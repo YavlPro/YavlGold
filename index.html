@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Inversiones - Global Invest</title>
-  <link rel="icon" href="https://i.imgur.com/8Zq6DgP.png" type="image/png"> <!-- Icono temporal dorado -->
+  <link rel="icon" href="https://i.imgur.com/8Zq6DgP.png" type="image/png">
   <style>
     :root {
-      --color-primary: #1e3a8a; /* Azul profesional */
-      --color-secondary: #d4af37; /* Dorado elegante */
+      --color-primary: #1e3a8a;
+      --color-secondary: #d4af37;
       --bg-dark: #0f172a;
       --text-light: #e2e8f0;
       --card-bg: #1e293b;
@@ -87,15 +87,12 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(30, 58, 138, 0.4);
     }
-    #resultado {
-      font-size: 1.4em;
-      font-weight: bold;
-      color: #10b981;
+    #resultados-avanzados {
       margin-top: 20px;
-      padding: 15px;
-      background: rgba(16, 185, 129, 0.1);
-      border-radius: 10px;
-      border-left: 4px solid #10b981;
+      display: none;
+    }
+    #resultados-avanzados h3 {
+      color: var(--color-secondary);
     }
     .redes, .comunidad {
       text-align: center;
@@ -142,10 +139,12 @@
   </header>
 
   <div class="proyecto">
-    <h2>💎 Calculadora Universal de Rendimientos</h2>
+    <h2>📊 Calculadora Avanzada de Rendimientos</h2>
+    <p>Elige tu moneda, ingresa tu inversión y APY para ver ganancias diarias, semanales, mensuales y anuales.</p>
+
     <div class="form-group">
-      <label for="moneda">Selecciona tu criptomoneda:</label>
-      <select id="moneda">
+      <label for="moneda-avanzada">Selecciona tu criptomoneda:</label>
+      <select id="moneda-avanzada">
         <option value="USDT">USDT</option>
         <option value="BNB">BNB</option>
         <option value="TON">TON</option>
@@ -156,23 +155,36 @@
       </select>
     </div>
 
-    <div class="form-group" id="campo-otra" style="display:none;">
-      <label for="otra-moneda">Nombre de la moneda:</label>
-      <input type="text" id="otra-moneda" placeholder="Ej: CAKE, AAVE, etc.">
+    <div class="form-group" id="campo-otra-avanzada" style="display:none;">
+      <label for="otra-moneda-avanzada">Nombre de la moneda:</label>
+      <input type="text" id="otra-moneda-avanzada" placeholder="Ej: CAKE, AAVE">
     </div>
 
     <div class="form-group">
-      <label for="inversion">Ingresa tu inversión:</label>
-      <input type="number" id="inversion" placeholder="Ej: 1000" step="0.01" min="0">
+      <label for="inversion-avanzada">Inversión inicial:</label>
+      <input type="number" id="inversion-avanzada" placeholder="Ej: 1000" step="0.01" min="0" value="1000">
     </div>
 
     <div class="form-group">
-      <label for="apy">Ingresa el APY (% anual):</label>
-      <input type="number" id="apy" placeholder="Ej: 48" min="0" max="1000">
+      <label for="apy-avanzada">APY (% anual):</label>
+      <input type="number" id="apy-avanzada" placeholder="Ej: 48" min="0" max="1000" value="48">
     </div>
 
-    <button onclick="calcularGanancia()">🚀 Calcular Ganancia en 30 Días</button>
-    <div id="resultado">...</div>
+    <button onclick="calcularRendimientosAvanzados()">🧮 Calcular Rendimientos</button>
+
+    <div id="resultados-avanzados">
+      <h3>📈 Resultados estimados en <span id="moneda-resultado">USDT</span>:</h3>
+      <ul style="list-style: none; padding: 0; font-size: 1.1em; line-height: 1.8;">
+        <li>💰 <strong>Diario:</strong> <span id="diario"></span></li>
+        <li>📅 <strong>Semanal:</strong> <span id="semanal"></span></li>
+        <li>📆 <strong>Mensual:</strong> <span id="mensual"></span></li>
+        <li>📆📅 <strong>Anual (APY):</strong> <span id="anual-apy"></span></li>
+        <li>📊 <strong>Anual (APR):</strong> <span id="anual-apr"></span></li>
+      </ul>
+      <p style="font-size: 0.9em; color: #94a3b8; margin-top: 15px;">
+        💡 <strong>APY</strong> incluye reinversión compuesta. <strong>APR</strong> es interés simple.
+      </p>
+    </div>
   </div>
 
   <div class="comunidad">
@@ -195,18 +207,17 @@
   </footer>
 
   <script>
-    // Mostrar campo "Otra moneda" si se selecciona "Otra"
-    document.getElementById('moneda').addEventListener('change', function() {
-      const campoOtra = document.getElementById('campo-otra');
+    document.getElementById('moneda-avanzada').addEventListener('change', function() {
+      const campoOtra = document.getElementById('campo-otra-avanzada');
       campoOtra.style.display = this.value === 'Otra' ? 'block' : 'none';
     });
 
-    function calcularGanancia() {
-      const inversion = parseFloat(document.getElementById('inversion').value);
-      const apy = parseFloat(document.getElementById('apy').value);
-      const selectMoneda = document.getElementById('moneda');
+    function calcularRendimientosAvanzados() {
+      const inversion = parseFloat(document.getElementById('inversion-avanzada').value);
+      const apy = parseFloat(document.getElementById('apy-avanzada').value);
+      const selectMoneda = document.getElementById('moneda-avanzada');
       const moneda = selectMoneda.value === 'Otra' 
-        ? document.getElementById('otra-moneda').value || 'Moneda'
+        ? document.getElementById('otra-moneda-avanzada').value || 'Moneda'
         : selectMoneda.value;
 
       if (isNaN(inversion) || isNaN(apy) || inversion <= 0 || apy < 0) {
@@ -214,43 +225,23 @@
         return;
       }
 
-      // Cálculo: Ganancia = Inversión * APY * 30 / 36500
-      const ganancia = (inversion * apy * 30) / (365 * 100);
-      const total = inversion + ganancia;
+      const diario = inversion * (Math.pow(1 + apy / 100, 1/365) - 1);
+      const semanal = inversion * (Math.pow(1 + apy / 100, 7/365) - 1);
+      const mensual = inversion * (Math.pow(1 + apy / 100, 30/365) - 1);
+      const anual_apy = inversion * (Math.pow(1 + apy / 100, 1) - 1);
+      const apr = (Math.pow(1 + apy / 100, 1) - 1) * 100;
+      const anual_apr = inversion * (apr / 100);
 
-      document.getElementById('resultado').innerHTML = `
-        💰 <strong>Ganancia estimada en 30 días:</strong><br>
-        <span style="font-size:1.6em; color:var(--color-secondary)">${ganancia.toFixed(4)} ${moneda}</span><br>
-        <small>Total acumulado: ${total.toFixed(4)} ${moneda}</small>
-      `;
+      document.getElementById('moneda-resultado').innerText = moneda;
+      document.getElementById('diario').innerText = `${diario.toFixed(4)} ${moneda}`;
+      document.getElementById('semanal').innerText = `${semanal.toFixed(4)} ${moneda}`;
+      document.getElementById('mensual').innerText = `${mensual.toFixed(4)} ${moneda}`;
+      document.getElementById('anual-apy').innerText = `${anual_apy.toFixed(4)} ${moneda}`;
+      document.getElementById('anual-apr').innerText = `${anual_apr.toFixed(4)} ${moneda}`;
+
+      document.getElementById('resultados-avanzados').style.display = 'block';
     }
   </script>
 
-</body>
-</html><!DOCTYPE html>
-
-<html>
-<head>
-  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <title>Hello, World!</title>
-</head>
-<body>
-  <h1>
-    Descubrelo por ti mismo y seras brillante!
-  </h1>
-</body>
-</html>
-<!DOCTYPE html>
-
-<html>
-<head>
-  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
-  <link rel="stylesheet" href="styles/style.css"/>
-  <title>Hello, World!</title>
-</head>
-<body>
-  <h1>
-    Hello, World!
-  </h1>
 </body>
 </html>
