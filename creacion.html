@@ -1,247 +1,156 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Inversiones - Global Invest</title>
-  <link rel="icon" href="https://i.imgur.com/8Zq6DgP.png" type="image/png">
-  <style>
-    :root {
-      --color-primary: #1e3a8a;
-      --color-secondary: #d4af37;
-      --bg-dark: #0f172a;
-      --text-light: #e2e8f0;
-      --card-bg: #1e293b;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-light);
-      padding: 20px;
-      max-width: 900px;
-      margin: 0 auto;
-      line-height: 1.6;
-    }
-    header {
-      text-align: center;
-      padding: 40px 0;
-      border-bottom: 3px solid var(--color-secondary);
-      background: linear-gradient(135deg, var(--bg-dark), #1e293b);
-      border-radius: 16px;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
-    }
-    h1 {
-      color: var(--color-secondary);
-      margin: 0 0 10px;
-      font-size: 2.5em;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    }
-    .brand {
-      font-size: 1.3em;
-      color: #94a3b8;
-      font-weight: 500;
-    }
-    .proyecto {
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: 16px;
-      margin: 25px 0;
-      border: 1px solid #334155;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-    .form-group {
-      margin: 20px 0;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--color-secondary);
-    }
-    input, select, button {
-      padding: 14px;
-      margin: 8px 0;
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: white;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    input::placeholder {
-      color: #94a3b8;
-    }
-    button {
-      background: var(--color-primary);
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 18px;
-      transition: all 0.3s ease;
-      border: 2px solid var(--color-secondary);
-    }
-    button:hover {
-      background: #2563eb;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(30, 58, 138, 0.4);
-    }
-    #resultados-avanzados {
-      margin-top: 20px;
-      display: none;
-    }
-    #resultados-avanzados h3 {
-      color: var(--color-secondary);
-    }
-    .redes, .comunidad {
-      text-align: center;
-      margin: 40px 0;
-      padding: 20px;
-      background: rgba(30, 58, 138, 0.2);
-      border-radius: 16px;
-      border: 1px solid var(--color-secondary);
-    }
-    .redes a, .comunidad a {
-      color: var(--color-secondary);
-      text-decoration: none;
-      font-weight: 600;
-      margin: 0 10px;
-      padding: 8px 16px;
-      border-radius: 8px;
-      background: rgba(212, 175, 55, 0.1);
-      transition: all 0.3s;
-    }
-    .redes a:hover, .comunidad a:hover {
-      background: var(--color-secondary);
-      color: var(--bg-dark);
-      transform: scale(1.05);
-    }
-    footer {
-      text-align: center;
-      margin-top: 50px;
-      padding: 20px;
-      color: #94a3b8;
-      font-size: 0.9em;
-      border-top: 1px solid #334155;
-    }
-    @media (max-width: 600px) {
-      h1 { font-size: 2em; }
-      .redes a, .comunidad a { display: block; margin: 10px 0; }
-    }
-  </style>
-</head>
-<body>
+<!-- Calculadora Avanzada 2.0 - Tiempo personalizado -->
+<div class="proyecto">
+  <h2>🧮 Calculadora Inteligente de Ganancias</h2>
+  <p>Elige tu moneda, APY y el tiempo exacto (horas, días o años) para ver tu rendimiento.</p>
 
-  <header>
-    <h1>📊 Panel de Inversiones</h1>
-    <p class="brand">Por <strong>YavlPro</strong> · Comunidad <strong>Global Invest</strong></p>
-  </header>
+  <!-- Selector de moneda -->
+  <div class="form-group">
+    <label for="moneda-2">Moneda:</label>
+    <select id="moneda-2">
+      <option value="USDT">USDT</option>
+      <option value="BNB">BNB</option>
+      <option value="TON">TON</option>
+      <option value="SOL">SOL</option>
+      <option value="BTC">BTC</option>
+      <option value="ETH">ETH</option>
+      <option value="Otra">Otra</option>
+    </select>
+  </div>
 
-  <div class="proyecto">
-    <h2>📊 Calculadora Avanzada de Rendimientos</h2>
-    <p>Elige tu moneda, ingresa tu inversión y APY para ver ganancias diarias, semanales, mensuales y anuales.</p>
+  <div class="form-group" id="campo-otra-2" style="display:none;">
+    <input type="text" id="otra-moneda-2" placeholder="Ej: CAKE">
+  </div>
 
-    <div class="form-group">
-      <label for="moneda-avanzada">Selecciona tu criptomoneda:</label>
-      <select id="moneda-avanzada">
-        <option value="USDT">USDT</option>
-        <option value="BNB">BNB</option>
-        <option value="TON">TON</option>
-        <option value="SOL">SOL</option>
-        <option value="BTC">BTC</option>
-        <option value="ETH">ETH</option>
-        <option value="Otra">Otra (escribe abajo)</option>
-      </select>
-    </div>
+  <!-- Inversión y APY -->
+  <div class="form-group">
+    <label for="inversion-2">Inversión:</label>
+    <input type="number" id="inversion-2" value="1000" step="0.01" min="0">
+  </div>
 
-    <div class="form-group" id="campo-otra-avanzada" style="display:none;">
-      <label for="otra-moneda-avanzada">Nombre de la moneda:</label>
-      <input type="text" id="otra-moneda-avanzada" placeholder="Ej: CAKE, AAVE">
-    </div>
+  <div class="form-group">
+    <label for="apy-2">APY (% anual):</label>
+    <input type="number" id="apy-2" value="48" min="0" max="1000">
+  </div>
 
-    <div class="form-group">
-      <label for="inversion-avanzada">Inversión inicial:</label>
-      <input type="number" id="inversion-avanzada" placeholder="Ej: 1000" step="0.01" min="0" value="1000">
-    </div>
-
-    <div class="form-group">
-      <label for="apy-avanzada">APY (% anual):</label>
-      <input type="number" id="apy-avanzada" placeholder="Ej: 48" min="0" max="1000" value="48">
-    </div>
-
-    <button onclick="calcularRendimientosAvanzados()">🧮 Calcular Rendimientos</button>
-
-    <div id="resultados-avanzados">
-      <h3>📈 Resultados estimados en <span id="moneda-resultado">USDT</span>:</h3>
-      <ul style="list-style: none; padding: 0; font-size: 1.1em; line-height: 1.8;">
-        <li>💰 <strong>Diario:</strong> <span id="diario"></span></li>
-        <li>📅 <strong>Semanal:</strong> <span id="semanal"></span></li>
-        <li>📆 <strong>Mensual:</strong> <span id="mensual"></span></li>
-        <li>📆📅 <strong>Anual (APY):</strong> <span id="anual-apy"></span></li>
-        <li>📊 <strong>Anual (APR):</strong> <span id="anual-apr"></span></li>
-      </ul>
-      <p style="font-size: 0.9em; color: #94a3b8; margin-top: 15px;">
-        💡 <strong>APY</strong> incluye reinversión compuesta. <strong>APR</strong> es interés simple.
-      </p>
+  <!-- Selector de unidad de tiempo -->
+  <div class="form-group">
+    <label>¿En qué unidad quieres calcular?</label>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
+      <button type="button" class="time-btn" data-unit="days">📅 Días</button>
+      <button type="button" class="time-btn" data-unit="years">📆 Años</button>
     </div>
   </div>
 
-  <div class="comunidad">
-    <h3>🔗 Únete a nuestra comunidad</h3>
-    <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+  <!-- Campo numérico -->
+  <div class="form-group">
+    <label for="cantidad-2">Cantidad:</label>
+    <input type="number" id="cantidad-2" value="72" min="0.1" step="1">
+    <small id="unidad-texto">72 horas = 3 días</small>
   </div>
 
-  <div class="redes">
-    <h3>🌐 Sígueme en mis redes</h3>
-    <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
-    <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
-    <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
-    <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
-    <a href="https://wa.me/message/DFXFFK4DS3HSM1" target="_blank">💬 WhatsApp</a>
+  <button onclick="calcularPersonalizado()">✨ Calcular Ganancia</button>
+
+  <div id="resultado-personalizado" style="margin-top:20px; display:none;">
+    <h3>📈 Resultado en <span id="moneda-res">USDT</span>:</h3>
+    <p><strong>Ganancia:</strong> <span id="ganancia-res"></span></p>
+    <p><strong>Rendimiento:</strong> <span id="porcentaje-res"></span>%</p>
+    <p><strong>Total:</strong> <span id="total-res"></span></p>
   </div>
+</div>
 
-  <footer>
-    <p>© 2025 Panel de Inversiones - Global Invest | Creado por YavlPro</p>
-    <p>💡 Herramienta educativa - No es asesoría financiera</p>
-  </footer>
+<style>
+  .time-btn {
+    background: #334155;
+    color: #e2e8f0;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+  }
+  .time-btn.active {
+    background: var(--color-secondary);
+    color: var(--bg-dark);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+  }
+  #unidad-texto {
+    color: #94a3b8;
+    font-size: 0.9em;
+  }
+</style>
 
-  <script>
-    document.getElementById('moneda-avanzada').addEventListener('change', function() {
-      const campoOtra = document.getElementById('campo-otra-avanzada');
-      campoOtra.style.display = this.value === 'Otra' ? 'block' : 'none';
+<script>
+  // Mostrar campo "Otra moneda"
+  document.getElementById('moneda-2').addEventListener('change', function() {
+    document.getElementById('campo-otra-2').style.display = this.value === 'Otra' ? 'block' : 'none';
+  });
+
+  // Selector de tiempo
+  document.querySelectorAll('.time-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      actualizarTextoUnidad();
     });
+  });
 
-    function calcularRendimientosAvanzados() {
-      const inversion = parseFloat(document.getElementById('inversion-avanzada').value);
-      const apy = parseFloat(document.getElementById('apy-avanzada').value);
-      const selectMoneda = document.getElementById('moneda-avanzada');
-      const moneda = selectMoneda.value === 'Otra' 
-        ? document.getElementById('otra-moneda-avanzada').value || 'Moneda'
-        : selectMoneda.value;
+  function actualizarTextoUnidad() {
+    const cantidad = parseFloat(document.getElementById('cantidad-2').value) || 0;
+    const unidad = document.querySelector('.time-btn.active').dataset.unit;
+    let texto = '';
 
-      if (isNaN(inversion) || isNaN(apy) || inversion <= 0 || apy < 0) {
-        alert("Por favor, ingresa valores válidos.");
-        return;
-      }
-
-      const diario = inversion * (Math.pow(1 + apy / 100, 1/365) - 1);
-      const semanal = inversion * (Math.pow(1 + apy / 100, 7/365) - 1);
-      const mensual = inversion * (Math.pow(1 + apy / 100, 30/365) - 1);
-      const anual_apy = inversion * (Math.pow(1 + apy / 100, 1) - 1);
-      const apr = (Math.pow(1 + apy / 100, 1) - 1) * 100;
-      const anual_apr = inversion * (apr / 100);
-
-      document.getElementById('moneda-resultado').innerText = moneda;
-      document.getElementById('diario').innerText = `${diario.toFixed(4)} ${moneda}`;
-      document.getElementById('semanal').innerText = `${semanal.toFixed(4)} ${moneda}`;
-      document.getElementById('mensual').innerText = `${mensual.toFixed(4)} ${moneda}`;
-      document.getElementById('anual-apy').innerText = `${anual_apy.toFixed(4)} ${moneda}`;
-      document.getElementById('anual-apr').innerText = `${anual_apr.toFixed(4)} ${moneda}`;
-
-      document.getElementById('resultados-avanzados').style.display = 'block';
+    if (unidad === 'hours') {
+      const dias = (cantidad / 24).toFixed(2);
+      texto = `${cantidad} horas = ${dias} días`;
+    } else if (unidad === 'days') {
+      const horas = cantidad * 24;
+      texto = `${cantidad} días = ${horas} horas`;
+    } else {
+      const dias = cantidad * 365;
+      texto = `${cantidad} años = ${dias} días`;
     }
-  </script>
 
-</body>
-</html>
+    document.getElementById('unidad-texto').innerText = texto;
+  }
+
+  document.getElementById('cantidad-2').addEventListener('input', actualizarTextoUnidad);
+
+  function calcularPersonalizado() {
+    const inversion = parseFloat(document.getElementById('inversion-2').value);
+    const apy = parseFloat(document.getElementById('apy-2').value);
+    const cantidad = parseFloat(document.getElementById('cantidad-2').value);
+    const unidad = document.querySelector('.time-btn.active').dataset.unit;
+    const moneda = document.getElementById('moneda-2').value === 'Otra' 
+      ? document.getElementById('otra-moneda-2').value || 'Moneda'
+      : document.getElementById('moneda-2').value;
+
+    if (isNaN(inversion) || isNaN(apy) || isNaN(cantidad) || inversion <= 0 || apy < 0 || cantidad <= 0) {
+      alert("Ingresa valores válidos.");
+      return;
+    }
+
+    // Convertir a fracción de año
+    let fraccionAnual;
+    if (unidad === 'hours') fraccionAnual = cantidad / (365 * 24);
+    else if (unidad === 'days') fraccionAnual = cantidad / 365;
+    else fraccionAnual = cantidad;
+
+    // Cálculo compuesto
+    const ganancia = inversion * (Math.pow(1 + apy / 100, fraccionAnual) - 1);
+    const porcentaje = (ganancia / inversion) * 100;
+    const total = inversion + ganancia;
+
+    // Mostrar resultados
+    document.getElementById('moneda-res').innerText = moneda;
+    document.getElementById('ganancia-res').innerText = `${ganancia.toFixed(4)} ${moneda}`;
+    document.getElementById('porcentaje-res').innerText = porcentaje.toFixed(4);
+    document.getElementById('total-res').innerText = `${total.toFixed(4)} ${moneda}`;
+
+    document.getElementById('resultado-personalizado').style.display = 'block';
+  }
+
+  // Inicializar
+  actualizarTextoUnidad();
+</script>
