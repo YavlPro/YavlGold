@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel de Inversiones - Global Invest</title>
-  <link rel="icon" href="https://i.imgur.com/8Zq6DgP.png" type="image/png">
+  <!-- ✅ Título personalizado con tu marca -->
+  <title>Calculadora de Ganancias - Global Invest</title>
+  <!-- ✅ Favicon profesional (puedes cambiar la URL por tu logo) -->
+  <link rel="icon" href="https://i.imgur.com/d4af37g.png" type="image/png">
   <style>
     :root {
       --color-primary: #1e3a8a;
@@ -164,10 +166,10 @@
     <p class="brand">Por <strong>YavlPro</strong> · Comunidad <strong>Global Invest</strong></p>
   </header>
 
-  <!-- Calculadora Inteligente de Ganancias - Versión 2.0 -->
+  <!-- Calculadora Inteligente de Ganancias - Versión 2.1 (con APR + mejoras) -->
   <div class="proyecto">
     <h2>🧮 Calculadora Inteligente de Ganancias</h2>
-    <p>Elige tu moneda, APY y el tiempo exacto (horas, días o años) para ver tu rendimiento.</p>
+    <p>Elige tu moneda, APY y el tiempo exacto para ver tu rendimiento con interés compuesto (APY) e interés simple (APR).</p>
 
     <!-- Selector de moneda -->
     <div class="form-group">
@@ -189,8 +191,8 @@
 
     <!-- Inversión y APY -->
     <div class="form-group">
-      <label for="inversion-2">Inversión:</label>
-      <input type="number" id="inversion-2" value="1000" step="0.01" min="0">
+      <label for="inversion-2">Inversión (≥ 0.01):</label>
+      <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
     </div>
 
     <div class="form-group">
@@ -211,17 +213,21 @@
     <!-- Campo numérico -->
     <div class="form-group">
       <label for="cantidad-2">Cantidad:</label>
-      <input type="number" id="cantidad-2" value="72" min="0.1" step="1">
+      <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
       <small id="unidad-texto">72 horas = 3 días</small>
     </div>
 
-    <button onclick="calcularPersonalizado()">✨ Calcular Ganancia</button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="calcularPersonalizado()">✨ Calcular Ganancia</button>
+      <button onclick="limpiarFormulario()" style="background:#64748b; border-color:#94a3b8;">🗑️ Limpiar</button>
+    </div>
 
     <div id="resultado-personalizado">
       <h3>📈 Resultado en <span id="moneda-res">USDT</span>:</h3>
-      <p><strong>Ganancia:</strong> <span id="ganancia-res"></span></p>
-      <p><strong>Rendimiento:</strong> <span id="porcentaje-res"></span>%</p>
-      <p><strong>Total:</strong> <span id="total-res"></span></p>
+      <p><strong>Ganancia (APY - compuesto):</strong> <span id="ganancia-apy"></span></p>
+      <p><strong>Ganancia (APR - simple):</strong> <span id="ganancia-apr"></span></p>
+      <p><strong>Rendimiento total:</strong> <span id="porcentaje-res"></span>%</p>
+      <p><strong>Total acumulado:</strong> <span id="total-res"></span></p>
     </div>
   </div>
 
@@ -241,7 +247,8 @@
 
   <footer>
     <p>© 2025 Panel de Inversiones - Global Invest | Creado por YavlPro</p>
-    <p>💡 Herramienta educativa - No es asesoría financiera</p>
+    <p>💡 <em>Los cálculos usan interés compuesto diario derivado del APY. El APR se calcula como interés simple para comparación.</em></p>
+    <p>⚠️ Herramienta educativa - No es asesoría financiera</p>
   </footer>
 
   <script>
@@ -284,15 +291,17 @@
       const inversion = parseFloat(document.getElementById('inversion-2').value);
       const apy = parseFloat(document.getElementById('apy-2').value);
       const cantidad = parseFloat(document.getElementById('cantidad-2').value);
+
+      // ✅ Validación mejorada
+      if (isNaN(inversion) || isNaN(apy) || isNaN(cantidad) || inversion < 0.01 || apy < 0 || cantidad < 0.1) {
+        alert("Por favor, ingresa valores válidos (inversión ≥ 0.01, tiempo ≥ 0.1).");
+        return;
+      }
+
       const unidad = document.querySelector('.time-btn.active').dataset.unit;
       const moneda = document.getElementById('moneda-2').value === 'Otra' 
         ? document.getElementById('otra-moneda-2').value || 'Moneda'
         : document.getElementById('moneda-2').value;
-
-      if (isNaN(inversion) || isNaN(apy) || isNaN(cantidad) || inversion <= 0 || apy < 0 || cantidad <= 0) {
-        alert("Ingresa valores válidos.");
-        return;
-      }
 
       // Convertir a fracción de año
       let fraccionAnual;
@@ -300,18 +309,34 @@
       else if (unidad === 'days') fraccionAnual = cantidad / 365;
       else fraccionAnual = cantidad;
 
-      // Cálculo compuesto
-      const ganancia = inversion * (Math.pow(1 + apy / 100, fraccionAnual) - 1);
-      const porcentaje = (ganancia / inversion) * 100;
-      const total = inversion + ganancia;
+      // Cálculo APY (compuesto)
+      const gananciaAPY = inversion * (Math.pow(1 + apy / 100, fraccionAnual) - 1);
+      
+      // Cálculo APR (simple)
+      const apr = apy; // APR ≈ APY para comparación simple
+      const gananciaAPR = inversion * (apr / 100) * fraccionAnual;
+
+      const porcentaje = (gananciaAPY / inversion) * 100;
+      const total = inversion + gananciaAPY;
 
       // Mostrar resultados
       document.getElementById('moneda-res').innerText = moneda;
-      document.getElementById('ganancia-res').innerText = `${ganancia.toFixed(4)} ${moneda}`;
+      document.getElementById('ganancia-apy').innerText = `${gananciaAPY.toFixed(4)} ${moneda}`;
+      document.getElementById('ganancia-apr').innerText = `${gananciaAPR.toFixed(4)} ${moneda}`;
       document.getElementById('porcentaje-res').innerText = porcentaje.toFixed(4);
       document.getElementById('total-res').innerText = `${total.toFixed(4)} ${moneda}`;
 
       document.getElementById('resultado-personalizado').style.display = 'block';
+    }
+
+    function limpiarFormulario() {
+      document.getElementById('inversion-2').value = '1000';
+      document.getElementById('apy-2').value = '48';
+      document.getElementById('cantidad-2').value = '72';
+      document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.time-btn[data-unit="hours"]').classList.add('active');
+      document.getElementById('resultado-personalizado').style.display = 'none';
+      actualizarTextoUnidad();
     }
 
     // Inicializar
