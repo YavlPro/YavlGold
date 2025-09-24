@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Inversiones - Global Invest</title>
+  <link rel="icon" href="https://i.imgur.com/8Zq6DgP.png" type="image/png"> <!-- Icono temporal dorado -->
+  <style>
+    :root {
+      --color-primary: #1e3a8a; /* Azul profesional */
+      --color-secondary: #d4af37; /* Dorado elegante */
+      --bg-dark: #0f172a;
+      --text-light: #e2e8f0;
+      --card-bg: #1e293b;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    header {
+      text-align: center;
+      padding: 40px 0;
+      border-bottom: 3px solid var(--color-secondary);
+      background: linear-gradient(135deg, var(--bg-dark), #1e293b);
+      border-radius: 16px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 20px rgba(30, 58, 138, 0.3);
+    }
+    h1 {
+      color: var(--color-secondary);
+      margin: 0 0 10px;
+      font-size: 2.5em;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    }
+    .brand {
+      font-size: 1.3em;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .proyecto {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      margin: 25px 0;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .form-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--color-secondary);
+    }
+    input, select, button {
+      padding: 14px;
+      margin: 8px 0;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    input::placeholder {
+      color: #94a3b8;
+    }
+    button {
+      background: var(--color-primary);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      border: 2px solid var(--color-secondary);
+    }
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(30, 58, 138, 0.4);
+    }
+    #resultado {
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #10b981;
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(16, 185, 129, 0.1);
+      border-radius: 10px;
+      border-left: 4px solid #10b981;
+    }
+    .redes, .comunidad {
+      text-align: center;
+      margin: 40px 0;
+      padding: 20px;
+      background: rgba(30, 58, 138, 0.2);
+      border-radius: 16px;
+      border: 1px solid var(--color-secondary);
+    }
+    .redes a, .comunidad a {
+      color: var(--color-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      margin: 0 10px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(212, 175, 55, 0.1);
+      transition: all 0.3s;
+    }
+    .redes a:hover, .comunidad a:hover {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+      transform: scale(1.05);
+    }
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 0.9em;
+      border-top: 1px solid #334155;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 2em; }
+      .redes a, .comunidad a { display: block; margin: 10px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📊 Panel de Inversiones</h1>
+    <p class="brand">Por <strong>YavlPro</strong> · Comunidad <strong>Global Invest</strong></p>
+  </header>
+
+  <div class="proyecto">
+    <h2>💎 Calculadora Universal de Rendimientos</h2>
+    <div class="form-group">
+      <label for="moneda">Selecciona tu criptomoneda:</label>
+      <select id="moneda">
+        <option value="USDT">USDT</option>
+        <option value="BNB">BNB</option>
+        <option value="TON">TON</option>
+        <option value="SOL">SOL</option>
+        <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+        <option value="Otra">Otra (escribe abajo)</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="campo-otra" style="display:none;">
+      <label for="otra-moneda">Nombre de la moneda:</label>
+      <input type="text" id="otra-moneda" placeholder="Ej: CAKE, AAVE, etc.">
+    </div>
+
+    <div class="form-group">
+      <label for="inversion">Ingresa tu inversión:</label>
+      <input type="number" id="inversion" placeholder="Ej: 1000" step="0.01" min="0">
+    </div>
+
+    <div class="form-group">
+      <label for="apy">Ingresa el APY (% anual):</label>
+      <input type="number" id="apy" placeholder="Ej: 48" min="0" max="1000">
+    </div>
+
+    <button onclick="calcularGanancia()">🚀 Calcular Ganancia en 30 Días</button>
+    <div id="resultado">...</div>
+  </div>
+
+  <div class="comunidad">
+    <h3>🔗 Únete a nuestra comunidad</h3>
+    <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+  </div>
+
+  <div class="redes">
+    <h3>🌐 Sígueme en mis redes</h3>
+    <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
+    <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
+    <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
+    <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
+    <a href="https://wa.me/message/DFXFFK4DS3HSM1" target="_blank">💬 WhatsApp</a>
+  </div>
+
+  <footer>
+    <p>© 2025 Panel de Inversiones - Global Invest | Creado por YavlPro</p>
+    <p>💡 Herramienta educativa - No es asesoría financiera</p>
+  </footer>
+
+  <script>
+    // Mostrar campo "Otra moneda" si se selecciona "Otra"
+    document.getElementById('moneda').addEventListener('change', function() {
+      const campoOtra = document.getElementById('campo-otra');
+      campoOtra.style.display = this.value === 'Otra' ? 'block' : 'none';
+    });
+
+    function calcularGanancia() {
+      const inversion = parseFloat(document.getElementById('inversion').value);
+      const apy = parseFloat(document.getElementById('apy').value);
+      const selectMoneda = document.getElementById('moneda');
+      const moneda = selectMoneda.value === 'Otra' 
+        ? document.getElementById('otra-moneda').value || 'Moneda'
+        : selectMoneda.value;
+
+      if (isNaN(inversion) || isNaN(apy) || inversion <= 0 || apy < 0) {
+        alert("Por favor, ingresa valores válidos.");
+        return;
+      }
+
+      // Cálculo: Ganancia = Inversión * APY * 30 / 36500
+      const ganancia = (inversion * apy * 30) / (365 * 100);
+      const total = inversion + ganancia;
+
+      document.getElementById('resultado').innerHTML = `
+        💰 <strong>Ganancia estimada en 30 días:</strong><br>
+        <span style="font-size:1.6em; color:var(--color-secondary)">${ganancia.toFixed(4)} ${moneda}</span><br>
+        <small>Total acumulado: ${total.toFixed(4)} ${moneda}</small>
+      `;
+    }
+  </script>
+
+</body>
+</html><!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <title>Hello, World!</title>
+</head>
+<body>
+  <h1>
+    Descubrelo por ti mismo y seras brillante!
+  </h1>
+</body>
+</html>
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" href="styles/style.css"/>
+  <title>Hello, World!</title>
+</head>
+<body>
+  <h1>
+    Hello, World!
+  </h1>
+</body>
+</html>
