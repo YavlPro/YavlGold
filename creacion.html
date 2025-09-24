@@ -138,7 +138,6 @@
     <p class="brand">Por <strong>YavlPro</strong> · Comunidad <strong>Global Invest</strong></p>
   </header>
 
-  <!-- Calculadora Avanzada de Rendimientos -->
   <div class="proyecto">
     <h2>📊 Calculadora Avanzada de Rendimientos</h2>
     <p>Elige tu moneda, ingresa tu inversión y APY para ver ganancias diarias, semanales, mensuales y anuales.</p>
@@ -208,7 +207,6 @@
   </footer>
 
   <script>
-    // Mostrar campo "Otra moneda"
     document.getElementById('moneda-avanzada').addEventListener('change', function() {
       const campoOtra = document.getElementById('campo-otra-avanzada');
       campoOtra.style.display = this.value === 'Otra' ? 'block' : 'none';
@@ -227,18 +225,14 @@
         return;
       }
 
-      // Cálculos con interés compuesto
       const diario = inversion * (Math.pow(1 + apy / 100, 1/365) - 1);
       const semanal = inversion * (Math.pow(1 + apy / 100, 7/365) - 1);
       const mensual = inversion * (Math.pow(1 + apy / 100, 30/365) - 1);
       const anual_apy = inversion * (Math.pow(1 + apy / 100, 1) - 1);
-      const apr = (Math.pow(1 + apy / 100, 1) - 1) * 100; // APR efectivo anual
+      const apr = (Math.pow(1 + apy / 100, 1) - 1) * 100;
       const anual_apr = inversion * (apr / 100);
 
-      // Mostrar moneda
       document.getElementById('moneda-resultado').innerText = moneda;
-
-      // Mostrar resultados
       document.getElementById('diario').innerText = `${diario.toFixed(4)} ${moneda}`;
       document.getElementById('semanal').innerText = `${semanal.toFixed(4)} ${moneda}`;
       document.getElementById('mensual').innerText = `${mensual.toFixed(4)} ${moneda}`;
