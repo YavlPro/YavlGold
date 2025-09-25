@@ -29,7 +29,14 @@
       --bg-dark: #0f172a;
       --text-light: #e2e8f0;
       --card-bg: #1e293b;
+      --error-color: #ef4444;
+      --success-color: #10b981;
     }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg-dark);
@@ -63,7 +70,8 @@
       margin: 0 auto;
       padding: 0 20px 120px;
     }
-    .section {
+    
+    .card {
       background: var(--card-bg);
       padding: 30px;
       border-radius: 16px;
@@ -71,6 +79,11 @@
       border: 1px solid #334155;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
+    
+    .section, .tool-section {
+      composes: card;
+    }
+
     .section h2 {
       color: var(--color-secondary);
       margin-top: 0;
@@ -85,6 +98,7 @@
       border-radius: 16px;
       border: 1px solid var(--color-secondary);
     }
+    
     .redes a, .comunidad a {
       color: var(--color-secondary);
       text-decoration: none;
@@ -96,6 +110,12 @@
       transition: all 0.3s;
       display: inline-block;
     }
+    
+    .redes a:hover, .comunidad a:hover {
+      background: rgba(212, 175, 55, 0.3);
+      transform: translateY(-2px);
+    }
+    
     footer {
       text-align: center;
       padding: 25px 0;
@@ -110,6 +130,7 @@
       bottom: 20px;
       right: 20px;
       display: flex;
+      flex-direction: column;
       gap: 15px;
       z-index: 1000;
     }
@@ -163,6 +184,7 @@
       text-align: center;
       background: #334155;
       margin: 5px 0;
+      cursor: pointer;
     }
 
     .tool-item:hover {
@@ -170,25 +192,18 @@
       color: var(--bg-dark);
     }
 
-    .tool-section {
-      display: none;
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: 16px;
-      margin: 30px 0;
-      border: 1px solid #334155;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
     .form-group {
       margin: 20px 0;
+      position: relative;
     }
+    
     label {
       display: block;
       margin-bottom: 8px;
       font-weight: 600;
       color: var(--color-secondary);
     }
+    
     input, select, button {
       padding: 14px;
       margin: 8px 0;
@@ -198,8 +213,26 @@
       background: #0f172a;
       color: white;
       font-size: 16px;
-      box-sizing: border-box;
+      transition: all 0.3s;
     }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    .input-error {
+      border-color: var(--error-color);
+    }
+    
+    .error-message {
+      color: var(--error-color);
+      font-size: 0.85em;
+      margin-top: 5px;
+      display: none;
+    }
+    
     button {
       background: var(--color-primary);
       color: white;
@@ -209,6 +242,19 @@
       transition: all 0.3s ease;
       border: 2px solid var(--color-secondary);
     }
+    
+    button:hover {
+      background: #1e40af;
+      transform: translateY(-2px);
+    }
+    
+    button:disabled {
+      background: #64748b;
+      cursor: not-allowed;
+      transform: none;
+      border-color: #64748b;
+    }
+    
     .time-btn {
       background: #334155;
       color: #e2e8f0;
@@ -219,21 +265,157 @@
       font-weight: bold;
       transition: all 0.2s;
       margin: 4px;
+      flex: 1;
+      min-width: 80px;
     }
+    
     .time-btn.active {
       background: var(--color-secondary);
       color: var(--bg-dark);
     }
+    
+    .time-buttons-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
     #unidad-texto {
       color: #94a3b8;
       font-size: 0.9em;
       display: block;
       margin-top: 8px;
     }
+    
+    .result-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(30, 58, 138, 0.2);
+      border-left: 4px solid var(--color-secondary);
+      display: none;
+    }
+    
+    .result-box p {
+      margin: 8px 0;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: var(--color-secondary);
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      border-bottom: 1px dotted var(--color-secondary);
+      cursor: help;
+      margin-left: 5px;
+    }
+    
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #1e293b;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border: 1px solid var(--color-secondary);
+      font-size: 0.85em;
+      font-weight: normal;
+    }
+    
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    .note {
+      font-size: 0.85em;
+      color: #94a3b8;
+      font-style: italic;
+      margin-top: 5px;
+    }
+    
+    .success-message {
+      background: rgba(16, 185, 129, 0.2);
+      border-left-color: var(--success-color);
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      display: none;
+    }
 
-    @media (max-width: 600px) {
-      .floating-buttons { gap: 12px; }
-      .floating-btn { width: 55px; height: 55px; font-size: 22px; }
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.4em;
+      }
+      
+      .hero p {
+        font-size: 1.1em;
+      }
+      
+      .card {
+        padding: 20px;
+        margin: 20px 0;
+      }
+      
+      .floating-buttons {
+        bottom: 15px;
+        right: 15px;
+        flex-direction: row;
+      }
+      
+      .floating-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 22px;
+      }
+      
+      #tools-menu {
+        bottom: 80px;
+        right: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .hero {
+        padding: 40px 15px 30px;
+      }
+      
+      .hero h1 {
+        font-size: 2em;
+      }
+      
+      .container {
+        padding: 0 15px 100px;
+      }
+      
+      .time-buttons-container {
+        flex-direction: column;
+      }
+      
+      .time-btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -246,22 +428,22 @@
 
   <div class="container" id="main-content">
 
-    <section class="section">
+    <section class="section card">
       <h2>👥 ¿Quiénes Somos?</h2>
       <p>Global Invest es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
     </section>
 
-    <section class="section">
+    <section class="section card">
       <h2>🎯 Misión</h2>
       <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
     </section>
 
-    <section class="section">
+    <section class="section card">
       <h2>🔭 Visión</h2>
       <p>Ser la comunidad de inversión en cripto más confiable, innovadora y colaborativa a nivel global, donde cada miembro crezca junto al ecosistema.</p>
     </section>
 
-    <section class="section">
+    <section class="section card">
       <h2>💎 Valores</h2>
       <ul style="padding-left: 20px;">
         <li><strong>Transparencia:</strong> Operamos con total claridad en cada proyecto.</li>
@@ -271,12 +453,12 @@
       </ul>
     </section>
 
-    <div class="comunidad">
+    <div class="comunidad card">
       <h3>🔗 Únete a nuestra comunidad</h3>
       <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
     </div>
 
-    <div class="redes">
+    <div class="redes card">
       <h3>🌐 Sígueme en mis redes</h3>
       <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
       <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
@@ -292,7 +474,7 @@
   </div>
 
   <!-- Calculadora -->
-  <div id="calculadora" class="tool-section">
+  <div id="calculadora" class="tool-section card">
     <h2>🧮 Calculadora Inteligente de Ganancias</h2>
     <div class="form-group">
       <label for="moneda-2">Moneda:</label>
@@ -308,14 +490,21 @@
     <div class="form-group">
       <label for="inversion-2">Inversión (≥ 0.01):</label>
       <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
+      <div class="error-message" id="error-inversion"></div>
     </div>
     <div class="form-group">
-      <label for="apy-2">APY (% anual):</label>
+      <label for="apy-2">
+        APY (% anual)
+        <span class="tooltip">(?)
+          <span class="tooltiptext">APY (Annual Percentage Yield) incluye el efecto del interés compuesto</span>
+        </span>:
+      </label>
       <input type="number" id="apy-2" value="48" min="0" max="1000">
+      <div class="error-message" id="error-apy"></div>
     </div>
     <div class="form-group">
       <label>Unidad de tiempo:</label>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <div class="time-buttons-container">
         <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
         <button type="button" class="time-btn" data-unit="days">📅 Días</button>
         <button type="button" class="time-btn" data-unit="years">📆 Años</button>
@@ -325,9 +514,10 @@
       <label for="cantidad-2">Cantidad:</label>
       <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
       <small id="unidad-texto">72 horas = 3 días</small>
+      <div class="error-message" id="error-cantidad"></div>
     </div>
-    <button onclick="calcularPersonalizado()">✨ Calcular</button>
-    <div id="resultado-personalizado" style="margin-top:20px; display:none;">
+    <button id="btn-calcular" onclick="calcularPersonalizado()">✨ Calcular</button>
+    <div class="result-box" id="resultado-personalizado">
       <p><strong>Ganancia (APY):</strong> <span id="ganancia-apy"></span></p>
       <p><strong>Ganancia (APR):</strong> <span id="ganancia-apr"></span></p>
       <p><strong>Total:</strong> <span id="total-res"></span></p>
@@ -340,11 +530,13 @@
   </div>
 
   <!-- Conversor -->
-  <div id="conversor" class="tool-section">
+  <div id="conversor" class="tool-section card">
     <h2>💱 Conversor de Criptomonedas</h2>
+    <p class="note">Nota: Las tasas de cambio son estimadas. Verifica en tiempo real para operar.</p>
     <div class="form-group">
       <label for="monto-conversor">Monto:</label>
       <input type="number" id="monto-conversor" value="1" step="0.01" min="0.01">
+      <div class="error-message" id="error-monto"></div>
     </div>
     <div class="form-group">
       <label for="de-moneda">De:</label>
@@ -352,6 +544,8 @@
         <option value="USDT">USDT</option>
         <option value="BNB">BNB</option>
         <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+        <option value="SOL">SOL</option>
       </select>
     </div>
     <div class="form-group">
@@ -360,10 +554,12 @@
         <option value="BNB">BNB</option>
         <option value="USDT">USDT</option>
         <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+        <option value="SOL">SOL</option>
       </select>
     </div>
-    <button onclick="convertirCripto()">🔄 Convertir</button>
-    <div id="resultado-conversor" style="margin-top:20px; display:none;">
+    <button id="btn-convertir" onclick="convertirCripto()">🔄 Convertir</button>
+    <div class="result-box" id="resultado-conversor">
       <p><strong>Resultado:</strong> <span id="conversion-res"></span></p>
     </div>
     <div style="text-align:center; margin-top:30px;">
@@ -374,19 +570,24 @@
   </div>
 
   <!-- Minería -->
-  <div id="mineria" class="tool-section">
+  <div id="mineria" class="tool-section card">
     <h2>⛏️ Potencia de Minería BTC</h2>
+    <p class="note">Nota: Estos cálculos son estimaciones basadas en parámetros promedio de la red Bitcoin.</p>
     <div class="form-group">
       <label for="hashrate">Hashrate (TH/s):</label>
       <input type="number" id="hashrate" value="100" step="0.1" min="0.1">
+      <div class="error-message" id="error-hashrate"></div>
     </div>
     <div class="form-group">
       <label for="costo-kwh">Costo por kWh ($):</label>
       <input type="number" id="costo-kwh" value="0.10" step="0.01" min="0">
+      <div class="error-message" id="error-costo"></div>
     </div>
-    <button onclick="calcularMineria()">⚡ Calcular</button>
-    <div id="resultado-mineria" style="margin-top:20px; display:none;">
-      <p><strong>Ganancia diaria:</strong> <span id="ganancia-mineria"></span> BTC</p>
+    <button id="btn-mineria" onclick="calcularMineria()">⚡ Calcular</button>
+    <div class="result-box" id="resultado-mineria">
+      <p><strong>Ganancia diaria estimada:</strong> <span id="ganancia-mineria"></span> BTC</p>
+      <p><strong>Coste eléctrico estimado:</strong> $<span id="coste-electrico"></span>/día</p>
+      <p><strong>Beneficio neto estimado:</strong> $<span id="beneficio-neto"></span>/día</p>
     </div>
     <div style="text-align:center; margin-top:30px;">
       <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
@@ -412,6 +613,77 @@
   </div>
 
   <script>
+    // Estado de la aplicación
+    const appState = {
+      tasasConversion: {
+        USDT_BNB: 0.0022,
+        BNB_USDT: 450,
+        USDT_BTC: 0.000023,
+        BTC_USDT: 43000,
+        USDT_ETH: 0.00054,
+        ETH_USDT: 1850,
+        USDT_SOL: 0.045,
+        SOL_USDT: 22,
+        BNB_BTC: 0.0000105,
+        BTC_BNB: 95238,
+        BNB_ETH: 0.245,
+        ETH_BNB: 4.08,
+        BNB_SOL: 20.45,
+        SOL_BNB: 0.049,
+        BTC_ETH: 23.24,
+        ETH_BTC: 0.043,
+        BTC_SOL: 1954,
+        SOL_BTC: 0.00051,
+        ETH_SOL: 84.1,
+        SOL_ETH: 0.012
+      },
+      precioBTC: 43000
+    };
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      // Cargar preferencias guardadas
+      cargarPreferencias();
+      
+      // Configurar eventos de entrada
+      configurarValidaciones();
+      
+      // Actualizar texto de unidad inicial
+      actualizarTextoUnidad();
+    });
+
+    // Funciones de utilidad
+    function validarNumero(valor, min, max) {
+      return !isNaN(valor) && valor >= min && valor <= max;
+    }
+
+    function mostrarError(campoId, mensaje) {
+      const errorElement = document.getElementById(`error-${campoId}`);
+      const inputElement = document.getElementById(campoId);
+      
+      if (errorElement && inputElement) {
+        errorElement.textContent = mensaje;
+        errorElement.style.display = 'block';
+        inputElement.classList.add('input-error');
+        
+        // Ocultar error después de 5 segundos
+        setTimeout(() => {
+          errorElement.style.display = 'none';
+          inputElement.classList.remove('input-error');
+        }, 5000);
+      }
+    }
+
+    function ocultarError(campoId) {
+      const errorElement = document.getElementById(`error-${campoId}`);
+      const inputElement = document.getElementById(campoId);
+      
+      if (errorElement && inputElement) {
+        errorElement.style.display = 'none';
+        inputElement.classList.remove('input-error');
+      }
+    }
+
     function toggleToolsMenu() {
       const menu = document.getElementById('tools-menu');
       menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
@@ -432,6 +704,69 @@
       document.getElementById(id).style.display = 'block';
       document.getElementById('tools-menu').style.display = 'none';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Guardar la sección actual
+      guardarPreferencia('seccion-activa', id);
+    }
+
+    function configurarValidaciones() {
+      // Validación en tiempo real para la calculadora
+      document.getElementById('inversion-2').addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (!validarNumero(valor, 0.01, 1000000000)) {
+          mostrarError('inversion-2', 'La inversión debe ser entre 0.01 y 1,000,000,000');
+        } else {
+          ocultarError('inversion-2');
+        }
+      });
+
+      document.getElementById('apy-2').addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (!validarNumero(valor, 0, 1000)) {
+          mostrarError('apy-2', 'El APY debe estar entre 0 y 1000%');
+        } else {
+          ocultarError('apy-2');
+        }
+      });
+
+      document.getElementById('cantidad-2').addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (!validarNumero(valor, 0.1, 100000)) {
+          mostrarError('cantidad-2', 'La cantidad debe estar entre 0.1 y 100,000');
+        } else {
+          ocultarError('cantidad-2');
+          actualizarTextoUnidad();
+        }
+      });
+
+      // Validación para el conversor
+      document.getElementById('monto-conversor').addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (!validarNumero(valor, 0.01, 1000000000)) {
+          mostrarError('monto', 'El monto debe ser entre 0.01 y 1,000,000,000');
+        } else {
+          ocultarError('monto');
+        }
+      });
+
+      // Validación para minería
+      document.getElementById('hashrate').addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (!validarNumero(valor, 0.1, 1000000)) {
+          mostrarError('hashrate', 'El hashrate debe estar entre 0.1 y 1,000,000 TH/s');
+        } else {
+          ocultarError('hashrate');
+        }
+      });
+
+      document.getElementById('costo-kwh').addEventListener('input', function() {
+        const valor = parseFloat(this.value);
+        if (!validarNumero(valor, 0, 1)) {
+          mostrarError('costo', 'El costo por kWh debe estar entre 0 y 1 USD');
+        } else {
+          ocultarError('costo');
+        }
+      });
     }
 
     document.querySelectorAll('.time-btn').forEach(btn => {
@@ -439,6 +774,9 @@
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         actualizarTextoUnidad();
+        
+        // Guardar preferencia
+        guardarPreferencia('unidad-tiempo', this.dataset.unit);
       });
     });
 
@@ -452,44 +790,217 @@
     }
 
     function calcularPersonalizado() {
-      const inv = parseFloat(document.getElementById('inversion-2').value);
-      const apy = parseFloat(document.getElementById('apy-2').value);
-      const cant = parseFloat(document.getElementById('cantidad-2').value);
-      if (isNaN(inv) || isNaN(apy) || isNaN(cant) || inv < 0.01 || apy < 0 || cant < 0.1) {
-        alert("Valores inválidos.");
-        return;
+      try {
+        const inv = parseFloat(document.getElementById('inversion-2').value);
+        const apy = parseFloat(document.getElementById('apy-2').value);
+        const cant = parseFloat(document.getElementById('cantidad-2').value);
+        const mon = document.getElementById('moneda-2').value;
+
+        // Validaciones
+        if (!validarNumero(inv, 0.01, 1000000000)) {
+          mostrarError('inversion-2', 'La inversión debe ser entre 0.01 y 1,000,000,000');
+          return;
+        }
+        
+        if (!validarNumero(apy, 0, 1000)) {
+          mostrarError('apy-2', 'El APY debe estar entre 0 y 1000%');
+          return;
+        }
+        
+        if (!validarNumero(cant, 0.1, 100000)) {
+          mostrarError('cantidad-2', 'La cantidad debe estar entre 0.1 y 100,000');
+          return;
+        }
+
+        const u = document.querySelector('.time-btn.active').dataset.unit;
+
+        // Mostrar loading
+        const btn = document.getElementById('btn-calcular');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Calculando...';
+        btn.disabled = true;
+
+        // Simular cálculo asíncrono (para demostración)
+        setTimeout(() => {
+          let f = u === 'hours' ? cant/(365*24) : u === 'days' ? cant/365 : cant;
+          const gAPY = inv * (Math.pow(1 + apy/100, f) - 1);
+          const gAPR = inv * (apy/100) * f;
+          const total = inv + gAPY;
+
+          document.getElementById('ganancia-apy').innerText = `${gAPY.toFixed(4)} ${mon}`;
+          document.getElementById('ganancia-apr').innerText = `${gAPR.toFixed(4)} ${mon}`;
+          document.getElementById('total-res').innerText = `${total.toFixed(4)} ${mon}`;
+          document.getElementById('resultado-personalizado').style.display = 'block';
+
+          // Restaurar botón
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+
+          // Guardar datos
+          guardarPreferencia('ultimo-calculo', { inv, apy, cant, u, mon });
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en cálculo personalizado:', error);
+        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
+        
+        // Restaurar botón en caso de error
+        const btn = document.getElementById('btn-calcular');
+        btn.innerHTML = '✨ Calcular';
+        btn.disabled = false;
       }
-      const u = document.querySelector('.time-btn.active').dataset.unit;
-      const mon = document.getElementById('moneda-2').value;
-
-      let f = u === 'hours' ? cant/(365*24) : u === 'days' ? cant/365 : cant;
-      const gAPY = inv * (Math.pow(1 + apy/100, f) - 1);
-      const gAPR = inv * (apy/100) * f;
-      const total = inv + gAPY;
-
-      document.getElementById('ganancia-apy').innerText = `${gAPY.toFixed(4)} ${mon}`;
-      document.getElementById('ganancia-apr').innerText = `${gAPR.toFixed(4)} ${mon}`;
-      document.getElementById('total-res').innerText = `${total.toFixed(4)} ${mon}`;
-      document.getElementById('resultado-personalizado').style.display = 'block';
     }
 
     function convertirCripto() {
-      const m = parseFloat(document.getElementById('monto-conversor').value);
-      const de = document.getElementById('de-moneda').value;
-      const a = document.getElementById('a-moneda').value;
-      if (isNaN(m) || m <= 0) { alert("Monto inválido."); return; }
-      const tasas = {USDT_BNB:0.0002,BNB_USDT:5000,USDT_BTC:0.000016,BTC_USDT:62500};
-      const r = tasas[`${de}_${a}`] ? (m * tasas[`${de}_${a}`]).toFixed(6) + " " + a : "No disponible";
-      document.getElementById('conversion-res').innerText = r;
-      document.getElementById('resultado-conversor').style.display = 'block';
+      try {
+        const m = parseFloat(document.getElementById('monto-conversor').value);
+        const de = document.getElementById('de-moneda').value;
+        const a = document.getElementById('a-moneda').value;
+
+        if (!validarNumero(m, 0.01, 1000000000)) {
+          mostrarError('monto', 'El monto debe ser entre 0.01 y 1,000,000,000');
+          return;
+        }
+
+        // Mostrar loading
+        const btn = document.getElementById('btn-convertir');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Convirtiendo...';
+        btn.disabled = true;
+
+        // Simular conversión asíncrona
+        setTimeout(() => {
+          const tasa = appState.tasasConversion[`${de}_${a}`];
+          const r = tasa ? (m * tasa).toFixed(6) + " " + a : "Conversión no disponible";
+          
+          document.getElementById('conversion-res').innerText = r;
+          document.getElementById('resultado-conversor').style.display = 'block';
+
+          // Restaurar botón
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+
+          // Guardar conversión
+          guardarPreferencia('ultima-conversion', { m, de, a });
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en conversor:', error);
+        alert('Ha ocurrido un error en la conversión. Por favor, verifica los valores.');
+        
+        // Restaurar botón en caso de error
+        const btn = document.getElementById('btn-convertir');
+        btn.innerHTML = '🔄 Convertir';
+        btn.disabled = false;
+      }
     }
 
     function calcularMineria() {
-      const h = parseFloat(document.getElementById('hashrate').value);
-      if (isNaN(h) || h <= 0) { alert("Hashrate inválido."); return; }
-      const g = (h * 0.0000005).toFixed(8);
-      document.getElementById('ganancia-mineria').innerText = g;
-      document.getElementById('resultado-mineria').style.display = 'block';
+      try {
+        const h = parseFloat(document.getElementById('hashrate').value);
+        const costoKwh = parseFloat(document.getElementById('costo-kwh').value);
+
+        if (!validarNumero(h, 0.1, 1000000)) {
+          mostrarError('hashrate', 'El hashrate debe estar entre 0.1 y 1,000,000 TH/s');
+          return;
+        }
+        
+        if (!validarNumero(costoKwh, 0, 1)) {
+          mostrarError('costo', 'El costo por kWh debe estar entre 0 y 1 USD');
+          return;
+        }
+
+        // Mostrar loading
+        const btn = document.getElementById('btn-mineria');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Calculando...';
+        btn.disabled = true;
+
+        // Simular cálculo asíncrono
+        setTimeout(() => {
+          // Fórmula más realista (estimación basada en datos actuales)
+          const btcPorDia = (h * 0.000007).toFixed(8);
+          
+          // Consumo aproximado: 2500 W por TH/s
+          const consumoWatts = h * 2500;
+          const costeDiario = (consumoWatts * 24 * costoKwh / 1000).toFixed(2);
+          
+          // Valor en USD de la ganancia
+          const valorGanancia = (parseFloat(btcPorDia) * appState.precioBTC).toFixed(2);
+          const beneficioNeto = (valorGanancia - parseFloat(costeDiario)).toFixed(2);
+          
+          document.getElementById('ganancia-mineria').innerText = btcPorDia + ' BTC';
+          document.getElementById('coste-electrico').innerText = costeDiario;
+          document.getElementById('beneficio-neto').innerText = beneficioNeto;
+          document.getElementById('resultado-mineria').style.display = 'block';
+
+          // Restaurar botón
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+
+          // Guardar cálculo
+          guardarPreferencia('ultima-mineria', { h, costoKwh });
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en cálculo de minería:', error);
+        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
+        
+        // Restaurar botón en caso de error
+        const btn = document.getElementById('btn-mineria');
+        btn.innerHTML = '⚡ Calcular';
+        btn.disabled = false;
+      }
+    }
+
+    // Sistema de preferencias con localStorage
+    function guardarPreferencia(clave, valor) {
+      try {
+        localStorage.setItem(`global-invest-${clave}`, JSON.stringify(valor));
+      } catch (e) {
+        console.warn('No se pudo guardar la preferencia:', e);
+      }
+    }
+
+    function obtenerPreferencia(clave, valorPorDefecto = null) {
+      try {
+        const valor = localStorage.getItem(`global-invest-${clave}`);
+        return valor ? JSON.parse(valor) : valorPorDefecto;
+      } catch (e) {
+        console.warn('No se pudo cargar la preferencia:', e);
+        return valorPorDefecto;
+      }
+    }
+
+    function cargarPreferencias() {
+      // Cargar unidad de tiempo
+      const unidadTiempo = obtenerPreferencia('unidad-tiempo', 'hours');
+      const botonUnidad = document.querySelector(`.time-btn[data-unit="${unidadTiempo}"]`);
+      if (botonUnidad) {
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+        botonUnidad.classList.add('active');
+      }
+      
+      // Cargar sección activa
+      const seccionActiva = obtenerPreferencia('seccion-activa', 'main-content');
+      if (seccionActiva !== 'main-content') {
+        showSection(seccionActiva);
+      }
+      
+      // Cargar último cálculo si existe
+      const ultimoCalculo = obtenerPreferencia('ultimo-calculo');
+      if (ultimoCalculo) {
+        document.getElementById('inversion-2').value = ultimoCalculo.inv;
+        document.getElementById('apy-2').value = ultimoCalculo.apy;
+        document.getElementById('cantidad-2').value = ultimoCalculo.cant;
+        document.getElementById('moneda-2').value = ultimoCalculo.mon;
+        
+        const botonUnidadCalc = document.querySelector(`.time-btn[data-unit="${ultimoCalculo.u}"]`);
+        if (botonUnidadCalc) {
+          document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+          botonUnidadCalc.classList.add('active');
+        }
+      }
     }
 
     actualizarTextoUnidad();
