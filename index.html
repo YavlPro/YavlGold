@@ -30,6 +30,8 @@
       --bg-dark: #0f172a;
       --text-light: #e2e8f0;
       --card-bg: #1e293b;
+      --error-color: #ef4444;
+      --success-color: #10b981;
     }
     
     * {
@@ -187,7 +189,7 @@
       color: var(--bg-dark);
     }
 
-    /* Estilos para el modo herramientas */
+    /* Estilos para herramientas */
     .tools-container {
       display: none;
       max-width: 900px;
@@ -234,6 +236,185 @@
       background: var(--color-secondary);
       color: var(--bg-dark);
     }
+    
+    /* Estilos para formularios de herramientas */
+    .form-group {
+      margin: 20px 0;
+      position: relative;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--color-secondary);
+    }
+    
+    input, select, button {
+      padding: 14px;
+      margin: 8px 0;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+    }
+    
+    .input-error {
+      border-color: var(--error-color);
+    }
+    
+    .error-message {
+      color: var(--error-color);
+      font-size: 0.85em;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .tool-btn {
+      background: var(--color-primary);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      border: 2px solid var(--color-secondary);
+    }
+    
+    .tool-btn:hover {
+      background: #1e40af;
+      transform: translateY(-2px);
+    }
+    
+    .time-btn {
+      background: #334155;
+      color: #e2e8f0;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+      margin: 4px;
+      flex: 1;
+      min-width: 80px;
+    }
+    
+    .time-btn.active {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+    }
+    
+    .time-buttons-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    #unidad-texto {
+      color: #94a3b8;
+      font-size: 0.9em;
+      display: block;
+      margin-top: 8px;
+    }
+    
+    .result-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(30, 58, 138, 0.2);
+      border-left: 4px solid var(--color-secondary);
+      display: none;
+    }
+    
+    .result-box p {
+      margin: 8px 0;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: var(--color-secondary);
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .note {
+      font-size: 0.85em;
+      color: #94a3b8;
+      font-style: italic;
+      margin-top: 5px;
+    }
+    
+    /* Estilos para ejemplos */
+    .examples-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .example-btn {
+      background: #334155;
+      color: #e2e8f0;
+      border: 1px solid #475569;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+      font-size: 0.9em;
+    }
+    
+    .example-btn:hover {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+      transform: translateY(-2px);
+    }
+    
+    .equivalencia-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: #1e293b;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .equivalencia-table th {
+      background: var(--color-primary);
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+    
+    .equivalencia-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #334155;
+    }
+    
+    .equivalencia-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .equivalencia-table tr:hover {
+      background: #2d3748;
+    }
 
     @media (max-width: 768px) {
       .hero h1 {
@@ -275,6 +456,40 @@
         width: 100%;
         max-width: 250px;
       }
+      
+      .examples-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .hero {
+        padding: 40px 15px 30px;
+      }
+      
+      .hero h1 {
+        font-size: 2em;
+      }
+      
+      .container {
+        padding: 0 15px 100px;
+      }
+      
+      .time-buttons-container {
+        flex-direction: column;
+      }
+      
+      .time-btn {
+        width: 100%;
+      }
+      
+      .tools-container {
+        padding: 15px;
+      }
+      
+      .tools-header h1 {
+        font-size: 2em;
+      }
     }
   </style>
 </head>
@@ -290,22 +505,40 @@
     <div class="container">
       <section class="section card">
         <h2>👥 ¿Quiénes Somos?</h2>
-        <p>GLOBAL INVEST es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas.</p>
+        <p>GLOBAL INVEST es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
       </section>
 
       <section class="section card">
         <h2>🎯 Misión</h2>
-        <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias.</p>
+        <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
       </section>
 
       <section class="section card">
         <h2>🔭 Visión</h2>
-        <p>Ser la comunidad de inversión en cripto más confiable, innovadora y colaborativa a nivel global.</p>
+        <p>Ser la comunidad de inversión en cripto más confiable, innovadora y colaborativa a nivel global, donde cada miembro crezca junto al ecosistema.</p>
+      </section>
+
+      <section class="section card">
+        <h2>💎 Valores</h2>
+        <ul style="padding-left: 20px;">
+          <li><strong>Transparencia:</strong> Operamos con total claridad en cada proyecto.</li>
+          <li><strong>Comunidad:</strong> Crecemos juntos, aprendemos juntos.</li>
+          <li><strong>Innovación:</strong> Adoptamos las mejores prácticas y tecnologías.</li>
+          <li><strong>Responsabilidad:</strong> Invertimos con criterio y educación.</li>
+        </ul>
       </section>
 
       <div class="comunidad card">
         <h3>🔗 Únete a nuestra comunidad</h3>
         <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+      </div>
+
+      <div class="redes card">
+        <h3>🌐 Sígueme en mis redes</h3>
+        <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
+        <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
+        <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
+        <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
       </div>
 
       <footer>
@@ -319,7 +552,7 @@
   <div id="tools-container" class="tools-container">
     <div class="tools-header">
       <h1>HERRAMIENTAS DE INVERSIÓN</h1>
-      <p>Utiliza nuestras herramientas profesionales para optimizar tus inversiones</p>
+      <p>Utiliza nuestras herramientas profesionales para optimizar tus inversiones en criptomonedas</p>
       
       <div class="tools-nav">
         <button class="tools-nav-btn active" onclick="showTool('calculadora')">🧮 Calculadora</button>
@@ -332,19 +565,141 @@
     <!-- Calculadora -->
     <div id="calculadora" class="card">
       <h2>🧮 Calculadora Inteligente de Ganancias</h2>
-      <p>Próximamente: Calculadora avanzada de APY/APR</p>
+      
+      <!-- Ejemplos predefinidos -->
+      <div class="examples-container">
+        <div class="example-btn" onclick="cargarEjemplo('ejemplo1')">
+          <strong>24% APY en 28 días</strong><br>
+          Inversión: $1,000
+        </div>
+        <div class="example-btn" onclick="cargarEjemplo('ejemplo2')">
+          <strong>48% APY en 90 días</strong><br>
+          Inversión: $5,000
+        </div>
+        <div class="example-btn" onclick="cargarEjemplo('ejemplo3')">
+          <strong>12% APY en 1 año</strong><br>
+          Inversión: $10,000
+        </div>
+        <div class="example-btn" onclick="cargarEjemplo('ejemplo4')">
+          <strong>72% APY en 60 días</strong><br>
+          Inversión: $2,500
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="moneda-2">Moneda:</label>
+        <select id="moneda-2">
+          <option value="USDT">USDT</option>
+          <option value="BNB">BNB</option>
+          <option value="TON">TON</option>
+          <option value="SOL">SOL</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="inversion-2">Inversión (≥ 0.01):</label>
+        <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
+        <div class="error-message" id="error-inversion"></div>
+      </div>
+      <div class="form-group">
+        <label for="apy-2">APY (% anual):</label>
+        <input type="number" id="apy-2" value="48" min="0" max="1000">
+        <div class="error-message" id="error-apy"></div>
+      </div>
+      <div class="form-group">
+        <label>Unidad de tiempo:</label>
+        <div class="time-buttons-container">
+          <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
+          <button type="button" class="time-btn" data-unit="days">📅 Días</button>
+          <button type="button" class="time-btn" data-unit="years">📆 Años</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="cantidad-2">Cantidad:</label>
+        <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
+        <small id="unidad-texto">72 horas = 3 días</small>
+        <div class="error-message" id="error-cantidad"></div>
+      </div>
+      <button class="tool-btn" id="btn-calcular" onclick="calcularPersonalizado()">✨ Calcular</button>
+      <div class="result-box" id="resultado-personalizado">
+        <p><strong>Ganancia (APY):</strong> <span id="ganancia-apy"></span></p>
+        <p><strong>Ganancia (APR):</strong> <span id="ganancia-apr"></span></p>
+        <p><strong>Total:</strong> <span id="total-res"></span></p>
+      </div>
+      
+      <!-- Tabla de equivalencias -->
+      <h3 style="margin-top: 40px;">📊 Equivalencias APY/APR</h3>
+      <table class="equivalencia-table">
+        <thead>
+          <tr>
+            <th>APY Anual</th>
+            <th>APR Anual</th>
+            <th>Rendimiento en 30 días</th>
+            <th>Rendimiento en 90 días</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-equivalencias">
+          <!-- Se llenará con JavaScript -->
+        </tbody>
+      </table>
     </div>
 
     <!-- Conversor -->
     <div id="conversor" class="card" style="display:none;">
       <h2>💱 Conversor de Criptomonedas</h2>
-      <p>Próximamente: Conversor en tiempo real</p>
+      <p class="note">Nota: Las tasas de cambio son estimadas. Verifica en tiempo real para operar.</p>
+      <div class="form-group">
+        <label for="monto-conversor">Monto:</label>
+        <input type="number" id="monto-conversor" value="1" step="0.01" min="0.01">
+        <div class="error-message" id="error-monto"></div>
+      </div>
+      <div class="form-group">
+        <label for="de-moneda">De:</label>
+        <select id="de-moneda">
+          <option value="USDT">USDT</option>
+          <option value="BNB">BNB</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="a-moneda">A:</label>
+        <select id="a-moneda">
+          <option value="BNB">BNB</option>
+          <option value="USDT">USDT</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+        </select>
+      </div>
+      <button class="tool-btn" id="btn-convertir" onclick="convertirCripto()">🔄 Convertir</button>
+      <div class="result-box" id="resultado-conversor">
+        <p><strong>Resultado:</strong> <span id="conversion-res"></span></p>
+      </div>
     </div>
 
     <!-- Minería -->
     <div id="mineria" class="card" style="display:none;">
       <h2>⛏️ Potencia de Minería BTC</h2>
-      <p>Próximamente: Calculadora de minería</p>
+      <p class="note">Nota: Estos cálculos son estimaciones basadas en parámetros promedio de la red Bitcoin.</p>
+      <div class="form-group">
+        <label for="hashrate">Hashrate (TH/s):</label>
+        <input type="number" id="hashrate" value="100" step="0.1" min="0.1">
+        <div class="error-message" id="error-hashrate"></div>
+      </div>
+      <div class="form-group">
+        <label for="costo-kwh">Costo por kWh ($):</label>
+        <input type="number" id="costo-kwh" value="0.10" step="0.01" min="0">
+        <div class="error-message" id="error-costo"></div>
+      </div>
+      <button class="tool-btn" id="btn-mineria" onclick="calcularMineria()">⚡ Calcular</button>
+      <div class="result-box" id="resultado-mineria">
+        <p><strong>Ganancia diaria estimada:</strong> <span id="ganancia-mineria"></span> BTC</p>
+        <p><strong>Coste eléctrico estimado:</strong> $<span id="coste-electrico"></span>/día</p>
+        <p><strong>Beneficio neto estimado:</strong> $<span id="beneficio-neto"></span>/día</p>
+      </div>
     </div>
   </div>
 
@@ -369,6 +724,38 @@
     // Estado de la aplicación
     let currentView = 'dashboard';
     
+    // Ejemplos predefinidos para la calculadora
+    const ejemplosCalculadora = {
+      ejemplo1: { inversion: 1000, apy: 24, cantidad: 28, unidad: 'days', moneda: 'USDT' },
+      ejemplo2: { inversion: 5000, apy: 48, cantidad: 90, unidad: 'days', moneda: 'USDT' },
+      ejemplo3: { inversion: 10000, apy: 12, cantidad: 1, unidad: 'years', moneda: 'USDT' },
+      ejemplo4: { inversion: 2500, apy: 72, cantidad: 60, unidad: 'days', moneda: 'USDT' }
+    };
+
+    // Tasas de conversión
+    const tasasConversion = {
+      USDT_BNB: 0.0022,
+      BNB_USDT: 450,
+      USDT_BTC: 0.000023,
+      BTC_USDT: 43000,
+      USDT_ETH: 0.00054,
+      ETH_USDT: 1850,
+      USDT_SOL: 0.045,
+      SOL_USDT: 22,
+      BNB_BTC: 0.0000105,
+      BTC_BNB: 95238,
+      BNB_ETH: 0.245,
+      ETH_BNB: 4.08,
+      BNB_SOL: 20.45,
+      SOL_BNB: 0.049,
+      BTC_ETH: 23.24,
+      ETH_BTC: 0.043,
+      BTC_SOL: 1954,
+      SOL_BTC: 0.00051,
+      ETH_SOL: 84.1,
+      SOL_ETH: 0.012
+    };
+
     // Inicialización cuando el DOM está listo
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Página cargada correctamente');
@@ -413,6 +800,15 @@
       toolsMenu.addEventListener('click', function(e) {
         e.stopPropagation();
       });
+      
+      // Configurar eventos de la calculadora
+      configurarCalculadora();
+      
+      // Generar tabla de equivalencias
+      generarTablaEquivalencias();
+      
+      // Actualizar texto de unidad inicial
+      actualizarTextoUnidad();
     }
 
     // Mostrar/ocultar menú de herramientas
@@ -506,21 +902,271 @@
       }
     }
 
-    // Función para verificar que todo esté funcionando
-    function debugInfo() {
-      console.log('=== DEBUG INFO ===');
-      console.log('Vista actual:', currentView);
-      console.log('Elementos encontrados:');
-      console.log('- Dashboard:', document.getElementById('dashboard') ? 'Sí' : 'No');
-      console.log('- Tools Container:', document.getElementById('tools-container') ? 'Sí' : 'No');
-      console.log('- Tools Button:', document.getElementById('tools-btn') ? 'Sí' : 'No');
-      console.log('- Tools Menu:', document.getElementById('tools-menu') ? 'Sí' : 'No');
-      console.log('==================');
+    // Configurar eventos de la calculadora
+    function configurarCalculadora() {
+      // Eventos para botones de tiempo
+      document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          actualizarTextoUnidad();
+        });
+      });
+      
+      // Evento para cambiar cantidad
+      document.getElementById('cantidad-2').addEventListener('input', function() {
+        actualizarTextoUnidad();
+      });
     }
 
-    // Ejecutar debug al cargar
-    setTimeout(debugInfo, 1000);
-  </script>
+    // Actualizar texto de unidad de tiempo
+    function actualizarTextoUnidad() {
+      const c = parseFloat(document.getElementById('cantidad-2').value) || 0;
+      const u = document.querySelector('.time-btn.active').dataset.unit;
+      document.getElementById('unidad-texto').innerText = 
+        u === 'hours' ? `${c} horas = ${(c/24).toFixed(2)} días` :
+        u === 'days' ? `${c} días = ${c*24} horas` :
+        `${c} años = ${c*365} días`;
+    }
 
+    // Cargar ejemplos predefinidos en la calculadora
+    function cargarEjemplo(claveEjemplo) {
+      const ejemplo = ejemplosCalculadora[claveEjemplo];
+      if (!ejemplo) return;
+      
+      document.getElementById('inversion-2').value = ejemplo.inversion;
+      document.getElementById('apy-2').value = ejemplo.apy;
+      document.getElementById('cantidad-2').value = ejemplo.cantidad;
+      document.getElementById('moneda-2').value = ejemplo.moneda;
+      
+      // Activar la unidad de tiempo correspondiente
+      document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.unit === ejemplo.unidad) {
+          btn.classList.add('active');
+        }
+      });
+      
+      actualizarTextoUnidad();
+      calcularPersonalizado();
+    }
+
+    // Generar tabla de equivalencias APY/APR
+    function generarTablaEquivalencias() {
+      const tabla = document.getElementById('tabla-equivalencias');
+      const apyValues = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100];
+      
+      let html = '';
+      apyValues.forEach(apy => {
+        // APR aproximado (para simplificación)
+        const apr = (Math.pow(1 + apy/100, 1/365) - 1) * 365 * 100;
+        const rendimiento30d = (Math.pow(1 + apy/100, 30/365) - 1) * 100;
+        const rendimiento90d = (Math.pow(1 + apy/100, 90/365) - 1) * 100;
+        
+        html += `
+          <tr>
+            <td>${apy}%</td>
+            <td>${apr.toFixed(2)}%</td>
+            <td>${rendimiento30d.toFixed(2)}%</td>
+            <td>${rendimiento90d.toFixed(2)}%</td>
+          </tr>
+        `;
+      });
+      
+      tabla.innerHTML = html;
+    }
+
+    // Función para validar números
+    function validarNumero(valor, min, max) {
+      return !isNaN(valor) && valor >= min && valor <= max;
+    }
+
+    // Función para mostrar errores
+    function mostrarError(campoId, mensaje) {
+      const errorElement = document.getElementById(`error-${campoId}`);
+      const inputElement = document.getElementById(campoId);
+      
+      if (errorElement && inputElement) {
+        errorElement.textContent = mensaje;
+        errorElement.style.display = 'block';
+        inputElement.classList.add('input-error');
+        
+        // Ocultar error después de 5 segundos
+        setTimeout(() => {
+          errorElement.style.display = 'none';
+          inputElement.classList.remove('input-error');
+        }, 5000);
+      }
+    }
+
+    // Función para ocultar errores
+    function ocultarError(campoId) {
+      const errorElement = document.getElementById(`error-${campoId}`);
+      const inputElement = document.getElementById(campoId);
+      
+      if (errorElement && inputElement) {
+        errorElement.style.display = 'none';
+        inputElement.classList.remove('input-error');
+      }
+    }
+
+    // Calculadora personalizada
+    function calcularPersonalizado() {
+      try {
+        const inv = parseFloat(document.getElementById('inversion-2').value);
+        const apy = parseFloat(document.getElementById('apy-2').value);
+        const cant = parseFloat(document.getElementById('cantidad-2').value);
+        const mon = document.getElementById('moneda-2').value;
+
+        // Validaciones
+        if (!validarNumero(inv, 0.01, 1000000000)) {
+          mostrarError('inversion-2', 'La inversión debe ser entre 0.01 y 1,000,000,000');
+          return;
+        }
+        
+        if (!validarNumero(apy, 0, 1000)) {
+          mostrarError('apy-2', 'El APY debe estar entre 0 y 1000%');
+          return;
+        }
+        
+        if (!validarNumero(cant, 0.1, 100000)) {
+          mostrarError('cantidad-2', 'La cantidad debe estar entre 0.1 y 100,000');
+          return;
+        }
+
+        const u = document.querySelector('.time-btn.active').dataset.unit;
+
+        // Mostrar loading
+        const btn = document.getElementById('btn-calcular');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Calculando...';
+        btn.disabled = true;
+
+        // Simular cálculo asíncrono
+        setTimeout(() => {
+          let f = u === 'hours' ? cant/(365*24) : u === 'days' ? cant/365 : cant;
+          const gAPY = inv * (Math.pow(1 + apy/100, f) - 1);
+          const gAPR = inv * (apy/100) * f;
+          const total = inv + gAPY;
+
+          document.getElementById('ganancia-apy').innerText = `${gAPY.toFixed(4)} ${mon}`;
+          document.getElementById('ganancia-apr').innerText = `${gAPR.toFixed(4)} ${mon}`;
+          document.getElementById('total-res').innerText = `${total.toFixed(4)} ${mon}`;
+          document.getElementById('resultado-personalizado').style.display = 'block';
+
+          // Restaurar botón
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en cálculo personalizado:', error);
+        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
+        
+        // Restaurar botón en caso de error
+        const btn = document.getElementById('btn-calcular');
+        btn.innerHTML = '✨ Calcular';
+        btn.disabled = false;
+      }
+    }
+
+    // Conversor de criptomonedas
+    function convertirCripto() {
+      try {
+        const m = parseFloat(document.getElementById('monto-conversor').value);
+        const de = document.getElementById('de-moneda').value;
+        const a = document.getElementById('a-moneda').value;
+
+        if (!validarNumero(m, 0.01, 1000000000)) {
+          mostrarError('monto', 'El monto debe ser entre 0.01 y 1,000,000,000');
+          return;
+        }
+
+        // Mostrar loading
+        const btn = document.getElementById('btn-convertir');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Convirtiendo...';
+        btn.disabled = true;
+
+        // Simular conversión asíncrona
+        setTimeout(() => {
+          const tasa = tasasConversion[`${de}_${a}`];
+          const r = tasa ? (m * tasa).toFixed(6) + " " + a : "Conversión no disponible";
+          
+          document.getElementById('conversion-res').innerText = r;
+          document.getElementById('resultado-conversor').style.display = 'block';
+
+          // Restaurar botón
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en conversor:', error);
+        alert('Ha ocurrido un error en la conversión. Por favor, verifica los valores.');
+        
+        // Restaurar botón en caso de error
+        const btn = document.getElementById('btn-convertir');
+        btn.innerHTML = '🔄 Convertir';
+        btn.disabled = false;
+      }
+    }
+
+    // Calculadora de minería
+    function calcularMineria() {
+      try {
+        const h = parseFloat(document.getElementById('hashrate').value);
+        const costoKwh = parseFloat(document.getElementById('costo-kwh').value);
+
+        if (!validarNumero(h, 0.1, 1000000)) {
+          mostrarError('hashrate', 'El hashrate debe estar entre 0.1 y 1,000,000 TH/s');
+          return;
+        }
+        
+        if (!validarNumero(costoKwh, 0, 1)) {
+          mostrarError('costo', 'El costo por kWh debe estar entre 0 y 1 USD');
+          return;
+        }
+
+        // Mostrar loading
+        const btn = document.getElementById('btn-mineria');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="loading"></span>Calculando...';
+        btn.disabled = true;
+
+        // Simular cálculo asíncrono
+        setTimeout(() => {
+          // Fórmula más realista (estimación basada en datos actuales)
+          const btcPorDia = (h * 0.000007).toFixed(8);
+          
+          // Consumo aproximado: 2500 W por TH/s
+          const consumoWatts = h * 2500;
+          const costeDiario = (consumoWatts * 24 * costoKwh / 1000).toFixed(2);
+          
+          // Valor en USD de la ganancia
+          const valorGanancia = (parseFloat(btcPorDia) * 43000).toFixed(2);
+          const beneficioNeto = (valorGanancia - parseFloat(costeDiario)).toFixed(2);
+          
+          document.getElementById('ganancia-mineria').innerText = btcPorDia + ' BTC';
+          document.getElementById('coste-electrico').innerText = costeDiario;
+          document.getElementById('beneficio-neto').innerText = beneficioNeto;
+          document.getElementById('resultado-mineria').style.display = 'block';
+
+          // Restaurar botón
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }, 500);
+
+      } catch (error) {
+        console.error('Error en cálculo de minería:', error);
+        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
+        
+        // Restaurar botón en caso de error
+        const btn = document.getElementById('btn-mineria');
+        btn.innerHTML = '⚡ Calcular';
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
