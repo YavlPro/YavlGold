@@ -1,1 +1,482 @@
-Estructura profesional y mejoras para Global Invest - index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Invest - Inversión Inteligente en Cripto</title>
+  <link rel="icon" href="https://i.imgur.com/d4af37g.png" type="image/png">
+  <style>
+    :root {
+      --color-primary: #1e3a8a;
+      --color-secondary: #d4af37;
+      --bg-dark: #0f172a;
+      --text-light: #e2e8f0;
+      --card-bg: #1e293b;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      margin: 0;
+      padding: 0;
+      line-height: 1.7;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 20px 40px;
+      background: linear-gradient(135deg, var(--bg-dark), #1e293b);
+      border-bottom: 3px solid var(--color-secondary);
+    }
+    .hero h1 {
+      font-size: 2.8em;
+      color: var(--color-secondary);
+      margin: 0 0 15px;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    }
+    .hero p {
+      font-size: 1.3em;
+      max-width: 700px;
+      margin: 0 auto;
+      color: #cbd5e1;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 120px;
+    }
+    .section {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      margin: 30px 0;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .section h2 {
+      color: var(--color-secondary);
+      margin-top: 0;
+      font-size: 1.8em;
+    }
+
+    .comunidad, .redes {
+      text-align: center;
+      margin: 40px 0;
+      padding: 20px;
+      background: rgba(30, 58, 138, 0.2);
+      border-radius: 16px;
+      border: 1px solid var(--color-secondary);
+    }
+    .redes a, .comunidad a {
+      color: var(--color-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      margin: 0 10px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: rgba(212, 175, 55, 0.1);
+      transition: all 0.3s;
+      display: inline-block;
+    }
+    footer {
+      text-align: center;
+      padding: 25px 0;
+      color: #94a3b8;
+      font-size: 0.9em;
+      border-top: 1px solid #334155;
+      margin-top: 20px;
+    }
+
+    .floating-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 15px;
+      z-index: 1000;
+    }
+
+    .floating-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #support-btn {
+      background: #25d366;
+      color: white;
+    }
+
+    #tools-btn {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+    }
+
+    #tools-menu {
+      position: fixed;
+      bottom: 90px;
+      right: 20px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      z-index: 999;
+      display: none;
+      min-width: 220px;
+      border: 1px solid #334155;
+    }
+
+    .tool-item {
+      display: block;
+      padding: 12px 10px;
+      color: var(--text-light);
+      text-decoration: none;
+      border-radius: 10px;
+      transition: background 0.2s;
+      font-weight: 500;
+      text-align: center;
+      background: #334155;
+      margin: 5px 0;
+    }
+
+    .tool-item:hover {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+    }
+
+    .tool-section {
+      display: none;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      margin: 30px 0;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-group {
+      margin: 20px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--color-secondary);
+    }
+    input, select, button {
+      padding: 14px;
+      margin: 8px 0;
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: white;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: var(--color-primary);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      border: 2px solid var(--color-secondary);
+    }
+    .time-btn {
+      background: #334155;
+      color: #e2e8f0;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+      margin: 4px;
+    }
+    .time-btn.active {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+    }
+    #unidad-texto {
+      color: #94a3b8;
+      font-size: 0.9em;
+      display: block;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .floating-buttons { gap: 12px; }
+      .floating-btn { width: 55px; height: 55px; font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>🌍 Global Invest</h1>
+    <p>Inversión inteligente, comunitaria y transparente en el ecosistema cripto.</p>
+  </div>
+
+  <div class="container" id="main-content">
+
+    <section class="section">
+      <h2>👥 ¿Quiénes Somos?</h2>
+      <p>Global Invest es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
+    </section>
+
+    <section class="section">
+      <h2>🎯 Misión</h2>
+      <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
+    </section>
+
+    <section class="section">
+      <h2>🔭 Visión</h2>
+      <p>Ser la comunidad de inversión en cripto más confiable, innovadora y colaborativa a nivel global, donde cada miembro crezca junto al ecosistema.</p>
+    </section>
+
+    <section class="section">
+      <h2>💎 Valores</h2>
+      <ul style="padding-left: 20px;">
+        <li><strong>Transparencia:</strong> Operamos con total claridad en cada proyecto.</li>
+        <li><strong>Comunidad:</strong> Crecemos juntos, aprendemos juntos.</li>
+        <li><strong>Innovación:</strong> Adoptamos las mejores prácticas y tecnologías.</li>
+        <li><strong>Responsabilidad:</strong> Invertimos con criterio y educación.</li>
+      </ul>
+    </section>
+
+    <div class="comunidad">
+      <h3>🔗 Únete a nuestra comunidad</h3>
+      <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+    </div>
+
+    <div class="redes">
+      <h3>🌐 Sígueme en mis redes</h3>
+      <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
+      <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
+      <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
+      <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
+    </div>
+
+    <footer>
+      <p>© 2025 Global Invest | Creado por YavlPro</p>
+      <p>💡 Comunidad de inversión en cripto — Educación, transparencia y crecimiento colectivo.</p>
+    </footer>
+
+  </div>
+
+  <!-- Calculadora -->
+  <div id="calculadora" class="tool-section">
+    <h2>🧮 Calculadora Inteligente de Ganancias</h2>
+    <div class="form-group">
+      <label for="moneda-2">Moneda:</label>
+      <select id="moneda-2">
+        <option value="USDT">USDT</option>
+        <option value="BNB">BNB</option>
+        <option value="TON">TON</option>
+        <option value="SOL">SOL</option>
+        <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="inversion-2">Inversión (≥ 0.01):</label>
+      <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
+    </div>
+    <div class="form-group">
+      <label for="apy-2">APY (% anual):</label>
+      <input type="number" id="apy-2" value="48" min="0" max="1000">
+    </div>
+    <div class="form-group">
+      <label>Unidad de tiempo:</label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
+        <button type="button" class="time-btn" data-unit="days">📅 Días</button>
+        <button type="button" class="time-btn" data-unit="years">📆 Años</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="cantidad-2">Cantidad:</label>
+      <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
+      <small id="unidad-texto">72 horas = 3 días</small>
+    </div>
+    <button onclick="calcularPersonalizado()">✨ Calcular</button>
+    <div id="resultado-personalizado" style="margin-top:20px; display:none;">
+      <p><strong>Ganancia (APY):</strong> <span id="ganancia-apy"></span></p>
+      <p><strong>Ganancia (APR):</strong> <span id="ganancia-apr"></span></p>
+      <p><strong>Total:</strong> <span id="total-res"></span></p>
+    </div>
+    <div style="text-align:center; margin-top:30px;">
+      <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
+        ← Volver al inicio
+      </button>
+    </div>
+  </div>
+
+  <!-- Conversor -->
+  <div id="conversor" class="tool-section">
+    <h2>💱 Conversor de Criptomonedas</h2>
+    <div class="form-group">
+      <label for="monto-conversor">Monto:</label>
+      <input type="number" id="monto-conversor" value="1" step="0.01" min="0.01">
+    </div>
+    <div class="form-group">
+      <label for="de-moneda">De:</label>
+      <select id="de-moneda">
+        <option value="USDT">USDT</option>
+        <option value="BNB">BNB</option>
+        <option value="BTC">BTC</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="a-moneda">A:</label>
+      <select id="a-moneda">
+        <option value="BNB">BNB</option>
+        <option value="USDT">USDT</option>
+        <option value="BTC">BTC</option>
+      </select>
+    </div>
+    <button onclick="convertirCripto()">🔄 Convertir</button>
+    <div id="resultado-conversor" style="margin-top:20px; display:none;">
+      <p><strong>Resultado:</strong> <span id="conversion-res"></span></p>
+    </div>
+    <div style="text-align:center; margin-top:30px;">
+      <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
+        ← Volver al inicio
+      </button>
+    </div>
+  </div>
+
+  <!-- Minería -->
+  <div id="mineria" class="tool-section">
+    <h2>⛏️ Potencia de Minería BTC</h2>
+    <div class="form-group">
+      <label for="hashrate">Hashrate (TH/s):</label>
+      <input type="number" id="hashrate" value="100" step="0.1" min="0.1">
+    </div>
+    <div class="form-group">
+      <label for="costo-kwh">Costo por kWh ($):</label>
+      <input type="number" id="costo-kwh" value="0.10" step="0.01" min="0">
+    </div>
+    <button onclick="calcularMineria()">⚡ Calcular</button>
+    <div id="resultado-mineria" style="margin-top:20px; display:none;">
+      <p><strong>Ganancia diaria:</strong> <span id="ganancia-mineria"></span> BTC</p>
+    </div>
+    <div style="text-align:center; margin-top:30px;">
+      <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
+        ← Volver al inicio
+      </button>
+    </div>
+  </div>
+
+  <!-- Botones flotantes -->
+  <div class="floating-buttons">
+    <a href="https://wa.me/message/DFXFFK4DS3HSM1" target="_blank" id="support-btn" class="floating-btn" title="Soporte por WhatsApp">
+      🤖
+    </a>
+    <button id="tools-btn" class="floating-btn" title="Herramientas" onclick="toggleToolsMenu()">
+      ⚙️
+    </button>
+  </div>
+
+  <div id="tools-menu">
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showSection('calculadora');">🧮 Calculadora Avanzada</a>
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showSection('conversor');">💱 Conversor de Cripto</a>
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showSection('mineria');">⛏️ Minería BTC</a>
+  </div>
+
+  <script>
+    function toggleToolsMenu() {
+      const menu = document.getElementById('tools-menu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('tools-menu');
+      const btn = document.getElementById('tools-btn');
+      if (!menu.contains(e.target) && e.target !== btn) {
+        menu.style.display = 'none';
+      }
+    });
+
+    function showSection(id) {
+      document.querySelectorAll('#main-content, #calculadora, #conversor, #mineria').forEach(el => {
+        el.style.display = 'none';
+      });
+      document.getElementById(id).style.display = 'block';
+      document.getElementById('tools-menu').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('.time-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        actualizarTextoUnidad();
+      });
+    });
+
+    function actualizarTextoUnidad() {
+      const c = parseFloat(document.getElementById('cantidad-2').value) || 0;
+      const u = document.querySelector('.time-btn.active').dataset.unit;
+      document.getElementById('unidad-texto').innerText = 
+        u === 'hours' ? `${c} horas = ${(c/24).toFixed(2)} días` :
+        u === 'days' ? `${c} días = ${c*24} horas` :
+        `${c} años = ${c*365} días`;
+    }
+
+    function calcularPersonalizado() {
+      const inv = parseFloat(document.getElementById('inversion-2').value);
+      const apy = parseFloat(document.getElementById('apy-2').value);
+      const cant = parseFloat(document.getElementById('cantidad-2').value);
+      if (isNaN(inv) || isNaN(apy) || isNaN(cant) || inv < 0.01 || apy < 0 || cant < 0.1) {
+        alert("Valores inválidos.");
+        return;
+      }
+      const u = document.querySelector('.time-btn.active').dataset.unit;
+      const mon = document.getElementById('moneda-2').value;
+
+      let f = u === 'hours' ? cant/(365*24) : u === 'days' ? cant/365 : cant;
+      const gAPY = inv * (Math.pow(1 + apy/100, f) - 1);
+      const gAPR = inv * (apy/100) * f;
+      const total = inv + gAPY;
+
+      document.getElementById('ganancia-apy').innerText = `${gAPY.toFixed(4)} ${mon}`;
+      document.getElementById('ganancia-apr').innerText = `${gAPR.toFixed(4)} ${mon}`;
+      document.getElementById('total-res').innerText = `${total.toFixed(4)} ${mon}`;
+      document.getElementById('resultado-personalizado').style.display = 'block';
+    }
+
+    function convertirCripto() {
+      const m = parseFloat(document.getElementById('monto-conversor').value);
+      const de = document.getElementById('de-moneda').value;
+      const a = document.getElementById('a-moneda').value;
+      if (isNaN(m) || m <= 0) { alert("Monto inválido."); return; }
+      const tasas = {USDT_BNB:0.0002,BNB_USDT:5000,USDT_BTC:0.000016,BTC_USDT:62500};
+      const r = tasas[`${de}_${a}`] ? (m * tasas[`${de}_${a}`]).toFixed(6) + " " + a : "No disponible";
+      document.getElementById('conversion-res').innerText = r;
+      document.getElementById('resultado-conversor').style.display = 'block';
+    }
+
+    function calcularMineria() {
+      const h = parseFloat(document.getElementById('hashrate').value);
+      if (isNaN(h) || h <= 0) { alert("Hashrate inválido."); return; }
+      const g = (h * 0.0000005).toFixed(8);
+      document.getElementById('ganancia-mineria').innerText = g;
+      document.getElementById('resultado-mineria').style.display = 'block';
+    }
+
+    actualizarTextoUnidad();
+  </script>
+
+</body>
+</html>
