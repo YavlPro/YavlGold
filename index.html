@@ -44,6 +44,7 @@
       margin: 0;
       padding: 0;
       line-height: 1.7;
+      transition: opacity 0.3s ease;
     }
 
     .hero {
@@ -363,6 +364,54 @@
       margin-top: 10px;
       display: none;
     }
+    
+    /* Estilos para el modo herramientas */
+    .tools-container {
+      display: none;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .tools-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .tools-header h1 {
+      color: var(--color-secondary);
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    
+    .tools-nav {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .tools-nav-btn {
+      background: var(--color-primary);
+      color: white;
+      border: 2px solid var(--color-secondary);
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    
+    .tools-nav-btn:hover {
+      background: #1e40af;
+      transform: translateY(-2px);
+    }
+    
+    .tools-nav-btn.active {
+      background: var(--color-secondary);
+      color: var(--bg-dark);
+    }
 
     @media (max-width: 768px) {
       .hero h1 {
@@ -394,6 +443,16 @@
         bottom: 80px;
         right: 15px;
       }
+      
+      .tools-nav {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .tools-nav-btn {
+        width: 100%;
+        max-width: 250px;
+      }
     }
     
     @media (max-width: 480px) {
@@ -416,183 +475,192 @@
       .time-btn {
         width: 100%;
       }
+      
+      .tools-container {
+        padding: 15px;
+      }
+      
+      .tools-header h1 {
+        font-size: 2em;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="hero">
-    <h1>🌍 Global Invest</h1>
-    <p>Inversión inteligente, comunitaria y transparente en el ecosistema cripto.</p>
+  <!-- Dashboard Principal (visible por defecto) -->
+  <div id="dashboard" class="dashboard-container">
+    <div class="hero">
+      <h1>🌍 Global Invest</h1>
+      <p>Inversión inteligente, comunitaria y transparente en el ecosistema cripto.</p>
+    </div>
+
+    <div class="container">
+      <section class="section card">
+        <h2>👥 ¿Quiénes Somos?</h2>
+        <p>Global Invest es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
+      </section>
+
+      <section class="section card">
+        <h2>🎯 Misión</h2>
+        <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
+      </section>
+
+      <section class="section card">
+        <h2>🔭 Visión</h2>
+        <p>Ser la comunidad de inversión en cripto más confiable, innovadora y colaborativa a nivel global, donde cada miembro crezca junto al ecosistema.</p>
+      </section>
+
+      <section class="section card">
+        <h2>💎 Valores</h2>
+        <ul style="padding-left: 20px;">
+          <li><strong>Transparencia:</strong> Operamos con total claridad en cada proyecto.</li>
+          <li><strong>Comunidad:</strong> Crecemos juntos, aprendemos juntos.</li>
+          <li><strong>Innovación:</strong> Adoptamos las mejores prácticas y tecnologías.</li>
+          <li><strong>Responsabilidad:</strong> Invertimos con criterio y educación.</li>
+        </ul>
+      </section>
+
+      <div class="comunidad card">
+        <h3>🔗 Únete a nuestra comunidad</h3>
+        <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+      </div>
+
+      <div class="redes card">
+        <h3>🌐 Sígueme en mis redes</h3>
+        <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
+        <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
+        <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
+        <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
+      </div>
+
+      <footer>
+        <p>© 2025 Global Invest | Creado por YavlPro</p>
+        <p>💡 Comunidad de inversión en cripto — Educación, transparencia y crecimiento colectivo.</p>
+      </footer>
+    </div>
   </div>
 
-  <div class="container" id="main-content">
-
-    <section class="section card">
-      <h2>👥 ¿Quiénes Somos?</h2>
-      <p>Global Invest es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
-    </section>
-
-    <section class="section card">
-      <h2>🎯 Misión</h2>
-      <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
-    </section>
-
-    <section class="section card">
-      <h2>🔭 Visión</h2>
-      <p>Ser la comunidad de inversión en cripto más confiable, innovadora y colaborativa a nivel global, donde cada miembro crezca junto al ecosistema.</p>
-    </section>
-
-    <section class="section card">
-      <h2>💎 Valores</h2>
-      <ul style="padding-left: 20px;">
-        <li><strong>Transparencia:</strong> Operamos con total claridad en cada proyecto.</li>
-        <li><strong>Comunidad:</strong> Crecemos juntos, aprendemos juntos.</li>
-        <li><strong>Innovación:</strong> Adoptamos las mejores prácticas y tecnologías.</li>
-        <li><strong>Responsabilidad:</strong> Invertimos con criterio y educación.</li>
-      </ul>
-    </section>
-
-    <div class="comunidad card">
-      <h3>🔗 Únete a nuestra comunidad</h3>
-      <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
-    </div>
-
-    <div class="redes card">
-      <h3>🌐 Sígueme en mis redes</h3>
-      <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
-      <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
-      <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
-      <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
-    </div>
-
-    <footer>
-      <p>© 2025 Global Invest | Creado por YavlPro</p>
-      <p>💡 Comunidad de inversión en cripto — Educación, transparencia y crecimiento colectivo.</p>
-    </footer>
-
-  </div>
-
-  <!-- Calculadora -->
-  <div id="calculadora" class="tool-section card">
-    <h2>🧮 Calculadora Inteligente de Ganancias</h2>
-    <div class="form-group">
-      <label for="moneda-2">Moneda:</label>
-      <select id="moneda-2">
-        <option value="USDT">USDT</option>
-        <option value="BNB">BNB</option>
-        <option value="TON">TON</option>
-        <option value="SOL">SOL</option>
-        <option value="BTC">BTC</option>
-        <option value="ETH">ETH</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="inversion-2">Inversión (≥ 0.01):</label>
-      <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
-      <div class="error-message" id="error-inversion"></div>
-    </div>
-    <div class="form-group">
-      <label for="apy-2">
-        APY (% anual)
-        <span class="tooltip">(?)
-          <span class="tooltiptext">APY (Annual Percentage Yield) incluye el efecto del interés compuesto</span>
-        </span>:
-      </label>
-      <input type="number" id="apy-2" value="48" min="0" max="1000">
-      <div class="error-message" id="error-apy"></div>
-    </div>
-    <div class="form-group">
-      <label>Unidad de tiempo:</label>
-      <div class="time-buttons-container">
-        <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
-        <button type="button" class="time-btn" data-unit="days">📅 Días</button>
-        <button type="button" class="time-btn" data-unit="years">📆 Años</button>
+  <!-- Contenedor de Herramientas (oculto por defecto) -->
+  <div id="tools-container" class="tools-container">
+    <div class="tools-header">
+      <h1>🛠️ Herramientas de Inversión</h1>
+      <p>Utiliza nuestras herramientas profesionales para optimizar tus inversiones en criptomonedas</p>
+      
+      <div class="tools-nav">
+        <button class="tools-nav-btn active" onclick="showTool('calculadora')">🧮 Calculadora</button>
+        <button class="tools-nav-btn" onclick="showTool('conversor')">💱 Conversor</button>
+        <button class="tools-nav-btn" onclick="showTool('mineria')">⛏️ Minería BTC</button>
+        <button class="tools-nav-btn" onclick="showDashboard()">🏠 Volver al Inicio</button>
       </div>
     </div>
-    <div class="form-group">
-      <label for="cantidad-2">Cantidad:</label>
-      <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
-      <small id="unidad-texto">72 horas = 3 días</small>
-      <div class="error-message" id="error-cantidad"></div>
-    </div>
-    <button id="btn-calcular" onclick="calcularPersonalizado()">✨ Calcular</button>
-    <div class="result-box" id="resultado-personalizado">
-      <p><strong>Ganancia (APY):</strong> <span id="ganancia-apy"></span></p>
-      <p><strong>Ganancia (APR):</strong> <span id="ganancia-apr"></span></p>
-      <p><strong>Total:</strong> <span id="total-res"></span></p>
-    </div>
-    <div style="text-align:center; margin-top:30px;">
-      <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
-        ← Volver al inicio
-      </button>
-    </div>
-  </div>
 
-  <!-- Conversor -->
-  <div id="conversor" class="tool-section card">
-    <h2>💱 Conversor de Criptomonedas</h2>
-    <p class="note">Nota: Las tasas de cambio son estimadas. Verifica en tiempo real para operar.</p>
-    <div class="form-group">
-      <label for="monto-conversor">Monto:</label>
-      <input type="number" id="monto-conversor" value="1" step="0.01" min="0.01">
-      <div class="error-message" id="error-monto"></div>
+    <!-- Calculadora -->
+    <div id="calculadora" class="tool-section card">
+      <h2>🧮 Calculadora Inteligente de Ganancias</h2>
+      <div class="form-group">
+        <label for="moneda-2">Moneda:</label>
+        <select id="moneda-2">
+          <option value="USDT">USDT</option>
+          <option value="BNB">BNB</option>
+          <option value="TON">TON</option>
+          <option value="SOL">SOL</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="inversion-2">Inversión (≥ 0.01):</label>
+        <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
+        <div class="error-message" id="error-inversion"></div>
+      </div>
+      <div class="form-group">
+        <label for="apy-2">
+          APY (% anual)
+          <span class="tooltip">(?)
+            <span class="tooltiptext">APY (Annual Percentage Yield) incluye el efecto del interés compuesto</span>
+          </span>:
+        </label>
+        <input type="number" id="apy-2" value="48" min="0" max="1000">
+        <div class="error-message" id="error-apy"></div>
+      </div>
+      <div class="form-group">
+        <label>Unidad de tiempo:</label>
+        <div class="time-buttons-container">
+          <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
+          <button type="button" class="time-btn" data-unit="days">📅 Días</button>
+          <button type="button" class="time-btn" data-unit="years">📆 Años</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="cantidad-2">Cantidad:</label>
+        <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
+        <small id="unidad-texto">72 horas = 3 días</small>
+        <div class="error-message" id="error-cantidad"></div>
+      </div>
+      <button id="btn-calcular" onclick="calcularPersonalizado()">✨ Calcular</button>
+      <div class="result-box" id="resultado-personalizado">
+        <p><strong>Ganancia (APY):</strong> <span id="ganancia-apy"></span></p>
+        <p><strong>Ganancia (APR):</strong> <span id="ganancia-apr"></span></p>
+        <p><strong>Total:</strong> <span id="total-res"></span></p>
+      </div>
     </div>
-    <div class="form-group">
-      <label for="de-moneda">De:</label>
-      <select id="de-moneda">
-        <option value="USDT">USDT</option>
-        <option value="BNB">BNB</option>
-        <option value="BTC">BTC</option>
-        <option value="ETH">ETH</option>
-        <option value="SOL">SOL</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label for="a-moneda">A:</label>
-      <select id="a-moneda">
-        <option value="BNB">BNB</option>
-        <option value="USDT">USDT</option>
-        <option value="BTC">BTC</option>
-        <option value="ETH">ETH</option>
-        <option value="SOL">SOL</option>
-      </select>
-    </div>
-    <button id="btn-convertir" onclick="convertirCripto()">🔄 Convertir</button>
-    <div class="result-box" id="resultado-conversor">
-      <p><strong>Resultado:</strong> <span id="conversion-res"></span></p>
-    </div>
-    <div style="text-align:center; margin-top:30px;">
-      <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
-        ← Volver al inicio
-      </button>
-    </div>
-  </div>
 
-  <!-- Minería -->
-  <div id="mineria" class="tool-section card">
-    <h2>⛏️ Potencia de Minería BTC</h2>
-    <p class="note">Nota: Estos cálculos son estimaciones basadas en parámetros promedio de la red Bitcoin.</p>
-    <div class="form-group">
-      <label for="hashrate">Hashrate (TH/s):</label>
-      <input type="number" id="hashrate" value="100" step="0.1" min="0.1">
-      <div class="error-message" id="error-hashrate"></div>
+    <!-- Conversor -->
+    <div id="conversor" class="tool-section card" style="display:none;">
+      <h2>💱 Conversor de Criptomonedas</h2>
+      <p class="note">Nota: Las tasas de cambio son estimadas. Verifica en tiempo real para operar.</p>
+      <div class="form-group">
+        <label for="monto-conversor">Monto:</label>
+        <input type="number" id="monto-conversor" value="1" step="0.01" min="0.01">
+        <div class="error-message" id="error-monto"></div>
+      </div>
+      <div class="form-group">
+        <label for="de-moneda">De:</label>
+        <select id="de-moneda">
+          <option value="USDT">USDT</option>
+          <option value="BNB">BNB</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="a-moneda">A:</label>
+        <select id="a-moneda">
+          <option value="BNB">BNB</option>
+          <option value="USDT">USDT</option>
+          <option value="BTC">BTC</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+        </select>
+      </div>
+      <button id="btn-convertir" onclick="convertirCripto()">🔄 Convertir</button>
+      <div class="result-box" id="resultado-conversor">
+        <p><strong>Resultado:</strong> <span id="conversion-res"></span></p>
+      </div>
     </div>
-    <div class="form-group">
-      <label for="costo-kwh">Costo por kWh ($):</label>
-      <input type="number" id="costo-kwh" value="0.10" step="0.01" min="0">
-      <div class="error-message" id="error-costo"></div>
-    </div>
-    <button id="btn-mineria" onclick="calcularMineria()">⚡ Calcular</button>
-    <div class="result-box" id="resultado-mineria">
-      <p><strong>Ganancia diaria estimada:</strong> <span id="ganancia-mineria"></span> BTC</p>
-      <p><strong>Coste eléctrico estimado:</strong> $<span id="coste-electrico"></span>/día</p>
-      <p><strong>Beneficio neto estimado:</strong> $<span id="beneficio-neto"></span>/día</p>
-    </div>
-    <div style="text-align:center; margin-top:30px;">
-      <button onclick="showSection('main-content')" style="background:#64748b; color:white; border:none; padding:10px 20px; border-radius:8px;">
-        ← Volver al inicio
-      </button>
+
+    <!-- Minería -->
+    <div id="mineria" class="tool-section card" style="display:none;">
+      <h2>⛏️ Potencia de Minería BTC</h2>
+      <p class="note">Nota: Estos cálculos son estimaciones basadas en parámetros promedio de la red Bitcoin.</p>
+      <div class="form-group">
+        <label for="hashrate">Hashrate (TH/s):</label>
+        <input type="number" id="hashrate" value="100" step="0.1" min="0.1">
+        <div class="error-message" id="error-hashrate"></div>
+      </div>
+      <div class="form-group">
+        <label for="costo-kwh">Costo por kWh ($):</label>
+        <input type="number" id="costo-kwh" value="0.10" step="0.01" min="0">
+        <div class="error-message" id="error-costo"></div>
+      </div>
+      <button id="btn-mineria" onclick="calcularMineria()">⚡ Calcular</button>
+      <div class="result-box" id="resultado-mineria">
+        <p><strong>Ganancia diaria estimada:</strong> <span id="ganancia-mineria"></span> BTC</p>
+        <p><strong>Coste eléctrico estimado:</strong> $<span id="coste-electrico"></span>/día</p>
+        <p><strong>Beneficio neto estimado:</strong> $<span id="beneficio-neto"></span>/día</p>
+      </div>
     </div>
   </div>
 
@@ -607,9 +675,10 @@
   </div>
 
   <div id="tools-menu">
-    <a href="#" class="tool-item" onclick="event.preventDefault(); showSection('calculadora');">🧮 Calculadora Avanzada</a>
-    <a href="#" class="tool-item" onclick="event.preventDefault(); showSection('conversor');">💱 Conversor de Cripto</a>
-    <a href="#" class="tool-item" onclick="event.preventDefault(); showSection('mineria');">⛏️ Minería BTC</a>
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showToolsContainer();">🛠️ Acceder a Herramientas</a>
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showToolsContainer(); showTool('calculadora');">🧮 Calculadora Avanzada</a>
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showToolsContainer(); showTool('conversor');">💱 Conversor de Cripto</a>
+    <a href="#" class="tool-item" onclick="event.preventDefault(); showToolsContainer(); showTool('mineria');">⛏️ Minería BTC</a>
   </div>
 
   <script>
@@ -650,7 +719,53 @@
       
       // Actualizar texto de unidad inicial
       actualizarTextoUnidad();
+      
+      // Mostrar dashboard por defecto
+      showDashboard();
     });
+
+    // Navegación entre vistas
+    function showDashboard() {
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('tools-container').style.display = 'none';
+      document.getElementById('tools-menu').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    function showToolsContainer() {
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('tools-container').style.display = 'block';
+      document.getElementById('tools-menu').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Mostrar la calculadora por defecto al entrar a herramientas
+      showTool('calculadora');
+    }
+    
+    function showTool(toolId) {
+      // Ocultar todas las herramientas
+      document.querySelectorAll('.tool-section').forEach(tool => {
+        tool.style.display = 'none';
+      });
+      
+      // Mostrar la herramienta seleccionada
+      document.getElementById(toolId).style.display = 'block';
+      
+      // Actualizar botones de navegación activos
+      document.querySelectorAll('.tools-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Activar el botón correspondiente
+      const activeBtn = Array.from(document.querySelectorAll('.tools-nav-btn')).find(btn => 
+        btn.textContent.includes(toolId === 'calculadora' ? 'Calculadora' : 
+                                toolId === 'conversor' ? 'Conversor' : 'Minería')
+      );
+      
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+      }
+    }
 
     // Funciones de utilidad
     function validarNumero(valor, min, max) {
@@ -696,18 +811,6 @@
         menu.style.display = 'none';
       }
     });
-
-    function showSection(id) {
-      document.querySelectorAll('#main-content, #calculadora, #conversor, #mineria').forEach(el => {
-        el.style.display = 'none';
-      });
-      document.getElementById(id).style.display = 'block';
-      document.getElementById('tools-menu').style.display = 'none';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Guardar la sección actual
-      guardarPreferencia('seccion-activa', id);
-    }
 
     function configurarValidaciones() {
       // Validación en tiempo real para la calculadora
@@ -979,12 +1082,6 @@
       if (botonUnidad) {
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         botonUnidad.classList.add('active');
-      }
-      
-      // Cargar sección activa
-      const seccionActiva = obtenerPreferencia('seccion-activa', 'main-content');
-      if (seccionActiva !== 'main-content') {
-        showSection(seccionActiva);
       }
       
       // Cargar último cálculo si existe
