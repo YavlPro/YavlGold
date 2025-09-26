@@ -279,6 +279,80 @@
         transform: translateY(-5px);
     }
 
+    /* --- COMUNIDAD Y REDES MEJORADAS --- */
+    .comunidad, .redes {
+      text-align: center;
+      padding: 25px;
+      background: rgba(30, 58, 138, 0.2);
+      border: 1px solid var(--color-secondary);
+      border-radius: 16px;
+      margin: 25px 0;
+    }
+    .comunidad h3, .redes h3 {
+      color: var(--color-secondary);
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+    .comunidad-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .comunidad-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: rgba(212, 175, 55, 0.15);
+      border: 1px solid var(--color-secondary);
+      border-radius: 10px;
+      color: var(--color-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      min-width: 200px;
+      justify-content: center;
+    }
+    .comunidad-link:hover {
+      background: rgba(212, 175, 55, 0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+    }
+    .redes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .red-social {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 15px;
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: 12px;
+      color: var(--color-secondary);
+      text-decoration: none;
+      transition: all 0.3s;
+      border: 1px solid transparent;
+    }
+    .red-social:hover {
+      background: rgba(212, 175, 55, 0.2);
+      transform: translateY(-3px);
+      border-color: var(--color-secondary);
+      box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
+    }
+    .red-social i {
+      font-size: 28px;
+    }
+    .red-social span {
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
     /* --- MODALES (LOGIN, REGISTRO, ANUNCIOS) --- */
     #modal-overlay {
         display: none;
@@ -295,6 +369,8 @@
         transform: translate(-50%, -50%);
         width: 90%;
         max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
         z-index: 1000;
         background: var(--card-bg);
         border-radius: 16px;
@@ -353,6 +429,21 @@
         cursor: pointer;
         padding: 5px;
         font-size: 16px;
+    }
+    .modal-scroll-indicator {
+        text-align: center;
+        margin-top: 15px;
+        color: #94a3b8;
+        font-size: 0.9em;
+        display: none;
+    }
+    .modal-scroll-indicator i {
+        animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+        40% {transform: translateY(-5px);}
+        60% {transform: translateY(-3px);}
     }
 
     /* --- NOTIFICACIONES --- */
@@ -490,7 +581,16 @@
         .floating-buttons { flex-direction: row; }
         #tools-menu { bottom: 80px; right: 15px; }
         #back-to-top { bottom: 80px; right: 85px; }
-        .modal { width: 95%; padding: 20px; }
+        .modal { width: 95%; padding: 20px; max-height: 85vh; }
+        .redes-grid { grid-template-columns: repeat(2, 1fr); }
+        .comunidad-link { min-width: 160px; }
+        .modal-scroll-indicator { display: block; }
+    }
+    
+    @media (max-width: 480px) {
+        .redes-grid { grid-template-columns: 1fr; }
+        .comunidad-links { flex-direction: column; }
+        .comunidad-link { width: 100%; }
     }
   </style>
 </head>
@@ -603,16 +703,35 @@
         </section>
 
         <div class="comunidad card">
-          <h3>🔗 Únete a nuestra comunidad</h3>
-          <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+          <h3><i class="fas fa-users"></i> Únete a nuestra comunidad</h3>
+          <div class="comunidad-links">
+            <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank" class="comunidad-link">
+              <i class="fab fa-telegram"></i>
+              <span>Global Invest Telegram</span>
+            </a>
+          </div>
         </div>
 
         <div class="redes card">
-          <h3>🌐 Sígueme en mis redes</h3>
-          <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
-          <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank">🔺 Reddit</a>
-          <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
-          <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
+          <h3><i class="fas fa-share-alt"></i> Sígueme en mis redes</h3>
+          <div class="redes-grid">
+            <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank" class="red-social">
+              <i class="fab fa-twitter"></i>
+              <span>Twitter</span>
+            </a>
+            <a href="https://www.reddit.com/u/YavlPro/s/jkMaBNq09l" target="_blank" class="red-social">
+              <i class="fab fa-reddit"></i>
+              <span>Reddit</span>
+            </a>
+            <a href="https://t.me/YavlPro" target="_blank" class="red-social">
+              <i class="fab fa-telegram"></i>
+              <span>Telegram Personal</span>
+            </a>
+            <a href="https://youtube.com/@globalgoldlc" target="_blank" class="red-social">
+              <i class="fab fa-youtube"></i>
+              <span>YouTube</span>
+            </a>
+          </div>
         </div>
 
         <footer>
@@ -647,7 +766,7 @@
 
   <div id="modal-overlay"></div>
 
-  <!-- MODAL DE AUTENTICACIÓN CORREGIDO -->
+  <!-- MODAL DE AUTENTICACIÓN MEJORADO -->
   <div id="auth-modal" class="modal card">
     <div class="modal-header">
       <h2>Mi Cuenta</h2>
@@ -714,6 +833,11 @@
             <span id="register-text">🚀 Crear Cuenta</span>
             <span id="register-loading" class="loading" style="display: none;"></span>
         </button>
+        
+        <!-- Indicador de scroll para pantallas pequeñas -->
+        <div class="modal-scroll-indicator">
+            <i class="fas fa-chevron-down"></i> Desliza hacia abajo para ver el botón de registro
+        </div>
     </form>
   </div>
 
@@ -808,6 +932,18 @@
           closeAuthModal();
           closeAnnouncementModal();
           closeStatsModal();
+      });
+
+      // Mostrar indicador de scroll en el modal de registro en pantallas pequeñas
+      const modal = document.getElementById('auth-modal');
+      const scrollIndicator = document.querySelector('.modal-scroll-indicator');
+      
+      modal.addEventListener('scroll', function() {
+        if (modal.scrollTop > 50) {
+          scrollIndicator.style.opacity = '0';
+        } else {
+          scrollIndicator.style.opacity = '1';
+        }
       });
     }
 
@@ -1187,6 +1323,14 @@
         document.getElementById('auth-modal').style.display = 'block';
         document.getElementById('modal-overlay').style.display = 'block';
         switchAuthTab(tab);
+        
+        // En pantallas pequeñas, hacer scroll al final del modal después de un breve retraso
+        if (window.innerWidth <= 768 && tab === 'register') {
+            setTimeout(() => {
+                const modal = document.getElementById('auth-modal');
+                modal.scrollTop = modal.scrollHeight;
+            }, 100);
+        }
     }
     
     function closeAuthModal() {
