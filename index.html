@@ -1,20 +1,3 @@
-¡Claro\! He fusionado y mejorado tus dos archivos en un único código cohesivo y optimizado.
-
-Aquí están los cambios y mejoras clave que he implementado:
-
-1.  **Sistema de Usuario Unificado:** Reemplacé el sistema de usuario simulado del primer archivo con el sistema más robusto del segundo. Ahora, el registro e inicio de sesión se manejan a través de un **modal interactivo** en lugar de una página separada, mejorando la experiencia del usuario.
-2.  **Integración de reCAPTCHA:** El sistema de autenticación ahora incluye la validación de **Google reCAPTCHA Enterprise**, añadiendo una capa de seguridad esencial para prevenir bots y spam.
-3.  **Perfil de Usuario Mejorado:** Los usuarios ahora pueden editar su perfil, cambiar su nombre de usuario, actualizar su biografía y **subir una foto de perfil**, que se guarda localmente (usando `localStorage`).
-4.  **Panel de Administración y Anuncios:** Integré el panel de administrador y el sistema de anuncios. El primer usuario que se registra se convierte automáticamente en administrador y puede publicar anuncios para toda la comunidad.
-5.  **Notificaciones Dinámicas:** Se ha añadido un sistema de notificaciones flotantes para dar feedback al usuario (por ejemplo, "Registro exitoso", "Contraseña incorrecta"), haciendo la interfaz más interactiva.
-6.  **Código Limpio y Refactorizado:** Eliminé el código redundante de ambos archivos, unifiqué los estilos CSS y refactoricé el JavaScript para que sea más modular y fácil de entender, añadiendo comentarios para explicar las partes clave.
-7.  **Interfaz de Usuario Coherente:** El diseño del sistema de usuario, los perfiles y los anuncios se ha integrado perfectamente en la estética general de la página principal.
-
-A continuación, el código completo y mejorado.
-
------
-
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -659,7 +642,7 @@ A continuación, el código completo y mejorado.
         <div class="auth-tab" id="register-tab-btn" onclick="switchAuthTab('register')">Registrarse</div>
     </div>
     
-    <form id="login-form" class="auth-form active">
+    <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
         <div class="form-group">
             <label for="login-email">Correo Electrónico:</label>
             <input type="email" id="login-email" required>
@@ -674,7 +657,7 @@ A continuación, el código completo y mejorado.
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🔑 Iniciar Sesión</button>
     </form>
     
-    <form id="register-form" class="auth-form">
+    <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
         <div class="form-group">
             <label for="register-username">Nombre de Usuario:</label>
             <input type="text" id="register-username" required>
@@ -706,7 +689,7 @@ A continuación, el código completo y mejorado.
         <h2>📢 Crear Nuevo Anuncio</h2>
         <button onclick="closeAnnouncementModal()" class="close-modal-btn">×</button>
       </div>
-      <form id="announcement-form">
+      <form id="announcement-form" onsubmit="handleAnnouncement(event)">
           <div class="form-group">
               <label for="announcement-title">Título:</label>
               <input type="text" id="announcement-title" required>
@@ -729,26 +712,27 @@ A continuación, el código completo y mejorado.
         date: new Date().toISOString(),
         author: "Admin"
     }];
-    const RECAPTCHA_SITE_KEY = '6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI';
+    const RECAPTCHA_KEY = '6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI';
 
     // --- INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
-      updateUserStats();
-      loadAnnouncements();
-      checkAuthStatus();
     });
 
     function initializeApp() {
+      updateUserStats();
+      loadAnnouncements();
+      checkAuthStatus();
+
       // Event listeners de botones flotantes
       document.getElementById('tools-btn').addEventListener('click', (e) => {
           e.stopPropagation();
-          document.getElementById('tools-menu').style.display = 'block';
+          document.getElementById('tools-menu').style.display = 
+              document.getElementById('tools-menu').style.display === 'block' ? 'none' : 'block';
       });
       document.getElementById('user-btn').addEventListener('click', () => {
           if (currentUser) {
-              const profileSection = document.getElementById('profile-section');
-              profileSection.scrollIntoView({ behavior: 'smooth' });
+              document.getElementById('profile-section').scrollIntoView({ behavior: 'smooth' });
           } else {
               showAuthModal('login');
           }
@@ -769,13 +753,10 @@ A continuación, el código completo y mejorado.
       });
       backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-      // Event listeners de formularios
-      document.getElementById('login-form').addEventListener('submit', handleLogin);
-      document.getElementById('register-form').addEventListener('submit', handleRegister);
-      document.getElementById('announcement-form').addEventListener('submit', handleAnnouncement);
+      // Event listener para el input del avatar
       document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
 
-      // Cerrar modales
+      // Cerrar modales con overlay
       document.getElementById('modal-overlay').addEventListener('click', () => {
           closeAuthModal();
           closeAnnouncementModal();
@@ -793,27 +774,22 @@ A continuación, el código completo y mejorado.
     }
 
     function showUserInterface() {
-      // Ocultar botones de auth, mostrar perfil
       document.getElementById('auth-buttons').style.display = 'none';
       document.getElementById('logout-btn').style.display = 'inline-block';
       document.getElementById('user-profile-display').style.display = 'flex';
       document.getElementById('profile-section').style.display = 'block';
 
-      // Actualizar info del header
       document.getElementById('user-avatar-display').src = currentUser.avatar || 'https://i.imgur.com/317XS9m.png';
       document.getElementById('username-display').textContent = currentUser.username;
       document.getElementById('user-email-display').textContent = currentUser.email;
 
-      // Poblar formulario de perfil
       document.getElementById('profile-username').value = currentUser.username;
       document.getElementById('profile-email').value = currentUser.email;
       document.getElementById('profile-bio').value = currentUser.bio || '';
       document.getElementById('avatar-preview').src = currentUser.avatar || 'https://i.imgur.com/317XS9m.png';
 
-      // Mostrar panel de admin si corresponde
       document.getElementById('admin-panel').style.display = (currentUser.role === 'admin') ? 'block' : 'none';
 
-      // Actualizar última actividad
       currentUser.lastActive = new Date().toISOString();
       updateUserInStorage(currentUser);
       updateUserStats();
@@ -829,6 +805,7 @@ A continuación, el código completo y mejorado.
 
     async function handleRegister(e) {
       e.preventDefault();
+      const form = e.target;
       const username = document.getElementById('register-username').value;
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
@@ -836,8 +813,8 @@ A continuación, el código completo y mejorado.
 
       if (password !== confirmPassword) return showNotification('Las contraseñas no coinciden', 'error');
       if (password.length < 6) return showNotification('La contraseña debe tener al menos 6 caracteres', 'error');
-      if (users.find(user => user.email === email)) return showNotification('Este correo ya está registrado', 'error');
-      if (users.find(user => user.username === username)) return showNotification('Este nombre de usuario ya está en uso', 'error');
+      if (users.some(user => user.email === email)) return showNotification('Este correo ya está registrado', 'error');
+      if (users.some(user => user.username === username)) return showNotification('Este nombre de usuario ya está en uso', 'error');
       
       try {
         await executeRecaptcha('REGISTER');
@@ -845,31 +822,36 @@ A continuación, el código completo y mejorado.
         return showNotification('Error de verificación de seguridad. Inténtalo de nuevo.', 'error');
       }
 
+      // --- ADVERTENCIA DE SEGURIDAD ---
+      // El método btoa() NO es encriptación. Es solo codificación Base64 y es fácilmente reversible.
+      // NUNCA uses esto en producción. En un entorno real, la contraseña debe ser enviada
+      // a un servidor (backend) y almacenada usando un hash seguro (ej. bcrypt).
+      const unsafePassword = btoa(password);
+
       const newUser = {
         id: Date.now(),
-        username,
-        email,
-        password: btoa(password), // Simulación de encriptación
-        avatar: 'https://i.imgur.com/317XS9m.png',
-        bio: '',
-        joinDate: new Date().toISOString(),
-        lastActive: new Date().toISOString(),
-        role: users.length === 0 ? 'admin' : 'user' // El primer usuario es admin
+        username, email, password: unsafePassword,
+        avatar: 'https://i.imgur.com/317XS9m.png', bio: '',
+        joinDate: new Date().toISOString(), lastActive: new Date().toISOString(),
+        role: users.length === 0 ? 'admin' : 'user'
       };
       
       users.push(newUser);
       localStorage.setItem('globalInvestUsers', JSON.stringify(users));
       
       showNotification('¡Registro exitoso! Por favor, inicia sesión.', 'success');
-      switchAuthTab('login'); // Cambia a la pestaña de login
-      document.getElementById('login-email').value = email; // Pre-rellena el email
+      form.reset();
+      switchAuthTab('login');
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-email').focus();
     }
 
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
-
+      
+      // Se "descodifica" la contraseña para comparar. Véase la advertencia en handleRegister.
       const user = users.find(u => u.email === email && atob(u.password) === password);
 
       if (user) {
@@ -901,22 +883,18 @@ A continuación, el código completo y mejorado.
 
     function updateProfile() {
       if (!currentUser) return;
-
       const newUsername = document.getElementById('profile-username').value;
       const newEmail = document.getElementById('profile-email').value;
 
-      const usernameExists = users.some(u => u.username === newUsername && u.id !== currentUser.id);
-      if (usernameExists) return showNotification('Ese nombre de usuario ya está en uso', 'error');
-      
-      const emailExists = users.some(u => u.email === newEmail && u.id !== currentUser.id);
-      if (emailExists) return showNotification('Ese correo electrónico ya está en uso', 'error');
+      if (users.some(u => u.username === newUsername && u.id !== currentUser.id)) return showNotification('Ese nombre de usuario ya está en uso', 'error');
+      if (users.some(u => u.email === newEmail && u.id !== currentUser.id)) return showNotification('Ese correo electrónico ya está en uso', 'error');
 
       currentUser.username = newUsername;
       currentUser.email = newEmail;
       currentUser.bio = document.getElementById('profile-bio').value;
 
       updateUserInStorage(currentUser);
-      showUserInterface(); // Actualiza la UI con los nuevos datos
+      showUserInterface();
       showNotification('Perfil actualizado correctamente', 'success');
     }
 
@@ -930,6 +908,12 @@ A continuación, el código completo y mejorado.
         const reader = new FileReader();
         reader.onload = function(event) {
             const avatarUrl = event.target.result;
+
+            // --- ADVERTENCIA DE RENDIMIENTO/ALMACENAMIENTO ---
+            // Guardar imágenes como DataURL (Base64) en localStorage es ineficiente y puede
+            // exceder rápidamente el límite de 5MB del navegador. En una app real,
+            // deberías subir la imagen a un servidor o un servicio de almacenamiento (como S3, Firebase Storage)
+            // y guardar solo la URL de la imagen.
             currentUser.avatar = avatarUrl;
             updateUserInStorage(currentUser);
             document.getElementById('user-avatar-display').src = avatarUrl;
@@ -946,13 +930,9 @@ A continuación, el código completo y mejorado.
         const title = document.getElementById('announcement-title').value;
         const content = document.getElementById('announcement-content').value;
 
-        const newAnnouncement = {
-            title, content,
-            date: new Date().toISOString(),
-            author: currentUser.username
-        };
+        const newAnnouncement = { title, content, date: new Date().toISOString(), author: currentUser.username };
         
-        announcements.unshift(newAnnouncement); // Añadir al principio
+        announcements.unshift(newAnnouncement);
         localStorage.setItem('announcements', JSON.stringify(announcements));
         
         loadAnnouncements();
@@ -962,6 +942,10 @@ A continuación, el código completo y mejorado.
     
     function loadAnnouncements() {
         const container = document.getElementById('announcements-container');
+        if(announcements.length === 0) {
+            container.innerHTML = "<p>No hay anuncios por el momento.</p>";
+            return;
+        }
         container.innerHTML = announcements.map(ann => `
             <div class="announcement-card">
                 <div class="announcement-date">${new Date(ann.date).toLocaleDateString('es-ES')}</div>
@@ -977,10 +961,9 @@ A continuación, el código completo y mejorado.
       const total = users.length;
       const activeToday = users.filter(user => {
         const lastActive = new Date(user.lastActive || 0);
-        const today = new Date();
-        return lastActive.toDateString() === today.toDateString();
+        return lastActive.toDateString() === new Date().toDateString();
       }).length;
-      const growth = total > 0 ? Math.round((activeToday / total) * 100) : 0;
+      const growth = total > 1 ? Math.round((activeToday / total) * 100) : 0;
 
       document.getElementById('total-users').textContent = total;
       document.getElementById('active-today').textContent = activeToday;
@@ -992,8 +975,8 @@ A continuación, el código completo y mejorado.
         if (index !== -1) {
             users[index] = updatedUser;
             localStorage.setItem('globalInvestUsers', JSON.stringify(users));
-            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
         }
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
     }
 
     function showNotification(message, type) {
@@ -1012,15 +995,18 @@ A continuación, el código completo y mejorado.
 
     function executeRecaptcha(action) {
         return new Promise((resolve, reject) => {
+            if (typeof grecaptcha === 'undefined' || !grecaptcha.enterprise) {
+                console.error("reCAPTCHA script no cargado.");
+                return reject();
+            }
             grecaptcha.enterprise.ready(async () => {
                 try {
-                    const token = await grecaptcha.enterprise.execute(RECAPTCHA_SITE_KEY, { action });
-                    // En una aplicación real, enviarías este token a tu backend para verificación.
-                    // Aquí, simplemente resolvemos si se obtiene el token.
+                    const token = await grecaptcha.enterprise.execute(RECAPTCHA_KEY, { action });
+                    // En una app real, enviarías este token a tu backend para verificación.
                     if (token) {
                         resolve(token);
                     } else {
-                        reject();
+                        reject(new Error("No se pudo obtener el token de reCAPTCHA."));
                     }
                 } catch (error) {
                     reject(error);
@@ -1058,5 +1044,3 @@ A continuación, el código completo y mejorado.
   </script>
 </body>
 </html>
-
-```
