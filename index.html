@@ -23,6 +23,9 @@
   <link rel="icon" href="https://i.imgur.com/d4af37g.png" type="image/png">
   <link rel="apple-touch-icon" href="https://i.imgur.com/d4af37g.png">
   
+  <!-- Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
     :root {
       --color-primary: #1e3a8a;
@@ -45,6 +48,7 @@
       margin: 0;
       padding: 0;
       line-height: 1.7;
+      scroll-behavior: smooth;
     }
 
     .hero {
@@ -361,59 +365,279 @@
       margin-top: 5px;
     }
     
-    /* Estilos para ejemplos */
-    .examples-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
+    /* Estilos para la nueva calculadora versátil */
+    .calculator-type-selector {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     
-    .example-btn {
+    .calc-type-btn {
       background: #334155;
       color: #e2e8f0;
       border: 1px solid #475569;
-      padding: 12px;
+      padding: 10px 15px;
       border-radius: 8px;
       cursor: pointer;
-      text-align: center;
       transition: all 0.3s;
-      font-size: 0.9em;
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
     }
     
-    .example-btn:hover {
+    .calc-type-btn.active {
       background: var(--color-secondary);
       color: var(--bg-dark);
-      transform: translateY(-2px);
+      border-color: var(--color-secondary);
     }
     
-    .equivalencia-table {
+    .conversion-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+    }
+    
+    .conversion-card {
+      background: rgba(30, 58, 138, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid var(--color-secondary);
+      text-align: center;
+    }
+    
+    .conversion-card h4 {
+      margin: 0 0 10px 0;
+      color: var(--color-secondary);
+      font-size: 1em;
+    }
+    
+    .conversion-value {
+      font-size: 1.4em;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    
+    /* Estilos para la calculadora científica */
+    .scientific-calculator {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .calculator-display {
+      margin-bottom: 15px;
+    }
+    
+    .calc-display {
       width: 100%;
-      border-collapse: collapse;
-      margin: 20px 0;
-      background: #1e293b;
-      border-radius: 8px;
-      overflow: hidden;
+      padding: 15px;
+      font-size: 1.5em;
+      text-align: right;
+      background: #0f172a;
+      border: 2px solid var(--color-secondary);
+      border-radius: 10px;
+      color: white;
     }
     
-    .equivalencia-table th {
+    .calculator-buttons {
+      display: grid;
+      gap: 10px;
+    }
+    
+    .calc-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    
+    .calc-btn {
+      padding: 15px 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 50px;
+    }
+    
+    .calc-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    }
+    
+    .num-btn {
+      background-color: #334155;
+      color: #e2e8f0;
+    }
+    
+    .op-btn {
+      background-color: var(--color-primary);
+      color: white;
+    }
+    
+    .func-btn {
+      background-color: #6c757d;
+      color: white;
+    }
+    
+    .sci-btn {
+      background-color: var(--color-secondary);
+      color: var(--bg-dark);
+      font-size: 0.9rem;
+    }
+    
+    .equals-btn {
+      background-color: #10b981;
+      color: white;
+      grid-column: span 2;
+    }
+    
+    .clear-btn {
+      background-color: #ef4444;
+      color: white;
+    }
+    
+    .scientific-functions {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+    
+    /* Estilos para la calculadora de inversión */
+    .investment-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 25px;
+    }
+    
+    .investment-card {
+      background: rgba(30, 58, 138, 0.2);
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid var(--color-secondary);
+      text-align: center;
+    }
+    
+    .investment-card h4 {
+      margin: 0 0 15px 0;
+      color: var(--color-secondary);
+      font-size: 1.1em;
+    }
+    
+    .investment-value {
+      font-size: 1.6em;
+      font-weight: bold;
+      margin: 10px 0;
+      color: var(--color-secondary);
+    }
+    
+    .investment-detail {
+      font-size: 0.9em;
+      color: #94a3b8;
+      margin: 5px 0;
+    }
+    
+    /* Estilos para la academia */
+    .academia-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .search-box {
+      position: relative;
+      margin-bottom: 30px;
+    }
+    
+    .search-input {
+      padding: 15px 50px 15px 20px;
+      border-radius: 50px;
+      border: 2px solid var(--color-secondary);
+      background: var(--card-bg);
+      color: white;
+      font-size: 16px;
+      width: 100%;
+    }
+    
+    .search-icon {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-secondary);
+      font-size: 20px;
+    }
+    
+    .academia-topic {
+      margin-bottom: 40px;
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 16px;
+      border: 1px solid #334155;
+    }
+    
+    .academia-topic h3 {
+      color: var(--color-secondary);
+      margin-top: 0;
+      border-bottom: 2px solid var(--color-secondary);
+      padding-bottom: 10px;
+    }
+    
+    .topic-content {
+      display: none;
+    }
+    
+    .topic-content.active {
+      display: block;
+    }
+    
+    .topic-toggle {
+      background: none;
+      border: none;
+      color: var(--color-secondary);
+      font-size: 1.5em;
+      cursor: pointer;
+      float: right;
+      transition: transform 0.3s;
+    }
+    
+    .topic-toggle.collapsed {
+      transform: rotate(0deg);
+    }
+    
+    .topic-toggle.expanded {
+      transform: rotate(45deg);
+    }
+    
+    /* Botón de ir al inicio */
+    #back-to-top {
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
       background: var(--color-primary);
       color: white;
-      padding: 12px;
-      text-align: left;
+      border: 2px solid var(--color-secondary);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      z-index: 999;
+      transition: all 0.3s;
     }
     
-    .equivalencia-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #334155;
-    }
-    
-    .equivalencia-table tr:last-child td {
-      border-bottom: none;
-    }
-    
-    .equivalencia-table tr:hover {
-      background: #2d3748;
+    #back-to-top:hover {
+      background: #1e40af;
+      transform: translateY(-3px);
     }
 
     @media (max-width: 768px) {
@@ -457,8 +681,27 @@
         max-width: 250px;
       }
       
-      .examples-container {
+      .calculator-type-selector {
+        flex-direction: column;
+      }
+      
+      .conversion-results, .investment-results {
         grid-template-columns: 1fr;
+      }
+      
+      .calc-row {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .scientific-functions {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      #back-to-top {
+        bottom: 90px;
+        right: 15px;
+        width: 45px;
+        height: 45px;
       }
     }
     
@@ -483,12 +726,20 @@
         width: 100%;
       }
       
-      .tools-container {
+      .tools-container, .academia-container {
         padding: 15px;
       }
       
       .tools-header h1 {
         font-size: 2em;
+      }
+      
+      .calc-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .scientific-functions {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
@@ -556,93 +807,131 @@
       
       <div class="tools-nav">
         <button class="tools-nav-btn active" onclick="showTool('calculadora')">🧮 Calculadora</button>
+        <button class="tools-nav-btn" onclick="showTool('inversion')">💰 Calculadora de Inversión</button>
         <button class="tools-nav-btn" onclick="showTool('conversor')">💱 Conversor</button>
         <button class="tools-nav-btn" onclick="showTool('mineria')">⛏️ Minería BTC</button>
+        <button class="tools-nav-btn" onclick="showTool('cientifica')">🔬 Calculadora Científica</button>
+        <button class="tools-nav-btn" onclick="showTool('academia')">📚 Academia</button>
         <button class="tools-nav-btn" onclick="showDashboard()">🏠 Volver al Inicio</button>
       </div>
     </div>
 
-    <!-- Calculadora -->
+    <!-- Calculadora Versátil -->
     <div id="calculadora" class="card">
-      <h2>🧮 Calculadora Inteligente de Ganancias</h2>
+      <h2>🧮 Calculadora Versátil de ROI/APR/APY</h2>
+      <p class="note">Convierte entre diferentes tipos de rendimiento y periodos de capitalización</p>
       
-      <!-- Ejemplos predefinidos -->
-      <div class="examples-container">
-        <div class="example-btn" onclick="cargarEjemplo('ejemplo1')">
-          <strong>24% APY en 28 días</strong><br>
-          Inversión: $1,000
-        </div>
-        <div class="example-btn" onclick="cargarEjemplo('ejemplo2')">
-          <strong>48% APY en 90 días</strong><br>
-          Inversión: $5,000
-        </div>
-        <div class="example-btn" onclick="cargarEjemplo('ejemplo3')">
-          <strong>12% APY en 1 año</strong><br>
-          Inversión: $10,000
-        </div>
-        <div class="example-btn" onclick="cargarEjemplo('ejemplo4')">
-          <strong>72% APY en 60 días</strong><br>
-          Inversión: $2,500
-        </div>
+      <div class="calculator-type-selector">
+        <button class="calc-type-btn active" data-type="roi-daily">ROI Diario</button>
+        <button class="calc-type-btn" data-type="roi-monthly">ROI Mensual</button>
+        <button class="calc-type-btn" data-type="apr">APR Anual</button>
+        <button class="calc-type-btn" data-type="apy">APY Anual</button>
       </div>
       
       <div class="form-group">
-        <label for="moneda-2">Moneda:</label>
-        <select id="moneda-2">
-          <option value="USDT">USDT</option>
-          <option value="BNB">BNB</option>
-          <option value="TON">TON</option>
-          <option value="SOL">SOL</option>
-          <option value="BTC">BTC</option>
-          <option value="ETH">ETH</option>
+        <label for="input-value">Valor de entrada:</label>
+        <input type="number" id="input-value" value="1" step="0.01" min="0.01" placeholder="Ingresa el porcentaje">
+        <span style="position: absolute; right: 15px; top: 50px; color: #94a3b8;">%</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="capitalization">Frecuencia de capitalización:</label>
+        <select id="capitalization">
+          <option value="daily">Diaria</option>
+          <option value="monthly">Mensual</option>
+          <option value="yearly">Anual</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="inversion-2">Inversión (≥ 0.01):</label>
-        <input type="number" id="inversion-2" value="1000" step="0.01" min="0.01">
-        <div class="error-message" id="error-inversion"></div>
-      </div>
-      <div class="form-group">
-        <label for="apy-2">APY (% anual):</label>
-        <input type="number" id="apy-2" value="48" min="0" max="1000">
-        <div class="error-message" id="error-apy"></div>
-      </div>
-      <div class="form-group">
-        <label>Unidad de tiempo:</label>
-        <div class="time-buttons-container">
-          <button type="button" class="time-btn active" data-unit="hours">🕒 Horas</button>
-          <button type="button" class="time-btn" data-unit="days">📅 Días</button>
-          <button type="button" class="time-btn" data-unit="years">📆 Años</button>
+      
+      <button class="tool-btn" onclick="calcularConversiones()">🔄 Calcular Conversiones</button>
+      
+      <div class="conversion-results" id="conversion-results">
+        <div class="conversion-card">
+          <h4>ROI Diario</h4>
+          <div class="conversion-value" id="roi-daily-result">0.00%</div>
+          <small>Rendimiento por día</small>
+        </div>
+        <div class="conversion-card">
+          <h4>ROI Mensual</h4>
+          <div class="conversion-value" id="roi-monthly-result">0.00%</div>
+          <small>Rendimiento por mes</small>
+        </div>
+        <div class="conversion-card">
+          <h4>APR Anual</h4>
+          <div class="conversion-value" id="apr-result">0.00%</div>
+          <small>Tasa porcentual anual</small>
+        </div>
+        <div class="conversion-card">
+          <h4>APY Anual</h4>
+          <div class="conversion-value" id="apy-result">0.00%</div>
+          <small>Rendimiento anual efectivo</small>
         </div>
       </div>
+    </div>
+
+    <!-- Calculadora de Inversión -->
+    <div id="inversion" class="card" style="display:none;">
+      <h2>💰 Calculadora de Inversión</h2>
+      <p class="note">Calcula el crecimiento de tu inversión con interés compuesto</p>
+      
       <div class="form-group">
-        <label for="cantidad-2">Cantidad:</label>
-        <input type="number" id="cantidad-2" value="72" min="0.1" step="0.1">
-        <small id="unidad-texto">72 horas = 3 días</small>
-        <div class="error-message" id="error-cantidad"></div>
-      </div>
-      <button class="tool-btn" id="btn-calcular" onclick="calcularPersonalizado()">✨ Calcular</button>
-      <div class="result-box" id="resultado-personalizado">
-        <p><strong>Ganancia (APY):</strong> <span id="ganancia-apy"></span></p>
-        <p><strong>Ganancia (APR):</strong> <span id="ganancia-apr"></span></p>
-        <p><strong>Total:</strong> <span id="total-res"></span></p>
+        <label for="inversion-monto">Monto inicial de inversión:</label>
+        <input type="number" id="inversion-monto" value="1000" step="0.01" min="0.01" placeholder="Ingresa el monto">
+        <span style="position: absolute; right: 15px; top: 50px; color: #94a3b8;">$</span>
       </div>
       
-      <!-- Tabla de equivalencias -->
-      <h3 style="margin-top: 40px;">📊 Equivalencias APY/APR</h3>
-      <table class="equivalencia-table">
-        <thead>
-          <tr>
-            <th>APY Anual</th>
-            <th>APR Anual</th>
-            <th>Rendimiento en 30 días</th>
-            <th>Rendimiento en 90 días</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-equivalencias">
-          <!-- Se llenará con JavaScript -->
-        </tbody>
-      </table>
+      <div class="form-group">
+        <label for="inversion-tasa">Tasa de rendimiento anual (%):</label>
+        <input type="number" id="inversion-tasa" value="10" step="0.01" min="0.01" placeholder="Tasa anual">
+        <span style="position: absolute; right: 15px; top: 50px; color: #94a3b8;">%</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="inversion-tiempo">Tiempo de inversión (años):</label>
+        <input type="number" id="inversion-tiempo" value="5" step="0.1" min="0.1" placeholder="Años">
+      </div>
+      
+      <div class="form-group">
+        <label for="inversion-frecuencia">Frecuencia de capitalización:</label>
+        <select id="inversion-frecuencia">
+          <option value="1">Anual</option>
+          <option value="2">Semestral</option>
+          <option value="4">Trimestral</option>
+          <option value="12">Mensual</option>
+          <option value="365">Diaria</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="inversion-aportes">Aportes mensuales adicionales (opcional):</label>
+        <input type="number" id="inversion-aportes" value="0" step="0.01" min="0" placeholder="Aportes mensuales">
+        <span style="position: absolute; right: 15px; top: 50px; color: #94a3b8;">$</span>
+      </div>
+      
+      <button class="tool-btn" onclick="calcularInversion()">📈 Calcular Inversión</button>
+      
+      <div class="investment-results" id="investment-results">
+        <div class="investment-card">
+          <h4>Inversión Total</h4>
+          <div class="investment-value" id="inversion-total">$0.00</div>
+          <div class="investment-detail">Capital + Aportes</div>
+        </div>
+        <div class="investment-card">
+          <h4>Valor Final</h4>
+          <div class="investment-value" id="valor-final">$0.00</div>
+          <div class="investment-detail">Después del período</div>
+        </div>
+        <div class="investment-card">
+          <h4>Ganancias</h4>
+          <div class="investment-value" id="ganancias">$0.00</div>
+          <div class="investment-detail">Intereses generados</div>
+        </div>
+        <div class="investment-card">
+          <h4>ROI Total</h4>
+          <div class="investment-value" id="roi-total">0.00%</div>
+          <div class="investment-detail">Retorno sobre inversión</div>
+        </div>
+      </div>
     </div>
 
     <!-- Conversor -->
@@ -701,37 +990,158 @@
         <p><strong>Beneficio neto estimado:</strong> $<span id="beneficio-neto"></span>/día</p>
       </div>
     </div>
+    
+    <!-- Calculadora Científica -->
+    <div id="cientifica" class="card" style="display:none;">
+      <h2>🔬 Calculadora Científica</h2>
+      <p class="note">Realiza operaciones matemáticas avanzadas y cálculos científicos</p>
+      
+      <div class="scientific-calculator">
+        <div class="calculator-display">
+          <input type="text" id="calc-display" class="calc-display" readonly value="0">
+        </div>
+        
+        <div class="calculator-buttons">
+          <div class="calc-row">
+            <button class="calc-btn clear-btn" data-action="clear">C</button>
+            <button class="calc-btn func-btn" data-action="backspace">⌫</button>
+            <button class="calc-btn func-btn" data-action="percent">%</button>
+            <button class="calc-btn op-btn" data-operator="/">/</button>
+            <button class="calc-btn sci-btn" data-function="sqrt">√</button>
+          </div>
+          <div class="calc-row">
+            <button class="calc-btn sci-btn" data-function="power">x²</button>
+            <button class="calc-btn sci-btn" data-function="sin">sin</button>
+            <button class="calc-btn sci-btn" data-function="cos">cos</button>
+            <button class="calc-btn sci-btn" data-function="tan">tan</button>
+            <button class="calc-btn op-btn" data-operator="*">×</button>
+          </div>
+          <div class="calc-row">
+            <button class="calc-btn num-btn" data-number="7">7</button>
+            <button class="calc-btn num-btn" data-number="8">8</button>
+            <button class="calc-btn num-btn" data-number="9">9</button>
+            <button class="calc-btn op-btn" data-operator="-">-</button>
+            <button class="calc-btn sci-btn" data-function="log">log</button>
+          </div>
+          <div class="calc-row">
+            <button class="calc-btn num-btn" data-number="4">4</button>
+            <button class="calc-btn num-btn" data-number="5">5</button>
+            <button class="calc-btn num-btn" data-number="6">6</button>
+            <button class="calc-btn op-btn" data-operator="+">+</button>
+            <button class="calc-btn sci-btn" data-function="ln">ln</button>
+          </div>
+          <div class="calc-row">
+            <button class="calc-btn num-btn" data-number="1">1</button>
+            <button class="calc-btn num-btn" data-number="2">2</button>
+            <button class="calc-btn num-btn" data-number="3">3</button>
+            <button class="calc-btn sci-btn" data-function="pi">π</button>
+            <button class="calc-btn sci-btn" data-function="e">e</button>
+          </div>
+          <div class="calc-row">
+            <button class="calc-btn num-btn" data-number="0">0</button>
+            <button class="calc-btn num-btn" data-number=".">.</button>
+            <button class="calc-btn sci-btn" data-function="factorial">x!</button>
+            <button class="calc-btn equals-btn" data-action="equals">=</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Academia -->
+    <div id="academia" class="card" style="display:none;">
+      <h2>📚 Academia Cripto</h2>
+      <p class="note">Aprende sobre los conceptos fundamentales del mundo cripto y las inversiones</p>
+      
+      <div class="search-box">
+        <input type="text" class="search-input" id="search-academia" placeholder="Buscar en la academia...">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      
+      <div class="academia-topic">
+        <h3>¿Qué es APY (Annual Percentage Yield)? <button class="topic-toggle collapsed">+</button></h3>
+        <div class="topic-content">
+          <p>El APY (Rendimiento Porcentual Anual) es la tasa de rendimiento real que se obtiene de una inversión teniendo en cuenta el efecto del interés compuesto.</p>
+          <p><strong>Fórmula:</strong> APY = (1 + r/n)^n - 1</p>
+          <p>Donde 'r' es la tasa de interés anual y 'n' es el número de períodos de capitalización por año.</p>
+          <p><strong>Ejemplo:</strong> Si inviertes $1,000 con un APY del 10% compuesto mensualmente, al final del año tendrías $1,104.71.</p>
+        </div>
+      </div>
+      
+      <div class="academia-topic">
+        <h3>¿Qué es APR (Annual Percentage Rate)? <button class="topic-toggle collapsed">+</button></h3>
+        <div class="topic-content">
+          <p>El APR (Tasa de Porcentaje Anual) es la tasa de interés anual que se cobra por una inversión o préstamo, sin tener en cuenta la capitalización.</p>
+          <p><strong>Diferencia con APY:</strong> El APR no considera el interés compuesto, mientras que el APY sí.</p>
+          <p><strong>Ejemplo:</strong> Un APR del 10% sobre $1,000 genera exactamente $100 de interés en un año.</p>
+        </div>
+      </div>
+      
+      <div class="academia-topic">
+        <h3>¿Qué es ROI (Return on Investment)? <button class="topic-toggle collapsed">+</button></h3>
+        <div class="topic-content">
+          <p>El ROI (Retorno de Inversión) es una métrica que mide la profitability de una inversión comparando la ganancia con el costo inicial.</p>
+          <p><strong>Fórmula:</strong> ROI = (Ganancia Neta / Costo de Inversión) × 100%</p>
+          <p><strong>Ejemplo:</strong> Si inviertes $1,000 y obtienes $1,200, tu ROI es del 20%.</p>
+        </div>
+      </div>
+      
+      <div class="academia-topic">
+        <h3>Conceptos Fundamentales de Blockchain <button class="topic-toggle collapsed">+</button></h3>
+        <div class="topic-content">
+          <p><strong>Blockchain:</strong> Es un libro mayor distribuido e inmutable que registra transacciones de forma segura y transparente.</p>
+          <p><strong>Descentralización:</strong> No hay una autoridad central que controle la red.</p>
+          <p><strong>Mineria:</strong> Proceso de validar transacciones y agregarlas a la blockchain.</p>
+          <p><strong>Wallet:</strong> Software o hardware que almacena claves públicas y privadas para interactuar con la blockchain.</p>
+        </div>
+      </div>
+      
+      <div class="academia-topic">
+        <h3>Tipos de Criptomonedas <button class="topic-toggle collapsed">+</button></h3>
+        <div class="topic-content">
+          <p><strong>Bitcoin (BTC):</strong> La primera criptomoneda, creada como dinero digital peer-to-peer.</p>
+          <p><strong>Ethereum (ETH):</strong> Plataforma para contratos inteligentes y aplicaciones descentralizadas.</p>
+          <p><strong>Stablecoins:</strong> Criptomonedas vinculadas a activos estables como el dólar (USDT, USDC).</p>
+          <p><strong>Altcoins:</strong> Término que se refiere a todas las criptomonedas alternativas a Bitcoin.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Botones flotantes -->
   <div class="floating-buttons">
     <a href="https://wa.me/message/DFXFFK4DS3HSM1" target="_blank" id="support-btn" class="floating-btn" title="Soporte por WhatsApp">
-      🤖
+      <i class="fas fa-robot"></i>
     </a>
     <button id="tools-btn" class="floating-btn" title="Herramientas">
-      ⚙️
+      <i class="fas fa-tools"></i>
     </button>
   </div>
 
+  <!-- Botón de ir al inicio -->
+  <button id="back-to-top" title="Volver al inicio">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
   <div id="tools-menu">
     <a href="#" class="tool-item" data-action="show-tools">🛠️ Acceder a Herramientas</a>
-    <a href="#" class="tool-item" data-action="show-calculadora">🧮 Calculadora Avanzada</a>
+    <a href="#" class="tool-item" data-action="show-calculadora">🧮 Calculadora Versátil</a>
+    <a href="#" class="tool-item" data-action="show-inversion">💰 Calculadora de Inversión</a>
     <a href="#" class="tool-item" data-action="show-conversor">💱 Conversor de Cripto</a>
     <a href="#" class="tool-item" data-action="show-mineria">⛏️ Minería BTC</a>
+    <a href="#" class="tool-item" data-action="show-cientifica">🔬 Calculadora Científica</a>
+    <a href="#" class="tool-item" data-action="show-academia">📚 Academia Cripto</a>
   </div>
 
   <script>
     // Estado de la aplicación
     let currentView = 'dashboard';
     
-    // Ejemplos predefinidos para la calculadora
-    const ejemplosCalculadora = {
-      ejemplo1: { inversion: 1000, apy: 24, cantidad: 28, unidad: 'days', moneda: 'USDT' },
-      ejemplo2: { inversion: 5000, apy: 48, cantidad: 90, unidad: 'days', moneda: 'USDT' },
-      ejemplo3: { inversion: 10000, apy: 12, cantidad: 1, unidad: 'years', moneda: 'USDT' },
-      ejemplo4: { inversion: 2500, apy: 72, cantidad: 60, unidad: 'days', moneda: 'USDT' }
-    };
-
+    // Variables para la calculadora científica
+    let currentInput = '0';
+    let previousInput = '0';
+    let operation = null;
+    let resetScreen = false;
+    
     // Tasas de conversión
     const tasasConversion = {
       USDT_BNB: 0.0022,
@@ -768,6 +1178,7 @@
       const toolsBtn = document.getElementById('tools-btn');
       const toolsMenu = document.getElementById('tools-menu');
       const toolItems = document.querySelectorAll('.tool-item');
+      const backToTopBtn = document.getElementById('back-to-top');
       
       if (toolsBtn) {
         toolsBtn.addEventListener('click', function(e) {
@@ -775,8 +1186,6 @@
           console.log('Botón de herramientas clickeado');
           toggleToolsMenu();
         });
-      } else {
-        console.error('No se encontró el botón de herramientas');
       }
       
       // Configurar eventos del menú de herramientas
@@ -801,14 +1210,33 @@
         e.stopPropagation();
       });
       
-      // Configurar eventos de la calculadora
-      configurarCalculadora();
+      // Configurar botón de ir al inicio
+      if (backToTopBtn) {
+        backToTopBtn.addEventListener('click', function() {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Mostrar/ocultar botón al hacer scroll
+        window.addEventListener('scroll', function() {
+          if (window.pageYOffset > 300) {
+            backToTopBtn.style.display = 'flex';
+          } else {
+            backToTopBtn.style.display = 'none';
+          }
+        });
+      }
       
-      // Generar tabla de equivalencias
-      generarTablaEquivalencias();
+      // Configurar calculadora versátil
+      configurarCalculadoraVersatil();
       
-      // Actualizar texto de unidad inicial
-      actualizarTextoUnidad();
+      // Configurar academia
+      configurarAcademia();
+      
+      // Configurar calculadora científica
+      configurarCalculadoraCientifica();
+      
+      // Calcular conversiones iniciales
+      calcularConversiones();
     }
 
     // Mostrar/ocultar menú de herramientas
@@ -819,13 +1247,10 @@
       } else {
         toolsMenu.style.display = 'block';
       }
-      console.log('Estado del menú:', toolsMenu.style.display);
     }
 
     // Manejar acciones del menú de herramientas
     function handleToolAction(action) {
-      console.log('Ejecutando acción:', action);
-      
       switch(action) {
         case 'show-tools':
           showToolsContainer();
@@ -833,6 +1258,10 @@
         case 'show-calculadora':
           showToolsContainer();
           setTimeout(() => showTool('calculadora'), 100);
+          break;
+        case 'show-inversion':
+          showToolsContainer();
+          setTimeout(() => showTool('inversion'), 100);
           break;
         case 'show-conversor':
           showToolsContainer();
@@ -842,17 +1271,20 @@
           showToolsContainer();
           setTimeout(() => showTool('mineria'), 100);
           break;
-        default:
-          console.warn('Acción no reconocida:', action);
+        case 'show-cientifica':
+          showToolsContainer();
+          setTimeout(() => showTool('cientifica'), 100);
+          break;
+        case 'show-academia':
+          showToolsContainer();
+          setTimeout(() => showTool('academia'), 100);
+          break;
       }
-      
-      // Ocultar menú después de la acción
       document.getElementById('tools-menu').style.display = 'none';
     }
 
     // Mostrar el dashboard principal
     function showDashboard() {
-      console.log('Mostrando dashboard');
       document.getElementById('dashboard').style.display = 'block';
       document.getElementById('tools-container').style.display = 'none';
       currentView = 'dashboard';
@@ -861,7 +1293,6 @@
 
     // Mostrar el contenedor de herramientas
     function showToolsContainer() {
-      console.log('Mostrando herramientas');
       document.getElementById('dashboard').style.display = 'none';
       document.getElementById('tools-container').style.display = 'block';
       currentView = 'tools';
@@ -870,204 +1301,355 @@
 
     // Mostrar una herramienta específica
     function showTool(toolId) {
-      console.log('Mostrando herramienta:', toolId);
-      
-      // Ocultar todas las herramientas
       document.querySelectorAll('#tools-container .card').forEach(tool => {
         tool.style.display = 'none';
       });
       
-      // Mostrar la herramienta seleccionada
       const selectedTool = document.getElementById(toolId);
-      if (selectedTool) {
-        selectedTool.style.display = 'block';
-      } else {
-        console.error('Herramienta no encontrada:', toolId);
-      }
+      if (selectedTool) selectedTool.style.display = 'block';
       
-      // Actualizar botones de navegación activos
       document.querySelectorAll('.tools-nav-btn').forEach(btn => {
         btn.classList.remove('active');
       });
       
-      // Activar el botón correspondiente
-      const activeBtn = Array.from(document.querySelectorAll('.tools-nav-btn')).find(btn => {
-        const btnText = btn.textContent.toLowerCase();
-        return btnText.includes(toolId.toLowerCase()) || 
-               (toolId === 'calculadora' && btnText.includes('calculadora'));
-      });
+      const activeBtn = Array.from(document.querySelectorAll('.tools-nav-btn')).find(btn => 
+        btn.textContent.toLowerCase().includes(toolId.toLowerCase()) || 
+        (toolId === 'calculadora' && btn.textContent.toLowerCase().includes('calculadora')) ||
+        (toolId === 'inversion' && btn.textContent.toLowerCase().includes('inversión')) ||
+        (toolId === 'cientifica' && btn.textContent.toLowerCase().includes('científica'))
+      );
       
-      if (activeBtn) {
-        activeBtn.classList.add('active');
-      }
+      if (activeBtn) activeBtn.classList.add('active');
     }
 
-    // Configurar eventos de la calculadora
-    function configurarCalculadora() {
-      // Eventos para botones de tiempo
-      document.querySelectorAll('.time-btn').forEach(btn => {
+    // Configurar calculadora versátil
+    function configurarCalculadoraVersatil() {
+      document.querySelectorAll('.calc-type-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-          document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.calc-type-btn').forEach(b => b.classList.remove('active'));
           this.classList.add('active');
-          actualizarTextoUnidad();
+        });
+      });
+    }
+
+    // Configurar academia
+    function configurarAcademia() {
+      document.querySelectorAll('.topic-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+          const topicContent = this.parentElement.nextElementSibling;
+          if (topicContent.style.display === 'block') {
+            topicContent.style.display = 'none';
+            this.classList.remove('expanded');
+            this.classList.add('collapsed');
+            this.textContent = '+';
+          } else {
+            topicContent.style.display = 'block';
+            this.classList.remove('collapsed');
+            this.classList.add('expanded');
+            this.textContent = '×';
+          }
         });
       });
       
-      // Evento para cambiar cantidad
-      document.getElementById('cantidad-2').addEventListener('input', function() {
-        actualizarTextoUnidad();
+      const searchInput = document.getElementById('search-academia');
+      if (searchInput) {
+        searchInput.addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase();
+          document.querySelectorAll('.academia-topic').forEach(topic => {
+            const topicText = topic.textContent.toLowerCase();
+            if (topicText.includes(searchTerm)) {
+              topic.style.display = 'block';
+            } else {
+              topic.style.display = 'none';
+            }
+          });
+        });
+      }
+    }
+
+    // Configurar calculadora científica
+    function configurarCalculadoraCientifica() {
+      const display = document.getElementById('calc-display');
+      const buttons = document.querySelectorAll('.calc-btn');
+      
+      buttons.forEach(button => {
+        button.addEventListener('click', function() {
+          const action = this.getAttribute('data-action');
+          const number = this.getAttribute('data-number');
+          const operator = this.getAttribute('data-operator');
+          const functionName = this.getAttribute('data-function');
+          
+          if (number !== null) {
+            appendNumber(number);
+          } else if (operator !== null) {
+            chooseOperation(operator);
+          } else if (action !== null) {
+            executeAction(action);
+          } else if (functionName !== null) {
+            executeFunction(functionName);
+          }
+          
+          updateDisplay();
+        });
       });
     }
 
-    // Actualizar texto de unidad de tiempo
-    function actualizarTextoUnidad() {
-      const c = parseFloat(document.getElementById('cantidad-2').value) || 0;
-      const u = document.querySelector('.time-btn.active').dataset.unit;
-      document.getElementById('unidad-texto').innerText = 
-        u === 'hours' ? `${c} horas = ${(c/24).toFixed(2)} días` :
-        u === 'days' ? `${c} días = ${c*24} horas` :
-        `${c} años = ${c*365} días`;
+    // Funciones de la calculadora científica
+    function appendNumber(number) {
+      if (currentInput === '0' || resetScreen) {
+        currentInput = number;
+        resetScreen = false;
+      } else {
+        currentInput += number;
+      }
     }
 
-    // Cargar ejemplos predefinidos en la calculadora
-    function cargarEjemplo(claveEjemplo) {
-      const ejemplo = ejemplosCalculadora[claveEjemplo];
-      if (!ejemplo) return;
+    function chooseOperation(operator) {
+      if (currentInput === '0') return;
       
-      document.getElementById('inversion-2').value = ejemplo.inversion;
-      document.getElementById('apy-2').value = ejemplo.apy;
-      document.getElementById('cantidad-2').value = ejemplo.cantidad;
-      document.getElementById('moneda-2').value = ejemplo.moneda;
+      if (operation !== null) {
+        calculate();
+      }
       
-      // Activar la unidad de tiempo correspondiente
-      document.querySelectorAll('.time-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.unit === ejemplo.unidad) {
-          btn.classList.add('active');
-        }
-      });
-      
-      actualizarTextoUnidad();
-      calcularPersonalizado();
+      previousInput = currentInput;
+      operation = operator;
+      resetScreen = true;
     }
 
-    // Generar tabla de equivalencias APY/APR
-    function generarTablaEquivalencias() {
-      const tabla = document.getElementById('tabla-equivalencias');
-      const apyValues = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100];
+    function executeAction(action) {
+      switch(action) {
+        case 'clear':
+          currentInput = '0';
+          previousInput = '0';
+          operation = null;
+          break;
+        case 'backspace':
+          if (currentInput.length > 1) {
+            currentInput = currentInput.slice(0, -1);
+          } else {
+            currentInput = '0';
+          }
+          break;
+        case 'percent':
+          currentInput = (parseFloat(currentInput) / 100).toString();
+          break;
+        case 'equals':
+          calculate();
+          break;
+      }
+    }
+
+    function executeFunction(func) {
+      const inputValue = parseFloat(currentInput);
       
-      let html = '';
-      apyValues.forEach(apy => {
-        // APR aproximado (para simplificación)
-        const apr = (Math.pow(1 + apy/100, 1/365) - 1) * 365 * 100;
-        const rendimiento30d = (Math.pow(1 + apy/100, 30/365) - 1) * 100;
-        const rendimiento90d = (Math.pow(1 + apy/100, 90/365) - 1) * 100;
+      switch(func) {
+        case 'sqrt':
+          currentInput = Math.sqrt(inputValue).toString();
+          break;
+        case 'power':
+          currentInput = Math.pow(inputValue, 2).toString();
+          break;
+        case 'sin':
+          currentInput = Math.sin(inputValue * Math.PI / 180).toString();
+          break;
+        case 'cos':
+          currentInput = Math.cos(inputValue * Math.PI / 180).toString();
+          break;
+        case 'tan':
+          currentInput = Math.tan(inputValue * Math.PI / 180).toString();
+          break;
+        case 'log':
+          currentInput = Math.log10(inputValue).toString();
+          break;
+        case 'ln':
+          currentInput = Math.log(inputValue).toString();
+          break;
+        case 'pi':
+          currentInput = Math.PI.toString();
+          break;
+        case 'e':
+          currentInput = Math.E.toString();
+          break;
+        case 'factorial':
+          currentInput = factorial(inputValue).toString();
+          break;
+      }
+    }
+
+    function factorial(n) {
+      if (n === 0 || n === 1) return 1;
+      let result = 1;
+      for (let i = 2; i <= n; i++) {
+        result *= i;
+      }
+      return result;
+    }
+
+    function calculate() {
+      let computation;
+      const prev = parseFloat(previousInput);
+      const current = parseFloat(currentInput);
+      
+      if (isNaN(prev) || isNaN(current)) return;
+      
+      switch(operation) {
+        case '+':
+          computation = prev + current;
+          break;
+        case '-':
+          computation = prev - current;
+          break;
+        case '*':
+          computation = prev * current;
+          break;
+        case '/':
+          computation = prev / current;
+          break;
+        default:
+          return;
+      }
+      
+      currentInput = computation.toString();
+      operation = null;
+      previousInput = '0';
+    }
+
+    function updateDisplay() {
+      const display = document.getElementById('calc-display');
+      display.value = currentInput;
+    }
+
+    // Calculadora de Inversión
+    function calcularInversion() {
+      try {
+        const montoInicial = parseFloat(document.getElementById('inversion-monto').value);
+        const tasaAnual = parseFloat(document.getElementById('inversion-tasa').value) / 100;
+        const tiempoAnios = parseFloat(document.getElementById('inversion-tiempo').value);
+        const frecuencia = parseInt(document.getElementById('inversion-frecuencia').value);
+        const aportesMensuales = parseFloat(document.getElementById('inversion-aportes').value);
         
-        html += `
-          <tr>
-            <td>${apy}%</td>
-            <td>${apr.toFixed(2)}%</td>
-            <td>${rendimiento30d.toFixed(2)}%</td>
-            <td>${rendimiento90d.toFixed(2)}%</td>
-          </tr>
-        `;
-      });
-      
-      tabla.innerHTML = html;
+        if (isNaN(montoInicial) || montoInicial <= 0) {
+          alert('Por favor ingresa un monto inicial válido');
+          return;
+        }
+        
+        if (isNaN(tasaAnual) || tasaAnual <= 0) {
+          alert('Por favor ingresa una tasa de rendimiento válida');
+          return;
+        }
+        
+        if (isNaN(tiempoAnios) || tiempoAnios <= 0) {
+          alert('Por favor ingresa un período de tiempo válido');
+          return;
+        }
+        
+        // Calcular interés compuesto
+        const tasaPeriodica = tasaAnual / frecuencia;
+        const periodosTotales = tiempoAnios * frecuencia;
+        
+        // Valor futuro del monto inicial
+        let valorFinal = montoInicial * Math.pow(1 + tasaPeriodica, periodosTotales);
+        
+        // Valor futuro de los aportes mensuales (si existen)
+        if (aportesMensuales > 0) {
+          // Convertir aportes mensuales a la frecuencia de capitalización
+          const aportesPeriodicos = aportesMensuales * (12 / frecuencia);
+          for (let i = 1; i <= periodosTotales; i++) {
+            valorFinal += aportesPeriodicos * Math.pow(1 + tasaPeriodica, periodosTotales - i);
+          }
+        }
+        
+        // Calcular inversión total (monto inicial + aportes totales)
+        const aportesTotales = aportesMensuales * 12 * tiempoAnios;
+        const inversionTotal = montoInicial + aportesTotales;
+        
+        // Calcular ganancias
+        const ganancias = valorFinal - inversionTotal;
+        
+        // Calcular ROI
+        const roi = (ganancias / inversionTotal) * 100;
+        
+        // Mostrar resultados
+        document.getElementById('inversion-total').textContent = '$' + inversionTotal.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('valor-final').textContent = '$' + valorFinal.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('ganancias').textContent = '$' + ganancias.toLocaleString('es-ES', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('roi-total').textContent = roi.toFixed(2) + '%';
+        
+      } catch (error) {
+        console.error('Error en el cálculo de inversión:', error);
+        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
+      }
     }
 
-    // Función para validar números
+    // Calculadora versátil de conversiones
+    function calcularConversiones() {
+      try {
+        const inputValue = parseFloat(document.getElementById('input-value').value) / 100;
+        const capitalization = document.getElementById('capitalization').value;
+        const selectedType = document.querySelector('.calc-type-btn.active').dataset.type;
+        
+        if (isNaN(inputValue) || inputValue <= 0) {
+          alert('Por favor ingresa un valor válido');
+          return;
+        }
+        
+        let roiDaily, roiMonthly, apr, apy;
+        
+        switch(selectedType) {
+          case 'roi-daily':
+            roiDaily = inputValue;
+            roiMonthly = Math.pow(1 + roiDaily, 30) - 1;
+            apr = roiDaily * 365;
+            apy = Math.pow(1 + roiDaily, 365) - 1;
+            break;
+            
+          case 'roi-monthly':
+            roiMonthly = inputValue;
+            roiDaily = Math.pow(1 + roiMonthly, 1/30) - 1;
+            apr = roiDaily * 365;
+            apy = Math.pow(1 + roiDaily, 365) - 1;
+            break;
+            
+          case 'apr':
+            apr = inputValue;
+            roiDaily = apr / 365;
+            roiMonthly = Math.pow(1 + roiDaily, 30) - 1;
+            apy = Math.pow(1 + roiDaily, 365) - 1;
+            break;
+            
+          case 'apy':
+            apy = inputValue;
+            roiDaily = Math.pow(1 + apy, 1/365) - 1;
+            roiMonthly = Math.pow(1 + roiDaily, 30) - 1;
+            apr = roiDaily * 365;
+            break;
+        }
+        
+        let n = 1;
+        switch(capitalization) {
+          case 'daily': n = 365; break;
+          case 'monthly': n = 12; break;
+          case 'yearly': n = 1; break;
+        }
+        
+        if (capitalization !== 'daily') {
+          apy = Math.pow(1 + apr/n, n) - 1;
+        }
+        
+        document.getElementById('roi-daily-result').textContent = (roiDaily * 100).toFixed(4) + '%';
+        document.getElementById('roi-monthly-result').textContent = (roiMonthly * 100).toFixed(2) + '%';
+        document.getElementById('apr-result').textContent = (apr * 100).toFixed(2) + '%';
+        document.getElementById('apy-result').textContent = (apy * 100).toFixed(2) + '%';
+        
+      } catch (error) {
+        console.error('Error en el cálculo:', error);
+        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
+      }
+    }
+
+    // Función de validación
     function validarNumero(valor, min, max) {
       return !isNaN(valor) && valor >= min && valor <= max;
-    }
-
-    // Función para mostrar errores
-    function mostrarError(campoId, mensaje) {
-      const errorElement = document.getElementById(`error-${campoId}`);
-      const inputElement = document.getElementById(campoId);
-      
-      if (errorElement && inputElement) {
-        errorElement.textContent = mensaje;
-        errorElement.style.display = 'block';
-        inputElement.classList.add('input-error');
-        
-        // Ocultar error después de 5 segundos
-        setTimeout(() => {
-          errorElement.style.display = 'none';
-          inputElement.classList.remove('input-error');
-        }, 5000);
-      }
-    }
-
-    // Función para ocultar errores
-    function ocultarError(campoId) {
-      const errorElement = document.getElementById(`error-${campoId}`);
-      const inputElement = document.getElementById(campoId);
-      
-      if (errorElement && inputElement) {
-        errorElement.style.display = 'none';
-        inputElement.classList.remove('input-error');
-      }
-    }
-
-    // Calculadora personalizada
-    function calcularPersonalizado() {
-      try {
-        const inv = parseFloat(document.getElementById('inversion-2').value);
-        const apy = parseFloat(document.getElementById('apy-2').value);
-        const cant = parseFloat(document.getElementById('cantidad-2').value);
-        const mon = document.getElementById('moneda-2').value;
-
-        // Validaciones
-        if (!validarNumero(inv, 0.01, 1000000000)) {
-          mostrarError('inversion-2', 'La inversión debe ser entre 0.01 y 1,000,000,000');
-          return;
-        }
-        
-        if (!validarNumero(apy, 0, 1000)) {
-          mostrarError('apy-2', 'El APY debe estar entre 0 y 1000%');
-          return;
-        }
-        
-        if (!validarNumero(cant, 0.1, 100000)) {
-          mostrarError('cantidad-2', 'La cantidad debe estar entre 0.1 y 100,000');
-          return;
-        }
-
-        const u = document.querySelector('.time-btn.active').dataset.unit;
-
-        // Mostrar loading
-        const btn = document.getElementById('btn-calcular');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="loading"></span>Calculando...';
-        btn.disabled = true;
-
-        // Simular cálculo asíncrono
-        setTimeout(() => {
-          let f = u === 'hours' ? cant/(365*24) : u === 'days' ? cant/365 : cant;
-          const gAPY = inv * (Math.pow(1 + apy/100, f) - 1);
-          const gAPR = inv * (apy/100) * f;
-          const total = inv + gAPY;
-
-          document.getElementById('ganancia-apy').innerText = `${gAPY.toFixed(4)} ${mon}`;
-          document.getElementById('ganancia-apr').innerText = `${gAPR.toFixed(4)} ${mon}`;
-          document.getElementById('total-res').innerText = `${total.toFixed(4)} ${mon}`;
-          document.getElementById('resultado-personalizado').style.display = 'block';
-
-          // Restaurar botón
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }, 500);
-
-      } catch (error) {
-        console.error('Error en cálculo personalizado:', error);
-        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
-        
-        // Restaurar botón en caso de error
-        const btn = document.getElementById('btn-calcular');
-        btn.innerHTML = '✨ Calcular';
-        btn.disabled = false;
-      }
     }
 
     // Conversor de criptomonedas
@@ -1078,34 +1660,27 @@
         const a = document.getElementById('a-moneda').value;
 
         if (!validarNumero(m, 0.01, 1000000000)) {
-          mostrarError('monto', 'El monto debe ser entre 0.01 y 1,000,000,000');
+          alert('Monto inválido');
           return;
         }
 
-        // Mostrar loading
         const btn = document.getElementById('btn-convertir');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<span class="loading"></span>Convirtiendo...';
         btn.disabled = true;
 
-        // Simular conversión asíncrona
         setTimeout(() => {
           const tasa = tasasConversion[`${de}_${a}`];
           const r = tasa ? (m * tasa).toFixed(6) + " " + a : "Conversión no disponible";
           
           document.getElementById('conversion-res').innerText = r;
           document.getElementById('resultado-conversor').style.display = 'block';
-
-          // Restaurar botón
           btn.innerHTML = originalText;
           btn.disabled = false;
         }, 500);
 
       } catch (error) {
         console.error('Error en conversor:', error);
-        alert('Ha ocurrido un error en la conversión. Por favor, verifica los valores.');
-        
-        // Restaurar botón en caso de error
         const btn = document.getElementById('btn-convertir');
         btn.innerHTML = '🔄 Convertir';
         btn.disabled = false;
@@ -1118,32 +1693,20 @@
         const h = parseFloat(document.getElementById('hashrate').value);
         const costoKwh = parseFloat(document.getElementById('costo-kwh').value);
 
-        if (!validarNumero(h, 0.1, 1000000)) {
-          mostrarError('hashrate', 'El hashrate debe estar entre 0.1 y 1,000,000 TH/s');
-          return;
-        }
-        
-        if (!validarNumero(costoKwh, 0, 1)) {
-          mostrarError('costo', 'El costo por kWh debe estar entre 0 y 1 USD');
+        if (!validarNumero(h, 0.1, 1000000) || !validarNumero(costoKwh, 0, 1)) {
+          alert('Valores inválidos');
           return;
         }
 
-        // Mostrar loading
         const btn = document.getElementById('btn-mineria');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<span class="loading"></span>Calculando...';
         btn.disabled = true;
 
-        // Simular cálculo asíncrono
         setTimeout(() => {
-          // Fórmula más realista (estimación basada en datos actuales)
           const btcPorDia = (h * 0.000007).toFixed(8);
-          
-          // Consumo aproximado: 2500 W por TH/s
           const consumoWatts = h * 2500;
           const costeDiario = (consumoWatts * 24 * costoKwh / 1000).toFixed(2);
-          
-          // Valor en USD de la ganancia
           const valorGanancia = (parseFloat(btcPorDia) * 43000).toFixed(2);
           const beneficioNeto = (valorGanancia - parseFloat(costeDiario)).toFixed(2);
           
@@ -1151,17 +1714,12 @@
           document.getElementById('coste-electrico').innerText = costeDiario;
           document.getElementById('beneficio-neto').innerText = beneficioNeto;
           document.getElementById('resultado-mineria').style.display = 'block';
-
-          // Restaurar botón
           btn.innerHTML = originalText;
           btn.disabled = false;
         }, 500);
 
       } catch (error) {
-        console.error('Error en cálculo de minería:', error);
-        alert('Ha ocurrido un error en el cálculo. Por favor, verifica los valores.');
-        
-        // Restaurar botón en caso de error
+        console.error('Error en minería:', error);
         const btn = document.getElementById('btn-mineria');
         btn.innerHTML = '⚡ Calcular';
         btn.disabled = false;
