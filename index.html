@@ -25,6 +25,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
   <style>
     /* --- VARIABLES Y ESTILOS GLOBALES --- */
@@ -241,6 +242,7 @@
         margin-top: 5px;
         border-radius: 3px;
         transition: all 0.3s;
+        width: 0%;
     }
     .strength-weak { background: var(--error-color); width: 33%; }
     .strength-medium { background: var(--warning-color); width: 66%; }
@@ -399,6 +401,10 @@
         max-width: 500px;
         z-index: 1000;
         background: var(--card-bg);
+        border-radius: 16px;
+        padding: 25px;
+        max-height: 90vh;
+        overflow-y: auto;
     }
     .modal-header {
         display: flex;
@@ -413,6 +419,15 @@
         color: #94a3b8;
         font-size: 1.8em;
         cursor: pointer;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .close-modal-btn:hover {
+        background: rgba(255,255,255,0.1);
     }
     .auth-tabs {
         display: flex;
@@ -463,9 +478,13 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        max-width: 400px;
     }
     .notification-success { background: var(--success-color); }
     .notification-error { background: var(--error-color); }
+    .notification-warning { background: var(--warning-color); }
+    .notification-info { background: var(--color-primary); }
     @keyframes slideIn {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
@@ -566,9 +585,37 @@
         .hero p { font-size: 1.1em; }
         .profile-form { grid-template-columns: 1fr; }
         .user-header { flex-direction: column; text-align: center; }
-        .floating-buttons { flex-direction: row; }
-        #tools-menu { bottom: 80px; right: 15px; }
-        #back-to-top { bottom: 80px; right: 85px; }
+        .floating-buttons { 
+            flex-direction: row; 
+            bottom: 10px;
+            right: 10px;
+        }
+        #tools-menu { 
+            bottom: 80px; 
+            right: 15px; 
+            left: 15px;
+        }
+        #back-to-top { 
+            bottom: 80px; 
+            right: 85px; 
+        }
+        .modal {
+            width: 95%;
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero h1 { font-size: 2em; }
+        .card { padding: 20px; }
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+        }
+        .user-stats {
+            grid-template-columns: 1fr;
+        }
     }
   </style>
 </head>
@@ -671,7 +718,7 @@
                     <h3>📊 Estadísticas</h3>
                     <p>Ver métricas detalladas de usuarios.</p>
                 </div>
-                <div class="control-card">
+                <div class="control-card" onclick="showUserManagement()">
                     <h3>👥 Gestión de Usuarios</h3>
                     <p>Administrar miembros de la comunidad.</p>
                 </div>
@@ -954,6 +1001,7 @@
                 <input type="password" id="register-password" required minlength="6">
                 <button type="button" class="toggle-password" onclick="togglePassword('register-password')">👁️</button>
             </div>
+            <div class="password-strength" id="password-strength"></div>
         </div>
         <div class="form-group">
             <label for="register-confirm-password">Confirmar Contraseña:</label>
@@ -966,9 +1014,20 @@
     </form>
   </div>
 
+  <!-- Modal de Administración -->
+  <div id="admin-modal" class="modal card" style="display: none; max-width: 600px;">
+    <div class="modal-header">
+      <h2 id="admin-modal-title">Panel de Administración</h2>
+      <button onclick="closeAdminModal()" class="close-modal-btn">×</button>
+    </div>
+    <div id="admin-modal-content">
+      <!-- Contenido dinámico del modal de administración -->
+    </div>
+  </div>
+
   <script>
     // ===== CONFIGURACIÓN FIREBASE =====
-    // REEMPLAZA CON TUS DATOS DE FIREBASE
+    // REEMPLAZA CON TUS DATOS REALES DE FIREBASE
     const firebaseConfig = {
       apiKey: "TU_API_KEY",
       authDomain: "TU_PROYECTO.firebaseapp.com",
@@ -984,6 +1043,7 @@
     }
     const auth = firebase.auth();
     const db = firebase.firestore();
+    const storage = firebase.storage();
 
     // ===== ESTADO DE LA APLICACIÓN =====
     let currentUser = null;
@@ -1005,6 +1065,7 @@
           currentUser = user;
           loadUserData(user.uid);
           showUserInterface();
+          updateLastActive(user.uid);
         } else {
           currentUser = null;
           showGuestInterface();
@@ -1014,6 +1075,9 @@
       // Cargar datos iniciales
       loadAnnouncements();
       updateUserStats();
+      
+      // Configurar intervalo para actualizar estadísticas
+      setInterval(updateUserStats, 30000); // Actualizar cada 30 segundos
     }
 
     function setupEventListeners() {
@@ -1040,6 +1104,17 @@
 
       // Avatar upload
       document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
+      
+      // Fuerza de contraseña
+      document.getElementById('register-password').addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+      });
+      
+      // Cerrar modales al hacer clic fuera
+      document.getElementById('modal-overlay').addEventListener('click', function() {
+        closeAuthModal();
+        closeAdminModal();
+      });
     }
 
     // ===== AUTENTICACIÓN CON FIREBASE =====
@@ -1081,7 +1156,8 @@
           avatar: 'https://i.imgur.com/317XS9m.png',
           bio: '',
           joinDate: new Date().toISOString(),
-          lastActive: new Date().toISOString()
+          lastActive: new Date().toISOString(),
+          isAdmin: false
         });
         
         showNotification('¡Cuenta creada exitosamente!', 'success');
@@ -1108,6 +1184,9 @@
       document.getElementById('profile-section').style.display = 'block';
       document.getElementById('tools-section').style.display = 'block';
       document.getElementById('academy-section').style.display = 'block';
+      
+      // Verificar si es admin
+      checkAdminStatus();
       
       // Mostrar datos del usuario
       loadUserProfile();
@@ -1154,6 +1233,172 @@
       });
     }
 
+    async function checkAdminStatus() {
+      if (!currentUser) return;
+      
+      try {
+        const userDoc = await db.collection('users').doc(currentUser.uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData.isAdmin) {
+            document.getElementById('admin-panel').style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    }
+
+    // ===== FUNCIONES DE PERFIL =====
+    async function updateProfile() {
+      if (!currentUser) return;
+      
+      const username = document.getElementById('profile-username').value;
+      const email = document.getElementById('profile-email').value;
+      const bio = document.getElementById('profile-bio').value;
+      
+      try {
+        await db.collection('users').doc(currentUser.uid).update({
+          username: username,
+          email: email,
+          bio: bio,
+          lastUpdate: new Date().toISOString()
+        });
+        
+        // Actualizar perfil mostrado
+        loadUserProfile();
+        showNotification('Perfil actualizado correctamente', 'success');
+      } catch (error) {
+        showNotification('Error al actualizar perfil: ' + error.message, 'error');
+      }
+    }
+
+    function handleAvatarUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // Validar tipo y tamaño
+      if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
+        showNotification('Solo se permiten imágenes JPEG o PNG', 'error');
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification('La imagen debe ser menor a 5MB', 'error');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('avatar-preview').src = e.target.result;
+        document.getElementById('user-avatar-display').src = e.target.result;
+        
+        // Subir a Firebase Storage (opcional)
+        uploadAvatarToFirebase(file);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function uploadAvatarToFirebase(file) {
+      if (!currentUser) return;
+      
+      try {
+        const storageRef = storage.ref();
+        const avatarRef = storageRef.child(`avatars/${currentUser.uid}`);
+        await avatarRef.put(file);
+        
+        // Obtener URL de descarga
+        const downloadURL = await avatarRef.getDownloadURL();
+        
+        // Actualizar en Firestore
+        await db.collection('users').doc(currentUser.uid).update({
+          avatar: downloadURL
+        });
+        
+        showNotification('Avatar actualizado correctamente', 'success');
+      } catch (error) {
+        console.error('Error uploading avatar:', error);
+        showNotification('Avatar guardado localmente (sin subir a servidor)', 'info');
+      }
+    }
+
+    // ===== FUNCIONES DE ANUNCIOS =====
+    async function loadAnnouncements() {
+      try {
+        const snapshot = await db.collection('announcements')
+          .orderBy('date', 'desc')
+          .limit(5)
+          .get();
+        
+        announcements = [];
+        const container = document.getElementById('announcements-container');
+        
+        // Mantener el anuncio de bienvenida si no hay otros
+        if (snapshot.empty) {
+          return;
+        }
+        
+        container.innerHTML = '';
+        
+        snapshot.forEach(doc => {
+          const announcement = doc.data();
+          announcements.push(announcement);
+          
+          const announcementHTML = `
+            <div class="announcement-card">
+              <div class="announcement-date">${new Date(announcement.date).toLocaleDateString()}</div>
+              <h4>${announcement.title}</h4>
+              <p>${announcement.content}</p>
+            </div>
+          `;
+          container.innerHTML += announcementHTML;
+        });
+      } catch (error) {
+        console.error('Error loading announcements:', error);
+      }
+    }
+
+    // ===== ESTADÍSTICAS =====
+    async function updateUserStats() {
+      try {
+        const usersSnapshot = await db.collection('users').get();
+        const totalUsers = usersSnapshot.size;
+        
+        // Calcular usuarios activos hoy
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let activeToday = 0;
+        usersSnapshot.forEach(doc => {
+          const userData = doc.data();
+          if (userData.lastActive) {
+            const lastActive = new Date(userData.lastActive);
+            if (lastActive >= today) activeToday++;
+          }
+        });
+        
+        // Calcular crecimiento (simulado por ahora)
+        const growth = Math.min(100, Math.round((activeToday / totalUsers) * 100));
+        
+        document.getElementById('total-users').textContent = totalUsers;
+        document.getElementById('active-today').textContent = activeToday;
+        document.getElementById('community-growth').textContent = `+${growth}%`;
+        
+      } catch (error) {
+        console.error('Error updating stats:', error);
+      }
+    }
+
+    async function updateLastActive(uid) {
+      try {
+        await db.collection('users').doc(uid).update({
+          lastActive: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Error updating last active:', error);
+      }
+    }
+
     // ===== HERRAMIENTAS FUNCIONALES =====
     function calculateInvestment() {
       const amount = parseFloat(document.getElementById('investment-amount').value);
@@ -1176,9 +1421,15 @@
       const expression = document.getElementById('calc-expression').value;
       
       try {
-        const result = eval(expression);
+        // Reemplazar símbolos matemáticos comunes
+        const sanitizedExpression = expression
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/\^/g, '**');
+        
+        const result = eval(sanitizedExpression);
         const resultElement = document.getElementById('calc-result');
-        resultElement.innerHTML = `<p>Resultado: ${result}</p>`;
+        resultElement.innerHTML = `<p>Resultado: ${result.toLocaleString()}</p>`;
         resultElement.style.display = 'block';
       } catch (error) {
         showNotification('Expresión inválida', 'error');
@@ -1190,13 +1441,71 @@
       const fromCrypto = document.getElementById('from-crypto').value;
       const toCrypto = document.getElementById('to-crypto').value;
       
-      // Precios simulados
-      const prices = { BTC: 50000, ETH: 3000, ADA: 1.2, USD: 1, EUR: 0.85 };
+      // Precios simulados (en un caso real, usarías una API)
+      const prices = { 
+        BTC: 50000, 
+        ETH: 3000, 
+        ADA: 1.2, 
+        DOT: 25,
+        USD: 1, 
+        EUR: 0.85 
+      };
       
       const result = (amount * prices[fromCrypto]) / prices[toCrypto];
       const resultElement = document.getElementById('conversion-result');
       resultElement.innerHTML = `<p>${amount} ${fromCrypto} = ${result.toFixed(6)} ${toCrypto}</p>`;
       resultElement.style.display = 'block';
+    }
+
+    // ===== ACADEMIA =====
+    function showAcademyModule(module) {
+      const content = document.getElementById('academy-content');
+      const modules = {
+        basics: `
+          <h3>🔰 Conceptos Básicos de Criptomonedas</h3>
+          <p>Las criptomonedas son monedas digitales que utilizan criptografía para asegurar transacciones.</p>
+          <ul>
+            <li><strong>Blockchain:</strong> Libro de contabilidad distribuido e inmutable</li>
+            <li><strong>Descentralización:</strong> Sin autoridad central que controle la red</li>
+            <li><strong>Minería:</strong> Proceso de validación de transacciones y creación de nuevos bloques</li>
+            <li><strong>Wallets:</strong> Software o hardware para almacenar criptomonedas</li>
+          </ul>
+        `,
+        trading: `
+          <h3>📈 Trading Básico</h3>
+          <p>Conceptos fundamentales para empezar a operar en mercados cripto.</p>
+          <ul>
+            <li><strong>Análisis técnico:</strong> Estudio de gráficos y patrones de precio</li>
+            <li><strong>Análisis fundamental:</strong> Evaluación del valor intrínseco de un activo</li>
+            <li><strong>Gestión de riesgo:</strong> Nunca invertir más de lo que puedes perder</li>
+            <li><strong>Psychology del trading:</strong> Control emocional y disciplina</li>
+          </ul>
+        `,
+        security: `
+          <h3>🔒 Seguridad en Cripto</h3>
+          <p>Protege tus activos digitales con estas mejores prácticas.</p>
+          <ul>
+            <li><strong>Wallets fríos:</strong> Almacenamiento offline (hardware wallets)</li>
+            <li><strong>Wallets calientes:</strong> Almacenamiento online (móvil, desktop)</li>
+            <li><strong>Autenticación de dos factores (2FA):</strong> Capa adicional de seguridad</li>
+            <li><strong>Phishing y scams:</strong> Cómo identificar y evitar estafas comunes</li>
+          </ul>
+        `,
+        defi: `
+          <h3>🔄 Finanzas Descentralizadas (DeFi)</h3>
+          <p>Ecosistema financiero construido sobre blockchain sin intermediarios.</p>
+          <ul>
+            <li><strong>Lending y borrowing:</strong> Prestar y pedir prestado sin bancos</li>
+            <li><strong>Yield farming:</strong> Obtener rendimientos por proporcionar liquidez</li>
+            <li><strong>DEXs:</strong> Exchanges descentralizados sin custodia</li>
+            <li><strong>Staking:</strong> Bloquear tokens para apoyar la red y obtener recompensas</li>
+          </ul>
+        `
+      };
+      
+      content.innerHTML = modules[module] || '<p>Módulo no disponible.</p>';
+      content.style.display = 'block';
+      content.scrollIntoView({ behavior: 'smooth' });
     }
 
     // ===== NAVEGACIÓN Y MENÚS =====
@@ -1233,16 +1542,160 @@
       toggleToolsMenu();
     }
 
+    // ===== ADMINISTRACIÓN =====
+    function showAnnouncementModal() {
+      if (!currentUser) return;
+      
+      // Verificar si es admin
+      const isAdmin = checkIfAdmin();
+      
+      if (!isAdmin) {
+        showNotification('Solo administradores pueden crear anuncios', 'error');
+        return;
+      }
+      
+      document.getElementById('admin-modal-title').textContent = 'Crear Nuevo Anuncio';
+      document.getElementById('admin-modal-content').innerHTML = `
+        <div class="form-group">
+          <label for="announcement-title">Título del anuncio:</label>
+          <input type="text" id="announcement-title" placeholder="Título importante">
+        </div>
+        <div class="form-group">
+          <label for="announcement-content">Contenido:</label>
+          <textarea id="announcement-content" rows="4" placeholder="Escribe el contenido del anuncio..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="createAnnouncement()">Publicar Anuncio</button>
+      `;
+      
+      document.getElementById('admin-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+    }
+
+    function showStatsModal() {
+      document.getElementById('admin-modal-title').textContent = 'Estadísticas Detalladas';
+      document.getElementById('admin-modal-content').innerHTML = `
+        <p>Cargando estadísticas...</p>
+      `;
+      
+      document.getElementById('admin-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+      
+      // Simular carga de estadísticas detalladas
+      setTimeout(() => {
+        document.getElementById('admin-modal-content').innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="stat-card">
+              <div class="stat-number" id="modal-total-users">0</div>
+              <div class="stat-label">Total Usuarios</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="modal-active-today">0</div>
+              <div class="stat-label">Activos Hoy</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="modal-new-this-week">0</div>
+              <div class="stat-label">Nuevos Esta Semana</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number" id="modal-growth-rate">0%</div>
+              <div class="stat-label">Tasa de Crecimiento</div>
+            </div>
+          </div>
+          <div style="margin-top: 20px;">
+            <h3>Actividad Reciente</h3>
+            <p>Funcionalidad en desarrollo...</p>
+          </div>
+        `;
+        
+        // Actualizar números (simulados)
+        document.getElementById('modal-total-users').textContent = document.getElementById('total-users').textContent;
+        document.getElementById('modal-active-today').textContent = document.getElementById('active-today').textContent;
+        document.getElementById('modal-new-this-week').textContent = Math.floor(parseInt(document.getElementById('total-users').textContent) * 0.1);
+        document.getElementById('modal-growth-rate').textContent = document.getElementById('community-growth').textContent;
+      }, 1000);
+    }
+
+    function showUserManagement() {
+      document.getElementById('admin-modal-title').textContent = 'Gestión de Usuarios';
+      document.getElementById('admin-modal-content').innerHTML = `
+        <p>Cargando lista de usuarios...</p>
+      `;
+      
+      document.getElementById('admin-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+      
+      // Simular carga de usuarios
+      setTimeout(() => {
+        document.getElementById('admin-modal-content').innerHTML = `
+          <div style="max-height: 300px; overflow-y: auto;">
+            <p>Funcionalidad en desarrollo. Aquí se listarán todos los usuarios registrados.</p>
+            <p>Características planificadas:</p>
+            <ul>
+              <li>Ver perfil de usuario</li>
+              <li>Estadísticas de actividad</li>
+              <li>Gestión de permisos</li>
+              <li>Comunicación directa</li>
+            </ul>
+          </div>
+        `;
+      }, 1000);
+    }
+
+    async function createAnnouncement() {
+      const title = document.getElementById('announcement-title').value;
+      const content = document.getElementById('announcement-content').value;
+      
+      if (!title || !content) {
+        showNotification('Por favor, completa todos los campos', 'error');
+        return;
+      }
+      
+      try {
+        await db.collection('announcements').add({
+          title: title,
+          content: content,
+          date: new Date().toISOString(),
+          author: currentUser.uid
+        });
+        
+        showNotification('Anuncio publicado correctamente', 'success');
+        closeAdminModal();
+        loadAnnouncements();
+      } catch (error) {
+        showNotification('Error al publicar anuncio: ' + error.message, 'error');
+      }
+    }
+
+    function checkIfAdmin() {
+      // Esta es una verificación básica. En producción, deberías verificar en Firestore
+      return currentUser && currentUser.email === 'admin@globalinvest.com';
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').style.display = 'none';
+      document.getElementById('modal-overlay').style.display = 'none';
+    }
+
     // ===== FUNCIONES AUXILIARES =====
     function showNotification(message, type) {
       const notification = document.createElement('div');
       notification.className = `notification notification-${type}`;
-      notification.innerHTML = `${type === 'success' ? '✅' : '❌'} ${message}`;
+      notification.innerHTML = `${getNotificationIcon(type)} ${message}`;
       document.body.appendChild(notification);
       
       setTimeout(() => {
         notification.remove();
       }, 4000);
+    }
+
+    function getNotificationIcon(type) {
+      switch(type) {
+        case 'success': return '✅';
+        case 'error': return '❌';
+        case 'warning': return '⚠️';
+        case 'info': return 'ℹ️';
+        default: return '💡';
+      }
     }
 
     function togglePassword(inputId) {
@@ -1259,6 +1712,11 @@
     function closeAuthModal() {
       document.getElementById('auth-modal').style.display = 'none';
       document.getElementById('modal-overlay').style.display = 'none';
+      
+      // Limpiar formularios
+      document.getElementById('login-form').reset();
+      document.getElementById('register-form').reset();
+      document.getElementById('password-strength').style.width = '0%';
     }
 
     function switchAuthTab(tab) {
@@ -1268,9 +1726,27 @@
       document.getElementById('register-form').classList.toggle('active', tab === 'register');
     }
 
-    // Las demás funciones se mantienen similares pero adaptadas para Firebase
-    // ... (código adicional para completar todas las funcionalidades)
-
+    function checkPasswordStrength(password) {
+      const strength = document.getElementById('password-strength');
+      if (!strength) return;
+      
+      let score = 0;
+      if (password.length >= 8) score++;
+      if (/[A-Z]/.test(password)) score++;
+      if (/[0-9]/.test(password)) score++;
+      if (/[^A-Za-z0-9]/.test(password)) score++;
+      
+      strength.className = 'password-strength ';
+      if (password.length === 0) {
+        strength.style.width = '0%';
+      } else if (score < 2) {
+        strength.className += 'strength-weak';
+      } else if (score < 4) {
+        strength.className += 'strength-medium';
+      } else {
+        strength.className += 'strength-strong';
+      }
+    }
   </script>
 </body>
 </html>
