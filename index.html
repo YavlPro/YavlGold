@@ -450,18 +450,39 @@
     }
     .auth-form { display: none; }
     .auth-form.active { display: block; }
-    .password-container { position: relative; }
+    
+    /* CORRECCIÓN PARA LOS CAMPOS DE CONTRASEÑA */
+    .password-container { 
+        position: relative; 
+        display: flex;
+        align-items: center;
+    }
+    .password-container input {
+        padding-right: 50px; /* Espacio para el botón */
+        width: 100%;
+        margin: 0;
+    }
     .toggle-password {
         position: absolute;
-        right: 1px;
-        top: 1px;
-        bottom: 1px;
-        background: #334155;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
         border: none;
-        color: #e2e8f0;
+        color: #94a3b8;
         cursor: pointer;
-        padding: 0 15px;
-        border-radius: 0 10px 10px 0;
+        padding: 8px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        transition: all 0.3s;
+    }
+    .toggle-password:hover {
+        background: rgba(255,255,255,0.1);
+        color: var(--color-secondary);
     }
 
     /* --- NOTIFICACIONES --- */
@@ -615,6 +636,14 @@
         }
         .user-stats {
             grid-template-columns: 1fr;
+        }
+        .password-container input {
+            padding-right: 45px; /* Ajuste para móviles */
+        }
+        .toggle-password {
+            width: 35px;
+            height: 35px;
+            right: 3px;
         }
     }
   </style>
@@ -980,7 +1009,9 @@
             <label for="login-password">Contraseña:</label>
             <div class="password-container">
                 <input type="password" id="login-password" required>
-                <button type="button" class="toggle-password" onclick="togglePassword('login-password')">👁️</button>
+                <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🔑 Iniciar Sesión</button>
@@ -999,7 +1030,9 @@
             <label for="register-password">Contraseña:</label>
             <div class="password-container">
                 <input type="password" id="register-password" required minlength="6">
-                <button type="button" class="toggle-password" onclick="togglePassword('register-password')">👁️</button>
+                <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
             <div class="password-strength" id="password-strength"></div>
         </div>
@@ -1007,7 +1040,9 @@
             <label for="register-confirm-password">Confirmar Contraseña:</label>
             <div class="password-container">
                 <input type="password" id="register-confirm-password" required>
-                <button type="button" class="toggle-password" onclick="togglePassword('register-confirm-password')">👁️</button>
+                <button type="button" class="toggle-password" onclick="togglePassword('register-confirm-password')">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🚀 Crear Cuenta</button>
@@ -1700,7 +1735,15 @@
 
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
-      input.type = input.type === 'password' ? 'text' : 'password';
+      const button = input.nextElementSibling;
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        button.innerHTML = '<i class="fas fa-eye"></i>';
+      }
     }
 
     function showAuthModal(tab) {
@@ -1717,6 +1760,12 @@
       document.getElementById('login-form').reset();
       document.getElementById('register-form').reset();
       document.getElementById('password-strength').style.width = '0%';
+      
+      // Restablecer iconos de visibilidad de contraseña
+      const toggleButtons = document.querySelectorAll('.toggle-password');
+      toggleButtons.forEach(button => {
+        button.innerHTML = '<i class="fas fa-eye"></i>';
+      });
     }
 
     function switchAuthTab(tab) {
