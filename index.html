@@ -1060,13 +1060,11 @@
 
   <script>
     // ===== CONFIGURACIÓN SUPABASE =====
-    const SUPABASE_CONFIG = {
-      url: 'https://tu-proyecto.supabase.co', // REEMPLAZA con tu URL de Supabase
-      anonKey: 'tu-clave-anon-publica-aqui'   // REEMPLAZA con tu clave anónima
-    };
+    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
 
     // Inicializar Supabase
-    const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // ===== CONFIGURACIÓN RECAPTCHA =====
     const RECAPTCHA_CONFIG = {
