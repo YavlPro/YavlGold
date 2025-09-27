@@ -960,6 +960,10 @@
             </div>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🔑 Iniciar Sesión</button>
+        <button type="button" class="btn btn-secondary" onclick="handleMagicLinkLogin()" style="width: 100%; margin-top: 10px;">Enviar Enlace Mágico</button>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="#" onclick="showForgotPasswordForm()">¿Olvidaste tu contraseña?</a>
+        </div>
     </form>
     <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
         <div class="form-group">
@@ -991,6 +995,16 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🚀 Crear Cuenta</button>
     </form>
+    <form id="forgot-password-form" class="auth-form" style="display: none;" onsubmit="handlePasswordReset(event)">
+        <div class="form-group">
+            <label for="reset-email">Correo Electrónico:</label>
+            <input type="email" id="reset-email" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Instrucciones</button>
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="#" onclick="showLoginForm()">Volver al Inicio de Sesión</a>
+        </div>
+    </form>
   </div>
   <!-- Modal de Administración -->
   <div id="admin-modal" class="modal card" style="display: none; max-width: 600px;">
@@ -1018,6 +1032,7 @@
     // ===== INICIALIZACIÓN =====
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
+      checkForPasswordReset(); // <-- Añadir esta línea para manejar el enlace de recuperación
     });
     function initializeApp() {
       // Configurar event listeners
@@ -1081,13 +1096,6 @@
       });
     }
     // ===== AUTENTICACIÓN CON SUPABASE =====
-    // --- MEJORA CRÍTICA: Validación del lado del servidor para reCAPTCHA ---
-    // ADVERTENCIA: Este código NO VALIDA el token de reCAPTCHA de forma segura.
-    // El token debe ser enviado a una función de Edge Function de Supabase o a un backend
-    // donde se verifique su validez usando la API de Google reCAPTCHA Server.
-    // El código actual solo lo envía, lo cual NO ES SEGURO.
-    // Se ha mantenido el envío para no romper la lógica existente, pero
-    // DEBE IMPLEMENTARSE la validación del lado del servidor.
     async function handleRegister(e) {
       if (e) e.preventDefault();
       const email = document.getElementById('register-email').value;
@@ -1103,8 +1111,6 @@
       try {
         // Ejecutar reCAPTCHA
         const token = await executeRecaptcha('register');
-        // --- ADVERTENCIA: El token de reCAPTCHA no se valida aquí ---
-        // Debes enviarlo a una función del lado del servidor para verificación.
         const { data, error } = await supabase.auth.signUp({
           email: email,
           password: password,
@@ -1113,7 +1119,8 @@
               username: username,
               // --- ADVERTENCIA: Enviar el token aquí sin validación previa es inseguro ---
               captcha_token: token // ESTE DATO DEBE SER VALIDADO EN EL SERVIDOR
-            }
+            },
+            emailRedirectTo: window.location.origin // URL a la que redirigirá tras la verificación
           }
         });
 
@@ -1122,24 +1129,13 @@
           return;
         }
 
-        // Crear perfil de usuario en la base de datos
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              username: username,
-              email: email,
-              avatar_url: 'https://i.imgur.com/317XS9m.png',
-              bio: '',
-              created_at: new Date().toISOString()
-            });
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-          }
-        }
-        showNotification('¡Cuenta creada exitosamente! Revisa tu email para verificación.', 'success');
-        closeAuthModal();
+        // *Cambio importante:* No crear el perfil aquí inmediatamente.
+        // showNotification('¡Cuenta creada exitosamente! Revisa tu email para verificación.', 'success');
+        // closeAuthModal(); // No cierres el modal aún, informa al usuario.
+
+        // Informar al usuario que debe verificar su correo
+        showNotification('¡Cuenta creada! Revisa tu email (' + email + ') para verificar tu dirección y activar tu cuenta.', 'info');
+
       } catch (error) {
         showNotification('Error en el proceso de registro: ' + error.message, 'error');
       }
@@ -1151,10 +1147,7 @@
       const password = document.getElementById('login-password').value;
 
       try {
-        // Ejecutar reCAPTCHA
         const token = await executeRecaptcha('login');
-        // --- ADVERTENCIA: El token de reCAPTCHA no se valida aquí ---
-        // Debes enviarlo a una función del lado del servidor para verificación ANTES de iniciar sesión.
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
           password: password
@@ -1169,6 +1162,136 @@
       } catch (error) {
         showNotification('Error en el proceso de login: ' + error.message, 'error');
       }
+    }
+
+    // --- NUEVA FUNCIÓN: Inicio de sesión con enlace mágico ---
+    async function handleMagicLinkLogin() {
+      const email = document.getElementById('login-email').value;
+      if (!email) {
+         showNotification('Por favor, ingresa tu correo electrónico', 'warning');
+         return;
+      }
+
+      try {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            emailRedirectTo: window.location.origin // URL a la que redirigirá tras hacer clic en el enlace
+          },
+        });
+
+        if (error) throw error;
+        showNotification('¡Enlace de inicio de sesión enviado a ' + email + '! Revisa tu bandeja de entrada.', 'success');
+      } catch (error) {
+        showNotification('Error enviando enlace: ' + error.message, 'error');
+      }
+    }
+
+    // --- NUEVAS FUNCIONES: Recuperación de contraseña ---
+    function showForgotPasswordForm() {
+        // Ocultar formularios de login y register
+        document.getElementById('login-form').style.display = 'none';
+        document.getElementById('register-form').style.display = 'none';
+        // Mostrar el formulario de recuperación
+        document.getElementById('forgot-password-form').style.display = 'block';
+    }
+
+    function showLoginForm() {
+        // Ocultar formularios de register y forgot
+        document.getElementById('register-form').style.display = 'none';
+        document.getElementById('forgot-password-form').style.display = 'none';
+        // Mostrar el formulario de login
+        document.getElementById('login-form').style.display = 'block';
+        // Asegurar que el tab de login esté activo
+        switchAuthTab('login');
+    }
+
+    async function handlePasswordReset(e) {
+      if (e) e.preventDefault();
+      const email = document.getElementById('reset-email').value;
+
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/update-password' // URL a la que redirigirá con el token
+        });
+
+        if (error) throw error;
+        showNotification('Instrucciones para restablecer la contraseña enviadas a ' + email + '.', 'success');
+        // Volver al formulario de login después de enviar
+        setTimeout(() => {
+            showLoginForm();
+        }, 3000); // Espera 3 segundos para que vea el mensaje
+
+      } catch (error) {
+        showNotification('Error al restablecer la contraseña: ' + error.message, 'error');
+      }
+    }
+
+    // --- NUEVAS FUNCIONES: Manejo del enlace de restablecimiento ---
+    function checkForPasswordReset() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const actionType = urlParams.get('type'); // Puede ser 'recovery' para restablecimiento
+      const token = urlParams.get('token'); // El token de recuperación
+
+      if (actionType === 'recovery' && token) {
+        // Mostrar un modal o sección específica para ingresar la nueva contraseña
+        showPasswordUpdateForm(token);
+      }
+    }
+
+    function showPasswordUpdateForm(token) {
+        // Crea o muestra un formulario para ingresar la nueva contraseña
+        // Este es un ejemplo simple insertando HTML directamente
+        const container = document.querySelector('.container'); // O el contenedor principal
+        container.innerHTML = `
+            <div class="card">
+                <h2>Actualizar Contraseña</h2>
+                <form id="update-password-form">
+                    <div class="form-group">
+                        <label for="new-password">Nueva Contraseña:</label>
+                        <input type="password" id="new-password" required>
+                    </div>
+                     <div class="form-group">
+                        <label for="confirm-new-password">Confirmar Nueva Contraseña:</label>
+                        <input type="password" id="confirm-new-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+                </form>
+            </div>
+        `;
+
+        document.getElementById('update-password-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+            if (newPassword !== confirmNewPassword) {
+                showNotification('Las contraseñas no coinciden', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await supabase.auth.updateUser({
+                    password: newPassword,
+                }, {
+                    // Este token se pasa internamente por Supabase si se maneja correctamente el enlace
+                    // No necesitas pasarlo explícitamente aquí si usas el flujo estándar de Supabase
+                    // Sin embargo, si estás haciendo algo personalizado, podrías necesitarlo.
+                    // Para el flujo estándar de resetPasswordForEmail -> redirectTo -> updatePassword, no es necesario.
+                });
+
+                if (error) throw error;
+                showNotification('¡Contraseña actualizada correctamente!', 'success');
+                // Redirigir o mostrar mensaje para que inicie sesión con la nueva contraseña
+                setTimeout(() => {
+                    window.location.hash = ''; // Limpiar la URL de token
+                    window.location.reload(); // O redirigir a la página principal
+                }, 2000);
+
+            } catch (error) {
+                showNotification('Error al actualizar la contraseña: ' + error.message, 'error');
+            }
+        };
     }
 
     async function logout() {
@@ -1386,66 +1509,23 @@
       resultElement.style.display = 'block';
     }
 
-    // --- MEJORA CRÍTICA: Reemplazo de eval() ---
-    // La función original usaba eval(), lo cual es inseguro.
-    // Esta nueva función usa la biblioteca math.js (o una implementación manual simple)
-    // para evaluar expresiones matemáticas de forma segura.
-    // Para esta implementación, se usará una función manual simple que solo permite operaciones básicas.
-    // Para funcionalidades más complejas, se recomienda usar math.js externa.
+    // --- FUNCIÓN REVERTIDA: Calculadora Versátil con eval() ---
+    // ADVERTENCIA: eval() es inseguro. Reemplazar en producción.
     function calculateExpression() {
-        const expressionInput = document.getElementById('calc-expression').value;
+      const expression = document.getElementById('calc-expression').value;
+      try {
+        // Reemplazar símbolos matemáticos comunes
+        const sanitizedExpression = expression
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/\^/g, '**');
+        const result = eval(sanitizedExpression);
         const resultElement = document.getElementById('calc-result');
-        resultElement.style.display = 'none'; // Ocultar resultado anterior
-
-        if (!expressionInput.trim()) {
-            showNotification('Ingresa una expresión para calcular', 'warning');
-            return;
-        }
-
-        // Sanitizar la expresión: reemplazar símbolos comunes y permitir solo caracteres específicos
-        const sanitizedExpression = expressionInput
-            .replace(/×/g, '*')
-            .replace(/÷/g, '/')
-            .replace(/\^/g, '**')
-            .replace(/\s/g, ''); // Eliminar espacios
-
-        // Validar expresión con expresión regular: solo números, operadores (+, -, *, /, %, **), paréntesis y puntos
-        const validExpressionRegex = /^[0-9+\-*/%().]+$/;
-        if (!validExpressionRegex.test(sanitizedExpression)) {
-            showNotification('Expresión inválida o caracteres no permitidos', 'error');
-            return;
-        }
-
-        // Verificar paréntesis balanceados
-        let parenthesesCount = 0;
-        for (let char of sanitizedExpression) {
-            if (char === '(') parenthesesCount++;
-            if (char === ')') parenthesesCount--;
-            if (parenthesesCount < 0) {
-                showNotification('Paréntesis desbalanceados', 'error');
-                return;
-            }
-        }
-        if (parenthesesCount !== 0) {
-            showNotification('Paréntesis desbalanceados', 'error');
-            return;
-        }
-
-        try {
-            // Usar Function en lugar de eval para mayor seguridad (aunque no es 100% infalible)
-            // y limitar aún más el alcance.
-            // Se encapsula en una función anónima que solo devuelve el resultado.
-            const calculateFn = new Function('return ' + sanitizedExpression);
-            const result = calculateFn();
-            if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
-                throw new Error('Resultado inválido');
-            }
-            resultElement.innerHTML = `<p>Resultado: ${result.toLocaleString()}</p>`;
-            resultElement.style.display = 'block';
-        } catch (error) {
-            console.error("Error en la calculadora:", error);
-            showNotification('Error en la expresión matemática', 'error');
-        }
+        resultElement.innerHTML = `<p>Resultado: ${result.toLocaleString()}</p>`;
+        resultElement.style.display = 'block';
+      } catch (error) {
+        showNotification('Expresión inválida', 'error');
+      }
     }
 
 
@@ -1708,6 +1788,7 @@
       // Limpiar formularios
       document.getElementById('login-form').reset();
       document.getElementById('register-form').reset();
+      document.getElementById('forgot-password-form').reset();
       document.getElementById('password-strength').style.width = '0%';
       // Restablecer iconos de visibilidad de contraseña
       const toggleButtons = document.querySelectorAll('.toggle-password');
@@ -1720,6 +1801,8 @@
       document.getElementById('register-tab-btn').classList.toggle('active', tab === 'register');
       document.getElementById('login-form').classList.toggle('active', tab === 'login');
       document.getElementById('register-form').classList.toggle('active', tab === 'register');
+      // Asegurar que el form de olvido de contraseña esté oculto
+      document.getElementById('forgot-password-form').style.display = 'none';
     }
     function checkPasswordStrength(password) {
       const strength = document.getElementById('password-strength');
