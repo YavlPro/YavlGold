@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GLOBAL INVEST — Inversión Inteligente en Cripto</title>
-  <meta name="description" content="Comunidad de inversión en criptomonedas con herramientas profesionales, registro de usuarios y academia.">
+  <!-- Actualizado para GlobalGold -->
+  <title>GlobalGold — Ecosistema Global Innovador en Cripto</title>
+  <meta name="description" content="Comunidad global de criptomonedas con herramientas profesionales, registro de usuarios y academia.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
-  <meta property="og:title" content="GLOBAL INVEST — Inversión Inteligente en Cripto">
-  <meta property="og:description" content="Únete a la comunidad de inversores en cripto con herramientas profesionales y soporte directo.">
+  <meta property="og:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
+  <meta property="og:description" content="Únete a la comunidad global de cripto con herramientas profesionales y soporte directo.">
   <meta property="og:image" content="https://i.imgur.com/317XS9m.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
-  <meta name="twitter:title" content="GLOBAL INVEST — Inversión Inteligente en Cripto">
-  <meta name="twitter:description" content="Comunidad de inversión en cripto con calculadora, conversor y soporte.">
+  <meta name="twitter:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
+  <meta name="twitter:description" content="Comunidad global de cripto con calculadora, conversor y soporte.">
   <meta name="twitter:image" content="https://i.imgur.com/317XS9m.png">
   <link rel="icon" href="https://i.imgur.com/317XS9m.png" type="image/png">
   <link rel="apple-touch-icon" href="https://i.imgur.com/317XS9m.png">
@@ -24,7 +25,7 @@
     /* --- VARIABLES Y ESTILOS GLOBALES --- */
     :root {
       --color-primary: #1e3a8a;
-      --color-secondary: #d4af37;
+      --color-secondary: #d4af37; /* Dorado */
       --bg-dark: #0f172a;
       --text-light: #e2e8f0;
       --card-bg: #1e293b;
@@ -42,36 +43,29 @@
       background: var(--bg-dark);
       color: var(--text-light);
       line-height: 1.7;
-      scroll-behavior: smooth;
+      scroll-behavior: smooth; /* Habilita scroll suave */
     }
     .container {
       max-width: 900px;
       margin: 0 auto;
       padding: 0 20px 120px;
     }
-    /* --- HERO SECTION --- */
+    /* --- HERO SECTION (Rediseñado) --- */
     .hero {
       text-align: center;
-      padding: 60px 20px 40px;
+      padding: 80px 20px; /* Ajustado */
       background: linear-gradient(135deg, var(--bg-dark), #1e293b);
       border-bottom: 3px solid var(--color-secondary);
-    }
-    .hero h1 {
-      font-size: 2.8em;
-      color: var(--color-secondary);
-      margin: 0 0 15px;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-    }
-    .hero p {
-      font-size: 1.3em;
-      max-width: 700px;
-      margin: 0 auto;
-      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh; /* Asegura altura completa */
     }
     .logo-header {
-        width: 100px;
-        height: 100px;
-        margin: 0 auto 20px;
+        width: 120px; /* Ajustado */
+        height: 120px;
+        margin: 0 auto 20px; /* Espacio arriba y abajo */
         border-radius: 50%;
         border: 3px solid var(--color-secondary);
     }
@@ -79,7 +73,48 @@
         width: 100%;
         border-radius: 50%;
     }
-    /* --- COMPONENTES GENERALES --- */
+    .hero h1 {
+      font-family: 'Playfair Display', serif; /* Fuente del rediseño */
+      font-size: 4em; /* Tamaño grande */
+      color: transparent;
+      background: linear-gradient(45deg, #D4AF37, #FFD700, #D4AF37); /* Degradado dorado */
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: shimmer 4s infinite linear; /* Animación del rediseño */
+      margin: 0 0 15px;
+      text-align: center;
+    }
+    .hero p {
+      font-size: 1.3em;
+      max-width: 700px;
+      margin: 0 auto 30px; /* Espacio inferior antes del botón */
+      color: #cbd5e1;
+      text-align: center;
+    }
+    .gold-btn { /* Nuevo estilo para el botón de scroll */
+        padding: 12px 28px;
+        border: 2px solid var(--color-secondary);
+        border-radius: 4px;
+        color: var(--color-secondary);
+        background: transparent;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+    }
+    .gold-btn:hover {
+        background: var(--color-secondary);
+        color: var(--bg-dark);
+        transform: scale(1.05);
+    }
+    @keyframes shimmer { /* Animación del rediseño */
+      0% {background-position:0% 50%;}
+      100% {background-position:100% 50%;}
+    }
+    /* --- COMPONENTES GENERALES (mantenido) --- */
     .card {
       background: var(--card-bg);
       padding: 30px;
@@ -126,7 +161,7 @@
         transform: none;
         box-shadow: none;
     }
-    /* --- SISTEMA DE USUARIO Y PERFIL --- */
+    /* --- SISTEMA DE USUARIO Y PERFIL (mantenido) --- */
     .user-header {
         display: flex;
         justify-content: space-between;
@@ -181,7 +216,7 @@
         font-size: 0.9em;
         color: #94a3b8;
     }
-    /* --- SECCIÓN DE EDICIÓN DE PERFIL --- */
+    /* --- SECCIÓN DE EDICIÓN DE PERFIL (mantenido) --- */
     .profile-section { display: none; }
     .profile-form {
         display: grid;
@@ -233,7 +268,7 @@
     .strength-weak { background: var(--error-color); width: 33%; }
     .strength-medium { background: var(--warning-color); width: 66%; }
     .strength-strong { background: var(--success-color); width: 100%; }
-    /* --- ANUNCIOS Y PANEL ADMIN --- */
+    /* --- ANUNCIOS Y PANEL ADMIN (mantenido) --- */
     .announcement-card {
         background: rgba(30, 58, 138, 0.1);
         padding: 20px;
@@ -266,7 +301,7 @@
         border-color: var(--color-secondary);
         transform: translateY(-5px);
     }
-    /* --- HERRAMIENTAS --- */
+    /* --- HERRAMIENTAS (mantenido) --- */
     .tools-section { display: none; }
     .tool-container {
         background: rgba(30, 58, 138, 0.1);
@@ -318,7 +353,7 @@
         margin-bottom: 15px;
         color: var(--color-secondary);
     }
-    /* --- ROADMAP Y PRESENTACIÓN --- */
+    /* --- ROADMAP Y PRESENTACIÓN (mantenido) --- */
     .roadmap {
         margin: 40px 0;
     }
@@ -342,7 +377,7 @@
     .roadmap-phase li {
         margin-bottom: 8px;
     }
-    /* --- COMUNIDAD Y REDES --- */
+    /* --- COMUNIDAD Y REDES (mantenido) --- */
     .comunidad, .redes {
       text-align: center;
       padding: 20px;
@@ -364,7 +399,7 @@
       background: rgba(212, 175, 55, 0.3);
       transform: translateY(-2px);
     }
-    /* --- MODALES --- */
+    /* --- MODALES (mantenido) --- */
     #modal-overlay {
         display: none;
         position: fixed;
@@ -464,7 +499,7 @@
         background: rgba(255,255,255,0.1);
         color: var(--color-secondary);
     }
-    /* --- NOTIFICACIONES --- */
+    /* --- NOTIFICACIONES (mantenido) --- */
     .notification {
         position: fixed;
         top: 20px;
@@ -489,7 +524,7 @@
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
-    /* --- BOTONES FLOTANTES Y MENÚ DE HERRAMIENTAS --- */
+    /* --- BOTONES FLOTANTES Y MENÚ DE HERRAMIENTAS (mantenido) --- */
     .floating-buttons {
       position: fixed;
       bottom: 20px;
@@ -567,7 +602,7 @@
         background: #1e40af;
         transform: translateY(-3px);
     }
-    /* --- FOOTER --- */
+    /* --- FOOTER (actualizado) --- */
     footer {
       text-align: center;
       padding: 25px 0;
@@ -576,7 +611,7 @@
       border-top: 1px solid #334155;
       margin-top: 20px;
     }
-    /* --- ESTILOS RESPONSIVE --- */
+    /* --- ESTILOS RESPONSIVE (mantenido) --- */
     @media (max-width: 768px) {
         .hero h1 { font-size: 2.4em; }
         .hero p { font-size: 1.1em; }
@@ -625,14 +660,19 @@
 </head>
 <body>
   <div id="dashboard">
+    <!-- Hero Section Rediseñado -->
     <div class="hero">
         <div class="logo-header">
-            <img src="https://i.imgur.com/317XS9m.png" alt="GLOBAL INVEST Logo">
+            <img src="https://i.imgur.com/317XS9m.png" alt="GlobalGold Logo">
         </div>
-        <h1>GLOBAL INVEST</h1>
-        <p>Inversión inteligente, comunitaria y transparente en el ecosistema cripto.</p>
+        <h1>GlobalGold</h1>
+        <p>Ecosistema Global Innovador en Cripto</p>
+        <!-- Botón de scroll -->
+        <a href="#dashboard-content" class="gold-btn">Descubrir</a>
     </div>
-    <div class="container">
+
+    <!-- Contenido principal (todo lo demás) -->
+    <div id="dashboard-content" class="container">
         <!-- Tarjeta de Usuario y Estadísticas -->
         <div class="card">
             <div class="user-header">
@@ -670,7 +710,7 @@
             <div id="announcements-container">
                 <div class="announcement-card">
                     <div class="announcement-date">26/09/2025</div>
-                    <h4>¡Bienvenidos a GLOBAL INVEST!</h4>
+                    <h4>¡Bienvenidos a GlobalGold!</h4>
                     <p>Estamos emocionados de lanzar nuestra plataforma con herramientas profesionales para la comunidad cripto.</p>
                 </div>
             </div>
@@ -820,7 +860,7 @@
         </div>
         <!-- Roadmap del Proyecto -->
         <div class="card roadmap">
-            <h2>🗺️ Roadmap de GLOBAL INVEST</h2>
+            <h2>🗺️ Roadmap de GlobalGold</h2>
             <div class="roadmap-phase">
                 <h3><i class="fas fa-rocket"></i> Fase 1: Lanzamiento (Q4 2025)</h3>
                 <ul>
@@ -852,7 +892,7 @@
         <!-- Sección Quiénes Somos -->
         <section class="section card">
             <h2>👥 ¿Quiénes Somos?</h2>
-            <p>GLOBAL INVEST es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
+            <p>GlobalGold es una comunidad global de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
             <div style="margin-top: 20px; padding: 20px; background: rgba(30, 58, 138, 0.1); border-radius: 10px;">
                 <h3 style="color: var(--color-secondary); margin-bottom: 15px;">Nuestros Valores</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -877,7 +917,7 @@
         <!-- Misión -->
         <section class="section card">
             <h2>🎯 Misión</h2>
-            <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
+            <p>Empoderar a cada miembro de nuestra comunidad global con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
             <div style="margin-top: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 200px;">
                     <h3 style="color: var(--color-secondary); margin-bottom: 15px;">Nuestro Enfoque</h3>
@@ -896,8 +936,8 @@
         </section>
         <!-- Comunidad y Redes -->
         <div class="comunidad card">
-            <h3>🔗 Únete a nuestra comunidad</h3>
-            <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
+            <h3>🔗 Únete a nuestra comunidad global</h3>
+            <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 GlobalGold Telegram</a>
         </div>
         <div class="redes card">
             <h3>🌐 Sígueme en mis redes</h3>
@@ -907,8 +947,8 @@
             <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
         </div>
         <footer>
-            <p>© 2025 GLOBAL INVEST | Creado por YavlPro</p>
-            <p>💡 Comunidad de inversión en cripto — Educación, transparencia y crecimiento colectivo.</p>
+            <p>© 2025 GlobalGold | Creado por YavlPro</p>
+            <p>💡 Comunidad global de cripto — Educación, transparencia y crecimiento colectivo.</p>
         </footer>
     </div>
   </div>
@@ -1057,7 +1097,7 @@
         }
       });
       // Verificar sesión existente al cargar
-      supabase.auth.getSession().then(({  { session } }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           currentUser = session.user;
           showUserInterface();
@@ -1773,7 +1813,7 @@
     }
     function checkIfAdmin() {
       // Esta es una verificación básica. En producción, deberías verificar en la base de datos
-      return currentUser && currentUser.email === 'admin@globalinvest.com';
+      return currentUser && currentUser.email === 'admin@globalgold.com'; // Actualizado para GlobalGold
     }
     function closeAdminModal() {
       document.getElementById('admin-modal').style.display = 'none';
