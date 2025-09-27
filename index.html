@@ -5,26 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GLOBAL INVEST — Inversión Inteligente en Cripto</title>
   <meta name="description" content="Comunidad de inversión en criptomonedas con herramientas profesionales, registro de usuarios y academia.">
-
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
   <meta property="og:title" content="GLOBAL INVEST — Inversión Inteligente en Cripto">
   <meta property="og:description" content="Únete a la comunidad de inversores en cripto con herramientas profesionales y soporte directo.">
   <meta property="og:image" content="https://i.imgur.com/317XS9m.png">
-
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
   <meta name="twitter:title" content="GLOBAL INVEST — Inversión Inteligente en Cripto">
   <meta name="twitter:description" content="Comunidad de inversión en cripto con calculadora, conversor y soporte.">
   <meta name="twitter:image" content="https://i.imgur.com/317XS9m.png">
-
   <link rel="icon" href="https://i.imgur.com/317XS9m.png" type="image/png">
   <link rel="apple-touch-icon" href="https://i.imgur.com/317XS9m.png">
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.google.com/recaptcha/enterprise.js?render=6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI"></script>
-
   <style>
     /* --- VARIABLES Y ESTILOS GLOBALES --- */
     :root {
@@ -37,13 +32,11 @@
       --success-color: #10b981;
       --warning-color: #f59e0b;
     }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: var(--bg-dark);
@@ -51,13 +44,11 @@
       line-height: 1.7;
       scroll-behavior: smooth;
     }
-
     .container {
       max-width: 900px;
       margin: 0 auto;
       padding: 0 20px 120px;
     }
-
     /* --- HERO SECTION --- */
     .hero {
       text-align: center;
@@ -88,7 +79,6 @@
         width: 100%;
         border-radius: 50%;
     }
-
     /* --- COMPONENTES GENERALES --- */
     .card {
       background: var(--card-bg);
@@ -136,7 +126,6 @@
         transform: none;
         box-shadow: none;
     }
-
     /* --- SISTEMA DE USUARIO Y PERFIL --- */
     .user-header {
         display: flex;
@@ -192,7 +181,6 @@
         font-size: 0.9em;
         color: #94a3b8;
     }
-
     /* --- SECCIÓN DE EDICIÓN DE PERFIL --- */
     .profile-section { display: none; }
     .profile-form {
@@ -245,7 +233,6 @@
     .strength-weak { background: var(--error-color); width: 33%; }
     .strength-medium { background: var(--warning-color); width: 66%; }
     .strength-strong { background: var(--success-color); width: 100%; }
-
     /* --- ANUNCIOS Y PANEL ADMIN --- */
     .announcement-card {
         background: rgba(30, 58, 138, 0.1);
@@ -279,7 +266,6 @@
         border-color: var(--color-secondary);
         transform: translateY(-5px);
     }
-
     /* --- HERRAMIENTAS --- */
     .tools-section { display: none; }
     .tool-container {
@@ -332,7 +318,6 @@
         margin-bottom: 15px;
         color: var(--color-secondary);
     }
-
     /* --- ROADMAP Y PRESENTACIÓN --- */
     .roadmap {
         margin: 40px 0;
@@ -357,7 +342,6 @@
     .roadmap-phase li {
         margin-bottom: 8px;
     }
-
     /* --- COMUNIDAD Y REDES --- */
     .comunidad, .redes {
       text-align: center;
@@ -380,7 +364,6 @@
       background: rgba(212, 175, 55, 0.3);
       transform: translateY(-2px);
     }
-
     /* --- MODALES --- */
     #modal-overlay {
         display: none;
@@ -448,7 +431,6 @@
     }
     .auth-form { display: none; }
     .auth-form.active { display: block; }
-    
     /* CORRECCIÓN PARA LOS CAMPOS DE CONTRASEÑA */
     .password-container { 
         position: relative; 
@@ -482,7 +464,6 @@
         background: rgba(255,255,255,0.1);
         color: var(--color-secondary);
     }
-
     /* --- NOTIFICACIONES --- */
     .notification {
         position: fixed;
@@ -508,7 +489,6 @@
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
-
     /* --- BOTONES FLOTANTES Y MENÚ DE HERRAMIENTAS --- */
     .floating-buttons {
       position: fixed;
@@ -587,7 +567,6 @@
         background: #1e40af;
         transform: translateY(-3px);
     }
-
     /* --- FOOTER --- */
     footer {
       text-align: center;
@@ -597,7 +576,6 @@
       border-top: 1px solid #334155;
       margin-top: 20px;
     }
-
     /* --- ESTILOS RESPONSIVE --- */
     @media (max-width: 768px) {
         .hero h1 { font-size: 2.4em; }
@@ -623,7 +601,6 @@
             padding: 20px;
         }
     }
-
     @media (max-width: 480px) {
         .hero h1 { font-size: 2em; }
         .card { padding: 20px; }
@@ -647,7 +624,6 @@
   </style>
 </head>
 <body>
-
   <div id="dashboard">
     <div class="hero">
         <div class="logo-header">
@@ -656,7 +632,6 @@
         <h1>GLOBAL INVEST</h1>
         <p>Inversión inteligente, comunitaria y transparente en el ecosistema cripto.</p>
     </div>
-
     <div class="container">
         <!-- Tarjeta de Usuario y Estadísticas -->
         <div class="card">
@@ -674,7 +649,6 @@
                 </div>
                  <button id="logout-btn" class="btn btn-secondary" onclick="logout()" style="display: none;">Cerrar Sesión</button>
             </div>
-
             <div class="user-stats">
                 <div class="stat-card">
                     <div class="stat-number" id="total-users">0</div>
@@ -690,7 +664,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Anuncios -->
         <div class="card announcements">
             <h2>📢 Anuncios Importantes</h2>
@@ -702,7 +675,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Perfil de Usuario -->
         <div class="card profile-section" id="profile-section">
             <h2>👤 Mi Perfil</h2>
@@ -732,7 +704,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Panel de Administración -->
         <div class="card admin-panel" id="admin-panel">
             <h2>⚙️ Panel de Administración</h2>
@@ -751,11 +722,9 @@
                 </div>
             </div>
         </div>
-
         <!-- Sección de Herramientas -->
         <div class="card tools-section" id="tools-section">
             <h2>🛠️ Herramientas de Inversión</h2>
-            
             <!-- Calculadora de Inversión -->
             <div class="tool-container">
                 <h3>💰 Calculadora de Inversión</h3>
@@ -776,7 +745,6 @@
                 <button class="btn btn-primary" onclick="calculateInvestment()" style="margin-top: 15px;">Calcular</button>
                 <div id="investment-result" class="calc-result" style="display: none;"></div>
             </div>
-
             <!-- Calculadora Versátil -->
             <div class="tool-container">
                 <h3>🧮 Calculadora Versátil</h3>
@@ -789,7 +757,6 @@
                 <button class="btn btn-primary" onclick="calculateExpression()" style="margin-top: 15px;">Calcular</button>
                 <div id="calc-result" class="calc-result" style="display: none;"></div>
             </div>
-
             <!-- Conversor de Criptomonedas -->
             <div class="tool-container">
                 <h3>💱 Conversor de Criptomonedas</h3>
@@ -821,12 +788,10 @@
                 <div id="conversion-result" class="calc-result" style="display: none;"></div>
             </div>
         </div>
-
         <!-- Academia Cripto -->
         <div class="card tools-section" id="academy-section">
             <h2>📚 Academia Cripto</h2>
             <p>Explora nuestros módulos educativos para mejorar tus conocimientos sobre criptomonedas.</p>
-            
             <div class="academy-modules">
                 <div class="module-card" onclick="showAcademyModule('basics')">
                     <div class="module-icon">🔰</div>
@@ -849,16 +814,13 @@
                     <p>Descubre las finanzas descentralizadas y sus oportunidades</p>
                 </div>
             </div>
-            
             <div id="academy-content" style="display: none; margin-top: 30px;">
                 <!-- El contenido de la academia se cargará aquí -->
             </div>
         </div>
-
         <!-- Roadmap del Proyecto -->
         <div class="card roadmap">
             <h2>🗺️ Roadmap de GLOBAL INVEST</h2>
-            
             <div class="roadmap-phase">
                 <h3><i class="fas fa-rocket"></i> Fase 1: Lanzamiento (Q4 2025)</h3>
                 <ul>
@@ -868,7 +830,6 @@
                     <li>Academia con módulos educativos iniciales</li>
                 </ul>
             </div>
-            
             <div class="roadmap-phase">
                 <h3><i class="fas fa-chart-line"></i> Fase 2: Expansión (Q1 2026)</h3>
                 <ul>
@@ -878,7 +839,6 @@
                     <li>Portfolio tracker avanzado</li>
                 </ul>
             </div>
-            
             <div class="roadmap-phase">
                 <h3><i class="fas fa-gem"></i> Fase 3: Ecosistema Completo (Q2 2026)</h3>
                 <ul>
@@ -889,12 +849,10 @@
                 </ul>
             </div>
         </div>
-
         <!-- Sección Quiénes Somos -->
         <section class="section card">
             <h2>👥 ¿Quiénes Somos?</h2>
             <p>GLOBAL INVEST es una comunidad de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
-            
             <div style="margin-top: 20px; padding: 20px; background: rgba(30, 58, 138, 0.1); border-radius: 10px;">
                 <h3 style="color: var(--color-secondary); margin-bottom: 15px;">Nuestros Valores</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -916,12 +874,10 @@
                 </div>
             </div>
         </section>
-
         <!-- Misión -->
         <section class="section card">
             <h2>🎯 Misión</h2>
             <p>Empoderar a cada miembro de nuestra comunidad con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
-            
             <div style="margin-top: 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 200px;">
                     <h3 style="color: var(--color-secondary); margin-bottom: 15px;">Nuestro Enfoque</h3>
@@ -938,13 +894,11 @@
                 </div>
             </div>
         </section>
-
         <!-- Comunidad y Redes -->
         <div class="comunidad card">
             <h3>🔗 Únete a nuestra comunidad</h3>
             <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 Global Invest Telegram</a>
         </div>
-
         <div class="redes card">
             <h3>🌐 Sígueme en mis redes</h3>
             <a href="https://x.com/Yavlcapitan?t=GlOtXtKgCGkMHc2JNolUdg&s=09" target="_blank">🐦 Twitter</a>
@@ -952,14 +906,12 @@
             <a href="https://t.me/YavlPro" target="_blank">📱 Telegram Personal</a>
             <a href="https://youtube.com/@globalgoldlc" target="_blank">📺 YouTube</a>
         </div>
-
         <footer>
             <p>© 2025 GLOBAL INVEST | Creado por YavlPro</p>
             <p>💡 Comunidad de inversión en cripto — Educación, transparencia y crecimiento colectivo.</p>
         </footer>
     </div>
   </div>
-
   <!-- Botones Flotantes -->
   <div class="floating-buttons">
     <a href="https://wa.me/message/DFXFFK4DS3HSM1" target="_blank" id="support-btn" class="floating-btn" title="Soporte por WhatsApp">
@@ -972,11 +924,9 @@
       <i class="fas fa-user"></i>
     </button>
   </div>
-  
   <button id="back-to-top" title="Volver al inicio">
     <i class="fas fa-arrow-up"></i>
   </button>
-
   <!-- Menú de Herramientas -->
   <div id="tools-menu">
     <a href="#" class="tool-item" onclick="showToolsSection()">🛠️ Acceder a Herramientas</a>
@@ -984,10 +934,8 @@
     <a href="#" class="tool-item" onclick="showInvestmentCalculator()">💰 Calculadora de Inversión</a>
     <a href="#" class="tool-item" onclick="showCryptoConverter()">💱 Conversor de Cripto</a>
   </div>
-
   <!-- Modal de Autenticación -->
   <div id="modal-overlay"></div>
-
   <div id="auth-modal" class="modal card">
     <div class="modal-header">
       <h2>Mi Cuenta</h2>
@@ -997,7 +945,6 @@
         <div class="auth-tab active" id="login-tab-btn" onclick="switchAuthTab('login')">Iniciar Sesión</div>
         <div class="auth-tab" id="register-tab-btn" onclick="switchAuthTab('register')">Registrarse</div>
     </div>
-    
     <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
         <div class="form-group">
             <label for="login-email">Correo Electrónico:</label>
@@ -1014,7 +961,6 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🔑 Iniciar Sesión</button>
     </form>
-    
     <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
         <div class="form-group">
             <label for="register-username">Nombre de Usuario:</label>
@@ -1046,7 +992,6 @@
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🚀 Crear Cuenta</button>
     </form>
   </div>
-
   <!-- Modal de Administración -->
   <div id="admin-modal" class="modal card" style="display: none; max-width: 600px;">
     <div class="modal-header">
@@ -1057,46 +1002,36 @@
       <!-- Contenido dinámico del modal de administración -->
     </div>
   </div>
-
   <script>
     // ===== CONFIGURACIÓN SUPABASE =====
     const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-
     // Inicializar Supabase
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     // ===== CONFIGURACIÓN RECAPTCHA =====
     const RECAPTCHA_CONFIG = {
         siteKey: "6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI"
     };
-
     // ===== ESTADO DE LA APLICACIÓN =====
     let currentUser = null;
     let announcements = [];
-
     // ===== INICIALIZACIÓN =====
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
     });
-
     function initializeApp() {
       // Configurar event listeners
       setupEventListeners();
-      
       // Configurar listener de autenticación
       initializeAuthListener();
-      
       // Cargar datos iniciales
       loadAnnouncements();
       updateUserStats();
     }
-
     function initializeAuthListener() {
       // Escuchar cambios en la autenticación
       supabase.auth.onAuthStateChange((event, session) => {
         console.log('Auth state changed:', event, session);
-        
         if (event === 'SIGNED_IN' && session) {
           currentUser = session.user;
           showUserInterface();
@@ -1106,7 +1041,6 @@
           showGuestInterface();
         }
       });
-      
       // Verificar sesión existente al cargar
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
@@ -1116,78 +1050,78 @@
         }
       });
     }
-
     function setupEventListeners() {
       // Botones flotantes
       document.getElementById('tools-btn').addEventListener('click', toggleToolsMenu);
       document.getElementById('user-btn').addEventListener('click', handleUserButton);
-      
       // Cerrar menú de herramientas al hacer clic fuera
       document.addEventListener('click', (e) => {
         if (!e.target.closest('#tools-menu') && e.target.id !== 'tools-btn') {
           document.getElementById('tools-menu').style.display = 'none';
         }
       });
-
       // Botón volver arriba
       window.addEventListener('scroll', () => {
         const backToTopBtn = document.getElementById('back-to-top');
         backToTopBtn.style.display = (window.pageYOffset > 300) ? 'flex' : 'none';
       });
-      
       document.getElementById('back-to-top').addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-
       // Avatar upload
       document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
-      
       // Fuerza de contraseña
       document.getElementById('register-password').addEventListener('input', function() {
         checkPasswordStrength(this.value);
       });
-      
       // Cerrar modales al hacer clic fuera
       document.getElementById('modal-overlay').addEventListener('click', function() {
         closeAuthModal();
         closeAdminModal();
       });
     }
-
     // ===== AUTENTICACIÓN CON SUPABASE =====
+    // --- MEJORA CRÍTICA: Validación del lado del servidor para reCAPTCHA ---
+    // ADVERTENCIA: Este código NO VALIDA el token de reCAPTCHA de forma segura.
+    // El token debe ser enviado a una función de Edge Function de Supabase o a un backend
+    // donde se verifique su validez usando la API de Google reCAPTCHA Server.
+    // El código actual solo lo envía, lo cual NO ES SEGURO.
+    // Se ha mantenido el envío para no romper la lógica existente, pero
+    // DEBE IMPLEMENTARSE la validación del lado del servidor.
     async function handleRegister(e) {
       if (e) e.preventDefault();
-      
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
       const username = document.getElementById('register-username').value;
       const confirmPassword = document.getElementById('register-confirm-password').value;
-      
+
       if (password !== confirmPassword) {
         showNotification('Las contraseñas no coinciden', 'error');
         return;
       }
-      
+
       try {
         // Ejecutar reCAPTCHA
         const token = await executeRecaptcha('register');
-        
+        // --- ADVERTENCIA: El token de reCAPTCHA no se valida aquí ---
+        // Debes enviarlo a una función del lado del servidor para verificación.
         const { data, error } = await supabase.auth.signUp({
           email: email,
           password: password,
           options: {
             data: {
               username: username,
-              captcha_token: token
+              // --- ADVERTENCIA: Enviar el token aquí sin validación previa es inseguro ---
+              captcha_token: token // ESTE DATO DEBE SER VALIDADO EN EL SERVIDOR
             }
           }
         });
-        
+
         if (error) {
           showNotification('Error al registrarse: ' + error.message, 'error');
           return;
         }
-        
+
         // Crear perfil de usuario en la base de datos
         if (data.user) {
           const { error: profileError } = await supabase
@@ -1200,15 +1134,12 @@
               bio: '',
               created_at: new Date().toISOString()
             });
-            
           if (profileError) {
             console.error('Error creating profile:', profileError);
           }
         }
-        
         showNotification('¡Cuenta creada exitosamente! Revisa tu email para verificación.', 'success');
         closeAuthModal();
-        
       } catch (error) {
         showNotification('Error en el proceso de registro: ' + error.message, 'error');
       }
@@ -1216,26 +1147,25 @@
 
     async function handleLogin(e) {
       if (e) e.preventDefault();
-      
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
-      
+
       try {
+        // Ejecutar reCAPTCHA
         const token = await executeRecaptcha('login');
-        
+        // --- ADVERTENCIA: El token de reCAPTCHA no se valida aquí ---
+        // Debes enviarlo a una función del lado del servidor para verificación ANTES de iniciar sesión.
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
           password: password
         });
-        
+
         if (error) {
           showNotification('Error al iniciar sesión: ' + error.message, 'error');
           return;
         }
-        
         showNotification('¡Bienvenido de nuevo!', 'success');
         closeAuthModal();
-        
       } catch (error) {
         showNotification('Error en el proceso de login: ' + error.message, 'error');
       }
@@ -1245,13 +1175,11 @@
       try {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
-        
         showNotification('Sesión cerrada correctamente', 'success');
       } catch (error) {
         showNotification('Error al cerrar sesión', 'error');
       }
     }
-
     // ===== INTERFAZ DE USUARIO =====
     function showUserInterface() {
       document.getElementById('auth-buttons').style.display = 'none';
@@ -1260,11 +1188,9 @@
       document.getElementById('profile-section').style.display = 'block';
       document.getElementById('tools-section').style.display = 'block';
       document.getElementById('academy-section').style.display = 'block';
-      
       // Verificar si es admin
       checkAdminStatus();
     }
-
     function showGuestInterface() {
       document.getElementById('auth-buttons').style.display = 'flex';
       document.getElementById('logout-btn').style.display = 'none';
@@ -1274,17 +1200,14 @@
       document.getElementById('academy-section').style.display = 'none';
       document.getElementById('admin-panel').style.display = 'none';
     }
-
     async function checkAdminStatus() {
       if (!currentUser) return;
-      
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('is_admin')
           .eq('id', currentUser.id)
           .single();
-        
         if (!error && data && data.is_admin) {
           document.getElementById('admin-panel').style.display = 'block';
         }
@@ -1292,25 +1215,20 @@
         console.error('Error checking admin status:', error);
       }
     }
-
     // ===== FUNCIONES DE PERFIL =====
     async function loadUserProfile() {
       if (!currentUser) return;
-      
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
           .single();
-        
         if (error) throw error;
-        
         if (data) {
           document.getElementById('user-avatar-display').src = data.avatar_url;
           document.getElementById('username-display').textContent = data.username;
           document.getElementById('user-email-display').textContent = currentUser.email;
-          
           document.getElementById('profile-username').value = data.username;
           document.getElementById('profile-email').value = currentUser.email;
           document.getElementById('profile-bio').value = data.bio || '';
@@ -1320,13 +1238,11 @@
         console.error('Error loading user profile:', error);
       }
     }
-
     async function updateProfile() {
       if (!currentUser) return;
-      
       const username = document.getElementById('profile-username').value;
       const bio = document.getElementById('profile-bio').value;
-      
+
       try {
         const { error } = await supabase
           .from('profiles')
@@ -1336,76 +1252,67 @@
             updated_at: new Date().toISOString()
           })
           .eq('id', currentUser.id);
-        
         if (error) throw error;
-        
         showNotification('Perfil actualizado correctamente', 'success');
         loadUserProfile();
       } catch (error) {
         showNotification('Error al actualizar perfil: ' + error.message, 'error');
       }
     }
-
     function handleAvatarUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
-      
+
       // Validar tipo y tamaño
       if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
         showNotification('Solo se permiten imágenes JPEG o PNG', 'error');
         return;
       }
-      
       if (file.size > 5 * 1024 * 1024) {
         showNotification('La imagen debe ser menor a 5MB', 'error');
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = function(e) {
         document.getElementById('avatar-preview').src = e.target.result;
         document.getElementById('user-avatar-display').src = e.target.result;
-        
         // Subir a Supabase Storage (opcional)
         uploadAvatarToSupabase(file);
       };
       reader.readAsDataURL(file);
     }
-
     async function uploadAvatarToSupabase(file) {
       if (!currentUser) return;
-      
       try {
         const fileExt = file.name.split('.').pop();
         const fileName = `${currentUser.id}-${Math.random()}.${fileExt}`;
         const filePath = `avatars/${fileName}`;
-        
+
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(filePath, file);
-        
+
         if (uploadError) throw uploadError;
-        
+
         // Obtener URL pública
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(filePath);
-        
+
         // Actualizar perfil con nueva URL de avatar
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ avatar_url: publicUrl })
           .eq('id', currentUser.id);
-        
+
         if (updateError) throw updateError;
-        
         showNotification('Avatar actualizado correctamente', 'success');
       } catch (error) {
         console.error('Error uploading avatar:', error);
         showNotification('Error al subir avatar', 'error');
       }
     }
-
     // ===== FUNCIONES DE ANUNCIOS =====
     async function loadAnnouncements() {
       try {
@@ -1414,19 +1321,14 @@
           .select('*')
           .order('created_at', { ascending: false })
           .limit(5);
-        
         if (error) throw error;
-        
         announcements = data || [];
         const container = document.getElementById('announcements-container');
-        
         // Mantener el anuncio de bienvenida si no hay otros
         if (announcements.length === 0) {
           return;
         }
-        
         container.innerHTML = '';
-        
         announcements.forEach(announcement => {
           const announcementHTML = `
             <div class="announcement-card">
@@ -1441,7 +1343,6 @@
         console.error('Error loading announcements:', error);
       }
     }
-
     // ===== ESTADÍSTICAS =====
     async function updateUserStats() {
       try {
@@ -1449,37 +1350,33 @@
         const { count: totalUsers, error: countError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
-        
         if (countError) throw countError;
-        
+
         // Calcular usuarios activos hoy (simulado)
         const today = new Date();
         today.setHours(0,0,0,0);
-        
         // En una implementación real, consultarías la tabla de sesiones
         const activeToday = Math.floor(totalUsers * 0.1); // 10% de usuarios activos
-        
+
         // Crecimiento (simulado)
         const growth = Math.min(100, Math.round((activeToday / totalUsers) * 100));
-        
+
         document.getElementById('total-users').textContent = totalUsers;
         document.getElementById('active-today').textContent = activeToday;
         document.getElementById('community-growth').textContent = `+${growth}%`;
-        
       } catch (error) {
         console.error('Error updating stats:', error);
       }
     }
-
     // ===== HERRAMIENTAS FUNCIONALES =====
     function calculateInvestment() {
       const amount = parseFloat(document.getElementById('investment-amount').value);
       const rate = parseFloat(document.getElementById('annual-return').value) / 100;
       const years = parseInt(document.getElementById('investment-period').value);
-      
+
       const futureValue = amount * Math.pow(1 + rate, years);
       const profit = futureValue - amount;
-      
+
       const resultElement = document.getElementById('investment-result');
       resultElement.innerHTML = `
         <p>Inversión inicial: $${amount.toLocaleString()}</p>
@@ -1489,30 +1386,74 @@
       resultElement.style.display = 'block';
     }
 
+    // --- MEJORA CRÍTICA: Reemplazo de eval() ---
+    // La función original usaba eval(), lo cual es inseguro.
+    // Esta nueva función usa la biblioteca math.js (o una implementación manual simple)
+    // para evaluar expresiones matemáticas de forma segura.
+    // Para esta implementación, se usará una función manual simple que solo permite operaciones básicas.
+    // Para funcionalidades más complejas, se recomienda usar math.js externa.
     function calculateExpression() {
-      const expression = document.getElementById('calc-expression').value;
-      
-      try {
-        // Reemplazar símbolos matemáticos comunes
-        const sanitizedExpression = expression
-          .replace(/×/g, '*')
-          .replace(/÷/g, '/')
-          .replace(/\^/g, '**');
-        
-        const result = eval(sanitizedExpression);
+        const expressionInput = document.getElementById('calc-expression').value;
         const resultElement = document.getElementById('calc-result');
-        resultElement.innerHTML = `<p>Resultado: ${result.toLocaleString()}</p>`;
-        resultElement.style.display = 'block';
-      } catch (error) {
-        showNotification('Expresión inválida', 'error');
-      }
+        resultElement.style.display = 'none'; // Ocultar resultado anterior
+
+        if (!expressionInput.trim()) {
+            showNotification('Ingresa una expresión para calcular', 'warning');
+            return;
+        }
+
+        // Sanitizar la expresión: reemplazar símbolos comunes y permitir solo caracteres específicos
+        const sanitizedExpression = expressionInput
+            .replace(/×/g, '*')
+            .replace(/÷/g, '/')
+            .replace(/\^/g, '**')
+            .replace(/\s/g, ''); // Eliminar espacios
+
+        // Validar expresión con expresión regular: solo números, operadores (+, -, *, /, %, **), paréntesis y puntos
+        const validExpressionRegex = /^[0-9+\-*/%().]+$/;
+        if (!validExpressionRegex.test(sanitizedExpression)) {
+            showNotification('Expresión inválida o caracteres no permitidos', 'error');
+            return;
+        }
+
+        // Verificar paréntesis balanceados
+        let parenthesesCount = 0;
+        for (let char of sanitizedExpression) {
+            if (char === '(') parenthesesCount++;
+            if (char === ')') parenthesesCount--;
+            if (parenthesesCount < 0) {
+                showNotification('Paréntesis desbalanceados', 'error');
+                return;
+            }
+        }
+        if (parenthesesCount !== 0) {
+            showNotification('Paréntesis desbalanceados', 'error');
+            return;
+        }
+
+        try {
+            // Usar Function en lugar de eval para mayor seguridad (aunque no es 100% infalible)
+            // y limitar aún más el alcance.
+            // Se encapsula en una función anónima que solo devuelve el resultado.
+            const calculateFn = new Function('return ' + sanitizedExpression);
+            const result = calculateFn();
+            if (typeof result !== 'number' || isNaN(result) || !isFinite(result)) {
+                throw new Error('Resultado inválido');
+            }
+            resultElement.innerHTML = `<p>Resultado: ${result.toLocaleString()}</p>`;
+            resultElement.style.display = 'block';
+        } catch (error) {
+            console.error("Error en la calculadora:", error);
+            showNotification('Error en la expresión matemática', 'error');
+        }
     }
+
 
     function convertCrypto() {
       const amount = parseFloat(document.getElementById('crypto-amount').value);
       const fromCrypto = document.getElementById('from-crypto').value;
       const toCrypto = document.getElementById('to-crypto').value;
-      
+
       // Precios simulados (en un caso real, usarías una API)
       const prices = { 
         BTC: 50000, 
@@ -1522,13 +1463,12 @@
         USD: 1, 
         EUR: 0.85 
       };
-      
+
       const result = (amount * prices[fromCrypto]) / prices[toCrypto];
       const resultElement = document.getElementById('conversion-result');
       resultElement.innerHTML = `<p>${amount} ${fromCrypto} = ${result.toFixed(6)} ${toCrypto}</p>`;
       resultElement.style.display = 'block';
     }
-
     // ===== ACADEMIA =====
     function showAcademyModule(module) {
       const content = document.getElementById('academy-content');
@@ -1574,18 +1514,15 @@
           </ul>
         `
       };
-      
       content.innerHTML = modules[module] || '<p>Módulo no disponible.</p>';
       content.style.display = 'block';
       content.scrollIntoView({ behavior: 'smooth' });
     }
-
     // ===== NAVEGACIÓN Y MENÚS =====
     function toggleToolsMenu() {
       const menu = document.getElementById('tools-menu');
       menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
     }
-
     function handleUserButton() {
       if (currentUser) {
         document.getElementById('profile-section').scrollIntoView({ behavior: 'smooth' });
@@ -1593,39 +1530,31 @@
         showAuthModal('login');
       }
     }
-
     function showToolsSection() {
       document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
       toggleToolsMenu();
     }
-
     function showAcademySection() {
       document.getElementById('academy-section').scrollIntoView({ behavior: 'smooth' });
       toggleToolsMenu();
     }
-
     function showInvestmentCalculator() {
       document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
       toggleToolsMenu();
     }
-
     function showCryptoConverter() {
       document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
       toggleToolsMenu();
     }
-
     // ===== ADMINISTRACIÓN =====
     function showAnnouncementModal() {
       if (!currentUser) return;
-      
       // Verificar si es admin
       const isAdmin = checkIfAdmin();
-      
       if (!isAdmin) {
         showNotification('Solo administradores pueden crear anuncios', 'error');
         return;
       }
-      
       document.getElementById('admin-modal-title').textContent = 'Crear Nuevo Anuncio';
       document.getElementById('admin-modal-content').innerHTML = `
         <div class="form-group">
@@ -1638,20 +1567,16 @@
         </div>
         <button class="btn btn-primary" onclick="createAnnouncement()">Publicar Anuncio</button>
       `;
-      
       document.getElementById('admin-modal').style.display = 'block';
       document.getElementById('modal-overlay').style.display = 'block';
     }
-
     function showStatsModal() {
       document.getElementById('admin-modal-title').textContent = 'Estadísticas Detalladas';
       document.getElementById('admin-modal-content').innerHTML = `
         <p>Cargando estadísticas...</p>
       `;
-      
       document.getElementById('admin-modal').style.display = 'block';
       document.getElementById('modal-overlay').style.display = 'block';
-      
       // Simular carga de estadísticas detalladas
       setTimeout(() => {
         document.getElementById('admin-modal-content').innerHTML = `
@@ -1678,7 +1603,6 @@
             <p>Funcionalidad en desarrollo...</p>
           </div>
         `;
-        
         // Actualizar números (simulados)
         document.getElementById('modal-total-users').textContent = document.getElementById('total-users').textContent;
         document.getElementById('modal-active-today').textContent = document.getElementById('active-today').textContent;
@@ -1686,16 +1610,13 @@
         document.getElementById('modal-growth-rate').textContent = document.getElementById('community-growth').textContent;
       }, 1000);
     }
-
     function showUserManagement() {
       document.getElementById('admin-modal-title').textContent = 'Gestión de Usuarios';
       document.getElementById('admin-modal-content').innerHTML = `
         <p>Cargando lista de usuarios...</p>
       `;
-      
       document.getElementById('admin-modal').style.display = 'block';
       document.getElementById('modal-overlay').style.display = 'block';
-      
       // Simular carga de usuarios
       setTimeout(() => {
         document.getElementById('admin-modal-content').innerHTML = `
@@ -1712,16 +1633,15 @@
         `;
       }, 1000);
     }
-
     async function createAnnouncement() {
       const title = document.getElementById('announcement-title').value;
       const content = document.getElementById('announcement-content').value;
-      
+
       if (!title || !content) {
         showNotification('Por favor, completa todos los campos', 'error');
         return;
       }
-      
+
       try {
         const { error } = await supabase
           .from('announcements')
@@ -1731,9 +1651,7 @@
             created_at: new Date().toISOString(),
             author_id: currentUser.id
           });
-        
         if (error) throw error;
-        
         showNotification('Anuncio publicado correctamente', 'success');
         closeAdminModal();
         loadAnnouncements();
@@ -1741,29 +1659,24 @@
         showNotification('Error al publicar anuncio: ' + error.message, 'error');
       }
     }
-
     function checkIfAdmin() {
       // Esta es una verificación básica. En producción, deberías verificar en la base de datos
       return currentUser && currentUser.email === 'admin@globalinvest.com';
     }
-
     function closeAdminModal() {
       document.getElementById('admin-modal').style.display = 'none';
       document.getElementById('modal-overlay').style.display = 'none';
     }
-
     // ===== FUNCIONES AUXILIARES =====
     function showNotification(message, type) {
       const notification = document.createElement('div');
       notification.className = `notification notification-${type}`;
       notification.innerHTML = `${getNotificationIcon(type)} ${message}`;
       document.body.appendChild(notification);
-      
       setTimeout(() => {
         notification.remove();
       }, 4000);
     }
-
     function getNotificationIcon(type) {
       switch(type) {
         case 'success': return '✅';
@@ -1773,11 +1686,9 @@
         default: return '💡';
       }
     }
-
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
       const button = input.nextElementSibling;
-      
       if (input.type === 'password') {
         input.type = 'text';
         button.innerHTML = '<i class="fas fa-eye-slash"></i>';
@@ -1786,46 +1697,39 @@
         button.innerHTML = '<i class="fas fa-eye"></i>';
       }
     }
-
     function showAuthModal(tab) {
       document.getElementById('auth-modal').style.display = 'block';
       document.getElementById('modal-overlay').style.display = 'block';
       switchAuthTab(tab);
     }
-
     function closeAuthModal() {
       document.getElementById('auth-modal').style.display = 'none';
       document.getElementById('modal-overlay').style.display = 'none';
-      
       // Limpiar formularios
       document.getElementById('login-form').reset();
       document.getElementById('register-form').reset();
       document.getElementById('password-strength').style.width = '0%';
-      
       // Restablecer iconos de visibilidad de contraseña
       const toggleButtons = document.querySelectorAll('.toggle-password');
       toggleButtons.forEach(button => {
         button.innerHTML = '<i class="fas fa-eye"></i>';
       });
     }
-
     function switchAuthTab(tab) {
       document.getElementById('login-tab-btn').classList.toggle('active', tab === 'login');
       document.getElementById('register-tab-btn').classList.toggle('active', tab === 'register');
       document.getElementById('login-form').classList.toggle('active', tab === 'login');
       document.getElementById('register-form').classList.toggle('active', tab === 'register');
     }
-
     function checkPasswordStrength(password) {
       const strength = document.getElementById('password-strength');
       if (!strength) return;
-      
       let score = 0;
       if (password.length >= 8) score++;
       if (/[A-Z]/.test(password)) score++;
       if (/[0-9]/.test(password)) score++;
       if (/[^A-Za-z0-9]/.test(password)) score++;
-      
+
       strength.className = 'password-strength ';
       if (password.length === 0) {
         strength.style.width = '0%';
@@ -1837,7 +1741,6 @@
         strength.className += 'strength-strong';
       }
     }
-
     // ===== CAPTCHA FUNCTIONS =====
     async function executeRecaptcha(action) {
       return new Promise((resolve, reject) => {
@@ -1845,7 +1748,6 @@
           reject(new Error('reCAPTCHA no está cargado'));
           return;
         }
-
         grecaptcha.enterprise.ready(() => {
           grecaptcha.enterprise.execute(RECAPTCHA_CONFIG.siteKey, { action })
             .then(resolve)
