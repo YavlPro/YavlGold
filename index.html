@@ -1032,7 +1032,8 @@
     // ===== INICIALIZACIÓN =====
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
-      checkForPasswordReset(); // <-- Añadir esta línea para manejar el enlace de recuperación
+      // Llamar a checkForPasswordReset después de initializeApp
+      checkForPasswordReset();
     });
     function initializeApp() {
       // Configurar event listeners
@@ -1048,20 +1049,59 @@
       supabase.auth.onAuthStateChange((event, session) => {
         console.log('Auth state changed:', event, session);
         if (event === 'SIGNED_IN' && session) {
+          // El evento SIGNED_IN se dispara para login, signup y recuperación de contraseña
+          // Tambien para la verificación de correo si la URL es manejada correctamente
+          // Actualizar currentUser
           currentUser = session.user;
-          showUserInterface();
-          loadUserProfile();
+          // Cargar perfil (esto puede fallar si el perfil no existe aún, por ejemplo, después del registro pero antes de la verificación)
+          loadUserProfile().then(() => {
+              // Si se carga el perfil, mostrar interfaz de usuario
+              showUserInterface();
+          }).catch(error => {
+              console.error('Error al cargar perfil en SIGNED_IN:', error);
+              // Si no se puede cargar el perfil (p.ej., no existe porque no se verificó el correo aún),
+              // puede que quieras mantener la interfaz de invitado o mostrar un mensaje.
+              // Para el flujo de registro, se mostrará un mensaje de verificación en handleRegister.
+              // Aquí asumimos que si hay sesión, eventualmente se podrá cargar el perfil si es válida.
+              // Por ahora, intentamos mostrar la interfaz de usuario.
+              // Si no hay perfil, la UI puede mostrar campos vacíos.
+              showUserInterface();
+          });
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
           showGuestInterface();
+        } else if (event === 'PASSWORD_RECOVERY') {
+          // Este evento no existe en la API actual de Supabase JS.
+          // La recuperación se maneja a través del flujo de redirección y updatePassword.
+          // No se necesita acción específica aquí.
         }
       });
-      // Verificar sesión existente al cargar
-      supabase.auth.getSession().then(({ data: { session } }) => {
+
+      // Verificar sesión existente al cargar (importante para manejar la URL de verificación en el mismo navegador)
+      // Se llama a getSession para obtener la sesión actual si existe (por ejemplo, tras hacer clic en el enlace de verificación en el mismo navegador)
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (error) {
+            console.error('Error obteniendo sesión inicial:', error);
+            // Aunque haya error, mostramos la interfaz de invitado
+            showGuestInterface();
+            return;
+        }
         if (session) {
+          console.log('Sesión inicial encontrada:', session);
           currentUser = session.user;
-          showUserInterface();
-          loadUserProfile();
+          // Intentar cargar el perfil inmediatamente
+          loadUserProfile().then(() => {
+              showUserInterface();
+          }).catch(loadError => {
+              console.error('Error al cargar perfil en getSession:', loadError);
+              // Si hay sesión pero no perfil, puede ser un usuario nuevo no verificado.
+              // Mostrar interfaz de invitado o un mensaje especial.
+              // Por ahora, mostramos la interfaz de usuario y asumimos que loadUserProfile manejará el error internamente si es necesario.
+              showUserInterface();
+          });
+        } else {
+          // No hay sesión activa, mostrar interfaz de invitado
+          showGuestInterface();
         }
       });
     }
@@ -1135,6 +1175,8 @@
 
         // Informar al usuario que debe verificar su correo
         showNotification('¡Cuenta creada! Revisa tu email (' + email + ') para verificar tu dirección y activar tu cuenta.', 'info');
+        // Opcional: Cerrar el modal o dejarlo abierto con un mensaje de verificación
+        // closeAuthModal(); // Puedes dejarlo abierto para enfatizar la verificación
 
       } catch (error) {
         showNotification('Error en el proceso de registro: ' + error.message, 'error');
@@ -1147,6 +1189,7 @@
       const password = document.getElementById('login-password').value;
 
       try {
+        // Ejecutar reCAPTCHA
         const token = await executeRecaptcha('login');
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email,
@@ -1157,6 +1200,7 @@
           showNotification('Error al iniciar sesión: ' + error.message, 'error');
           return;
         }
+        // El evento onAuthStateChange se encargará de mostrar la UI
         showNotification('¡Bienvenido de nuevo!', 'success');
         closeAuthModal();
       } catch (error) {
@@ -1164,7 +1208,7 @@
       }
     }
 
-    // --- NUEVA FUNCIÓN: Inicio de sesión con enlace mágico ---
+    // --- FUNCIÓN: Inicio de sesión con enlace mágico ---
     async function handleMagicLinkLogin() {
       const email = document.getElementById('login-email').value;
       if (!email) {
@@ -1187,7 +1231,7 @@
       }
     }
 
-    // --- NUEVAS FUNCIONES: Recuperación de contraseña ---
+    // --- FUNCIONES: Recuperación de contraseña ---
     function showForgotPasswordForm() {
         // Ocultar formularios de login y register
         document.getElementById('login-form').style.display = 'none';
@@ -1227,15 +1271,28 @@
       }
     }
 
-    // --- NUEVAS FUNCIONES: Manejo del enlace de restablecimiento ---
+    // --- FUNCIONES: Manejo del enlace de restablecimiento y verificación ---
     function checkForPasswordReset() {
       const urlParams = new URLSearchParams(window.location.search);
-      const actionType = urlParams.get('type'); // Puede ser 'recovery' para restablecimiento
-      const token = urlParams.get('token'); // El token de recuperación
+      const actionType = urlParams.get('type'); // Puede ser 'recovery' para restablecimiento o 'signup' para confirmación de correo
+      const token = urlParams.get('token'); // El token de recuperación o confirmación
 
       if (actionType === 'recovery' && token) {
+        console.log("Token de recuperación encontrado en la URL.");
         // Mostrar un modal o sección específica para ingresar la nueva contraseña
         showPasswordUpdateForm(token);
+      } else if (actionType === 'signup' && token) {
+          // Este es el caso de verificación de correo electrónico
+          console.log("Token de confirmación de correo encontrado en la URL.");
+          // La sesión debería haberse iniciado automáticamente si la URL es correcta y coincide con emailRedirectTo.
+          // El evento onAuthStateChange y getSession deberían haber manejado esto.
+          // Si llegamos aquí, puede significar que el proceso de carga de perfil falló o que hay un retraso.
+          // Mostrar un mensaje temporal y recargar la página para asegurar el estado.
+          showNotification('¡Correo verificado! Cargando tu cuenta...', 'info');
+          setTimeout(() => {
+              window.location.hash = ''; // Limpiar la URL de token si es necesario
+              window.location.reload(); // Recargar para que se aplique el estado de sesión
+          }, 2000);
       }
     }
 
@@ -1273,18 +1330,14 @@
             try {
                 const { error } = await supabase.auth.updateUser({
                     password: newPassword,
-                }, {
-                    // Este token se pasa internamente por Supabase si se maneja correctamente el enlace
-                    // No necesitas pasarlo explícitamente aquí si usas el flujo estándar de Supabase
-                    // Sin embargo, si estás haciendo algo personalizado, podrías necesitarlo.
-                    // Para el flujo estándar de resetPasswordForEmail -> redirectTo -> updatePassword, no es necesario.
                 });
 
                 if (error) throw error;
                 showNotification('¡Contraseña actualizada correctamente!', 'success');
                 // Redirigir o mostrar mensaje para que inicie sesión con la nueva contraseña
+                // La sesión debería mantenerse, pero se puede forzar una recarga para refrescar la UI.
                 setTimeout(() => {
-                    window.location.hash = ''; // Limpiar la URL de token
+                    window.location.hash = ''; // Limpiar la URL de token si es necesario
                     window.location.reload(); // O redirigir a la página principal
                 }, 2000);
 
@@ -1297,10 +1350,21 @@
     async function logout() {
       try {
         const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        showNotification('Sesión cerrada correctamente', 'success');
+        if (error) {
+             console.error('Error en Supabase signOut:', error);
+             // A veces puede haber problemas de red o el token ya expiró.
+             // Aún así, forzamos el cambio de interfaz como si se hubiera cerrado sesión.
+             // El evento onAuthStateChange debería capturar el SIGNED_OUT y llamar a showGuestInterface.
+             // Si no lo hace, forzamos el cambio aquí.
+             showGuestInterface();
+             showNotification('Sesión cerrada. Si persisten problemas, recarga la página.', 'warning');
+             return;
+        }
+        // El evento onAuthStateChange se encargará de mostrar la UI de invitado
+        // showNotification('Sesión cerrada correctamente', 'success'); // Opcional, el evento SIGNED_OUT podría mostrar un mensaje
       } catch (error) {
-        showNotification('Error al cerrar sesión', 'error');
+        console.error('Error inesperado al cerrar sesión:', error);
+        showNotification('Error inesperado al cerrar sesión', 'error');
       }
     }
     // ===== INTERFAZ DE USUARIO =====
@@ -1347,7 +1411,15 @@
           .select('*')
           .eq('id', currentUser.id)
           .single();
-        if (error) throw error;
+        if (error) {
+            // Si el perfil no existe (p.ej., usuario nuevo no verificado), se lanza un error.
+            // Esto es normal en ciertos flujos.
+            // console.error('Error loading user profile:', error); // Opcional: comentar para no llenar consola
+            // No mostramos notificación de error aquí porque puede ser intencional (usuario no verificado).
+            // Simplemente no se carga la info.
+            // La UI mostrará campos vacíos o valores por defecto.
+            return; // Salir silenciosamente si no hay perfil
+        }
         if (data) {
           document.getElementById('user-avatar-display').src = data.avatar_url;
           document.getElementById('username-display').textContent = data.username;
@@ -1359,6 +1431,8 @@
         }
       } catch (error) {
         console.error('Error loading user profile:', error);
+        // Opcional: Mostrar un mensaje genérico si falla por otros motivos
+        // showNotification('Error al cargar el perfil', 'error');
       }
     }
     async function updateProfile() {
@@ -1509,7 +1583,7 @@
       resultElement.style.display = 'block';
     }
 
-    // --- FUNCIÓN REVERTIDA: Calculadora Versátil con eval() ---
+    // --- FUNCIÓN: Calculadora Versátil con eval() ---
     // ADVERTENCIA: eval() es inseguro. Reemplazar en producción.
     function calculateExpression() {
       const expression = document.getElementById('calc-expression').value;
