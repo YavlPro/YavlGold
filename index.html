@@ -24,7 +24,7 @@
     /* --- VARIABLES Y ESTILOS GLOBALES --- */
     :root {
       --color-primary: #1e3a8a;
-      --color-secondary: #d4af37; /* Dorado */
+      --color-secondary: #d4af37;
       --bg-dark: #0f172a;
       --text-light: #e2e8f0;
       --card-bg: #1e293b;
@@ -49,7 +49,6 @@
       margin: 0 auto;
       padding: 0 20px 120px;
     }
-    /* --- HERO SECTION (Rediseñado) --- */
     .hero {
       text-align: center;
       padding: 80px 20px;
@@ -113,7 +112,6 @@
       0% {background-position:0% 50%;}
       100% {background-position:100% 50%;}
     }
-    /* --- COMPONENTES GENERALES --- */
     .card {
       background: var(--card-bg);
       padding: 30px;
@@ -160,7 +158,6 @@
         transform: none;
         box-shadow: none;
     }
-    /* --- SISTEMA DE USUARIO Y PERFIL --- */
     .user-header {
         display: flex;
         justify-content: space-between;
@@ -215,7 +212,6 @@
         font-size: 0.9em;
         color: #94a3b8;
     }
-    /* --- SECCIÓN DE EDICIÓN DE PERFIL --- */
     .profile-section { display: none; }
     .profile-form {
         display: grid;
@@ -267,7 +263,6 @@
     .strength-weak { background: var(--error-color); width: 33%; }
     .strength-medium { background: var(--warning-color); width: 66%; }
     .strength-strong { background: var(--success-color); width: 100%; }
-    /* --- ANUNCIOS Y PANEL ADMIN --- */
     .announcement-card {
         background: rgba(30, 58, 138, 0.1);
         padding: 20px;
@@ -300,7 +295,6 @@
         border-color: var(--color-secondary);
         transform: translateY(-5px);
     }
-    /* --- HERRAMIENTAS --- */
     .tools-section { display: none; }
     .tool-container {
         background: rgba(30, 58, 138, 0.1);
@@ -352,7 +346,6 @@
         margin-bottom: 15px;
         color: var(--color-secondary);
     }
-    /* --- ROADMAP Y PRESENTACIÓN --- */
     .roadmap {
         margin: 40px 0;
     }
@@ -376,7 +369,6 @@
     .roadmap-phase li {
         margin-bottom: 8px;
     }
-    /* --- COMUNIDAD Y REDES --- */
     .comunidad, .redes {
       text-align: center;
       padding: 20px;
@@ -398,7 +390,6 @@
       background: rgba(212, 175, 55, 0.3);
       transform: translateY(-2px);
     }
-    /* --- MODALES --- */
     #modal-overlay {
         display: none;
         position: fixed;
@@ -465,7 +456,6 @@
     }
     .auth-form { display: none; }
     .auth-form.active { display: block; }
-    /* CORRECCIÓN PARA LOS CAMPOS DE CONTRASEÑA */
     .password-container { 
         position: relative; 
         display: flex;
@@ -498,7 +488,6 @@
         background: rgba(255,255,255,0.1);
         color: var(--color-secondary);
     }
-    /* --- NOTIFICACIONES --- */
     .notification {
         position: fixed;
         top: 20px;
@@ -523,7 +512,6 @@
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
-    /* --- BOTONES FLOTANTES Y MENÚ DE HERRAMIENTAS --- */
     .floating-buttons {
       position: fixed;
       bottom: 20px;
@@ -601,7 +589,6 @@
         background: #1e40af;
         transform: translateY(-3px);
     }
-    /* --- FOOTER --- */
     footer {
       text-align: center;
       padding: 25px 0;
@@ -610,7 +597,6 @@
       border-top: 1px solid #334155;
       margin-top: 20px;
     }
-    /* --- ESTILOS RESPONSIVE --- */
     @media (max-width: 768px) {
         .hero h1 { font-size: 2.4em; }
         .hero p { font-size: 1.1em; }
@@ -659,20 +645,16 @@
 </head>
 <body>
   <div id="dashboard">
-    <!-- Hero Section Rediseñado -->
     <div class="hero">
         <div class="logo-header">
             <img src="https://i.imgur.com/317XS9m.png" alt="GlobalGold Logo">
         </div>
         <h1>GlobalGold</h1>
         <p>Ecosistema Global Innovador en Cripto</p>
-        <!-- Botón de scroll -->
         <a href="#dashboard-content" class="gold-btn">Descubrir</a>
     </div>
 
-    <!-- Contenido principal -->
     <div id="dashboard-content" class="container">
-        <!-- Tarjeta de Usuario y Estadísticas -->
         <div class="card">
             <div class="user-header">
                 <div class="user-profile" id="user-profile-display" style="display: none;">
@@ -703,7 +685,7 @@
                 </div>
             </div>
         </div>
-        <!-- Anuncios -->
+        
         <div class="card announcements">
             <h2>📢 Anuncios Importantes</h2>
             <div id="announcements-container">
@@ -714,7 +696,7 @@
                 </div>
             </div>
         </div>
-        <!-- Perfil de Usuario -->
+        
         <div class="card profile-section" id="profile-section">
             <h2>👤 Mi Perfil</h2>
             <div class="profile-form">
@@ -743,7 +725,7 @@
                 </div>
             </div>
         </div>
-        <!-- Panel de Administración -->
+        
         <div class="card admin-panel" id="admin-panel">
             <h2>⚙️ Panel de Administración</h2>
             <div class="admin-controls">
@@ -761,10 +743,9 @@
                 </div>
             </div>
         </div>
-        <!-- Sección de Herramientas -->
+        
         <div class="card tools-section" id="tools-section">
             <h2>🛠️ Herramientas de Inversión</h2>
-            <!-- Calculadora de Inversión -->
             <div class="tool-container">
                 <h3>💰 Calculadora de Inversión</h3>
                 <div class="calculator-grid">
@@ -784,7 +765,7 @@
                 <button class="btn btn-primary" onclick="calculateInvestment()" style="margin-top: 15px;">Calcular</button>
                 <div id="investment-result" class="calc-result" style="display: none;"></div>
             </div>
-            <!-- Calculadora Versátil (SEGURA) -->
+            
             <div class="tool-container">
                 <h3>🧮 Calculadora Versátil</h3>
                 <div class="calculator-grid">
@@ -797,7 +778,7 @@
                 <button class="btn btn-primary" onclick="calculateExpression()" style="margin-top: 15px;">Calcular</button>
                 <div id="calc-result" class="calc-result" style="display: none;"></div>
             </div>
-            <!-- Conversor de Criptomonedas -->
+            
             <div class="tool-container">
                 <h3>💱 Conversor de Criptomonedas</h3>
                 <div class="calculator-grid">
@@ -828,7 +809,7 @@
                 <div id="conversion-result" class="calc-result" style="display: none;"></div>
             </div>
         </div>
-        <!-- Academia Cripto -->
+        
         <div class="card tools-section" id="academy-section">
             <h2>📚 Academia Cripto</h2>
             <p>Explora nuestros módulos educativos para mejorar tus conocimientos sobre criptomonedas.</p>
@@ -854,11 +835,9 @@
                     <p>Descubre las finanzas descentralizadas y sus oportunidades</p>
                 </div>
             </div>
-            <div id="academy-content" style="display: none; margin-top: 30px;">
-                <!-- El contenido de la academia se cargará aquí -->
-            </div>
+            <div id="academy-content" style="display: none; margin-top: 30px;"></div>
         </div>
-        <!-- Roadmap del Proyecto -->
+        
         <div class="card roadmap">
             <h2>🗺️ Roadmap de GlobalGold</h2>
             <div class="roadmap-phase">
@@ -889,7 +868,7 @@
                 </ul>
             </div>
         </div>
-        <!-- Sección Quiénes Somos -->
+        
         <section class="section card">
             <h2>👥 ¿Quiénes Somos?</h2>
             <p>GlobalGold es una comunidad global de inversores comprometidos con el crecimiento sostenible en el mundo de las criptomonedas. Fundada por <strong>YavlPro</strong>, nuestra misión es democratizar el acceso a oportunidades de alto rendimiento, con transparencia, educación y soporte continuo.</p>
@@ -914,7 +893,7 @@
                 </div>
             </div>
         </section>
-        <!-- Misión -->
+        
         <section class="section card">
             <h2>🎯 Misión</h2>
             <p>Empoderar a cada miembro de nuestra comunidad global con las herramientas, conocimientos y oportunidades necesarias para alcanzar la libertad financiera a través de inversiones inteligentes en activos digitales.</p>
@@ -934,7 +913,7 @@
                 </div>
             </div>
         </section>
-        <!-- Comunidad y Redes -->
+        
         <div class="comunidad card">
             <h3>🔗 Únete a nuestra comunidad global</h3>
             <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank">👉 GlobalGold Telegram</a>
@@ -952,7 +931,7 @@
         </footer>
     </div>
   </div>
-  <!-- Botones Flotantes -->
+  
   <div class="floating-buttons">
     <a href="https://wa.me/message/DFXFFK4DS3HSM1" target="_blank" id="support-btn" class="floating-btn" title="Soporte por WhatsApp">
       <i class="fas fa-robot"></i>
@@ -967,14 +946,14 @@
   <button id="back-to-top" title="Volver al inicio">
     <i class="fas fa-arrow-up"></i>
   </button>
-  <!-- Menú de Herramientas -->
+  
   <div id="tools-menu">
     <a href="#" class="tool-item" onclick="showToolsSection()">🛠️ Acceder a Herramientas</a>
     <a href="#" class="tool-item" onclick="showAcademySection()">📚 Academia Cripto</a>
     <a href="#" class="tool-item" onclick="showInvestmentCalculator()">💰 Calculadora de Inversión</a>
     <a href="#" class="tool-item" onclick="showCryptoConverter()">💱 Conversor de Cripto</a>
   </div>
-  <!-- Modal de Autenticación -->
+  
   <div id="modal-overlay"></div>
   <div id="auth-modal" class="modal card">
     <div class="modal-header">
@@ -1046,35 +1025,31 @@
         </div>
     </form>
   </div>
-  <!-- Modal de Administración -->
+  
   <div id="admin-modal" class="modal card" style="display: none; max-width: 600px;">
     <div class="modal-header">
       <h2 id="admin-modal-title">Panel de Administración</h2>
       <button onclick="closeAdminModal()" class="close-modal-btn">×</button>
     </div>
-    <div id="admin-modal-content">
-      <!-- Contenido dinámico del modal de administración -->
-    </div>
+    <div id="admin-modal-content"></div>
   </div>
+  
   <script>
     // ===== CONFIGURACIÓN SUPABASE =====
     const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
     
-    // Inicializar Supabase
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // ===== CONFIGURACIÓN RECAPTCHA =====
     const RECAPTCHA_CONFIG = {
         siteKey: "6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI"
     };
 
-    // ===== ESTADO DE LA APLICACIÓN =====
     let currentUser = null;
     let announcements = [];
     let userIsAdmin = false;
+    let statsUpdateInterval;
 
-    // ===== INICIALIZACIÓN =====
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
       checkForAuthRedirects();
@@ -1085,6 +1060,9 @@
       initializeAuthListener();
       loadAnnouncements();
       updateUserStats();
+      
+      // Actualizar estadísticas cada 30 segundos
+      statsUpdateInterval = setInterval(updateUserStats, 30000);
     }
 
     function initializeAuthListener() {
@@ -1095,10 +1073,14 @@
           showUserInterface();
           loadUserProfile();
           checkAdminStatus();
+          updateUserStats(); // Actualizar stats cuando un usuario inicia sesión
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
           userIsAdmin = false;
           showGuestInterface();
+          updateUserStats(); // Actualizar stats cuando un usuario cierra sesión
+        } else if (event === 'USER_UPDATED') {
+          updateUserStats(); // Actualizar stats cuando se actualiza un usuario
         }
       });
 
@@ -1109,6 +1091,7 @@
           loadUserProfile();
           checkAdminStatus();
         }
+        updateUserStats(); // Asegurar que las stats se carguen al inicio
       });
     }
 
@@ -1143,7 +1126,7 @@
       });
     }
 
-    // ===== AUTENTICACIÓN CON SUPABASE =====
+    // ===== AUTENTICACIÓN =====
     async function handleRegister(e) {
       if (e) e.preventDefault();
       
@@ -1160,7 +1143,6 @@
       try {
         const token = await executeRecaptcha('register');
         
-        // CORRECCIÓN: Sintaxis corregida del objeto options
         const { data, error } = await supabase.auth.signUp({
           email: email,
           password: password,
@@ -1177,9 +1159,9 @@
           return;
         }
 
-        // Crear perfil después del registro exitoso
         if (data.user) {
           await createUserProfile(data.user.id, username);
+          updateUserStats(); // Actualizar stats después del registro
         }
 
         showNotification('¡Cuenta creada! Revisa tu email (' + email + ') para verificar tu dirección.', 'info');
@@ -1189,7 +1171,6 @@
       }
     }
 
-    // CORRECCIÓN: Función para crear perfil de usuario
     async function createUserProfile(userId, username) {
       try {
         const { error } = await supabase
@@ -1202,13 +1183,13 @@
               avatar_url: 'https://i.imgur.com/317XS9m.png',
               is_admin: false,
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
+              last_active: new Date().toISOString()
             }
           ]);
 
-        if (error) {
+        if (error && error.code !== '23505') { // Ignorar error si el perfil ya existe
           console.error('Error creating profile:', error);
-          // No mostrar error al usuario para no confundirlo
         }
       } catch (error) {
         console.error('Error in createUserProfile:', error);
@@ -1234,10 +1215,27 @@
           return;
         }
         
+        // Actualizar última actividad
+        if (data.user) {
+          await updateLastActive(data.user.id);
+        }
+        
         showNotification('¡Bienvenido de nuevo!', 'success');
         closeAuthModal();
+        updateUserStats(); // Actualizar stats después del login
       } catch (error) {
         showNotification('Error en el proceso de login: ' + error.message, 'error');
+      }
+    }
+
+    async function updateLastActive(userId) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ last_active: new Date().toISOString() })
+          .eq('id', userId);
+      } catch (error) {
+        console.error('Error updating last active:', error);
       }
     }
 
@@ -1375,6 +1373,7 @@
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
         showNotification('Sesión cerrada correctamente', 'success');
+        updateUserStats(); // Actualizar stats después del logout
       } catch (error) {
         showNotification('Error al cerrar sesión', 'error');
       }
@@ -1426,6 +1425,56 @@
       }
     }
 
+    // ===== ESTADÍSTICAS DE USUARIOS =====
+    async function updateUserStats() {
+      try {
+        // Obtener total de usuarios
+        const { count: totalUsers, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+          
+        if (countError) throw countError;
+
+        // Obtener usuarios activos hoy (últimas 24 horas)
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        
+        const { count: activeToday, error: activeError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gte('last_active', yesterday.toISOString());
+          
+        if (activeError) throw activeError;
+
+        // Calcular crecimiento mensual (comparación con el mes anterior)
+        const lastMonth = new Date(today);
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        
+        const { count: lastMonthUsers, error: monthError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .lte('created_at', lastMonth.toISOString());
+          
+        if (monthError) throw monthError;
+
+        const growth = lastMonthUsers > 0 ? 
+          Math.round(((totalUsers - lastMonthUsers) / lastMonthUsers) * 100) : 100;
+
+        // Actualizar la interfaz
+        document.getElementById('total-users').textContent = totalUsers || 0;
+        document.getElementById('active-today').textContent = activeToday || 0;
+        document.getElementById('community-growth').textContent = `+${growth}%`;
+        
+      } catch (error) {
+        console.error('Error updating stats:', error);
+        // Valores por defecto en caso de error
+        document.getElementById('total-users').textContent = '0';
+        document.getElementById('active-today').textContent = '0';
+        document.getElementById('community-growth').textContent = '+0%';
+      }
+    }
+
     // ===== FUNCIONES DE PERFIL =====
     async function loadUserProfile() {
       if (!currentUser) return;
@@ -1438,10 +1487,8 @@
           .single();
           
         if (error) {
-          // Si no existe el perfil, crearlo
           if (error.code === 'PGRST116') {
             await createUserProfile(currentUser.id, currentUser.email.split('@')[0]);
-            // Recargar después de crear
             loadUserProfile();
           }
           return;
@@ -1480,6 +1527,7 @@
         if (error) throw error;
         showNotification('Perfil actualizado correctamente', 'success');
         loadUserProfile();
+        updateUserStats(); // Actualizar stats después de actualizar perfil
       } catch (error) {
         showNotification('Error al actualizar perfil: ' + error.message, 'error');
       }
@@ -1533,13 +1581,14 @@
 
         if (updateError) throw updateError;
         showNotification('Avatar actualizado correctamente', 'success');
+        updateUserStats(); // Actualizar stats después de cambiar avatar
       } catch (error) {
         console.error('Error uploading avatar:', error);
         showNotification('Error al subir avatar', 'error');
       }
     }
 
-    // ===== HERRAMIENTAS FUNCIONALES =====
+    // ===== HERRAMIENTAS =====
     function calculateInvestment() {
       const amount = parseFloat(document.getElementById('investment-amount').value);
       const rate = parseFloat(document.getElementById('annual-return').value) / 100;
@@ -1557,24 +1606,20 @@
       resultElement.style.display = 'block';
     }
 
-    // CORRECCIÓN: Calculadora segura sin eval()
     function calculateExpression() {
       const expression = document.getElementById('calc-expression').value;
       
       try {
-        // Validar y limpiar la expresión
         const sanitizedExpression = expression
-          .replace(/[^0-9+\-*/().^]/g, '') // Solo permitir caracteres seguros
+          .replace(/[^0-9+\-*/().^]/g, '')
           .replace(/×/g, '*')
           .replace(/÷/g, '/')
           .replace(/\^/g, '**');
           
-        // Validación adicional de seguridad
         if (!/^[0-9+\-*/().\s]+$/.test(sanitizedExpression)) {
           throw new Error('Expresión contiene caracteres no permitidos');
         }
         
-        // Usar Function constructor como alternativa más segura a eval
         const result = new Function('return ' + sanitizedExpression)();
         
         const resultElement = document.getElementById('calc-result');
@@ -1590,7 +1635,6 @@
       const fromCrypto = document.getElementById('from-crypto').value;
       const toCrypto = document.getElementById('to-crypto').value;
 
-      // Precios simulados
       const prices = { 
         BTC: 50000, 
         ETH: 3000, 
@@ -1606,9 +1650,160 @@
       resultElement.style.display = 'block';
     }
 
-    // ===== FUNCIONES RESTANTES (sin cambios significativos) =====
-    // [El resto del código JavaScript permanece igual...]
-    
+    // ===== FUNCIONES RESTANTES =====
+    function showAcademyModule(module) {
+      const content = document.getElementById('academy-content');
+      const modules = {
+        basics: `<h3>🔰 Conceptos Básicos de Criptomonedas</h3><p>Las criptomonedas son monedas digitales que utilizan criptografía para asegurar transacciones.</p>`,
+        trading: `<h3>📈 Trading Básico</h3><p>Conceptos fundamentales para empezar a operar en mercados cripto.</p>`,
+        security: `<h3>🔒 Seguridad en Cripto</h3><p>Protege tus activos digitales con estas mejores prácticas.</p>`,
+        defi: `<h3>🔄 Finanzas Descentralizadas (DeFi)</h3><p>Ecosistema financiero construido sobre blockchain sin intermediarios.</p>`
+      };
+      
+      content.innerHTML = modules[module] || '<p>Módulo no disponible.</p>';
+      content.style.display = 'block';
+      content.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function toggleToolsMenu() {
+      const menu = document.getElementById('tools-menu');
+      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function handleUserButton() {
+      if (currentUser) {
+        document.getElementById('profile-section').scrollIntoView({ behavior: 'smooth' });
+      } else {
+        showAuthModal('login');
+      }
+    }
+
+    function showToolsSection() {
+      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
+      toggleToolsMenu();
+    }
+
+    function showAcademySection() {
+      document.getElementById('academy-section').scrollIntoView({ behavior: 'smooth' });
+      toggleToolsMenu();
+    }
+
+    function showInvestmentCalculator() {
+      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
+      toggleToolsMenu();
+    }
+
+    function showCryptoConverter() {
+      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
+      toggleToolsMenu();
+    }
+
+    // ===== ANUNCIOS =====
+    async function loadAnnouncements() {
+      try {
+        const { data, error } = await supabase
+          .from('announcements')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(5);
+          
+        if (error) throw error;
+        announcements = data || [];
+        const container = document.getElementById('announcements-container');
+        
+        if (announcements.length === 0) return;
+        
+        container.innerHTML = '';
+        announcements.forEach(announcement => {
+          const announcementHTML = `
+            <div class="announcement-card">
+              <div class="announcement-date">${new Date(announcement.created_at).toLocaleDateString()}</div>
+              <h4>${announcement.title}</h4>
+              <p>${announcement.content}</p>
+            </div>
+          `;
+          container.innerHTML += announcementHTML;
+        });
+      } catch (error) {
+        console.error('Error loading announcements:', error);
+      }
+    }
+
+    // ===== ADMINISTRACIÓN =====
+    function showAnnouncementModal() {
+      if (!currentUser || !userIsAdmin) {
+        showNotification('Solo administradores pueden crear anuncios', 'error');
+        return;
+      }
+      
+      document.getElementById('admin-modal-title').textContent = 'Crear Nuevo Anuncio';
+      document.getElementById('admin-modal-content').innerHTML = `
+        <div class="form-group">
+          <label for="announcement-title">Título del anuncio:</label>
+          <input type="text" id="announcement-title" placeholder="Título importante">
+        </div>
+        <div class="form-group">
+          <label for="announcement-content">Contenido:</label>
+          <textarea id="announcement-content" rows="4" placeholder="Escribe el contenido del anuncio..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="createAnnouncement()">Publicar Anuncio</button>
+      `;
+      document.getElementById('admin-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+    }
+
+    async function createAnnouncement() {
+      const title = document.getElementById('announcement-title').value;
+      const content = document.getElementById('announcement-content').value;
+
+      if (!title || !content) {
+        showNotification('Por favor, completa todos los campos', 'error');
+        return;
+      }
+
+      try {
+        const { error } = await supabase
+          .from('announcements')
+          .insert({
+            title: title,
+            content: content,
+            created_at: new Date().toISOString(),
+            author_id: currentUser.id
+          });
+          
+        if (error) throw error;
+        showNotification('Anuncio publicado correctamente', 'success');
+        closeAdminModal();
+        loadAnnouncements();
+        updateUserStats(); // Actualizar stats después de crear anuncio
+      } catch (error) {
+        showNotification('Error al publicar anuncio: ' + error.message, 'error');
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').style.display = 'none';
+      document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    function showStatsModal() {
+      document.getElementById('admin-modal-title').textContent = 'Estadísticas Detalladas';
+      document.getElementById('admin-modal-content').innerHTML = `
+        <p>Funcionalidad en desarrollo...</p>
+      `;
+      document.getElementById('admin-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+    }
+
+    function showUserManagement() {
+      document.getElementById('admin-modal-title').textContent = 'Gestión de Usuarios';
+      document.getElementById('admin-modal-content').innerHTML = `
+        <p>Funcionalidad en desarrollo...</p>
+      `;
+      document.getElementById('admin-modal').style.display = 'block';
+      document.getElementById('modal-overlay').style.display = 'block';
+    }
+
     // ===== FUNCIONES AUXILIARES =====
     function showNotification(message, type) {
       const notification = document.createElement('div');
@@ -1692,11 +1887,9 @@
       }
     }
 
-    // ===== CAPTCHA FUNCTIONS =====
     async function executeRecaptcha(action) {
       return new Promise((resolve, reject) => {
         if (typeof grecaptcha === 'undefined' || typeof grecaptcha.enterprise === 'undefined') {
-          // Fallback si reCAPTCHA no está cargado
           resolve('no-captcha');
           return;
         }
@@ -1709,218 +1902,12 @@
       });
     }
 
-    // ===== FUNCIONES DE NAVEGACIÓN Y MENÚS =====
-    function toggleToolsMenu() {
-      const menu = document.getElementById('tools-menu');
-      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function handleUserButton() {
-      if (currentUser) {
-        document.getElementById('profile-section').scrollIntoView({ behavior: 'smooth' });
-      } else {
-        showAuthModal('login');
+    // Limpiar intervalo cuando se cierra la página
+    window.addEventListener('beforeunload', function() {
+      if (statsUpdateInterval) {
+        clearInterval(statsUpdateInterval);
       }
-    }
-
-    function showToolsSection() {
-      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-
-    function showAcademySection() {
-      document.getElementById('academy-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-
-    function showInvestmentCalculator() {
-      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-
-    function showCryptoConverter() {
-      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-
-    // ===== FUNCIONES DE ANUNCIOS Y ESTADÍSTICAS =====
-    async function loadAnnouncements() {
-      try {
-        const { data, error } = await supabase
-          .from('announcements')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
-          
-        if (error) throw error;
-        announcements = data || [];
-        const container = document.getElementById('announcements-container');
-        
-        if (announcements.length === 0) return;
-        
-        container.innerHTML = '';
-        announcements.forEach(announcement => {
-          const announcementHTML = `
-            <div class="announcement-card">
-              <div class="announcement-date">${new Date(announcement.created_at).toLocaleDateString()}</div>
-              <h4>${announcement.title}</h4>
-              <p>${announcement.content}</p>
-            </div>
-          `;
-          container.innerHTML += announcementHTML;
-        });
-      } catch (error) {
-        console.error('Error loading announcements:', error);
-      }
-    }
-
-    async function updateUserStats() {
-      try {
-        const { count: totalUsers, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-          
-        if (countError) throw countError;
-
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const activeToday = Math.floor(totalUsers * 0.1);
-        const growth = Math.min(100, Math.round((activeToday / totalUsers) * 100));
-
-        document.getElementById('total-users').textContent = totalUsers;
-        document.getElementById('active-today').textContent = activeToday;
-        document.getElementById('community-growth').textContent = `+${growth}%`;
-      } catch (error) {
-        console.error('Error updating stats:', error);
-      }
-    }
-
-    // ===== ACADEMIA =====
-    function showAcademyModule(module) {
-      const content = document.getElementById('academy-content');
-      const modules = {
-        basics: `
-          <h3>🔰 Conceptos Básicos de Criptomonedas</h3>
-          <p>Las criptomonedas son monedas digitales que utilizan criptografía para asegurar transacciones.</p>
-          <ul>
-            <li><strong>Blockchain:</strong> Libro de contabilidad distribuido e inmutable</li>
-            <li><strong>Descentralización:</strong> Sin autoridad central que controle la red</li>
-            <li><strong>Minería:</strong> Proceso de validación de transacciones y creación de nuevos bloques</li>
-            <li><strong>Wallets:</strong> Software o hardware para almacenar criptomonedas</li>
-          </ul>
-        `,
-        trading: `
-          <h3>📈 Trading Básico</h3>
-          <p>Conceptos fundamentales para empezar a operar en mercados cripto.</p>
-          <ul>
-            <li><strong>Análisis técnico:</strong> Estudio de gráficos y patrones de precio</li>
-            <li><strong>Análisis fundamental:</strong> Evaluación del valor intrínseco de un activo</li>
-            <li><strong>Gestión de riesgo:</strong> Nunca invertir más de lo que puedes perder</li>
-            <li><strong>Psychology del trading:</strong> Control emocional y disciplina</li>
-          </ul>
-        `,
-        security: `
-          <h3>🔒 Seguridad en Cripto</h3>
-          <p>Protege tus activos digitales con estas mejores prácticas.</p>
-          <ul>
-            <li><strong>Wallets fríos:</strong> Almacenamiento offline (hardware wallets)</li>
-            <li><strong>Wallets calientes:</strong> Almacenamiento online (móvil, desktop)</li>
-            <li><strong>Autenticación de dos factores (2FA):</strong> Capa adicional de seguridad</li>
-            <li><strong>Phishing y scams:</strong> Cómo identificar y evitar estafas comunes</li>
-          </ul>
-        `,
-        defi: `
-          <h3>🔄 Finanzas Descentralizadas (DeFi)</h3>
-          <p>Ecosistema financiero construido sobre blockchain sin intermediarios.</p>
-          <ul>
-            <li><strong>Lending y borrowing:</strong> Prestar y pedir prestado sin bancos</li>
-            <li><strong>Yield farming:</strong> Obtener rendimientos por proporcionar liquidez</li>
-            <li><strong>DEXs:</strong> Exchanges descentralizados sin custodia</li>
-            <li><strong>Staking:</strong> Bloquear tokens para apoyar la red y obtener recompensas</li>
-          </ul>
-        `
-      };
-      
-      content.innerHTML = modules[module] || '<p>Módulo no disponible.</p>';
-      content.style.display = 'block';
-      content.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // ===== ADMINISTRACIÓN =====
-    function showAnnouncementModal() {
-      if (!currentUser || !userIsAdmin) {
-        showNotification('Solo administradores pueden crear anuncios', 'error');
-        return;
-      }
-      
-      document.getElementById('admin-modal-title').textContent = 'Crear Nuevo Anuncio';
-      document.getElementById('admin-modal-content').innerHTML = `
-        <div class="form-group">
-          <label for="announcement-title">Título del anuncio:</label>
-          <input type="text" id="announcement-title" placeholder="Título importante">
-        </div>
-        <div class="form-group">
-          <label for="announcement-content">Contenido:</label>
-          <textarea id="announcement-content" rows="4" placeholder="Escribe el contenido del anuncio..."></textarea>
-        </div>
-        <button class="btn btn-primary" onclick="createAnnouncement()">Publicar Anuncio</button>
-      `;
-      document.getElementById('admin-modal').style.display = 'block';
-      document.getElementById('modal-overlay').style.display = 'block';
-    }
-
-    async function createAnnouncement() {
-      const title = document.getElementById('announcement-title').value;
-      const content = document.getElementById('announcement-content').value;
-
-      if (!title || !content) {
-        showNotification('Por favor, completa todos los campos', 'error');
-        return;
-      }
-
-      try {
-        const { error } = await supabase
-          .from('announcements')
-          .insert({
-            title: title,
-            content: content,
-            created_at: new Date().toISOString(),
-            author_id: currentUser.id
-          });
-          
-        if (error) throw error;
-        showNotification('Anuncio publicado correctamente', 'success');
-        closeAdminModal();
-        loadAnnouncements();
-      } catch (error) {
-        showNotification('Error al publicar anuncio: ' + error.message, 'error');
-      }
-    }
-
-    function closeAdminModal() {
-      document.getElementById('admin-modal').style.display = 'none';
-      document.getElementById('modal-overlay').style.display = 'none';
-    }
-
-    // Funciones de administración adicionales (placeholders)
-    function showStatsModal() {
-      document.getElementById('admin-modal-title').textContent = 'Estadísticas Detalladas';
-      document.getElementById('admin-modal-content').innerHTML = `
-        <p>Funcionalidad en desarrollo...</p>
-      `;
-      document.getElementById('admin-modal').style.display = 'block';
-      document.getElementById('modal-overlay').style.display = 'block';
-    }
-
-    function showUserManagement() {
-      document.getElementById('admin-modal-title').textContent = 'Gestión de Usuarios';
-      document.getElementById('admin-modal-content').innerHTML = `
-        <p>Funcionalidad en desarrollo...</p>
-      `;
-      document.getElementById('admin-modal').style.display = 'block';
-      document.getElementById('modal-overlay').style.display = 'block';
-    }
-
+    });
   </script>
 </body>
 </html>
