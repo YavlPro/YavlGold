@@ -18,8 +18,7 @@
   <link rel="icon" href="https://i.imgur.com/317XS9m.png" type="image/png">
   <link rel="apple-touch-icon" href="https://i.imgur.com/317XS9m.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://www.google.com/recaptcha/enterprise.js?render=6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI"></script>
+  <!-- REMOVIDO: Supabase y reCAPTCHA por ahora para aislar el problema de la UI -->
   <style>
     /* --- VARIABLES Y ESTILOS GLOBALES --- */
     :root {
@@ -945,7 +944,7 @@
         <div class="auth-tab active" id="login-tab-btn" onclick="switchAuthTab('login')">Iniciar Sesión</div>
         <div class="auth-tab" id="register-tab-btn" onclick="switchAuthTab('register')">Registrarse</div>
     </div>
-    <form id="login-form" class="auth-form active" onsubmit="handleLogin(event)">
+    <form id="login-form" class="auth-form active" onsubmit="event.preventDefault(); alert('Inicio de sesión simulado. (Funcionalidad real pendiente)'); closeAuthModal();">
         <div class="form-group">
             <label for="login-email">Correo Electrónico:</label>
             <input type="email" id="login-email" required>
@@ -961,7 +960,7 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🔑 Iniciar Sesión</button>
     </form>
-    <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
+    <form id="register-form" class="auth-form" onsubmit="event.preventDefault(); alert('Registro simulado. (Funcionalidad real pendiente)'); closeAuthModal();">
         <div class="form-group">
             <label for="register-username">Nombre de Usuario:</label>
             <input type="text" id="register-username" required>
@@ -1003,860 +1002,9 @@
     </div>
   </div>
   <script>
-    // ===== CONFIGURACIÓN SUPABASE =====
-    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-    // Inicializar Supabase
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    // ===== CONFIGURACIÓN RECAPTCHA =====
-    const RECAPTCHA_CONFIG = {
-        siteKey: "6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI"
-    };
     // ===== ESTADO DE LA APLICACIÓN =====
-    let currentUser = null;
-    let announcements = [];
-    // ===== INICIALIZACIÓN =====
-    document.addEventListener('DOMContentLoaded', function() {
-      initializeApp();
-      // Llamar a checkForAuthRedirects después de initializeApp
-      checkForAuthRedirects();
-    });
-    function initializeApp() {
-      // Configurar event listeners
-      setupEventListeners();
-      // Configurar listener de autenticación
-      initializeAuthListener();
-      // Cargar datos iniciales
-      loadAnnouncements();
-      updateUserStats();
-    }
-    function initializeAuthListener() {
-      // Escuchar cambios en la autenticación
-      supabase.auth.onAuthStateChange((event, session) => {
-        console.log('Auth state changed:', event, session);
-        if (event === 'SIGNED_IN' && session) {
-          // El evento SIGNED_IN se dispara para login, signup y recuperación de contraseña
-          // Tambien para la verificación de correo si la URL es manejada correctamente
-          // Actualizar currentUser
-          currentUser = session.user;
-          // Cargar perfil (esto puede fallar si el perfil no existe aún, por ejemplo, después del registro pero antes de la verificación)
-          loadUserProfile().then(() => {
-              // Si se carga el perfil, mostrar interfaz de usuario
-              showUserInterface();
-          }).catch(error => {
-              console.error('Error al cargar perfil en SIGNED_IN:', error);
-              // Si no se puede cargar el perfil (p.ej., no existe porque no se verificó el correo aún),
-              // puede que quieras mantener la interfaz de invitado o mostrar un mensaje.
-              // Para el flujo de registro, se mostrará un mensaje de verificación en handleRegister.
-              // Aquí asumimos que si hay sesión, eventualmente se podrá cargar el perfil si es válida.
-              // Por ahora, intentamos mostrar la interfaz de usuario.
-              showUserInterface();
-          });
-        } else if (event === 'SIGNED_OUT') {
-          currentUser = null;
-          showGuestInterface();
-        } else if (event === 'PASSWORD_RECOVERY') {
-          // Este evento no existe en la API actual de Supabase JS.
-          // La recuperación se maneja a través del flujo de redirección y updatePassword.
-          // No se necesita acción específica aquí.
-        }
-      });
-
-      // Verificar sesión existente al cargar (importante para manejar la URL de verificación en el mismo navegador)
-      // Se llama a getSession para obtener la sesión actual si existe (por ejemplo, tras hacer clic en el enlace de verificación en el mismo navegador)
-      supabase.auth.getSession().then(({  { session }, error }) => {
-        if (error) {
-            console.error('Error obteniendo sesión inicial:', error);
-            // Aunque haya error, mostramos la interfaz de invitado
-            showGuestInterface();
-            return;
-        }
-        if (session) {
-          console.log('Sesión inicial encontrada:', session);
-          currentUser = session.user;
-          // Intentar cargar el perfil inmediatamente
-          loadUserProfile().then(() => {
-              showUserInterface();
-          }).catch(loadError => {
-              console.error('Error al cargar perfil en getSession:', loadError);
-              // Si hay sesión pero no perfil, puede ser un usuario nuevo no verificado.
-              // Mostrar interfaz de invitado o un mensaje especial.
-              // Por ahora, mostramos la interfaz de usuario y asumimos que loadUserProfile manejará el error internamente si es necesario.
-              showUserInterface();
-          });
-        } else {
-          // No hay sesión activa, mostrar interfaz de invitado
-          showGuestInterface();
-        }
-      });
-    }
-    function setupEventListeners() {
-      // Botones flotantes
-      document.getElementById('tools-btn').addEventListener('click', toggleToolsMenu);
-      document.getElementById('user-btn').addEventListener('click', handleUserButton);
-      // Cerrar menú de herramientas al hacer clic fuera
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('#tools-menu') && e.target.id !== 'tools-btn') {
-          document.getElementById('tools-menu').style.display = 'none';
-        }
-      });
-      // Botón volver arriba
-      window.addEventListener('scroll', () => {
-        const backToTopBtn = document.getElementById('back-to-top');
-        backToTopBtn.style.display = (window.pageYOffset > 300) ? 'flex' : 'none';
-      });
-      document.getElementById('back-to-top').addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-      // Avatar upload
-      document.getElementById('avatar-input').addEventListener('change', handleAvatarUpload);
-      // Fuerza de contraseña
-      document.getElementById('register-password').addEventListener('input', function() {
-        checkPasswordStrength(this.value);
-      });
-      // Cerrar modales al hacer clic fuera
-      document.getElementById('modal-overlay').addEventListener('click', function() {
-        closeAuthModal();
-        closeAdminModal();
-      });
-    }
-    // ===== AUTENTICACIÓN CON SUPABASE =====
-    async function handleRegister(e) {
-      if (e) e.preventDefault();
-      const email = document.getElementById('register-email').value;
-      const password = document.getElementById('register-password').value;
-      const username = document.getElementById('register-username').value;
-      const confirmPassword = document.getElementById('register-confirm-password').value;
-
-      if (password !== confirmPassword) {
-        showNotification('Las contraseñas no coinciden', 'error');
-        return;
-      }
-
-      try {
-        // Ejecutar reCAPTCHA
-        const token = await executeRecaptcha('register');
-        const { data, error } = await supabase.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-             {
-              username: username,
-              // --- ADVERTENCIA: Enviar el token aquí sin validación previa es inseguro ---
-              captcha_token: token // ESTE DATO DEBE SER VALIDADO EN EL SERVIDOR
-            },
-            emailRedirectTo: window.location.origin // URL a la que redirigirá tras la verificación
-          }
-        });
-
-        if (error) {
-          showNotification('Error al registrarse: ' + error.message, 'error');
-          return;
-        }
-
-        // *Cambio importante:* No crear el perfil aquí inmediatamente.
-        // showNotification('¡Cuenta creada exitosamente! Revisa tu email para verificación.', 'success');
-        // closeAuthModal(); // No cierres el modal aún, informa al usuario.
-
-        // Informar al usuario que debe verificar su correo
-        showNotification('¡Cuenta creada! Revisa tu email (' + email + ') para verificar tu dirección y activar tu cuenta.', 'info');
-        // Opcional: Cerrar el modal o dejarlo abierto con un mensaje de verificación
-        // closeAuthModal(); // Puedes dejarlo abierto para enfatizar la verificación
-
-      } catch (error) {
-        showNotification('Error en el proceso de registro: ' + error.message, 'error');
-      }
-    }
-
-    async function handleLogin(e) {
-      if (e) e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-
-      try {
-        // Ejecutar reCAPTCHA
-        const token = await executeRecaptcha('login');
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
-        if (error) {
-          showNotification('Error al iniciar sesión: ' + error.message, 'error');
-          return;
-        }
-        // El evento onAuthStateChange se encargará de mostrar la UI
-        showNotification('¡Bienvenido de nuevo!', 'success');
-        closeAuthModal();
-      } catch (error) {
-        showNotification('Error en el proceso de login: ' + error.message, 'error');
-      }
-    }
-
-    // --- FUNCIÓN: Inicio de sesión con enlace mágico ---
-    async function handleMagicLinkLogin() {
-      const email = document.getElementById('login-email').value;
-      if (!email) {
-         showNotification('Por favor, ingresa tu correo electrónico', 'warning');
-         return;
-      }
-
-      try {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: email,
-          options: {
-            emailRedirectTo: window.location.origin // URL a la que redirigirá tras hacer clic en el enlace
-          },
-        });
-
-        if (error) throw error;
-        showNotification('¡Enlace de inicio de sesión enviado a ' + email + '! Revisa tu bandeja de entrada.', 'success');
-      } catch (error) {
-        showNotification('Error enviando enlace: ' + error.message, 'error');
-      }
-    }
-
-    // --- FUNCIONES: Recuperación de contraseña ---
-    function showForgotPasswordForm() {
-        // Ocultar formularios de login y register
-        document.getElementById('login-form').style.display = 'none';
-        document.getElementById('register-form').style.display = 'none';
-        // Mostrar el formulario de recuperación
-        document.getElementById('forgot-password-form').style.display = 'block';
-    }
-
-    function showLoginForm() {
-        // Ocultar formularios de register y forgot
-        document.getElementById('register-form').style.display = 'none';
-        document.getElementById('forgot-password-form').style.display = 'none';
-        // Mostrar el formulario de login
-        document.getElementById('login-form').style.display = 'block';
-        // Asegurar que el tab de login esté activo
-        switchAuthTab('login');
-    }
-
-    async function handlePasswordReset(e) {
-      if (e) e.preventDefault();
-      const email = document.getElementById('reset-email').value;
-
-      try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + '/update-password' // URL a la que redirigirá con el token
-        });
-
-        if (error) throw error;
-        showNotification('Instrucciones para restablecer la contraseña enviadas a ' + email + '.', 'success');
-        // Volver al formulario de login después de enviar
-        setTimeout(() => {
-            showLoginForm();
-        }, 3000); // Espera 3 segundos para que vea el mensaje
-
-      } catch (error) {
-        showNotification('Error al restablecer la contraseña: ' + error.message, 'error');
-      }
-    }
-
-    // --- FUNCIONES: Manejo del enlace de restablecimiento y verificación ---
-    function checkForAuthRedirects() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const actionType = urlParams.get('type'); // Puede ser 'recovery' para restablecimiento o 'signup' para confirmación de correo
-      const token = urlParams.get('token'); // El token de recuperación o confirmación
-
-      if (actionType === 'recovery' && token) {
-        console.log("Token de recuperación encontrado en la URL.");
-        // Mostrar un modal o sección específica para ingresar la nueva contraseña
-        showPasswordUpdateForm(token);
-      } else if (actionType === 'signup' && token) {
-          // Este es el caso de verificación de correo electrónico
-          console.log("Token de confirmación de correo encontrado en la URL.");
-          // La sesión debería haberse iniciado automáticamente si la URL es correcta y coincide con emailRedirectTo.
-          // El evento onAuthStateChange y getSession deberían haber manejado esto.
-          // Si llegamos aquí, puede significar que el proceso de carga de perfil falló o que hay un retraso.
-          // Mostrar un mensaje temporal y recargar la página para asegurar el estado.
-          showNotification('¡Correo verificado! Cargando tu cuenta...', 'info');
-          setTimeout(() => {
-              window.location.hash = ''; // Limpiar la URL de token si es necesario
-              window.location.reload(); // Recargar para que se aplique el estado de sesión
-          }, 2000);
-      } else if (urlParams.has('error')) {
-          // Manejar errores específicos de Supabase
-          const errorCode = urlParams.get('error_code');
-          const errorDescription = urlParams.get('error_description');
-          console.error('Error en la URL de redirección:', errorCode, errorDescription);
-
-          // Mostrar un mensaje de error específico al usuario
-          let errorMessage = 'Ha ocurrido un error al procesar tu solicitud.';
-          if (errorCode === 'otp_expired') {
-              errorMessage = 'El enlace de verificación ha expirado. Por favor, solicita uno nuevo.';
-          } else if (errorCode === 'otp_invalid') {
-              errorMessage = 'El enlace de verificación es inválido. Por favor, revisa el enlace y vuelve a intentarlo.';
-          } else if (errorCode === 'access_denied') {
-              errorMessage = 'Acceso denegado. Por favor, verifica tu correo electrónico y vuelve a intentar.';
-          }
-
-          showNotification(errorMessage, 'error');
-
-          // Opcional: Mostrar un botón para reenviar el correo de verificación
-          // Esto requeriría una función adicional en el backend.
-          // Por ahora, simplemente mostramos el mensaje de error.
-      }
-    }
-
-    function showPasswordUpdateForm(token) {
-        // Crea o muestra un formulario para ingresar la nueva contraseña
-        // Este es un ejemplo simple insertando HTML directamente
-        const container = document.querySelector('.container'); // O el contenedor principal
-        container.innerHTML = `
-            <div class="card">
-                <h2>Actualizar Contraseña</h2>
-                <form id="update-password-form">
-                    <div class="form-group">
-                        <label for="new-password">Nueva Contraseña:</label>
-                        <input type="password" id="new-password" required>
-                    </div>
-                     <div class="form-group">
-                        <label for="confirm-new-password">Confirmar Nueva Contraseña:</label>
-                        <input type="password" id="confirm-new-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
-                </form>
-            </div>
-        `;
-
-        document.getElementById('update-password-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const newPassword = document.getElementById('new-password').value;
-            const confirmNewPassword = document.getElementById('confirm-new-password').value;
-
-            if (newPassword !== confirmNewPassword) {
-                showNotification('Las contraseñas no coinciden', 'error');
-                return;
-            }
-
-            try {
-                const { error } = await supabase.auth.updateUser({
-                    password: newPassword,
-                });
-
-                if (error) throw error;
-                showNotification('¡Contraseña actualizada correctamente!', 'success');
-                // Redirigir o mostrar mensaje para que inicie sesión con la nueva contraseña
-                // La sesión debería mantenerse, pero se puede forzar una recarga para refrescar la UI.
-                setTimeout(() => {
-                    window.location.hash = ''; // Limpiar la URL de token si es necesario
-                    window.location.reload(); // O redirigir a la página principal
-                }, 2000);
-
-            } catch (error) {
-                showNotification('Error al actualizar la contraseña: ' + error.message, 'error');
-            }
-        };
-    }
-
-    async function logout() {
-      try {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-             console.error('Error en Supabase signOut:', error);
-             // A veces puede haber problemas de red o el token ya expiró.
-             // Aún así, forzamos el cambio de interfaz como si se hubiera cerrado sesión.
-             // El evento onAuthStateChange debería capturar el SIGNED_OUT y llamar a showGuestInterface.
-             // Si no lo hace, forzamos el cambio aquí.
-             showGuestInterface();
-             showNotification('Sesión cerrada. Si persisten problemas, recarga la página.', 'warning');
-             return;
-        }
-        // El evento onAuthStateChange se encargará de mostrar la UI de invitado
-        // showNotification('Sesión cerrada correctamente', 'success'); // Opcional, el evento SIGNED_OUT podría mostrar un mensaje
-      } catch (error) {
-        console.error('Error inesperado al cerrar sesión:', error);
-        showNotification('Error inesperado al cerrar sesión', 'error');
-      }
-    }
-    // ===== INTERFAZ DE USUARIO =====
-    function showUserInterface() {
-      document.getElementById('auth-buttons').style.display = 'none';
-      document.getElementById('logout-btn').style.display = 'inline-block';
-      document.getElementById('user-profile-display').style.display = 'flex';
-      document.getElementById('profile-section').style.display = 'block';
-      document.getElementById('tools-section').style.display = 'block';
-      document.getElementById('academy-section').style.display = 'block';
-      // Verificar si es admin
-      checkAdminStatus();
-    }
-    function showGuestInterface() {
-      document.getElementById('auth-buttons').style.display = 'flex';
-      document.getElementById('logout-btn').style.display = 'none';
-      document.getElementById('user-profile-display').style.display = 'none';
-      document.getElementById('profile-section').style.display = 'none';
-      document.getElementById('tools-section').style.display = 'none';
-      document.getElementById('academy-section').style.display = 'none';
-      document.getElementById('admin-panel').style.display = 'none';
-    }
-    async function checkAdminStatus() {
-      if (!currentUser) return;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('id', currentUser.id)
-          .single();
-        if (!error && data && data.is_admin) {
-          document.getElementById('admin-panel').style.display = 'block';
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-      }
-    }
-    // ===== FUNCIONES DE PERFIL =====
-    async function loadUserProfile() {
-      if (!currentUser) return;
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentUser.id)
-          .single();
-        if (error) {
-            // Si el perfil no existe (p.ej., usuario nuevo no verificado), se lanza un error.
-            // Esto es normal en ciertos flujos.
-            // console.error('Error loading user profile:', error); // Opcional: comentar para no llenar consola
-            // No mostramos notificación de error aquí porque puede ser intencional (usuario no verificado).
-            // Simplemente no se carga la info.
-            // La UI mostrará campos vacíos o valores por defecto.
-            return; // Salir silenciosamente si no hay perfil
-        }
-        if (data) {
-          document.getElementById('user-avatar-display').src = data.avatar_url;
-          document.getElementById('username-display').textContent = data.username;
-          document.getElementById('user-email-display').textContent = currentUser.email;
-          document.getElementById('profile-username').value = data.username;
-          document.getElementById('profile-email').value = currentUser.email;
-          document.getElementById('profile-bio').value = data.bio || '';
-          document.getElementById('avatar-preview').src = data.avatar_url;
-        }
-      } catch (error) {
-        console.error('Error loading user profile:', error);
-        // Opcional: Mostrar un mensaje genérico si falla por otros motivos
-        // showNotification('Error al cargar el perfil', 'error');
-      }
-    }
-    async function updateProfile() {
-      if (!currentUser) return;
-      const username = document.getElementById('profile-username').value;
-      const bio = document.getElementById('profile-bio').value;
-
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            username: username,
-            bio: bio,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', currentUser.id);
-        if (error) throw error;
-        showNotification('Perfil actualizado correctamente', 'success');
-        loadUserProfile();
-      } catch (error) {
-        showNotification('Error al actualizar perfil: ' + error.message, 'error');
-      }
-    }
-    function handleAvatarUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      // Validar tipo y tamaño
-      if (!file.type.match('image/jpeg') && !file.type.match('image/png')) {
-        showNotification('Solo se permiten imágenes JPEG o PNG', 'error');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        showNotification('La imagen debe ser menor a 5MB', 'error');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        document.getElementById('avatar-preview').src = e.target.result;
-        document.getElementById('user-avatar-display').src = e.target.result;
-        // Subir a Supabase Storage (opcional)
-        uploadAvatarToSupabase(file);
-      };
-      reader.readAsDataURL(file);
-    }
-    async function uploadAvatarToSupabase(file) {
-      if (!currentUser) return;
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${currentUser.id}-${Math.random()}.${fileExt}`;
-        const filePath = `avatars/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        // Obtener URL pública
-        const {  { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-
-        // Actualizar perfil con nueva URL de avatar
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ avatar_url: publicUrl })
-          .eq('id', currentUser.id);
-
-        if (updateError) throw updateError;
-        showNotification('Avatar actualizado correctamente', 'success');
-      } catch (error) {
-        console.error('Error uploading avatar:', error);
-        showNotification('Error al subir avatar', 'error');
-      }
-    }
-    // ===== FUNCIONES DE ANUNCIOS =====
-    async function loadAnnouncements() {
-      try {
-        const { data, error } = await supabase
-          .from('announcements')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
-        if (error) throw error;
-        announcements = data || [];
-        const container = document.getElementById('announcements-container');
-        // Mantener el anuncio de bienvenida si no hay otros
-        if (announcements.length === 0) {
-          return;
-        }
-        container.innerHTML = '';
-        announcements.forEach(announcement => {
-          const announcementHTML = `
-            <div class="announcement-card">
-              <div class="announcement-date">${new Date(announcement.created_at).toLocaleDateString()}</div>
-              <h4>${announcement.title}</h4>
-              <p>${announcement.content}</p>
-            </div>
-          `;
-          container.innerHTML += announcementHTML;
-        });
-      } catch (error) {
-        console.error('Error loading announcements:', error);
-      }
-    }
-    // ===== ESTADÍSTICAS =====
-    async function updateUserStats() {
-      try {
-        // Obtener total de usuarios
-        const { count: totalUsers, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        if (countError) throw countError;
-
-        // Calcular usuarios activos hoy (simulado)
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        // En una implementación real, consultarías la tabla de sesiones
-        const activeToday = Math.floor(totalUsers * 0.1); // 10% de usuarios activos
-
-        // Crecimiento (simulado)
-        const growth = Math.min(100, Math.round((activeToday / totalUsers) * 100));
-
-        document.getElementById('total-users').textContent = totalUsers;
-        document.getElementById('active-today').textContent = activeToday;
-        document.getElementById('community-growth').textContent = `+${growth}%`;
-      } catch (error) {
-        console.error('Error updating stats:', error);
-      }
-    }
-    // ===== HERRAMIENTAS FUNCIONALES =====
-    function calculateInvestment() {
-      const amount = parseFloat(document.getElementById('investment-amount').value);
-      const rate = parseFloat(document.getElementById('annual-return').value) / 100;
-      const years = parseInt(document.getElementById('investment-period').value);
-
-      const futureValue = amount * Math.pow(1 + rate, years);
-      const profit = futureValue - amount;
-
-      const resultElement = document.getElementById('investment-result');
-      resultElement.innerHTML = `
-        <p>Inversión inicial: $${amount.toLocaleString()}</p>
-        <p>Valor futuro: $${futureValue.toLocaleString()}</p>
-        <p>Ganancia: $${profit.toLocaleString()}</p>
-      `;
-      resultElement.style.display = 'block';
-    }
-
-    // --- FUNCIÓN: Calculadora Versátil con eval() ---
-    // ADVERTENCIA: eval() es inseguro. Reemplazar en producción.
-    function calculateExpression() {
-      const expression = document.getElementById('calc-expression').value;
-      try {
-        // Reemplazar símbolos matemáticos comunes
-        const sanitizedExpression = expression
-          .replace(/×/g, '*')
-          .replace(/÷/g, '/')
-          .replace(/\^/g, '**');
-        const result = eval(sanitizedExpression);
-        const resultElement = document.getElementById('calc-result');
-        resultElement.innerHTML = `<p>Resultado: ${result.toLocaleString()}</p>`;
-        resultElement.style.display = 'block';
-      } catch (error) {
-        showNotification('Expresión inválida', 'error');
-      }
-    }
-
-
-    function convertCrypto() {
-      const amount = parseFloat(document.getElementById('crypto-amount').value);
-      const fromCrypto = document.getElementById('from-crypto').value;
-      const toCrypto = document.getElementById('to-crypto').value;
-
-      // Precios simulados (en un caso real, usarías una API)
-      const prices = { 
-        BTC: 50000, 
-        ETH: 3000, 
-        ADA: 1.2, 
-        DOT: 25,
-        USD: 1, 
-        EUR: 0.85 
-      };
-
-      const result = (amount * prices[fromCrypto]) / prices[toCrypto];
-      const resultElement = document.getElementById('conversion-result');
-      resultElement.innerHTML = `<p>${amount} ${fromCrypto} = ${result.toFixed(6)} ${toCrypto}</p>`;
-      resultElement.style.display = 'block';
-    }
-    // ===== ACADEMIA =====
-    function showAcademyModule(module) {
-      const content = document.getElementById('academy-content');
-      const modules = {
-        basics: `
-          <h3>🔰 Conceptos Básicos de Criptomonedas</h3>
-          <p>Las criptomonedas son monedas digitales que utilizan criptografía para asegurar transacciones.</p>
-          <ul>
-            <li><strong>Blockchain:</strong> Libro de contabilidad distribuido e inmutable</li>
-            <li><strong>Descentralización:</strong> Sin autoridad central que controle la red</li>
-            <li><strong>Minería:</strong> Proceso de validación de transacciones y creación de nuevos bloques</li>
-            <li><strong>Wallets:</strong> Software o hardware para almacenar criptomonedas</li>
-          </ul>
-        `,
-        trading: `
-          <h3>📈 Trading Básico</h3>
-          <p>Conceptos fundamentales para empezar a operar en mercados cripto.</p>
-          <ul>
-            <li><strong>Análisis técnico:</strong> Estudio de gráficos y patrones de precio</li>
-            <li><strong>Análisis fundamental:</strong> Evaluación del valor intrínseco de un activo</li>
-            <li><strong>Gestión de riesgo:</strong> Nunca invertir más de lo que puedes perder</li>
-            <li><strong>Psychology del trading:</strong> Control emocional y disciplina</li>
-          </ul>
-        `,
-        security: `
-          <h3>🔒 Seguridad en Cripto</h3>
-          <p>Protege tus activos digitales con estas mejores prácticas.</p>
-          <ul>
-            <li><strong>Wallets fríos:</strong> Almacenamiento offline (hardware wallets)</li>
-            <li><strong>Wallets calientes:</strong> Almacenamiento online (móvil, desktop)</li>
-            <li><strong>Autenticación de dos factores (2FA):</strong> Capa adicional de seguridad</li>
-            <li><strong>Phishing y scams:</strong> Cómo identificar y evitar estafas comunes</li>
-          </ul>
-        `,
-        defi: `
-          <h3>🔄 Finanzas Descentralizadas (DeFi)</h3>
-          <p>Ecosistema financiero construido sobre blockchain sin intermediarios.</p>
-          <ul>
-            <li><strong>Lending y borrowing:</strong> Prestar y pedir prestado sin bancos</li>
-            <li><strong>Yield farming:</strong> Obtener rendimientos por proporcionar liquidez</li>
-            <li><strong>DEXs:</strong> Exchanges descentralizados sin custodia</li>
-            <li><strong>Staking:</strong> Bloquear tokens para apoyar la red y obtener recompensas</li>
-          </ul>
-        `
-      };
-      content.innerHTML = modules[module] || '<p>Módulo no disponible.</p>';
-      content.style.display = 'block';
-      content.scrollIntoView({ behavior: 'smooth' });
-    }
-    // ===== NAVEGACIÓN Y MENÚS =====
-    function toggleToolsMenu() {
-      const menu = document.getElementById('tools-menu');
-      menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-    }
-    function handleUserButton() {
-      if (currentUser) {
-        document.getElementById('profile-section').scrollIntoView({ behavior: 'smooth' });
-      } else {
-        showAuthModal('login');
-      }
-    }
-    function showToolsSection() {
-      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-    function showAcademySection() {
-      document.getElementById('academy-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-    function showInvestmentCalculator() {
-      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-    function showCryptoConverter() {
-      document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
-      toggleToolsMenu();
-    }
-    // ===== ADMINISTRACIÓN =====
-    function showAnnouncementModal() {
-      if (!currentUser) return;
-      // Verificar si es admin
-      const isAdmin = checkIfAdmin();
-      if (!isAdmin) {
-        showNotification('Solo administradores pueden crear anuncios', 'error');
-        return;
-      }
-      document.getElementById('admin-modal-title').textContent = 'Crear Nuevo Anuncio';
-      document.getElementById('admin-modal-content').innerHTML = `
-        <div class="form-group">
-          <label for="announcement-title">Título del anuncio:</label>
-          <input type="text" id="announcement-title" placeholder="Título importante">
-        </div>
-        <div class="form-group">
-          <label for="announcement-content">Contenido:</label>
-          <textarea id="announcement-content" rows="4" placeholder="Escribe el contenido del anuncio..."></textarea>
-        </div>
-        <button class="btn btn-primary" onclick="createAnnouncement()">Publicar Anuncio</button>
-      `;
-      document.getElementById('admin-modal').style.display = 'block';
-      document.getElementById('modal-overlay').style.display = 'block';
-    }
-    function showStatsModal() {
-      document.getElementById('admin-modal-title').textContent = 'Estadísticas Detalladas';
-      document.getElementById('admin-modal-content').innerHTML = `
-        <p>Cargando estadísticas...</p>
-      `;
-      document.getElementById('admin-modal').style.display = 'block';
-      document.getElementById('modal-overlay').style.display = 'block';
-      // Simular carga de estadísticas detalladas
-      setTimeout(() => {
-        document.getElementById('admin-modal-content').innerHTML = `
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div class="stat-card">
-              <div class="stat-number" id="modal-total-users">0</div>
-              <div class="stat-label">Total Usuarios</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number" id="modal-active-today">0</div>
-              <div class="stat-label">Activos Hoy</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number" id="modal-new-this-week">0</div>
-              <div class="stat-label">Nuevos Esta Semana</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number" id="modal-growth-rate">0%</div>
-              <div class="stat-label">Tasa de Crecimiento</div>
-            </div>
-          </div>
-          <div style="margin-top: 20px;">
-            <h3>Actividad Reciente</h3>
-            <p>Funcionalidad en desarrollo...</p>
-          </div>
-        `;
-        // Actualizar números (simulados)
-        document.getElementById('modal-total-users').textContent = document.getElementById('total-users').textContent;
-        document.getElementById('modal-active-today').textContent = document.getElementById('active-today').textContent;
-        document.getElementById('modal-new-this-week').textContent = Math.floor(parseInt(document.getElementById('total-users').textContent) * 0.1);
-        document.getElementById('modal-growth-rate').textContent = document.getElementById('community-growth').textContent;
-      }, 1000);
-    }
-    function showUserManagement() {
-      document.getElementById('admin-modal-title').textContent = 'Gestión de Usuarios';
-      document.getElementById('admin-modal-content').innerHTML = `
-        <p>Cargando lista de usuarios...</p>
-      `;
-      document.getElementById('admin-modal').style.display = 'block';
-      document.getElementById('modal-overlay').style.display = 'block';
-      // Simular carga de usuarios
-      setTimeout(() => {
-        document.getElementById('admin-modal-content').innerHTML = `
-          <div style="max-height: 300px; overflow-y: auto;">
-            <p>Funcionalidad en desarrollo. Aquí se listarán todos los usuarios registrados.</p>
-            <p>Características planificadas:</p>
-            <ul>
-              <li>Ver perfil de usuario</li>
-              <li>Estadísticas de actividad</li>
-              <li>Gestión de permisos</li>
-              <li>Comunicación directa</li>
-            </ul>
-          </div>
-        `;
-      }, 1000);
-    }
-    async function createAnnouncement() {
-      const title = document.getElementById('announcement-title').value;
-      const content = document.getElementById('announcement-content').value;
-
-      if (!title || !content) {
-        showNotification('Por favor, completa todos los campos', 'error');
-        return;
-      }
-
-      try {
-        const { error } = await supabase
-          .from('announcements')
-          .insert({
-            title: title,
-            content: content,
-            created_at: new Date().toISOString(),
-            author_id: currentUser.id
-          });
-        if (error) throw error;
-        showNotification('Anuncio publicado correctamente', 'success');
-        closeAdminModal();
-        loadAnnouncements();
-      } catch (error) {
-        showNotification('Error al publicar anuncio: ' + error.message, 'error');
-      }
-    }
-    function checkIfAdmin() {
-      // Esta es una verificación básica. En producción, deberías verificar en la base de datos
-      return currentUser && currentUser.email === 'admin@globalinvest.com';
-    }
-    function closeAdminModal() {
-      document.getElementById('admin-modal').style.display = 'none';
-      document.getElementById('modal-overlay').style.display = 'none';
-    }
-    // ===== FUNCIONES AUXILIARES =====
-    function showNotification(message, type) {
-      const notification = document.createElement('div');
-      notification.className = `notification notification-${type}`;
-      notification.innerHTML = `${getNotificationIcon(type)} ${message}`;
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.remove();
-      }, 4000);
-    }
-    function getNotificationIcon(type) {
-      switch(type) {
-        case 'success': return '✅';
-        case 'error': return '❌';
-        case 'warning': return '⚠️';
-        case 'info': return 'ℹ️';
-        default: return '💡';
-      }
-    }
-    function togglePassword(inputId) {
-      const input = document.getElementById(inputId);
-      const button = input.nextElementSibling;
-      if (input.type === 'password') {
-        input.type = 'text';
-        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
-      } else {
-        input.type = 'password';
-        button.innerHTML = '<i class="fas fa-eye"></i>';
-      }
-    }
+    let currentUser = null; // Simulado
+    // ===== FUNCIONES DE INTERFAZ (UI) AISLADAS =====
     function showAuthModal(tab) {
       document.getElementById('auth-modal').style.display = 'block';
       document.getElementById('modal-overlay').style.display = 'block';
@@ -1868,7 +1016,6 @@
       // Limpiar formularios
       document.getElementById('login-form').reset();
       document.getElementById('register-form').reset();
-      document.getElementById('forgot-password-form').reset();
       document.getElementById('password-strength').style.width = '0%';
       // Restablecer iconos de visibilidad de contraseña
       const toggleButtons = document.querySelectorAll('.toggle-password');
@@ -1881,8 +1028,17 @@
       document.getElementById('register-tab-btn').classList.toggle('active', tab === 'register');
       document.getElementById('login-form').classList.toggle('active', tab === 'login');
       document.getElementById('register-form').classList.toggle('active', tab === 'register');
-      // Asegurar que el form de olvido de contraseña esté oculto
-      document.getElementById('forgot-password-form').style.display = 'none';
+    }
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const button = input.nextElementSibling;
+      if (input.type === 'password') {
+        input.type = 'text';
+        button.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        button.innerHTML = '<i class="fas fa-eye"></i>';
+      }
     }
     function checkPasswordStrength(password) {
       const strength = document.getElementById('password-strength');
@@ -1904,20 +1060,136 @@
         strength.className += 'strength-strong';
       }
     }
-    // ===== CAPTCHA FUNCTIONS =====
-    async function executeRecaptcha(action) {
-      return new Promise((resolve, reject) => {
-        if (typeof grecaptcha === 'undefined' || typeof grecaptcha.enterprise === 'undefined') {
-          reject(new Error('reCAPTCHA no está cargado'));
-          return;
+    // Actualizar fuerza de contraseña al escribir
+    document.getElementById('register-password').addEventListener('input', function() {
+        checkPasswordStrength(this.value);
+    });
+    // Cerrar modales al hacer clic fuera
+    document.getElementById('modal-overlay').addEventListener('click', function() {
+        closeAuthModal();
+        closeAdminModal(); // Asumiendo que esta función también cierra el admin
+    });
+    // Botones flotantes y menú de herramientas
+    document.getElementById('tools-btn').addEventListener('click', function() {
+        const menu = document.getElementById('tools-menu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    });
+    // Cerrar menú de herramientas al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        const toolsMenu = document.getElementById('tools-menu');
+        const toolsBtn = document.getElementById('tools-btn');
+        if (!e.target.closest('#tools-menu') && e.target !== toolsBtn) {
+            toolsMenu.style.display = 'none';
         }
-        grecaptcha.enterprise.ready(() => {
-          grecaptcha.enterprise.execute(RECAPTCHA_CONFIG.siteKey, { action })
-            .then(resolve)
-            .catch(reject);
-        });
-      });
+    });
+    // Botón volver arriba
+    window.addEventListener('scroll', () => {
+        const backToTopBtn = document.getElementById('back-to-top');
+        backToTopBtn.style.display = (window.pageYOffset > 300) ? 'flex' : 'none';
+    });
+    document.getElementById('back-to-top').addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    // Funciones de navegación simuladas
+    function showToolsSection() {
+        document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('tools-menu').style.display = 'none'; // Ocultar menú después de hacer clic
     }
+    function showAcademySection() {
+        document.getElementById('academy-section').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('tools-menu').style.display = 'none';
+    }
+    function showInvestmentCalculator() {
+        document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('tools-menu').style.display = 'none';
+    }
+    function showCryptoConverter() {
+        document.getElementById('tools-section').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('tools-menu').style.display = 'none';
+    }
+    // Funciones de perfil simuladas
+    function updateProfile() {
+        alert('Actualización de perfil simulada. (Funcionalidad real pendiente)');
+    }
+    function handleAvatarUpload() {
+        alert('Cambio de avatar simulado. (Funcionalidad real pendiente)');
+    }
+    // Funciones de administración simuladas
+    function closeAdminModal() {
+        document.getElementById('admin-modal').style.display = 'none';
+        document.getElementById('modal-overlay').style.display = 'none';
+    }
+    function showAnnouncementModal() {
+        alert('Panel de administración - Crear anuncio. (Funcionalidad real pendiente)');
+    }
+    function showStatsModal() {
+        alert('Panel de administración - Ver estadísticas. (Funcionalidad real pendiente)');
+    }
+    function showUserManagement() {
+        alert('Panel de administración - Gestión de usuarios. (Funcionalidad real pendiente)');
+    }
+    // Funciones de cálculo simuladas
+    function calculateInvestment() {
+        alert('Calculando inversión... (Funcionalidad real pendiente)');
+        // ... lógica de cálculo real aquí ...
+    }
+    function calculateExpression() {
+        alert('Calculando expresión... (Funcionalidad real pendiente)');
+        // ... lógica de cálculo real aquí ...
+    }
+    function convertCrypto() {
+        alert('Convirtiendo criptomonedas... (Funcionalidad real pendiente)');
+        // ... lógica de conversión real aquí ...
+    }
+    // Funciones de academia simuladas
+    function showAcademyModule(module) {
+        alert(`Cargando módulo de academia: ${module}. (Funcionalidad real pendiente)`);
+        // ... lógica para mostrar contenido del módulo ...
+    }
+    // Función de logout simulada
+    function logout() {
+        alert('Cerrando sesión... (Funcionalidad real pendiente)');
+        // ... lógica de cierre de sesión real aquí ...
+        // Por ahora, solo mostramos la interfaz de invitado
+        document.getElementById('auth-buttons').style.display = 'flex';
+        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('user-profile-display').style.display = 'none';
+        document.getElementById('profile-section').style.display = 'none';
+        document.getElementById('tools-section').style.display = 'none';
+        document.getElementById('academy-section').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'none';
+    }
+    // Función de login simulada (para probar el cambio de interfaz)
+    function simulateLogin() {
+        // Simular inicio de sesión
+        document.getElementById('auth-buttons').style.display = 'none';
+        document.getElementById('logout-btn').style.display = 'inline-block';
+        document.getElementById('user-profile-display').style.display = 'flex';
+        document.getElementById('profile-section').style.display = 'block';
+        document.getElementById('tools-section').style.display = 'block';
+        document.getElementById('academy-section').style.display = 'block';
+        // Aquí se cargarían los datos reales del usuario
+        document.getElementById('username-display').textContent = 'UsuarioSimulado';
+        document.getElementById('user-email-display').textContent = 'usuario@simulado.com';
+        document.getElementById('avatar-preview').src = 'https://i.imgur.com/317XS9m.png';
+        document.getElementById('user-avatar-display').src = 'https://i.imgur.com/317XS9m.png';
+    }
+    // Inicialización de listeners para elementos generales
+    document.addEventListener('DOMContentLoaded', function() {
+        // Listener para el botón de usuario
+        document.getElementById('user-btn').addEventListener('click', function() {
+            if (currentUser) {
+                document.getElementById('profile-section').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                showAuthModal('login');
+            }
+        });
+        // Listener para el campo de contraseña de registro para actualizar fuerza
+        // Ya está agregado arriba
+    });
+    // NOTA: El resto de la lógica (autenticación real, perfiles, etc.) se implementará
+    // cuando `grecaptcha` y `supabase` estén funcionando correctamente en el entorno adecuado.
+    // Por ahora, esta parte del script maneja solo la UI.
   </script>
 </body>
 </html>
