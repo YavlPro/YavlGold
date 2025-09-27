@@ -9,14 +9,14 @@
   <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
   <meta property="og:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
   <meta property="og:description" content="Únete a la comunidad global de cripto con herramientas profesionales y soporte directo.">
-  <meta property="og:image" content="https://i.imgur.com/pdIfS3E.jpeg">
+  <meta property="og:image" content="https://i.imgur.com/7A4FJu3">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
   <meta name="twitter:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
   <meta name="twitter:description" content="Comunidad global de cripto con calculadora, conversor y soporte.">
-  <meta name="twitter:image" content="https://i.imgur.com/pdIfS3E.jpeg">
-  <link rel="icon" href="https://i.imgur.com/pdIfS3E.jpeg" type="image/jpeg">
-  <link rel="apple-touch-icon" href="https://i.imgur.com/pdIfS3E.jpeg">
+  <meta name="twitter:image" content="https://i.imgur.com/7A4FJu3">
+  <link rel="icon" href="https://i.imgur.com/7A4FJu3" type="image/jpeg">
+  <link rel="apple-touch-icon" href="https://i.imgur.com/7A4FJu3">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,13 +24,13 @@
   <style>
     /* --- VARIABLES Y ESTILOS GLOBALES --- */
     :root {
-      --color-primary: #1e3a8a;
+      --color-primary: #111111;
       --color-secondary: #d4af37;
       --bg-dark: #0a0a0a;
       --bg-darker: #000000;
       --text-light: #e2e8f0;
-      --card-bg: rgba(30, 41, 59, 0.8);
-      --card-bg-solid: #1e293b;
+      --card-bg: rgba(17, 17, 17, 0.9);
+      --card-bg-solid: #111111;
       --error-color: #ef4444;
       --success-color: #10b981;
       --warning-color: #f59e0b;
@@ -63,7 +63,7 @@
       background: 
         radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(30, 58, 138, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 40% 40%, rgba(17, 17, 17, 0.1) 0%, transparent 50%);
       z-index: -1;
     }
     
@@ -348,7 +348,7 @@
     }
     
     .stat-card {
-        background: rgba(30, 58, 138, 0.2);
+        background: rgba(17, 17, 17, 0.5);
         padding: 20px;
         border-radius: 15px;
         text-align: center;
@@ -446,7 +446,7 @@
     
     /* --- ANUNCIOS Y PANEL ADMIN --- */
     .announcement-card {
-        background: rgba(30, 58, 138, 0.15);
+        background: rgba(17, 17, 17, 0.5);
         padding: 25px;
         border-radius: 15px;
         margin: 20px 0;
@@ -475,7 +475,7 @@
     }
     
     .control-card {
-        background: rgba(30, 58, 138, 0.2);
+        background: rgba(17, 17, 17, 0.5);
         padding: 25px;
         border-radius: 15px;
         text-align: center;
@@ -492,9 +492,9 @@
     }
     
     /* --- HERRAMIENTAS --- */
-    .tools-section { display: none; }
+    .tools-section { display: block; }
     .tool-container {
-        background: rgba(30, 58, 138, 0.15);
+        background: rgba(17, 17, 17, 0.5);
         padding: 25px;
         border-radius: 15px;
         margin: 20px 0;
@@ -533,7 +533,7 @@
     }
     
     .module-card {
-        background: rgba(30, 58, 138, 0.2);
+        background: rgba(17, 17, 17, 0.5);
         padding: 25px;
         border-radius: 15px;
         text-align: center;
@@ -565,7 +565,7 @@
     }
     
     .roadmap-phase {
-        background: rgba(30, 58, 138, 0.15);
+        background: rgba(17, 17, 17, 0.5);
         padding: 30px;
         border-radius: 15px;
         margin: 25px 0;
@@ -607,7 +607,7 @@
     .comunidad, .redes {
       text-align: center;
       padding: 30px;
-      background: rgba(30, 58, 138, 0.2);
+      background: rgba(17, 17, 17, 0.5);
       border: 1px solid var(--color-secondary);
       border-radius: 15px;
       backdrop-filter: blur(10px);
@@ -955,7 +955,7 @@
   <div id="dashboard">
     <div class="hero">
         <div class="logo-header">
-            <img src="https://i.imgur.com/pdIfS3E.jpeg" alt="GlobalGold Logo">
+            <img src="https://i.imgur.com/7A4FJu3" alt="GlobalGold Logo">
         </div>
         <h1>GlobalGold</h1>
         <p>Ecosistema Global Innovador en Cripto</p>
@@ -966,7 +966,7 @@
         <div class="card">
             <div class="user-header">
                 <div class="user-profile" id="user-profile-display" style="display: none;">
-                    <img id="user-avatar-display" src="https://i.imgur.com/pdIfS3E.jpeg" alt="Avatar" class="user-avatar">
+                    <img id="user-avatar-display" src="https://i.imgur.com/7A4FJu3" alt="Avatar" class="user-avatar">
                     <div class="user-info">
                         <h3 id="username-display"></h3>
                         <p id="user-email-display"></p>
@@ -980,15 +980,15 @@
             </div>
             <div class="user-stats">
                 <div class="stat-card">
-                    <div class="stat-number" id="total-users">0</div>
+                    <div class="stat-number">1.250</div>
                     <div class="stat-label">Usuarios Registrados</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="active-today">0</div>
+                    <div class="stat-number">342</div>
                     <div class="stat-label">Activos Hoy</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="community-growth">+0%</div>
+                    <div class="stat-number">+15%</div>
                     <div class="stat-label">Crecimiento Mensual</div>
                 </div>
             </div>
@@ -1196,9 +1196,6 @@
       
       // Mostrar botón de volver arriba al hacer scroll
       window.addEventListener('scroll', toggleBackToTopButton);
-      
-      // Actualizar estadísticas
-      updateStats();
     });
     
     // Funciones de autenticación
@@ -1430,13 +1427,6 @@
       setTimeout(() => {
         notification.remove();
       }, 5000);
-    }
-    
-    function updateStats() {
-      // Simulación de estadísticas (en un caso real, vendrían de la base de datos)
-      document.getElementById('total-users').textContent = '1,250';
-      document.getElementById('active-today').textContent = '342';
-      document.getElementById('community-growth').textContent = '+15%';
     }
   </script>
 </body>
