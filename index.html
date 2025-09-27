@@ -9,14 +9,14 @@
   <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
   <meta property="og:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
   <meta property="og:description" content="Únete a la comunidad global de cripto con herramientas profesionales y soporte directo.">
-  <meta property="og:image" content="https://i.imgur.com/317XS9m.png">
+  <meta property="og:image" content="https://i.imgur.com/pdIfS3E.jpeg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
   <meta name="twitter:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
   <meta name="twitter:description" content="Comunidad global de cripto con calculadora, conversor y soporte.">
-  <meta name="twitter:image" content="https://i.imgur.com/317XS9m.png">
-  <link rel="icon" href="https://i.imgur.com/317XS9m.png" type="image/png">
-  <link rel="apple-touch-icon" href="https://i.imgur.com/317XS9m.png">
+  <meta name="twitter:image" content="https://i.imgur.com/pdIfS3E.jpeg">
+  <link rel="icon" href="https://i.imgur.com/pdIfS3E.jpeg" type="image/jpeg">
+  <link rel="apple-touch-icon" href="https://i.imgur.com/pdIfS3E.jpeg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.google.com/recaptcha/enterprise.js?render=6LcK89UrAAAAAC4EdwLRhFstgsJEZwmqZ5sPYhRI"></script>
@@ -66,10 +66,14 @@
         margin: 0 auto 20px;
         border-radius: 50%;
         border: 3px solid var(--color-secondary);
+        background: white;
+        padding: 5px;
     }
     .logo-header img {
         width: 100%;
+        height: 100%;
         border-radius: 50%;
+        object-fit: cover;
     }
     .hero h1 {
       font-family: 'Playfair Display', serif;
@@ -647,7 +651,7 @@
   <div id="dashboard">
     <div class="hero">
         <div class="logo-header">
-            <img src="https://i.imgur.com/317XS9m.png" alt="GlobalGold Logo">
+            <img src="https://i.imgur.com/pdIfS3E.jpeg" alt="GlobalGold Logo">
         </div>
         <h1>GlobalGold</h1>
         <p>Ecosistema Global Innovador en Cripto</p>
@@ -658,7 +662,7 @@
         <div class="card">
             <div class="user-header">
                 <div class="user-profile" id="user-profile-display" style="display: none;">
-                    <img id="user-avatar-display" src="" alt="Avatar" class="user-avatar">
+                    <img id="user-avatar-display" src="https://i.imgur.com/pdIfS3E.jpeg" alt="Avatar" class="user-avatar">
                     <div class="user-info">
                         <h3 id="username-display"></h3>
                         <p id="user-email-display"></p>
@@ -701,7 +705,7 @@
             <h2>👤 Mi Perfil</h2>
             <div class="profile-form">
                 <div class="avatar-upload">
-                    <img id="avatar-preview" src="https://i.imgur.com/317XS9m.png" alt="Preview" class="avatar-preview">
+                    <img id="avatar-preview" src="https://i.imgur.com/pdIfS3E.jpeg" alt="Preview" class="avatar-preview">
                     <input type="file" id="avatar-input" accept="image/jpeg,image/png" style="display: none;">
                     <button type="button" class="btn btn-secondary" onclick="document.getElementById('avatar-input').click()">
                         Cambiar Foto
@@ -1073,14 +1077,14 @@
           showUserInterface();
           loadUserProfile();
           checkAdminStatus();
-          updateUserStats(); // Actualizar stats cuando un usuario inicia sesión
+          updateUserStats();
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
           userIsAdmin = false;
           showGuestInterface();
-          updateUserStats(); // Actualizar stats cuando un usuario cierra sesión
+          updateUserStats();
         } else if (event === 'USER_UPDATED') {
-          updateUserStats(); // Actualizar stats cuando se actualiza un usuario
+          updateUserStats();
         }
       });
 
@@ -1091,7 +1095,7 @@
           loadUserProfile();
           checkAdminStatus();
         }
-        updateUserStats(); // Asegurar que las stats se carguen al inicio
+        updateUserStats();
       });
     }
 
@@ -1126,7 +1130,6 @@
       });
     }
 
-    // ===== AUTENTICACIÓN =====
     async function handleRegister(e) {
       if (e) e.preventDefault();
       
@@ -1161,7 +1164,7 @@
 
         if (data.user) {
           await createUserProfile(data.user.id, username);
-          updateUserStats(); // Actualizar stats después del registro
+          updateUserStats();
         }
 
         showNotification('¡Cuenta creada! Revisa tu email (' + email + ') para verificar tu dirección.', 'info');
@@ -1180,7 +1183,7 @@
               id: userId,
               username: username,
               bio: '',
-              avatar_url: 'https://i.imgur.com/317XS9m.png',
+              avatar_url: 'https://i.imgur.com/pdIfS3E.jpeg',
               is_admin: false,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
@@ -1188,7 +1191,7 @@
             }
           ]);
 
-        if (error && error.code !== '23505') { // Ignorar error si el perfil ya existe
+        if (error && error.code !== '23505') {
           console.error('Error creating profile:', error);
         }
       } catch (error) {
@@ -1215,14 +1218,13 @@
           return;
         }
         
-        // Actualizar última actividad
         if (data.user) {
           await updateLastActive(data.user.id);
         }
         
         showNotification('¡Bienvenido de nuevo!', 'success');
         closeAuthModal();
-        updateUserStats(); // Actualizar stats después del login
+        updateUserStats();
       } catch (error) {
         showNotification('Error en el proceso de login: ' + error.message, 'error');
       }
@@ -1373,13 +1375,12 @@
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
         showNotification('Sesión cerrada correctamente', 'success');
-        updateUserStats(); // Actualizar stats después del logout
+        updateUserStats();
       } catch (error) {
         showNotification('Error al cerrar sesión', 'error');
       }
     }
 
-    // ===== INTERFAZ DE USUARIO =====
     function showUserInterface() {
       document.getElementById('auth-buttons').style.display = 'none';
       document.getElementById('logout-btn').style.display = 'inline-block';
@@ -1425,17 +1426,14 @@
       }
     }
 
-    // ===== ESTADÍSTICAS DE USUARIOS =====
     async function updateUserStats() {
       try {
-        // Obtener total de usuarios
         const { count: totalUsers, error: countError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
           
         if (countError) throw countError;
 
-        // Obtener usuarios activos hoy (últimas 24 horas)
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
@@ -1447,7 +1445,6 @@
           
         if (activeError) throw activeError;
 
-        // Calcular crecimiento mensual (comparación con el mes anterior)
         const lastMonth = new Date(today);
         lastMonth.setMonth(lastMonth.getMonth() - 1);
         
@@ -1461,21 +1458,18 @@
         const growth = lastMonthUsers > 0 ? 
           Math.round(((totalUsers - lastMonthUsers) / lastMonthUsers) * 100) : 100;
 
-        // Actualizar la interfaz
         document.getElementById('total-users').textContent = totalUsers || 0;
         document.getElementById('active-today').textContent = activeToday || 0;
         document.getElementById('community-growth').textContent = `+${growth}%`;
         
       } catch (error) {
         console.error('Error updating stats:', error);
-        // Valores por defecto en caso de error
         document.getElementById('total-users').textContent = '0';
         document.getElementById('active-today').textContent = '0';
         document.getElementById('community-growth').textContent = '+0%';
       }
     }
 
-    // ===== FUNCIONES DE PERFIL =====
     async function loadUserProfile() {
       if (!currentUser) return;
       
@@ -1527,7 +1521,7 @@
         if (error) throw error;
         showNotification('Perfil actualizado correctamente', 'success');
         loadUserProfile();
-        updateUserStats(); // Actualizar stats después de actualizar perfil
+        updateUserStats();
       } catch (error) {
         showNotification('Error al actualizar perfil: ' + error.message, 'error');
       }
@@ -1581,14 +1575,13 @@
 
         if (updateError) throw updateError;
         showNotification('Avatar actualizado correctamente', 'success');
-        updateUserStats(); // Actualizar stats después de cambiar avatar
+        updateUserStats();
       } catch (error) {
         console.error('Error uploading avatar:', error);
         showNotification('Error al subir avatar', 'error');
       }
     }
 
-    // ===== HERRAMIENTAS =====
     function calculateInvestment() {
       const amount = parseFloat(document.getElementById('investment-amount').value);
       const rate = parseFloat(document.getElementById('annual-return').value) / 100;
@@ -1650,7 +1643,6 @@
       resultElement.style.display = 'block';
     }
 
-    // ===== FUNCIONES RESTANTES =====
     function showAcademyModule(module) {
       const content = document.getElementById('academy-content');
       const modules = {
@@ -1698,7 +1690,6 @@
       toggleToolsMenu();
     }
 
-    // ===== ANUNCIOS =====
     async function loadAnnouncements() {
       try {
         const { data, error } = await supabase
@@ -1729,7 +1720,6 @@
       }
     }
 
-    // ===== ADMINISTRACIÓN =====
     function showAnnouncementModal() {
       if (!currentUser || !userIsAdmin) {
         showNotification('Solo administradores pueden crear anuncios', 'error');
@@ -1775,7 +1765,7 @@
         showNotification('Anuncio publicado correctamente', 'success');
         closeAdminModal();
         loadAnnouncements();
-        updateUserStats(); // Actualizar stats después de crear anuncio
+        updateUserStats();
       } catch (error) {
         showNotification('Error al publicar anuncio: ' + error.message, 'error');
       }
@@ -1804,7 +1794,6 @@
       document.getElementById('modal-overlay').style.display = 'block';
     }
 
-    // ===== FUNCIONES AUXILIARES =====
     function showNotification(message, type) {
       const notification = document.createElement('div');
       notification.className = `notification notification-${type}`;
@@ -1902,7 +1891,6 @@
       });
     }
 
-    // Limpiar intervalo cuando se cierra la página
     window.addEventListener('beforeunload', function() {
       if (statsUpdateInterval) {
         clearInterval(statsUpdateInterval);
