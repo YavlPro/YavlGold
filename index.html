@@ -960,10 +960,6 @@
             </div>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🔑 Iniciar Sesión</button>
-        <button type="button" class="btn btn-secondary" onclick="handleMagicLinkLogin()" style="width: 100%; margin-top: 10px;">Enviar Enlace Mágico</button>
-        <div style="text-align: center; margin-top: 15px;">
-            <a href="#" onclick="showForgotPasswordForm()">¿Olvidaste tu contraseña?</a>
-        </div>
     </form>
     <form id="register-form" class="auth-form" onsubmit="handleRegister(event)">
         <div class="form-group">
@@ -995,16 +991,6 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">🚀 Crear Cuenta</button>
     </form>
-    <form id="forgot-password-form" class="auth-form" style="display: none;" onsubmit="handlePasswordReset(event)">
-        <div class="form-group">
-            <label for="reset-email">Correo Electrónico:</label>
-            <input type="email" id="reset-email" required>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Enviar Instrucciones</button>
-        <div style="text-align: center; margin-top: 15px;">
-            <a href="#" onclick="showLoginForm()">Volver al Inicio de Sesión</a>
-        </div>
-    </form>
   </div>
   <!-- Modal de Administración -->
   <div id="admin-modal" class="modal card" style="display: none; max-width: 600px;">
@@ -1032,8 +1018,8 @@
     // ===== INICIALIZACIÓN =====
     document.addEventListener('DOMContentLoaded', function() {
       initializeApp();
-      // Llamar a checkForPasswordReset después de initializeApp
-      checkForPasswordReset();
+      // Llamar a checkForAuthRedirects después de initializeApp
+      checkForAuthRedirects();
     });
     function initializeApp() {
       // Configurar event listeners
@@ -1064,7 +1050,6 @@
               // Para el flujo de registro, se mostrará un mensaje de verificación en handleRegister.
               // Aquí asumimos que si hay sesión, eventualmente se podrá cargar el perfil si es válida.
               // Por ahora, intentamos mostrar la interfaz de usuario.
-              // Si no hay perfil, la UI puede mostrar campos vacíos.
               showUserInterface();
           });
         } else if (event === 'SIGNED_OUT') {
@@ -1079,7 +1064,7 @@
 
       // Verificar sesión existente al cargar (importante para manejar la URL de verificación en el mismo navegador)
       // Se llama a getSession para obtener la sesión actual si existe (por ejemplo, tras hacer clic en el enlace de verificación en el mismo navegador)
-      supabase.auth.getSession().then(({ data: { session }, error }) => {
+      supabase.auth.getSession().then(({  { session }, error }) => {
         if (error) {
             console.error('Error obteniendo sesión inicial:', error);
             // Aunque haya error, mostramos la interfaz de invitado
@@ -1155,7 +1140,7 @@
           email: email,
           password: password,
           options: {
-            data: {
+             {
               username: username,
               // --- ADVERTENCIA: Enviar el token aquí sin validación previa es inseguro ---
               captcha_token: token // ESTE DATO DEBE SER VALIDADO EN EL SERVIDOR
@@ -1272,7 +1257,7 @@
     }
 
     // --- FUNCIONES: Manejo del enlace de restablecimiento y verificación ---
-    function checkForPasswordReset() {
+    function checkForAuthRedirects() {
       const urlParams = new URLSearchParams(window.location.search);
       const actionType = urlParams.get('type'); // Puede ser 'recovery' para restablecimiento o 'signup' para confirmación de correo
       const token = urlParams.get('token'); // El token de recuperación o confirmación
@@ -1293,6 +1278,27 @@
               window.location.hash = ''; // Limpiar la URL de token si es necesario
               window.location.reload(); // Recargar para que se aplique el estado de sesión
           }, 2000);
+      } else if (urlParams.has('error')) {
+          // Manejar errores específicos de Supabase
+          const errorCode = urlParams.get('error_code');
+          const errorDescription = urlParams.get('error_description');
+          console.error('Error en la URL de redirección:', errorCode, errorDescription);
+
+          // Mostrar un mensaje de error específico al usuario
+          let errorMessage = 'Ha ocurrido un error al procesar tu solicitud.';
+          if (errorCode === 'otp_expired') {
+              errorMessage = 'El enlace de verificación ha expirado. Por favor, solicita uno nuevo.';
+          } else if (errorCode === 'otp_invalid') {
+              errorMessage = 'El enlace de verificación es inválido. Por favor, revisa el enlace y vuelve a intentarlo.';
+          } else if (errorCode === 'access_denied') {
+              errorMessage = 'Acceso denegado. Por favor, verifica tu correo electrónico y vuelve a intentar.';
+          }
+
+          showNotification(errorMessage, 'error');
+
+          // Opcional: Mostrar un botón para reenviar el correo de verificación
+          // Esto requeriría una función adicional en el backend.
+          // Por ahora, simplemente mostramos el mensaje de error.
       }
     }
 
@@ -1493,7 +1499,7 @@
         if (uploadError) throw uploadError;
 
         // Obtener URL pública
-        const { data: { publicUrl } } = supabase.storage
+        const {  { publicUrl } } = supabase.storage
           .from('avatars')
           .getPublicUrl(filePath);
 
