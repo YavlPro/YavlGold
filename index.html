@@ -24,6 +24,30 @@
   <link rel="apple-touch-icon" href="https://i.imgur.com/7A4FJu3.jpg">
   <meta name="theme-color" content="#0B0C0F">
   
+  <!-- JSON-LD para SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "GlobalGold",
+    "url": "https://yeriksonvarela-glitch.github.io/gold/",
+    "logo": "https://i.imgur.com/7A4FJu3.jpg",
+    "description": "Ecosistema Global Innovador en Cripto - Herramientas profesionales, formación y comunidad",
+    "sameAs": [
+      "https://x.com/Yavlcapitan",
+      "https://t.me/+94LkbchALuk3Zjhh",
+      "https://t.me/YavlPro",
+      "https://youtube.com/@globalgoldlc"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+58-424-739-4025",
+      "contactType": "customer service",
+      "availableLanguage": "es"
+    }
+  }
+  </script>
+  
   <!-- Fuentes y librerías -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -127,7 +151,8 @@
       position: relative;
     }
     
-    .main-nav a:hover {
+    .main-nav a:hover,
+    .main-nav a.active {
       color: var(--color-secondary);
     }
     
@@ -142,7 +167,8 @@
       transition: width 0.3s ease;
     }
     
-    .main-nav a:hover::after {
+    .main-nav a:hover::after,
+    .main-nav a.active::after {
       width: 100%;
     }
     
@@ -478,6 +504,54 @@
       box-shadow: 0 5px 15px rgba(200, 167, 82, 0.2);
     }
     
+    /* --- SECCIÓN CONTACTO (NUEVA) --- */
+    .contact-section {
+      text-align: center;
+      padding: 60px 5%;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      margin: 40px 5%;
+      border: 1px solid var(--color-secondary);
+      backdrop-filter: blur(10px);
+    }
+    
+    .contact-methods {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+    
+    .contact-method {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      text-align: center;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .contact-method:hover {
+      border-color: var(--color-secondary);
+      transform: translateY(-5px);
+    }
+    
+    .contact-icon {
+      font-size: 3rem;
+      color: var(--color-secondary);
+      margin-bottom: 20px;
+    }
+    
+    .contact-method h3 {
+      margin-bottom: 15px;
+      color: var(--text-light);
+    }
+    
+    .contact-method p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    
     /* --- FOOTER MEJORADO --- */
     footer {
       text-align: center;
@@ -533,6 +607,31 @@
       margin-top: 20px;
       font-size: 0.8rem;
       opacity: 0.7;
+    }
+    
+    /* --- BOTÓN FLOTANTE WHATSAPP --- */
+    #wafloat {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1000;
+      width: 60px;
+      height: 60px;
+      background: #25D366;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+      transition: var(--transition);
+    }
+    
+    #wafloat:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 25px rgba(37, 211, 102, 0.6);
     }
     
     /* --- MODAL DE AUTENTICACIÓN MEJORADO --- */
@@ -801,6 +900,24 @@
         width: 100%;
         max-width: 280px;
       }
+      
+      .contact-methods {
+        grid-template-columns: 1fr;
+      }
+      
+      #wafloat {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        right: 15px;
+        bottom: 15px;
+      }
+    }
+    
+    @media (min-width: 769px) {
+      #wafloat {
+        display: none;
+      }
     }
     
     @media (max-width: 480px) {
@@ -832,16 +949,17 @@
 <body>
   <!-- Header con navegación profesional -->
   <header class="gg-header">
-    <a class="brand" href="#home">
+    <a class="brand" href="/gold/">
       <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="brand-logo">
       <span>GlobalGold</span>
     </a>
     
     <nav class="main-nav">
-      <a href="#herramientas">Herramientas</a>
-      <a href="#academia">Academia</a>
-      <a href="#comunidad">Comunidad</a>
-      <a href="#dashboard">Dashboard</a>
+      <a href="/gold/herramientas/">Herramientas</a>
+      <a href="/gold/#academia">Academia</a>
+      <a href="/gold/#comunidad">Comunidad</a>
+      <a href="/gold/dashboard/">Dashboard</a>
+      <a href="/gold/#contacto">Contacto</a>
     </nav>
     
     <div class="auth-buttons">
@@ -859,8 +977,8 @@
     <p>Ecosistema Global Innovador en Cripto - Herramientas profesionales, formación y comunidad para maximizar tu potencial en el mundo cripto.</p>
     
     <div class="cta-buttons">
-      <a href="#herramientas" class="btn btn-primary">Ir a Herramientas</a>
-      <a href="#comunidad" class="btn btn-secondary">Unirse a la Comunidad</a>
+      <a href="/gold/herramientas/" class="btn btn-primary">Ir a Herramientas</a>
+      <a href="/gold/#contacto" class="btn btn-secondary">Contactar por WhatsApp</a>
     </div>
   </section>
 
@@ -878,7 +996,7 @@
         </div>
         <h3>Calculadora de Rentabilidad</h3>
         <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
-        <a href="#calculadora" class="btn btn-secondary">Abrir Calculadora</a>
+        <a href="/gold/herramientas/#calculadora" class="btn btn-secondary">Abrir Calculadora</a>
       </div>
       
       <div class="tool-card">
@@ -887,7 +1005,7 @@
         </div>
         <h3>Conversor de Cripto</h3>
         <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
-        <a href="#conversor" class="btn btn-secondary">Abrir Conversor</a>
+        <a href="/gold/herramientas/#conversor" class="btn btn-secondary">Abrir Conversor</a>
       </div>
       
       <div class="tool-card">
@@ -896,7 +1014,7 @@
         </div>
         <h3>Análisis de Mercado</h3>
         <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
-        <a href="#analisis" class="btn btn-secondary">Ver Análisis</a>
+        <a href="/gold/herramientas/#analisis" class="btn btn-secondary">Ver Análisis</a>
       </div>
     </div>
   </section>
@@ -968,24 +1086,56 @@
     </div>
   </section>
 
-  <!-- Sección Comunidad -->
+  <!-- Sección Comunidad ACTUALIZADA -->
   <section class="community-section" id="comunidad">
     <h2>Únete a Nuestra Comunidad</h2>
-    <p>Conecta con otros entusiastas de las criptomonedas, comparte conocimientos y mantente actualizado con las últimas tendencias</p>
+    <p>Conecta con GlobalGold en tus canales favoritos y recibe soporte directo</p>
     
     <div class="social-links">
-      <a href="https://t.me/globalgold" target="_blank" class="social-link">
-        <i class="fab fa-telegram"></i> Telegram
+      <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank" class="social-link">
+        <i class="fab fa-telegram"></i> Telegram (Comunidad)
       </a>
-      <a href="https://discord.gg/globalgold" target="_blank" class="social-link">
-        <i class="fab fa-discord"></i> Discord
+      <a href="https://t.me/YavlPro" target="_blank" class="social-link">
+        <i class="fab fa-telegram"></i> Telegram (Contacto)
       </a>
-      <a href="https://twitter.com/globalgold" target="_blank" class="social-link">
-        <i class="fab fa-twitter"></i> Twitter
+      <a href="https://x.com/Yavlcapitan" target="_blank" class="social-link">
+        <i class="fab fa-twitter"></i> X (Twitter)
       </a>
-      <a href="https://youtube.com/globalgold" target="_blank" class="social-link">
+      <a href="https://youtube.com/@globalgoldlc" target="_blank" class="social-link">
         <i class="fab fa-youtube"></i> YouTube
       </a>
+    </div>
+  </section>
+
+  <!-- NUEVA Sección Contacto -->
+  <section class="contact-section" id="contacto">
+    <div class="section-title">
+      <h2>Contacto Directo</h2>
+      <p>¿Tienes preguntas? Escríbenos directamente</p>
+    </div>
+    
+    <div class="contact-methods">
+      <div class="contact-method">
+        <div class="contact-icon">
+          <i class="fab fa-whatsapp"></i>
+        </div>
+        <h3>WhatsApp</h3>
+        <p>Respuesta rápida en horario laboral (UTC-4)</p>
+        <a href="https://wa.me/584247394025" class="btn btn-primary" target="_blank" id="whatsapp-contact">
+          +58 424 739 4025
+        </a>
+      </div>
+      
+      <div class="contact-method">
+        <div class="contact-icon">
+          <i class="fab fa-telegram"></i>
+        </div>
+        <h3>Telegram Directo</h3>
+        <p>Soporte técnico y consultas específicas</p>
+        <a href="https://t.me/YavlPro" class="btn btn-secondary" target="_blank">
+          @YavlPro
+        </a>
+      </div>
     </div>
   </section>
 
@@ -999,10 +1149,11 @@
     <p>Ecosistema Global Innovador en Cripto</p>
     
     <div class="footer-links">
-      <a href="#herramientas">Herramientas</a>
-      <a href="#academia">Academia</a>
-      <a href="#comunidad">Comunidad</a>
-      <a href="#dashboard">Dashboard</a>
+      <a href="/gold/herramientas/">Herramientas</a>
+      <a href="/gold/#academia">Academia</a>
+      <a href="/gold/#comunidad">Comunidad</a>
+      <a href="/gold/dashboard/">Dashboard</a>
+      <a href="/gold/#contacto">Contacto</a>
       <a href="#" onclick="showAuthModal('login')">Iniciar Sesión</a>
     </div>
     
@@ -1011,6 +1162,11 @@
       <p>Desarrollado con pasión para la comunidad cripto global</p>
     </div>
   </footer>
+
+  <!-- Botón flotante WhatsApp -->
+  <a id="wafloat" aria-label="WhatsApp" target="_blank" rel="noopener">
+    <i class="fab fa-whatsapp"></i>
+  </a>
 
   <!-- Modal de Autenticación -->
   <div id="modal-overlay" onclick="closeModal()"></div>
@@ -1083,9 +1239,32 @@
       document.getElementById('login-form').addEventListener('submit', handleLogin);
       document.getElementById('register-form').addEventListener('submit', handleRegister);
       
+      // Configurar WhatsApp con mensajes personalizados
+      setupWhatsAppLinks();
+      
       // Ajustar el padding del contenido para la navbar fija
       document.body.style.paddingTop = document.querySelector('.gg-header').offsetHeight + 'px';
     });
+    
+    // Configurar enlaces de WhatsApp
+    function setupWhatsAppLinks() {
+      const baseWA = "https://wa.me/584247394025?text=";
+      
+      // Botón flotante
+      const msgFloat = "Hola GlobalGold, necesito más información.";
+      document.getElementById('wafloat').href = baseWA + encodeURIComponent(msgFloat);
+      
+      // Sección contacto
+      const msgContact = "Hola GlobalGold, me contacto desde la sección Contacto de la web.";
+      document.getElementById('whatsapp-contact').href = baseWA + encodeURIComponent(msgContact);
+      
+      // CTA del hero
+      const heroBtn = document.querySelector('.cta-buttons .btn-secondary');
+      if (heroBtn) {
+        const msgHero = "Hola GlobalGold, vengo desde la web y quiero más información.";
+        heroBtn.href = baseWA + encodeURIComponent(msgHero);
+      }
+    }
     
     // Funciones de autenticación
     function showAuthModal(type) {
@@ -1131,6 +1310,9 @@
           email: email
         };
         
+        // Guardar en localStorage para persistencia
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
         updateUIForLoggedInUser();
         showNotification('Sesión iniciada correctamente', 'success');
         closeModal();
@@ -1158,6 +1340,9 @@
           email: email
         };
         
+        // Guardar en localStorage para persistencia
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
         updateUIForLoggedInUser();
         showNotification('Cuenta creada correctamente', 'success');
         closeModal();
@@ -1168,13 +1353,18 @@
     
     function logout() {
       currentUser = null;
+      localStorage.removeItem('currentUser');
       updateUIForLoggedInUser();
       showNotification('Sesión cerrada', 'info');
     }
     
     function checkAuthStatus() {
-      // En una implementación real, verificaríamos el estado de autenticación con Supabase
-      // Por ahora, simulamos que no hay usuario logueado al cargar la página
+      // Verificar si hay un usuario en localStorage
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        updateUIForLoggedInUser();
+      }
     }
     
     function updateUIForLoggedInUser() {
