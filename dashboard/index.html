@@ -466,9 +466,10 @@
       <i class="fas fa-lock"></i>
     </div>
     <h2>Acceso Restringido</h2>
-    <p>Debes iniciar sesión para acceder al dashboard.</p>
+    <p>Debes iniciar sesión para acceder al dashboard y disfrutar de todas las herramientas premium de GlobalGold.</p>
     <div style="margin-top: 30px;">
-      <a href="/gold/" class="btn btn-primary">Ir a la Página Principal</a>
+      <a href="/gold/" class="btn btn-primary">Iniciar Sesión</a>
+      <a href="/gold/" class="btn btn-secondary">Ir a la Página Principal</a>
     </div>
   </div>
 
@@ -486,8 +487,8 @@
         loginPrompt.style.display = 'block';
         
         authButtons.innerHTML = `
-          <button class="btn btn-primary" onclick="window.location.href='/gold/'">Registrarse</button>
-          <button class="btn btn-secondary" onclick="window.location.href='/gold/'">Iniciar Sesión</button>
+          <a href="/gold/" class="btn btn-primary">Iniciar Sesión</a>
+          <a href="/gold/" class="btn btn-secondary">Registrarse</a>
         `;
       } else {
         // Hay sesión, cargar dashboard

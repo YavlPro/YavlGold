@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversor de Cripto - GlobalGold</title>
+  <meta name="description" content="Próximamente: Conversor de criptomonedas en tiempo real">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="https://i.imgur.com/7A4FJu3.jpg" type="image/jpeg">
+  
+  <!-- Fuentes y librerías -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #050505;
+      --text-light: #ffffff;
+      --text-muted: #cccccc;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --gradient-gold: linear-gradient(135deg, #C8A752 0%, #D4AF37 100%);
+      --border-radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 600px;
+      padding: 60px 40px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 20px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: transparent;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      background-clip: text;
+      font-size: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 20px;
+    }
+
+    .icon {
+      font-size: 4rem;
+      color: var(--color-secondary);
+      margin-bottom: 30px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: var(--border-radius);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      margin: 10px;
+    }
+
+    .btn-primary {
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(200, 167, 82, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-secondary);
+      border: 2px solid var(--color-secondary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      transform: translateY(-3px);
+    }
+
+    .features {
+      margin-top: 40px;
+      text-align: left;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      color: var(--text-muted);
+    }
+
+    .feature i {
+      color: var(--color-secondary);
+      margin-right: 15px;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="logo">
+    <div class="icon">
+      <i class="fas fa-exchange-alt"></i>
+    </div>
+    <h1>Conversor de Cripto</h1>
+    <p>Esta herramienta estará disponible muy pronto. Podrás convertir entre más de 100 criptomonedas con datos en tiempo real y análisis de spreads.</p>
+    
+    <div class="features">
+      <div class="feature">
+        <i class="fas fa-check"></i>
+        <span>Conversión en tiempo real</span>
+      </div>
+      <div class="feature">
+        <i class="fas fa-check"></i>
+        <span>Más de 100 criptomonedas</span>
+      </div>
+      <div class="feature">
+        <i class="fas fa-check"></i>
+        <span>Análisis de spreads y comisiones</span>
+      </div>
+      <div class="feature">
+        <i class="fas fa-check"></i>
+        <span>Comparación de exchanges</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <a href="/gold/herramientas/" class="btn btn-primary">Volver al Hub de Herramientas</a>
+      <a href="/gold/" class="btn btn-secondary">Ir al Inicio</a>
+    </div>
+  </div>
+</body>
+</html>

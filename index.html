@@ -978,7 +978,7 @@
     
     <div class="cta-buttons">
       <a href="/gold/herramientas/" class="btn btn-primary">Ir a Herramientas</a>
-      <a href="/gold/#contacto" class="btn btn-secondary">Contactar por WhatsApp</a>
+      <a href="/gold/go/whatsapp.html" class="btn btn-secondary">Contactar por WhatsApp</a>
     </div>
   </section>
 
@@ -1092,16 +1092,16 @@
     <p>Conecta con GlobalGold en tus canales favoritos y recibe soporte directo</p>
     
     <div class="social-links">
-      <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank" class="social-link">
+      <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank" rel="noopener" class="social-link">
         <i class="fab fa-telegram"></i> Telegram (Comunidad)
       </a>
-      <a href="https://t.me/YavlPro" target="_blank" class="social-link">
+      <a href="https://t.me/YavlPro" target="_blank" rel="noopener" class="social-link">
         <i class="fab fa-telegram"></i> Telegram (Contacto)
       </a>
-      <a href="https://x.com/Yavlcapitan" target="_blank" class="social-link">
+      <a href="https://x.com/Yavlcapitan" target="_blank" rel="noopener" class="social-link">
         <i class="fab fa-twitter"></i> X (Twitter)
       </a>
-      <a href="https://youtube.com/@globalgoldlc" target="_blank" class="social-link">
+      <a href="https://youtube.com/@globalgoldlc" target="_blank" rel="noopener" class="social-link">
         <i class="fab fa-youtube"></i> YouTube
       </a>
     </div>
@@ -1121,8 +1121,8 @@
         </div>
         <h3>WhatsApp</h3>
         <p>Respuesta rápida en horario laboral (UTC-4)</p>
-        <a href="https://wa.me/584247394025" class="btn btn-primary" target="_blank" id="whatsapp-contact">
-          +58 424 739 4025
+        <a href="/gold/go/whatsapp.html" class="btn btn-primary" target="_blank" rel="noopener">
+          Contactar por WhatsApp
         </a>
       </div>
       
@@ -1132,8 +1132,8 @@
         </div>
         <h3>Telegram Directo</h3>
         <p>Soporte técnico y consultas específicas</p>
-        <a href="https://t.me/YavlPro" class="btn btn-secondary" target="_blank">
-          @YavlPro
+        <a href="/gold/go/telegram.html" class="btn btn-secondary" target="_blank" rel="noopener">
+          Contactar por Telegram
         </a>
       </div>
     </div>
@@ -1253,17 +1253,6 @@
       // Botón flotante
       const msgFloat = "Hola GlobalGold, necesito más información.";
       document.getElementById('wafloat').href = baseWA + encodeURIComponent(msgFloat);
-      
-      // Sección contacto
-      const msgContact = "Hola GlobalGold, me contacto desde la sección Contacto de la web.";
-      document.getElementById('whatsapp-contact').href = baseWA + encodeURIComponent(msgContact);
-      
-      // CTA del hero
-      const heroBtn = document.querySelector('.cta-buttons .btn-secondary');
-      if (heroBtn) {
-        const msgHero = "Hola GlobalGold, vengo desde la web y quiero más información.";
-        heroBtn.href = baseWA + encodeURIComponent(msgHero);
-      }
     }
     
     // Funciones de autenticación
