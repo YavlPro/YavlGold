@@ -1,0 +1,15 @@
+<script>
+// GUARD DE AUTENTICACIÓN - Protege la página de herramientas
+(function(){
+    try {
+        var auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
+        if (!auth.ok) {
+            sessionStorage.setItem('gg:intended', window.location.pathname);
+            window.location.href = 'dashboard.html?needLogin=1#login';
+        }
+    } catch(e) {
+        // En caso de error, redirigir al login por seguridad
+        window.location.href = 'dashboard.html?needLogin=1#login';
+    }
+})();
+</script>
