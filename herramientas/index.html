@@ -3,10 +3,17 @@
 <head>
   <!-- Protección simple -->
   <script>
-    if (!localStorage.getItem('goldAuth')) {
-      alert('Acceso restringido. Debes iniciar sesión.');
-      window.location.replace('/gold/login.html');
-    }
+    (function(){
+      try{
+        var goldAuth = localStorage.getItem('goldAuth') === 'true';
+        var currentUser = localStorage.getItem('currentUser');
+        if(!(goldAuth || currentUser)){
+          alert('Acceso restringido. Debes iniciar sesión.');
+          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+          window.location.replace('/gold/login.html');
+        }
+      }catch(e){}
+    })();
   </script>
   
   <meta charset="UTF-8">
