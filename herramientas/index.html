@@ -383,7 +383,7 @@
         </div>
         <h3>Calculadora de Rentabilidad</h3>
         <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
-        <a href="#calculadora" class="btn btn-secondary" onclick="document.getElementById('calculadora').scrollIntoView({behavior: 'smooth'})">Ir a la Calculadora</a>
+  <a href="/gold/herramientas/calculadora.html" class="btn btn-secondary">Ir a la Calculadora</a>
       </div>
       
       <div class="tool-card">
@@ -433,43 +433,7 @@
     <div style="text-align:center;opacity:.8;">📈 Muy pronto podrás ver análisis técnicos aquí.</div>
   </section>
 
-  <!-- Sección Calculadora -->
-  <section class="section" id="calculadora">
-    <div class="section-title">
-      <h2>Calculadora de Rentabilidad</h2>
-      <p>Calcula proyecciones de inversión con diferentes escenarios</p>
-    </div>
-    
-    <div class="tool-card" style="max-width: 600px; margin: 0 auto;">
-      <div class="tool-icon">
-        <i class="fas fa-calculator"></i>
-      </div>
-      
-      <form id="calculator-form">
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--color-secondary);">Inversión Inicial ($)</label>
-          <input type="number" id="investment" placeholder="Ej: 1000" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white;">
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--color-secondary);">Rentabilidad Esperada (% mensual)</label>
-          <input type="number" id="roi" placeholder="Ej: 10" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white;">
-        </div>
-        
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; color: var(--color-secondary);">Período (meses)</label>
-          <input type="number" id="period" placeholder="Ej: 12" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white;">
-        </div>
-        
-        <button type="button" onclick="calculateROI()" class="btn btn-primary" style="width: 100%;">Calcular</button>
-      </form>
-      
-      <div id="result" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; display: none;">
-        <h4 style="color: var(--color-secondary); margin-bottom: 10px;">Resultado:</h4>
-        <p id="result-text"></p>
-      </div>
-    </div>
-  </section>
+  <!-- Sección Calculadora trasladada a calculadora.html -->
 
   <!-- Footer -->
   <footer>
