@@ -7,7 +7,7 @@
       const currentUser = localStorage.getItem('currentUser');
       if (!currentUser) {
         alert('Acceso restringido. Debes iniciar sesión.');
-        window.location.href = '/gold/';
+        window.location.href = '/';
       }
     });
   </script>
@@ -247,7 +247,7 @@
     </div>
 
     <div style="text-align: center; margin-top: 40px; padding: 20px;">
-      <a href="/gold/" class="btn btn-secondary" style="color: #C8A752; text-decoration: none;">
+      <a href="/" class="btn btn-secondary" style="color: #C8A752; text-decoration: none;">
         <i class="fas fa-arrow-left"></i> Volver al Inicio
       </a>
       <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 20px;">
@@ -305,7 +305,7 @@
     function logout() {
       localStorage.removeItem('currentUser');
       alert('Sesión cerrada correctamente');
-      window.location.href = '/gold/';
+      window.location.href = '/';
     }
   </script>
 </body>
