@@ -23,6 +23,26 @@
   <link rel="alternate icon" href="https://i.imgur.com/7A4FJu3.jpg" sizes="32x32">
   <link rel="apple-touch-icon" href="https://i.imgur.com/7A4FJu3.jpg">
   <meta name="theme-color" content="#0B0C0F">
+
+  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <script>
+    (function () {
+      try {
+        var BUST_VERSION = '20250929'; // update when deploying major changes
+        var key = 'gg_html_busted_index';
+        var already = sessionStorage.getItem(key);
+        var url = new URL(window.location.href);
+        if (!url.searchParams.has('v') && !already) {
+          url.searchParams.set('v', BUST_VERSION);
+          sessionStorage.setItem(key, '1');
+          window.location.replace(url.toString());
+        }
+      } catch (e) { /* noop */ }
+    })();
+  </script>
   
   <!-- JSON-LD para SEO -->
   <script type="application/ld+json">
@@ -947,6 +967,8 @@
   </style>
 </head>
 <body>
+  <!-- Build banner to verify fresh deploy visually -->
+  <div id="gg-version-banner" style="position:fixed;bottom:10px;right:10px;background:#111;padding:6px 10px;border:1px solid rgba(200,167,82,0.5);border-radius:6px;color:#e2e8f0;font-size:.8rem;z-index:2000">Build: 2025-09-29 03:40Z · v=20250929</div>
   <!-- Header con navegación profesional -->
   <header class="gg-header">
     <a class="brand" href="/gold/">
