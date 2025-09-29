@@ -9,9 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Credenciales simples
       if (username === 'admin' && password === '123') {
+        // Marcar autenticación y guardar usuario básico
         localStorage.setItem('goldAuth', 'true');
+        const user = { username, email: `${username}@example.com` };
+        localStorage.setItem('currentUser', JSON.stringify(user));
+
         alert('¡Login exitoso!');
-        window.location.href = '/gold/tools.html';
+        // Redirigir a la ruta que intentaba acceder o a herramientas
+        const redirect = sessionStorage.getItem('redirectAfterLogin') || '/gold/herramientas/';
+        sessionStorage.removeItem('redirectAfterLogin');
+        window.location.href = redirect;
       } else {
         alert('Usuario o contraseña incorrectos. Usa: admin/123');
       }
@@ -22,10 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const protectedPaths = ['/gold/herramientas/', '/gold/dashboard/'];
   const currentPath = window.location.pathname;
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  const goldAuth = localStorage.getItem('goldAuth') === 'true';
 
   // 1. Proteger rutas
   if (protectedPaths.some(path => currentPath.startsWith(path))) {
-    if (!currentUser) {
+    if (!(goldAuth || currentUser)) {
       // Guardar la URL a la que se intentaba acceder para redirigir después del login
       sessionStorage.setItem('redirectAfterLogin', currentPath);
       window.location.href = '/gold/login.html';
@@ -34,12 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 2. Actualizar la UI si el usuario está autenticado
-  if (currentUser) {
+  if (goldAuth || currentUser) {
     // Actualizar header principal (si existe)
     const authButtons = document.getElementById('auth-buttons');
     if (authButtons) {
+      const name = (currentUser && currentUser.username) ? currentUser.username : 'Usuario';
       authButtons.innerHTML = `
-        <span style="color: var(--text-light); margin-right: 15px;">Hola, ${currentUser.username}</span>
+        <span style="color: var(--text-light); margin-right: 15px;">Hola, ${name}</span>
         <button class="btn btn-outline" onclick="logout()">Cerrar Sesión</button>
       `;
     }
@@ -52,10 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dashboardContent) dashboardContent.style.display = 'flex';
       if (loginPrompt) loginPrompt.style.display = 'none';
       
-      document.getElementById('user-name').textContent = currentUser.username;
-      document.getElementById('user-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
-      document.getElementById('user-name-input').value = currentUser.username;
-      document.getElementById('user-email').value = currentUser.email;
+      const name = (currentUser && currentUser.username) ? currentUser.username : 'Usuario';
+      const email = (currentUser && currentUser.email) ? currentUser.email : '';
+      const userNameEl = document.getElementById('user-name');
+      const avatarEl = document.getElementById('user-avatar');
+      const userNameInput = document.getElementById('user-name-input');
+      const userEmailInput = document.getElementById('user-email');
+      if (userNameEl) userNameEl.textContent = name;
+      if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+      if (userNameInput) userNameInput.value = name;
+      if (userEmailInput) userEmailInput.value = email;
     }
   } else {
     // 3. Configurar UI para usuario no autenticado
@@ -80,5 +95,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- FUNCIÓN DE LOGOUT ---
 function logout() {
   localStorage.removeItem('currentUser');
-  window.location.href = '/gold/index.html';
+  localStorage.removeItem('goldAuth');
+  window.location.href = '/gold/index.html?v=20250929';
+}
+
+// --- LOGIN RÁPIDO (para el botón en login.html) ---
+function simpleLogin() {
+  // Simula el login con credenciales por defecto
+  localStorage.setItem('goldAuth', 'true');
+  const user = { username: 'admin', email: 'admin@example.com' };
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  const redirect = sessionStorage.getItem('redirectAfterLogin') || '/gold/herramientas/';
+  sessionStorage.removeItem('redirectAfterLogin');
+  window.location.href = redirect;
 }
