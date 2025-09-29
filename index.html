@@ -1,34 +1,64 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GlobalGold — Ecosistema Global Innovador en Cripto</title>
-  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
-  
-  <!-- Metadatos Open Graph / Twitter -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
-  <meta property="og:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
-  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta property="og:image" content="https://i.imgur.com/7A4FJu3.jpg">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
-  <meta name="twitter:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
-  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta name="twitter:image" content="https://i.imgur.com/7A4FJu3.jpg">
-  
-  <!-- Favicon e íconos -->
-  <link rel="icon" href="https://i.imgur.com/7A4FJu3.jpg" type="image/jpeg">
-  <link rel="alternate icon" href="https://i.imgur.com/7A4FJu3.jpg" sizes="32x32">
-  <link rel="apple-touch-icon" href="https://i.imgur.com/7A4FJu3.jpg">
-  <meta name="theme-color" content="#0B0C0F">
+<!DOCTYPE html><!DOCTYPE html>
 
-  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <script>
+<html lang="es"><html lang="es">
+
+<head><head>
+
+  <meta charset="UTF-8">  <meta charset="UTF-8">
+
+  <title>Bienvenido a GLOBAL GOLD</title>  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="/gold/assets/css/style.css">  <title>GlobalGold — Ecosistema Global Innovador en Cripto</title>
+
+</head>  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
+
+<body>  
+
+  <header><!-- El header se cargará aquí --></header>  <!-- Metadatos Open Graph / Twitter -->
+
+  <main>  <meta property="og:type" content="website">
+
+    <h1>Iniciar Sesión</h1>  <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
+
+    <form id="login-form">  <meta property="og:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
+
+      <input type="text" id="username" placeholder="Usuario (test)" required>  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
+
+      <input type="password" id="password" placeholder="Contraseña (1234)" required>  <meta property="og:image" content="https://i.imgur.com/7A4FJu3.jpg">
+
+      <button type="submit">Entrar</button>  <meta name="twitter:card" content="summary_large_image">
+
+    </form>  <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
+
+  </main>  <meta name="twitter:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
+
+  <footer><!-- El footer se cargará aquí --></footer>  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
+
+    <meta name="twitter:image" content="https://i.imgur.com/7A4FJu3.jpg">
+
+  <script src="/gold/assets/js/auth.js"></script>  
+
+  <script src="/gold/assets/js/main.js"></script>  <!-- Favicon e íconos -->
+
+  <script>  <link rel="icon" href="https://i.imgur.com/7A4FJu3.jpg" type="image/jpeg">
+
+    document.getElementById('login-form').addEventListener('submit', function(e) {  <link rel="alternate icon" href="https://i.imgur.com/7A4FJu3.jpg" sizes="32x32">
+
+      e.preventDefault();  <link rel="apple-touch-icon" href="https://i.imgur.com/7A4FJu3.jpg">
+
+      const user = document.getElementById('username').value;  <meta name="theme-color" content="#0B0C0F">
+
+      const pass = document.getElementById('password').value;
+
+      window.auth.handleLogin(user, pass);  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
+
+    });  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+
+  </script>  <meta http-equiv="Pragma" content="no-cache" />
+
+</body>  <meta http-equiv="Expires" content="0" />
+
+</html>  <script>
     (function () {
       try {
         var BUST_VERSION = '20250929'; // update when deploying major changes
