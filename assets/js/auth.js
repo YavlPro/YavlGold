@@ -7,17 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const username = e.target.username.value;
       const password = e.target.password.value;
 
-      // Credenciales de prueba (reemplazar con una validación real en el futuro)
-      if (username === 'user' && password === 'pass') {
-        const user = { username: username, email: 'user@example.com' };
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        
-        // Redirigir a la página solicitada o al dashboard por defecto
-        const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '/gold/dashboard/';
-        sessionStorage.removeItem('redirectAfterLogin');
-        window.location.href = redirectUrl;
+      // Credenciales simples
+      if (username === 'admin' && password === '123') {
+        localStorage.setItem('goldAuth', 'true');
+        alert('¡Login exitoso!');
+        window.location.href = '/gold/herramientas/';
       } else {
-        alert('Usuario o contraseña incorrectos.');
+        alert('Usuario o contraseña incorrectos. Usa: admin/123');
       }
     });
   }

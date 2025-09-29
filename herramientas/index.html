@@ -5,7 +5,7 @@
   <script>
     if (!localStorage.getItem('goldAuth')) {
       alert('Acceso restringido. Debes iniciar sesión.');
-      window.location.href = '/gold/login.html';
+      window.location.replace('/gold/login.html');
     }
   </script>
   
