@@ -332,7 +332,7 @@
     </a>
     
     <nav class="main-nav">
-      <a href="/gold/herramientas/">Herramientas</a>
+      <a href="/gold/login.html">Herramientas</a>
       <a href="/gold/#academia">Academia</a>
       <a href="/gold/#comunidad">Comunidad</a>
       <a href="/gold/dashboard/" class="active">Dashboard</a>
@@ -359,9 +359,6 @@
         </a>
         <a href="#portfolio" class="nav-item" onclick="switchTab('portfolio')">
           <i class="fas fa-wallet"></i> Mi Portafolio
-        </a>
-        <a href="#tools" class="nav-item" onclick="switchTab('tools')">
-          <i class="fas fa-tools"></i> Herramientas
         </a>
         <a href="#academy" class="nav-item" onclick="switchTab('academy')">
           <i class="fas fa-graduation-cap"></i> Academia
@@ -429,12 +426,6 @@
         <p>Funcionalidad en desarrollo. Próximamente podrás gestionar tu portafolio de inversiones.</p>
       </section>
       
-      <section id="tools" class="content-section">
-        <h2>Herramientas Premium</h2>
-        <p>Acceso completo a todas nuestras herramientas de análisis e inversión.</p>
-        <a href="/gold/herramientas/" class="btn btn-primary">Ir a Herramientas</a>
-      </section>
-      
       <section id="academy" class="content-section">
         <h2>Contenido de la Academia</h2>
         <p>Accede a cursos, tutoriales y material educativo exclusivo.</p>
@@ -473,81 +464,25 @@
     </div>
   </div>
 
+  <script src="/gold/assets/js/auth.js"></script>
   <script>
-    // Verificación de sesión
-    document.addEventListener('DOMContentLoaded', function() {
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      const dashboardContent = document.getElementById('dashboard-content');
-      const loginPrompt = document.getElementById('login-prompt');
-      const authButtons = document.getElementById('auth-buttons');
-      
-      if (!currentUser) {
-        // No hay sesión, mostrar mensaje de login
-        dashboardContent.style.display = 'none';
-        loginPrompt.style.display = 'block';
-        
-        authButtons.innerHTML = `
-          <a href="/gold/" class="btn btn-primary">Iniciar Sesión</a>
-          <a href="/gold/" class="btn btn-secondary">Registrarse</a>
-        `;
-      } else {
-        // Hay sesión, cargar dashboard
-        dashboardContent.style.display = 'flex';
-        loginPrompt.style.display = 'none';
-        
-        // Actualizar información del usuario
-        document.getElementById('user-name').textContent = currentUser.username || 'Usuario';
-        document.getElementById('user-avatar').textContent = (currentUser.username || 'U').charAt(0).toUpperCase();
-        document.getElementById('user-name-input').value = currentUser.username || '';
-        document.getElementById('user-email').value = currentUser.email || '';
-        
-        authButtons.innerHTML = `
-          <span style="margin-right: 15px;">Hola, ${currentUser.username}</span>
-          <button class="btn btn-outline" onclick="logout()">Cerrar Sesión</button>
-        `;
-      }
-      
-      // Ajustar responsive
-      if (window.innerWidth <= 768) {
-        document.body.style.paddingTop = '120px';
-      } else {
-        document.body.style.paddingTop = '80px';
-      }
-    });
-    
-    // Función para cambiar pestañas
+    // Función para cambiar de pestaña en el dashboard
     function switchTab(tabId) {
-      // Ocultar todas las secciones
       document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active');
       });
+      document.getElementById(tabId).classList.add('active');
       
-      // Remover active de todos los items del menú
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
       });
-      
-      // Activar la sección seleccionada
-      document.getElementById(tabId).classList.add('active');
-      
-      // Activar el item del menú correspondiente
-      document.querySelector(`.nav-item[href="#${tabId}"]`).classList.add('active');
+      document.querySelector(`a[href="#${tabId}"]`).classList.add('active');
     }
-    
-    // Función para cerrar sesión
-    function logout() {
-      localStorage.removeItem('currentUser');
-      window.location.href = '/gold/';
-    }
-    
-    // Manejo responsive
-    window.addEventListener('resize', function() {
-      if (window.innerWidth <= 768) {
-        document.body.style.paddingTop = '120px';
-      } else {
-        document.body.style.paddingTop = '80px';
-      }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Activar la primera pestaña por defecto
+      switchTab('overview');
     });
   </script>
 </body>
-  </html>
+</html>

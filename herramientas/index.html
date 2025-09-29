@@ -356,9 +356,8 @@
       <a href="/gold/#contacto">Contacto</a>
     </nav>
     
-    <div class="auth-buttons">
-      <button class="btn btn-primary" onclick="showAuthModal('register')">Registrarse</button>
-      <button class="btn btn-secondary" onclick="showAuthModal('login')">Iniciar Sesión</button>
+    <div class="auth-buttons" id="auth-buttons">
+      <!-- Se llenará dinámicamente por auth.js -->
     </div>
   </header>
 
@@ -464,10 +463,11 @@
     </div>
     
     <div class="copyright">
-      <p>GlobalGold &copy; 2025 - Todos los derechos reservados</p>
+      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
 
+  <script src="/gold/assets/js/auth.js"></script>
   <script>
     // Función para calcular ROI
     function calculateROI() {
@@ -495,17 +495,6 @@
       
       document.getElementById('result').style.display = 'block';
     }
-    
-    // Simulación de funciones de autenticación (deben coincidir con las de index.html)
-    function showAuthModal(type) {
-      alert('Redirigiendo a la página principal para autenticación...');
-      window.location.href = '/gold/';
-    }
-    
-    // Ajustar padding para header fijo
-    document.addEventListener('DOMContentLoaded', function() {
-      document.body.style.paddingTop = document.querySelector('.gg-header').offsetHeight + 'px';
-    });
   </script>
 </body>
-  </html>
+</html>
