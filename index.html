@@ -1068,6 +1068,9 @@
         <span class="btn btn-secondary">Comenzar</span>
       </div>
     </div>
+
+    <!-- Contenido dinámico del módulo -->
+    <div id="academy-content" style="margin-top:40px; background: rgba(17,17,17,0.9); padding: 24px; border-radius: 12px; border:1px solid rgba(255,255,255,0.1); display:none;"></div>
   </section>
 
   <!-- Sección Roadmap -->
@@ -1398,15 +1401,39 @@
       }
     }
     
-    // Funciones de herramientas
+    // Funciones de herramientas / academia
     function openModule(module) {
-      if (currentUser) {
-        showNotification(`Abriendo módulo: ${module}`, 'info');
-        // Aquí iría la lógica para abrir el módulo específico
-      } else {
-        showNotification('Por favor, inicia sesión para acceder a la academia', 'warning');
-        showAuthModal('login');
-      }
+      // Permitir ver el contenido básico aún sin login (mejor UX)
+      const contentEl = document.getElementById('academy-content');
+      if (!contentEl) return;
+      const modules = {
+        basics: {
+          title: 'Conceptos Básicos',
+          body: '<ul><li>¿Qué es Blockchain?</li><li>¿Qué es Bitcoin/Ethereum?</li><li>Wallets y claves privadas</li><li>Buenas prácticas de seguridad</li></ul>'
+        },
+        trading: {
+          title: 'Trading Básico',
+          body: '<ul><li>Soporte y resistencia</li><li>Tendencias y pullbacks</li><li>Gestión de riesgo (1-2%)</li><li>Psicología del trading</li></ul>'
+        },
+        security: {
+          title: 'Seguridad',
+          body: '<ul><li>2FA y contraseñas seguras</li><li>Phishing y estafas comunes</li><li>Hardware wallets</li><li>Backups y recuperación</li></ul>'
+        }
+      };
+
+      const data = modules[module];
+      if (!data) return;
+      contentEl.style.display = 'block';
+      contentEl.innerHTML = `
+        <h3 style="color:#C8A752; margin-bottom:12px;">${data.title}</h3>
+        <p style="opacity:.8; margin-bottom:10px;">Módulo: ${module}</p>
+        <div>${data.body}</div>
+        <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+          <a href="/gold/login.html" class="btn btn-primary">Iniciar sesión para más</a>
+          <a href="#academia" class="btn btn-secondary" onclick="document.getElementById('academia').scrollIntoView({behavior:'smooth'})">Volver a módulos</a>
+        </div>
+      `;
+      document.getElementById('academia').scrollIntoView({behavior:'smooth'});
     }
     
     // Funciones de utilidad
