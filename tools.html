@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Protección simple -->
+  <script>
+    if (!localStorage.getItem('goldAuth')) {
+      alert('Acceso restringido. Debes iniciar sesión.');
+      window.location.replace('/gold/login.html');
+    }
+  </script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herramientas Premium - GLOBAL GOLD</title>
+  
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1f 100%);
+      color: #e2e8f0;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 30px;
+      background: rgba(17, 17, 17, 0.9);
+      border-radius: 15px;
+    }
+    .header h1 {
+      color: #C8A752;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin: 40px 0;
+    }
+    .tool-card {
+      background: rgba(17, 17, 17, 0.9);
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+    }
+    .tool-icon {
+      font-size: 3rem;
+      color: #C8A752;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background: linear-gradient(45deg, #C8A752, #D4AF37);
+      color: #0B0C0F;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    .calculator-section {
+      background: rgba(17, 17, 17, 0.9);
+      padding: 40px;
+      border-radius: 15px;
+      margin: 40px 0;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #C8A752;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: white;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(16, 185, 129, 0.2);
+      border-radius: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 Herramientas Premium</h1>
+      <p>Acceso exclusivo para miembros autenticados</p>
+      <button onclick="logout()" class="btn" style="background: #ef4444;">Cerrar Sesión</button>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-icon">📊</div>
+        <h3>Calculadora de Rentabilidad</h3>
+        <p>Calcula proyecciones de inversión con diferentes escenarios</p>
+        <button onclick="showCalculator()" class="btn">Usar Calculadora</button>
+      </div>
+      
+      <div class="tool-card">
+        <div class="tool-icon">💱</div>
+        <h3>Conversor de Cripto</h3>
+        <p>Conversión en tiempo real entre criptomonedas</p>
+        <button onclick="alert('🚧 Conversor próximamente disponible')" class="btn">Próximamente</button>
+      </div>
+      
+      <div class="tool-card">
+        <div class="tool-icon">📈</div>
+        <h3>Análisis de Mercado</h3>
+        <p>Indicadores técnicos y gráficos avanzados</p>
+        <button onclick="alert('🚧 Análisis próximamente disponible')" class="btn">Próximamente</button>
+      </div>
+      
+      <div class="tool-card">
+        <div class="tool-icon">💼</div>
+        <h3>Gestor de Portafolio</h3>
+        <p>Seguimiento de inversiones y reportes</p>
+        <button onclick="alert('🚧 Portafolio próximamente disponible')" class="btn">Próximamente</button>
+      </div>
+    </div>
+
+    <!-- Calculadora -->
+    <div id="calculator" class="calculator-section" style="display: none;">
+      <h2 style="color: #C8A752; text-align: center;">📊 Calculadora de Rentabilidad</h2>
+      
+      <div class="form-group">
+        <label>Inversión Inicial ($)</label>
+        <input type="number" id="investment" placeholder="Ej: 1000" />
+      </div>
+      
+      <div class="form-group">
+        <label>Rentabilidad Esperada (% mensual)</label>
+        <input type="number" id="roi" placeholder="Ej: 10" />
+      </div>
+      
+      <div class="form-group">
+        <label>Período (meses)</label>
+        <input type="number" id="period" placeholder="Ej: 12" />
+      </div>
+      
+      <button onclick="calculate()" class="btn" style="width: 100%;">Calcular</button>
+      
+      <div id="result" class="result">
+        <h4 style="color: #10b981;">Resultado:</h4>
+        <p id="result-text"></p>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 40px; padding: 20px;">
+      <p><a href="/gold/" style="color: #C8A752;">← Volver al Inicio</a></p>
+      <p style="font-size: 0.9rem; opacity: 0.7;">GlobalGold © 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+    </div>
+  </div>
+
+  <script>
+    function showCalculator() {
+      document.getElementById('calculator').style.display = 'block';
+      document.getElementById('calculator').scrollIntoView({behavior: 'smooth'});
+    }
+
+    function calculate() {
+      const investment = parseFloat(document.getElementById('investment').value);
+      const roi = parseFloat(document.getElementById('roi').value);
+      const period = parseInt(document.getElementById('period').value);
+      
+      if (!investment || !roi || !period) {
+        alert('Por favor, completa todos los campos');
+        return;
+      }
+      
+      const monthlyRate = roi / 100;
+      const finalAmount = investment * Math.pow(1 + monthlyRate, period);
+      const profit = finalAmount - investment;
+      
+      document.getElementById('result-text').innerHTML = `
+        <strong>Inversión inicial:</strong> $${investment.toLocaleString()}<br>
+        <strong>Período:</strong> ${period} meses<br>
+        <strong>Rentabilidad mensual:</strong> ${roi}%<br>
+        <strong>Valor final:</strong> $${finalAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
+        <strong>Ganancia:</strong> $${profit.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
+        <strong>ROI total:</strong> ${((profit / investment) * 100).toFixed(2)}%
+      `;
+      
+      document.getElementById('result').style.display = 'block';
+    }
+
+    function logout() {
+      localStorage.removeItem('goldAuth');
+      alert('Sesión cerrada');
+      window.location.href = '/gold/';
+    }
+  </script>
+</body>
+</html>

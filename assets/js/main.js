@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (user === 'admin' && pass === '123') {
       localStorage.setItem('goldAuth', 'true');
       alert('Acceso concedido');
-      window.location.href = '/gold/herramientas/';
+      window.location.href = '/gold/tools.html';
     } else {
       alert('Credenciales incorrectas');
     }

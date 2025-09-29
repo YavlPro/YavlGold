@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (username === 'admin' && password === '123') {
         localStorage.setItem('goldAuth', 'true');
         alert('¡Login exitoso!');
-        window.location.href = '/gold/herramientas/';
+        window.location.href = '/gold/tools.html';
       } else {
         alert('Usuario o contraseña incorrectos. Usa: admin/123');
       }
