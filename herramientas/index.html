@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Protección simple -->
+  <script>
+    (function(){
+      try{
+        var goldAuth = localStorage.getItem('goldAuth') === 'true';
+        var currentUser = localStorage.getItem('currentUser');
+        if(!(goldAuth || currentUser)){
+          alert('Acceso restringido. Debes iniciar sesión.');
+          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+          window.location.replace('/gold/login.html');
+        }
+      }catch(e){}
+    })();
+  </script>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Herramientas - GlobalGold</title>
+  <meta name="description" content="Herramientas profesionales para traders e inversores de criptomonedas">
+  
+  <!-- Metadatos Open Graph / Twitter -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/herramientas/">
+  <meta property="og:title" content="Herramientas - GlobalGold">
+  <meta property="og:description" content="Herramientas profesionales para traders e inversores">
+  <meta property="og:image" content="https://i.imgur.com/7A4FJu3.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/herramientas/">
+  <meta name="twitter:title" content="Herramientas - GlobalGold">
+  <meta name="twitter:description" content="Herramientas profesionales para traders e inversores">
+  <meta name="twitter:image" content="https://i.imgur.com/7A4FJu3.jpg">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="https://i.imgur.com/7A4FJu3.jpg" type="image/jpeg">
+  
+  <!-- Fuentes y librerías -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #0B0C0F;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: rgba(17, 17, 17, 0.9);
+      --card-bg-solid: #111111;
+      --error-color: #ef4444;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+      --border-radius: 15px;
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-light);
+      line-height: 1.7;
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(200, 167, 82, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(200, 167, 82, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(17, 17, 17, 0.1) 0%, transparent 50%);
+      z-index: -1;
+    }
+    
+    .gg-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 5%;
+      background: rgba(11, 12, 15, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+    }
+    
+    .gg-header .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.4rem;
+      font-family: 'Playfair Display', serif;
+    }
+    
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid var(--color-secondary);
+    }
+    
+    .main-nav {
+      display: flex;
+      gap: 30px;
+    }
+    
+    .main-nav a {
+      color: var(--text-light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: var(--transition);
+      padding: 8px 0;
+      position: relative;
+    }
+    
+    .main-nav a:hover,
+    .main-nav a.active {
+      color: var(--color-secondary);
+    }
+    
+    .main-nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--gradient-gold);
+      transition: width 0.3s ease;
+    }
+    
+    .main-nav a:hover::after,
+    .main-nav a.active::after {
+      width: 100%;
+    }
+    
+    .auth-buttons {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .btn {
+      padding: 14px 32px;
+      border-radius: var(--border-radius);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+    
+    .btn-primary {
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(200, 167, 82, 0.3);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-secondary);
+      border: 2px solid var(--color-secondary);
+      backdrop-filter: blur(10px);
+    }
+    
+    .btn-secondary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(200, 167, 82, 0.3);
+    }
+    
+    .section {
+      padding: 140px 5% 80px;
+      min-height: 100vh;
+    }
+    
+    .section-title {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .section-title h2 {
+      color: transparent;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      background-clip: text;
+      font-size: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 15px;
+    }
+    
+    .section-title p {
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+    
+    .tool-card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    .tool-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      border-color: var(--color-secondary);
+    }
+    
+    .tool-icon {
+      font-size: 3rem;
+      color: var(--color-secondary);
+      margin-bottom: 20px;
+    }
+    
+    .tool-card h3 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: var(--text-light);
+    }
+    
+    .tool-card p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 50px 5% 30px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 60px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .footer-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--color-secondary);
+    }
+    
+    .footer-brand span {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin: 25px 0;
+    }
+    
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    
+    .footer-links a:hover {
+      color: var(--color-secondary);
+    }
+    
+    .copyright {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+    
+    @media (max-width: 768px) {
+      .gg-header {
+        padding: 12px 5%;
+        flex-wrap: wrap;
+      }
+      
+      .main-nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        margin-top: 15px;
+        gap: 20px;
+      }
+      
+      .section {
+        padding: 120px 5% 60px;
+      }
+      
+      .section-title h2 {
+        font-size: 2rem;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header con navegación -->
+  <header class="gg-header">
+    <a class="brand" href="/gold/">
+      <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="brand-logo">
+      <span>GlobalGold</span>
+    </a>
+    
+    <nav class="main-nav">
+      <a href="/gold/herramientas/" class="active">Herramientas</a>
+      <a href="/gold/#academia">Academia</a>
+      <a href="/gold/#comunidad">Comunidad</a>
+      <a href="/gold/dashboard/">Dashboard</a>
+      <a href="/gold/#contacto">Contacto</a>
+    </nav>
+    
+    <div class="auth-buttons" id="auth-buttons">
+      <!-- Se llenará dinámicamente por auth.js -->
+    </div>
+  </header>
+
+  <!-- Sección Principal de Herramientas -->
+  <section class="section" id="herramientas">
+    <div class="section-title">
+      <h2>Herramientas Profesionales</h2>
+      <p>Accede a nuestro conjunto completo de herramientas diseñadas para traders e inversores de criptomonedas</p>
+    </div>
+    
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-icon">
+          <i class="fas fa-calculator"></i>
+        </div>
+        <h3>Calculadora de Rentabilidad</h3>
+        <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
+  <a href="/gold/herramientas/calculadora.html" class="btn btn-secondary">Ir a la Calculadora</a>
+      </div>
+      
+      <div class="tool-card">
+        <div class="tool-icon">
+          <i class="fas fa-exchange-alt"></i>
+        </div>
+        <h3>Conversor de Cripto</h3>
+        <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
+        <button class="btn btn-secondary" onclick="alert('Conversor próximamente disponible')">Próximamente</button>
+      </div>
+      
+      <div class="tool-card">
+        <div class="tool-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h3>Análisis de Mercado</h3>
+        <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
+        <button class="btn btn-secondary" onclick="alert('Análisis de mercado próximamente disponible')">Próximamente</button>
+      </div>
+      
+      <div class="tool-card">
+        <div class="tool-icon">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <h3>Gestor de Portafolio</h3>
+        <p>Seguimiento y análisis de tu portafolio de inversiones con alertas y reportes automáticos.</p>
+        <button class="btn btn-secondary" onclick="alert('Gestor de portafolio próximamente disponible')">Próximamente</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección Conversor (placeholder) -->
+  <section class="section" id="conversor">
+    <div class="section-title">
+      <h2>Conversor de Cripto</h2>
+      <p>Funcionalidad en desarrollo. Próximamente disponible.</p>
+    </div>
+    <div style="text-align:center;opacity:.8;">🚧 Estamos trabajando en esta herramienta.</div>
+  </section>
+
+  <!-- Sección Análisis (placeholder) -->
+  <section class="section" id="analisis">
+    <div class="section-title">
+      <h2>Análisis de Mercado</h2>
+      <p>Indicadores y gráficos avanzados. Próximamente disponible.</p>
+    </div>
+    <div style="text-align:center;opacity:.8;">📈 Muy pronto podrás ver análisis técnicos aquí.</div>
+  </section>
+
+  <!-- Sección Calculadora trasladada a calculadora.html -->
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-brand">
+      <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="footer-logo">
+      <span>GlobalGold</span>
+    </div>
+    
+    <p>Ecosistema Global Innovador en Cripto</p>
+    
+    <div class="footer-links">
+      <a href="/gold/herramientas/">Herramientas</a>
+      <a href="/gold/#academia">Academia</a>
+      <a href="/gold/#comunidad">Comunidad</a>
+      <a href="/gold/dashboard/">Dashboard</a>
+      <a href="/gold/#contacto">Contacto</a>
+    </div>
+    
+    <div class="copyright">
+      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+    </div>
+  </footer>
+
+  <script src="/gold/assets/js/auth.js"></script>
+  <script>
+    // Función para calcular ROI
+    function calculateROI() {
+      const investment = parseFloat(document.getElementById('investment').value);
+      const roi = parseFloat(document.getElementById('roi').value);
+      const period = parseInt(document.getElementById('period').value);
+      
+      if (!investment || !roi || !period) {
+        alert('Por favor, completa todos los campos');
+        return;
+      }
+      
+      const monthlyRate = roi / 100;
+      const finalAmount = investment * Math.pow(1 + monthlyRate, period);
+      const profit = finalAmount - investment;
+      
+      document.getElementById('result-text').innerHTML = `
+        <strong>Inversión inicial:</strong> $${investment.toLocaleString()}<br>
+        <strong>Período:</strong> ${period} meses<br>
+        <strong>Rentabilidad mensual:</strong> ${roi}%<br>
+        <strong>Valor final:</strong> $${finalAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
+        <strong>Ganancia:</strong> $${profit.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
+        <strong>ROI total:</strong> ${((profit / investment) * 100).toFixed(2)}%
+      `;
+      
+      document.getElementById('result').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
