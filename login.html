@@ -4,64 +4,223 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Global Gold</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: #1a1a1a;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(255, 215, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #333;
+        }
+        
+        h2 {
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #FFD700;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #FFD700;
+            outline: none;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+        }
+        
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder {
+            color: #666;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 0.8rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        p {
+            margin: 1rem 0;
+            color: #999;
+            text-align: center;
+        }
+        
+        a {
+            color: #FFD700;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        
+        a:hover {
+            color: #FFA500;
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 1rem 0;
+            display: none;
+            border-left: 4px solid #ff4444;
+            text-align: center;
+        }
+        
+        .gold-accent {
+            color: #FFD700;
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Iniciar Sesión</h2>
+        <h2>Iniciar Sesión <span class="gold-accent">Global Gold</span></h2>
         <form id="login-form">
             <div class="form-group">
                 <label for="username">Usuario</label>
-                <input type="text" id="username" name="username" required value="admin">
+                <input type="text" id="username" name="username" required placeholder="Ingresa tu usuario">
             </div>
             <div class="form-group">
                 <label for="password">Contraseña</label>
-                <input type="password" id="password" name="password" required value="123">
+                <input type="password" id="password" name="password" required placeholder="Ingresa tu contraseña">
             </div>
             <button type="submit" class="btn btn-primary">Acceder</button>
-            <button type="button" onclick="quickLogin()" class="btn btn-secondary">Login Rápido</button>
+            <button type="button" class="btn btn-secondary" onclick="quickLogin()">Login Rápido</button>
         </form>
+        <div id="error-message" class="error-message"></div>
         <p>¿No tienes una cuenta? <a href="creacion.html">Regístrate</a></p>
         <p><a href="#">¿Olvidaste tu contraseña?</a></p>
     </div>
 
     <script>
-        // Sistema de autenticación para tu proyecto original
+        // Sistema de autenticación
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
             
-            // Validación básica
+            // Limpiar mensajes de error
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+            
+            // Validaciones
             if (!username || !password) {
-                alert('Por favor completa todos los campos');
+                showError('Por favor, completa todos los campos');
                 return;
             }
             
-            // Autenticación - redirige al dashboard principal
-            if (username === 'admin' && password === '123') {
+            // Simular autenticación
+            if (authenticate(username, password)) {
                 // Guardar sesión
-                localStorage.setItem('userAuthenticated', 'true');
-                localStorage.setItem('username', username);
-                // Redirigir a la página principal
+                localStorage.setItem('goldUserSession', username);
+                // Redirigir al dashboard principal
                 window.location.href = 'index.html';
             } else {
-                alert('Usuario o contraseña incorrectos');
+                showError('Usuario o contraseña incorrectos');
             }
         });
         
+        function authenticate(username, password) {
+            // Usuarios de prueba
+            const users = {
+                'admin': 'admin123',
+                'usuario': 'cliente123', 
+                'demo': 'demo123',
+                'test': 'test123'
+            };
+            return users[username] === password;
+        }
+        
         function quickLogin() {
-            // Rellenar automáticamente y hacer login
-            document.getElementById('username').value = 'admin';
-            document.getElementById('password').value = '123';
+            // Login automático con credenciales de demo
+            document.getElementById('username').value = 'demo';
+            document.getElementById('password').value = 'demo123';
             document.getElementById('login-form').dispatchEvent(new Event('submit'));
         }
         
-        // Verificar si ya está logueado
-        if (localStorage.getItem('userAuthenticated') === 'true') {
-            window.location.href = 'index.html';
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
         }
+        
+        // Verificar si ya hay sesión activa
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('goldUserSession')) {
+                window.location.href = 'index.html';
+            }
+        });
     </script>
 </body>
 </html>
