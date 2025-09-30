@@ -974,12 +974,12 @@
       <span>GlobalGold</span>
     </a>
     
+    <!-- ##### MENÚ DE NAVEGACIÓN ACTUALIZADO ##### -->
     <nav class="main-nav">
-      <a href="/herramientas/">Herramientas</a>
-      <a href="/#academia">Academia</a>
-      <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
-      <a href="/#contacto">Contacto</a>
+      <a href="herramientas.html" data-protected="true">Herramientas</a>
+      <a href="academia/">Academia</a>
+      <a href="comunidad.html">Comunidad</a>
+      <a href="dashboard.html">Dashboard</a>
     </nav>
     
     <div class="auth-buttons" id="auth-buttons">
@@ -998,185 +998,159 @@
     
     <div class="cta-buttons">
       <a href="/tools.html" class="btn btn-primary">Ir a Herramientas</a>
-      <a href="/go/whatsapp.html" class="btn btn-secondary">Contactar por WhatsApp</a>
+      <a href="#academia" class="btn btn-secondary">Explorar Academia</a>
     </div>
   </section>
 
-  <!-- Sección de Herramientas Públicas -->
+  <!-- Sección de Herramientas -->
   <section class="section" id="herramientas">
     <div class="section-title">
-      <h2>Herramientas Profesionales</h2>
-      <p>Accede a nuestro conjunto completo de herramientas diseñadas para traders e inversores de criptomonedas</p>
+      <h2>Nuestro Ecosistema</h2>
+      <p>Todo lo que necesitas para tener éxito en el mundo cripto, en un solo lugar.</p>
     </div>
     
     <div class="tools-grid">
       <div class="tool-card">
-        <div class="tool-icon">
-          <i class="fas fa-calculator"></i>
-        </div>
-        <h3>Calculadora de Rentabilidad</h3>
-        <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
-        <a href="/tools.html" class="btn btn-secondary">Abrir Calculadora</a>
+        <div class="tool-icon"><i class="fas fa-calculator"></i></div>
+        <h3>Herramientas Pro</h3>
+        <p>Calculadoras, conversores y análisis de mercado para tomar decisiones informadas.</p>
+        <a href="/herramientas/" class="btn btn-secondary">Acceder</a>
       </div>
       
       <div class="tool-card">
-        <div class="tool-icon">
-          <i class="fas fa-exchange-alt"></i>
-        </div>
-        <h3>Conversor de Cripto</h3>
-        <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
-        <a href="/tools.html" class="btn btn-secondary">Abrir Conversor</a>
+        <div class="tool-icon"><i class="fas fa-graduation-cap"></i></div>
+        <h3>Academia Cripto</h3>
+        <p>Formación desde cero a avanzado con cursos prácticos y directos.</p>
+        <a href="#academia" class="btn btn-secondary">Aprender</a>
       </div>
       
       <div class="tool-card">
-        <div class="tool-icon">
-          <i class="fas fa-chart-line"></i>
-        </div>
-        <h3>Análisis de Mercado</h3>
-        <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
-        <a href="/tools.html" class="btn btn-secondary">Ver Análisis</a>
+        <div class="tool-icon"><i class="fas fa-users"></i></div>
+        <h3>Comunidad</h3>
+        <p>Conecta con otros traders e inversores, comparte ideas y crece en comunidad.</p>
+        <a href="#comunidad" class="btn btn-secondary">Unirse</a>
       </div>
-
-      <div class="tool-card">
-        <div class="tool-icon">
-          <i class="fas fa-briefcase"></i>
-        </div>
-        <h3>Gestor de Portafolio</h3>
-        <p>Seguimiento completo de tus inversiones con reportes detallados y análisis de performance.</p>
-        <a href="/tools.html" class="btn btn-secondary">Gestionar Portafolio</a>
-      </div>
-    </div>
-
-    <div style="text-align: center; margin-top: 40px;">
-      <p style="color: var(--text-muted); font-size: 0.9rem;">
-        <i class="fas fa-lock"></i> Todas las herramientas requieren autenticación
-      </p>
     </div>
   </section>
 
-  <!-- Sección Academia -->
-  <section class="section" id="academia" style="scroll-margin-top: 120px;">
+  <!-- Sección de Academia -->
+  <section class="section" id="academia">
     <div class="section-title">
       <h2>Academia GlobalGold</h2>
-      <p>Aprende desde los fundamentos hasta estrategias avanzadas con nuestro programa educativo estructurado</p>
+      <p>Formación práctica para dominar el mercado cripto, sin importar tu nivel.</p>
     </div>
     
     <div class="academy-modules">
-      <div class="module-card" onclick="openModule('basics')">
-        <div class="module-icon"><i class="fas fa-book"></i></div>
-        <h4>Conceptos Básicos</h4>
-        <p>Aprende los fundamentos de blockchain y criptomonedas desde cero.</p>
-        <span class="btn btn-secondary">Comenzar</span>
+      <div class="module-card" onclick="window.location.href='/academia/lecciones/intro.html'">
+        <div class="module-icon">📚</div>
+        <h3>Módulo 1: Fundamentos</h3>
+        <p>Blockchain, criptomonedas y seguridad esencial.</p>
       </div>
-      <div class="module-card" onclick="openModule('trading')">
-        <div class="module-icon"><i class="fas fa-chart-line"></i></div>
-        <h4>Trading Básico</h4>
-        <p>Estrategias para comenzar a operar en los mercados cripto.</p>
-        <span class="btn btn-secondary">Comenzar</span>
+      <div class="module-card" onclick="window.location.href='/academia/lecciones/trading.html'">
+        <div class="module-icon">📈</div>
+        <h3>Módulo 2: Trading Básico</h3>
+        <p>Órdenes, gestión de riesgo y disciplina.</p>
       </div>
-      <div class="module-card" onclick="openModule('security')">
-        <div class="module-icon"><i class="fas fa-shield-alt"></i></div>
-        <h4>Seguridad</h4>
-        <p>Protege tus activos digitales con las mejores prácticas.</p>
-        <span class="btn btn-secondary">Comenzar</span>
+      <div class="module-card" onclick="window.location.href='/academia/lecciones/analisis.html'">
+        <div class="module-icon">🔍</div>
+        <h3>Módulo 3: Análisis Técnico</h3>
+        <p>Gráficos, indicadores y patrones.</p>
+      </div>
+      <div class="module-card" onclick="window.location.href='/academia/lecciones/avanzado.html'">
+        <div class="module-icon">💎</div>
+        <h3>Módulo 4: Estrategias Avanzadas</h3>
+        <p>DeFi, futuros y gestión de portafolio.</p>
       </div>
     </div>
-
-    <!-- Contenido dinámico del módulo -->
-    <div id="academy-content" style="margin-top:40px; background: rgba(17,17,17,0.9); padding: 24px; border-radius: 12px; border:1px solid rgba(255,255,255,0.1); display:none;"></div>
   </section>
 
   <!-- Sección Roadmap -->
-  <section class="section">
+  <section class="section" id="roadmap">
     <div class="section-title">
       <h2>Roadmap del Proyecto</h2>
-      <p>Nuestro plan estratégico para convertirnos en el ecosistema cripto líder a nivel global</p>
+      <p>Nuestro compromiso con la innovación y el crecimiento continuo.</p>
     </div>
     
     <div class="roadmap">
       <div class="roadmap-phase">
-        <h3><i class="fas fa-rocket"></i> Fase 1: Lanzamiento</h3>
+        <h3><i class="fas fa-check-circle" style="color: var(--success-color);"></i> Fase 1: Fundación</h3>
         <ul>
-          <li>Plataforma básica de registro y autenticación</li>
-          <li>Calculadora de inversiones y conversor</li>
-          <li>Comunidad inicial en Telegram y Discord</li>
-          <li>Primeros módulos de la academia</li>
+          <li>Lanzamiento de la plataforma web.</li>
+          <li>Implementación de herramientas básicas (Calculadora).</li>
+          <li>Creación de la comunidad inicial.</li>
         </ul>
-      </div>
-      <div class="roadmap-phase">
-        <h3><i class="fas fa-chart-line"></i> Fase 2: Expansión</h3>
-        <ul>
-          <li>App móvil nativa para iOS y Android</li>
-          <li>Integración con exchanges principales</li>
-          <li>Herramientas avanzadas de análisis técnico</li>
-          <li>Programa de afiliados y recompensas</li>
-        </ul>
-      </div>
-      <div class="roadmap-phase">
-        <h3><i class="fas fa-globe"></i> Fase 3: Globalización</h3>
-        <ul>
-          <li>Token nativo GlobalGold (GGT)</li>
-          <li>Plataforma de staking y farming</li>
-          <li>Expansión a mercados internacionales</li>
-          <li>Alianzas estratégicas con proyectos líderes</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- Sección Comunidad ACTUALIZADA -->
-  <section class="community-section" id="comunidad">
-    <h2>Únete a Nuestra Comunidad</h2>
-    <p>Conecta con GlobalGold en tus canales favoritos y recibe soporte directo</p>
-    
-    <div class="social-links">
-      <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank" rel="noopener" class="social-link">
-        <i class="fab fa-telegram"></i> Telegram (Comunidad)
-      </a>
-      <a href="https://t.me/YavlPro" target="_blank" rel="noopener" class="social-link">
-        <i class="fab fa-telegram"></i> Telegram (Contacto)
-      </a>
-      <a href="https://x.com/Yavlcapitan" target="_blank" rel="noopener" class="social-link">
-        <i class="fab fa-twitter"></i> X (Twitter)
-      </a>
-      <a href="https://youtube.com/@globalgoldlc" target="_blank" rel="noopener" class="social-link">
-        <i class="fab fa-youtube"></i> YouTube
-      </a>
-    </div>
-  </section>
-
-  <!-- NUEVA Sección Contacto -->
-  <section class="contact-section" id="contacto">
-    <div class="section-title">
-      <h2>Contacto Directo</h2>
-      <p>¿Tienes preguntas? Escríbenos directamente</p>
-    </div>
-    
-    <div class="contact-methods">
-      <div class="contact-method">
-        <div class="contact-icon">
-          <i class="fab fa-whatsapp"></i>
-        </div>
-        <h3>WhatsApp</h3>
-        <p>Respuesta rápida en horario laboral (UTC-4)</p>
-        <a href="/go/whatsapp.html" class="btn btn-primary" target="_blank" rel="noopener">
-          Contactar por WhatsApp
-        </a>
       </div>
       
-      <div class="contact-method">
-        <div class="contact-icon">
-          <i class="fab fa-telegram"></i>
-        </div>
-        <h3>Telegram Directo</h3>
-        <p>Soporte técnico y consultas específicas</p>
-        <a href="/go/telegram.html" class="btn btn-secondary" target="_blank" rel="noopener">
-          Contactar por Telegram
-        </a>
+      <div class="roadmap-phase">
+        <h3><i class="fas fa-cogs" style="color: var(--warning-color);"></i> Fase 2: Expansión (En Progreso)</h3>
+        <ul>
+          <li>Lanzamiento de la Academia GlobalGold.</li>
+          <li>Integración de sistema de autenticación de usuarios.</li>
+          <li>Desarrollo de nuevas herramientas (Conversor, Análisis).</li>
+        </ul>
+      </div>
+      
+      <div class="roadmap-phase">
+        <h3><i class="fas fa-rocket" style="color: var(--text-muted);"></i> Fase 3: Ecosistema Pro</h3>
+        <ul>
+          <li>Lanzamiento del Gestor de Portafolio.</li>
+          <li>Integración con APIs de exchanges.</li>
+          <li>Contenido exclusivo para miembros premium.</li>
+        </ul>
       </div>
     </div>
   </section>
 
+  <!-- Sección Comunidad -->
+  <section class="section" id="comunidad">
+    <div class="community-section">
+      <div class="section-title">
+        <h2>Únete a Nuestra Comunidad</h2>
+        <p>Conecta, aprende y crece con miles de entusiastas de las criptomonedas. Sigue nuestras redes para no perderte ninguna actualización.</p>
+      </div>
+      
+      <div class="social-links">
+        <a href="https://t.me/+94LkbchALuk3Zjhh" target="_blank" class="social-link"><i class="fab fa-telegram-plane"></i> Telegram</a>
+        <a href="https://x.com/Yavlcapitan" target="_blank" class="social-link"><i class="fab fa-twitter"></i> Twitter (X)</a>
+        <a href="https://youtube.com/@globalgoldlc" target="_blank" class="social-link"><i class="fab fa-youtube"></i> YouTube</a>
+        <a href="https://www.instagram.com/globalgold.lc" target="_blank" class="social-link"><i class="fab fa-instagram"></i> Instagram</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección Contacto -->
+  <section class="section" id="contacto">
+    <div class="contact-section">
+      <div class="section-title">
+        <h2>Contacto</h2>
+        <p>¿Tienes alguna pregunta o propuesta? Estamos aquí para ayudarte.</p>
+      </div>
+      
+      <div class="contact-methods">
+        <div class="contact-method">
+          <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+          <h3>Email</h3>
+          <p>Para consultas generales y soporte.</p>
+          <a href="mailto:yavlpro@gmail.com" class="btn btn-secondary">Enviar Email</a>
+        </div>
+        
+        <div class="contact-method">
+          <div class="contact-icon"><i class="fab fa-telegram-plane"></i></div>
+          <h3>Telegram (Soporte)</h3>
+          <p>Para soporte rápido y consultas directas.</p>
+          <a href="https://t.me/YavlPro" target="_blank" class="btn btn-secondary">Contactar</a>
+        </div>
+        
+        <div class="contact-method">
+          <div class="contact-icon"><i class="fas fa-briefcase"></i></div>
+          <h3>Propuestas de Negocio</h3>
+          <p>Para alianzas y colaboraciones.</p>
+          <a href="mailto:yavlpro@gmail.com?subject=Propuesta de Negocio" class="btn btn-secondary">Proponer</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  
   <!-- Footer -->
   <footer>
     <div class="footer-brand">
@@ -1187,331 +1161,79 @@
     <p>Ecosistema Global Innovador en Cripto</p>
     
     <div class="footer-links">
-      <a href="/tools.html">Herramientas</a>
-      <a href="/#academia">Academia</a>
-      <a href="/#comunidad">Comunidad</a>
+      <a href="#herramientas">Herramientas</a>
+      <a href="#academia">Academia</a>
+      <a href="#comunidad">Comunidad</a>
       <a href="/dashboard/">Dashboard</a>
-      <a href="/#contacto">Contacto</a>
-      <a href="#" onclick="showAuthModal('login')">Iniciar Sesión</a>
+      <a href="#contacto">Contacto</a>
     </div>
     
     <div class="copyright">
-      <p>GlobalGold &copy; 2025 - Todos los derechos reservados</p>
-      <p>Desarrollado con pasión para la comunidad cripto global</p>
+      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
-
-  <!-- Botón flotante WhatsApp -->
-  <a id="wafloat" aria-label="WhatsApp" target="_blank" rel="noopener">
+  
+  <!-- Botón de WhatsApp flotante para móviles -->
+  <a id="wafloat" href="https://wa.me/584247394025" target="_blank" aria-label="Contactar por WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
 
   <!-- Modal de Autenticación -->
-  <div id="modal-overlay" onclick="closeModal()"></div>
-  <div id="auth-modal" class="modal">
+  <div id="modal-overlay"></div>
+  <div class="modal" id="auth-modal">
+    <button class="close-modal-btn" onclick="closeAuthModal()">&times;</button>
+    
     <div class="modal-header">
-      <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="modal-logo">
-      <h2 id="auth-modal-title">Iniciar Sesión</h2>
+      <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold Logo" class="modal-logo">
+      <h2 id="modal-title">Bienvenido</h2>
     </div>
-    <button class="close-modal-btn" onclick="closeModal()">&times;</button>
     
     <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuthTab('login')">Iniciar Sesión</div>
-      <div class="auth-tab" onclick="switchAuthTab('register')">Registrarse</div>
+      <div class="auth-tab active" id="login-tab" onclick="switchAuthTab('login')">Iniciar Sesión</div>
+      <div class="auth-tab" id="register-tab" onclick="switchAuthTab('register')">Registrarse</div>
     </div>
     
-    <form id="login-form" class="auth-form active">
+    <!-- Formulario de Login -->
+    <form class="auth-form active" id="login-form">
       <div class="form-group">
-        <label for="login-email">Correo Electrónico</label>
+        <label for="login-email">Email</label>
         <input type="email" id="login-email" required>
       </div>
       <div class="form-group">
         <label for="login-password">Contraseña</label>
         <div class="password-container">
           <input type="password" id="login-password" required>
-          <button type="button" class="toggle-password" onclick="togglePassword('login-password')">
-            <i class="fas fa-eye"></i>
-          </button>
+          <button type="button" class="toggle-password" onclick="togglePasswordVisibility('login-password')"><i class="fas fa-eye"></i></button>
         </div>
       </div>
-      <button type="submit" class="btn btn-primary" style="width: 100%;">Iniciar Sesión</button>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
     </form>
     
-    <form id="register-form" class="auth-form">
+    <!-- Formulario de Registro -->
+    <form class="auth-form" id="register-form">
       <div class="form-group">
-        <label for="register-username">Nombre de Usuario</label>
-        <input type="text" id="register-username" required>
+        <label for="register-name">Nombre</label>
+        <input type="text" id="register-name" required>
       </div>
       <div class="form-group">
-        <label for="register-email">Correo Electrónico</label>
+        <label for="register-email">Email</label>
         <input type="email" id="register-email" required>
       </div>
       <div class="form-group">
         <label for="register-password">Contraseña</label>
         <div class="password-container">
-          <input type="password" id="register-password" required oninput="checkPasswordStrength(this.value)">
-          <button type="button" class="toggle-password" onclick="togglePassword('register-password')">
-            <i class="fas fa-eye"></i>
-          </button>
+          <input type="password" id="register-password" required onkeyup="checkPasswordStrength(this.value)">
+          <button type="button" class="toggle-password" onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
         </div>
-        <div class="password-strength" id="password-strength"></div>
+        <div class="password-strength" id="password-strength-bar"></div>
       </div>
-      <div class="form-group">
-        <label for="register-confirm">Confirmar Contraseña</label>
-        <input type="password" id="register-confirm" required>
-      </div>
-      <button type="submit" class="btn btn-primary" style="width: 100%;">Registrarse</button>
+      <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Cuenta</button>
     </form>
   </div>
-
-  <script>
-    // Variables globales
-    let currentUser = null;
-    
-    // Inicialización cuando se carga la página
-    document.addEventListener('DOMContentLoaded', function() {
-      // Verificar si hay un usuario logueado
-      checkAuthStatus();
-      
-      // Configurar formularios
-      document.getElementById('login-form').addEventListener('submit', handleLogin);
-      document.getElementById('register-form').addEventListener('submit', handleRegister);
-      
-      // Configurar WhatsApp con mensajes personalizados
-      setupWhatsAppLinks();
-      
-      // Ajustar el padding del contenido para la navbar fija
-      document.body.style.paddingTop = document.querySelector('.gg-header').offsetHeight + 'px';
-    });
-    
-    // Configurar enlaces de WhatsApp
-    function setupWhatsAppLinks() {
-      const baseWA = "https://wa.me/584247394025?text=";
-      
-      // Botón flotante
-      const msgFloat = "Hola GlobalGold, necesito más información.";
-      document.getElementById('wafloat').href = baseWA + encodeURIComponent(msgFloat);
-    }
-    
-    // Funciones de autenticación
-    function showAuthModal(type) {
-      document.getElementById('modal-overlay').style.display = 'block';
-      document.getElementById('auth-modal').style.display = 'block';
-      switchAuthTab(type);
-    }
-    
-    function switchAuthTab(type) {
-      // Actualizar pestañas
-      document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-      
-      if (type === 'login') {
-        document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
-        document.getElementById('login-form').classList.add('active');
-        document.getElementById('auth-modal-title').textContent = 'Iniciar Sesión';
-      } else {
-        document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
-        document.getElementById('register-form').classList.add('active');
-        document.getElementById('auth-modal-title').textContent = 'Registrarse';
-      }
-    }
-    
-    function closeModal() {
-      document.getElementById('modal-overlay').style.display = 'none';
-      document.getElementById('auth-modal').style.display = 'none';
-      // Limpiar formularios
-      document.getElementById('login-form').reset();
-      document.getElementById('register-form').reset();
-      document.getElementById('password-strength').className = 'password-strength';
-    }
-    
-    function handleLogin(e) {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      
-      // Simulación de login (en un caso real, aquí iría la conexión con Supabase)
-      if (email && password) {
-        currentUser = {
-          username: email.split('@')[0],
-          email: email
-        };
-        
-        // Guardar en localStorage para persistencia
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
-        updateUIForLoggedInUser();
-        showNotification('Sesión iniciada correctamente', 'success');
-        closeModal();
-      } else {
-        showNotification('Por favor, completa todos los campos', 'error');
-      }
-    }
-    
-    function handleRegister(e) {
-      e.preventDefault();
-      const username = document.getElementById('register-username').value;
-      const email = document.getElementById('register-email').value;
-      const password = document.getElementById('register-password').value;
-      const confirm = document.getElementById('register-confirm').value;
-      
-      if (password !== confirm) {
-        showNotification('Las contraseñas no coinciden', 'error');
-        return;
-      }
-      
-      // Simulación de registro (en un caso real, aquí iría la conexión con Supabase)
-      if (username && email && password) {
-        currentUser = {
-          username: username,
-          email: email
-        };
-        
-        // Guardar en localStorage para persistencia
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
-        updateUIForLoggedInUser();
-        showNotification('Cuenta creada correctamente', 'success');
-        closeModal();
-      } else {
-        showNotification('Por favor, completa todos los campos', 'error');
-      }
-    }
-    
-    function logout() {
-      currentUser = null;
-      localStorage.removeItem('currentUser');
-      updateUIForLoggedInUser();
-      showNotification('Sesión cerrada', 'info');
-    }
-    
-    function checkAuthStatus() {
-      // Verificar si hay un usuario en localStorage
-      const savedUser = localStorage.getItem('currentUser');
-      if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        updateUIForLoggedInUser();
-      }
-    }
-    
-    function updateUIForLoggedInUser() {
-      const authButtons = document.querySelector('.auth-buttons');
-      
-      if (currentUser) {
-        // Cambiar botones de autenticación por información de usuario
-        authButtons.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <span>Hola, ${currentUser.username}</span>
-            <button class="btn btn-secondary" onclick="logout()">Cerrar Sesión</button>
-          </div>
-        `;
-      } else {
-        // Restaurar botones de autenticación
-        authButtons.innerHTML = `
-          <button class="btn btn-primary" onclick="showAuthModal('register')">Registrarse</button>
-          <button class="btn btn-secondary" onclick="showAuthModal('login')">Iniciar Sesión</button>
-        `;
-      }
-    }
-    
-    // Funciones de herramientas / academia
-    function openModule(module) {
-      // Permitir ver el contenido básico aún sin login (mejor UX)
-      const contentEl = document.getElementById('academy-content');
-      if (!contentEl) return;
-      const modules = {
-        basics: {
-          title: 'Conceptos Básicos',
-          body: '<ul><li>¿Qué es Blockchain?</li><li>¿Qué es Bitcoin/Ethereum?</li><li>Wallets y claves privadas</li><li>Buenas prácticas de seguridad</li></ul>'
-        },
-        trading: {
-          title: 'Trading Básico',
-          body: '<ul><li>Soporte y resistencia</li><li>Tendencias y pullbacks</li><li>Gestión de riesgo (1-2%)</li><li>Psicología del trading</li></ul>'
-        },
-        security: {
-          title: 'Seguridad',
-          body: '<ul><li>2FA y contraseñas seguras</li><li>Phishing y estafas comunes</li><li>Hardware wallets</li><li>Backups y recuperación</li></ul>'
-        }
-      };
-
-      const data = modules[module];
-      if (!data) return;
-      contentEl.style.display = 'block';
-      contentEl.innerHTML = `
-        <h3 style="color:#C8A752; margin-bottom:12px;">${data.title}</h3>
-        <p style="opacity:.8; margin-bottom:10px;">Módulo: ${module}</p>
-        <div>${data.body}</div>
-        <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-          <a href="/login.html" class="btn btn-primary">Iniciar sesión para más</a>
-          <a href="#academia" class="btn btn-secondary" onclick="document.getElementById('academia').scrollIntoView({behavior:'smooth'})">Volver a módulos</a>
-        </div>
-      `;
-      document.getElementById('academia').scrollIntoView({behavior:'smooth'});
-    }
-    
-    // Funciones de utilidad
-    function togglePassword(inputId) {
-      const input = document.getElementById(inputId);
-      const icon = input.nextElementSibling.querySelector('i');
-      
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-      } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-      }
-    }
-    
-    function checkPasswordStrength(password) {
-      const strengthBar = document.getElementById('password-strength');
-      let strength = 0;
-      
-      if (password.length >= 8) strength++;
-      if (/[A-Z]/.test(password)) strength++;
-      if (/[0-9]/.test(password)) strength++;
-      if (/[^A-Za-z0-9]/.test(password)) strength++;
-      
-      strengthBar.className = 'password-strength';
-      if (strength === 0) return;
-      
-      if (strength <= 2) {
-        strengthBar.classList.add('strength-weak');
-      } else if (strength === 3) {
-        strengthBar.classList.add('strength-medium');
-      } else {
-        strengthBar.classList.add('strength-strong');
-      }
-    }
-    
-    function showNotification(message, type) {
-      // Eliminar notificaciones existentes
-      document.querySelectorAll('.notification').forEach(notif => notif.remove());
-      
-      const notification = document.createElement('div');
-      notification.className = `notification notification-${type}`;
-      notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation' : 'info'}-circle"></i>
-        ${message}
-      `;
-      
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.remove();
-        }
-      }, 5000);
-    }
-    
-    // Cerrar modal con tecla ESC
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeModal();
-      }
-    });
-  </script>
+  
+  <!-- Scripts -->
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/script.js"></script>
+  
 </body>
-  </html>
+</html>
