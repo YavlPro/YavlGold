@@ -1,208 +1,210 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar Sesión - Global Gold</title>
-  <style>
-    /* Estilos básicos para el login */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Arial', sans-serif;
-    }
-    
-    body {
-      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .login-container {
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      width: 100%;
-      max-width: 400px;
-    }
-    
-    h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      color: #333;
-    }
-    
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #555;
-      font-weight: bold;
-    }
-    
-    input[type="text"],
-    input[type="password"] {
-      width: 100%;
-      padding: 0.75rem;
-      border: 2px solid #ddd;
-      border-radius: 5px;
-      font-size: 1rem;
-      transition: border-color 0.3s;
-    }
-    
-    input[type="text"]:focus,
-    input[type="password"]:focus {
-      border-color: #4CAF50;
-      outline: none;
-    }
-    
-    .btn {
-      width: 100%;
-      padding: 0.75rem;
-      border: none;
-      border-radius: 5px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      margin-bottom: 0.5rem;
-    }
-    
-    .btn-primary {
-      background-color: #4CAF50;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background-color: #45a049;
-    }
-    
-    .btn-secondary {
-      background-color: #2196F3;
-      color: white;
-    }
-    
-    .btn-secondary:hover {
-      background-color: #0b7dda;
-    }
-    
-    p {
-      text-align: center;
-      margin-top: 1rem;
-    }
-    
-    a {
-      color: #2196F3;
-      text-decoration: none;
-    }
-    
-    a:hover {
-      text-decoration: underline;
-    }
-    
-    .error-message {
-      color: #f44336;
-      text-align: center;
-      margin-top: 1rem;
-      display: none;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Global Gold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: bold;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 0.8rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        
+        p {
+            margin: 1rem 0;
+            color: #666;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            background: #fdf2f2;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 1rem 0;
+            display: none;
+            border-left: 4px solid #e74c3c;
+        }
+    </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Iniciar Sesión - Global Gold</h2>
-    <form id="login-form">
-      <div class="form-group">
-        <label for="username">Usuario</label>
-        <input type="text" id="username" name="username" required placeholder="Ingresa tu usuario">
-      </div>
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input type="password" id="password" name="password" required placeholder="Ingresa tu contraseña">
-      </div>
-      <button type="submit" class="btn btn-primary">Acceder</button>
-      <button type="button" class="btn btn-secondary" onclick="quickLogin()">Login Rápido (Demo)</button>
-    </form>
-    <div id="error-message" class="error-message"></div>
-    <p>¿No tienes una cuenta? <a href="creacion.html">Regístrate</a></p>
-    <p><a href="#">¿Olvidaste tu contraseña?</a></p>
-  </div>
+    <div class="login-container">
+        <h2>Iniciar Sesión</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" name="username" required placeholder="Ingresa tu usuario">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" required placeholder="Ingresa tu contraseña">
+            </div>
+            <button type="submit" class="btn btn-primary">Acceder</button>
+            <button type="button" class="btn btn-secondary" onclick="quickLogin()">Login Rápido</button>
+        </form>
+        <div id="error-message" class="error-message"></div>
+        <p>¿No tienes una cuenta? <a href="creacion.html">Regístrate</a></p>
+        <p><a href="#">¿Olvidaste tu contraseña?</a></p>
+    </div>
 
-  <script>
-    // Sistema de autenticación básico
-    document.getElementById('login-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      const errorMessage = document.getElementById('error-message');
-      
-      // Limpiar mensajes anteriores
-      errorMessage.style.display = 'none';
-      errorMessage.textContent = '';
-      
-      // Validación básica
-      if (!username || !password) {
-        showError('Por favor, completa todos los campos');
-        return;
-      }
-      
-      // Simular verificación de credenciales
-      if (authenticateUser(username, password)) {
-        // Login exitoso - redirigir al dashboard
-        window.location.href = 'index.html';
-      } else {
-        showError('Usuario o contraseña incorrectos');
-      }
-    });
-    
-    function authenticateUser(username, password) {
-      // En un sistema real, aquí harías una petición al servidor
-      // Por ahora, usaremos credenciales de prueba
-      const validUsers = {
-        'admin': 'admin123',
-        'usuario': 'cliente123',
-        'demo': 'demo123'
-      };
-      
-      return validUsers[username] === password;
-    }
-    
-    function quickLogin() {
-      // Rellenar con credenciales de demo y hacer login automático
-      document.getElementById('username').value = 'demo';
-      document.getElementById('password').value = 'demo123';
-      
-      // Disparar el evento de submit
-      document.getElementById('login-form').dispatchEvent(new Event('submit'));
-    }
-    
-    function showError(message) {
-      const errorElement = document.getElementById('error-message');
-      errorElement.textContent = message;
-      errorElement.style.display = 'block';
-    }
-    
-    // Verificar si ya hay una sesión activa (simulado)
-    function checkExistingSession() {
-      // En un sistema real, verificarías tokens o cookies
-      const hasSession = localStorage.getItem('goldUserSession');
-      if (hasSession) {
-        // Si ya hay sesión, redirigir al dashboard
-        window.location.href = 'index.html';
-      }
-    }
-    
-    // Ejecutar al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-      checkExistingSession();
-    });
-  </script>
+    <script>
+        // Sistema de autenticación
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            // Limpiar mensajes de error
+            errorMessage.style.display = 'none';
+            errorMessage.textContent = '';
+            
+            // Validaciones
+            if (!username || !password) {
+                showError('Por favor, completa todos los campos');
+                return;
+            }
+            
+            // Simular autenticación
+            if (authenticate(username, password)) {
+                // Guardar sesión
+                localStorage.setItem('goldUserSession', username);
+                // Redirigir al dashboard principal
+                window.location.href = 'index.html';
+            } else {
+                showError('Usuario o contraseña incorrectos');
+            }
+        });
+        
+        function authenticate(username, password) {
+            // Usuarios de prueba
+            const users = {
+                'admin': 'admin123',
+                'usuario': 'cliente123', 
+                'demo': 'demo123',
+                'test': 'test123'
+            };
+            return users[username] === password;
+        }
+        
+        function quickLogin() {
+            // Login automático con credenciales de demo
+            document.getElementById('username').value = 'demo';
+            document.getElementById('password').value = 'demo123';
+            document.getElementById('login-form').dispatchEvent(new Event('submit'));
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        // Verificar si ya hay sesión activa
+        window.addEventListener('load', function() {
+            if (localStorage.getItem('goldUserSession')) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
 </body>
 </html>
