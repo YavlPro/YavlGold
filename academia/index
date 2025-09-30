@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Header (igual que tu index.html) -->
     <header class="header">
         <div class="container">
             <div class="logo">
@@ -22,12 +21,10 @@
             </nav>
         </div>
     </header>
-
     <main class="container" style="margin: 40px auto; max-width: 900px;">
         <div class="card">
             <h1 class="gold-text" style="text-align: center; margin-bottom: 10px;">🎓 Academia Global Gold</h1>
             <p style="text-align: center; color: #666; margin-bottom: 30px;">Empieza aquí. Lecciones cortas y prácticas para dominar el trading.</p>
-            
             <div class="lessons-grid">
                 <div class="lesson-card">
                     <div class="lesson-icon">📚</div>
@@ -35,28 +32,24 @@
                     <p>Fundamentos de blockchain y criptomonedas</p>
                     <a href="lecciones/01-introduccion-cripto.html" class="btn-outline">Comenzar →</a>
                 </div>
-                
                 <div class="lesson-card">
                     <div class="lesson-icon">🔒</div>
                     <h3>Seguridad Básica</h3>
                     <p>Protege tus activos y aprende autocustodia</p>
                     <a href="lecciones/02-seguridad-basica.html" class="btn-outline">Comenzar →</a>
                 </div>
-                
                 <div class="lesson-card featured">
                     <div class="lesson-icon">📈</div>
                     <h3>Trading Básico</h3>
                     <p>Órdenes, disciplina y fundamentos del trading</p>
                     <a href="lecciones/03-trading-basico.html" class="btn-gold">Módulos de Trading →</a>
                 </div>
-                
                 <div class="lesson-card">
                     <div class="lesson-icon">🛡️</div>
                     <h3>Gestión de Riesgo</h3>
                     <p>Administra tu capital y minimiza pérdidas</p>
                     <a href="lecciones/04-gestion-riesgo.html" class="btn-outline">Comenzar →</a>
                 </div>
-                
                 <div class="lesson-card">
                     <div class="lesson-icon">📖</div>
                     <h3>Glosario Esencial</h3>
@@ -64,64 +57,19 @@
                     <a href="lecciones/05-glosario.html" class="btn-outline">Comenzar →</a>
                 </div>
             </div>
-            
-            <hr style="margin: 40px 0;">
-            <small class="muted" style="text-align: center; display: block;">
-                💡 Contenido educativo. No es asesoría financiera.
-            </small>
+            <hr style="margin: 40px 0;"><small class="muted" style="text-align: center; display: block;">💡 Contenido educativo. No es asesoría financiera.</small>
         </div>
     </main>
-
     <style>
-    .lessons-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
-        margin: 30px 0;
-    }
-    .lesson-card {
-        background: white;
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 25px;
-        text-align: center;
-        transition: all 0.3s ease;
-    }
-    .lesson-card:hover {
-        border-color: #d4af37;
-        transform: translateY(-5px);
-    }
-    .lesson-card.featured {
-        border-color: #d4af37;
-        background: linear-gradient(135deg, #fff9e6, #fff);
-    }
-    .lesson-icon {
-        font-size: 2.5em;
-        margin-bottom: 15px;
-    }
-    .lesson-card h3 {
-        margin: 10px 0;
-        color: #333;
-    }
-    .lesson-card p {
-        color: #666;
-        margin-bottom: 20px;
-        font-size: 0.9em;
-    }
-    .btn-outline {
-        display: inline-block;
-        padding: 10px 20px;
-        border: 2px solid #d4af37;
-        border-radius: 6px;
-        color: #d4af37;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    .btn-outline:hover {
-        background: #d4af37;
-        color: white;
-    }
+    .lessons-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }
+    .lesson-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 25px; text-align: center; transition: all 0.3s ease; }
+    .lesson-card:hover { border-color: #d4af37; transform: translateY(-5px); }
+    .lesson-card.featured { border-color: #d4af37; background: linear-gradient(135deg, #fff9e6, #fff); }
+    .lesson-icon { font-size: 2.5em; margin-bottom: 15px; }
+    .lesson-card h3 { margin: 10px 0; color: #333; }
+    .lesson-card p { color: #666; margin-bottom: 20px; font-size: 0.9em; }
+    .btn-outline { display: inline-block; padding: 10px 20px; border: 2px solid #d4af37; border-radius: 6px; color: #d4af37; text-decoration: none; font-weight: 600; transition: all 0.3s ease; }
+    .btn-outline:hover { background: #d4af37; color: white; }
     </style>
 </body>
 </html>
