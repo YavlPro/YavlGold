@@ -9,7 +9,7 @@
         var currentUser = localStorage.getItem('currentUser');
         if(!(goldAuth || currentUser)){
           sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/login.html');
+          window.location.replace('/dashboard/?needLogin=1#login');
         }
       }catch(e){}
     })();
@@ -42,7 +42,8 @@
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
     label{display:block;margin:0 0 8px;color:var(--color-secondary)}
     input{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#fff}
-    .btn{display:inline-block;padding:12px 20px;border-radius:10px;border:none;background:linear-gradient(45deg,#C8A752,#D4AF37);color:#0B0C0F;font-weight:700;cursor:pointer}
+  .btn{display:inline-block;padding:12px 20px;border-radius:10px;border:none;background:linear-gradient(45deg,#C8A752,#D4AF37);color:#0B0C0F;font-weight:700;cursor:pointer}
+  a:focus-visible, .btn:focus-visible, input:focus-visible { outline:2px solid #D4AF37; outline-offset:2px; }
     .result{margin-top:16px;padding:14px;border-radius:10px;background:rgba(16,185,129,.15);display:none}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
     .link{color:var(--color-secondary);text-decoration:none}
@@ -88,28 +89,43 @@
       <div id="result" class="result">
         <h3 style="margin:0 0 8px;color:#10b981">Resultado</h3>
         <p id="result-text" style="margin:0"></p>
+        <p style="margin:8px 0 0;font-size:.9rem;opacity:.85">Nota: Los cálculos son educativos y no garantizan rendimientos. Se asume capitalización mensual simple.</p>
       </div>
     </div>
   </div>
 
   <script src="../assets/js/auth.js"></script>
   <script>
+    function parseLocaleNumber(value){
+      if(typeof value !== 'string') return NaN;
+      const trimmed = value.trim();
+      // Acepta coma o punto como separador decimal
+      const normalized = trimmed.replace(/\./g,'').replace(',','.');
+      return parseFloat(normalized);
+    }
     function calculate(){
-      const inv=parseFloat(document.getElementById('investment').value);
-      const roi=parseFloat(document.getElementById('roi').value);
-      const per=parseInt(document.getElementById('period').value);
-      if(!inv||!roi||!per){ alert('Completa todos los campos'); return; }
-      const r=roi/100; const final=inv*Math.pow(1+r,per); const profit=final-inv;
-      const el=document.getElementById('result');
+      const invInput = document.getElementById('investment');
+      const roiInput = document.getElementById('roi');
+      const perInput = document.getElementById('period');
+      const inv = parseLocaleNumber(invInput.value || invInput.valueAsNumber?.toString());
+      const roi = parseLocaleNumber(roiInput.value || roiInput.valueAsNumber?.toString());
+      const per = parseInt(perInput.value,10);
+      if(!isFinite(inv)||!isFinite(roi)||!isFinite(per)||per<=0){ alert('Completa todos los campos con valores válidos'); return; }
+      const r = roi/100;
+      const final = inv*Math.pow(1+r,per);
+      const profit = final - inv;
+      const nf = new Intl.NumberFormat('es-ES',{minimumFractionDigits:2, maximumFractionDigits:2});
+      const el = document.getElementById('result');
       document.getElementById('result-text').innerHTML = `
-        <strong>Inversión inicial:</strong> $${inv.toLocaleString()}<br>
+        <strong>Inversión inicial:</strong> $${nf.format(inv)}<br>
         <strong>Período:</strong> ${per} meses<br>
-        <strong>Rentabilidad mensual:</strong> ${roi}%<br>
-        <strong>Valor final:</strong> $${final.toLocaleString(undefined,{maximumFractionDigits:2})}<br>
-        <strong>Ganancia:</strong> $${profit.toLocaleString(undefined,{maximumFractionDigits:2})}<br>
-        <strong>ROI total:</strong> ${((profit/inv)*100).toFixed(2)}%
+        <strong>Rentabilidad mensual:</strong> ${nf.format(roi)}%<br>
+        <strong>Valor final:</strong> $${nf.format(final)}<br>
+        <strong>Ganancia:</strong> $${nf.format(profit)}<br>
+        <strong>ROI total:</strong> ${nf.format((profit/inv)*100)}%
       `;
       el.style.display='block';
+      el.scrollIntoView({behavior:'smooth', block:'start'});
     }
   </script>
 </body>

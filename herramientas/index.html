@@ -8,9 +8,8 @@
         var goldAuth = localStorage.getItem('goldAuth') === 'true';
         var currentUser = localStorage.getItem('currentUser');
         if(!(goldAuth || currentUser)){
-          alert('Acceso restringido. Debes iniciar sesión.');
           sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/login.html');
+          window.location.replace('/dashboard/?needLogin=1#login');
         }
       }catch(e){}
     })();
@@ -156,6 +155,7 @@
     .main-nav a.active::after {
       width: 100%;
     }
+    .main-nav a:focus-visible, .btn:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; border-radius: 6px; }
     
     .auth-buttons {
       display: flex;
@@ -390,7 +390,7 @@
         </div>
         <h3>Calculadora de Rentabilidad</h3>
         <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
-  <a href="./calculadora.html" class="btn btn-secondary">Ir a la Calculadora</a>
+  <a href="./calculadora.html#top" class="btn btn-secondary" title="Ir directamente a la Calculadora">Ir a la Calculadora</a>
       </div>
       
       <div class="tool-card">
@@ -399,7 +399,7 @@
         </div>
         <h3>Conversor de Cripto</h3>
         <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
-        <button class="btn btn-secondary" onclick="alert('Conversor próximamente disponible')">Próximamente</button>
+  <button class="btn btn-secondary" type="button" aria-disabled="true" disabled title="Próximamente">Próximamente</button>
       </div>
       
       <div class="tool-card">
@@ -408,7 +408,7 @@
         </div>
         <h3>Análisis de Mercado</h3>
         <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
-        <button class="btn btn-secondary" onclick="alert('Análisis de mercado próximamente disponible')">Próximamente</button>
+  <button class="btn btn-secondary" type="button" aria-disabled="true" disabled title="Próximamente">Próximamente</button>
       </div>
       
       <div class="tool-card">
@@ -417,7 +417,7 @@
         </div>
         <h3>Gestor de Portafolio</h3>
         <p>Seguimiento y análisis de tu portafolio de inversiones con alertas y reportes automáticos.</p>
-        <button class="btn btn-secondary" onclick="alert('Gestor de portafolio próximamente disponible')">Próximamente</button>
+  <button class="btn btn-secondary" type="button" aria-disabled="true" disabled title="Próximamente">Próximamente</button>
       </div>
     </div>
   </section>
