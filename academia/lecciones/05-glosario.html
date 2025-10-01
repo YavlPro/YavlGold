@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>Glosario de Términos - Global Gold</title>
+    <title>Lección 5: Glosario — Global Gold</title>
+    <meta name="description" content="Glosario esencial de trading y criptomonedas con buscador en tiempo real. Lección 5 de la Academia Global Gold.">
+    <link rel="canonical" href="https://globalgold.gold/academia/lecciones/05-glosario.html">
     <style>
         * {
             margin: 0;
@@ -123,6 +124,14 @@
             display: none;
         }
         
+        /* UX: tipografía y foco visibles */
+        .lesson { margin: 24px auto; max-width: 920px; }
+        .lesson p { line-height: 1.7; font-size: 1rem; }
+        .lesson h1 { font-size: clamp(1.6rem, 2.4vw, 2.1rem); margin: 8px 0 6px; }
+        a { text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        a:focus-visible, .btn-volver:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
+
         @media (max-width: 768px) {
             .glosario-container {
                 padding: 1rem;
@@ -131,7 +140,15 @@
     </style>
 </head>
 <body>
-    <div class="glosario-container">
+    <div id="read-progress" style="position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,#F5D06E,#D4AF37);width:0;z-index:20"></div>
+    <div class="glosario-container lesson">
+        <nav class="muted" aria-label="breadcrumb" style="margin-bottom:8px">
+          <ol style="list-style:none;display:flex;gap:6px;padding:0;margin:0">
+            <li><a href="../index.html">Academia</a></li>
+            <li aria-hidden="true">·</li>
+            <li aria-current="page">Glosario</li>
+          </ol>
+        </nav>
         <div class="header-glosario">
             <h1>Glosario de Términos - Trading y Criptomonedas</h1>
             <p class="meta-glosario">Diccionario completo para traders • Actualizado constantemente</p>
@@ -274,6 +291,14 @@
     </div>
 
     <script>
+        // Barra de progreso de lectura
+        (function(){
+          const bar = document.getElementById('read-progress');
+          addEventListener('scroll', () => {
+            const h=document.documentElement; const max=h.scrollHeight-h.clientHeight;
+            bar.style.width = (max>0 ? (h.scrollTop/max)*100 : 0) + '%';
+          }, { passive:true });
+        })();
         // Sistema de búsqueda en el glosario
         document.getElementById('buscador').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
@@ -296,55 +321,29 @@
             // Mostrar categorías que tienen resultados
             const categories = document.querySelectorAll('.categoria');
             categories.forEach(category => {
-                const categoryTerms = category.nextElementSibling;
+                let sibling = category.nextElementSibling;
                 let hasVisibleTerms = false;
-                
-                while(categoryTerms && !categoryTerms.classList.contains('categoria')) {
-                    if(categoryTerms.classList.contains('termino') && categoryTerms.style.display !== 'none') {
+                while(sibling && !sibling.classList.contains('categoria')) {
+                    if(sibling.classList.contains('termino') && sibling.style.display !== 'none') {
                         hasVisibleTerms = true;
                     }
-                    categoryTerms = categoryTerms.nextElementSibling;
+                    sibling = sibling.nextElementSibling;
                 }
-                
                 category.style.display = hasVisibleTerms ? 'block' : 'none';
             });
         });
+        // JSON-LD Article
+        (function(){
+          const ld = {
+            "@context":"https://schema.org","@type":"Article",
+            "headline":"Lección 5: Glosario",
+            "inLanguage":"es",
+            "author": {"@type":"Organization","name":"Global Gold"},
+            "description":"Glosario esencial de trading y criptomonedas con buscador en tiempo real.",
+            "url":"https://globalgold.gold/academia/lecciones/05-glosario.html"
+          };
+          const s=document.createElement('script'); s.type='application/ld+json'; s.textContent=JSON.stringify(ld); document.head.appendChild(s);
+        })();
     </script>
-=======
-    <title>Glosario Esencial - Global Gold Academy</title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="logo">
-                <img src="../../assets/images/logo.png" alt="Global Gold" style="height: 40px;">
-            </div>
-            <nav class="main-nav">
-                <a href="../../herramientas.html" data-protected="true">Herramientas</a>
-                <a href="../../academia/">Academia</a>
-                <a href="../../comunidad.html">Comunidad</a>
-                <a href="../../dashboard.html">Dashboard</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container" style="margin: 30px auto; max-width: 800px;">
-        <nav style="margin-bottom: 20px;">
-            <a href="../../academia/" class="muted">← Volver a Academia</a>
-        </nav>
-
-        <div class="card">
-            <h1 class="gold-text">📖 Glosario Esencial</h1>
-            <p class="muted">Contenido en desarrollo - Próximamente disponible</p>
-            
-            <div style="display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-top: 40px;">
-                <a href="../../academia/" class="btn" style="background: #f8f9fa; color: #333; border: 1px solid #ddd;">
-                    ← Volver al índice
-                </a>
-            </div>
-        </div>
-    </main>
->>>>>>> 5c285ece782e4127d7914337e1d4bff8347242d1
 </body>
 </html>

@@ -6,4 +6,40 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+  <url>
+    <loc>https://globalgold.gold/academia/</loc>
+    <lastmod>2025-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://globalgold.gold/academia/lecciones/01-introduccion-cripto.html</loc>
+    <lastmod>2025-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://globalgold.gold/academia/lecciones/02-seguridad-basica.html</loc>
+    <lastmod>2025-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://globalgold.gold/academia/lecciones/03-trading-basico.html</loc>
+    <lastmod>2025-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://globalgold.gold/academia/lecciones/04-gestion-riesgo.html</loc>
+    <lastmod>2025-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://globalgold.gold/academia/lecciones/05-glosario.html</loc>
+    <lastmod>2025-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>

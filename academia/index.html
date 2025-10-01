@@ -4,6 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academia - Global Gold</title>
+    <meta name="description" content="Academia Global Gold: curso gratuito de criptomonedas y trading con 5 lecciones claras, recursos y progreso guardado.">
+    <link rel="canonical" href="https://globalgold.gold/academia/">
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "Academia Global Gold — Lecciones",
+            "itemListElement": [
+                {"@type":"ListItem","position":1,"url":"https://globalgold.gold/academia/lecciones/01-introduccion-cripto.html"},
+                {"@type":"ListItem","position":2,"url":"https://globalgold.gold/academia/lecciones/02-seguridad-basica.html"},
+                {"@type":"ListItem","position":3,"url":"https://globalgold.gold/academia/lecciones/03-trading-basico.html"},
+                {"@type":"ListItem","position":4,"url":"https://globalgold.gold/academia/lecciones/04-gestion-riesgo.html"},
+                {"@type":"ListItem","position":5,"url":"https://globalgold.gold/academia/lecciones/05-glosario.html"}
+            ]
+        }
+        </script>
     <style>
         * {
             margin: 0;
@@ -175,6 +191,16 @@
             transition: width 0.5s ease;
         }
         
+        /* UX: contenedor y tipografía base para índice */
+        .academy-index { margin: 24px auto; max-width: 920px; }
+        .academy-index p { line-height: 1.7; font-size: 1rem; }
+        .academy-index h1 { font-size: clamp(1.8rem, 3vw, 2.2rem); margin: 8px 0 6px; }
+        .academy-index h2 { font-size: clamp(1.2rem, 2.2vw, 1.6rem); margin: 18px 0 8px; }
+        .academy-index h3 { font-size: 1.05rem; margin: 14px 0 6px; }
+        a { text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        a:focus-visible, .btn:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
+
         @media (max-width: 768px) {
             .academia-container {
                 padding: 1rem;
@@ -191,7 +217,7 @@
     </style>
 </head>
 <body>
-    <div class="academia-container">
+    <div class="academia-container academy-index">
         <div class="header">
             <h1>Academia Global Gold</h1>
             <p class="subtitle">Domina el trading de criptomonedas paso a paso</p>

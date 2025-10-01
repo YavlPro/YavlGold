@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>Lección 2: Seguridad Básica - Global Gold</title>
+    <title>Lección 2: Seguridad Básica — Global Gold</title>
+    <meta name="description" content="Buenas prácticas de seguridad, 2FA, wallets frías vs calientes y prevención de phishing. Lección 2 de la Academia Global Gold.">
+    <link rel="canonical" href="https://globalgold.gold/academia/lecciones/02-seguridad-basica.html">
     <style>
         * {
             margin: 0;
@@ -165,7 +166,16 @@
             margin: 1.5rem 0;
             border-radius: 0 8px 8px 0;
         }
-        
+        /* UX: tipografía y foco visibles */
+        .lesson { margin: 24px auto; max-width: 920px; }
+        .lesson p { line-height: 1.7; font-size: 1rem; }
+        .lesson h1 { font-size: clamp(1.6rem, 2.4vw, 2.1rem); margin: 8px 0 6px; }
+        .lesson h2 { font-size: clamp(1.2rem, 1.8vw, 1.4rem); margin: 18px 0 8px; }
+        .lesson h3 { font-size: 1.05rem; margin: 14px 0 6px; }
+        a { text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        a:focus-visible, .btn-volver:focus-visible, .btn-siguiente:focus-visible, .btn-anterior:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
+
         @media (max-width: 768px) {
             .leccion-container {
                 padding: 1rem;
@@ -183,7 +193,15 @@
     </style>
 </head>
 <body>
-    <div class="leccion-container">
+    <div id="read-progress" style="position:fixed;left:0;top:0;height:3px;background:linear-gradient(90deg,#F5D06E,#D4AF37);width:0;z-index:20"></div>
+    <div class="leccion-container lesson">
+        <nav class="muted" aria-label="breadcrumb" style="margin-bottom:8px">
+          <ol style="list-style:none;display:flex;gap:6px;padding:0;margin:0">
+            <li><a href="../index.html">Academia</a></li>
+            <li aria-hidden="true">·</li>
+            <li aria-current="page">Seguridad Básica</li>
+          </ol>
+        </nav>
         <div class="header-leccion">
             <h1>Lección 2: Seguridad Básica en Criptomonedas</h1>
             <p class="meta-leccion">Módulo 1: Fundamentos • Tiempo estimado: 20 minutos</p>
@@ -275,16 +293,24 @@
             </div>
         </div>
         
-        <div class="navegacion">
+        <div class="navegacion actions">
             <div>
-                <a href="01-introduccion-cripto.html" class="btn-anterior">← Lección Anterior</a>
-                <a href="../index.html" class="btn-volver">Volver a Academia</a>
+                <a href="01-introduccion-cripto.html" class="btn-anterior">← Anterior: Introducción</a>
+                <a href="../index.html" class="btn-volver">Volver al índice</a>
             </div>
-            <a href="03-trading-basico.html" class="btn-siguiente">Siguiente Lección: Trading Básico →</a>
+            <a href="03-trading-basico.html" class="btn-siguiente">Siguiente: Trading Básico →</a>
         </div>
     </div>
 
     <script>
+        // Barra de progreso de lectura
+        (function(){
+          const bar = document.getElementById('read-progress');
+          addEventListener('scroll', () => {
+            const h=document.documentElement; const max=h.scrollHeight-h.clientHeight;
+            bar.style.width = (max>0 ? (h.scrollTop/max)*100 : 0) + '%';
+          }, { passive:true });
+        })();
         // Marcar lección como completada
         document.addEventListener('DOMContentLoaded', function() {
             const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
@@ -293,45 +319,19 @@
                 localStorage.setItem('leccionesCompletadas', JSON.stringify(leccionesCompletadas));
             }
         });
+        // JSON-LD Article
+        (function(){
+          const ld = {
+            "@context":"https://schema.org","@type":"Article",
+            "headline":"Lección 2: Seguridad Básica",
+            "inLanguage":"es",
+            "author": {"@type":"Organization","name":"Global Gold"},
+            "description":"Buenas prácticas de seguridad, 2FA, wallets frías vs calientes y prevención de phishing.",
+            "timeRequired":"PT20M",
+            "url":"https://globalgold.gold/academia/lecciones/02-seguridad-basica.html"
+          };
+          const s=document.createElement('script'); s.type='application/ld+json'; s.textContent=JSON.stringify(ld); document.head.appendChild(s);
+        })();
     </script>
-=======
-    <title>Seguridad Básica - Global Gold Academy</title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="logo">
-                <img src="../../assets/images/logo.png" alt="Global Gold" style="height: 40px;">
-            </div>
-            <nav class="main-nav">
-                <a href="../../herramientas.html" data-protected="true">Herramientas</a>
-                <a href="../../academia/">Academia</a>
-                <a href="../../comunidad.html">Comunidad</a>
-                <a href="../../dashboard.html">Dashboard</a>
-            </nav>
-        </div>
-    </header>
-
-    <main class="container" style="margin: 30px auto; max-width: 800px;">
-        <nav style="margin-bottom: 20px;">
-            <a href="../../academia/" class="muted">← Volver a Academia</a>
-        </nav>
-
-        <div class="card">
-            <h1 class="gold-text">🔒 Seguridad Básica</h1>
-            <p class="muted">Contenido en desarrollo - Próximamente disponible</p>
-            
-            <div style="display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-top: 40px;">
-                <a href="../../academia/" class="btn" style="background: #f8f9fa; color: #333; border: 1px solid #ddd;">
-                    ← Volver al índice
-                </a>
-                <a href="03-trading-basico.html" class="btn-gold">
-                    Siguiente lección →
-                </a>
-            </div>
-        </div>
-    </main>
->>>>>>> 5c285ece782e4127d7914337e1d4bff8347242d1
 </body>
 </html>
