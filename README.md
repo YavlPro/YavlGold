@@ -39,8 +39,8 @@ Este proyecto está bajo la licencia MIT. Consulta `LICENSE` para más detalles.
 ## Contribuciones
 ¿Quieres aportar? Abre un issue o una pull request. ¡Toda ayuda es bienvenida!
 
-## Próximos pasos / Roadmap
-- Agregar sección de preguntas frecuentes (FAQ).
-- Implementar formulario de contacto.
-- Mejorar la accesibilidad (teclado, ARIA y contraste).
-- Añadir más ejemplos y capturas de pantalla al README.
+## Próximos pasos / Roadmap (Oct 2025)
+- Prioridad 1: Hosting + Backend Laravel en `api.globalgold.gold` (ver `docs/infra/ROADMAP.md`).
+- Prioridad 2: Autenticación real (Supabase o Laravel Sanctum) y endpoints de progreso/métricas.
+- Stand-by temporal: métricas frontend avanzadas y barra de progreso global (se reactivan tras el backend).
+- Pendientes UX menores: FAQ, formulario de contacto, mejoras de accesibilidad y capturas.
