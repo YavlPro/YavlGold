@@ -6,6 +6,7 @@
     <title>Lección 2: Seguridad Básica — Global Gold</title>
     <meta name="description" content="Buenas prácticas de seguridad, 2FA, wallets frías vs calientes y prevención de phishing. Lección 2 de la Academia Global Gold.">
     <link rel="canonical" href="https://globalgold.gold/academia/lecciones/02-seguridad-basica.html">
+    <link rel="stylesheet" href="/assets/css/buttons.css">
     <style>
         * {
             margin: 0;
@@ -97,67 +98,7 @@
             color: #ff8888;
         }
         
-        .btn-volver {
-            display: inline-block;
-            background: transparent;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-volver:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .btn-siguiente {
-            display: inline-block;
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            margin-left: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-siguiente:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-        
-        .btn-anterior {
-            display: inline-block;
-            background: transparent;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            margin-right: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-anterior:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .navegacion {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
+        .actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top: 2rem; flex-wrap: wrap; }
         
         .completado {
             background: rgba(76, 175, 80, 0.1);
@@ -174,7 +115,7 @@
         .lesson h3 { font-size: 1.05rem; margin: 14px 0 6px; }
         a { text-decoration: none; }
         a:hover { text-decoration: underline; }
-        a:focus-visible, .btn-volver:focus-visible, .btn-siguiente:focus-visible, .btn-anterior:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
+    a:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
 
         @media (max-width: 768px) {
             .leccion-container {
@@ -293,12 +234,12 @@
             </div>
         </div>
         
-        <div class="navegacion actions">
-            <div>
-                <a href="01-introduccion-cripto.html" class="btn-anterior">← Anterior: Introducción</a>
-                <a href="../index.html" class="btn-volver">Volver al índice</a>
+        <div class="actions">
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <a class="btn" href="/academia/">Volver al índice</a>
+                <a class="btn" href="/academia/lecciones/01-introduccion-cripto.html">Anterior</a>
             </div>
-            <a href="03-trading-basico.html" class="btn-siguiente">Siguiente: Trading Básico →</a>
+            <a class="btn-gold" href="/academia/lecciones/03-trading-basico.html">Siguiente: Trading Básico</a>
         </div>
     </div>
 

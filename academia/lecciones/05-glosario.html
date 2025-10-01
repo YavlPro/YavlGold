@@ -6,6 +6,7 @@
     <title>Lección 5: Glosario — Global Gold</title>
     <meta name="description" content="Glosario esencial de trading y criptomonedas con buscador en tiempo real. Lección 5 de la Academia Global Gold.">
     <link rel="canonical" href="https://globalgold.gold/academia/lecciones/05-glosario.html">
+    <link rel="stylesheet" href="/assets/css/buttons.css">
     <style>
         * {
             margin: 0;
@@ -100,22 +101,7 @@
             margin-bottom: 0;
         }
         
-        .btn-volver {
-            display: inline-block;
-            background: transparent;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 2rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-volver:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
+        .actions { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top: 2rem; flex-wrap: wrap; }
         
         .sin-resultados {
             text-align: center;
@@ -130,7 +116,7 @@
         .lesson h1 { font-size: clamp(1.6rem, 2.4vw, 2.1rem); margin: 8px 0 6px; }
         a { text-decoration: none; }
         a:hover { text-decoration: underline; }
-        a:focus-visible, .btn-volver:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
+    a:focus-visible { outline: 2px solid #F5D06E; outline-offset: 2px; }
 
         @media (max-width: 768px) {
             .glosario-container {
@@ -285,8 +271,12 @@
             <p>Wallet conectada a internet (software o exchange). Conveniente para trading pero menos segura que las cold wallets.</p>
         </div>
 
-        <div style="text-align: center;">
-            <a href="../index.html" class="btn-volver">← Volver a la Academia</a>
+        <div class="actions">
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <a class="btn" href="/academia/">Volver al índice</a>
+                <a class="btn" href="/academia/lecciones/04-gestion-riesgo.html">Anterior</a>
+            </div>
+            <a class="btn-gold" href="/academia/">Finalizar</a>
         </div>
     </div>
 
