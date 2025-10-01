@@ -1,0 +1,180 @@
+/* Sidebar GlobalGold - estilos compartidos */
+:root {
+  --gg-sidebar-width: 80px;
+  --gg-sidebar-width-sm: 60px;
+}
+
+body.with-sidebar {
+  padding-left: var(--gg-sidebar-width);
+}
+
+@media (max-width: 900px) {
+  body.with-sidebar { padding-left: var(--gg-sidebar-width-sm); }
+}
+
+@media (max-width: 600px) {
+  body.with-sidebar { padding-left: 0; }
+}
+
+/* Oculta la nav superior cuando hay sidebar para evitar duplicación */
+body.with-sidebar .main-nav { display: none; }
+
+/* Ajusta header cuando hay sidebar fija */
+body.with-sidebar .gg-header {
+  left: var(--gg-sidebar-width);
+  width: calc(100% - var(--gg-sidebar-width));
+}
+@media (max-width: 900px) {
+  body.with-sidebar .gg-header {
+    left: var(--gg-sidebar-width-sm);
+    width: calc(100% - var(--gg-sidebar-width-sm));
+  }
+}
+@media (max-width: 600px) {
+  body.with-sidebar .gg-header {
+    left: 0;
+    width: 100%;
+  }
+}
+
+/* Sidebar vertical */
+.gold-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--gg-sidebar-width);
+  height: 100vh;
+  background: #111111;
+  box-shadow: 2px 0 24px 0 #d4af3733;
+  z-index: 1500; /* Asegura que modales puedan superarla */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0 20px;
+  border-right: 2px solid #d4af37;
+}
+.gold-sidebar .sidebar-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border: 2px solid #d4af37;
+  box-shadow: 0 0 12px 2px #d4af3799;
+}
+.gold-sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  align-items: center;
+  margin-bottom: auto;
+}
+.gold-sidebar nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  color: #d4af37;
+  font-size: 1.7rem;
+  text-decoration: none;
+  background: #181818;
+  box-shadow: 0 0 0 0 #d4af37;
+  transition: box-shadow 0.2s, background 0.2s, color 0.2s;
+  position: relative;
+}
+.gold-sidebar nav a.active,
+.gold-sidebar nav a:hover {
+  background: #222;
+  color: #fffbe6;
+  box-shadow: 0 0 16px 2px #d4af3799, 0 0 4px 1px #d4af3755;
+}
+.gold-sidebar nav a .sidebar-label {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  color: #d4af37;
+  letter-spacing: 0.5px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  opacity: 0.8;
+  transition: color 0.2s;
+}
+.gold-sidebar nav a.active .sidebar-label,
+.gold-sidebar nav a:hover .sidebar-label {
+  color: #fffbe6;
+  opacity: 1;
+}
+.gold-sidebar .sidebar-bottom {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.gold-sidebar .sidebar-bottom a {
+  color: #d4af37;
+  font-size: 1.3rem;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.2s, color 0.2s;
+}
+.gold-sidebar .sidebar-bottom a:hover {
+  opacity: 1;
+  color: #fffbe6;
+}
+
+/* Toggle (móvil) */
+.gg-toggle {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 1600; /* por encima del header, por debajo de modales */
+  background: #181818;
+  color: #d4af37;
+  border: 2px solid #d4af37;
+  border-radius: 10px;
+  width: 44px;
+  height: 40px;
+  font-size: 1.2rem;
+  line-height: 36px;
+  text-align: center;
+}
+
+/* Overlay */
+.gg-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1400;
+  display: none;
+}
+.gg-overlay.is-show { display: block; }
+
+/* Estados responsive */
+@media (max-width: 900px) {
+  .gold-sidebar { width: var(--gg-sidebar-width-sm); }
+}
+
+@media (max-width: 600px) {
+  .gg-toggle { display: inline-block; }
+  .gold-sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    padding-top: 70px; /* que no tape el header */
+    display: block; /* visible pero fuera de vista */
+  }
+  .gold-sidebar.is-open { transform: translateX(0); }
+}
+
+/* Accesibilidad: reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .gold-sidebar { transition: none !important; }
+  .gold-sidebar nav a { transition: none !important; box-shadow: none !important; }
+}
+
+/* Estado de no scroll en body cuando está abierta en móvil */
+body.no-scroll { overflow: hidden; }

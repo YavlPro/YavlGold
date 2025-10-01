@@ -8,8 +8,9 @@
         var goldAuth = localStorage.getItem('goldAuth') === 'true';
         var currentUser = localStorage.getItem('currentUser');
         if(!(goldAuth || currentUser)){
+          alert('Acceso restringido. Debes iniciar sesión.');
           sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/dashboard/?needLogin=1#login');
+          window.location.replace('/login.html');
         }
       }catch(e){}
     })();
@@ -155,7 +156,6 @@
     .main-nav a.active::after {
       width: 100%;
     }
-    .main-nav a:focus-visible, .btn:focus-visible { outline: 2px solid var(--color-secondary); outline-offset: 2px; border-radius: 6px; }
     
     .auth-buttons {
       display: flex;
@@ -354,21 +354,39 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="/assets/css/sidebar.css">
 </head>
-<body>
+<body class="with-sidebar layout-app">
+  <button class="gg-toggle" type="button" aria-label="Expandir/cerrar menú" aria-expanded="false">≡</button>
+  <div class="gg-overlay" hidden></div>
+  <!-- Sidebar vertical moderna -->
+  <aside class="gold-sidebar" aria-label="Navegación principal">
+    <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="sidebar-logo">
+    <nav>
+  <a href="/herramientas/" data-protected="true" class="active gg-item" title="Herramientas"><i class="fas fa-tools"></i><span class="sidebar-label">Herramientas</span></a>
+      <a href="/#academia" class="gg-item" title="Academia"><i class="fas fa-graduation-cap"></i><span class="sidebar-label">Academia</span></a>
+      <a href="/#comunidad" class="gg-item" title="Comunidad"><i class="fas fa-users"></i><span class="sidebar-label">Comunidad</span></a>
+  <a href="/dashboard/" data-protected="true" class="gg-item" title="Dashboard"><i class="fas fa-tachometer-alt"></i><span class="sidebar-label">Dashboard</span></a>
+      <a href="/#contacto" class="gg-item" title="Contacto"><i class="fas fa-envelope"></i><span class="sidebar-label">Contacto</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="https://t.me/globalgold" target="_blank" rel="noopener" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      <a href="https://wa.me/584145555555" target="_blank" rel="noopener" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+    </div>
+  </aside>
   <!-- Header con navegación -->
   <header class="gg-header">
-  <a class="brand" href="../">
+    <a class="brand" href="/">
       <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="brand-logo">
       <span>GlobalGold</span>
     </a>
     
     <nav class="main-nav">
-  <a href="./" class="active">Herramientas</a>
-  <a href="../academia/">Academia</a>
-  <a href="../#comunidad">Comunidad</a>
-  <a href="../dashboard/">Dashboard</a>
-  <a href="../#contacto">Contacto</a>
+      <a href="/herramientas/" class="active">Herramientas</a>
+      <a href="/#academia">Academia</a>
+      <a href="/#comunidad">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+      <a href="/#contacto">Contacto</a>
     </nav>
     
     <div class="auth-buttons" id="auth-buttons">
@@ -390,7 +408,7 @@
         </div>
         <h3>Calculadora de Rentabilidad</h3>
         <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
-  <a href="./calculadora.html#top" class="btn btn-secondary" title="Ir directamente a la Calculadora">Ir a la Calculadora</a>
+  <a href="/herramientas/calculadora.html" class="btn btn-secondary">Ir a la Calculadora</a>
       </div>
       
       <div class="tool-card">
@@ -399,7 +417,7 @@
         </div>
         <h3>Conversor de Cripto</h3>
         <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
-  <button class="btn btn-secondary" type="button" aria-disabled="true" disabled title="Próximamente">Próximamente</button>
+        <button class="btn btn-secondary" onclick="alert('Conversor próximamente disponible')">Próximamente</button>
       </div>
       
       <div class="tool-card">
@@ -408,7 +426,7 @@
         </div>
         <h3>Análisis de Mercado</h3>
         <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
-  <button class="btn btn-secondary" type="button" aria-disabled="true" disabled title="Próximamente">Próximamente</button>
+        <button class="btn btn-secondary" onclick="alert('Análisis de mercado próximamente disponible')">Próximamente</button>
       </div>
       
       <div class="tool-card">
@@ -417,7 +435,7 @@
         </div>
         <h3>Gestor de Portafolio</h3>
         <p>Seguimiento y análisis de tu portafolio de inversiones con alertas y reportes automáticos.</p>
-  <button class="btn btn-secondary" type="button" aria-disabled="true" disabled title="Próximamente">Próximamente</button>
+        <button class="btn btn-secondary" onclick="alert('Gestor de portafolio próximamente disponible')">Próximamente</button>
       </div>
     </div>
   </section>
@@ -452,11 +470,11 @@
     <p>Ecosistema Global Innovador en Cripto</p>
     
     <div class="footer-links">
-  <a href="./">Herramientas</a>
-  <a href="../academia/">Academia</a>
-  <a href="../#comunidad">Comunidad</a>
-  <a href="../dashboard/">Dashboard</a>
-  <a href="../#contacto">Contacto</a>
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/#academia">Academia</a>
+      <a href="/#comunidad">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+      <a href="/#contacto">Contacto</a>
     </div>
     
     <div class="copyright">
@@ -464,23 +482,20 @@
     </div>
   </footer>
 
-  <script src="../assets/js/auth.js"></script>
+  <script src="/assets/js/auth.js"></script>
   <script>
     // Función para calcular ROI
     function calculateROI() {
       const investment = parseFloat(document.getElementById('investment').value);
       const roi = parseFloat(document.getElementById('roi').value);
       const period = parseInt(document.getElementById('period').value);
-      
       if (!investment || !roi || !period) {
         alert('Por favor, completa todos los campos');
         return;
       }
-      
       const monthlyRate = roi / 100;
       const finalAmount = investment * Math.pow(1 + monthlyRate, period);
       const profit = finalAmount - investment;
-      
       document.getElementById('result-text').innerHTML = `
         <strong>Inversión inicial:</strong> $${investment.toLocaleString()}<br>
         <strong>Período:</strong> ${period} meses<br>
@@ -489,9 +504,10 @@
         <strong>Ganancia:</strong> $${profit.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
         <strong>ROI total:</strong> ${((profit / investment) * 100).toFixed(2)}%
       `;
-      
       document.getElementById('result').style.display = 'block';
     }
   </script>
+  <script src="/assets/js/sidebar.js"></script>
+  
 </body>
 </html>

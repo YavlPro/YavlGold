@@ -342,8 +342,25 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="../assets/css/sidebar.css">
 </head>
-<body>
+<body class="with-sidebar layout-app">
+  <button class="gg-toggle" type="button" aria-label="Expandir/cerrar menú" aria-expanded="false">≡</button>
+  <div class="gg-overlay" hidden></div>
+  <aside class="gold-sidebar" aria-label="Navegación principal">
+    <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="sidebar-logo">
+    <nav>
+  <a href="../herramientas/" data-protected="true" class="gg-item" title="Herramientas"><i class="fas fa-tools"></i><span class="sidebar-label">Herramientas</span></a>
+      <a href="../academia/" class="gg-item" title="Academia"><i class="fas fa-graduation-cap"></i><span class="sidebar-label">Academia</span></a>
+      <a href="../#comunidad" class="gg-item" title="Comunidad"><i class="fas fa-users"></i><span class="sidebar-label">Comunidad</span></a>
+  <a href="./" data-protected="true" class="gg-item active" title="Dashboard" aria-current="page"><i class="fas fa-tachometer-alt"></i><span class="sidebar-label">Dashboard</span></a>
+      <a href="../#contacto" class="gg-item" title="Contacto"><i class="fas fa-envelope"></i><span class="sidebar-label">Contacto</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="https://t.me/globalgold" target="_blank" rel="noopener" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      <a href="https://wa.me/584145555555" target="_blank" rel="noopener" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+    </div>
+  </aside>
   <!-- Header con navegación -->
   <header class="gg-header">
   <a class="brand" href="../">
@@ -351,13 +368,7 @@
       <span>GlobalGold</span>
     </a>
     
-    <nav class="main-nav">
-  <a href="../herramientas/">Herramientas</a>
-  <a href="../academia/">Academia</a>
-  <a href="../#comunidad">Comunidad</a>
-  <a href="./" class="active">Dashboard</a>
-  <a href="../#contacto">Contacto</a>
-    </nav>
+    <nav class="main-nav" aria-hidden="true"></nav>
     
     <div class="auth-buttons" id="auth-buttons">
       <!-- Se llenará dinámicamente -->
@@ -492,6 +503,7 @@
   </div>
 
   <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/sidebar.js"></script>
   <script>
     // Función para cambiar de pestaña en el dashboard
     function switchTab(tabId) {
