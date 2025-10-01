@@ -8,9 +8,8 @@
         var goldAuth = localStorage.getItem('goldAuth') === 'true';
         var currentUser = localStorage.getItem('currentUser');
         if(!(goldAuth || currentUser)){
-          alert('Acceso restringido. Debes iniciar sesión.');
           sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/login.html');
+          window.location.replace('/dashboard/?needLogin=1#login');
         }
       }catch(e){}
     })();
@@ -20,6 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Herramientas - GlobalGold</title>
   <meta name="description" content="Herramientas profesionales para traders e inversores de criptomonedas">
+  <link rel="canonical" href="https://globalgold.gold/herramientas/">
   
   <!-- Metadatos Open Graph / Twitter -->
   <meta property="og:type" content="website">
@@ -416,8 +416,8 @@
           <i class="fas fa-exchange-alt"></i>
         </div>
         <h3>Conversor de Cripto</h3>
-        <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
-        <button class="btn btn-secondary" onclick="alert('Conversor próximamente disponible')">Próximamente</button>
+  <p>Conversión en tiempo real entre más de 100 criptomonedas con datos de spread y comisiones.</p>
+  <button class="btn btn-secondary" type="button" disabled aria-disabled="true" title="Próximamente">Próximamente</button>
       </div>
       
       <div class="tool-card">
@@ -425,8 +425,8 @@
           <i class="fas fa-chart-line"></i>
         </div>
         <h3>Análisis de Mercado</h3>
-        <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
-        <button class="btn btn-secondary" onclick="alert('Análisis de mercado próximamente disponible')">Próximamente</button>
+  <p>Indicadores técnicos, gráficos avanzados y alertas personalizadas para tu estrategia de trading.</p>
+  <button class="btn btn-secondary" type="button" disabled aria-disabled="true" title="Próximamente">Próximamente</button>
       </div>
       
       <div class="tool-card">
@@ -434,8 +434,8 @@
           <i class="fas fa-wallet"></i>
         </div>
         <h3>Gestor de Portafolio</h3>
-        <p>Seguimiento y análisis de tu portafolio de inversiones con alertas y reportes automáticos.</p>
-        <button class="btn btn-secondary" onclick="alert('Gestor de portafolio próximamente disponible')">Próximamente</button>
+  <p>Seguimiento y análisis de tu portafolio de inversiones con alertas y reportes automáticos.</p>
+  <button class="btn btn-secondary" type="button" disabled aria-disabled="true" title="Próximamente">Próximamente</button>
       </div>
     </div>
   </section>
