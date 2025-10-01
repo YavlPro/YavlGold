@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- Protección simple -->
+  <!-- GUARD DE AUTENTICACIÓN - Protege la página de herramientas -->
   <script>
-    (function(){
-      try{
-        var goldAuth = localStorage.getItem('goldAuth') === 'true';
-        var currentUser = localStorage.getItem('currentUser');
-        if(!(goldAuth || currentUser)){
-          alert('Acceso restringido. Debes iniciar sesión.');
-          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/login.html');
-        }
-      }catch(e){}
-    })();
+  (function(){
+      try {
+          var auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
+          if (!auth.ok) {
+              sessionStorage.setItem('gg:intended', window.location.pathname);
+              window.location.href = 'dashboard.html?needLogin=1#login';
+          }
+      } catch(e) {
+          // En caso de error, redirigir al login por seguridad
+          window.location.href = 'dashboard.html?needLogin=1#login';
+      }
+  })();
   </script>
   
   <meta charset="UTF-8">
@@ -364,11 +365,10 @@
     </a>
     
     <nav class="main-nav">
-      <a href="/herramientas/" class="active">Herramientas</a>
-      <a href="/#academia">Academia</a>
-      <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
-      <a href="/#contacto">Contacto</a>
+      <a href="herramientas.html" data-protected="true" class="active">Herramientas</a>
+      <a href="academia/">Academia</a>
+      <a href="comunidad.html">Comunidad</a>
+      <a href="dashboard.html">Dashboard</a>
     </nav>
     
     <div class="auth-buttons" id="auth-buttons">
@@ -390,7 +390,7 @@
         </div>
         <h3>Calculadora de Rentabilidad</h3>
         <p>Proyecta escenarios de inversión con análisis conservador, base y optimista para tomar decisiones informadas.</p>
-  <a href="/herramientas/calculadora.html" class="btn btn-secondary">Ir a la Calculadora</a>
+        <a href="/herramientas/calculadora.html" class="btn btn-secondary">Ir a la Calculadora</a>
       </div>
       
       <div class="tool-card">
@@ -422,26 +422,6 @@
     </div>
   </section>
 
-  <!-- Sección Conversor (placeholder) -->
-  <section class="section" id="conversor">
-    <div class="section-title">
-      <h2>Conversor de Cripto</h2>
-      <p>Funcionalidad en desarrollo. Próximamente disponible.</p>
-    </div>
-    <div style="text-align:center;opacity:.8;">🚧 Estamos trabajando en esta herramienta.</div>
-  </section>
-
-  <!-- Sección Análisis (placeholder) -->
-  <section class="section" id="analisis">
-    <div class="section-title">
-      <h2>Análisis de Mercado</h2>
-      <p>Indicadores y gráficos avanzados. Próximamente disponible.</p>
-    </div>
-    <div style="text-align:center;opacity:.8;">📈 Muy pronto podrás ver análisis técnicos aquí.</div>
-  </section>
-
-  <!-- Sección Calculadora trasladada a calculadora.html -->
-
   <!-- Footer -->
   <footer>
     <div class="footer-brand">
@@ -452,11 +432,10 @@
     <p>Ecosistema Global Innovador en Cripto</p>
     
     <div class="footer-links">
-      <a href="/herramientas/">Herramientas</a>
-      <a href="/#academia">Academia</a>
-      <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
-      <a href="/#contacto">Contacto</a>
+      <a href="herramientas.html">Herramientas</a>
+      <a href="academia/">Academia</a>
+      <a href="comunidad.html">Comunidad</a>
+      <a href="dashboard.html">Dashboard</a>
     </div>
     
     <div class="copyright">
@@ -465,33 +444,6 @@
   </footer>
 
   <script src="/assets/js/auth.js"></script>
-  <script>
-    // Función para calcular ROI
-    function calculateROI() {
-      const investment = parseFloat(document.getElementById('investment').value);
-      const roi = parseFloat(document.getElementById('roi').value);
-      const period = parseInt(document.getElementById('period').value);
-      
-      if (!investment || !roi || !period) {
-        alert('Por favor, completa todos los campos');
-        return;
-      }
-      
-      const monthlyRate = roi / 100;
-      const finalAmount = investment * Math.pow(1 + monthlyRate, period);
-      const profit = finalAmount - investment;
-      
-      document.getElementById('result-text').innerHTML = `
-        <strong>Inversión inicial:</strong> $${investment.toLocaleString()}<br>
-        <strong>Período:</strong> ${period} meses<br>
-        <strong>Rentabilidad mensual:</strong> ${roi}%<br>
-        <strong>Valor final:</strong> $${finalAmount.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
-        <strong>Ganancia:</strong> $${profit.toLocaleString(undefined, {maximumFractionDigits: 2})}<br>
-        <strong>ROI total:</strong> ${((profit / investment) * 100).toFixed(2)}%
-      `;
-      
-      document.getElementById('result').style.display = 'block';
-    }
-  </script>
+  <script src="/assets/js/script.js"></script>
 </body>
 </html>

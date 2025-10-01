@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         alert('¡Login exitoso!');
         // Redirigir a la ruta que intentaba acceder o a herramientas
-        const redirect = sessionStorage.getItem('redirectAfterLogin') || '/gold/herramientas/';
+        const redirect = sessionStorage.getItem('redirectAfterLogin') || '/herramientas/';
         sessionStorage.removeItem('redirectAfterLogin');
         window.location.href = redirect;
       } else {
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- PROTECCIÓN DE PÁGINAS Y ACTUALIZACIÓN DE UI ---
-  const protectedPaths = ['/gold/herramientas/', '/gold/dashboard/'];
+  const protectedPaths = ['/herramientas/', '/dashboard/'];
   const currentPath = window.location.pathname;
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
   const goldAuth = localStorage.getItem('goldAuth') === 'true';
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!(goldAuth || currentUser)) {
       // Guardar la URL a la que se intentaba acceder para redirigir después del login
       sessionStorage.setItem('redirectAfterLogin', currentPath);
-      window.location.href = '/gold/login.html';
+      window.location.href = '/login.html';
       return; // Detener la ejecución para evitar que se procese el resto del script
     }
   }
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Actualizar UI específica del Dashboard (si estamos en el dashboard)
-    if (currentPath.startsWith('/gold/dashboard/')) {
+    if (currentPath.startsWith('/dashboard/')) {
       const dashboardContent = document.getElementById('dashboard-content');
       const loginPrompt = document.getElementById('login-prompt');
       
@@ -77,13 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const authButtons = document.getElementById('auth-buttons');
     if (authButtons) {
       authButtons.innerHTML = `
-        <a href="/gold/login.html" class="btn btn-primary">Iniciar Sesión</a>
-        <a href="/gold/creacion.html" class="btn btn-secondary">Registrarse</a>
+        <a href="/login.html" class="btn btn-primary">Iniciar Sesión</a>
+        <a href="/creacion.html" class="btn btn-secondary">Registrarse</a>
       `;
     }
     
     // Ocultar contenido del dashboard si no hay sesión
-    if (currentPath.startsWith('/gold/dashboard/')) {
+    if (currentPath.startsWith('/dashboard/')) {
       const dashboardContent = document.getElementById('dashboard-content');
       const loginPrompt = document.getElementById('login-prompt');
       if (dashboardContent) dashboardContent.style.display = 'none';
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function logout() {
   localStorage.removeItem('currentUser');
   localStorage.removeItem('goldAuth');
-  window.location.href = '/gold/index.html?v=20250929';
+  window.location.href = '/index.html?v=20250929';
 }
 
 // --- LOGIN RÁPIDO (para el botón en login.html) ---
@@ -105,7 +105,7 @@ function simpleLogin() {
   localStorage.setItem('goldAuth', 'true');
   const user = { username: 'admin', email: 'admin@example.com' };
   localStorage.setItem('currentUser', JSON.stringify(user));
-  const redirect = sessionStorage.getItem('redirectAfterLogin') || '/gold/herramientas/';
+  const redirect = sessionStorage.getItem('redirectAfterLogin') || '/herramientas/';
   sessionStorage.removeItem('redirectAfterLogin');
   window.location.href = redirect;
 }

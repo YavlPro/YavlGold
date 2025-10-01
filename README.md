@@ -27,7 +27,7 @@ assets/
 - Marca/comunidad: GLOBAL GOLD
 
 ## Contacto
-- Web: https://yeriksonvarela-glitch.github.io/gold/  
+- Web: https://globalgold.gold/  
 - X (Twitter): https://x.com/Yavlcapitan  
 - Telegram (Comunidad): https://t.me/+94LkbchALuk3Zjhh  
 - YouTube: https://youtube.com/@globalgoldlc  
