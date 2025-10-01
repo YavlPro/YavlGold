@@ -11,20 +11,21 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             const auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
             const isAuthenticated = auth.ok === true;
-            
             if (!isAuthenticated) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                // Guardar destino intentado
-                const targetUrl = this.getAttribute('href');
-                sessionStorage.setItem('gg:intended', targetUrl);
-                
-                console.log('🔐 Redirigiendo al login...');
-                // Asegúrate de que la ruta a dashboard.html sea correcta desde donde se ejecute el script
-                window.location.href = 'dashboard.html?needLogin=1#login';
+                try {
+                    const abs = new URL(this.href, window.location.origin);
+                    sessionStorage.setItem('gg:intended', abs.pathname);
+                } catch {}
+                // Abre modal si existe; si no, fallback al dashboard login público
+                const openLoginBtn = document.querySelector('[data-open="login"], .btn-login, [href="#login"]');
+                if (openLoginBtn) {
+                    openLoginBtn.click();
+                } else {
+                    window.location.href = '/dashboard/?needLogin=1#login';
+                }
             }
-            // Si está autenticado, el enlace funciona normal
         });
     });
 
