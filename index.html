@@ -976,8 +976,8 @@
     
     <!-- ##### MENÚ DE NAVEGACIÓN ACTUALIZADO ##### -->
     <nav class="main-nav">
-      <a href="/herramientas/" data-protected="true">Herramientas</a>
-      <a href="/academia/">Academia</a>
+      <a href="/herramientas/" data-protected="true" onclick="(window.plausible||function(){})('home_to_tools_click',{props:{group: localStorage.getItem('gg:exp_sidebar_home')||'NA'}})">Herramientas</a>
+      <a href="/academia/" onclick="(window.plausible||function(){})('home_to_academy_click',{props:{group: localStorage.getItem('gg:exp_sidebar_home')||'NA'}})">Academia</a>
       <a href="/#comunidad">Comunidad</a>
       <a href="/dashboard/" data-protected="true">Dashboard</a>
     </nav>
@@ -997,8 +997,8 @@
     <p>Ecosistema Global Innovador en Cripto - Herramientas profesionales, formación y comunidad para maximizar tu potencial en el mundo cripto.</p>
     
     <div class="cta-buttons">
-  <a href="/herramientas/" class="btn btn-primary" data-protected="true">Ir a Herramientas</a>
-      <a href="#academia" class="btn btn-secondary">Explorar Academia</a>
+  <a href="/herramientas/" class="btn btn-primary" data-protected="true" onclick="(window.plausible||function(){})('home_to_tools_click',{props:{group: localStorage.getItem('gg:exp_sidebar_home')||'NA'}})">Ir a Herramientas</a>
+  <a href="#academia" class="btn btn-secondary" onclick="(window.plausible||function(){})('home_to_academy_click',{props:{group: localStorage.getItem('gg:exp_sidebar_home')||'NA'}})">Explorar Academia</a>
     </div>
   </section>
 

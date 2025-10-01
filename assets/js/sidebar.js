@@ -1,6 +1,6 @@
 // Sidebar GlobalGold - comportamiento accesible compartido
 (function(){
-  // Solo inicializar en páginas marcadas como layout-app (flujo tipo aplicación)
+  // Solo inicializar en páginas marcadas como layout-app o en Home desktop (A/B test)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', gateAndInit);
   } else {
@@ -9,10 +9,25 @@
 
   function gateAndInit(){
     var isApp = document.body.classList.contains('layout-app');
-    // Si se quisiera un híbrido desktop-only para layout-site:
-    // var isDesktop = window.matchMedia('(min-width:1024px)').matches;
-    if (!isApp) return;
+    var isHome = document.body.classList.contains('layout-site');
+    var isDesktop = window.matchMedia('(min-width:1024px)').matches;
+    var group = localStorage.getItem('gg:exp_sidebar_home');
+    if (!group) {
+      group = Math.random() < 0.5 ? 'A' : 'B';
+      localStorage.setItem('gg:exp_sidebar_home', group);
+    }
+    var enableHomeSidebar = isHome && isDesktop && group === 'A';
+
+    // Analítica: impresión en Home (A y B)
+    if (isHome && typeof window !== 'undefined') {
+      (window.plausible || function(){})('home_sidebar_impression', { props: { group: group } });
+    }
+
+    if (!(isApp || enableHomeSidebar)) return;
     initSidebar();
+    if (isHome && enableHomeSidebar) {
+      document.body.classList.add('sidebar-on');
+    }
   }
   function initSidebar(root){
     var sidebar = root || document.querySelector('.gold-sidebar');

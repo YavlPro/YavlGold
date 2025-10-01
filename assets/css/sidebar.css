@@ -18,6 +18,9 @@ body.with-sidebar {
 
 /* Oculta la nav superior cuando hay sidebar para evitar duplicación */
 body.with-sidebar .main-nav { display: none; }
+@media (min-width:1024px){
+  .layout-site.sidebar-on .main-nav { display: none; }
+}
 
 /* Ajusta header cuando hay sidebar fija */
 body.with-sidebar .gg-header {
