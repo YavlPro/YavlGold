@@ -79,6 +79,16 @@ footer {
   border-top: 1px solid #334155;
   margin-top: 20px;
 }
+/* WhatsApp FAB */
+.gg-wa-fab{
+  position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:95;
+  width:56px; height:56px; border-radius:50%; display:grid; place-items:center;
+  background:var(--gold-grad); color:#141414; border:none; cursor:grab; user-select:none; touch-action:none;
+  box-shadow:0 14px 30px rgba(0,0,0,.45), 0 0 0 2px rgba(212,175,55,.25); text-decoration:none;
+}
+.gg-wa-fab:active{ cursor:grabbing; }
+.gg-wa-fab:focus-visible{ outline:2px solid #FFE7A3; outline-offset:3px; }
+.gg-wa-ico{ width:26px; height:26px; }
 /* Responsive */
 @media (max-width: 600px) {
   .hero h1 { font-size: 2em; }
