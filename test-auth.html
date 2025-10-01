@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Test Auth</title>
+</head>
+<body>
+    <h2>Panel de Pruebas de Autenticación</h2>
+    <button onclick="simularLogin()">Simular Login</button>
+    <button onclick="logout()">Cerrar Sesión</button>
+    <button onclick="checkAuthStatus()">Ver Estado Auth</button>
+    <hr>
+    <a href="herramientas.html" data-protected="true">Ir a Herramientas (Protegido)</a><br>
+    <a href="academia.html">Ir a Academia (Público)</a>
+
+    <script>
+    function simularLogin() {
+        localStorage.setItem('gg:auth', JSON.stringify({ok: true, t: Date.now()}));
+        alert('Login simulado correctamente');
+        checkAuthStatus();
+    }
+    function logout() {
+        localStorage.removeItem('gg:auth');
+        sessionStorage.removeItem('gg:intended');
+        alert('Sesión cerrada');
+        checkAuthStatus();
+    }
+    function checkAuthStatus() {
+        const auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
+        alert(auth.ok ? 'CON SESIÓN' : 'SIN SESIÓN');
+    }
+    </script>
+</body>
+</html>

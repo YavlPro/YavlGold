@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lección 1: Introducción a las Criptomonedas - Global Gold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            color: #FFD700;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .leccion-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header-leccion {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #FFD700;
+        }
+        
+        h1 {
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+        }
+        
+        .meta-leccion {
+            color: #cccccc;
+            font-size: 1rem;
+        }
+        
+        .contenido-leccion {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        h2 {
+            color: #FFD700;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: #FFA500;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: #cccccc;
+        }
+        
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            color: #cccccc;
+        }
+        
+        .concepto-destacado {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .btn-volver {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-volver:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .btn-siguiente {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-left: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-siguiente:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .navegacion {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .completado {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4CAF50;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .leccion-container {
+                padding: 1rem;
+            }
+            
+            .navegacion {
+                flex-direction: column;
+            }
+            
+            .btn-siguiente {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="leccion-container">
+        <div class="header-leccion">
+            <h1>Lección 1: Introducción a las Criptomonedas</h1>
+            <p class="meta-leccion">Módulo 1: Fundamentos • Tiempo estimado: 15 minutos</p>
+        </div>
+        
+        <div class="contenido-leccion">
+            <h2>¿Qué son las Criptomonedas?</h2>
+            <p>Las criptomonedas son activos digitales que utilizan criptografía para asegurar transacciones financieras, controlar la creación de nuevas unidades y verificar la transferencia de activos.</p>
+            
+            <div class="concepto-destacado">
+                <h3>💡 Concepto Clave: Descentralización</h3>
+                <p>A diferencia de las monedas tradicionales controladas por bancos centrales, las criptomonedas operan en redes descentralizadas basadas en tecnología blockchain.</p>
+            </div>
+            
+            <h3>Principales Características:</h3>
+            <ul>
+                <li><strong>Descentralización:</strong> Sin intermediarios bancarios o gobiernos</li>
+                <li><strong>Seguridad:</strong> Protegidas por criptografía avanzada</li>
+                <li><strong>Transparencia:</strong> Todas las transacciones son públicas</li>
+                <li><strong>Globalidad:</strong> Accesibles desde cualquier lugar del mundo</li>
+                <li><strong>Inmutabilidad:</strong> Las transacciones no pueden ser alteradas</li>
+            </ul>
+            
+            <h3>Blockchain: La Tecnología Revolucionaria</h3>
+            <p>Blockchain es un libro de contabilidad digital distribuido que registra todas las transacciones de forma segura y transparente. Cada "bloque" contiene un conjunto de transacciones, y estos bloques están encadenados cronológicamente.</p>
+            
+            <div class="concepto-destacado">
+                <h3>🔗 Cómo Funciona Blockchain</h3>
+                <p>1. Una transacción es solicitada<br>
+                2. La transacción se transmite a una red P2P<br>
+                3. La red valida la transacción<br>
+                4. La transacción se combina con otras para crear un bloque<br>
+                5. El bloque se añade a la cadena existente<br>
+                6. La transacción está completa</p>
+            </div>
+            
+            <h3>Principales Criptomonedas:</h3>
+            <ul>
+                <li><strong>Bitcoin (BTC):</strong> La primera y más conocida criptomoneda</li>
+                <li><strong>Ethereum (ETH):</strong> Plataforma para contratos inteligentes</li>
+                <li><strong>Binance Coin (BNB):</strong> Token nativo de Binance Exchange</li>
+                <li><strong>Cardano (ADA):</strong> Plataforma de contratos inteligentes</li>
+                <li><strong>Solana (SOL):</strong> Conocida por su alta velocidad y bajas tarifas</li>
+            </ul>
+            
+            <div class="completado">
+                <h3>✅ ¡Excelente! Has completado esta sección</h3>
+                <p>Ya comprendes los conceptos básicos de las criptomonedas. En la siguiente lección aprenderás sobre seguridad.</p>
+            </div>
+        </div>
+        
+        <div class="navegacion">
+            <a href="../index.html" class="btn-volver">← Volver a la Academia</a>
+            <a href="02-seguridad-basica.html" class="btn-siguiente">Siguiente Lección: Seguridad Básica →</a>
+        </div>
+    </div>
+
+    <script>
+        // Marcar lección como completada
+        document.addEventListener('DOMContentLoaded', function() {
+            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
+            if (!leccionesCompletadas.includes('leccion-1')) {
+                leccionesCompletadas.push('leccion-1');
+                localStorage.setItem('leccionesCompletadas', JSON.stringify(leccionesCompletadas));
+            }
+        });
+    </script>
+</body>
+</html>

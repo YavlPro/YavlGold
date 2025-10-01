@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lección 2: Seguridad Básica - Global Gold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            color: #FFD700;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .leccion-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header-leccion {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #FFD700;
+        }
+        
+        h1 {
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+        }
+        
+        .meta-leccion {
+            color: #cccccc;
+            font-size: 1rem;
+        }
+        
+        .contenido-leccion {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        h2 {
+            color: #FFD700;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: #FFA500;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: #cccccc;
+        }
+        
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            color: #cccccc;
+        }
+        
+        .consejo-seguridad {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .advertencia {
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 4px solid #ff4444;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+            color: #ff8888;
+        }
+        
+        .btn-volver {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-volver:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .btn-siguiente {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-left: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-siguiente:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn-anterior {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-right: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-anterior:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .navegacion {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .completado {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4CAF50;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .leccion-container {
+                padding: 1rem;
+            }
+            
+            .navegacion {
+                flex-direction: column;
+            }
+            
+            .btn-siguiente, .btn-anterior {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="leccion-container">
+        <div class="header-leccion">
+            <h1>Lección 2: Seguridad Básica en Criptomonedas</h1>
+            <p class="meta-leccion">Módulo 1: Fundamentos • Tiempo estimado: 20 minutos</p>
+        </div>
+        
+        <div class="contenido-leccion">
+            <h2>Protege Tus Activos Digitales</h2>
+            <p>La seguridad es el aspecto más importante cuando trabajas con criptomonedas. Un error puede significar la pérdida permanente de tus fondos.</p>
+            
+            <div class="advertencia">
+                <h3>⚠️ Advertencia Crítica</h3>
+                <p>Las transacciones en blockchain son IRREVERSIBLES. Si envías fondos a una dirección incorrecta o pierdes tus claves, NO HAY forma de recuperarlos.</p>
+            </div>
+            
+            <div class="consejo-seguridad">
+                <h3>🔒 Contraseñas Seguras</h3>
+                <p><strong>Mejores prácticas:</strong></p>
+                <ul>
+                    <li>Usa contraseñas únicas para cada exchange y wallet</li>
+                    <li>Mínimo 12 caracteres con mayúsculas, minúsculas, números y símbolos</li>
+                    <li>Considera usar un gestor de contraseñas como LastPass o 1Password</li>
+                    <li>Nunca compartas tus contraseñas con nadie</li>
+                </ul>
+            </div>
+            
+            <div class="consejo-seguridad">
+                <h3>📱 Autenticación de Dos Factores (2FA)</h3>
+                <p><strong>¿Por qué es esencial?</strong></p>
+                <ul>
+                    <li>Protege tu cuenta incluso si tu contraseña es comprometida</li>
+                    <li>Usa aplicaciones como Google Authenticator o Authy (NO SMS)</li>
+                    <li>Activa 2FA en TODAS tus cuentas de exchange</li>
+                    <li>Guarda tus códigos de recuperación en lugar seguro</li>
+                </ul>
+            </div>
+            
+            <div class="consejo-seguridad">
+                <h3>💼 Wallets: Frías vs Calientes</h3>
+                <p><strong>Wallets Calientes (Hot Wallets):</strong></p>
+                <ul>
+                    <li>Conectados a internet</li>
+                    <li>Ideales para pequeñas cantidades y trading diario</li>
+                    <li>Ejemplos: MetaMask, Trust Wallet, wallets de exchange</li>
+                </ul>
+                
+                <p><strong>Wallets Frías (Cold Wallets):</strong></p>
+                <ul>
+                    <li>Sin conexión a internet</li>
+                    <li>Máxima seguridad para grandes cantidades</li>
+                    <li>Ejemplos: Ledger, Trezor, paper wallets</li>
+                </ul>
+                
+                <p><strong>Estrategia recomendada:</strong> Almacena solo lo necesario para trading en wallets calientes y el resto en wallets fríos.</p>
+            </div>
+            
+            <div class="consejo-seguridad">
+                <h3>🔍 Phishing y Estafas Comunes</h3>
+                <p><strong>Señales de alerta:</strong></p>
+                <ul>
+                    <li>Emails o mensajes que piden tus claves privadas</li>
+                    <li>URLs que imitan sitios legítimos (ej: binance.com vs binance.com)</li>
+                    <li>Ofertas que parecen demasiado buenas para ser verdad</li>
+                    <li>"Soporte técnico" que te contacta primero</li>
+                </ul>
+                
+                <p><strong>Protección:</strong></p>
+                <ul>
+                    <li>Nunca hagas clic en links de emails sospechosos</li>
+                    <li>Verifica siempre la URL del sitio web</li>
+                    <li>Usa bookmarks para sitios frecuentes</li>
+                    <li>NUNCA compartas tu seed phrase o claves privadas</li>
+                </ul>
+            </div>
+            
+            <div class="consejo-seguridad">
+                <h3>💾 Backup y Recuperación</h3>
+                <p><strong>Seed Phrase (Frase Semilla):</strong></p>
+                <ul>
+                    <li>12-24 palabras que dan acceso a tu wallet</li>
+                    <li>Escríbelas en papel y guárdalas en lugar seguro</li>
+                    <li>NUNCA las almacenes en la nube o en tu computadora</li>
+                    <li>Considera una caja de seguridad o caja ignífuga</li>
+                </ul>
+            </div>
+            
+            <div class="completado">
+                <h3>✅ ¡Excelente! Ahora estás más seguro</h3>
+                <p>Has aprendido las prácticas esenciales de seguridad. En la siguiente lección comenzaremos con trading básico.</p>
+            </div>
+        </div>
+        
+        <div class="navegacion">
+            <div>
+                <a href="01-introduccion-cripto.html" class="btn-anterior">← Lección Anterior</a>
+                <a href="../index.html" class="btn-volver">Volver a Academia</a>
+            </div>
+            <a href="03-trading-basico.html" class="btn-siguiente">Siguiente Lección: Trading Básico →</a>
+        </div>
+    </div>
+
+    <script>
+        // Marcar lección como completada
+        document.addEventListener('DOMContentLoaded', function() {
+            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
+            if (!leccionesCompletadas.includes('leccion-2')) {
+                leccionesCompletadas.push('leccion-2');
+                localStorage.setItem('leccionesCompletadas', JSON.stringify(leccionesCompletadas));
+            }
+        });
+    </script>
+</body>
+</html>

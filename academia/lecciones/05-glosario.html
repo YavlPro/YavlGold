@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glosario de Términos - Global Gold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            color: #FFD700;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .glosario-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header-glosario {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #FFD700;
+        }
+        
+        h1 {
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+        }
+        
+        .meta-glosario {
+            color: #cccccc;
+            font-size: 1rem;
+        }
+        
+        .busqueda {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        #buscador {
+            width: 100%;
+            padding: 0.8rem;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #FFD700;
+            font-size: 1rem;
+        }
+        
+        #buscador::placeholder {
+            color: #666;
+        }
+        
+        .categoria {
+            color: #FFA500;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 2px solid #FFA500;
+            padding-bottom: 0.5rem;
+            font-size: 1.4rem;
+        }
+        
+        .termino {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .termino:hover {
+            border-color: #FFD700;
+            transform: translateY(-2px);
+        }
+        
+        .termino h3 {
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .termino p {
+            color: #cccccc;
+            margin-bottom: 0;
+        }
+        
+        .btn-volver {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-volver:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .sin-resultados {
+            text-align: center;
+            color: #ff4444;
+            padding: 2rem;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .glosario-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glosario-container">
+        <div class="header-glosario">
+            <h1>Glosario de Términos - Trading y Criptomonedas</h1>
+            <p class="meta-glosario">Diccionario completo para traders • Actualizado constantemente</p>
+        </div>
+        
+        <div class="busqueda">
+            <input type="text" id="buscador" placeholder="🔍 Buscar término... (escribe cualquier palabra)">
+            <div class="sin-resultados" id="sin-resultados">
+                <h3>No se encontraron resultados</h3>
+                <p>Intenta con otra palabra o revisa la ortografía</p>
+            </div>
+        </div>
+        
+        <h2 class="categoria">🔗 Blockchain y Criptomonedas</h2>
+        
+        <div class="termino" data-categoria="blockchain">
+            <h3>Blockchain</h3>
+            <p>Cadena de bloques - Tecnología de registro distribuido que forma la base de las criptomonedas. Es un libro de contabilidad digital inmutable que registra transacciones de forma segura y transparente.</p>
+        </div>
+        
+        <div class="termino" data-categoria="blockchain">
+            <h3>Wallet (Cartera)</h3>
+            <p>Software o hardware que almacena claves públicas y privadas, permitiendo enviar y recibir criptomonedas. No almacena las criptos en sí, sino las claves para acceder a ellas en la blockchain.</p>
+        </div>
+        
+        <div class="termino" data-categoria="blockchain">
+            <h3>Exchange</h3>
+            <p>Plataforma donde se compran, venden y negocian criptomonedas. Ejemplos: Binance, Coinbase, Kraken. Pueden ser centralizados (CEX) o descentralizados (DEX).</p>
+        </div>
+        
+        <div class="termino" data-categoria="blockchain">
+            <h3>DeFi (Finanzas Descentralizadas)</h3>
+            <p>Ecosistema de aplicaciones financieras construidas en blockchain que operan sin intermediarios tradicionales como bancos. Incluye préstamos, trading y más.</p>
+        </div>
+        
+        <div class="termino" data-categoria="blockchain">
+            <h3>Smart Contract (Contrato Inteligente)</h3>
+            <p>Programa auto-ejecutable que corre en blockchain y ejecuta automáticamente los términos de un acuerdo cuando se cumplen condiciones específicas.</p>
+        </div>
+
+        <h2 class="categoria">📈 Trading Básico</h2>
+        
+        <div class="termino" data-categoria="trading">
+            <h3>Long (Ir Largo)</h3>
+            <p>Posición compradora - Apostar a que el precio de un activo subirá. Compras barato para vender caro.</p>
+        </div>
+        
+        <div class="termino" data-categoria="trading">
+            <h3>Short (Ir Corto)</h3>
+            <p>Posición vendedora - Apostar a que el precio de un activo bajará. Vendes caro para recomprar barato (operación más avanzada).</p>
+        </div>
+        
+        <div class="termino" data-categoria="trading">
+            <h3>Stop Loss</h3>
+            <p>Orden para limitar pérdidas - Se ejecuta automáticamente cuando el precio alcanza un nivel determinado, cerrando la posición para evitar mayores pérdidas.</p>
+        </div>
+        
+        <div class="termino" data-categoria="trading">
+            <h3>Take Profit</h3>
+            <p>Orden para asegurar ganancias - Se ejecuta cuando el precio alcanza un objetivo de beneficio, cerrando la posición para asegurar las ganancias.</p>
+        </div>
+        
+        <div class="termino" data-categoria="trading">
+            <h3>Leverage (Apalancamiento)</h3>
+            <p>Uso de capital prestado para aumentar la exposición a una operación. Ejemplo: 10x leverage significa que controlas 10 veces tu capital real.</p>
+        </div>
+        
+        <div class="termino" data-categoria="trading">
+            <h3>Liquidation (Liquidación)</h3>
+            <p>Cierre forzoso de una posición apalancada cuando las pérdidas alcanzan un nivel crítico, resultando en la pérdida del colateral.</p>
+        </div>
+
+        <h2 class="categoria">📊 Análisis Técnico</h2>
+        
+        <div class="termino" data-categoria="analisis">
+            <h3>Support (Soporte)</h3>
+            <p>Nivel de precio donde la demanda es suficientemente fuerte para evitar que el precio baje más. Zona donde los comprones entran al mercado.</p>
+        </div>
+        
+        <div class="termino" data-categoria="analisis">
+            <h3>Resistance (Resistencia)</h3>
+            <p>Nivel de precio donde la oferta es suficientemente fuerte para evitar que el precio suba más. Zona donde los vendedores entran al mercado.</p>
+        </div>
+        
+        <div class="termino" data-categoria="analisis">
+            <h3>Trend (Tendencia)</h3>
+            <p>Dirección general del movimiento del precio. Puede ser alcista (uptrend), bajista (downtrend) o lateral (sideways).</p>
+        </div>
+        
+        <div class="termino" data-categoria="analisis">
+            <h3>Breakout (Ruptura)</h3>
+            <p>Movimiento del precio por encima de una resistencia o por debajo de un soporte, indicando posible continuación de la tendencia.</p>
+        </div>
+        
+        <div class="termino" data-categoria="analisis">
+            <h3>RSI (Relative Strength Index)</h3>
+            <p>Indicador técnico que mula la velocidad y cambio de movimientos de precio. Valores sobre 70 indican sobrecompra, bajo 30 indican sobreventa.</p>
+        </div>
+        
+        <div class="termino" data-categoria="analisis">
+            <h3>MACD</h3>
+            <p>Indicador de seguimiento de tendencia que muestra la relación entre dos medias móviles del precio. Ayuda a identificar cambios en la momentum.</p>
+        </div>
+
+        <h2 class="categoria">🛡️ Seguridad</h2>
+        
+        <div class="termino" data-categoria="seguridad">
+            <h3>2FA (Autenticación de Dos Factores)</h3>
+            <p>Capa adicional de seguridad que requiere dos formas de verificación para acceder a una cuenta. Generalmente contraseña + código temporal.</p>
+        </div>
+        
+        <div class="termino" data-categoria="seguridad">
+            <h3>Seed Phrase (Frase Semilla)</h3>
+            <p>Conjunto de 12-24 palabras que permite recuperar una wallet y todos sus fondos. DEBE guardarse en lugar seguro y NUNCA compartirse.</p>
+        </div>
+        
+        <div class="termino" data-categoria="seguridad">
+            <h3>Private Key (Clave Privada)</h3>
+            <p>Clave criptográfica que prueba la propiedad de una dirección de wallet y permite firmar transacciones. NUNCA debe compartirse.</p>
+        </div>
+        
+        <div class="termino" data-categoria="seguridad">
+            <h3>Phishing</h3>
+            <p>Ataque cibernético que intenta obtener información sensible haciéndose pasar por una entidad confiable mediante correos o sitios web falsos.</p>
+        </div>
+        
+        <div class="termino" data-categoria="seguridad">
+            <h3>Cold Wallet (Wallet Fría)</h3>
+            <p>Wallet sin conexión a internet (hardware o paper wallet). Ofrece máxima seguridad para almacenamiento a largo plazo.</p>
+        </div>
+        
+        <div class="termino" data-categoria="seguridad">
+            <h3>Hot Wallet (Wallet Caliente)</h3>
+            <p>Wallet conectada a internet (software o exchange). Conveniente para trading pero menos segura que las cold wallets.</p>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="../index.html" class="btn-volver">← Volver a la Academia</a>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de búsqueda en el glosario
+        document.getElementById('buscador').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const terms = document.querySelectorAll('.termino');
+            let foundResults = false;
+            
+            terms.forEach(term => {
+                const termText = term.textContent.toLowerCase();
+                if (termText.includes(searchTerm)) {
+                    term.style.display = 'block';
+                    foundResults = true;
+                } else {
+                    term.style.display = 'none';
+                }
+            });
+            
+            // Mostrar/ocultar mensaje de no resultados
+            document.getElementById('sin-resultados').style.display = foundResults ? 'none' : 'block';
+            
+            // Mostrar categorías que tienen resultados
+            const categories = document.querySelectorAll('.categoria');
+            categories.forEach(category => {
+                const categoryTerms = category.nextElementSibling;
+                let hasVisibleTerms = false;
+                
+                while(categoryTerms && !categoryTerms.classList.contains('categoria')) {
+                    if(categoryTerms.classList.contains('termino') && categoryTerms.style.display !== 'none') {
+                        hasVisibleTerms = true;
+                    }
+                    categoryTerms = categoryTerms.nextElementSibling;
+                }
+                
+                category.style.display = hasVisibleTerms ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

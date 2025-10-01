@@ -1,0 +1,32 @@
+<!-- Manejar redirección por login -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const needsLogin = urlParams.get('needLogin') === '1';
+    const hashLogin = window.location.hash === '#login';
+    
+    if (needsLogin || hashLogin) {
+        console.log('Mostrando interfaz de login...');
+        setTimeout(() => {
+            const userResponse = confirm('Necesitas iniciar sesión para acceder a las herramientas.\n\n¿Quieres simular login? (OK = Sí, Cancelar = No)');
+            if (userResponse) {
+                localStorage.setItem('gg:auth', JSON.stringify({
+                    ok: true,
+                    t: Date.now(),
+                    user: 'usuario_demo'
+                }));
+                const intended = sessionStorage.getItem('gg:intended') || 'herramientas.html';
+                sessionStorage.removeItem('gg:intended');
+                window.location.href = intended;
+            } else {
+                window.location.href = 'index.html';
+            }
+        }, 1000);
+    }
+});
+
+// Botón de login manual (opcional)
+function manualLogin() {
+    if (typeof simularLogin === 'function') simularLogin();
+}
+</script>

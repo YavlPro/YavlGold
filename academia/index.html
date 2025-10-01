@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academia - Global Gold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            color: #FFD700;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .academia-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #FFD700;
+        }
+        
+        h1 {
+            color: #FFD700;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #cccccc;
+            font-size: 1.2rem;
+        }
+        
+        .modulo {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .modulo h2 {
+            color: #FFD700;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .lecciones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .leccion-card {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .leccion-card:hover {
+            border-color: #FFD700;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.1);
+        }
+        
+        .numero-leccion {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #FFD700;
+            color: #000;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .leccion-card h3 {
+            color: #FFD700;
+            margin-bottom: 0.8rem;
+            font-size: 1.3rem;
+            margin-top: 0.5rem;
+        }
+        
+        .leccion-card p {
+            color: #cccccc;
+            margin-bottom: 1.2rem;
+            min-height: 60px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn-volver {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 2rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-volver:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .progreso {
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .progreso h3 {
+            color: #FFD700;
+            margin-bottom: 1rem;
+        }
+        
+        .barra-progreso {
+            background: #333;
+            border-radius: 10px;
+            height: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+        
+        .progreso-interno {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .academia-container {
+                padding: 1rem;
+            }
+            
+            .lecciones-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="academia-container">
+        <div class="header">
+            <h1>Academia Global Gold</h1>
+            <p class="subtitle">Domina el trading de criptomonedas paso a paso</p>
+        </div>
+        
+        <div class="progreso">
+            <h3>Tu Progreso de Aprendizaje</h3>
+            <div class="barra-progreso">
+                <div class="progreso-interno" id="barra-progreso"></div>
+            </div>
+            <p id="texto-progreso">0% Completado - ¡Comienza tu journey!</p>
+        </div>
+        
+        <div class="modulo">
+            <h2>Módulo 1: Fundamentos de Criptomonedas</h2>
+            <div class="lecciones-grid">
+                <div class="leccion-card">
+                    <div class="numero-leccion">1</div>
+                    <h3>Introducción a las Criptomonedas</h3>
+                    <p>Conceptos básicos y terminología esencial del mundo cripto. Aprende qué son las criptomonedas y cómo funcionan.</p>
+                    <a href="lecciones/01-introduccion-cripto.html" class="btn">Comenzar Lección</a>
+                </div>
+                <div class="leccion-card">
+                    <div class="numero-leccion">2</div>
+                    <h3>Seguridad Básica</h3>
+                    <p>Aprende a proteger tus activos digitales. Wallets, contraseñas seguras y protección contra estafas.</p>
+                    <a href="lecciones/02-seguridad-basica.html" class="btn">Comenzar Lección</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modulo">
+            <h2>Módulo 2: Trading Básico</h2>
+            <div class="lecciones-grid">
+                <div class="leccion-card">
+                    <div class="numero-leccion">3</div>
+                    <h3>Trading Básico</h3>
+                    <p>Primeros pasos en el trading de criptomonedas. Órdenes, análisis y estrategias iniciales.</p>
+                    <a href="lecciones/03-trading-basico.html" class="btn">Comenzar Lección</a>
+                </div>
+                <div class="leccion-card">
+                    <div class="numero-leccion">4</div>
+                    <h3>Gestión de Riesgo</h3>
+                    <p>Estrategias para proteger tu capital. Aprende a gestionar riesgos como un profesional.</p>
+                    <a href="lecciones/04-gestion-riesgo.html" class="btn">Comenzar Lección</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modulo">
+            <h2>Módulo 3: Recursos Adicionales</h2>
+            <div class="lecciones-grid">
+                <div class="leccion-card">
+                    <div class="numero-leccion">5</div>
+                    <h3>Glosario de Términos</h3>
+                    <p>Diccionario completo de trading y criptomonedas. Consulta los términos que no entiendas.</p>
+                    <a href="lecciones/05-glosario.html" class="btn">Acceder al Glosario</a>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="../dashboard/index.html" class="btn-volver">← Volver al Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de progreso
+        document.addEventListener('DOMContentLoaded', function() {
+            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
+            const totalLecciones = 4; // Excluyendo el glosario
+            const progreso = (leccionesCompletadas.length / totalLecciones) * 100;
+            
+            const barraProgreso = document.getElementById('barra-progreso');
+            const textoProgreso = document.getElementById('texto-progreso');
+            
+            barraProgreso.style.width = progreso + '%';
+            
+            if (progreso === 0) {
+                textoProgreso.textContent = '0% Completado - ¡Comienza tu journey!';
+            } else if (progreso === 100) {
+                textoProgreso.textContent = '100% Completado - ¡Felicidades, eres un experto! 🎉';
+            } else {
+                textoProgreso.textContent = Math.round(progreso) + '% Completado - ¡Sigue así!';
+            }
+        });
+    </script>
+</body>
+</html>

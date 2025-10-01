@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lección 3: Trading Básico - Global Gold</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: #000000;
+            color: #FFD700;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .leccion-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header-leccion {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #FFD700;
+        }
+        
+        h1 {
+            color: #FFD700;
+            margin-bottom: 0.5rem;
+            font-size: 2.2rem;
+        }
+        
+        .meta-leccion {
+            color: #cccccc;
+            font-size: 1rem;
+        }
+        
+        .contenido-leccion {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        h2 {
+            color: #FFD700;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            color: #FFA500;
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: #cccccc;
+        }
+        
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            color: #cccccc;
+        }
+        
+        .concepto-trading {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid #FFD700;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .ejemplo {
+            background: rgba(0, 255, 255, 0.1);
+            border-left: 4px solid #00ffff;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+            color: #88ffff;
+        }
+        
+        .btn-volver {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-volver:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .btn-siguiente {
+            display: inline-block;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-left: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-siguiente:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .btn-anterior {
+            display: inline-block;
+            background: transparent;
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-right: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-anterior:hover {
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .navegacion {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .completado {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4CAF50;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        th, td {
+            border: 1px solid #333;
+            padding: 0.8rem;
+            text-align: left;
+        }
+        
+        th {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+        }
+        
+        td {
+            color: #cccccc;
+        }
+        
+        @media (max-width: 768px) {
+            .leccion-container {
+                padding: 1rem;
+            }
+            
+            .navegacion {
+                flex-direction: column;
+            }
+            
+            .btn-siguiente, .btn-anterior {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="leccion-container">
+        <div class="header-leccion">
+            <h1>Lección 3: Trading Básico de Criptomonedas</h1>
+            <p class="meta-leccion">Módulo 2: Trading Básico • Tiempo estimado: 25 minutos</p>
+        </div>
+        
+        <div class="contenido-leccion">
+            <h2>Primeros Pasos en el Trading</h2>
+            <p>El trading consiste en comprar y vender activos con el objetivo de generar ganancias. En criptomonedas, esto se hace las 24 horas del día, los 7 días de la semana.</p>
+            
+            <div class="concepto-trading">
+                <h3>📈 Comprar (Long) vs Vender (Short)</h3>
+                <p><strong>Long (Ir Largo):</strong> Comprar un activo esperando que su precio suba.</p>
+                <p><strong>Short (Ir Corto):</strong> Vender un activo esperando que su precio baje (más avanzado).</p>
+            </div>
+            
+            <div class="concepto-trading">
+                <h3>💱 Pares de Trading</h3>
+                <p>Los pares muestran el valor de una criptomoneda en términos de otra:</p>
+                <ul>
+                    <li><strong>BTC/USDT:</strong> Valor de Bitcoin en Tether</li>
+                    <li><strong>ETH/BTC:</strong> Valor de Ethereum en Bitcoin</li>
+                    <li><strong>ADA/USDT:</strong> Valor de Cardano en Tether</li>
+                </ul>
+                <p>El primer activo es el que estás comprando/vendiendo, el segundo es en lo que se mide el precio.</p>
+            </div>
+            
+            <h3>📊 Tipos de Órdenes Básicas</h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo de Orden</th>
+                        <th>Descripción</th>
+                        <th>Cuándo Usarla</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Market Order</strong></td>
+                        <td>Ejecución inmediata al precio actual del mercado</td>
+                        <td>Cuando necesitas entrar/salir rápido</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Limit Order</strong></td>
+                        <td>Ejecución solo al precio especificado o mejor</td>
+                        <td>Cuando quieres controlar el precio de entrada/salida</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stop Loss</strong></td>
+                        <td>Se convierte en market order cuando el precio alcanza un nivel</td>
+                        <td>Para limitar pérdidas automáticamente</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Take Profit</strong></td>
+                        <td>Cierra la posición cuando se alcanza un objetivo de ganancia</td>
+                        <td>Para asegurar ganancias automáticamente</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="ejemplo">
+                <h3>📝 Ejemplo Práctico</h3>
+                <p><strong>Scenario:</strong> Bitcoin está en $50,000 y crees que subirá a $55,000</p>
+                <p><strong>Operación:</strong></p>
+                <ol>
+                    <li>Compras 0.1 BTC con una <strong>limit order</strong> a $50,000</li>
+                    <li>Colocas <strong>stop loss</strong> a $48,000 (limita pérdidas a $200)</li>
+                    <li>Colocas <strong>take profit</strong> a $55,000 (objetivo de ganancia $500)</li>
+                </ol>
+                <p><strong>Resultado potencial:</strong> Ganas $500 o pierdes máximo $200</p>
+            </div>
+            
+            <div class="concepto-trading">
+                <h3>🕒 Timeframes (Marcos Temporales)</h3>
+                <p>Diferentes periodos para analizar gráficos:</p>
+                <ul>
+                    <li><strong>Corto plazo:</strong> 1m, 5m, 15m (scalping)</li>
+                    <li><strong>Medio plazo:</strong> 1h, 4h (day trading)</li>
+                    <li><strong>Largo plazo:</strong> 1d, 1w (swing trading/inversión)</li>
+                </ul>
+                <p><strong>Consejo:</strong> Los timeframes más largos suelen ser más confiables.</p>
+            </div>
+            
+            <div class="concepto-trading">
+                <h3>📊 Análisis Básico del Gráfico</h3>
+                <p><strong>Soporte:</strong> Nivel de precio donde la demanda es fuerte (zona de compra)</p>
+                <p><strong>Resistencia:</strong> Nivel de precio donde la oferta es fuerte (zona de venta)</p>
+                <p><strong>Tendencia:</strong> Dirección general del mercado (alcista, bajista, lateral)</p>
+            </div>
+            
+            <div class="completado">
+                <h3>✅ ¡Bien hecho! Entiendes los conceptos básicos</h3>
+                <p>Has aprendido los fundamentos del trading. En la siguiente lección veremos gestión de riesgo, que es aún más importante.</p>
+            </div>
+        </div>
+        
+        <div class="navegacion">
+            <div>
+                <a href="02-seguridad-basica.html" class="btn-anterior">← Lección Anterior</a>
+                <a href="../index.html" class="btn-volver">Volver a Academia</a>
+            </div>
+            <a href="04-gestion-riesgo.html" class="btn-siguiente">Siguiente Lección: Gestión de Riesgo →</a>
+        </div>
+    </div>
+
+    <script>
+        // Marcar lección como completada
+        document.addEventListener('DOMContentLoaded', function() {
+            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
+            if (!leccionesCompletadas.includes('leccion-3')) {
+                leccionesCompletadas.push('leccion-3');
+                localStorage.setItem('leccionesCompletadas', JSON.stringify(leccionesCompletadas));
+            }
+        });
+    </script>
+</body>
+</html>
