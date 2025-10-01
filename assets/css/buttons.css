@@ -1,0 +1,76 @@
+/* ========== BOTONES GLOBAL (restauración tema dorado/negro) ========== */
+:root{
+  --bg:#0B0C0F; --bg-2:#111418; --stroke:#22262D;
+  --text:#E8EAED; --muted:#9AA0A6;
+  --gold-1:#F5D06E; --gold-2:#D4AF37; --gold-3:#B8860B;
+  --gold-grad:linear-gradient(135deg,var(--gold-1),var(--gold-2) 50%,var(--gold-3));
+}
+
+/* Base: botón oscuro neutro */
+button.btn, a.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:10px;
+  background:#14171D; border:1px solid var(--stroke); color:var(--text);
+  text-decoration:none; line-height:1; cursor:pointer;
+}
+
+/* Variante dorada (CTA principal) */
+button.btn-gold, a.btn-gold {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 16px; border-radius:10px; font-weight:700;
+  background:var(--gold-grad); border:0; color:#141414;
+  text-decoration:none; line-height:1; cursor:pointer;
+}
+
+/* Variante contorno (secundaria) */
+button.btn-outline, a.btn-outline {
+  background:transparent; border:1px solid var(--stroke); color:var(--text);
+}
+
+/* Variante sutil/muted */
+button.btn-muted, a.btn-muted {
+  background:#0E1116; border:1px solid var(--stroke); color:var(--muted);
+}
+
+/* Estados */
+button.btn:hover, a.btn:hover { background:#171b21; }
+button.btn-gold:hover, a.btn-gold:hover { filter:saturate(105%); }
+button.btn-outline:hover, a.btn-outline:hover { background:#12161c; }
+button[disabled], a[aria-disabled="true"] { opacity:.55; cursor:not-allowed; pointer-events:none; }
+
+/* Accesibilidad: foco consistente */
+button.btn:focus-visible, a.btn:focus-visible,
+button.btn-gold:focus-visible, a.btn-gold:focus-visible,
+button.btn-outline:focus-visible, a.btn-outline:focus-visible {
+  outline:2px solid var(--gold-1); outline-offset:2px;
+}
+
+/* Compatibilidad: mapea clases históricas (duplica reglas clave) */
+button.btn-primary, a.btn-primary {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 16px; border-radius:10px; font-weight:700;
+  background:var(--gold-grad); border:0; color:#141414;
+}
+button.btn-secondary, a.btn-secondary {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px; border-radius:10px;
+  background:#14171D; border:1px solid var(--stroke); color:var(--text);
+}
+button.btn-primary:hover, a.btn-primary:hover { filter:saturate(105%); }
+button.btn-secondary:hover, a.btn-secondary:hover { background:#171b21; }
+button.btn-primary:focus-visible, a.btn-primary:focus-visible,
+button.btn-secondary:focus-visible, a.btn-secondary:focus-visible {
+  outline:2px solid var(--gold-1); outline-offset:2px;
+}
+
+/* Blindaje frente a estilos del menú superior */
+.main-nav a.btn, .main-nav a.btn-gold, .main-nav a.btn-outline,
+.main-nav a.btn-primary, .main-nav a.btn-secondary {
+  background:inherit;
+}
+.main-nav a.btn-gold, .main-nav a.btn-primary {
+  background:var(--gold-grad) !important; color:#141414 !important; border:0 !important;
+}
+.main-nav a.btn, .main-nav a.btn-secondary {
+  background:#14171D !important; color:var(--text) !important; border:1px solid var(--stroke) !important;
+}
