@@ -14,10 +14,10 @@
                 <img src="../assets/images/logo.png" alt="Global Gold" style="height: 40px;">
             </div>
             <nav class="main-nav">
-                <a href="../herramientas.html" data-protected="true">Herramientas</a>
+                <a href="/herramientas/" data-protected="true">Herramientas</a>
                 <a href="../academia/" class="active">Academia</a>
                 <a href="../comunidad.html">Comunidad</a>
-                <a href="../dashboard.html">Dashboard</a>
+                <a href="/dashboard/">Dashboard</a>
             </nav>
         </div>
     </header>

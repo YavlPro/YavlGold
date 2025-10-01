@@ -47,7 +47,7 @@ function simularLogin() {
         user: 'usuario_demo'
     }));
     
-    const intended = sessionStorage.getItem('gg:intended') || 'herramientas.html';
+    const intended = sessionStorage.getItem('gg:intended') || '/herramientas/';
     sessionStorage.removeItem('gg:intended');
     window.location.href = intended;
 }
