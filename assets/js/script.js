@@ -6,32 +6,35 @@
 // =============================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    // INTERCEPTOR SOLO para enlaces protegidos
-    document.querySelectorAll('a[data-protected="true"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            const auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
-            const isAuthenticated = auth.ok === true;
-            if (!isAuthenticated) {
-                e.preventDefault();
-                e.stopPropagation();
-                try {
-                    const abs = new URL(this.href, window.location.origin);
-                    sessionStorage.setItem('gg:intended', abs.pathname);
-                } catch {}
-                // Abre modal si existe; si no, fallback al dashboard login público
-                const openLoginBtn = document.querySelector('[data-open="login"], .btn-login, [href="#login"]');
-                if (openLoginBtn) {
-                    openLoginBtn.click();
-                } else {
-                    window.location.href = '/dashboard/?needLogin=1#login';
-                }
-            }
-        });
-    });
-
     // Verificar estado de autenticación (opcional, para lógica de UI)
     checkAuthStatus();
 });
+
+// Intercepta SOLO enlaces protegidos; no toques enlaces públicos (Academia, etc.)
+(function guardProtectedLinks(){
+  document.querySelectorAll('a[data-protected="true"]').forEach(a=>{
+    a.addEventListener('click',(e)=>{
+      const s = JSON.parse(localStorage.getItem('gg:auth')||'{}');
+      const ok = s?.ok===true && s?.src==='supabase' && s?.version==='v2';
+      if(!ok){
+        e.preventDefault();
+        try{ sessionStorage.setItem('gg:intended', new URL(a.href).pathname); }catch{}
+        document.querySelector('[data-open="login"]')?.click()
+          || (location.href='/dashboard/?needLogin=1#login');
+      }
+    });
+  });
+})();
+
+// Overlay de sidebar: si está oculta, no captura clics
+(() => {
+  const ov = document.querySelector('.gg-overlay');
+  if (ov) ov.style.pointerEvents = ov.classList.contains('is-show') ? 'auto' : 'none';
+  new MutationObserver(()=> {
+    if (!ov) return;
+    ov.style.pointerEvents = ov.classList.contains('is-show') ? 'auto' : 'none';
+  }).observe(document.documentElement, { attributes:true, subtree:true, attributeFilter:['class'] });
+})();
 
 // Función para verificar autenticación
 function checkAuthStatus() {
