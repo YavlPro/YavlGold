@@ -1,0 +1,105 @@
+{
+  "commit": "a950cc3",
+  "tag": "v0.4-design-baseline",
+  "date": "2025-10-02",
+  "branding": {
+    "colors": {
+      "bg": "#0B0C0F",
+      "text": "#E8EAED",
+      "muted": "#9AA0A6",
+      "stroke": "#22262D",
+      "gold": [
+        "#F5D06E",
+        "#D4AF37",
+        "#B8860B"
+      ]
+    },
+    "fonts": {
+      "display": "Plus Jakarta Sans",
+      "ui": "Inter",
+      "maxWidth": 920,
+      "lineHeight": 1.7
+    }
+  },
+  "css": [
+    "/assets/css/style.css",
+    "/assets/css/buttons.css",
+    "/assets/css/sidebar.css",
+    "/assets/css/typography.css"
+  ],
+  "js": [
+    "/assets/js/main.js",
+    "/assets/js/script.js",
+    "/assets/js/sidebar.js",
+    "/assets/js/search.js",
+    "/assets/js/draggable.js",
+    "/assets/js/auth.js"
+  ],
+  "ui": {
+    "buttons": [
+      ".btn",
+      ".btn-gold",
+      ".btn-outline",
+      ".btn-muted"
+    ],
+    "sidebar": {
+      "enabled": [
+        "/herramientas/",
+        "/dashboard/"
+      ],
+      "hybridHomeDesktop": true,
+      "aria": [
+        "aria-current",
+        "aria-expanded"
+      ],
+      "zIndex": {
+        "sidebar": 30,
+        "overlay": 25,
+        "modal": 110
+      }
+    },
+    "fabs": {
+      "search": {
+        "id": "gg-search-fab",
+        "storageKey": "gg:search_pos"
+      },
+      "whatsapp": {
+        "id": "gg-wa-fab",
+        "href": "/go/whatsapp.html",
+        "storageKey": "gg:wa_pos"
+      }
+    }
+  },
+  "routing": {
+    "home": "/",
+    "academia": "/academia/",
+    "lecciones": [
+      "/academia/lecciones/01-introduccion-cripto.html",
+      "/academia/lecciones/02-seguridad-basica.html",
+      "/academia/lecciones/03-trading-basico.html"
+    ],
+    "herramientas": "/herramientas/",
+    "calculadora": "/herramientas/calculadora.html",
+    "dashboard": "/dashboard/",
+    "go": [
+      "/go/whatsapp.html",
+      "/go/telegram.html"
+    ]
+  },
+  "guards": {
+    "protectedLinks": [
+      "a[data-protected='true']"
+    ],
+    "sessionKey": "gg:auth",
+    "sessionVersion": "v2",
+    "source": "supabase"
+  },
+  "analytics": [
+    "home_sidebar_impression",
+    "home_to_tools_click",
+    "home_to_academy_click",
+    "search_open",
+    "search_submit",
+    "search_click"
+  ]
+}
