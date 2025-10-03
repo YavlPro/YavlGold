@@ -125,80 +125,7 @@
       z-index: -1;
     }
     
-    /* --- HEADER CON NAVEGACIÓN PROFESIONAL --- */
-    .gg-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 15px 5%;
-      background: rgba(11, 12, 15, 0.9);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(200, 167, 82, 0.2);
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 1000;
-    }
-    
-    .gg-header .brand {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      text-decoration: none;
-      color: #fff;
-      font-weight: 700;
-      font-size: 1.4rem;
-      font-family: 'Playfair Display', serif;
-    }
-    
-    .brand-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      object-fit: cover;
-      border: 2px solid var(--color-secondary);
-    }
-    
-    .main-nav {
-      display: flex;
-      gap: 30px;
-    }
-    
-    .main-nav a {
-      color: var(--text-light);
-      text-decoration: none;
-      font-weight: 500;
-      transition: var(--transition);
-      padding: 8px 0;
-      position: relative;
-    }
-    
-    .main-nav a:hover,
-    .main-nav a.active {
-      color: var(--color-secondary);
-    }
-    
-    .main-nav a::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: var(--gradient-gold);
-      transition: width 0.3s ease;
-    }
-    
-    .main-nav a:hover::after,
-    .main-nav a.active::after {
-      width: 100%;
-    }
-    
-    .auth-buttons {
-      display: flex;
-      gap: 15px;
-    }
+    /* Header, navegación y botones están unificados en /assets/css/unificacion.css */
     
     /* --- HERO SECTION MEJORADO --- */
     .hero {
@@ -281,133 +208,11 @@
       font-weight: 300;
     }
     
-    .cta-buttons {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 30px;
-    }
+    .cta-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
     
-    /* --- BOTONES MEJORADOS --- */
-    .btn {
-      padding: 14px 32px;
-      border-radius: var(--border-radius);
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1rem;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
-    }
+    /* Botones: usar .btn, .btn-primary, .btn-secondary de unificacion.css */
     
-    .btn-primary {
-      background: var(--gradient-gold);
-      color: var(--bg-darker);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s;
-    }
-    
-    .btn-primary:hover::before {
-      left: 100%;
-    }
-    
-    .btn-secondary {
-      background: transparent;
-      color: var(--color-secondary);
-      border: 2px solid var(--color-secondary);
-      backdrop-filter: blur(10px);
-    }
-    
-    .btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(200, 167, 82, 0.3);
-    }
-    
-    /* --- SECCIÓN DE HERRAMIENTAS PÚBLICAS --- */
-    .section {
-      padding: 80px 5%;
-    }
-    
-    .section-title {
-      text-align: center;
-      margin-bottom: 50px;
-    }
-    
-    .section-title h2 {
-      color: transparent;
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      background-clip: text;
-      font-size: 2.5rem;
-      font-family: 'Playfair Display', serif;
-      margin-bottom: 15px;
-    }
-    
-    .section-title p {
-      color: var(--text-muted);
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 30px;
-      margin-top: 40px;
-    }
-    
-    .tool-card {
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: var(--border-radius);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(10px);
-      transition: var(--transition);
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-    
-    .tool-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-      border-color: var(--color-secondary);
-    }
-    
-    .tool-icon {
-      font-size: 3rem;
-      color: var(--color-secondary);
-      margin-bottom: 20px;
-    }
-    
-    .tool-card h3 {
-      font-size: 1.5rem;
-      margin-bottom: 15px;
-      color: var(--text-light);
-    }
-    
-    .tool-card p {
-      color: var(--text-muted);
-      margin-bottom: 20px;
-      flex-grow: 1;
-    }
+    /* Secciones/cards: usar .section, .section-title, .tools-grid, .tool-card de unificacion.css */
     
     /* --- SECCIÓN ACADEMIA --- */
     .academy-modules {
@@ -575,62 +380,7 @@
       margin-bottom: 20px;
     }
     
-    /* --- FOOTER MEJORADO --- */
-    footer {
-      text-align: center;
-      padding: 50px 5% 30px;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      margin-top: 60px;
-      backdrop-filter: blur(10px);
-    }
-    
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .footer-logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      object-fit: cover;
-      border: 1px solid var(--color-secondary);
-    }
-    
-    .footer-brand span {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      font-weight: 700;
-    }
-    
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
-      margin: 25px 0;
-    }
-    
-    .footer-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: var(--transition);
-    }
-    
-    .footer-links a:hover {
-      color: var(--color-secondary);
-    }
-    
-    .copyright {
-      margin-top: 20px;
-      font-size: 0.8rem;
-      opacity: 0.7;
-    }
+    /* Footer: usar estilos de unificacion.css */
     
     /* --- BOTÓN FLOTANTE WHATSAPP --- */
     #wafloat {
@@ -885,56 +635,11 @@
     
     /* --- RESPONSIVE --- */
     @media (max-width: 768px) {
-      .gg-header {
-        padding: 12px 5%;
-        flex-wrap: wrap;
-      }
-      
-      .main-nav {
-        order: 3;
-        width: 100%;
-        justify-content: center;
-        margin-top: 15px;
-        gap: 20px;
-      }
-      
-      .hero h1 {
-        font-size: 3rem;
-      }
-      
-      .hero p {
-        font-size: 1.1rem;
-      }
-      
-      .section {
-        padding: 60px 5%;
-      }
-      
-      .tools-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .cta-buttons {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .btn {
-        width: 100%;
-        max-width: 280px;
-      }
-      
-      .contact-methods {
-        grid-template-columns: 1fr;
-      }
-      
-      #wafloat {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        right: 15px;
-        bottom: 15px;
-      }
+      .hero h1 { font-size: 3rem; }
+      .hero p { font-size: 1.1rem; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+      .btn { width: 100%; max-width: 280px; }
+      .contact-methods { grid-template-columns: 1fr; }
     }
     
     @media (min-width: 769px) {
@@ -979,10 +684,10 @@
     
     <!-- ##### MENÚ DE NAVEGACIÓN ACTUALIZADO ##### -->
     <nav class="main-nav">
-      <a href="herramientas.html" data-protected="true">Herramientas</a>
-  <a href="academia/">Academia</a>
-      <a href="comunidad.html">Comunidad</a>
-      <a href="dashboard.html">Dashboard</a>
+      <a href="/herramientas/" data-protected="true">Herramientas</a>
+      <a href="/academia/">Academia</a>
+      <a href="/go/telegram.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
     </nav>
     
     <div class="auth-buttons" id="auth-buttons">
@@ -1000,7 +705,7 @@
     <p>Ecosistema Global Innovador en Cripto - Herramientas profesionales, formación y comunidad para maximizar tu potencial en el mundo cripto.</p>
     
     <div class="cta-buttons">
-      <a href="/tools.html" class="btn btn-primary">Ir a Herramientas</a>
+  <a href="/herramientas/" class="btn btn-primary">Ir a Herramientas</a>
       <a href="#academia" class="btn btn-secondary">Explorar Academia</a>
     </div>
   </section>
