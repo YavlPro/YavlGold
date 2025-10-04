@@ -1,0 +1,33 @@
+name: Auto Backup Snapshot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # Lunes 03:00 UTC semanal
+
+permissions:
+  contents: read
+
+jobs:
+  zip-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preparar fecha
+        run: echo "DATE=$(date -u +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+
+      - name: Crear ZIP del repositorio (excluye backups/ y .git/)
+        run: |
+          zip -r backup-${{ github.ref_name }}-$DATE.zip . \
+            -x "backups/*" -x ".git/*" -x "**/*.zip"
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.ref_name }}-$DATE
+          path: backup-${{ github.ref_name }}-$DATE.zip
+          if-no-files-found: error

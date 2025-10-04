@@ -1,0 +1,8 @@
+# Ignorar snapshots y binarios pesados
+/backups/*.zip
+*.zip
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
