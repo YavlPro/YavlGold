@@ -196,25 +196,25 @@ const AuthClient = {
         };
         AuthClient.saveSession(session);
         localStorage.removeItem('goldAuth');
-      }
-    } catch (e) {}
-  }
-})();
-
-// Auto-refresh cada 30 minutos
-setInterval(() => {
-  if (AuthClient.isAuthenticated()) AuthClient.refreshSession();
-}, 30 * 60 * 1000);
-
-// Export
-window.AuthClient = AuthClient;
-          createdAt: Date.now(),
-        };
-        AuthClient.saveSession(session);
-        localStorage.removeItem('goldAuth');
         console.log('[Auth] ✅ Migración desde goldAuth exitosa');
         return;
       }
+    } catch (e) { console.warn('[Auth] ⚠ Error migrando goldAuth:', e); }
+  }
+  console.log('[Auth] ℹ No hay sesiones legacy para migrar');
+})();
+
+// ===== AUTO-REFRESH SESIÓN =====
+setInterval(() => {
+  if (AuthClient.isAuthenticated()) {
+    AuthClient.refreshSession();
+  }
+}, 30 * 60 * 1000);
+
+// ===== EXPORTAR =====
+window.AuthClient = AuthClient;
+console.log('[Auth] ✅ AuthClient v2.0 inicializado');
+console.log('[Auth] ✅ AuthClient v2.0 inicializado');
     } catch (e) { console.warn('[Auth] ⚠ Error migrando goldAuth:', e); }
   }
   console.log('[Auth] ℹ No hay sesiones legacy para migrar');
