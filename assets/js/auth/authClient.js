@@ -204,14 +204,14 @@ const AuthClient = {
   console.log('[Auth] ℹ No hay sesiones legacy para migrar');
 })();
 
-// ===== AUTO-REFRESH SESIÓN =====
+// Auto-refresh cada 30 minutos
 setInterval(() => {
   if (AuthClient.isAuthenticated()) {
     AuthClient.refreshSession();
   }
 }, 30 * 60 * 1000);
 
-// ===== EXPORTAR =====
+// Export
 window.AuthClient = AuthClient;
 console.log('[Auth] ✅ AuthClient v2.0 inicializado');
 console.log('[Auth] ✅ AuthClient v2.0 inicializado');
