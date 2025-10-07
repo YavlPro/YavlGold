@@ -6,5 +6,3 @@
 .DS_Store
 Thumbs.db
 .vscode/
-/backups/*.html
-/verify_restore.sh
