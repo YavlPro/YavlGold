@@ -1,4 +1,21 @@
-<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="100" cy="100" r="90" stroke="#C8A752" stroke-width="8" fill="none"/>
-  <text x="100" y="115" font-family="Arial" font-size="32" fill="#C8A752" text-anchor="middle" font-weight="bold">GG</text>
+cat > assets/images/logo.svg << 'EOF'
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="95" fill="#C5B150"/>
+    <circle cx="100" cy="100" r="90" fill="#E6D380"/>
+    <circle cx="100" cy="100" r="85" fill="#C5B150"/>
+
+    <circle cx="100" cy="100" r="80" fill="#000000"/>
+
+    <circle cx="100" cy="100" r="35" stroke="#E6D380" stroke-width="2"/>
+    <ellipse cx="100" cy="100" rx="20" ry="35" stroke="#E6D380" stroke-width="2"/>
+    <line x1="100" y1="65" x2="100" y2="135" stroke="#E6D380" stroke-width="2"/>
+    <line x1="65" y1="100" x2="135" y2="100" stroke="#E6D380" stroke-width="2"/>
+    <path d="M75 65 C80 80 80 120 75 135" stroke="#E6D380" stroke-width="2" fill="none"/>
+    <path d="M125 65 C120 80 120 120 125 135" stroke="#E6D380" stroke-width="2" fill="none"/>
+
+    <path d="M70 120 L95 80 L120 95 L145 60 L140 55 L150 50 L145 70 L120 105 L95 90 L70 130 Z" fill="#E6D380"/>
+    <path d="M60 120 L80 80 L100 100 L140 60 L145 65 L150 55 L140 45 L90 95 L70 75 Z" fill="#E6D380"/>
+    
+    <text x="100" y="165" font-family="Arial, sans-serif" font-size="16" fill="#E6D380" text-anchor="middle" letter-spacing="1">GLOBAL GOLD</text>
 </svg>
+EOF
