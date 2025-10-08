@@ -111,3 +111,57 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
     font-size: 16px !important;
   }
 }
+
+/* === LOGO GLOBALGOLD OFICIAL === */
+.logo,
+.footer-logo,
+.modal-logo,
+.logo-hero img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Header logo */
+.gg-header .logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+}
+
+/* Hero logo */
+.logo-hero {
+  width: 140px;
+  height: 140px;
+}
+
+/* Modal logo */
+.modal-logo {
+  width: 60px;
+  height: 60px;
+}
+
+/* Footer logo */
+.footer-logo {
+  width: 40px;
+  height: 40px;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .gg-header .logo {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .logo-hero {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .modal-logo {
+    width: 50px;
+    height: 50px;
+  }
+}
