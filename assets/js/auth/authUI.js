@@ -156,8 +156,9 @@ const AuthUI = {
 
   handleLogout() {
     if (confirm('¿Estás seguro de cerrar sesión?')) {
+      console.log('[AuthUI] 🚪 Logout iniciado');
       window.AuthClient.logout();
-  console.log("[AuthUI] ✅ Logout completed");
+      console.log('[AuthUI] ✅ Sesión cerrada');
       this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
     }
@@ -204,35 +205,34 @@ const AuthUI = {
     const user = window.AuthClient.getCurrentUser();
     if (authed && user) {
       this.elements.authButtons && (this.elements.authButtons.style.display = 'none');
-      if
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 5000);
-  },
-  clearError(type) {
-    const el = type === 'login' ? this.elements.loginError : this.elements.registerError;
-    if (el) { el.textContent = ''; el.style.display = 'none'; }
-  },
-  showSuccess(message) { this.showToast(message, 'success'); },
-  showToast(message, type = 'success') {
-    let toast = document.getElementById('auth-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'auth-toast';
-      document.body.appendChild(toast);
+      if (this.elements.userMenu) {
+        this.elements.userMenu.style.display = 'flex';
+        const nameSpan = this.elements.userMenu.querySelector('span');
+        const avatar = this.elements.userMenu.querySelector('.user-avatar-sm');
+        if (nameSpan) nameSpan.textContent = user.name || user.email?.split('@')[0] || 'Usuario';
+        if (avatar) {
+          avatar.src =
+            user.avatar ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=C8A752&color=0B0C0F&bold=true`;
+          avatar.alt = user.name || user.email || 'User';
+        }
+      }
+      // Quitar candados de enlaces protegidos
+      document.querySelectorAll('[data-protected="true"] .lock-icon')?.forEach((i) => i.remove());
+    } else {
+      this.elements.authButtons && (this.elements.authButtons.style.display = 'flex');
+      this.elements.userMenu && (this.elements.userMenu.style.display = 'none');
     }
-    const style = type === 'success'
-      ? { bg: 'linear-gradient(135deg,#C8A752,#D4AF37)', color: '#0B0C0F', icon: 'fa-check-circle' }
-      : { bg: 'linear-gradient(135deg,#ff6b6b,#ff5252)', color: '#fff', icon: 'fa-exclamation-circle' };
+  },
+};
 
-    toast.style.cssText = `
-      position: fixed; top: 90px; right: 20px;
-      background: ${style.bg}; color: ${style.color};
-      padding: 16px 24px; border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.3); font-weight: 600; font-size: 15px;
-      z-index: 10000; opacity: 0; transform: translateX(400px);
-      transition: all .3s cubic-bezier(.68,-.55,.265,1.55);
-      display: flex; align-items: center; gap: 12px; max-width: 350px;
-    `;
+// Auto-init y export (ligero delay para asegurar carga de AuthClient)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(() => AuthUI.init(), 50));
+} else {
+  setTimeout(() => AuthUI.init(), 50);
+}
+window.AuthUI = AuthUI;
     toast.innerHTML = `<i class="fas ${style.icon}"></i><span>${message}</span>`;
     setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
     setTimeout(() => {
