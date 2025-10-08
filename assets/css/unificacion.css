@@ -72,3 +72,42 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
   .section { padding: 80px 5% 40px; }
   .tools-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .main-header {
+    padding: 0.75rem 1rem;
+  }
+  .main-nav {
+    display: none;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    flex-direction: column;
+    padding: 1rem;
+    z-index: 999;
+  }
+  .main-nav.active {
+    display: flex !important;
+  }
+  .hamburger-menu {
+    display: block !important;
+    background: none;
+    border: none;
+    color: var(--gold-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  .auth-modal-content {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 1rem auto;
+  }
+  .modal-input,
+  .modal-button {
+    min-height: 44px !important;
+    font-size: 16px !important;
+  }
+}
