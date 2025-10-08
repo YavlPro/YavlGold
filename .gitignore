@@ -6,3 +6,7 @@
 .DS_Store
 Thumbs.db
 .vscode/
+*.backup*
+backups/
+fix-critical-bugs.sh
+verify_restore.sh
