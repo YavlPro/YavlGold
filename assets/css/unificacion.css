@@ -112,19 +112,21 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
   }
 }
 
-/* === LOGO GLOBALGOLD OFICIAL === */
+/* === LOGO GLOBALGOLD OFICIAL — UNIFICADO === */
 .logo,
+.brand-logo,
 .footer-logo,
 .modal-logo,
 .logo-hero img {
-  width: auto;
-  height: auto;
+  display: block;
   max-width: 100%;
+  height: auto;
   object-fit: contain;
 }
 
 /* Header logo */
-.gg-header .logo {
+.gg-header .logo,
+.gg-header .brand-logo {
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -142,7 +144,7 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
   height: 60px;
 }
 
-/* Footer logo */
+/* Footer logo (tamaños; mantiene su borde definido arriba) */
 .footer-logo {
   width: 40px;
   height: 40px;
@@ -150,18 +152,21 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
 
 /* Responsive mobile */
 @media (max-width: 768px) {
-  .gg-header .logo {
+  .gg-header .logo,
+  .gg-header .brand-logo {
     width: 40px;
     height: 40px;
   }
-  
   .logo-hero {
     width: 100px;
     height: 100px;
   }
-  
   .modal-logo {
     width: 50px;
     height: 50px;
   }
 }
+
+/* ========================================
+   FIN UNIFICACION.CSS v2.0
+   ======================================== */
