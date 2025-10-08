@@ -197,12 +197,17 @@ const AuthUI = {
     `;
     toast.innerHTML = `<i class="fas ${style.icon}"></i><span>${message}</span>`;
     setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
-    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)'; setTimeout(() => toast.remove?.(), 300); }, 3500);
+    setTimeout(() => {
+      toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)';
+      setTimeout(() => { toast.remove?.(); }, 300);
+    }, 3500);
   },
 
+  // Actualizar UI
   updateUI() {
     const authed = window.AuthClient.isAuthenticated();
     const user = window.AuthClient.getCurrentUser();
+
     if (authed && user) {
       this.elements.authButtons && (this.elements.authButtons.style.display = 'none');
       if (this.elements.userMenu) {
@@ -233,11 +238,6 @@ if (document.readyState === 'loading') {
   setTimeout(() => AuthUI.init(), 50);
 }
 window.AuthUI = AuthUI;
-    toast.innerHTML = `<i class="fas ${style.icon}"></i><span>${message}</span>`;
-    setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
-    setTimeout(() => {
-      toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)';
-      setTimeout(() => { toast.remove?.(); }, 300);
     }, 3500);
   },
 
