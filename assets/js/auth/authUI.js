@@ -8,6 +8,7 @@ const AuthUI = {
     this.cacheElements();
     this.attachEventListeners();
     this.updateUI();
+  console.log("[AuthUI] 🔄 UI updated after logout");
     console.log('[AuthUI] ✅ AuthUI v2.0 inicializado');
   },
 
@@ -62,6 +63,7 @@ const AuthUI = {
     }
 
     window.addEventListener('auth:login', () => { this.updateUI(); this.hideLoginModal(); this.hideRegisterModal(); });
+  console.log("[AuthUI] 🔄 UI updated after logout");
     window.addEventListener('auth:logout', () => this.updateUI());
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
 
@@ -155,6 +157,7 @@ const AuthUI = {
   handleLogout() {
     if (confirm('¿Estás seguro de cerrar sesión?')) {
       window.AuthClient.logout();
+  console.log("[AuthUI] ✅ Logout completed");
       this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
     }
