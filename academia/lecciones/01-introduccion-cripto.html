@@ -1,267 +1,387 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>Lección 1: Introducción a las Criptomonedas - Global Gold</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-        
-        body {
-            background: #000000;
-            color: #FFD700;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        
-        .leccion-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .header-leccion {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #FFD700;
-        }
-        
-        h1 {
-            color: #FFD700;
-            margin-bottom: 0.5rem;
-            font-size: 2.2rem;
-        }
-        
-        .meta-leccion {
-            color: #cccccc;
-            font-size: 1rem;
-        }
-        
-        .contenido-leccion {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-        
-        h2 {
-            color: #FFD700;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #333;
-            padding-bottom: 0.5rem;
-        }
-        
-        h3 {
-            color: #FFA500;
-            margin: 1.5rem 0 0.8rem 0;
-        }
-        
-        p {
-            margin-bottom: 1rem;
-            color: #cccccc;
-        }
-        
-        ul, ol {
-            margin: 1rem 0;
-            padding-left: 2rem;
-        }
-        
-        li {
-            margin-bottom: 0.5rem;
-            color: #cccccc;
-        }
-        
-        .concepto-destacado {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 4px solid #FFD700;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .btn-volver {
-            display: inline-block;
-            background: transparent;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-volver:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .btn-siguiente {
-            display: inline-block;
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            margin-left: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-siguiente:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-        
-        .navegacion {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .completado {
-            background: rgba(76, 175, 80, 0.1);
-            border-left: 4px solid #4CAF50;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        @media (max-width: 768px) {
-            .leccion-container {
-                padding: 1rem;
-            }
-            
-            .navegacion {
-                flex-direction: column;
-            }
-            
-            .btn-siguiente {
-                margin-left: 0;
-                margin-top: 0.5rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo 1: Fundamentos - Academia GlobalGold</title>
+  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #0B0C0F;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: rgba(17, 17, 17, 0.9);
+      --success-color: #10b981;
+      --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+      --border-radius: 15px;
+      --transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+    
+    .lesson-hero {
+      text-align: center;
+      padding: 140px 20px 80px;
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+    }
+    
+    .lesson-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      color: transparent;
+      background: var(--gradient-gold);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: shimmer 3s infinite linear;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .breadcrumb {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .breadcrumb a {
+      color: var(--color-secondary);
+      text-decoration: none;
+    }
+    
+    .lesson-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .lesson-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 40px;
+      margin-bottom: 40px;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      backdrop-filter: blur(10px);
+    }
+    
+    .lesson-list {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .lesson-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 25px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+    
+    .lesson-item:hover {
+      border-color: var(--color-secondary);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(200, 167, 82, 0.2);
+    }
+    
+    .lesson-item.completed {
+      border-color: var(--success-color);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .lesson-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+    
+    .lesson-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--color-secondary);
+      margin: 0;
+    }
+    
+    .lesson-status {
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .status-completed {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success-color);
+    }
+    
+    .status-pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+    }
+    
+    .lesson-description {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    
+    .lesson-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+    
+    .btn-nav {
+      padding: 12px 25px;
+      border-radius: var(--border-radius);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .btn-back {
+      background: transparent;
+      border: 2px solid var(--text-muted);
+      color: var(--text-muted);
+    }
+    
+    .btn-back:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+    }
+    
+    .btn-next {
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      border: 2px solid var(--color-secondary);
+    }
+    
+    .btn-next:hover {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+      .lesson-hero h1 { font-size: 2.5rem; }
+      .lesson-card { padding: 25px; }
+      .navigation-buttons { flex-direction: column; gap: 15px; }
+      .lesson-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="leccion-container">
-        <div class="header-leccion">
-            <h1>Lección 1: Introducción a las Criptomonedas</h1>
-            <p class="meta-leccion">Módulo 1: Fundamentos • Tiempo estimado: 15 minutos</p>
-        </div>
-        
-        <div class="contenido-leccion">
-            <h2>¿Qué son las Criptomonedas?</h2>
-            <p>Las criptomonedas son activos digitales que utilizan criptografía para asegurar transacciones financieras, controlar la creación de nuevas unidades y verificar la transferencia de activos.</p>
-            
-            <div class="concepto-destacado">
-                <h3>💡 Concepto Clave: Descentralización</h3>
-                <p>A diferencia de las monedas tradicionales controladas por bancos centrales, las criptomonedas operan en redes descentralizadas basadas en tecnología blockchain.</p>
-            </div>
-            
-            <h3>Principales Características:</h3>
-            <ul>
-                <li><strong>Descentralización:</strong> Sin intermediarios bancarios o gobiernos</li>
-                <li><strong>Seguridad:</strong> Protegidas por criptografía avanzada</li>
-                <li><strong>Transparencia:</strong> Todas las transacciones son públicas</li>
-                <li><strong>Globalidad:</strong> Accesibles desde cualquier lugar del mundo</li>
-                <li><strong>Inmutabilidad:</strong> Las transacciones no pueden ser alteradas</li>
-            </ul>
-            
-            <h3>Blockchain: La Tecnología Revolucionaria</h3>
-            <p>Blockchain es un libro de contabilidad digital distribuido que registra todas las transacciones de forma segura y transparente. Cada "bloque" contiene un conjunto de transacciones, y estos bloques están encadenados cronológicamente.</p>
-            
-            <div class="concepto-destacado">
-                <h3>🔗 Cómo Funciona Blockchain</h3>
-                <p>1. Una transacción es solicitada<br>
-                2. La transacción se transmite a una red P2P<br>
-                3. La red valida la transacción<br>
-                4. La transacción se combina con otras para crear un bloque<br>
-                5. El bloque se añade a la cadena existente<br>
-                6. La transacción está completa</p>
-            </div>
-            
-            <h3>Principales Criptomonedas:</h3>
-            <ul>
-                <li><strong>Bitcoin (BTC):</strong> La primera y más conocida criptomoneda</li>
-                <li><strong>Ethereum (ETH):</strong> Plataforma para contratos inteligentes</li>
-                <li><strong>Binance Coin (BNB):</strong> Token nativo de Binance Exchange</li>
-                <li><strong>Cardano (ADA):</strong> Plataforma de contratos inteligentes</li>
-                <li><strong>Solana (SOL):</strong> Conocida por su alta velocidad y bajas tarifas</li>
-            </ul>
-            
-            <div class="completado">
-                <h3>✅ ¡Excelente! Has completado esta sección</h3>
-                <p>Ya comprendes los conceptos básicos de las criptomonedas. En la siguiente lección aprenderás sobre seguridad.</p>
-            </div>
-        </div>
-        
-        <div class="navegacion">
-            <a href="../index.html" class="btn-volver">← Volver a la Academia</a>
-            <a href="02-seguridad-basica.html" class="btn-siguiente">Siguiente Lección: Seguridad Básica →</a>
-        </div>
+  <!-- Header -->
+  <header class="gg-header">
+    <a class="brand" href="/">
+      <img src="/assets/images/logo.png" alt="GlobalGold" class="logo" />
+      <span>GlobalGold</span>
+    </a>
+    
+    <nav class="main-nav">
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/academia/" class="active">Academia</a>
+      <a href="/go/telegram.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+    </nav>
+    
+    <div class="auth-buttons" id="auth-buttons">
+      <!-- Se llenará dinámicamente -->
     </div>
+  </header>
 
-    <script>
-        // Marcar lección como completada
-        document.addEventListener('DOMContentLoaded', function() {
-            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
-            if (!leccionesCompletadas.includes('leccion-1')) {
-                leccionesCompletadas.push('leccion-1');
-                localStorage.setItem('leccionesCompletadas', JSON.stringify(leccionesCompletadas));
-            }
-        });
-    </script>
-=======
-    <title>Introducción Cripto - Global Gold Academy</title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="logo">
-                <img src="../../assets/images/logo.png" alt="Global Gold" style="height: 40px;">
-            </div>
-            <nav class="main-nav">
-                <a href="../../herramientas.html" data-protected="true">Herramientas</a>
-                <a href="../../academia/">Academia</a>
-                <a href="../../comunidad.html">Comunidad</a>
-                <a href="../../dashboard.html">Dashboard</a>
-            </nav>
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="/academia/">📚 Academia</a> / <span>Módulo 1: Fundamentos</span>
+  </div>
+
+  <!-- Hero -->
+  <section class="lesson-hero">
+    <h1>📚 Módulo 1: Fundamentos</h1>
+    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto;">
+      Introducción completa al mundo de las criptomonedas y blockchain
+    </p>
+  </section>
+
+  <!-- Contenido de Lecciones -->
+  <div class="lesson-content">
+    <div class="lesson-card">
+      <h2 style="color: var(--color-secondary); margin-bottom: 30px;">
+        <i class="fas fa-graduation-cap"></i> Lecciones del Módulo
+      </h2>
+      
+      <div class="lesson-list">
+        <!-- Lección 1 -->
+        <div class="lesson-item completed" onclick="openLesson('01-01')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">1.1 ¿Qué son las Criptomonedas?</h3>
+            <span class="lesson-status status-completed">✅ Completada</span>
+          </div>
+          <p class="lesson-description">
+            Introducción básica a las criptomonedas, su historia y por qué son importantes.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 15 min</span>
+            <span><i class="fas fa-book"></i> Lectura</span>
+            <span><i class="fas fa-star"></i> Básico</span>
+          </div>
         </div>
-    </header>
-
-    <main class="container" style="margin: 30px auto; max-width: 800px;">
-        <nav style="margin-bottom: 20px;">
-            <a href="../../academia/" class="muted">← Volver a Academia</a>
-        </nav>
-
-        <div class="card">
-            <h1 class="gold-text">📚 Introducción a Cripto y Blockchain</h1>
-            <p class="muted">Contenido en desarrollo - Próximamente disponible</p>
-            
-            <div style="display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; margin-top: 40px;">
-                <a href="../../academia/" class="btn" style="background: #f8f9fa; color: #333; border: 1px solid #ddd;">
-                    ← Volver al índice
-                </a>
-                <a href="02-seguridad-basica.html" class="btn-gold">
-                    Siguiente lección →
-                </a>
-            </div>
+        
+        <!-- Lección 2 -->
+        <div class="lesson-item" onclick="openLesson('01-02')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">1.2 ¿Qué es Blockchain?</h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Entendiendo la tecnología detrás de las criptomonedas de manera simple.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 20 min</span>
+            <span><i class="fas fa-video"></i> Video + Lectura</span>
+            <span><i class="fas fa-star"></i> Básico</span>
+          </div>
         </div>
-    </main>
->>>>>>> 5c285ece782e4127d7914337e1d4bff8347242d1
+        
+        <!-- Lección 3 -->
+        <div class="lesson-item" onclick="openLesson('01-03')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">1.3 Bitcoin: La Primera Criptomoneda</h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Historia de Bitcoin, cómo funciona y por qué cambió el mundo financiero.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 25 min</span>
+            <span><i class="fas fa-book"></i> Lectura</span>
+            <span><i class="fas fa-star"></i> Básico</span>
+          </div>
+        </div>
+        
+        <!-- Lección 4 -->
+        <div class="lesson-item" onclick="openLesson('01-04')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">1.4 Altcoins y Ecosistemas</h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Ethereum, BNB, y otras criptomonedas importantes que debes conocer.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 30 min</span>
+            <span><i class="fas fa-video"></i> Video + Práctica</span>
+            <span><i class="fas fa-star"></i> Básico</span>
+          </div>
+        </div>
+        
+        <!-- Lección 5 -->
+        <div class="lesson-item" onclick="openLesson('01-05')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">1.5 Casos de Uso Reales</h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Ejemplos prácticos de cómo las criptomonedas están cambiando industrias.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 20 min</span>
+            <span><i class="fas fa-lightbulb"></i> Casos de Estudio</span>
+            <span><i class="fas fa-star"></i> Básico</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progreso del Módulo -->
+    <div class="lesson-card">
+      <h3 style="color: var(--color-secondary); margin-bottom: 20px;">
+        <i class="fas fa-chart-line"></i> Tu Progreso en este Módulo
+      </h3>
+      
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span>Progreso Actual</span>
+        <span style="color: var(--color-secondary); font-weight: 600;">20%</span>
+      </div>
+      
+      <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+        <div style="width: 20%; height: 100%; background: var(--gradient-gold); border-radius: 4px;"></div>
+      </div>
+      
+      <p style="margin-top: 15px; color: var(--text-muted);">
+        Has completado <strong>1 de 5 lecciones</strong>. ¡Continúa así!
+      </p>
+    </div>
+  </div>
+
+  <!-- Botones de Navegación -->
+  <div class="navigation-buttons">
+    <a href="/academia/" class="btn-nav btn-back">
+      <i class="fas fa-arrow-left"></i> Volver a Academia
+    </a>
+    <a href="/academia/lecciones/02-seguridad-basica.html" class="btn-nav btn-next">
+      Siguiente Módulo <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer style="margin-top: 80px;">
+    <div class="footer-brand">
+      <img src="/assets/images/logo.png" alt="GlobalGold" class="footer-logo">
+      <span>GlobalGold</span>
+    </div>
+    <p>Academia de Criptomonedas y Trading</p>
+    <div class="copyright">
+      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    function openLesson(lessonId) {
+      // Por ahora mostrar una notificación
+      showNotification(Lección ${lessonId} - ¡Próximamente disponible!, 'info');
+      
+      // En el futuro aquí se abrirá el contenido específico de cada lección
+      console.log(Abriendo lección: ${lessonId});
+    }
+    
+    // Simular progreso del usuario (esto vendría de Supabase)
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuth();
+    });
+  </script>
 </body>
 </html>

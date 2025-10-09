@@ -1,111 +1,266 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // --- LÓGICA DE LOGIN ---
-  const loginForm = document.getElementById('login-form');
-  if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const username = e.target.username.value;
-      const password = e.target.password.value;
+// Configuración de Supabase
+const SUPABASE_URL = 'https://ppjtyslyvwpxepedymlf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwanR5c2x5dndweGVwZWR5bWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg0MzY4ODUsImV4cCI6MjA0NDAxMjg4NX0.pHUWJmwO0fmxdLNqoLgD2H2N-4-HWBC1JAj5jKz2oJE';
 
-      // Credenciales simples
-      if (username === 'admin' && password === '123') {
-        // Marcar autenticación y guardar usuario básico
-        localStorage.setItem('goldAuth', 'true');
-        const user = { username, email: `${username}@example.com` };
-        localStorage.setItem('currentUser', JSON.stringify(user));
+// Inicializar cliente de Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        alert('¡Login exitoso!');
-        // Redirigir a la ruta que intentaba acceder o a herramientas
-        const redirect = sessionStorage.getItem('redirectAfterLogin') || '/herramientas/';
-        sessionStorage.removeItem('redirectAfterLogin');
-        window.location.href = redirect;
-      } else {
-        alert('Usuario o contraseña incorrectos. Usa: admin/123');
-      }
-    });
-  }
+// Estado de autenticación global
+let currentUser = null;
 
-  // --- PROTECCIÓN DE PÁGINAS Y ACTUALIZACIÓN DE UI ---
-  const protectedPaths = ['/herramientas/', '/dashboard/'];
-  const currentPath = window.location.pathname;
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  const goldAuth = localStorage.getItem('goldAuth') === 'true';
-
-  // 1. Proteger rutas
-  if (protectedPaths.some(path => currentPath.startsWith(path))) {
-    if (!(goldAuth || currentUser)) {
-      // Guardar la URL a la que se intentaba acceder para redirigir después del login
-      sessionStorage.setItem('redirectAfterLogin', currentPath);
-      window.location.href = '/login.html';
-      return; // Detener la ejecución para evitar que se procese el resto del script
+// Función para verificar si el usuario está autenticado
+async function checkAuth() {
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        currentUser = session?.user || null;
+        updateAuthUI();
+        return currentUser;
+    } catch (error) {
+        console.error('Error verificando autenticación:', error);
+        currentUser = null;
+        updateAuthUI();
+        return null;
     }
-  }
+}
 
-  // 2. Actualizar la UI si el usuario está autenticado
-  if (goldAuth || currentUser) {
-    // Actualizar header principal (si existe)
+// Función para actualizar la interfaz según el estado de autenticación
+function updateAuthUI() {
     const authButtons = document.getElementById('auth-buttons');
-    if (authButtons) {
-      const name = (currentUser && currentUser.username) ? currentUser.username : 'Usuario';
-      authButtons.innerHTML = `
-        <span style="color: var(--text-light); margin-right: 15px;">Hola, ${name}</span>
-        <button class="btn btn-outline" onclick="logout()">Cerrar Sesión</button>
-      `;
+    if (!authButtons) return;
+    
+    if (currentUser) {
+        // Usuario autenticado
+        const userName = currentUser.user_metadata?.full_name || 
+                        currentUser.user_metadata?.name || 
+                        currentUser.email?.split('@')[0] || 
+                        'Usuario';
+        
+        authButtons.innerHTML = `
+            <div class="user-menu">
+                <span class="user-name">¡Hola, ${userName}!</span>
+                <button class="btn btn-secondary" onclick="logout()">Cerrar Sesión</button>
+            </div>
+        `;
+    } else {
+        // Usuario no autenticado
+        authButtons.innerHTML = `
+            <button class="btn btn-secondary" onclick="showAuthModal('login')">Iniciar Sesión</button>
+            <button class="btn btn-primary" onclick="showAuthModal('register')">Registrarse</button>
+        `;
     }
+}
 
-    // Actualizar UI específica del Dashboard (si estamos en el dashboard)
-    if (currentPath.startsWith('/dashboard/')) {
-      const dashboardContent = document.getElementById('dashboard-content');
-      const loginPrompt = document.getElementById('login-prompt');
-      
-      if (dashboardContent) dashboardContent.style.display = 'flex';
-      if (loginPrompt) loginPrompt.style.display = 'none';
-      
-      const name = (currentUser && currentUser.username) ? currentUser.username : 'Usuario';
-      const email = (currentUser && currentUser.email) ? currentUser.email : '';
-      const userNameEl = document.getElementById('user-name');
-      const avatarEl = document.getElementById('user-avatar');
-      const userNameInput = document.getElementById('user-name-input');
-      const userEmailInput = document.getElementById('user-email');
-      if (userNameEl) userNameEl.textContent = name;
-      if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
-      if (userNameInput) userNameInput.value = name;
-      if (userEmailInput) userEmailInput.value = email;
+// Función de registro
+async function register(email, password, name) {
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    full_name: name,
+                    name: name
+                }
+            }
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+            showNotification('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.', 'success');
+            hideAuthModal();
+            return data.user;
+        }
+    } catch (error) {
+        console.error('Error en registro:', error);
+        showNotification(error.message || 'Error al registrar usuario', 'error');
+        throw error;
     }
-  } else {
-    // 3. Configurar UI para usuario no autenticado
-    const authButtons = document.getElementById('auth-buttons');
-    if (authButtons) {
-      authButtons.innerHTML = `
-        <a href="/login.html" class="btn btn-primary">Iniciar Sesión</a>
-        <a href="/creacion.html" class="btn btn-secondary">Registrarse</a>
-      `;
+}
+
+// Función de login
+async function login(email, password) {
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+            currentUser = data.user;
+            updateAuthUI();
+            showNotification('¡Inicio de sesión exitoso!', 'success');
+            hideAuthModal();
+            
+            // Redirigir si estaba intentando acceder a una página protegida
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('needLogin') === '1') {
+                // Remover el parámetro y recargar
+                window.location.href = window.location.pathname;
+            }
+            
+            return data.user;
+        }
+    } catch (error) {
+        console.error('Error en login:', error);
+        showNotification(error.message || 'Error al iniciar sesión', 'error');
+        throw error;
+    }
+}
+
+// Función de logout
+async function logout() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        
+        currentUser = null;
+        updateAuthUI();
+        showNotification('Sesión cerrada correctamente', 'success');
+        
+        // Redirigir a home si está en página protegida
+        if (window.location.pathname.includes('/dashboard/') || 
+            window.location.pathname.includes('/herramientas/')) {
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('Error en logout:', error);
+        showNotification('Error al cerrar sesión', 'error');
+    }
+}
+
+// Función para verificar acceso a páginas protegidas
+function checkProtectedPage() {
+    const protectedPaths = ['/dashboard/', '/herramientas/'];
+    const currentPath = window.location.pathname;
+    
+    if (protectedPaths.some(path => currentPath.includes(path))) {
+        if (!currentUser) {
+            // Redirigir al home con parámetro para mostrar login
+            window.location.href = '/?needLogin=1';
+            return false;
+        }
+    }
+    return true;
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    // Remover notificación existente
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
     }
     
-    // Ocultar contenido del dashboard si no hay sesión
-    if (currentPath.startsWith('/dashboard/')) {
-      const dashboardContent = document.getElementById('dashboard-content');
-      const loginPrompt = document.getElementById('login-prompt');
-      if (dashboardContent) dashboardContent.style.display = 'none';
-      if (loginPrompt) loginPrompt.style.display = 'block';
+    // Crear nueva notificación
+    const notification = document.createElement('div');
+    notification.className = notification notification-${type};
+    
+    const icon = type === 'success' ? '✅' : 
+                 type === 'error' ? '❌' : 
+                 type === 'warning' ? '⚠' : 'ℹ';
+    
+    notification.innerHTML = `
+        <span>${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (notification && notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Event listeners para formularios
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar autenticación al cargar
+    checkAuth();
+    
+    // Verificar si necesita mostrar login
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('needLogin') === '1') {
+        showNotification('Necesitas iniciar sesión para acceder a esta página', 'warning');
+        setTimeout(() => showAuthModal('login'), 1000);
     }
-  }
+    
+    // Form de login
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username')?.value;
+            const password = document.getElementById('password')?.value;
+            
+            if (!username || !password) {
+                showNotification('Por favor completa todos los campos', 'warning');
+                return;
+            }
+            
+            try {
+                await login(username, password);
+            } catch (error) {
+                console.error('Error en login:', error);
+            }
+        });
+    }
+    
+    // Form de registro
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name')?.value;
+            const email = document.getElementById('register-email')?.value;
+            const password = document.getElementById('register-password')?.value;
+            
+            if (!name || !email || !password) {
+                showNotification('Por favor completa todos los campos', 'warning');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showNotification('La contraseña debe tener al menos 8 caracteres', 'warning');
+                return;
+            }
+            
+            try {
+                await register(email, password, name);
+            } catch (error) {
+                console.error('Error en registro:', error);
+            }
+        });
+    }
 });
 
-// --- FUNCIÓN DE LOGOUT ---
-function logout() {
-  localStorage.removeItem('currentUser');
-  localStorage.removeItem('goldAuth');
-  window.location.href = '/index.html?v=20250929';
-}
+// Escuchar cambios en el estado de autenticación
+supabase.auth.onAuthStateChange((event, session) => {
+    console.log('Auth state changed:', event, session);
+    currentUser = session?.user || null;
+    updateAuthUI();
+    
+    if (event === 'SIGNED_OUT') {
+        // Usuario cerró sesión
+        if (window.location.pathname.includes('/dashboard/') || 
+            window.location.pathname.includes('/herramientas/')) {
+            window.location.href = '/';
+        }
+    }
+});
 
-// --- LOGIN RÁPIDO (para el botón en login.html) ---
-function simpleLogin() {
-  // Simula el login con credenciales por defecto
-  localStorage.setItem('goldAuth', 'true');
-  const user = { username: 'admin', email: 'admin@example.com' };
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  const redirect = sessionStorage.getItem('redirectAfterLogin') || '/herramientas/';
-  sessionStorage.removeItem('redirectAfterLogin');
-  window.location.href = redirect;
-}
+// Exponer funciones globalmente
+window.checkAuth = checkAuth;
+window.login = login;
+window.register = register;
+window.logout = logout;
+window.showNotification = showNotification;
+window.checkProtectedPage = checkProtectedPage;

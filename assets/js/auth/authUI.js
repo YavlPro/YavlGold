@@ -8,6 +8,7 @@ const AuthUI = {
     this.cacheElements();
     this.attachEventListeners();
     this.updateUI();
+  console.log("[AuthUI] 🔄 UI updated after logout");
     console.log('[AuthUI] ✅ AuthUI v2.0 inicializado');
   },
 
@@ -62,7 +63,8 @@ const AuthUI = {
     }
 
     window.addEventListener('auth:login', () => { this.updateUI(); this.hideLoginModal(); this.hideRegisterModal(); });
-    window.addEventListener('auth:logout', () => { console.log('[AuthUI] 🔄 UI updated after logout'); this.updateUI(); });
+  console.log("[AuthUI] 🔄 UI updated after logout");
+    window.addEventListener('auth:logout', () => this.updateUI());
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
 
     this.elements.showRegisterLink?.addEventListener('click', (e) => { e.preventDefault(); this.hideLoginModal(); this.showRegisterModal(); });
@@ -75,21 +77,18 @@ const AuthUI = {
     this.clearError('login');
     setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
   },
-
   hideLoginModal() {
     if (!this.elements.loginModal) return;
     this.elements.loginModal.style.display = 'none';
     this.clearError('login');
     this.elements.loginForm?.reset();
   },
-
   showRegisterModal() {
     if (!this.elements.registerModal) return;
     this.elements.registerModal.style.display = 'flex';
     this.clearError('register');
     setTimeout(() => this.elements.registerForm?.querySelector('input[name="name"]')?.focus(), 80);
   },
-
   hideRegisterModal() {
     if (!this.elements.registerModal) return;
     this.elements.registerModal.style.display = 'none';
@@ -159,6 +158,7 @@ const AuthUI = {
     if (confirm('¿Estás seguro de cerrar sesión?')) {
       console.log('[AuthUI] 🚪 Logout iniciado');
       window.AuthClient.logout();
+  console.log("[AuthUI] ✅ Sesión cerrada");
       console.log('[AuthUI] ✅ Sesión cerrada');
       this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
@@ -172,20 +172,16 @@ const AuthUI = {
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 5000);
   },
-
   clearError(type) {
     const el = type === 'login' ? this.elements.loginError : this.elements.registerError;
     if (el) { el.textContent = ''; el.style.display = 'none'; }
   },
-
   showSuccess(message) { this.showToast(message, 'success'); },
 
   showToast(message, type = 'success') {
     let toast = document.getElementById('auth-toast');
     if (!toast) {
-      toast = document.createElement('div'); 
-      toast.id = 'auth-toast'; 
-      document.body.appendChild(toast);
+      toast = document.createElement('div'); toast.id = 'auth-toast'; document.body.appendChild(toast);
     }
     const style = type === 'success'
       ? { bg: 'linear-gradient(135deg,#C8A752,#D4AF37)', color: '#0B0C0F', icon: 'fa-check-circle' }
@@ -200,7 +196,7 @@ const AuthUI = {
       transition: all .3s cubic-bezier(.68,-.55,.265,1.55);
       display: flex; align-items: center; gap: 12px; max-width: 350px;
     `;
-    toast.innerHTML = <i class="fas ${style.icon}"></i><span>${message}</span>;
+    toast.innerHTML = `<i class="fas ${style.icon}"></i><span>${message}</span>`;
     setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
     setTimeout(() => {
       toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)';
@@ -208,6 +204,7 @@ const AuthUI = {
     }, 3500);
   },
 
+  // Actualizar UI
   updateUI() {
     const authed = window.AuthClient.isAuthenticated();
     const user = window.AuthClient.getCurrentUser();
@@ -222,7 +219,7 @@ const AuthUI = {
         if (avatar) {
           avatar.src =
             user.avatar ||
-            https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=C8A752&color=0B0C0F&bold=true;
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=C8A752&color=0B0C0F&bold=true`;
           avatar.alt = user.name || user.email || 'User';
         }
       }
@@ -235,7 +232,45 @@ const AuthUI = {
   },
 };
 
-// Auto-init y export
+// Auto-init y export (ligero delay para asegurar carga de AuthClient)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => setTimeout(() => AuthUI.init(), 50));
+} else {
+  setTimeout(() => AuthUI.init(), 50);
+}
+window.AuthUI = AuthUI;
+    }, 3500);
+  },
+
+  // Actualizar UI
+  updateUI() {
+    const authed = window.AuthClient.isAuthenticated();
+    const user = window.AuthClient.getCurrentUser();
+
+    if (authed && user) {
+      this.elements.authButtons && (this.elements.authButtons.style.display = 'none');
+      if (this.elements.userMenu) {
+        this.elements.userMenu.style.display = 'flex';
+        const nameSpan = this.elements.userMenu.querySelector('span');
+        const avatar = this.elements.userMenu.querySelector('.user-avatar-sm');
+        if (nameSpan) nameSpan.textContent = user.name || user.email?.split('@')[0] || 'Usuario';
+        if (avatar) {
+          avatar.src =
+            user.avatar ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=C8A752&color=0B0C0F&bold=true`;
+          avatar.alt = user.name || user.email || 'User';
+        }
+      }
+      // Quitar candados de enlaces protegidos
+      document.querySelectorAll('[data-protected="true"] .lock-icon')?.forEach((i) => i.remove());
+    } else {
+      this.elements.authButtons && (this.elements.authButtons.style.display = 'flex');
+      this.elements.userMenu && (this.elements.userMenu.style.display = 'none');
+    }
+  },
+};
+
+// Auto-init y export (ligero delay para asegurar carga de AuthClient)
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(() => AuthUI.init(), 50));
 } else {

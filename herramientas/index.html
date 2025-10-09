@@ -3,59 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GlobalGold — Ecosistema Global Innovador en Cripto</title>
-  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
-  
-  <!-- Metadatos Open Graph / Twitter -->
+  <title>Herramientas - GlobalGold</title>
+  <meta name="description" content="Herramientas profesionales para trading e inversión en criptomonedas. Calculadoras, conversores y análisis de mercado para maximizar tus ganancias.">
+  <meta name="keywords" content="herramientas cripto, calculadora trading, conversor criptomonedas, análisis mercado, GlobalGold">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://globalgold.gold/herramientas/">
+
+  <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://yeriksonvarela-glitch.github.io/gold/">
-  <meta property="og:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
-  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta property="og:image" content="https://yeriksonvarela-glitch.github.io/gold/assets/images/logo.png">
+  <meta property="og:url" content="https://globalgold.gold/herramientas/">
+  <meta property="og:title" content="Herramientas Profesionales - GlobalGold">
+  <meta property="og:description" content="Herramientas avanzadas para trading e inversión en criptomonedas">
+  <meta property="og:image" content="https://globalgold.gold/assets/brand/og-cover.png">
+
+  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://yeriksonvarela-glitch.github.io/gold/">
-  <meta name="twitter:title" content="GlobalGold — Ecosistema Global Innovador en Cripto">
-  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta name="twitter:image" content="https://yeriksonvarela-glitch.github.io/gold/assets/images/logo.png">
-  
-  <!-- Favicon e íconos -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <meta property="twitter:url" content="https://globalgold.gold/herramientas/">
+  <meta property="twitter:title" content="Herramientas Profesionales - GlobalGold">
+  <meta property="twitter:description" content="Herramientas avanzadas para trading e inversión en criptomonedas">
+  <meta property="twitter:image" content="https://globalgold.gold/assets/brand/og-cover.png">
+
+  <!-- Favicon -->
+  <link rel="icon" href="/assets/images/logo.svg" type="image/jpeg">
+  <link rel="alternate icon" href="/assets/images/logo.svg" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/images/logo.svg">
   <meta name="theme-color" content="#0B0C0F">
-
-  <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
-
-  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <script>
-    (function () {
-      try {
-        var BUST_VERSION = '20250929'; // update when deploying major changes
-        var key = 'gg_html_busted_index';
-        var already = sessionStorage.getItem(key);
-        var url = new URL(window.location.href);
-        if (!url.searchParams.has('v') && !already) {
-          url.searchParams.set('v', BUST_VERSION);
-          sessionStorage.setItem(key, '1');
-          window.location.replace(url.toString());
-        }
-      } catch (e) { /* noop */ }
-    })();
-  </script>
   
-  <!-- JSON-LD para SEO -->
+  <!-- Schema.org structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "GlobalGold",
-    "url": "https://yeriksonvarela-glitch.github.io/gold/",
-    "logo": "https://yeriksonvarela-glitch.github.io/gold/assets/images/logo.png",
-    "description": "Ecosistema Global Innovador en Cripto - Herramientas profesionales, formación y comunidad",
+    "url": "https://globalgold.gold",
+    "logo": "https://globalgold.gold/assets/images/logo.png",
+    "description": "Ecosistema Global Innovador en Cripto - Herramientas, Academia y Comunidad",
+    "foundingDate": "2024",
+    "founder": {
+      "@type": "Person",
+      "name": "Yerikson Varela"
+    },
     "sameAs": [
       "https://x.com/Yavlcapitan",
       "https://t.me/+94LkbchALuk3Zjhh",
@@ -71,9 +58,15 @@
   }
   </script>
   
+  <!-- Hoja unificada de CSS -->
+  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  
   <!-- Fuentes y librerías -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
     /* --- VARIABLES DEL SISTEMA DE DISEÑO --- */
@@ -684,15 +677,14 @@
     
     <!-- ##### MENÚ DE NAVEGACIÓN ACTUALIZADO ##### -->
     <nav class="main-nav">
-      <a href="/herramientas/" data-protected="true">Herramientas</a>
+      <a href="/herramientas/" class="active" data-protected="true">Herramientas</a>
       <a href="/academia/">Academia</a>
       <a href="/go/telegram.html">Comunidad</a>
       <a href="/dashboard/">Dashboard</a>
     </nav>
     
     <div class="auth-buttons" id="auth-buttons">
-      <button class="btn btn-primary" onclick="showAuthModal('register')">Registrarse</button>
-      <button class="btn btn-secondary" onclick="showAuthModal('login')">Iniciar Sesión</button>
+      <!-- Se llenará dinámicamente -->
     </div>
   </header>
 
@@ -940,8 +932,10 @@
   </div>
   
   <!-- Scripts -->
-  <script src="assets/js/auth.js"></script>
-  <script src="assets/js/script.js"></script>
+  <script src="/assets/js/auth/authClient.js"></script>
+  <script src="/assets/js/auth/authUI.js"></script>
+  <script src="/assets/js/auth.js"></script>
+  <script src="/assets/js/script.js"></script>
   
   <script>
     // Modal control functions

@@ -1,278 +1,650 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academia - Global Gold</title>
-    <link rel="stylesheet" href="/assets/css/unificacion.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-        
-        body {
-            background: #000000;
-            color: #FFD700;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        
-        .academia-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #FFD700;
-        }
-        
-        h1 {
-            color: #FFD700;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .subtitle {
-            color: #cccccc;
-            font-size: 1.2rem;
-        }
-        
-        .modulo {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .modulo h2 {
-            color: #FFD700;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid #FFD700;
-            padding-bottom: 0.5rem;
-            font-size: 1.8rem;
-        }
-        
-        .lecciones-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1rem;
-        }
-        
-        .leccion-card {
-            background: #000;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .leccion-card:hover {
-            border-color: #FFD700;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(255, 215, 0, 0.1);
-        }
-        
-        .numero-leccion {
-            position: absolute;
-            top: -10px;
-            left: 20px;
-            background: #FFD700;
-            color: #000;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        
-        .leccion-card h3 {
-            color: #FFD700;
-            margin-bottom: 0.8rem;
-            font-size: 1.3rem;
-            margin-top: 0.5rem;
-        }
-        
-        .leccion-card p {
-            color: #cccccc;
-            margin-bottom: 1.2rem;
-            min-height: 60px;
-        }
-        
-        /* Botones unificados provienen de unificacion.css (.btn, .btn-primary, .btn-secondary) */
-        
-        .progreso {
-            background: rgba(255, 215, 0, 0.1);
-            border-radius: 10px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-        
-        .progreso h3 {
-            color: #FFD700;
-            margin-bottom: 1rem;
-        }
-        
-        .barra-progreso {
-            background: #333;
-            border-radius: 10px;
-            height: 10px;
-            margin: 1rem 0;
-            overflow: hidden;
-        }
-        
-        .progreso-interno {
-            background: linear-gradient(90deg, #FFD700, #FFA500);
-            height: 100%;
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        
-        @media (max-width: 768px) {
-            .academia-container {
-                padding: 1rem;
-            }
-            
-            .lecciones-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academia GlobalGold - Domina las Criptomonedas y el Trading</title>
+  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #0B0C0F;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: rgba(17, 17, 17, 0.9);
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      --blue-color: #3b82f6;
+      --purple-color: #8b5cf6;
+      --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+      --border-radius: 15px;
+      --transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(200, 167, 82, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+      z-index: -1;
+    }
+    
+    .academy-hero {
+      text-align: center;
+      padding: 140px 20px 80px;
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .academy-hero::before {
+      content: '🎓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20rem;
+      opacity: 0.03;
+      z-index: 0;
+    }
+    
+    .academy-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 4rem;
+      color: transparent;
+      background: var(--gradient-gold);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: goldShimmer 4s infinite linear;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    @keyframes goldShimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .academy-hero p {
+      font-size: 1.3rem;
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto 40px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 50px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      display: block;
+    }
+    
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    .modules-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+    
+    .section-title {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .section-title h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      color: var(--color-secondary);
+      margin-bottom: 15px;
+    }
+    
+    .section-title p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+    }
+    
+    .module-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 35px;
+      border: 2px solid rgba(200, 167, 82, 0.3);
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .module-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.1), transparent);
+      transition: left 0.6s ease;
+    }
+    
+    .module-card:hover::before {
+      left: 100%;
+    }
+    
+    .module-card:hover {
+      border-color: var(--color-secondary);
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(200, 167, 82, 0.2);
+    }
+    
+    .module-card.featured {
+      border-color: var(--color-accent);
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.1), rgba(17, 17, 17, 0.9));
+    }
+    
+    .module-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      display: block;
+    }
+    
+    .module-number {
+      font-size: 0.9rem;
+      color: var(--color-secondary);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    
+    .module-title {
+      font-size: 1.5rem;
+      color: var(--text-light);
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    
+    .module-description {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .module-meta {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .module-meta span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .module-progress {
+      margin-bottom: 20px;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: var(--gradient-gold);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    
+    .module-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 25px;
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    
+    .module-btn:hover {
+      background: var(--color-accent);
+      transform: translateX(5px);
+    }
+    
+    .feature-section {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 50px;
+      margin: 60px auto;
+      max-width: 1200px;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+    
+    .feature-item {
+      text-align: center;
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+    
+    .feature-title {
+      font-weight: 600;
+      color: var(--color-secondary);
+      margin-bottom: 10px;
+    }
+    
+    .cta-section {
+      text-align: center;
+      padding: 80px 20px;
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.1), rgba(17, 17, 17, 0.5));
+      border-radius: var(--border-radius);
+      margin: 60px auto;
+      max-width: 1200px;
+    }
+    
+    .cta-section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5rem;
+      color: var(--color-secondary);
+      margin-bottom: 20px;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .btn-primary {
+      padding: 15px 35px;
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    
+    .btn-primary:hover {
+      background: var(--color-accent);
+      transform: translateY(-3px);
+    }
+    
+    .btn-secondary {
+      padding: 15px 35px;
+      background: transparent;
+      border: 2px solid var(--color-secondary);
+      color: var(--color-secondary);
+      text-decoration: none;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+    }
+    
+    @media (max-width: 768px) {
+      .academy-hero h1 { font-size: 2.5rem; }
+      .modules-grid { grid-template-columns: 1fr; }
+      .hero-stats { flex-direction: column; gap: 20px; }
+      .cta-buttons { flex-direction: column; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-        <header class="gg-header">
-            <a class="brand" href="/">
-                <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="brand-logo">
-                <span>GlobalGold</span>
-            </a>
-            <nav class="main-nav">
-                <a href="/herramientas/" data-protected="true">Herramientas</a>
-                <a href="/academia/" class="active">Academia</a>
-                <a href="/dashboard/">Dashboard</a>
-                <a href="/go/telegram.html">Comunidad</a>
-            </nav>
-            <div class="auth-buttons" id="auth-buttons"></div>
-        </header>
+  <!-- Header -->
+  <header class="gg-header">
+    <a class="brand" href="/">
+      <img src="/assets/images/logo.png" alt="GlobalGold" class="logo" />
+      <span>GlobalGold</span>
+    </a>
+    
+    <nav class="main-nav">
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/academia/" class="active">Academia</a>
+      <a href="/go/telegram.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+    </nav>
+    
+    <div class="auth-buttons" id="auth-buttons"></div>
+  </header>
 
-        <div class="academia-container" style="padding-top: 100px;">
-        <div class="header">
-            <h1>Academia Global Gold</h1>
-            <p class="subtitle">Domina el trading de criptomonedas paso a paso</p>
-        </div>
-        
-        <div class="progreso">
-            <h3>Tu Progreso de Aprendizaje</h3>
-            <div class="barra-progreso">
-                <div class="progreso-interno" id="barra-progreso"></div>
-            </div>
-            <p id="texto-progreso">0% Completado - ¡Comienza tu journey!</p>
-        </div>
-        
-        <div class="modulo">
-            <h2>Módulo 1: Fundamentos de Criptomonedas</h2>
-            <div class="lecciones-grid">
-                <div class="leccion-card">
-                    <div class="numero-leccion">1</div>
-                    <h3>Introducción a las Criptomonedas</h3>
-                    <p>Conceptos básicos y terminología esencial del mundo cripto. Aprende qué son las criptomonedas y cómo funcionan.</p>
-                    <a href="lecciones/01-introduccion-cripto.html" class="btn btn-primary">Comenzar Lección</a>
-                </div>
-                <div class="leccion-card">
-                    <div class="numero-leccion">2</div>
-                    <h3>Seguridad Básica</h3>
-                    <p>Aprende a proteger tus activos digitales. Wallets, contraseñas seguras y protección contra estafas.</p>
-                    <a href="lecciones/02-seguridad-basica.html" class="btn btn-primary">Comenzar Lección</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="modulo">
-            <h2>Módulo 2: Trading Básico</h2>
-            <div class="lecciones-grid">
-                <div class="leccion-card">
-                    <div class="numero-leccion">3</div>
-                    <h3>Trading Básico</h3>
-                    <p>Primeros pasos en el trading de criptomonedas. Órdenes, análisis y estrategias iniciales.</p>
-                    <a href="lecciones/03-trading-basico.html" class="btn btn-primary">Comenzar Lección</a>
-                </div>
-                <div class="leccion-card">
-                    <div class="numero-leccion">4</div>
-                    <h3>Gestión de Riesgo</h3>
-                    <p>Estrategias para proteger tu capital. Aprende a gestionar riesgos como un profesional.</p>
-                    <a href="lecciones/04-gestion-riesgo.html" class="btn btn-primary">Comenzar Lección</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="modulo">
-            <h2>Módulo 3: Recursos Adicionales</h2>
-            <div class="lecciones-grid">
-                <div class="leccion-card">
-                    <div class="numero-leccion">5</div>
-                    <h3>Glosario de Términos</h3>
-                    <p>Diccionario completo de trading y criptomonedas. Consulta los términos que no entiendas.</p>
-                    <a href="lecciones/05-glosario.html" class="btn btn-secondary">Acceder al Glosario</a>
-                </div>
-            </div>
-        </div>
-
-                <div style="text-align: center;">
-                        <a href="/dashboard/" class="btn btn-secondary">← Volver al Dashboard</a>
-                </div>
+  <!-- Hero Section -->
+  <section class="academy-hero">
+    <h1>🎓 Academia GlobalGold</h1>
+    <p>
+      De principiante a experto. Aprende cripto, trading y DeFi con lecciones prácticas 
+      diseñadas por traders profesionales.
+    </p>
+    
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-number">40+</span>
+        <span class="stat-label">Lecciones</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">5</span>
+        <span class="stat-label">Módulos</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">100%</span>
+        <span class="stat-label">Gratis</span>
+      </div>
     </div>
-        <footer>
-            <div class="footer-brand">
-                <img src="https://i.imgur.com/7A4FJu3.jpg" alt="GlobalGold" class="footer-logo">
-                <span>GlobalGold</span>
-            </div>
-            <p>Ecosistema Global Innovador en Cripto</p>
-            <div class="footer-links">
-                <a href="/">Inicio</a>
-                <a href="/herramientas/">Herramientas</a>
-                <a href="/academia/">Academia</a>
-                <a href="/dashboard/">Dashboard</a>
-            </div>
-        </footer>
+  </section>
 
-        <script src="/assets/js/auth.js"></script>
-        <script>
-        // Sistema de progreso
-        document.addEventListener('DOMContentLoaded', function() {
-            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
-            const totalLecciones = 4; // Excluyendo el glosario
-            const progreso = (leccionesCompletadas.length / totalLecciones) * 100;
-            
-            const barraProgreso = document.getElementById('barra-progreso');
-            const textoProgreso = document.getElementById('texto-progreso');
-            
-            barraProgreso.style.width = progreso + '%';
-            
-            if (progreso === 0) {
-                textoProgreso.textContent = '0% Completado - ¡Comienza tu journey!';
-            } else if (progreso === 100) {
-                textoProgreso.textContent = '100% Completado - ¡Felicidades, eres un experto! 🎉';
-            } else {
-                textoProgreso.textContent = Math.round(progreso) + '% Completado - ¡Sigue así!';
-            }
-        });
-    </script>
+  <!-- Módulos -->
+  <div class="modules-container">
+    <div class="section-title">
+      <h2>📚 Ruta de Aprendizaje</h2>
+      <p>Empieza desde cero y conviértete en un trader profesional</p>
+    </div>
+    
+    <div class="modules-grid">
+      <!-- Módulo 1 -->
+      <div class="module-card" onclick="window.location.href='lecciones/01-introduccion-cripto.html'">
+        <div class="module-icon">🌟</div>
+        <div class="module-number">MÓDULO 1</div>
+        <h3 class="module-title">Introducción a las Criptomonedas</h3>
+        <p class="module-description">
+          Comienza tu viaje en el mundo crypto. Aprende qué es blockchain, 
+          Bitcoin, y cómo funciona todo desde cero.
+        </p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> 8 Lecciones</span>
+          <span><i class="fas fa-clock"></i> 4h</span>
+          <span><i class="fas fa-signal"></i> Principiante</span>
+        </div>
+        <div class="module-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <a href="lecciones/01-introduccion-cripto.html" class="module-btn">
+          Comenzar <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <!-- Módulo 2 -->
+      <div class="module-card" onclick="window.location.href='lecciones/02-seguridad-basica.html'">
+        <div class="module-icon">🔒</div>
+        <div class="module-number">MÓDULO 2</div>
+        <h3 class="module-title">Seguridad y Autocustodia</h3>
+        <p class="module-description">
+          Protege tus activos digitales. Wallets, claves privadas, 
+          2FA y cómo evitar scams y hacks.
+        </p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> 8 Lecciones</span>
+          <span><i class="fas fa-clock"></i> 3.5h</span>
+          <span><i class="fas fa-signal"></i> Fundamental</span>
+        </div>
+        <div class="module-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <a href="lecciones/02-seguridad-basica.html" class="module-btn">
+          Comenzar <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <!-- Módulo 3 - DESTACADO -->
+      <div class="module-card featured" onclick="window.location.href='lecciones/03-trading-basico.html'">
+        <div class="module-icon">📈</div>
+        <div class="module-number">MÓDULO 3 ⭐ DESTACADO</div>
+        <h3 class="module-title">Trading Básico</h3>
+        <p class="module-description">
+          Aprende a operar en exchanges. Órdenes, estrategias, 
+          psicología del trader y gestión de capital.
+        </p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> 8 Lecciones</span>
+          <span><i class="fas fa-clock"></i> 5h</span>
+          <span><i class="fas fa-signal"></i> Intermedio</span>
+        </div>
+        <div class="module-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <a href="lecciones/03-trading-basico.html" class="module-btn">
+          Comenzar <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <!-- Módulo 4 -->
+      <div class="module-card" onclick="window.location.href='lecciones/04-analisis-tecnico.html'">
+        <div class="module-icon">📊</div>
+        <div class="module-number">MÓDULO 4</div>
+        <h3 class="module-title">Análisis Técnico</h3>
+        <p class="module-description">
+          Lee gráficos como un pro. Velas japonesas, indicadores, 
+          patrones y cómo predecir movimientos del mercado.
+        </p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> 8 Lecciones</span>
+          <span><i class="fas fa-clock"></i> 6h</span>
+          <span><i class="fas fa-signal"></i> Avanzado</span>
+        </div>
+        <div class="module-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <a href="lecciones/04-analisis-tecnico.html" class="module-btn">
+          Comenzar <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <!-- Módulo 5 -->
+      <div class="module-card" onclick="window.location.href='lecciones/05-defi-avanzado.html'">
+        <div class="module-icon">🔗</div>
+        <div class="module-number">MÓDULO 5</div>
+        <h3 class="module-title">DeFi Avanzado</h3>
+        <p class="module-description">
+          Finanzas descentralizadas. Yield farming, staking, lending 
+          y cómo generar ingresos pasivos.
+        </p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> 8 Lecciones</span>
+          <span><i class="fas fa-clock"></i> 5.5h</span>
+          <span><i class="fas fa-signal"></i> Experto</span>
+        </div>
+        <div class="module-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <a href="lecciones/05-defi-avanzado.html" class="module-btn">
+          Comenzar <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+      
+      <!-- Módulo 6 - PRÓXIMAMENTE -->
+      <div class="module-card" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('🚀 ¡Próximamente! Este módulo se desbloqueará pronto.')">
+        <div class="module-icon">🎮</div>
+        <div class="module-number">MÓDULO 6 🔒 PRÓXIMAMENTE</div>
+        <h3 class="module-title">NFTs y Metaverso</h3>
+        <p class="module-description">
+          Arte digital, coleccionables, gaming y el futuro de los 
+          activos virtuales.
+        </p>
+        <div class="module-meta">
+          <span><i class="fas fa-book"></i> 6 Lecciones</span>
+          <span><i class="fas fa-clock"></i> 4h</span>
+          <span><i class="fas fa-signal"></i> Intermedio</span>
+        </div>
+        <div class="module-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <span class="module-btn" style="opacity: 0.5; cursor: not-allowed;">
+          Próximamente <i class="fas fa-lock"></i>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="feature-section">
+    <div class="section-title">
+      <h2>✨ ¿Por qué nuestra Academia?</h2>
+      <p>Educación de calidad diseñada para el mundo real</p>
+    </div>
+    
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon">🎯</div>
+        <h4 class="feature-title">100% Práctica</h4>
+        <p style="color: var(--text-muted);">
+          Ejemplos reales, casos de uso y ejercicios aplicables inmediatamente
+        </p>
+      </div>
+      
+      <div class="feature-item">
+        <div class="feature-icon">⚡</div>
+        <h4 class="feature-title">Sin Fluff</h4>
+        <p style="color: var(--text-muted);">
+          Directo al grano. Solo información valiosa y accionable
+        </p>
+      </div>
+      
+      <div class="feature-item">
+        <div class="feature-icon">📱</div>
+        <h4 class="feature-title">Actualizada</h4>
+        <p style="color: var(--text-muted);">
+          Contenido constantemente actualizado con las últimas tendencias
+        </p>
+      </div>
+      
+      <div class="feature-item">
+        <div class="feature-icon">🎓</div>
+        <h4 class="feature-title">Certificados</h4>
+        <p style="color: var(--text-muted);">
+          Obtén certificados al completar cada módulo
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>🚀 ¿Listo para dominar las cripto?</h2>
+    <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 15px;">
+      Empieza hoy mismo. Todo el contenido es 100% gratuito.
+    </p>
+    
+    <div class="cta-buttons">
+      <a href="lecciones/01-introduccion-cripto.html" class="btn-primary">
+        Comenzar Ahora <i class="fas fa-rocket"></i>
+      </a>
+      <a href="/go/telegram.html" class="btn-secondary">
+        Únete a la Comunidad <i class="fab fa-telegram"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer style="margin-top: 80px;">
+    <div class="footer-brand">
+      <img src="/assets/images/logo.png" alt="GlobalGold" class="footer-logo">
+      <span>GlobalGold</span>
+    </div>
+    <p>Academia de Criptomonedas y Trading</p>
+    <div class="footer-links">
+      <a href="/academia/">Academia</a>
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/go/telegram.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+    </div>
+    <div class="copyright">
+      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    // Cargar progreso desde Supabase (futuro)
+    async function loadProgress() {
+      // TODO: Implementar con Supabase
+      console.log('Cargando progreso del usuario...');
+    }
+    
+    // Ejecutar al cargar
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProgress();
+    });
+  </script>
 </body>
 </html>

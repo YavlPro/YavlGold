@@ -1,395 +1,697 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
-    <title>Lección 3: Trading Básico - Global Gold</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-        
-        body {
-            background: #000000;
-            color: #FFD700;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        
-        .leccion-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .header-leccion {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #FFD700;
-        }
-        
-        h1 {
-            color: #FFD700;
-            margin-bottom: 0.5rem;
-            font-size: 2.2rem;
-        }
-        
-        .meta-leccion {
-            color: #cccccc;
-            font-size: 1rem;
-        }
-        
-        .contenido-leccion {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 2rem;
-            margin: 2rem 0;
-        }
-        
-        h2 {
-            color: #FFD700;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #333;
-            padding-bottom: 0.5rem;
-        }
-        
-        h3 {
-            color: #FFA500;
-            margin: 1.5rem 0 0.8rem 0;
-        }
-        
-        p {
-            margin-bottom: 1rem;
-            color: #cccccc;
-        }
-        
-        ul, ol {
-            margin: 1rem 0;
-            padding-left: 2rem;
-        }
-        
-        li {
-            margin-bottom: 0.5rem;
-            color: #cccccc;
-        }
-        
-        .concepto-trading {
-            background: rgba(255, 215, 0, 0.1);
-            border-left: 4px solid #FFD700;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .ejemplo {
-            background: rgba(0, 255, 255, 0.1);
-            border-left: 4px solid #00ffff;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0 8px 8px 0;
-            color: #88ffff;
-        }
-        
-        .btn-volver {
-            display: inline-block;
-            background: transparent;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-volver:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .btn-siguiente {
-            display: inline-block;
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            margin-left: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-siguiente:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-        
-        .btn-anterior {
-            display: inline-block;
-            background: transparent;
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-            margin-top: 1rem;
-            margin-right: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .btn-anterior:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .navegacion {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .completado {
-            background: rgba(76, 175, 80, 0.1);
-            border-left: 4px solid #4CAF50;
-            padding: 1rem;
-            margin: 1.5rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-        }
-        
-        th, td {
-            border: 1px solid #333;
-            padding: 0.8rem;
-            text-align: left;
-        }
-        
-        th {
-            background: rgba(255, 215, 0, 0.2);
-            color: #FFD700;
-        }
-        
-        td {
-            color: #cccccc;
-        }
-        
-        @media (max-width: 768px) {
-            .leccion-container {
-                padding: 1rem;
-            }
-            
-            .navegacion {
-                flex-direction: column;
-            }
-            
-            .btn-siguiente, .btn-anterior {
-                margin-left: 0;
-                margin-top: 0.5rem;
-            }
-            
-            table {
-                font-size: 0.9rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo 3: Trading Básico - Academia GlobalGold</title>
+  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #0B0C0F;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: rgba(17, 17, 17, 0.9);
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+      --gradient-green: linear-gradient(45deg, #10b981, #059669);
+      --border-radius: 15px;
+      --transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(200, 167, 82, 0.05) 0%, transparent 50%);
+      z-index: -1;
+    }
+    
+    .lesson-hero {
+      text-align: center;
+      padding: 140px 20px 80px;
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lesson-hero::before {
+      content: '📈';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 15rem;
+      opacity: 0.03;
+      z-index: 0;
+    }
+    
+    .lesson-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      color: transparent;
+      background: linear-gradient(45deg, #10b981, #C8A752, #10b981);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: tradingShimmer 4s infinite linear;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    @keyframes tradingShimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .trading-alert {
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid var(--success-color);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin: 30px auto;
+      max-width: 800px;
+      text-align: center;
+    }
+    
+    .trading-alert h3 {
+      color: var(--success-color);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    
+    .breadcrumb {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .breadcrumb a {
+      color: var(--color-secondary);
+      text-decoration: none;
+    }
+    
+    .lesson-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .lesson-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 40px;
+      margin-bottom: 40px;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    
+    .trading-card {
+      border-color: rgba(16, 185, 129, 0.3);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .lesson-list {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .lesson-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 25px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lesson-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+      transition: left 0.6s ease;
+    }
+    
+    .lesson-item:hover::before {
+      left: 100%;
+    }
+    
+    .lesson-item:hover {
+      border-color: var(--success-color);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
+    }
+    
+    .lesson-item.completed {
+      border-color: var(--success-color);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    
+    .lesson-item.intermediate {
+      border-color: var(--warning-color);
+      background: rgba(245, 158, 11, 0.05);
+    }
+    
+    .lesson-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .lesson-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--color-secondary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .lesson-status {
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .status-completed {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success-color);
+    }
+    
+    .status-pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning-color);
+    }
+    
+    .status-practice {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+    
+    .lesson-description {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .lesson-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 2;
+    }
+    
+    .trading-tips {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success-color);
+      border-radius: var(--border-radius);
+      padding: 25px;
+      margin: 30px 0;
+    }
+    
+    .trading-tips h4 {
+      color: var(--success-color);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .trading-tips ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .trading-tips li {
+      padding: 8px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .trading-tips li::before {
+      content: '💡';
+      font-size: 0.9rem;
+      margin-top: 2px;
+    }
+    
+    .simulator-box {
+      background: var(--card-bg);
+      border: 2px solid var(--success-color);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      text-align: center;
+      margin: 30px 0;
+    }
+    
+    .simulator-box h3 {
+      color: var(--success-color);
+      margin-bottom: 15px;
+    }
+    
+    .btn-simulator {
+      background: var(--gradient-green);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1.1rem;
+      margin-top: 15px;
+    }
+    
+    .btn-simulator:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    }
+    
+    .navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+    
+    .btn-nav {
+      padding: 12px 25px;
+      border-radius: var(--border-radius);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .btn-back {
+      background: transparent;
+      border: 2px solid var(--text-muted);
+      color: var(--text-muted);
+    }
+    
+    .btn-back:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+    }
+    
+    .btn-next {
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      border: 2px solid var(--color-secondary);
+    }
+    
+    .btn-next:hover {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+      .lesson-hero h1 { font-size: 2.5rem; }
+      .lesson-card { padding: 25px; }
+      .navigation-buttons { flex-direction: column; gap: 15px; }
+      .lesson-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .lesson-meta { flex-wrap: wrap; }
+    }
+  </style>
 </head>
 <body>
-    <div class="leccion-container">
-        <div class="header-leccion">
-            <h1>Lección 3: Trading Básico de Criptomonedas</h1>
-            <p class="meta-leccion">Módulo 2: Trading Básico • Tiempo estimado: 25 minutos</p>
-        </div>
-        
-        <div class="contenido-leccion">
-            <h2>Primeros Pasos en el Trading</h2>
-            <p>El trading consiste en comprar y vender activos con el objetivo de generar ganancias. En criptomonedas, esto se hace las 24 horas del día, los 7 días de la semana.</p>
-            
-            <div class="concepto-trading">
-                <h3>📈 Comprar (Long) vs Vender (Short)</h3>
-                <p><strong>Long (Ir Largo):</strong> Comprar un activo esperando que su precio suba.</p>
-                <p><strong>Short (Ir Corto):</strong> Vender un activo esperando que su precio baje (más avanzado).</p>
-            </div>
-            
-            <div class="concepto-trading">
-                <h3>💱 Pares de Trading</h3>
-                <p>Los pares muestran el valor de una criptomoneda en términos de otra:</p>
-                <ul>
-                    <li><strong>BTC/USDT:</strong> Valor de Bitcoin en Tether</li>
-                    <li><strong>ETH/BTC:</strong> Valor de Ethereum en Bitcoin</li>
-                    <li><strong>ADA/USDT:</strong> Valor de Cardano en Tether</li>
-                </ul>
-                <p>El primer activo es el que estás comprando/vendiendo, el segundo es en lo que se mide el precio.</p>
-            </div>
-            
-            <h3>📊 Tipos de Órdenes Básicas</h3>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tipo de Orden</th>
-                        <th>Descripción</th>
-                        <th>Cuándo Usarla</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Market Order</strong></td>
-                        <td>Ejecución inmediata al precio actual del mercado</td>
-                        <td>Cuando necesitas entrar/salir rápido</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Limit Order</strong></td>
-                        <td>Ejecución solo al precio especificado o mejor</td>
-                        <td>Cuando quieres controlar el precio de entrada/salida</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Stop Loss</strong></td>
-                        <td>Se convierte en market order cuando el precio alcanza un nivel</td>
-                        <td>Para limitar pérdidas automáticamente</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Take Profit</strong></td>
-                        <td>Cierra la posición cuando se alcanza un objetivo de ganancia</td>
-                        <td>Para asegurar ganancias automáticamente</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="ejemplo">
-                <h3>📝 Ejemplo Práctico</h3>
-                <p><strong>Scenario:</strong> Bitcoin está en $50,000 y crees que subirá a $55,000</p>
-                <p><strong>Operación:</strong></p>
-                <ol>
-                    <li>Compras 0.1 BTC con una <strong>limit order</strong> a $50,000</li>
-                    <li>Colocas <strong>stop loss</strong> a $48,000 (limita pérdidas a $200)</li>
-                    <li>Colocas <strong>take profit</strong> a $55,000 (objetivo de ganancia $500)</li>
-                </ol>
-                <p><strong>Resultado potencial:</strong> Ganas $500 o pierdes máximo $200</p>
-            </div>
-            
-            <div class="concepto-trading">
-                <h3>🕒 Timeframes (Marcos Temporales)</h3>
-                <p>Diferentes periodos para analizar gráficos:</p>
-                <ul>
-                    <li><strong>Corto plazo:</strong> 1m, 5m, 15m (scalping)</li>
-                    <li><strong>Medio plazo:</strong> 1h, 4h (day trading)</li>
-                    <li><strong>Largo plazo:</strong> 1d, 1w (swing trading/inversión)</li>
-                </ul>
-                <p><strong>Consejo:</strong> Los timeframes más largos suelen ser más confiables.</p>
-            </div>
-            
-            <div class="concepto-trading">
-                <h3>📊 Análisis Básico del Gráfico</h3>
-                <p><strong>Soporte:</strong> Nivel de precio donde la demanda es fuerte (zona de compra)</p>
-                <p><strong>Resistencia:</strong> Nivel de precio donde la oferta es fuerte (zona de venta)</p>
-                <p><strong>Tendencia:</strong> Dirección general del mercado (alcista, bajista, lateral)</p>
-            </div>
-            
-            <div class="completado">
-                <h3>✅ ¡Bien hecho! Entiendes los conceptos básicos</h3>
-                <p>Has aprendido los fundamentos del trading. En la siguiente lección veremos gestión de riesgo, que es aún más importante.</p>
-            </div>
-        </div>
-        
-        <div class="navegacion">
-            <div>
-                <a href="02-seguridad-basica.html" class="btn-anterior">← Lección Anterior</a>
-                <a href="../index.html" class="btn-volver">Volver a Academia</a>
-            </div>
-            <a href="04-gestion-riesgo.html" class="btn-siguiente">Siguiente Lección: Gestión de Riesgo →</a>
-        </div>
-    </div>
+  <!-- Header -->
+  <header class="gg-header">
+    <a class="brand" href="/">
+      <img src="/assets/images/logo.png" alt="GlobalGold" class="logo" />
+      <span>GlobalGold</span>
+    </a>
+    
+    <nav class="main-nav">
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/academia/" class="active">Academia</a>
+      <a href="/go/telegram.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+    </nav>
+    
+    <div class="auth-buttons" id="auth-buttons"></div>
+  </header>
 
-    <script>
-        // Marcar lección como completada
-        document.addEventListener('DOMContentLoaded', function() {
-            const leccionesCompletadas = JSON.parse(localStorage.getItem('leccionesCompletadas')) || [];
-            if (!leccionesCompletadas.includes('leccion-3')) {
-                leccionesCompletadas.push('leccion-3');
-                localStorage.setItem('leccionesCompletadas', JSON.stringify(leccionesCompletadas));
-            }
-        });
-    </script>
-=======
-    <title>Trading Básico - Global Gold Academy</title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="logo"><img src="../../assets/images/logo.png" alt="Global Gold" style="height: 40px;"></div>
-            <nav class="main-nav">
-                <a href="../../herramientas.html" data-protected="true">Herramientas</a>
-                <a href="../../academia/">Academia</a>
-                <a href="../../comunidad.html">Comunidad</a>
-                <a href="../../dashboard.html">Dashboard</a>
-            </nav>
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="/academia/">📚 Academia</a> / <span>Módulo 3: Trading Básico</span>
+  </div>
+
+  <!-- Hero -->
+  <section class="lesson-hero">
+    <h1>📈 Módulo 3: Trading Básico</h1>
+    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
+      Aprende a operar en exchanges como un profesional
+    </p>
+    
+    <div class="trading-alert">
+      <h3>💰 ¡ES HORA DE OPERAR!</h3>
+      <p>En este módulo aprenderás los conceptos fundamentales del trading, gestión de riesgo y psicología del mercado.</p>
+    </div>
+  </section>
+
+  <!-- Contenido de Lecciones -->
+  <div class="lesson-content">
+    <div class="lesson-card trading-card">
+      <h2 style="color: var(--success-color); margin-bottom: 30px;">
+        <i class="fas fa-chart-line"></i> Lecciones de Trading
+      </h2>
+      
+      <div class="lesson-list">
+        <!-- Lección 1 -->
+        <div class="lesson-item intermediate" onclick="openLesson('03-01')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-university"></i>
+              3.1 Exchanges: Tu Puerta al Mercado
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Binance, Coinbase, Kraken. Cómo elegir, registrarse y operar de forma segura.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 25 min</span>
+            <span><i class="fas fa-video"></i> Video Tutorial</span>
+            <span><i class="fas fa-star"></i> Intermedio</span>
+          </div>
         </div>
-    </header>
-    <main class="container" style="margin: 30px auto; max-width: 800px;">
-        <nav style="margin-bottom: 20px;"><a href="../../academia/" class="muted">← Volver a Academia</a></nav>
-        <div class="card">
-            <h1 class="gold-text">📈 Trading Básico: Órdenes y Disciplina</h1>
-            <p class="muted">Duración: 8 minutos · Nivel: Principiante</p>
-            <div class="lesson-content">
-                <h2>🎯 Órdenes Esenciales</h2>
-                <ul>
-                    <li><strong>Market Order</strong>: Ejecuta inmediatamente al precio disponible del mercado</li>
-                    <li><strong>Limit Order</strong>: Ejecuta solo al precio que defines o mejor</li>
-                    <li><strong>Stop Loss</strong>: Protege tu capital limitando pérdidas automáticamente</li>
-                    <li><strong>Take Profit</strong>: Asegura ganancias cuando el precio alcanza tu objetivo</li>
-                </ul>
-                <h2>🛡️ Gestión de Riesgo</h2>
-                <ul>
-                    <li><strong>Riesgo por operación</strong>: Nunca arriesgues más del 1-2% de tu capital</li>
-                    <li><strong>Ratio riesgo/beneficio</strong>: Busca mínimo 1:2 (ganas el doble de lo que arriesgas)</li>
-                    <li><strong>Stop Loss obligatorio</strong>: Define tu SL antes de entrar a cada operación</li>
-                    <li><strong>Diversificación</strong>: No pongas todos tus huevos en una canasta</li>
-                </ul>
-                <h2>⚡ Disciplina del Trader</h2>
-                <ul>
-                    <li><strong>Plan de trading</strong>: Define tu estrategia ANTES de operar</li>
-                    <li><strong>Journal de operaciones</strong>: Registra y analiza cada trade</li>
-                    <li><strong>Control emocional</strong>: Miedo y codicia son tus peores enemigos</li>
-                    <li><strong>Consistencia</strong>: Mejor 1% constante que 10% con suerte</li>
-                </ul>
-                <div class="tip-card">
-                    <h3>💡 Consejo Práctico</h3>
-                    <p>Empieza con una cuenta demo, domina 2-3 setups simples, y solo luego opera con capital real. La paciencia es tu mejor aliada.</p>
-                </div>
-            </div>
-            <hr style="margin: 30px 0;">
-            <div style="display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
-                <a href="../../academia/" class="btn" style="background: #f8f9fa; color: #333; border: 1px solid #ddd;">← Volver al índice</a>
-                <a href="04-gestion-riesgo.html" class="btn-gold">Siguiente: Gestión de Riesgo →</a>
-            </div>
-            <small class="muted" style="display: block; text-align: center; margin-top: 20px;">📚 Contenido educativo. No constituye asesoría financiera.</small>
+        
+        <!-- Lección 2 -->
+        <div class="lesson-item intermediate" onclick="openLesson('03-02')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-exchange-alt"></i>
+              3.2 Tipos de Órdenes
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Market, Limit, Stop-Loss, Take-Profit. Cuándo usar cada tipo de orden.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 30 min</span>
+            <span><i class="fas fa-hands-helping"></i> Práctica</span>
+            <span><i class="fas fa-star"></i> Intermedio</span>
+          </div>
         </div>
-    </main>
-    <style>
-    .lesson-content { line-height: 1.6; }
-    .lesson-content h2 { color: #333; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
-    .lesson-content ul { margin-bottom: 25px; padding-left: 20px; }
-    .lesson-content li { margin-bottom: 8px; }
-    .tip-card { background: linear-gradient(135deg, #fff9e6, #fff3cd); border-left: 4px solid #d4af37; padding: 20px; border-radius: 8px; margin: 25px 0; }
-    .tip-card h3 { margin-top: 0; color: #856404; }
-    .btn, .btn-gold { display: inline-block; padding: 12px 25px; background: #d4af37; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; transition: all 0.3s ease; }
-    .btn:hover, .btn-gold:hover { background: #b8941f; transform: translateY(-2px); }
-    </style>
->>>>>>> 5c285ece782e4127d7914337e1d4bff8347242d1
-</body>
-</html>
+        
+        <!-- Lección 3 -->
+        <div class="lesson-item intermediate" onclick="openLesson('03-03')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-balance-scale"></i>
+              3.3 Gestión de Riesgo
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            La regla del 1-2%, position sizing, y cómo no perder todo tu dinero.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 35 min</span>
+            <span><i class="fas fa-calculator"></i> Calculadora</span>
+            <span><i class="fas fa-fire"></i> Muy Importante</span>
+          </div>
+        </div>
+        
+        <!-- Lección 4 -->
+        <div class="lesson-item intermediate" onclick="openLesson('03-04')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-brain"></i>
+              3.4 Psicología del Trading
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            FOMO, FUD, emociones y cómo mantener la disciplina en el mercado.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 30 min</span>
+            <span><i class="fas fa-book"></i> Lectura</span>
+            <span><i class="fas fa-star"></i> Intermedio</span>
+          </div>
+        </div>
+        
+        <!-- Lección 5 -->
+        <div class="lesson-item" onclick="openLesson('03-05')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-book-open"></i>
+              3.5 Diario de Trading
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Cómo llevar un registro de tus operaciones y mejorar constantemente.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 20 min</span>
+            <span><i class="fas fa-clipboard"></i> Plantilla</span>
+            <span><i class="fas fa-star"></i> Intermedio</span>
+          </div>
+        </div>
+        
+        <!-- Lección 6 -->
+        <div class="lesson-item" onclick="openLesson('03-06')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-graduation-cap"></i>
+              3.6 Primera Operación Práctica
+            </h3>
+            <span class="lesson-status status-practice">🎯 Práctica</span>
+          </div>
+          <p class="lesson-description">
+            Realizarás tu primera operación real (con dinero de práctica).
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 40 min</span>
+            <span><i class="fas fa-hands-helping"></i> Práctica Guiada</span>
+            <span><i class="fas fa-trophy"></i> Final</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Simulador de Trading -->
+    <div class="simulator-box">
+      <h3>🎮 Simulador de Trading</h3>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">
+        Practica sin riesgo con nuestro simulador antes de operar con dinero real.
+      </p>
+      <button class="btn-simulator" onclick="openSimulator()">
+        Abrir Simulador <i class="fas fa-play"></i>
+      </button>
+    </div>
+    
+    <!-- Consejos de Trading -->
+    <div class="trading-tips">
+      <h4>
+        <i class="fas fa-lightbulb"></i>
+        Reglas de Oro del Trading
+      </h4>
+      <ul>
+        <li><strong>Nunca inviertas más de lo que puedes perder</strong></li>
+        <li>Usa siempre stop-loss para limitar pérdidas</li>
+        <li>No hagas trading emocional (FOMO/FUD)</li>
+        <li>Diversifica tu portafolio</li>
+        <li>Ten un plan antes de abrir una posición</li>
+        <li>No perssigas bombas (pump and dump)</li>
+        <li>La paciencia es clave - no todas las oportunidades son buenas</li>
+      </ul>
+    </div>
+    
+    <!-- Progreso del Módulo -->
+    <div class="lesson-card">
+      <h3 style="color: var(--color-secondary); margin-bottom: 20px;">
+        <i class="fas fa-chart-line"></i> Tu Progreso en Trading
+      </h3>
+      
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span>Progreso Actual</span>
+        <span style="color: var(--warning-color); font-weight: 600;">0%</span>
+      </div>
+      
+      <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+        <div style="width: 0%; height: 100%; background: var(--gradient-green); border-radius: 4px;"></div>
+      </div>
+      
+      <p style="margin-top: 15px; color: var(--text-muted);">
+        Has completado <strong>0 de 6 lecciones</strong>. ¡Comienza ahora!
+      </p>
+    </div>
+    
+    <!-- Errores Comunes -->
+    <div class="lesson-card" style="border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);">
+      <h3 style="color: var(--error-color); margin-bottom: 20px;">
+        <i class="fas fa-exclamation-triangle"></i> Errores Que Debes Evitar
+      </h3>
+      
+      <div style="display: grid; gap: 15px;">
+        <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <strong style="color: var(--error-color);">❌ Over-Trading</strong><br>
+          <span style="color: var(--text-muted);">Operar demasiado seguido por aburrimiento o desesperación.</span>
+        </div>
+        
+        <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <strong style="color: var(--error-color);">❌ No Usar Stop-Loss</strong><br>
+          <span style="color: var(--text-muted);">Esperar que una posición perdedora se recupere "algún día".</span>
+        </div>
+        
+        <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <strong style="color: var(--error-color);">❌ FOMO (Fear Of Missing Out)</strong><br>
+          <span style="color: var(--text-muted);">Entrar en una operación solo porque "todos lo están haciendo".</span>
+        </div>
+        
+        <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <strong style="color: var(--error-color);">❌ Revenge Trading</strong><br>
+          <span style="color: var(--text-muted);">Intentar recuperar pérdidas inmediatamente con operaciones impulsivas.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de Navegación -->
+  <div class="navigation-buttons">
+    <a href="/academia/lecciones/02-seguridad-basica.html" class="btn-nav btn-back">
+      <i class="fas fa-arrow-left"></i> Módulo Anterior
+    </a>
+    <a href="/academia/lecciones/04-analisis-tecnico.html" class="btn-nav btn-next">
+      Siguiente Módulo <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer style="margin-top: 80px;">
+    <div class="footer-brand">
+      <img src="/assets/images/logo.png" alt="GlobalGold" class="footer-logo">
+      <span>GlobalGold</span>
+    </div>
+    <p>Academia de Criptomonedas y Trading</p>
+    <div class="copyright">
+      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    function openLesson(lessonId) {
+      const lessons = {
+        '03-01': {
+          title: 'Exchanges: Tu Puerta al Mercado',
+          content: `
+            <h3>🏦 LOS MEJORES EXCHANGES</h3>
+            
+            <h4>🥇 BINANCE</h4>
+            <ul>
+              <li><strong>Pros:</strong> Mayor liquidez, más pares, bajas comisiones</li>
+              <li><strong>Contras:</strong> Interfaz compleja para principiantes</li>
+              <li><strong>Ideal para:</strong> Traders activos</li>
+            </ul>
+            
+            <h4>🥈 COINBASE</h4>
+            <ul>
+              <li><strong>Pros:</strong> Muy fácil de usar, regulado en USA</li>
+              <li><strong>Contras:</strong> Comisiones más altas</li>
+              <li><strong>Ideal para:</strong> Principiantes</li>
+            </ul>
+            
+            <h4>🥉 KRAKEN</h4>
+            <ul>
+              <li><strong>Pros:</strong> Excelente seguridad, buen soporte</li>
+              <li><strong>Contras:</strong> Menos pares que Binance</li>
+              <li><strong>Ideal para:</strong> Seguridad prioritaria</li>
+            </ul>
+            
+            <h4>📋 CHECKLIST ANTES DE REGISTRARTE</h4>
+            <ol>
+              <li>Verifica que el exchange opere en tu país</li>
+              <li>Lee sobre su historial de seguridad</li>
+              <li>Compara las comisiones</li>
+              <li>Verifica qué criptos ofrece</li>
+              <li>Activa 2FA inmediatamente después del registro</li>
+            </ol>
+          `
+        },
+        '03-02': {
+          title: 'Tipos de Órdenes',
+          content: `
+            <h3>📊 TIPOS DE ÓRDENES</h3>
+            
+            <h4>1️⃣ MARKET ORDER (Orden de Mercado)</h4>
+            <p><strong>Qué es:</strong> Compra/vende al precio actual del mercado.</p>
+            <p><strong>Cuándo usar:</strong> Cuando quieres entrar/salir INMEDIATAMENTE.</p>
+            <p><strong>⚠ Cuidado:</strong> En mercados volátiles puede ejecutarse a un precio diferente (slippage).</p>
+            
+            <h4>2️⃣ LIMIT ORDER (Orden Limitada)</h4>
+            <p><strong>Qué es:</strong> Fijas el precio al que quieres comprar/vender.</p>
+            <p><strong>Cuándo usar:</strong> Cuando quieres un precio específico y puedes esperar.</p>
+            <p><strong>Ejemplo:</strong> BTC está a $50,000 pero quieres comprar solo si baja a $48,000.</p>
+            
+            <h4>3️⃣ STOP-LOSS</h4>
+            <p><strong>Qué es:</strong> Vende automáticamente si el precio cae a cierto nivel.</p>
+            <p><strong>Cuándo usar:</strong> SIEMPRE. Es tu red de seguridad.</p>
+            <p><strong>Ejemplo:</strong> Compras BTC a $50,000 y pones stop-loss a $48,000 (límite de pérdida del 4%).</p>
+            
+            <h4>4️⃣ TAKE-PROFIT</h4>
+            <p><strong>Qué es:</strong> Vende automáticamente cuando alcanzas tu objetivo de ganancia.</p>
+            <p><strong>Cuándo usar:</strong> Para asegurar ganancias sin estar pegado a la pantalla.</p>
+            <p><strong>Ejemplo:</strong> Compras a $50,000 y pones take-profit a $55,000 (+10%).</p>
+            
+            <div style="background: rgba(16,185,129,0.1); padding: 20px; border-radius: 10px; margin-top: 20px;">
+              <h4 style="color: var(--success-color);">💡 ESTRATEGIA RECOMENDADA</h4>
+              <p>Siempre usa <strong>Stop-Loss</strong> Y <strong>Take-Profit</strong> juntos para automatizar tu gestión de riesgo.</p>
+            </div>
+          `
+        },
+        '03-03': {
+          title: 'Gestión de Riesgo',
+          content: `
+            <h3>⚖ LA REGLA MÁS IMPORTANTE DEL TRADING</h3>
+            
+            <h4>🎯 REGLA DEL 1-2%</h4>
+            <p><strong>Nunca arriesgues más del 1-2% de tu capital en una sola operación.</strong></p>
