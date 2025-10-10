@@ -62,7 +62,6 @@ const AuthUI = {
     }
 
     window.addEventListener('auth:login', () => { this.updateUI(); this.hideLoginModal(); this.hideRegisterModal(); });
-    console.log("[AuthUI] 🔄 UI updated after logout");
     window.addEventListener('auth:logout', () => this.updateUI());
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
 
