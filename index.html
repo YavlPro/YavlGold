@@ -78,6 +78,9 @@
   <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
+  <!-- hCaptcha Script -->
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+  
   <style>
     /* --- VARIABLES DEL SISTEMA DE DISEÑO --- */
     :root {
@@ -938,6 +941,12 @@
         </div>
         <div class="password-strength" id="password-strength-bar"></div>
       </div>
+      
+      <!-- hCaptcha Widget -->
+      <div class="form-group">
+        <div class="h-captcha" data-sitekey="22069708-c388-4a48-b054-fc12c4ee0ab6"></div>
+      </div>
+      
       <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Cuenta</button>
     </form>
   </div>
@@ -1046,6 +1055,11 @@
         bar.style.width = '0%';
       }
     }
+    
+    // Inicializar hCaptcha cuando esté listo
+    window.onHCaptchaLoad = function() {
+      console.log('✅ hCaptcha cargado');
+    };
     
     // Hash change handler for deep linking
     function handleHashChange() {
