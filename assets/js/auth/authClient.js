@@ -9,7 +9,7 @@ const AuthClient = {
   init() {
     // Inicializar cliente Supabase
     const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdlcnpsenpwa2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc2NjEwMTAsImV4cCI6MjA1MzIzNzAxMH0.Z8wKUJGx5gMGqLpY-oT_6vCK5kJ0z5gDqWN7QxYz5hI';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
     
     this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
