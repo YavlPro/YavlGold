@@ -155,11 +155,9 @@ const AuthUI = {
   },
 
   handleLogout() {
+    console.log('[AuthUI] 🚪 Logout iniciado');
     if (confirm('¿Estás seguro de cerrar sesión?')) {
-      console.log('[AuthUI] 🚪 Logout iniciado');
       window.AuthClient.logout();
-  console.log("[AuthUI] ✅ Sesión cerrada");
-      console.log('[AuthUI] ✅ Sesión cerrada');
       this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
     }
@@ -237,6 +235,8 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(() => AuthUI.init(), 50));
 } else {
   setTimeout(() => AuthUI.init(), 50);
+}
+window.AuthUI = AuthUI;
 }
 window.AuthUI = AuthUI;
     }, 3500);

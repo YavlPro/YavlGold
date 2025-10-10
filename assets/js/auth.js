@@ -149,34 +149,20 @@ function checkProtectedPage() {
 }
 
 // Función para mostrar notificaciones
-function showNotification(message, type = 'info') {
-    // Remover notificación existente
-    const existingNotification = document.querySelector('.notification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    
-    // Crear nueva notificación
-    const notification = document.createElement('div');
-    notification.className = notification notification-${type};
-    
-    const icon = type === 'success' ? '✅' : 
-                 type === 'error' ? '❌' : 
-                 type === 'warning' ? '⚠' : 'ℹ';
-    
-    notification.innerHTML = `
-        <span>${icon}</span>
-        <span>${message}</span>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remover después de 5 segundos
-    setTimeout(() => {
-        if (notification && notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
+function showNotification(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `auth-toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 // Event listeners para formularios
