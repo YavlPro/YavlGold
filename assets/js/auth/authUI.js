@@ -8,7 +8,6 @@ const AuthUI = {
     this.cacheElements();
     this.attachEventListeners();
     this.updateUI();
-  console.log("[AuthUI] 🔄 UI updated after logout");
     console.log('[AuthUI] ✅ AuthUI v2.0 inicializado');
   },
 
@@ -63,7 +62,7 @@ const AuthUI = {
     }
 
     window.addEventListener('auth:login', () => { this.updateUI(); this.hideLoginModal(); this.hideRegisterModal(); });
-  console.log("[AuthUI] 🔄 UI updated after logout");
+    console.log("[AuthUI] 🔄 UI updated after logout");
     window.addEventListener('auth:logout', () => this.updateUI());
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
 
@@ -230,47 +229,7 @@ const AuthUI = {
   },
 };
 
-// Auto-init y export (ligero delay para asegurar carga de AuthClient)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => setTimeout(() => AuthUI.init(), 50));
-} else {
-  setTimeout(() => AuthUI.init(), 50);
-}
-window.AuthUI = AuthUI;
-}
-window.AuthUI = AuthUI;
-    }, 3500);
-  },
-
-  // Actualizar UI
-  updateUI() {
-    const authed = window.AuthClient.isAuthenticated();
-    const user = window.AuthClient.getCurrentUser();
-
-    if (authed && user) {
-      this.elements.authButtons && (this.elements.authButtons.style.display = 'none');
-      if (this.elements.userMenu) {
-        this.elements.userMenu.style.display = 'flex';
-        const nameSpan = this.elements.userMenu.querySelector('span');
-        const avatar = this.elements.userMenu.querySelector('.user-avatar-sm');
-        if (nameSpan) nameSpan.textContent = user.name || user.email?.split('@')[0] || 'Usuario';
-        if (avatar) {
-          avatar.src =
-            user.avatar ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=C8A752&color=0B0C0F&bold=true`;
-          avatar.alt = user.name || user.email || 'User';
-        }
-      }
-      // Quitar candados de enlaces protegidos
-      document.querySelectorAll('[data-protected="true"] .lock-icon')?.forEach((i) => i.remove());
-    } else {
-      this.elements.authButtons && (this.elements.authButtons.style.display = 'flex');
-      this.elements.userMenu && (this.elements.userMenu.style.display = 'none');
-    }
-  },
-};
-
-// Auto-init y export (ligero delay para asegurar carga de AuthClient)
+// Auto-init y export
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => setTimeout(() => AuthUI.init(), 50));
 } else {
