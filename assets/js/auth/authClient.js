@@ -277,6 +277,13 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
-// Exportar globalmente
+// Auto-refresh cada 30 minutos
+setInterval(() => {
+  if (AuthClient.isAuthenticated()) {
+    AuthClient.refreshSession();
+  }
+}, 30 * 60 * 1000);
+
+// Export
 window.AuthClient = AuthClient;
-console.log('[AuthClient] ✅ AuthClient v3.0 inicializado con Supabase');
+console.log('[Auth] ✅ AuthClient v2.0 inicializado');
