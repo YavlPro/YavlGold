@@ -1,26 +1,36 @@
 /**
- * GLOBALGOLD - AUTH CLIENT v3.0
- * Integración con Supabase Authentication
+ * GLOBALGOLD - AUTH CLIENT v2.0
  */
-
-// Configuración de Supabase
-const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-
-// Inicializar cliente de Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 const AuthClient = {
+  supabase: null,
+  currentSession: null,
+  STORAGE_KEY: 'gg:session',
+
+  init() {
+    // Inicializar cliente Supabase
+    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdlcnpsenpwa2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc2NjEwMTAsImV4cCI6MjA1MzIzNzAxMH0.Z8wKUJGx5gMGqLpY-oT_6vCK5kJ0z5gDqWN7QxYz5hI';
+    
+    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    this.loadSession();
+    console.log('[Auth] ✅ AuthClient v2.0 inicializado');
+  },
+
   /**
    * Iniciar sesión con email y contraseña
    */
   async login(email, password) {
+    console.log('[AuthClient] 🔐 Iniciando sesión...');
     try {
-      console.log('[AuthClient] 🔐 Iniciando sesión...');
+      const captchaToken = await this.getCaptchaToken();
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await this.supabase.auth.signInWithPassword({
         email: email,
         password: password,
+        options: {
+          captchaToken: captchaToken || undefined
+        }
       });
 
       if (error) {
@@ -50,49 +60,57 @@ const AuthClient = {
    * Registrar nuevo usuario
    */
   async register(email, password, name) {
+    console.log('[AuthClient] 📝 Registrando usuario...');
     try {
-      console.log('[AuthClient] 📝 Registrando usuario...');
+      const captchaToken = await this.getCaptchaToken();
+      
+      if (!captchaToken) {
+        return { success: false, error: 'Por favor completa el CAPTCHA' };
+      }
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await this.supabase.auth.signUp({
         email: email,
         password: password,
         options: {
           data: {
             name: name,
+            full_name: name
           },
-        },
+          emailRedirectTo: window.location.origin,
+          captchaToken: captchaToken
+        }
       });
 
-      if (error) {
-        console.error('[AuthClient] ❌ Error en registro:', error.message);
-        return { success: false, error: error.message };
-      }
+      if (error) throw error;
 
       if (data.user) {
-        console.log('[AuthClient] ✅ Registro exitoso');
+        console.log('[AuthClient] ✅ Usuario registrado:', data.user.email);
         
-        // Si el registro requiere confirmación de email
-        if (data.user.identities && data.user.identities.length === 0) {
-          return { 
-            success: true, 
-            user: data.user,
-            message: 'Por favor verifica tu email para activar tu cuenta'
-          };
-        }
+        const session = {
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            name: name,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`,
+            role: 'user',
+            createdAt: data.user.created_at
+          },
+          token: data.session?.access_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
+          refreshToken: data.session?.refresh_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
+          expiresAt: Date.now() + (24 * 60 * 60 * 1000),
+          createdAt: Date.now()
+        };
 
-        // Si el login es automático después del registro
-        if (data.session) {
-          this.saveSession(data.session, data.user);
-          window.dispatchEvent(new CustomEvent('auth:login', { detail: data.user }));
-        }
-
-        return { success: true, user: data.user };
+        this.saveSession(session);
+        this.emitAuthChange('USER_REGISTERED');
+        
+        return { success: true, user: session.user };
       }
 
-      return { success: false, error: 'No se pudo crear la cuenta' };
-    } catch (err) {
-      console.error('[AuthClient] ❌ Error inesperado:', err);
-      return { success: false, error: 'Error inesperado al registrarse' };
+      return { success: false, error: 'No se pudo crear el usuario' };
+    } catch (error) {
+      console.error('[AuthClient] ❌ Error en registro:', error.message);
+      return { success: false, error: error.message };
     }
   },
 
@@ -255,35 +273,32 @@ const AuthClient = {
       return { success: false, error: 'Error inesperado al actualizar perfil' };
     }
   },
+
+  /**
+   * Obtener token de CAPTCHA (hCaptcha)
+   */
+  async getCaptchaToken() {
+    // Intentar obtener token de hCaptcha si está cargado
+    if (typeof hcaptcha !== 'undefined') {
+      try {
+        const response = hcaptcha.getResponse();
+        if (response) {
+          console.log('[AuthClient] ✅ hCaptcha token obtenido');
+          return response;
+        }
+      } catch (e) {
+        console.warn('[AuthClient] ⚠️ No se pudo obtener token de CAPTCHA:', e.message);
+      }
+    }
+    return null;
+  },
 };
 
-// Restaurar sesión al cargar
+// Auto-init
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => AuthClient.restoreSession());
+  document.addEventListener('DOMContentLoaded', () => AuthClient.init());
 } else {
-  AuthClient.restoreSession();
+  AuthClient.init();
 }
 
-// Escuchar cambios en la autenticación de Supabase
-supabase.auth.onAuthStateChange((event, session) => {
-  console.log('[AuthClient] 🔔 Estado de auth cambió:', event);
-  
-  if (event === 'SIGNED_IN' && session) {
-    AuthClient.saveSession(session, session.user);
-  } else if (event === 'SIGNED_OUT') {
-    AuthClient.clearSession();
-  } else if (event === 'TOKEN_REFRESHED' && session) {
-    AuthClient.saveSession(session, session.user);
-  }
-});
-
-// Auto-refresh cada 30 minutos
-setInterval(() => {
-  if (AuthClient.isAuthenticated()) {
-    AuthClient.refreshSession();
-  }
-}, 30 * 60 * 1000);
-
-// Export
 window.AuthClient = AuthClient;
-console.log('[Auth] ✅ AuthClient v2.0 inicializado');
