@@ -1,5 +1,5 @@
 /**
- * GLOBALGOLD - AUTH CLIENT v2.0
+ * YAVLGOLD - AUTH CLIENT v2.0
  */
 const AuthClient = {
   supabase: null,

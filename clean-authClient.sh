@@ -25,7 +25,7 @@ echo "💾 Backup creado: ${FILE}.backup"
 cat > "$FILE" << 'EOF'
 /**
  * ========================================
- * GLOBALGOLD - AUTH CLIENT v2.0
+ * YAVLGOLD - AUTH CLIENT v2.0
  * ========================================
  * Sistema de autenticación unificado
  * @version 2.0

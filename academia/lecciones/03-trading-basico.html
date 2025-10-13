@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Módulo 3: Trading Básico - Academia GlobalGold</title>
+  <title>Módulo 3: Trading Básico - Academia YavlGold</title>
   <link rel="stylesheet" href="/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -361,8 +361,8 @@
   <!-- Header -->
   <header class="gg-header">
     <a class="brand" href="/">
-      <img src="/assets/images/logo.png" alt="GlobalGold" class="logo" />
-      <span>GlobalGold</span>
+  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
+  <span>YavlGold</span>
     </a>
     
     <nav class="main-nav">
@@ -608,12 +608,12 @@
   <!-- Footer -->
   <footer style="margin-top: 80px;">
     <div class="footer-brand">
-      <img src="/assets/images/logo.png" alt="GlobalGold" class="footer-logo">
-      <span>GlobalGold</span>
+      <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+      <span>YavlGold</span>
     </div>
     <p>Academia de Criptomonedas y Trading</p>
     <div class="copyright">
-      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
 
@@ -695,3 +695,30 @@
             
             <h4>🎯 REGLA DEL 1-2%</h4>
             <p><strong>Nunca arriesgues más del 1-2% de tu capital en una sola operación.</strong></p>
+          `
+        }
+      };
+      
+      if (lessons[lessonId]) {
+        if (typeof showLessonModal === 'function') {
+          showLessonModal(lessons[lessonId].title, lessons[lessonId].content);
+        } else {
+          // Fallback simple
+          const modal = document.createElement('div');
+          modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display:flex;align-items:center;justify-content:center;z-index:10000;padding:20px;';
+          modal.innerHTML = `<div style="background: var(--card-bg); border-radius: var(--border-radius); padding: 40px; max-width: 800px; max-height: 80vh; overflow-y: auto; border: 1px solid var(--color-secondary); position: relative;">
+            <button onclick="this.closest('div').parentNode.remove()" style="position:absolute; top:15px; right:20px; background:none; border:none; color:var(--text-light); font-size:1.5rem; cursor:pointer;">×</button>
+            <h2 style="color: var(--color-secondary); margin-bottom: 30px;">${lessons[lessonId].title}</h2>
+            <div style="color: var(--text-light); line-height:1.7;">${lessons[lessonId].content}</div>
+          </div>`;
+          document.body.appendChild(modal);
+        }
+      } else {
+        showNotification(`Lección ${lessonId} - ¡Próximamente disponible!`, 'info');
+      }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuth();
+    });
+  </script>

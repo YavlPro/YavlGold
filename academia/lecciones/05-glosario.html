@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Módulo 5: DeFi Avanzado - Academia GlobalGold</title>
+  <title>Módulo 5: DeFi Avanzado - Academia YavlGold</title>
   <link rel="stylesheet" href="/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -423,8 +423,8 @@
   <!-- Header -->
   <header class="gg-header">
     <a class="brand" href="/">
-      <img src="/assets/images/logo.png" alt="GlobalGold" class="logo" />
-      <span>GlobalGold</span>
+  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
+  <span>YavlGold</span>
     </a>
     
     <nav class="main-nav">
@@ -803,12 +803,12 @@
   <!-- Footer -->
   <footer style="margin-top: 80px;">
     <div class="footer-brand">
-      <img src="/assets/images/logo.png" alt="GlobalGold" class="footer-logo">
-      <span>GlobalGold</span>
+      <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+      <span>YavlGold</span>
     </div>
     <p>Academia de Criptomonedas y Trading</p>
     <div class="copyright">
-      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
 
@@ -830,10 +830,10 @@
       const profit = finalAmount - capital;
       const roi = (profit / capital) * 100;
       
-      // Mostrar resultados
-      document.getElementById('profit').textContent = $${profit.toLocaleString('en-US', {maximumFractionDigits: 2})};
-      document.getElementById('total').textContent = $${finalAmount.toLocaleString('en-US', {maximumFractionDigits: 2})};
-      document.getElementById('roi').textContent = ${roi.toFixed(2)}%;
+  // Mostrar resultados
+  document.getElementById('profit').textContent = `$${profit.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+  document.getElementById('total').textContent = `$${finalAmount.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+  document.getElementById('roi').textContent = `${roi.toFixed(2)}%`;
       
       document.getElementById('yield-result').style.display = 'block';
     }
@@ -884,7 +884,7 @@
       };
       
       if (lessons[lessonId]) {
-        alert(📖 ${lessons[lessonId].title}\n\nEsta funcionalidad estará disponible pronto con contenido interactivo completo.);
+        alert(`📖 ${lessons[lessonId].title}\n\nEsta funcionalidad estará disponible pronto con contenido interactivo completo.`);
       }
     }
     
@@ -896,7 +896,7 @@
         'makerdao': 'MakerDAO mantiene la stablecoin DAI colateralizada por criptomonedas.'
       };
       
-      alert(ℹ ${protocols[protocol]});
+  alert(`ℹ ${protocols[protocol]}`);
     }
   </script>
 </body>

@@ -1,14 +1,12 @@
-/**
- * ==========================================
- * GLOBALGOLD - TOKENS DE DISEÑO v1.0
- * Sistema unificado de variables CSS
- * ==========================================
- */
+/*
+   COLORES PRINCIPALES - DORADO YAVLGOLD
+   Sistema de tokens simple para YavlGold
+*/
 
 :root {
-  /* ========================================
-     COLORES PRINCIPALES - DORADO GLOBALGOLD
-     ======================================== */
+   /* ========================================
+       COLORES PRINCIPALES - DORADO YAVLGOLD
+       ======================================== */
   --gg-gold-primary: #C8A752;        /* Dorado principal - Uso general */
   --gg-gold-bright: #D4AF37;         /* Dorado brillante - Hover/Accent */
   --gg-gold-dark: #B8860B;           /* Dorado oscuro - Texto sobre claro */
@@ -187,9 +185,7 @@
    DARK MODE (preparado para futuro)
    ========================================== */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* Ya está en dark mode por defecto */
-  }
+   /* No additional overrides for dark mode; tokens are dark-first */
 }
 
 /* ==========================================

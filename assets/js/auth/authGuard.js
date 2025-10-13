@@ -1,5 +1,5 @@
 /**
- * GLOBALGOLD - AUTH GUARD v2.0.1
+ * YAVLGOLD - AUTH GUARD v2.0.1
  */
 const AuthGuard = {
   protectedPaths: ['/herramientas/', '/dashboard/', '/profile/', '/settings/'],

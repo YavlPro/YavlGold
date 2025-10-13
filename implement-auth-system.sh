@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ========================================
-# GLOBALGOLD - IMPLEMENTACIÓN AUTOMÁTICA
+# YAVLGOLD - IMPLEMENTACIÓN AUTOMÁTICA
 # Auth System v2.0
 # ========================================
 

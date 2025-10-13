@@ -1,5 +1,5 @@
 /**
- * GLOBALGOLD - AUTH LEGACY BRIDGE
+ * YAVLGOLD - AUTH LEGACY BRIDGE
  * Este archivo mantiene compatibilidad con código legacy
  * Redirige las llamadas al nuevo sistema AuthClient v2.0
  */
