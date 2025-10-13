@@ -1,11 +1,11 @@
 /**
  * =============================================
- * GLOBALGOLD - MAIN SCRIPT v2.0
+ * YAVLGOLD - MAIN SCRIPT v2.0
  * Scripts generales del sitio
  * =============================================
  */
 
-console.log('[Script] 📜 GlobalGold Main Script v2.0 cargado');
+console.log('[Script] 📜 YavlGold Main Script v2.0 cargado');
 
 // =============================================
 // SMOOTH SCROLL PARA ANCLAS
@@ -107,4 +107,4 @@ window.isMobile = function() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-console.log('[Script] 🚀 GlobalGold scripts listos');
+console.log('[Script] 🚀 YavlGold scripts listos');

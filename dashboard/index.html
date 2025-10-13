@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - GlobalGold</title>
-  <meta name="description" content="Panel de control de GlobalGold">
+  <title>Dashboard - YavlGold</title>
+  <meta name="description" content="Panel de control de YavlGold">
   
   <!-- Metadatos Open Graph / Twitter -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://globalgold.gold/dashboard/">
-  <meta property="og:title" content="Dashboard - GlobalGold">
-  <meta property="og:description" content="Panel de control de GlobalGold">
-  <meta property="og:image" content="https://globalgold.gold/assets/brand/og-cover.png">
+  <meta property="og:url" content="https://yavlgold.com/dashboard/">
+  <meta property="og:title" content="Dashboard - YavlGold">
+  <meta property="og:description" content="Panel de control de YavlGold">
+  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://globalgold.gold/dashboard/">
-  <meta property="twitter:title" content="Dashboard - GlobalGold">
-  <meta property="twitter:description" content="Panel de control de GlobalGold">
-  <meta property="twitter:image" content="https://globalgold.gold/assets/brand/og-cover.png">
+  <meta property="twitter:url" content="https://yavlgold.com/dashboard/">
+  <meta property="twitter:title" content="Dashboard - YavlGold">
+  <meta property="twitter:description" content="Panel de control de YavlGold">
+  <meta property="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   
   <!-- Favicon -->
   <link rel="icon" href="/assets/images/logo.svg" type="image/jpeg">
@@ -309,8 +309,8 @@
   <!-- Header con navegación -->
   <header class="gg-header">
     <a class="brand" href="/">
-      <img src="/assets/images/logo.png" alt="GlobalGold" class="logo">
-      <span>GlobalGold</span>
+  <img src="/assets/images/logo.png" alt="YavlGold" class="logo">
+  <span>YavlGold</span>
     </a>
     
     <nav class="main-nav">
@@ -446,7 +446,7 @@
       <i class="fas fa-lock"></i>
     </div>
     <h2>Acceso Restringido</h2>
-    <p>Debes iniciar sesión para acceder al dashboard y disfrutar de todas las herramientas premium de GlobalGold.</p>
+  <p>Debes iniciar sesión para acceder al dashboard y disfrutar de todas las herramientas premium de YavlGold.</p>
     <div style="margin-top: 30px;">
       <button class="btn btn-primary" onclick="showAuthModal('login')">Iniciar Sesión</button>
       <a href="/" class="btn btn-secondary">Ir a la Página Principal</a>
@@ -459,7 +459,7 @@
     <button class="close-modal-btn" onclick="closeAuthModal()">&times;</button>
     
     <div class="modal-header">
-      <img src="/assets/images/logo.png" alt="GlobalGold Logo" class="modal-logo">
+  <img src="/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
       <h2 id="modal-title">Bienvenido</h2>
     </div>
     
@@ -508,8 +508,8 @@
   <!-- Footer unificado -->
   <footer>
     <div class="footer-brand">
-      <img src="/assets/images/logo.png" alt="GlobalGold" class="footer-logo">
-      <span>GlobalGold</span>
+      <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+      <span>YavlGold</span>
     </div>
     <p>Ecosistema Global Innovador en Cripto</p>
     <div class="footer-links">
@@ -520,7 +520,7 @@
       <a href="/#contacto">Contacto</a>
     </div>
     <div class="copyright">
-      <p>GlobalGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
 
@@ -540,7 +540,8 @@
       document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
       });
-      document.querySelector(a[href="#${tabId}"]).classList.add('active');
+      const tabLink = document.querySelector(`a[href="#${tabId}"]`);
+      if (tabLink) tabLink.classList.add('active');
     }
 
     // Función para actualizar configuración del usuario
@@ -621,10 +622,10 @@
 
     function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
-      notification.className = notification notification-${type};
+      notification.className = `notification notification-${type}`;
       notification.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-        ${message}
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
       `;
       
       document.body.appendChild(notification);

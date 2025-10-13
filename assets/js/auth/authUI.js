@@ -1,5 +1,5 @@
 /**
- * GLOBALGOLD - AUTH UI v2.0.1
+ * YAVLGOLD - AUTH UI v2.0.1
  */
 const AuthUI = {
   elements: {},

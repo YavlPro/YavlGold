@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://globalgold.gold/sitemap.xml
+Sitemap: https://yavlgold.com/sitemap.xml

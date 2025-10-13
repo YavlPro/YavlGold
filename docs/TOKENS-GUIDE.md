@@ -1,6 +1,6 @@
-# 🎨 Guía de Tokens de Diseño GlobalGold
+# 🎨 Guía de Tokens de Diseño YavlGold
 
-Esta guía documenta el sistema de tokens CSS unificado de GlobalGold, que garantiza consistencia visual en todo el proyecto.
+Esta guía documenta el sistema de tokens CSS unificado de YavlGold, que garantiza consistencia visual en todo el proyecto.
 
 ## 📋 Índice
 
