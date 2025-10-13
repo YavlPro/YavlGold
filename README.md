@@ -1,145 +1,1554 @@
-# 🌟 GLOBAL GOLD - Ecosistema Cripto Profesional
+# 🎓 YavlGold — Academia de Blockchain y Finanzas Digitales
 
-Plataforma completa para trading e inversión en criptomonedas. Incluye herramientas profesionales, academia educativa, sistema de autenticación y comunidad activa.
+**Plataforma educativa** para aprender sobre blockchain, criptomonedas, finanzas descentralizadas (DeFi) y economía digital. Contenido gratuito, herramientas didácticas y comunidad de aprendizaje.
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
 
 ## 📦 Estructura del Proyecto
 
 ```
-globalgold/
+yavlgold/
 ├── index.html              # Página principal
 ├── assets/
 │   ├── css/
-│   │   ├── tokens.css        # Sistema de tokens de diseño
-│   │   ├── unificacion.css   # Estilos unificados
-│   │   └── style.css         # Estilos base
+│   │   ├── tokens.css      # Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css # Estilos unificados
+│   │   └── style.css       # Estilos base
 │   ├── js/
-│   │   ├── auth/
-│   │   │   ├── authClient.js   # Cliente de autenticación v2.0
-│   │   │   ├── authUI.js       # Interfaz de auth
-│   │   │   └── authGuard.js    # Protección de rutas
-│   │   └── script.js        # Scripts generales
-│   └── images/            # Imágenes y assets
+│   │   ├── auth/           # Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
 ├── herramientas/
-│   ├── index.html         # Hub de herramientas
-│   ├── calculadora.html   # Calculadora de ROI
-│   ├── conversor.html     # Conversor de cripto
-│   └── analisis.html      # Análisis de mercado
+│   ├── index.html          # Hub de herramientas educativas
+│   ├── calculadora.html    # Calculadora didáctica
+│   ├── conversor.html      # Conversor educativo
+│   └── analisis.html       # Análisis de datos históricos
 ├── academia/
-│   ├── index.html         # Página principal academia
-│   └── lecciones/         # Contenido educativo
+│   ├── index.html
+│   └── lecciones/          # Contenido educativo
 ├── dashboard/
-│   └── index.html         # Panel de usuario
-└── go/                   # Redirects (Telegram, WhatsApp, etc)
+│   └── index.html          # Panel de progreso del estudiante
+└── go/                     # Redirects
+
 ```
 
-## 🚀 Instalación y Configuración
+---
+
+## 🚀 Instalación (Para Desarrolladores)
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/YavlPro/gold.git
-cd gold
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
 ```
 
-### 2. Configurar Supabase (Backend)
-Edita `assets/js/auth/authClient.js` con tus credenciales:
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
 ```javascript
-const SUPABASE_URL = 'tu-proyecto.supabase.co';
-const SUPABASE_ANON_KEY = 'tu-anon-key';
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ```
 
 ### 3. Desplegar
-- **GitHub Pages**: Push a main y activa Pages en Settings
-- **Vercel/Netlify**: Conecta el repo y despliega automáticamente
-- **Servidor propio**: Sube los archivos vía FTP/SSH
 
-## 📚 Cómo Usar
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
 
-### Sistema de Tokens CSS
-Usa las variables definidas en `assets/css/tokens.css`:
-
-```css
-/* Colores dorados */
-background: var(--gg-gold-primary);
-color: var(--gg-gold-bright);
-
-/* Gradientes */
-background: var(--gg-gradient-gold);
-
-/* Sombras */
-box-shadow: var(--gg-shadow-gold);
-
-/* Transiciones */
-transition: var(--gg-transition-base);
-```
-
-### Sistema de Autenticación
-#### Proteger una página:
-```html
-<script src="/assets/js/auth/authClient.js"></script>
-<script src="/assets/js/auth/authUI.js"></script>
-<script src="/assets/js/auth/authGuard.js"></script>
-```
-
-#### Proteger un enlace:
-```html
-<a href="/herramientas/" data-protected="true">Herramientas</a>
-```
-
-### Agregar nuevas herramientas
-1. Crea un archivo en `/herramientas/mi-herramienta.html`
-2. Copia la estructura de `calculadora.html`
-3. Agrégala al hub en `herramientas/index.html`
-
-## Autoría
-- Autor: Yerikson Varela (YavlPro)  
-- Marca/comunidad: GLOBAL GOLD
-
-## Contacto
-- Web: https://globalgold.gold/  
-- X (Twitter): https://x.com/Yavlcapitan  
-- Telegram (Comunidad): https://t.me/+94LkbchALuk3Zjhh  
-- YouTube: https://youtube.com/@globalgoldlc  
-- Nota: En el sitio web los botones de contacto ocultan número/usuario a simple vista (implementado vía páginas /go/).
-
-## ⚖️ Licencia
-
-Este proyecto está bajo la licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
-
-## 👏 Créditos
-
-- **Diseño y Desarrollo**: Yerikson Varela (YavlPro)
-- **Comunidad**: GlobalGold Team
-- **Inspiración**: La comunidad cripto global
-
-## Contribuciones
-¿Quieres aportar? Abre un issue o una pull request. ¡Toda ayuda es bienvenida!
-
-## 🛣️ Roadmap
-
-### ✅ Fase 1: Fundación (Completada)
-- [x] Estructura base del sitio
-- [x] Sistema de autenticación v2.0
-- [x] Diseño responsive
-- [x] Sistema de tokens CSS
-
-### 🔄 Fase 2: Expansión (En Progreso)
-- [x] Academia completa (5 lecciones)
-- [x] Calculadora de ROI
-- [ ] Conversor de criptomonedas (en desarrollo)
-- [ ] Análisis de mercado
-- [ ] Dashboard con datos reales
-
-### ⏳ Fase 3: Ecosistema Pro (Próximamente)
-- [ ] Gestor de portafolio
-- [ ] Integración con APIs de exchanges
-- [ ] Contenido premium para miembros
-- [ ] Sistema de notificaciones en tiempo real
-- [ ] Mobile app (PWA)
+-----
 
 ## 🛠️ Stack Tecnológico
 
-- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript (Vanilla)
-- **Backend**: Supabase (Auth, Database, Storage)
-- **Hosting**: GitHub Pages / Vercel
-- **CDN**: Font Awesome, Google Fonts
-- **Seguridad**: hCaptcha, HTTPS, CORS
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### 🔄 Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+	- 📺 YouTube: [@yavlprogold](https://www.google.com/search?q=https://youtube.com/%40yavlprogold)
+
+-----
+
+## 🤝 Contribuciones
+
+¿Eres educador, desarrollador o entusiasta de blockchain?
+¡Abre un **issue** o **pull request**\!
+
+### Áreas donde necesitamos ayuda:
+
+	- 📝 Creación de contenido educativo
+	- 🎨 Diseño UI/UX (estilo *Golden Cyberpunk*)
+	- 💻 Desarrollo de herramientas didácticas
+	- 🌍 Traducción de contenidos
+	- ✅ Testing y corrección de bugs
+
+-----
+
+## ⚖️ Licencia
+
+MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detalles
+
+-----
+
+## 🙏 Créditos
+
+	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
+	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
+	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+
+-----
+
+## 📚 Recursos Recomendados
+
+	- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
+	- [Ethereum.org Learn](https://ethereum.org/es/learn/)
+	- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
+
+-----
+
+## ❓ FAQ
+
+**¿Es gratis?**
+Sí, el contenido educativo base es 100% gratuito.
+
+**¿Necesito conocimientos previos?**
+No, empezamos desde cero.
+
+**¿Dan certificados?**
+Certificados de finalización (reconocimiento educativo, no oficial).
+
+**¿Puedo usar esto para aprender a invertir?**
+Aprenderás sobre tecnología y conceptos, pero **no se dan recomendaciones de inversión**.
+
+-----
+
+**Hecho con 💛 para la comunidad hispana de blockchain**
+**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
+
+## 📦 Estructura del Proyecto
+
+```
+yavlgold/
+├── index.html              \# Página principal
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css      \# Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css \# Estilos unificados
+│   │   └── style.css       \# Estilos base
+│   ├── js/
+│   │   ├── auth/           \# Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
+├── herramientas/
+│   ├── index.html          \# Hub de herramientas educativas
+│   ├── calculadora.html    \# Calculadora didáctica
+│   ├── conversor.html      \# Conversor educativo
+│   └── analisis.html       \# Análisis de datos históricos
+├── academia/
+│   ├── index.html
+│   └── lecciones/          \# Contenido educativo
+├── dashboard/
+│   └── index.html          \# Panel de progreso del estudiante
+└── go/                     \# Redirects
+
+```
+
+---
+
+## 🚀 Instalación (Para Desarrolladores)
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
+```
+
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
+```javascript
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+```
+
+### 3. Desplegar
+
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
+
+-----
+
+## 🛠️ Stack Tecnológico
+
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### 🔄 Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+	- 📺 YouTube: [@yavlprogold](https://www.google.com/search?q=https://youtube.com/%40yavlprogold)
+
+-----
+
+## 🤝 Contribuciones
+
+¿Eres educador, desarrollador o entusiasta de blockchain?
+¡Abre un **issue** o **pull request**\!
+
+### Áreas donde necesitamos ayuda:
+
+	- 📝 Creación de contenido educativo
+	- 🎨 Diseño UI/UX (estilo *Golden Cyberpunk*)
+	- 💻 Desarrollo de herramientas didácticas
+	- 🌍 Traducción de contenidos
+	- ✅ Testing y corrección de bugs
+
+-----
+
+## ⚖️ Licencia
+
+MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detalles
+
+-----
+
+## 🙏 Créditos
+
+	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
+	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
+	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+
+-----
+
+## 📚 Recursos Recomendados
+
+	- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
+	- [Ethereum.org Learn](https://ethereum.org/es/learn/)
+	- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
+
+-----
+
+## ❓ FAQ
+
+**¿Es gratis?**
+Sí, el contenido educativo base es 100% gratuito.
+
+**¿Necesito conocimientos previos?**
+No, empezamos desde cero.
+
+**¿Dan certificados?**
+Certificados de finalización (reconocimiento educativo, no oficial).
+
+**¿Puedo usar esto para aprender a invertir?**
+Aprenderás sobre tecnología y conceptos, pero **no se dan recomendaciones de inversión**.
+
+-----
+
+**Hecho con 💛 para la comunidad hispana de blockchain**
+**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
+
+## 📦 Estructura del Proyecto
+
+```
+yavlgold/
+├── index.html              \# Página principal
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css      \# Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css \# Estilos unificados
+│   │   └── style.css       \# Estilos base
+│   ├── js/
+│   │   ├── auth/           \# Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
+├── herramientas/
+│   ├── index.html          \# Hub de herramientas educativas
+│   ├── calculadora.html    \# Calculadora didáctica
+│   ├── conversor.html      \# Conversor educativo
+│   └── analisis.html       \# Análisis de datos históricos
+├── academia/
+│   ├── index.html
+│   └── lecciones/          \# Contenido educativo
+├── dashboard/
+│   └── index.html          \# Panel de progreso del estudiante
+└── go/                     \# Redirects
+
+```
+
+---
+
+## 🚀 Instalación (Para Desarrolladores)
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
+```
+
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
+```javascript
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+```
+
+### 3. Desplegar
+
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
+
+-----
+
+## 🛠️ Stack Tecnológico
+
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### 🔄 Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+	- 📺 YouTube: [@yavlprogold](https://www.google.com/search?q=https://youtube.com/%40yavlprogold)
+
+-----
+
+## 🤝 Contribuciones
+
+¿Eres educador, desarrollador o entusiasta de blockchain?
+¡Abre un **issue** o **pull request**\!
+
+### Áreas donde necesitamos ayuda:
+
+	- 📝 Creación de contenido educativo
+	- 🎨 Diseño UI/UX (estilo *Golden Cyberpunk*)
+	- 💻 Desarrollo de herramientas didácticas
+	- 🌍 Traducción de contenidos
+	- ✅ Testing y corrección de bugs
+
+-----
+
+## ⚖️ Licencia
+
+MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detalles
+
+-----
+
+## 🙏 Créditos
+
+	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
+	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
+	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+
+-----
+
+## 📚 Recursos Recomendados
+
+	- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
+	- [Ethereum.org Learn](https://ethereum.org/es/learn/)
+	- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
+
+-----
+
+## ❓ FAQ
+
+**¿Es gratis?**
+Sí, el contenido educativo base es 100% gratuito.
+
+**¿Necesito conocimientos previos?**
+No, empezamos desde cero.
+
+**¿Dan certificados?**
+Certificados de finalización (reconocimiento educativo, no oficial).
+
+**¿Puedo usar esto para aprender a invertir?**
+Aprenderás sobre tecnología y conceptos, pero **no se dan recomendaciones de inversión**.
+
+-----
+
+**Hecho con 💛 para la comunidad hispana de blockchain**
+**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
+
+## 📦 Estructura del Proyecto
+
+```
+yavlgold/
+├── index.html              \# Página principal
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css      \# Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css \# Estilos unificados
+│   │   └── style.css       \# Estilos base
+│   ├── js/
+│   │   ├── auth/           \# Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
+├── herramientas/
+│   ├── index.html          \# Hub de herramientas educativas
+│   ├── calculadora.html    \# Calculadora didáctica
+│   ├── conversor.html      \# Conversor educativo
+│   └── analisis.html       \# Análisis de datos históricos
+├── academia/
+│   ├── index.html
+│   └── lecciones/          \# Contenido educativo
+├── dashboard/
+│   └── index.html          \# Panel de progreso del estudiante
+└── go/                     \# Redirects
+
+```
+
+---
+
+## 🚀 Instalación (Para Desarrolladores)
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
+```
+
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
+```javascript
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+```
+
+### 3. Desplegar
+
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
+
+-----
+
+## 🛠️ Stack Tecnológico
+
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### 🔄 Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+	- 📺 YouTube: [@yavlprogold](https://www.google.com/search?q=https://youtube.com/%40yavlprogold)
+
+-----
+
+## 🤝 Contribuciones
+
+¿Eres educador, desarrollador o entusiasta de blockchain?
+¡Abre un **issue** o **pull request**\!
+
+### Áreas donde necesitamos ayuda:
+
+	- 📝 Creación de contenido educativo
+	- 🎨 Diseño UI/UX (estilo *Golden Cyberpunk*)
+	- 💻 Desarrollo de herramientas didácticas
+	- 🌍 Traducción de contenidos
+	- ✅ Testing y corrección de bugs
+
+-----
+
+## ⚖️ Licencia
+
+MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detalles
+
+-----
+
+## 🙏 Créditos
+
+	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
+	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
+	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+
+-----
+
+## 📚 Recursos Recomendados
+
+	- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
+	- [Ethereum.org Learn](https://ethereum.org/es/learn/)
+	- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
+
+-----
+
+## ❓ FAQ
+
+**¿Es gratis?**
+Sí, el contenido educativo base es 100% gratuito.
+
+**¿Necesito conocimientos previos?**
+No, empezamos desde cero.
+
+**¿Dan certificados?**
+Certificados de finalización (reconocimiento educativo, no oficial).
+
+**¿Puedo usar esto para aprender a invertir?**
+Aprenderás sobre tecnología y conceptos, pero **no se dan recomendaciones de inversión**.
+
+-----
+
+**Hecho con 💛 para la comunidad hispana de blockchain**
+**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
+
+## 📦 Estructura del Proyecto
+
+```
+yavlgold/
+├── index.html              # Página principal
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css      # Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css # Estilos unificados
+│   │   └── style.css       # Estilos base
+│   ├── js/
+│   │   ├── auth/           # Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
+├── herramientas/
+│   ├── index.html          # Hub de herramientas educativas
+│   ├── calculadora.html    # Calculadora didáctica
+│   ├── conversor.html      # Conversor educativo
+│   └── analisis.html       # Análisis de datos históricos
+├── academia/
+│   ├── index.html
+│   └── lecciones/          # Contenido educativo
+├── dashboard/
+│   └── index.html          # Panel de progreso del estudiante
+└── go/                     # Redirects
+
+```
+
+---
+
+## 🚀 Instalación (Para Desarrolladores)
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
+```
+
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
+```javascript
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+```
+
+### 3. Desplegar
+
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
+
+-----
+
+## 🛠️ Stack Tecnológico
+
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### 🔄 Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+# 🎓 YavlGold — Academia de Blockchain y Finanzas Digitales
+
+**Plataforma educativa** para aprender sobre blockchain, criptomonedas, finanzas descentralizadas (DeFi) y economía digital. Contenido gratuito, herramientas didácticas y comunidad de aprendizaje.
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+# 🎓 YavlGold — Academia de Blockchain y Finanzas Digitales
+
+**Plataforma educativa** para aprender sobre blockchain, criptomonedas, finanzas descentralizadas (DeFi) y economía digital. Contenido gratuito, herramientas didácticas y comunidad de aprendizaje.
+
+---
+
+## ⚠️ AVISO IMPORTANTE
+
+Este es un proyecto **exclusivamente educativo**.
+
+- ❌ NO ofrecemos asesoría financiera
+- ❌ NO recomendamos inversiones específicas
+- ❌ NO garantizamos rendimientos
+- ✅ SÍ enseñamos cómo funciona la tecnología blockchain
+- ✅ SÍ promovemos educación financiera responsable
+
+**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
+
+---
+
+## 🎯 ¿Qué Aprenderás?
+
+### 📚 Academia
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
+
+## 📦 Estructura del Proyecto
+
+```
+yavlgold/
+├── index.html              # Página principal
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css      # Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css # Estilos unificados
+│   │   └── style.css       # Estilos base
+│   ├── js/
+│   │   ├── auth/           # Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
+├── herramientas/
+│   ├── index.html          # Hub de herramientas educativas
+│   ├── calculadora.html    # Calculadora didáctica
+│   ├── conversor.html      # Conversor educativo
+│   └── analisis.html       # Análisis de datos históricos
+├── academia/
+│   ├── index.html
+│   └── lecciones/          # Contenido educativo
+├── dashboard/
+│   └── index.html          # Panel de progreso del estudiante
+└── go/                     # Redirects
+
+```
+
+---
+
+## 🚀 Instalación (Para Desarrolladores)
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
+```
+
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
+```javascript
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+```
+
+### 3. Desplegar
+
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
+
+-----
+
+## 🛠️ Stack Tecnológico
+
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### � Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+	- 📺 YouTube: [@yavlprogold](https://www.google.com/search?q=https://youtube.com/%40yavlprogold)
+
+-----
+
+## 🤝 Contribuciones
+
+¿Eres educador, desarrollador o entusiasta de blockchain?
+¡Abre un **issue** o **pull request**\!
+
+### Áreas donde necesitamos ayuda:
+
+	- 📝 Creación de contenido educativo
+	- 🎨 Diseño UI/UX (estilo *Golden Cyberpunk*)
+	- 💻 Desarrollo de herramientas didácticas
+	- 🌍 Traducción de contenidos
+	- ✅ Testing y corrección de bugs
+
+-----
+
+## ⚖️ Licencia
+
+MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detalles
+
+-----
+
+## 🙏 Créditos
+
+	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
+	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
+	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+
+-----
+
+## 📚 Recursos Recomendados
+
+	- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
+	- [Ethereum.org Learn](https://ethereum.org/es/learn/)
+	- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
+
+-----
+
+## ❓ FAQ
+
+**¿Es gratis?**
+Sí, el contenido educativo base es 100% gratuito.
+
+**¿Necesito conocimientos previos?**
+No, empezamos desde cero.
+
+**¿Dan certificados?**
+Certificados de finalización (reconocimiento educativo, no oficial).
+
+**¿Puedo usar esto para aprender a invertir?**
+Aprenderás sobre tecnología y conceptos, pero **no se dan recomendaciones de inversión**.
+
+-----
+
+**Hecho con 💛 para la comunidad hispana de blockchain**
+**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
+
+- Fundamentos de Blockchain
+- Cómo funcionan las criptomonedas
+- Seguridad digital y wallets
+- Lectura de datos de mercado (educativo)
+- Conceptos de finanzas descentralizadas (DeFi)
+
+### 🛠️ Herramientas Educativas
+- **Calculadora de Interés Compuesto**: Entiende conceptos matemáticos
+- **Conversor Didáctico**: Aprende sobre pares de trading
+- **Simulador de Análisis**: Practica con datos históricos (sin predicciones)
+
+### 👥 Comunidad
+- Espacio para aprender en conjunto
+- Preguntas y respuestas
+- Recursos compartidos
+- Sin presión de ventas
+
+---
+
+## 📦 Estructura del Proyecto
+
+```
+yavlgold/
+├── index.html              # Página principal
+├── assets/
+│   ├── css/
+│   │   ├── tokens.css      # Sistema de tokens de diseño (colores sagrados)
+│   │   ├── unificacion.css # Estilos unificados
+│   │   └── style.css       # Estilos base
+│   ├── js/
+│   │   ├── auth/           # Sistema de autenticación
+│   │   │   ├── authClient.js
+│   │   │   ├── authUI.js
+│   │   │   └── authGuard.js
+│   │   └── main.js
+│   └── images/
+├── herramientas/
+│   ├── index.html          # Hub de herramientas educativas
+│   ├── calculadora.html    # Calculadora didáctica
+│   ├── conversor.html      # Conversor educativo
+│   └── analisis.html       # Análisis de datos históricos
+├── academia/
+│   ├── index.html
+│   └── lecciones/          # Contenido educativo
+├── dashboard/
+│   └── index.html          # Panel de progreso del estudiante
+└── go/                     # Redirects
+
+```
+
+---
+
+## 🚀 Instalación (Para Desarrolladores)
+
+### 1. Clonar el repositorio
+```bash
+git clone [https://github.com/YavlPro/yavlgold.git](https://github.com/YavlPro/yavlgold.git)
+cd yavlgold
+```
+
+### 2. Configurar Backend (Supabase)
+
+⚠️ **Nunca expongas tus keys en código público**
+
+```javascript
+// Usa variables de entorno (en producción)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+```
+
+### 3. Desplegar
+
+	- **GitHub Pages**: Settings → Pages
+	- **Vercel/Netlify**: Conexión automática
+	- **Servidor propio**: FTP/SSH
+
+-----
+
+## 🛠️ Stack Tecnológico
+
+	- **Frontend**: HTML5, CSS3 (Variables CSS), JavaScript Vanilla
+	- **Backend**: Supabase (Auth, Database)
+	- **Seguridad**: hCaptcha
+	- **Hosting**: Próximamente en `yavlgold.com`
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
+
+-----
+
+## 📖 Cómo Usar
+
+### Sistema de Tokens CSS
+
+```css
+background: var(--gg-gold-primary);
+color: var(--gg-gold-bright);
+box-shadow: var(--gg-glow-gold-soft);
+```
+
+### Sistema de Autenticación
+
+```html
+<script type="module" src="/assets/js/auth/authClient.js"></script>
+<script type="module" src="/assets/js/auth/authGuard.js"></script>
+```
+
+### Proteger contenido educativo
+
+```html
+<a href="/academia/nivel-avanzado/" data-protected="true">Lecciones Avanzadas</a>
+```
+
+-----
+
+## 🛣️ Roadmap
+
+### ✅ Fase 1: Fundación
+
+	- [x] Estructura base del sitio
+	- [x] Sistema de autenticación (email + password + hCaptcha)
+	- [x] Diseño responsive y sistema de tokens CSS
+	- [x] Enfoque 100% educativo
+
+### 🔄 Fase 2: Contenido Educativo
+
+	- [ ] 10 lecciones fundamentales
+	- [ ] Quizzes interactivos
+	- [ ] Sistema de progreso y badges
+	- [ ] Glosario de términos
+
+### ⏳ Fase 3: Ecosistema Yavl
+
+	- [ ] Integración con YavlSocial (identidad verificada)
+	- [ ] Acceso premium en YavlSuite con YavlGold ID
+	- [ ] Certificados de finalización
+
+-----
+
+## 👨‍💻 Autor
+
+**Yerikson Varela** (YavlPro)
+Educador en tecnología blockchain y creador del ecosistema Yavl.
+
+-----
+
+## 📞 Contacto
+
+	- 🌐 Web: Próximamente en `yavlgold.com`
+	- 🐦 X: [@Yavlcapitan](https://x.com/Yavlcapitan)
+	- 📱 Telegram: [Comunidad Educativa](https://t.me/+94LkbchALuk3Zjhh)
+	- 📺 YouTube: [@yavlprogold](https://www.google.com/search?q=https://youtube.com/%40yavlprogold)
+
+-----
+
+## 🤝 Contribuciones
+
+¿Eres educador, desarrollador o entusiasta de blockchain?
+¡Abre un **issue** o **pull request**\!
+
+### Áreas donde necesitamos ayuda:
+
+	- 📝 Creación de contenido educativo
+	- 🎨 Diseño UI/UX (estilo *Golden Cyberpunk*)
+	- 💻 Desarrollo de herramientas didácticas
+	- 🌍 Traducción de contenidos
+	- ✅ Testing y corrección de bugs
+
+-----
+
+## ⚖️ Licencia
+
+MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detalles
+
+-----
+
+## 🙏 Créditos
+
+	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
+	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
+	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+
+-----
+
+## 📚 Recursos Recomendados
+
+	- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
+	- [Ethereum.org Learn](https://ethereum.org/es/learn/)
+	- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
+
+-----
+
+## ❓ FAQ
+
+**¿Es gratis?**
+Sí, el contenido educativo base es 100% gratuito.
+
+**¿Necesito conocimientos previos?**
+No, empezamos desde cero.
+
+**¿Dan certificados?**
+Certificados de finalización (reconocimiento educativo, no oficial).
+
+**¿Puedo usar esto para aprender a invertir?**
+Aprenderás sobre tecnología y conceptos, pero **no se dan recomendaciones de inversión**.
+
+-----
+
+**Hecho con 💛 para la comunidad hispana de blockchain**
+**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
