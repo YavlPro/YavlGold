@@ -39,4 +39,4 @@ git checkout -b restore/design-baseline v0.4-design-baseline
 ### Notas
 
 - Este repositorio mantiene además una rama de trabajo de unificación visual: `feature/unificacion-ui` con PR abierto.
-- El manifiesto `backups/baseline-2025-10-02.json` proviene del contenedor “GLOBAL GOLD — Backup de diseño (Baseline 2025‑10‑02)”.
+- El manifiesto `backups/baseline-2025-10-02.json` proviene del contenedor “YavlGold — Backup de diseño (Baseline 2025‑10‑02)”.
