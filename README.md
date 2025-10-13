@@ -887,7 +887,7 @@ MIT License - Ver [LICENSE](https://www.google.com/search?q=LICENSE) para detall
 
 	- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
 	- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
-	- **Comunidad**: GlobalGold Team → ahora **YavlGold Community**
+	- **Comunidad**: YavlGold Team → ahora **YavlGold Community**
 
 -----
 
