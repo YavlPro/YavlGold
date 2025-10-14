@@ -86,6 +86,33 @@
     .action-card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius); text-align: center; text-decoration: none; color: var(--text-light); transition: var(--transition); border: 1px solid rgba(255,255,255,0.1); }
     .action-card:hover { transform: translateY(-5px); border-color: var(--color-secondary); }
     .action-icon { font-size: 2.5rem; color: var(--color-secondary); margin-bottom: 15px; }
+    
+    /* Anuncios */
+    .announcements-section { margin: 40px 0; }
+    .announcements-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+    .announcements-header h3 { margin: 0; display: flex; align-items: center; gap: 10px; }
+    .announcements-list { display: flex; flex-direction: column; gap: 20px; }
+    .announcement-card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.1); transition: var(--transition); position: relative; }
+    .announcement-card:hover { border-color: var(--color-secondary); transform: translateY(-3px); }
+    .announcement-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
+    .announcement-title { font-size: 1.3rem; font-weight: 600; color: var(--color-secondary); margin: 0 0 10px; }
+    .announcement-meta { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; }
+    .announcement-author { display: flex; align-items: center; gap: 8px; }
+    .announcement-author-avatar { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--color-secondary); }
+    .announcement-content { color: var(--text-light); line-height: 1.7; white-space: pre-wrap; }
+    .announcement-date { display: flex; align-items: center; gap: 5px; }
+    .announcement-actions { position: absolute; top: 25px; right: 25px; display: flex; gap: 10px; }
+    .announcement-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px 12px; border-radius: 6px; transition: var(--transition); }
+    .announcement-btn:hover { background: rgba(255,255,255,0.1); color: var(--color-secondary); }
+    .admin-badge { background: var(--gradient-gold); color: var(--bg-darker); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .create-announcement-btn { background: var(--gradient-gold); color: var(--bg-darker); padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: var(--transition); }
+    .create-announcement-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+    .no-announcements { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .announcement-form-modal { max-width: 600px; }
+    .form-group textarea { min-height: 150px; resize: vertical; }
+    .loading-spinner { text-align: center; padding: 40px; color: var(--color-secondary); }
+    .load-more-btn { width: 100%; padding: 15px; background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); color: var(--text-light); border-radius: 8px; cursor: pointer; font-weight: 600; transition: var(--transition); margin-top: 20px; }
+    .load-more-btn:hover { border-color: var(--color-secondary); background: rgba(200, 167, 82, 0.1); }
     .login-prompt { text-align: center; padding: 60px 20px; max-width: 500px; margin: 100px auto; background: var(--card-bg); border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.1); }
     
     /* Modal de autenticación */
@@ -401,6 +428,26 @@
             <p>Conectar con otros</p>
           </a>
         </div>
+
+        <!-- Sección de Anuncios -->
+        <div class="announcements-section">
+          <div class="announcements-header">
+            <h3>
+              <i class="fas fa-bullhorn"></i>
+              Anuncios y Actualizaciones
+            </h3>
+            <button id="create-announcement-btn" class="create-announcement-btn" style="display: none;">
+              <i class="fas fa-plus"></i> Crear Anuncio
+            </button>
+          </div>
+          
+          <div id="announcements-container">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin fa-2x"></i>
+              <p>Cargando anuncios...</p>
+            </div>
+          </div>
+        </div>
       </section>
       
       <section id="portfolio" class="content-section">
@@ -528,6 +575,8 @@
   <script src="/assets/js/auth/authClient.js"></script>
   <script src="/assets/js/auth/authUI.js"></script>
   <script src="/assets/js/auth/authGuard.js"></script>
+  <script src="/assets/js/profile/profileManager.js"></script>
+  <script src="/assets/js/announcements/announcementsManager.js"></script>
   
   <script>
     // Función para cambiar de pestaña en el dashboard
@@ -638,9 +687,224 @@
     // Close modal when clicking overlay
     document.getElementById('modal-overlay')?.addEventListener('click', hideAuthModal);
 
+    // ========================================
+    // ANNOUNCEMENTS FUNCTIONALITY
+    // ========================================
+    
+    let currentAnnouncementsPage = 0;
+    const announcementsPerPage = 5;
+    let isAdmin = false;
+
+    async function loadAnnouncements(append = false) {
+      const container = document.getElementById('announcements-container');
+      if (!container) return;
+
+      if (!append) {
+        container.innerHTML = `
+          <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>Cargando anuncios...</p>
+          </div>
+        `;
+      }
+
+      try {
+        const result = await AnnouncementsManager.getAnnouncements({
+          limit: announcementsPerPage,
+          offset: currentAnnouncementsPage * announcementsPerPage
+        });
+
+        if (result.success) {
+          if (result.announcements.length === 0 && currentAnnouncementsPage === 0) {
+            container.innerHTML = `
+              <div class="no-announcements">
+                <i class="fas fa-inbox fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i>
+                <p>No hay anuncios disponibles en este momento</p>
+              </div>
+            `;
+            return;
+          }
+
+          const announcementsHTML = result.announcements.map(announcement => {
+            const date = new Date(announcement.created_at);
+            const formattedDate = date.toLocaleDateString('es-ES', { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+
+            const authorName = announcement.author?.username || 'Administrador';
+            const authorAvatar = announcement.author?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=C8A752&color=0B0C0F&bold=true';
+
+            const isEdited = announcement.updated_at && announcement.updated_at !== announcement.created_at;
+
+            return `
+              <div class="announcement-card" data-id="${announcement.id}">
+                ${isAdmin ? `
+                  <div class="announcement-actions">
+                    <button class="announcement-btn" onclick="editAnnouncement('${announcement.id}')" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="announcement-btn" onclick="deleteAnnouncement('${announcement.id}')" title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                ` : ''}
+                
+                <div class="announcement-header">
+                  <div>
+                    <h4 class="announcement-title">${escapeHtml(announcement.title)}</h4>
+                    <div class="announcement-meta">
+                      <div class="announcement-author">
+                        <img src="${authorAvatar}" alt="${authorName}" class="announcement-author-avatar">
+                        <span>${authorName}</span>
+                        <span class="admin-badge">ADMIN</span>
+                      </div>
+                      <div class="announcement-date">
+                        <i class="fas fa-clock"></i>
+                        <span>${formattedDate}</span>
+                        ${isEdited ? '<span style="font-style: italic;">(editado)</span>' : ''}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="announcement-content">${escapeHtml(announcement.content)}</div>
+              </div>
+            `;
+          }).join('');
+
+          if (append) {
+            const loadMoreBtn = container.querySelector('.load-more-btn');
+            if (loadMoreBtn) loadMoreBtn.remove();
+            container.insertAdjacentHTML('beforeend', announcementsHTML);
+          } else {
+            container.innerHTML = announcementsHTML;
+          }
+
+          // Agregar botón "Cargar más" si hay más anuncios
+          if (result.announcements.length === announcementsPerPage) {
+            container.insertAdjacentHTML('beforeend', `
+              <button class="load-more-btn" onclick="loadMoreAnnouncements()">
+                <i class="fas fa-chevron-down"></i> Cargar más anuncios
+              </button>
+            `);
+          }
+        } else {
+          throw new Error(result.error || 'Error al cargar anuncios');
+        }
+      } catch (error) {
+        console.error('Error loading announcements:', error);
+        container.innerHTML = `
+          <div class="no-announcements">
+            <i class="fas fa-exclamation-circle fa-3x" style="margin-bottom: 15px; color: #ff6b6b;"></i>
+            <p>Error al cargar los anuncios</p>
+            <button onclick="loadAnnouncements()" style="margin-top: 15px; padding: 10px 20px; background: var(--color-secondary); border: none; border-radius: 6px; cursor: pointer;">
+              Reintentar
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    async function loadMoreAnnouncements() {
+      currentAnnouncementsPage++;
+      await loadAnnouncements(true);
+    }
+
+    async function checkAdminStatus() {
+      const session = AuthClient.getSession();
+      if (!session?.user?.id) {
+        isAdmin = false;
+        return;
+      }
+
+      const result = await ProfileManager.isAdmin(session.user.id);
+      isAdmin = result.success && result.isAdmin;
+
+      // Mostrar/ocultar botón de crear anuncio
+      const createBtn = document.getElementById('create-announcement-btn');
+      if (createBtn) {
+        createBtn.style.display = isAdmin ? 'inline-block' : 'none';
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    async function createAnnouncement() {
+      const title = prompt('Título del anuncio:');
+      if (!title) return;
+
+      const content = prompt('Contenido del anuncio:');
+      if (!content) return;
+
+      const result = await AnnouncementsManager.createAnnouncement(title, content);
+      
+      if (result.success) {
+        showNotification('Anuncio creado exitosamente', 'success');
+        currentAnnouncementsPage = 0;
+        await loadAnnouncements();
+      } else {
+        showNotification(result.error || 'Error al crear anuncio', 'error');
+      }
+    }
+
+    async function editAnnouncement(id) {
+      const announcement = await AnnouncementsManager.getAnnouncement(id);
+      if (!announcement.success) {
+        showNotification('Error al obtener anuncio', 'error');
+        return;
+      }
+
+      const title = prompt('Nuevo título:', announcement.announcement.title);
+      if (!title) return;
+
+      const content = prompt('Nuevo contenido:', announcement.announcement.content);
+      if (!content) return;
+
+      const result = await AnnouncementsManager.updateAnnouncement(id, { title, content });
+      
+      if (result.success) {
+        showNotification('Anuncio actualizado exitosamente', 'success');
+        currentAnnouncementsPage = 0;
+        await loadAnnouncements();
+      } else {
+        showNotification(result.error || 'Error al actualizar anuncio', 'error');
+      }
+    }
+
+    async function deleteAnnouncement(id) {
+      if (!confirm('¿Estás seguro de eliminar este anuncio?')) return;
+
+      const result = await AnnouncementsManager.deleteAnnouncement(id);
+      
+      if (result.success) {
+        showNotification('Anuncio eliminado exitosamente', 'success');
+        currentAnnouncementsPage = 0;
+        await loadAnnouncements();
+      } else {
+        showNotification(result.error || 'Error al eliminar anuncio', 'error');
+      }
+    }
+
+    // Event listener para botón de crear anuncio
+    document.getElementById('create-announcement-btn')?.addEventListener('click', createAnnouncement);
+
     document.addEventListener('DOMContentLoaded', function() {
       // Activar la primera pestaña por defecto
       switchTab('overview');
+      
+      // Cargar anuncios y verificar admin status
+      setTimeout(async () => {
+        await checkAdminStatus();
+        await loadAnnouncements();
+      }, 500);
     });
   </script>
 </body>

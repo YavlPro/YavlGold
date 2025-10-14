@@ -101,6 +101,28 @@ const AuthClient = {
       if (data.user) {
         console.log('[AuthClient] ✅ Usuario registrado:', data.user.email);
         
+        // Crear perfil extendido en tabla profiles
+        try {
+          const { error: profileError } = await this.supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              username: name.toLowerCase().replace(/\s+/g, '_'),
+              email: data.user.email,
+              avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`,
+              bio: '',
+              is_admin: false
+            });
+
+          if (profileError) {
+            console.warn('[AuthClient] ⚠️ No se pudo crear perfil extendido:', profileError.message);
+          } else {
+            console.log('[AuthClient] ✅ Perfil extendido creado');
+          }
+        } catch (profileErr) {
+          console.warn('[AuthClient] ⚠️ Error al crear perfil:', profileErr.message);
+        }
+        
         // Reset hCaptcha después de uso exitoso
         if (typeof hcaptcha !== 'undefined') {
           hcaptcha.reset();

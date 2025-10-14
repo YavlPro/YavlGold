@@ -58,15 +58,29 @@ const AuthGuard = {
     setTimeout(() => (window.location.href = '/dashboard/'), 800);
   },
 
-  hasRole(requiredRole) {
+  async hasRole(requiredRole) {
     const user = window.AuthClient?.getCurrentUser();
     if (!user) return false;
+
+    // Si ProfileManager está disponible, consultar is_admin desde base de datos
+    if (window.ProfileManager && requiredRole === 'admin') {
+      try {
+        const result = await ProfileManager.isAdmin(user.id);
+        return result.success && result.isAdmin;
+      } catch (error) {
+        console.warn('[AuthGuard] ⚠️ Error al verificar admin, usando fallback:', error.message);
+      }
+    }
+
+    // Fallback al sistema de roles en sesión
     const hierarchy = { admin: 3, moderator: 2, user: 1 };
     return (hierarchy[user.role] || 0) >= (hierarchy[requiredRole] || 0);
   },
-  checkRole(requiredRole) {
+
+  async checkRole(requiredRole) {
     if (!this.check()) return false;
-    if (!this.hasRole(requiredRole)) {
+    const hasPermission = await this.hasRole(requiredRole);
+    if (!hasPermission) {
       console.warn(`[AuthGuard] ⛔ Rol insuficiente: ${requiredRole}`);
       if (window.AuthUI) window.AuthUI.showError('generic', 'No tienes permisos para acceder.');
       else alert('No tienes permisos para acceder.');
@@ -75,12 +89,33 @@ const AuthGuard = {
     }
     return true;
   },
-  protectByRole() {
+
+  async protectByRole() {
     const user = window.AuthClient?.getCurrentUser();
     if (!user) return;
+
+    // Obtener estado de admin desde base de datos si es posible
+    let isAdmin = false;
+    if (window.ProfileManager) {
+      try {
+        const result = await ProfileManager.isAdmin(user.id);
+        isAdmin = result.success && result.isAdmin;
+      } catch (error) {
+        console.warn('[AuthGuard] ⚠️ Error al verificar admin:', error.message);
+      }
+    }
+
     document.querySelectorAll('[data-role]').forEach(el => {
       const req = el.getAttribute('data-role');
-      el.style.display = this.hasRole(req) ? '' : 'none';
+      let shouldShow = false;
+
+      if (req === 'admin') {
+        shouldShow = isAdmin;
+      } else {
+        shouldShow = this.hasRole(req);
+      }
+
+      el.style.display = shouldShow ? '' : 'none';
     });
   },
 
