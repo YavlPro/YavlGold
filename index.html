@@ -136,14 +136,14 @@
     /* --- HERO SECTION MEJORADO --- */
     .hero {
       text-align: center;
-      padding: 180px 20px 100px;
+      padding: 120px 20px 60px;
       background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
       border-bottom: 1px solid rgba(200, 167, 82, 0.3);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      min-height: auto;
       position: relative;
       overflow: hidden;
     }
@@ -166,9 +166,9 @@
     }
     
     .logo-hero {
-      width: 140px;
-      height: 140px;
-      margin: 0 auto 30px;
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
       border-radius: 50%;
       border: 3px solid var(--color-secondary);
       background: rgba(255, 255, 255, 0.1);
@@ -188,7 +188,7 @@
     
     .hero h1 {
       font-family: 'Playfair Display', serif;
-      font-size: 4.5rem;
+      font-size: 3.5rem;
       font-weight: 700;
       color: transparent;
       background: var(--gradient-gold);
@@ -196,7 +196,7 @@
       -webkit-background-clip: text;
       background-clip: text;
       animation: shimmer 3s infinite linear;
-      margin: 0 0 20px;
+      margin: 0 0 15px;
       text-align: center;
       position: relative;
       z-index: 2;
@@ -204,17 +204,18 @@
     }
     
     .hero p {
-      font-size: 1.3rem;
-      max-width: 700px;
-      margin: 0 auto 40px;
+      font-size: 1.15rem;
+      max-width: 650px;
+      margin: 0 auto 30px;
       color: var(--text-muted);
       text-align: center;
       position: relative;
       z-index: 2;
       font-weight: 300;
+      line-height: 1.6;
     }
     
-    .cta-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+    .cta-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
     
     /* Botones: usar .btn, .btn-primary, .btn-secondary de unificacion.css */
     
@@ -654,9 +655,32 @@
       }
     }
     
-    @media (max-width: 480px) {
+    @media (max-width: 768px) {
+      .hero {
+        padding: 100px 20px 50px;
+      }
+      
       .hero h1 {
         font-size: 2.5rem;
+      }
+      
+      .hero p {
+        font-size: 1rem;
+      }
+      
+      .logo-hero {
+        width: 80px;
+        height: 80px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .hero {
+        padding: 90px 15px 40px;
+      }
+      
+      .hero h1 {
+        font-size: 2rem;
       }
       
       .main-nav {
