@@ -23,13 +23,20 @@ const ProfileManager = {
       const { data, error } = await this.supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
       if (error) throw error;
 
-      console.log('[ProfileManager] ✅ Perfil obtenido:', data.username);
-      return { success: true, profile: data };
+      // Verificar si hay resultados
+      if (!data || data.length === 0) {
+        return { success: false, error: 'Perfil no encontrado' };
+      }
+
+      // Si hay múltiples (no debería pasar), tomar el primero
+      const profile = data[0];
+
+      console.log('[ProfileManager] ✅ Perfil obtenido:', profile.username);
+      return { success: true, profile: profile };
     } catch (error) {
       console.error('[ProfileManager] ❌ Error al obtener perfil:', error.message);
       return { success: false, error: error.message };
@@ -145,12 +152,19 @@ const ProfileManager = {
       const { data, error } = await this.supabase
         .from('profiles')
         .select('is_admin')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId);
 
       if (error) throw error;
 
-      return { success: true, isAdmin: data.is_admin === true };
+      // Verificar si hay resultados
+      if (!data || data.length === 0) {
+        return { success: false, isAdmin: false, error: 'Perfil no encontrado' };
+      }
+
+      // Tomar el primer resultado (debería ser único por PK)
+      const profile = data[0];
+
+      return { success: true, isAdmin: profile.is_admin === true };
     } catch (error) {
       console.error('[ProfileManager] ❌ Error al verificar admin:', error.message);
       return { success: false, isAdmin: false };

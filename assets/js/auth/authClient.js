@@ -208,6 +208,10 @@ const AuthClient = {
     return this.currentSession?.user || null;
   },
 
+  getSession() {
+    return this.currentSession;
+  },
+
   emitAuthChange(event) {
     const customEvent = new CustomEvent(`auth:${event.toLowerCase()}`, {
       detail: { user: this.currentSession?.user }
