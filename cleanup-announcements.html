@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧹 Limpiar Anuncios de Prueba - YavlGold</title>
+  <style>
+    body {
+      background: #0B0C0F;
+      color: #E5E5E5;
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 2px solid #C8A752;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 20px 0;
+    }
+    button {
+      background: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
+      color: #0B0C0F;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px 5px;
+      font-size: 1rem;
+    }
+    button:hover { opacity: 0.9; }
+    button.danger {
+      background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+      color: #fff;
+    }
+    .success { color: #4CAF50; }
+    .error { color: #f44336; }
+    .warning { color: #ff9800; }
+    pre {
+      background: #000;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .announcement-item {
+      background: #0B0C0F;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    .announcement-item.test {
+      border-color: #ff9800;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧹 Limpieza de Anuncios de Prueba</h1>
+  
+  <div class="card">
+    <h2>Estado del Sistema</h2>
+    <div id="status">
+      <p class="warning">⏳ Cargando...</p>
+    </div>
+  </div>
+
+  <div class="card" id="announcements-list" style="display: none;">
+    <h2>Anuncios Detectados</h2>
+    <div id="announcements-container"></div>
+    
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #333;">
+      <button onclick="deleteTestAnnouncements()" class="danger">
+        🗑️ Eliminar Todos los Anuncios de Prueba
+      </button>
+      <button onclick="deleteAllAnnouncements()" class="danger" style="background: linear-gradient(135deg, #c62828 0%, #8b0000 100%);">
+        ⚠️ ELIMINAR TODOS (Incluye reales)
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Registro de Acciones</h2>
+    <pre id="log"></pre>
+  </div>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/auth/authClient.js"></script>
+  <script src="/assets/js/profile/profileManager.js?v=3"></script>
+  <script src="/assets/js/announcements/announcementsManager.js"></script>
+
+  <script>
+    const logDiv = document.getElementById('log');
+    const statusDiv = document.getElementById('status');
+    const announcementsListDiv = document.getElementById('announcements-list');
+    const announcementsContainer = document.getElementById('announcements-container');
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+      logDiv.textContent += `[${timestamp}] ${icon} ${message}\n`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    async function loadAnnouncements() {
+      try {
+        log('Cargando anuncios desde Supabase...');
+        
+        const result = await AnnouncementsManager.getAnnouncements({ limit: 100 });
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Error al cargar anuncios');
+        }
+
+        const announcements = result.announcements;
+        log(`Anuncios encontrados: ${announcements.length}`, 'success');
+
+        const testAnnouncements = announcements.filter(a => a.title.includes('🧪 Test') || a.title.includes('Test Anuncio'));
+        const realAnnouncements = announcements.filter(a => !a.title.includes('🧪 Test') && !a.title.includes('Test Anuncio'));
+
+        statusDiv.innerHTML = `
+          <p class="success">✅ Sistema inicializado correctamente</p>
+          <p><strong>Total de anuncios:</strong> ${announcements.length}</p>
+          <p class="warning"><strong>Anuncios de prueba:</strong> ${testAnnouncements.length}</p>
+          <p class="success"><strong>Anuncios reales:</strong> ${realAnnouncements.length}</p>
+        `;
+
+        announcementsListDiv.style.display = 'block';
+
+        announcementsContainer.innerHTML = announcements.map(a => {
+          const isTest = a.title.includes('🧪 Test') || a.title.includes('Test Anuncio');
+          return `
+            <div class="announcement-item ${isTest ? 'test' : ''}">
+              <h4 style="margin: 0 0 10px 0; color: ${isTest ? '#ff9800' : '#C8A752'};">
+                ${isTest ? '🧪' : '📢'} ${a.title}
+              </h4>
+              <p style="margin: 5px 0; font-size: 0.9rem; color: #888;">
+                ID: ${a.id}<br>
+                Creado: ${new Date(a.created_at).toLocaleString()}
+              </p>
+            </div>
+          `;
+        }).join('');
+
+        log(`Anuncios de prueba: ${testAnnouncements.length}`, 'warning');
+        log(`Anuncios reales: ${realAnnouncements.length}`, 'success');
+
+        return { all: announcements, test: testAnnouncements, real: realAnnouncements };
+
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+        statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        throw error;
+      }
+    }
+
+    async function deleteTestAnnouncements() {
+      if (!confirm('¿Estás seguro de eliminar TODOS los anuncios de prueba?\n\nEsto eliminará todos los anuncios que contengan "🧪 Test" en el título.')) {
+        return;
+      }
+
+      try {
+        log('Iniciando eliminación de anuncios de prueba...', 'warning');
+        
+        const data = await loadAnnouncements();
+        const testAnnouncements = data.test;
+
+        if (testAnnouncements.length === 0) {
+          log('No hay anuncios de prueba para eliminar', 'success');
+          alert('No hay anuncios de prueba para eliminar');
+          return;
+        }
+
+        log(`Eliminando ${testAnnouncements.length} anuncios de prueba...`, 'warning');
+
+        let deleted = 0;
+        let failed = 0;
+
+        for (const announcement of testAnnouncements) {
+          try {
+            const result = await AnnouncementsManager.deleteAnnouncement(announcement.id);
+            if (result.success) {
+              deleted++;
+              log(`Eliminado: ${announcement.title}`, 'success');
+            } else {
+              failed++;
+              log(`Error al eliminar: ${announcement.title} - ${result.error}`, 'error');
+            }
+            // Pequeña pausa para no sobrecargar
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (error) {
+            failed++;
+            log(`Error: ${announcement.title} - ${error.message}`, 'error');
+          }
+        }
+
+        log(`\n=== RESUMEN ===`, 'success');
+        log(`Eliminados: ${deleted}`, 'success');
+        log(`Fallidos: ${failed}`, failed > 0 ? 'error' : 'success');
+        log(`Total procesados: ${deleted + failed}`, 'success');
+
+        alert(`✅ Proceso completado\n\nEliminados: ${deleted}\nFallidos: ${failed}`);
+
+        // Recargar lista
+        await loadAnnouncements();
+
+      } catch (error) {
+        log(`Error crítico: ${error.message}`, 'error');
+        alert('❌ Error: ' + error.message);
+      }
+    }
+
+    async function deleteAllAnnouncements() {
+      if (!confirm('⚠️ ADVERTENCIA ⚠️\n\n¿Estás ABSOLUTAMENTE SEGURO de eliminar TODOS los anuncios?\n\nEsto incluye anuncios reales y de prueba.\n\nEsta acción NO se puede deshacer.')) {
+        return;
+      }
+
+      if (!confirm('Esta es tu última oportunidad.\n\n¿Realmente quieres ELIMINAR TODO?')) {
+        return;
+      }
+
+      try {
+        log('⚠️ ELIMINACIÓN TOTAL INICIADA ⚠️', 'error');
+        
+        const data = await loadAnnouncements();
+        const allAnnouncements = data.all;
+
+        log(`Eliminando ${allAnnouncements.length} anuncios...`, 'warning');
+
+        let deleted = 0;
+        let failed = 0;
+
+        for (const announcement of allAnnouncements) {
+          try {
+            const result = await AnnouncementsManager.deleteAnnouncement(announcement.id);
+            if (result.success) {
+              deleted++;
+              log(`Eliminado: ${announcement.title}`, 'success');
+            } else {
+              failed++;
+              log(`Error: ${announcement.title} - ${result.error}`, 'error');
+            }
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (error) {
+            failed++;
+            log(`Error: ${announcement.title} - ${error.message}`, 'error');
+          }
+        }
+
+        log(`\n=== RESUMEN FINAL ===`, 'success');
+        log(`Eliminados: ${deleted}`, 'success');
+        log(`Fallidos: ${failed}`, failed > 0 ? 'error' : 'success');
+
+        alert(`✅ Eliminación completada\n\nEliminados: ${deleted}\nFallidos: ${failed}`);
+
+        await loadAnnouncements();
+
+      } catch (error) {
+        log(`Error crítico: ${error.message}`, 'error');
+        alert('❌ Error: ' + error.message);
+      }
+    }
+
+    // Inicializar
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        AuthClient.init();
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (!ProfileManager.supabase) {
+          ProfileManager.init();
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        log('Sistema inicializado', 'success');
+        await loadAnnouncements();
+      } catch (error) {
+        log(`Error de inicialización: ${error.message}`, 'error');
+        statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+      }
+    });
+  </script>
+
+</body>
+</html>

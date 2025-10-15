@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fix RLS - YavlGold</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0B0C0F;
+      color: #E5E5E5;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #C8A752;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .alert {
+      background: #f44336;
+      color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 5px solid #d32f2f;
+    }
+    .alert h2 {
+      margin-bottom: 10px;
+      font-size: 1.3rem;
+    }
+    .steps {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      border: 2px solid #C8A752;
+      margin-bottom: 30px;
+    }
+    .step {
+      margin-bottom: 30px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid #333;
+    }
+    .step:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .step h3 {
+      color: #C8A752;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-number {
+      background: #C8A752;
+      color: #0B0C0F;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .sql-code {
+      background: #0B0C0F;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;
+      margin: 15px 0;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #C8A752;
+      color: #0B0C0F;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+    .copy-btn:hover {
+      opacity: 0.8;
+    }
+    .copy-btn.copied {
+      background: #4caf50;
+      color: #fff;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
+      color: #0B0C0F;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      width: 100%;
+      margin-top: 20px;
+    }
+    button.primary:hover {
+      opacity: 0.9;
+    }
+    .info-box {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #2196f3;
+      margin: 15px 0;
+    }
+    .success-box {
+      background: #1b5e20;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #4caf50;
+      margin: 15px 0;
+    }
+    ul {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    code {
+      background: #2a2a2a;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #C8A752;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔒 Arreglar Políticas RLS de Announcements</h1>
+    
+    <div class="alert">
+      <h2>⚠️ Problema Identificado</h2>
+      <p><strong>Los anuncios NO se eliminan de la base de datos</strong></p>
+      <p>Causa: Las políticas RLS (Row Level Security) están bloqueando las operaciones DELETE.</p>
+      <br>
+      <p><strong>Evidencia:</strong></p>
+      <ul>
+        <li>✅ UPDATE funciona (editar y guardar) = Política UPDATE está bien</li>
+        <li>❌ DELETE NO funciona = Política DELETE está mal o falta</li>
+        <li>✅ El código JavaScript reporta éxito pero BD no cambia</li>
+      </ul>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <h3>
+          <span class="step-number">1</span>
+          Abrir Supabase SQL Editor
+        </h3>
+        <p>Haz clic en el botón de abajo para abrir el SQL Editor de tu proyecto:</p>
+        <button class="primary" onclick="openSupabase()">
+          🚀 Abrir Supabase SQL Editor
+        </button>
+        <div class="info-box">
+          <strong>💡 Tip:</strong> Se abrirá en una nueva pestaña. Mantén esta página abierta para copiar el SQL.
+        </div>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="step-number">2</span>
+          Copiar el SQL
+        </h3>
+        <p>Haz clic en "Copiar" para copiar el SQL que arregla las políticas:</p>
+        
+        <div class="sql-code" id="sql-code">
+          <button class="copy-btn" onclick="copySql()">📋 Copiar</button>
+<pre style="margin: 0; color: #E5E5E5;">-- ====================================
+-- FIX: Políticas RLS para Announcements
+-- ====================================
+
+-- Paso 1: Eliminar políticas DELETE antiguas (si existen)
+DROP POLICY IF EXISTS "Users can delete own announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Admins can delete any announcement" ON public.announcements;
+DROP POLICY IF EXISTS "Allow delete for admins or authors" ON public.announcements;
+DROP POLICY IF EXISTS "Authors can delete own announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Allow delete for authors and admins" ON public.announcements;
+
+-- Paso 2: Crear nueva política DELETE (permite a autores Y admins)
+CREATE POLICY "Allow delete for authors and admins"
+  ON public.announcements
+  FOR DELETE
+  TO authenticated
+  USING (
+    (author_id = (SELECT auth.uid()))
+    OR 
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = (SELECT auth.uid())
+      AND profiles.is_admin = true
+    )
+  );
+
+-- Verificar que funcionó
+SELECT 
+  policyname,
+  cmd,
+  qual
+FROM pg_policies
+WHERE schemaname = 'public' 
+AND tablename = 'announcements' 
+AND cmd = 'DELETE';</pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="step-number">3</span>
+          Ejecutar el SQL
+        </h3>
+        <p>En el SQL Editor de Supabase:</p>
+        <ol>
+          <li>Pega el SQL que copiaste (Ctrl+V o Cmd+V)</li>
+          <li>Haz clic en el botón <strong>"Run"</strong> (esquina inferior derecha)</li>
+          <li>Espera a que aparezca el mensaje de éxito</li>
+          <li>Verifica que la última consulta muestre la nueva política</li>
+        </ol>
+        
+        <div class="success-box">
+          <strong>✅ Resultado esperado:</strong><br>
+          Deberías ver 1 política de DELETE llamada <code>"Allow delete for authors and admins"</code>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3>
+          <span class="step-number">4</span>
+          Probar que Funciona
+        </h3>
+        <p>Después de ejecutar el SQL:</p>
+        <button class="primary" onclick="testDelete()">
+          🧪 Ir a Página de Prueba
+        </button>
+        <div class="info-box">
+          <strong>Qué hacer:</strong>
+          <ol>
+            <li>Intenta eliminar un anuncio de prueba</li>
+            <li>Recarga la página (F5)</li>
+            <li>Verifica que el anuncio YA NO aparezca</li>
+            <li>Si desapareció = ¡Arreglado! ✅</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <h3 style="margin-bottom: 10px; color: #C8A752;">📚 ¿Qué hace este SQL?</h3>
+      <ol>
+        <li><strong>Elimina políticas antiguas:</strong> Limpia cualquier política DELETE mal configurada</li>
+        <li><strong>Crea política correcta:</strong> Permite DELETE si:
+          <ul>
+            <li>Eres el autor del anuncio (<code>auth.uid() = author_id</code>)</li>
+            <li>O eres admin (<code>profiles.is_admin = true</code>)</li>
+          </ul>
+        </li>
+        <li><strong>Verifica:</strong> Muestra la política creada para confirmar</li>
+      </ol>
+    </div>
+
+    <div class="success-box">
+      <h3 style="margin-bottom: 10px; color: #4caf50;">🎯 Después de Aplicar</h3>
+      <p><strong>Deberías poder:</strong></p>
+      <ul>
+        <li>✅ Eliminar anuncios de prueba y que desaparezcan</li>
+        <li>✅ Eliminar anuncios reales si eres el autor</li>
+        <li>✅ Eliminar cualquier anuncio si eres admin</li>
+        <li>✅ Ver cambios inmediatamente al recargar</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function openSupabase() {
+      window.open('https://supabase.com/dashboard/project/gerzlzprkarikblqxpjt/sql/new', '_blank');
+    }
+
+    function copySql() {
+      const sqlText = document.getElementById('sql-code').querySelector('pre').textContent;
+      
+      navigator.clipboard.writeText(sqlText).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Copiado!';
+        btn.classList.add('copied');
+        
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        alert('Error al copiar. Selecciona el texto manualmente y copia con Ctrl+C');
+      });
+    }
+
+    function testDelete() {
+      window.open('http://localhost:8080/debug-announcements.html', '_blank');
+    }
+  </script>
+</body>
+</html>

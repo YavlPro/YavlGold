@@ -60,17 +60,24 @@ const AuthGuard = {
 
   async hasRole(requiredRole) {
     const user = window.AuthClient?.getCurrentUser();
-    if (!user) return false;
+    if (!user) {
+      console.warn('[AuthGuard] ⚠️ No hay usuario autenticado');
+      return false;
+    }
 
     // Si ProfileManager está disponible, consultar is_admin desde base de datos
     if (window.ProfileManager && requiredRole === 'admin') {
       try {
+        console.log('[AuthGuard] 🔍 Verificando admin para user.id:', user.id);
         const result = await ProfileManager.isAdmin(user.id);
+        console.log('[AuthGuard] 📊 Resultado de isAdmin:', result);
         return result.success && result.isAdmin;
       } catch (error) {
         console.warn('[AuthGuard] ⚠️ Error al verificar admin, usando fallback:', error.message);
       }
     }
+
+    console.log('[AuthGuard] ⚠️ Usando fallback de roles en sesión. ProfileManager disponible:', !!window.ProfileManager);
 
     // Fallback al sistema de roles en sesión
     const hierarchy = { admin: 3, moderator: 2, user: 1 };

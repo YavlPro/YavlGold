@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔐 Registro Test - YavlGold</title>
+  <style>
+    body {
+      background: #0B0C0F;
+      color: #E5E5E5;
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 2px solid #C8A752;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 20px 0;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      background: #000;
+      border: 1px solid #C8A752;
+      border-radius: 6px;
+      color: #E5E5E5;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      background: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
+      color: #0B0C0F;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px 0;
+      font-size: 1rem;
+      width: 100%;
+    }
+    button:hover { opacity: 0.9; }
+    .success { color: #4CAF50; }
+    .error { color: #f44336; }
+    .info { color: #2196F3; }
+  </style>
+</head>
+<body>
+
+  <h1>🔐 Registro con Contraseña Real</h1>
+  
+  <div class="card">
+    <h2>Crear Cuenta Nueva</h2>
+    <p>Registra tu cuenta con contraseña para generar JWT válido</p>
+    
+    <form id="signupForm">
+      <label>Email:</label>
+      <input type="email" id="email" value="yeriksonvarela@gmail.com" required>
+      
+      <label>Nombre de usuario:</label>
+      <input type="text" id="username" value="yeriksonvarela" required>
+      
+      <label>Contraseña (mínimo 6 caracteres):</label>
+      <input type="password" id="password" placeholder="Ej: YavlGold123!" required minlength="6">
+      
+      <label>Confirmar Contraseña:</label>
+      <input type="password" id="password2" placeholder="Repite la contraseña" required minlength="6">
+      
+      <button type="submit">✅ Crear Cuenta y Login</button>
+    </form>
+    
+    <div id="result" style="margin-top: 20px;"></div>
+  </div>
+
+  <div class="card" style="background: #1a1a2e; border-color: #2196F3;">
+    <h3>📋 Instrucciones</h3>
+    <ol>
+      <li>Ingresa email: <code>yeriksonvarela@gmail.com</code></li>
+      <li>Crea una contraseña segura</li>
+      <li>Click en "Crear Cuenta"</li>
+      <li>Si el email ya existe, te dirá que uses login</li>
+      <li>Una vez creado, serás redirigido a los tests</li>
+    </ol>
+  </div>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/auth/authClient.js"></script>
+
+  <script>
+    const resultDiv = document.getElementById('result');
+
+    // Inicializar
+    AuthClient.init();
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const password2 = document.getElementById('password2').value;
+
+      // Validar contraseñas
+      if (password !== password2) {
+        resultDiv.innerHTML = '<p class="error">❌ Las contraseñas no coinciden</p>';
+        return;
+      }
+
+      if (password.length < 6) {
+        resultDiv.innerHTML = '<p class="error">❌ La contraseña debe tener al menos 6 caracteres</p>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<p class="info">⏳ Creando cuenta...</p>';
+
+      try {
+        // Registrar usuario (sin CAPTCHA)
+        const { data, error } = await AuthClient.supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              name: username,
+              username: username
+            }
+          }
+        });
+
+        if (error) {
+          // Si el usuario ya existe, intentar login
+          if (error.message.includes('already registered')) {
+            resultDiv.innerHTML = '<p class="info">⏳ Email ya existe, intentando login...</p>';
+            
+            const { data: loginData, error: loginError } = await AuthClient.supabase.auth.signInWithPassword({
+              email: email,
+              password: password
+            });
+
+            if (loginError) {
+              throw new Error('Email ya registrado. Usa la contraseña correcta o recupera tu cuenta.');
+            }
+
+            if (loginData.session) {
+              saveSessionAndRedirect(loginData);
+              return;
+            }
+          }
+          throw error;
+        }
+
+        if (data.session) {
+          resultDiv.innerHTML = `
+            <p class="success">✅ ¡Cuenta creada exitosamente!</p>
+            <p class="info">📧 Revisa tu email para confirmar (opcional)</p>
+            <p class="info">⏳ Redirigiendo a tests...</p>
+          `;
+          
+          saveSessionAndRedirect(data);
+        } else {
+          resultDiv.innerHTML = `
+            <p class="success">✅ Cuenta creada!</p>
+            <p class="error">⚠️ Necesitas confirmar tu email antes de continuar</p>
+            <p class="info">📧 Revisa tu bandeja de entrada: ${email}</p>
+          `;
+        }
+
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        console.error('[Signup] ❌', error);
+      }
+    });
+
+    function saveSessionAndRedirect(data) {
+      // Guardar sesión con JWT REAL
+      AuthClient.currentSession = {
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.username || data.user.email.split('@')[0],
+          role: 'user'
+        },
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: new Date(data.session.expires_at * 1000).toISOString()
+      };
+      
+      AuthClient.saveSession(AuthClient.currentSession);
+      
+      console.log('[Signup] ✅ Sesión guardada con JWT:', data.session.access_token.substring(0, 50) + '...');
+      
+      // Redirigir después de 2 segundos
+      setTimeout(() => {
+        window.location.href = '/test-admin.html';
+      }, 2000);
+    }
+  </script>
+
+</body>
+</html>

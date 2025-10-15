@@ -20,15 +20,20 @@ const ProfileManager = {
    */
   async getProfile(userId) {
     try {
+      console.log('[ProfileManager] 🔍 Consultando perfil para ID:', userId);
+      
       const { data, error } = await this.supabase
         .from('profiles')
         .select('*')
         .eq('id', userId);
 
+      console.log('[ProfileManager] 📊 Respuesta Supabase:', { data, error, count: data?.length });
+
       if (error) throw error;
 
       // Verificar si hay resultados
       if (!data || data.length === 0) {
+        console.warn('[ProfileManager] ⚠️ No se encontraron resultados para ID:', userId);
         return { success: false, error: 'Perfil no encontrado' };
       }
 
@@ -149,6 +154,16 @@ const ProfileManager = {
    */
   async isAdmin(userId) {
     try {
+      // Verificar que ProfileManager esté inicializado
+      if (!this.supabase) {
+        console.warn('[ProfileManager] ⚠️ No inicializado aún, esperando...');
+        // Esperar un momento para que se inicialice
+        await new Promise(resolve => setTimeout(resolve, 150));
+        if (!this.supabase) {
+          return { success: false, isAdmin: false, error: 'ProfileManager no inicializado' };
+        }
+      }
+
       const { data, error } = await this.supabase
         .from('profiles')
         .select('is_admin')
@@ -214,6 +229,9 @@ const ProfileManager = {
     }
   }
 };
+
+// Exponer ProfileManager globalmente
+window.ProfileManager = ProfileManager;
 
 // Auto-inicializar cuando se carga el DOM
 if (document.readyState === 'loading') {

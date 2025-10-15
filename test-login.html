@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔑 Login Real para Tests - YavlGold</title>
+  <style>
+    body {
+      background: #0B0C0F;
+      color: #E5E5E5;
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 2px solid #C8A752;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 20px 0;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      background: #000;
+      border: 1px solid #C8A752;
+      border-radius: 6px;
+      color: #E5E5E5;
+      font-size: 1rem;
+    }
+    button {
+      background: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
+      color: #0B0C0F;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px 0;
+      font-size: 1rem;
+      width: 100%;
+    }
+    button:hover { opacity: 0.9; }
+    .success { color: #4CAF50; }
+    .error { color: #f44336; }
+    pre {
+      background: #000;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔑 Login Real con Supabase</h1>
+  
+  <div class="card">
+    <h2>Autenticación de Prueba</h2>
+    <p>Elige tu método de autenticación con Supabase:</p>
+    
+    <div style="margin: 20px 0; padding: 15px; background: #000; border-radius: 8px;">
+      <h3 style="color: #C8A752; margin-top: 0;">🔑 Método 1: Con Contraseña</h3>
+      <form id="loginForm">
+        <label>Email:</label>
+        <input type="email" id="email" value="yeriksonvarela@gmail.com" required>
+        
+        <label>Contraseña:</label>
+        <input type="password" id="password" placeholder="Tu contraseña de Supabase" required>
+        
+        <button type="submit">🚀 Login con Contraseña</button>
+      </form>
+    </div>
+
+    <div style="margin: 20px 0; padding: 15px; background: #000; border-radius: 8px;">
+      <h3 style="color: #C8A752; margin-top: 0;">📧 Método 2: Magic Link (Sin contraseña)</h3>
+      <p style="font-size: 0.9rem; opacity: 0.8;">Te enviaremos un link de acceso a tu email</p>
+      <button onclick="sendMagicLink()" type="button">✨ Enviar Magic Link</button>
+    </div>
+    
+    <div id="result" style="margin-top: 20px;"></div>
+  </div>
+
+  <div class="card" id="sessionInfo" style="display: none;">
+    <h3>✅ Sesión Activa</h3>
+    <p><strong>User ID:</strong> <code id="userId"></code></p>
+    <p><strong>Email:</strong> <code id="userEmail"></code></p>
+    <p><strong>JWT Token:</strong></p>
+    <pre id="jwtToken" style="word-break: break-all; white-space: pre-wrap;"></pre>
+    
+    <button onclick="refreshToken()" style="background: #ff9800;">
+      🔄 Obtener JWT de Supabase
+    </button>
+    
+    <button onclick="window.location.href='/test-admin.html'">
+      📊 Ir a Tests de Admin
+    </button>
+    
+    <button onclick="logout()" style="background: #f44336;">
+      🚪 Cerrar Sesión
+    </button>
+  </div>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/auth/authClient.js"></script>
+
+  <script>
+    const resultDiv = document.getElementById('result');
+
+    // Inicializar AuthClient
+    AuthClient.init();
+
+    // Verificar sesión existente
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Primero, intentar obtener sesión de Supabase directamente
+      const { data: { session: supabaseSession }, error } = await AuthClient.supabase.auth.getSession();
+      
+      if (supabaseSession) {
+        console.log('[Test Login] ✅ Sesión de Supabase encontrada:', supabaseSession.user.email);
+        
+        // Guardar sesión con JWT real
+        AuthClient.currentSession = {
+          user: {
+            id: supabaseSession.user.id,
+            email: supabaseSession.user.email,
+            name: supabaseSession.user.user_metadata?.name || supabaseSession.user.email.split('@')[0],
+            role: 'user'
+          },
+          access_token: supabaseSession.access_token,
+          refresh_token: supabaseSession.refresh_token,
+          expires_at: new Date(supabaseSession.expires_at * 1000).toISOString()
+        };
+        
+        AuthClient.saveSession(AuthClient.currentSession);
+        showSessionInfo(AuthClient.currentSession);
+        return;
+      }
+      
+      // Si no hay sesión de Supabase, verificar localStorage
+      const session = AuthClient.getSession();
+      if (session && session.user) {
+        showSessionInfo(session);
+      }
+    });
+
+    // Manejar login con contraseña
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      resultDiv.innerHTML = '<p style="color: #ff9800;">⏳ Autenticando con contraseña...</p>';
+
+      try {
+        // Login REAL con Supabase
+        const { data, error } = await AuthClient.supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
+
+        if (data.session) {
+          saveSession(data);
+        }
+
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        console.error('[Login Real] ❌', error);
+      }
+    });
+
+    // Manejar Magic Link
+    async function sendMagicLink() {
+      const email = document.getElementById('email').value;
+      
+      if (!email) {
+        resultDiv.innerHTML = '<p class="error">❌ Por favor ingresa un email</p>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<p style="color: #ff9800;">⏳ Enviando Magic Link...</p>';
+
+      try {
+        const { data, error } = await AuthClient.supabase.auth.signInWithOtp({
+          email: email,
+          options: {
+            emailRedirectTo: 'http://localhost:8080/test-login.html'
+          }
+        });
+
+        if (error) throw error;
+
+        resultDiv.innerHTML = `
+          <div style="padding: 20px; background: #1a4d1a; border-radius: 8px; border: 2px solid #4CAF50;">
+            <p class="success" style="font-size: 1.2rem; margin: 0 0 10px 0;">✅ Magic Link enviado!</p>
+            <p style="font-size: 0.95rem; opacity: 0.9;">
+              📧 Revisa tu email: <strong>${email}</strong><br>
+              🔗 Click en el link para autenticarte<br>
+              ⏱️ El link expira en 1 hora
+            </p>
+          </div>
+        `;
+
+        console.log('[Magic Link] ✅ Enviado a:', email);
+
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+        console.error('[Magic Link] ❌', error);
+      }
+    }
+
+    function saveSession(data) {
+      // Guardar sesión
+      AuthClient.currentSession = {
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.user_metadata?.name || data.user.email.split('@')[0],
+          role: 'user'
+        },
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+      
+      AuthClient.saveSession(AuthClient.currentSession);
+
+      resultDiv.innerHTML = '<p class="success">✅ Login exitoso!</p>';
+      showSessionInfo(AuthClient.currentSession);
+
+      console.log('[Login Real] ✅ Sesión creada con JWT real:', data.session.access_token.substring(0, 50) + '...');
+    }
+
+    function showSessionInfo(session) {
+      document.getElementById('loginForm').parentElement.style.display = 'none';
+      document.querySelector('[onclick="sendMagicLink()"]').parentElement.style.display = 'none';
+      document.getElementById('sessionInfo').style.display = 'block';
+      document.getElementById('userId').textContent = session.user.id;
+      document.getElementById('userEmail').textContent = session.user.email;
+      document.getElementById('jwtToken').textContent = session.access_token || 'N/A - Click en "Obtener JWT de Supabase"';
+    }
+
+    async function refreshToken() {
+      try {
+        const { data: { session }, error } = await AuthClient.supabase.auth.getSession();
+        
+        if (error) throw error;
+        
+        if (session && session.access_token) {
+          document.getElementById('jwtToken').textContent = session.access_token;
+          
+          // Actualizar sesión guardada
+          AuthClient.currentSession.access_token = session.access_token;
+          AuthClient.saveSession(AuthClient.currentSession);
+          
+          resultDiv.innerHTML = '<p class="success">✅ JWT obtenido de Supabase!</p>';
+          console.log('[JWT] ✅ Token actualizado:', session.access_token.substring(0, 50) + '...');
+        } else {
+          throw new Error('No hay sesión activa en Supabase');
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<p class="error">❌ ${error.message}</p>`;
+        console.error('[JWT] ❌', error);
+      }
+    }
+
+    async function logout() {
+      await AuthClient.supabase.auth.signOut();
+      AuthClient.clearSession();
+      location.reload();
+    }
+  </script>
+
+</body>
+</html>

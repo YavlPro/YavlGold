@@ -110,10 +110,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- Auth & Managers -->
-  <script src="/assets/js/auth/authClient.js"></script>
-  <script src="/assets/js/auth/authGuard.js"></script>
-  <script src="/assets/js/profile/profileManager.js"></script>
+    <script src="/assets/js/auth/authClient.js"></script>
+  <script src="/assets/js/profile/profileManager.js?v=3"></script>
   <script src="/assets/js/announcements/announcementsManager.js"></script>
+  <script src="/assets/js/auth/authGuard.js?v=2"></script>
 
   <script>
     const resultsDiv = document.getElementById('results');
@@ -309,18 +309,14 @@
       showResult('⏳ Test 4: Probando AuthGuard.hasRole()...', 'Verificando roles desde BD...', 'warning');
 
       try {
-        // Simular sesión
-        const mockSession = {
-          user: {
-            id: YOUR_ADMIN_ID,
-            email: 'yeriksonvarela@yavlgold.com',
-            name: 'yeriksonvarela',
-            role: 'user' // Rol en sesión es "user", pero BD dice "admin"
-          }
-        };
+        // Usar la sesión actual (ya autenticada con JWT real)
+        const currentUser = AuthClient.getCurrentUser();
+        
+        if (!currentUser) {
+          throw new Error('No hay usuario autenticado. Por favor haz login primero.');
+        }
 
-        // Guardar sesión temporal
-        AuthClient.saveSession(mockSession);
+        console.log('[Test 4] Usuario actual:', currentUser.id, currentUser.email);
 
         const hasAdminRole = await AuthGuard.hasRole('admin');
 

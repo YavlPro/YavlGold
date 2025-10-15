@@ -194,6 +194,7 @@
     .close-modal-btn:hover {
       background: rgba(255,255,255,0.1);
       color: var(--color-secondary);
+      transform: scale(1.1);
     }
     
     .auth-tabs {
@@ -500,6 +501,70 @@
     </div>
   </div>
 
+  <!-- Modal para Crear/Editar Anuncio -->
+  <div id="announcement-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 99999; overflow-y: auto; padding: 20px;">
+    <div class="modal-content" style="max-width: 600px; width: 100%; margin: 50px auto; background: #1a1a1a; border-radius: 12px; padding: 30px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 2px solid #C8A752;">
+      <button class="close-modal-btn" onclick="closeAnnouncementModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; line-height: 1; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s;">&times;</button>
+      
+      <h2 id="announcement-modal-title" style="color: #C8A752; margin-bottom: 25px;">
+        <i class="fas fa-bullhorn"></i> Crear Anuncio
+      </h2>
+      
+      <form id="announcement-form">
+        <input type="hidden" id="announcement-id">
+        
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label for="announcement-title" style="display: block; margin-bottom: 8px; color: #E5E5E5; font-weight: 500;">
+            Título <span style="color: #f44336;">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="announcement-title" 
+            required 
+            maxlength="200"
+            placeholder="Ej: Nueva funcionalidad disponible"
+            style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0B0C0F; color: #E5E5E5; font-size: 1rem;"
+          >
+          <small style="color: #888; font-size: 0.85rem;">Máximo 200 caracteres</small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 25px;">
+          <label for="announcement-content" style="display: block; margin-bottom: 8px; color: #E5E5E5; font-weight: 500;">
+            Contenido <span style="color: #f44336;">*</span>
+          </label>
+          <textarea 
+            id="announcement-content" 
+            required 
+            maxlength="2000"
+            rows="8"
+            placeholder="Escribe el contenido del anuncio aquí..."
+            style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #0B0C0F; color: #E5E5E5; font-size: 1rem; resize: vertical; font-family: inherit;"
+          ></textarea>
+          <small style="color: #888; font-size: 0.85rem;">Máximo 2000 caracteres</small>
+        </div>
+        
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button 
+            type="button" 
+            onclick="closeAnnouncementModal()" 
+            style="padding: 12px 24px; border-radius: 8px; border: 1px solid #333; background: transparent; color: #E5E5E5; cursor: pointer; font-size: 1rem;"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="submit" 
+            id="announcement-submit-btn"
+            style="padding: 12px 24px; border-radius: 8px; border: none; background: linear-gradient(135deg, #C8A752 0%, #8B7842 100%); color: #0B0C0F; cursor: pointer; font-weight: bold; font-size: 1rem;"
+          >
+            <i class="fas fa-paper-plane"></i> Publicar
+          </button>
+        </div>
+      </form>
+      
+      <div id="announcement-form-message" style="margin-top: 20px; padding: 12px; border-radius: 8px; display: none;"></div>
+    </div>
+  </div>
+
   <!-- Modal de Autenticación -->
   <div id="modal-overlay"></div>
   <div class="modal" id="auth-modal">
@@ -709,9 +774,11 @@
       }
 
       try {
+        // FORZAR REFRESH - nunca usar caché
         const result = await AnnouncementsManager.getAnnouncements({
           limit: announcementsPerPage,
-          offset: currentAnnouncementsPage * announcementsPerPage
+          offset: currentAnnouncementsPage * announcementsPerPage,
+          forceRefresh: true  // ← ESTO FUERZA CONSULTA FRESCA
         });
 
         if (result.success) {
@@ -837,59 +904,167 @@
       return div.innerHTML;
     }
 
-    async function createAnnouncement() {
-      const title = prompt('Título del anuncio:');
-      if (!title) return;
-
-      const content = prompt('Contenido del anuncio:');
-      if (!content) return;
-
-      const result = await AnnouncementsManager.createAnnouncement(title, content);
+    // ========================================
+    // FUNCIONES PARA MODAL DE ANUNCIOS
+    // ========================================
+    
+    function openAnnouncementModal(announcementId = null, title = '', content = '') {
+      const modal = document.getElementById('announcement-modal');
+      const modalTitle = document.getElementById('announcement-modal-title');
+      const form = document.getElementById('announcement-form');
+      const idInput = document.getElementById('announcement-id');
+      const titleInput = document.getElementById('announcement-title');
+      const contentInput = document.getElementById('announcement-content');
+      const submitBtn = document.getElementById('announcement-submit-btn');
       
-      if (result.success) {
-        showNotification('Anuncio creado exitosamente', 'success');
-        currentAnnouncementsPage = 0;
-        await loadAnnouncements();
+      // Resetear formulario
+      form.reset();
+      document.getElementById('announcement-form-message').style.display = 'none';
+      
+      if (announcementId) {
+        // Modo edición
+        modalTitle.innerHTML = '<i class="fas fa-edit"></i> Editar Anuncio';
+        submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+        idInput.value = announcementId;
+        titleInput.value = title;
+        contentInput.value = content;
       } else {
-        showNotification(result.error || 'Error al crear anuncio', 'error');
+        // Modo creación
+        modalTitle.innerHTML = '<i class="fas fa-bullhorn"></i> Crear Anuncio';
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Publicar';
+        idInput.value = '';
       }
+      
+      // Mostrar modal
+      modal.style.display = 'block';
+      
+      // Focus en el título
+      setTimeout(() => titleInput.focus(), 100);
+    }
+    
+    function closeAnnouncementModal() {
+      const modal = document.getElementById('announcement-modal');
+      modal.style.display = 'none';
+    }
+    
+    // Cerrar modal al hacer click fuera
+    document.getElementById('announcement-modal')?.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeAnnouncementModal();
+      }
+    });
+    
+    // Manejar envío del formulario
+    document.getElementById('announcement-form')?.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const messageDiv = document.getElementById('announcement-form-message');
+      const submitBtn = document.getElementById('announcement-submit-btn');
+      const announcementId = document.getElementById('announcement-id').value;
+      const title = document.getElementById('announcement-title').value.trim();
+      const content = document.getElementById('announcement-content').value.trim();
+      
+      if (!title || !content) {
+        messageDiv.style.display = 'block';
+        messageDiv.style.background = '#f44336';
+        messageDiv.style.color = '#fff';
+        messageDiv.textContent = 'Por favor completa todos los campos';
+        return;
+      }
+      
+      // Deshabilitar botón
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+      
+      try {
+        let result;
+        
+        if (announcementId) {
+          // Actualizar
+          result = await AnnouncementsManager.updateAnnouncement(announcementId, { title, content });
+        } else {
+          // Crear
+          result = await AnnouncementsManager.createAnnouncement(title, content);
+        }
+        
+        if (result.success) {
+          messageDiv.style.display = 'block';
+          messageDiv.style.background = '#4CAF50';
+          messageDiv.style.color = '#fff';
+          messageDiv.textContent = announcementId ? '✅ Anuncio actualizado exitosamente' : '✅ Anuncio creado exitosamente';
+          
+          // Recargar anuncios
+          currentAnnouncementsPage = 0;
+          await loadAnnouncements();
+          
+          // Cerrar modal después de 1.5 segundos
+          setTimeout(() => {
+            closeAnnouncementModal();
+          }, 1500);
+        } else {
+          throw new Error(result.error || 'Error desconocido');
+        }
+      } catch (error) {
+        messageDiv.style.display = 'block';
+        messageDiv.style.background = '#f44336';
+        messageDiv.style.color = '#fff';
+        messageDiv.textContent = '❌ ' + error.message;
+        
+        // Rehabilitar botón
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = announcementId ? '<i class="fas fa-save"></i> Guardar Cambios' : '<i class="fas fa-paper-plane"></i> Publicar';
+      }
+    });
+
+    async function createAnnouncement() {
+      openAnnouncementModal();
     }
 
     async function editAnnouncement(id) {
-      const announcement = await AnnouncementsManager.getAnnouncement(id);
-      if (!announcement.success) {
-        showNotification('Error al obtener anuncio', 'error');
-        return;
-      }
-
-      const title = prompt('Nuevo título:', announcement.announcement.title);
-      if (!title) return;
-
-      const content = prompt('Nuevo contenido:', announcement.announcement.content);
-      if (!content) return;
-
-      const result = await AnnouncementsManager.updateAnnouncement(id, { title, content });
+      // Obtener el anuncio actual
+      const result = await AnnouncementsManager.getAnnouncement(id);
       
       if (result.success) {
-        showNotification('Anuncio actualizado exitosamente', 'success');
-        currentAnnouncementsPage = 0;
-        await loadAnnouncements();
+        const announcement = result.announcement;
+        openAnnouncementModal(id, announcement.title, announcement.content);
       } else {
-        showNotification(result.error || 'Error al actualizar anuncio', 'error');
+        showNotification('Error al obtener anuncio', 'error');
       }
     }
 
     async function deleteAnnouncement(id) {
-      if (!confirm('¿Estás seguro de eliminar este anuncio?')) return;
+      if (!confirm('¿Estás seguro de eliminar este anuncio?\n\nEsta acción no se puede deshacer.')) return;
 
-      const result = await AnnouncementsManager.deleteAnnouncement(id);
-      
-      if (result.success) {
-        showNotification('Anuncio eliminado exitosamente', 'success');
-        currentAnnouncementsPage = 0;
-        await loadAnnouncements();
-      } else {
-        showNotification(result.error || 'Error al eliminar anuncio', 'error');
+      try {
+        console.log('[Dashboard] 🗑️ Eliminando anuncio:', id);
+        
+        // Limpiar caché antes de eliminar
+        AnnouncementsManager.clearCache();
+        
+        const result = await AnnouncementsManager.deleteAnnouncement(id);
+        
+        if (result.success) {
+          showNotification('✅ Anuncio eliminado exitosamente', 'success');
+          
+          // Limpiar caché después de eliminar
+          AnnouncementsManager.clearCache();
+          
+          // Resetear página y recargar
+          currentAnnouncementsPage = 0;
+          allAnnouncementsLoaded = false;
+          
+          // Esperar un momento y recargar CON FORCE REFRESH
+          await new Promise(resolve => setTimeout(resolve, 500)); // Aumentado a 500ms
+          await loadAnnouncements(); // Ya tiene forceRefresh: true
+          
+          console.log('[Dashboard] ✅ Anuncios recargados después de eliminar');
+        } else {
+          console.error('[Dashboard] ❌ Error al eliminar:', result.error);
+          showNotification('❌ ' + (result.error || 'Error al eliminar anuncio'), 'error');
+        }
+      } catch (error) {
+        console.error('[Dashboard] ❌ Excepción al eliminar:', error);
+        showNotification('❌ Error: ' + error.message, 'error');
       }
     }
 

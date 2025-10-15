@@ -25,7 +25,7 @@ const AnnouncementsManager = {
    */
   async getAnnouncements(options = {}) {
     try {
-      // Usar caché si está disponible y no ha expirado
+      // Usar caché si está disponible y no ha expirado Y no se fuerza refresh
       const now = Date.now();
       if (!options.forceRefresh && 
           this.cache.announcements.length > 0 && 
@@ -33,6 +33,8 @@ const AnnouncementsManager = {
         console.log('[AnnouncementsManager] 📦 Usando caché');
         return { success: true, announcements: this.cache.announcements, fromCache: true };
       }
+
+      console.log('[AnnouncementsManager] 🔄 Consultando base de datos (forceRefresh:', options.forceRefresh, ')');
 
       let query = this.supabase
         .from('announcements')
@@ -57,6 +59,9 @@ const AnnouncementsManager = {
       this.cache.lastFetch = now;
 
       console.log('[AnnouncementsManager] ✅ Anuncios obtenidos:', data.length);
+      if (data.length > 0) {
+        console.log('[AnnouncementsManager] 📋 IDs:', data.map(a => a.id));
+      }
       return { success: true, announcements: data, fromCache: false };
     } catch (error) {
       console.error('[AnnouncementsManager] ❌ Error al obtener anuncios:', error.message);
