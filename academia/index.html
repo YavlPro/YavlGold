@@ -351,12 +351,146 @@
       color: var(--bg-darker);
     }
     
+    /* Coming Soon Banner */
+    .coming-soon-banner {
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(212, 175, 55, 0.1));
+      border-top: 2px solid var(--color-secondary);
+      border-bottom: 2px solid var(--color-secondary);
+      padding: 80px 20px;
+      margin: 40px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .coming-soon-banner::before {
+      content: '🎓';
+      position: absolute;
+      top: 50%;
+      right: -100px;
+      transform: translateY(-50%);
+      font-size: 25rem;
+      opacity: 0.03;
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(-50%) translateX(0); }
+      50% { transform: translateY(-50%) translateX(-20px); }
+    }
+    
+    .coming-soon-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .coming-soon-icon {
+      font-size: 4rem;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    .coming-soon-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem;
+      color: var(--color-secondary);
+      text-align: center;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 10px rgba(200, 167, 82, 0.3);
+    }
+    
+    .coming-soon-subtitle {
+      text-align: center;
+      font-size: 1.3rem;
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto 60px;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-bottom: 50px;
+    }
+    
+    .feature-item {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(200, 167, 82, 0.2);
+      text-align: center;
+      transition: var(--transition);
+      backdrop-filter: blur(10px);
+    }
+    
+    .feature-item:hover {
+      border-color: var(--color-secondary);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(200, 167, 82, 0.2);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      color: var(--color-secondary);
+      margin-bottom: 15px;
+      display: block;
+    }
+    
+    .feature-item h3 {
+      font-size: 1.2rem;
+      color: var(--text-light);
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .feature-item p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    
+    .coming-soon-cta {
+      text-align: center;
+      margin-top: 40px;
+    }
+    
+    .btn-notify {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 40px;
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+      text-decoration: none;
+      border-radius: var(--border-radius);
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+    }
+    
+    .btn-notify:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 25px rgba(200, 167, 82, 0.5);
+    }
+
     @media (max-width: 768px) {
       .academy-hero h1 { font-size: 2.5rem; }
       .modules-grid { grid-template-columns: 1fr; }
       .hero-stats { flex-direction: column; gap: 20px; }
       .cta-buttons { flex-direction: column; }
       .features-grid { grid-template-columns: 1fr; }
+      .coming-soon-title { font-size: 2rem; }
+      .coming-soon-subtitle { font-size: 1.1rem; }
+      .btn-notify { padding: 14px 30px; font-size: 1rem; }
     }
   </style>
 </head>
@@ -398,6 +532,54 @@
       <div class="stat-item">
         <span class="stat-number">100%</span>
         <span class="stat-label">Gratis</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coming Soon Banner -->
+  <section class="coming-soon-banner">
+    <div class="coming-soon-content">
+      <div class="coming-soon-icon">🚀</div>
+      <h2 class="coming-soon-title">Próximamente: Nueva Academia Interactiva</h2>
+      <p class="coming-soon-subtitle">Estamos desarrollando una experiencia de aprendizaje revolucionaria, inspirada en Duolingo</p>
+      
+      <div class="features-grid">
+        <div class="feature-item">
+          <i class="fas fa-video feature-icon"></i>
+          <h3>Videos Educativos</h3>
+          <p>Aprende con contenido visual de alta calidad</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-question-circle feature-icon"></i>
+          <h3>Quizzes Interactivos</h3>
+          <p>5 preguntas por lección: completar, V/F, emparejar</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-trophy feature-icon"></i>
+          <h3>Sistema de Ranking</h3>
+          <p>Compite y ve tu progreso en tiempo real</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-gamepad feature-icon"></i>
+          <h3>Duelos Online</h3>
+          <p>Desafía a otros usuarios y demuestra tu conocimiento</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-check-circle feature-icon"></i>
+          <h3>Historial Detallado</h3>
+          <p>Revisa tus aciertos y errores para mejorar</p>
+        </div>
+        <div class="feature-item">
+          <i class="fas fa-graduation-cap feature-icon"></i>
+          <h3>Tres Niveles</h3>
+          <p>Básico → Avanzado → Premium</p>
+        </div>
+      </div>
+      
+      <div class="coming-soon-cta">
+        <a href="/#comunidad" class="btn-notify">
+          <i class="fas fa-bell"></i> Únete a la Comunidad para Novedades
+        </a>
       </div>
     </div>
   </section>

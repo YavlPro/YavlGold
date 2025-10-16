@@ -61,8 +61,19 @@ const AuthUI = {
       this.elements.mainNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => this.elements.mainNav.classList.remove('active')));
     }
 
-    window.addEventListener('auth:login', () => { this.updateUI(); this.hideLoginModal(); this.hideRegisterModal(); });
-    window.addEventListener('auth:logout', () => this.updateUI());
+    // Listen to auth events (note: authClient emits 'signed_in', not 'login')
+    window.addEventListener('auth:signed_in', () => { 
+      this.updateUI(); 
+      this.hideLoginModal(); 
+      this.hideRegisterModal();
+      // Auto-redirect to dashboard if not already there
+      if (!window.location.pathname.includes('/dashboard')) {
+        setTimeout(() => {
+          window.location.href = '/dashboard/';
+        }, 500);
+      }
+    });
+    window.addEventListener('auth:signed_out', () => this.updateUI());
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
 
     this.elements.showRegisterLink?.addEventListener('click', (e) => { e.preventDefault(); this.hideLoginModal(); this.showRegisterModal(); });
