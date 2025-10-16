@@ -169,6 +169,11 @@ const AuthUI = {
       window.AuthClient.logout();
       this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
+      
+      // Redirigir a la página principal después de cerrar sesión
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     }
   },
 
