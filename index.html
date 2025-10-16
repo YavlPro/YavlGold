@@ -743,9 +743,29 @@
       <a href="/dashboard/">Dashboard</a>
     </nav>
     
-    <div class="auth-buttons" id="auth-buttons">
-      <button class="btn btn-primary" onclick="showAuthModal('register')">Registrarse</button>
-      <button class="btn btn-secondary" onclick="showAuthModal('login')">Iniciar Sesión</button>
+    <div class="auth-buttons" id="auth-buttons" style="display: flex; gap: 12px;">
+      <button class="btn-login" onclick="window.AuthUI?.showLoginModal()">
+        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+      </button>
+      <button class="btn-register" onclick="window.AuthUI?.showRegisterModal()">
+        <i class="fas fa-user-plus"></i> Registrarse
+      </button>
+    </div>
+    <div id="user-menu" class="user-menu" style="display: none;">
+      <button id="user-menu-btn" class="user-menu-btn">
+        <img src="" alt="" class="user-avatar-sm">
+        <span>Usuario</span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      <div id="user-dropdown" class="user-dropdown" style="display: none;">
+        <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
+        <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+        <hr>
+        <button id="logout-btn" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
     </div>
   </header>
 
