@@ -13,23 +13,36 @@ const AuthUI = {
 
   cacheElements() {
     this.elements = {
+      // Modales nuevos (dashboard/herramientas)
       loginModal: document.getElementById('loginModal'),
       registerModal: document.getElementById('registerModal'),
+      // Modal antiguo (homepage)
+      authModal: document.getElementById('auth-modal'),
+      modalOverlay: document.getElementById('modal-overlay'),
+      loginTab: document.getElementById('login-tab'),
+      registerTab: document.getElementById('register-tab'),
+      // Botones
       loginBtn: document.getElementById('login-btn'),
       registerBtn: document.getElementById('register-btn'),
+      // Formularios
       loginForm: document.getElementById('login-form'),
       registerForm: document.getElementById('register-form'),
+      // Cerrar modales
       closeLoginModal: document.querySelector('#loginModal .modal-close'),
       closeRegisterModal: document.querySelector('#registerModal .modal-close'),
+      // User menu
       userMenu: document.getElementById('user-menu'),
       userMenuBtn: document.getElementById('user-menu-btn'),
       userDropdown: document.getElementById('user-dropdown'),
       logoutBtn: document.getElementById('logout-btn'),
       authButtons: document.querySelector('.auth-buttons'),
+      // Errores
       loginError: document.getElementById('login-error'),
       registerError: document.getElementById('register-error'),
+      // Nav móvil
       navToggle: document.getElementById('nav-toggle'),
       mainNav: document.getElementById('main-nav'),
+      // Links para cambiar entre login/register
       showRegisterLink: document.getElementById('show-register-link'),
       showLoginLink: document.getElementById('show-login-link'),
     };
@@ -81,28 +94,87 @@ const AuthUI = {
   },
 
   showLoginModal() {
-    if (!this.elements.loginModal) return;
-    this.elements.loginModal.style.display = 'flex';
-    this.clearError('login');
-    setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
+    // Sistema nuevo (loginModal separado)
+    if (this.elements.loginModal) {
+      this.elements.loginModal.style.display = 'flex';
+      this.clearError('login');
+      setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
+      return;
+    }
+    
+    // Sistema antiguo (auth-modal con tabs)
+    if (this.elements.authModal) {
+      this.elements.modalOverlay.style.display = 'block';
+      this.elements.authModal.style.display = 'block';
+      // Activar tab de login
+      this.elements.loginTab?.classList.add('active');
+      this.elements.registerTab?.classList.remove('active');
+      // Mostrar formulario de login
+      this.elements.loginForm?.classList.add('active');
+      this.elements.registerForm?.classList.remove('active');
+      this.clearError('login');
+      setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
+    }
   },
+  
   hideLoginModal() {
-    if (!this.elements.loginModal) return;
-    this.elements.loginModal.style.display = 'none';
-    this.clearError('login');
-    this.elements.loginForm?.reset();
+    // Sistema nuevo
+    if (this.elements.loginModal) {
+      this.elements.loginModal.style.display = 'none';
+      this.clearError('login');
+      this.elements.loginForm?.reset();
+      return;
+    }
+    
+    // Sistema antiguo
+    if (this.elements.authModal) {
+      this.elements.modalOverlay.style.display = 'none';
+      this.elements.authModal.style.display = 'none';
+      this.clearError('login');
+      this.elements.loginForm?.reset();
+    }
   },
+  
   showRegisterModal() {
-    if (!this.elements.registerModal) return;
-    this.elements.registerModal.style.display = 'flex';
-    this.clearError('register');
-    setTimeout(() => this.elements.registerForm?.querySelector('input[name="name"]')?.focus(), 80);
+    // Sistema nuevo (registerModal separado)
+    if (this.elements.registerModal) {
+      this.elements.registerModal.style.display = 'flex';
+      this.clearError('register');
+      setTimeout(() => this.elements.registerForm?.querySelector('input[name="name"]')?.focus(), 80);
+      return;
+    }
+    
+    // Sistema antiguo (auth-modal con tabs)
+    if (this.elements.authModal) {
+      this.elements.modalOverlay.style.display = 'block';
+      this.elements.authModal.style.display = 'block';
+      // Activar tab de registro
+      this.elements.registerTab?.classList.add('active');
+      this.elements.loginTab?.classList.remove('active');
+      // Mostrar formulario de registro
+      this.elements.registerForm?.classList.add('active');
+      this.elements.loginForm?.classList.remove('active');
+      this.clearError('register');
+      setTimeout(() => this.elements.registerForm?.querySelector('input[name="email"]')?.focus(), 80);
+    }
   },
+  
   hideRegisterModal() {
-    if (!this.elements.registerModal) return;
-    this.elements.registerModal.style.display = 'none';
-    this.clearError('register');
-    this.elements.registerForm?.reset();
+    // Sistema nuevo
+    if (this.elements.registerModal) {
+      this.elements.registerModal.style.display = 'none';
+      this.clearError('register');
+      this.elements.registerForm?.reset();
+      return;
+    }
+    
+    // Sistema antiguo
+    if (this.elements.authModal) {
+      this.elements.modalOverlay.style.display = 'none';
+      this.elements.authModal.style.display = 'none';
+      this.clearError('register');
+      this.elements.registerForm?.reset();
+    }
   },
 
   toggleUserDropdown() {
