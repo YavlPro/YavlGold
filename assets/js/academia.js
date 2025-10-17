@@ -81,7 +81,7 @@ class AcademiaProgress {
     async loadUserProfile() {
         try {
             const { data, error } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .select('*')
                 .eq('id', this.currentUser.id)
                 .single();
@@ -114,7 +114,7 @@ class AcademiaProgress {
                             'estudiante';
             
             const { data, error } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .insert([{
                     id: this.currentUser.id,
                     username: username,
@@ -226,7 +226,7 @@ class AcademiaProgress {
             
             // El nivel se actualiza automáticamente por trigger en Supabase
             const { data, error } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .update({ 
                     xp_points: newXP,
                     updated_at: new Date().toISOString()
@@ -283,7 +283,7 @@ class AcademiaProgress {
             
             // Actualizar en BD
             const { error } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .update({
                     study_streak_days: newStreak,
                     last_study_date: today
@@ -317,7 +317,7 @@ class AcademiaProgress {
             const newTotal = (this.userProfile.total_study_time_minutes || 0) + minutes;
             
             const { error } = await this.supabase
-                .from('user_profiles')
+                .from('profiles')
                 .update({ total_study_time_minutes: newTotal })
                 .eq('id', this.currentUser.id);
             
