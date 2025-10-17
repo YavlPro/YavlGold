@@ -39,6 +39,45 @@
 .main-nav a:hover::after, .main-nav a.active::after { width: 100%; }
 .auth-buttons { display: flex; gap: 12px; align-items: center; }
 
+/* Botones de autenticación específicos */
+.btn-login,
+.btn-register {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-login {
+  background: transparent;
+  color: var(--color-secondary);
+  border: 2px solid var(--color-secondary);
+}
+
+.btn-login:hover {
+  background: rgba(200, 167, 82, 0.1);
+  transform: translateY(-2px);
+}
+
+.btn-register {
+  background: var(--gradient-gold);
+  color: var(--bg-darker);
+  border: 2px solid transparent;
+}
+
+.btn-register:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(200, 167, 82, 0.4);
+}
+
 /* Botones */
 .btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; font-size: 1rem; text-decoration: none; display: inline-block; text-align: center; }
 .btn-primary { background: var(--gradient-gold); color: var(--bg-darker); }
