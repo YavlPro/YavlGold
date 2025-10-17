@@ -204,4 +204,30 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
     width: 50px;
     height: 50px;
   }
+  
+  /* Header responsive */
+  .gg-header {
+    padding: 12px 4%;
+  }
+  
+  /* Ocultar navegación en móvil (mostrar hamburger en futuro) */
+  .main-nav {
+    display: none;
+  }
+  
+  /* Botones de auth en móvil - más compactos */
+  .auth-buttons {
+    gap: 8px;
+  }
+  
+  .btn-login,
+  .btn-register {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .btn-login i,
+  .btn-register i {
+    display: none; /* Ocultar iconos en móvil para ahorrar espacio */
+  }
 }
