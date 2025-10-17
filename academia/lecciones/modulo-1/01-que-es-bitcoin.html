@@ -836,14 +836,13 @@
       }
       
       try {
-        // Mark lesson as complete (need lesson UUID from database)
-        // For now, just show confirmation
+        // Mark lesson as complete with real UUID
         this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        
+        await window.academiaProgress.markLessonComplete('6a0a26c4-d542-4ac1-bf26-ee357042c04d');
+        
         this.innerHTML = '<i class="fas fa-check-double"></i> ¡Lección Completada!';
-        
-        // In production, this would call:
-        // await window.academiaProgress.markLessonComplete('LESSON_UUID');
-        
         alert('¡Felicitaciones! Lección completada. +10 XP ganados');
         
         // Show next lesson button
