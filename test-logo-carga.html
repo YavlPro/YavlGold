@@ -640,14 +640,15 @@
         });
 
         // Test 3: Verificar timeout delay
-        const timeoutDelay = html.match(/setTimeout\s*\([^,]*,\s*10\s*\)/);
+        const timeoutDelay = html.match(/setTimeout\s*\(\s*(?:\(\)\s*=>|function\s*\(\))\s*\{[\s\S]*?\}\s*,\s*(\d+)\s*\)/);
+        const delayMs = timeoutDelay ? parseInt(timeoutDelay[1]) : null;
         section.tests.push({
-          name: 'Delay del setTimeout (10ms)',
-          status: timeoutDelay ? 'pass' : 'warn',
-          details: timeoutDelay 
-            ? 'Delay de 10ms permite ver el logo brevemente'
-            : 'El delay podría ser diferente o no existir',
-          icon: timeoutDelay ? '✓' : '⚠'
+          name: 'Delay del setTimeout',
+          status: delayMs ? 'pass' : 'warn',
+          details: delayMs 
+            ? `Delay de <strong>${delayMs}ms</strong> configurado correctamente`
+            : 'El delay podría no estar configurado',
+          icon: delayMs ? '✓' : '⚠'
         });
 
         // Test 4: Verificar enlace de fallback manual
@@ -727,12 +728,14 @@
         const scriptCount = externalScripts ? externalScripts.length : 0;
         section.tests.push({
           name: 'Scripts externos en splash screen',
-          status: scriptCount < 3 ? 'pass' : 'warn',
-          details: `${scriptCount} scripts externos detectados. ${
-            scriptCount < 3 ? 'Cantidad mínima para carga rápida' : 
-            'Considerar cargar scripts después de la redirección'
-          }`,
-          icon: scriptCount < 3 ? '✓' : '⚠'
+          status: scriptCount === 0 ? 'pass' : (scriptCount < 3 ? 'warn' : 'fail'),
+          details: scriptCount === 0 
+            ? '✨ Cero scripts externos - Carga instantánea optimizada'
+            : `${scriptCount} scripts externos detectados. ${
+                scriptCount < 3 ? 'Aceptable, pero podría optimizarse' : 
+                'Considerar cargar scripts después de la redirección'
+              }`,
+          icon: scriptCount === 0 ? '✓' : (scriptCount < 3 ? '⚠' : '✗')
         });
 
       } catch (error) {
