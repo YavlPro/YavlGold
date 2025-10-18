@@ -1,242 +1,122 @@
-<!DOCTYPE html><!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 
-<html lang="es">
+<html lang="es"><html lang="es">
 
-<head><html lang="es"><html lang="es">
+<head><head>
 
-  <meta charset="UTF-8">
+  <meta charset="UTF-8">  <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><head><head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta http-equiv="refresh" content="0;url=/apps/gold/">
+  <meta http-equiv="refresh" content="0;url=/apps/gold/">  <title>YavlGold — Academia y Herramientas de Cripto</title>
 
-    <meta charset="UTF-8">  <meta charset="UTF-8">
+  <title>YavlGold - Academia de Trading y Blockchain</title>  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
 
-  <title>YavlGold — Academia y Herramientas de Cripto</title>
+  <meta name="description" content="Academia y herramientas educativas en blockchain y finanzas digitales. Aprende trading, criptomonedas y gestión de riesgos.">  
 
-  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Metadatos Open Graph / Twitter -->
 
-  
+  <!-- Open Graph -->  <meta property="og:type" content="website">
 
-  <!-- Metadatos Open Graph / Twitter -->  <meta http-equiv="refresh" content="0;url=/apps/gold/">  <title>YavlGold — Academia y Herramientas de Cripto</title>
+  <meta property="og:title" content="YavlGold - Academia de Trading">  <meta property="og:url" content="https://yavlgold.com/">
 
-  <meta property="og:type" content="website">
+  <meta property="og:description" content="Aprende trading, blockchain y finanzas digitales con recursos gratuitos.">  <meta property="og:title" content="YavlGold — Academia y Herramientas de Cripto">
 
-  <meta property="og:url" content="https://yavlgold.com/">  <title>YavlGold - Academia de Trading y Blockchain</title>  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
+  <meta property="og:type" content="website">  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
 
-  <meta property="og:title" content="YavlGold — Academia y Herramientas de Cripto">
+  <meta property="og:url" content="https://yavlgold.com">  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
 
-  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">  <meta name="description" content="Academia y herramientas educativas en blockchain y finanzas digitales. Aprende trading, criptomonedas y gestión de riesgos.">  
+    <meta name="twitter:card" content="summary_large_image">
 
-  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+  <style>  <meta name="twitter:url" content="https://yavlgold.com/">
 
-  <meta name="twitter:card" content="summary_large_image">    <!-- Metadatos Open Graph / Twitter -->
+    * { margin: 0; padding: 0; box-sizing: border-box; }  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
 
-  <meta name="twitter:url" content="https://yavlgold.com/">
+    body {  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
 
-  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">  <!-- Open Graph -->  <meta property="og:type" content="website">
+      font-family: system-ui, -apple-system, sans-serif;  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
 
-  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
+      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1e 100%);  
 
-  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">  <meta property="og:title" content="YavlGold - Academia de Trading">  <meta property="og:url" content="https://yavlgold.com/">
+      color: #fff;  <!-- Favicon e íconos -->
 
-  
+      display: flex;  <link rel="icon" href="/assets/images/logo.png" type="image/png">
 
-  <!-- Favicon e íconos -->  <meta property="og:description" content="Aprende trading, blockchain y finanzas digitales con recursos gratuitos.">  <meta property="og:title" content="YavlGold — Academia y Herramientas de Cripto">
+      align-items: center;  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
 
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
+      justify-content: center;  <link rel="apple-touch-icon" href="/assets/images/logo.png">
 
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">  <meta property="og:type" content="website">  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
+      min-height: 100vh;  <meta name="theme-color" content="#0B0C0F">
 
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+      padding: 20px;
 
-  <meta name="theme-color" content="#0B0C0F">  <meta property="og:url" content="https://yavlgold.com">  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+    }  <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
 
-
-
-  <style>    <meta name="twitter:card" content="summary_large_image">
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {  <style>  <meta name="twitter:url" content="https://yavlgold.com/">
-
-      font-family: system-ui, -apple-system, sans-serif;
-
-      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1e 100%);    * { margin: 0; padding: 0; box-sizing: border-box; }  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
-
-      color: #fff;
-
-      display: flex;    body {  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
-
-      align-items: center;
-
-      justify-content: center;      font-family: system-ui, -apple-system, sans-serif;  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
-
-      min-height: 100vh;
-
-      padding: 20px;      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1e 100%);  
-
-    }
-
-    .container {      color: #fff;  <!-- Favicon e íconos -->
+    .container {  <link rel="stylesheet" href="/assets/css/unificacion.css">
 
       text-align: center;
 
-      max-width: 600px;      display: flex;  <link rel="icon" href="/assets/images/logo.png" type="image/png">
+      max-width: 600px;  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
 
-    }
+    }  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 
-    .logo {      align-items: center;  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
+    .logo {  <meta http-equiv="Pragma" content="no-cache" />
 
-      width: 120px;
+      width: 120px;  <meta http-equiv="Expires" content="0" />
 
-      height: 120px;      justify-content: center;  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+      height: 120px;  <script>
 
-      margin: 0 auto 30px;
+      margin: 0 auto 30px;    (function () {
 
-      background: linear-gradient(135deg, #C8A752, #D4AF37);      min-height: 100vh;  <meta name="theme-color" content="#0B0C0F">
+      background: linear-gradient(135deg, #C8A752, #D4AF37);      try {
 
-      border-radius: 20px;
+      border-radius: 20px;        var BUST_VERSION = '20250929'; // update when deploying major changes
 
-      display: flex;      padding: 20px;
+      display: flex;        var key = 'gg_html_busted_index';
 
-      align-items: center;
+      align-items: center;        var already = sessionStorage.getItem(key);
 
-      justify-content: center;    }  <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
+      justify-content: center;        var url = new URL(window.location.href);
 
-      font-size: 48px;
+      font-size: 48px;        if (!url.searchParams.has('v') && !already) {
 
-      font-weight: 900;    .container {  <link rel="stylesheet" href="/assets/css/unificacion.css">
+      font-weight: 900;          url.searchParams.set('v', BUST_VERSION);
 
-      color: #0B0C0F;
+      color: #0B0C0F;          sessionStorage.setItem(key, '1');
 
-      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);      text-align: center;
+      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);          window.location.replace(url.toString());
 
-    }
+    }        }
 
-    h1 {      max-width: 600px;  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
+    h1 {      } catch (e) { /* noop */ }
 
-      font-size: clamp(2rem, 5vw, 3rem);
+      font-size: clamp(2rem, 5vw, 3rem);    })();
 
-      margin-bottom: 15px;    }  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+      margin-bottom: 15px;  </script>
 
-      background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);
+      background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);  
 
-      -webkit-background-clip: text;    .logo {  <meta http-equiv="Pragma" content="no-cache" />
+      -webkit-background-clip: text;  <!-- JSON-LD para SEO -->
 
-      -webkit-text-fill-color: transparent;
+      -webkit-text-fill-color: transparent;  <script type="application/ld+json">
 
-      background-clip: text;      width: 120px;  <meta http-equiv="Expires" content="0" />
+      background-clip: text;  {
 
-    }
+    }    "@context": "https://schema.org",
 
-    p {      height: 120px;  <script>
+    p {    "@type": "Organization",
 
-      font-size: 1.1rem;
+      font-size: 1.1rem;  "name": "YavlGold",
 
-      color: #b0b0b0;      margin: 0 auto 30px;    (function () {
+      color: #b0b0b0;  "url": "https://yavlgold.com/",
 
-      margin-bottom: 30px;
+      margin-bottom: 30px;  "logo": "https://yavlgold.com/assets/brand/icon-512.png",
 
-    }      background: linear-gradient(135deg, #C8A752, #D4AF37);      try {
+    }  "description": "Academia y herramientas educativas en blockchain y finanzas digitales",
 
-    .loader {
+    .loader {    "sameAs": [
 
-      width: 40px;      border-radius: 20px;        var BUST_VERSION = '20250929'; // update when deploying major changes
-
-      height: 40px;
-
-      margin: 0 auto;      display: flex;        var key = 'gg_html_busted_index';
-
-      border: 4px solid rgba(212, 175, 55, 0.2);
-
-      border-top-color: #D4AF37;      align-items: center;        var already = sessionStorage.getItem(key);
-
-      border-radius: 50%;
-
-      animation: spin 1s linear infinite;      justify-content: center;        var url = new URL(window.location.href);
-
-    }
-
-    @keyframes spin {      font-size: 48px;        if (!url.searchParams.has('v') && !already) {
-
-      to { transform: rotate(360deg); }
-
-    }      font-weight: 900;          url.searchParams.set('v', BUST_VERSION);
-
-    a {
-
-      color: #D4AF37;      color: #0B0C0F;          sessionStorage.setItem(key, '1');
-
-      text-decoration: none;
-
-      font-weight: 600;      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);          window.location.replace(url.toString());
-
-    }
-
-    a:hover, a:focus {    }        }
-
-      text-decoration: underline;
-
-      outline: 2px solid #D4AF37;    h1 {      } catch (e) { /* noop */ }
-
-      outline-offset: 4px;
-
-    }      font-size: clamp(2rem, 5vw, 3rem);    })();
-
-    .note {
-
-      margin-top: 20px;      margin-bottom: 15px;  </script>
-
-      font-size: 0.9rem;
-
-      color: #808080;      background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);  
-
-    }
-
-  </style>      -webkit-background-clip: text;  <!-- JSON-LD para SEO -->
-
-</head>
-
-<body>      -webkit-text-fill-color: transparent;  <script type="application/ld+json">
-
-  <div class="container">
-
-    <div class="logo">YG</div>      background-clip: text;  {
-
-    <h1>YavlGold</h1>
-
-    <p>Redirigiendo a la academia...</p>    }    "@context": "https://schema.org",
-
-    <div class="loader"></div>
-
-    <p class="note">    p {    "@type": "Organization",
-
-      Si no eres redirigido automáticamente, 
-
-      <a href="/apps/gold/">haz click aquí</a>      font-size: 1.1rem;  "name": "YavlGold",
-
-    </p>
-
-  </div>      color: #b0b0b0;  "url": "https://yavlgold.com/",
-
-
-
-  <script>      margin-bottom: 30px;  "logo": "https://yavlgold.com/assets/brand/icon-512.png",
-
-    // Redirect inmediato via JavaScript (backup del meta refresh)
-
-    setTimeout(() => {    }  "description": "Academia y herramientas educativas en blockchain y finanzas digitales",
-
-      window.location.href = '/apps/gold/';
-
-    }, 10);    .loader {    "sameAs": [
-
-  </script>
-
-</body>      width: 40px;      "https://x.com/Yavlcapitan",
-
-</html>
+      width: 40px;      "https://x.com/Yavlcapitan",
 
       height: 40px;      "https://t.me/YavlEcosystem",
 
