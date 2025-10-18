@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <base href="/apps/gold/">
   <title>YavlGold — Academia y Herramientas de Cripto</title>
   <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
   
@@ -20,13 +19,13 @@
   <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   
   <!-- Favicon e íconos -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <link rel="icon" href="/apps/gold/assets/images/logo.png" type="image/png">
+  <link rel="alternate icon" href="/apps/gold/assets/images/logo.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apps/gold/assets/images/logo.png">
   <meta name="theme-color" content="#0B0C0F">
 
   <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="/apps/gold/assets/css/unificacion.css">
 
   <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -731,17 +730,17 @@
 <body>
   <!-- Header con navegación profesional -->
   <header class="gg-header">
-    <a class="brand" href="/">
-  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
+    <a class="brand" href="/apps/gold/">
+  <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="logo" />
   <span>YavlGold</span>
     </a>
     
     <!-- ##### MENÚ DE NAVEGACIÓN ACTUALIZADO ##### -->
     <nav class="main-nav">
-      <a href="herramientas/" data-protected="true">Herramientas</a>
-      <a href="/academia/">Academia</a>
-      <a href="/go/telegram.html">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
+      <a href="/apps/gold/herramientas/" data-protected="true">Herramientas</a>
+      <a href="/apps/gold/academia/">Academia</a>
+      <a href="/apps/gold/go/telegram.html">Comunidad</a>
+      <a href="/apps/gold/dashboard/">Dashboard</a>
     </nav>
     
     <!-- Theme Switcher -->
@@ -762,9 +761,9 @@
         <i class="fas fa-chevron-down"></i>
       </button>
       <div id="user-dropdown" class="user-dropdown" style="display: none;">
-        <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
-        <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+        <a href="/apps/gold/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/apps/gold/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
+        <a href="/apps/gold/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
         <hr>
         <button id="logout-btn" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
@@ -776,13 +775,13 @@
   <!-- Hero Section -->
   <section class="hero" id="home">
     <div class="logo-hero">
-      <img src="/assets/images/logo.png" alt="YavlGold Logo">
+      <img src="/apps/gold/assets/images/logo.png" alt="YavlGold Logo">
     </div>
     <h1>YavlGold</h1>
     <p>Academia y herramientas educativas en blockchain y finanzas digitales — aprende y practica con recursos gratuitos y didácticos.</p>
     
     <div class="cta-buttons">
-  <a href="herramientas/" class="btn btn-primary">Ir a Herramientas</a>
+  <a href="/apps/gold/herramientas/" class="btn btn-primary">Ir a Herramientas</a>
       <a href="#academia" class="btn btn-secondary">Explorar Academia</a>
     </div>
   </section>
@@ -799,7 +798,7 @@
         <div class="tool-icon"><i class="fas fa-calculator"></i></div>
         <h3>Herramientas Pro</h3>
         <p>Calculadoras, conversores y análisis de mercado para tomar decisiones informadas.</p>
-        <a href="herramientas/" class="btn btn-secondary">Acceder</a>
+        <a href="/apps/gold/herramientas/" class="btn btn-secondary">Acceder</a>
       </div>
       
       <div class="tool-card">
@@ -938,7 +937,7 @@
   <!-- Footer -->
   <footer>
     <div class="footer-brand">
-      <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+      <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="footer-logo">
       <span>YavlGold</span>
     </div>
     
@@ -948,7 +947,7 @@
       <a href="#herramientas">Herramientas</a>
       <a href="#academia">Academia</a>
       <a href="#comunidad">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
+      <a href="/apps/gold/dashboard/">Dashboard</a>
       <a href="#contacto">Contacto</a>
     </div>
     
@@ -968,7 +967,7 @@
     <button class="close-modal-btn" onclick="closeAuthModal()">&times;</button>
     
     <div class="modal-header">
-  <img src="/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
+  <img src="/apps/gold/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
       <h2 id="modal-title">Bienvenido</h2>
     </div>
     
@@ -1029,14 +1028,14 @@
   
   <!-- Scripts -->
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
-  <script type="module" src="/assets/js/auth.js"></script>
+  <script type="module" src="/apps/gold/assets/js/auth.js"></script>
   
   <!-- Sistema de temas desde workspace package @yavl/themes -->
-  <link rel="stylesheet" href="assets/packages/themes/yavl-themes.css">
-  <link rel="stylesheet" href="assets/packages/ui/base.css">
+  <link rel="stylesheet" href="/apps/gold/assets/packages/themes/yavl-themes.css">
+  <link rel="stylesheet" href="/apps/gold/assets/packages/ui/base.css">
   <script type="module">
-    import { ThemeManager } from './assets/packages/themes/theme-manager.js';
-    import { ThemeSwitcher } from './assets/packages/ui/ThemeSwitcher.js';
+    import { ThemeManager } from '/apps/gold/assets/packages/themes/theme-manager.js';
+    import { ThemeSwitcher } from '/apps/gold/assets/packages/ui/ThemeSwitcher.js';
     
     // Inicializar theme manager
     const themeManager = new ThemeManager();
@@ -1046,7 +1045,7 @@
     themeSwitcher.init(themeManager);
   </script>
   
-  <script src="/assets/js/script.js"></script>
+  <script src="/apps/gold/assets/js/script.js"></script>
   
   <script>
     // Modal control functions
