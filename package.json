@@ -1,0 +1,27 @@
+{
+  "name": "yavl-ecosystem",
+  "version": "1.0.0",
+  "description": "Monorepositorio del ecosistema Yavl - Trading, Social, Suite, Agro",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --filter './apps/*' build",
+    "test": "pnpm --filter './apps/*' test",
+    "lint": "pnpm --filter './apps/*' lint"
+  },
+  "keywords": [
+    "yavl",
+    "monorepo",
+    "crypto",
+    "trading",
+    "social",
+    "agro"
+  ],
+  "author": "YavlPro",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "devDependencies": {}
+}
