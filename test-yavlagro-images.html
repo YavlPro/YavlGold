@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test: Imágenes YavlAgro - YavlGold</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0a0a0a;
+      color: #00ff00;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: #00ff00;
+      border-bottom: 2px solid #00ff00;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    
+    h2 {
+      color: #ffff00;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    
+    .summary {
+      background: rgba(255, 255, 0, 0.1);
+      border: 2px solid #ffff00;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+    
+    .image-card {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      transition: border-color 0.3s;
+    }
+    
+    .image-card.pass {
+      border-color: #00ff00;
+      background: rgba(0, 255, 0, 0.05);
+    }
+    
+    .image-card.fail {
+      border-color: #ff0000;
+      background: rgba(255, 0, 0, 0.05);
+    }
+    
+    .image-card.warn {
+      border-color: #ffaa00;
+      background: rgba(255, 170, 0, 0.05);
+    }
+    
+    .image-preview {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      background: #1a1a1a;
+    }
+    
+    .image-info {
+      font-size: 12px;
+      margin: 5px 0;
+      word-break: break-all;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .status-badge.pass {
+      background: #00ff00;
+      color: #000;
+    }
+    
+    .status-badge.fail {
+      background: #ff0000;
+      color: #fff;
+    }
+    
+    .status-badge.warn {
+      background: #ffaa00;
+      color: #000;
+    }
+    
+    button {
+      background: #00ff00;
+      color: #000;
+      border: none;
+      padding: 12px 24px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      margin: 10px 10px 10px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background: #00cc00;
+    }
+    
+    .counter {
+      display: inline-block;
+      margin: 0 15px;
+      font-size: 18px;
+    }
+    
+    .counter.pass { color: #00ff00; }
+    .counter.fail { color: #ff0000; }
+    .counter.warn { color: #ffaa00; }
+    
+    .recommendations {
+      background: rgba(0, 170, 255, 0.1);
+      border: 1px solid #00aaff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .recommendations h3 {
+      color: #00aaff;
+      margin-bottom: 15px;
+    }
+    
+    .recommendations ul {
+      margin-left: 20px;
+    }
+    
+    .recommendations li {
+      margin: 8px 0;
+      color: #00aaff;
+    }
+    
+    code {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #ff6666;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      color: #ffff00;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🖼️ TEST: Imágenes YavlAgro</h1>
+    <p>Verificación de imágenes, optimización y accesibilidad</p>
+    
+    <button onclick="runTests()">▶ Ejecutar Tests</button>
+    <button onclick="location.reload()">🔄 Recargar</button>
+    <button onclick="downloadReport()">📄 Descargar Reporte</button>
+    
+    <div id="summary" class="summary" style="display: none;">
+      <h3>📊 Resumen</h3>
+      <div>
+        <span class="counter pass">✓ <span id="passCount">0</span> PASS</span>
+        <span class="counter fail">✗ <span id="failCount">0</span> FAIL</span>
+        <span class="counter warn">⚠ <span id="warnCount">0</span> WARN</span>
+      </div>
+      <div style="margin-top: 15px;">
+        <strong>Total de imágenes analizadas:</strong> <span id="totalImages">0</span>
+      </div>
+    </div>
+    
+    <div id="results"></div>
+    
+    <div id="recommendations" class="recommendations" style="display: none;">
+      <h3>💡 Recomendaciones</h3>
+      <ul id="recommendationsList"></ul>
+    </div>
+  </div>
+  
+  <script>
+    let passCount = 0;
+    let failCount = 0;
+    let warnCount = 0;
+    let totalImages = 0;
+    let imageData = [];
+    
+    const results = document.getElementById('results');
+    const summary = document.getElementById('summary');
+    const recommendations = document.getElementById('recommendations');
+    const recommendationsList = document.getElementById('recommendationsList');
+    
+    function updateSummary() {
+      document.getElementById('passCount').textContent = passCount;
+      document.getElementById('failCount').textContent = failCount;
+      document.getElementById('warnCount').textContent = warnCount;
+      document.getElementById('totalImages').textContent = totalImages;
+      summary.style.display = 'block';
+    }
+    
+    async function testImage(src, alt, context) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const startTime = performance.now();
+        
+        img.onload = function() {
+          const loadTime = performance.now() - startTime;
+          resolve({
+            loaded: true,
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+            loadTime: loadTime.toFixed(2),
+            size: null // No podemos obtener el tamaño sin hacer fetch
+          });
+        };
+        
+        img.onerror = function() {
+          resolve({
+            loaded: false,
+            error: 'No se pudo cargar la imagen'
+          });
+        };
+        
+        img.src = src;
+        
+        // Timeout de 10 segundos
+        setTimeout(() => {
+          if (!img.complete) {
+            resolve({
+              loaded: false,
+              error: 'Timeout: La imagen tardó más de 10 segundos'
+            });
+          }
+        }, 10000);
+      });
+    }
+    
+    function isPlaceholder(src) {
+      // Servicios de placeholder genéricos
+      const genericPlaceholders = [
+        'placeholder.com',
+        'placehold.it',
+        'via.placeholder.com',
+        'dummyimage.com',
+        'lorempixel.com'
+      ];
+      
+      // Detectar picsum.photos (siempre es placeholder)
+      if (src.includes('picsum.photos')) return true;
+      
+      // Detectar Unsplash sin ID específico (genérico)
+      // URLs específicas tienen /photo-XXXXX/ en la ruta
+      if (src.includes('unsplash.com') && !src.match(/photo-[a-zA-Z0-9_-]+/)) {
+        return true;
+      }
+      
+      return genericPlaceholders.some(service => src.includes(service));
+    }
+    
+    function analyzeImageQuality(data) {
+      const issues = [];
+      const recommendations = [];
+      
+      // Verificar si es placeholder
+      if (isPlaceholder(data.src)) {
+        if (data.src.includes('picsum.photos')) {
+          issues.push('❌ Usando picsum.photos (placeholder genérico)');
+          recommendations.push(`Reemplazar con imagen específica de Unsplash o CDN local`);
+        } else {
+          issues.push('⚠️ URL de imagen sin ID específico');
+          recommendations.push(`Verificar que la URL tenga un ID específico (photo-XXXXX)`);
+        }
+      }
+      
+      // Verificar texto alternativo
+      if (!data.alt || data.alt.trim() === '') {
+        issues.push('❌ Falta texto alternativo (alt)');
+        recommendations.push('Agregar alt descriptivo para accesibilidad');
+      } else if (data.alt.length < 10) {
+        issues.push('⚠️ Texto alternativo muy corto');
+        recommendations.push('Mejorar descripción del alt text');
+      }
+      
+      // Verificar dimensiones
+      if (data.result.loaded) {
+        if (data.result.width > 2000 || data.result.height > 2000) {
+          issues.push('⚠️ Imagen muy grande (puede ser lenta)');
+          recommendations.push(`Optimizar tamaño: ${data.result.width}x${data.result.height} → máx 1200x1200`);
+        }
+        
+        if (data.result.width < 300 && data.result.height < 300) {
+          issues.push('⚠️ Imagen pequeña (puede verse pixelada)');
+        }
+        
+        // Verificar tiempo de carga
+        if (data.result.loadTime > 2000) {
+          issues.push('❌ Tiempo de carga muy alto');
+          recommendations.push(`Optimizar imagen (cargó en ${data.result.loadTime}ms)`);
+        } else if (data.result.loadTime > 1000) {
+          issues.push('⚠️ Tiempo de carga alto');
+          recommendations.push('Considerar optimización adicional');
+        }
+      }
+      
+      // Determinar estado
+      let status = 'pass';
+      if (issues.some(i => i.startsWith('❌'))) {
+        status = 'fail';
+      } else if (issues.some(i => i.startsWith('⚠️'))) {
+        status = 'warn';
+      }
+      
+      return { status, issues, recommendations };
+    }
+    
+    function createImageCard(data, analysis) {
+      const card = document.createElement('div');
+      card.className = `image-card ${analysis.status}`;
+      
+      let statusText = '';
+      if (analysis.status === 'pass') {
+        statusText = '✓ PASS';
+        passCount++;
+      } else if (analysis.status === 'fail') {
+        statusText = '✗ FAIL';
+        failCount++;
+      } else if (analysis.status === 'warn') {
+        statusText = '⚠ WARN';
+        warnCount++;
+      }
+      
+      let imageHTML = '';
+      if (data.result.loaded) {
+        imageHTML = `<img src="${data.src}" alt="${data.alt}" class="image-preview">`;
+      } else {
+        imageHTML = `<div class="image-preview" style="display:flex;align-items:center;justify-content:center;color:#ff6666;">
+          <div>❌ Error al cargar</div>
+        </div>`;
+      }
+      
+      let dimensionsHTML = '';
+      if (data.result.loaded) {
+        dimensionsHTML = `
+          <div class="image-info">📐 ${data.result.width}x${data.result.height}px</div>
+          <div class="image-info">⏱️ ${data.result.loadTime}ms</div>
+        `;
+      } else {
+        dimensionsHTML = `<div class="image-info" style="color:#ff6666;">${data.result.error}</div>`;
+      }
+      
+      card.innerHTML = `
+        <span class="status-badge ${analysis.status}">${statusText}</span>
+        ${imageHTML}
+        <div class="image-info"><strong>Contexto:</strong> ${data.context}</div>
+        <div class="image-info"><strong>Alt:</strong> ${data.alt || '(vacío)'}</div>
+        ${dimensionsHTML}
+        <div class="image-info"><strong>URL:</strong> <code>${data.src.substring(0, 60)}...</code></div>
+        ${analysis.issues.length > 0 ? `
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333;">
+            ${analysis.issues.map(issue => `<div style="margin: 5px 0;">${issue}</div>`).join('')}
+          </div>
+        ` : ''}
+      `;
+      
+      return card;
+    }
+    
+    async function runTests() {
+      // Limpiar
+      results.innerHTML = '<div class="loading">⏳ Analizando imágenes...</div>';
+      passCount = 0;
+      failCount = 0;
+      warnCount = 0;
+      totalImages = 0;
+      imageData = [];
+      recommendationsList.innerHTML = '';
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Fetch YavlAgro.html
+      const response = await fetch('/apps/agro/YavlAgro.html');
+      const html = await response.text();
+      
+      // Crear DOM temporal
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Encontrar todas las imágenes
+      const images = doc.querySelectorAll('img');
+      totalImages = images.length;
+      
+      results.innerHTML = '';
+      const section = document.createElement('div');
+      section.innerHTML = `<h2>🖼️ Análisis de ${totalImages} Imágenes</h2>`;
+      results.appendChild(section);
+      
+      const grid = document.createElement('div');
+      grid.className = 'test-grid';
+      
+      // Analizar cada imagen
+      for (let img of images) {
+        const src = img.getAttribute('src') || '';
+        const alt = img.getAttribute('alt') || '';
+        const context = img.closest('[class*="card"]')?.querySelector('h3')?.textContent || 
+                       img.closest('picture')?.querySelector('img')?.alt || 
+                       'Imagen general';
+        
+        // Test de carga
+        const result = await testImage(src, alt, context);
+        
+        const data = { src, alt, context, result };
+        const analysis = analyzeImageQuality(data);
+        
+        imageData.push({ data, analysis });
+        
+        // Agregar recomendaciones globales
+        analysis.recommendations.forEach(rec => {
+          if (!recommendationsList.innerHTML.includes(rec)) {
+            const li = document.createElement('li');
+            li.textContent = rec;
+            recommendationsList.appendChild(li);
+          }
+        });
+        
+        grid.appendChild(createImageCard(data, analysis));
+      }
+      
+      results.appendChild(grid);
+      updateSummary();
+      
+      if (recommendationsList.children.length > 0) {
+        recommendations.style.display = 'block';
+      }
+      
+      // Scroll al resumen
+      summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    function downloadReport() {
+      const report = {
+        fecha: new Date().toISOString(),
+        resumen: {
+          total: totalImages,
+          pass: passCount,
+          fail: failCount,
+          warn: warnCount
+        },
+        imagenes: imageData.map(item => ({
+          src: item.data.src,
+          alt: item.data.alt,
+          context: item.data.context,
+          status: item.analysis.status,
+          dimensiones: item.data.result.loaded ? 
+            `${item.data.result.width}x${item.data.result.height}` : 'error',
+          loadTime: item.data.result.loadTime || 'N/A',
+          issues: item.analysis.issues,
+          recommendations: item.analysis.recommendations
+        }))
+      };
+      
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `yavlagro-images-report-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    // Auto-ejecutar
+    window.addEventListener('load', () => {
+      setTimeout(runTests, 500);
+    });
+  </script>
+</body>
+</html>
