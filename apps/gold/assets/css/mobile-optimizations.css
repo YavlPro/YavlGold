@@ -1,0 +1,509 @@
+/* ==============================================
+   OPTIMIZACIONES RESPONSIVE PARA MÓVIL
+   YavlGold - Mejoras de UX Mobile
+   Fecha: 18 de octubre de 2025
+   ============================================== */
+
+/* --- MEJORAS GENERALES MÓVIL --- */
+@media (max-width: 768px) {
+  
+  /* Optimizar espaciado general */
+  body {
+    font-size: 16px; /* Tamaño base legible en móvil */
+  }
+
+  /* Header más compacto en móvil */
+  .gg-header {
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    background: rgba(11, 12, 15, 0.95);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Auto-hide header al scroll down */
+  .gg-header.scroll-down {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  .gg-header.scroll-up {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Logo header optimizado */
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .logo-text {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  /* Botones de autenticación más grandes y táctiles */
+  .auth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .btn-auth {
+    width: 100%;
+    padding: 14px 20px; /* Área táctil mínima 44x44px */
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.3s ease;
+    touch-action: manipulation; /* Mejor respuesta táctil */
+  }
+
+  /* Botón "Iniciar Sesión" con borde dorado */
+  .btn-login {
+    background: transparent;
+    border: 2px solid var(--color-secondary);
+    color: var(--color-secondary);
+  }
+
+  .btn-login:active {
+    transform: scale(0.98);
+    background: rgba(200, 167, 82, 0.1);
+  }
+
+  /* Botón "Registrarse" dorado sólido */
+  .btn-register {
+    background: linear-gradient(135deg, #C8A752, #D4AF37);
+    color: #0B0C0F;
+    border: none;
+    box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+  }
+
+  .btn-register:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(200, 167, 82, 0.4);
+  }
+
+  /* Hero section optimizada */
+  .hero {
+    padding: 140px 20px 60px;
+    text-align: center;
+    min-height: auto;
+  }
+
+  /* Logo hero más grande y destacado */
+  .logo-hero {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 30px;
+    border: 4px solid var(--color-secondary);
+    padding: 12px;
+    box-shadow: 0 0 40px rgba(200, 167, 82, 0.4),
+                0 0 80px rgba(200, 167, 82, 0.2);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 40px rgba(200, 167, 82, 0.4),
+                  0 0 80px rgba(200, 167, 82, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 60px rgba(200, 167, 82, 0.6),
+                  0 0 100px rgba(200, 167, 82, 0.3);
+    }
+  }
+
+  .logo-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* Título hero responsive */
+  .hero h1 {
+    font-size: clamp(2rem, 8vw, 3rem);
+    line-height: 1.2;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtítulo más legible */
+  .hero p {
+    font-size: clamp(1rem, 4vw, 1.2rem);
+    line-height: 1.6;
+    color: #94a3b8;
+    margin-bottom: 30px;
+    padding: 0 10px;
+  }
+
+  /* Botones CTA en columna con espaciado */
+  .cta-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 350px;
+    margin: 0 auto;
+  }
+
+  .btn-cta {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    touch-action: manipulation;
+    transition: all 0.3s ease;
+  }
+
+  /* Botón "Ir a Herramientas" con candado */
+  .btn-herramientas {
+    background: linear-gradient(135deg, #C8A752, #D4AF37);
+    color: #0B0C0F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+  }
+
+  .btn-herramientas i {
+    font-size: 1.2rem;
+  }
+
+  .btn-herramientas:active {
+    transform: scale(0.98);
+  }
+
+  /* Botón "Explorar Academia" con borde */
+  .btn-academia {
+    background: transparent;
+    border: 2px solid var(--color-secondary);
+    color: var(--color-secondary);
+  }
+
+  .btn-academia:active {
+    transform: scale(0.98);
+    background: rgba(200, 167, 82, 0.1);
+  }
+
+  /* Secciones con padding optimizado */
+  .section {
+    padding: 60px 20px;
+  }
+
+  .section-title h2 {
+    font-size: clamp(1.8rem, 6vw, 2.5rem);
+    margin-bottom: 15px;
+  }
+
+  .section-title p {
+    font-size: clamp(1rem, 4vw, 1.1rem);
+    line-height: 1.6;
+  }
+
+  /* Cards más grandes y táctiles */
+  .feature-card,
+  .tool-card {
+    padding: 25px 20px;
+    margin-bottom: 20px;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+  }
+
+  .feature-card:active,
+  .tool-card:active {
+    transform: scale(0.98);
+  }
+
+  /* Grid de features en 1 columna */
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  /* Iconos más grandes */
+  .feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+  }
+
+  /* Textos de features legibles */
+  .feature-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+
+  .feature-card p {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  /* Footer más compacto */
+  .footer {
+    padding: 40px 20px;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 30px;
+    text-align: center;
+  }
+
+  /* Enlaces del footer más grandes */
+  .footer-links a {
+    font-size: 1rem;
+    padding: 10px 0;
+    display: block;
+  }
+
+  /* Redes sociales más grandes */
+  .social-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .social-links a {
+    font-size: 1.8rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(200, 167, 82, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .social-links a:active {
+    transform: scale(0.95);
+    background: rgba(200, 167, 82, 0.2);
+  }
+}
+
+/* --- OPTIMIZACIONES PARA MÓVILES PEQUEÑOS --- */
+@media (max-width: 480px) {
+  
+  /* Ajustes adicionales para pantallas muy pequeñas */
+  .hero {
+    padding: 120px 15px 50px;
+  }
+
+  .logo-hero {
+    width: 120px;
+    height: 120px;
+  }
+
+  .hero h1 {
+    font-size: clamp(1.8rem, 7vw, 2.5rem);
+  }
+
+  .btn-auth,
+  .btn-cta {
+    padding: 14px 18px;
+    font-size: 1rem;
+  }
+
+  .section {
+    padding: 50px 15px;
+  }
+
+  .section-title h2 {
+    font-size: clamp(1.6rem, 6vw, 2rem);
+  }
+
+  .feature-card {
+    padding: 20px 15px;
+  }
+}
+
+/* --- MEJORAS DE ACCESIBILIDAD TÁCTIL --- */
+@media (hover: none) and (pointer: coarse) {
+  
+  /* Todas las áreas interactivas mínimo 44x44px */
+  button,
+  a,
+  .btn,
+  .btn-auth,
+  .btn-cta,
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Eliminar hover en dispositivos táctiles */
+  .btn:hover,
+  .feature-card:hover,
+  .tool-card:hover {
+    transform: none;
+  }
+
+  /* Mejor feedback en tap */
+  .btn:active,
+  .feature-card:active,
+  .tool-card:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+/* --- OPTIMIZACIÓN DE IMÁGENES EN MÓVIL --- */
+@media (max-width: 768px) {
+  
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Lazy loading para imágenes */
+  img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  img[loading="lazy"].loaded {
+    opacity: 1;
+  }
+}
+
+/* --- MEJORAS DE SCROLLING EN MÓVIL --- */
+@media (max-width: 768px) {
+  
+  /* Scroll suave */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevenir scroll horizontal */
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Mejor scrolling en iOS */
+  .content-wrapper {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* --- MEJORAS DE RENDIMIENTO MÓVIL --- */
+@media (max-width: 768px) {
+  
+  /* Reducir animaciones pesadas */
+  * {
+    animation-duration: 0.5s !important;
+    transition-duration: 0.3s !important;
+  }
+
+  /* Optimizar sombras */
+  .card,
+  .btn {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Desactivar parallax en móvil */
+  [data-parallax] {
+    transform: none !important;
+  }
+}
+
+/* --- LANDSCAPE MODE (Móvil horizontal) --- */
+@media (max-width: 768px) and (orientation: landscape) {
+  
+  .hero {
+    padding: 100px 20px 40px;
+    min-height: auto;
+  }
+
+  .logo-hero {
+    width: 100px;
+    height: 100px;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .cta-buttons {
+    flex-direction: row;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .btn-cta {
+    width: auto;
+    min-width: 180px;
+  }
+}
+
+/* --- DARK MODE ESPECÍFICO PARA MÓVIL --- */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+  
+  /* Ajustes de contraste para OLED */
+  .hero,
+  .section {
+    background: #000000;
+  }
+
+  .card {
+    background: #0a0a0a;
+    border: 1px solid rgba(200, 167, 82, 0.2);
+  }
+}
+
+/* --- SAFE AREA INSETS (iPhone con notch) --- */
+@supports (padding: env(safe-area-inset-top)) {
+  @media (max-width: 768px) {
+    
+    .main-header {
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+
+    .hero {
+      padding-top: calc(120px + env(safe-area-inset-top));
+    }
+
+    .footer {
+      padding-bottom: max(40px, env(safe-area-inset-bottom));
+    }
+  }
+}
+
+/* --- OPTIMIZACIONES PARA PWA --- */
+@media (display-mode: standalone) {
+  @media (max-width: 768px) {
+    
+    /* Sin barra de navegación del navegador */
+    .main-header {
+      padding-top: 20px;
+    }
+
+    /* Más espacio para contenido */
+    .hero {
+      padding-top: 100px;
+    }
+  }
+}
