@@ -1,0 +1,273 @@
+/* 🎨 YAVL ECOSYSTEM - SISTEMA DE 8 TEMAS CYBERPUNK
+ * Cada tema define un conjunto completo de variables CSS
+ * para personalizar toda la interfaz del ecosistema Yavl
+ */
+
+/* ============================================
+   TEMA 1: YAVL GOLD (Default)
+   Profesional, elegante, dorado
+   ============================================ */
+[data-theme="gold"],
+:root {
+  --primary: #D4AF37;
+  --primary-light: #E5C158;
+  --primary-dark: #B8941F;
+  
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a2a2a;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  
+  --accent: #FFD700;
+  --gradient: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ============================================
+   TEMA 2: NEON BLUE
+   Gaming, cyberpunk, neón azul vibrante
+   ============================================ */
+[data-theme="neon-blue"] {
+  --primary: #00d9ff;
+  --primary-light: #33e3ff;
+  --primary-dark: #00a8cc;
+  
+  --bg-primary: #050a0f;
+  --bg-secondary: #0f1419;
+  --bg-tertiary: #1a2029;
+  
+  --text-primary: #e0f7ff;
+  --text-secondary: #8fb4c9;
+  
+  --accent: #00ffff;
+  --gradient: linear-gradient(135deg, #00d9ff 0%, #00ffff 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #00d9ff;
+}
+
+/* ============================================
+   TEMA 3: MAGENTA PUNK
+   Agresivo, rebelde, magenta vibrante
+   ============================================ */
+[data-theme="magenta-punk"] {
+  --primary: #ff006e;
+  --primary-light: #ff3385;
+  --primary-dark: #cc0058;
+  
+  --bg-primary: #0f050a;
+  --bg-secondary: #1a0f14;
+  --bg-tertiary: #2a1a24;
+  
+  --text-primary: #ffe0f0;
+  --text-secondary: #d98fb4;
+  
+  --accent: #ff00ff;
+  --gradient: linear-gradient(135deg, #ff006e 0%, #ff00ff 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ff006e;
+  --info: #a855f7;
+}
+
+/* ============================================
+   TEMA 4: EMERALD MATRIX (YavlAgro)
+   Nature-tech, verde Matrix, agricultura
+   ============================================ */
+[data-theme="emerald-matrix"] {
+  --primary: #10b981;
+  --primary-light: #34d399;
+  --primary-dark: #059669;
+  
+  --bg-primary: #05140a;
+  --bg-secondary: #0a1f14;
+  --bg-tertiary: #0f2a1e;
+  
+  --text-primary: #d1fae5;
+  --text-secondary: #86efac;
+  
+  --accent: #00ff88;
+  --gradient: linear-gradient(135deg, #10b981 0%, #00ff88 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ============================================
+   TEMA 5: PURPLE HAZE
+   Premium, misterioso, violeta profundo
+   ============================================ */
+[data-theme="purple-haze"] {
+  --primary: #a855f7;
+  --primary-light: #c084fc;
+  --primary-dark: #9333ea;
+  
+  --bg-primary: #0a050f;
+  --bg-secondary: #140f1a;
+  --bg-tertiary: #1e1a2a;
+  
+  --text-primary: #f3e8ff;
+  --text-secondary: #d8b4fe;
+  
+  --accent: #d946ef;
+  --gradient: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #a855f7;
+}
+
+/* ============================================
+   TEMA 6: ORANGE BLADE
+   Blade Runner, naranja cálido, retrofuturista
+   ============================================ */
+[data-theme="orange-blade"] {
+  --primary: #ff8c00;
+  --primary-light: #ffa733;
+  --primary-dark: #cc7000;
+  
+  --bg-primary: #0f0a05;
+  --bg-secondary: #1a140f;
+  --bg-tertiary: #2a1e14;
+  
+  --text-primary: #fff5e6;
+  --text-secondary: #ffc966;
+  
+  --accent: #ffaa00;
+  --gradient: linear-gradient(135deg, #ff8c00 0%, #ffaa00 100%);
+  
+  --success: #10b981;
+  --warning: #ff8c00;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ============================================
+   TEMA 7: RED ALERT
+   Peligro, urgencia, rojo intenso
+   ============================================ */
+[data-theme="red-alert"] {
+  --primary: #ef4444;
+  --primary-light: #f87171;
+  --primary-dark: #dc2626;
+  
+  --bg-primary: #0f0505;
+  --bg-secondary: #1a0f0f;
+  --bg-tertiary: #2a1414;
+  
+  --text-primary: #fee2e2;
+  --text-secondary: #fca5a5;
+  
+  --accent: #ff0000;
+  --gradient: linear-gradient(135deg, #ef4444 0%, #ff0000 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ============================================
+   TEMA 8: ARCTIC BLUE
+   Clean, profesional, azul ártico
+   ============================================ */
+[data-theme="arctic-blue"] {
+  --primary: #3b82f6;
+  --primary-light: #60a5fa;
+  --primary-dark: #2563eb;
+  
+  --bg-primary: #050a0f;
+  --bg-secondary: #0f1419;
+  --bg-tertiary: #1a2434;
+  
+  --text-primary: #dbeafe;
+  --text-secondary: #93c5fd;
+  
+  --accent: #0ea5e9;
+  --gradient: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ============================================
+   VARIABLES GLOBALES (Todas las temas)
+   Se aplican independientemente del tema
+   ============================================ */
+:root {
+  /* Transiciones */
+  --transition-speed: 0.3s;
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Bordes */
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  
+  /* Sombras */
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+  
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Tipografía */
+  --font-display: 'Orbitron', sans-serif;
+  --font-heading: 'Rajdhani', sans-serif;
+  --font-body: 'Montserrat', sans-serif;
+  
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ============================================
+   TRANSICIONES SUAVES DE TEMA
+   ============================================ */
+* {
+  transition: 
+    background-color var(--transition-speed) var(--transition-timing),
+    color var(--transition-speed) var(--transition-timing),
+    border-color var(--transition-speed) var(--transition-timing);
+}
+
+/* Excepciones (elementos que no deben animar) */
+input, textarea, select {
+  transition: none;
+}
