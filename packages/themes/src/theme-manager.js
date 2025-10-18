@@ -108,10 +108,15 @@ export class ThemeManager {
 
   /**
    * Obtiene la lista de todos los temas disponibles
-   * @returns {object} Objeto con todos los temas
+   * @returns {array} Array de temas con id, name, primary
    */
   getAvailableThemes() {
-    return this.themes;
+    return Object.keys(this.themes).map(key => ({
+      id: key,
+      name: this.themes[key].name,
+      description: this.themes[key].description,
+      primary: this.themes[key].color
+    }));
   }
 
   /**
@@ -144,13 +149,23 @@ export class ThemeManager {
    * @param {string} themeName - Nombre del nuevo tema
    */
   emitThemeChange(themeName) {
-    const event = new CustomEvent('themechange', {
+    // Evento estilo kebab-case para consistency con auth
+    const eventKebab = new CustomEvent('theme:changed', {
       detail: {
         theme: themeName,
         themeInfo: this.themes[themeName]
       }
     });
-    window.dispatchEvent(event);
+    window.dispatchEvent(eventKebab);
+    
+    // También emitir evento legacy para compatibilidad
+    const eventLegacy = new CustomEvent('themechange', {
+      detail: {
+        theme: themeName,
+        themeInfo: this.themes[themeName]
+      }
+    });
+    window.dispatchEvent(eventLegacy);
   }
 
   /**

@@ -743,6 +743,9 @@
       <a href="/dashboard/">Dashboard</a>
     </nav>
     
+    <!-- Theme Switcher -->
+    <div id="theme-switcher-container"></div>
+    
     <div class="auth-buttons" id="auth-buttons" style="display: flex; gap: 12px;">
       <button id="login-btn" class="btn-login">
         <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
@@ -1026,6 +1029,22 @@
   <!-- Scripts -->
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
   <script type="module" src="/assets/js/auth.js"></script>
+  
+  <!-- Sistema de temas desde workspace package @yavl/themes -->
+  <link rel="stylesheet" href="/node_modules/@yavl/themes/src/yavl-themes.css">
+  <link rel="stylesheet" href="/node_modules/@yavl/ui/src/base.css">
+  <script type="module">
+    import { ThemeManager } from '/node_modules/@yavl/themes/src/theme-manager.js';
+    import { ThemeSwitcher } from '/node_modules/@yavl/ui/src/ThemeSwitcher.js';
+    
+    // Inicializar theme manager
+    const themeManager = new ThemeManager();
+    
+    // Inicializar theme switcher
+    const themeSwitcher = new ThemeSwitcher();
+    themeSwitcher.init(themeManager);
+  </script>
+  
   <script src="/assets/js/script.js"></script>
   
   <script>
