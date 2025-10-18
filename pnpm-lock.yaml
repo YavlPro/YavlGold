@@ -8,6 +8,18 @@ importers:
 
   .: {}
 
+  apps/agro:
+    dependencies:
+      '@yavl/themes':
+        specifier: workspace:*
+        version: link:../../packages/themes
+      '@yavl/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@yavl/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+
   apps/gold:
     dependencies:
       '@supabase/supabase-js':
@@ -16,6 +28,30 @@ importers:
       '@yavl/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@yavl/themes':
+        specifier: workspace:*
+        version: link:../../packages/themes
+      '@yavl/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@yavl/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+
+  apps/social:
+    dependencies:
+      '@yavl/themes':
+        specifier: workspace:*
+        version: link:../../packages/themes
+      '@yavl/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@yavl/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+
+  apps/suite:
+    dependencies:
       '@yavl/themes':
         specifier: workspace:*
         version: link:../../packages/themes
