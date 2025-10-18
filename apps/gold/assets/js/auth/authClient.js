@@ -7,6 +7,13 @@ const AuthClient = {
   STORAGE_KEY: 'gg:session',
 
   init() {
+    // Esperar a que Supabase esté disponible
+    if (typeof window.supabase === 'undefined') {
+      console.log('[Auth] ⏳ Esperando Supabase...');
+      setTimeout(() => this.init(), 50);
+      return;
+    }
+    
     const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
     

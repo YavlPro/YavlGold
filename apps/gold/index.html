@@ -83,8 +83,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Supabase Client Library (DEBE cargar primero para auth.js) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase Client Library (async para no bloquear) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
   
   <!-- hCaptcha Script (async para no bloquear) -->
   <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
@@ -174,20 +174,20 @@
     }
     
     .logo-hero {
-      width: 125px;
-      height: 125px;
-      margin: 0 auto 25px;
+      width: 100px;  /* Reducido de 125px */
+      height: 100px; /* Reducido de 125px */
+      margin: 0 auto 20px; /* Reducido margen */
       border-radius: 50%;
-      border: 4px solid var(--color-secondary);
+      border: 3px solid var(--color-secondary); /* Reducido de 4px */
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      padding: 10px;
+      padding: 8px; /* Reducido de 10px */
       position: relative;
       z-index: 2;
       box-shadow: 
-        0 0 40px rgba(200, 167, 82, 0.4),
-        0 0 80px rgba(200, 167, 82, 0.2),
-        inset 0 0 20px rgba(200, 167, 82, 0.1);
+        0 0 30px rgba(200, 167, 82, 0.3), /* Reducido */
+        0 0 60px rgba(200, 167, 82, 0.15), /* Reducido */
+        inset 0 0 15px rgba(200, 167, 82, 0.1); /* Reducido */
       transition: all 0.3s ease;
     }
     
