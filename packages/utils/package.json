@@ -1,0 +1,19 @@
+{
+  "name": "@yavl/utils",
+  "version": "1.0.0",
+  "description": "Utilidades compartidas del ecosistema Yavl",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Tests coming soon\"",
+    "lint": "echo \"Linting coming soon\""
+  },
+  "keywords": [
+    "yavl",
+    "utils",
+    "utilities",
+    "helpers"
+  ],
+  "author": "YavlPro",
+  "license": "MIT"
+}

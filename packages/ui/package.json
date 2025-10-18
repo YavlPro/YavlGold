@@ -1,0 +1,19 @@
+{
+  "name": "@yavl/ui",
+  "version": "1.0.0",
+  "description": "Componentes UI compartidos del ecosistema Yavl",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Tests coming soon\"",
+    "lint": "echo \"Linting coming soon\""
+  },
+  "keywords": [
+    "yavl",
+    "ui",
+    "components",
+    "design-system"
+  ],
+  "author": "YavlPro",
+  "license": "MIT"
+}

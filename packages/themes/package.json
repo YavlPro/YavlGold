@@ -1,0 +1,20 @@
+{
+  "name": "@yavl/themes",
+  "version": "1.0.0",
+  "description": "Sistema de temas cyberpunk para el ecosistema Yavl - 8 temas disponibles",
+  "main": "src/theme-manager.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Tests coming soon\"",
+    "lint": "echo \"Linting coming soon\""
+  },
+  "keywords": [
+    "yavl",
+    "themes",
+    "cyberpunk",
+    "css",
+    "design-system"
+  ],
+  "author": "YavlPro",
+  "license": "MIT"
+}
