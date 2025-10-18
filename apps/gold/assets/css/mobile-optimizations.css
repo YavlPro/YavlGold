@@ -507,3 +507,93 @@
     }
   }
 }
+
+/* ==============================================
+   BOTÓN SCROLL-TO-TOP
+   ============================================== */
+#scroll-to-top {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #C8A752, #D4AF37);
+  color: #0B0C0F;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(200, 167, 82, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#scroll-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+#scroll-to-top:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(200, 167, 82, 0.6);
+}
+
+#scroll-to-top:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  #scroll-to-top {
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* ==============================================
+   PREFERS-REDUCED-MOTION
+   Accesibilidad para usuarios que prefieren menos movimiento
+   ============================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Desactivar animaciones específicas */
+  .logo-hero {
+    animation: none !important;
+  }
+
+  .pulse-glow {
+    animation: none !important;
+  }
+
+  /* Mantener transiciones de opacidad muy rápidas */
+  .fade-in,
+  img.loaded {
+    transition: opacity 0.01ms !important;
+  }
+
+  /* Header sin animación */
+  .gg-header {
+    transition: none !important;
+  }
+
+  /* Smooth scroll desactivado */
+  html {
+    scroll-behavior: auto !important;
+  }
+}
