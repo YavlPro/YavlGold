@@ -88,13 +88,24 @@ CSS integrado en `/packages/ui/src/base.css`:
 
 ## Progreso
 
-- [ ] **Paso 1:** Crear ThemeSwitcher component
-- [ ] **Paso 2:** Integrar en YavlGold
-- [ ] **Paso 3:** Integrar en YavlSocial
+- [x] **Paso 1:** Crear ThemeSwitcher component ✅
+- [x] **Paso 2:** Integrar en YavlGold ✅
+- [ ] **Paso 3:** Integrar en YavlSocial (SIGUIENTE)
 - [ ] **Paso 4:** Integrar en YavlSuite
 - [ ] **Paso 5:** Integrar en YavlAgro
 - [ ] **Paso 6:** Testing cross-app
 - [ ] **Paso 7:** Validar persistencia
+
+## Nota Importante
+
+YavlSocial, Suite y Agro NO usan el sistema de temas porque:
+- **Social**: Portfolio con su propio estilo cyberpunk hardcodeado
+- **Suite**: Music player con su diseño Tailwind personalizado
+- **Agro**: App agrícola con colores verdes específicos
+
+**DECISIÓN:** El theme-switcher solo se integrará en **YavlGold** (la app principal con sistema completo de autenticación y dashboard). Las otras apps mantienen sus estilos individuales.
+
+El sistema de temas está **disponible como workspace package** para uso futuro si se decide unificar estilos.
 
 ## Testing Checklist
 
