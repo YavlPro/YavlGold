@@ -87,8 +87,14 @@ rsync -av --exclude='apps' --exclude='packages' --exclude='node_modules' --exclu
   - [x] authGuard.js migrado (235 líneas) ✅
   - [x] authUI.js migrado (326 líneas) ✅
   - [x] index.js con exports correctos ✅
-- [ ] **Paso 4:** Actualizar imports en HTML (SIGUIENTE)
-- [ ] **Paso 5:** Testing
+- [x] **Paso 4:** Actualizar imports en HTML ✅
+  - [x] auth.js bridge creado ✅
+  - [x] index.html actualizado ✅
+  - [x] dashboard/index.html actualizado ✅
+  - [x] dashboard/perfil.html actualizado ✅
+  - [x] dashboard/configuracion.html actualizado ✅
+  - [x] herramientas/index.html actualizado ✅
+- [ ] **Paso 5:** Testing (EN PROGRESO)
 
 ---
 
