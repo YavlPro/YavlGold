@@ -43,10 +43,10 @@ const ThemeManager = {
   },
   
   /**
-   * Detectar preferencia del sistema
+   * Detectar preferencia del sistema con prefers-color-scheme
    */
   detectSystemPreference() {
-    if (window.matchMedia) {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').media !== 'not all') {
       const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
       this.systemPrefersDark = darkModeQuery.matches;
       
@@ -57,6 +57,8 @@ const ThemeManager = {
           this.applyTheme(this.THEMES.AUTO);
         }
       });
+      
+      console.log('[ThemeManager] 🎨 prefers-color-scheme detectado:', this.systemPrefersDark ? 'dark' : 'light');
     } else {
       this.systemPrefersDark = true; // Default a dark
     }

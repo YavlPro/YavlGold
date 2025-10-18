@@ -1048,39 +1048,30 @@
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
   <script type="module" src="/apps/gold/assets/js/auth.js"></script>
   
-  <!-- Sistema de temas desde workspace package @yavl/themes -->
+  <!-- Sistema de temas - Usando ThemeManager v2.0 (auto-inicializado en head) -->
+  <!-- El selector de emojis se renderiza automáticamente en #theme-switcher-container -->
+  
+  <!--
+  LEGACY CODE - Commented out, using new ThemeManager v2.0 instead
   <link rel="stylesheet" href="/apps/gold/assets/packages/themes/yavl-themes.css">
   <link rel="stylesheet" href="/apps/gold/assets/packages/ui/base.css">
   <script type="module">
     import { ThemeManager } from '/apps/gold/assets/packages/themes/theme-manager.js';
     import { ThemeSwitcher } from '/apps/gold/assets/packages/ui/ThemeSwitcher.js';
     
-    // Asegurar que DOM esté listo
     function initThemes() {
-      console.log('[Themes] 🎨 Iniciando sistema de temas...');
-      
-      try {
-        // Inicializar theme manager
-        const themeManager = new ThemeManager();
-        console.log('[Themes] ✅ ThemeManager inicializado');
-        
-        // Inicializar theme switcher
-        const themeSwitcher = new ThemeSwitcher();
-        themeSwitcher.init(themeManager);
-        console.log('[Themes] ✅ ThemeSwitcher inicializado');
-      } catch (error) {
-        console.error('[Themes] ❌ Error:', error);
-      }
+      const themeManager = new ThemeManager();
+      const themeSwitcher = new ThemeSwitcher();
+      themeSwitcher.init(themeManager);
     }
     
-    // Esperar a que DOM esté completamente cargado
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initThemes);
     } else {
-      // DOM ya está listo
       initThemes();
     }
   </script>
+  -->
   
   <script src="/apps/gold/assets/js/script.js"></script>
   

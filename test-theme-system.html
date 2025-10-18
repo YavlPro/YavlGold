@@ -347,7 +347,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('setTheme');
+                        return js.includes('setTheme(') || js.includes('setTheme (');
                     }
                 },
                 {
@@ -355,7 +355,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('getTheme');
+                        return js.includes('getTheme(') || js.includes('getTheme (');
                     }
                 }
             ],
@@ -365,7 +365,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('createElement') || js.includes('innerHTML');
+                        return js.includes('createEmojiSelector') && (js.includes('createElement') || js.includes('innerHTML'));
                     }
                 },
                 {
@@ -401,7 +401,7 @@
                     test: async () => {
                         const response = await fetch('/apps/gold/assets/css/unificacion.css');
                         const css = await response.text();
-                        return css.includes('[data-theme="dark"]') || css.includes('.theme-dark');
+                        return css.includes('data-theme="dark"') || css.includes("data-theme='dark'") || css.includes('.theme-dark');
                     }
                 },
                 {
@@ -409,7 +409,7 @@
                     test: async () => {
                         const response = await fetch('/apps/gold/assets/css/unificacion.css');
                         const css = await response.text();
-                        return css.includes('[data-theme="light"]') || css.includes('.theme-light');
+                        return css.includes('data-theme="light"') || css.includes("data-theme='light'") || css.includes('.theme-light');
                     }
                 }
             ],
@@ -417,9 +417,11 @@
                 {
                     name: 'ThemeManager.init() es llamado',
                     test: async () => {
-                        const response = await fetch(TEST_URL);
-                        const html = await response.text();
-                        return html.includes('ThemeManager.init()') || html.includes('themeManager.init()');
+                        const response = await fetch('/assets/js/themeManager.js');
+                        const js = await response.text();
+                        // El script se auto-inicializa con DOMContentLoaded
+                        return (js.includes('ThemeManager.init()') || js.includes('themeManager.init()')) && 
+                               js.includes('DOMContentLoaded');
                     }
                 },
                 {
