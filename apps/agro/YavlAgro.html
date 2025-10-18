@@ -5,17 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>YavlAgro — Hortalizas y frutas de Táchira</title>
   <meta name="description" content="Productos agrícolas de Táchira, Venezuela: variedades, beneficios, temporada y contacto directo. YavlAgro by YAVL Pro.">
-  <link rel="canonical" href="https://yavlpro.github.io/YavlAgro/YavlAgro.html">
+  <link rel="canonical" href="https://yavlgold.com/apps/agro/YavlAgro.html">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="YavlAgro">
   <meta property="og:description" content="Hortalizas y frutas de Táchira, Venezuela. YavlAgro by YAVL Pro.">
-  <meta property="og:url" content="https://yavlpro.github.io/YavlAgro/YavlAgro.html">
+  <meta property="og:url" content="https://yavlgold.com/apps/agro/YavlAgro.html">
   <meta property="og:image" content="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=1200&auto=format&fit=crop">
 
   <!-- Favicon opcional -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24'%3E%3Cpath fill='%2338d39f' d='M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z'/%3E%3C/svg%3E">
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Theme Manager -->
+  <script src="/assets/js/themeManager.js"></script>
 
   <style>
     :root{
@@ -243,8 +249,8 @@
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "YavlAgro",
-  "url": "https://yavlpro.github.io/YavlAgro/YavlAgro.html",
-    "logo": "https://yavlpro.github.io/YavlAgro/logo.png"
+    "url": "https://yavlgold.com/apps/agro/YavlAgro.html",
+    "logo": "https://yavlgold.com/assets/images/logo.png"
   }
   </script>
 
@@ -393,22 +399,68 @@
       navToggle.setAttribute("aria-expanded", open ? "true" : "false");
     });
 
-    // Tema claro/oscuro
-    const root = d.documentElement;
-    const themeBtn = d.getElementById("themeToggle");
-    function setTheme(t){ root.setAttribute("data-theme", t); localStorage.setItem("theme", t); themeBtn.textContent = t === "light" ? "🌞" : "🌙"; }
-    const saved = localStorage.getItem("theme");
-    setTheme(saved || "dark");
-    themeBtn?.addEventListener("click", () => {
-      const t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      setTheme(t);
-    });
+    // Tema claro/oscuro usando ThemeManager
+    if (typeof ThemeManager !== 'undefined') {
+      ThemeManager.init();
+      
+      // Conectar el botón de tema
+      const themeBtn = d.getElementById("themeToggle");
+      if (themeBtn) {
+        themeBtn.addEventListener("click", () => {
+          ThemeManager.toggle();
+        });
+        
+        // Actualizar icono del botón
+        const updateIcon = () => {
+          const current = ThemeManager.getCurrentTheme();
+          themeBtn.textContent = current === "light" ? "🌞" : "🌙";
+        };
+        updateIcon();
+        
+        // Observar cambios de tema
+        const observer = new MutationObserver(updateIcon);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      }
+    } else {
+      // Fallback si ThemeManager no está disponible
+      const root = d.documentElement;
+      const themeBtn = d.getElementById("themeToggle");
+      function setTheme(t){ root.setAttribute("data-theme", t); localStorage.setItem("theme", t); themeBtn.textContent = t === "light" ? "🌞" : "🌙"; }
+      const saved = localStorage.getItem("theme");
+      setTheme(saved || "dark");
+      themeBtn?.addEventListener("click", () => {
+        const t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        setTheme(t);
+      });
+    }
 
     // Año en footer
     d.getElementById("year").textContent = new Date().getFullYear();
 
     // Inicial
     render("all");
+  </script>
+
+  <!-- Auth Guard para protección de página -->
+  <script type="module">
+    import { supabase } from '/assets/js/supabase.js';
+
+    // Verificar autenticación al cargar la página
+    async function checkAuth() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session) {
+        // Guardar la URL actual para redireccionar después del login
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      console.log('✅ Usuario autenticado en YavlAgro');
+    }
+
+    // Ejecutar verificación
+    checkAuth();
   </script>
 </body>
 </html>
