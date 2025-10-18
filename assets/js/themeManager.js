@@ -1,14 +1,21 @@
 /**
  * =============================================
- * YAVLGOLD - THEME MANAGER v1.0
- * Sistema de gestión de temas (claro/oscuro)
+ * YAVLGOLD - THEME MANAGER v2.0
+ * Sistema de gestión de temas con selector de emojis
  * =============================================
  */
 
 const ThemeManager = {
   THEMES: {
     DARK: 'dark',
-    LIGHT: 'light'
+    LIGHT: 'light',
+    AUTO: 'auto'
+  },
+  
+  THEME_EMOJIS: {
+    dark: '🌙',
+    light: '☀️',
+    auto: '🎨'
   },
   
   STORAGE_KEY: 'gg:theme',
@@ -19,9 +26,15 @@ const ThemeManager = {
   init() {
     console.log('[ThemeManager] 🎨 Inicializando sistema de temas...');
     
-    // Cargar tema guardado o usar oscuro por defecto
-    const savedTheme = this.getSavedTheme();
-    this.applyTheme(savedTheme);
+    // Detectar preferencia del sistema
+    this.detectSystemPreference();
+    
+    // Cargar tema guardado o usar auto por defecto
+    const savedTheme = this.getTheme();
+    this.setTheme(savedTheme);
+    
+    // Crear selector de emojis
+    this.createEmojiSelector();
     
     // Actualizar toggle si existe
     this.updateToggleButton();
@@ -30,20 +43,53 @@ const ThemeManager = {
   },
   
   /**
-   * Obtener el tema guardado
+   * Detectar preferencia del sistema
    */
-  getSavedTheme() {
-    try {
-      const saved = localStorage.getItem(this.STORAGE_KEY);
-      return saved || this.THEMES.DARK;
-    } catch (error) {
-      console.warn('[ThemeManager] ⚠️ Error al leer tema guardado:', error);
-      return this.THEMES.DARK;
+  detectSystemPreference() {
+    if (window.matchMedia) {
+      const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.systemPrefersDark = darkModeQuery.matches;
+      
+      // Escuchar cambios en la preferencia del sistema
+      darkModeQuery.addEventListener('change', (e) => {
+        this.systemPrefersDark = e.matches;
+        if (this.getTheme() === this.THEMES.AUTO) {
+          this.applyTheme(this.THEMES.AUTO);
+        }
+      });
+    } else {
+      this.systemPrefersDark = true; // Default a dark
     }
   },
   
   /**
-   * Obtener el tema actual
+   * Obtener el tema guardado (MÉTODO PÚBLICO)
+   */
+  getTheme() {
+    try {
+      const saved = localStorage.getItem(this.STORAGE_KEY);
+      return saved || this.THEMES.AUTO;
+    } catch (error) {
+      console.warn('[ThemeManager] ⚠️ Error al leer tema guardado:', error);
+      return this.THEMES.AUTO;
+    }
+  },
+  
+  /**
+   * Establecer tema (MÉTODO PÚBLICO)
+   */
+  setTheme(theme) {
+    const validTheme = [this.THEMES.DARK, this.THEMES.LIGHT, this.THEMES.AUTO].includes(theme) 
+      ? theme 
+      : this.THEMES.AUTO;
+    
+    this.applyTheme(validTheme);
+    this.updateEmojiSelector(validTheme);
+    return validTheme;
+  },
+  
+  /**
+   * Obtener el tema actual del documento
    */
   getCurrentTheme() {
     return document.documentElement.getAttribute('data-theme') || this.THEMES.DARK;
@@ -53,26 +99,89 @@ const ThemeManager = {
    * Aplicar un tema
    */
   applyTheme(theme) {
-    const validTheme = theme === this.THEMES.LIGHT ? this.THEMES.LIGHT : this.THEMES.DARK;
+    let effectiveTheme = theme;
+    
+    // Si es AUTO, usar preferencia del sistema
+    if (theme === this.THEMES.AUTO) {
+      effectiveTheme = this.systemPrefersDark ? this.THEMES.DARK : this.THEMES.LIGHT;
+    }
     
     // Aplicar al HTML
-    document.documentElement.setAttribute('data-theme', validTheme);
+    document.documentElement.setAttribute('data-theme', effectiveTheme);
     
-    // Guardar en localStorage
+    // Guardar selección del usuario (no el tema efectivo)
     try {
-      localStorage.setItem(this.STORAGE_KEY, validTheme);
+      localStorage.setItem(this.STORAGE_KEY, theme);
     } catch (error) {
       console.warn('[ThemeManager] ⚠️ Error al guardar tema:', error);
     }
     
     // Disparar evento personalizado
     window.dispatchEvent(new CustomEvent('theme:changed', {
-      detail: { theme: validTheme }
+      detail: { theme: effectiveTheme, userChoice: theme }
     }));
     
-    console.log('[ThemeManager] 🎨 Tema aplicado:', validTheme);
+    console.log('[ThemeManager] 🎨 Tema aplicado:', effectiveTheme, '(selección:', theme, ')');
     
-    return validTheme;
+    return effectiveTheme;
+  },
+  
+  /**
+   * Crear selector de emojis para temas
+   */
+  createEmojiSelector() {
+    const container = document.getElementById('theme-switcher-container');
+    if (!container) {
+      console.warn('[ThemeManager] ⚠️ Contenedor theme-switcher-container no encontrado');
+      return;
+    }
+    
+    // Limpiar contenedor
+    container.innerHTML = '';
+    
+    // Crear selector
+    const selector = document.createElement('div');
+    selector.className = 'theme-emoji-selector';
+    selector.setAttribute('role', 'radiogroup');
+    selector.setAttribute('aria-label', 'Selector de tema');
+    
+    // Crear botones para cada tema
+    Object.keys(this.THEMES).forEach(themeKey => {
+      const theme = this.THEMES[themeKey];
+      const emoji = this.THEME_EMOJIS[theme];
+      
+      const button = document.createElement('button');
+      button.className = 'theme-emoji-btn';
+      button.setAttribute('data-theme', theme);
+      button.setAttribute('role', 'radio');
+      button.setAttribute('aria-label', `Tema ${theme}`);
+      button.textContent = emoji;
+      button.title = `Cambiar a tema ${theme}`;
+      
+      // Event listener
+      button.addEventListener('click', () => {
+        this.setTheme(theme);
+      });
+      
+      selector.appendChild(button);
+    });
+    
+    container.appendChild(selector);
+    this.updateEmojiSelector(this.getTheme());
+    
+    console.log('[ThemeManager] 🎨 Selector de emojis creado');
+  },
+  
+  /**
+   * Actualizar selector de emojis
+   */
+  updateEmojiSelector(activeTheme) {
+    const buttons = document.querySelectorAll('.theme-emoji-btn');
+    buttons.forEach(btn => {
+      const isActive = btn.getAttribute('data-theme') === activeTheme;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    });
   },
   
   /**
