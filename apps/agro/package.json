@@ -1,0 +1,19 @@
+{
+  "name": "@yavl/agro",
+  "version": "1.0.0",
+  "description": "YavlAgro - Productos Agrícolas de Táchira, Venezuela",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@yavl/themes": "workspace:*",
+    "@yavl/ui": "workspace:*",
+    "@yavl/utils": "workspace:*"
+  },
+  "scripts": {
+    "dev": "python3 -m http.server 8083",
+    "preview": "python3 -m http.server 8083"
+  },
+  "keywords": ["agricultura", "yavl", "tachira", "venezuela", "productos-agricolas"],
+  "author": "Yerikson Varela (YAVL Pro)",
+  "license": "MIT"
+}
