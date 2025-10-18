@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST: Logo de Carga YavlGold</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+      color: #e2e8f0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .header {
+      text-align: center;
+      padding: 30px 20px;
+      background: rgba(200, 167, 82, 0.1);
+      border-radius: 15px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #94a3b8;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      color: #0a0a0a;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(200, 167, 82, 0.2);
+      color: #D4AF37;
+      border: 1px solid rgba(200, 167, 82, 0.5);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(200, 167, 82, 0.3);
+    }
+
+    .summary {
+      background: rgba(17, 17, 17, 0.9);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(200, 167, 82, 0.2);
+    }
+
+    .summary h2 {
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      color: #C8A752;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat {
+      background: rgba(200, 167, 82, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .stat-value.pass { color: #00ff00; }
+    .stat-value.fail { color: #ff0000; }
+    .stat-value.warn { color: #ffaa00; }
+
+    .stat-label {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .test-section {
+      background: rgba(17, 17, 17, 0.9);
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-left: 4px solid rgba(200, 167, 82, 0.5);
+    }
+
+    .test-section h3 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      color: #D4AF37;
+    }
+
+    .test-item {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: 2px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    .test-item.pass {
+      border-color: #00ff00;
+      background: rgba(0, 255, 0, 0.05);
+    }
+
+    .test-item.fail {
+      border-color: #ff0000;
+      background: rgba(255, 0, 0, 0.05);
+    }
+
+    .test-item.warn {
+      border-color: #ffaa00;
+      background: rgba(255, 170, 0, 0.05);
+    }
+
+    .test-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .test-icon {
+      font-size: 1.3rem;
+    }
+
+    .test-details {
+      margin-top: 10px;
+      padding-left: 33px;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+
+    .test-details strong {
+      color: #e2e8f0;
+    }
+
+    .code {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #C8A752;
+      font-size: 0.9rem;
+    }
+
+    .preview-container {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .logo-preview {
+      display: inline-block;
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: 900;
+      color: #0B0C0F;
+      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
+      margin: 0 auto 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      margin: 20px auto;
+      border: 4px solid rgba(212, 175, 55, 0.2);
+      border-top-color: #D4AF37;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .recommendations {
+      background: rgba(212, 175, 55, 0.1);
+      border-left: 4px solid #D4AF37;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .recommendations h4 {
+      color: #D4AF37;
+      margin-bottom: 10px;
+    }
+
+    .recommendations ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .recommendations li {
+      padding: 5px 0 5px 25px;
+      position: relative;
+    }
+
+    .recommendations li::before {
+      content: '💡';
+      position: absolute;
+      left: 0;
+    }
+
+    #loadingStatus {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(200, 167, 82, 0.1);
+      border-radius: 8px;
+      text-align: center;
+      color: #D4AF37;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>TEST: Logo de Carga YavlGold</h1>
+    <p>Verificación de rendimiento, visibilidad y experiencia del splash screen</p>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-primary" onclick="runTests()">
+      ▶ Ejecutar Tests
+    </button>
+    <button class="btn btn-secondary" onclick="location.reload()">
+      🔄 Recargar
+    </button>
+    <button class="btn btn-secondary" onclick="downloadReport()">
+      📄 Descargar Reporte
+    </button>
+  </div>
+
+  <div id="loadingStatus" style="display: none;">
+    <div class="spinner"></div>
+    <p>Analizando logo de carga...</p>
+  </div>
+
+  <div id="results" style="display: none;">
+    <div class="summary">
+      <h2>📊 Resumen</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value pass" id="passCount">0</div>
+          <div class="stat-label">✓ PASS</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value fail" id="failCount">0</div>
+          <div class="stat-label">✗ FAIL</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value warn" id="warnCount">0</div>
+          <div class="stat-label">⚠ WARN</div>
+        </div>
+      </div>
+      <p style="margin-top: 15px; color: #94a3b8;">
+        Total de verificaciones: <strong id="totalTests">0</strong>
+      </p>
+    </div>
+
+    <div id="testResults"></div>
+  </div>
+
+  <script>
+    let testResults = [];
+    let passCount = 0;
+    let failCount = 0;
+    let warnCount = 0;
+
+    async function runTests() {
+      document.getElementById('loadingStatus').style.display = 'block';
+      document.getElementById('results').style.display = 'none';
+      
+      testResults = [];
+      passCount = 0;
+      failCount = 0;
+      warnCount = 0;
+
+      // Simular un pequeño delay para que se vea el loading
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Tests
+      await testLogoHTML();
+      await testLogoStyles();
+      await testSpinnerAnimation();
+      await testRedirectMechanism();
+      await testPerformance();
+      await testAccessibility();
+
+      displayResults();
+    }
+
+    async function testLogoHTML() {
+      const section = {
+        title: '📝 Estructura HTML del Logo',
+        tests: []
+      };
+
+      try {
+        const response = await fetch('/index.html');
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        // Test 1: Verificar que existe el contenedor del logo
+        const logoContainer = html.match(/<div class="container">/);
+        section.tests.push({
+          name: 'Contenedor principal existe',
+          status: logoContainer ? 'pass' : 'fail',
+          details: logoContainer 
+            ? 'Contenedor <code>.container</code> encontrado correctamente'
+            : 'No se encontró el contenedor principal',
+          icon: logoContainer ? '✓' : '✗'
+        });
+
+        // Test 2: Verificar logo YG
+        const logoDiv = html.match(/<div class="logo">YG<\/div>/);
+        section.tests.push({
+          name: 'Logo "YG" presente',
+          status: logoDiv ? 'pass' : 'fail',
+          details: logoDiv 
+            ? 'Logo "YG" encontrado con la clase correcta'
+            : 'No se encontró el logo YG',
+          icon: logoDiv ? '✓' : '✗'
+        });
+
+        // Test 3: Verificar título YavlGold
+        const title = html.match(/<h1>YavlGold<\/h1>/);
+        section.tests.push({
+          name: 'Título "YavlGold" presente',
+          status: title ? 'pass' : 'fail',
+          details: title 
+            ? 'Título encontrado correctamente'
+            : 'No se encontró el título YavlGold',
+          icon: title ? '✓' : '✗'
+        });
+
+        // Test 4: Verificar texto de redirección
+        const redirectText = html.match(/Redirigiendo a la academia\.\.\./);
+        section.tests.push({
+          name: 'Texto de redirección presente',
+          status: redirectText ? 'pass' : 'fail',
+          details: redirectText 
+            ? 'Mensaje de redirección encontrado'
+            : 'No se encontró el texto de redirección',
+          icon: redirectText ? '✓' : '✗'
+        });
+
+        // Test 5: Verificar spinner/loader
+        const loader = html.match(/<div class="loader"><\/div>/);
+        section.tests.push({
+          name: 'Spinner de carga presente',
+          status: loader ? 'pass' : 'fail',
+          details: loader 
+            ? 'Elemento <code>.loader</code> encontrado'
+            : 'No se encontró el spinner de carga',
+          icon: loader ? '✓' : '✗'
+        });
+
+        // Test 6: Verificar enlace de fallback
+        const fallbackLink = html.match(/<a href="\/apps\/gold\/">haz click aquí<\/a>/);
+        section.tests.push({
+          name: 'Enlace de fallback presente',
+          status: fallbackLink ? 'pass' : 'fail',
+          details: fallbackLink 
+            ? 'Enlace manual de redirección disponible'
+            : 'No se encontró el enlace de fallback',
+          icon: fallbackLink ? '✓' : '✗'
+        });
+
+      } catch (error) {
+        section.tests.push({
+          name: 'Error al cargar HTML',
+          status: 'fail',
+          details: `Error: ${error.message}`,
+          icon: '✗'
+        });
+      }
+
+      testResults.push(section);
+      updateCounts(section.tests);
+    }
+
+    async function testLogoStyles() {
+      const section = {
+        title: '🎨 Estilos del Logo',
+        tests: []
+      };
+
+      try {
+        const response = await fetch('/index.html');
+        const html = await response.text();
+
+        // Test 1: Verificar dimensiones del logo
+        const logoDimensions = html.match(/\.logo\s*{[^}]*width:\s*120px[^}]*height:\s*120px/s);
+        section.tests.push({
+          name: 'Dimensiones del logo (120x120px)',
+          status: logoDimensions ? 'pass' : 'warn',
+          details: logoDimensions 
+            ? 'Logo tiene dimensiones óptimas de 120x120px'
+            : 'Las dimensiones del logo podrían no ser las esperadas',
+          icon: logoDimensions ? '✓' : '⚠'
+        });
+
+        // Test 2: Verificar gradiente dorado
+        const goldGradient = html.match(/linear-gradient\(135deg,\s*#C8A752,\s*#D4AF37\)/);
+        section.tests.push({
+          name: 'Gradiente dorado aplicado',
+          status: goldGradient ? 'pass' : 'fail',
+          details: goldGradient 
+            ? 'Gradiente dorado (#C8A752 → #D4AF37) aplicado correctamente'
+            : 'No se encontró el gradiente dorado característico',
+          icon: goldGradient ? '✓' : '✗'
+        });
+
+        // Test 3: Verificar border-radius
+        const borderRadius = html.match(/\.logo\s*{[^}]*border-radius:\s*20px/s);
+        section.tests.push({
+          name: 'Bordes redondeados (20px)',
+          status: borderRadius ? 'pass' : 'warn',
+          details: borderRadius 
+            ? 'Border-radius de 20px para esquinas suaves'
+            : 'Border-radius podría ser diferente',
+          icon: borderRadius ? '✓' : '⚠'
+        });
+
+        // Test 4: Verificar box-shadow
+        const boxShadow = html.match(/\.logo\s*{[^}]*box-shadow:[^}]*rgba\(212,\s*175,\s*55/s);
+        section.tests.push({
+          name: 'Sombra dorada (glow effect)',
+          status: boxShadow ? 'pass' : 'warn',
+          details: boxShadow 
+            ? 'Box-shadow dorado para efecto de resplandor'
+            : 'Sombra del logo podría estar ausente o ser diferente',
+          icon: boxShadow ? '✓' : '⚠'
+        });
+
+        // Test 5: Verificar font-size del logo
+        const fontSize = html.match(/\.logo\s*{[^}]*font-size:\s*48px/s);
+        section.tests.push({
+          name: 'Tamaño de fuente (48px)',
+          status: fontSize ? 'pass' : 'warn',
+          details: fontSize 
+            ? 'Font-size de 48px para "YG" es legible'
+            : 'El tamaño de fuente podría ser diferente',
+          icon: fontSize ? '✓' : '⚠'
+        });
+
+        // Test 6: Verificar background del body
+        const bodyBg = html.match(/body\s*{[^}]*background:\s*linear-gradient\(135deg,\s*#0B0C0F[^}]*#1a1b1e/s);
+        section.tests.push({
+          name: 'Fondo degradado oscuro',
+          status: bodyBg ? 'pass' : 'warn',
+          details: bodyBg 
+            ? 'Fondo oscuro (#0B0C0F → #1a1b1e) para contraste'
+            : 'El fondo podría tener colores diferentes',
+          icon: bodyBg ? '✓' : '⚠'
+        });
+
+      } catch (error) {
+        section.tests.push({
+          name: 'Error al analizar estilos',
+          status: 'fail',
+          details: `Error: ${error.message}`,
+          icon: '✗'
+        });
+      }
+
+      testResults.push(section);
+      updateCounts(section.tests);
+    }
+
+    async function testSpinnerAnimation() {
+      const section = {
+        title: '⚙️ Animación del Spinner',
+        tests: []
+      };
+
+      try {
+        const response = await fetch('/index.html');
+        const html = await response.text();
+
+        // Test 1: Verificar keyframes de spin
+        const spinKeyframes = html.match(/@keyframes\s+spin\s*{[^}]*to\s*{\s*transform:\s*rotate\(360deg\)/s);
+        section.tests.push({
+          name: 'Keyframes @spin definidos',
+          status: spinKeyframes ? 'pass' : 'fail',
+          details: spinKeyframes 
+            ? 'Animación de rotación 360° definida correctamente'
+            : 'No se encontraron los keyframes de animación',
+          icon: spinKeyframes ? '✓' : '✗'
+        });
+
+        // Test 2: Verificar animation en .loader
+        const loaderAnimation = html.match(/\.loader\s*{[^}]*animation:\s*spin\s+1s\s+linear\s+infinite/s);
+        section.tests.push({
+          name: 'Animación aplicada al loader',
+          status: loaderAnimation ? 'pass' : 'fail',
+          details: loaderAnimation 
+            ? 'Spinner gira continuamente (1s linear infinite)'
+            : 'La animación no está aplicada al loader',
+          icon: loaderAnimation ? '✓' : '✗'
+        });
+
+        // Test 3: Verificar dimensiones del spinner
+        const spinnerSize = html.match(/\.loader\s*{[^}]*width:\s*40px[^}]*height:\s*40px/s);
+        section.tests.push({
+          name: 'Tamaño del spinner (40x40px)',
+          status: spinnerSize ? 'pass' : 'warn',
+          details: spinnerSize 
+            ? 'Spinner de 40x40px es visible sin ser intrusivo'
+            : 'El tamaño del spinner podría ser diferente',
+          icon: spinnerSize ? '✓' : '⚠'
+        });
+
+        // Test 4: Verificar border del spinner
+        const spinnerBorder = html.match(/\.loader\s*{[^}]*border:\s*4px\s+solid\s+rgba\(212,\s*175,\s*55,\s*0\.2\)/s);
+        section.tests.push({
+          name: 'Borde dorado del spinner',
+          status: spinnerBorder ? 'pass' : 'warn',
+          details: spinnerBorder 
+            ? 'Borde dorado con opacidad 0.2 para efecto sutil'
+            : 'El borde del spinner podría tener otro color',
+          icon: spinnerBorder ? '✓' : '⚠'
+        });
+
+        // Test 5: Verificar border-top-color
+        const borderTop = html.match(/\.loader\s*{[^}]*border-top-color:\s*#D4AF37/s);
+        section.tests.push({
+          name: 'Borde superior dorado brillante',
+          status: borderTop ? 'pass' : 'fail',
+          details: borderTop 
+            ? 'Border-top #D4AF37 crea el efecto de rotación visible'
+            : 'El color del borde superior no es el esperado',
+          icon: borderTop ? '✓' : '✗'
+        });
+
+      } catch (error) {
+        section.tests.push({
+          name: 'Error al analizar animación',
+          status: 'fail',
+          details: `Error: ${error.message}`,
+          icon: '✗'
+        });
+      }
+
+      testResults.push(section);
+      updateCounts(section.tests);
+    }
+
+    async function testRedirectMechanism() {
+      const section = {
+        title: '🔀 Mecanismos de Redirección',
+        tests: []
+      };
+
+      try {
+        const response = await fetch('/index.html');
+        const html = await response.text();
+
+        // Test 1: Verificar meta refresh
+        const metaRefresh = html.match(/<meta\s+http-equiv="refresh"\s+content="0;url=\/apps\/gold\/"/);
+        section.tests.push({
+          name: 'Meta refresh configurado',
+          status: metaRefresh ? 'pass' : 'warn',
+          details: metaRefresh 
+            ? 'Meta refresh a /apps/gold/ con delay 0 (redirección inmediata)'
+            : 'Meta refresh podría no estar configurado o tener otra URL',
+          icon: metaRefresh ? '✓' : '⚠'
+        });
+
+        // Test 2: Verificar JavaScript redirect
+        const jsRedirect = html.match(/setTimeout\s*\(\s*\(\)\s*=>\s*{[^}]*window\.location\.href\s*=\s*['"]\/apps\/gold\//);
+        section.tests.push({
+          name: 'Redirección JavaScript presente',
+          status: jsRedirect ? 'pass' : 'warn',
+          details: jsRedirect 
+            ? 'Redirección JavaScript como backup del meta refresh'
+            : 'Redirección JS podría no estar configurada',
+          icon: jsRedirect ? '✓' : '⚠'
+        });
+
+        // Test 3: Verificar timeout delay
+        const timeoutDelay = html.match(/setTimeout\s*\([^,]*,\s*10\s*\)/);
+        section.tests.push({
+          name: 'Delay del setTimeout (10ms)',
+          status: timeoutDelay ? 'pass' : 'warn',
+          details: timeoutDelay 
+            ? 'Delay de 10ms permite ver el logo brevemente'
+            : 'El delay podría ser diferente o no existir',
+          icon: timeoutDelay ? '✓' : '⚠'
+        });
+
+        // Test 4: Verificar enlace de fallback manual
+        const manualLink = html.match(/<a\s+href="\/apps\/gold\/">haz click aquí<\/a>/);
+        section.tests.push({
+          name: 'Enlace manual de fallback',
+          status: manualLink ? 'pass' : 'fail',
+          details: manualLink 
+            ? 'Usuario puede hacer clic manual si la redirección falla'
+            : 'No hay fallback manual para la redirección',
+          icon: manualLink ? '✓' : '✗'
+        });
+
+      } catch (error) {
+        section.tests.push({
+          name: 'Error al analizar redirección',
+          status: 'fail',
+          details: `Error: ${error.message}`,
+          icon: '✗'
+        });
+      }
+
+      testResults.push(section);
+      updateCounts(section.tests);
+    }
+
+    async function testPerformance() {
+      const section = {
+        title: '⚡ Rendimiento de Carga',
+        tests: []
+      };
+
+      try {
+        const startTime = performance.now();
+        const response = await fetch('/index.html');
+        const html = await response.text();
+        const loadTime = performance.now() - startTime;
+
+        // Test 1: Tiempo de carga del HTML
+        section.tests.push({
+          name: 'Tiempo de carga del HTML',
+          status: loadTime < 500 ? 'pass' : (loadTime < 1000 ? 'warn' : 'fail'),
+          details: `HTML cargado en <strong>${loadTime.toFixed(2)}ms</strong>. ${
+            loadTime < 500 ? '¡Excelente!' : 
+            loadTime < 1000 ? 'Aceptable, pero podría optimizarse' : 
+            'Tiempo de carga elevado'
+          }`,
+          icon: loadTime < 500 ? '✓' : (loadTime < 1000 ? '⚠' : '✗')
+        });
+
+        // Test 2: Tamaño del HTML
+        const sizeKB = (html.length / 1024).toFixed(2);
+        section.tests.push({
+          name: 'Tamaño del archivo HTML',
+          status: sizeKB < 50 ? 'pass' : (sizeKB < 100 ? 'warn' : 'fail'),
+          details: `Tamaño: <strong>${sizeKB}KB</strong>. ${
+            sizeKB < 50 ? 'Óptimo para carga rápida' : 
+            sizeKB < 100 ? 'Aceptable' : 
+            'El archivo es grande, considerar minificación'
+          }`,
+          icon: sizeKB < 50 ? '✓' : (sizeKB < 100 ? '⚠' : '✗')
+        });
+
+        // Test 3: Estilos inline vs externos
+        const inlineStyles = html.match(/<style>/g);
+        section.tests.push({
+          name: 'Estilos críticos inline',
+          status: inlineStyles && inlineStyles.length > 0 ? 'pass' : 'warn',
+          details: inlineStyles 
+            ? `Estilos inline presentes (${inlineStyles.length} bloques) - elimina flash de contenido sin estilo`
+            : 'No se detectaron estilos inline, podría haber FOUC',
+          icon: inlineStyles ? '✓' : '⚠'
+        });
+
+        // Test 4: Scripts externos pesados
+        const externalScripts = html.match(/<script[^>]*src=/g);
+        const scriptCount = externalScripts ? externalScripts.length : 0;
+        section.tests.push({
+          name: 'Scripts externos en splash screen',
+          status: scriptCount < 3 ? 'pass' : 'warn',
+          details: `${scriptCount} scripts externos detectados. ${
+            scriptCount < 3 ? 'Cantidad mínima para carga rápida' : 
+            'Considerar cargar scripts después de la redirección'
+          }`,
+          icon: scriptCount < 3 ? '✓' : '⚠'
+        });
+
+      } catch (error) {
+        section.tests.push({
+          name: 'Error al medir rendimiento',
+          status: 'fail',
+          details: `Error: ${error.message}`,
+          icon: '✗'
+        });
+      }
+
+      testResults.push(section);
+      updateCounts(section.tests);
+    }
+
+    async function testAccessibility() {
+      const section = {
+        title: '♿ Accesibilidad',
+        tests: []
+      };
+
+      try {
+        const response = await fetch('/index.html');
+        const html = await response.text();
+
+        // Test 1: Atributo lang en HTML
+        const langAttr = html.match(/<html\s+lang="es">/);
+        section.tests.push({
+          name: 'Atributo lang en <html>',
+          status: langAttr ? 'pass' : 'warn',
+          details: langAttr 
+            ? 'lang="es" permite a lectores de pantalla usar pronunciación correcta'
+            : 'Falta atributo lang, afecta accesibilidad',
+          icon: langAttr ? '✓' : '⚠'
+        });
+
+        // Test 2: Título de página
+        const titleTag = html.match(/<title>[^<]+<\/title>/);
+        section.tests.push({
+          name: 'Título de página presente',
+          status: titleTag ? 'pass' : 'fail',
+          details: titleTag 
+            ? 'Título encontrado, ayuda a usuarios de lectores de pantalla'
+            : 'Falta <title>, importante para accesibilidad',
+          icon: titleTag ? '✓' : '✗'
+        });
+
+        // Test 3: Meta viewport
+        const viewport = html.match(/<meta\s+name="viewport"\s+content="[^"]+"/);
+        section.tests.push({
+          name: 'Meta viewport configurado',
+          status: viewport ? 'pass' : 'warn',
+          details: viewport 
+            ? 'Viewport configurado para diseño responsive'
+            : 'Falta meta viewport, afecta visualización móvil',
+          icon: viewport ? '✓' : '⚠'
+        });
+
+        // Test 4: Contraste de colores
+        const textColor = html.match(/color:\s*#fff/);
+        const bgDark = html.match(/background:\s*linear-gradient[^;]*#0B0C0F/);
+        const goodContrast = textColor && bgDark;
+        section.tests.push({
+          name: 'Contraste de colores (WCAG)',
+          status: goodContrast ? 'pass' : 'warn',
+          details: goodContrast 
+            ? 'Texto blanco sobre fondo oscuro cumple con WCAG AA'
+            : 'Verificar que el contraste sea suficiente (ratio 4.5:1)',
+          icon: goodContrast ? '✓' : '⚠'
+        });
+
+        // Test 5: Texto alternativo para redirección
+        const redirectText = html.match(/Si no eres redirigido automáticamente/);
+        section.tests.push({
+          name: 'Mensaje para usuarios sin JS',
+          status: redirectText ? 'pass' : 'warn',
+          details: redirectText 
+            ? 'Texto explicativo ayuda si JavaScript está deshabilitado'
+            : 'Considerar agregar mensaje para usuarios sin JS',
+          icon: redirectText ? '✓' : '⚠'
+        });
+
+        // Test 6: Focus visible en enlace
+        const focusStyles = html.match(/a:hover|a:focus/);
+        section.tests.push({
+          name: 'Estilos de hover/focus en enlace',
+          status: focusStyles ? 'pass' : 'warn',
+          details: focusStyles 
+            ? 'Enlace de fallback tiene estados visuales para navegación con teclado'
+            : 'Agregar estilos :focus para mejorar accesibilidad',
+          icon: focusStyles ? '✓' : '⚠'
+        });
+
+      } catch (error) {
+        section.tests.push({
+          name: 'Error al analizar accesibilidad',
+          status: 'fail',
+          details: `Error: ${error.message}`,
+          icon: '✗'
+        });
+      }
+
+      testResults.push(section);
+      updateCounts(section.tests);
+    }
+
+    function updateCounts(tests) {
+      tests.forEach(test => {
+        if (test.status === 'pass') passCount++;
+        else if (test.status === 'fail') failCount++;
+        else if (test.status === 'warn') warnCount++;
+      });
+    }
+
+    function displayResults() {
+      document.getElementById('loadingStatus').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+
+      document.getElementById('passCount').textContent = passCount;
+      document.getElementById('failCount').textContent = failCount;
+      document.getElementById('warnCount').textContent = warnCount;
+      document.getElementById('totalTests').textContent = passCount + failCount + warnCount;
+
+      const resultsContainer = document.getElementById('testResults');
+      resultsContainer.innerHTML = '';
+
+      testResults.forEach(section => {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'test-section';
+        
+        let sectionHTML = `<h3>${section.title}</h3>`;
+        
+        section.tests.forEach(test => {
+          sectionHTML += `
+            <div class="test-item ${test.status}">
+              <div class="test-header">
+                <span class="test-icon">${test.icon}</span>
+                <span>${test.name}</span>
+              </div>
+              <div class="test-details">${test.details}</div>
+            </div>
+          `;
+        });
+
+        sectionDiv.innerHTML = sectionHTML;
+        resultsContainer.appendChild(sectionDiv);
+      });
+
+      // Agregar recomendaciones si hay warns o fails
+      if (failCount > 0 || warnCount > 0) {
+        const recommendations = generateRecommendations();
+        if (recommendations.length > 0) {
+          const recDiv = document.createElement('div');
+          recDiv.className = 'recommendations';
+          recDiv.innerHTML = `
+            <h4>💡 Recomendaciones</h4>
+            <ul>
+              ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+          `;
+          resultsContainer.appendChild(recDiv);
+        }
+      }
+
+      // Agregar preview del logo
+      const previewDiv = document.createElement('div');
+      previewDiv.className = 'test-section';
+      previewDiv.innerHTML = `
+        <h3>👁️ Preview del Logo de Carga</h3>
+        <div class="preview-container">
+          <div class="logo-preview">YG</div>
+          <p style="color: #D4AF37; font-weight: 600; margin-bottom: 10px;">YavlGold</p>
+          <p style="color: #94a3b8;">Redirigiendo a la academia...</p>
+          <div class="spinner"></div>
+          <p style="color: #808080; font-size: 0.9rem; margin-top: 15px;">
+            Si no eres redirigido automáticamente, 
+            <a href="/apps/gold/" style="color: #D4AF37;">haz click aquí</a>
+          </p>
+        </div>
+      `;
+      resultsContainer.appendChild(previewDiv);
+    }
+
+    function generateRecommendations() {
+      const recs = [];
+      
+      if (failCount > 0) {
+        recs.push('Corregir los elementos marcados como FAIL para asegurar funcionalidad básica');
+      }
+      
+      testResults.forEach(section => {
+        section.tests.forEach(test => {
+          if (test.status === 'warn' && test.name.includes('Tiempo de carga')) {
+            recs.push('Optimizar tiempo de carga: minificar HTML, usar CDN, comprimir recursos');
+          }
+          if (test.status === 'warn' && test.name.includes('Tamaño del archivo')) {
+            recs.push('Reducir tamaño del HTML: eliminar espacios innecesarios, minificar código');
+          }
+          if (test.status === 'fail' && test.name.includes('redirección')) {
+            recs.push('Implementar múltiples mecanismos de redirección (meta refresh + JS) para mayor confiabilidad');
+          }
+        });
+      });
+
+      return [...new Set(recs)]; // Eliminar duplicados
+    }
+
+    function downloadReport() {
+      const reportData = {
+        fecha: new Date().toISOString(),
+        resumen: {
+          pass: passCount,
+          fail: failCount,
+          warn: warnCount,
+          total: passCount + failCount + warnCount
+        },
+        resultados: testResults
+      };
+
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `test-logo-carga-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Auto-ejecutar tests al cargar
+    window.addEventListener('load', () => {
+      setTimeout(runTests, 300);
+    });
+  </script>
+</body>
+</html>
