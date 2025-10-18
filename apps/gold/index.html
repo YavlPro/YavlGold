@@ -6,6 +6,14 @@
   <title>YavlGold — Academia y Herramientas de Cripto</title>
   <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
   
+  <!-- Performance: Preconnect a CDNs externos -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://js.hcaptcha.com">
+  <link rel="dns-prefetch" href="https://gerzlzprkarikblqxpjt.supabase.co">
+  
   <!-- Metadatos Open Graph / Twitter -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yavlgold.com/">
@@ -14,9 +22,9 @@
   <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://yavlgold.com/">
-  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
-  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+  <meta property="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
+  <meta property="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
+  <meta property="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   
   <!-- Favicon e íconos -->
   <link rel="icon" href="/apps/gold/assets/images/logo.png" type="image/png">
@@ -75,10 +83,10 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Supabase Client Library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase Client Library (defer para no bloquear render) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   
-  <!-- hCaptcha Script -->
+  <!-- hCaptcha Script (async para no bloquear) -->
   <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
   
   <style>
