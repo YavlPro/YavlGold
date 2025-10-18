@@ -295,7 +295,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('init') && (js.includes('function') || js.includes('=>'));
+                        return js.includes('init()') || js.includes('init ()');
                     }
                 },
                 {
@@ -311,7 +311,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('gg:theme') || js.includes("'theme'") || js.includes('"theme"');
+                        return js.includes('gg:theme');
                     }
                 },
                 {
@@ -319,7 +319,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('prefers-color-scheme') || js.includes('matchMedia');
+                        return js.includes('prefers-color-scheme');
                     }
                 }
             ],
@@ -347,7 +347,8 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('setTheme(') || js.includes('setTheme (');
+                        // Buscar definición de método
+                        return /setTheme\s*\(/.test(js);
                     }
                 },
                 {
@@ -355,7 +356,8 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('getTheme(') || js.includes('getTheme (');
+                        // Buscar definición de método
+                        return /getTheme\s*\(/.test(js);
                     }
                 }
             ],
@@ -365,7 +367,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('createEmojiSelector') && (js.includes('createElement') || js.includes('innerHTML'));
+                        return /createEmojiSelector\s*\(/.test(js) && js.includes('createElement');
                     }
                 },
                 {
@@ -374,8 +376,7 @@
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
                         // Buscar emojis comunes de temas
-                        return (js.includes('☀') || js.includes('🌙') || js.includes('🎨') || 
-                                js.includes('\\u{') || js.includes('&#x'));
+                        return js.includes('🌙') || js.includes('☀') || js.includes('🎨');
                     }
                 },
                 {
@@ -383,7 +384,7 @@
                     test: async () => {
                         const response = await fetch('/assets/js/themeManager.js');
                         const js = await response.text();
-                        return js.includes('addEventListener') && (js.includes('click') || js.includes('change'));
+                        return js.includes('addEventListener') && js.includes('click');
                     }
                 }
             ],
@@ -401,7 +402,7 @@
                     test: async () => {
                         const response = await fetch('/apps/gold/assets/css/unificacion.css');
                         const css = await response.text();
-                        return css.includes('data-theme="dark"') || css.includes("data-theme='dark'") || css.includes('.theme-dark');
+                        return /\[data-theme\s*=\s*["']dark["']\]/.test(css) || css.includes('.theme-dark');
                     }
                 },
                 {
@@ -409,7 +410,7 @@
                     test: async () => {
                         const response = await fetch('/apps/gold/assets/css/unificacion.css');
                         const css = await response.text();
-                        return css.includes('data-theme="light"') || css.includes("data-theme='light'") || css.includes('.theme-light');
+                        return /\[data-theme\s*=\s*["']light["']\]/.test(css) || css.includes('.theme-light');
                     }
                 }
             ],
