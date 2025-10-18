@@ -19,13 +19,17 @@ const AuthClient = {
     if (typeof hcaptcha !== 'undefined') {
       try {
         const response = hcaptcha.getResponse();
-        if (response) {
-          console.log('[AuthClient] ✅ hCaptcha token obtenido');
+        if (response && response.length > 0) {
+          console.log('[AuthClient] ✅ hCaptcha token obtenido:', response.substring(0, 20) + '...');
           return response;
+        } else {
+          console.warn('[AuthClient] ⚠️ hCaptcha no completado o token vacío');
         }
       } catch (e) {
-        console.warn('[AuthClient] ⚠️ No se pudo obtener token de CAPTCHA:', e.message);
+        console.warn('[AuthClient] ⚠️ Error al obtener token de CAPTCHA:', e.message);
       }
+    } else {
+      console.warn('[AuthClient] ⚠️ hCaptcha no está cargado');
     }
     return null;
   },

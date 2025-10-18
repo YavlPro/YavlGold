@@ -19,9 +19,9 @@
   <meta property="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   
   <!-- Favicon -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <link rel="icon" href="/apps/gold/assets/images/logo.png" type="image/png">
+  <link rel="alternate icon" href="/apps/gold/assets/images/logo.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apps/gold/assets/images/logo.png">
   <meta name="theme-color" content="#0B0C0F">
 
   <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
@@ -45,7 +45,7 @@
   </script>
   
   <!-- Estilos y fuentes: hoja unificada + iconos + fuentes -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="/apps/gold/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -934,19 +934,19 @@
     }
   </style>
 </head>
-<body>
+<body data-page-protected="true">
   <!-- Header con navegación -->
   <header class="gg-header">
-    <a class="brand" href="/">
-  <img src="/assets/images/logo.png" alt="YavlGold" class="logo">
+    <a class="brand" href="/apps/gold/">
+  <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="logo">
   <span>YavlGold</span>
     </a>
     
     <nav class="main-nav">
-      <a href="/herramientas/" data-protected="true">Herramientas</a>
+      <a href="/apps/gold/herramientas/" data-protected="true">Herramientas</a>
       <a href="/academia/">Academia</a>
       <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/" class="active">Dashboard</a>
+      <a href="/apps/gold/dashboard/" class="active">Dashboard</a>
       <a href="/#contacto">Contacto</a>
     </nav>
     
@@ -965,9 +965,9 @@
         <i class="fas fa-chevron-down"></i>
       </button>
       <div id="user-dropdown" class="user-dropdown" style="display: none;">
-        <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
-        <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+        <a href="/apps/gold/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/apps/gold/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
+        <a href="/apps/gold/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
         <hr>
         <button id="logout-btn" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
@@ -1142,19 +1142,19 @@
         
         <h3>Herramientas YavlGold</h3>
         <div class="quick-actions">
-          <a href="/herramientas/calculadora.html" class="action-card">
+          <a href="/apps/gold/herramientas/calculadora.html" class="action-card">
             <div class="action-icon"><i class="fas fa-calculator"></i></div>
             <h4>Calculadora</h4>
             <p>Proyecciones de inversión</p>
           </a>
           
-          <a href="/herramientas/conversor.html" class="action-card">
+          <a href="/apps/gold/herramientas/conversor.html" class="action-card">
             <div class="action-icon"><i class="fas fa-exchange-alt"></i></div>
             <h4>Calculadora Cripto</h4>
             <p>Conversión en tiempo real</p>
           </a>
           
-          <a href="/herramientas/analisis.html" class="action-card">
+          <a href="/apps/gold/herramientas/analisis.html" class="action-card">
             <div class="action-icon"><i class="fas fa-chart-line"></i></div>
             <h4>Análisis de Mercado</h4>
             <p>Tendencias y datos</p>
@@ -1396,7 +1396,7 @@
     <button class="close-modal-btn" onclick="closeAuthModal()">&times;</button>
     
     <div class="modal-header">
-  <img src="/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
+  <img src="/apps/gold/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
       <h2 id="modal-title">Bienvenido</h2>
     </div>
     
@@ -1445,15 +1445,15 @@
   <!-- Footer unificado -->
   <footer>
     <div class="footer-brand">
-      <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+      <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="footer-logo">
       <span>YavlGold</span>
     </div>
     <p>Ecosistema Global Innovador en Cripto</p>
     <div class="footer-links">
-      <a href="/herramientas/">Herramientas</a>
+      <a href="/apps/gold/herramientas/">Herramientas</a>
       <a href="/academia/">Academia</a>
       <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
+      <a href="/apps/gold/dashboard/">Dashboard</a>
       <a href="/#contacto">Contacto</a>
     </div>
     <div class="copyright">
@@ -1463,10 +1463,10 @@
 
   <!-- Scripts -->
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
-  <script type="module" src="/assets/js/auth.js"></script>
-  <script src="/assets/js/profile/profileManager.js"></script>
-  <script src="/assets/js/announcements/announcementsManager.js"></script>
-  <script src="/assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
+  <script type="module" src="/apps/gold/assets/js/auth.js"></script>
+  <script src="/apps/gold/assets/js/profile/profileManager.js"></script>
+  <script src="/apps/gold/assets/js/announcements/announcementsManager.js"></script>
+  <script src="/apps/gold/assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
   
   <script>
     // Función para cambiar de pestaña en el dashboard
