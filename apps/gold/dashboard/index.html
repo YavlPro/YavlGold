@@ -1462,8 +1462,8 @@
   </footer>
 
   <!-- Scripts -->
-  <!-- Supabase con async (no bloquea render) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" async></script>
+  <!-- CRÍTICO: Supabase primero (carga al final del body, no bloquea inicial paint) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- Auth carga después -->
   <script type="module" src="/apps/gold/assets/js/auth.js"></script>
