@@ -1462,8 +1462,13 @@
   </footer>
 
   <!-- Scripts -->
-  <!-- Sistema de autenticación desde workspace package @yavl/auth -->
+  <!-- CRÍTICO: Supabase primero -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- CRÍTICO: Auth ANTES de mostrar contenido -->
   <script type="module" src="/apps/gold/assets/js/auth.js"></script>
+  
+  <!-- Otros scripts -->
   <script src="/apps/gold/assets/js/profile/profileManager.js"></script>
   <script src="/apps/gold/assets/js/announcements/announcementsManager.js"></script>
   <script src="/apps/gold/assets/js/academia.js"></script> <!-- Sistema de progreso académico -->

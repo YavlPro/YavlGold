@@ -83,8 +83,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Supabase Client Library (defer para no bloquear render) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <!-- Supabase Client Library (DEBE cargar primero para auth.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- hCaptcha Script (async para no bloquear) -->
   <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
@@ -1045,12 +1045,31 @@
     import { ThemeManager } from '/apps/gold/assets/packages/themes/theme-manager.js';
     import { ThemeSwitcher } from '/apps/gold/assets/packages/ui/ThemeSwitcher.js';
     
-    // Inicializar theme manager
-    const themeManager = new ThemeManager();
+    // Asegurar que DOM esté listo
+    function initThemes() {
+      console.log('[Themes] 🎨 Iniciando sistema de temas...');
+      
+      try {
+        // Inicializar theme manager
+        const themeManager = new ThemeManager();
+        console.log('[Themes] ✅ ThemeManager inicializado');
+        
+        // Inicializar theme switcher
+        const themeSwitcher = new ThemeSwitcher();
+        themeSwitcher.init(themeManager);
+        console.log('[Themes] ✅ ThemeSwitcher inicializado');
+      } catch (error) {
+        console.error('[Themes] ❌ Error:', error);
+      }
+    }
     
-    // Inicializar theme switcher
-    const themeSwitcher = new ThemeSwitcher();
-    themeSwitcher.init(themeManager);
+    // Esperar a que DOM esté completamente cargado
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initThemes);
+    } else {
+      // DOM ya está listo
+      initThemes();
+    }
   </script>
   
   <script src="/apps/gold/assets/js/script.js"></script>
