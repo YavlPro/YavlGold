@@ -1,0 +1,19 @@
+{
+  "name": "@yavl/social",
+  "version": "1.0.0",
+  "description": "YavlPro - Portfolio & Landing Page Cyberpunk",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@yavl/themes": "workspace:*",
+    "@yavl/ui": "workspace:*",
+    "@yavl/utils": "workspace:*"
+  },
+  "scripts": {
+    "dev": "python3 -m http.server 8081",
+    "preview": "python3 -m http.server 8081"
+  },
+  "keywords": ["portfolio", "landing-page", "cyberpunk", "yavl"],
+  "author": "Yerikson Varela (YAVL Pro)",
+  "license": "MIT"
+}
