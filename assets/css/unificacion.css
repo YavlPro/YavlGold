@@ -321,3 +321,91 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
 .logout-btn:hover {
   background: rgba(255, 107, 107, 0.1) !important;
 }
+
+/* ===== THEME SYSTEM ===== */
+/* Theme Toggle Button */
+#theme-toggle {
+  background: transparent;
+  border: 2px solid var(--color-secondary);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#theme-toggle:hover {
+  background: rgba(200, 167, 82, 0.1);
+  transform: translateY(-2px);
+}
+
+/* TEMA CLARO */
+[data-theme="light"] {
+  --color-primary: #f8f9fa;
+  --color-secondary: #996515; /* Dorado más oscuro para mejor contraste */
+  --color-accent: #B8860B;    /* DarkGoldenRod */
+  --bg-dark: #ffffff;
+  --bg-darker: #f8f9fa;
+  --text-light: #1a202c;
+  --text-muted: #4a5568;
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-bg-solid: #ffffff;
+  --gradient-gold: linear-gradient(45deg, #996515, #B8860B, #996515);
+}
+
+[data-theme="light"] body {
+  background: var(--bg-darker);
+  color: var(--text-light);
+}
+
+[data-theme="light"] body::before {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(153, 101, 21, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(153, 101, 21, 0.03) 0%, transparent 50%);
+}
+
+[data-theme="light"] .gg-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(153, 101, 21, 0.2);
+}
+
+[data-theme="light"] .tool-card,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .action-card,
+[data-theme="light"] .announcement-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .tool-card:hover,
+[data-theme="light"] .stat-card:hover,
+[data-theme="light"] .action-card:hover,
+[data-theme="light"] .announcement-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-secondary);
+}
+
+[data-theme="light"] footer {
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Transición suave entre temas */
+html {
+  transition: background-color 0.3s ease;
+}
+
+body,
+.gg-header,
+.tool-card,
+.stat-card,
+.action-card,
+.announcement-card,
+footer {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}

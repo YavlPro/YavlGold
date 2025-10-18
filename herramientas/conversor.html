@@ -3,6 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
+  <script>
+    (function() {
+      const session = sessionStorage.getItem('gg:session') || localStorage.getItem('sb-' + 'ndojapkfhqbgiqtixiqo' + '-auth-token');
+      if (!session) {
+        document.body.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          window.location.href = '/#login';
+        });
+      }
+    })();
+  </script>
+  
   <title>Calculadora Cripto - YavlGold</title>
   <meta name="description" content="Convierte criptomonedas en tiempo real con datos de CoinGecko">
   

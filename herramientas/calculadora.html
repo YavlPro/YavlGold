@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <!-- Guardia de autenticación: requiere sesión -->
+  <meta charset="UTF-8" />
+  
+  <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
   <script>
-    (function(){
-      try{
-        var goldAuth = localStorage.getItem('goldAuth') === 'true';
-        var currentUser = localStorage.getItem('currentUser');
-        if(!(goldAuth || currentUser)){
-          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/login.html');
-        }
-      }catch(e){}
+    (function() {
+      // Verificar si hay sesión antes de cargar el contenido
+      const session = sessionStorage.getItem('gg:session') || localStorage.getItem('sb-' + 'ndojapkfhqbgiqtixiqo' + '-auth-token');
+      if (!session) {
+        // No hay sesión, bloquear y redirigir
+        document.body.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          window.location.href = '/#login';
+        });
+      }
     })();
   </script>
-
-  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Calculadora de Rentabilidad - YavlGold</title>
   <meta name="description" content="Calcula proyecciones de inversión con escenarios y ROI." />

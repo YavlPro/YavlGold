@@ -22,6 +22,8 @@ const AuthGuard = {
       return true;
     }
     console.warn('[AuthGuard] ⛔ Acceso denegado:', current);
+    // Bloquear contenido inmediatamente
+    document.body.style.display = 'none';
     this.redirectToLogin(current + window.location.search + window.location.hash);
     return false;
   },

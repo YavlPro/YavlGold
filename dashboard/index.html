@@ -52,6 +52,22 @@
   <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
+  <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
+  <script>
+    (function() {
+      // Verificar si hay sesión antes de cargar el contenido
+      const session = sessionStorage.getItem('gg:session') || localStorage.getItem('sb-' + 'ndojapkfhqbgiqtixiqo' + '-auth-token');
+      if (!session) {
+        // No hay sesión, bloquear y redirigir
+        document.body.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          window.location.href = '/#login';
+        });
+      }
+    })();
+  </script>
+  
   <style>
     /* Estilos específicos del dashboard (manteniendo layout propio) */
     body {
@@ -951,6 +967,10 @@
     </nav>
     
     <div class="auth-buttons" id="auth-buttons" style="display: flex; gap: 12px;">
+      <!-- Theme Toggle Button -->
+      <button id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">
+        <i class="fas fa-moon"></i>
+      </button>
       <button class="btn-login" onclick="window.AuthUI?.showLoginModal()">
         <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
       </button>
@@ -1462,12 +1482,22 @@
   </footer>
 
   <!-- Scripts -->
+  <script src="/assets/js/themeManager.js"></script>
   <script src="/assets/js/auth/authClient.js"></script>
   <script src="/assets/js/auth/authUI.js"></script>
   <script src="/assets/js/auth/authGuard.js"></script>
   <script src="/assets/js/profile/profileManager.js"></script>
   <script src="/assets/js/announcements/announcementsManager.js"></script>
   <script src="/assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
+  
+  <script>
+    // Inicializar el botón de cambio de tema
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.ThemeManager) {
+        ThemeManager.setupToggleButton('theme-toggle');
+      }
+    });
+  </script>
   
   <script>
     // Función para cambiar de pestaña en el dashboard

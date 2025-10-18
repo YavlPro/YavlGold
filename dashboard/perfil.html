@@ -20,6 +20,20 @@
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
+  <!-- Protección de acceso -->
+  <script>
+    (function() {
+      const session = sessionStorage.getItem('gg:session') || localStorage.getItem('sb-' + 'ndojapkfhqbgiqtixiqo' + '-auth-token');
+      if (!session) {
+        document.body.style.display = 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          window.location.href = '/#login';
+        });
+      }
+    })();
+  </script>
+  
   <style>
     body {
       background: var(--bg-darker);
