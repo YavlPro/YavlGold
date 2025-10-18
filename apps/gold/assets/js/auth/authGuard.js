@@ -141,3 +141,6 @@ const AuthGuard = {
 AuthGuard.init();
 window.AuthGuard = AuthGuard;
 console.log('[AuthGuard] ✅ AuthGuard v2.0.1 cargado');
+
+// Export para imports de módulos ES6
+export default AuthGuard;

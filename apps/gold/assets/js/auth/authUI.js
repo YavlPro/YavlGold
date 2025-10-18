@@ -323,3 +323,6 @@ if (document.readyState === 'loading') {
   setTimeout(() => AuthUI.init(), 50);
 }
 window.AuthUI = AuthUI;
+
+// Export para imports de módulos ES6
+export default AuthUI;

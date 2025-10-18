@@ -1,14 +1,16 @@
 /**
  * YAVLGOLD - AUTH BRIDGE v3.0
- * Importa el sistema de autenticación desde @yavl/auth (workspace package)
+ * Importa el sistema de autenticación desde archivos locales
  * y mantiene compatibilidad con código legacy
  */
 
 // ⚠️ NOTA: Este archivo debe cargarse como module:
-// <script type="module" src="/assets/js/auth.js"></script>
+// <script type="module" src="/apps/gold/assets/js/auth.js"></script>
 
-// Importar desde el paquete workspace @yavl/auth
-import { authClient, authGuard, authUI } from '@yavl/auth';
+// Importar desde archivos locales (GitHub Pages compatible)
+import authClient from './auth/authClient.js';
+import authGuard from './auth/authGuard.js';
+import authUI from './auth/authUI.js';
 
 // Exponer globalmente para backward compatibility
 window.AuthClient = authClient;

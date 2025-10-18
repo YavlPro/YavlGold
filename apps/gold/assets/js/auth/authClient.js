@@ -229,3 +229,6 @@ if (document.readyState === 'loading') {
 }
 
 window.AuthClient = AuthClient;
+
+// Export para imports de módulos ES6
+export default AuthClient;
