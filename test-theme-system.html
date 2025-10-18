@@ -317,9 +317,11 @@
                 {
                     name: 'Detección de prefers-color-scheme',
                     test: async () => {
-                        const response = await fetch('/assets/js/themeManager.js');
+                        const response = await fetch(`/assets/js/themeManager.js?t=${Date.now()}`);
                         const js = await response.text();
-                        return js.includes('prefers-color-scheme');
+                        const found = js.includes('prefers-color-scheme');
+                        console.log('[TEST] prefers-color-scheme found:', found, 'Length:', js.length);
+                        return found;
                     }
                 }
             ],
@@ -345,19 +347,21 @@
                 {
                     name: 'Método setTheme() existe',
                     test: async () => {
-                        const response = await fetch('/assets/js/themeManager.js');
+                        const response = await fetch(`/assets/js/themeManager.js?t=${Date.now()}`);
                         const js = await response.text();
-                        // Buscar definición de método
-                        return /setTheme\s*\(/.test(js);
+                        const found = /setTheme\s*\(/.test(js);
+                        console.log('[TEST] setTheme found:', found);
+                        return found;
                     }
                 },
                 {
                     name: 'Método getTheme() existe',
                     test: async () => {
-                        const response = await fetch('/assets/js/themeManager.js');
+                        const response = await fetch(`/assets/js/themeManager.js?t=${Date.now()}`);
                         const js = await response.text();
-                        // Buscar definición de método
-                        return /getTheme\s*\(/.test(js);
+                        const found = /getTheme\s*\(/.test(js);
+                        console.log('[TEST] getTheme found:', found);
+                        return found;
                     }
                 }
             ],
@@ -365,9 +369,12 @@
                 {
                     name: 'Crea selector de emojis en el DOM',
                     test: async () => {
-                        const response = await fetch('/assets/js/themeManager.js');
+                        const response = await fetch(`/assets/js/themeManager.js?t=${Date.now()}`);
                         const js = await response.text();
-                        return /createEmojiSelector\s*\(/.test(js) && js.includes('createElement');
+                        const hasMethod = /createEmojiSelector\s*\(/.test(js);
+                        const hasCreate = js.includes('createElement');
+                        console.log('[TEST] createEmojiSelector:', hasMethod, 'createElement:', hasCreate);
+                        return hasMethod && hasCreate;
                     }
                 },
                 {
@@ -400,17 +407,23 @@
                 {
                     name: 'Variables para dark mode',
                     test: async () => {
-                        const response = await fetch('/apps/gold/assets/css/unificacion.css');
+                        const response = await fetch(`/apps/gold/assets/css/unificacion.css?t=${Date.now()}`);
                         const css = await response.text();
-                        return /\[data-theme\s*=\s*["']dark["']\]/.test(css) || css.includes('.theme-dark');
+                        const regexMatch = /\[data-theme\s*=\s*["']dark["']\]/.test(css);
+                        const classMatch = css.includes('.theme-dark');
+                        console.log('[TEST] Dark mode - regex:', regexMatch, 'class:', classMatch, 'Length:', css.length);
+                        return regexMatch || classMatch;
                     }
                 },
                 {
                     name: 'Variables para light mode',
                     test: async () => {
-                        const response = await fetch('/apps/gold/assets/css/unificacion.css');
+                        const response = await fetch(`/apps/gold/assets/css/unificacion.css?t=${Date.now()}`);
                         const css = await response.text();
-                        return /\[data-theme\s*=\s*["']light["']\]/.test(css) || css.includes('.theme-light');
+                        const regexMatch = /\[data-theme\s*=\s*["']light["']\]/.test(css);
+                        const classMatch = css.includes('.theme-light');
+                        console.log('[TEST] Light mode - regex:', regexMatch, 'class:', classMatch, 'Length:', css.length);
+                        return regexMatch || classMatch;
                     }
                 }
             ],
