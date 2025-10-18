@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Anuncios - YavlGold</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0B0C0F;
+      color: #E5E5E5;
+      font-family: 'Courier New', monospace;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #C8A752;
+      margin-bottom: 20px;
+      text-align: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .debug-section {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #333;
+    }
+    .debug-section h2 {
+      color: #C8A752;
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .announcement-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .announcement-table th {
+      background: #2a2a2a;
+      padding: 10px;
+      text-align: left;
+      color: #C8A752;
+      border-bottom: 2px solid #C8A752;
+    }
+    .announcement-table td {
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    .announcement-table tr:hover {
+      background: #252525;
+    }
+    .id-cell {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .title-cell {
+      color: #fff;
+      font-weight: bold;
+    }
+    .test-badge {
+      background: #ff9800;
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .real-badge {
+      background: #4caf50;
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    button {
+      background: #C8A752;
+      color: #0B0C0F;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+    button:hover {
+      opacity: 0.8;
+    }
+    .btn-danger {
+      background: #f44336;
+      color: #fff;
+    }
+    .status {
+      padding: 15px;
+      background: #2a2a2a;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .status-item {
+      display: inline-block;
+      margin-right: 30px;
+    }
+    .status-label {
+      color: #888;
+    }
+    .status-value {
+      color: #C8A752;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Debug de Anuncios en Base de Datos</h1>
+    
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">Total:</span>
+        <span class="status-value" id="total">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Prueba:</span>
+        <span class="status-value" id="test">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Real:</span>
+        <span class="status-value" id="real">0</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <button onclick="loadDirect()">🔄 Recargar Directo (sin caché)</button>
+      <button onclick="clearAllCache()">🗑️ Limpiar Caché</button>
+    </div>
+
+    <div class="debug-section">
+      <h2>📋 Todos los Anuncios en la Base de Datos</h2>
+      <div id="announcements-container">
+        <p style="color: #888; text-align: center;">Cargando...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/assets/js/auth/authClient.js"></script>
+  <script src="/assets/js/profile/profileManager.js"></script>
+  <script src="/assets/js/announcements/announcementsManager.js"></script>
+  
+  <script>
+    async function loadDirect() {
+      const container = document.getElementById('announcements-container');
+      container.innerHTML = '<p style="color: #888; text-align: center;">Cargando desde base de datos...</p>';
+      
+      try {
+        console.log('🔄 Limpiando caché...');
+        AnnouncementsManager.clearCache();
+        
+        console.log('📡 Consultando Supabase directamente...');
+        
+        // Consulta DIRECTA a Supabase sin usar el manager
+        const { data, error } = await AnnouncementsManager.supabase
+          .from('announcements')
+          .select(`
+            id,
+            title,
+            content,
+            author_id,
+            created_at,
+            updated_at,
+            author:profiles!announcements_author_id_fkey(username, avatar_url)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('❌ Error de Supabase:', error);
+          container.innerHTML = `<p style="color: #f44336;">Error: ${error.message}</p>`;
+          return;
+        }
+
+        console.log('✅ Datos recibidos:', data);
+        console.log('📊 Total de anuncios:', data.length);
+        
+        if (data.length > 0) {
+          console.log('📋 IDs en BD:', data.map(a => a.id));
+          console.log('📝 Títulos:', data.map(a => a.title));
+        }
+
+        // Clasificar
+        const testAnnouncements = data.filter(a => 
+          a.title.toLowerCase().includes('test') || 
+          a.title.includes('🧪') ||
+          a.title.toLowerCase().includes('prueba')
+        );
+        const realAnnouncements = data.filter(a => 
+          !a.title.toLowerCase().includes('test') && 
+          !a.title.includes('🧪') &&
+          !a.title.toLowerCase().includes('prueba')
+        );
+
+        // Actualizar stats
+        document.getElementById('total').textContent = data.length;
+        document.getElementById('test').textContent = testAnnouncements.length;
+        document.getElementById('real').textContent = realAnnouncements.length;
+
+        // Mostrar tabla
+        if (data.length === 0) {
+          container.innerHTML = '<p style="color: #888; text-align: center;">No hay anuncios en la base de datos</p>';
+        } else {
+          container.innerHTML = `
+            <table class="announcement-table">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Título</th>
+                  <th>ID</th>
+                  <th>Autor</th>
+                  <th>Fecha</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.map(a => {
+                  const isTest = testAnnouncements.includes(a);
+                  const date = new Date(a.created_at).toLocaleString('es-ES');
+                  const author = a.author?.username || 'Desconocido';
+                  
+                  return `
+                    <tr>
+                      <td>
+                        ${isTest ? '<span class="test-badge">TEST</span>' : '<span class="real-badge">REAL</span>'}
+                      </td>
+                      <td class="title-cell">${a.title}</td>
+                      <td class="id-cell">${a.id}</td>
+                      <td>${author}</td>
+                      <td>${date}</td>
+                      <td>
+                        <button class="btn-danger" onclick="deleteSingle('${a.id}', '${a.title}')">
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `;
+        }
+
+      } catch (error) {
+        console.error('❌ Excepción:', error);
+        container.innerHTML = `<p style="color: #f44336;">Excepción: ${error.message}</p>`;
+      }
+    }
+
+    async function deleteSingle(id, title) {
+      if (!confirm(`¿Eliminar este anuncio?\n\n"${title}"\n\nEsta acción no se puede deshacer.`)) {
+        return;
+      }
+
+      try {
+        console.log('🗑️ Eliminando:', id, title);
+        
+        const result = await AnnouncementsManager.deleteAnnouncement(id);
+        
+        if (result.success) {
+          console.log('✅ Eliminado exitosamente');
+          alert('✅ Anuncio eliminado');
+          
+          // Esperar y recargar
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await loadDirect();
+        } else {
+          console.error('❌ Error:', result.error);
+          alert('❌ Error: ' + result.error);
+        }
+      } catch (error) {
+        console.error('❌ Excepción:', error);
+        alert('❌ Excepción: ' + error.message);
+      }
+    }
+
+    function clearAllCache() {
+      AnnouncementsManager.clearCache();
+      console.log('✅ Caché limpiado');
+      alert('✅ Caché limpiado');
+    }
+
+    // Auto-cargar al iniciar
+    window.addEventListener('DOMContentLoaded', async () => {
+      console.log('🚀 Iniciando debug...');
+      
+      // Esperar a que se inicialicen los managers
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      await loadDirect();
+    });
+  </script>
+</body>
+</html>

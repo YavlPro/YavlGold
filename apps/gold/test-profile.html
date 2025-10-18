@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Profile - YavlGold</title>
+  <style>
+    body {
+      background: #0B0C0F;
+      color: #E5E5E5;
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .result {
+      background: #1a1a1a;
+      border: 1px solid #C8A752;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .success { border-color: #4CAF50; }
+    .error { border-color: #f44336; }
+    button {
+      background: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
+      color: #0B0C0F;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 10px 5px;
+    }
+    button:hover { opacity: 0.9; }
+    pre {
+      background: #000;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    img.avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid #C8A752;
+      margin: 10px 0;
+    }
+    .badge {
+      background: #C8A752;
+      color: #0B0C0F;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Test de ProfileManager</h1>
+  <p>Verificación de integración con Supabase</p>
+
+  <div>
+    <button onclick="testGetProfile()">1. Obtener Perfil por ID</button>
+    <button onclick="testGetCurrent()">2. Obtener Perfil Actual</button>
+    <button onclick="testIsAdmin()">3. Verificar Admin</button>
+    <button onclick="testSearchProfiles()">4. Buscar Perfiles</button>
+    <button onclick="clearResults()">Limpiar Resultados</button>
+  </div>
+
+  <div id="results"></div>
+
+  <!-- Supabase Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Auth & Profile Managers -->
+  <script src="/assets/js/auth/authClient.js"></script>
+  <script src="/assets/js/profile/profileManager.js"></script>
+
+  <script>
+    const resultsDiv = document.getElementById('results');
+    
+    function showResult(title, data, isError = false) {
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `result ${isError ? 'error' : 'success'}`;
+      resultDiv.innerHTML = `
+        <h3>${isError ? '❌' : '✅'} ${title}</h3>
+        <pre>${JSON.stringify(data, null, 2)}</pre>
+      `;
+      resultsDiv.appendChild(resultDiv);
+    }
+
+    function clearResults() {
+      resultsDiv.innerHTML = '';
+    }
+
+    // Test 1: Obtener perfil por ID específico
+    async function testGetProfile() {
+      const testId = '68a4963b-2b86-4382-a04f-1f38f1873d1c'; // Tu ID
+      
+      showResult('Probando getProfile()...', { userId: testId });
+      
+      try {
+        const result = await ProfileManager.getProfile(testId);
+        
+        if (result.success) {
+          const profile = result.profile;
+          
+          // Mostrar visualmente
+          const visualDiv = document.createElement('div');
+          visualDiv.className = 'result success';
+          visualDiv.innerHTML = `
+            <h3>✅ Perfil Obtenido</h3>
+            <img src="${profile.avatar_url}" alt="${profile.username}" class="avatar" onerror="this.src='https://ui-avatars.com/api/?name=Error&background=ff0000'">
+            <p><strong>Username:</strong> ${profile.username} ${profile.is_admin ? '<span class="badge">ADMIN</span>' : ''}</p>
+            <p><strong>Email:</strong> ${profile.email}</p>
+            <p><strong>Bio:</strong> ${profile.bio || '(sin biografía)'}</p>
+            <p><strong>Creado:</strong> ${new Date(profile.created_at).toLocaleString('es-ES')}</p>
+            <p><strong>Actualizado:</strong> ${new Date(profile.updated_at).toLocaleString('es-ES')}</p>
+            <pre>${JSON.stringify(profile, null, 2)}</pre>
+          `;
+          resultsDiv.appendChild(visualDiv);
+        } else {
+          showResult('Error al obtener perfil', result, true);
+        }
+      } catch (error) {
+        showResult('Excepción capturada', { error: error.message }, true);
+      }
+    }
+
+    // Test 2: Obtener perfil del usuario actual (requiere login)
+    async function testGetCurrent() {
+      try {
+        const session = AuthClient.getSession();
+        
+        if (!session || !session.user) {
+          showResult('Advertencia', { 
+            message: 'No hay sesión activa. Debes iniciar sesión primero.',
+            action: 'Ve a /dashboard/ y haz login primero'
+          }, true);
+          return;
+        }
+        
+        showResult('Usuario en sesión', { userId: session.user.id });
+        
+        const result = await ProfileManager.getCurrentProfile();
+        
+        if (result.success) {
+          showResult('Perfil actual obtenido', result.profile);
+        } else {
+          showResult('Error al obtener perfil actual', result, true);
+        }
+      } catch (error) {
+        showResult('Excepción capturada', { error: error.message }, true);
+      }
+    }
+
+    // Test 3: Verificar si el usuario es admin
+    async function testIsAdmin() {
+      const testId = '68a4963b-2b86-4382-a04f-1f38f1873d1c'; // Tu ID
+      
+      try {
+        const result = await ProfileManager.isAdmin(testId);
+        
+        const statusDiv = document.createElement('div');
+        statusDiv.className = `result ${result.isAdmin ? 'success' : 'error'}`;
+        statusDiv.innerHTML = `
+          <h3>${result.isAdmin ? '👑' : '👤'} Estado de Admin</h3>
+          <p style="font-size: 1.5rem; font-weight: bold;">
+            ${result.isAdmin ? 'SÍ es ADMINISTRADOR ✅' : 'NO es administrador ❌'}
+          </p>
+          <pre>${JSON.stringify(result, null, 2)}</pre>
+        `;
+        resultsDiv.appendChild(statusDiv);
+      } catch (error) {
+        showResult('Excepción capturada', { error: error.message }, true);
+      }
+    }
+
+    // Test 4: Buscar perfiles
+    async function testSearchProfiles() {
+      const searchTerm = prompt('Término de búsqueda (username):', 'yerikson');
+      if (!searchTerm) return;
+      
+      try {
+        const result = await ProfileManager.searchProfiles(searchTerm);
+        
+        if (result.success) {
+          showResult(`Búsqueda: "${searchTerm}" (${result.profiles.length} resultados)`, result.profiles);
+        } else {
+          showResult('Error en búsqueda', result, true);
+        }
+      } catch (error) {
+        showResult('Excepción capturada', { error: error.message }, true);
+      }
+    }
+
+    // Auto-inicializar
+    window.addEventListener('load', () => {
+      console.log('[Test] Página de prueba cargada');
+      console.log('[Test] AuthClient:', window.AuthClient ? 'Cargado' : 'NO cargado');
+      console.log('[Test] ProfileManager:', window.ProfileManager ? 'Cargado' : 'NO cargado');
+      
+      setTimeout(() => {
+        const initDiv = document.createElement('div');
+        initDiv.className = 'result';
+        initDiv.innerHTML = `
+          <h3>🚀 Sistema Inicializado</h3>
+          <p><strong>AuthClient:</strong> ${window.AuthClient ? '✅ Disponible' : '❌ No disponible'}</p>
+          <p><strong>ProfileManager:</strong> ${window.ProfileManager ? '✅ Disponible' : '❌ No disponible'}</p>
+          <p><strong>Supabase:</strong> ${window.supabase ? '✅ Cargado' : '❌ No cargado'}</p>
+          <hr>
+          <p>Haz clic en los botones arriba para probar cada función.</p>
+        `;
+        resultsDiv.appendChild(initDiv);
+      }, 500);
+    });
+  </script>
+</body>
+</html>

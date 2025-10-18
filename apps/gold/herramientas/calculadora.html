@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Guardia de autenticación: requiere sesión -->
+  <script>
+    (function(){
+      try{
+        var goldAuth = localStorage.getItem('goldAuth') === 'true';
+        var currentUser = localStorage.getItem('currentUser');
+        if(!(goldAuth || currentUser)){
+          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+          window.location.replace('/login.html');
+        }
+      }catch(e){}
+    })();
+  </script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Rentabilidad - YavlGold</title>
+  <meta name="description" content="Calcula proyecciones de inversión con escenarios y ROI." />
+  <link rel="icon" href="/assets/images/logo.png" type="image/png" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --color-secondary:#C8A752; --bg:#0B0C0F; --text:#e2e8f0;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif}
+    .gg-header{display:flex;align-items:center;justify-content:space-between;padding:15px 5%;background:rgba(11,12,15,.9);backdrop-filter:blur(10px);border-bottom:1px solid rgba(200,167,82,.2);position:sticky;top:0;z-index:10}
+    .brand{display:flex;gap:12px;align-items:center;color:#fff;text-decoration:none;font-weight:700;font-family:'Playfair Display',serif}
+    .brand-logo{width:36px;height:36px;border-radius:8px;border:2px solid var(--color-secondary);object-fit:cover}
+    .main-nav{display:flex;gap:30px}
+    .main-nav a{color:var(--text);text-decoration:none}
+    .container{max-width:900px;margin:40px auto;padding:0 16px}
+    .card{background:rgba(17,17,17,.9);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:24px}
+    h1{color:var(--color-secondary);margin:0 0 6px}
+    .subtitle{opacity:.8;margin:0 0 20px}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    label{display:block;margin:0 0 8px;color:var(--color-secondary)}
+    input{width:100%;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#fff}
+    .btn{display:inline-block;padding:12px 20px;border-radius:10px;border:none;background:linear-gradient(45deg,#C8A752,#D4AF37);color:#0B0C0F;font-weight:700;cursor:pointer}
+    .result{margin-top:16px;padding:14px;border-radius:10px;background:rgba(16,185,129,.15);display:none}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+    .link{color:var(--color-secondary);text-decoration:none}
+  </style>
+</head>
+<body>
+  <header class="gg-header">
+  <a class="brand" href="../"><img src="/assets/images/logo.png" class="brand-logo" alt="YavlGold"/><span>YavlGold</span></a>
+    <nav class="main-nav">
+      <a href="../herramientas/">Herramientas</a>
+      <a href="../dashboard/">Dashboard</a>
+      <a href="../academia/">Academia</a>
+      <a href="../#contacto">Contacto</a>
+    </nav>
+    <div id="auth-buttons"></div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h1>Calculadora de Rentabilidad</h1>
+      <p class="subtitle">Proyecta tu inversión con interés compuesto mensual</p>
+
+      <div class="grid">
+        <div>
+          <label for="investment">Inversión inicial ($)</label>
+          <input type="number" id="investment" placeholder="Ej: 1000" />
+        </div>
+        <div>
+          <label for="roi">Rentabilidad esperada (% mensual)</label>
+          <input type="number" id="roi" placeholder="Ej: 10" />
+        </div>
+        <div>
+          <label for="period">Período (meses)</label>
+          <input type="number" id="period" placeholder="Ej: 12" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" onclick="calculate()">Calcular</button>
+        <a class="link" href="/herramientas/">← Volver a Herramientas</a>
+      </div>
+
+      <div id="result" class="result">
+        <h3 style="margin:0 0 8px;color:#10b981">Resultado</h3>
+        <p id="result-text" style="margin:0"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/auth.js"></script>
+  <script>
+    function calculate(){
+      const inv=parseFloat(document.getElementById('investment').value);
+      const roi=parseFloat(document.getElementById('roi').value);
+      const per=parseInt(document.getElementById('period').value);
+      if(!inv||!roi||!per){ alert('Completa todos los campos'); return; }
+      const r=roi/100; const final=inv*Math.pow(1+r,per); const profit=final-inv;
+      const el=document.getElementById('result');
+      document.getElementById('result-text').innerHTML = `
+        <strong>Inversión inicial:</strong> $${inv.toLocaleString()}<br>
+        <strong>Período:</strong> ${per} meses<br>
+        <strong>Rentabilidad mensual:</strong> ${roi}%<br>
+        <strong>Valor final:</strong> $${final.toLocaleString(undefined,{maximumFractionDigits:2})}<br>
+        <strong>Ganancia:</strong> $${profit.toLocaleString(undefined,{maximumFractionDigits:2})}<br>
+        <strong>ROI total:</strong> ${((profit/inv)*100).toFixed(2)}%
+      `;
+      el.style.display='block';
+    }
+  </script>
+</body>
+</html>

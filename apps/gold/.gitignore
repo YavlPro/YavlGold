@@ -1,0 +1,61 @@
+# Ignorar snapshots y binarios pesados
+/backups/*.zip
+*.zip
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.staging
+.env.backup
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build outputs
+dist/
+build/
+.output/
+.vercel/
+.netlify/
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.backup*
+backups/
+fix-critical-bugs.sh
+verify_restore.sh
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Supabase
+.supabase/
+
+# Secrets
+secrets/

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Cripto - YavlGold</title>
+  <meta name="description" content="Convierte criptomonedas en tiempo real con datos de CoinGecko">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="/assets/images/logo.png" type="image/png">
+  
+  <!-- Fuentes y librerías -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #050505;
+      --text-light: #ffffff;
+      --text-muted: #cccccc;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --gradient-gold: linear-gradient(135deg, #C8A752 0%, #D4AF37 100%);
+      --border-radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 600px;
+      padding: 60px 40px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 20px;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      color: transparent;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      background-clip: text;
+      font-size: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 20px;
+    }
+
+    .icon {
+      font-size: 4rem;
+      color: var(--color-secondary);
+      margin-bottom: 30px;
+    }
+
+    p {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: var(--border-radius);
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      margin: 10px;
+    }
+
+    .btn-primary {
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(200, 167, 82, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-secondary);
+      border: 2px solid var(--color-secondary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      transform: translateY(-3px);
+    }
+
+    .features {
+      margin-top: 40px;
+      text-align: left;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      color: var(--text-muted);
+    }
+
+    .feature i {
+      color: var(--color-secondary);
+      margin-right: 15px;
+      font-size: 1.2rem;
+    }
+
+    /* Calculator Styles */
+    .calculator {
+      margin-top: 40px;
+      text-align: left;
+    }
+
+    .input-group {
+      margin-bottom: 25px;
+    }
+
+    .input-group label {
+      display: block;
+      color: var(--color-secondary);
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: var(--border-radius);
+      border: 2px solid rgba(200, 167, 82, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+      font-size: 1rem;
+      font-family: 'Montserrat', sans-serif;
+      transition: var(--transition);
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
+    }
+
+    .input-group select {
+      cursor: pointer;
+    }
+
+    .swap-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      margin: 0 auto 25px;
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1.2rem;
+    }
+
+    .swap-button:hover {
+      transform: rotate(180deg) scale(1.1);
+      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.4);
+    }
+
+    .result {
+      margin-top: 30px;
+      padding: 25px;
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(212, 175, 55, 0.1));
+      border-radius: var(--border-radius);
+      border: 2px solid var(--color-secondary);
+      text-align: center;
+    }
+
+    .result-amount {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      margin-bottom: 15px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .result-rate {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .result-updated {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .error {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 2px solid #ef4444;
+      border-radius: var(--border-radius);
+      color: #fca5a5;
+      text-align: center;
+    }
+
+    .loading {
+      margin-top: 20px;
+      padding: 20px;
+      text-align: center;
+      color: var(--color-secondary);
+      font-size: 1.1rem;
+    }
+
+    .loading i {
+      margin-right: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 40px 25px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .result-amount {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="/assets/images/logo.png" alt="YavlGold" class="logo">
+    <div class="icon">
+      <i class="fas fa-exchange-alt"></i>
+    </div>
+    <h1>Calculadora Cripto</h1>
+    <p>Convierte entre las principales criptomonedas con datos en tiempo real de CoinGecko</p>
+    
+    <div class="calculator">
+      <div class="input-group">
+        <label for="amount">Cantidad</label>
+        <input type="number" id="amount" value="1" min="0" step="any" placeholder="0.00">
+      </div>
+      
+      <div class="input-group">
+        <label for="from-crypto">De</label>
+        <select id="from-crypto">
+          <option value="bitcoin">Bitcoin (BTC)</option>
+          <option value="ethereum">Ethereum (ETH)</option>
+          <option value="tron">Tron (TRX)</option>
+          <option value="dogecoin">Dogecoin (DOGE)</option>
+          <option value="binancecoin">BNB (BNB)</option>
+          <option value="cardano">Cardano (ADA)</option>
+          <option value="solana">Solana (SOL)</option>
+          <option value="ripple">XRP (XRP)</option>
+          <option value="polkadot">Polkadot (DOT)</option>
+          <option value="litecoin">Litecoin (LTC)</option>
+          <option value="chainlink">Chainlink (LINK)</option>
+          <option value="stellar">Stellar (XLM)</option>
+          <option value="uniswap">Uniswap (UNI)</option>
+          <option value="avalanche-2">Avalanche (AVAX)</option>
+          <option value="matic-network">Polygon (MATIC)</option>
+        </select>
+      </div>
+      
+      <div class="swap-button" onclick="swapCryptos()">
+        <i class="fas fa-exchange-alt"></i>
+      </div>
+      
+      <div class="input-group">
+        <label for="to-crypto">A</label>
+        <select id="to-crypto">
+          <option value="bitcoin">Bitcoin (BTC)</option>
+          <option value="ethereum">Ethereum (ETH)</option>
+          <option value="tron" selected>Tron (TRX)</option>
+          <option value="dogecoin">Dogecoin (DOGE)</option>
+          <option value="binancecoin">BNB (BNB)</option>
+          <option value="cardano">Cardano (ADA)</option>
+          <option value="solana">Solana (SOL)</option>
+          <option value="ripple">XRP (XRP)</option>
+          <option value="polkadot">Polkadot (DOT)</option>
+          <option value="litecoin">Litecoin (LTC)</option>
+          <option value="chainlink">Chainlink (LINK)</option>
+          <option value="stellar">Stellar (XLM)</option>
+          <option value="uniswap">Uniswap (UNI)</option>
+          <option value="avalanche-2">Avalanche (AVAX)</option>
+          <option value="matic-network">Polygon (MATIC)</option>
+        </select>
+      </div>
+      
+      <button class="btn btn-primary" onclick="convertCrypto()">
+        <i class="fas fa-sync-alt"></i> Convertir
+      </button>
+      
+      <div id="result" class="result" style="display: none;">
+        <div class="result-amount" id="result-amount">0.00</div>
+        <div class="result-rate" id="result-rate">Tasa: 1 BTC = 0 TRX</div>
+        <div class="result-updated" id="result-updated">
+          <i class="fas fa-clock"></i> Actualizado ahora
+        </div>
+      </div>
+      
+      <div id="error" class="error" style="display: none;"></div>
+      <div id="loading" class="loading" style="display: none;">
+        <i class="fas fa-spinner fa-spin"></i> Cargando datos...
+      </div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <a href="/dashboard/" class="btn btn-secondary">Volver al Dashboard</a>
+      <a href="/" class="btn btn-secondary">Ir al Inicio</a>
+    </div>
+  </div>
+
+  <script>
+    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    let priceCache = {};
+    let lastUpdate = null;
+
+    // Convert crypto on load
+    window.addEventListener('load', () => {
+      convertCrypto();
+    });
+
+    // Auto-convert on input change
+    document.getElementById('amount').addEventListener('input', () => {
+      if (Object.keys(priceCache).length > 0) {
+        calculateResult();
+      }
+    });
+
+    document.getElementById('from-crypto').addEventListener('change', convertCrypto);
+    document.getElementById('to-crypto').addEventListener('change', convertCrypto);
+
+    function swapCryptos() {
+      const fromSelect = document.getElementById('from-crypto');
+      const toSelect = document.getElementById('to-crypto');
+      const temp = fromSelect.value;
+      fromSelect.value = toSelect.value;
+      toSelect.value = temp;
+      convertCrypto();
+    }
+
+    async function convertCrypto() {
+      const amount = parseFloat(document.getElementById('amount').value) || 0;
+      const from = document.getElementById('from-crypto').value;
+      const to = document.getElementById('to-crypto').value;
+      
+      const loading = document.getElementById('loading');
+      const result = document.getElementById('result');
+      const error = document.getElementById('error');
+      
+      loading.style.display = 'block';
+      result.style.display = 'none';
+      error.style.display = 'none';
+      
+      try {
+        const response = await fetch(`${COINGECKO_API}/simple/price?ids=${from},${to}&vs_currencies=usd`);
+        
+        if (!response.ok) {
+          throw new Error('Error al obtener datos de CoinGecko');
+        }
+        
+        const data = await response.json();
+        
+        if (!data[from] || !data[to]) {
+          throw new Error('Criptomoneda no encontrada');
+        }
+        
+        priceCache = {
+          from: data[from].usd,
+          to: data[to].usd,
+          fromId: from,
+          toId: to
+        };
+        
+        lastUpdate = new Date();
+        calculateResult();
+        
+      } catch (err) {
+        console.error('Error:', err);
+        error.textContent = '⚠️ ' + err.message + '. Intenta de nuevo.';
+        error.style.display = 'block';
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
+
+    function calculateResult() {
+      const amount = parseFloat(document.getElementById('amount').value) || 0;
+      const from = document.getElementById('from-crypto').value;
+      const to = document.getElementById('to-crypto').value;
+      
+      if (priceCache.fromId !== from || priceCache.toId !== to) {
+        convertCrypto();
+        return;
+      }
+      
+      const rate = priceCache.from / priceCache.to;
+      const convertedAmount = amount * rate;
+      
+      document.getElementById('result-amount').textContent = 
+        convertedAmount.toLocaleString('es-ES', { 
+          maximumFractionDigits: 8,
+          minimumFractionDigits: 2 
+        });
+      
+      document.getElementById('result-rate').textContent = 
+        `Tasa: 1 ${getCryptoSymbol(from)} = ${rate.toLocaleString('es-ES', { maximumFractionDigits: 8 })} ${getCryptoSymbol(to)}`;
+      
+      const timeAgo = lastUpdate ? Math.floor((new Date() - lastUpdate) / 1000) : 0;
+      const timeText = timeAgo < 60 ? 'Actualizado ahora' : `Actualizado hace ${Math.floor(timeAgo / 60)} min`;
+      document.getElementById('result-updated').innerHTML = `<i class="fas fa-clock"></i> ${timeText}`;
+      
+      document.getElementById('result').style.display = 'block';
+    }
+
+    function getCryptoSymbol(id) {
+      const symbols = {
+        'bitcoin': 'BTC',
+        'ethereum': 'ETH',
+        'tron': 'TRX',
+        'dogecoin': 'DOGE',
+        'binancecoin': 'BNB',
+        'cardano': 'ADA',
+        'solana': 'SOL',
+        'ripple': 'XRP',
+        'polkadot': 'DOT',
+        'litecoin': 'LTC',
+        'chainlink': 'LINK',
+        'stellar': 'XLM',
+        'uniswap': 'UNI',
+        'avalanche-2': 'AVAX',
+        'matic-network': 'MATIC'
+      };
+      return symbols[id] || id.toUpperCase();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo 5: DeFi Avanzado - Academia YavlGold</title>
+  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --color-primary: #111111;
+      --color-secondary: #C8A752;
+      --color-accent: #D4AF37;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #0B0C0F;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --card-bg: rgba(17, 17, 17, 0.9);
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --error-color: #ef4444;
+      --purple-color: #8b5cf6;
+      --cyan-color: #06b6d4;
+      --gradient-defi: linear-gradient(45deg, #8b5cf6, #06b6d4, #10b981);
+      --gradient-glow: linear-gradient(45deg, #C8A752, #D4AF37, #8b5cf6);
+      --border-radius: 15px;
+      --transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: var(--bg-darker);
+      color: var(--text-light);
+      line-height: 1.7;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+      z-index: -1;
+    }
+    
+    .lesson-hero {
+      text-align: center;
+      padding: 140px 20px 80px;
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lesson-hero::before {
+      content: '🔗';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 15rem;
+      opacity: 0.03;
+      z-index: 0;
+    }
+    
+    .lesson-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.5rem;
+      color: transparent;
+      background: var(--gradient-defi);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: defiFlow 6s infinite ease-in-out;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    @keyframes defiFlow {
+      0%, 100% { background-position: 0% 50%; }
+      33% { background-position: 50% 0%; }
+      66% { background-position: 100% 50%; }
+    }
+    
+    .defi-alert {
+      background: rgba(139, 92, 246, 0.1);
+      border: 2px solid var(--purple-color);
+      border-radius: var(--border-radius);
+      padding: 20px;
+      margin: 30px auto;
+      max-width: 800px;
+      text-align: center;
+    }
+    
+    .defi-alert h3 {
+      color: var(--purple-color);
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+    
+    .breadcrumb {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .breadcrumb a {
+      color: var(--color-secondary);
+      text-decoration: none;
+    }
+    
+    .lesson-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .lesson-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      padding: 40px;
+      margin-bottom: 40px;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      backdrop-filter: blur(10px);
+      position: relative;
+    }
+    
+    .defi-card {
+      border-color: rgba(139, 92, 246, 0.3);
+      background: rgba(139, 92, 246, 0.05);
+    }
+    
+    .lesson-list {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .lesson-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 25px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .lesson-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+      transition: left 0.6s ease;
+    }
+    
+    .lesson-item:hover::before {
+      left: 100%;
+    }
+    
+    .lesson-item:hover {
+      border-color: var(--purple-color);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
+    }
+    
+    .lesson-item.expert {
+      border-color: rgba(6, 182, 212, 0.3);
+      background: rgba(6, 182, 212, 0.05);
+    }
+    
+    .lesson-item.expert:hover {
+      border-color: var(--cyan-color);
+      box-shadow: 0 10px 25px rgba(6, 182, 212, 0.2);
+    }
+    
+    .lesson-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .lesson-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--color-secondary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .lesson-status {
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .status-pending {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning-color);
+    }
+    
+    .status-expert {
+      background: rgba(6, 182, 212, 0.2);
+      color: var(--cyan-color);
+    }
+    
+    .status-advanced {
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--purple-color);
+    }
+    
+    .status-dangerous {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--error-color);
+    }
+    
+    .lesson-description {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .lesson-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 2;
+    }
+    
+    .protocols-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .protocol-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: var(--border-radius);
+      padding: 25px;
+      text-align: center;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    
+    .protocol-card:hover {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: var(--purple-color);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
+    }
+    
+    .protocol-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+    
+    .protocol-name {
+      font-weight: 600;
+      color: var(--purple-color);
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+    
+    .protocol-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+    
+    .risk-warning {
+      background: rgba(239, 68, 68, 0.1);
+      border: 2px solid var(--error-color);
+      border-radius: var(--border-radius);
+      padding: 25px;
+      margin: 30px 0;
+      text-align: center;
+    }
+    
+    .risk-warning h4 {
+      color: var(--error-color);
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .yield-calculator {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success-color);
+      border-radius: var(--border-radius);
+      padding: 25px;
+      margin: 30px 0;
+      text-align: center;
+    }
+    
+    .yield-calculator h4 {
+      color: var(--success-color);
+      margin-bottom: 20px;
+    }
+    
+    .calculator-input {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .input-group label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    
+    .input-group input {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+    
+    .btn-calculate {
+      background: var(--success-color);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 15px;
+    }
+    
+    .btn-calculate:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+    
+    .navigation-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+    
+    .btn-nav {
+      padding: 12px 25px;
+      border-radius: var(--border-radius);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .btn-back {
+      background: transparent;
+      border: 2px solid var(--text-muted);
+      color: var(--text-muted);
+    }
+    
+    .btn-back:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+    }
+    
+    .btn-next {
+      background: var(--color-secondary);
+      color: var(--bg-darker);
+      border: 2px solid var(--color-secondary);
+    }
+    
+    .btn-next:hover {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+      .lesson-hero h1 { font-size: 2.5rem; }
+      .lesson-card { padding: 25px; }
+      .navigation-buttons { flex-direction: column; gap: 15px; }
+      .lesson-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .lesson-meta { flex-wrap: wrap; }
+      .protocols-grid { grid-template-columns: 1fr; }
+      .calculator-input { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="gg-header">
+    <a class="brand" href="/">
+  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
+  <span>YavlGold</span>
+    </a>
+    
+    <nav class="main-nav">
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/academia/" class="active">Academia</a>
+      <a href="/go/telegram.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+    </nav>
+    
+    <div class="auth-buttons" id="auth-buttons"></div>
+  </header>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="/academia/">📚 Academia</a> / <span>Módulo 5: DeFi Avanzado</span>
+  </div>
+
+  <!-- Hero -->
+  <section class="lesson-hero">
+    <h1>🔗 Módulo 5: DeFi Avanzado</h1>
+    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
+      Finanzas Descentralizadas: El futuro de los servicios financieros
+    </p>
+    
+    <div class="defi-alert">
+      <h3>🚀 ¡BIENVENIDO AL FUTURO!</h3>
+      <p>DeFi te permite ser tu propio banco. Aprende a generar ingresos pasivos y participar en protocolos innovadores.</p>
+    </div>
+  </section>
+
+  <!-- Contenido de Lecciones -->
+  <div class="lesson-content">
+    <div class="lesson-card defi-card">
+      <h2 style="color: var(--purple-color); margin-bottom: 30px;">
+        <i class="fas fa-coins"></i> Lecciones de DeFi
+      </h2>
+      
+      <div class="lesson-list">
+        <!-- Lección 1 -->
+        <div class="lesson-item" onclick="openLesson('05-01')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-university"></i>
+              5.1 ¿Qué es DeFi?
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Finanzas tradicionales vs DeFi. Ventajas, desventajas y casos de uso reales.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 30 min</span>
+            <span><i class="fas fa-video"></i> Video Tutorial</span>
+            <span><i class="fas fa-star"></i> Fundamental</span>
+          </div>
+        </div>
+        
+        <!-- Lección 2 -->
+        <div class="lesson-item" onclick="openLesson('05-02')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-wallet"></i>
+              5.2 Wallets DeFi y MetaMask
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Configurar MetaMask, conectar a redes, y navegar el ecosistema DeFi de forma segura.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 35 min</span>
+            <span><i class="fas fa-hands-helping"></i> Práctica</span>
+            <span><i class="fas fa-star"></i> Importante</span>
+          </div>
+        </div>
+        
+        <!-- Lección 3 -->
+        <div class="lesson-item" onclick="openLesson('05-03')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-exchange-alt"></i>
+              5.3 DEXs - Exchanges Descentralizados
+            </h3>
+            <span class="lesson-status status-pending">📖 Pendiente</span>
+          </div>
+          <p class="lesson-description">
+            Uniswap, SushiSwap, PancakeSwap. Cómo hacer swaps y entender el slippage.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 40 min</span>
+            <span><i class="fas fa-hands-helping"></i> Práctica</span>
+            <span><i class="fas fa-star"></i> Importante</span>
+          </div>
+        </div>
+        
+        <!-- Lección 4 -->
+        <div class="lesson-item expert" onclick="openLesson('05-04')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-swimming-pool"></i>
+              5.4 Liquidity Pools y Farming
+            </h3>
+            <span class="lesson-status status-expert">🔬 Experto</span>
+          </div>
+          <p class="lesson-description">
+            Proveer liquidez, entender impermanent loss y maximizar rendimientos.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 50 min</span>
+            <span><i class="fas fa-calculator"></i> Calculadora</span>
+            <span><i class="fas fa-fire"></i> Avanzado</span>
+          </div>
+        </div>
+        
+        <!-- Lección 5 -->
+        <div class="lesson-item expert" onclick="openLesson('05-05')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-lock"></i>
+              5.5 Staking y Lending
+            </h3>
+            <span class="lesson-status status-expert">🔬 Experto</span>
+          </div>
+          <p class="lesson-description">
+            Aave, Compound, MakerDAO. Presta y pide prestado en protocolos DeFi.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 45 min</span>
+            <span><i class="fas fa-percent"></i> Rendimientos</span>
+            <span><i class="fas fa-star"></i> Avanzado</span>
+          </div>
+        </div>
+        
+        <!-- Lección 6 -->
+        <div class="lesson-item expert" onclick="openLesson('05-06')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-coins"></i>
+              5.6 Stablecoins y Yield Farming
+            </h3>
+            <span class="lesson-status status-expert">🔬 Experto</span>
+          </div>
+          <p class="lesson-description">
+            USDC, USDT, DAI. Estrategias de bajo riesgo para generar yield estable.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 40 min</span>
+            <span><i class="fas fa-shield-alt"></i> Bajo Riesgo</span>
+            <span><i class="fas fa-star"></i> Recomendado</span>
+          </div>
+        </div>
+        
+        <!-- Lección 7 -->
+        <div class="lesson-item" onclick="openLesson('05-07')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-exclamation-triangle"></i>
+              5.7 Riesgos en DeFi
+            </h3>
+            <span class="lesson-status status-dangerous">⚠ Crítico</span>
+          </div>
+          <p class="lesson-description">
+            Smart contract risks, rug pulls, impermanent loss y cómo protegerte.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 35 min</span>
+            <span><i class="fas fa-shield-alt"></i> Seguridad</span>
+            <span><i class="fas fa-fire"></i> Muy Importante</span>
+          </div>
+        </div>
+        
+        <!-- Lección 8 -->
+        <div class="lesson-item" onclick="openLesson('05-08')">
+          <div class="lesson-header">
+            <h3 class="lesson-title">
+              <i class="fas fa-graduation-cap"></i>
+              5.8 Portfolio DeFi Práctico
+            </h3>
+            <span class="lesson-status status-pending">🎯 Práctica</span>
+          </div>
+          <p class="lesson-description">
+            Construye tu primer portfolio DeFi diversificado y sostenible.
+          </p>
+          <div class="lesson-meta">
+            <span><i class="fas fa-clock"></i> 60 min</span>
+            <span><i class="fas fa-hands-helping"></i> Práctica Final</span>
+            <span><i class="fas fa-trophy"></i> Final</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Protocolos Principales -->
+    <div class="lesson-card">
+      <h3 style="color: var(--purple-color); margin-bottom: 20px;">
+        <i class="fas fa-network-wired"></i> Protocolos DeFi Principales
+      </h3>
+      
+      <div class="protocols-grid">
+        <div class="protocol-card" onclick="showProtocol('uniswap')">
+          <div class="protocol-icon">🦄</div>
+          <div class="protocol-name">Uniswap</div>
+          <div class="protocol-desc">El DEX más popular de Ethereum</div>
+          <div style="color: var(--success-color); font-weight: 600;">TVL: $4.2B</div>
+        </div>
+        
+        <div class="protocol-card" onclick="showProtocol('aave')">
+          <div class="protocol-icon">👻</div>
+          <div class="protocol-name">Aave</div>
+          <div class="protocol-desc">Protocolo de lending descentralizado</div>
+          <div style="color: var(--success-color); font-weight: 600;">TVL: $6.8B</div>
+        </div>
+        
+        <div class="protocol-card" onclick="showProtocol('compound')">
+          <div class="protocol-icon">🏢</div>
+          <div class="protocol-name">Compound</div>
+          <div class="protocol-desc">Mercado de dinero descentralizado</div>
+          <div style="color: var(--success-color); font-weight: 600;">TVL: $2.1B</div>
+        </div>
+        
+        <div class="protocol-card" onclick="showProtocol('makerdao')">
+          <div class="protocol-icon">🎭</div>
+          <div class="protocol-name">MakerDAO</div>
+          <div class="protocol-desc">Creador de la stablecoin DAI</div>
+          <div style="color: var(--success-color); font-weight: 600;">TVL: $8.5B</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Calculadora de Yield -->
+    <div class="yield-calculator">
+      <h4>
+        <i class="fas fa-calculator"></i>
+        Calculadora de Yield Farming
+      </h4>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">
+        Calcula tus ganancias potenciales en diferentes protocolos DeFi
+      </p>
+      
+      <div class="calculator-input">
+        <div class="input-group">
+          <label>Capital Inicial ($)</label>
+          <input type="number" id="capital" placeholder="1000" value="1000">
+        </div>
+        
+        <div class="input-group">
+          <label>APY (%)</label>
+          <input type="number" id="apy" placeholder="12" value="12">
+        </div>
+        
+        <div class="input-group">
+          <label>Período (días)</label>
+          <input type="number" id="days" placeholder="365" value="365">
+        </div>
+      </div>
+      
+      <button class="btn-calculate" onclick="calculateYield()">
+        Calcular Rendimiento <i class="fas fa-calculator"></i>
+      </button>
+      
+      <div id="yield-result" style="margin-top: 20px; padding: 15px; background: rgba(16,185,129,0.1); border-radius: 10px; display: none;">
+        <h4 style="color: var(--success-color); margin-bottom: 10px;">📊 Resultados:</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; text-align: left;">
+          <div>
+            <strong>Ganancia:</strong><br>
+            <span id="profit" style="color: var(--success-color); font-size: 1.2rem; font-weight: 600;"></span>
+          </div>
+          <div>
+            <strong>Total Final:</strong><br>
+            <span id="total" style="color: var(--color-secondary); font-size: 1.2rem; font-weight: 600;"></span>
+          </div>
+          <div>
+            <strong>ROI:</strong><br>
+            <span id="roi" style="color: var(--purple-color); font-size: 1.2rem; font-weight: 600;"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Advertencia de Riesgos -->
+    <div class="risk-warning">
+      <h4>
+        <i class="fas fa-exclamation-triangle"></i>
+        ⚠ ADVERTENCIA DE RIESGOS ⚠
+      </h4>
+      
+      <div style="text-align: left; margin-top: 20px;">
+        <p><strong>DeFi es experimental y de alto riesgo:</strong></p>
+        <ul style="margin-top: 15px;">
+          <li>🐛 <strong>Smart Contract Risk:</strong> Bugs pueden drenar fondos</li>
+          <li>📉 <strong>Impermanent Loss:</strong> Puedes perder dinero en liquidity pools</li>
+          <li>🎭 <strong>Rug Pulls:</strong> Proyectos pueden desaparecer de la noche a la mañana</li>
+          <li>⛽ <strong>Gas Fees:</strong> Las comisiones pueden ser muy altas</li>
+          <li>📱 <strong>UI/UX Risks:</strong> Interfaces confusas pueden causar errores costosos</li>
+        </ul>
+        
+        <div style="background: rgba(239,68,68,0.2); padding: 15px; border-radius: 10px; margin-top: 20px;">
+          <strong style="color: var(--error-color);">REGLA DE ORO:</strong><br>
+          Nunca inviertas más de lo que puedes permitirte perder. Empieza con cantidades pequeñas.
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progreso del Módulo -->
+    <div class="lesson-card">
+      <h3 style="color: var(--color-secondary); margin-bottom: 20px;">
+        <i class="fas fa-chart-line"></i> Tu Progreso en DeFi
+      </h3>
+      
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <span>Progreso Actual</span>
+        <span style="color: var(--purple-color); font-weight: 600;">0%</span>
+      </div>
+      
+      <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+        <div style="width: 0%; height: 100%; background: var(--gradient-defi); border-radius: 4px;"></div>
+      </div>
+      
+      <p style="margin-top: 15px; color: var(--text-muted);">
+        Has completado <strong>0 de 8 lecciones</strong>. Este es el módulo más innovador.
+      </p>
+    </div>
+    
+    <!-- Estrategia Recomendada -->
+    <div class="lesson-card" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
+      <h3 style="color: var(--success-color); margin-bottom: 20px;">
+        <i class="fas fa-lightbulb"></i> Estrategia DeFi para Principiantes
+      </h3>
+      
+      <div style="display: grid; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <div style="background: var(--success-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">1</div>
+          <div>
+            <strong>Comienza con Stablecoins</strong><br>
+            <span style="color: var(--text-muted);">Usa USDC o USDT en protocolos establecidos (Aave, Compound)</span>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <div style="background: var(--success-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">2</div>
+          <div>
+            <strong>Diversifica en 3-5 Protocolos</strong><br>
+            <span style="color: var(--text-muted);">No pongas todo en un solo protocolo, por seguro que parezca</span>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <div style="background: var(--success-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">3</div>
+          <div>
+            <strong>Reinvierte Gradualmente</strong><br>
+            <span style="color: var(--text-muted);">Compounding es poderoso, pero retira ganancias periódicamente</span>
+          </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+          <div style="background: var(--success-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">4</div>
+          <div>
+            <strong>Monitorea Constantemente</strong><br>
+            <span style="color: var(--text-muted);">DeFi cambia rápido. Mantente actualizado sobre tus protocolos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de Navegación -->
+  <div class="navigation-buttons">
+    <a href="/academia/lecciones/04-analisis-tecnico.html" class="btn-nav btn-back">
+      <i class="fas fa-arrow-left"></i> Módulo Anterior
+    </a>
+    <a href="/academia/lecciones/06-nfts-metaverso.html" class="btn-nav btn-next">
+      Siguiente Módulo <i class="fas fa-arrow-right"></i>
+    </a>
+  </div>
+
+  <!-- Footer -->
+  <footer style="margin-top: 80px;">
+    <div class="footer-brand">
+      <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+      <span>YavlGold</span>
+    </div>
+    <p>Academia de Criptomonedas y Trading</p>
+    <div class="copyright">
+  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/auth.js"></script>
+  <script>
+    function calculateYield() {
+      const capital = parseFloat(document.getElementById('capital').value) || 0;
+      const apy = parseFloat(document.getElementById('apy').value) || 0;
+      const days = parseFloat(document.getElementById('days').value) || 0;
+      
+      if (capital <= 0 || apy <= 0 || days <= 0) {
+        alert('Por favor ingresa valores válidos');
+        return;
+      }
+      
+      // Cálculo de compound interest
+      const dailyRate = (apy / 100) / 365;
+      const finalAmount = capital * Math.pow(1 + dailyRate, days);
+      const profit = finalAmount - capital;
+      const roi = (profit / capital) * 100;
+      
+  // Mostrar resultados
+  document.getElementById('profit').textContent = `$${profit.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+  document.getElementById('total').textContent = `$${finalAmount.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+  document.getElementById('roi').textContent = `${roi.toFixed(2)}%`;
+      
+      document.getElementById('yield-result').style.display = 'block';
+    }
+    
+    function openLesson(lessonId) {
+      const lessons = {
+        '05-01': {
+          title: '¿Qué es DeFi?',
+          content: `
+            <h3>🏦 FINANZAS TRADICIONALES VS DeFi</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0;">
+              <div style="background: rgba(239,68,68,0.1); padding: 20px; border-radius: 10px; border: 1px solid var(--error-color);">
+                <h4 style="color: var(--error-color);">🏛 FINANZAS TRADICIONALES</h4>
+                <ul style="color: var(--text-muted);">
+                  <li>Bancos controlan tu dinero</li>
+                  <li>Horarios limitados</li>
+                  <li>Muchos intermediarios</li>
+                  <li>Comisiones altas</li>
+                  <li>Requiere documentación</li>
+                  <li>Puede negarte servicios</li>
+                </ul>
+              </div>
+              
+              <div style="background: rgba(16,185,129,0.1); padding: 20px; border-radius: 10px; border: 1px solid var(--success-color);">
+                <h4 style="color: var(--success-color);">🔗 DeFi</h4>
+                <ul style="color: var(--text-muted);">
+                  <li>Tú controlas tu dinero</li>
+                  <li>24/7/365</li>
+                  <li>Sin intermediarios</li>
+                  <li>Comisiones transparentes</li>
+                  <li>Solo necesitas una wallet</li>
+                  <li>Accesible para todos</li>
+                </ul>
+              </div>
+            </div>
+            
+            <h4>🎯 CASOS DE USO PRINCIPALES</h4>
+            <ol>
+              <li><strong>Intercambio:</strong> Swap tokens sin exchanges centralizados</li>
+              <li><strong>Préstamos:</strong> Presta y pide prestado sin bancos</li>
+              <li><strong>Ahorro:</strong> Gana intereses superiores a bancos tradicionales</li>
+              <li><strong>Trading:</strong> Apalancamiento y derivados descentralizados</li>
+              <li><strong>Seguros:</strong> Protección contra smart contract risks</li>
+            </ol>
+          `
+        }
+      };
+      
+      if (lessons[lessonId]) {
+        alert(`📖 ${lessons[lessonId].title}\n\nEsta funcionalidad estará disponible pronto con contenido interactivo completo.`);
+      }
+    }
+    
+    function showProtocol(protocol) {
+      const protocols = {
+        'uniswap': 'Uniswap es el DEX más grande de Ethereum, pionero en AMM (Automated Market Maker).',
+        'aave': 'Aave permite prestar y pedir prestado criptomonedas de forma descentralizada.',
+        'compound': 'Compound es un protocolo de mercado de dinero que permite ganar intereses.',
+        'makerdao': 'MakerDAO mantiene la stablecoin DAI colateralizada por criptomonedas.'
+      };
+      
+  alert(`ℹ ${protocols[protocol]}`);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "@yavl/gold",
+  "version": "1.0.0",
+  "description": "YavlGold - Academia de Trading y Criptomonedas",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Servidor de desarrollo - usar Live Server o similar'",
+    "build": "echo 'Build process - TBD'",
+    "test": "echo 'Tests - TBD'"
+  },
+  "dependencies": {
+    "@yavl/auth": "workspace:*",
+    "@yavl/ui": "workspace:*",
+    "@yavl/utils": "workspace:*",
+    "@yavl/themes": "workspace:*",
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "keywords": [
+    "yavl",
+    "trading",
+    "crypto",
+    "academy",
+    "education"
+  ],
+  "author": "YavlPro",
+  "license": "MIT"
+}

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Perfil - YavlGold</title>
+  <meta name="description" content="Gestiona tu perfil y preferencias en YavlGold">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="/assets/images/logo.png" type="image/png">
+  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <meta name="theme-color" content="#0B0C0F">
+  
+  <!-- Estilos -->
+  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    body {
+      background: var(--bg-darker);
+      color: var(--text-light);
+      line-height: 1.7;
+      padding-top: 80px;
+      min-height: 100vh;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(200,167,82,.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(200,167,82,.05) 0%, transparent 50%);
+      z-index: -1;
+    }
+    
+    .profile-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    .page-header {
+      margin-bottom: 40px;
+    }
+    
+    .page-header h1 {
+      font-size: 2.5rem;
+      font-family: 'Playfair Display', serif;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    
+    .profile-sidebar {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      height: fit-content;
+    }
+    
+    .profile-avatar-large {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: var(--gradient-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      font-weight: bold;
+      color: var(--bg-darker);
+      margin: 0 auto 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .profile-avatar-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .avatar-upload {
+      margin-top: 15px;
+    }
+    
+    .avatar-upload input[type="file"] {
+      display: none;
+    }
+    
+    .avatar-upload label {
+      display: inline-block;
+      padding: 8px 16px;
+      background: rgba(200, 167, 82, 0.1);
+      border: 1px solid var(--color-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.9rem;
+    }
+    
+    .avatar-upload label:hover {
+      background: rgba(200, 167, 82, 0.2);
+    }
+    
+    .profile-stats {
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .profile-stat {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    
+    .profile-stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+    }
+    
+    .profile-stat-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--color-secondary);
+    }
+    
+    .profile-main {
+      background: var(--card-bg);
+      padding: 40px;
+      border-radius: var(--border-radius);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .form-section {
+      margin-bottom: 40px;
+    }
+    
+    .form-section h3 {
+      font-size: 1.5rem;
+      color: var(--text-light);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid rgba(200,167,82,0.3);
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--text-light);
+      font-family: 'Montserrat', sans-serif;
+      transition: var(--transition);
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+      background: rgba(255,255,255,0.08);
+    }
+    
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .form-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    .btn-save {
+      padding: 12px 30px;
+      background: var(--gradient-gold);
+      color: var(--bg-darker);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(200, 167, 82, 0.4);
+    }
+    
+    .btn-cancel {
+      padding: 12px 30px;
+      background: transparent;
+      color: var(--text-light);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-block;
+    }
+    
+    .btn-cancel:hover {
+      border-color: var(--color-secondary);
+      color: var(--color-secondary);
+    }
+    
+    .success-message,
+    .error-message {
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+    }
+    
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+    
+    .danger-zone {
+      margin-top: 50px;
+      padding: 30px;
+      background: rgba(239, 68, 68, 0.05);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: var(--border-radius);
+    }
+    
+    .danger-zone h3 {
+      color: #ef4444;
+      margin-bottom: 15px;
+    }
+    
+    .btn-danger {
+      padding: 10px 20px;
+      background: transparent;
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .profile-main {
+        padding: 25px;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+      
+      .btn-save,
+      .btn-cancel {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header con navegación -->
+  <header class="gg-header">
+    <a href="/" class="brand">
+      <img src="/assets/images/logo.png" alt="YavlGold" class="brand-logo">
+      <span>YavlGold</span>
+    </a>
+    <nav class="main-nav">
+      <a href="/herramientas/">Herramientas</a>
+      <a href="/academia/">Academia</a>
+      <a href="/comunidad.html">Comunidad</a>
+      <a href="/dashboard/">Dashboard</a>
+    </nav>
+    <div class="auth-buttons">
+      <button id="login-btn" class="btn-login" style="display: none;">
+        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+      </button>
+      <button id="register-btn" class="btn-register" style="display: none;">
+        <i class="fas fa-user-plus"></i> Registrarse
+      </button>
+    </div>
+    <div id="user-menu" class="user-menu" style="display: none;">
+      <button id="user-menu-btn" class="user-menu-btn">
+        <img src="" alt="" class="user-avatar-sm">
+        <span>Usuario</span>
+        <i class="fas fa-chevron-down"></i>
+      </button>
+      <div id="user-dropdown" class="user-dropdown" style="display: none;">
+        <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/dashboard/perfil.html" class="active"><i class="fas fa-user"></i> Mi Perfil</a>
+        <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+        <hr>
+        <button id="logout-btn" class="logout-btn">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <div class="profile-container">
+    <div class="page-header">
+      <h1><i class="fas fa-user"></i> Mi Perfil</h1>
+      <p>Gestiona tu información personal y preferencias</p>
+    </div>
+
+    <div id="success-msg" class="success-message">
+      <i class="fas fa-check-circle"></i> Perfil actualizado correctamente
+    </div>
+    <div id="error-msg" class="error-message">
+      <i class="fas fa-exclamation-circle"></i> <span id="error-text">Error al actualizar perfil</span>
+    </div>
+
+    <div class="profile-grid">
+      <!-- Sidebar con Avatar y Stats -->
+      <aside class="profile-sidebar">
+        <div class="profile-avatar-large" id="profile-avatar">
+          <span id="avatar-initials">YV</span>
+        </div>
+        <h3 id="profile-name">Usuario</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="profile-email">email@ejemplo.com</p>
+        
+        <div class="avatar-upload">
+          <input type="file" id="avatar-input" accept="image/*">
+          <label for="avatar-input">
+            <i class="fas fa-camera"></i> Cambiar Foto
+          </label>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat-label">Nivel</div>
+            <div class="profile-stat-value" id="user-level">Novato</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-label">Puntos XP</div>
+            <div class="profile-stat-value" id="user-xp">0</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-label">Lecciones Completadas</div>
+            <div class="profile-stat-value" id="user-lessons">0</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-label">Miembro desde</div>
+            <div class="profile-stat-value" id="user-joined" style="font-size: 0.95rem;">-</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Formulario Principal -->
+      <main class="profile-main">
+        <form id="profile-form">
+          <!-- Información Personal -->
+          <div class="form-section">
+            <h3><i class="fas fa-user-circle"></i> Información Personal</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="first-name">Nombre</label>
+                <input type="text" id="first-name" placeholder="Tu nombre">
+              </div>
+              <div class="form-group">
+                <label for="last-name">Apellido</label>
+                <input type="text" id="last-name" placeholder="Tu apellido">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="username">Nombre de Usuario</label>
+              <input type="text" id="username" placeholder="@usuario">
+            </div>
+
+            <div class="form-group">
+              <label for="bio">Biografía</label>
+              <textarea id="bio" placeholder="Cuéntanos sobre ti..."></textarea>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div class="form-section">
+            <h3><i class="fas fa-envelope"></i> Información de Contacto</h3>
+            
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="tu@email.com" disabled>
+              <small style="color: var(--text-muted); font-size: 0.85rem;">
+                <i class="fas fa-info-circle"></i> El email no puede ser modificado
+              </small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">Teléfono (Opcional)</label>
+                <input type="tel" id="phone" placeholder="+1 234 567 890">
+              </div>
+              <div class="form-group">
+                <label for="country">País</label>
+                <select id="country">
+                  <option value="">Selecciona un país</option>
+                  <option value="ES">España</option>
+                  <option value="MX">México</option>
+                  <option value="AR">Argentina</option>
+                  <option value="CO">Colombia</option>
+                  <option value="VE">Venezuela</option>
+                  <option value="CL">Chile</option>
+                  <option value="PE">Perú</option>
+                  <option value="US">Estados Unidos</option>
+                  <option value="OTHER">Otro</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preferencias de Trading -->
+          <div class="form-section">
+            <h3><i class="fas fa-chart-line"></i> Preferencias de Trading</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="experience-level">Nivel de Experiencia</label>
+                <select id="experience-level">
+                  <option value="beginner">Principiante</option>
+                  <option value="intermediate">Intermedio</option>
+                  <option value="advanced">Avanzado</option>
+                  <option value="expert">Experto</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="trading-style">Estilo de Trading</label>
+                <select id="trading-style">
+                  <option value="">Selecciona un estilo</option>
+                  <option value="day">Day Trading</option>
+                  <option value="swing">Swing Trading</option>
+                  <option value="position">Position Trading</option>
+                  <option value="scalping">Scalping</option>
+                  <option value="hodl">HODL</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-save">
+              <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+            <a href="/dashboard/" class="btn-cancel">
+              <i class="fas fa-times"></i> Cancelar
+            </a>
+          </div>
+        </form>
+
+        <!-- Zona de Peligro -->
+        <div class="danger-zone">
+          <h3><i class="fas fa-exclamation-triangle"></i> Zona de Peligro</h3>
+          <p style="color: var(--text-muted); margin-bottom: 15px;">
+            Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, ten cuidado.
+          </p>
+          <button class="btn-danger" onclick="confirmDeleteAccount()">
+            <i class="fas fa-trash-alt"></i> Eliminar Cuenta
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <!-- Sistema de autenticación desde workspace package @yavl/auth -->
+  <script type="module" src="/assets/js/auth.js"></script>
+
+  <script>
+    console.log('[Perfil] 🎨 Página de perfil cargada');
+
+    let currentUser = null;
+
+    // Cargar datos del usuario
+    async function loadUserProfile() {
+      try {
+        const user = await window.AuthClient.getCurrentUser();
+        if (!user) {
+          window.location.href = '/dashboard/';
+          return;
+        }
+
+        currentUser = user;
+
+        // Cargar perfil desde Supabase
+        const { data: profile, error } = await window.AuthClient.supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('[Perfil] Error al cargar perfil:', error);
+          return;
+        }
+
+        // Actualizar UI con datos del perfil
+        document.getElementById('profile-name').textContent = profile.display_name || 'Usuario';
+        document.getElementById('profile-email').textContent = user.email;
+        document.getElementById('email').value = user.email;
+        
+        // Avatar
+        const initials = profile.display_name 
+          ? profile.display_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+          : user.email.slice(0, 2).toUpperCase();
+        document.getElementById('avatar-initials').textContent = initials;
+
+        // Stats
+        document.getElementById('user-level').textContent = profile.level || 'Novato';
+        document.getElementById('user-xp').textContent = profile.xp_points || 0;
+        document.getElementById('user-lessons').textContent = profile.lessons_completed || 0;
+        
+        const joinedDate = new Date(profile.created_at);
+        document.getElementById('user-joined').textContent = joinedDate.toLocaleDateString('es-ES', { 
+          month: 'short', 
+          year: 'numeric' 
+        });
+
+        // Formulario
+        if (profile.display_name) {
+          const names = profile.display_name.split(' ');
+          document.getElementById('first-name').value = names[0] || '';
+          document.getElementById('last-name').value = names.slice(1).join(' ') || '';
+        }
+        
+        document.getElementById('username').value = profile.username || '';
+        document.getElementById('bio').value = profile.bio || '';
+        document.getElementById('phone').value = profile.phone || '';
+        document.getElementById('country').value = profile.country || '';
+        document.getElementById('experience-level').value = profile.experience_level || 'beginner';
+        document.getElementById('trading-style').value = profile.trading_style || '';
+
+      } catch (error) {
+        console.error('[Perfil] Error:', error);
+      }
+    }
+
+    // Guardar perfil
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!currentUser) return;
+
+      const firstName = document.getElementById('first-name').value.trim();
+      const lastName = document.getElementById('last-name').value.trim();
+      const displayName = `${firstName} ${lastName}`.trim();
+
+      const profileData = {
+        display_name: displayName || null,
+        username: document.getElementById('username').value.trim() || null,
+        bio: document.getElementById('bio').value.trim() || null,
+        phone: document.getElementById('phone').value.trim() || null,
+        country: document.getElementById('country').value || null,
+        experience_level: document.getElementById('experience-level').value || 'beginner',
+        trading_style: document.getElementById('trading-style').value || null,
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        const { error } = await window.AuthClient.supabase
+          .from('profiles')
+          .update(profileData)
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        // Mostrar mensaje de éxito
+        const successMsg = document.getElementById('success-msg');
+        successMsg.style.display = 'block';
+        setTimeout(() => {
+          successMsg.style.display = 'none';
+        }, 3000);
+
+        // Recargar perfil
+        await loadUserProfile();
+
+      } catch (error) {
+        console.error('[Perfil] Error al guardar:', error);
+        const errorMsg = document.getElementById('error-msg');
+        document.getElementById('error-text').textContent = error.message || 'Error al actualizar perfil';
+        errorMsg.style.display = 'block';
+        setTimeout(() => {
+          errorMsg.style.display = 'none';
+        }, 5000);
+      }
+    });
+
+    // Confirmación de eliminación de cuenta
+    function confirmDeleteAccount() {
+      const confirmed = confirm(
+        '⚠️ ADVERTENCIA: Esta acción es irreversible.\n\n' +
+        '¿Estás seguro de que quieres eliminar tu cuenta?\n' +
+        'Se perderán todos tus datos, progreso, lecciones y logros.\n\n' +
+        'Escribe "ELIMINAR" para confirmar.'
+      );
+
+      if (confirmed) {
+        const confirmation = prompt('Escribe "ELIMINAR" para confirmar:');
+        if (confirmation === 'ELIMINAR') {
+          deleteAccount();
+        } else {
+          alert('Cancelado. Tu cuenta está segura.');
+        }
+      }
+    }
+
+    async function deleteAccount() {
+      try {
+        // Aquí iría la lógica de eliminación de cuenta
+        alert('Funcionalidad de eliminación de cuenta en desarrollo.');
+      } catch (error) {
+        console.error('[Perfil] Error al eliminar cuenta:', error);
+        alert('Error al eliminar cuenta. Por favor contacta soporte.');
+      }
+    }
+
+    // Cargar perfil al iniciar
+    window.addEventListener('load', () => {
+      loadUserProfile();
+    });
+  </script>
+</body>
+</html>
