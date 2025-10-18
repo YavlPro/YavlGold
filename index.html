@@ -1,108 +1,213 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YavlGold — Academia y Herramientas de Cripto</title>
-  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
-  
-  <!-- Metadatos Open Graph / Twitter -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://yavlgold.com/">
-  <meta property="og:title" content="YavlGold — Academia y Herramientas de Cripto">
-  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://yavlgold.com/">
-  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
-  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
-  
-  <!-- Favicon e íconos -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
-  <meta name="theme-color" content="#0B0C0F">
+<!DOCTYPE html><!DOCTYPE html>
 
-  <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
+<html lang="es"><html lang="es">
 
-  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <script>
-    (function () {
-      try {
-        var BUST_VERSION = '20250929'; // update when deploying major changes
-        var key = 'gg_html_busted_index';
-        var already = sessionStorage.getItem(key);
-        var url = new URL(window.location.href);
-        if (!url.searchParams.has('v') && !already) {
-          url.searchParams.set('v', BUST_VERSION);
-          sessionStorage.setItem(key, '1');
-          window.location.replace(url.toString());
-        }
-      } catch (e) { /* noop */ }
-    })();
-  </script>
-  
-  <!-- JSON-LD para SEO -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-  "name": "YavlGold",
-  "url": "https://yavlgold.com/",
-  "logo": "https://yavlgold.com/assets/brand/icon-512.png",
-  "description": "Academia y herramientas educativas en blockchain y finanzas digitales",
-    "sameAs": [
-      "https://x.com/Yavlcapitan",
-      "https://t.me/YavlEcosystem",
-      "https://t.me/YavlPro",
-      "https://youtube.com/@yavlgoldpro"
-    ],
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "+58-424-739-4025",
-      "contactType": "customer service",
-      "availableLanguage": "es"
-    }
-  }
-  </script>
-  
-  <!-- Fuentes y librerías -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Supabase Client Library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- hCaptcha Script -->
-  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
-  
-  <style>
-    /* --- VARIABLES DEL SISTEMA DE DISEÑO --- */
-    :root {
-      --color-primary: #111111;
-      --color-secondary: #C8A752;  /* Dorado principal */
-      --color-accent: #D4AF37;     /* Dorado secundario */
-      --bg-dark: #0a0a0a;
-      --bg-darker: #0B0C0F;        /* Negro de fondo */
-      --text-light: #e2e8f0;
-      --text-muted: #94a3b8;
-      --card-bg: rgba(17, 17, 17, 0.9);
-      --card-bg-solid: #111111;
-      --error-color: #ef4444;
-      --success-color: #10b981;
-      --warning-color: #f59e0b;
-      --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
-      --border-radius: 15px;
-      --transition: all 0.3s ease;
-    }
-    
-    * {
-      box-sizing: border-box;
+<head><head>
+
+  <meta charset="UTF-8">  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta http-equiv="refresh" content="0;url=/apps/gold/">  <title>YavlGold — Academia y Herramientas de Cripto</title>
+
+  <title>YavlGold - Academia de Trading y Blockchain</title>  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
+
+  <meta name="description" content="Academia y herramientas educativas en blockchain y finanzas digitales. Aprende trading, criptomonedas y gestión de riesgos.">  
+
+    <!-- Metadatos Open Graph / Twitter -->
+
+  <!-- Open Graph -->  <meta property="og:type" content="website">
+
+  <meta property="og:title" content="YavlGold - Academia de Trading">  <meta property="og:url" content="https://yavlgold.com/">
+
+  <meta property="og:description" content="Aprende trading, blockchain y finanzas digitales con recursos gratuitos.">  <meta property="og:title" content="YavlGold — Academia y Herramientas de Cripto">
+
+  <meta property="og:type" content="website">  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
+
+  <meta property="og:url" content="https://yavlgold.com">  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+
+  <style>  <meta name="twitter:url" content="https://yavlgold.com/">
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
+
+    body {  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
+
+      font-family: system-ui, -apple-system, sans-serif;  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+
+      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1e 100%);  
+
+      color: #fff;  <!-- Favicon e íconos -->
+
+      display: flex;  <link rel="icon" href="/assets/images/logo.png" type="image/png">
+
+      align-items: center;  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
+
+      justify-content: center;  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+
+      min-height: 100vh;  <meta name="theme-color" content="#0B0C0F">
+
+      padding: 20px;
+
+    }  <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
+
+    .container {  <link rel="stylesheet" href="/assets/css/unificacion.css">
+
+      text-align: center;
+
+      max-width: 600px;  <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
+
+    }  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+
+    .logo {  <meta http-equiv="Pragma" content="no-cache" />
+
+      width: 120px;  <meta http-equiv="Expires" content="0" />
+
+      height: 120px;  <script>
+
+      margin: 0 auto 30px;    (function () {
+
+      background: linear-gradient(135deg, #C8A752, #D4AF37);      try {
+
+      border-radius: 20px;        var BUST_VERSION = '20250929'; // update when deploying major changes
+
+      display: flex;        var key = 'gg_html_busted_index';
+
+      align-items: center;        var already = sessionStorage.getItem(key);
+
+      justify-content: center;        var url = new URL(window.location.href);
+
+      font-size: 48px;        if (!url.searchParams.has('v') && !already) {
+
+      font-weight: 900;          url.searchParams.set('v', BUST_VERSION);
+
+      color: #0B0C0F;          sessionStorage.setItem(key, '1');
+
+      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);          window.location.replace(url.toString());
+
+    }        }
+
+    h1 {      } catch (e) { /* noop */ }
+
+      font-size: clamp(2rem, 5vw, 3rem);    })();
+
+      margin-bottom: 15px;  </script>
+
+      background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);  
+
+      -webkit-background-clip: text;  <!-- JSON-LD para SEO -->
+
+      -webkit-text-fill-color: transparent;  <script type="application/ld+json">
+
+      background-clip: text;  {
+
+    }    "@context": "https://schema.org",
+
+    p {    "@type": "Organization",
+
+      font-size: 1.1rem;  "name": "YavlGold",
+
+      color: #b0b0b0;  "url": "https://yavlgold.com/",
+
+      margin-bottom: 30px;  "logo": "https://yavlgold.com/assets/brand/icon-512.png",
+
+    }  "description": "Academia y herramientas educativas en blockchain y finanzas digitales",
+
+    .loader {    "sameAs": [
+
+      width: 40px;      "https://x.com/Yavlcapitan",
+
+      height: 40px;      "https://t.me/YavlEcosystem",
+
+      margin: 0 auto;      "https://t.me/YavlPro",
+
+      border: 4px solid rgba(212, 175, 55, 0.2);      "https://youtube.com/@yavlgoldpro"
+
+      border-top-color: #D4AF37;    ],
+
+      border-radius: 50%;    "contactPoint": {
+
+      animation: spin 1s linear infinite;      "@type": "ContactPoint",
+
+    }      "telephone": "+58-424-739-4025",
+
+    @keyframes spin {      "contactType": "customer service",
+
+      to { transform: rotate(360deg); }      "availableLanguage": "es"
+
+    }    }
+
+    a {  }
+
+      color: #D4AF37;  </script>
+
+      text-decoration: none;  
+
+      font-weight: 600;  <!-- Fuentes y librerías -->
+
+    }  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    a:hover {  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+      text-decoration: underline;  
+
+    }  <!-- Supabase Client Library -->
+
+    .note {  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+      margin-top: 20px;  
+
+      font-size: 0.9rem;  <!-- hCaptcha Script -->
+
+      color: #808080;  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+    }  
+
+  </style>  <style>
+
+</head>    /* --- VARIABLES DEL SISTEMA DE DISEÑO --- */
+
+<body>    :root {
+
+  <div class="container">      --color-primary: #111111;
+
+    <div class="logo">YG</div>      --color-secondary: #C8A752;  /* Dorado principal */
+
+    <h1>YavlGold</h1>      --color-accent: #D4AF37;     /* Dorado secundario */
+
+    <p>Redirigiendo a la academia...</p>      --bg-dark: #0a0a0a;
+
+    <div class="loader"></div>      --bg-darker: #0B0C0F;        /* Negro de fondo */
+
+    <p class="note">      --text-light: #e2e8f0;
+
+      Si no eres redirigido automáticamente,       --text-muted: #94a3b8;
+
+      <a href="/apps/gold/">haz click aquí</a>      --card-bg: rgba(17, 17, 17, 0.9);
+
+    </p>      --card-bg-solid: #111111;
+
+  </div>      --error-color: #ef4444;
+
+        --success-color: #10b981;
+
+  <script>      --warning-color: #f59e0b;
+
+    // Redirect inmediato via JavaScript (backup del meta refresh)      --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+
+    setTimeout(() => {      --border-radius: 15px;
+
+      window.location.href = '/apps/gold/';      --transition: all 0.3s ease;
+
+    }, 100);    }
+
+  </script>    
+
+</body>    * {
+
+</html>      box-sizing: border-box;
+
       margin: 0;
       padding: 0;
     }
