@@ -161,6 +161,25 @@
     width: 100%;
     max-width: 350px;
     margin: 0 auto;
+    align-items: stretch; /* Asegurar que los botones se estiren */
+  }
+
+  /* Todos los botones dentro de .cta-buttons */
+  .cta-buttons .btn,
+  .cta-buttons a.btn {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    touch-action: manipulation;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    box-sizing: border-box;
   }
 
   .btn-cta {
@@ -173,7 +192,39 @@
     transition: all 0.3s ease;
   }
 
-  /* Botón "Ir a Herramientas" con candado */
+  /* Botón "Ir a Herramientas" - Primario con gradiente */
+  .cta-buttons .btn-primary {
+    background: linear-gradient(135deg, #C8A752, #D4AF37);
+    color: #0B0C0F;
+    border: none;
+    box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+  }
+
+  .cta-buttons .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(200, 167, 82, 0.5);
+  }
+
+  .cta-buttons .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  /* Botón "Explorar Academia" - Secundario con borde */
+  .cta-buttons .btn-secondary {
+    background: transparent;
+    border: 2px solid var(--color-secondary);
+    color: var(--color-secondary);
+  }
+
+  .cta-buttons .btn-secondary:hover {
+    background: rgba(200, 167, 82, 0.1);
+  }
+
+  .cta-buttons .btn-secondary:active {
+    transform: scale(0.98);
+    background: rgba(200, 167, 82, 0.2);
+  }
+
+  /* Botón "Ir a Herramientas" con candado (legacy) */
   .btn-herramientas {
     background: linear-gradient(135deg, #C8A752, #D4AF37);
     color: #0B0C0F;
@@ -192,7 +243,7 @@
     transform: scale(0.98);
   }
 
-  /* Botón "Explorar Academia" con borde */
+  /* Botón "Explorar Academia" con borde (legacy) */
   .btn-academia {
     background: transparent;
     border: 2px solid var(--color-secondary);
