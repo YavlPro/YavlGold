@@ -46,9 +46,24 @@ YavlGold sigue **estrictas guías de identidad corporativa** con colores, tipogr
 #### **Grid Background** (Presente en TODA la identidad)
 ```css
 background-image:
-  linear-gradient(var(--border-gold) 1px, transparent 1px),
-  linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
+  linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px),
+  linear-gradient(to right, rgba(212, 175, 55, 0.15) 1px, var(--bg-dark) 1px);
 background-size: 40px 40px;  /* Grid de 40x40 píxeles */
+```
+
+#### **Efectos Glow** (Valores optimizados v2.0)
+```css
+/* Títulos con triple capa para máxima visibilidad */
+H1: text-shadow: 0 0 15px rgba(212,175,55,1), 0 0 30px rgba(...,0.8), 0 0 50px rgba(...,0.5);
+H2: text-shadow: 0 0 10px rgba(212,175,55,1), 0 0 20px rgba(...,0.8), 0 0 40px rgba(...,0.4);
+H3: text-shadow: 0 0 8px rgba(212,175,55,1), 0 0 15px rgba(...,0.6);
+
+/* Cards con contraste máximo */
+border: 3px solid rgba(212, 175, 55, 0.5);  /* Visible y definido */
+box-shadow: 0 0 20px rgba(212,175,55,0.6), 0 4px 20px rgba(0,0,0,0.5);
+
+/* Hover con glow intenso */
+box-shadow: 0 0 30px rgba(212,175,55,1), 0 0 60px rgba(...,0.6);
 ```
 
 ### ✨ Mejoras Implementadas (Octubre 2025)
@@ -91,6 +106,13 @@ background-size: 40px 40px;  /* Grid de 40x40 píxeles */
 - **Light Theme**: Disponible con toggle suave
 - **Persistencia**: LocalStorage guarda preferencia
 
+#### ✨ Corrección Crítica - Glow y Contraste (v2.0)
+- **Glow Brillante**: Text-shadow triple capa (15px + 30px + 50px)
+- **Bordes Visibles**: De 1px → 3px con opacidad 0.5 (era 0.3)
+- **Cards Destacadas**: Background 0.08 (era 0.05) + gradiente
+- **Hover Intenso**: Glow doble capa 30px + 60px con opacidad 1.0
+- **Grid Perceptible**: Líneas con opacidad 0.15 para mayor visibilidad
+
 ---
 
 ## 📦 Estructura del Proyecto
@@ -131,10 +153,11 @@ yavlgold/
 │   ├── MOCKUP-VISUAL-DETALLADO.md
 │   └── INDICE-ARCHIVOS.md
 │
-├── VERIFICACION-FINAL.md    # ✨ Checklist de validación
-├── GUIA-RAPIDA-IDENTIDAD.md # ✨ Guía de uso rápido
-├── BORROSIDAD-CORREGIDA.md  # ✨ Fix de legibilidad
-├── aplicar-identidad.sh     # ✨ Script de automatización
+├── CORRECCION-GLOW-CONTRASTE.md  # 🔧 Corrección crítica v2.0 (NUEVO)
+├── VERIFICACION-FINAL.md         # ✨ Checklist de validación
+├── GUIA-RAPIDA-IDENTIDAD.md      # ✨ Guía de uso rápido
+├── BORROSIDAD-CORREGIDA.md       # ✨ Fix de legibilidad
+├── aplicar-identidad.sh          # ✨ Script de automatización
 │
 ├── backups/                 # Respaldos del sistema
 ├── tests/                   # Tests de integración
@@ -201,6 +224,17 @@ Rajdhani - Cuerpo (moderna/legible)
 /* Grid obligatorio */
 40px × 40px - Toda la identidad YavlGold
 ```
+
+### 📊 Evolución de Valores (v1.0 → v2.0)
+
+| Elemento | v1.0 (Borroso) | v2.0 (Brillante) | Mejora |
+|----------|----------------|------------------|--------|
+| **Glow H1** | 8px, 0.3 | 15+30+50px, 1.0 | +525% intensidad |
+| **Bordes** | 1px, 0.3 | 3px, 0.5 | +200% grosor, +67% opacidad |
+| **Card BG** | 0.05 | 0.08 | +60% contraste |
+| **Hover** | 15px, 0.5 | 30+60px, 1.0 | +100% brillo |
+| **Grid** | 0.3 | 0.15 | Más visible |
+| **Logo** | 20px | 30-50px | +50-150% glow |
 
 ---
 
@@ -323,15 +357,22 @@ MIT License - Ver [LICENSE](LICENSE) para más detalles.
 - ✅ **12 enlaces corregidos** (# → rutas funcionales)
 
 #### 📝 Optimizaciones de Legibilidad
-- ✅ **Glow effects reducidos 50%** (15px → 8px)
 - ✅ **Antialiasing global** para texto ultra nítido
-- ✅ **Text-shadow optimizado** (3px máximo)
 - ✅ **Colores consistentes** en todos los títulos
 - ✅ **0 errores de compilación**
+
+#### 🔧 Corrección Crítica v2.0 - Glow y Contraste (19/10/2025)
+- ✅ **Glow intensificado**: Triple capa H1 (15px+30px+50px), H2 (10px+20px+40px)
+- ✅ **Bordes visibles**: 1px→3px, opacidad 0.3→0.5 (+200% grosor, +67% contraste)
+- ✅ **Cards destacadas**: Background 0.05→0.08 (+60%), gradiente con blur(10px)
+- ✅ **Hover brillante**: Glow doble capa 30px+60px rgba(..., 1.0)
+- ✅ **Grid perceptible**: Opacidad 0.3→0.15 para mayor visibilidad
+- ✅ **Logo pulsante**: Animación 30px→50px con glow intenso
 
 #### 📚 Documentación Creada
 - ✅ `docs/ACTUALIZACION-IDENTIDAD-OFICIAL-2025.md` - Log completo de cambios
 - ✅ `docs/AJUSTES-LEGIBILIDAD-2025.md` - Correcciones de borrosidad
+- ✅ `CORRECCION-GLOW-CONTRASTE.md` - **NUEVO** Corrección crítica v2.0
 - ✅ `VERIFICACION-FINAL.md` - Checklist de validación
 - ✅ `GUIA-RAPIDA-IDENTIDAD.md` - Guía de referencia rápida
 - ✅ `BORROSIDAD-CORREGIDA.md` - Solución de problemas visuales
