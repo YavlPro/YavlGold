@@ -34,7 +34,7 @@ Click en el botón **"⚡ Auto-rellenar con datos de prueba"**
 
 Esto generará automáticamente:
 - Nombre: `Test User {random}`
-- Email: `test{timestamp}@yavlgold.test`
+- Email: `test{timestamp}@example.com`
 - Password: `password123`
 
 ### Paso 2: Crear Cuenta
@@ -61,12 +61,12 @@ El sistema mostrará en tiempo real:
 [23:45:12] ✅ Supabase inicializado correctamente
 [23:45:15] 📝 Iniciando registro de usuario...
 [23:45:15] 👤 Nombre: Test User 123
-[23:45:15] 📧 Email: test1729382712345@yavlgold.test
+[23:45:15] 📧 Email: test1729382712345@example.com
 [23:45:15] 🏷️ Username generado: test_user_123
 [23:45:15] 🔄 Llamando a supabase.auth.signUp()...
 [23:45:16] ✅ Usuario creado en auth.users
 [23:45:16] 🆔 User ID: a1b2c3d4-5678-90ab-cdef-1234567890ab
-[23:45:16] 📧 Email: test1729382712345@yavlgold.test
+[23:45:16] 📧 Email: test1729382712345@example.com
 [23:45:16] 📅 Creado: 19/10/2025, 23:45:16
 [23:45:16] ⏳ Esperando trigger ensure_profile_exists() (1 segundo)...
 [23:45:17] 🔍 Verificando perfil en public.profiles...
@@ -110,7 +110,7 @@ Después de un registro exitoso, verifica en:
 1. Ve a: https://supabase.com/dashboard/project/gerzlzprkarikblqxpjt/auth/users
 2. Busca el email que usaste
 3. Deberías ver:
-   - Email: `test{timestamp}@yavlgold.test`
+   - Email: `test{timestamp}@example.com`
    - Created: hace unos segundos
    - Confirmed: ❌ (hasta que se confirme el email)
 
@@ -120,7 +120,7 @@ Después de un registro exitoso, verifica en:
 3. Busca el registro con el mismo UUID
 4. Deberías ver:
    - id: (mismo UUID que auth.users)
-   - email: `test{timestamp}@yavlgold.test`
+   - email: `test{timestamp}@example.com`
    - username: `test_user_123`
    - xp_points: 0
    - current_level: 1
@@ -184,7 +184,7 @@ Después de un registro exitoso, verifica en:
 1. **Emails únicos**: Cada test usa email con timestamp para evitar conflictos
 2. **Sin CAPTCHA**: Test simplificado sin hCaptcha para rapidez
 3. **Confirmación email**: Usuario debe confirmar email antes de login real
-4. **Datos de prueba**: Usa dominio `.test` para distinguir de usuarios reales
+4. **Datos de prueba**: Usa dominio `@example.com` (válido para testing)
 5. **Auto-cleanup**: Puedes eliminar usuarios de prueba desde Supabase Dashboard
 
 ---
