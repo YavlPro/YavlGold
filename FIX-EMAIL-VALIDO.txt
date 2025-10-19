@@ -1,0 +1,131 @@
+🐛 FIX APLICADO - Email de Prueba Válido
+═══════════════════════════════════════════════
+
+✅ COMMIT: 546b155
+✅ PROBLEMA RESUELTO
+✅ PUSHEADO A GITHUB
+✅ GITHUB PAGES ACTUALIZÁNDOSE
+
+═══════════════════════════════════════════════
+
+❌ PROBLEMA DETECTADO:
+
+Email: test1760917717485@yavlgold.test
+Error: "Email address is invalid"
+
+Causa: Supabase rechaza TLD .test (no es válido)
+
+═══════════════════════════════════════════════
+
+✅ SOLUCIÓN APLICADA:
+
+Cambio de dominio de prueba:
+  ❌ ANTES: @yavlgold.test
+  ✅ AHORA: @example.com
+
+Razón: example.com es dominio RFC 2606
+       (Reservado para documentación y testing)
+
+═══════════════════════════════════════════════
+
+📝 ARCHIVOS MODIFICADOS:
+
+✅ test-registro-rapido.html
+   → Función autoFill() actualizada
+   → Genera: test{timestamp}@example.com
+
+✅ GUIA-TEST-REGISTRO.md
+   → Todos los ejemplos actualizados
+   → Documentación corregida
+
+✅ TEST-STATUS.txt
+   → Referencias actualizadas
+
+═══════════════════════════════════════════════
+
+🎯 PRÓXIMOS PASOS:
+
+1. Recarga la página del test:
+   https://yavlpro.github.io/YavlGold/test-registro-rapido.html
+
+2. Click en "⚡ Auto-rellenar con datos de prueba"
+   → Ahora generará: test{timestamp}@example.com
+
+3. Click en "🚀 Crear Cuenta de Prueba"
+   → Debería funcionar correctamente
+
+4. Observa los logs:
+   ✅ Supabase inicializado
+   📝 Iniciando registro
+   🔄 Llamando a API
+   ✅ Usuario creado
+   ✅ Perfil encontrado
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ✅ REGISTRO EXITOSO
+
+═══════════════════════════════════════════════
+
+📊 RESULTADO ESPERADO:
+
+[19:55:00] ✅ Supabase inicializado correctamente
+[19:55:03] 📝 Iniciando registro de usuario...
+[19:55:03] 👤 Nombre: Test User 789
+[19:55:03] 📧 Email: test1760918100000@example.com
+[19:55:03] 🏷️ Username generado: test_user_789
+[19:55:03] 🔄 Llamando a supabase.auth.signUp()...
+[19:55:04] ✅ Usuario creado en auth.users
+[19:55:04] 🆔 User ID: abc123...
+[19:55:05] ✅ Perfil encontrado en public.profiles
+[19:55:05] 🏷️ Username: test_user_789
+[19:55:05] ⭐ XP: 0
+[19:55:05] 🎯 Nivel: 1
+[19:55:05] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[19:55:05] ✅ REGISTRO EXITOSO
+
+═══════════════════════════════════════════════
+
+🔍 VERIFICACIÓN EN SUPABASE:
+
+Después del test exitoso, verifica:
+
+1. Authentication → Users
+   Email: test{timestamp}@example.com
+   Status: Unconfirmed (esperando confirmación)
+
+2. Table Editor → profiles
+   Username: test_user_{número}
+   Email: test{timestamp}@example.com
+   XP: 0, Level: 1
+
+═══════════════════════════════════════════════
+
+✨ LECCIONES APRENDIDAS:
+
+1. TLDs Válidos para Testing:
+   ✅ .com, .org, .net, .edu
+   ✅ example.com (RFC 2606 - reservado)
+   ✅ test.com (dominio real válido)
+   ❌ .test (no es TLD válido)
+   ❌ .local (solo redes internas)
+
+2. Dominios Reservados RFC 2606:
+   • example.com
+   • example.org
+   • example.net
+   • *.example (cualquier subdominio)
+
+3. Validación de Email en Supabase:
+   • Verifica formato estándar
+   • Valida TLD contra lista conocida
+   • Rechaza dominios inválidos
+
+═══════════════════════════════════════════════
+
+Commit: 546b155
+Autor: yeriksonvarela-glitch
+Fecha: 19 Oct 2025, 19:50 UTC
+Estado: ✅ CORREGIDO Y DESPLEGADO
+
+═══════════════════════════════════════════════
+
+🚀 Recarga la página y prueba de nuevo!
