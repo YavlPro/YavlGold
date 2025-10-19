@@ -48,7 +48,7 @@
       --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
       --bg-dark: #101114;                /* Fondo oscuro general */
       --bg-darker: #0a0a0a;              /* Fondo más oscuro */
-      --bg-card: rgba(212, 175, 55, 0.05); /* Fondo de cards con tinte dorado */
+      --bg-card: rgba(212, 175, 55, 0.08); /* Fondo de cards MÁS VISIBLE */
       --overlay-dark: rgba(11, 12, 15, 0.95); /* Overlay oscuro semi-transparente */
       
       /* TEXTOS */
@@ -56,13 +56,13 @@
       --text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
       --text-muted: #6b7280;             /* Texto deshabilitado/notas */
       
-      /* BORDES */
-      --border-gold: rgba(212, 175, 55, 0.3);  /* Borde normal */
-      --border-gold-hover: rgba(212, 175, 55, 0.6); /* Borde hover */
+      /* BORDES - MÁS VISIBLES */
+      --border-gold: rgba(212, 175, 55, 0.5);      /* Borde más visible */
+      --border-gold-hover: rgba(212, 175, 55, 0.9); /* Borde hover brillante */
       
-      /* EFECTOS GLOW - Ajustados para mejor legibilidad */
-      --glow-gold: 0 0 8px rgba(212, 175, 55, 0.3);  /* Resplandor suave */
-      --glow-gold-intense: 0 0 15px rgba(212, 175, 55, 0.5); /* Resplandor intenso */
+      /* EFECTOS GLOW - INTENSOS Y VISIBLES */
+      --glow-gold: 0 0 20px rgba(212, 175, 55, 0.6), 0 4px 20px rgba(0, 0, 0, 0.5);  /* Glow visible + profundidad */
+      --glow-gold-intense: 0 0 30px rgba(212, 175, 55, 1), 0 0 60px rgba(212, 175, 55, 0.6); /* Glow INTENSO */
       --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
       
       /* TIPOGRAFÍA */
@@ -118,10 +118,10 @@
       line-height: 1.6;
       overflow-x: hidden;
       
-      /* GRID BACKGROUND - OBLIGATORIO EN TODA LA IDENTIDAD YAVL */
+      /* GRID BACKGROUND - MÁS VISIBLE */
       background-image:
-        linear-gradient(var(--border-gold) 1px, transparent 1px),
-        linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
+        linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px),
+        linear-gradient(to right, rgba(212, 175, 55, 0.15) 1px, var(--bg-dark) 1px);
       background-size: 40px 40px;
     }
     
@@ -142,17 +142,28 @@
     h1 {
       font-size: 3rem;          /* 48px */
       font-weight: 900;
-      text-shadow: var(--glow-text), var(--glow-gold); /* Sombra legible + glow sutil */
+      /* GLOW TRIPLE CAPA - EXTRA BRILLANTE */
+      text-shadow: 
+        0 0 15px rgba(212, 175, 55, 1),
+        0 0 30px rgba(212, 175, 55, 0.8),
+        0 0 50px rgba(212, 175, 55, 0.5);
     }
     
     h2 {
       font-size: 2rem;          /* 32px */
-      text-shadow: var(--glow-text); /* Solo sombra para legibilidad */
+      /* GLOW DOBLE CAPA - BRILLANTE */
+      text-shadow: 
+        0 0 10px rgba(212, 175, 55, 1),
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 0 40px rgba(212, 175, 55, 0.4);
     }
     
     h3 {
       font-size: 1.5rem;        /* 24px */
-      text-shadow: none; /* Sin efectos para máxima nitidez */
+      /* GLOW SUTIL PERO VISIBLE */
+      text-shadow: 
+        0 0 8px rgba(212, 175, 55, 1),
+        0 0 15px rgba(212, 175, 55, 0.6);
     }
     
     h4 {
@@ -234,7 +245,10 @@
     
     .navbar.scrolled {
       background: rgba(11, 12, 15, 0.95);
-      box-shadow: var(--glow-gold);
+      /* GLOW VISIBLE EN NAVBAR */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.6),
+        0 4px 15px rgba(0, 0, 0, 0.5);
     }
     
     .navbar-container {
@@ -345,7 +359,10 @@
       background: var(--bg-card-hover);
       border-color: var(--yavl-gold);
       transform: rotate(15deg);
-      box-shadow: var(--shadow-gold-soft);
+      /* GLOW VISIBLE EN HOVER */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 4px 15px rgba(212, 175, 55, 0.3);
     }
     
     .btn {
@@ -385,9 +402,13 @@
       background: var(--yavl-gold);
       color: var(--yavl-dark);
       border-color: var(--yavl-gold);
-      box-shadow: var(--glow-gold-intense);
-      transform: translateY(-2px);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Sombra sutil solo en hover */
+      /* GLOW INTENSO AL HOVER */
+      box-shadow: 
+        0 0 25px rgba(212, 175, 55, 1),
+        0 0 50px rgba(212, 175, 55, 0.6),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+      transform: translateY(-3px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-primary {
@@ -395,13 +416,20 @@
       color: var(--yavl-dark);
       border: none;
       font-weight: 700;
-      box-shadow: var(--glow-gold);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Sombra sutil para contraste */
+      /* GLOW BRILLANTE EN BOTONES */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-primary:hover {
-      box-shadow: var(--glow-gold-intense);
-      transform: translateY(-2px);
+      /* GLOW MÁXIMO AL HOVER */
+      box-shadow: 
+        0 0 30px rgba(212, 175, 55, 1),
+        0 0 60px rgba(212, 175, 55, 0.6),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(-3px) scale(1.02);
     }
     
     /* Menú móvil */
@@ -826,28 +854,29 @@
       height: 100%;
       border-radius: 50%;
       background: var(--bg-card);
-      border: 2px solid var(--yavl-gold);
+      border: 3px solid var(--yavl-gold);
       padding: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      /* GLOW MÁS INTENSO */
       box-shadow: 
-        0 0 20px rgba(201, 168, 81, 0.22),
-        0 4px 18px rgba(201, 168, 81, 0.12),
-        inset 0 0 18px rgba(201, 168, 81, 0.06);
+        0 0 30px rgba(212, 175, 55, 0.8),
+        0 4px 25px rgba(212, 175, 55, 0.5),
+        inset 0 0 25px rgba(212, 175, 55, 0.1);
       animation: glow 3s ease-in-out infinite;
     }
     
     @keyframes glow {
       0%, 100% { box-shadow: 
-        0 0 20px rgba(201, 168, 81, 0.22),
-        0 4px 18px rgba(201, 168, 81, 0.12),
-        inset 0 0 18px rgba(201, 168, 81, 0.06);
+        0 0 30px rgba(212, 175, 55, 0.8),
+        0 4px 25px rgba(212, 175, 55, 0.5),
+        inset 0 0 25px rgba(212, 175, 55, 0.1);
       }
       50% { box-shadow: 
-        0 0 30px rgba(201, 168, 81, 0.30),
-        0 4px 25px rgba(201, 168, 81, 0.20),
-        inset 0 0 25px rgba(201, 168, 81, 0.10);
+        0 0 50px rgba(212, 175, 55, 1),
+        0 4px 35px rgba(212, 175, 55, 0.7),
+        inset 0 0 40px rgba(212, 175, 55, 0.15);
       }
     }
     
@@ -945,13 +974,25 @@
     }
     
     .feature-card {
-      background: var(--bg-card);
+      /* Fondo con gradiente VISIBLE */
+      background: linear-gradient(
+        135deg, 
+        rgba(11, 12, 15, 0.95),
+        rgba(212, 175, 55, 0.08)
+      );
       border-radius: var(--radius-xl);
       padding: 2.5rem 2rem;
-      border: 1px solid var(--border-subtle);
+      /* BORDE GRUESO Y VISIBLE */
+      border: 3px solid rgba(212, 175, 55, 0.5);
       transition: var(--transition-normal);
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
+      /* GLOW INTENSO */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.6),
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        inset 0 0 40px rgba(212, 175, 55, 0.03);
     }
     
     .feature-card::before {
@@ -968,10 +1009,15 @@
     }
     
     .feature-card:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--border-gold);
-      transform: translateY(-6px);
-      box-shadow: var(--shadow-gold-soft);
+      /* Borde DORADO BRILLANTE */
+      border-color: rgba(212, 175, 55, 0.9);
+      transform: translateY(-8px);
+      /* GLOW MÁXIMO AL HOVER */
+      box-shadow: 
+        0 0 30px rgba(212, 175, 55, 1),
+        0 0 60px rgba(212, 175, 55, 0.6),
+        0 8px 30px rgba(0, 0, 0, 0.7),
+        inset 0 0 60px rgba(212, 175, 55, 0.05);
     }
     
     .feature-card:hover::before {
@@ -1201,8 +1247,11 @@
       background: linear-gradient(180deg, var(--yavl-gold), var(--yavl-gold-dark));
       color: #0B0E11;
       border-color: var(--yavl-gold);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-gold-soft);
+      transform: translateY(-3px);
+      /* GLOW BRILLANTE */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 4px 15px rgba(212, 175, 55, 0.4);
     }
     
     .footer-column h4 {
