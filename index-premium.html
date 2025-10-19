@@ -935,24 +935,30 @@
     }
     
     @media (max-width: 480px) {
-      /* Header móvil optimizado - ambos botones siempre visibles y clickeables */
+      /* Header móvil optimizado - compacto sin espacios extras */
       .navbar {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         z-index: 1000;
+        height: auto;
+        min-height: unset;
       }
       
       .navbar-container {
         flex-direction: column;
-        padding: 12px 1rem;
-        gap: 10px;
+        padding: 10px 1rem 8px;
+        gap: 8px;
         position: relative;
+        height: auto;
+        min-height: unset;
+        margin-bottom: 0;
       }
       
       .navbar-logo {
         margin-bottom: 0;
+        margin-top: 0;
         width: 100%;
         display: flex;
         justify-content: center;
@@ -979,6 +985,8 @@
         position: relative;
         z-index: 11;
         pointer-events: auto;
+        margin-bottom: 0;
+        padding-bottom: 0;
       }
       
       .navbar-actions .btn {
@@ -1003,8 +1011,8 @@
       
       .theme-toggle {
         position: absolute;
-        top: 14px;
-        right: 14px;
+        top: 12px;
+        right: 12px;
         width: 36px;
         height: 36px;
         font-size: 1rem;
@@ -1017,9 +1025,10 @@
         display: none;
       }
       
-      /* Hero section móvil - ajustar padding-top para compensar header */
+      /* Hero section móvil - compacto, pegado al header */
       .hero {
-        padding-top: 160px;
+        padding-top: 140px;
+        padding-bottom: 50px;
       }
       
       .hero-buttons {
@@ -1045,7 +1054,8 @@
     /* Breakpoint extra pequeño para móviles muy pequeños (iPhone SE, etc.) */
     @media (max-width: 375px) {
       .navbar-container {
-        padding: 10px 0.75rem;
+        padding: 8px 0.75rem 6px;
+        gap: 6px;
       }
       
       .navbar-brand {
@@ -1054,6 +1064,7 @@
       
       .navbar-actions {
         max-width: 280px;
+        gap: 6px;
       }
       
       .navbar-actions .btn {
@@ -1064,8 +1075,20 @@
       }
       
       .theme-toggle {
-        top: 12px;
-        right: 12px;
+        top: 10px;
+        right: 10px;
+      }
+      
+      /* Hero más compacto en pantallas pequeñas */
+      .hero {
+        padding-top: 130px;
+        padding-bottom: 45px;
+      }
+      
+      .hero-logo {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 1rem;
       }
     }
     
