@@ -2785,19 +2785,30 @@
           }
           
           // Usar datos del perfil
+          const userData = {
+            id: profile.id,
+            email: profile.email,
+            name: profile.username || profile.email.split('@')[0],
+            username: profile.username,
+            avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username || profile.email)}&background=D4AF37&color=0B0C0F&bold=true`,
+            bio: profile.bio,
+            isAdmin: profile.is_admin,
+            xpPoints: profile.xp_points || 0,
+            currentLevel: profile.current_level || 1
+          };
+          
+          // Log detallado del perfil
+          console.log('[Auth] 👤 Perfil cargado:', {
+            username: userData.username,
+            email: userData.email,
+            role: userData.isAdmin ? '🛡️ ADMIN' : '👤 Usuario',
+            xp: userData.xpPoints,
+            level: userData.currentLevel
+          });
+          
           return {
             success: true,
-            user: {
-              id: profile.id,
-              email: profile.email,
-              name: profile.username || profile.email.split('@')[0],
-              username: profile.username,
-              avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username || profile.email)}&background=D4AF37&color=0B0C0F&bold=true`,
-              bio: profile.bio,
-              isAdmin: profile.is_admin,
-              xpPoints: profile.xp_points || 0,
-              currentLevel: profile.current_level || 1
-            }
+            user: userData
           };
         }
 
@@ -2827,16 +2838,34 @@
       const registerBtn = document.querySelector('.btn-register');
       
       if (user && loginBtn && registerBtn) {
-        // Usuario logueado - mostrar nombre y logout
+        // Usuario logueado - mostrar nombre, rol y logout
         const userMenu = document.createElement('div');
         userMenu.style.cssText = `
           display: flex;
           align-items: center;
           gap: 1rem;
         `;
+        
+        // Badge de admin si corresponde
+        const adminBadge = user.isAdmin ? `
+          <span style="
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0B0C0F;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+          ">
+            🛡️ ADMIN
+          </span>
+        ` : '';
+        
         userMenu.innerHTML = `
-          <span style="color: var(--yavl-gold); font-weight: 600;">
-            <i class="fas fa-user-circle"></i> ${user.name}
+          <span style="color: var(--yavl-gold); font-weight: 600; display: flex; align-items: center;">
+            <i class="fas fa-user-circle"></i> ${user.name}${adminBadge}
           </span>
           <button onclick="logoutUser()" class="btn btn-outline" style="padding: 0.5rem 1rem;">
             <i class="fas fa-sign-out-alt"></i> Salir
@@ -2845,6 +2874,14 @@
         
         loginBtn.replaceWith(userMenu);
         if (registerBtn) registerBtn.style.display = 'none';
+        
+        // Log de sesión activa
+        console.log(`[Auth] 🎉 Sesión activa:`, {
+          user: user.username,
+          role: user.isAdmin ? '🛡️ ADMIN' : '👤 Usuario',
+          xp: user.xpPoints,
+          level: user.currentLevel
+        });
       }
     }
 
