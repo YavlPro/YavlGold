@@ -19,9 +19,9 @@
   <meta property="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   
   <!-- Favicon -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <link rel="icon" href="../assets/images/logo.png" type="image/png">
+  <link rel="alternate icon" href="../assets/images/logo.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/images/logo.png">
   <meta name="theme-color" content="#0B0C0F">
 
   <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
@@ -45,7 +45,7 @@
   </script>
   
   <!-- Estilos y fuentes: hoja unificada + iconos + fuentes -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
+  <link rel="stylesheet" href="../assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -953,17 +953,17 @@
 <body>
   <!-- Header con navegación -->
   <header class="gg-header">
-    <a class="brand" href="/">
+    <a class="brand" href="../">
   <img src="/assets/images/logo.png" alt="YavlGold" class="logo">
   <span>YavlGold</span>
     </a>
     
     <nav class="main-nav">
-      <a href="/herramientas/" data-protected="true">Herramientas</a>
-      <a href="/academia/">Academia</a>
-      <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/" class="active">Dashboard</a>
-      <a href="/#contacto">Contacto</a>
+      <a href="../herramientas/" data-protected="true">Herramientas</a>
+      <a href="../academia/">Academia</a>
+      <a href="../#comunidad">Comunidad</a>
+      <a href="./" class="active">Dashboard</a>
+      <a href="../#contacto">Contacto</a>
     </nav>
     
     <div class="auth-buttons" id="auth-buttons" style="display: flex; gap: 12px;">
@@ -985,9 +985,9 @@
         <i class="fas fa-chevron-down"></i>
       </button>
       <div id="user-dropdown" class="user-dropdown" style="display: none;">
-        <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
-        <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+        <a href="./"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="./perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
+        <a href="./configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
         <hr>
         <button id="logout-btn" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
@@ -1051,7 +1051,7 @@
         <div class="academia-section" id="academia-progress-section">
           <div class="academia-header">
             <h3><i class="fas fa-graduation-cap"></i> Tu Progreso Académico</h3>
-            <a href="/academia/" class="view-all-link">
+            <a href="../academia/" class="view-all-link">
               Ver Academia Completa <i class="fas fa-arrow-right"></i>
             </a>
           </div>
@@ -1115,7 +1115,7 @@
               <div class="empty-state">
                 <div class="empty-state-icon"><i class="fas fa-book-reader"></i></div>
                 <h4>Aún no has comenzado ningún curso</h4>
-                <p>Explora la <a href="/academia/">Academia YavlGold</a> y comienza tu primera lección</p>
+                <p>Explora la <a href="../academia/">Academia YavlGold</a> y comienza tu primera lección</p>
               </div>
             </div>
           </div>
@@ -1137,7 +1137,7 @@
                   <span><i class="fas fa-clock"></i> 15 minutos</span>
                   <span><i class="fas fa-star"></i> +10 XP</span>
                 </div>
-                <a href="/academia/lecciones/modulo-1/01-que-es-bitcoin.html" class="btn-start-lesson" id="next-lesson-link">
+                <a href="../academia/lecciones/modulo-1/01-que-es-bitcoin.html" class="btn-start-lesson" id="next-lesson-link">
                   Comenzar Ahora <i class="fas fa-arrow-right"></i>
                 </a>
               </div>
@@ -1162,25 +1162,25 @@
         
         <h3>Herramientas YavlGold</h3>
         <div class="quick-actions">
-          <a href="/herramientas/calculadora.html" class="action-card" data-protected="true">
+          <a href="../herramientas/calculadora.html" class="action-card" data-protected="true">
             <div class="action-icon"><i class="fas fa-calculator"></i></div>
             <h4>Calculadora</h4>
             <p>Proyecciones de inversión</p>
           </a>
           
-          <a href="/herramientas/conversor.html" class="action-card" data-protected="true">
+          <a href="../herramientas/conversor.html" class="action-card" data-protected="true">
             <div class="action-icon"><i class="fas fa-exchange-alt"></i></div>
             <h4>Calculadora Cripto</h4>
             <p>Conversión en tiempo real</p>
           </a>
           
-          <a href="/herramientas/analisis.html" class="action-card">
+          <a href="../herramientas/analisis.html" class="action-card">
             <div class="action-icon"><i class="fas fa-chart-line"></i></div>
             <h4>Análisis de Mercado</h4>
             <p>Tendencias y datos</p>
           </a>
           
-          <a href="/#comunidad" class="action-card">
+          <a href="../#comunidad" class="action-card">
             <div class="action-icon"><i class="fas fa-users"></i></div>
             <h4>Comunidad</h4>
             <p>Conectar con traders</p>
@@ -1296,7 +1296,7 @@
             </div>
           </div>
           
-          <a href="/academia/" style="
+          <a href="../academia/" style="
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -1342,7 +1342,7 @@
   <p>Debes iniciar sesión para acceder al dashboard y disfrutar de todas las herramientas premium de YavlGold.</p>
     <div style="margin-top: 30px;">
       <button class="btn btn-primary" onclick="showAuthModal('login')">Iniciar Sesión</button>
-      <a href="/" class="btn btn-secondary">Ir a la Página Principal</a>
+      <a href="../" class="btn btn-secondary">Ir a la Página Principal</a>
     </div>
   </div>
 
@@ -1470,11 +1470,11 @@
     </div>
     <p>Ecosistema Global Innovador en Cripto</p>
     <div class="footer-links">
-      <a href="/herramientas/">Herramientas</a>
-      <a href="/academia/">Academia</a>
-      <a href="/#comunidad">Comunidad</a>
-      <a href="/dashboard/">Dashboard</a>
-      <a href="/#contacto">Contacto</a>
+      <a href="../herramientas/">Herramientas</a>
+      <a href="../academia/">Academia</a>
+      <a href="../#comunidad">Comunidad</a>
+      <a href="./">Dashboard</a>
+      <a href="../#contacto">Contacto</a>
     </div>
     <div class="copyright">
   <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
@@ -2064,7 +2064,7 @@
             <div class="empty-state">
               <div class="empty-state-icon"><i class="fas fa-book-reader"></i></div>
               <h4>Aún no has comenzado ningún curso</h4>
-              <p>Explora la <a href="/academia/">Academia YavlGold</a> y comienza tu primera lección</p>
+              <p>Explora la <a href="../academia/">Academia YavlGold</a> y comienza tu primera lección</p>
             </div>
           `;
           return;
