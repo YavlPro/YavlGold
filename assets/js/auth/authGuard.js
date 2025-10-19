@@ -1,17 +1,26 @@
 /**
- * YAVLGOLD - AUTH GUARD v2.0.1
+ * YAVLGOLD - AUTH GUARD v2.0.2
+ * Updated for GitHub Pages relative paths
  */
 const AuthGuard = {
-  protectedPaths: ['/herramientas/', '/dashboard/', '/profile/', '/settings/'],
-  publicPaths: ['/', '/index.html', '/comunidad/', '/academia/'],
+  protectedPaths: ['/herramientas/', '/dashboard/', '/profile/', '/settings/', 'herramientas/', 'dashboard/', 'profile/', 'settings/'],
+  publicPaths: ['/', '/index.html', '/comunidad/', '/academia/', 'index.html', 'comunidad/', 'academia/'],
 
   isProtectedRoute(path = window.location.pathname) {
-    const p = path === '/' ? '/' : path.replace(/\/$/, '');
-    return this.protectedPaths.some(pp => p === pp.replace(/\/$/, '') || p.startsWith(pp.replace(/\/$/, '')));
+    // Normalizar la ruta eliminando el prefijo del repo si existe
+    const normalizedPath = path.replace(/^\/[^/]+\//, '/');
+    const p = normalizedPath === '/' ? '/' : normalizedPath.replace(/\/$/, '');
+    
+    return this.protectedPaths.some(pp => {
+      const normalized = pp.replace(/^\//, '').replace(/\/$/, '');
+      return p.includes(normalized) || p === '/' + normalized || p.endsWith('/' + normalized);
+    });
   },
+  
   isPublicRoute(path = window.location.pathname) {
-    const p = path === '/' ? '/' : path.replace(/\/$/, '');
-    return this.publicPaths.some(pub => p === pub || p.startsWith(pub));
+    const normalizedPath = path.replace(/^\/[^/]+\//, '/');
+    const p = normalizedPath === '/' ? '/' : normalizedPath.replace(/\/$/, '');
+    return this.publicPaths.some(pub => p === pub || p.startsWith(pub) || p === '/' + pub.replace(/^\//, ''));
   },
 
   check() {
@@ -23,7 +32,9 @@ const AuthGuard = {
     }
     console.warn('[AuthGuard] ⛔ Acceso denegado:', current);
     // Bloquear contenido inmediatamente
-    document.body.style.display = 'none';
+    if (document.body) {
+      document.body.style.display = 'none';
+    }
     this.redirectToLogin(current + window.location.search + window.location.hash);
     return false;
   },
@@ -51,13 +62,30 @@ const AuthGuard = {
   redirectToLogin(intended = null) {
     try { if (intended && intended !== '/') sessionStorage.setItem('gg:redirectAfterLogin', intended); } catch (_) {}
     if (window.AuthUI?.showLoginModal) window.AuthUI.showLoginModal();
-    else { alert('Debes iniciar sesión para acceder.'); setTimeout(() => (window.location.href = '/'), 1500); }
+    else { 
+      alert('Debes iniciar sesión para acceder.'); 
+      // Redirigir a la página principal (relativa al repo)
+      setTimeout(() => {
+        // Detectar si estamos en un subdirectorio y ajustar la ruta
+        const pathParts = window.location.pathname.split('/').filter(p => p);
+        if (pathParts.length > 1) {
+          window.location.href = '../';
+        } else {
+          window.location.href = './';
+        }
+      }, 1500); 
+    }
   },
 
   redirectAfterLogin() {
     const intended = sessionStorage.getItem('gg:redirectAfterLogin');
-    if (intended) { sessionStorage.removeItem('gg:redirectAfterLogin'); setTimeout(() => (window.location.href = intended), 800); return; }
-    setTimeout(() => (window.location.href = '/dashboard/'), 800);
+    if (intended) { 
+      sessionStorage.removeItem('gg:redirectAfterLogin'); 
+      setTimeout(() => (window.location.href = intended), 800); 
+      return; 
+    }
+    // Redirigir al dashboard con ruta relativa
+    setTimeout(() => (window.location.href = './dashboard/'), 800);
   },
 
   async hasRole(requiredRole) {
@@ -136,10 +164,23 @@ const AuthGuard = {
       if (window.AuthClient?.isAuthenticated()) this.protectByRole();
     });
     window.addEventListener('auth:login', () => { this.protectLinks(); this.protectByRole(); this.redirectAfterLogin(); });
-    window.addEventListener('auth:logout', () => { this.protectLinks(); if (this.isProtectedRoute()) setTimeout(() => (window.location.href = '/'), 500); });
+    window.addEventListener('auth:logout', () => { 
+      this.protectLinks(); 
+      if (this.isProtectedRoute()) {
+        setTimeout(() => {
+          // Detectar nivel de carpeta y redirigir apropiadamente
+          const pathParts = window.location.pathname.split('/').filter(p => p);
+          if (pathParts.length > 1) {
+            window.location.href = '../';
+          } else {
+            window.location.href = './';
+          }
+        }, 500);
+      }
+    });
   },
 };
 
 AuthGuard.init();
 window.AuthGuard = AuthGuard;
-console.log('[AuthGuard] ✅ AuthGuard v2.0.1 cargado');
+console.log('[AuthGuard] ✅ AuthGuard v2.0.2 cargado (GitHub Pages compatible)');

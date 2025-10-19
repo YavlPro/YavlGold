@@ -55,15 +55,40 @@
   <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
   <script>
     (function() {
-      // Verificar si hay sesión antes de cargar el contenido
-      const session = sessionStorage.getItem('gg:session') || localStorage.getItem('sb-' + 'ndojapkfhqbgiqtixiqo' + '-auth-token');
-      if (!session) {
-        // No hay sesión, bloquear y redirigir
-        document.body.style.display = 'none';
+      // Verificar si hay sesión de Supabase
+      function checkSupabaseSession() {
+        try {
+          // Buscar en localStorage todas las claves que contienen 'auth-token'
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('auth-token')) {
+              const item = localStorage.getItem(key);
+              if (item) {
+                const parsed = JSON.parse(item);
+                if (parsed.access_token || parsed.user) {
+                  console.log('[Dashboard] ✅ Sesión encontrada');
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        } catch (e) {
+          console.error('[Dashboard] Error verificando sesión:', e);
+          return false;
+        }
+      }
+
+      if (!checkSupabaseSession()) {
+        console.log('[Dashboard] ⛔ No hay sesión, redirigiendo...');
+        // No hay sesión, redirigir después de que DOM cargue
         document.addEventListener('DOMContentLoaded', function() {
           sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
-          window.location.href = '/#login';
+          alert('Debes iniciar sesión para acceder al dashboard');
+          window.location.href = '../index.html#login';
         });
+      } else {
+        console.log('[Dashboard] ✅ Sesión válida, permitiendo acceso');
       }
     })();
   </script>
@@ -1482,13 +1507,13 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="/assets/js/themeManager.js"></script>
-  <script src="/assets/js/auth/authClient.js"></script>
-  <script src="/assets/js/auth/authUI.js"></script>
-  <script src="/assets/js/auth/authGuard.js"></script>
-  <script src="/assets/js/profile/profileManager.js"></script>
-  <script src="/assets/js/announcements/announcementsManager.js"></script>
-  <script src="/assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
+  <script src="../assets/js/themeManager.js"></script>
+  <script src="../assets/js/auth/authClient.js"></script>
+  <script src="../assets/js/auth/authUI.js"></script>
+  <script src="../assets/js/auth/authGuard.js"></script>
+  <script src="../assets/js/profile/profileManager.js"></script>
+  <script src="../assets/js/announcements/announcementsManager.js"></script>
+  <script src="../assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
   
   <script>
     // Inicializar el botón de cambio de tema
