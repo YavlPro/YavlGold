@@ -1439,6 +1439,29 @@
       .mobile-drawer {
         width: 88%;
       }
+
+      /* MÓVIL: Glow dorado reducido para performance */
+      h1 {
+        text-shadow: 
+          0 0 10px rgba(212, 175, 55, 1),
+          0 0 20px rgba(212, 175, 55, 0.7);
+      }
+
+      h2 {
+        text-shadow: 
+          0 0 8px rgba(212, 175, 55, 1),
+          0 0 15px rgba(212, 175, 55, 0.6);
+      }
+
+      h3 {
+        text-shadow: 0 0 6px rgba(212, 175, 55, 0.9);
+      }
+
+      /* Cards móvil con bordes dorados visibles */
+      .feature-card, .info-card {
+        border: 2px solid rgba(212, 175, 55, 0.5);
+        background: rgba(212, 175, 55, 0.08);
+      }
     }
 
     @media (max-width: 480px) {
@@ -1454,6 +1477,7 @@
 
       .navbar-brand {
         font-size: 1.25rem;
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.9);
       }
 
       .theme-toggle {
@@ -1484,6 +1508,21 @@
         width: 90%;
         max-width: 300px;
         padding: 24px 18px 28px;
+        background: rgba(16, 17, 20, 0.98);
+        border: 2px solid rgba(212, 175, 55, 0.4);
+      }
+
+      /* Botones móvil con glow dorado */
+      .btn-primary, .btn-secondary {
+        box-shadow: 
+          0 0 15px rgba(212, 175, 55, 0.6),
+          0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+
+      .btn-primary:hover, .btn-secondary:hover {
+        box-shadow: 
+          0 0 25px rgba(212, 175, 55, 0.9),
+          0 4px 18px rgba(212, 175, 55, 0.5);
       }
     }
 
@@ -1494,6 +1533,7 @@
 
       .navbar-brand {
         font-size: 1.15rem;
+        text-shadow: 0 0 6px rgba(212, 175, 55, 0.8);
       }
 
       .hero {
@@ -1502,6 +1542,20 @@
 
       .mobile-drawer {
         width: 92%;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+      }
+
+      /* Optimización móvil pequeño: glow más suave */
+      h1 {
+        text-shadow: 0 0 8px rgba(212, 175, 55, 1);
+      }
+
+      h2 {
+        text-shadow: 0 0 6px rgba(212, 175, 55, 0.9);
+      }
+
+      h3 {
+        text-shadow: 0 0 5px rgba(212, 175, 55, 0.8);
       }
     }
     
