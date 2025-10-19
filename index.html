@@ -328,6 +328,368 @@
     }
     
     /* =========================================
+       MOBILE DRAWER & MODALS
+       ========================================= */
+    .mobile-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 85%;
+      max-width: 360px;
+      height: 100vh;
+      background: var(--bg-secondary);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 960;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      border-right: 1px solid var(--border-gold);
+    }
+    
+    body.drawer-open .mobile-drawer {
+      transform: translateX(0);
+    }
+    
+    .mobile-drawer-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .mobile-drawer-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    
+    .mobile-drawer-logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+    
+    .mobile-drawer-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .mobile-drawer-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: transparent;
+      color: var(--gold-500);
+      font-size: 1.3rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-fast);
+    }
+    
+    .mobile-drawer-close:hover {
+      background: var(--bg-card);
+    }
+    
+    .mobile-drawer-nav {
+      flex: 1;
+      padding: 1rem 0;
+      overflow-y: auto;
+    }
+    
+    .mobile-drawer-nav a {
+      display: block;
+      padding: 1rem 1.5rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: var(--transition-fast);
+      border-left: 3px solid transparent;
+    }
+    
+    .mobile-drawer-nav a:hover {
+      background: var(--overlay-gold-subtle);
+      border-left-color: var(--gold-500);
+      color: var(--gold-400);
+    }
+    
+    .mobile-drawer-actions {
+      padding: 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .mobile-menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 950;
+    }
+    
+    body.drawer-open .mobile-menu-overlay {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    /* Modal System */
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-gold);
+      box-shadow: var(--shadow-lg);
+      max-width: 480px;
+      width: 90%;
+      max-height: min(90vh, 800px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      z-index: 980;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    
+    .modal::-webkit-scrollbar-thumb {
+      background: var(--gold-500);
+      border-radius: 4px;
+    }
+    
+    .modal::-webkit-scrollbar-thumb:hover {
+      background: var(--gold-400);
+    }
+    
+    body.modal-open .modal {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 970;
+    }
+    
+    body.modal-open .modal-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .modal-header {
+      padding: 2rem 2rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-fast);
+    }
+    
+    .modal-close:hover {
+      background: var(--bg-card);
+      color: var(--gold-400);
+    }
+    
+    .modal-body {
+      padding: 2rem;
+      flex: 1;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition-fast);
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--gold-500);
+      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.1);
+    }
+    
+    .form-input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .captcha-container {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--bg-main);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+    
+    .captcha-label {
+      display: block;
+      margin-bottom: 0.75rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .captcha-challenge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-sm);
+    }
+    
+    .captcha-text {
+      font-family: 'Courier New', monospace;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--gold-400);
+      text-shadow: 0 2px 8px rgba(201, 168, 81, 0.3);
+    }
+    
+    .captcha-refresh {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--gold-500);
+      font-size: 1.1rem;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: var(--transition-fast);
+    }
+    
+    .captcha-refresh:hover {
+      background: var(--overlay-gold-subtle);
+      transform: rotate(90deg);
+    }
+    
+    .captcha-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      text-align: center;
+      letter-spacing: 2px;
+      transition: var(--transition-fast);
+    }
+    
+    .captcha-input:focus {
+      outline: none;
+      border-color: var(--gold-500);
+      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.1);
+    }
+    
+    .modal-footer {
+      padding: 1.5rem 2rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .modal-footer .btn {
+      width: 100%;
+    }
+    
+    .modal-alt-action {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .modal-alt-action a {
+      color: var(--gold-400);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition-fast);
+    }
+    
+    .modal-alt-action a:hover {
+      color: var(--gold-500);
+      text-decoration: underline;
+    }
+    
+    /* =========================================
        HERO SECTION
        ========================================= */
     .hero {
@@ -861,6 +1223,10 @@
         display: none;
       }
       
+      .navbar-actions .btn {
+        display: none;
+      }
+      
       .mobile-menu-toggle {
         display: flex;
         align-items: center;
@@ -1168,6 +1534,188 @@
       </button>
     </div>
   </nav>
+  
+  <!-- =========================================
+       MOBILE DRAWER
+       ========================================= -->
+  <aside class="mobile-drawer" id="mobile-drawer">
+    <div class="mobile-drawer-header">
+      <a href="/" class="mobile-drawer-logo">
+        <img src="/assets/images/logo.png" alt="YavlGold">
+        <span class="mobile-drawer-brand">YavlGold</span>
+      </a>
+      <button class="mobile-drawer-close" id="mobile-drawer-close" aria-label="Cerrar menú">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <nav class="mobile-drawer-nav">
+      <a href="#inicio" onclick="closeDrawer()">Inicio</a>
+      <a href="#herramientas" onclick="closeDrawer()">Herramientas</a>
+      <a href="#academia" onclick="closeDrawer()">Academia</a>
+      <a href="#comunidad" onclick="closeDrawer()">Comunidad</a>
+      <a href="/dashboard" onclick="closeDrawer()">Dashboard</a>
+    </nav>
+    
+    <div class="mobile-drawer-actions">
+      <button class="btn btn-outline" onclick="openModal('login')">
+        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+      </button>
+      <button class="btn btn-primary" onclick="openModal('register')">
+        <i class="fas fa-user-plus"></i> Registrarse
+      </button>
+    </div>
+  </aside>
+  
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeDrawer()"></div>
+  
+  <!-- =========================================
+       MODAL: INICIAR SESIÓN
+       ========================================= -->
+  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="modal-header">
+      <h2 class="modal-title" id="login-title">Iniciar Sesión</h2>
+      <p class="modal-subtitle">Bienvenido de vuelta a YavlGold</p>
+      <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email" class="form-label">Correo electrónico</label>
+          <input 
+            type="email" 
+            id="login-email" 
+            name="email" 
+            class="form-input" 
+            placeholder="tu@email.com"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="login-password" class="form-label">Contraseña</label>
+          <input 
+            type="password" 
+            id="login-password" 
+            name="password" 
+            class="form-input" 
+            placeholder="••••••••"
+            required
+          >
+        </div>
+        
+        <div class="captcha-container">
+          <label class="captcha-label">Verificación de seguridad</label>
+          <div class="captcha-challenge">
+            <span class="captcha-text" id="login-captcha-text">ABCD123</span>
+            <button type="button" class="captcha-refresh" onclick="refreshCaptcha('login')" aria-label="Nuevo código">
+              <i class="fas fa-redo"></i>
+            </button>
+          </div>
+          <input 
+            type="text" 
+            id="login-captcha-input" 
+            class="captcha-input" 
+            placeholder="Escribe el código"
+            required
+          >
+        </div>
+        
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+          </button>
+          <p class="modal-alt-action">
+            ¿No tienes cuenta? <a href="#" onclick="event.preventDefault(); closeModal(); setTimeout(() => openModal('register'), 300)">Regístrate aquí</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- =========================================
+       MODAL: REGISTRARSE
+       ========================================= -->
+  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-labelledby="register-title">
+    <div class="modal-header">
+      <h2 class="modal-title" id="register-title">Crear Cuenta</h2>
+      <p class="modal-subtitle">Únete a la comunidad YavlGold</p>
+      <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <form id="register-form">
+        <div class="form-group">
+          <label for="register-name" class="form-label">Nombre completo</label>
+          <input 
+            type="text" 
+            id="register-name" 
+            name="name" 
+            class="form-input" 
+            placeholder="Tu nombre"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="register-email" class="form-label">Correo electrónico</label>
+          <input 
+            type="email" 
+            id="register-email" 
+            name="email" 
+            class="form-input" 
+            placeholder="tu@email.com"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="register-password" class="form-label">Contraseña</label>
+          <input 
+            type="password" 
+            id="register-password" 
+            name="password" 
+            class="form-input" 
+            placeholder="••••••••"
+            required
+          >
+        </div>
+        
+        <div class="captcha-container">
+          <label class="captcha-label">Verificación de seguridad</label>
+          <div class="captcha-challenge">
+            <span class="captcha-text" id="register-captcha-text">XYZ789</span>
+            <button type="button" class="captcha-refresh" onclick="refreshCaptcha('register')" aria-label="Nuevo código">
+              <i class="fas fa-redo"></i>
+            </button>
+          </div>
+          <input 
+            type="text" 
+            id="register-captcha-input" 
+            class="captcha-input" 
+            placeholder="Escribe el código"
+            required
+          >
+        </div>
+        
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Crear Cuenta
+          </button>
+          <p class="modal-alt-action">
+            ¿Ya tienes cuenta? <a href="#" onclick="event.preventDefault(); closeModal(); setTimeout(() => openModal('login'), 300)">Inicia sesión aquí</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal()"></div>
   
   <!-- =========================================
        HERO SECTION
@@ -1543,132 +2091,168 @@
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          const offsetTop = target.offsetTop - 70;
-          window.scrollTo({
-            top: offsetTop,
-            behavior: 'smooth'
-          });
-        }
-      });
-    });
-    
-    // Mobile menu toggle (basic implementation)
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const navbarMenu = document.querySelector('.navbar-menu');
-    
-    mobileMenuToggle.addEventListener('click', () => {
-      navbarMenu.style.display = navbarMenu.style.display === 'flex' ? 'none' : 'flex';
-    });
-    
-    // =========================================
-    // FIX: Forzar funcionalidad de botones
-    // =========================================
-    function fixButtonFunctionality() {
-      console.log('🔧 Aplicando fix de botones...');
-      
-      // Seleccionar todos los botones del navbar
-      const loginBtn = document.querySelector('.btn-outline');
-      const registerBtn = document.querySelector('.btn-primary');
-      const navbarActions = document.querySelector('.navbar-actions');
-      const navbar = document.querySelector('.navbar');
-      
-      // Arrays para aplicar fixes
-      const buttons = [loginBtn, registerBtn];
-      const containers = [navbarActions, navbar];
-      
-      // Fix 1: Forzar pointer-events y z-index en botones
-      buttons.forEach((btn, index) => {
-        if (btn) {
-          btn.style.pointerEvents = 'auto';
-          btn.style.cursor = 'pointer';
-          btn.style.zIndex = '100';
-          btn.style.position = 'relative';
-          
-          // Verificar que el href existe
-          const href = btn.getAttribute('href');
-          console.log(`Botón ${index + 1}: href="${href}", clickeable=${btn.style.pointerEvents}`);
-          
-          // Añadir event listener como backup
-          btn.addEventListener('click', function(e) {
-            console.log(`✅ Click detectado en: ${this.textContent.trim()}`);
-            // Si el href es #login o #register, podrías redirigir aquí
-            if (href === '#login') {
-              console.log('→ Redirigiendo a login...');
-              // window.location.href = '/login'; // Descomenta cuando tengas la ruta real
-            } else if (href === '#register') {
-              console.log('→ Redirigiendo a registro...');
-              // window.location.href = '/register'; // Descomenta cuando tengas la ruta real
-            }
-          }, true); // useCapture = true para capturar antes que otros listeners
-        }
-      });
-      
-      // Fix 2: Forzar pointer-events en contenedores
-      containers.forEach(container => {
-        if (container) {
-          container.style.pointerEvents = 'auto';
-          container.style.position = 'relative';
-          container.style.zIndex = 'auto';
-        }
-      });
-      
-      // Fix 3: Verificar elementos bloqueantes
-      const allElements = document.querySelectorAll('*');
-      let blockingElements = [];
-      
-      allElements.forEach(el => {
-        const computed = window.getComputedStyle(el);
-        const zIndex = parseInt(computed.zIndex);
-        
-        // Si hay elementos con z-index muy alto y pointer-events habilitados
-        if (zIndex > 900 && zIndex !== 1000 && computed.pointerEvents === 'auto') {
-          // Verificar si están sobre los botones
-          const rect = el.getBoundingClientRect();
-          const btnRect = loginBtn ? loginBtn.getBoundingClientRect() : null;
-          
-          if (btnRect && 
-              rect.top < btnRect.bottom && 
-              rect.bottom > btnRect.top &&
-              rect.left < btnRect.right && 
-              rect.right > btnRect.left) {
-            blockingElements.push(el);
-            console.warn('⚠️ Elemento bloqueante detectado:', el);
-            // Reducir su z-index
-            el.style.zIndex = '50';
+        const href = this.getAttribute('href');
+        if (href !== '#login' && href !== '#register') {
+          e.preventDefault();
+          const target = document.querySelector(href);
+          if (target) {
+            const offsetTop = target.offsetTop - 70;
+            window.scrollTo({
+              top: offsetTop,
+              behavior: 'smooth'
+            });
           }
         }
       });
-      
-      // Fix 4: Asegurar que body::before no bloquee (ya tiene pointer-events:none)
-      const bodyStyles = window.getComputedStyle(document.body, '::before');
-      console.log('body::before pointer-events:', bodyStyles.pointerEvents);
-      
-      console.log('✅ Fix de botones aplicado');
-      console.log(`- Botones procesados: ${buttons.filter(b => b).length}`);
-      console.log(`- Elementos bloqueantes corregidos: ${blockingElements.length}`);
-      
-      return {
-        buttonsFixed: buttons.filter(b => b).length,
-        blockingElementsFixed: blockingElements.length
-      };
+    });
+    
+    // =========================================
+    // MOBILE DRAWER & MODALS SYSTEM
+    // =========================================
+    const body = document.body;
+    const mobileDrawer = document.getElementById('mobile-drawer');
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+    const mobileDrawerClose = document.getElementById('mobile-drawer-close');
+    const loginModal = document.getElementById('login-modal');
+    const registerModal = document.getElementById('register-modal');
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    
+    // Drawer functions
+    function openDrawer() {
+      body.classList.add('drawer-open');
+      mobileDrawer.setAttribute('aria-hidden', 'false');
+      mobileDrawerClose.focus();
     }
     
-    // Aplicar fix al cargar la página
-    window.addEventListener('DOMContentLoaded', fixButtonFunctionality);
+    function closeDrawer() {
+      body.classList.remove('drawer-open');
+      mobileDrawer.setAttribute('aria-hidden', 'true');
+    }
     
-    // Aplicar fix también después de un pequeño delay (por si hay carga asíncrona)
-    setTimeout(fixButtonFunctionality, 500);
+    // Modal functions
+    function openModal(type) {
+      closeDrawer(); // Close drawer if open
+      
+      const modal = type === 'login' ? loginModal : registerModal;
+      
+      body.classList.add('modal-open');
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+      
+      // Focus first input
+      setTimeout(() => {
+        const firstInput = modal.querySelector('input');
+        if (firstInput) firstInput.focus();
+      }, 300);
+    }
     
-    // Re-aplicar en resize (por si cambia el responsive)
-    window.addEventListener('resize', fixButtonFunctionality);
+    function closeModal() {
+      body.classList.remove('modal-open');
+      loginModal.style.display = 'none';
+      registerModal.style.display = 'none';
+      loginModal.setAttribute('aria-hidden', 'true');
+      registerModal.setAttribute('aria-hidden', 'true');
+    }
     
-    // Exponer función globalmente para debugging
-    window.fixButtonFunctionality = fixButtonFunctionality;
+    // Event listeners
+    mobileMenuToggle.addEventListener('click', openDrawer);
+    mobileDrawerClose.addEventListener('click', closeDrawer);
+    mobileMenuOverlay.addEventListener('click', closeDrawer);
+    modalBackdrop.addEventListener('click', closeModal);
     
-    console.log('💡 Para diagnosticar, ejecuta en consola: fixButtonFunctionality()');
+    // Desktop login/register buttons
+    document.querySelectorAll('a[href="#login"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal('login');
+      });
+    });
+    
+    document.querySelectorAll('a[href="#register"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openModal('register');
+      });
+    });
+    
+    // Close modals on Escape key
+    window.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        if (body.classList.contains('modal-open')) {
+          closeModal();
+        } else if (body.classList.contains('drawer-open')) {
+          closeDrawer();
+        }
+      }
+    });
+    
+    // Captcha generation function
+    function refreshCaptcha(formType) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 7; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const captchaText = document.getElementById(`${formType}-captcha-text`);
+      const captchaInput = document.getElementById(`${formType}-captcha-input`);
+      if (captchaText) captchaText.textContent = code;
+      if (captchaInput) captchaInput.value = '';
+    }
+    
+    // Expose globally for onclick handlers
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.closeDrawer = closeDrawer;
+    window.refreshCaptcha = refreshCaptcha;
+    
+    // Initialize captchas on page load
+    refreshCaptcha('login');
+    refreshCaptcha('register');
+    
+    // Form submission with captcha validation
+    const forms = [document.getElementById('login-form'), document.getElementById('register-form')];
+    forms.forEach(form => {
+      if (!form) return;
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        
+        // Determine form type
+        const formType = form.id === 'login-form' ? 'login' : 'register';
+        
+        // Get captcha values
+        const captchaText = document.getElementById(`${formType}-captcha-text`);
+        const captchaInput = document.getElementById(`${formType}-captcha-input`);
+        
+        // Validate captcha
+        if (!captchaText || !captchaInput) {
+          alert('Error de configuración. Por favor, recarga la página.');
+          return;
+        }
+        
+        if (captchaInput.value.trim().toUpperCase() !== captchaText.textContent.trim()) {
+          alert('❌ Código de verificación incorrecto. Por favor, inténtalo de nuevo.');
+          refreshCaptcha(formType); // Generate new captcha
+          captchaInput.value = '';
+          captchaInput.focus();
+          return;
+        }
+        
+        // Captcha valid, proceed with form submission
+        const formData = new FormData(form);
+        const payload = Object.fromEntries(formData.entries());
+        console.log('Formulario enviado:', form.id, payload);
+        
+        const message = form.id === 'login-form'
+          ? '✅ Tu acceso estará disponible en cuanto activemos la plataforma.'
+          : '✅ Gracias por registrarte. Te avisaremos cuando el acceso premium esté habilitado.';
+        
+        alert(message);
+        form.reset();
+        refreshCaptcha(formType); // Reset captcha after successful submission
+        closeModal();
+      });
+    });
   </script>
   
 </body>
