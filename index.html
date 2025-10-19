@@ -2615,15 +2615,40 @@
       return session !== null;
     }
 
-    // Obtener usuario actual
+    // Obtener usuario actual con datos del perfil
     async function getCurrentUser() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
+        // Obtener perfil completo desde public.profiles
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profileError) {
+          console.warn('[Auth] ⚠️ Error obteniendo perfil:', profileError.message);
+          // Fallback a user_metadata si no hay perfil
+          return {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+            username: session.user.user_metadata?.username || session.user.email.split('@')[0],
+            avatar: session.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email)}&background=D4AF37&color=0B0C0F&bold=true`
+          };
+        }
+        
+        // Usar datos del perfil
         return {
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-          avatar: session.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email)}&background=D4AF37&color=0B0C0F&bold=true`
+          id: profile.id,
+          email: profile.email,
+          name: profile.username || profile.email.split('@')[0],
+          username: profile.username,
+          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username || profile.email)}&background=D4AF37&color=0B0C0F&bold=true`,
+          bio: profile.bio,
+          isAdmin: profile.is_admin,
+          xpPoints: profile.xp_points || 0,
+          currentLevel: profile.current_level || 1
         };
       }
       return null;
@@ -2634,13 +2659,17 @@
       console.log('[Auth] 📝 Registrando usuario con Supabase...');
       
       try {
+        // Crear username a partir del nombre
+        const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        
         const { data, error } = await supabase.auth.signUp({
           email: email,
           password: password,
           options: {
             data: {
               name: name,
-              full_name: name
+              full_name: name,
+              username: username
             },
             emailRedirectTo: window.location.origin
           }
@@ -2653,12 +2682,48 @@
 
         if (data.user) {
           console.log('[Auth] ✅ Usuario registrado:', data.user.email);
+          
+          // El trigger ensure_profile_exists() creará automáticamente el perfil
+          // Esperar 1 segundo para asegurar que el trigger se ejecutó
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Verificar que el perfil se creó
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (profileError) {
+            console.warn('[Auth] ⚠️ Perfil no encontrado, creando manualmente...');
+            
+            // Crear perfil manualmente si el trigger falló
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                email: email,
+                username: username,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            
+            if (insertError) {
+              console.error('[Auth] ❌ Error creando perfil:', insertError.message);
+            } else {
+              console.log('[Auth] ✅ Perfil creado manualmente');
+            }
+          } else {
+            console.log('[Auth] ✅ Perfil encontrado:', profile.username);
+          }
+          
           return {
             success: true,
             user: {
               id: data.user.id,
               email: data.user.email,
               name: name,
+              username: username,
               avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D4AF37&color=0B0C0F&bold=true`
             }
           };
@@ -2696,13 +2761,42 @@
 
         if (data.session && data.user) {
           console.log('[Auth] ✅ Login exitoso:', data.user.email);
+          
+          // Obtener perfil completo desde public.profiles
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (profileError) {
+            console.warn('[Auth] ⚠️ Error obteniendo perfil:', profileError.message);
+            // Fallback a user_metadata
+            return {
+              success: true,
+              user: {
+                id: data.user.id,
+                email: data.user.email,
+                name: data.user.user_metadata?.name || data.user.email.split('@')[0],
+                username: data.user.user_metadata?.username || data.user.email.split('@')[0],
+                avatar: data.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.email)}&background=D4AF37&color=0B0C0F&bold=true`
+              }
+            };
+          }
+          
+          // Usar datos del perfil
           return {
             success: true,
             user: {
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.user_metadata?.name || data.user.email.split('@')[0],
-              avatar: data.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.email)}&background=D4AF37&color=0B0C0F&bold=true`
+              id: profile.id,
+              email: profile.email,
+              name: profile.username || profile.email.split('@')[0],
+              username: profile.username,
+              avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username || profile.email)}&background=D4AF37&color=0B0C0F&bold=true`,
+              bio: profile.bio,
+              isAdmin: profile.is_admin,
+              xpPoints: profile.xp_points || 0,
+              currentLevel: profile.current_level || 1
             }
           };
         }
