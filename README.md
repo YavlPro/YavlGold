@@ -1,26 +1,129 @@
-# ✨ YavlGold — Ecosistema Cripto Premium
+# 🏆 YavlGold — Academia Cripto de Élite
 
-> **Plataforma educativa blockchain** con **identidad oficial YavlGold**. Herramientas profesionales, academia y comunidad para el mundo cripto.
+> **Plataforma educativa blockchain** con autenticación real, herramientas profesionales y gamificación. El núcleo educativo del ecosistema Yavl.
 
-[![Estado](https://img.shields.io/badge/Estado-Producci%C3%B3n-success)](https://yavlgold.com/)
+[![Estado](https://img.shields.io/badge/Estado-40%25%20Launch%20Ready-yellow)](https://yavlpro.github.io/YavlGold/)
+[![Autenticación](https://img.shields.io/badge/Auth-Supabase%20%E2%9C%85-brightgreen)](https://supabase.com/)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
-[![Diseño](https://img.shields.io/badge/Dise%C3%B1o-Identidad%20Oficial-gold)]()
 [![Responsive](https://img.shields.io/badge/Responsive-100%25-brightgreen)]()
 [![Última Actualización](https://img.shields.io/badge/Actualizado-19%20Oct%202025-gold)]()
 
-🌐 **En vivo:** [https://yavlgold.com/](https://yavlgold.com/)
+🌐 **En vivo:** [https://yavlpro.github.io/YavlGold/](https://yavlpro.github.io/YavlGold/)  
+📚 **Roadmap:** Ver `YavlGold Roadmap.html`  
+👤 **Admin:** yeriksonvarela (is_admin = true)
 
-## 🎯 Última Actualización - 19 Octubre 2025
+---
 
-### ✨ Mejoras Aplicadas
-- ✅ **Identidad Visual Oficial 100%** - Colores #D4AF37, fonts Orbitron+Rajdhani, grid dorado
-- ✅ **Glow Dorado Intenso v2.0** - Triple capa `rgba(212, 175, 55, ...)` en H1/H2/H3
-- ✅ **12 Enlaces Corregidos** - Academia, herramientas, social, testimonios
-- ✅ **Captcha Optimizado** - 6 caracteres sin ambigüedad (I/O/0/1 removidos)
-- ✅ **Bordes Visibles 3px** - Cards y elementos con contraste mejorado
-- ✅ **JavaScript Completo** - Scroll smooth, mobile menu, validación, captcha
-- ✅ **6 Commits Exitosos** - Git sincronizado con GitHub
-- ✅ **12 Documentos Técnicos** - Guías, correcciones, verificaciones
+## 🎯 Estado Actual — Octubre 2025
+
+### ✅ COMPLETADO (100%)
+
+#### 🔐 **Sistema de Autenticación con Supabase**
+- ✅ Login/Registro funcional con email + password
+- ✅ JWT tokens con refresh automático
+- ✅ Confirmación de email obligatoria
+- ✅ Row Level Security (RLS) activo
+- ✅ Tabla `public.profiles` con sync automático
+- ✅ Trigger SQL: `ensure_profile_exists()`
+- ✅ Badge de admin 🛡️ visible en navbar
+- ✅ Sesiones persistentes con localStorage
+
+#### 🎨 **Identidad Visual YavlGold**
+- ✅ Color oficial: `#D4AF37` (yavl-gold)
+- ✅ Tipografías: Orbitron + Rajdhani
+- ✅ Glow dorado intenso v2.0 (triple capa)
+- ✅ Grid background 40×40px
+- ✅ 12 enlaces corregidos
+- ✅ Captcha optimizado sin ambigüedades
+- ✅ Mobile responsive 100%
+
+#### 📄 **Páginas Legales (40%)**
+- ✅ `privacidad.html` — Política de Privacidad GDPR
+- ✅ `terminos.html` — Términos con avisos cripto
+- ⚠️ `cookies.html` — **PENDIENTE**
+- ⚠️ `faq.html` — **PENDIENTE**
+- ⚠️ `soporte.html` — **PENDIENTE**
+
+#### 📚 **Documentación Completa**
+- ✅ 15+ archivos técnicos creados
+- ✅ `.admin-credentials.md` (local, gitignored)
+- ✅ `QUICK-REFERENCE-SUPABASE.md`
+- ✅ `SUPABASE-SETUP-INSTRUCTIONS.md`
+- ✅ `README-ADMIN-SETUP-COMPLETO.md`
+- ✅ `PLAN-ACCION-48H.md` (roadmap inmediato)
+
+---
+
+### ⚠️ EN PROGRESO (40%)
+
+#### 🛠️ **Herramientas MVP (0/3)**
+- ❌ Conversor Cripto/Fiat (CoinGecko API)
+- ❌ Calculadora ROI/DCA
+- ❌ Checklist de Seguridad interactivo
+
+#### 📚 **Contenido Educativo (0%)**
+- ❌ Landing `/academia/` con 1 lección gratuita
+- ❌ 0/8 módulos educativos completos
+- ❌ Blog: 0/2 artículos mínimos
+- ❌ 0/4 videos de YouTube
+
+#### 🔍 **SEO & Marketing (0%)**
+- ❌ sitemap.xml automático
+- ❌ robots.txt optimizado
+- ❌ OG tags + Twitter Cards
+- ❌ Google Analytics 4
+- ❌ reCAPTCHA v3 real
+
+---
+
+### 📋 PLAN DE ACCIÓN INMEDIATO
+
+#### 🔴 Crítico (Próximas 2-4h)
+```bash
+[ ] Crear cookies.html, faq.html, soporte.html
+[ ] Agregar footer con avisos legales: "NO somos asesores financieros"
+[ ] Implementar reCAPTCHA v3 (reemplazar captcha visual)
+[ ] Landing /herramientas/ con 3 widgets MVP
+[ ] Landing /academia/ con 1 lección gratuita
+```
+
+#### 🟡 Importante (24-48h)
+```bash
+[ ] Conversor Cripto/Fiat (CoinGecko API, top 10 coins, refresh 30s)
+[ ] Calculadora ROI/DCA (inputs: inicial, mensual, duración, precio)
+[ ] Checklist de Seguridad (8 items: 2FA, seed phrase, email check...)
+[ ] 2 artículos de blog (Bitcoin 101, Seguridad en Cripto)
+[ ] sitemap.xml + robots.txt + OG tags
+```
+
+#### 🟢 Mejoras (48-72h)
+```bash
+[ ] Google Analytics 4 + heatmaps
+[ ] Lead magnet (PDF checklist descargable)
+[ ] Newsletter signup con Mailchimp
+[ ] Social proof: testimonios reales
+[ ] Soft launch en comunidad Telegram
+```
+
+**Plan completo:** Ver `PLAN-ACCION-48H.md`
+
+---
+
+### 🎯 Métricas Objetivo
+
+#### **Semana 1 (Post-Launch)**
+- 500 visitantes únicos
+- 25 registros (5% conversion)
+- 100 usos de herramientas
+- 15 joins a Telegram
+- <70% bounce rate
+- >2min tiempo en sitio
+
+#### **Q1 2026**
+- 1,000+ usuarios registrados
+- 60% tasa de completitud de cursos
+- 5,000+ MAU (Monthly Active Users)
+- 50 miembros premium (5% conversion)
 
 ---
 
@@ -128,52 +231,58 @@ box-shadow: 0 0 30px rgba(212,175,55,1), 0 0 60px rgba(...,0.6);
 
 ---
 
-## 📦 Estructura del Proyecto
+## � Estructura del Proyecto
 
 ```
-yavlgold/
-├── index.html                # Página principal optimizada
-├── index-premium.html        # Versión alternativa premium
+YavlGold/
+├── index.html                      # Landing principal (3,140 líneas)
+├── privacidad.html                 # Política de privacidad GDPR ✨ NUEVO
+├── terminos.html                   # Términos + avisos cripto ✨ NUEVO
+│
+├── academia/                       # Módulos educativos
+│   ├── index.html                 # Landing academia (pendiente)
+│   └── lecciones/                 # Contenido por módulo
+│
+├── herramientas/                   # Tools cripto
+│   └── index.html                 # Landing herramientas (pendiente)
+│
+├── dashboard/                      # Panel usuario
+│   ├── index.html                 # Dashboard principal
+│   ├── perfil.html                # Perfil de usuario
+│   └── configuracion.html         # Ajustes
 │
 ├── assets/
-│   ├── images/
-│   │   ├── logo.png         # Logo YavlGold 512x512
-│   │   └── og-cover.png     # Open Graph image
-│   ├── css/                 # Estilos inline en HTML
-│   └── js/                  # JavaScript inline en HTML
+│   ├── css/
+│   │   └── styles.css            # Estilos globales (inline en HTML)
+│   ├── js/
+│   │   └── auth/
+│   │       └── authClient.js     # OBSOLETO (usar index.html)
+│   └── images/
+│       ├── logo.png              # Logo YavlGold 512x512
+│       └── og-cover.png          # Open Graph image
 │
-├── apps/
-│   ├── gold/                # Aplicación Gold
-│   ├── agro/                # YavlAgro integration
-│   ├── social/              # Red social cripto
-│   └── suite/               # Suite de herramientas
+├── supabase/
+│   └── migrations/
+│       └── 001_setup_profiles_trigger.sql  # Setup DB + RLS
 │
-├── academia/                # Módulo educativo
-│   └── lecciones/
+├── docs/                           # Documentación técnica
+│   ├── IMPLEMENTACION-SUPABASE-AUTH-COMPLETA.md
+│   ├── ADMIN-ACCOUNT-INFO.md
+│   ├── FASE-2-MIGRACION-GOLD.md
+│   ├── FASE-6-SISTEMA-TEMAS.md
+│   └── [15+ archivos más]
 │
-├── herramientas/            # Herramientas Pro
-├── dashboard/               # Panel de usuario
-├── profile/                 # Perfiles de usuario
+├── tests/
+│   └── verify-supabase.html       # Tool de diagnóstico
 │
-├── docs/                    # Documentación
-│   ├── RESUMEN-EJECUTIVO.md
-│   ├── DISEÑO-PREMIUM-2025.md
-│   ├── DISEÑO-VISUAL-GUIA.md
-│   ├── COMPARATIVA-DISEÑO.md
-│   ├── ACTUALIZACION-IDENTIDAD-OFICIAL-2025.md  # ✨ NUEVO
-│   ├── AJUSTES-LEGIBILIDAD-2025.md              # ✨ NUEVO
-│   ├── INICIO-RAPIDO.md
-│   ├── MOCKUP-VISUAL-DETALLADO.md
-│   └── INDICE-ARCHIVOS.md
+├── backups/                        # Respaldos históricos
 │
-├── CORRECCION-GLOW-CONTRASTE.md  # 🔧 Corrección crítica v2.0 (NUEVO)
-├── VERIFICACION-FINAL.md         # ✨ Checklist de validación
-├── GUIA-RAPIDA-IDENTIDAD.md      # ✨ Guía de uso rápido
-├── BORROSIDAD-CORREGIDA.md       # ✨ Fix de legibilidad
-├── aplicar-identidad.sh          # ✨ Script de automatización
-│
-├── backups/                 # Respaldos del sistema
-├── tests/                   # Tests de integración
+├── PLAN-ACCION-48H.md             # Roadmap inmediato ✨ NUEVO
+├── YavlGold Roadmap.html          # Roadmap oficial 4 fases
+├── QUICK-REFERENCE-SUPABASE.md    # Guía rápida 5 min
+├── SUPABASE-SETUP-INSTRUCTIONS.md # Setup paso a paso
+├── README-ADMIN-SETUP-COMPLETO.md # Resumen admin
+├── .admin-credentials.md          # Contraseñas (LOCAL, gitignored)
 │
 ├── package.json
 ├── pnpm-lock.yaml
@@ -191,13 +300,39 @@ yavlgold/
 ### Desarrollo Local
 
 ```bash
-# Clonar repositorio
+# 1. Clonar repositorio
 git clone https://github.com/YavlPro/YavlGold.git
 cd YavlGold
 
-# Abrir con Live Server (VS Code)
+# 2. Abrir con Live Server (VS Code)
 # O simplemente abrir index.html en el navegador
+python -m http.server 8000
+# Abrir: http://localhost:8000
 ```
+
+### Verificar Setup de Supabase
+
+```bash
+# 1. Abrir en navegador:
+tests/verify-supabase.html
+
+# Debe mostrar:
+# ✅ Conexión a Supabase exitosa
+# ✅ Tabla profiles existe
+# ✅ RLS activo
+# ✅ Trigger configurado
+```
+
+### Registrar Usuario de Prueba
+
+1. Ir a: http://localhost:8000 (o GitHub Pages)
+2. Click "Registrarse"
+3. Llenar formulario + resolver captcha
+4. Confirmar email recibido de Supabase
+5. Login con credenciales
+6. Verificar redirección a `/dashboard/`
+
+---
 
 ### Deployment
 
@@ -207,139 +342,290 @@ El sitio se despliega automáticamente en GitHub Pages:
 git add .
 git commit -m "feat: nueva funcionalidad"
 git push origin main
-```
 
-**URL de producción:** [https://yavlgold.com/](https://yavlgold.com/)
-
----
-
-## 💻 Tecnologías
-
-- **HTML5**: Semántico y accesible (WCAG 2.1 AA)
-- **CSS3**: Custom properties, Flexbox, Grid
-- **JavaScript ES6+**: Vanilla JS (sin frameworks)
-- **Font Awesome 6.4.0**: Iconografía profesional
-- **Google Fonts**: Orbitron (títulos) + Rajdhani (cuerpo) - **Identidad oficial**
-- **Grid Background**: Patrón 40×40px obligatorio
-- **Responsive Design**: Mobile-first approach (320px+)
-
-### 🎨 Sistema de Diseño Oficial
-
-```css
-/* Color oficial NUNCA cambiar */
-#D4AF37 - Oro YavlGold principal
-#B8860B - Oro oscuro (hover)
-
-/* Tipografía oficial */
-Orbitron - Títulos (futurista/tech)
-Rajdhani - Cuerpo (moderna/legible)
-
-/* Grid obligatorio */
-40px × 40px - Toda la identidad YavlGold
-```
-
-### 📊 Evolución de Valores (v1.0 → v2.0)
-
-| Elemento | v1.0 (Borroso) | v2.0 (Brillante) | Mejora |
-|----------|----------------|------------------|--------|
-| **Glow H1** | 8px, 0.3 | 15+30+50px, 1.0 | +525% intensidad |
-| **Bordes** | 1px, 0.3 | 3px, 0.5 | +200% grosor, +67% opacidad |
-| **Card BG** | 0.05 | 0.08 | +60% contraste |
-| **Hover** | 15px, 0.5 | 30+60px, 1.0 | +100% brillo |
-| **Grid** | 0.3 | 0.15 | Más visible |
-| **Logo** | 20px | 30-50px | +50-150% glow |
-
----
-
-## 📱 Breakpoints Responsive
-
-```css
-/* Desktop */
-@media (min-width: 1024px) { /* Full navbar + modals */ }
-
-/* Tablet */
-@media (max-width: 1024px) { /* Drawer + compact modals */ }
-@media (max-width: 768px) { /* Optimized spacing */ }
-
-/* Mobile */
-@media (max-width: 480px) { /* Ultra compact */ }
-@media (max-width: 375px) { /* Small devices */ }
+# GitHub Actions ejecuta CI/CD
+# Deploy automático en: https://yavlpro.github.io/YavlGold/
 ```
 
 ---
 
-## 🎯 Características Principales
+## � Tecnologías del Stack
 
-### 🏠 Landing Page
-- Hero section con logo animado
-- Secciones: Conceptos, Herramientas, Academia, Comunidad
-- Footer con 4 columnas informativas
-- WhatsApp floating button
+### Frontend
+- **Vanilla JavaScript** (ES6+, no frameworks)
+- **HTML5 Semántico** (WCAG 2.1 AA)
+- **CSS3** con custom properties
+- **Font Awesome 6.4.0**
+- **Google Fonts:** Orbitron + Rajdhani
 
-### 📱 Mobile Experience
-- Drawer lateral glassmorphism (320px, blur 20px)
-- Overlay con blur intenso (8px)
-- Navegación completa en drawer
-- Auth buttons en footer del drawer
+### Backend & Autenticación
+- **Supabase** (PostgreSQL + Auth)
+- **JWT Tokens** con refresh automático
+- **Row Level Security (RLS)**
+- **Email Confirmation**
+- **bcrypt** para hash de passwords
 
-### 🔐 Sistema de Autenticación
-- Modal de Login compacto
-- Modal de Registro compacto
-- Captcha visual con refresh
-- Validación en tiempo real
-- Scroll interno (max-height 85-90vh)
+### Base de Datos
+```sql
+-- Tablas principales
+├── auth.users              # Supabase Auth (gestionada)
+├── public.profiles         # Perfiles de usuario
+│   ├── id (UUID, PK)
+│   ├── username
+│   ├── email
+│   ├── avatar_url
+│   ├── bio
+│   ├── is_admin (boolean)
+│   ├── xp_points (integer)
+│   └── current_level (integer)
+└── public.announcements    # Anuncios/contenido
 
-### 🎨 Efectos Visuales
-- Glassmorphism en drawer y modals
-- Blur effects (backdrop-filter)
-- Animaciones suaves (cubic-bezier)
-- Hover effects en navegación
-- Logo glow pulsante
-- Scrollbar dorado personalizado
+-- Features implementados
+- Trigger: ensure_profile_exists() → AFTER INSERT on auth.users
+- 9 políticas RLS (5 profiles + 4 announcements)
+- Índices: id, email, username, author_id
+```
+
+### Hosting & Deploy
+- **GitHub Pages** (producción)
+- **GitHub Actions** (CI/CD)
+- **Cloudflare** (CDN opcional)
 
 ---
 
-## 📝 Commits Recientes
+## � Configuración de Supabase
+
+### Credenciales (en `index.html`)
+```javascript
+const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+```
+
+### Funciones de Autenticación
+```javascript
+// Registro de usuario
+await registerUser(name, email, password);
+
+// Login
+await loginUser(email, password);
+
+// Obtener usuario actual (con datos de profiles)
+const user = await getCurrentUser();
+// Retorna: { id, email, username, isAdmin, xpPoints, currentLevel, ... }
+
+// Logout
+await logoutUser();
+```
+
+### Ejecutar Migraciones SQL
+1. **Dashboard:** [Supabase Project](https://supabase.com/dashboard/project/gerzlzprkarikblqxpjt)
+2. **SQL Editor** > New Query
+3. **Copiar** contenido de `supabase/migrations/001_setup_profiles_trigger.sql`
+4. **Ejecutar** (▶️ Run)
+
+**Contenido del archivo SQL:**
+- Trigger `ensure_profile_exists()` → Crea perfil automáticamente
+- 5 políticas RLS para `profiles`
+- 4 políticas RLS para `announcements`
+- Índices optimizados
+
+---
+
+## 👤 Cuenta de Admin
+
+### Credenciales
+```yaml
+Username:  yeriksonvarela
+Email:     yeriksonvarela@gmail.com
+User ID:   68a4963b-2b86-4382-a04f-1f38f1873d1c
+Role:      🛡️ Admin (is_admin = true)
+```
+
+**Archivo con contraseña:** `.admin-credentials.md` (LOCAL ONLY, gitignored)
+
+### Verificar en Supabase
+```sql
+SELECT id, email, username, is_admin, xp_points
+FROM public.profiles 
+WHERE id = '68a4963b-2b86-4382-a04f-1f38f1873d1c';
+
+-- Debe retornar:
+-- is_admin: true
+-- username: yeriksonvarela
+```
+
+### Privilegios de Admin
+- Badge 🛡️ ADMIN visible en navbar
+- Acceso a panel de administración
+- Crear/editar anuncios
+- Gestionar usuarios (futuro)
+
+---
+
+## 🎯 Roadmap Oficial YavlGold
+
+### Fase 1: Foundation (Q4 2025) — 40% COMPLETADO
+- ✅ **Autenticación Supabase** (JWT + RLS)
+- ✅ **Identidad visual oficial** (#D4AF37, Orbitron, Grid)
+- ✅ **Páginas legales básicas** (privacidad, términos)
+- ⚠️ **4 módulos educativos** (0/4 pendientes)
+  - Bitcoin 101
+  - Seguridad Cripto
+  - DeFi Básico
+  - NFTs y Web3
+- ⚠️ **3 herramientas MVP** (0/3 pendientes)
+  - Conversor Cripto/Fiat
+  - Calculadora ROI/DCA
+  - Checklist de Seguridad
+- ⚠️ **Blog activo** (0/2 artículos mínimos)
+
+### Fase 2: Engagement (Q1-Q2 2026)
+- ❌ **Certificados NFT** (Polygon testnet)
+- ❌ **Sistema de gamificación** (XP, levels, badges)
+- ❌ **Quizzes interactivos** (10 preguntas por módulo)
+- ❌ **Leaderboard público** (top usuarios por XP)
+- ❌ **Comunidad Discord** (privada para alumnos)
+
+### Fase 3: Contenido Avanzado (Q2-Q3 2026)
+- ❌ **Módulos 5-8**
+  - Trading Técnico
+  - Smart Contracts (Solidity)
+  - Análisis On-Chain
+  - Gestión de Portafolio
+- ❌ **Webinars mensuales** (invitados expertos)
+- ❌ **Casos de estudio** (10 análisis reales)
+- ❌ **Recursos descargables** (PDFs, checklists, templates)
+
+### Fase 4: Premium & Escala (Q4 2026+)
+- ❌ **Membresía Premium** ($19.99/mes)
+  - Contenido exclusivo avanzado
+  - Comunidad privada premium
+  - Mentorías grupales mensuales
+  - Certificados verificables NFT
+- ❌ **Plan Enterprise** (custom pricing)
+  - Cursos corporativos personalizados
+  - Dashboard de progreso grupal
+  - Soporte prioritario 24/7
+- ❌ **App Móvil** (iOS + Android)
+  - Notificaciones push de precios
+  - Modo offline para lecciones
+  - Widgets de herramientas
+
+**Monetización:**
+- 60% contenido gratuito (atracción)
+- 40% premium/enterprise (monetización)
+- Target Year 1: 1,000 usuarios, 50 premium (5% conversion)
+
+**Ver roadmap visual completo:** `YavlGold Roadmap.html`
+
+---
+
+## 📝 Documentación Importante
+
+### Para Comenzar
+- 📖 `QUICK-REFERENCE-SUPABASE.md` — Activación en 5 minutos
+- ⚡ `INICIO-RAPIDO.md` — Guía de inicio rápido
+- 🔧 `SUPABASE-SETUP-INSTRUCTIONS.md` — Setup paso a paso
+
+### Para Administradores
+- 🛡️ `.admin-credentials.md` — Contraseñas (LOCAL ONLY)
+- 👤 `docs/ADMIN-ACCOUNT-INFO.md` — Privilegios y tareas
+- 📋 `README-ADMIN-SETUP-COMPLETO.md` — Resumen completo
+
+### Para Desarrolladores
+- 🔐 `docs/IMPLEMENTACION-SUPABASE-AUTH-COMPLETA.md` — 40+ páginas técnicas
+- 🗄️ `supabase/migrations/001_setup_profiles_trigger.sql` — SQL completo
+- 🧪 `tests/verify-supabase.html` — Tool de diagnóstico
+
+### Planificación
+- 📅 `PLAN-ACCION-48H.md` — Roadmap inmediato con KPIs
+- 🗺️ `YavlGold Roadmap.html` — Roadmap visual 4 fases
+- 📊 `docs/RESUMEN-EJECUTIVO-COMPLETO.md` — Overview del proyecto
+
+---
+
+## � Links Importantes
+
+### Producción
+- 🌐 **GitHub Pages:** https://yavlpro.github.io/YavlGold/
+- 📊 **Supabase Dashboard:** https://supabase.com/dashboard/project/gerzlzprkarikblqxpjt
+- 🐙 **GitHub Repo:** https://github.com/YavlPro/YavlGold
+
+### Comunidad
+- 💬 **Telegram:** https://t.me/yavlgold
+- 🐦 **Twitter/X:** https://x.com/yavlgold
+- 📺 **YouTube:** https://youtube.com/@yavlgold
+
+---
+
+## 🧪 Testing & Verificación
+
+### Verificar Autenticación
+```bash
+1. Ir a: https://yavlpro.github.io/YavlGold/
+2. Click "Registrarse"
+3. Completar formulario + resolver captcha
+4. Confirmar email de Supabase
+5. Login con credenciales
+6. Verificar redirección a /dashboard/
+```
+
+### Verificar Admin
+```bash
+1. Login como yeriksonvarela@gmail.com
+2. Verificar badge 🛡️ ADMIN en navbar
+3. Console (F12): await getCurrentUser()
+4. Verificar: isAdmin: true
+```
+
+### Herramienta de Diagnóstico
+```bash
+# Abrir tests/verify-supabase.html
+# Verifica:
+- ✅ Conexión a Supabase
+- ✅ Tabla profiles existe
+- ✅ RLS activo
+- ✅ Trigger configurado
+- ✅ Admin account válido
+```
+
+---
+
+## 📊 Historial de Commits (Octubre 2025)
 
 ```bash
-# Historial de mejoras (Oct 2025)
-6016ca0 - feat: compact drawer with glassmorphism blur effect
-72964a8 - feat: make modals more compact for mobile and desktop
-408346b - fix: restore mobile navbar with hamburger menu
-64600ec - feat: port mobile improvements to main index.html
-2e43c3c - feat: add captcha validation with scroll support
-cd1a181 - fix: mobile drawer and auth modals with validation
+# Identidad Visual (8 commits)
+295aebf - feat: implement official YavlGold identity
+8110964 - feat: optimize readability and antialiasing
+dc3857e - feat: admin badge and profile integration
+87b99c0 - fix: glow intensity and border contrast v2.0
+...
+
+# Autenticación Supabase (3 commits)
+98369b7 - feat: complete Supabase Auth integration
+d4f21c8 - feat: add RLS policies and triggers
+6a7e5b2 - docs: comprehensive Supabase documentation
+
+# Legal & Roadmap (1 commit)
+[PENDIENTE] - feat: legal pages + 48h action plan
 ```
-
----
-
-## 🛠️ Mantenimiento
-
-### Archivos Principales
-- `index.html` - Landing page principal (mantener actualizado)
-- `index-premium.html` - Versión alternativa premium
-- `assets/images/logo.png` - Logo oficial 512x512
-- `README.md` - Este archivo
-
-### Backups
-- `index.html.backup` - Respaldo pre-cambios importantes
-- `index.html.backup-pre-mobile-fix` - Respaldo pre-mobile
-- `backups/` - Respaldos históricos organizados
-
-### Limpieza
-Archivos de test y temporales eliminados para mantener el repo limpio.
 
 ---
 
 ## 🤝 Contribuir
 
-Este es un proyecto privado de YavlPro. Para contribuciones:
-
-1. Fork del repositorio
+### Para Desarrolladores
+1. Fork el repositorio
 2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit: `git commit -m 'feat: nueva funcionalidad'`
+3. Commit: `git commit -m "✨ feat: nueva funcionalidad"`
 4. Push: `git push origin feature/nueva-funcionalidad`
 5. Abre un Pull Request
+
+### Para Creadores de Contenido
+- Escribe artículos educativos para el blog
+- Crea tutoriales en video para YouTube
+- Traduce contenido a otros idiomas
+- Sugiere mejoras en GitHub Issues
 
 ---
 
@@ -349,62 +635,49 @@ MIT License - Ver [LICENSE](LICENSE) para más detalles.
 
 ---
 
-## 📞 Contacto
+## 📞 Soporte
 
-- **Web:** [https://yavlgold.com/](https://yavlgold.com/)
-- **GitHub:** [@YavlPro](https://github.com/YavlPro)
-- **Organización:** YavlPro
+¿Necesitas ayuda?
+- 📧 **Email:** yeriksonvarela@gmail.com
+- 💬 **Telegram:** [@yavlgold](https://t.me/yavlgold)
+- 🐙 **GitHub Issues:** [Reportar problema](https://github.com/YavlPro/YavlGold/issues)
 
 ---
 
-## 🎉 Estado del Proyecto
+## 👏 Créditos
 
-✅ **En Producción Activa - Octubre 2025**
-
-### ✨ Últimas Actualizaciones (19/10/2025)
-
-#### 🎨 Identidad Visual Oficial Aplicada
-- ✅ **Color oro #D4AF37** implementado en 35+ instancias
-- ✅ **Tipografías oficiales**: Orbitron + Rajdhani en toda la plataforma
-- ✅ **Grid background 40×40px** presente en todos los fondos
-- ✅ **12 enlaces corregidos** (# → rutas funcionales)
-
-#### 📝 Optimizaciones de Legibilidad
-- ✅ **Antialiasing global** para texto ultra nítido
-- ✅ **Colores consistentes** en todos los títulos
-- ✅ **0 errores de compilación**
-
-#### 🔧 Corrección Crítica v2.0 - Glow y Contraste (19/10/2025)
-- ✅ **Glow intensificado**: Triple capa H1 (15px+30px+50px), H2 (10px+20px+40px)
-- ✅ **Bordes visibles**: 1px→3px, opacidad 0.3→0.5 (+200% grosor, +67% contraste)
-- ✅ **Cards destacadas**: Background 0.05→0.08 (+60%), gradiente con blur(10px)
-- ✅ **Hover brillante**: Glow doble capa 30px+60px rgba(..., 1.0)
-- ✅ **Grid perceptible**: Opacidad 0.3→0.15 para mayor visibilidad
-- ✅ **Logo pulsante**: Animación 30px→50px con glow intenso
-
-#### 📚 Documentación Creada
-- ✅ `docs/ACTUALIZACION-IDENTIDAD-OFICIAL-2025.md` - Log completo de cambios
-- ✅ `docs/AJUSTES-LEGIBILIDAD-2025.md` - Correcciones de borrosidad
-- ✅ `CORRECCION-GLOW-CONTRASTE.md` - **NUEVO** Corrección crítica v2.0
-- ✅ `VERIFICACION-FINAL.md` - Checklist de validación
-- ✅ `GUIA-RAPIDA-IDENTIDAD.md` - Guía de referencia rápida
-- ✅ `BORROSIDAD-CORREGIDA.md` - Solución de problemas visuales
-- ✅ `aplicar-identidad.sh` - Script de automatización bash
-
-#### 🚀 Próximos Pasos
-- [ ] Aplicar identidad a `academia/index.html`
-- [ ] Aplicar identidad a `herramientas/index.html`
-- [ ] Aplicar identidad a `dashboard/index.html`
-- [ ] Testing E2E completo
-- [ ] Performance audit (Lighthouse 95+)
-- Accesible (WCAG AA+)
+**Fundador y Desarrollador Principal:** Yerikson Varela  
+**Stack Técnico:** Vanilla JS + Supabase + GitHub Pages  
+**Identidad Visual:** #D4AF37 (yavl-gold oficial)  
+**Inspiración:** Hacer educación cripto accesible para todos 🌟
 
 ---
 
 <div align="center">
-  
+
+## 🎉 Estado del Proyecto
+
+**✨ 40% Launch-Ready — Octubre 2025**
+
+### Resumen del Progreso
+
+| Categoría | Estado | Completado |
+|-----------|--------|------------|
+| 🔐 **Autenticación** | ✅ Completo | 100% |
+| 🎨 **Identidad Visual** | ✅ Completo | 100% |
+| 📄 **Legal** | ⚠️ Parcial | 40% |
+| 🛠️ **Herramientas** | ❌ Pendiente | 0% |
+| 📚 **Contenido** | ❌ Pendiente | 0% |
+| 🔍 **SEO** | ❌ Pendiente | 0% |
+| 📚 **Documentación** | ✅ Completo | 100% |
+
+**Próximo hito:** Soft launch en 48-72 horas  
+**Objetivo Semana 1:** 500 visitantes, 25 registros, <70% bounce
+
+---
+
 ### ✨ Hecho con 💛 por YavlPro
 
-**YavlGold** — *Tu ecosistema cripto premium*
+**YavlGold** — *Tu academia cripto de élite*
 
 </div>
