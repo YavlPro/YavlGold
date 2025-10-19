@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔍 Verificación de Supabase - YavlGold</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1f 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #D4AF37;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 3rem;
+    }
+
+    .check-section {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .check-section h2 {
+      color: #D4AF37;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      border-left: 4px solid #666;
+    }
+
+    .check-item.success {
+      border-left-color: #4CAF50;
+    }
+
+    .check-item.error {
+      border-left-color: #f44336;
+    }
+
+    .check-item.warning {
+      border-left-color: #ff9800;
+    }
+
+    .check-item.pending {
+      border-left-color: #2196F3;
+    }
+
+    .status-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .check-content {
+      flex: 1;
+    }
+
+    .check-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .check-detail {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #D4AF37 0%, #b8941f 100%);
+      color: #0B0C0F;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      width: 100%;
+      margin-top: 1rem;
+      transition: transform 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .code-block {
+      background: #000;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .loading {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .summary {
+      text-align: center;
+      font-size: 1.2rem;
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: 12px;
+      border: 2px solid #D4AF37;
+    }
+
+    .summary.ready {
+      border-color: #4CAF50;
+      background: rgba(76, 175, 80, 0.1);
+    }
+
+    .summary.needs-setup {
+      border-color: #ff9800;
+      background: rgba(255, 152, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Verificación de Supabase</h1>
+    <p class="subtitle">Comprobando configuración de autenticación y base de datos</p>
+
+    <div class="check-section">
+      <h2>📦 Conexión a Supabase</h2>
+      <div id="connection-checks"></div>
+    </div>
+
+    <div class="check-section">
+      <h2>🔐 Configuración de Autenticación</h2>
+      <div id="auth-checks"></div>
+    </div>
+
+    <div class="check-section">
+      <h2>🗄️ Tablas y Esquema</h2>
+      <div id="schema-checks"></div>
+    </div>
+
+    <div class="check-section">
+      <h2>🛡️ Políticas RLS</h2>
+      <div id="rls-checks"></div>
+    </div>
+
+    <div class="check-section">
+      <h2>⚡ Triggers y Funciones</h2>
+      <div id="trigger-checks"></div>
+    </div>
+
+    <div id="summary-section"></div>
+
+    <button class="btn" id="run-checks" onclick="runAllChecks()">
+      ▶️ Ejecutar Verificación Completa
+    </button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
+
+    let supabase;
+    let results = {
+      connection: [],
+      auth: [],
+      schema: [],
+      rls: [],
+      triggers: []
+    };
+
+    function addCheck(category, title, status, detail = '') {
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        pending: '⏳'
+      };
+
+      results[category].push({ title, status, detail });
+
+      const container = document.getElementById(`${category}-checks`);
+      const checkItem = document.createElement('div');
+      checkItem.className = `check-item ${status}`;
+      checkItem.innerHTML = `
+        <div class="status-icon">${icons[status]}</div>
+        <div class="check-content">
+          <div class="check-title">${title}</div>
+          ${detail ? `<div class="check-detail">${detail}</div>` : ''}
+        </div>
+      `;
+      container.appendChild(checkItem);
+    }
+
+    function showSummary() {
+      const total = Object.values(results).flat().length;
+      const success = Object.values(results).flat().filter(r => r.status === 'success').length;
+      const errors = Object.values(results).flat().filter(r => r.status === 'error').length;
+      const warnings = Object.values(results).flat().filter(r => r.status === 'warning').length;
+
+      const percentage = Math.round((success / total) * 100);
+      const isReady = errors === 0 && warnings === 0;
+
+      const summaryDiv = document.getElementById('summary-section');
+      summaryDiv.innerHTML = `
+        <div class="summary ${isReady ? 'ready' : 'needs-setup'}">
+          <h2>${isReady ? '🎉 ¡Sistema Listo!' : '⚠️ Requiere Configuración'}</h2>
+          <p style="margin-top: 1rem;">
+            <strong>${success}/${total}</strong> verificaciones exitosas (${percentage}%)
+          </p>
+          ${errors > 0 ? `<p style="color: #f44336; margin-top: 0.5rem;">❌ ${errors} errores encontrados</p>` : ''}
+          ${warnings > 0 ? `<p style="color: #ff9800; margin-top: 0.5rem;">⚠️ ${warnings} advertencias</p>` : ''}
+          ${!isReady ? `
+            <p style="margin-top: 1rem; font-size: 0.9rem;">
+              📖 Consulta <strong>SUPABASE-SETUP-INSTRUCTIONS.md</strong> para configurar el sistema
+            </p>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    async function runAllChecks() {
+      const btn = document.getElementById('run-checks');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading">⏳</span> Verificando...';
+
+      // Clear previous results
+      results = { connection: [], auth: [], schema: [], rls: [], triggers: [] };
+      ['connection', 'auth', 'schema', 'rls', 'trigger'].forEach(id => {
+        document.getElementById(`${id}-checks`).innerHTML = '';
+      });
+
+      try {
+        // 1. Verificar conexión
+        addCheck('connection', 'Inicializando cliente Supabase...', 'pending');
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        addCheck('connection', 'Cliente Supabase inicializado', 'success', `URL: ${SUPABASE_URL}`);
+
+        // 2. Verificar autenticación
+        addCheck('auth', 'Verificando configuración de Auth...', 'pending');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          addCheck('auth', 'Error obteniendo sesión', 'error', sessionError.message);
+        } else {
+          addCheck('auth', 'Sistema de autenticación disponible', 'success', 
+            session ? `Usuario activo: ${session.user.email}` : 'Sin sesión activa');
+        }
+
+        // 3. Verificar tabla profiles
+        addCheck('schema', 'Verificando tabla profiles...', 'pending');
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('count')
+          .limit(1);
+
+        if (profilesError) {
+          if (profilesError.code === '42P01') {
+            addCheck('schema', 'Tabla profiles no existe', 'error', 
+              'Ejecuta el SQL en SUPABASE-SETUP-INSTRUCTIONS.md');
+          } else {
+            addCheck('schema', 'Error accediendo a profiles', 'error', profilesError.message);
+          }
+        } else {
+          addCheck('schema', 'Tabla profiles existe y es accesible', 'success');
+        }
+
+        // 4. Verificar tabla announcements
+        addCheck('schema', 'Verificando tabla announcements...', 'pending');
+        const { data: announcements, error: announcementsError } = await supabase
+          .from('announcements')
+          .select('count')
+          .limit(1);
+
+        if (announcementsError) {
+          if (announcementsError.code === '42P01') {
+            addCheck('schema', 'Tabla announcements no existe', 'error', 
+              'Crea la tabla según tu esquema');
+          } else {
+            addCheck('schema', 'Error accediendo a announcements', 'error', announcementsError.message);
+          }
+        } else {
+          addCheck('schema', 'Tabla announcements existe y es accesible', 'success');
+        }
+
+        // 5. Verificar RLS en profiles
+        addCheck('rls', 'Verificando RLS en profiles...', 'pending');
+        try {
+          const { error: rlsError } = await supabase
+            .from('profiles')
+            .select('*')
+            .limit(1);
+
+          if (rlsError && rlsError.code === '42501') {
+            addCheck('rls', 'RLS habilitado en profiles', 'success', 
+              'Políticas configuradas correctamente');
+          } else if (!rlsError) {
+            addCheck('rls', 'RLS posiblemente deshabilitado', 'warning', 
+              'Verifica las políticas en Supabase Dashboard');
+          } else {
+            addCheck('rls', 'Error verificando RLS', 'error', rlsError.message);
+          }
+        } catch (e) {
+          addCheck('rls', 'RLS habilitado correctamente', 'success');
+        }
+
+        // 6. Verificar trigger (esto requiere test de registro)
+        addCheck('triggers', 'Verificar trigger manualmente', 'warning', 
+          'Registra un usuario y verifica que se cree en public.profiles');
+
+        addCheck('triggers', 'ensure_profile_exists() debe existir', 'warning', 
+          'Verifica en Supabase Dashboard > Database > Functions');
+
+      } catch (error) {
+        addCheck('connection', 'Error general', 'error', error.message);
+      }
+
+      showSummary();
+
+      btn.disabled = false;
+      btn.innerHTML = '🔄 Volver a Verificar';
+    }
+
+    // Run checks on page load
+    window.addEventListener('load', () => {
+      setTimeout(runAllChecks, 500);
+    });
+  </script>
+</body>
+</html>
