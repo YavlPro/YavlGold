@@ -241,6 +241,12 @@
       margin-bottom: 0 !important;
     }
     
+    .navbar-actions-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
     .theme-toggle {
       width: 44px;
       height: 44px;
@@ -1305,7 +1311,7 @@
     }
     
     @media (max-width: 480px) {
-      /* Header móvil optimizado - compacto sin espacios extras */
+      /* Header móvil con hamburguesa */
       .navbar {
         position: fixed;
         top: 0;
@@ -1313,93 +1319,53 @@
         right: 0;
         z-index: 1000;
         height: auto;
-        min-height: unset;
       }
       
       .navbar-container {
-        flex-direction: column;
-        padding: 10px 1rem 8px;
-        gap: 8px;
-        position: relative;
-        height: auto;
-        min-height: unset;
-        margin-bottom: 0;
+        padding: 1rem;
+        height: 70px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
       }
       
       .navbar-logo {
-        margin-bottom: 0;
-        margin-top: 0;
-        width: 100%;
         display: flex;
-        justify-content: center;
-        position: relative;
-        z-index: 12;
-      }
-      
-      .navbar-brand {
-        font-size: 1.3rem;
+        align-items: center;
+        gap: 0.5rem;
       }
       
       .navbar-logo img {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
       }
       
-      /* Botones apilados verticalmente en móviles pequeños */
-      .navbar-actions {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        max-width: 320px;
-        gap: 8px;
-        position: relative;
-        z-index: 11;
-        pointer-events: auto;
-        margin-bottom: 0;
-        padding-bottom: 0;
+      .navbar-brand {
+        font-size: 1.25rem;
       }
       
+      /* Ocultar botones de login/register en móvil */
       .navbar-actions .btn {
-        width: 100%;
-        padding: 12px 16px;
-        font-size: 0.9rem;
-        min-width: unset;
-        height: 44px;
-        justify-content: center;
-        position: relative;
-        z-index: 11;
-        pointer-events: auto;
-        cursor: pointer;
-      }
-      
-      /* Asegurar que los botones sean clickeables */
-      .btn-outline,
-      .btn-primary {
-        pointer-events: auto !important;
-        cursor: pointer !important;
-      }
-      
-      .theme-toggle {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
-        z-index: 13;
-        pointer-events: auto;
-      }
-      
-      /* Ocultar menú móvil toggle si existe */
-      .mobile-menu-toggle {
         display: none;
       }
       
-      /* Hero section móvil - compacto, pegado al header */
+      /* Mantener theme toggle visible */
+      .theme-toggle {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+      
+      /* Mostrar hamburguesa */
+      .mobile-menu-toggle {
+        display: flex !important;
+      }
+      
+      /* Hero section móvil */
       .hero {
-        padding-top: 130px;
+        padding-top: 110px;
         padding-bottom: 50px;
-        margin-top: 0 !important;
       }
       
       .hero-buttons {
@@ -1415,7 +1381,6 @@
         margin-bottom: 2.5rem;
       }
       
-      /* Hero logo más pequeño en móvil */
       .hero-logo {
         width: 120px;
         height: 120px;
@@ -1425,36 +1390,32 @@
     /* Breakpoint extra pequeño para móviles muy pequeños (iPhone SE, etc.) */
     @media (max-width: 375px) {
       .navbar-container {
-        padding: 8px 0.75rem 6px;
-        gap: 6px;
+        padding: 0.875rem;
+        height: 65px;
+      }
+      
+      .navbar-logo img {
+        width: 28px;
+        height: 28px;
       }
       
       .navbar-brand {
-        font-size: 1.2rem;
-      }
-      
-      .navbar-actions {
-        max-width: 280px;
-        gap: 6px;
-      }
-      
-      .navbar-actions .btn {
-        padding: 11px 14px;
-        font-size: 0.85rem;
-        height: 42px;
-        pointer-events: auto !important;
+        font-size: 1.15rem;
       }
       
       .theme-toggle {
-        top: 10px;
-        right: 10px;
+        width: 36px;
+        height: 36px;
       }
       
-      /* Hero más compacto en pantallas pequeñas */
+      .mobile-menu-toggle {
+        width: 36px;
+        height: 36px;
+      }
+      
       .hero {
-        padding-top: 120px;
+        padding-top: 100px;
         padding-bottom: 45px;
-        margin-top: 0 !important;
       }
       
       .hero-logo {
@@ -1527,11 +1488,10 @@
         </button>
         <a href="#login" class="btn btn-outline">Iniciar Sesión</a>
         <a href="#register" class="btn btn-primary">Registrarse</a>
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menú">
+          <i class="fas fa-bars"></i>
+        </button>
       </div>
-      
-      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menú">
-        <i class="fas fa-bars"></i>
-      </button>
     </div>
   </nav>
   
