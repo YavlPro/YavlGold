@@ -27,59 +27,68 @@
   
   <style>
     /* =========================================
-       VARIABLES DEL SISTEMA DE DISEÑO PREMIUM
-       Paleta Refinada: Champagne/Antique Gold
+       DESIGN TOKENS - CHAMPAGNE SOFT GOLD
+       Sistema de diseño premium ultra-refinado
        ========================================= */
     :root {
-      /* Colores principales - Champagne Gold Refinado */
-      --gold-400: #E3C466;        /* Champagne Gold Claro */
-      --gold-500: #C9A646;        /* Champagne Gold Principal */
-      --gold-600: #A8842A;        /* Antique Gold Oscuro */
-      --gold-primary: #C9A646;    /* Alias principal */
-      --gold-secondary: #E3C466;  /* Alias secundario */
-      --gold-light: #E3C466;      /* Alias claro */
-      --gold-dark: #A8842A;       /* Alias oscuro */
+      /* Champagne Soft Gold - Paleta Principal */
+      --gold-300: #E8D59B;        /* Champagne Extra Suave */
+      --gold-400: #E2C675;        /* Champagne Acento Principal */
+      --gold-500: #C9A851;        /* Champagne Intenso */
+      --gold-600: #A8863B;        /* Sombras y Contornos */
+      --gold-700: #8B6F30;        /* Dorado Oscuro Profundo */
       
-      /* Fondos oscuros - Más profundos */
-      --bg-main: #0C0F13;         /* Fondo principal refinado */
+      /* Aliases para compatibilidad */
+      --gold-primary: #C9A851;    /* Alias principal */
+      --gold-secondary: #E2C675;  /* Alias secundario */
+      --gold-light: #E8D59B;      /* Alias claro */
+      --gold-dark: #A8863B;       /* Alias oscuro */
+      
+      /* Fondos Oscuros Premium */
+      --bg-main: #0C1015;         /* Fondo principal profundo */
       --bg-surface: #12161C;      /* Superficies elevadas */
-      --bg-primary: #0C0F13;      /* Alias principal */
+      --bg-primary: #0C1015;      /* Alias principal */
       --bg-secondary: #12161C;    /* Alias secundario */
       --bg-card: rgba(18, 22, 28, 0.95);
       --bg-card-hover: rgba(24, 28, 36, 0.98);
       
-      /* Textos - Mejorada legibilidad */
-      --text-primary: #E6E9EF;    /* Texto principal suave */
-      --text-secondary: #C6CFDC;  /* Texto secundario */
+      /* Textos - Máxima Legibilidad */
+      --text-primary: #E8ECF2;    /* Texto principal ultra claro */
+      --text-secondary: #C9D0DA;  /* Texto secundario suave */
       --text-muted: #8B95A8;      /* Texto atenuado */
       
-      /* Bordes y líneas */
-      --border-gold: rgba(227, 196, 102, 0.4);  /* Borde dorado suave */
-      --border-subtle: rgba(227, 196, 102, 0.15);
+      /* Bordes y Divisores */
+      --border-gold: rgba(201, 168, 81, 0.45);   /* Borde dorado visible */
+      --border-subtle: rgba(201, 168, 81, 0.15); /* Borde sutil */
+      --border-card: rgba(255, 255, 255, 0.04);  /* Borde de tarjetas */
       
-      /* Efectos - Glow reducido 40% */
+      /* Efectos y Sombras */
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-      --shadow-gold: 0 0 15px rgba(201, 166, 70, 0.25);        /* Reducido */
-      --shadow-gold-lg: 0 0 25px rgba(201, 166, 70, 0.35);     /* Reducido */
-      --shadow-gold-soft: 0 4px 20px rgba(201, 166, 70, 0.20); /* Extra suave */
+      --shadow-gold: 0 0 15px rgba(201, 168, 81, 0.25);
+      --shadow-gold-lg: 0 0 24px rgba(201, 168, 81, 0.35);
+      --shadow-gold-soft: 0 4px 20px rgba(201, 168, 81, 0.20);
+      
+      /* Overlays y Fondos Interactivos */
+      --overlay-gold-subtle: rgba(201, 168, 81, 0.08);
+      --overlay-gold-medium: rgba(201, 168, 81, 0.15);
       
       /* Transiciones */
       --transition-fast: 0.2s ease;
-      --transition-normal: 0.3s ease;
+      --transition-normal: 0.25s ease;
       --transition-slow: 0.5s ease;
       
-      /* Bordes */
+      /* Radios de Borde */
       --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
       --radius-xl: 20px;
       
-      /* Gradientes refinados */
-      --gradient-gold: linear-gradient(180deg, #E3C466 0%, #C9A646 50%, #A8842A 100%);
-      --gradient-gold-subtle: linear-gradient(135deg, rgba(227, 196, 102, 0.15), rgba(168, 132, 42, 0.05));
-      --gradient-dark: linear-gradient(135deg, #0C0F13 0%, #12161C 100%);
+      /* Gradientes Refinados */
+      --gradient-gold: linear-gradient(180deg, var(--gold-400) 0%, var(--gold-600) 100%);
+      --gradient-gold-subtle: linear-gradient(135deg, rgba(226, 198, 117, 0.15), rgba(168, 134, 59, 0.05));
+      --gradient-dark: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-surface) 100%);
     }
     
     /* =========================================
@@ -115,8 +124,8 @@
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 15% 85%, rgba(201, 166, 70, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 85% 15%, rgba(227, 196, 102, 0.04) 0%, transparent 40%);
+        radial-gradient(circle at 15% 85%, rgba(201, 168, 81, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 85% 15%, rgba(226, 198, 117, 0.03) 0%, transparent 40%);
       z-index: -1;
       pointer-events: none;
     }
@@ -271,7 +280,7 @@
     }
     
     .btn-outline:hover {
-      background: rgba(201, 166, 70, 0.08);
+      background: rgba(201, 168, 81, 0.07);
       color: var(--gold-400);
       border-color: var(--gold-500);
       box-shadow: var(--shadow-gold-soft);
@@ -323,7 +332,7 @@
       transform: translate(-50%, -50%);
       width: 800px;
       height: 800px;
-      background: radial-gradient(circle, rgba(201, 166, 70, 0.08) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(201, 168, 81, 0.06) 0%, transparent 70%);
       animation: pulse 8s ease-in-out infinite;
     }
     
@@ -357,22 +366,22 @@
       align-items: center;
       justify-content: center;
       box-shadow: 
-        0 0 25px rgba(201, 166, 70, 0.25),
-        0 4px 20px rgba(201, 166, 70, 0.15),
-        inset 0 0 20px rgba(201, 166, 70, 0.08);
+        0 0 20px rgba(201, 168, 81, 0.22),
+        0 4px 18px rgba(201, 168, 81, 0.12),
+        inset 0 0 18px rgba(201, 168, 81, 0.06);
       animation: glow 3s ease-in-out infinite;
     }
     
     @keyframes glow {
       0%, 100% { box-shadow: 
-        0 0 25px rgba(201, 166, 70, 0.25),
-        0 4px 20px rgba(201, 166, 70, 0.15),
-        inset 0 0 20px rgba(201, 166, 70, 0.08);
+        0 0 20px rgba(201, 168, 81, 0.22),
+        0 4px 18px rgba(201, 168, 81, 0.12),
+        inset 0 0 18px rgba(201, 168, 81, 0.06);
       }
       50% { box-shadow: 
-        0 0 35px rgba(201, 166, 70, 0.35),
-        0 4px 30px rgba(201, 166, 70, 0.25),
-        inset 0 0 30px rgba(201, 166, 70, 0.12);
+        0 0 30px rgba(201, 168, 81, 0.30),
+        0 4px 25px rgba(201, 168, 81, 0.20),
+        inset 0 0 25px rgba(201, 168, 81, 0.10);
       }
     }
     
@@ -519,7 +528,7 @@
     
     .feature-card:hover .feature-icon {
       transform: scale(1.08) rotate(3deg);
-      background: linear-gradient(135deg, rgba(227, 196, 102, 0.2), rgba(168, 132, 42, 0.1));
+      background: linear-gradient(135deg, rgba(226, 198, 117, 0.18), rgba(168, 134, 59, 0.08));
       box-shadow: var(--shadow-gold-soft);
     }
     
