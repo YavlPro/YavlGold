@@ -2594,6 +2594,107 @@
     refreshCaptcha('login');
     refreshCaptcha('register');
 
+    // =========================================
+    // SISTEMA DE AUTENTICACIÓN FUNCIONAL
+    // =========================================
+    
+    // Inicializar sistema de usuarios
+    function initAuthSystem() {
+      if (!localStorage.getItem('yavlgold_users')) {
+        localStorage.setItem('yavlgold_users', JSON.stringify([]));
+      }
+    }
+    initAuthSystem();
+
+    // Verificar si el usuario está logueado
+    function isLoggedIn() {
+      return localStorage.getItem('yavlgold_current_user') !== null;
+    }
+
+    // Obtener usuario actual
+    function getCurrentUser() {
+      const userJson = localStorage.getItem('yavlgold_current_user');
+      return userJson ? JSON.parse(userJson) : null;
+    }
+
+    // Registrar nuevo usuario
+    function registerUser(name, email, password) {
+      const users = JSON.parse(localStorage.getItem('yavlgold_users') || '[]');
+      
+      // Verificar si el email ya existe
+      if (users.find(u => u.email === email)) {
+        return { success: false, message: 'Este correo ya está registrado' };
+      }
+
+      // Crear nuevo usuario
+      const newUser = {
+        id: Date.now().toString(),
+        name: name,
+        email: email,
+        password: password, // En producción, usar hash
+        createdAt: new Date().toISOString(),
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D4AF37&color=0B0C0F&bold=true`
+      };
+
+      users.push(newUser);
+      localStorage.setItem('yavlgold_users', JSON.stringify(users));
+      
+      return { success: true, user: newUser };
+    }
+
+    // Login de usuario
+    function loginUser(email, password) {
+      const users = JSON.parse(localStorage.getItem('yavlgold_users') || '[]');
+      const user = users.find(u => u.email === email && u.password === password);
+      
+      if (user) {
+        // Guardar usuario actual (sin password)
+        const userSession = { ...user };
+        delete userSession.password;
+        localStorage.setItem('yavlgold_current_user', JSON.stringify(userSession));
+        return { success: true, user: userSession };
+      }
+      
+      return { success: false, message: 'Correo o contraseña incorrectos' };
+    }
+
+    // Logout de usuario
+    function logoutUser() {
+      localStorage.removeItem('yavlgold_current_user');
+      window.location.reload();
+    }
+
+    // Actualizar UI según estado de autenticación
+    function updateAuthUI() {
+      const user = getCurrentUser();
+      const loginBtn = document.querySelector('.btn-login');
+      const registerBtn = document.querySelector('.btn-register');
+      
+      if (user && loginBtn && registerBtn) {
+        // Usuario logueado - mostrar nombre y logout
+        const userMenu = document.createElement('div');
+        userMenu.style.cssText = `
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        `;
+        userMenu.innerHTML = `
+          <span style="color: var(--yavl-gold); font-weight: 600;">
+            <i class="fas fa-user-circle"></i> ${user.name}
+          </span>
+          <button onclick="logoutUser()" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+            <i class="fas fa-sign-out-alt"></i> Salir
+          </button>
+        `;
+        
+        loginBtn.replaceWith(userMenu);
+        if (registerBtn) registerBtn.style.display = 'none';
+      }
+    }
+
+    // Llamar al cargar la página
+    updateAuthUI();
+
     // Form submission with captcha validation
     const forms = [document.getElementById('login-form'), document.getElementById('register-form')];
     forms.forEach(form => {
@@ -2610,47 +2711,151 @@
         
         // Validate captcha
         if (!captchaText || !captchaInput) {
-          alert('Error de configuración. Por favor, recarga la página.');
+          showErrorMessage('Error de configuración. Por favor, recarga la página.');
           return;
         }
         
         if (captchaInput.value.trim().toUpperCase() !== captchaText.textContent.trim()) {
-          alert('❌ Código de verificación incorrecto. Por favor, inténtalo de nuevo.');
-          refreshCaptcha(formType); // Generate new captcha
+          showErrorMessage('❌ Código de verificación incorrecto. Por favor, inténtalo de nuevo.');
+          refreshCaptcha(formType);
           captchaInput.value = '';
           captchaInput.focus();
           return;
         }
         
-        // Captcha valid, proceed with form submission
+        // Captcha valid, proceed with authentication
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
-        console.log('Formulario enviado:', form.id, payload);
         
-        // Mensajes personalizados según el tipo de formulario
         if (form.id === 'login-form') {
-          showSuccessMessage(
-            '🎉 ¡Gracias por tu interés!',
-            'Tu solicitud de acceso ha sido registrada. Te notificaremos por correo cuando la plataforma esté completamente activa.',
-            'En breve podrás acceder a todas las herramientas premium de YavlGold.'
-          );
+          // LOGIN
+          const result = loginUser(payload.email, payload.password);
+          
+          if (result.success) {
+            showSuccessMessage(
+              '🎉 ¡Bienvenido de vuelta!',
+              `Hola ${result.user.name}, te has autenticado exitosamente.`,
+              'Redirigiendo al dashboard...'
+            );
+            
+            form.reset();
+            refreshCaptcha(formType);
+            
+            setTimeout(() => {
+              closeModal();
+              window.location.href = '/dashboard/';
+            }, 2000);
+          } else {
+            showErrorMessage(result.message);
+            refreshCaptcha(formType);
+          }
+          
         } else {
-          showSuccessMessage(
-            '✨ ¡Registro Exitoso!',
-            `¡Bienvenido a YavlGold, ${payload.name}! Tu cuenta ha sido pre-registrada.`,
-            'Te avisaremos por correo electrónico cuando el acceso premium esté habilitado. ¡Prepárate para maximizar tu potencial cripto!'
-          );
+          // REGISTRO
+          const result = registerUser(payload.name, payload.email, payload.password);
+          
+          if (result.success) {
+            // Auto-login después del registro
+            localStorage.setItem('yavlgold_current_user', JSON.stringify({
+              ...result.user,
+              password: undefined
+            }));
+            
+            showSuccessMessage(
+              '✨ ¡Registro Exitoso!',
+              `¡Bienvenido a YavlGold, ${result.user.name}! Tu cuenta ha sido creada.`,
+              'Redirigiendo al dashboard...'
+            );
+            
+            form.reset();
+            refreshCaptcha(formType);
+            
+            setTimeout(() => {
+              closeModal();
+              window.location.href = '/dashboard/';
+            }, 2000);
+          } else {
+            showErrorMessage(result.message);
+            refreshCaptcha(formType);
+          }
         }
-        
-        form.reset();
-        refreshCaptcha(formType);
-        
-        // Cerrar modal después de 4 segundos
-        setTimeout(() => {
-          closeModal();
-        }, 4000);
       });
     });
+
+    // Función para mostrar mensajes de error
+    function showErrorMessage(message) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(11, 12, 15, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+      `;
+      
+      const messageBox = document.createElement('div');
+      messageBox.style.cssText = `
+        background: linear-gradient(135deg, rgba(16, 17, 20, 0.98), rgba(220, 38, 38, 0.1));
+        border: 3px solid rgba(220, 38, 38, 0.6);
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 
+          0 0 40px rgba(220, 38, 38, 0.6),
+          0 20px 60px rgba(0, 0, 0, 0.8);
+        animation: slideUp 0.4s ease;
+      `;
+      
+      messageBox.innerHTML = `
+        <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+        <h2 style="
+          font-family: 'Orbitron', sans-serif;
+          font-size: 1.8rem;
+          color: #ef4444;
+          margin-bottom: 1rem;
+          text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
+        ">Error</h2>
+        <p style="
+          font-size: 1.1rem;
+          color: #f0f0f0;
+          margin-bottom: 1rem;
+          line-height: 1.6;
+        ">${message}</p>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          margin-top: 2rem;
+          padding: 12px 32px;
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          color: #FFFFFF;
+          border: none;
+          border-radius: 12px;
+          font-family: 'Orbitron', sans-serif;
+          font-weight: 700;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
+        " onmouseover="this.style.transform='scale(1.05)'" 
+           onmouseout="this.style.transform='scale(1)'">
+          Cerrar
+        </button>
+      `;
+      
+      overlay.appendChild(messageBox);
+      document.body.appendChild(overlay);
+      
+      setTimeout(() => {
+        overlay.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => overlay.remove(), 300);
+      }, 4000);
+    }
 
     // Función para mostrar mensajes de éxito con estilo
     function showSuccessMessage(title, message, subtitle) {
