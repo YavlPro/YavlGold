@@ -1533,6 +1533,113 @@
     mobileMenuToggle.addEventListener('click', () => {
       navbarMenu.style.display = navbarMenu.style.display === 'flex' ? 'none' : 'flex';
     });
+    
+    // =========================================
+    // FIX: Forzar funcionalidad de botones
+    // =========================================
+    function fixButtonFunctionality() {
+      console.log('🔧 Aplicando fix de botones...');
+      
+      // Seleccionar todos los botones del navbar
+      const loginBtn = document.querySelector('.btn-outline');
+      const registerBtn = document.querySelector('.btn-primary');
+      const navbarActions = document.querySelector('.navbar-actions');
+      const navbar = document.querySelector('.navbar');
+      
+      // Arrays para aplicar fixes
+      const buttons = [loginBtn, registerBtn];
+      const containers = [navbarActions, navbar];
+      
+      // Fix 1: Forzar pointer-events y z-index en botones
+      buttons.forEach((btn, index) => {
+        if (btn) {
+          btn.style.pointerEvents = 'auto';
+          btn.style.cursor = 'pointer';
+          btn.style.zIndex = '100';
+          btn.style.position = 'relative';
+          
+          // Verificar que el href existe
+          const href = btn.getAttribute('href');
+          console.log(`Botón ${index + 1}: href="${href}", clickeable=${btn.style.pointerEvents}`);
+          
+          // Añadir event listener como backup
+          btn.addEventListener('click', function(e) {
+            console.log(`✅ Click detectado en: ${this.textContent.trim()}`);
+            // Si el href es #login o #register, podrías redirigir aquí
+            if (href === '#login') {
+              console.log('→ Redirigiendo a login...');
+              // window.location.href = '/login'; // Descomenta cuando tengas la ruta real
+            } else if (href === '#register') {
+              console.log('→ Redirigiendo a registro...');
+              // window.location.href = '/register'; // Descomenta cuando tengas la ruta real
+            }
+          }, true); // useCapture = true para capturar antes que otros listeners
+        }
+      });
+      
+      // Fix 2: Forzar pointer-events en contenedores
+      containers.forEach(container => {
+        if (container) {
+          container.style.pointerEvents = 'auto';
+          container.style.position = 'relative';
+          container.style.zIndex = 'auto';
+        }
+      });
+      
+      // Fix 3: Verificar elementos bloqueantes
+      const allElements = document.querySelectorAll('*');
+      let blockingElements = [];
+      
+      allElements.forEach(el => {
+        const computed = window.getComputedStyle(el);
+        const zIndex = parseInt(computed.zIndex);
+        
+        // Si hay elementos con z-index muy alto y pointer-events habilitados
+        if (zIndex > 900 && zIndex !== 1000 && computed.pointerEvents === 'auto') {
+          // Verificar si están sobre los botones
+          const rect = el.getBoundingClientRect();
+          const btnRect = loginBtn ? loginBtn.getBoundingClientRect() : null;
+          
+          if (btnRect && 
+              rect.top < btnRect.bottom && 
+              rect.bottom > btnRect.top &&
+              rect.left < btnRect.right && 
+              rect.right > btnRect.left) {
+            blockingElements.push(el);
+            console.warn('⚠️ Elemento bloqueante detectado:', el);
+            // Reducir su z-index
+            el.style.zIndex = '50';
+          }
+        }
+      });
+      
+      // Fix 4: Asegurar que body::before no bloquee (ya tiene pointer-events:none)
+      const bodyStyles = window.getComputedStyle(document.body, '::before');
+      console.log('body::before pointer-events:', bodyStyles.pointerEvents);
+      
+      console.log('✅ Fix de botones aplicado');
+      console.log(`- Botones procesados: ${buttons.filter(b => b).length}`);
+      console.log(`- Elementos bloqueantes corregidos: ${blockingElements.length}`);
+      
+      return {
+        buttonsFixed: buttons.filter(b => b).length,
+        blockingElementsFixed: blockingElements.length
+      };
+    }
+    
+    // Aplicar fix al cargar la página
+    window.addEventListener('DOMContentLoaded', fixButtonFunctionality);
+    
+    // Aplicar fix también después de un pequeño delay (por si hay carga asíncrona)
+    setTimeout(fixButtonFunctionality, 500);
+    
+    // Re-aplicar en resize (por si cambia el responsive)
+    window.addEventListener('resize', fixButtonFunctionality);
+    
+    // Exponer función globalmente para debugging
+    window.fixButtonFunctionality = fixButtonFunctionality;
+    
+    console.log('💡 Para diagnosticar, ejecuta en consola: fixButtonFunctionality()');
   </script>
   
 </body>

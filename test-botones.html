@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test de Botones - YavlGold</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0C1015;
+      color: #E8ECF2;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .test-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #12161C;
+      border-radius: 12px;
+      padding: 30px;
+      border: 1px solid rgba(201, 168, 81, 0.3);
+    }
+    
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #E2C675;
+    }
+    
+    p {
+      margin-bottom: 20px;
+      color: #C9D0DA;
+      font-size: 14px;
+    }
+    
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(18, 22, 28, 0.5);
+      border-radius: 8px;
+      border: 1px solid rgba(201, 168, 81, 0.2);
+    }
+    
+    .test-section h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #E2C675;
+    }
+    
+    /* Estilos de botones del proyecto real */
+    .btn {
+      padding: 0.75rem 1.75rem;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-width: 140px;
+      height: 44px;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+      margin: 8px;
+    }
+    
+    .btn-outline {
+      background: transparent;
+      color: #E2C675;
+      border: 1px solid rgba(201, 168, 81, 0.45);
+    }
+    
+    .btn-outline:hover {
+      background: rgba(201, 168, 81, 0.07);
+      border-color: #C9A851;
+      box-shadow: 0 4px 20px rgba(201, 168, 81, 0.20);
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(180deg, #E2C675, #A8863B);
+      color: #0B0E11;
+      border: none;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(201, 168, 81, 0.20);
+    }
+    
+    .btn-primary:hover {
+      box-shadow: 0 0 24px rgba(201, 168, 81, 0.35);
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+    
+    .btn-test {
+      background: #28a745;
+      color: white;
+      border: 2px solid #1e7e34;
+    }
+    
+    .btn-test:hover {
+      background: #218838;
+      transform: scale(1.05);
+    }
+    
+    /* Test de z-index */
+    .z-index-test {
+      position: relative;
+      height: 150px;
+      background: rgba(255, 0, 0, 0.1);
+      border: 2px dashed red;
+      margin-bottom: 20px;
+    }
+    
+    .z-index-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 255, 0.1);
+      border: 2px dashed blue;
+      z-index: 5;
+      pointer-events: none;
+    }
+    
+    .z-index-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    
+    /* Test responsive */
+    .responsive-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(40, 167, 69, 0.1);
+      border: 1px solid #28a745;
+      border-radius: 6px;
+      color: #28a745;
+      display: none;
+    }
+    
+    .result.show {
+      display: block;
+    }
+    
+    .error {
+      background: rgba(220, 53, 69, 0.1);
+      border-color: #dc3545;
+      color: #dc3545;
+    }
+    
+    @media (max-width: 480px) {
+      .responsive-container .btn {
+        width: 100%;
+        margin: 4px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 Test de Funcionalidad - Botones YavlGold</h1>
+    <p>Diagnóstico completo para identificar por qué los botones no son clickeables</p>
+    
+    <!-- Test 1: Botones Simples -->
+    <div class="test-section">
+      <h2>Test 1: Botones HTML Básicos</h2>
+      <p>Si estos botones funcionan, el problema está en el CSS o estructura del proyecto real</p>
+      <button class="btn btn-test" onclick="showResult('result1', true)">
+        ✅ Botón de Prueba Simple
+      </button>
+      <div id="result1" class="result">¡Funciona! El navegador responde correctamente.</div>
+    </div>
+    
+    <!-- Test 2: Enlaces con Clases del Proyecto -->
+    <div class="test-section">
+      <h2>Test 2: Enlaces con Estilos del Proyecto Real</h2>
+      <p>Mismos estilos CSS que tu navbar actual</p>
+      <a href="javascript:void(0)" class="btn btn-outline" onclick="showResult('result2', true)">
+        Iniciar Sesión
+      </a>
+      <a href="javascript:void(0)" class="btn btn-primary" onclick="showResult('result2', true)">
+        Registrarse
+      </a>
+      <div id="result2" class="result">¡Botones clickeables! Los estilos funcionan.</div>
+    </div>
+    
+    <!-- Test 3: Z-Index -->
+    <div class="test-section">
+      <h2>Test 3: Z-Index y Overlays</h2>
+      <p>Botón debajo de un overlay con pointer-events:none</p>
+      <div class="z-index-test">
+        <div class="z-index-overlay"></div>
+        <button class="btn btn-primary z-index-button" onclick="showResult('result3', true)">
+          Botón Bajo Overlay
+        </button>
+      </div>
+      <div id="result3" class="result">¡Z-index configurado correctamente!</div>
+    </div>
+    
+    <!-- Test 4: Responsive Móvil -->
+    <div class="test-section">
+      <h2>Test 4: Layout Móvil (<480px)</h2>
+      <p>Simula el diseño móvil con botones apilados</p>
+      <div class="responsive-container">
+        <a href="javascript:void(0)" class="btn btn-outline" onclick="showResult('result4', true)">
+          Iniciar Sesión
+        </a>
+        <a href="javascript:void(0)" class="btn btn-primary" onclick="showResult('result4', true)">
+          Registrarse
+        </a>
+      </div>
+      <div id="result4" class="result">¡Responsive funciona correctamente!</div>
+    </div>
+    
+    <!-- Test 5: Pointer Events -->
+    <div class="test-section">
+      <h2>Test 5: Verificación de Pointer-Events</h2>
+      <button class="btn btn-test" onclick="checkPointerEvents()">
+        🔍 Verificar Configuración
+      </button>
+      <div id="result5" class="result"></div>
+    </div>
+    
+    <!-- Test 6: Console Inspector -->
+    <div class="test-section">
+      <h2>Test 6: Inspector de Elementos</h2>
+      <p>Abre la consola del navegador (F12) y ejecuta:</p>
+      <pre style="background: #000; padding: 10px; border-radius: 6px; overflow-x: auto;">
+document.querySelector('.btn-outline').style.pointerEvents;
+document.querySelector('.btn-primary').style.zIndex;
+document.querySelector('.navbar-actions').style.position;
+      </pre>
+      <button class="btn btn-test" onclick="runInspection()">
+        🔍 Ejecutar Inspección
+      </button>
+      <div id="result6" class="result"></div>
+    </div>
+  </div>
+  
+  <script>
+    function showResult(id, success) {
+      const result = document.getElementById(id);
+      result.classList.add('show');
+      if (!success) {
+        result.classList.add('error');
+      }
+      setTimeout(() => {
+        result.classList.remove('show');
+      }, 3000);
+    }
+    
+    function checkPointerEvents() {
+      const buttons = document.querySelectorAll('.btn');
+      const result = document.getElementById('result5');
+      let report = '<strong>Configuración de Botones:</strong><br><br>';
+      
+      buttons.forEach((btn, index) => {
+        const computed = window.getComputedStyle(btn);
+        report += `Botón ${index + 1}:<br>`;
+        report += `- pointer-events: ${computed.pointerEvents}<br>`;
+        report += `- z-index: ${computed.zIndex}<br>`;
+        report += `- position: ${computed.position}<br>`;
+        report += `- cursor: ${computed.cursor}<br><br>`;
+      });
+      
+      result.innerHTML = report;
+      result.classList.add('show');
+      
+      setTimeout(() => {
+        result.classList.remove('show');
+      }, 8000);
+    }
+    
+    function runInspection() {
+      const result = document.getElementById('result6');
+      let report = '<strong>Resultados de Inspección:</strong><br><br>';
+      
+      // Verificar si estamos en el proyecto real
+      const navbar = document.querySelector('.navbar');
+      const btnOutline = document.querySelector('.btn-outline');
+      const btnPrimary = document.querySelector('.btn-primary');
+      
+      if (navbar) {
+        const navbarStyle = window.getComputedStyle(navbar);
+        report += `<strong>Navbar:</strong><br>`;
+        report += `- z-index: ${navbarStyle.zIndex}<br>`;
+        report += `- pointer-events: ${navbarStyle.pointerEvents}<br><br>`;
+      }
+      
+      if (btnOutline) {
+        const outlineStyle = window.getComputedStyle(btnOutline);
+        report += `<strong>Botón Outline:</strong><br>`;
+        report += `- z-index: ${outlineStyle.zIndex}<br>`;
+        report += `- pointer-events: ${outlineStyle.pointerEvents}<br>`;
+        report += `- cursor: ${outlineStyle.cursor}<br><br>`;
+      }
+      
+      if (btnPrimary) {
+        const primaryStyle = window.getComputedStyle(btnPrimary);
+        report += `<strong>Botón Primary:</strong><br>`;
+        report += `- z-index: ${primaryStyle.zIndex}<br>`;
+        report += `- pointer-events: ${primaryStyle.pointerEvents}<br>`;
+        report += `- cursor: ${primaryStyle.cursor}<br><br>`;
+      }
+      
+      // Verificar elementos que puedan bloquear
+      const allElements = document.querySelectorAll('*');
+      let blockingElements = [];
+      
+      allElements.forEach(el => {
+        const style = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        
+        // Verificar si hay elementos con z-index alto que puedan bloquear
+        if (parseInt(style.zIndex) > 100 && style.pointerEvents !== 'none') {
+          blockingElements.push({
+            tag: el.tagName,
+            zIndex: style.zIndex,
+            pointerEvents: style.pointerEvents
+          });
+        }
+      });
+      
+      if (blockingElements.length > 0) {
+        report += `<strong>⚠️ Elementos Potencialmente Bloqueantes:</strong><br>`;
+        blockingElements.slice(0, 5).forEach(el => {
+          report += `- ${el.tag}: z-index=${el.zIndex}, pointer-events=${el.pointerEvents}<br>`;
+        });
+      } else {
+        report += `✅ No se detectaron elementos bloqueantes<br>`;
+      }
+      
+      result.innerHTML = report;
+      result.classList.add('show');
+      result.style.maxHeight = '400px';
+      result.style.overflow = 'auto';
+      
+      setTimeout(() => {
+        result.classList.remove('show');
+      }, 10000);
+    }
+    
+    // Auto-test al cargar
+    console.log('🧪 Test de Botones YavlGold cargado');
+    console.log('Ejecuta los tests haciendo clic en los botones');
+  </script>
+</body>
+</html>
