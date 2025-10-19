@@ -3,19 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YavlGold — Ecosistema Innovador de Criptomonedas</title>
-  <meta name="description" content="Herramientas profesionales, formación y comunidad para maximizar tu potencial en el mundo cripto.">
+  <title>YavlGold — Academia Cripto de Élite | Educación Blockchain</title>
+  <meta name="description" content="YavlGold: academia cripto en español. Cursos desde básicos hasta avanzados, certificaciones NFT y comunidad. Educación, no hype. Aprende trading, DeFi, NFTs y más.">
+  <link rel="canonical" href="https://yavlgold.com/">
+  <meta name="theme-color" content="#0B0C0F">
   
-  <!-- Metadatos Open Graph -->
+  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yavlgold.com/">
-  <meta property="og:title" content="YavlGold — Ecosistema Cripto Premium">
-  <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta property="og:image" content="/assets/images/og-cover.png">
+  <meta property="og:title" content="YavlGold — Academia Cripto de Élite">
+  <meta property="og:description" content="Academia cripto en español. Certificaciones NFT, comunidad y cursos desde básico hasta avanzado. Educación, no hype.">
+  <meta property="og:image" content="https://yavlgold.com/assets/images/og-cover.png">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="YavlGold">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://yavlgold.com/">
+  <meta name="twitter:title" content="YavlGold — Academia Cripto de Élite">
+  <meta name="twitter:description" content="Academia cripto en español. Certificaciones NFT, comunidad y cursos desde básico hasta avanzado.">
+  <meta name="twitter:image" content="https://yavlgold.com/assets/images/og-cover.png">
+  <meta name="twitter:creator" content="@yavlgold">
   
   <!-- Favicon -->
   <link rel="icon" href="./assets/images/logo.png" type="image/png">
-  <meta name="theme-color" content="#0B0C0F">
+  <link rel="apple-touch-icon" href="./assets/images/logo.png">
+  
+  <!-- Keywords adicionales para SEO -->
+  <meta name="keywords" content="academia cripto, blockchain español, cursos criptomonedas, trading cripto, DeFi, NFT, Web3, educación blockchain, YavlGold">
   
   <!-- Fuentes Oficiales YavlGold -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,10 +38,61 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
   
   <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- JSON-LD Structured Data - Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "YavlGold",
+    "url": "https://yavlgold.com",
+    "logo": "https://yavlgold.com/assets/images/logo.png",
+    "description": "Academia cripto en español con certificaciones NFT, comunidad y cursos desde básico hasta avanzado",
+    "foundingDate": "2024",
+    "sameAs": [
+      "https://youtube.com/@yavlgold",
+      "https://x.com/yavlgold",
+      "https://twitter.com/yavlgold"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Customer Support",
+      "availableLanguage": ["es", "en"]
+    }
+  }
+  </script>
+  
+  <!-- JSON-LD Structured Data - WebSite with SearchAction -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "YavlGold",
+    "url": "https://yavlgold.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://yavlgold.com/buscar?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  
+  <!-- JSON-LD Structured Data - EducationalOrganization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "YavlGold Academia",
+    "url": "https://yavlgold.com/academia",
+    "description": "Academia cripto con cursos certificados en blockchain, trading, DeFi y NFTs",
+    "areaServed": "ES",
+    "availableLanguage": "es"
+  }
+  </script>
   
   <style>
     /**
@@ -945,6 +1011,71 @@
         0 4px 35px rgba(212, 175, 55, 0.7),
         inset 0 0 40px rgba(212, 175, 55, 0.15);
       }
+    }
+    
+    /* =========================================
+       ACCESIBILIDAD - REDUCED MOTION
+       ========================================= */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+      
+      .hero-logo,
+      .pulse,
+      .glow,
+      [class*="float"],
+      [class*="bounce"] {
+        animation: none !important;
+      }
+    }
+    
+    /* Skip Link para accesibilidad (lectores de pantalla) */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--yavl-gold);
+      color: var(--bg-darker);
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 4px 0;
+      z-index: 10000;
+      transition: top 0.2s;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    /* Screen reader only class */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .sr-only:focus {
+      position: static;
+      width: auto;
+      height: auto;
+      padding: 0.5rem;
+      margin: 0;
+      overflow: visible;
+      clip: auto;
+      white-space: normal;
     }
     
     .hero-logo img {
@@ -1900,17 +2031,21 @@
 </head>
 <body>
   
+  <!-- Skip Link para accesibilidad -->
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+  
   <!-- =========================================
        BARRA DE NAVEGACIÓN
        ========================================= -->
-  <nav class="navbar" id="navbar">
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
     <div class="navbar-container">
       <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-drawer">
-        <i class="fas fa-bars"></i>
+        <i class="fas fa-bars" aria-hidden="true"></i>
+        <span class="sr-only">Menú</span>
       </button>
 
       <a href="/" class="navbar-logo">
-        <img src="/assets/images/logo.png" alt="YavlGold Logo">
+        <img src="/assets/images/logo.png" alt="YavlGold - Academia Cripto">
         <span class="navbar-brand">YavlGold</span>
       </a>
       
@@ -1959,34 +2094,39 @@
   </aside>
   
   <!-- =========================================
-       HERO SECTION
+       CONTENIDO PRINCIPAL
        ========================================= -->
-  <section class="hero" id="inicio">
-    <div class="hero-content">
-      <div class="hero-logo">
-        <div class="hero-logo-inner">
-          <img src="/assets/images/logo.png" alt="YavlGold">
+  <main id="main-content" role="main" aria-label="Contenido principal">
+    
+    <!-- =========================================
+         HERO SECTION
+         ========================================= -->
+    <section class="hero" id="inicio" aria-labelledby="hero-title">
+      <div class="hero-content">
+        <div class="hero-logo">
+          <div class="hero-logo-inner">
+            <img src="/assets/images/logo.png" alt="YavlGold - Ecosistema Cripto">
+          </div>
+        </div>
+        
+        <h1 id="hero-title">YavlGold</h1>
+        <p class="hero-subtitle">
+          Ecosistema Global Innovador en Cripto — Herramientas profesionales, 
+          formación y comunidad para maximizar tu potencial en el mundo cripto.
+        </p>
+        
+        <div class="hero-buttons">
+          <a href="#herramientas" class="btn btn-primary btn-large">
+            <i class="fas fa-rocket" aria-hidden="true"></i>
+            Ir a Herramientas
+          </a>
+          <a href="#academia" class="btn btn-outline btn-large">
+            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+            Explorar Academia
+          </a>
         </div>
       </div>
-      
-      <h1>YavlGold</h1>
-      <p class="hero-subtitle">
-        Ecosistema Global Innovador en Cripto — Herramientas profesionales, 
-        formación y comunidad para maximizar tu potencial en el mundo cripto.
-      </p>
-      
-      <div class="hero-buttons">
-        <a href="#herramientas" class="btn btn-primary btn-large">
-          <i class="fas fa-rocket"></i>
-          Ir a Herramientas
-        </a>
-        <a href="#academia" class="btn btn-outline btn-large">
-          <i class="fas fa-graduation-cap"></i>
-          Explorar Academia
-        </a>
-      </div>
-    </div>
-  </section>
+    </section>
   
   <!-- =========================================
        SECCIÓN: CONCEPTOS BÁSICOS
@@ -2203,33 +2343,42 @@
     </div>
   </section>
   
+  </main><!-- Cierre de main-content -->
+  
   <!-- =========================================
        FOOTER
        ========================================= -->
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     <div class="footer-container">
       <div class="footer-grid">
         <div class="footer-about-section">
           <div class="footer-brand">
-            <img src="/assets/images/logo.png" alt="YavlGold">
+            <img src="/assets/images/logo.png" alt="YavlGold - Academia Cripto">
             <span class="footer-brand-name">YavlGold</span>
           </div>
           <p class="footer-about">
             Academia y herramientas educativas en blockchain y finanzas digitales 
             — aprende, practica con recursos gratuitos y didácticos.
           </p>
+          
+          <!-- Aviso legal educativo -->
+          <p class="text-xs text-gray-500 mt-4 leading-relaxed" style="color: #9CA3AF; font-size: 0.75rem; margin-top: 1rem; line-height: 1.6;">
+            <strong>⚠️ Descargo de responsabilidad:</strong> El contenido de YavlGold es estrictamente educativo y no constituye asesoría financiera, de inversión ni legal. 
+            Los criptoactivos son altamente volátiles y conllevan riesgos significativos. Realiza tu propia investigación (DYOR) antes de tomar decisiones de inversión.
+          </p>
+          
           <div class="footer-social">
-            <a href="https://t.me/YavlEcosystem" target="_blank" class="social-icon" aria-label="Telegram">
-              <i class="fab fa-telegram"></i>
+            <a href="https://t.me/YavlEcosystem" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Únete a nuestro Telegram">
+              <i class="fab fa-telegram" aria-hidden="true"></i>
             </a>
-            <a href="https://x.com/Yavlcapitan" target="_blank" class="social-icon" aria-label="Twitter">
-              <i class="fab fa-twitter"></i>
+            <a href="https://x.com/Yavlcapitan" target="_blank" rel="noopener noreferrer me" class="social-icon" aria-label="Síguenos en Twitter">
+              <i class="fab fa-twitter" aria-hidden="true"></i>
             </a>
-            <a href="https://youtube.com/@yavlgoldpro" target="_blank" class="social-icon" aria-label="YouTube">
-              <i class="fab fa-youtube"></i>
+            <a href="https://youtube.com/@yavlgoldpro" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Suscríbete a nuestro canal de YouTube">
+              <i class="fab fa-youtube" aria-hidden="true"></i>
             </a>
-            <a href="https://github.com/YavlPro" target="_blank" class="social-icon" aria-label="GitHub">
-              <i class="fab fa-github"></i>
+            <a href="https://github.com/YavlPro" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Visita nuestro GitHub">
+              <i class="fab fa-github" aria-hidden="true"></i>
             </a>
           </div>
         </div>
