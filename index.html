@@ -3,118 +3,1327 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="0;url=/apps/gold/">
+  <title>YavlGold — Ecosistema Innovador de Criptomonedas</title>
+  <meta name="description" content="Herramientas profesionales, formación y comunidad para maximizar tu potencial en el mundo cripto.">
   
-  <title>YavlGold — Academia y Herramientas de Cripto</title>
-  <meta name="description" content="Herramientas profesionales, formación y comunidad para entusiastas de las criptomonedas.">
-  
-  <!-- Metadatos Open Graph / Twitter -->
+  <!-- Metadatos Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yavlgold.com/">
-  <meta property="og:title" content="YavlGold — Academia y Herramientas de Cripto">
+  <meta property="og:title" content="YavlGold — Ecosistema Cripto Premium">
   <meta property="og:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://yavlgold.com/">
-  <meta name="twitter:title" content="YavlGold — Academia y Herramientas de Cripto">
-  <meta name="twitter:description" content="Herramientas y formación cripto en un solo lugar.">
-  <meta name="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+  <meta property="og:image" content="/assets/images/og-cover.png">
   
-  <!-- Favicon e íconos -->
+  <!-- Favicon -->
   <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
   <meta name="theme-color" content="#0B0C0F">
-
+  
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* =========================================
+       VARIABLES DEL SISTEMA DE DISEÑO PREMIUM
+       ========================================= */
+    :root {
+      /* Colores principales */
+      --gold-primary: #C8A752;
+      --gold-secondary: #D4AF37;
+      --gold-light: #E8D08B;
+      --gold-dark: #9B8240;
+      
+      /* Fondos oscuros */
+      --bg-primary: #0B0C0F;
+      --bg-secondary: #12141A;
+      --bg-card: rgba(18, 20, 26, 0.95);
+      --bg-card-hover: rgba(24, 26, 34, 0.98);
+      
+      /* Textos */
+      --text-primary: #FFFFFF;
+      --text-secondary: #B8BCC8;
+      --text-muted: #6B7280;
+      
+      /* Efectos */
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+      --shadow-gold: 0 4px 24px rgba(200, 167, 82, 0.25);
+      --shadow-gold-lg: 0 8px 40px rgba(200, 167, 82, 0.35);
+      
+      /* Transiciones */
+      --transition-fast: 0.2s ease;
+      --transition-normal: 0.3s ease;
+      --transition-slow: 0.5s ease;
+      
+      /* Bordes */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      
+      /* Gradientes */
+      --gradient-gold: linear-gradient(135deg, #C8A752 0%, #D4AF37 50%, #E8D08B 100%);
+      --gradient-dark: linear-gradient(135deg, #0B0C0F 0%, #12141A 100%);
+    }
+    
+    /* =========================================
+       RESET Y ESTILOS BASE
+       ========================================= */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+    
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0B0C0F 0%, #1a1b1e 100%);
-      color: #fff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Fondo animado sutil */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 15% 85%, rgba(200, 167, 82, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 15%, rgba(200, 167, 82, 0.06) 0%, transparent 40%);
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    /* =========================================
+       NAVEGACIÓN SUPERIOR
+       ========================================= */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(11, 12, 15, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+      transition: var(--transition-normal);
+    }
+    
+    .navbar.scrolled {
+      background: rgba(11, 12, 15, 0.95);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .navbar-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+    }
+    
+    .navbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+    
+    .navbar-logo:hover {
+      transform: scale(1.02);
+    }
+    
+    .navbar-logo img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--gold-primary);
+      padding: 2px;
+    }
+    
+    .navbar-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+    
+    .navbar-menu {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+      list-style: none;
+    }
+    
+    .navbar-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: var(--transition-fast);
+      position: relative;
+      padding: 0.5rem 0;
+    }
+    
+    .navbar-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--gradient-gold);
+      transition: var(--transition-normal);
+    }
+    
+    .navbar-link:hover {
+      color: var(--gold-light);
+    }
+    
+    .navbar-link:hover::after {
+      width: 100%;
+    }
+    
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .theme-toggle {
+      width: 44px;  /* Mismo tamaño que los botones regulares */
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      color: var(--gold-primary);
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
+      font-size: 1.1rem;
+      transition: var(--transition-normal);
     }
-    .container {
+    
+    .theme-toggle:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--gold-primary);
+      transform: rotate(15deg);
+    }
+    
+    .btn {
+      padding: 0.75rem 1.75rem;  /* Tamaño más consistente */
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: 'Inter', sans-serif;
+      min-width: 140px;  /* Ancho mínimo para consistencia */
+      height: 44px;  /* Altura fija para todos los botones */
+    }
+    
+    .btn-outline {
+      background: transparent;
+      color: var(--gold-primary);
+      border: 1.5px solid var(--gold-primary);
+    }
+    
+    .btn-outline:hover {
+      background: var(--gold-primary);
+      color: var(--bg-primary);
+      box-shadow: var(--shadow-gold);
+      transform: translateY(-2px);
+    }
+    
+    .btn-primary {
+      background: var(--gradient-gold);
+      color: var(--bg-primary);
+      border: none;
+      font-weight: 700;
+    }
+    
+    .btn-primary:hover {
+      box-shadow: var(--shadow-gold-lg);
+      transform: translateY(-2px);
+    }
+    
+    /* Menú móvil */
+    .mobile-menu-toggle {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      color: var(--gold-primary);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    
+    /* =========================================
+       HERO SECTION
+       ========================================= */
+    .hero {
+      padding: 140px 2rem 80px;
       text-align: center;
-      max-width: 600px;
+      position: relative;
+      overflow: hidden;
     }
-    .logo {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 30px;
-      background: linear-gradient(135deg, #C8A752, #D4AF37);
-      border-radius: 20px;
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(200, 167, 82, 0.1) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+    }
+    
+    .hero-content {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .hero-logo {
+      width: 144px;  /* 20% más grande: 120px * 1.2 = 144px */
+      height: 144px;
+      margin: 0 auto 2rem;
+      position: relative;
+    }
+    
+    .hero-logo-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 3px solid var(--gold-primary);
+      padding: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
-      font-weight: 900;
-      color: #0B0C0F;
-      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
+      box-shadow: 
+        var(--shadow-gold-lg),
+        0 0 60px rgba(200, 167, 82, 0.2),
+        inset 0 0 30px rgba(200, 167, 82, 0.1);
+      animation: glow 3s ease-in-out infinite;
     }
-    h1 {
-      font-size: clamp(2rem, 5vw, 3rem);
-      margin-bottom: 15px;
-      background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);
+    
+    @keyframes glow {
+      0%, 100% { box-shadow: 
+        0 8px 40px rgba(200, 167, 82, 0.35),
+        0 0 60px rgba(200, 167, 82, 0.2),
+        inset 0 0 30px rgba(200, 167, 82, 0.1);
+      }
+      50% { box-shadow: 
+        0 8px 50px rgba(200, 167, 82, 0.5),
+        0 0 80px rgba(200, 167, 82, 0.3),
+        inset 0 0 40px rgba(200, 167, 82, 0.15);
+      }
+    }
+    
+    .hero-logo img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.25rem;
+      letter-spacing: -1px;
+      line-height: 1.1;
+    }
+    
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+      font-weight: 400;
+    }
+    
+    .hero-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn-large {
+      padding: 0.9rem 2.25rem;
+      font-size: 1.05rem;
+      min-width: 180px;  /* Ancho mínimo para botones grandes */
+      height: 52px;  /* Altura consistente para botones grandes */
+    }
+    
+    /* =========================================
+       SECCIONES DE CONTENIDO
+       ========================================= */
+    .section {
+      padding: 80px 2rem;
+    }
+    
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .section-header {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+    
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+    
+    .section-title .highlight {
+      background: var(--gradient-gold);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    p {
-      font-size: 1.1rem;
-      color: #b0b0b0;
-      margin-bottom: 30px;
-    }
-    .loader {
-      width: 40px;
-      height: 40px;
+    
+    .section-description {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 700px;
       margin: 0 auto;
-      border: 4px solid rgba(212, 175, 55, 0.2);
-      border-top-color: #D4AF37;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      line-height: 1.7;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    
+    /* =========================================
+       TARJETAS DE FEATURES
+       ========================================= */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
     }
-    a {
-      color: #D4AF37;
+    
+    .feature-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(200, 167, 82, 0.15);
+      transition: var(--transition-normal);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: var(--transition-normal);
+    }
+    
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--gold-primary);
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-gold);
+    }
+    
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .feature-icon {
+      width: 60px;  /* Reducido de 70px para mejor proporción */
+      height: 60px;
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(200, 167, 82, 0.05));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;  /* Ajustado proporcionalmente */
+      color: var(--gold-primary);
+      margin-bottom: 1.5rem;
+      transition: var(--transition-normal);
+    }
+    
+    .feature-card:hover .feature-icon {
+      transform: scale(1.1) rotate(5deg);
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.25), rgba(200, 167, 82, 0.1));
+    }
+    
+    .feature-card h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+    }
+    
+    .feature-card p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    
+    .feature-link {
+      color: var(--gold-primary);
       text-decoration: none;
       font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition-fast);
     }
-    a:hover, a:focus {
-      text-decoration: underline;
-      outline: 2px solid #D4AF37;
-      outline-offset: 4px;
+    
+    .feature-link:hover {
+      gap: 0.75rem;
+      color: var(--gold-light);
     }
-    .note {
-      margin-top: 20px;
+    
+    /* =========================================
+       SECCIÓN ALTERNATIVA (IMAGEN + CONTENIDO)
+       ========================================= */
+    .section-alternate {
+      background: var(--bg-secondary);
+      border-top: 1px solid rgba(200, 167, 82, 0.1);
+      border-bottom: 1px solid rgba(200, 167, 82, 0.1);
+      padding: 60px 2rem;  /* Reducido de 80px a 60px */
+    }
+    
+    .alternate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;  /* Reducido de 4rem a 3rem */
+      align-items: center;
+    }
+    
+    .alternate-content h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+    }
+    
+    .alternate-content p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 1.25rem;
+      font-size: 1.05rem;
+    }
+    
+    .alternate-features {
+      margin: 2rem 0;
+    }
+    
+    .alternate-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .alternate-feature-icon {
+      width: 44px;  /* Consistente con otros elementos interactivos */
+      height: 44px;
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.2), rgba(200, 167, 82, 0.05));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-primary);
+      flex-shrink: 0;
+      font-size: 1.1rem;  /* Tamaño de ícono proporcionado */
+    }
+    
+    .alternate-feature-text h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .alternate-feature-text p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+    
+    .alternate-image {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      max-height: 350px;  /* Altura máxima reducida */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .alternate-image img {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 350px;  /* Limitar altura de imagen */
+      object-fit: contain;
+    }
+    
+    /* =========================================
+       FOOTER
+       ========================================= */
+    .footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid rgba(200, 167, 82, 0.2);
+      padding: 60px 2rem 30px;
+    }
+    
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+    
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    
+    .footer-brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    
+    .footer-brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: var(--gradient-gold);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .footer-about {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+    
+    .footer-social {
+      display: flex;
+      gap: 0.75rem;
+    }
+    
+    .social-icon {
+      width: 44px;  /* Consistente con otros botones */
+      height: 44px;
+      background: var(--bg-card);
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold-primary);
+      text-decoration: none;
+      transition: var(--transition-normal);
+      font-size: 1.1rem;  /* Tamaño de ícono consistente */
+    }
+    
+    .social-icon:hover {
+      background: var(--gold-primary);
+      color: var(--bg-primary);
+      border-color: var(--gold-primary);
+      transform: translateY(-3px);
+    }
+    
+    .footer-column h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+    }
+    
+    .footer-links {
+      list-style: none;
+    }
+    
+    .footer-links li {
+      margin-bottom: 0.75rem;
+    }
+    
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition-fast);
+      font-size: 0.95rem;
+    }
+    
+    .footer-links a:hover {
+      color: var(--gold-primary);
+      padding-left: 5px;
+    }
+    
+    .footer-bottom {
+      padding-top: 2rem;
+      border-top: 1px solid rgba(200, 167, 82, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
       font-size: 0.9rem;
-      color: #808080;
+    }
+    
+    .footer-bottom-links {
+      display: flex;
+      gap: 2rem;
+    }
+    
+    .footer-bottom-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition-fast);
+    }
+    
+    .footer-bottom-links a:hover {
+      color: var(--gold-primary);
+    }
+    
+    /* =========================================
+       BOTÓN FLOTANTE WHATSAPP
+       ========================================= */
+    .whatsapp-float {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #25D366, #20BA5C);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.7rem;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+      z-index: 999;
+      transition: var(--transition-normal);
+    }
+    
+    .whatsapp-float:hover {
+      transform: scale(1.1) translateY(-2px);
+      box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
+    }
+    
+    /* =========================================
+       RESPONSIVE DESIGN
+       ========================================= */
+    @media (max-width: 1024px) {
+      .navbar-menu {
+        display: none;
+      }
+      
+      .mobile-menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+      }
+      
+      .alternate-grid {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+      
+      .alternate-image {
+        order: -1;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .navbar-container {
+        padding: 0 1.5rem;
+      }
+      
+      .hero {
+        padding: 120px 1.5rem 60px;
+      }
+      
+      .section {
+        padding: 60px 1.5rem;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .footer-bottom {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+      
+      .whatsapp-float {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .hero-buttons {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .btn-large {
+        width: 100%;
+      }
+      
+      .section-header {
+        margin-bottom: 2.5rem;
+      }
+    }
+    
+    /* =========================================
+       TEMA CLARO (OPCIONAL)
+       ========================================= */
+    body.light-theme {
+      --bg-primary: #F8F9FA;
+      --bg-secondary: #FFFFFF;
+      --bg-card: rgba(255, 255, 255, 0.95);
+      --bg-card-hover: rgba(255, 255, 255, 1);
+      --text-primary: #1A1A1A;
+      --text-secondary: #4B5563;
+      --text-muted: #9CA3AF;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    body.light-theme::before {
+      background: 
+        radial-gradient(circle at 15% 85%, rgba(200, 167, 82, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 85% 15%, rgba(200, 167, 82, 0.03) 0%, transparent 40%);
+    }
+    
+    body.light-theme .navbar {
+      background: rgba(255, 255, 255, 0.85);
+      border-bottom-color: rgba(200, 167, 82, 0.2);
+    }
+    
+    body.light-theme .feature-card {
+      border-color: rgba(200, 167, 82, 0.2);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    body.light-theme .feature-card:hover {
+      box-shadow: var(--shadow-gold);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">YG</div>
-    <h1>YavlGold</h1>
-    <p>Redirigiendo a la academia...</p>
-    <div class="loader"></div>
-    <p class="note">
-      Si no eres redirigido automáticamente, 
-      <a href="/apps/gold/">haz click aquí</a>
-    </p>
-  </div>
-
+  
+  <!-- =========================================
+       BARRA DE NAVEGACIÓN
+       ========================================= -->
+  <nav class="navbar" id="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-logo">
+        <img src="/assets/images/logo.png" alt="YavlGold Logo">
+        <span class="navbar-brand">YavlGold</span>
+      </a>
+      
+      <ul class="navbar-menu">
+        <li><a href="#inicio" class="navbar-link">Inicio</a></li>
+        <li><a href="#herramientas" class="navbar-link">Herramientas</a></li>
+        <li><a href="#academia" class="navbar-link">Academia</a></li>
+        <li><a href="#comunidad" class="navbar-link">Comunidad</a></li>
+        <li><a href="/dashboard" class="navbar-link">Dashboard</a></li>
+      </ul>
+      
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
+          <i class="fas fa-moon"></i>
+        </button>
+        <a href="#login" class="btn btn-outline">Iniciar Sesión</a>
+        <a href="#register" class="btn btn-primary">Registrarse</a>
+      </div>
+      
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menú">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+  
+  <!-- =========================================
+       HERO SECTION
+       ========================================= -->
+  <section class="hero" id="inicio">
+    <div class="hero-content">
+      <div class="hero-logo">
+        <div class="hero-logo-inner">
+          <img src="/assets/images/logo.png" alt="YavlGold">
+        </div>
+      </div>
+      
+      <h1>YavlGold</h1>
+      <p class="hero-subtitle">
+        Ecosistema Global Innovador en Cripto — Herramientas profesionales, 
+        formación y comunidad para maximizar tu potencial en el mundo cripto.
+      </p>
+      
+      <div class="hero-buttons">
+        <a href="#herramientas" class="btn btn-primary btn-large">
+          <i class="fas fa-rocket"></i>
+          Ir a Herramientas
+        </a>
+        <a href="#academia" class="btn btn-outline btn-large">
+          <i class="fas fa-graduation-cap"></i>
+          Explorar Academia
+        </a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- =========================================
+       SECCIÓN: CONCEPTOS BÁSICOS
+       ========================================= -->
+  <section class="section" id="conceptos">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">
+          Comienza tu <span class="highlight">Viaje Cripto</span>
+        </h2>
+        <p class="section-description">
+          Aprende los fundamentos de blockchain y criptomonedas desde cero con recursos gratuitos y didácticos.
+        </p>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-book-open"></i>
+          </div>
+          <h3>Conceptos Básicos</h3>
+          <p>Aprende los fundamentos de blockchain y criptomonedas desde cero.</p>
+          <a href="#" class="feature-link">
+            Comenzar <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3>Trading Básico</h3>
+          <p>Estrategias para comenzar a operar en los mercados cripto.</p>
+          <a href="#" class="feature-link">
+            Comenzar <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <h3>Seguridad Cripto</h3>
+          <p>Protege tus activos con las mejores prácticas de seguridad.</p>
+          <a href="#" class="feature-link">
+            Comenzar <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- =========================================
+       SECCIÓN: HERRAMIENTAS PRO
+       ========================================= -->
+  <section class="section section-alternate" id="herramientas">
+    <div class="section-container">
+      <div class="alternate-grid">
+        <div class="alternate-content">
+          <h2>Herramientas <span class="highlight">Profesionales</span></h2>
+          <p>
+            Calculadoras, conversores y análisis de mercado para tomar decisiones 
+            informadas en tus inversiones cripto.
+          </p>
+          
+          <div class="alternate-features">
+            <div class="alternate-feature-item">
+              <div class="alternate-feature-icon">
+                <i class="fas fa-calculator"></i>
+              </div>
+              <div class="alternate-feature-text">
+                <h4>Calculadoras Avanzadas</h4>
+                <p>Herramientas para calcular ganancias, ROI y proyecciones.</p>
+              </div>
+            </div>
+            
+            <div class="alternate-feature-item">
+              <div class="alternate-feature-icon">
+                <i class="fas fa-exchange-alt"></i>
+              </div>
+              <div class="alternate-feature-text">
+                <h4>Conversores en Tiempo Real</h4>
+                <p>Convierte entre criptomonedas y monedas fiat al instante.</p>
+              </div>
+            </div>
+            
+            <div class="alternate-feature-item">
+              <div class="alternate-feature-icon">
+                <i class="fas fa-chart-pie"></i>
+              </div>
+              <div class="alternate-feature-text">
+                <h4>Análisis de Mercado</h4>
+                <p>Gráficos y datos para analizar tendencias del mercado.</p>
+              </div>
+            </div>
+          </div>
+          
+          <a href="/herramientas" class="btn btn-primary">
+            <i class="fas fa-lock"></i>
+            Acceder
+          </a>
+        </div>
+        
+        <div class="alternate-image">
+          <div class="feature-icon" style="width: 200px; height: 200px; margin: 0 auto; font-size: 5rem;">
+            <i class="fas fa-toolbox"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- =========================================
+       SECCIÓN: ACADEMIA CRIPTO
+       ========================================= -->
+  <section class="section" id="academia">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="highlight">Academia</span> Cripto
+        </h2>
+        <p class="section-description">
+          Formación desde cero a avanzado con cursos prácticos y directos para 
+          dominar el mundo de las criptomonedas.
+        </p>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <h3>Cursos Estructurados</h3>
+          <p>Programas completos desde nivel principiante hasta experto.</p>
+          <a href="#" class="feature-link">
+            Aprender <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-video"></i>
+          </div>
+          <h3>Tutoriales en Video</h3>
+          <p>Contenido audiovisual explicativo y fácil de seguir.</p>
+          <a href="#" class="feature-link">
+            Ver Cursos <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-certificate"></i>
+          </div>
+          <h3>Certificaciones</h3>
+          <p>Obtén certificados al completar nuestros programas.</p>
+          <a href="#" class="feature-link">
+            Certificarse <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- =========================================
+       SECCIÓN: COMUNIDAD
+       ========================================= -->
+  <section class="section section-alternate" id="comunidad">
+    <div class="section-container">
+      <div class="section-header">
+        <h2 class="section-title">
+          Únete a la <span class="highlight">Comunidad</span>
+        </h2>
+        <p class="section-description">
+          Conecta con otros entusiastas, comparte conocimientos y mantente actualizado 
+          con las últimas tendencias del mercado cripto.
+        </p>
+      </div>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fab fa-telegram"></i>
+          </div>
+          <h3>Telegram</h3>
+          <p>Únete a nuestros grupos de discusión y análisis de mercado.</p>
+          <a href="https://t.me/YavlEcosystem" target="_blank" class="feature-link">
+            Unirse <i class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fab fa-twitter"></i>
+          </div>
+          <h3>Twitter</h3>
+          <p>Síguenos para noticias, actualizaciones y análisis diarios.</p>
+          <a href="https://x.com/Yavlcapitan" target="_blank" class="feature-link">
+            Seguir <i class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fab fa-youtube"></i>
+          </div>
+          <h3>YouTube</h3>
+          <p>Videos educativos, tutoriales y análisis de criptomonedas.</p>
+          <a href="https://youtube.com/@yavlgoldpro" target="_blank" class="feature-link">
+            Suscribirse <i class="fas fa-external-link-alt"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- =========================================
+       FOOTER
+       ========================================= -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-about-section">
+          <div class="footer-brand">
+            <img src="/assets/images/logo.png" alt="YavlGold">
+            <span class="footer-brand-name">YavlGold</span>
+          </div>
+          <p class="footer-about">
+            Academia y herramientas educativas en blockchain y finanzas digitales 
+            — aprende, practica con recursos gratuitos y didácticos.
+          </p>
+          <div class="footer-social">
+            <a href="https://t.me/YavlEcosystem" target="_blank" class="social-icon" aria-label="Telegram">
+              <i class="fab fa-telegram"></i>
+            </a>
+            <a href="https://x.com/Yavlcapitan" target="_blank" class="social-icon" aria-label="Twitter">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://youtube.com/@yavlgoldpro" target="_blank" class="social-icon" aria-label="YouTube">
+              <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://github.com/YavlPro" target="_blank" class="social-icon" aria-label="GitHub">
+              <i class="fab fa-github"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Plataforma</h4>
+          <ul class="footer-links">
+            <li><a href="#herramientas">Herramientas</a></li>
+            <li><a href="#academia">Academia</a></li>
+            <li><a href="#comunidad">Comunidad</a></li>
+            <li><a href="/dashboard">Dashboard</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Recursos</h4>
+          <ul class="footer-links">
+            <li><a href="/docs">Documentación</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/faq">FAQ</a></li>
+            <li><a href="/soporte">Soporte</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Legal</h4>
+          <ul class="footer-links">
+            <li><a href="/privacidad">Privacidad</a></li>
+            <li><a href="/terminos">Términos</a></li>
+            <li><a href="/cookies">Cookies</a></li>
+            <li><a href="/contacto">Contacto</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2025 YavlGold. Todos los derechos reservados.</p>
+        <div class="footer-bottom-links">
+          <a href="/privacidad">Privacidad</a>
+          <a href="/terminos">Términos</a>
+          <a href="/cookies">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- =========================================
+       BOTÓN FLOTANTE WHATSAPP
+       ========================================= -->
+  <a href="https://wa.me/584247394025" 
+     target="_blank" 
+     class="whatsapp-float" 
+     aria-label="Contactar por WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  
+  <!-- =========================================
+       JAVASCRIPT
+       ========================================= -->
   <script>
-    // Redirect inmediato via JavaScript (backup del meta refresh)
-    setTimeout(() => {
-      window.location.href = '/apps/gold/';
-    }, 10);
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    let lastScroll = 0;
+    
+    window.addEventListener('scroll', () => {
+      const currentScroll = window.pageYOffset;
+      
+      if (currentScroll > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+      
+      lastScroll = currentScroll;
+    });
+    
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = themeToggle.querySelector('i');
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+      document.body.classList.add('light-theme');
+      themeIcon.classList.replace('fa-moon', 'fa-sun');
+    }
+    
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('light-theme');
+      
+      if (document.body.classList.contains('light-theme')) {
+        themeIcon.classList.replace('fa-moon', 'fa-sun');
+        localStorage.setItem('theme', 'light');
+      } else {
+        themeIcon.classList.replace('fa-sun', 'fa-moon');
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          const offsetTop = target.offsetTop - 70;
+          window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+    
+    // Mobile menu toggle (basic implementation)
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const navbarMenu = document.querySelector('.navbar-menu');
+    
+    mobileMenuToggle.addEventListener('click', () => {
+      navbarMenu.style.display = navbarMenu.style.display === 'flex' ? 'none' : 'flex';
+    });
   </script>
+  
 </body>
 </html>
