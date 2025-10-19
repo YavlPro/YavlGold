@@ -25,6 +25,9 @@
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <!-- Supabase Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     /**
      * ============================================
@@ -2595,78 +2598,137 @@
     refreshCaptcha('register');
 
     // =========================================
-    // SISTEMA DE AUTENTICACIÓN FUNCIONAL
+    // SISTEMA DE AUTENTICACIÓN CON SUPABASE
     // =========================================
     
-    // Inicializar sistema de usuarios
-    function initAuthSystem() {
-      if (!localStorage.getItem('yavlgold_users')) {
-        localStorage.setItem('yavlgold_users', JSON.stringify([]));
-      }
-    }
-    initAuthSystem();
+    // Configuración de Supabase
+    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
+    
+    // Inicializar cliente de Supabase
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('[Auth] ✅ Supabase inicializado');
 
     // Verificar si el usuario está logueado
-    function isLoggedIn() {
-      return localStorage.getItem('yavlgold_current_user') !== null;
+    async function isLoggedIn() {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session !== null;
     }
 
     // Obtener usuario actual
-    function getCurrentUser() {
-      const userJson = localStorage.getItem('yavlgold_current_user');
-      return userJson ? JSON.parse(userJson) : null;
+    async function getCurrentUser() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        return {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+          avatar: session.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email)}&background=D4AF37&color=0B0C0F&bold=true`
+        };
+      }
+      return null;
     }
 
-    // Registrar nuevo usuario
-    function registerUser(name, email, password) {
-      const users = JSON.parse(localStorage.getItem('yavlgold_users') || '[]');
+    // Registrar nuevo usuario con Supabase
+    async function registerUser(name, email, password) {
+      console.log('[Auth] 📝 Registrando usuario con Supabase...');
       
-      // Verificar si el email ya existe
-      if (users.find(u => u.email === email)) {
-        return { success: false, message: 'Este correo ya está registrado' };
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              name: name,
+              full_name: name
+            },
+            emailRedirectTo: window.location.origin
+          }
+        });
+
+        if (error) {
+          console.error('[Auth] ❌ Error en registro:', error.message);
+          return { success: false, message: error.message };
+        }
+
+        if (data.user) {
+          console.log('[Auth] ✅ Usuario registrado:', data.user.email);
+          return {
+            success: true,
+            user: {
+              id: data.user.id,
+              email: data.user.email,
+              name: name,
+              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D4AF37&color=0B0C0F&bold=true`
+            }
+          };
+        }
+
+        return { success: false, message: 'No se pudo crear el usuario' };
+      } catch (error) {
+        console.error('[Auth] ❌ Error inesperado:', error);
+        return { success: false, message: 'Error del servidor' };
       }
-
-      // Crear nuevo usuario
-      const newUser = {
-        id: Date.now().toString(),
-        name: name,
-        email: email,
-        password: password, // En producción, usar hash
-        createdAt: new Date().toISOString(),
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=D4AF37&color=0B0C0F&bold=true`
-      };
-
-      users.push(newUser);
-      localStorage.setItem('yavlgold_users', JSON.stringify(users));
-      
-      return { success: true, user: newUser };
     }
 
-    // Login de usuario
-    function loginUser(email, password) {
-      const users = JSON.parse(localStorage.getItem('yavlgold_users') || '[]');
-      const user = users.find(u => u.email === email && u.password === password);
+    // Login de usuario con Supabase
+    async function loginUser(email, password) {
+      console.log('[Auth] 🔐 Iniciando sesión con Supabase...');
       
-      if (user) {
-        // Guardar usuario actual (sin password)
-        const userSession = { ...user };
-        delete userSession.password;
-        localStorage.setItem('yavlgold_current_user', JSON.stringify(userSession));
-        return { success: true, user: userSession };
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) {
+          console.error('[Auth] ❌ Error en login:', error.message);
+          
+          // Mensajes de error amigables
+          if (error.message.includes('Invalid login credentials')) {
+            return { success: false, message: 'Correo o contraseña incorrectos' };
+          } else if (error.message.includes('Email not confirmed')) {
+            return { success: false, message: 'Por favor, confirma tu correo electrónico primero' };
+          }
+          
+          return { success: false, message: error.message };
+        }
+
+        if (data.session && data.user) {
+          console.log('[Auth] ✅ Login exitoso:', data.user.email);
+          return {
+            success: true,
+            user: {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.user_metadata?.name || data.user.email.split('@')[0],
+              avatar: data.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.email)}&background=D4AF37&color=0B0C0F&bold=true`
+            }
+          };
+        }
+
+        return { success: false, message: 'No se pudo iniciar sesión' };
+      } catch (error) {
+        console.error('[Auth] ❌ Error inesperado:', error);
+        return { success: false, message: 'Error del servidor' };
       }
-      
-      return { success: false, message: 'Correo o contraseña incorrectos' };
     }
 
     // Logout de usuario
-    function logoutUser() {
-      localStorage.removeItem('yavlgold_current_user');
-      window.location.reload();
+    async function logoutUser() {
+      console.log('[Auth] 🚪 Cerrando sesión...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('[Auth] ❌ Error al cerrar sesión:', error);
+      } else {
+        console.log('[Auth] ✅ Sesión cerrada');
+        window.location.reload();
+      }
     }
 
     // Actualizar UI según estado de autenticación
-    function updateAuthUI() {
-      const user = getCurrentUser();
+    async function updateAuthUI() {
+      const user = await getCurrentUser();
       const loginBtn = document.querySelector('.btn-login');
       const registerBtn = document.querySelector('.btn-register');
       
@@ -2695,11 +2757,11 @@
     // Llamar al cargar la página
     updateAuthUI();
 
-    // Form submission with captcha validation
+    // Form submission with captcha validation and Supabase
     const forms = [document.getElementById('login-form'), document.getElementById('register-form')];
     forms.forEach(form => {
       if (!form) return;
-      form.addEventListener('submit', event => {
+      form.addEventListener('submit', async event => {
         event.preventDefault();
         
         // Determine form type
@@ -2727,9 +2789,18 @@
         const formData = new FormData(form);
         const payload = Object.fromEntries(formData.entries());
         
+        // Mostrar loading
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        submitBtn.disabled = true;
+        
         if (form.id === 'login-form') {
-          // LOGIN
-          const result = loginUser(payload.email, payload.password);
+          // LOGIN CON SUPABASE
+          const result = await loginUser(payload.email, payload.password);
+          
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
           
           if (result.success) {
             showSuccessMessage(
@@ -2751,20 +2822,17 @@
           }
           
         } else {
-          // REGISTRO
-          const result = registerUser(payload.name, payload.email, payload.password);
+          // REGISTRO CON SUPABASE
+          const result = await registerUser(payload.name, payload.email, payload.password);
+          
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
           
           if (result.success) {
-            // Auto-login después del registro
-            localStorage.setItem('yavlgold_current_user', JSON.stringify({
-              ...result.user,
-              password: undefined
-            }));
-            
             showSuccessMessage(
               '✨ ¡Registro Exitoso!',
               `¡Bienvenido a YavlGold, ${result.user.name}! Tu cuenta ha sido creada.`,
-              'Redirigiendo al dashboard...'
+              'Por favor, revisa tu correo para confirmar tu cuenta. Redirigiendo...'
             );
             
             form.reset();
@@ -2772,8 +2840,13 @@
             
             setTimeout(() => {
               closeModal();
-              window.location.href = '/dashboard/';
-            }, 2000);
+              // Mostrar mensaje de confirmación de email
+              showSuccessMessage(
+                '📧 Confirma tu correo',
+                'Hemos enviado un email de confirmación a tu correo.',
+                'Por favor, revisa tu bandeja de entrada y confirma tu cuenta para poder iniciar sesión.'
+              );
+            }, 3000);
           } else {
             showErrorMessage(result.message);
             refreshCaptcha(formType);
