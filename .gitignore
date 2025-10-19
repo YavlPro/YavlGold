@@ -9,6 +9,13 @@
 .env.staging
 .env.backup
 
+# Credentials and sensitive files
+.admin-credentials.md
+*credentials*.md
+*password*.txt
+*secret*.txt
+.supabase-keys.md
+
 # Dependencies
 node_modules/
 npm-debug.log*
