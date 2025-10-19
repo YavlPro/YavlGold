@@ -1952,7 +1952,7 @@
       <div class="captcha-container">
         <label class="captcha-label">Verifica que no eres un robot</label>
         <div class="captcha-challenge">
-          <span id="login-captcha-text">ABCD123</span>
+          <span id="login-captcha-text">A2B3C4</span>
           <button type="button" class="captcha-refresh" onclick="refreshCaptcha('login')" title="Generar nuevo código">
             <i class="fas fa-sync-alt"></i>
           </button>
@@ -1963,7 +1963,7 @@
           class="captcha-input" 
           placeholder="Escribe el código" 
           required 
-          maxlength="7"
+          maxlength="6"
           autocomplete="off">
       </div>
       
@@ -1998,7 +1998,7 @@
       <div class="captcha-container">
         <label class="captcha-label">Verifica que no eres un robot</label>
         <div class="captcha-challenge">
-          <span id="register-captcha-text">XYZ789</span>
+          <span id="register-captcha-text">X7Y8Z9</span>
           <button type="button" class="captcha-refresh" onclick="refreshCaptcha('register')" title="Generar nuevo código">
             <i class="fas fa-sync-alt"></i>
           </button>
@@ -2009,7 +2009,7 @@
           class="captcha-input" 
           placeholder="Escribe el código" 
           required 
-          maxlength="7"
+          maxlength="6"
           autocomplete="off">
       </div>
       
@@ -2218,9 +2218,9 @@
 
     // Captcha generation function
     function refreshCaptcha(formType) {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin caracteres ambiguos (I, O, 0, 1)
       let code = '';
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 6; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       const captchaText = document.getElementById(`${formType}-captcha-text`);
