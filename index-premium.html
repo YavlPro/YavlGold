@@ -17,78 +17,81 @@
   <link rel="icon" href="/assets/images/logo.png" type="image/png">
   <meta name="theme-color" content="#0B0C0F">
   
-  <!-- Fuentes -->
+  <!-- Fuentes Oficiales YavlGold -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
+    /**
+     * ============================================
+     * YAVL GOLD - ESTILOS OFICIALES v1.0
+     * ============================================
+     * BASADO EN LA GUÍA DE ESTILOS OFICIAL
+     * Color oro oficial: #D4AF37 (NUNCA CAMBIAR)
+     * Fuentes: Orbitron (títulos) + Rajdhani (texto)
+     * ============================================
+     */
+
     /* =========================================
-       DESIGN TOKENS - CHAMPAGNE SOFT GOLD
-       Sistema de diseño premium ultra-refinado
+       VARIABLES CSS - COLORES OFICIALES
        ========================================= */
     :root {
-      /* Champagne Soft Gold - Paleta Principal */
-      --gold-300: #E8D59B;        /* Champagne Extra Suave */
-      --gold-400: #E2C675;        /* Champagne Acento Principal */
-      --gold-500: #C9A851;        /* Champagne Intenso */
-      --gold-600: #A8863B;        /* Sombras y Contornos */
-      --gold-700: #8B6F30;        /* Dorado Oscuro Profundo */
+      /* COLORES PRINCIPALES - IDENTIDAD YAVL */
+      --yavl-gold: #D4AF37;              /* ORO PRINCIPAL - NO CAMBIAR */
+      --yavl-gold-dark: #B8860B;         /* ORO OSCURO (hover/secondary) */
       
-      /* Aliases para compatibilidad */
-      --gold-primary: #C9A851;    /* Alias principal */
-      --gold-secondary: #E2C675;  /* Alias secundario */
-      --gold-light: #E8D59B;      /* Alias claro */
-      --gold-dark: #A8863B;       /* Alias oscuro */
+      /* BACKGROUNDS */
+      --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
+      --bg-dark: #101114;                /* Fondo oscuro general */
+      --bg-darker: #0a0a0a;              /* Fondo más oscuro */
+      --bg-card: rgba(212, 175, 55, 0.05); /* Fondo de cards con tinte dorado */
+      --overlay-dark: rgba(11, 12, 15, 0.95); /* Overlay oscuro semi-transparente */
       
-      /* Fondos Oscuros Premium */
-      --bg-main: #0C1015;         /* Fondo principal profundo */
-      --bg-surface: #12161C;      /* Superficies elevadas */
-      --bg-primary: #0C1015;      /* Alias principal */
-      --bg-secondary: #12161C;    /* Alias secundario */
-      --bg-card: rgba(18, 22, 28, 0.95);
-      --bg-card-hover: rgba(24, 28, 36, 0.98);
+      /* TEXTOS */
+      --text-light: #f0f0f0;             /* Texto principal claro */
+      --text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
+      --text-muted: #6b7280;             /* Texto deshabilitado/notas */
       
-      /* Textos - Máxima Legibilidad */
-      --text-primary: #E8ECF2;    /* Texto principal ultra claro */
-      --text-secondary: #C9D0DA;  /* Texto secundario suave */
-      --text-muted: #8B95A8;      /* Texto atenuado */
+      /* BORDES */
+      --border-gold: rgba(212, 175, 55, 0.3);  /* Borde normal */
+      --border-gold-hover: rgba(212, 175, 55, 0.6); /* Borde hover */
       
-      /* Bordes y Divisores */
-      --border-gold: rgba(201, 168, 81, 0.45);   /* Borde dorado visible */
-      --border-subtle: rgba(201, 168, 81, 0.15); /* Borde sutil */
-      --border-card: rgba(255, 255, 255, 0.04);  /* Borde de tarjetas */
+      /* EFECTOS GLOW - Ajustados para mejor legibilidad */
+      --glow-gold: 0 0 8px rgba(212, 175, 55, 0.3);  /* Resplandor suave */
+      --glow-gold-intense: 0 0 15px rgba(212, 175, 55, 0.5); /* Resplandor intenso */
+      --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
       
-      /* Efectos y Sombras */
+      /* TIPOGRAFÍA */
+      --font-heading: 'Orbitron', sans-serif;  /* Fuente para títulos */
+      --font-body: 'Rajdhani', sans-serif;     /* Fuente para texto */
+      
+      /* ALIASES PARA COMPATIBILIDAD */
+      --gold-primary: #D4AF37;
+      --gold-secondary: #B8860B;
+      --bg-main: #0B0C0F;
+      --bg-surface: #101114;
+      --text-primary: #f0f0f0;
+      
+      /* TRANSICIONES Y EFECTOS */
+      --transition-fast: 0.2s ease;
+      --transition-normal: 0.3s ease;
+      --transition-slow: 0.5s ease;
+      
+      /* RADIOS DE BORDE */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      
+      /* SOMBRAS */
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-      --shadow-gold: 0 0 15px rgba(201, 168, 81, 0.25);
-      --shadow-gold-lg: 0 0 24px rgba(201, 168, 81, 0.35);
-      --shadow-gold-soft: 0 4px 20px rgba(201, 168, 81, 0.20);
-      
-      /* Overlays y Fondos Interactivos */
-      --overlay-gold-subtle: rgba(201, 168, 81, 0.08);
-      --overlay-gold-medium: rgba(201, 168, 81, 0.15);
-      
-      /* Transiciones */
-      --transition-fast: 0.2s ease;
-      --transition-normal: 0.25s ease;
-      --transition-slow: 0.5s ease;
-      
-      /* Radios de Borde */
-      --radius-sm: 8px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --radius-xl: 20px;
-      
-      /* Gradientes Refinados */
-      --gradient-gold: linear-gradient(180deg, var(--gold-400) 0%, var(--gold-600) 100%);
-      --gradient-gold-subtle: linear-gradient(135deg, rgba(226, 198, 117, 0.15), rgba(168, 134, 59, 0.05));
-      --gradient-dark: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-surface) 100%);
+      --shadow-gold-soft: 0 4px 20px rgba(212, 175, 55, 0.20);
     }
     
     /* =========================================
@@ -100,34 +103,118 @@
       box-sizing: border-box;
     }
     
+    /* Mejorar renderización de fuentes en toda la página */
     html {
-      scroll-behavior: smooth;
-      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      font-family: var(--font-body);
+      font-size: 16px;
       line-height: 1.6;
       overflow-x: hidden;
+      
+      /* GRID BACKGROUND - OBLIGATORIO EN TODA LA IDENTIDAD YAVL */
+      background-image:
+        linear-gradient(var(--border-gold) 1px, transparent 1px),
+        linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
+      background-size: 40px 40px;
+    }
+    
+    /* =========================================
+       TIPOGRAFÍA OFICIAL
+       ========================================= */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      color: var(--yavl-gold);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      /* Mejorar legibilidad - sin glow en títulos pequeños */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Fondo animado sutil - Tono champagne refinado */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 15% 85%, rgba(201, 168, 81, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 85% 15%, rgba(226, 198, 117, 0.03) 0%, transparent 40%);
-      z-index: -1;
-      pointer-events: none;
+    h1 {
+      font-size: 3rem;          /* 48px */
+      font-weight: 900;
+      text-shadow: var(--glow-text), var(--glow-gold); /* Sombra legible + glow sutil */
+    }
+    
+    h2 {
+      font-size: 2rem;          /* 32px */
+      text-shadow: var(--glow-text); /* Solo sombra para legibilidad */
+    }
+    
+    h3 {
+      font-size: 1.5rem;        /* 24px */
+      text-shadow: none; /* Sin efectos para máxima nitidez */
+    }
+    
+    h4 {
+      font-size: 1.2rem;        /* 19px */
+      text-shadow: none; /* Sin efectos para máxima nitidez */
+    }
+    
+    p {
+      margin-bottom: 1rem;
+      color: var(--text-light);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* =========================================
+       ENLACES
+       ========================================= */
+    a {
+      color: var(--yavl-gold);
+      text-decoration: none;
+      transition: var(--transition-normal);
+    }
+    
+    a:hover {
+      color: var(--yavl-gold-dark);
+      /* Removido text-shadow para evitar borrosidad */
+    }
+    
+    /* =========================================
+       SCROLLBAR PERSONALIZADO
+       ========================================= */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-darker);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--yavl-gold);
+      border-radius: 6px;
+      border: 2px solid var(--bg-darker);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--yavl-gold-dark);
+    }
+    
+    ::selection {
+      background: var(--yavl-gold);
+      color: var(--yavl-dark);
+    }
+    
+    html {
+      scroll-behavior: smooth;
     }
     
     /* =========================================
@@ -139,16 +226,15 @@
       left: 0;
       right: 0;
       z-index: 1000;
-      background: rgba(12, 15, 19, 0.85);
+      background: rgba(11, 12, 15, 0.85);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border-gold);
       transition: var(--transition-normal);
-      pointer-events: auto;
     }
     
     .navbar.scrolled {
-      background: rgba(12, 15, 19, 0.95);
-      box-shadow: var(--shadow-md);
+      background: rgba(11, 12, 15, 0.95);
+      box-shadow: var(--glow-gold);
     }
     
     .navbar-container {
@@ -179,19 +265,19 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: 2px solid var(--gold-primary);
+      border: 2px solid var(--yavl-gold);
       padding: 2px;
     }
     
     .navbar-brand {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 1.5rem;
       font-weight: 800;
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--yavl-gold);
       letter-spacing: -0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra sutil para legibilidad */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .navbar-menu {
@@ -223,7 +309,7 @@
     }
     
     .navbar-link:hover {
-      color: var(--gold-light);
+      color: var(--yavl-gold);
     }
     
     .navbar-link:hover::after {
@@ -244,7 +330,7 @@
       border-radius: 50%;
       background: var(--bg-card);
       border: 1px solid var(--border-gold);
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -257,7 +343,7 @@
     
     .theme-toggle:hover {
       background: var(--bg-card-hover);
-      border-color: var(--gold-500);
+      border-color: var(--yavl-gold);
       transform: rotate(15deg);
       box-shadow: var(--shadow-gold-soft);
     }
@@ -265,7 +351,7 @@
     .btn {
       padding: 0.75rem 1.75rem;
       border-radius: var(--radius-lg);
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.95rem;
       text-decoration: none;
       border: none;
@@ -275,40 +361,47 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-heading);
       min-width: 140px;
       height: 44px;
       position: relative;
       z-index: 10;
       pointer-events: auto;
+      /* Mejorar legibilidad del texto en botones */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-outline {
       background: transparent;
-      color: var(--gold-400);
-      border: 1px solid var(--border-gold);
+      color: var(--yavl-gold);
+      border: 2px solid var(--yavl-gold);
+      box-shadow: none;
+      text-shadow: none; /* Texto nítido sin sombras */
     }
     
     .btn-outline:hover {
-      background: rgba(201, 168, 81, 0.07);
-      color: var(--gold-400);
-      border-color: var(--gold-500);
-      box-shadow: var(--shadow-gold-soft);
-      transform: translateY(-1px);
+      background: var(--yavl-gold);
+      color: var(--yavl-dark);
+      border-color: var(--yavl-gold);
+      box-shadow: var(--glow-gold-intense);
+      transform: translateY(-2px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Sombra sutil solo en hover */
     }
     
     .btn-primary {
-      background: linear-gradient(180deg, var(--gold-400), var(--gold-600));
-      color: #0B0E11;
+      background: linear-gradient(135deg, var(--yavl-gold), var(--yavl-gold-dark));
+      color: var(--yavl-dark);
       border: none;
-      font-weight: 600;
-      box-shadow: var(--shadow-gold-soft);
+      font-weight: 700;
+      box-shadow: var(--glow-gold);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Sombra sutil para contraste */
     }
     
     .btn-primary:hover {
-      box-shadow: var(--shadow-gold);
-      transform: translateY(-1px);
-      filter: brightness(1.05);
+      box-shadow: var(--glow-gold-intense);
+      transform: translateY(-2px);
     }
     
     /* Menú móvil */
@@ -319,7 +412,7 @@
       border: none;
       background: var(--bg-card);
       border-radius: var(--radius-sm);
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       font-size: 1.2rem;
       cursor: pointer;
       align-items: center;
@@ -398,7 +491,7 @@
     }
 
     .mobile-drawer-brand span {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Orbitron', serif;
       font-size: 1.25rem;
       font-weight: 700;
       background: var(--gradient-gold);
@@ -444,7 +537,7 @@
     }
 
     .mobile-drawer-nav a i {
-      color: var(--gold-400);
+      color: var(--yavl-gold);
     }
 
     .mobile-drawer-nav a:hover {
@@ -515,12 +608,12 @@
     }
     
     .modal::-webkit-scrollbar-thumb {
-      background: var(--gold-500);
+      background: var(--yavl-gold);
       border-radius: 4px;
     }
     
     .modal::-webkit-scrollbar-thumb:hover {
-      background: var(--gold-400);
+      background: var(--yavl-gold);
     }
 
     .modal.open {
@@ -537,9 +630,13 @@
     }
 
     .modal-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 1.5rem;
       font-weight: 700;
+      color: var(--yavl-gold);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .modal-close {
@@ -588,7 +685,7 @@
 
     .modal-form input:focus {
       outline: none;
-      border-color: var(--gold-500);
+      border-color: var(--yavl-gold);
       box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.2);
     }
 
@@ -626,7 +723,7 @@
       border-radius: var(--radius-sm);
       font-size: 1.1rem;
       font-weight: 700;
-      color: var(--gold-400);
+      color: var(--yavl-gold);
       letter-spacing: 4px;
       user-select: none;
     }
@@ -634,7 +731,7 @@
     .captcha-refresh {
       background: transparent;
       border: none;
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       cursor: pointer;
       font-size: 1.1rem;
       padding: 4px;
@@ -642,7 +739,7 @@
     }
     
     .captcha-refresh:hover {
-      color: var(--gold-400);
+      color: var(--yavl-gold);
       transform: rotate(180deg);
     }
     
@@ -660,7 +757,7 @@
     
     .captcha-input:focus {
       outline: none;
-      border-color: var(--gold-500);
+      border-color: var(--yavl-gold);
       box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.2);
     }
 
@@ -674,13 +771,13 @@
     }
 
     .modal-footer a {
-      color: var(--gold-400);
+      color: var(--yavl-gold);
       text-decoration: none;
       font-weight: 600;
     }
 
     .modal-footer a:hover {
-      color: var(--gold-light);
+      color: var(--yavl-gold);
     }
     /* =========================================
        HERO SECTION
@@ -729,7 +826,7 @@
       height: 100%;
       border-radius: 50%;
       background: var(--bg-card);
-      border: 2px solid var(--gold-500);
+      border: 2px solid var(--yavl-gold);
       padding: 10px;
       display: flex;
       align-items: center;
@@ -762,16 +859,16 @@
     }
     
     .hero h1 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: clamp(2.5rem, 6vw, 4rem);
       font-weight: 800;
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--yavl-gold);
       margin-bottom: 1.25rem;
       letter-spacing: -1px;
       line-height: 1.1;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Mismo estilo que navbar */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .hero-subtitle {
@@ -815,18 +912,18 @@
     }
     
     .section-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: clamp(2rem, 4vw, 2.75rem);
       font-weight: 800;
-      color: var(--text-primary);
+      color: var(--text-light);
       margin-bottom: 1rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .section-title .highlight {
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--yavl-gold);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Mismo estilo consistente */
     }
     
     .section-description {
@@ -890,7 +987,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1.75rem;  /* Ajustado proporcionalmente */
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       margin-bottom: 1.5rem;
       transition: var(--transition-normal);
     }
@@ -904,8 +1001,11 @@
     .feature-card h3 {
       font-size: 1.4rem;
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--yavl-gold);
       margin-bottom: 0.75rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); /* Consistente con navbar */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .feature-card p {
@@ -915,7 +1015,7 @@
     }
     
     .feature-link {
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       text-decoration: none;
       font-weight: 600;
       display: inline-flex;
@@ -926,7 +1026,7 @@
     
     .feature-link:hover {
       gap: 0.75rem;
-      color: var(--gold-light);
+      color: var(--yavl-gold);
     }
     
     /* =========================================
@@ -947,10 +1047,18 @@
     }
     
     .alternate-content h2 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: clamp(2rem, 4vw, 2.75rem);
       font-weight: 800;
       margin-bottom: 1.5rem;
+      color: var(--text-light);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .alternate-content h2 .highlight {
+      color: var(--yavl-gold);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     }
     
     .alternate-content p {
@@ -979,7 +1087,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gold-primary);
+      color: var(--yavl-gold);
       flex-shrink: 0;
       font-size: 1.1rem;  /* Tamaño de ícono proporcionado */
     }
@@ -988,6 +1096,9 @@
       font-size: 1.1rem;
       font-weight: 600;
       margin-bottom: 0.25rem;
+      color: var(--yavl-gold);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .alternate-feature-text p {
@@ -1050,7 +1161,7 @@
     }
     
     .footer-brand-name {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Orbitron', serif;
       font-size: 1.5rem;
       font-weight: 800;
       background: var(--gradient-gold);
@@ -1080,16 +1191,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       text-decoration: none;
       transition: var(--transition-normal);
       font-size: 1.1rem;  /* Tamaño de ícono consistente */
     }
     
     .social-icon:hover {
-      background: linear-gradient(180deg, var(--gold-400), var(--gold-600));
+      background: linear-gradient(180deg, var(--yavl-gold), var(--yavl-gold-dark));
       color: #0B0E11;
-      border-color: var(--gold-500);
+      border-color: var(--yavl-gold);
       transform: translateY(-2px);
       box-shadow: var(--shadow-gold-soft);
     }
@@ -1098,7 +1209,9 @@
       font-size: 1.1rem;
       font-weight: 700;
       margin-bottom: 1.25rem;
-      color: var(--text-primary);
+      color: var(--yavl-gold);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .footer-links {
@@ -1117,7 +1230,7 @@
     }
     
     .footer-links a:hover {
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       padding-left: 5px;
     }
     
@@ -1129,13 +1242,6 @@
       align-items: center;
     }
     
-    .footer-column h4 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1.25rem;
-      color: var(--text-primary);
-    }
-    
     .footer-links {
       list-style: none;
     }
@@ -1152,7 +1258,7 @@
     }
     
     .footer-links a:hover {
-      color: var(--gold-primary);
+      color: var(--yavl-gold);
       padding-left: 5px;
     }
     
@@ -1178,7 +1284,7 @@
     }
     
     .footer-bottom-links a:hover {
-      color: var(--gold-primary);
+      color: var(--yavl-gold);
     }
     
     /* =========================================
@@ -1498,7 +1604,7 @@
           </div>
           <h3>Conceptos Básicos</h3>
           <p>Aprende los fundamentos de blockchain y criptomonedas desde cero.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Comenzar <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1509,7 +1615,7 @@
           </div>
           <h3>Trading Básico</h3>
           <p>Estrategias para comenzar a operar en los mercados cripto.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Comenzar <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1520,7 +1626,7 @@
           </div>
           <h3>Seguridad Cripto</h3>
           <p>Protege tus activos con las mejores prácticas de seguridad.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Comenzar <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1610,7 +1716,7 @@
           </div>
           <h3>Cursos Estructurados</h3>
           <p>Programas completos desde nivel principiante hasta experto.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Aprender <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1621,7 +1727,7 @@
           </div>
           <h3>Tutoriales en Video</h3>
           <p>Contenido audiovisual explicativo y fácil de seguir.</p>
-          <a href="#" class="feature-link">
+          <a href="https://youtube.com/@yavlgoldpro" target="_blank" class="feature-link">
             Ver Cursos <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1632,7 +1738,7 @@
           </div>
           <h3>Certificaciones</h3>
           <p>Obtén certificados al completar nuestros programas.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Certificarse <i class="fas fa-arrow-right"></i>
           </a>
         </div>
