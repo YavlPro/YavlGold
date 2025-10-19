@@ -17,78 +17,81 @@
   <link rel="icon" href="/assets/images/logo.png" type="image/png">
   <meta name="theme-color" content="#0B0C0F">
   
-  <!-- Fuentes -->
+  <!-- Fuentes Oficiales YavlGold -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
   
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
+    /**
+     * ============================================
+     * YAVL GOLD - ESTILOS OFICIALES v1.0
+     * ============================================
+     * BASADO EN LA GUÍA DE ESTILOS OFICIAL
+     * Color oro oficial: #D4AF37 (NUNCA CAMBIAR)
+     * Fuentes: Orbitron (títulos) + Rajdhani (texto)
+     * ============================================
+     */
+
     /* =========================================
-       DESIGN TOKENS - CHAMPAGNE SOFT GOLD
-       Sistema de diseño premium ultra-refinado
+       VARIABLES CSS - COLORES OFICIALES
        ========================================= */
     :root {
-      /* Champagne Soft Gold - Paleta Principal */
-      --gold-300: #E8D59B;        /* Champagne Extra Suave */
-      --gold-400: #E2C675;        /* Champagne Acento Principal */
-      --gold-500: #C9A851;        /* Champagne Intenso */
-      --gold-600: #A8863B;        /* Sombras y Contornos */
-      --gold-700: #8B6F30;        /* Dorado Oscuro Profundo */
+      /* COLORES PRINCIPALES - IDENTIDAD YAVL */
+      --yavl-gold: #D4AF37;              /* ORO PRINCIPAL - NO CAMBIAR */
+      --yavl-gold-dark: #B8860B;         /* ORO OSCURO (hover/secondary) */
       
-      /* Aliases para compatibilidad */
-      --gold-primary: #C9A851;    /* Alias principal */
-      --gold-secondary: #E2C675;  /* Alias secundario */
-      --gold-light: #E8D59B;      /* Alias claro */
-      --gold-dark: #A8863B;       /* Alias oscuro */
+      /* BACKGROUNDS */
+      --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
+      --bg-dark: #101114;                /* Fondo oscuro general */
+      --bg-darker: #0a0a0a;              /* Fondo más oscuro */
+      --bg-card: rgba(212, 175, 55, 0.08); /* Fondo de cards MÁS VISIBLE */
+      --overlay-dark: rgba(11, 12, 15, 0.95); /* Overlay oscuro semi-transparente */
       
-      /* Fondos Oscuros Premium */
-      --bg-main: #0C1015;         /* Fondo principal profundo */
-      --bg-surface: #12161C;      /* Superficies elevadas */
-      --bg-primary: #0C1015;      /* Alias principal */
-      --bg-secondary: #12161C;    /* Alias secundario */
-      --bg-card: rgba(18, 22, 28, 0.95);
-      --bg-card-hover: rgba(24, 28, 36, 0.98);
+      /* TEXTOS */
+      --text-light: #f0f0f0;             /* Texto principal claro */
+      --text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
+      --text-muted: #6b7280;             /* Texto deshabilitado/notas */
       
-      /* Textos - Máxima Legibilidad */
-      --text-primary: #E8ECF2;    /* Texto principal ultra claro */
-      --text-secondary: #C9D0DA;  /* Texto secundario suave */
-      --text-muted: #8B95A8;      /* Texto atenuado */
+      /* BORDES - MÁS VISIBLES */
+      --border-gold: rgba(212, 175, 55, 0.5);      /* Borde más visible */
+      --border-gold-hover: rgba(212, 175, 55, 0.9); /* Borde hover brillante */
       
-      /* Bordes y Divisores */
-      --border-gold: rgba(201, 168, 81, 0.45);   /* Borde dorado visible */
-      --border-subtle: rgba(201, 168, 81, 0.15); /* Borde sutil */
-      --border-card: rgba(255, 255, 255, 0.04);  /* Borde de tarjetas */
+      /* EFECTOS GLOW - INTENSOS Y VISIBLES */
+      --glow-gold: 0 0 20px rgba(212, 175, 55, 0.6), 0 4px 20px rgba(0, 0, 0, 0.5);  /* Glow visible + profundidad */
+      --glow-gold-intense: 0 0 30px rgba(212, 175, 55, 1), 0 0 60px rgba(212, 175, 55, 0.6); /* Glow INTENSO */
+      --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
       
-      /* Efectos y Sombras */
+      /* TIPOGRAFÍA */
+      --font-heading: 'Orbitron', sans-serif;  /* Fuente para títulos */
+      --font-body: 'Rajdhani', sans-serif;     /* Fuente para texto */
+      
+      /* ALIASES PARA COMPATIBILIDAD */
+      --gold-primary: #D4AF37;
+      --gold-secondary: #B8860B;
+      --bg-main: #0B0C0F;
+      --bg-surface: #101114;
+      --text-primary: #f0f0f0;
+      
+      /* TRANSICIONES Y EFECTOS */
+      --transition-fast: 0.2s ease;
+      --transition-normal: 0.3s ease;
+      --transition-slow: 0.5s ease;
+      
+      /* RADIOS DE BORDE */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      
+      /* SOMBRAS */
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-      --shadow-gold: 0 0 15px rgba(201, 168, 81, 0.25);
-      --shadow-gold-lg: 0 0 24px rgba(201, 168, 81, 0.35);
-      --shadow-gold-soft: 0 4px 20px rgba(201, 168, 81, 0.20);
-      
-      /* Overlays y Fondos Interactivos */
-      --overlay-gold-subtle: rgba(201, 168, 81, 0.08);
-      --overlay-gold-medium: rgba(201, 168, 81, 0.15);
-      
-      /* Transiciones */
-      --transition-fast: 0.2s ease;
-      --transition-normal: 0.25s ease;
-      --transition-slow: 0.5s ease;
-      
-      /* Radios de Borde */
-      --radius-sm: 8px;
-      --radius-md: 10px;
-      --radius-lg: 14px;
-      --radius-xl: 20px;
-      
-      /* Gradientes Refinados */
-      --gradient-gold: linear-gradient(180deg, var(--gold-400) 0%, var(--gold-600) 100%);
-      --gradient-gold-subtle: linear-gradient(135deg, rgba(226, 198, 117, 0.15), rgba(168, 134, 59, 0.05));
-      --gradient-dark: linear-gradient(135deg, var(--bg-main) 0%, var(--bg-surface) 100%);
+      --shadow-gold-soft: 0 4px 20px rgba(212, 175, 55, 0.20);
     }
     
     /* =========================================
@@ -100,34 +103,129 @@
       box-sizing: border-box;
     }
     
+    /* Mejorar renderización de fuentes en toda la página */
     html {
-      scroll-behavior: smooth;
-      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      font-family: var(--font-body);
+      font-size: 16px;
       line-height: 1.6;
       overflow-x: hidden;
+      
+      /* GRID BACKGROUND - MÁS VISIBLE */
+      background-image:
+        linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px),
+        linear-gradient(to right, rgba(212, 175, 55, 0.15) 1px, var(--bg-dark) 1px);
+      background-size: 40px 40px;
+    }
+    
+    /* =========================================
+       TIPOGRAFÍA OFICIAL
+       ========================================= */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      color: var(--yavl-gold);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+      /* Mejorar legibilidad - sin glow en títulos pequeños */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Fondo animado sutil - Tono champagne refinado */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 15% 85%, rgba(201, 168, 81, 0.05) 0%, transparent 40%),
-        radial-gradient(circle at 85% 15%, rgba(226, 198, 117, 0.03) 0%, transparent 40%);
-      z-index: -1;
-      pointer-events: none;
+    h1 {
+      font-size: 3rem;          /* 48px */
+      font-weight: 900;
+      /* GLOW TRIPLE CAPA - EXTRA BRILLANTE */
+      text-shadow: 
+        0 0 15px rgba(212, 175, 55, 1),
+        0 0 30px rgba(212, 175, 55, 0.8),
+        0 0 50px rgba(212, 175, 55, 0.5);
+    }
+    
+    h2 {
+      font-size: 2rem;          /* 32px */
+      /* GLOW DOBLE CAPA - BRILLANTE */
+      text-shadow: 
+        0 0 10px rgba(212, 175, 55, 1),
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 0 40px rgba(212, 175, 55, 0.4);
+    }
+    
+    h3 {
+      font-size: 1.5rem;        /* 24px */
+      /* GLOW SUTIL PERO VISIBLE */
+      text-shadow: 
+        0 0 8px rgba(212, 175, 55, 1),
+        0 0 15px rgba(212, 175, 55, 0.6);
+    }
+    
+    h4 {
+      font-size: 1.2rem;        /* 19px */
+      text-shadow: none; /* Sin efectos para máxima nitidez */
+    }
+    
+    p {
+      margin-bottom: 1rem;
+      color: var(--text-light);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* =========================================
+       ENLACES
+       ========================================= */
+    a {
+      color: var(--yavl-gold);
+      text-decoration: none;
+      transition: var(--transition-normal);
+    }
+    
+    a:hover {
+      color: var(--yavl-gold-dark);
+      /* Removido text-shadow para evitar borrosidad */
+    }
+    
+    /* =========================================
+       SCROLLBAR PERSONALIZADO
+       ========================================= */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--bg-darker);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--yavl-gold);
+      border-radius: 6px;
+      border: 2px solid var(--bg-darker);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--yavl-gold-dark);
+    }
+    
+    ::selection {
+      background: var(--yavl-gold);
+      color: var(--yavl-dark);
+    }
+    
+    html {
+      scroll-behavior: smooth;
     }
     
     /* =========================================
@@ -139,18 +237,18 @@
       left: 0;
       right: 0;
       z-index: 1000;
-      background: rgba(12, 15, 19, 0.85);
+      background: rgba(11, 12, 15, 0.85);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border-gold);
       transition: var(--transition-normal);
-      pointer-events: auto;
-      margin-bottom: 0 !important;
-      padding-bottom: 0 !important;
     }
     
     .navbar.scrolled {
-      background: rgba(12, 15, 19, 0.95);
-      box-shadow: var(--shadow-md);
+      background: rgba(11, 12, 15, 0.95);
+      /* GLOW VISIBLE EN NAVBAR */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.6),
+        0 4px 15px rgba(0, 0, 0, 0.5);
     }
     
     .navbar-container {
@@ -181,19 +279,19 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: 2px solid var(--gold-primary);
+      border: 2px solid var(--yavl-gold);
       padding: 2px;
     }
     
     .navbar-brand {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 1.5rem;
       font-weight: 800;
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--yavl-gold);
       letter-spacing: -0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra sutil para legibilidad */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .navbar-menu {
@@ -225,7 +323,7 @@
     }
     
     .navbar-link:hover {
-      color: var(--gold-light);
+      color: var(--yavl-gold);
     }
     
     .navbar-link:hover::after {
@@ -238,13 +336,6 @@
       gap: 1rem;
       position: relative;
       z-index: 10;
-      margin-bottom: 0 !important;
-    }
-    
-    .navbar-actions-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
     }
     
     .theme-toggle {
@@ -253,7 +344,7 @@
       border-radius: 50%;
       background: var(--bg-card);
       border: 1px solid var(--border-gold);
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -266,15 +357,18 @@
     
     .theme-toggle:hover {
       background: var(--bg-card-hover);
-      border-color: var(--gold-500);
+      border-color: var(--yavl-gold);
       transform: rotate(15deg);
-      box-shadow: var(--shadow-gold-soft);
+      /* GLOW VISIBLE EN HOVER */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 4px 15px rgba(212, 175, 55, 0.3);
     }
     
     .btn {
       padding: 0.75rem 1.75rem;
       border-radius: var(--radius-lg);
-      font-weight: 600;
+      font-weight: 700;
       font-size: 0.95rem;
       text-decoration: none;
       border: none;
@@ -284,40 +378,58 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      font-family: 'Inter', sans-serif;
+      font-family: var(--font-heading);
       min-width: 140px;
       height: 44px;
       position: relative;
       z-index: 10;
       pointer-events: auto;
+      /* Mejorar legibilidad del texto en botones */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-outline {
       background: transparent;
-      color: var(--gold-400);
-      border: 1px solid var(--border-gold);
+      color: var(--yavl-gold);
+      border: 2px solid var(--yavl-gold);
+      box-shadow: none;
+      text-shadow: none; /* Texto nítido sin sombras */
     }
     
     .btn-outline:hover {
-      background: rgba(201, 168, 81, 0.07);
-      color: var(--gold-400);
-      border-color: var(--gold-500);
-      box-shadow: var(--shadow-gold-soft);
-      transform: translateY(-1px);
+      background: var(--yavl-gold);
+      color: var(--yavl-dark);
+      border-color: var(--yavl-gold);
+      /* GLOW INTENSO AL HOVER */
+      box-shadow: 
+        0 0 25px rgba(212, 175, 55, 1),
+        0 0 50px rgba(212, 175, 55, 0.6),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+      transform: translateY(-3px);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-primary {
-      background: linear-gradient(180deg, var(--gold-400), var(--gold-600));
-      color: #0B0E11;
+      background: linear-gradient(135deg, var(--yavl-gold), var(--yavl-gold-dark));
+      color: var(--yavl-dark);
       border: none;
-      font-weight: 600;
-      box-shadow: var(--shadow-gold-soft);
+      font-weight: 700;
+      /* GLOW BRILLANTE EN BOTONES */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 4px 15px rgba(0, 0, 0, 0.3);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-primary:hover {
-      box-shadow: var(--shadow-gold);
-      transform: translateY(-1px);
-      filter: brightness(1.05);
+      /* GLOW MÁXIMO AL HOVER */
+      box-shadow: 
+        0 0 30px rgba(212, 175, 55, 1),
+        0 0 60px rgba(212, 175, 55, 0.6),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(-3px) scale(1.02);
     }
     
     /* Menú móvil */
@@ -328,424 +440,373 @@
       border: none;
       background: var(--bg-card);
       border-radius: var(--radius-sm);
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       font-size: 1.2rem;
       cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
     }
     
-    /* =========================================
-       MOBILE DRAWER & MODALS
-       ========================================= */
+    .mobile-menu-toggle:hover {
+      background: var(--bg-card-hover);
+    }
+
+    body.drawer-open,
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .mobile-menu-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 16, 21, 0.65);
+      backdrop-filter: blur(6px);
+      z-index: 950;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition-normal);
+    }
+
+    .mobile-menu-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .mobile-drawer {
       position: fixed;
       top: 0;
       left: 0;
-      width: 80%;
+      width: 85%;
       max-width: 320px;
       height: 100vh;
-      background: rgba(18, 22, 28, 0.85);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-gold);
+      box-shadow: var(--shadow-md);
       transform: translateX(-100%);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: var(--transition-normal);
       z-index: 960;
       display: flex;
       flex-direction: column;
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-      border-right: 1px solid rgba(201, 168, 81, 0.2);
+      padding: 24px 20px 32px;
+      gap: 28px;
     }
-    
-    body.drawer-open .mobile-drawer {
+
+    .mobile-drawer.active {
       transform: translateX(0);
     }
-    
+
     .mobile-drawer-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid rgba(201, 168, 81, 0.15);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(0, 0, 0, 0.2);
+      gap: 16px;
     }
-    
-    .mobile-drawer-logo {
+
+    .mobile-drawer-brand {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 12px;
       text-decoration: none;
     }
-    
-    .mobile-drawer-logo img {
-      width: 28px;
-      height: 28px;
+
+    .mobile-drawer-brand img {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(201, 168, 81, 0.3);
+      border: 2px solid var(--gold-secondary);
+      padding: 2px;
     }
-    
-    .mobile-drawer-brand {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.15rem;
+
+    .mobile-drawer-brand span {
+      font-family: 'Orbitron', serif;
+      font-size: 1.25rem;
       font-weight: 700;
       background: var(--gradient-gold);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    
+
     .mobile-drawer-close {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       border: none;
-      background: rgba(201, 168, 81, 0.1);
-      color: var(--gold-400);
+      border-radius: 50%;
+      background: var(--bg-card);
+      color: var(--text-secondary);
       font-size: 1.1rem;
       cursor: pointer;
-      border-radius: var(--radius-sm);
       transition: var(--transition-fast);
     }
-    
+
     .mobile-drawer-close:hover {
-      background: rgba(201, 168, 81, 0.2);
-      transform: rotate(90deg);
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
     }
-    
+
     .mobile-drawer-nav {
-      flex: 1;
-      padding: 0.75rem 0;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    
-    .mobile-drawer-nav::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    .mobile-drawer-nav::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-    }
-    
-    .mobile-drawer-nav::-webkit-scrollbar-thumb {
-      background: rgba(201, 168, 81, 0.4);
-      border-radius: 3px;
-    }
-    
-    .mobile-drawer-nav::-webkit-scrollbar-thumb:hover {
-      background: rgba(201, 168, 81, 0.6);
-    }
-    
+
     .mobile-drawer-nav a {
       display: flex;
       align-items: center;
-      padding: 0.85rem 1.25rem;
-      color: var(--text-primary);
-      text-decoration: none;
-      font-size: 0.95rem;
+      gap: 12px;
       font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
       transition: var(--transition-fast);
-      border-left: 3px solid transparent;
-      position: relative;
+      border: 1px solid transparent;
     }
-    
-    .mobile-drawer-nav a::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      background: rgba(201, 168, 81, 0.05);
-      opacity: 0;
-      transition: var(--transition-fast);
+
+    .mobile-drawer-nav a i {
+      color: var(--yavl-gold);
     }
-    
-    .mobile-drawer-nav a:hover::before {
-      opacity: 1;
-    }
-    
+
     .mobile-drawer-nav a:hover {
-      border-left-color: var(--gold-500);
-      color: var(--gold-400);
       background: rgba(201, 168, 81, 0.08);
+      border-color: var(--border-gold);
+      color: var(--text-primary);
     }
-    
+
     .mobile-drawer-actions {
-      padding: 1rem 1.25rem;
-      border-top: 1px solid rgba(201, 168, 81, 0.15);
+      margin-top: auto;
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
-      background: rgba(0, 0, 0, 0.2);
+      gap: 10px;
     }
-    
+
     .mobile-drawer-actions .btn {
-      padding: 0.7rem 1rem;
-      font-size: 0.9rem;
+      width: 100%;
+      justify-content: center;
     }
-    
-    .mobile-menu-overlay {
+
+    .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px) saturate(120%);
-      -webkit-backdrop-filter: blur(8px) saturate(120%);
+      background: rgba(12, 16, 21, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 970;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 950;
+      transition: var(--transition-normal);
     }
-    
-    body.drawer-open .mobile-menu-overlay {
+
+    .modal-backdrop.open {
       opacity: 1;
       pointer-events: auto;
     }
-    
-    /* Modal System */
+
     .modal {
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%) scale(0.9);
+      transform: translate(-50%, -50%) scale(0.95);
       background: var(--bg-secondary);
-      border-radius: var(--radius-lg);
       border: 1px solid var(--border-gold);
+      border-radius: var(--radius-xl);
       box-shadow: var(--shadow-lg);
-      max-width: 420px;
-      width: 90%;
-      max-height: 85vh;
-      overflow-y: auto;
-      overflow-x: hidden;
+      z-index: 980;
+      width: min(420px, calc(100% - 40px));
+      max-height: min(90vh, 800px);
+      padding: 32px 28px;
       opacity: 0;
       pointer-events: none;
-      transition: all 0.25s ease;
-      z-index: 980;
+      transition: var(--transition-normal);
       display: flex;
       flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     
+    /* Scrollbar personalizado para el modal */
     .modal::-webkit-scrollbar {
       width: 8px;
     }
     
     .modal::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(201, 168, 81, 0.05);
       border-radius: 4px;
     }
     
     .modal::-webkit-scrollbar-thumb {
-      background: var(--gold-500);
+      background: var(--yavl-gold);
       border-radius: 4px;
     }
     
     .modal::-webkit-scrollbar-thumb:hover {
-      background: var(--gold-400);
+      background: var(--yavl-gold);
     }
-    
-    body.modal-open .modal {
+
+    .modal.open {
       opacity: 1;
       pointer-events: auto;
       transform: translate(-50%, -50%) scale(1);
     }
-    
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-      z-index: 970;
+
+    .modal header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
     }
-    
-    body.modal-open .modal-backdrop {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    
-    .modal-header {
-      padding: 1.25rem 1.5rem 1rem;
-      text-align: center;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    
+
     .modal-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 1.5rem;
       font-weight: 700;
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.35rem;
+      color: var(--yavl-gold);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    
-    .modal-subtitle {
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-    }
-    
+
     .modal-close {
-      position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-      border-radius: var(--radius-sm);
-      transition: var(--transition-fast);
-    }
-    
-    .modal-close:hover {
       background: var(--bg-card);
-      color: var(--gold-400);
-    }
-    
-    .modal-body {
-      padding: 1.25rem 1.5rem;
-      flex: 1;
-    }
-    
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    
-    .form-label {
-      display: block;
-      margin-bottom: 0.4rem;
-      color: var(--text-primary);
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    
-    .form-input {
-      width: 100%;
-      padding: 0.7rem 0.9rem;
-      background: var(--bg-main);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      color: var(--text-primary);
-      font-size: 0.9rem;
-      font-family: 'Inter', sans-serif;
+      color: var(--text-secondary);
+      cursor: pointer;
       transition: var(--transition-fast);
     }
-    
-    .form-input:focus {
-      outline: none;
-      border-color: var(--gold-500);
-      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.1);
+
+    .modal-close:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
     }
-    
-    .form-input::placeholder {
-      color: var(--text-muted);
+
+    .modal-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
     }
-    
-    .captcha-container {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: var(--bg-main);
-      border: 1px solid var(--border-subtle);
+
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-form label {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.92rem;
+    }
+
+    .modal-form input {
+      width: 100%;
+      padding: 12px 14px;
       border-radius: var(--radius-md);
+      border: 1px solid rgba(201, 168, 81, 0.25);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .modal-form input:focus {
+      outline: none;
+      border-color: var(--yavl-gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.2);
+    }
+
+    .modal-form .btn {
+      width: 100%;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    
+    /* Captcha container */
+    .captcha-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      background: rgba(201, 168, 81, 0.05);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-md);
+      margin: 8px 0;
     }
     
     .captcha-label {
-      display: block;
-      margin-bottom: 0.6rem;
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-      font-weight: 500;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
     }
     
     .captcha-challenge {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.6rem;
-      padding: 0.6rem 0.85rem;
+      justify-content: center;
+      gap: 12px;
+      padding: 12px;
       background: var(--bg-card);
-      border: 1px solid var(--border-gold);
       border-radius: var(--radius-sm);
-    }
-    
-    .captcha-text {
-      font-family: 'Courier New', monospace;
       font-size: 1.1rem;
       font-weight: 700;
-      letter-spacing: 3px;
-      color: var(--gold-400);
-      text-shadow: 0 2px 8px rgba(201, 168, 81, 0.3);
+      color: var(--yavl-gold);
+      letter-spacing: 4px;
+      user-select: none;
     }
     
     .captcha-refresh {
-      width: 28px;
-      height: 28px;
-      border: none;
       background: transparent;
-      color: var(--gold-500);
-      font-size: 1rem;
+      border: none;
+      color: var(--yavl-gold);
       cursor: pointer;
-      border-radius: var(--radius-sm);
+      font-size: 1.1rem;
+      padding: 4px;
       transition: var(--transition-fast);
     }
     
     .captcha-refresh:hover {
-      background: var(--overlay-gold-subtle);
-      transform: rotate(90deg);
+      color: var(--yavl-gold);
+      transform: rotate(180deg);
     }
     
     .captcha-input {
       width: 100%;
-      padding: 0.6rem 0.85rem;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(201, 168, 81, 0.25);
       background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
       color: var(--text-primary);
-      font-size: 0.9rem;
-      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
       text-align: center;
       letter-spacing: 2px;
-      transition: var(--transition-fast);
     }
     
     .captcha-input:focus {
       outline: none;
-      border-color: var(--gold-500);
-      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.1);
+      border-color: var(--yavl-gold);
+      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.2);
     }
-    
+
     .modal-footer {
-      padding: 1rem 1.5rem 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
-    }
-    
-    .modal-footer .btn {
-      width: 100%;
-      padding: 0.7rem 1rem;
+      gap: 12px;
       font-size: 0.9rem;
-    }
-    
-    .modal-alt-action {
-      text-align: center;
       color: var(--text-secondary);
-      font-size: 0.85rem;
+      text-align: center;
     }
-    
-    .modal-alt-action a {
-      color: var(--gold-400);
+
+    .modal-footer a {
+      color: var(--yavl-gold);
       text-decoration: none;
       font-weight: 600;
-      transition: var(--transition-fast);
     }
-    
-    .modal-alt-action a:hover {
-      color: var(--gold-500);
-      text-decoration: underline;
+
+    .modal-footer a:hover {
+      color: var(--yavl-gold);
     }
-    
     /* =========================================
        HERO SECTION
        ========================================= */
@@ -793,28 +854,29 @@
       height: 100%;
       border-radius: 50%;
       background: var(--bg-card);
-      border: 2px solid var(--gold-500);
+      border: 3px solid var(--yavl-gold);
       padding: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      /* GLOW MÁS INTENSO */
       box-shadow: 
-        0 0 20px rgba(201, 168, 81, 0.22),
-        0 4px 18px rgba(201, 168, 81, 0.12),
-        inset 0 0 18px rgba(201, 168, 81, 0.06);
+        0 0 30px rgba(212, 175, 55, 0.8),
+        0 4px 25px rgba(212, 175, 55, 0.5),
+        inset 0 0 25px rgba(212, 175, 55, 0.1);
       animation: glow 3s ease-in-out infinite;
     }
     
     @keyframes glow {
       0%, 100% { box-shadow: 
-        0 0 20px rgba(201, 168, 81, 0.22),
-        0 4px 18px rgba(201, 168, 81, 0.12),
-        inset 0 0 18px rgba(201, 168, 81, 0.06);
+        0 0 30px rgba(212, 175, 55, 0.8),
+        0 4px 25px rgba(212, 175, 55, 0.5),
+        inset 0 0 25px rgba(212, 175, 55, 0.1);
       }
       50% { box-shadow: 
-        0 0 30px rgba(201, 168, 81, 0.30),
-        0 4px 25px rgba(201, 168, 81, 0.20),
-        inset 0 0 25px rgba(201, 168, 81, 0.10);
+        0 0 50px rgba(212, 175, 55, 1),
+        0 4px 35px rgba(212, 175, 55, 0.7),
+        inset 0 0 40px rgba(212, 175, 55, 0.15);
       }
     }
     
@@ -826,16 +888,16 @@
     }
     
     .hero h1 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: clamp(2.5rem, 6vw, 4rem);
       font-weight: 800;
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--yavl-gold);
       margin-bottom: 1.25rem;
       letter-spacing: -1px;
       line-height: 1.1;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Mismo estilo que navbar */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .hero-subtitle {
@@ -879,18 +941,18 @@
     }
     
     .section-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: clamp(2rem, 4vw, 2.75rem);
       font-weight: 800;
-      color: var(--text-primary);
+      color: var(--text-light);
       margin-bottom: 1rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .section-title .highlight {
-      background: var(--gradient-gold);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--yavl-gold);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Mismo estilo consistente */
     }
     
     .section-description {
@@ -912,13 +974,25 @@
     }
     
     .feature-card {
-      background: var(--bg-card);
+      /* Fondo con gradiente VISIBLE */
+      background: linear-gradient(
+        135deg, 
+        rgba(11, 12, 15, 0.95),
+        rgba(212, 175, 55, 0.08)
+      );
       border-radius: var(--radius-xl);
       padding: 2.5rem 2rem;
-      border: 1px solid var(--border-subtle);
+      /* BORDE GRUESO Y VISIBLE */
+      border: 3px solid rgba(212, 175, 55, 0.5);
       transition: var(--transition-normal);
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
+      /* GLOW INTENSO */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.6),
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        inset 0 0 40px rgba(212, 175, 55, 0.03);
     }
     
     .feature-card::before {
@@ -935,10 +1009,15 @@
     }
     
     .feature-card:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--border-gold);
-      transform: translateY(-6px);
-      box-shadow: var(--shadow-gold-soft);
+      /* Borde DORADO BRILLANTE */
+      border-color: rgba(212, 175, 55, 0.9);
+      transform: translateY(-8px);
+      /* GLOW MÁXIMO AL HOVER */
+      box-shadow: 
+        0 0 30px rgba(212, 175, 55, 1),
+        0 0 60px rgba(212, 175, 55, 0.6),
+        0 8px 30px rgba(0, 0, 0, 0.7),
+        inset 0 0 60px rgba(212, 175, 55, 0.05);
     }
     
     .feature-card:hover::before {
@@ -954,7 +1033,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1.75rem;  /* Ajustado proporcionalmente */
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       margin-bottom: 1.5rem;
       transition: var(--transition-normal);
     }
@@ -968,8 +1047,11 @@
     .feature-card h3 {
       font-size: 1.4rem;
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--yavl-gold);
       margin-bottom: 0.75rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); /* Consistente con navbar */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .feature-card p {
@@ -979,7 +1061,7 @@
     }
     
     .feature-link {
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       text-decoration: none;
       font-weight: 600;
       display: inline-flex;
@@ -990,7 +1072,7 @@
     
     .feature-link:hover {
       gap: 0.75rem;
-      color: var(--gold-light);
+      color: var(--yavl-gold);
     }
     
     /* =========================================
@@ -1011,10 +1093,18 @@
     }
     
     .alternate-content h2 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: clamp(2rem, 4vw, 2.75rem);
       font-weight: 800;
       margin-bottom: 1.5rem;
+      color: var(--text-light);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .alternate-content h2 .highlight {
+      color: var(--yavl-gold);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     }
     
     .alternate-content p {
@@ -1043,7 +1133,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gold-primary);
+      color: var(--yavl-gold);
       flex-shrink: 0;
       font-size: 1.1rem;  /* Tamaño de ícono proporcionado */
     }
@@ -1052,6 +1142,9 @@
       font-size: 1.1rem;
       font-weight: 600;
       margin-bottom: 0.25rem;
+      color: var(--yavl-gold);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .alternate-feature-text p {
@@ -1114,7 +1207,7 @@
     }
     
     .footer-brand-name {
-      font-family: 'Playfair Display', serif;
+      font-family: 'Orbitron', serif;
       font-size: 1.5rem;
       font-weight: 800;
       background: var(--gradient-gold);
@@ -1144,25 +1237,30 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       text-decoration: none;
       transition: var(--transition-normal);
       font-size: 1.1rem;  /* Tamaño de ícono consistente */
     }
     
     .social-icon:hover {
-      background: linear-gradient(180deg, var(--gold-400), var(--gold-600));
+      background: linear-gradient(180deg, var(--yavl-gold), var(--yavl-gold-dark));
       color: #0B0E11;
-      border-color: var(--gold-500);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-gold-soft);
+      border-color: var(--yavl-gold);
+      transform: translateY(-3px);
+      /* GLOW BRILLANTE */
+      box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.8),
+        0 4px 15px rgba(212, 175, 55, 0.4);
     }
     
     .footer-column h4 {
       font-size: 1.1rem;
       font-weight: 700;
       margin-bottom: 1.25rem;
-      color: var(--text-primary);
+      color: var(--yavl-gold);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
     .footer-links {
@@ -1181,7 +1279,7 @@
     }
     
     .footer-links a:hover {
-      color: var(--gold-500);
+      color: var(--yavl-gold);
       padding-left: 5px;
     }
     
@@ -1193,13 +1291,6 @@
       align-items: center;
     }
     
-    .footer-column h4 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1.25rem;
-      color: var(--text-primary);
-    }
-    
     .footer-links {
       list-style: none;
     }
@@ -1216,7 +1307,7 @@
     }
     
     .footer-links a:hover {
-      color: var(--gold-primary);
+      color: var(--yavl-gold);
       padding-left: 5px;
     }
     
@@ -1242,7 +1333,7 @@
     }
     
     .footer-bottom-links a:hover {
-      color: var(--gold-primary);
+      color: var(--yavl-gold);
     }
     
     /* =========================================
@@ -1276,153 +1367,67 @@
        RESPONSIVE DESIGN
        ========================================= */
     @media (max-width: 1024px) {
+      .navbar-container {
+        padding: 0 1.5rem;
+        height: 64px;
+      }
+
       .navbar-menu {
         display: none;
       }
-      
+
+      .navbar-actions {
+        gap: 0.5rem;
+      }
+
       .navbar-actions .btn {
         display: none;
       }
-      
+
       .mobile-menu-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: inline-flex;
       }
-      
+
       .footer-grid {
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
       }
-      
+
       .alternate-grid {
         grid-template-columns: 1fr;
         gap: 3rem;
       }
-      
+
       .alternate-image {
         order: -1;
       }
     }
-    
+
     @media (max-width: 768px) {
-      .navbar-container {
-        padding: 0 1.5rem;
-        height: auto;
-        min-height: 70px;
-      }
-      
-      /* Ajuste para mostrar ambos botones en tablet */
-      .navbar-actions {
-        gap: 0.75rem;
-      }
-      
-      .navbar-actions .btn {
-        padding: 0.65rem 1.25rem;
-        font-size: 0.9rem;
-        min-width: 110px;
-      }
-      
-      .theme-toggle {
-        width: 40px;
-        height: 40px;
-      }
-      
-      /* Modals más compactos en tablet/móvil */
-      .modal {
-        max-width: 380px;
-        width: 92%;
-        max-height: 88vh;
-      }
-      
-      .modal-header {
-        padding: 1rem 1.25rem 0.85rem;
-      }
-      
-      .modal-title {
-        font-size: 1.35rem;
-      }
-      
-      .modal-subtitle {
-        font-size: 0.8rem;
-      }
-      
-      .modal-body {
-        padding: 1rem 1.25rem;
-      }
-      
-      .form-group {
-        margin-bottom: 0.85rem;
-      }
-      
-      .form-label {
-        font-size: 0.85rem;
-        margin-bottom: 0.35rem;
-      }
-      
-      .form-input {
-        padding: 0.65rem 0.8rem;
-        font-size: 0.875rem;
-      }
-      
-      .captcha-container {
-        padding: 0.85rem;
-        margin-top: 0.85rem;
-      }
-      
-      .captcha-label {
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
-      }
-      
-      .captcha-text {
-        font-size: 1rem;
-        letter-spacing: 2px;
-      }
-      
-      .captcha-input {
-        padding: 0.55rem 0.75rem;
-        font-size: 0.875rem;
-      }
-      
-      .modal-footer {
-        padding: 0.85rem 1.25rem 1rem;
-        gap: 0.75rem;
-      }
-      
-      .modal-footer .btn {
-        padding: 0.65rem 0.9rem;
-        font-size: 0.875rem;
-      }
-      
-      .modal-alt-action {
-        font-size: 0.8rem;
-      }
-      
       .hero {
         padding: 120px 1.5rem 60px;
       }
-      
+
       .section {
         padding: 60px 1.5rem;
       }
-      
+
       .features-grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
       }
-      
+
       .footer-grid {
         grid-template-columns: 1fr;
         gap: 2rem;
       }
-      
+
       .footer-bottom {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
       }
-      
+
       .whatsapp-float {
         bottom: 20px;
         right: 20px;
@@ -1430,205 +1435,127 @@
         height: 50px;
         font-size: 1.5rem;
       }
+
+      .mobile-drawer {
+        width: 88%;
+      }
+
+      /* MÓVIL: Glow dorado reducido para performance */
+      h1 {
+        text-shadow: 
+          0 0 10px rgba(212, 175, 55, 1),
+          0 0 20px rgba(212, 175, 55, 0.7);
+      }
+
+      h2 {
+        text-shadow: 
+          0 0 8px rgba(212, 175, 55, 1),
+          0 0 15px rgba(212, 175, 55, 0.6);
+      }
+
+      h3 {
+        text-shadow: 0 0 6px rgba(212, 175, 55, 0.9);
+      }
+
+      /* Cards móvil con bordes dorados visibles */
+      .feature-card, .info-card {
+        border: 2px solid rgba(212, 175, 55, 0.5);
+        background: rgba(212, 175, 55, 0.08);
+      }
     }
-    
+
     @media (max-width: 480px) {
-      /* Header móvil con hamburguesa */
-      .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        height: auto;
-      }
-      
       .navbar-container {
-        padding: 1rem;
-        height: 70px;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
+        padding: 0 1rem;
+        height: 60px;
       }
-      
-      .navbar-logo {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      
+
       .navbar-logo img {
         width: 32px;
         height: 32px;
       }
-      
+
       .navbar-brand {
         font-size: 1.25rem;
+        text-shadow: 0 0 8px rgba(212, 175, 55, 0.9);
       }
-      
-      /* Ocultar botones de login/register en móvil */
-      .navbar-actions .btn {
-        display: none;
-      }
-      
-      /* Mantener theme toggle visible */
+
       .theme-toggle {
-        width: 40px;
-        height: 40px;
+        width: 38px;
+        height: 38px;
         font-size: 1rem;
       }
-      
-      /* Mostrar hamburguesa */
-      .mobile-menu-toggle {
-        display: flex !important;
-      }
-      
-      /* Modals extra compactos en móvil pequeño */
-      .modal {
-        max-width: 340px;
-        width: 94%;
-        max-height: 90vh;
-      }
-      
-      .modal-header {
-        padding: 0.9rem 1rem 0.75rem;
-      }
-      
-      .modal-title {
-        font-size: 1.25rem;
-      }
-      
-      .modal-subtitle {
-        font-size: 0.75rem;
-      }
-      
-      .modal-close {
-        width: 28px;
-        height: 28px;
-        font-size: 1.1rem;
-      }
-      
-      .modal-body {
-        padding: 0.9rem 1rem;
-      }
-      
-      .form-group {
-        margin-bottom: 0.75rem;
-      }
-      
-      .form-label {
-        font-size: 0.8rem;
-      }
-      
-      .form-input {
-        padding: 0.6rem 0.75rem;
-        font-size: 0.85rem;
-      }
-      
-      .captcha-container {
-        padding: 0.75rem;
-        margin-top: 0.75rem;
-      }
-      
-      .captcha-label {
-        font-size: 0.75rem;
-      }
-      
-      .captcha-challenge {
-        padding: 0.5rem 0.7rem;
-      }
-      
-      .captcha-text {
-        font-size: 0.95rem;
-        letter-spacing: 2px;
-      }
-      
-      .captcha-refresh {
-        width: 26px;
-        height: 26px;
-        font-size: 0.95rem;
-      }
-      
-      .captcha-input {
-        padding: 0.5rem 0.7rem;
-        font-size: 0.85rem;
-      }
-      
-      .modal-footer {
-        padding: 0.75rem 1rem 0.9rem;
-        gap: 0.65rem;
-      }
-      
-      .modal-footer .btn {
-        padding: 0.6rem 0.8rem;
-        font-size: 0.85rem;
-      }
-      
-      .modal-alt-action {
-        font-size: 0.75rem;
-      }
-      
-      /* Hero section móvil */
+
       .hero {
-        padding-top: 110px;
-        padding-bottom: 50px;
+        padding: 110px 1rem 50px;
       }
-      
+
+      .hero-logo {
+        width: 110px;
+        height: 110px;
+      }
+
       .hero-buttons {
         flex-direction: column;
         align-items: stretch;
       }
-      
+
       .btn-large {
         width: 100%;
       }
-      
-      .section-header {
-        margin-bottom: 2.5rem;
+
+      .mobile-drawer {
+        width: 90%;
+        max-width: 300px;
+        padding: 24px 18px 28px;
+        background: rgba(16, 17, 20, 0.98);
+        border: 2px solid rgba(212, 175, 55, 0.4);
       }
-      
-      .hero-logo {
-        width: 120px;
-        height: 120px;
+
+      /* Botones móvil con glow dorado */
+      .btn-primary, .btn-secondary {
+        box-shadow: 
+          0 0 15px rgba(212, 175, 55, 0.6),
+          0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+
+      .btn-primary:hover, .btn-secondary:hover {
+        box-shadow: 
+          0 0 25px rgba(212, 175, 55, 0.9),
+          0 4px 18px rgba(212, 175, 55, 0.5);
       }
     }
-    
-    /* Breakpoint extra pequeño para móviles muy pequeños (iPhone SE, etc.) */
+
     @media (max-width: 375px) {
       .navbar-container {
-        padding: 0.875rem;
-        height: 65px;
+        padding: 0 0.75rem;
       }
-      
-      .navbar-logo img {
-        width: 28px;
-        height: 28px;
-      }
-      
+
       .navbar-brand {
         font-size: 1.15rem;
+        text-shadow: 0 0 6px rgba(212, 175, 55, 0.8);
       }
-      
-      .theme-toggle {
-        width: 36px;
-        height: 36px;
-      }
-      
-      .mobile-menu-toggle {
-        width: 36px;
-        height: 36px;
-      }
-      
+
       .hero {
-        padding-top: 100px;
-        padding-bottom: 45px;
+        padding: 105px 0.75rem 45px;
       }
-      
-      .hero-logo {
-        width: 100px;
-        height: 100px;
-        margin-bottom: 1rem;
+
+      .mobile-drawer {
+        width: 92%;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+      }
+
+      /* Optimización móvil pequeño: glow más suave */
+      h1 {
+        text-shadow: 0 0 8px rgba(212, 175, 55, 1);
+      }
+
+      h2 {
+        text-shadow: 0 0 6px rgba(212, 175, 55, 0.9);
+      }
+
+      h3 {
+        text-shadow: 0 0 5px rgba(212, 175, 55, 0.8);
       }
     }
     
@@ -1676,6 +1603,10 @@
        ========================================= -->
   <nav class="navbar" id="navbar">
     <div class="navbar-container">
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-drawer">
+        <i class="fas fa-bars"></i>
+      </button>
+
       <a href="/" class="navbar-logo">
         <img src="/assets/images/logo.png" alt="YavlGold Logo">
         <span class="navbar-brand">YavlGold</span>
@@ -1693,196 +1624,37 @@
         <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
           <i class="fas fa-moon"></i>
         </button>
-        <a href="#login" class="btn btn-outline">Iniciar Sesión</a>
-        <a href="#register" class="btn btn-primary">Registrarse</a>
-        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Menú">
-          <i class="fas fa-bars"></i>
-        </button>
+        <button type="button" class="btn btn-outline" data-modal-target="login-modal">Iniciar Sesión</button>
+        <button type="button" class="btn btn-primary" data-modal-target="register-modal">Registrarse</button>
       </div>
     </div>
   </nav>
-  
-  <!-- =========================================
-       MOBILE DRAWER
-       ========================================= -->
-  <aside class="mobile-drawer" id="mobile-drawer">
+
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true"></div>
+  <aside class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
     <div class="mobile-drawer-header">
-      <a href="/" class="mobile-drawer-logo">
-        <img src="/assets/images/logo.png" alt="YavlGold">
-        <span class="mobile-drawer-brand">YavlGold</span>
+      <a href="/" class="mobile-drawer-brand">
+        <img src="/assets/images/logo.png" alt="YavlGold Logo">
+        <span>YavlGold</span>
       </a>
-      <button class="mobile-drawer-close" id="mobile-drawer-close" aria-label="Cerrar menú">
+      <button type="button" class="mobile-drawer-close" data-drawer-close aria-label="Cerrar menú">
         <i class="fas fa-times"></i>
       </button>
     </div>
-    
+
     <nav class="mobile-drawer-nav">
-      <a href="#inicio" onclick="closeDrawer()">Inicio</a>
-      <a href="#herramientas" onclick="closeDrawer()">Herramientas</a>
-      <a href="#academia" onclick="closeDrawer()">Academia</a>
-      <a href="#comunidad" onclick="closeDrawer()">Comunidad</a>
-      <a href="/dashboard" onclick="closeDrawer()">Dashboard</a>
+      <a href="#inicio"><i class="fas fa-home"></i>Inicio</a>
+      <a href="#herramientas"><i class="fas fa-toolbox"></i>Herramientas</a>
+      <a href="#academia"><i class="fas fa-graduation-cap"></i>Academia</a>
+      <a href="#comunidad"><i class="fas fa-users"></i>Comunidad</a>
+      <a href="/dashboard"><i class="fas fa-chart-line"></i>Dashboard</a>
     </nav>
-    
+
     <div class="mobile-drawer-actions">
-      <button class="btn btn-outline" onclick="openModal('login')">
-        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-      </button>
-      <button class="btn btn-primary" onclick="openModal('register')">
-        <i class="fas fa-user-plus"></i> Registrarse
-      </button>
+      <button type="button" class="btn btn-outline" data-modal-target="login-modal">Iniciar Sesión</button>
+      <button type="button" class="btn btn-primary" data-modal-target="register-modal">Registrarse</button>
     </div>
   </aside>
-  
-  <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeDrawer()"></div>
-  
-  <!-- =========================================
-       MODAL: INICIAR SESIÓN
-       ========================================= -->
-  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
-    <div class="modal-header">
-      <h2 class="modal-title" id="login-title">Iniciar Sesión</h2>
-      <p class="modal-subtitle">Bienvenido de vuelta a YavlGold</p>
-      <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    
-    <div class="modal-body">
-      <form id="login-form">
-        <div class="form-group">
-          <label for="login-email" class="form-label">Correo electrónico</label>
-          <input 
-            type="email" 
-            id="login-email" 
-            name="email" 
-            class="form-input" 
-            placeholder="tu@email.com"
-            required
-          >
-        </div>
-        
-        <div class="form-group">
-          <label for="login-password" class="form-label">Contraseña</label>
-          <input 
-            type="password" 
-            id="login-password" 
-            name="password" 
-            class="form-input" 
-            placeholder="••••••••"
-            required
-          >
-        </div>
-        
-        <div class="captcha-container">
-          <label class="captcha-label">Verificación de seguridad</label>
-          <div class="captcha-challenge">
-            <span class="captcha-text" id="login-captcha-text">ABCD123</span>
-            <button type="button" class="captcha-refresh" onclick="refreshCaptcha('login')" aria-label="Nuevo código">
-              <i class="fas fa-redo"></i>
-            </button>
-          </div>
-          <input 
-            type="text" 
-            id="login-captcha-input" 
-            class="captcha-input" 
-            placeholder="Escribe el código"
-            required
-          >
-        </div>
-        
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-          </button>
-          <p class="modal-alt-action">
-            ¿No tienes cuenta? <a href="#" onclick="event.preventDefault(); closeModal(); setTimeout(() => openModal('register'), 300)">Regístrate aquí</a>
-          </p>
-        </div>
-      </form>
-    </div>
-  </div>
-  
-  <!-- =========================================
-       MODAL: REGISTRARSE
-       ========================================= -->
-  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-labelledby="register-title">
-    <div class="modal-header">
-      <h2 class="modal-title" id="register-title">Crear Cuenta</h2>
-      <p class="modal-subtitle">Únete a la comunidad YavlGold</p>
-      <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    
-    <div class="modal-body">
-      <form id="register-form">
-        <div class="form-group">
-          <label for="register-name" class="form-label">Nombre completo</label>
-          <input 
-            type="text" 
-            id="register-name" 
-            name="name" 
-            class="form-input" 
-            placeholder="Tu nombre"
-            required
-          >
-        </div>
-        
-        <div class="form-group">
-          <label for="register-email" class="form-label">Correo electrónico</label>
-          <input 
-            type="email" 
-            id="register-email" 
-            name="email" 
-            class="form-input" 
-            placeholder="tu@email.com"
-            required
-          >
-        </div>
-        
-        <div class="form-group">
-          <label for="register-password" class="form-label">Contraseña</label>
-          <input 
-            type="password" 
-            id="register-password" 
-            name="password" 
-            class="form-input" 
-            placeholder="••••••••"
-            required
-          >
-        </div>
-        
-        <div class="captcha-container">
-          <label class="captcha-label">Verificación de seguridad</label>
-          <div class="captcha-challenge">
-            <span class="captcha-text" id="register-captcha-text">XYZ789</span>
-            <button type="button" class="captcha-refresh" onclick="refreshCaptcha('register')" aria-label="Nuevo código">
-              <i class="fas fa-redo"></i>
-            </button>
-          </div>
-          <input 
-            type="text" 
-            id="register-captcha-input" 
-            class="captcha-input" 
-            placeholder="Escribe el código"
-            required
-          >
-        </div>
-        
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-user-plus"></i> Crear Cuenta
-          </button>
-          <p class="modal-alt-action">
-            ¿Ya tienes cuenta? <a href="#" onclick="event.preventDefault(); closeModal(); setTimeout(() => openModal('login'), 300)">Inicia sesión aquí</a>
-          </p>
-        </div>
-      </form>
-    </div>
-  </div>
-  
-  <div class="modal-backdrop" id="modal-backdrop" onclick="closeModal()"></div>
   
   <!-- =========================================
        HERO SECTION
@@ -1935,7 +1707,7 @@
           </div>
           <h3>Conceptos Básicos</h3>
           <p>Aprende los fundamentos de blockchain y criptomonedas desde cero.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Comenzar <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1946,7 +1718,7 @@
           </div>
           <h3>Trading Básico</h3>
           <p>Estrategias para comenzar a operar en los mercados cripto.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Comenzar <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -1957,7 +1729,7 @@
           </div>
           <h3>Seguridad Cripto</h3>
           <p>Protege tus activos con las mejores prácticas de seguridad.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Comenzar <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -2047,7 +1819,7 @@
           </div>
           <h3>Cursos Estructurados</h3>
           <p>Programas completos desde nivel principiante hasta experto.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Aprender <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -2058,7 +1830,7 @@
           </div>
           <h3>Tutoriales en Video</h3>
           <p>Contenido audiovisual explicativo y fácil de seguir.</p>
-          <a href="#" class="feature-link">
+          <a href="https://youtube.com/@yavlgoldpro" target="_blank" class="feature-link">
             Ver Cursos <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -2069,7 +1841,7 @@
           </div>
           <h3>Certificaciones</h3>
           <p>Obtén certificados al completar nuestros programas.</p>
-          <a href="#" class="feature-link">
+          <a href="/academia" class="feature-link">
             Certificarse <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -2211,6 +1983,97 @@
      aria-label="Contactar por WhatsApp">
     <i class="fab fa-whatsapp"></i>
   </a>
+
+  <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true"></div>
+
+  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title">
+    <header>
+      <h2 class="modal-title" id="login-modal-title">Inicia sesión en YavlGold</h2>
+      <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+    <p class="modal-description">
+      Accede a tus herramientas profesionales, seguimiento en vivo y recursos personalizados.
+    </p>
+    <form class="modal-form" id="login-form">
+      <label for="login-email">Correo electrónico</label>
+      <input id="login-email" name="email" type="email" required autocomplete="email" placeholder="tu@email.com">
+      
+      <label for="login-password">Contraseña</label>
+      <input id="login-password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+      
+      <div class="captcha-container">
+        <label class="captcha-label">Verifica que no eres un robot</label>
+        <div class="captcha-challenge">
+          <span id="login-captcha-text">A2B3C4</span>
+          <button type="button" class="captcha-refresh" onclick="refreshCaptcha('login')" title="Generar nuevo código">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+        <input 
+          type="text" 
+          id="login-captcha-input" 
+          class="captcha-input" 
+          placeholder="Escribe el código" 
+          required 
+          maxlength="6"
+          autocomplete="off">
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Entrar</button>
+    </form>
+    <div class="modal-footer">
+      <span>¿Aún no tienes cuenta?</span>
+      <a href="#" data-alt-modal="register-modal">Crear cuenta</a>
+    </div>
+  </div>
+
+  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title">
+    <header>
+      <h2 class="modal-title" id="register-modal-title">Crea tu cuenta premium</h2>
+      <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+    <p class="modal-description">
+      Regístrate para desbloquear dashboards personalizados, alertas y acompañamiento experto.
+    </p>
+    <form class="modal-form" id="register-form">
+      <label for="register-name">Nombre completo</label>
+      <input id="register-name" name="name" type="text" required autocomplete="name" placeholder="Juan Pérez">
+      
+      <label for="register-email">Correo electrónico</label>
+      <input id="register-email" name="email" type="email" required autocomplete="email" placeholder="tu@email.com">
+      
+      <label for="register-password">Contraseña</label>
+      <input id="register-password" name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+      
+      <div class="captcha-container">
+        <label class="captcha-label">Verifica que no eres un robot</label>
+        <div class="captcha-challenge">
+          <span id="register-captcha-text">X7Y8Z9</span>
+          <button type="button" class="captcha-refresh" onclick="refreshCaptcha('register')" title="Generar nuevo código">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+        <input 
+          type="text" 
+          id="register-captcha-input" 
+          class="captcha-input" 
+          placeholder="Escribe el código" 
+          required 
+          maxlength="6"
+          autocomplete="off">
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Crear cuenta</button>
+    </form>
+    <div class="modal-footer">
+      <span>¿Ya eres miembro?</span>
+      <a href="#" data-alt-modal="login-modal">Iniciar sesión</a>
+    </div>
+  </div>
   
   <!-- =========================================
        JAVASCRIPT
@@ -2218,132 +2081,185 @@
   <script>
     // Navbar scroll effect
     const navbar = document.getElementById('navbar');
-    let lastScroll = 0;
-    
     window.addEventListener('scroll', () => {
-      const currentScroll = window.pageYOffset;
-      
-      if (currentScroll > 50) {
+      if (window.pageYOffset > 50) {
         navbar.classList.add('scrolled');
       } else {
         navbar.classList.remove('scrolled');
       }
-      
-      lastScroll = currentScroll;
     });
-    
+
     // Theme toggle
     const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = themeToggle.querySelector('i');
-    
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') {
-      document.body.classList.add('light-theme');
-      themeIcon.classList.replace('fa-moon', 'fa-sun');
-    }
-    
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('light-theme');
-      
-      if (document.body.classList.contains('light-theme')) {
+    if (themeToggle) {
+      const themeIcon = themeToggle.querySelector('i');
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
         themeIcon.classList.replace('fa-moon', 'fa-sun');
-        localStorage.setItem('theme', 'light');
-      } else {
-        themeIcon.classList.replace('fa-sun', 'fa-moon');
-        localStorage.setItem('theme', 'dark');
       }
-    });
-    
+
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-theme');
+
+        if (document.body.classList.contains('light-theme')) {
+          themeIcon.classList.replace('fa-moon', 'fa-sun');
+          localStorage.setItem('theme', 'light');
+        } else {
+          themeIcon.classList.replace('fa-sun', 'fa-moon');
+          localStorage.setItem('theme', 'dark');
+        }
+      });
+    }
+
     // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        const href = this.getAttribute('href');
-        if (href !== '#login' && href !== '#register') {
-          e.preventDefault();
-          const target = document.querySelector(href);
-          if (target) {
-            const offsetTop = target.offsetTop - 70;
-            window.scrollTo({
-              top: offsetTop,
-              behavior: 'smooth'
-            });
-          }
+    const anchorLinks = Array.from(document.querySelectorAll('a[href^="#"]')).filter(anchor => {
+      const href = anchor.getAttribute('href');
+      return href && href.length > 1 && !anchor.dataset.altModal;
+    });
+
+    anchorLinks.forEach(anchor => {
+      anchor.addEventListener('click', event => {
+        const target = document.querySelector(anchor.getAttribute('href'));
+        if (target) {
+          event.preventDefault();
+          const offsetTop = target.getBoundingClientRect().top + window.pageYOffset - 70;
+          window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+          });
         }
       });
     });
-    
-    // =========================================
-    // MOBILE DRAWER & MODALS SYSTEM
-    // =========================================
+
+    // Mobile drawer navigation
     const body = document.body;
-    const mobileDrawer = document.getElementById('mobile-drawer');
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
-    const mobileDrawerClose = document.getElementById('mobile-drawer-close');
-    const loginModal = document.getElementById('login-modal');
-    const registerModal = document.getElementById('register-modal');
-    const modalBackdrop = document.getElementById('modal-backdrop');
-    
-    // Drawer functions
-    function openDrawer() {
-      body.classList.add('drawer-open');
-      mobileDrawer.setAttribute('aria-hidden', 'false');
-      mobileDrawerClose.focus();
-    }
-    
-    function closeDrawer() {
-      body.classList.remove('drawer-open');
+    const mobileDrawer = document.getElementById('mobile-drawer');
+    const mobileOverlay = document.getElementById('mobile-menu-overlay');
+    const drawerCloseButtons = document.querySelectorAll('[data-drawer-close]');
+
+    const closeDrawer = (restoreFocus = true) => {
+      if (!mobileDrawer || !mobileOverlay) return;
+      mobileDrawer.classList.remove('active');
+      mobileOverlay.classList.remove('active');
       mobileDrawer.setAttribute('aria-hidden', 'true');
+      mobileOverlay.setAttribute('aria-hidden', 'true');
+      body.classList.remove('drawer-open');
+      if (mobileMenuToggle) {
+        mobileMenuToggle.setAttribute('aria-expanded', 'false');
+        if (restoreFocus) {
+          mobileMenuToggle.focus();
+        }
+      }
+    };
+
+    const openDrawer = () => {
+      if (!mobileDrawer || !mobileOverlay) return;
+      mobileDrawer.classList.add('active');
+      mobileOverlay.classList.add('active');
+      mobileDrawer.setAttribute('aria-hidden', 'false');
+      mobileOverlay.setAttribute('aria-hidden', 'false');
+      body.classList.add('drawer-open');
+      if (mobileMenuToggle) {
+        mobileMenuToggle.setAttribute('aria-expanded', 'true');
+      }
+      const firstFocusable = mobileDrawer.querySelector('a, button');
+      if (firstFocusable) {
+        firstFocusable.focus();
+      }
+    };
+
+    if (mobileMenuToggle && mobileDrawer && mobileOverlay) {
+      mobileMenuToggle.addEventListener('click', () => {
+        const expanded = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
+        if (expanded) {
+          closeDrawer(false);
+        } else {
+          openDrawer();
+        }
+      });
+
+      mobileOverlay.addEventListener('click', () => closeDrawer());
+      drawerCloseButtons.forEach(button => button.addEventListener('click', () => closeDrawer()));
+
+      mobileDrawer.querySelectorAll('.mobile-drawer-nav a').forEach(link => {
+        link.addEventListener('click', () => closeDrawer(false));
+      });
+
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 1024) {
+          closeDrawer(false);
+        }
+      });
     }
-    
-    // Modal functions
-    function openModal(type) {
-      closeDrawer(); // Close drawer if open
-      
-      const modal = type === 'login' ? loginModal : registerModal;
-      
-      body.classList.add('modal-open');
-      modal.style.display = 'flex';
-      modal.setAttribute('aria-hidden', 'false');
-      
-      // Focus first input
-      setTimeout(() => {
-        const firstInput = modal.querySelector('input');
-        if (firstInput) firstInput.focus();
-      }, 300);
-    }
-    
-    function closeModal() {
+
+    // Modal handling
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalTriggers = document.querySelectorAll('[data-modal-target]');
+    const modalCloseButtons = document.querySelectorAll('[data-modal-close]');
+    const modalAltLinks = document.querySelectorAll('[data-alt-modal]');
+    let activeModal = null;
+    let lastFocusedElement = null;
+
+    const closeModal = (restoreFocus = true) => {
+      if (!activeModal || !modalBackdrop) return;
+      activeModal.classList.remove('open');
+      activeModal.setAttribute('aria-hidden', 'true');
+      activeModal = null;
+      modalBackdrop.classList.remove('open');
+      modalBackdrop.setAttribute('aria-hidden', 'true');
       body.classList.remove('modal-open');
-      loginModal.style.display = 'none';
-      registerModal.style.display = 'none';
-      loginModal.setAttribute('aria-hidden', 'true');
-      registerModal.setAttribute('aria-hidden', 'true');
+      if (restoreFocus && lastFocusedElement) {
+        lastFocusedElement.focus();
+      }
+    };
+
+    const openModal = id => {
+      const modal = document.getElementById(id);
+      if (!modal || !modalBackdrop) return;
+      closeDrawer(false);
+      if (activeModal && activeModal !== modal) {
+        closeModal(false);
+      }
+      lastFocusedElement = document.activeElement;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      modalBackdrop.classList.add('open');
+      modalBackdrop.setAttribute('aria-hidden', 'false');
+      body.classList.add('modal-open');
+      activeModal = modal;
+      const focusable = modal.querySelector('input, button, [href], select, textarea');
+      if (focusable) {
+        focusable.focus();
+      }
+    };
+
+    modalTriggers.forEach(trigger => {
+      trigger.addEventListener('click', () => {
+        const targetId = trigger.getAttribute('data-modal-target');
+        if (targetId) {
+          openModal(targetId);
+        }
+      });
+    });
+
+    modalCloseButtons.forEach(button => button.addEventListener('click', () => closeModal()));
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', () => closeModal());
     }
-    
-    // Event listeners
-    mobileMenuToggle.addEventListener('click', openDrawer);
-    mobileDrawerClose.addEventListener('click', closeDrawer);
-    mobileMenuOverlay.addEventListener('click', closeDrawer);
-    modalBackdrop.addEventListener('click', closeModal);
-    
-    // Desktop login/register buttons
-    document.querySelectorAll('a[href="#login"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal('login');
+
+    modalAltLinks.forEach(link => {
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        const targetId = link.getAttribute('data-alt-modal');
+        if (targetId) {
+          closeModal(false);
+          openModal(targetId);
+        }
       });
     });
-    
-    document.querySelectorAll('a[href="#register"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal('register');
-      });
-    });
-    
-    // Close modals on Escape key
+
     window.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
         if (body.classList.contains('modal-open')) {
@@ -2353,12 +2269,12 @@
         }
       }
     });
-    
+
     // Captcha generation function
     function refreshCaptcha(formType) {
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin caracteres ambiguos (I, O, 0, 1)
       let code = '';
-      for (let i = 0; i < 7; i++) {
+      for (let i = 0; i < 6; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       const captchaText = document.getElementById(`${formType}-captcha-text`);
@@ -2366,17 +2282,11 @@
       if (captchaText) captchaText.textContent = code;
       if (captchaInput) captchaInput.value = '';
     }
-    
-    // Expose globally for onclick handlers
-    window.openModal = openModal;
-    window.closeModal = closeModal;
-    window.closeDrawer = closeDrawer;
-    window.refreshCaptcha = refreshCaptcha;
-    
+
     // Initialize captchas on page load
     refreshCaptcha('login');
     refreshCaptcha('register');
-    
+
     // Form submission with captcha validation
     const forms = [document.getElementById('login-form'), document.getElementById('register-form')];
     forms.forEach(form => {
