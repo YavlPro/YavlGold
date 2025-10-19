@@ -1,41 +1,63 @@
 # ✨ YavlGold — Ecosistema Cripto Premium
 
-> **Plataforma educativa blockchain** con diseño premium en tema oscuro y acentos dorados. Herramientas profesionales, academia y comunidad para el mundo cripto.
+> **Plataforma educativa blockchain** con diseño premium glassmorphism. Herramientas profesionales, academia y comunidad para el mundo cripto.
 
-[![Estado](https://img.shields.io/badge/Estado-En%20Producci%C3%B3n-success)](https://yavlpro.github.io/gold/)
+[![Estado](https://img.shields.io/badge/Estado-Producci%C3%B3n-success)](https://yavlgold.com/)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
-[![Diseño](https://img.shields.io/badge/Dise%C3%B1o-Premium-gold)]()
+[![Diseño](https://img.shields.io/badge/Dise%C3%B1o-Glassmorphism-gold)]()
+[![Responsive](https://img.shields.io/badge/Responsive-100%25-brightgreen)]()
 
-🌐 **En vivo:** [https://yavlpro.github.io/gold/](https://yavlpro.github.io/gold/)
+🌐 **En vivo:** [https://yavlgold.com/](https://yavlgold.com/)
 
 ---
 
-## 🎨 Diseño Premium Sagrado
+## 🎨 Diseño Premium con Glassmorphism
 
-YavlGold utiliza un **diseño único y consistente** con colores sagrados que definen nuestra identidad visual:
+YavlGold utiliza un **diseño de última generación** con efectos glassmorphism y paleta dorada champagne:
 
-### 🌟 Paleta de Colores Oficial
+### 🌟 Paleta de Colores Champagne Gold
 
 ```css
-/* Colores Sagrados YavlGold */
---gold-primary: #C8A752;      /* Dorado Principal */
---gold-secondary: #D4AF37;    /* Dorado Brillante */
---dark-bg: #0B0C0F;          /* Fondo Oscuro */
---dark-surface: #12141A;     /* Superficie Oscura */
+/* Champagne Soft Gold - Paleta Premium */
+--gold-300: #E8D59B;        /* Champagne Extra Suave */
+--gold-400: #E2C675;        /* Champagne Acento Principal */
+--gold-500: #C9A851;        /* Champagne Intenso */
+--gold-600: #A8863B;        /* Sombras y Contornos */
+
+/* Fondos Oscuros Premium */
+--bg-main: #0C1015;         /* Fondo principal profundo */
+--bg-surface: #12161C;      /* Superficies elevadas */
+
+/* Textos - Máxima Legibilidad */
+--text-primary: #E8ECF2;    /* Texto principal ultra claro */
+--text-secondary: #C9D0DA;  /* Texto secundario suave */
 ```
 
-### ✨ Características del Diseño
+### ✨ Características Premium
 
-- **Tema Oscuro Elegante**: Fondo #0B0C0F con acentos dorados
-- **Tipografía Premium**: Playfair Display (títulos) + Inter (cuerpo)
-- **Animaciones GPU**: Efectos glow, pulse y transformaciones optimizadas
-- **Logo Animado**: 144px con efecto glow pulsante dorado
-- **Sistema de Tarjetas**: Hover effects premium con gradientes
-- **100% Responsive**: Optimizado para móvil, tablet y desktop
-- **Toggle Tema**: Claro/Oscuro con transiciones suaves
-- **Accesibilidad**: WCAG AA+ compliant
+#### 🎯 Diseño Visual
+- **Glassmorphism Effect**: Backdrop blur (20px) con saturación aumentada
+- **Tema Oscuro Premium**: Negro profundo (#0C1015) con acentos dorados
+- **Tipografía Elegante**: Playfair Display (headings) + Inter (body)
+- **Logo Animado**: Efecto glow pulsante con sombra dorada
+- **Transiciones Suaves**: cubic-bezier optimizado
 
-> 🚫 **Nota Importante:** YavlGold utiliza ÚNICAMENTE este diseño premium con colores sagrados. No hay skins alternativos ni temas múltiples. Esta es nuestra identidad visual oficial y permanente.
+#### 📱 Mobile-First
+- **Drawer Lateral**: Glassmorphism con blur 20px + saturate 180%
+- **Modals Compactos**: Desktop (420px), Tablet (380px), Móvil (340px)
+- **Auth Completo**: Login/Register con validación captcha
+- **Scrollbar Dorado**: Personalizado 6px ultra delgado
+- **Touch Optimizado**: Botones y espaciados para dedos
+
+#### 🔐 Características de Seguridad
+- **Captcha Visual**: Códigos aleatorios 7 caracteres (A-Z, 0-9)
+- **Validación Frontend**: Verificación antes de envío
+- **Refresh Dinámico**: Regeneración automática tras errores
+
+#### 🎭 Temas
+- **Dark Theme**: Predeterminado con dorado champagne
+- **Light Theme**: Disponible con toggle suave
+- **Persistencia**: LocalStorage guarda preferencia
 
 ---
 
@@ -43,302 +65,213 @@ YavlGold utiliza un **diseño único y consistente** con colores sagrados que de
 
 ```
 yavlgold/
-├── index.html                # Página principal (diseño premium)
-├── index-premium.html        # Respaldo del diseño premium
+├── index.html                # Página principal optimizada
+├── index-premium.html        # Versión alternativa premium
+│
 ├── assets/
-│   ├── css/
-│   │   └── inline styles    # CSS integrado en index.html
-│   ├── js/
-│   │   ├── auth/           # Sistema de autenticación
-│   │   └── main.js         # Funcionalidad principal
-│   └── images/
-│       └── logo.png        # Logo oficial YavlGold
-├── herramientas/
-│   ├── index.html          # Hub de herramientas
-│   ├── calculadora.html    # Calculadora educativa
-│   ├── conversor.html      # Conversor de cripto
-│   └── analisis.html       # Análisis de mercado
-├── academia/
-│   ├── index.html
-│   └── lecciones/          # Contenido educativo
-├── dashboard/
-│   └── index.html          # Panel del usuario
-├── docs/                   # Documentación técnica
-└── go/                     # Sistema de redirects
+│   ├── images/
+│   │   ├── logo.png         # Logo YavlGold 512x512
+│   │   └── og-cover.png     # Open Graph image
+│   ├── css/                 # Estilos inline en HTML
+│   └── js/                  # JavaScript inline en HTML
+│
+├── apps/
+│   ├── gold/                # Aplicación Gold
+│   ├── agro/                # YavlAgro integration
+│   ├── social/              # Red social cripto
+│   └── suite/               # Suite de herramientas
+│
+├── academia/                # Módulo educativo
+│   └── lecciones/
+│
+├── herramientas/            # Herramientas Pro
+├── dashboard/               # Panel de usuario
+├── profile/                 # Perfiles de usuario
+│
+├── docs/                    # Documentación
+│   ├── RESUMEN-EJECUTIVO.md
+│   ├── DISEÑO-PREMIUM-2025.md
+│   ├── DISEÑO-VISUAL-GUIA.md
+│   ├── COMPARATIVA-DISEÑO.md
+│   ├── INICIO-RAPIDO.md
+│   ├── MOCKUP-VISUAL-DETALLADO.md
+│   └── INDICE-ARCHIVOS.md
+│
+├── backups/                 # Respaldos del sistema
+├── tests/                   # Tests de integración
+│
+├── package.json
+├── pnpm-lock.yaml
+├── netlify.toml
+├── vercel.json
+├── robots.txt
+├── sitemap.xml
+└── CNAME
 ```
 
 ---
 
-## 🚀 Características Principales
+## 🚀 Inicio Rápido
 
-### 🎓 Academia Blockchain
-- Fundamentos de blockchain y criptomonedas
-- Cursos interactivos con quizzes
-- Seguridad digital y wallets
-- DeFi (Finanzas Descentralizadas)
-- Certificados de finalización
-
-### 🛠️ Herramientas Profesionales
-- **Calculadora Cripto**: Interés compuesto y ROI
-- **Conversor**: Conversión entre criptomonedas
-- **Análisis Técnico**: Gráficos y datos de mercado
-- **Portfolio Manager**: Gestión de activos
-
-### 👥 Comunidad Global
-- Foros de discusión
-- Eventos y webinars
-- Red de networking
-- Soporte 24/7
-
-### 🔐 Sistema de Autenticación
-- Email + Password
-- Verificación hCaptcha
-- Protección de contenido premium
-- Dashboard personalizado
-
----
-
-## 🛠️ Stack Tecnológico
-
-- **Frontend**: HTML5, CSS3 Variables, JavaScript Vanilla
-- **Backend**: Supabase (Auth + Database)
-- **Seguridad**: hCaptcha + RLS Policies
-- **Hosting**: GitHub Pages
-- **Diseño**: Sistema de tokens CSS con colores sagrados
-- **Tipografía**: Google Fonts (Playfair Display + Inter)
-- **Iconos**: Font Awesome 6.4
-- **Animaciones**: GPU-accelerated CSS transforms
-
----
-
-## 📋 Roadmap
-
-### ✅ Fase 1: Fundación (Completada)
-- [x] Diseño premium con colores sagrados implementado
-- [x] Sistema de autenticación funcional
-- [x] Estructura base responsive
-- [x] Logo animado con efectos glow
-- [x] Deploy a producción en GitHub Pages
-
-### 🔄 Fase 2: Contenido (En Progreso)
-- [ ] 20 lecciones de blockchain
-- [ ] Sistema de quizzes interactivos
-- [ ] Badges y sistema de progreso
-- [ ] Glosario de términos cripto
-- [ ] Videos tutoriales
-
-### ⏳ Fase 3: Ecosistema (Próximo)
-- [ ] Integración con YavlSocial
-- [ ] Acceso premium en YavlSuite
-- [ ] Certificados NFT
-- [ ] Trading paper (simulado)
-- [ ] API pública
-
-### 🔮 Fase 4: Expansión (Futuro)
-- [ ] App móvil nativa
-- [ ] Soporte multiidioma
-- [ ] Integración con wallets
-- [ ] Marketplace educativo
-- [ ] DAO de gobernanza
-
----
-
-## 🎯 Instalación Local
-
-### 1. Clonar el repositorio
+### Desarrollo Local
 
 ```bash
+# Clonar repositorio
 git clone https://github.com/YavlPro/YavlGold.git
 cd YavlGold
+
+# Abrir con Live Server (VS Code)
+# O simplemente abrir index.html en el navegador
 ```
 
-### 2. Configurar entorno (opcional)
+### Deployment
+
+El sitio se despliega automáticamente en GitHub Pages:
 
 ```bash
-# Si usas un servidor local
-python -m http.server 8000
-# o
-npx serve
+git add .
+git commit -m "feat: nueva funcionalidad"
+git push origin main
 ```
 
-### 3. Abrir en el navegador
-
-```
-http://localhost:8000
-```
-
-### 4. Configurar Supabase (opcional para desarrollo)
-
-```javascript
-// Configura tus variables de entorno
-const SUPABASE_URL = 'tu_url_de_supabase';
-const SUPABASE_ANON_KEY = 'tu_anon_key';
-```
-
-⚠️ **Importante:** Nunca expongas tus keys reales en código público. Usa variables de entorno.
+**URL de producción:** [https://yavlgold.com/](https://yavlgold.com/)
 
 ---
 
-## 🎨 Sistema de Tokens CSS
+## 💻 Tecnologías
 
-El diseño de YavlGold está construido sobre un sistema de tokens CSS que garantiza consistencia visual:
+- **HTML5**: Semántico y accesible
+- **CSS3**: Custom properties, Flexbox, Grid
+- **JavaScript ES6+**: Vanilla JS (sin frameworks)
+- **Font Awesome 6.4.0**: Iconografía
+- **Google Fonts**: Playfair Display + Inter
+- **Glassmorphism**: Backdrop-filter blur effects
+- **Responsive Design**: Mobile-first approach
+
+---
+
+## 📱 Breakpoints Responsive
 
 ```css
-/* Ejemplo de uso de tokens */
-.card {
-  background: var(--dark-surface);
-  color: var(--gold-primary);
-  box-shadow: 0 4px 6px rgba(200, 167, 82, 0.1);
-}
+/* Desktop */
+@media (min-width: 1024px) { /* Full navbar + modals */ }
 
-.button-primary {
-  background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
-  color: var(--dark-bg);
-}
+/* Tablet */
+@media (max-width: 1024px) { /* Drawer + compact modals */ }
+@media (max-width: 768px) { /* Optimized spacing */ }
 
-.logo-glow {
-  box-shadow: 0 0 20px var(--gold-primary);
-  animation: pulse 2s infinite;
-}
+/* Mobile */
+@media (max-width: 480px) { /* Ultra compact */ }
+@media (max-width: 375px) { /* Small devices */ }
 ```
 
 ---
 
-## 🤝 Contribuciones
+## 🎯 Características Principales
 
-¡Las contribuciones son bienvenidas! Por favor, sigue estas pautas:
+### 🏠 Landing Page
+- Hero section con logo animado
+- Secciones: Conceptos, Herramientas, Academia, Comunidad
+- Footer con 4 columnas informativas
+- WhatsApp floating button
 
-### Áreas donde necesitamos ayuda:
+### 📱 Mobile Experience
+- Drawer lateral glassmorphism (320px, blur 20px)
+- Overlay con blur intenso (8px)
+- Navegación completa en drawer
+- Auth buttons en footer del drawer
 
-- 📝 **Contenido**: Creación de lecciones y tutoriales
-- 🎨 **Diseño**: Mejoras UI/UX (manteniendo colores sagrados)
-- 💻 **Desarrollo**: Nuevas herramientas y funcionalidades
-- 🌍 **Traducción**: Contenido en otros idiomas
-- 🧪 **Testing**: Pruebas y reportes de bugs
-- 📚 **Documentación**: Guías y tutoriales
+### 🔐 Sistema de Autenticación
+- Modal de Login compacto
+- Modal de Registro compacto
+- Captcha visual con refresh
+- Validación en tiempo real
+- Scroll interno (max-height 85-90vh)
 
-### Proceso de contribución:
+### 🎨 Efectos Visuales
+- Glassmorphism en drawer y modals
+- Blur effects (backdrop-filter)
+- Animaciones suaves (cubic-bezier)
+- Hover effects en navegación
+- Logo glow pulsante
+- Scrollbar dorado personalizado
 
-1. Fork el repositorio
+---
+
+## 📝 Commits Recientes
+
+```bash
+# Historial de mejoras (Oct 2025)
+6016ca0 - feat: compact drawer with glassmorphism blur effect
+72964a8 - feat: make modals more compact for mobile and desktop
+408346b - fix: restore mobile navbar with hamburger menu
+64600ec - feat: port mobile improvements to main index.html
+2e43c3c - feat: add captcha validation with scroll support
+cd1a181 - fix: mobile drawer and auth modals with validation
+```
+
+---
+
+## 🛠️ Mantenimiento
+
+### Archivos Principales
+- `index.html` - Landing page principal (mantener actualizado)
+- `index-premium.html` - Versión alternativa premium
+- `assets/images/logo.png` - Logo oficial 512x512
+- `README.md` - Este archivo
+
+### Backups
+- `index.html.backup` - Respaldo pre-cambios importantes
+- `index.html.backup-pre-mobile-fix` - Respaldo pre-mobile
+- `backups/` - Respaldos históricos organizados
+
+### Limpieza
+Archivos de test y temporales eliminados para mantener el repo limpio.
+
+---
+
+## 🤝 Contribuir
+
+Este es un proyecto privado de YavlPro. Para contribuciones:
+
+1. Fork del repositorio
 2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit tus cambios: `git commit -m 'feat: Agregar nueva funcionalidad'`
-4. Push a la rama: `git push origin feature/nueva-funcionalidad`
+3. Commit: `git commit -m 'feat: nueva funcionalidad'`
+4. Push: `git push origin feature/nueva-funcionalidad`
 5. Abre un Pull Request
 
 ---
 
-## ⚠️ Aviso Legal
+## 📄 Licencia
 
-**YavlGold es un proyecto exclusivamente educativo.**
-
-- ❌ NO ofrecemos asesoría financiera
-- ❌ NO recomendamos inversiones específicas
-- ❌ NO garantizamos rendimientos
-- ✅ SÍ enseñamos tecnología blockchain
-- ✅ SÍ promovemos educación financiera responsable
-
-**Siempre consulta profesionales certificados antes de tomar decisiones financieras.**
-
----
-
-## 👨‍💻 Autor
-
-**Yerikson Varela** (YavlPro)  
-Educador en tecnología blockchain y creador del ecosistema Yavl.
+MIT License - Ver [LICENSE](LICENSE) para más detalles.
 
 ---
 
 ## 📞 Contacto
 
-- 🌐 **Web**: [yavlpro.github.io/gold](https://yavlpro.github.io/gold/)
-- 🐦 **X (Twitter)**: [@Yavlcapitan](https://x.com/Yavlcapitan)
-- 📱 **Telegram**: [Comunidad YavlGold](https://t.me/+94LkbchALuk3Zjhh)
-- 📺 **YouTube**: [@yavlprogold](https://youtube.com/@yavlprogold)
-- 💼 **GitHub**: [YavlPro](https://github.com/YavlPro)
+- **Web:** [https://yavlgold.com/](https://yavlgold.com/)
+- **GitHub:** [@YavlPro](https://github.com/YavlPro)
+- **Organización:** YavlPro
 
 ---
 
-## 📚 Recursos Recomendados
+## 🎉 Estado del Proyecto
 
-- [MIT Blockchain & Money (OCW)](https://ocw.mit.edu/courses/15-s12-blockchain-and-money-fall-2018/)
-- [Ethereum.org Learn](https://ethereum.org/es/learn/)
-- [Mastering Bitcoin (Open Source)](https://github.com/bitcoinbook/bitcoinbook)
-- [CoinGecko Learn](https://www.coingecko.com/learn)
-- [Binance Academy](https://academy.binance.com)
-
----
-
-## ❓ FAQ
-
-<details>
-<summary><strong>¿Es gratis?</strong></summary>
-<br>
-Sí, el contenido educativo base es 100% gratuito. Habrá contenido premium opcional en el futuro.
-</details>
-
-<details>
-<summary><strong>¿Necesito conocimientos previos?</strong></summary>
-<br>
-No, empezamos desde cero. Solo necesitas ganas de aprender.
-</details>
-
-<details>
-<summary><strong>¿Dan certificados?</strong></summary>
-<br>
-Sí, certificados de finalización (reconocimiento educativo, no oficial). En el futuro serán NFTs.
-</details>
-
-<details>
-<summary><strong>¿Puedo cambiar los colores del diseño?</strong></summary>
-<br>
-No. YavlGold utiliza únicamente su diseño premium con colores sagrados (#C8A752, #D4AF37, #0B0C0F). Esta es nuestra identidad visual oficial y no se cambiará.
-</details>
-
-<details>
-<summary><strong>¿Puedo usar esto para aprender a invertir?</strong></summary>
-<br>
-Aprenderás sobre tecnología y conceptos, pero NO damos recomendaciones de inversión. Consulta siempre a profesionales certificados.
-</details>
-
-<details>
-<summary><strong>¿Cómo puedo contribuir?</strong></summary>
-<br>
-Abre issues para reportar bugs o sugerencias, y pull requests para contribuciones de código. Lee la sección de Contribuciones arriba.
-</details>
-
----
-
-## ⚖️ Licencia
-
-[MIT License](LICENSE) © 2025 Yerikson Varela (YavlPro)
-
----
-
-## 🙏 Créditos
-
-- **Desarrollo & Visión**: Yerikson Varela (YavlPro)
-- **Inspiración**: MIT OpenCourseWare, Ethereum.org, Mastering Bitcoin
-- **Comunidad**: YavlGold Community
-- **Diseño**: Tema oscuro premium con acentos dorados
-
----
-
-## 🌟 ¿Te gusta YavlGold?
-
-- ⭐ Dale una estrella a este repositorio
-- 🔄 Comparte con tu comunidad
-- 🐦 Síguenos en [X (Twitter)](https://x.com/Yavlcapitan)
-- 📱 Únete a nuestro [Telegram](https://t.me/+94LkbchALuk3Zjhh)
-
----
-
-**Hecho con 💛 para la comunidad hispana de blockchain**  
-**Parte del ecosistema Yavl: YavlSuite • YavlSocial • YavlGold**
+✅ **En Producción Activa**
+- Landing page optimizada
+- Mobile drawer glassmorphism
+- Auth modals compactos
+- Captcha funcional
+- 100% responsive
+- Accesible (WCAG AA+)
 
 ---
 
 <div align="center">
-  <img src="https://img.shields.io/badge/YavlGold-Premium-gold?style=for-the-badge&logo=bitcoin&logoColor=white" alt="YavlGold Premium"/>
-  <br><br>
-  <strong>✨ Diseño Premium • 🔒 Educación Segura • 🌍 Comunidad Global ✨</strong>
+  
+### ✨ Hecho con 💛 por YavlPro
+
+**YavlGold** — *Tu ecosistema cripto premium*
+
 </div>
