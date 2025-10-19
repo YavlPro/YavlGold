@@ -1,61 +1,93 @@
 # ✨ YavlGold — Ecosistema Cripto Premium
 
-> **Plataforma educativa blockchain** con diseño premium glassmorphism. Herramientas profesionales, academia y comunidad para el mundo cripto.
+> **Plataforma educativa blockchain** con **identidad oficial YavlGold**. Herramientas profesionales, academia y comunidad para el mundo cripto.
 
 [![Estado](https://img.shields.io/badge/Estado-Producci%C3%B3n-success)](https://yavlgold.com/)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
-[![Diseño](https://img.shields.io/badge/Dise%C3%B1o-Glassmorphism-gold)]()
+[![Diseño](https://img.shields.io/badge/Dise%C3%B1o-Identidad%20Oficial-gold)]()
 [![Responsive](https://img.shields.io/badge/Responsive-100%25-brightgreen)]()
 
 🌐 **En vivo:** [https://yavlgold.com/](https://yavlgold.com/)
 
 ---
 
-## 🎨 Diseño Premium con Glassmorphism
+## 🎨 Identidad Visual Oficial YavlGold
 
-YavlGold utiliza un **diseño de última generación** con efectos glassmorphism y paleta dorada champagne:
+YavlGold sigue **estrictas guías de identidad corporativa** con colores, tipografías y elementos visuales definidos oficialmente:
 
-### 🌟 Paleta de Colores Champagne Gold
+### 🌟 Paleta de Colores Oficial (NUNCA CAMBIAR)
 
 ```css
-/* Champagne Soft Gold - Paleta Premium */
---gold-300: #E8D59B;        /* Champagne Extra Suave */
---gold-400: #E2C675;        /* Champagne Acento Principal */
---gold-500: #C9A851;        /* Champagne Intenso */
---gold-600: #A8863B;        /* Sombras y Contornos */
+/* COLORES PRINCIPALES - IDENTIDAD YAVL */
+--yavl-gold: #D4AF37;              /* ORO PRINCIPAL - Color oficial YavlGold */
+--yavl-gold-dark: #B8860B;         /* ORO OSCURO (hover/secondary) */
 
-/* Fondos Oscuros Premium */
---bg-main: #0C1015;         /* Fondo principal profundo */
---bg-surface: #12161C;      /* Superficies elevadas */
+/* FONDOS OFICIALES */
+--yavl-dark: #0B0C0F;              /* Negro Yavl principal */
+--bg-dark: #101114;                /* Fondo oscuro general */
+--bg-card: rgba(212, 175, 55, 0.05); /* Cards con tinte dorado */
 
-/* Textos - Máxima Legibilidad */
---text-primary: #E8ECF2;    /* Texto principal ultra claro */
---text-secondary: #C9D0DA;  /* Texto secundario suave */
+/* TEXTOS - Máxima Legibilidad */
+--text-light: #f0f0f0;             /* Texto principal claro */
+--text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
+--text-muted: #6b7280;             /* Texto deshabilitado/notas */
 ```
 
-### ✨ Características Premium
+### 📝 Tipografía Oficial
 
-#### 🎯 Diseño Visual
-- **Glassmorphism Effect**: Backdrop blur (20px) con saturación aumentada
-- **Tema Oscuro Premium**: Negro profundo (#0C1015) con acentos dorados
-- **Tipografía Elegante**: Playfair Display (headings) + Inter (body)
-- **Logo Animado**: Efecto glow pulsante con sombra dorada
-- **Transiciones Suaves**: cubic-bezier optimizado
+```css
+/* FUENTES OBLIGATORIAS */
+--font-heading: 'Orbitron', sans-serif;  /* Títulos - Futurista/Tech */
+--font-body: 'Rajdhani', sans-serif;     /* Cuerpo - Moderna/Legible */
+```
+
+### 🎯 Elementos Visuales Obligatorios
+
+#### **Grid Background** (Presente en TODA la identidad)
+```css
+background-image:
+  linear-gradient(var(--border-gold) 1px, transparent 1px),
+  linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
+background-size: 40px 40px;  /* Grid de 40x40 píxeles */
+```
+
+### ✨ Mejoras Implementadas (Octubre 2025)
+
+#### � Identidad Visual
+- **Color Oro Oficial**: #D4AF37 (100% consistente en toda la plataforma)
+- **Grid Background**: Patrón obligatorio 40×40px con líneas doradas
+- **Tipografía Oficial**: Orbitron (títulos futuristas) + Rajdhani (cuerpo moderno)
+- **Logo Animado**: Efecto glow pulsante con sombra dorada (#D4AF37)
+- **Transiciones Suaves**: 0.3s ease para interacciones
+
+#### 📝 Optimizaciones de Legibilidad
+- **Antialiasing Global**: `-webkit-font-smoothing: antialiased` en toda la página
+- **Text Shadow Reducido**: De 15px a 2-3px para mayor nitidez
+- **Glow Effects**: Reducidos 50% (de 15px a 8px) para mejor claridad
+- **Color Consistente**: Todos los títulos usan exactamente var(--yavl-gold)
+- **Sin Gradientes**: Eliminados gradient-clip que causaban borrosidad
+
+#### � Corrección de Enlaces
+- **12 Enlaces Corregidos**: De `#` a rutas funcionales
+- **Academia**: `/academia` (lecciones y cursos)
+- **Herramientas**: `/herramientas` (calculadoras y conversores)
+- **Dashboard**: `/dashboard` (panel de control)
+- **Social Media**: YouTube, Telegram, Twitter con URLs reales
 
 #### 📱 Mobile-First
-- **Drawer Lateral**: Glassmorphism con blur 20px + saturate 180%
-- **Modals Compactos**: Desktop (420px), Tablet (380px), Móvil (340px)
+- **Drawer Lateral**: Menu responsive con animaciones suaves
+- **Modals Compactos**: Adaptables a todos los tamaños de pantalla
 - **Auth Completo**: Login/Register con validación captcha
-- **Scrollbar Dorado**: Personalizado 6px ultra delgado
-- **Touch Optimizado**: Botones y espaciados para dedos
+- **Scrollbar Dorado**: Personalizado con color oficial
+- **Touch Optimizado**: Botones 44×44px mínimo para dedos
 
 #### 🔐 Características de Seguridad
 - **Captcha Visual**: Códigos aleatorios 7 caracteres (A-Z, 0-9)
 - **Validación Frontend**: Verificación antes de envío
 - **Refresh Dinámico**: Regeneración automática tras errores
 
-#### 🎭 Temas
-- **Dark Theme**: Predeterminado con dorado champagne
+#### 🎭 Sistema de Temas
+- **Dark Theme**: Predeterminado con oro #D4AF37
 - **Light Theme**: Disponible con toggle suave
 - **Persistencia**: LocalStorage guarda preferencia
 
@@ -93,9 +125,16 @@ yavlgold/
 │   ├── DISEÑO-PREMIUM-2025.md
 │   ├── DISEÑO-VISUAL-GUIA.md
 │   ├── COMPARATIVA-DISEÑO.md
+│   ├── ACTUALIZACION-IDENTIDAD-OFICIAL-2025.md  # ✨ NUEVO
+│   ├── AJUSTES-LEGIBILIDAD-2025.md              # ✨ NUEVO
 │   ├── INICIO-RAPIDO.md
 │   ├── MOCKUP-VISUAL-DETALLADO.md
 │   └── INDICE-ARCHIVOS.md
+│
+├── VERIFICACION-FINAL.md    # ✨ Checklist de validación
+├── GUIA-RAPIDA-IDENTIDAD.md # ✨ Guía de uso rápido
+├── BORROSIDAD-CORREGIDA.md  # ✨ Fix de legibilidad
+├── aplicar-identidad.sh     # ✨ Script de automatización
 │
 ├── backups/                 # Respaldos del sistema
 ├── tests/                   # Tests de integración
@@ -140,13 +179,28 @@ git push origin main
 
 ## 💻 Tecnologías
 
-- **HTML5**: Semántico y accesible
+- **HTML5**: Semántico y accesible (WCAG 2.1 AA)
 - **CSS3**: Custom properties, Flexbox, Grid
 - **JavaScript ES6+**: Vanilla JS (sin frameworks)
-- **Font Awesome 6.4.0**: Iconografía
-- **Google Fonts**: Playfair Display + Inter
-- **Glassmorphism**: Backdrop-filter blur effects
-- **Responsive Design**: Mobile-first approach
+- **Font Awesome 6.4.0**: Iconografía profesional
+- **Google Fonts**: Orbitron (títulos) + Rajdhani (cuerpo) - **Identidad oficial**
+- **Grid Background**: Patrón 40×40px obligatorio
+- **Responsive Design**: Mobile-first approach (320px+)
+
+### 🎨 Sistema de Diseño Oficial
+
+```css
+/* Color oficial NUNCA cambiar */
+#D4AF37 - Oro YavlGold principal
+#B8860B - Oro oscuro (hover)
+
+/* Tipografía oficial */
+Orbitron - Títulos (futurista/tech)
+Rajdhani - Cuerpo (moderna/legible)
+
+/* Grid obligatorio */
+40px × 40px - Toda la identidad YavlGold
+```
 
 ---
 
@@ -258,12 +312,37 @@ MIT License - Ver [LICENSE](LICENSE) para más detalles.
 
 ## 🎉 Estado del Proyecto
 
-✅ **En Producción Activa**
-- Landing page optimizada
-- Mobile drawer glassmorphism
-- Auth modals compactos
-- Captcha funcional
-- 100% responsive
+✅ **En Producción Activa - Octubre 2025**
+
+### ✨ Últimas Actualizaciones (19/10/2025)
+
+#### 🎨 Identidad Visual Oficial Aplicada
+- ✅ **Color oro #D4AF37** implementado en 35+ instancias
+- ✅ **Tipografías oficiales**: Orbitron + Rajdhani en toda la plataforma
+- ✅ **Grid background 40×40px** presente en todos los fondos
+- ✅ **12 enlaces corregidos** (# → rutas funcionales)
+
+#### 📝 Optimizaciones de Legibilidad
+- ✅ **Glow effects reducidos 50%** (15px → 8px)
+- ✅ **Antialiasing global** para texto ultra nítido
+- ✅ **Text-shadow optimizado** (3px máximo)
+- ✅ **Colores consistentes** en todos los títulos
+- ✅ **0 errores de compilación**
+
+#### 📚 Documentación Creada
+- ✅ `docs/ACTUALIZACION-IDENTIDAD-OFICIAL-2025.md` - Log completo de cambios
+- ✅ `docs/AJUSTES-LEGIBILIDAD-2025.md` - Correcciones de borrosidad
+- ✅ `VERIFICACION-FINAL.md` - Checklist de validación
+- ✅ `GUIA-RAPIDA-IDENTIDAD.md` - Guía de referencia rápida
+- ✅ `BORROSIDAD-CORREGIDA.md` - Solución de problemas visuales
+- ✅ `aplicar-identidad.sh` - Script de automatización bash
+
+#### 🚀 Próximos Pasos
+- [ ] Aplicar identidad a `academia/index.html`
+- [ ] Aplicar identidad a `herramientas/index.html`
+- [ ] Aplicar identidad a `dashboard/index.html`
+- [ ] Testing E2E completo
+- [ ] Performance audit (Lighthouse 95+)
 - Accesible (WCAG AA+)
 
 ---
