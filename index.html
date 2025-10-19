@@ -370,6 +370,27 @@
         0 4px 15px rgba(212, 175, 55, 0.3);
     }
     
+    /* User Menu Styles - Desktop & Mobile */
+    .user-menu-desktop {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .user-menu-desktop .fa-user-circle {
+      font-size: 1.2rem;
+      color: var(--yavl-gold);
+    }
+    
+    .mobile-user-menu {
+      width: 100%;
+    }
+    
+    .mobile-user-menu .fa-user-circle {
+      font-size: 1.5rem;
+      color: var(--yavl-gold);
+    }
+    
     .btn {
       padding: 0.75rem 1.75rem;
       border-radius: var(--radius-lg);
@@ -2834,12 +2855,15 @@
     // Actualizar UI según estado de autenticación
     async function updateAuthUI() {
       const user = await getCurrentUser();
-      const loginBtn = document.querySelector('.btn-login');
-      const registerBtn = document.querySelector('.btn-register');
+      
+      // Actualizar navbar desktop
+      const loginBtn = document.querySelector('.navbar-actions .btn-outline[data-modal-target="login-modal"]');
+      const registerBtn = document.querySelector('.navbar-actions .btn-primary[data-modal-target="register-modal"]');
       
       if (user && loginBtn && registerBtn) {
         // Usuario logueado - mostrar nombre, rol y logout
         const userMenu = document.createElement('div');
+        userMenu.className = 'user-menu-desktop';
         userMenu.style.cssText = `
           display: flex;
           align-items: center;
@@ -2865,7 +2889,7 @@
         
         userMenu.innerHTML = `
           <span style="color: var(--yavl-gold); font-weight: 600; display: flex; align-items: center;">
-            <i class="fas fa-user-circle"></i> ${user.name}${adminBadge}
+            <i class="fas fa-user-circle" style="margin-right: 0.5rem;"></i> ${user.name}${adminBadge}
           </span>
           <button onclick="logoutUser()" class="btn btn-outline" style="padding: 0.5rem 1rem;">
             <i class="fas fa-sign-out-alt"></i> Salir
@@ -2882,6 +2906,70 @@
           xp: user.xpPoints,
           level: user.currentLevel
         });
+      }
+      
+      // Actualizar menú móvil
+      const mobileLoginBtn = document.querySelector('.mobile-drawer-actions .btn-outline[data-modal-target="login-modal"]');
+      const mobileRegisterBtn = document.querySelector('.mobile-drawer-actions .btn-primary[data-modal-target="register-modal"]');
+      
+      if (user && mobileLoginBtn && mobileRegisterBtn) {
+        const mobileUserMenu = document.createElement('div');
+        mobileUserMenu.className = 'mobile-user-menu';
+        mobileUserMenu.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          width: 100%;
+        `;
+        
+        const adminBadgeMobile = user.isAdmin ? `
+          <span style="
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: #0B0C0F;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+          ">
+            🛡️ ADMIN
+          </span>
+        ` : '';
+        
+        mobileUserMenu.innerHTML = `
+          <div style="
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+          ">
+            <div style="
+              color: var(--yavl-gold);
+              font-weight: 600;
+              font-size: 1.1rem;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 0.5rem;
+            ">
+              <i class="fas fa-user-circle" style="margin-right: 0.5rem; font-size: 1.5rem;"></i>
+              ${user.name}${adminBadgeMobile}
+            </div>
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+              ${user.email}
+            </div>
+          </div>
+          <button onclick="logoutUser()" class="btn btn-outline" style="width: 100%; padding: 0.75rem;">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+          </button>
+        `;
+        
+        // Reemplazar ambos botones con el nuevo menú
+        mobileLoginBtn.replaceWith(mobileUserMenu);
+        if (mobileRegisterBtn) mobileRegisterBtn.style.display = 'none';
       }
     }
 
