@@ -1,0 +1,167 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  ⚠️ PROBLEMA: POLÍTICAS RLS DUPLICADAS                              ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📊 ANÁLISIS DE LAS POLÍTICAS ACTUALES:
+═════════════════════════════════════════════════════════════════════
+
+Total: 10 políticas (demasiadas, hay duplicados)
+
+DUPLICADOS DETECTADOS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INSERT (3 políticas - ¡duplicadas!):
+  1. "Users can insert own profile during signup"
+  2. "Los usuarios pueden insertar su propio perfil"
+  3. Parte de "profiles_owner_full" (ALL)
+
+SELECT (4 políticas - ¡demasiadas!):
+  1. "Profiles are viewable by everyone"
+  2. "profiles_public_select_basic"
+  3. "Users can view their full profile"
+  4. "Authenticated users can view basic profile info"
+
+UPDATE (3 políticas - ¡duplicadas!):
+  1. "Users can update own profile"
+  2. "Los usuarios pueden actualizar su propio perfil"
+  3. Parte de "profiles_owner_full" (ALL)
+
+DELETE (2 políticas):
+  1. "Users can delete own profile"
+  2. Parte de "profiles_owner_full" (ALL)
+
+ALL (1 política - muy permisiva):
+  • "profiles_owner_full" (aplica a todas las operaciones)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ PROBLEMAS:
+═════════════════════════════════════════════════════════════════════
+
+1. Políticas duplicadas causan confusión
+2. Mezcla de español e inglés
+3. Múltiples políticas SELECT pueden causar conflictos
+4. Política "ALL" es demasiado permisiva
+5. Difícil de mantener y debuggear
+
+
+✅ SOLUCIÓN: LIMPIEZA COMPLETA
+═════════════════════════════════════════════════════════════════════
+
+Ejecuta este SQL para limpiar todo y crear 4 políticas limpias:
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  -- ELIMINAR TODAS LAS POLÍTICAS                                    │
+│  DROP POLICY IF EXISTS "profiles_owner_full"                        │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Users can delete own profile"               │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Users can insert own profile during..."     │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Los usuarios pueden insertar su propio..."  │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "profiles_public_select_basic"               │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Profiles are viewable by everyone"          │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Users can view their full profile"          │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Authenticated users can view basic..."      │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Users can update own profile"               │
+│    ON public.profiles;                                              │
+│  DROP POLICY IF EXISTS "Los usuarios pueden actualizar su..."       │
+│    ON public.profiles;                                              │
+│                                                                     │
+│  -- CREAR SOLO 4 POLÍTICAS LIMPIAS                                  │
+│  CREATE POLICY "users_insert_own_profile"                           │
+│  ON public.profiles FOR INSERT TO authenticated                     │
+│  WITH CHECK (auth.uid() = id);                                      │
+│                                                                     │
+│  CREATE POLICY "profiles_public_read"                               │
+│  ON public.profiles FOR SELECT TO public                            │
+│  USING (true);                                                      │
+│                                                                     │
+│  CREATE POLICY "users_update_own_profile"                           │
+│  ON public.profiles FOR UPDATE TO authenticated                     │
+│  USING (auth.uid() = id) WITH CHECK (auth.uid() = id);              │
+│                                                                     │
+│  CREATE POLICY "users_delete_own_profile"                           │
+│  ON public.profiles FOR DELETE TO authenticated                     │
+│  USING (auth.uid() = id);                                           │
+│                                                                     │
+│  ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;             │
+└─────────────────────────────────────────────────────────────────────┘
+
+📌 Archivo completo: /sql/cleanup-rls-policies.sql
+
+
+🎯 CÓMO APLICAR:
+═════════════════════════════════════════════════════════════════════
+
+1. Supabase Dashboard → SQL Editor → New Query
+
+2. Copia el SQL de /sql/cleanup-rls-policies.sql
+
+3. Click "RUN" (Ctrl+Enter)
+
+4. Verifica con:
+   SELECT policyname, cmd FROM pg_policies 
+   WHERE tablename = 'profiles';
+
+
+✅ RESULTADO ESPERADO: 4 POLÍTICAS LIMPIAS
+═════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────┬────────┬────────────────┬───────────────┐
+│ policyname                │ cmd    │ roles          │ description   │
+├───────────────────────────┼────────┼────────────────┼───────────────┤
+│ users_delete_own_profile  │ DELETE │ authenticated  │ Solo dueño    │
+│ users_insert_own_profile  │ INSERT │ authenticated  │ Solo dueño    │
+│ profiles_public_read      │ SELECT │ public         │ Todos pueden  │
+│ users_update_own_profile  │ UPDATE │ authenticated  │ Solo dueño    │
+└───────────────────────────┴────────┴────────────────┴───────────────┘
+
+
+🔍 VERIFICACIÓN:
+═════════════════════════════════════════════════════════════════════
+
+Después de aplicar el SQL:
+
+✅ Solo 4 políticas (no más duplicados)
+✅ Nombres en inglés consistentes
+✅ Snake_case (mejor práctica)
+✅ Roles especificados (authenticated/public)
+✅ Una política por operación
+
+
+🧪 TESTING DESPUÉS DE LA LIMPIEZA:
+═════════════════════════════════════════════════════════════════════
+
+1. Ve a: https://yavlpro.github.io/YavlGold/test-registro-rapido.html
+2. Recarga (F5)
+3. Auto-rellenar
+4. Crear Cuenta
+
+Resultado esperado:
+✅ Usuario creado
+✅ Perfil creado
+✅ REGISTRO EXITOSO
+
+
+📚 BENEFICIOS DE LA LIMPIEZA:
+═════════════════════════════════════════════════════════════════════
+
+✅ Código más limpio y mantenible
+✅ No hay conflictos entre políticas
+✅ Mejor performance (menos evaluaciones)
+✅ Fácil de entender y debuggear
+✅ Sigue mejores prácticas de PostgreSQL
+
+
+═════════════════════════════════════════════════════════════════════
+
+Ejecuta el SQL de limpieza y avísame cuando lo hayas hecho! 🚀
+
+═════════════════════════════════════════════════════════════════════
