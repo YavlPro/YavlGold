@@ -81,12 +81,8 @@
 
       if (!checkSupabaseSession()) {
         console.log('[Dashboard] ⛔ No hay sesión, redirigiendo...');
-        // No hay sesión, redirigir después de que DOM cargue
-        document.addEventListener('DOMContentLoaded', function() {
-          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
-          alert('Debes iniciar sesión para acceder al dashboard');
-          window.location.href = '../index.html#login';
-        });
+        sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+        window.location.replace('../#login');
       } else {
         console.log('[Dashboard] ✅ Sesión válida, permitiendo acceso');
       }

@@ -18,19 +18,25 @@
               const item = localStorage.getItem(key);
               if (item) {
                 const parsed = JSON.parse(item);
-                if (parsed.access_token || parsed.user) return true;
+                if (parsed.access_token || parsed.user) {
+                  console.log('[YavlTrading] ✅ Sesión encontrada');
+                  return true;
+                }
               }
             }
           }
           return false;
-        } catch (e) { return false; }
+        } catch (e) {
+          console.error('[YavlTrading] Error verificando sesión:', e);
+          return false;
+        }
       }
       if (!checkSupabaseSession()) {
-        document.addEventListener('DOMContentLoaded', function() {
-          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
-          alert('Debes iniciar sesión para acceder a YavlTrading');
-          window.location.href = '/#login';
-        });
+        console.log('[YavlTrading] ⛔ No hay sesión, redirigiendo...');
+        sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+        window.location.replace('/#login');
+      } else {
+        console.log('[YavlTrading] ✅ Sesión válida, permitiendo acceso');
       }
     })();
   </script>

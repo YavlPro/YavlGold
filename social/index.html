@@ -44,11 +44,8 @@
 
       if (!checkSupabaseSession()) {
         console.log('[YavlSocial] ⛔ No hay sesión, redirigiendo...');
-        document.addEventListener('DOMContentLoaded', function() {
-          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
-          alert('Debes iniciar sesión para acceder a YavlSocial');
-          window.location.href = '/#login';
-        });
+        sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+        window.location.replace('/#login');
       } else {
         console.log('[YavlSocial] ✅ Sesión válida, permitiendo acceso');
       }

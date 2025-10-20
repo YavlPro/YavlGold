@@ -40,12 +40,8 @@
 
       if (!checkSupabaseSession()) {
         console.log('[Academia] ⛔ No hay sesión, redirigiendo...');
-        // No hay sesión, redirigir después de que DOM cargue
-        document.addEventListener('DOMContentLoaded', function() {
-          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
-          alert('Debes iniciar sesión para acceder a YavlAcademy');
-          window.location.href = '/#login';
-        });
+        sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+        window.location.replace('/#login');
       } else {
         console.log('[Academia] ✅ Sesión válida, permitiendo acceso');
       }
