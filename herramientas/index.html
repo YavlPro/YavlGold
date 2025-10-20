@@ -71,15 +71,40 @@
   <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
   <script>
     (function() {
-      // Verificar si hay sesión antes de cargar el contenido
-      const session = sessionStorage.getItem('gg:session') || localStorage.getItem('sb-' + 'ndojapkfhqbgiqtixiqo' + '-auth-token');
-      if (!session) {
-        // No hay sesión, bloquear y redirigir
-        document.body.style.display = 'none';
+      // Verificar si hay sesión de Supabase
+      function checkSupabaseSession() {
+        try {
+          // Buscar en localStorage todas las claves que contienen 'auth-token'
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('auth-token')) {
+              const item = localStorage.getItem(key);
+              if (item) {
+                const parsed = JSON.parse(item);
+                if (parsed.access_token || parsed.user) {
+                  console.log('[Herramientas] ✅ Sesión encontrada');
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        } catch (e) {
+          console.error('[Herramientas] Error verificando sesión:', e);
+          return false;
+        }
+      }
+
+      if (!checkSupabaseSession()) {
+        console.log('[Herramientas] ⛔ No hay sesión, redirigiendo...');
+        // No hay sesión, redirigir después de que DOM cargue
         document.addEventListener('DOMContentLoaded', function() {
           sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          alert('Debes iniciar sesión para acceder a YavlCrypto (Herramientas Pro)');
           window.location.href = '/#login';
         });
+      } else {
+        console.log('[Herramientas] ✅ Sesión válida, permitiendo acceso');
       }
     })();
   </script>

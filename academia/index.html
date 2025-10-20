@@ -7,7 +7,50 @@
   <link rel="stylesheet" href="/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
+  <script>
+    (function() {
+      // Verificar si hay sesión de Supabase
+      function checkSupabaseSession() {
+        try {
+          // Buscar en localStorage todas las claves que contienen 'auth-token'
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('auth-token')) {
+              const item = localStorage.getItem(key);
+              if (item) {
+                const parsed = JSON.parse(item);
+                if (parsed.access_token || parsed.user) {
+                  console.log('[Academia] ✅ Sesión encontrada');
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        } catch (e) {
+          console.error('[Academia] Error verificando sesión:', e);
+          return false;
+        }
+      }
+
+      if (!checkSupabaseSession()) {
+        console.log('[Academia] ⛔ No hay sesión, redirigiendo...');
+        // No hay sesión, redirigir después de que DOM cargue
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          alert('Debes iniciar sesión para acceder a YavlAcademy');
+          window.location.href = '/#login';
+        });
+      } else {
+        console.log('[Academia] ✅ Sesión válida, permitiendo acceso');
+      }
+    })();
+  </script>
   
   <style>
     :root {

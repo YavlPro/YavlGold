@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YavlChess - Ajedrez Cyberpunk (Futuro)</title>
+  <link rel="icon" href="../assets/images/logo.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function() {
+      function checkSupabaseSession() {
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('auth-token')) {
+              const item = localStorage.getItem(key);
+              if (item) {
+                const parsed = JSON.parse(item);
+                if (parsed.access_token || parsed.user) return true;
+              }
+            }
+          }
+          return false;
+        } catch (e) { return false; }
+      }
+      if (!checkSupabaseSession()) {
+        document.addEventListener('DOMContentLoaded', function() {
+          sessionStorage.setItem('gg:redirectAfterLogin', window.location.pathname);
+          alert('Debes iniciar sesión para acceder a YavlChess');
+          window.location.href = '/#login';
+        });
+      }
+    })();
+  </script>
+  <style>
+    :root { --yavl-gold: #C2A552; --yavl-dark: #0B0C0F; --bg-dark: #101114; --text-light: #f0f0f0; --border-gold: rgba(194, 165, 82, 0.28); }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Rajdhani', sans-serif; background: var(--bg-dark); color: var(--text-light); min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2rem; }
+    .container { max-width: 600px; }
+    .icon { font-size: 5rem; color: var(--yavl-gold); margin-bottom: 2rem; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 2.5rem; color: var(--yavl-gold); margin-bottom: 1rem; }
+    p { font-size: 1.2rem; color: #a0a0a0; margin-bottom: 2rem; line-height: 1.6; }
+    .back-btn { display: inline-block; padding: 1rem 2rem; background: transparent; border: 2px solid var(--yavl-gold); color: var(--yavl-gold); text-decoration: none; border-radius: 12px; font-weight: 600; transition: all 0.3s ease; }
+    .back-btn:hover { background: var(--yavl-gold); color: var(--yavl-dark); transform: translateY(-2px); box-shadow: 0 0 20px rgba(194, 165, 82, 0.4); }
+    .status { display: inline-block; padding: 0.5rem 1rem; background: rgba(128, 128, 128, 0.2); border: 1px solid rgba(128, 128, 128, 0.4); border-radius: 20px; font-size: 0.9rem; margin-bottom: 2rem; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon"><i class="fas fa-chess"></i></div>
+    <h1>YavlChess</h1>
+    <div class="status">🔒 FUTURO</div>
+    <p>Checkmate the System. Ajedrez online con estética cyberpunk, variantes únicas y sistema de rangos. Planificado para el futuro.</p>
+    <a href="/" class="back-btn"><i class="fas fa-arrow-left"></i> Volver al Inicio</a>
+  </div>
+</body>
+</html>
