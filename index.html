@@ -1295,6 +1295,17 @@
       outline-offset: 2px;
       border-color: rgba(194,165,82,0.38);
     }
+
+    /* 6) Tarjetas como enlaces: mejorar interacción */
+    a.feature-card {
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    a.feature-card:active {
+      transform: translateY(0);
+    }
     
     .feature-icon {
       width: 60px;
@@ -1491,6 +1502,13 @@
       color: #FFB8B8;
       background: rgba(231,76,60,0.12);
       border-color: rgba(231,76,60,0.25);
+    }
+
+    /* Chip FUTURO - Morado frío para visión a largo plazo */
+    .chip-future {
+      color: #E3D6FF;
+      background: rgba(152,120,255,0.12);
+      border-color: rgba(152,120,255,0.25);
     }
     
     /* Botones con alto contraste */
@@ -1968,6 +1986,16 @@
         box-shadow: 
           0 0 25px rgba(212, 175, 55, 0.9),
           0 4px 18px rgba(212, 175, 55, 0.5);
+      }
+    }
+
+    /* Responsive chips para móviles muy pequeños */
+    @media (max-width: 380px) {
+      .chip {
+        font-size: 0.70rem;
+        padding: 0.2rem 0.4rem;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
       }
     }
 
@@ -2461,7 +2489,7 @@
       </a>
       
       <ul class="navbar-menu">
-        <li><a href="#inicio" class="navbar-link">Inicio</a></li>
+        <li><a href="#inicio" class="navbar-link" aria-current="page">Inicio</a></li>
         <li><a href="#modulos" class="navbar-link">Módulos</a></li>
         <li><a href="./roadmap/" class="navbar-link">Roadmap</a></li>
         <li><a href="#comunidad" class="navbar-link">Comunidad</a></li>
@@ -2562,209 +2590,188 @@
       <div class="features-grid">
         
         <!-- 1. YavlSocial -->
-        <div class="feature-card card-focusable coming-soon" tabindex="0">
+        <a href="./apps/social/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Abrir YavlSocial, próximamente disponible. Red social innovadora para compartir contenido.">
           <div class="feature-icon">
-            <i class="fas fa-users"></i>
+            <i class="fas fa-users" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlSocial</h3>
           <p class="card-text">Red social innovadora para compartir contenido, importar desde redes tradicionales y conectar con comunidades.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Publicaciones multimedia
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Importación de redes sociales
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Chat en tiempo real
             </p>
           </div>
-          <a href="./apps/social/" class="feature-link" style="margin-top: 1rem; display: inline-flex;">
-            Ver más <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
         <!-- 2. YavlSuite -->
-        <div class="feature-card card-focusable coming-soon" tabindex="0">
+        <a href="./apps/suite/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Abrir YavlSuite, próximamente disponible. Suite multimedia completa con DJ virtual, karaoke y editor de video.">
           <div class="feature-icon">
-            <i class="fas fa-layer-group"></i>
+            <i class="fas fa-layer-group" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlSuite</h3>
           <p class="card-text">Suite multimedia completa con DJ virtual, karaoke, editor de video, conversión de formatos y más.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               DJ y mezclas en vivo
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Karaoke con letras sincronizadas
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Conversión de formatos multimedia
             </p>
           </div>
-          <a href="./apps/suite/" class="feature-link" style="margin-top: 1rem; display: inline-flex;">
-            Ver más <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
         <!-- 3. YavlAcademy -->
-        <div class="feature-card card-accent card-focusable" tabindex="0">
+        <a href="./academia/" class="feature-card card-accent card-focusable block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Explorar YavlAcademy, 40 por ciento completo. Academia central con cursos y certificaciones de todos los módulos.">
           <div class="feature-icon">
-            <i class="fas fa-graduation-cap"></i>
+            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-done">40% COMPLETO</span>
+            <span class="chip chip-done" aria-hidden="true">✅ 40% COMPLETO</span>
           </div>
           <h3 class="card-title">YavlAcademy</h3>
           <p class="card-text">Academia ÚNICA y CENTRAL con cursos y certificaciones de TODOS los módulos del ecosistema. Tu centro educativo completo.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Cursos de todos los módulos
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Certificaciones unificadas
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Sistema de gamificación global
             </p>
           </div>
-          <a href="./academia/" class="feature-link" style="margin-top: 1rem; display: inline-flex;">
-            Explorar <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
         <!-- 4. YavlCrypto (DESTACADO) -->
-        <div class="feature-card priority-high card-accent card-focusable" tabindex="0">
+        <a href="./herramientas/" class="feature-card priority-high card-accent card-focusable block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Acceder a YavlCrypto, alta prioridad, 60 por ciento completo. Academia cripto más herramientas profesionales.">
           <div class="feature-icon">
-            <i class="fas fa-bitcoin"></i>
+            <i class="fas fa-bitcoin" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
-            <span class="chip chip-hot">⚡ ALTA PRIORIDAD</span>
-            <span class="chip chip-done">60% COMPLETO</span>
+            <span class="chip chip-hot" aria-hidden="true">⚡ ALTA PRIORIDAD</span>
+            <span class="chip chip-done" aria-hidden="true">✅ 60% COMPLETO</span>
           </div>
           <h3 class="card-title">YavlCrypto</h3>
           <p class="card-text">Academia cripto + herramientas profesionales (calculadoras, conversores, análisis) para dominar el ecosistema blockchain.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.4);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Calculadoras de rentabilidad ROI
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Conversores en tiempo real
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Análisis de mercado y tendencias
             </p>
           </div>
-          <a href="./herramientas/" class="feature-link" style="margin-top: 1rem; display: inline-flex; color: var(--yavl-gold); font-weight: 700;">
-            <i class="fas fa-rocket"></i> Acceder <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
         <!-- 5. YavlAgro -->
-        <div class="feature-card card-focusable coming-soon" tabindex="0">
+        <a href="./apps/agro/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Ver más sobre YavlAgro, próximamente disponible. Plataforma para agricultura innovadora con marketplace.">
           <div class="feature-icon">
-            <i class="fas fa-seedling"></i>
+            <i class="fas fa-seedling" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlAgro</h3>
           <p class="card-text">Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Marketplace agrícola
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Cursos de agricultura sostenible
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Gestión de cultivos y cosechas
             </p>
           </div>
-          <a href="./apps/agro/" class="feature-link" style="margin-top: 1rem; display: inline-flex;">
-            Ver más <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
         <!-- 6. YavlChess -->
-        <div class="feature-card card-focusable coming-soon" tabindex="0">
+        <a href="./chess/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Ver más sobre YavlChess, planificado para el futuro. Ajedrez con variantes exclusivas y desafíos contra IA.">
           <div class="feature-icon">
-            <i class="fas fa-chess"></i>
+            <i class="fas fa-chess" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon">FUTURO</span>
+            <span class="chip chip-future" aria-hidden="true">🧭 FUTURO</span>
           </div>
           <h3 class="card-title">YavlChess</h3>
           <p class="card-text">Ajedrez con variantes exclusivas: modo turbo, probabilístico, explosivo y desafíos contra IA avanzada.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Variantes innovadoras de ajedrez
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Desafíos contra IA
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Torneos y rankings globales
             </p>
           </div>
-          <a href="./chess/" class="feature-link" style="margin-top: 1rem; display: inline-flex;">
-            Ver más <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
         <!-- 7. YavlTrading -->
-        <div class="feature-card card-accent card-focusable coming-soon" tabindex="0">
+        <a href="./trading/" class="feature-card card-accent card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(194,165,82,0.55)] focus-visible:outline-offset-2" aria-label="Ver más sobre YavlTrading, muy importante, próximamente disponible. Educación completa en trading y análisis técnico.">
           <div class="feature-icon">
-            <i class="fas fa-chart-line"></i>
+            <i class="fas fa-chart-line" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
-            <span class="chip chip-important">MUY IMPORTANTE</span>
-            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+            <span class="chip chip-important" aria-hidden="true">MUY IMPORTANTE</span>
+            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlTrading</h3>
           <p class="card-text">Educación completa en trading, análisis técnico profesional y estadísticas de mercado en tiempo real.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Educación en trading profesional
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Análisis técnico y fundamental
             </p>
             <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
+              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
               Estadísticas de mercado en vivo
             </p>
           </div>
-          <a href="./trading/" class="feature-link" style="margin-top: 1rem; display: inline-flex;">
-            Ver más <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
+        </a>
         
       </div>
       
@@ -2806,7 +2813,7 @@
           </div>
           <h3>Telegram</h3>
           <p>Únete a nuestros grupos de discusión y análisis de mercado.</p>
-          <a href="https://t.me/YavlEcosystem" target="_blank" class="feature-link">
+          <a href="https://t.me/YavlEcosystem" target="_blank" rel="noopener noreferrer" class="feature-link">
             Unirse <i class="fas fa-external-link-alt"></i>
           </a>
         </div>
@@ -2817,7 +2824,7 @@
           </div>
           <h3>Twitter</h3>
           <p>Síguenos para noticias, actualizaciones y análisis diarios.</p>
-          <a href="https://x.com/Yavlcapitan" target="_blank" class="feature-link">
+          <a href="https://x.com/Yavlcapitan" target="_blank" rel="noopener noreferrer" class="feature-link">
             Seguir <i class="fas fa-external-link-alt"></i>
           </a>
         </div>
@@ -2828,7 +2835,7 @@
           </div>
           <h3>YouTube</h3>
           <p>Videos educativos, tutoriales y contenido del ecosistema.</p>
-          <a href="https://youtube.com/@yavlgoldpro" target="_blank" class="feature-link">
+          <a href="https://youtube.com/@yavlgoldpro" target="_blank" rel="noopener noreferrer" class="feature-link">
             Suscribirse <i class="fas fa-external-link-alt"></i>
           </a>
         </div>
@@ -2930,7 +2937,16 @@
 
   <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true"></div>
 
-  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title">
+  <!-- 
+  ==========================================
+  MODALES DE LOGIN/REGISTRO DESHABILITADOS
+  ==========================================
+  Estos modales con captchas de ejemplo (A2B3C4, X7Y8Z9) están ocultos
+  hasta implementar el flujo real de autenticación en /login y /signup.
+  Mantienen su código para referencia futura.
+  ==========================================
+  -->
+  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title" style="display: none !important;">
     <header>
       <h2 class="modal-title" id="login-modal-title">Inicia sesión en YavlGold</h2>
       <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
@@ -2984,7 +3000,7 @@
     </div>
   </div>
 
-  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title">
+  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title" style="display: none !important;">
     <header>
       <h2 class="modal-title" id="register-modal-title">Crea tu cuenta premium</h2>
       <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
