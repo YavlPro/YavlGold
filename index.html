@@ -1668,6 +1668,23 @@
       height: 40px;
       border-radius: 50%;
     }
+
+    /* Logo del footer: control de tamaño más robusto (fix logo gigante) */
+    .footer-logo {
+      height: clamp(32px, 2.8vw, 40px) !important;
+      width: clamp(32px, 2.8vw, 40px) !important;
+      max-width: 40px !important;
+      max-height: 40px !important;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      vertical-align: middle;
+      border-radius: 50%;
+    }
+
+    /* Ocultar cualquier logo huérfano al final de la página */
+    .end-of-page-logo {
+      display: none !important;
+    }
     
     .footer-brand-name {
       font-family: 'Orbitron', serif;
@@ -2853,7 +2870,7 @@
       <div class="footer-grid">
         <div class="footer-about-section">
           <div class="footer-brand">
-            <img src="/assets/images/logo.png" alt="YavlGold - Academia Cripto">
+            <img src="/assets/images/logo.png" alt="YavlGold - Academia Cripto" class="footer-logo" width="40" height="40" loading="lazy">
             <span class="footer-brand-name">YavlGold</span>
           </div>
           <p class="footer-about">
