@@ -32,10 +32,12 @@
   <!-- Keywords adicionales para SEO -->
   <meta name="keywords" content="academia cripto, blockchain español, cursos criptomonedas, trading cripto, DeFi, NFT, Web3, educación blockchain, YavlGold">
   
-  <!-- Fuentes Oficiales YavlGold -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Preload Critical Fonts (Performance Optimization) -->
+  <link rel="preload" href="./assets/fonts/orbitron-v31-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./assets/fonts/rajdhani-v15-latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+  
+  <!-- Self-Hosted Fonts (Faster than Google Fonts CDN) -->
+  <link rel="stylesheet" href="./assets/css/fonts.css">
   
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -97,28 +99,29 @@
   <style>
     /**
      * ============================================
-     * YAVL GOLD - ESTILOS OFICIALES v1.0
+     * YAVL GOLD - CYBER CHAMPAGNE GOLD THEME
      * ============================================
-     * BASADO EN LA GUÍA DE ESTILOS OFICIAL
-     * Color oro oficial: #D4AF37 (NUNCA CAMBIAR)
+     * Tema suave para reducir fatiga visual
+     * Color oro: #C2A552 (Champagne Gold)
      * Fuentes: Orbitron (títulos) + Rajdhani (texto)
      * ============================================
      */
 
     /* =========================================
-       VARIABLES CSS - COLORES OFICIALES
+       VARIABLES CSS - CYBER CHAMPAGNE GOLD
        ========================================= */
     :root {
-      /* COLORES PRINCIPALES - IDENTIDAD YAVL */
-      --yavl-gold: #D4AF37;              /* ORO PRINCIPAL - NO CAMBIAR */
-      --yavl-gold-dark: #B8860B;         /* ORO OSCURO (hover/secondary) */
+      /* COLORES PRINCIPALES - CHAMPAGNE GOLD */
+      --yavl-gold: #C2A552;              /* Dorado suave champagne */
+      --yavl-gold-dark: #7D6B32;         /* Dorado oscuro para bordes/hover */
+      --gold-light: #E4D08E;             /* Reflejos y acentos claros */
       --success-green: #2ecc71;          /* VERDE ÉXITO (para estados positivos) */
       
       /* BACKGROUNDS */
       --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
       --bg-dark: #101114;                /* Fondo oscuro general */
       --bg-darker: #0a0a0a;              /* Fondo más oscuro */
-      --bg-card: rgba(212, 175, 55, 0.08); /* Fondo de cards MÁS VISIBLE */
+      --bg-card: rgba(194, 165, 82, 0.06); /* Fondo de cards más suave */
       --overlay-dark: rgba(11, 12, 15, 0.95); /* Overlay oscuro semi-transparente */
       
       /* TEXTOS */
@@ -126,14 +129,14 @@
       --text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
       --text-muted: #6b7280;             /* Texto deshabilitado/notas */
       
-      /* BORDES - MÁS VISIBLES */
-      --border-gold: rgba(212, 175, 55, 0.5);      /* Borde más visible */
-      --border-gold-hover: rgba(212, 175, 55, 0.9); /* Borde hover brillante */
+      /* BORDES - MÁS SUTILES */
+      --border-gold: rgba(194, 165, 82, 0.28);      /* Borde suave */
+      --border-gold-hover: rgba(194, 165, 82, 0.70); /* Borde hover */
       
-      /* EFECTOS GLOW - INTENSOS Y VISIBLES */
-      --glow-gold: 0 0 20px rgba(212, 175, 55, 0.6), 0 4px 20px rgba(0, 0, 0, 0.5);  /* Glow visible + profundidad */
-      --glow-gold-intense: 0 0 30px rgba(212, 175, 55, 1), 0 0 60px rgba(212, 175, 55, 0.6); /* Glow INTENSO */
-      --glow-intense: 0 0 30px rgba(212, 175, 55, 0.9); /* Alias para compatibilidad */
+      /* EFECTOS GLOW - SUTILES PARA REDUCIR FATIGA */
+      --glow-gold: 0 0 10px rgba(194, 165, 82, 0.35);  /* Glow suave */
+      --glow-gold-intense: 0 0 18px rgba(194, 165, 82, 0.55); /* Glow intenso pero suave */
+      --glow-intense: 0 0 18px rgba(194, 165, 82, 0.55); /* Alias */
       --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
       
       /* TIPOGRAFÍA */
@@ -141,8 +144,8 @@
       --font-body: 'Rajdhani', sans-serif;     /* Fuente para texto */
       
       /* ALIASES PARA COMPATIBILIDAD */
-      --gold-primary: #D4AF37;
-      --gold-secondary: #B8860B;
+      --gold-primary: #C2A552;
+      --gold-secondary: #7D6B32;
       --bg-main: #0B0C0F;
       --bg-surface: #101114;
       --text-primary: #f0f0f0;
@@ -162,7 +165,7 @@
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
       --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-      --shadow-gold-soft: 0 4px 20px rgba(212, 175, 55, 0.20);
+      --shadow-gold-soft: 0 4px 20px rgba(194, 165, 82, 0.20);
     }
     
     /* =========================================
@@ -189,11 +192,13 @@
       line-height: 1.6;
       overflow-x: hidden;
       
-      /* GRID BACKGROUND - MÁS VISIBLE */
+      /* GRID BACKGROUND - MÁS SUTIL */
       background-image:
-        linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px),
-        linear-gradient(to right, rgba(212, 175, 55, 0.15) 1px, var(--bg-dark) 1px);
-      background-size: 40px 40px;
+        radial-gradient(circle at 20% 50%, rgba(194,165,82,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(194,165,82,0.03) 0%, transparent 50%),
+        linear-gradient(var(--border-gold) 1px, transparent 1px),
+        linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
+      background-size: 800px 800px, 600px 600px, 40px 40px, 40px 40px;
     }
     
     /* =========================================
@@ -213,28 +218,24 @@
     h1 {
       font-size: 3rem;          /* 48px */
       font-weight: 900;
-      /* GLOW TRIPLE CAPA - EXTRA BRILLANTE */
+      /* GLOW SUAVE - NO CANSAR LA VISTA */
       text-shadow: 
-        0 0 15px rgba(212, 175, 55, 1),
-        0 0 30px rgba(212, 175, 55, 0.8),
-        0 0 50px rgba(212, 175, 55, 0.5);
+        0 0 3px rgba(194, 165, 82, 0.45),
+        0 0 8px rgba(194, 165, 82, 0.25);
     }
     
     h2 {
       font-size: 2rem;          /* 32px */
-      /* GLOW DOBLE CAPA - BRILLANTE */
+      /* GLOW MUY SUTIL */
       text-shadow: 
-        0 0 10px rgba(212, 175, 55, 1),
-        0 0 20px rgba(212, 175, 55, 0.8),
-        0 0 40px rgba(212, 175, 55, 0.4);
+        0 0 6px rgba(194, 165, 82, 0.55),
+        0 0 14px rgba(194, 165, 82, 0.35);
     }
     
     h3 {
       font-size: 1.5rem;        /* 24px */
-      /* GLOW SUTIL PERO VISIBLE */
-      text-shadow: 
-        0 0 8px rgba(212, 175, 55, 1),
-        0 0 15px rgba(212, 175, 55, 0.6);
+      /* GLOW CASI IMPERCEPTIBLE */
+      text-shadow: none; /* Sin efectos en h3 y menores */
     }
     
     h4 {
@@ -281,9 +282,10 @@
     }
     
     ::-webkit-scrollbar-thumb {
-      background: var(--yavl-gold);
-      border-radius: 6px;
+      background: linear-gradient(to bottom, var(--yavl-gold), var(--yavl-gold-dark));
+      border-radius: 20px;
       border: 2px solid var(--bg-darker);
+      box-shadow: 0 0 8px rgba(194, 165, 82, 0.45);
     }
     
     ::-webkit-scrollbar-thumb:hover {
@@ -316,10 +318,8 @@
     
     .navbar.scrolled {
       background: rgba(11, 12, 15, 0.95);
-      /* GLOW VISIBLE EN NAVBAR */
-      box-shadow: 
-        0 0 20px rgba(212, 175, 55, 0.6),
-        0 4px 15px rgba(0, 0, 0, 0.5);
+      /* GLOW SUAVE EN NAVBAR */
+      box-shadow: var(--glow-gold);
     }
     
     .navbar-container {
@@ -430,10 +430,8 @@
       background: var(--bg-card-hover);
       border-color: var(--yavl-gold);
       transform: rotate(15deg);
-      /* GLOW VISIBLE EN HOVER */
-      box-shadow: 
-        0 0 20px rgba(212, 175, 55, 0.8),
-        0 4px 15px rgba(212, 175, 55, 0.3);
+      /* GLOW SUAVE EN HOVER */
+      box-shadow: var(--glow-gold);
     }
     
     /* User Menu Styles - Desktop & Mobile */
@@ -494,11 +492,8 @@
       background: var(--yavl-gold);
       color: var(--yavl-dark);
       border-color: var(--yavl-gold);
-      /* GLOW INTENSO AL HOVER */
-      box-shadow: 
-        0 0 25px rgba(212, 175, 55, 1),
-        0 0 50px rgba(212, 175, 55, 0.6),
-        0 4px 15px rgba(0, 0, 0, 0.3);
+      /* GLOW MODERADO AL HOVER */
+      box-shadow: var(--glow-gold-intense);
       transform: translateY(-3px);
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
@@ -508,19 +503,14 @@
       color: var(--yavl-dark);
       border: none;
       font-weight: 700;
-      /* GLOW BRILLANTE EN BOTONES */
-      box-shadow: 
-        0 0 20px rgba(212, 175, 55, 0.8),
-        0 4px 15px rgba(0, 0, 0, 0.3);
+      /* GLOW SUAVE EN BOTONES */
+      box-shadow: var(--glow-gold);
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     .btn-primary:hover {
-      /* GLOW MÁXIMO AL HOVER */
-      box-shadow: 
-        0 0 30px rgba(212, 175, 55, 1),
-        0 0 60px rgba(212, 175, 55, 0.6),
-        0 6px 20px rgba(0, 0, 0, 0.4);
+      /* GLOW MODERADO AL HOVER */
+      box-shadow: var(--glow-gold-intense);
       transform: translateY(-3px) scale(1.02);
     }
     
@@ -2026,6 +2016,140 @@
       box-shadow: 
         0 4px 20px rgba(37, 211, 102, 0.5),
         0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* =========================================
+       CLASES ESPECIALES CHAMPAGNE GOLD
+       ========================================= */
+    
+    .gold-glow {
+      color: var(--yavl-gold);
+      text-shadow: 0 0 3px rgba(194, 165, 82, 0.45), 0 0 8px rgba(194, 165, 82, 0.25);
+    }
+    
+    .gold-glow-intense {
+      color: var(--gold-light);
+      text-shadow: 0 0 6px rgba(194, 165, 82, 0.55), 0 0 14px rgba(194, 165, 82, 0.35);
+    }
+    
+    .icon-gold {
+      color: var(--yavl-gold);
+      filter: drop-shadow(0 0 6px rgba(194, 165, 82, 0.35));
+    }
+    
+    .phase-card {
+      background: linear-gradient(135deg, rgba(11, 12, 15, 0.96), rgba(194, 165, 82, 0.06));
+      border: 1px solid var(--border-gold);
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+      box-shadow: var(--glow-gold);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .phase-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(194, 165, 82, 0.08), transparent);
+      transition: left 0.5s;
+    }
+    
+    .phase-card:hover::before {
+      left: 100%;
+    }
+    
+    .phase-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--glow-intense);
+      border-color: var(--yavl-gold);
+    }
+    
+    .feature-item {
+      border-left: 3px solid var(--yavl-gold);
+      background: linear-gradient(to right, rgba(194, 165, 82, 0.10), transparent);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-item:hover {
+      background: linear-gradient(to right, rgba(194, 165, 82, 0.18), transparent);
+      border-left-width: 4px;
+    }
+    
+    .stat-card {
+      background: rgba(194, 165, 82, 0.06);
+      border: 1px solid var(--border-gold);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      background: rgba(194, 165, 82, 0.14);
+      box-shadow: var(--glow-gold);
+      transform: scale(1.05);
+    }
+    
+    .timeline-connector {
+      width: 3px;
+      height: 50px;
+      background: linear-gradient(to bottom, var(--yavl-gold), rgba(194, 165, 82, 0.3));
+      margin: 0 auto;
+      box-shadow: 0 0 8px rgba(194, 165, 82, 0.55);
+    }
+    
+    /* =========================================
+       OPTIMIZACIONES MÓVIL Y ACCESIBILIDAD
+       ========================================= */
+    
+    /* Reducir fatiga en móvil */
+    @media (max-width: 640px) {
+      .gold-glow,
+      .gold-glow-intense {
+        text-shadow: none;
+      }
+      
+      .phase-card,
+      .stat-card {
+        box-shadow: none;
+      }
+      
+      h1, h2 {
+        text-shadow: none;
+      }
+    }
+    
+    /* Respetar preferencias de movimiento reducido */
+    @media (prefers-reduced-motion: reduce) {
+      .float-animation,
+      .pulse-border {
+        animation: none !important;
+      }
+      
+      * {
+        scroll-behavior: auto;
+      }
+      
+      .phase-card::before {
+        display: none;
+      }
+    }
+    
+    /* Animación pulse suave */
+    @keyframes pulse-gold {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(194, 165, 82, 0.30);
+        border-color: var(--border-gold);
+      }
+      50% {
+        box-shadow: 0 0 22px rgba(194, 165, 82, 0.50);
+        border-color: var(--yavl-gold);
+      }
+    }
+    
+    .pulse-border {
+      animation: pulse-gold 3s ease-in-out infinite;
     }
   </style>
 </head>
