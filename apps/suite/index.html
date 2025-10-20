@@ -18,7 +18,47 @@ limitations under the License.
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlMusic V2.0 - Offline</title>
+    <title>YavlSuite - Suite Multimedia</title>
+    
+    <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
+    <script>
+      (function() {
+        function checkSupabaseSession() {
+          try {
+            const keys = Object.keys(localStorage);
+            const authTokenKey = keys.find(key => key.includes('auth-token'));
+            
+            if (authTokenKey) {
+              const token = localStorage.getItem(authTokenKey);
+              if (token) {
+                try {
+                  const parsed = JSON.parse(token);
+                  if (parsed && parsed.access_token) {
+                    console.log('[YavlSuite] ✅ Sesión encontrada');
+                    return true;
+                  }
+                } catch (e) {
+                  console.error('[YavlSuite] Error verificando sesión:', e);
+                }
+              }
+            }
+            
+            console.log('[YavlSuite] ⛔ No hay sesión, redirigiendo...');
+            return false;
+          } catch (e) {
+            console.error('[YavlSuite] Error al verificar sesión:', e);
+            return false;
+          }
+        }
+        
+        if (!checkSupabaseSession()) {
+          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+          window.location.replace('/../../#login');
+        } else {
+          console.log('[YavlSuite] ✅ Sesión válida, permitiendo acceso');
+        }
+      })();
+    </script>
     <!-- Tailwind CSS para un diseño responsivo y moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Librería para leer etiquetas ID3 de archivos MP3 -->

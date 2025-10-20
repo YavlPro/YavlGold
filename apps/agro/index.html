@@ -3,11 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YavlAgro — Hortalizas y frutas de Táchira</title>
-  <meta name="description" content="Productos agrícolas de Táchira, Venezuela: variedades, beneficios, temporada y contacto directo. YavlAgro by YAVL Pro.">
-  <link rel="canonical" href="https://yavlgold.com/apps/agro/YavlAgro.html">
-  <!-- Redirección inmediata a la portada preferida -->
-  <meta http-equiv="refresh" content="0; url=YavlAgro.html">
+  <title>YavlAgro — Plataforma Agrícola</title>
+  <meta name="description" content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión. YavlAgro by YAVL Pro.">
+  <link rel="canonical" href="https://yavlgold.com/apps/agro/">
+  
+  <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
+  <script>
+    (function() {
+      function checkSupabaseSession() {
+        try {
+          const keys = Object.keys(localStorage);
+          const authTokenKey = keys.find(key => key.includes('auth-token'));
+          
+          if (authTokenKey) {
+            const token = localStorage.getItem(authTokenKey);
+            if (token) {
+              try {
+                const parsed = JSON.parse(token);
+                if (parsed && parsed.access_token) {
+                  console.log('[YavlAgro] ✅ Sesión encontrada');
+                  return true;
+                }
+              } catch (e) {
+                console.error('[YavlAgro] Error verificando sesión:', e);
+              }
+            }
+          }
+          
+          console.log('[YavlAgro] ⛔ No hay sesión, redirigiendo...');
+          return false;
+        } catch (e) {
+          console.error('[YavlAgro] Error al verificar sesión:', e);
+          return false;
+        }
+      }
+      
+      if (!checkSupabaseSession()) {
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+        window.location.replace('/../../#login');
+      } else {
+        console.log('[YavlAgro] ✅ Sesión válida, permitiendo acceso');
+      }
+    })();
+  </script>
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">

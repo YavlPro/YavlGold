@@ -3,7 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlPro - Cyber Developer Venezolano 🚀</title>
+    <title>YavlSocial - Red Social Cripto</title>
+    
+    <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
+    <script>
+      (function() {
+        function checkSupabaseSession() {
+          try {
+            const keys = Object.keys(localStorage);
+            const authTokenKey = keys.find(key => key.includes('auth-token'));
+            
+            if (authTokenKey) {
+              const token = localStorage.getItem(authTokenKey);
+              if (token) {
+                try {
+                  const parsed = JSON.parse(token);
+                  if (parsed && parsed.access_token) {
+                    console.log('[YavlSocial] ✅ Sesión encontrada');
+                    return true;
+                  }
+                } catch (e) {
+                  console.error('[YavlSocial] Error verificando sesión:', e);
+                }
+              }
+            }
+            
+            console.log('[YavlSocial] ⛔ No hay sesión, redirigiendo...');
+            return false;
+          } catch (e) {
+            console.error('[YavlSocial] Error al verificar sesión:', e);
+            return false;
+          }
+        }
+        
+        if (!checkSupabaseSession()) {
+          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+          window.location.replace('/../../#login');
+        } else {
+          console.log('[YavlSocial] ✅ Sesión válida, permitiendo acceso');
+        }
+      })();
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@300;400&display=swap');
         
