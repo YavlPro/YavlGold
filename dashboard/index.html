@@ -973,6 +973,137 @@
         text-align: center;
       }
     }
+    
+    /* CoinGecko Widget */
+    .crypto-widget {
+      margin-top: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(200, 167, 82, 0.05), var(--card-bg));
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(200, 167, 82, 0.2);
+    }
+    
+    .crypto-widget-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+    }
+    
+    .crypto-widget-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .crypto-refresh-btn {
+      background: transparent;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      color: var(--color-secondary);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+    
+    .crypto-refresh-btn:hover {
+      background: rgba(200, 167, 82, 0.1);
+      border-color: var(--color-secondary);
+    }
+    
+    .crypto-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .crypto-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: rgba(11, 12, 15, 0.4);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .crypto-item:hover {
+      background: rgba(200, 167, 82, 0.08);
+      transform: translateX(3px);
+    }
+    
+    .crypto-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+    
+    .crypto-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+    
+    .crypto-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+    
+    .crypto-symbol {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    
+    .crypto-price {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-light);
+      text-align: right;
+    }
+    
+    .crypto-change {
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-align: right;
+    }
+    
+    .crypto-change.positive {
+      color: #2ecc71;
+      background: rgba(46, 204, 113, 0.1);
+    }
+    
+    .crypto-change.negative {
+      color: #e74c3c;
+      background: rgba(231, 76, 60, 0.1);
+    }
+    
+    .crypto-loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .crypto-loading i {
+      animation: spin 1s linear infinite;
+    }
   </style>
 </head>
 <body>
@@ -1044,6 +1175,25 @@
           <i class="fas fa-cog"></i> Configuración
         </a>
       </nav>
+      
+      <!-- CoinGecko Widget -->
+      <div class="crypto-widget">
+        <div class="crypto-widget-header">
+          <div class="crypto-widget-title">
+            <i class="fas fa-chart-line"></i>
+            Precios Cripto
+          </div>
+          <button class="crypto-refresh-btn" onclick="refreshCryptoPrice()" title="Actualizar precios">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+        <div class="crypto-list" id="crypto-list">
+          <div class="crypto-loading">
+            <i class="fas fa-spinner"></i>
+            <p>Cargando precios...</p>
+          </div>
+        </div>
+      </div>
     </aside>
     
     <main class="main-content">
@@ -2195,6 +2345,144 @@
         container.style.display = 'block';
       }
     }
+    
+    /**
+     * ===================================================
+     * COINGECKO WIDGET - Precios Cripto en Tiempo Real
+     * ===================================================
+     */
+    
+    const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+    const TOP_CRYPTOS = ['bitcoin', 'ethereum', 'binancecoin', 'ripple', 'cardano', 'solana', 'polkadot', 'dogecoin', 'avalanche-2', 'chainlink'];
+    let cryptoRefreshInterval;
+    
+    /**
+     * Fetch crypto prices from CoinGecko API
+     */
+    async function fetchCryptoPrices() {
+      try {
+        const ids = TOP_CRYPTOS.join(',');
+        const response = await fetch(`${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+        
+        if (!response.ok) throw new Error('CoinGecko API error');
+        
+        const data = await response.json();
+        
+        // Get logos
+        const logosResponse = await fetch(`${COINGECKO_API}/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=10&page=1`);
+        const logosData = await logosResponse.json();
+        
+        return TOP_CRYPTOS.map(id => {
+          const priceData = data[id];
+          const logoData = logosData.find(c => c.id === id);
+          
+          return {
+            id,
+            name: logoData?.name || id,
+            symbol: logoData?.symbol || id,
+            price: priceData?.usd || 0,
+            change24h: priceData?.usd_24h_change || 0,
+            logo: logoData?.image || ''
+          };
+        });
+        
+      } catch (error) {
+        console.error('❌ Error fetching crypto prices:', error);
+        return [];
+      }
+    }
+    
+    /**
+     * Render crypto prices in the widget
+     */
+    function renderCryptoPrices(cryptos) {
+      const container = document.getElementById('crypto-list');
+      
+      if (!cryptos || cryptos.length === 0) {
+        container.innerHTML = `
+          <div class="crypto-loading">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Error al cargar precios</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = cryptos.map(crypto => {
+        const changeClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+        const changeIcon = crypto.change24h >= 0 ? '▲' : '▼';
+        const formattedPrice = crypto.price.toLocaleString('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: crypto.price < 1 ? 6 : 2
+        });
+        const formattedChange = Math.abs(crypto.change24h).toFixed(2);
+        
+        return `
+          <div class="crypto-item">
+            <div class="crypto-info">
+              ${crypto.logo ? `<img src="${crypto.logo}" alt="${crypto.name}" class="crypto-logo">` : ''}
+              <div>
+                <div class="crypto-name">${crypto.name}</div>
+                <div class="crypto-symbol">${crypto.symbol}</div>
+              </div>
+            </div>
+            <div>
+              <div class="crypto-price">${formattedPrice}</div>
+              <div class="crypto-change ${changeClass}">
+                ${changeIcon} ${formattedChange}%
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    /**
+     * Initialize crypto widget
+     */
+    async function initCryptoWidget() {
+      const cryptos = await fetchCryptoPrices();
+      renderCryptoPrices(cryptos);
+      
+      // Auto-refresh every 30 seconds
+      if (cryptoRefreshInterval) {
+        clearInterval(cryptoRefreshInterval);
+      }
+      
+      cryptoRefreshInterval = setInterval(async () => {
+        const updatedCryptos = await fetchCryptoPrices();
+        renderCryptoPrices(updatedCryptos);
+      }, 30000); // 30 segundos
+    }
+    
+    /**
+     * Manual refresh button
+     */
+    async function refreshCryptoPrice() {
+      const container = document.getElementById('crypto-list');
+      container.innerHTML = `
+        <div class="crypto-loading">
+          <i class="fas fa-spinner"></i>
+          <p>Actualizando...</p>
+        </div>
+      `;
+      
+      await initCryptoWidget();
+    }
+    
+    // Initialize crypto widget on page load
+    window.addEventListener('load', () => {
+      initCryptoWidget();
+    });
+    
+    // Cleanup interval on page unload
+    window.addEventListener('beforeunload', () => {
+      if (cryptoRefreshInterval) {
+        clearInterval(cryptoRefreshInterval);
+      }
+    });
   </script>
 </body>
 </html>
