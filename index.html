@@ -560,7 +560,7 @@
       top: 0;
       left: 0;
       width: 85%;
-      max-width: 320px;
+      max-width: 300px;
       height: 100vh;
       background: var(--bg-secondary);
       border-right: 1px solid var(--border-gold);
@@ -570,8 +570,8 @@
       z-index: 960;
       display: flex;
       flex-direction: column;
-      padding: 24px 20px 32px;
-      gap: 28px;
+      padding: 16px 16px 20px;
+      gap: 16px;
     }
 
     .mobile-drawer.active {
@@ -582,19 +582,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(194, 165, 82, 0.15);
     }
 
     .mobile-drawer-brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       text-decoration: none;
     }
 
     .mobile-drawer-brand img {
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       border: 2px solid var(--gold-secondary);
       padding: 2px;
@@ -602,7 +604,7 @@
 
     .mobile-drawer-brand span {
       font-family: 'Orbitron', serif;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 700;
       background: var(--gradient-gold);
       -webkit-background-clip: text;
@@ -611,15 +613,18 @@
     }
 
     .mobile-drawer-close {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       border: none;
       border-radius: 50%;
       background: var(--bg-card);
       color: var(--text-secondary);
-      font-size: 1.1rem;
+      font-size: 1rem;
       cursor: pointer;
       transition: var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .mobile-drawer-close:hover {
@@ -630,17 +635,20 @@
     .mobile-drawer-nav {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 4px;
+      flex: 1;
+      overflow-y: auto;
     }
 
     .mobile-drawer-nav a {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       font-weight: 500;
+      font-size: 0.95rem;
       color: var(--text-secondary);
       text-decoration: none;
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-radius: var(--radius-md);
       transition: var(--transition-fast);
       border: 1px solid transparent;
@@ -648,6 +656,8 @@
 
     .mobile-drawer-nav a i {
       color: var(--yavl-gold);
+      font-size: 1rem;
+      width: 18px;
     }
 
     .mobile-drawer-nav a:hover {
@@ -658,14 +668,18 @@
 
     .mobile-drawer-actions {
       margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(194, 165, 82, 0.15);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .mobile-drawer-actions .btn {
       width: 100%;
       justify-content: center;
+      padding: 10px 16px;
+      font-size: 0.95rem;
     }
 
     .modal-backdrop {
