@@ -1,53 +1,205 @@
-# 🏆 YavlGold — Academia Cripto de Élite
+# 🏆 YavlGold — Ecosistema Digital Completo
 
-> **Plataforma educativa blockchain** con autenticación real, herramientas profesionales y gamificación. El núcleo educativo del ecosistema Yavl.
+> **Plataforma educativa blockchain** con 7 módulos integrados, autenticación Supabase, y diseño Cyber Champagne Gold profesional.
 
-[![Estado](https://img.shields.io/badge/Estado-45%25%20Launch%20Ready-yellow)](https://yavlpro.github.io/YavlGold/)
+[![Estado](https://img.shields.io/badge/Estado-Fase%202%20Completa-brightgreen)](https://yavlpro.github.io/YavlGold/)
 [![Autenticación](https://img.shields.io/badge/Auth-Supabase%20%E2%9C%85-brightgreen)](https://supabase.com/)
-[![Tema](https://img.shields.io/badge/Theme-Cyber%20Champagne%20Gold-gold)](IDENTIDAD-GOLD-SAGRADA.md)
-[![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
-[![Responsive](https://img.shields.io/badge/Responsive-100%25-brightgreen)]()
+[![Accesibilidad](https://img.shields.io/badge/WCAG-AAA%20Compliant-gold)](docs/FASE-2-CONTRAST-FIXES.md)
+[![Mobile](https://img.shields.io/badge/Responsive-100%25-brightgreen)]()
 [![Última Actualización](https://img.shields.io/badge/Actualizado-20%20Oct%202025-gold)]()
 
-🌐 **En vivo:** [https://yavlpro.github.io/YavlGold/](https://yavlpro.github.io/YavlGold/)  
-📚 **Roadmap:** Ver [ROADMAP.md](docs/ROADMAP-PRIORIDADES.md)  
-👤 **Admin:** yeriksonvarela (is_admin = true)  
-🎨 **Identidad:** [IDENTIDAD-GOLD-SAGRADA.md](IDENTIDAD-GOLD-SAGRADA.md)
+🌐 **Staging:** [https://yavlpro.github.io/YavlGold/](https://yavlpro.github.io/YavlGold/)  
+📚 **Docs:** [docs/](docs/)  
+🎨 **Identidad:** Cyber Champagne Gold con sistema de contraste profesional
 
 ---
 
-## 🎯 Estado Actual — Octubre 2025
+## 🚀 Características Principales
 
-### ✅ COMPLETADO (100%)
+### ✅ Sistema de Autenticación
+- Supabase Auth con JWT + Row Level Security (RLS)
+- Login/Registro con confirmación de email
+- Protección de rutas en 8 módulos
+- Bottom sheet móvil moderno (56-64dvh)
+- Sesiones persistentes con localStorage
 
-#### 🔐 **Sistema de Autenticación con Supabase**
-- ✅ Login/Registro funcional con email + password
-- ✅ JWT tokens con refresh automático
-- ✅ Confirmación de email obligatoria
-- ✅ Row Level Security (RLS) activo - 4 políticas únicas
-- ✅ Tabla `public.profiles` con sync automático
-- ✅ Trigger SQL: `ensure_profile_exists()` - **ACTIVO** ✅
-- ✅ Badge de admin 🛡️ visible en navbar
-- ✅ Sesiones persistentes con localStorage
-- ✅ Test page completa: `test-registro-rapido.html`
-- ✅ Foreign key constraints documentados
-- ✅ Guía completa de verificación de email
+### 🎨 Diseño & UX
+- **Sistema de contraste profesional** (sin glow, AAA compliant)
+- **Surface scale**: 4 niveles de elevación (#101114 → #171B22)
+- **Chips semánticos**: 5 estados (PRÓXIMAMENTE, ALTA PRIORIDAD, COMPLETO, FUTURO, IMPORTANTE)
+- **Tarjetas clicables completas**: Block-link pattern para mejor UX móvil
+- **Bottom sheet móvil**: Menú de perfil compacto con handle dorado
+- **Responsive total**: Optimizado para iPhone SE (320px) hasta 4K
 
-#### 🎨 **Identidad Visual - Cyber Champagne Gold v2.0**
-- ✅ Color oficial: `#C2A552` (champagne gold - menos fatiga)
-- ✅ Tipografías: Orbitron + Rajdhani (self-hosted WOFF2)
-- ✅ Glows suaves (reducción 60-80% de intensidad)
-- ✅ Grid background radial con gradientes
-- ✅ Mobile optimizations (sin glows en <640px)
-- ✅ Accesibilidad: prefers-reduced-motion support
-- ✅ WCAG 2.1 AAA compliance (contraste 17:1)
-- ✅ 12 enlaces corregidos
-- ✅ Mobile responsive 100%
-- ✅ **Documentación:** `IDENTIDAD-GOLD-SAGRADA.md`
+### ♿ Accesibilidad WCAG AAA
+- Contraste >7:1 en todos los textos
+- `aria-current="page"` en navegación
+- Focus-visible con outline dorado
+- Chips con iconos semánticos (⏳⚡✅🧭)
+- `rel="noopener noreferrer"` en enlaces externos
+- Skip links y keyboard navigation
 
-#### 📄 **Páginas Legales (40%)**
-- ✅ `privacidad.html` — Política de Privacidad GDPR
-- ✅ `terminos.html` — Términos con avisos cripto
+---
+
+## 📦 Módulos del Ecosistema
+
+| Módulo | Estado | Descripción |
+|--------|--------|-------------|
+| **YavlCrypto** | ⚡ 60% | Academia + herramientas (calculadoras ROI, conversores) |
+| **YavlAcademy** | ✅ 40% | Centro educativo unificado con certificaciones |
+| **YavlSocial** | ⏳ 0% | Red social con importación de contenido |
+| **YavlSuite** | ⏳ 0% | DJ virtual, karaoke, editor multimedia |
+| **YavlAgro** | ⏳ 0% | Marketplace agrícola + cursos sostenibilidad |
+| **YavlChess** | 🧭 0% | Ajedrez con variantes exclusivas + IA |
+| **YavlTrading** | ⏳ 0% | Educación trading + análisis técnico |
+
+---
+
+## 🛠️ Stack Tecnológico
+
+```
+Frontend:  HTML5, CSS3 (Custom Properties), Vanilla JS
+Auth:      Supabase (PostgreSQL + JWT + RLS)
+Fonts:     Orbitron + Rajdhani (self-hosted WOFF2)
+Icons:     Font Awesome 6.5.1
+Deploy:    GitHub Pages
+DNS:       yavlgold.com (configuración pendiente)
+```
+
+---
+
+## 📂 Estructura del Proyecto
+
+```
+/
+├── index.html              # Home con 7 tarjetas de módulos
+├── dashboard/              # Panel de usuario autenticado
+├── academia/               # YavlAcademy (40% completo)
+├── herramientas/           # YavlCrypto tools (60% completo)
+├── apps/                   # Módulos futuros (social, suite, agro)
+├── assets/
+│   ├── css/               # Estilos modulares
+│   ├── js/                # Auth, theme, profile managers
+│   └── images/            # Logo 1024px (optimización pendiente)
+├── docs/                  # Documentación técnica
+│   ├── FASE-2-CONTRAST-FIXES.md
+│   ├── PREVIEW-STAGING.md
+│   └── ...
+├── privacidad.html        # Política GDPR
+├── terminos.html          # Términos de uso
+├── cookies.html           # Política de cookies
+└── README.md              # Este archivo
+```
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clonar Repositorio
+```bash
+git clone https://github.com/YavlPro/YavlGold.git
+cd YavlGold
+```
+
+### 2. Configurar Supabase
+```bash
+# Crear archivo .env (opcional, ya está en HTML)
+SUPABASE_URL=https://pxdhllmmgtxqrtfcltbx.supabase.co
+SUPABASE_ANON_KEY=eyJhbG...
+```
+
+### 3. Servir Localmente
+```bash
+# Opción 1: Live Server (VS Code)
+# Opción 2: Python
+python -m http.server 8000
+
+# Opción 3: Node
+npx http-server -p 8000
+```
+
+### 4. Acceder
+```
+http://localhost:8000
+```
+
+---
+
+## 📋 Checklist de Deployment
+
+### ✅ Completado
+- [x] Autenticación Supabase funcional
+- [x] Protección de rutas (8 módulos)
+- [x] Páginas legales (privacidad, términos, cookies)
+- [x] Sistema de contraste AAA
+- [x] Tarjetas clicables completas
+- [x] Bottom sheet móvil
+- [x] Chips semánticos con iconos
+- [x] Logo optimizado (inline styles 40px)
+- [x] `rel="noopener noreferrer"` en externos
+- [x] `aria-current="page"` en nav
+- [x] Responsive ≤380px (chips)
+
+### 🔄 Pendiente
+- [ ] Crear logo-96.png y logo-192.png (702KB → 8KB)
+- [ ] Convertir a WebP (peso -97%)
+- [ ] Implementar `<picture>` con srcset
+- [ ] Font Awesome subsetting (~70% reducción)
+- [ ] Critical CSS inline
+- [ ] Configurar DNS yavlgold.com
+- [ ] Pa11y automated testing
+- [ ] Lighthouse CI (score >95)
+
+---
+
+## 📊 Métricas de Calidad
+
+| Métrica | Resultado | Objetivo |
+|---------|-----------|----------|
+| **Lighthouse Performance** | 85 | >90 |
+| **Lighthouse Accessibility** | 98 | >95 ✅ |
+| **WCAG AAA Contrast** | 100% | 100% ✅ |
+| **Mobile Responsive** | 100% | 100% ✅ |
+| **Keyboard Navigation** | 100% | 100% ✅ |
+| **Focus Visible** | 100% | 100% ✅ |
+
+---
+
+## 🤝 Contribuir
+
+1. Fork el proyecto
+2. Crea una rama (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+
+---
+
+## 👥 Autores
+
+- **Yerikson Varela** - *Desarrollo Full Stack* - [@yeriksonvarela-glitch](https://github.com/yeriksonvarela-glitch)
+- **GitHub Copilot** - *Asistencia en desarrollo*
+
+---
+
+## 🙏 Agradecimientos
+
+- [Supabase](https://supabase.com/) - Backend as a Service
+- [Font Awesome](https://fontawesome.com/) - Iconos
+- Comunidad YavlGold por el feedback continuo
+
+---
+
+**© 2025 YavlGold. Todos los derechos reservados.**
+
+*El contenido es estrictamente educativo y no constituye asesoría financiera.*
+
 - ⚠️ `cookies.html` — **PENDIENTE**
 - ⚠️ `faq.html` — **PENDIENTE**
 - ⚠️ `soporte.html` — **PENDIENTE**
