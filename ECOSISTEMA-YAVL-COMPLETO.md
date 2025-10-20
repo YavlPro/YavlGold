@@ -30,7 +30,7 @@
 - ₿ **Academia + Herramientas Cripto** (YavlCrypto)
 - 🌱 **Agricultura Innovadora** (YavlAgro)
 - ♟️ **Ajedrez Exclusivo** (YavlChess)
-- 📈 **Trading Simulado/Real** (YavlTrading)
+- 📈 **Educación en Trading** (YavlTrading)
 
 ### Estado Actual
 
@@ -111,15 +111,15 @@ YavlGold (Ecosistema Completo)
 
 **Estado:** Planificado  
 **URL:** Pendiente  
-**Descripción:** Simulador de trading + trading real (futuro)
+**Descripción:** Academia de trading profesional con análisis técnico y estadísticas de mercado
 
 #### Funcionalidades Planeadas:
-- 📋 Simulación con dinero virtual
-- 📋 Gráficos y análisis técnico
-- 📋 Competencias de trading
-- 📋 Integración con exchanges reales (futuro lejano)
+- 📋 Cursos de trading profesional (técnico + fundamental)
+- 📋 Análisis técnico avanzado (indicadores, patrones, estrategias)
+- 📋 Estadísticas de mercado en tiempo real
+- 📋 Herramientas de análisis y alertas personalizadas
 
-**Nota:** Marcado como MUY IMPORTANTE por alta demanda
+**Nota:** Marcado como MUY IMPORTANTE por alta demanda educativa
 
 ---
 
@@ -508,7 +508,7 @@ lessons_completed INTEGER DEFAULT 0
 
 ### Medio Plazo (1-2 Meses)
 
-1. 📋 **YavlTrading:** Simulador de trading (MUY IMPORTANTE)
+1. 📋 **YavlTrading:** Educación + Análisis + Estadísticas (MUY IMPORTANTE)
 2. 📋 **YavlAcademy:** Duelos educativos + Certificaciones NFT
 3. 📋 **YavlCrypto:** Alertas de precios + Análisis técnico
 
@@ -686,7 +686,7 @@ lessons_completed INTEGER DEFAULT 0
 ### Próximos Hitos:
 
 - **Fase 2:** Optimización Font Awesome (~191KB ahorro)
-- **YavlTrading:** Simulador de trading (MUY IMPORTANTE)
+- **YavlTrading:** Educación + Análisis + Estadísticas (MUY IMPORTANTE)
 - **YavlAcademy:** Completar duelos y certificaciones
 
 ---
