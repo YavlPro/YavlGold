@@ -626,19 +626,36 @@
       const firstName = document.getElementById('first-name').value.trim();
       const lastName = document.getElementById('last-name').value.trim();
       const displayName = `${firstName} ${lastName}`.trim();
-
-      const profileData = {
-        display_name: displayName || null,
-        username: document.getElementById('username').value.trim() || null,
-        bio: document.getElementById('bio').value.trim() || null,
-        phone: document.getElementById('phone').value.trim() || null,
-        country: document.getElementById('country').value || null,
-        experience_level: document.getElementById('experience-level').value || 'beginner',
-        trading_style: document.getElementById('trading-style').value || null,
-        updated_at: new Date().toISOString()
-      };
+      const newUsername = document.getElementById('username').value.trim() || null;
 
       try {
+        // Validar username único (solo si cambió)
+        if (newUsername) {
+          const { data: existingProfiles, error: checkError } = await window.AuthClient.supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('username', newUsername)
+            .neq('user_id', currentUser.id)
+            .limit(1);
+
+          if (checkError) throw checkError;
+
+          if (existingProfiles && existingProfiles.length > 0) {
+            throw new Error('Este nombre de usuario ya está en uso. Por favor elige otro.');
+          }
+        }
+
+        const profileData = {
+          display_name: displayName || null,
+          username: newUsername,
+          bio: document.getElementById('bio').value.trim() || null,
+          phone: document.getElementById('phone').value.trim() || null,
+          country: document.getElementById('country').value || null,
+          experience_level: document.getElementById('experience-level').value || 'beginner',
+          trading_style: document.getElementById('trading-style').value || null,
+          updated_at: new Date().toISOString()
+        };
+
         const { error } = await window.AuthClient.supabase
           .from('profiles')
           .update(profileData)
@@ -655,6 +672,8 @@
 
         // Recargar perfil
         await loadUserProfile();
+
+        console.log('✅ Perfil actualizado exitosamente');
 
       } catch (error) {
         console.error('[Perfil] Error al guardar:', error);
@@ -695,6 +714,84 @@
         alert('Error al eliminar cuenta. Por favor contacta soporte.');
       }
     }
+
+    // Upload de Avatar
+    document.getElementById('avatar-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        alert('Por favor selecciona una imagen válida');
+        return;
+      }
+
+      // Validar tamaño (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('La imagen es muy grande. Máximo 2MB');
+        return;
+      }
+
+      if (!currentUser) return;
+
+      try {
+        // Crear nombre único para el archivo
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        // Upload a Supabase Storage
+        const { data: uploadData, error: uploadError } = await window.AuthClient.supabase.storage
+          .from('profiles')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = window.AuthClient.supabase.storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+
+        const avatarUrl = urlData.publicUrl;
+
+        // Update profile with new avatar URL
+        const { error: updateError } = await window.AuthClient.supabase
+          .from('profiles')
+          .update({ 
+            avatar_url: avatarUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', currentUser.id);
+
+        if (updateError) throw updateError;
+
+        // Show avatar in UI
+        const avatarContainer = document.getElementById('profile-avatar');
+        avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+
+        // Success message
+        const successMsg = document.getElementById('success-msg');
+        successMsg.style.display = 'block';
+        successMsg.innerHTML = '<i class="fas fa-check-circle"></i> ¡Avatar actualizado exitosamente!';
+        setTimeout(() => {
+          successMsg.style.display = 'none';
+        }, 3000);
+
+        console.log('✅ Avatar uploaded successfully:', avatarUrl);
+
+      } catch (error) {
+        console.error('❌ Error uploading avatar:', error);
+        const errorMsg = document.getElementById('error-msg');
+        document.getElementById('error-text').textContent = error.message || 'Error al subir la imagen';
+        errorMsg.style.display = 'block';
+        setTimeout(() => {
+          errorMsg.style.display = 'none';
+        }, 5000);
+      }
+    });
 
     // Cargar perfil al iniciar
     window.addEventListener('load', () => {
