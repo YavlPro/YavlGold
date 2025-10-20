@@ -1370,10 +1370,10 @@
     
     /* 7) Móvil: sin sombras innecesarias */
     @media (max-width: 640px) {
-      .feature-card {
+      .feature-card, .card, .phase-card, .stat-card {
         box-shadow: none;
       }
-      .feature-card:hover {
+      .feature-card:hover, .card:hover {
         box-shadow: var(--shadow-elev);
       }
     }
@@ -1381,13 +1381,124 @@
     /* 8) Reduce motion: sin transforms */
     @media (prefers-reduced-motion: reduce) {
       .feature-card:hover,
-      .feature-icon {
+      .feature-icon,
+      .card:hover,
+      .phase-card:hover,
+      .stat-card:hover {
         transform: none;
       }
       .feature-card,
-      .feature-icon {
+      .feature-icon,
+      .card,
+      .phase-card,
+      .stat-card {
         transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
       }
+    }
+    
+    /* =========================================
+       KIT DE CONTRASTE REFINADO - CHIPS & BUTTONS
+       Sistema semántico de clases para alta legibilidad
+       ========================================= */
+    
+    /* Clase genérica .card para cualquier contenedor */
+    .card {
+      background-color: var(--surface-2);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+      border: 1px solid var(--border-neutral);
+      box-shadow: none;
+      position: relative;
+      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+    
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 1px 0 var(--inner-hairline),
+        inset 0 -1px 0 var(--outer-hairline);
+      border-radius: inherit;
+    }
+    
+    .card:hover {
+      background-color: var(--surface-3);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-elev);
+      transform: translateY(-2px);
+    }
+    
+    /* Clase card-focusable para navegación con teclado */
+    .card-focusable:focus-visible {
+      outline: 2px solid rgba(194,165,82,0.55);
+      outline-offset: 2px;
+      border-color: rgba(194,165,82,0.38);
+    }
+    
+    /* Chips de estado - Sistema refinado */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid transparent;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .chip-soon {
+      color: #D7E3FF;
+      background: rgba(142,230,255,0.10);
+      border-color: rgba(142,230,255,0.25);
+    }
+    
+    .chip-hot {
+      color: #FFE7B0;
+      background: rgba(194,165,82,0.12);
+      border-color: rgba(194,165,82,0.35);
+    }
+    
+    .chip-done {
+      color: #C9F7D1;
+      background: rgba(76,175,80,0.12);
+      border-color: rgba(76,175,80,0.25);
+    }
+    
+    .chip-important {
+      color: #FFB8B8;
+      background: rgba(231,76,60,0.12);
+      border-color: rgba(231,76,60,0.25);
+    }
+    
+    /* Botones con alto contraste */
+    .btn-primary {
+      background: linear-gradient(180deg, #C2A552, #7D6B32);
+      color: #0B0C0F;
+      border: 1px solid rgba(0,0,0,0.35);
+      font-weight: 600;
+      transition: filter 0.2s ease, transform 0.2s ease;
+    }
+    
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      color: #EDEFF2;
+      border: 1px solid rgba(255,255,255,0.12);
+      font-weight: 500;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.22);
     }
     
     /* =========================================
@@ -2427,15 +2538,15 @@
       <div class="features-grid">
         
         <!-- 1. YavlSocial -->
-        <div class="feature-card coming-soon" tabindex="0">
+        <div class="feature-card card-focusable coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-users"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold);">
-            PRÓXIMAMENTE
-          </span>
-          <h3>YavlSocial</h3>
-          <p>Red social innovadora para compartir contenido, importar desde redes tradicionales y conectar con comunidades.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem;">
+            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+          </div>
+          <h3 class="card-title">YavlSocial</h3>
+          <p class="card-text">Red social innovadora para compartir contenido, importar desde redes tradicionales y conectar con comunidades.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
@@ -2456,15 +2567,15 @@
         </div>
         
         <!-- 2. YavlSuite -->
-        <div class="feature-card coming-soon" tabindex="0">
+        <div class="feature-card card-focusable coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-layer-group"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold);">
-            PRÓXIMAMENTE
-          </span>
-          <h3>YavlSuite</h3>
-          <p>Suite multimedia completa con DJ virtual, karaoke, editor de video, conversión de formatos y más.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem;">
+            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+          </div>
+          <h3 class="card-title">YavlSuite</h3>
+          <p class="card-text">Suite multimedia completa con DJ virtual, karaoke, editor de video, conversión de formatos y más.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
@@ -2485,15 +2596,15 @@
         </div>
         
         <!-- 3. YavlAcademy -->
-        <div class="feature-card card-accent" tabindex="0">
+        <div class="feature-card card-accent card-focusable" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-graduation-cap"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71;">
-            40% COMPLETO
-          </span>
-          <h3>YavlAcademy</h3>
-          <p>Academia ÚNICA y CENTRAL con cursos y certificaciones de TODOS los módulos del ecosistema. Tu centro educativo completo.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem;">
+            <span class="chip chip-done">40% COMPLETO</span>
+          </div>
+          <h3 class="card-title">YavlAcademy</h3>
+          <p class="card-text">Academia ÚNICA y CENTRAL con cursos y certificaciones de TODOS los módulos del ecosistema. Tu centro educativo completo.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
@@ -2514,18 +2625,16 @@
         </div>
         
         <!-- 4. YavlCrypto (DESTACADO) -->
-        <div class="feature-card priority-high card-accent" tabindex="0">
-          <div class="priority-badge">
-            ⚡ ALTA PRIORIDAD
-          </div>
-          <div class="feature-icon" style="margin-top: 1rem;">
+        <div class="feature-card priority-high card-accent card-focusable" tabindex="0">
+          <div class="feature-icon">
             <i class="fas fa-bitcoin"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
-            60% COMPLETO
-          </span>
-          <h3>YavlCrypto</h3>
-          <p>Academia cripto + herramientas profesionales (calculadoras, conversores, análisis) para dominar el ecosistema blockchain.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+            <span class="chip chip-hot">⚡ ALTA PRIORIDAD</span>
+            <span class="chip chip-done">60% COMPLETO</span>
+          </div>
+          <h3 class="card-title">YavlCrypto</h3>
+          <p class="card-text">Academia cripto + herramientas profesionales (calculadoras, conversores, análisis) para dominar el ecosistema blockchain.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.4);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
@@ -2546,15 +2655,15 @@
         </div>
         
         <!-- 5. YavlAgro -->
-        <div class="feature-card coming-soon" tabindex="0">
+        <div class="feature-card card-focusable coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-seedling"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold);">
-            PRÓXIMAMENTE
-          </span>
-          <h3>YavlAgro</h3>
-          <p>Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem;">
+            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+          </div>
+          <h3 class="card-title">YavlAgro</h3>
+          <p class="card-text">Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
@@ -2575,15 +2684,15 @@
         </div>
         
         <!-- 6. YavlChess -->
-        <div class="feature-card coming-soon" tabindex="0">
+        <div class="feature-card card-focusable coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-chess"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.15); color: var(--text-secondary);">
-            FUTURO
-          </span>
-          <h3>YavlChess</h3>
-          <p>Ajedrez con variantes exclusivas: modo turbo, probabilístico, explosivo y desafíos contra IA avanzada.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem;">
+            <span class="chip chip-soon">FUTURO</span>
+          </div>
+          <h3 class="card-title">YavlChess</h3>
+          <p class="card-text">Ajedrez con variantes exclusivas: modo turbo, probabilístico, explosivo y desafíos contra IA avanzada.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
@@ -2604,15 +2713,16 @@
         </div>
         
         <!-- 7. YavlTrading -->
-        <div class="feature-card card-accent coming-soon" tabindex="0">
+        <div class="feature-card card-accent card-focusable coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-chart-line"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c;">
-            MUY IMPORTANTE
-          </span>
-          <h3>YavlTrading</h3>
-          <p>Educación completa en trading, análisis técnico profesional y estadísticas de mercado en tiempo real.</p>
+          <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+            <span class="chip chip-important">MUY IMPORTANTE</span>
+            <span class="chip chip-soon">PRÓXIMAMENTE</span>
+          </div>
+          <h3 class="card-title">YavlTrading</h3>
+          <p class="card-text">Educación completa en trading, análisis técnico profesional y estadísticas de mercado en tiempo real.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
               <i class="fas fa-check-circle" style="color: var(--yavl-gold);"></i>
