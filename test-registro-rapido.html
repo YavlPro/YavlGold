@@ -439,23 +439,39 @@
         
         if (profileError) {
           addLog('warning', '⚠️ Perfil no encontrado por trigger');
-          addLog('info', '🔧 Creando perfil manualmente...');
           
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: email,
-              username: username,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+          // Si hay sesión, usar las credenciales del usuario autenticado
+          if (data.session) {
+            addLog('info', '🔧 Creando perfil manualmente con sesión autenticada...');
+            
+            // Crear un nuevo cliente con la sesión del usuario
+            const authenticatedClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+              global: {
+                headers: {
+                  Authorization: `Bearer ${data.session.access_token}`
+                }
+              }
             });
-          
-          if (insertError) {
-            addLog('error', '❌ Error creando perfil: ' + insertError.message);
-            throw insertError;
+            
+            const { error: insertError } = await authenticatedClient
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                email: email,
+                username: username,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+            
+            if (insertError) {
+              addLog('error', '❌ Error creando perfil: ' + insertError.message);
+              throw insertError;
+            } else {
+              addLog('success', '✅ Perfil creado manualmente');
+            }
           } else {
-            addLog('success', '✅ Perfil creado manualmente');
+            addLog('error', '❌ No hay sesión disponible para crear perfil');
+            addLog('warning', '⚠️ Usuario creado pero sin perfil');
           }
         } else {
           addLog('success', '✅ Perfil encontrado en public.profiles');
