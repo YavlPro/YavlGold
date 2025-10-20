@@ -1668,6 +1668,66 @@
       if (window.ThemeManager) {
         ThemeManager.setupToggleButton('theme-toggle');
       }
+      
+      // ========================================
+      // USER MENU DROPDOWN TOGGLE
+      // ========================================
+      const userMenuBtn = document.getElementById('user-menu-btn');
+      const userDropdown = document.getElementById('user-dropdown');
+      
+      if (userMenuBtn && userDropdown) {
+        // Toggle dropdown cuando se hace clic en el botón
+        userMenuBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const isVisible = userDropdown.style.display === 'block';
+          userDropdown.style.display = isVisible ? 'none' : 'block';
+        });
+        
+        // Cerrar dropdown cuando se hace clic fuera
+        document.addEventListener('click', function(e) {
+          if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
+            userDropdown.style.display = 'none';
+          }
+        });
+      }
+      
+      // ========================================
+      // LOGOUT BUTTON FUNCTIONALITY
+      // ========================================
+      const logoutBtn = document.getElementById('logout-btn');
+      
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function(e) {
+          e.preventDefault();
+          
+          try {
+            // Cerrar sesión con Supabase si está disponible
+            if (window.supabase && window.supabase.auth) {
+              const { error } = await window.supabase.auth.signOut();
+              if (error) {
+                console.error('Error al cerrar sesión:', error);
+              }
+            }
+            
+            // Limpiar localStorage
+            localStorage.removeItem('sb-pxdhllmmgtxqrtfcltbx-auth-token');
+            localStorage.removeItem('user-session');
+            localStorage.removeItem('user-data');
+            
+            // Mostrar mensaje de éxito
+            showNotification('Sesión cerrada correctamente', 'success');
+            
+            // Redirigir al inicio después de 1 segundo
+            setTimeout(() => {
+              window.location.href = '../#login';
+            }, 1000);
+            
+          } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+            showNotification('Error al cerrar sesión', 'error');
+          }
+        });
+      }
     });
   </script>
   

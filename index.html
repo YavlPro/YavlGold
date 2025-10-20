@@ -1175,91 +1175,149 @@
       margin-top: 3rem;
     }
     
-    .feature-card {
-      /* Fondo con gradiente VISIBLE */
-      background: linear-gradient(
-        135deg, 
-        rgba(11, 12, 15, 0.95),
-        rgba(212, 175, 55, 0.08)
-      );
-      border-radius: var(--radius-xl);
-      padding: 2.5rem 2rem;
-      /* BORDE GRUESO Y VISIBLE */
-      border: 3px solid rgba(212, 175, 55, 0.5);
-      transition: var(--transition-normal);
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(10px);
-      /* GLOW INTENSO */
-      box-shadow: 
-        0 0 20px rgba(212, 175, 55, 0.6),
-        0 4px 20px rgba(0, 0, 0, 0.5),
-        inset 0 0 40px rgba(212, 175, 55, 0.03);
+    /* =========================================
+       SISTEMA DE CONTRASTE LIMPIO (SIN GLOW)
+       Premium por capas, bordes y elevación
+       ========================================= */
+    
+    /* 1) Escalera de superficies oscuras para contraste */
+    :root {
+      --surface-0: #101114;  /* fondo página */
+      --surface-1: #111318;
+      --surface-2: #14171D;  /* base tarjeta */
+      --surface-3: #171B22;  /* hover/elevación */
+      --border-neutral: rgba(255,255,255,0.06); /* borde base */
+      --border-strong: rgba(255,255,255,0.10);  /* hover/focus */
+      --inner-hairline: rgba(255,255,255,0.08); /* highlight interno 1px */
+      --outer-hairline: rgba(0,0,0,0.45);       /* sombra interna 1px */
+      --shadow-elev: 0 8px 24px -12px rgba(0,0,0,0.65);
+      
+      /* Textos accesibles */
+      --card-title-color: #F3F5F7;
+      --card-text-color: #CACDD3;
     }
     
-    .feature-card::before {
-      content: '';
+    /* 2) Tarjetas: contraste por capas + hairlines */
+    .feature-card {
+      background-color: var(--surface-2);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); /* tinta sutil */
+      border: 1px solid var(--border-neutral);
+      border-radius: var(--radius-xl);
+      padding: 2rem 1.75rem;
+      box-shadow: none; /* sin glow */
+      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+      position: relative;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Hairlines internos para dar "edge" sin brillar */
+    .feature-card::after {
+      content: "";
       position: absolute;
-      top: 0;
+      inset: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 1px 0 var(--inner-hairline),  /* línea superior clara */
+        inset 0 -1px 0 var(--outer-hairline); /* línea inferior oscura */
+      border-radius: inherit;
+    }
+    
+    /* 3) Hover: elevar cambiando superficie y borde, sin brillo */
+    .feature-card:hover {
+      background-color: var(--surface-3);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-elev);
+      transform: translateY(-2px);
+    }
+    
+    /* 4) Acento dorado minimal: línea de 2px arriba */
+    .card-accent::before {
+      content: "";
+      position: absolute;
       left: 0;
+      top: 0;
       right: 0;
       height: 2px;
-      background: var(--gradient-gold);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: var(--transition-normal);
+      background: linear-gradient(90deg, var(--yavl-gold), rgba(194,165,82,0.0) 70%);
+      opacity: 0.8;
+      z-index: 1;
     }
     
-    .feature-card:hover {
-      /* Borde DORADO BRILLANTE */
-      border-color: rgba(212, 175, 55, 0.9);
-      transform: translateY(-8px);
-      /* GLOW MÁXIMO AL HOVER */
-      box-shadow: 
-        0 0 30px rgba(212, 175, 55, 1),
-        0 0 60px rgba(212, 175, 55, 0.6),
-        0 8px 30px rgba(0, 0, 0, 0.7),
-        inset 0 0 60px rgba(212, 175, 55, 0.05);
+    /* Priority card styles */
+    .feature-card.priority-high {
+      border: 2px solid rgba(194, 165, 82, 0.3);
+      background-color: var(--surface-2);
     }
     
-    .feature-card:hover::before {
-      transform: scaleX(1);
+    .feature-card.priority-high::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--yavl-gold), rgba(194,165,82,0.0) 80%);
+      opacity: 0.9;
+      z-index: 1;
+    }
+    
+    .feature-card.coming-soon {
+      opacity: 0.75;
+    }
+    
+    /* 5) Estados de foco accesibles */
+    .feature-card:focus-visible {
+      outline: 2px solid rgba(194,165,82,0.55); /* dorado suave */
+      outline-offset: 2px;
+      border-color: rgba(194,165,82,0.38);
     }
     
     .feature-icon {
-      width: 60px;  /* Reducido de 70px para mejor proporción */
+      width: 60px;
       height: 60px;
-      background: var(--gradient-gold-subtle);
-      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(194, 165, 82, 0.12), rgba(194, 165, 82, 0.05));
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.75rem;  /* Ajustado proporcionalmente */
+      font-size: 2rem;
       color: var(--yavl-gold);
-      margin-bottom: 1.5rem;
+      margin: 0 auto 1.25rem auto;
       transition: var(--transition-normal);
+      position: relative;
+      z-index: 2;
     }
     
     .feature-card:hover .feature-icon {
-      transform: scale(1.08) rotate(3deg);
-      background: linear-gradient(135deg, rgba(226, 198, 117, 0.18), rgba(168, 134, 59, 0.08));
-      box-shadow: var(--shadow-gold-soft);
+      transform: scale(1.05);
+      background: linear-gradient(135deg, rgba(194, 165, 82, 0.18), rgba(194, 165, 82, 0.08));
     }
     
-    .feature-card h3 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--yavl-gold);
-      margin-bottom: 0.75rem;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); /* Consistente con navbar */
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    /* 6) Texto dentro de tarjeta: títulos y párrafos accesibles */
+    .feature-card h3,
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--card-title-color);
+      margin: 0 0 0.75rem 0;
+      position: relative;
+      z-index: 2;
     }
     
-    .feature-card p {
-      color: var(--text-secondary);
-      line-height: 1.7;
-      margin-bottom: 1.5rem;
+    .feature-card p,
+    .card-text {
+      color: var(--card-text-color);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      flex-grow: 1;
+      position: relative;
+      z-index: 2;
     }
     
     .feature-link {
@@ -1270,11 +1328,66 @@
       align-items: center;
       gap: 0.5rem;
       transition: var(--transition-fast);
+      margin-top: auto;
+      position: relative;
+      z-index: 2;
     }
     
     .feature-link:hover {
       gap: 0.75rem;
       color: var(--yavl-gold);
+    }
+    
+    /* Feature card badges */
+    .feature-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 2;
+    }
+    
+    .priority-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gradient-gold);
+      color: var(--yavl-dark);
+      padding: 0.45rem 1.25rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(194, 165, 82, 0.4);
+      white-space: nowrap;
+      z-index: 3;
+    }
+    
+    /* 7) Móvil: sin sombras innecesarias */
+    @media (max-width: 640px) {
+      .feature-card {
+        box-shadow: none;
+      }
+      .feature-card:hover {
+        box-shadow: var(--shadow-elev);
+      }
+    }
+    
+    /* 8) Reduce motion: sin transforms */
+    @media (prefers-reduced-motion: reduce) {
+      .feature-card:hover,
+      .feature-icon {
+        transform: none;
+      }
+      .feature-card,
+      .feature-icon {
+        transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+      }
     }
     
     /* =========================================
@@ -2052,57 +2165,87 @@
     }
     
     .phase-card {
-      background: linear-gradient(135deg, rgba(11, 12, 15, 0.96), rgba(194, 165, 82, 0.06));
-      border: 1px solid var(--border-gold);
-      backdrop-filter: blur(5px);
-      transition: all 0.3s ease;
-      box-shadow: var(--glow-gold);
+      background-color: var(--surface-2);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+      border: 1px solid var(--border-neutral);
+      box-shadow: none;
+      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
       position: relative;
       overflow: hidden;
     }
     
-    .phase-card::before {
-      content: '';
+    .phase-card::after {
+      content: "";
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(194, 165, 82, 0.08), transparent);
-      transition: left 0.5s;
-    }
-    
-    .phase-card:hover::before {
-      left: 100%;
+      inset: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 1px 0 var(--inner-hairline),
+        inset 0 -1px 0 var(--outer-hairline);
+      border-radius: inherit;
     }
     
     .phase-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--glow-intense);
-      border-color: var(--yavl-gold);
+      background-color: var(--surface-3);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-elev);
+      transform: translateY(-2px);
     }
     
     .feature-item {
       border-left: 3px solid var(--yavl-gold);
-      background: linear-gradient(to right, rgba(194, 165, 82, 0.10), transparent);
-      transition: all 0.3s ease;
+      background-color: var(--surface-2);
+      background-image: linear-gradient(to right, rgba(194, 165, 82, 0.08), transparent);
+      border: 1px solid var(--border-neutral);
+      border-left: 3px solid var(--yavl-gold);
+      box-shadow: none;
+      transition: background-color .2s ease, border-color .2s ease, border-left-width .2s ease;
+      position: relative;
+    }
+    
+    .feature-item::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 1px 0 var(--inner-hairline),
+        inset 0 -1px 0 var(--outer-hairline);
+      border-radius: inherit;
     }
     
     .feature-item:hover {
-      background: linear-gradient(to right, rgba(194, 165, 82, 0.18), transparent);
+      background-color: var(--surface-3);
+      background-image: linear-gradient(to right, rgba(194, 165, 82, 0.15), transparent);
       border-left-width: 4px;
+      border-left-color: var(--yavl-gold);
     }
     
     .stat-card {
-      background: rgba(194, 165, 82, 0.06);
-      border: 1px solid var(--border-gold);
-      transition: all 0.3s ease;
+      background-color: var(--surface-2);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+      border: 1px solid var(--border-neutral);
+      box-shadow: none;
+      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+      position: relative;
+    }
+    
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow:
+        inset 0 1px 0 var(--inner-hairline),
+        inset 0 -1px 0 var(--outer-hairline);
+      border-radius: inherit;
     }
     
     .stat-card:hover {
-      background: rgba(194, 165, 82, 0.14);
-      box-shadow: var(--glow-gold);
-      transform: scale(1.05);
+      background-color: var(--surface-3);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-elev);
+      transform: translateY(-2px);
     }
     
     .timeline-connector {
@@ -2284,11 +2427,11 @@
       <div class="features-grid">
         
         <!-- 1. YavlSocial -->
-        <div class="feature-card">
+        <div class="feature-card coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-users"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
+          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold);">
             PRÓXIMAMENTE
           </span>
           <h3>YavlSocial</h3>
@@ -2313,11 +2456,11 @@
         </div>
         
         <!-- 2. YavlSuite -->
-        <div class="feature-card">
+        <div class="feature-card coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-layer-group"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
+          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold);">
             PRÓXIMAMENTE
           </span>
           <h3>YavlSuite</h3>
@@ -2342,11 +2485,11 @@
         </div>
         
         <!-- 3. YavlAcademy -->
-        <div class="feature-card">
+        <div class="feature-card card-accent" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-graduation-cap"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
+          <span class="feature-badge" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71;">
             40% COMPLETO
           </span>
           <h3>YavlAcademy</h3>
@@ -2371,8 +2514,8 @@
         </div>
         
         <!-- 4. YavlCrypto (DESTACADO) -->
-        <div class="feature-card" style="border: 2px solid var(--yavl-gold); position: relative; box-shadow: 0 0 20px rgba(194,165,82,0.3);">
-          <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--yavl-gold), var(--yavl-gold-dark)); padding: 0.4rem 1.5rem; border-radius: 20px; font-size: 0.75rem; font-weight: 800; color: var(--yavl-dark); box-shadow: 0 4px 10px rgba(194,165,82,0.4);">
+        <div class="feature-card priority-high card-accent" tabindex="0">
+          <div class="priority-badge">
             ⚡ ALTA PRIORIDAD
           </div>
           <div class="feature-icon" style="margin-top: 1rem;">
@@ -2403,11 +2546,11 @@
         </div>
         
         <!-- 5. YavlAgro -->
-        <div class="feature-card">
+        <div class="feature-card coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-seedling"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
+          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold);">
             PRÓXIMAMENTE
           </span>
           <h3>YavlAgro</h3>
@@ -2432,11 +2575,11 @@
         </div>
         
         <!-- 6. YavlChess -->
-        <div class="feature-card">
+        <div class="feature-card coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-chess"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.15); color: var(--text-secondary); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
+          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.15); color: var(--text-secondary);">
             FUTURO
           </span>
           <h3>YavlChess</h3>
@@ -2461,19 +2604,14 @@
         </div>
         
         <!-- 7. YavlTrading -->
-        <div class="feature-card">
+        <div class="feature-card card-accent coming-soon" tabindex="0">
           <div class="feature-icon">
             <i class="fas fa-chart-line"></i>
           </div>
-          <span class="feature-badge" style="background: rgba(194, 165, 82, 0.2); color: var(--yavl-gold); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; position: absolute; top: 1.5rem; right: 1.5rem;">
-            PRÓXIMAMENTE
+          <span class="feature-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c;">
+            MUY IMPORTANTE
           </span>
-          <h3 style="display: flex; align-items: center; gap: 0.5rem;">
-            YavlTrading
-            <span style="background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.65rem; font-weight: 800;">
-              MUY IMPORTANTE
-            </span>
-          </h3>
+          <h3>YavlTrading</h3>
           <p>Educación completa en trading, análisis técnico profesional y estadísticas de mercado en tiempo real.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(194,165,82,0.2);">
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
