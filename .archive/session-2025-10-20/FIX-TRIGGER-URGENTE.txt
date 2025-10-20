@@ -1,0 +1,232 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  🔴 PROBLEMA CRÍTICO: TRIGGER NO SE EJECUTA                         ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📊 ANÁLISIS DEL PROBLEMA:
+═════════════════════════════════════════════════════════════════════
+
+Test realizado:
+✅ Usuario creado en auth.users
+❌ Trigger ensure_profile_exists() NO se ejecuta
+❌ Fallback manual bloqueado por RLS
+
+Error: "new row violates row-level security policy"
+
+
+🔍 CAUSA RAÍZ:
+═════════════════════════════════════════════════════════════════════
+
+1. Trigger NO existe o está deshabilitado en Supabase
+2. Fallback manual usaba cliente anónimo (sin auth.uid())
+3. Política RLS requiere auth.uid() = id para INSERT
+4. Sin sesión autenticada, auth.uid() retorna NULL
+
+
+✅ SOLUCIONES APLICADAS:
+═════════════════════════════════════════════════════════════════════
+
+SOLUCIÓN 1: Fix del fallback en test-registro-rapido.html
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANTES (bloqueado por RLS):
+```javascript
+const { error } = await supabase  // ← Cliente anónimo
+  .from('profiles')
+  .insert({ ... });
+```
+
+AHORA (con sesión autenticada):
+```javascript
+// Usar access_token del usuario recién registrado
+const authenticatedClient = window.supabase.createClient(
+  SUPABASE_URL, 
+  SUPABASE_ANON_KEY,
+  {
+    global: {
+      headers: {
+        Authorization: `Bearer ${data.session.access_token}`
+      }
+    }
+  }
+);
+
+const { error } = await authenticatedClient  // ← Cliente autenticado
+  .from('profiles')
+  .insert({ ... });
+```
+
+Beneficio: auth.uid() ahora retorna el ID correcto ✅
+
+
+SOLUCIÓN 2: SQL para verificar y recrear trigger
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Archivo: /sql/verificar-y-recrear-trigger.sql
+
+Incluye:
+✅ Verificación de trigger existente
+✅ Verificación de función existente
+✅ Limpieza de triggers antiguos
+✅ Creación de función mejorada
+✅ Creación de trigger
+✅ Testing del trigger
+✅ Troubleshooting completo
+
+
+🎯 ACCIÓN REQUERIDA: EJECUTAR SQL EN SUPABASE
+═════════════════════════════════════════════════════════════════════
+
+Opción A: SQL Completo (Recomendado)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Supabase Dashboard → SQL Editor → New Query
+
+2. Copia y ejecuta TODO el contenido de:
+   /sql/verificar-y-recrear-trigger.sql
+
+3. Verifica con:
+   SELECT tgname, tgenabled 
+   FROM pg_trigger 
+   WHERE tgname = 'create_profile_after_user_insert';
+
+   Debe retornar 1 fila con tgenabled = 'O' (enabled)
+
+
+Opción B: SQL Rápido (Solo lo esencial)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Si quieres ir directo al grano:
+
+```sql
+-- Eliminar si existe
+DROP TRIGGER IF EXISTS create_profile_after_user_insert ON auth.users;
+DROP FUNCTION IF EXISTS public.ensure_profile_exists() CASCADE;
+
+-- Crear función
+CREATE OR REPLACE FUNCTION public.ensure_profile_exists()
+RETURNS TRIGGER AS $$
+DECLARE
+  generated_username TEXT;
+BEGIN
+  generated_username := COALESCE(
+    NEW.raw_user_meta_data->>'username',
+    LOWER(REPLACE(SPLIT_PART(NEW.email, '@', 1), '.', '_'))
+  );
+  
+  INSERT INTO public.profiles (
+    id, email, username, avatar_url, bio, is_admin, 
+    xp_points, current_level, created_at, updated_at
+  ) VALUES (
+    NEW.id,
+    NEW.email,
+    generated_username,
+    'https://ui-avatars.com/api/?name=' || 
+      COALESCE(NEW.raw_user_meta_data->>'name', 'User') || 
+      '&background=D4AF37&color=0B0C0F&bold=true',
+    NULL, FALSE, 0, 1, NOW(), NOW()
+  )
+  ON CONFLICT (id) DO NOTHING;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Crear trigger
+CREATE TRIGGER create_profile_after_user_insert
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.ensure_profile_exists();
+```
+
+
+🧪 TESTING DESPUÉS DEL FIX:
+═════════════════════════════════════════════════════════════════════
+
+Paso 1: Ejecutar SQL del trigger en Supabase
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ SQL ejecutado
+✅ Trigger creado
+✅ Función creada
+
+
+Paso 2: Esperar deploy de GitHub Pages (5 min)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+El fix del test-registro-rapido.html está en commit: f6989fe
+GitHub Pages se actualizará automáticamente
+
+
+Paso 3: Probar registro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Ve a: https://yavlpro.github.io/YavlGold/test-registro-rapido.html
+2. Recarga (F5)
+3. Auto-rellenar
+4. Crear Cuenta
+
+
+✅ RESULTADO ESPERADO (CON TRIGGER):
+═════════════════════════════════════════════════════════════════════
+
+[20:XX:XX] ✅ Usuario creado en auth.users
+[20:XX:XX] ⏳ Esperando trigger ensure_profile_exists() (1 seg)...
+[20:XX:XX] 🔍 Verificando perfil en public.profiles...
+[20:XX:XX] ✅ Perfil encontrado en public.profiles  ← TRIGGER FUNCIONÓ
+[20:XX:XX] 🏷️ Username: test_user_xxx
+[20:XX:XX] ⭐ XP: 0
+[20:XX:XX] 🎯 Nivel: 1
+[20:XX:XX] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[20:XX:XX] ✅ REGISTRO EXITOSO
+
+
+✅ RESULTADO ESPERADO (SIN TRIGGER, CON FALLBACK):
+═════════════════════════════════════════════════════════════════════
+
+[20:XX:XX] ✅ Usuario creado en auth.users
+[20:XX:XX] ⏳ Esperando trigger ensure_profile_exists() (1 seg)...
+[20:XX:XX] 🔍 Verificando perfil en public.profiles...
+[20:XX:XX] ⚠️ Perfil no encontrado por trigger
+[20:XX:XX] 🔧 Creando perfil manualmente con sesión autenticada...
+[20:XX:XX] ✅ Perfil creado manualmente  ← FALLBACK FUNCIONÓ
+[20:XX:XX] 📧 Email de confirmación enviado
+[20:XX:XX] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[20:XX:XX] ✅ REGISTRO EXITOSO
+
+
+📊 DIFERENCIA:
+═════════════════════════════════════════════════════════════════════
+
+CON TRIGGER:
+✅ Perfil creado automáticamente
+✅ Más rápido (sin espera de fallback)
+✅ Mejor arquitectura
+
+CON FALLBACK (sin trigger):
+✅ Perfil creado manualmente
+✅ Funciona igual de bien
+⚠️ Requiere sesión autenticada (ya implementado)
+
+
+🎯 PRIORIDAD:
+═════════════════════════════════════════════════════════════════════
+
+1. 🔴 CRÍTICO: Ejecutar SQL del trigger en Supabase
+2. ⏳ Esperar 5 min (GitHub Pages se actualiza)
+3. 🧪 Probar registro nuevamente
+4. ✅ Verificar resultado
+
+
+═════════════════════════════════════════════════════════════════════
+
+Commit: f6989fe
+Archivos:
+- test-registro-rapido.html (fallback con sesión)
+- sql/verificar-y-recrear-trigger.sql (SQL completo)
+- Esta documentación
+
+═════════════════════════════════════════════════════════════════════
+
+Ejecuta el SQL del trigger y espera 5 minutos para probar! 🚀
+
+═════════════════════════════════════════════════════════════════════

@@ -1,0 +1,203 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║  ✅ USUARIOS DE PRUEBA ELIMINADOS - LISTOS PARA PROBAR             ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+FECHA: 2025-10-20
+HORA: ~20:XX (hora local)
+
+✅ LIMPIEZA EXITOSA:
+═════════════════════════════════════════════════════════════════════
+
+Ejecutado:
+┌─────────────────────────────────────────────────────────────────┐
+│ DELETE FROM public.profiles WHERE email = 'yeriksonpro...';    │
+│ DELETE FROM auth.users WHERE email = 'yeriksonpro...';         │
+└─────────────────────────────────────────────────────────────────┘
+
+Resultado: Success. No rows returned ✅
+
+IDs eliminados:
+• adeda623-eb57-4667-829b-7db4c78c922c
+• efd7b13b-b28d-45d1-8ed6-9c8bf3b3285e  
+• 87fef4b8-8d20-468a-a4e8-2acca6e541dd
+
+
+🚀 DEPLOYMENT EN PROGRESO:
+═════════════════════════════════════════════════════════════════════
+
+Commit: f6989fe
+Título: 🔧 fix: Trigger no se ejecuta + fallback con sesión autenticada
+Archivos modificados:
+  • test-registro-rapido.html (fallback usa Bearer token)
+  • sql/verificar-y-recrear-trigger.sql (trigger comprehensive)
+  • Documentación múltiple
+
+Estado GitHub Pages: 🔄 Deploying...
+Tiempo estimado: ~5 minutos desde push
+URL test: https://yavlpro.github.io/YavlGold/test-registro-rapido.html
+
+
+🧪 PRÓXIMA PRUEBA (EN ~2-3 MINUTOS):
+═════════════════════════════════════════════════════════════════════
+
+PASO 1: Verificar deployment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Abrir: https://yavlpro.github.io/YavlGold/test-registro-rapido.html
+O desde: https://github.com/YavlPro/gold/deployments
+
+Verificar:
+• Badge dice "deployed" (verde) ✅
+• Timestamp del deployment es reciente (últimos 5 min)
+
+
+PASO 2: Ejecutar test de registro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Hacer clic en "🎲 Auto-rellenar" (genera test{timestamp}@example.com)
+2. Hacer clic en "✨ Registrar Usuario"
+3. Observar logs en tiempo real
+
+
+RESULTADO ESPERADO (CON TRIGGER FUNCIONANDO):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────────────────────────────────────────────────┐
+│ ⏳ Iniciando registro...                                        │
+│ ✅ Usuario registrado exitosamente                             │
+│ ℹ️ ID: [uuid-generado]                                         │
+│ 🔍 Verificando perfil en public.profiles...                    │
+│ ✅ Perfil encontrado en public.profiles ← ESTE ES EL ÉXITO    │
+│ ℹ️ Username: test1729XXXXXX                                    │
+│ ℹ️ Email: test1729XXXXXX@example.com                           │
+│ ✅ ¡Registro completado! Usuario y perfil creados.             │
+└─────────────────────────────────────────────────────────────────┘
+
+🎯 CLAVE: "✅ Perfil encontrado en public.profiles"
+    Significa que el trigger ensure_profile_exists() funcionó ✅
+
+
+RESULTADO ALTERNATIVO (SI TRIGGER FALLA):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────────────────────────────────────────────────┐
+│ ⏳ Iniciando registro...                                        │
+│ ✅ Usuario registrado exitosamente                             │
+│ ℹ️ ID: [uuid-generado]                                         │
+│ 🔍 Verificando perfil en public.profiles...                    │
+│ ⚠️ Perfil no encontrado por trigger ← Trigger falló           │
+│ ⏳ Creando perfil manualmente con sesión autenticada...        │
+│ ✅ Perfil creado manualmente                                   │
+│ ✅ ¡Registro completado! Usuario y perfil creados.             │
+└─────────────────────────────────────────────────────────────────┘
+
+Nota: El fallback AHORA usa la sesión autenticada (Bearer token)
+      por lo que debería funcionar aunque el trigger falle ✅
+
+
+🔍 VERIFICACIÓN EN SUPABASE:
+═════════════════════════════════════════════════════════════════════
+
+1. Authentication → Users
+   ✅ Buscar el email test{timestamp}@example.com
+   ✅ Verificar estado: "Waiting for verification" (normal)
+
+2. Table Editor → profiles
+   ✅ Buscar el mismo email
+   ✅ Verificar campos:
+      • id: debe coincidir con auth.users.id
+      • username: test1729XXXXXX (generado del metadata)
+      • full_name: null o del metadata
+      • created_at: timestamp reciente
+
+
+📊 DIAGNÓSTICO DEL TRIGGER:
+═════════════════════════════════════════════════════════════════════
+
+Estado actual del trigger:
+┌─────────────────────────────────────────────────────────────────┐
+│ tgname: create_profile_after_user_insert                       │
+│ tgenabled: O (ACTIVE) ✅                                        │
+│ Event: AFTER INSERT on auth.users                              │
+│ Function: ensure_profile_exists()                              │
+│ Security: DEFINER (bypass RLS) ✅                              │
+└─────────────────────────────────────────────────────────────────┘
+
+El trigger DEBERÍA funcionar ahora porque:
+✅ Está activo (tgenabled='O')
+✅ Usa SECURITY DEFINER (bypass RLS)
+✅ Tiene ON CONFLICT DO NOTHING (evita errores)
+✅ Genera username desde metadata.full_name o NEW.email
+
+
+🎯 CRITERIOS DE ÉXITO:
+═════════════════════════════════════════════════════════════════════
+
+Éxito Total (100%):
+  ✅ Log muestra "Perfil encontrado en public.profiles"
+  ✅ No hay mensaje "Creando perfil manualmente"
+  ✅ Perfil existe en table editor con username generado
+  
+Éxito Parcial (80%):
+  ⚠️ Log muestra "Perfil no encontrado por trigger"
+  ✅ Log muestra "Perfil creado manualmente"
+  ✅ Perfil existe en table editor
+  📝 Trigger aún no funciona, pero fallback sí
+
+Fallo (0%):
+  ❌ Error en registro de usuario
+  ❌ Error en creación manual de perfil
+  ❌ Perfil no existe en table editor
+
+
+🐛 SI EL TRIGGER AÚN NO FUNCIONA:
+═════════════════════════════════════════════════════════════════════
+
+Posibles causas:
+1. Delay de propagación en Supabase (poco probable)
+2. Error en función ensure_profile_exists() (revisar logs)
+3. Trigger no asociado correctamente a auth.users
+
+Debug SQL:
+-- Ver logs de ejecución del trigger
+SELECT * FROM pg_stat_user_functions 
+WHERE funcname = 'ensure_profile_exists';
+
+-- Ver si hay errores en postgres logs
+-- (requiere acceso a dashboard de Supabase)
+
+
+📋 SIGUIENTE FASE (DESPUÉS DEL TEST):
+═════════════════════════════════════════════════════════════════════
+
+Si test es exitoso:
+  1. ✅ Marcar "Verificación sistema registro" como COMPLETA
+  2. 🚀 Continuar con Fase 2: Font Awesome optimization
+     • 30 iconos únicos identificados
+     • Opciones: SVG sprite subset, CDN defer, o local subset
+     • Ahorro estimado: ~140KB
+  
+  3. 📅 Días 3-7: Performance optimization roadmap
+     • Day 3: Critical CSS extraction
+     • Day 4: Image optimization (WebP/AVIF)
+     • Day 5: Course schema markup
+     • Day 6: Legal pages
+     • Day 7: Final QA + Lighthouse
+
+Si test falla:
+  1. 🐛 Analizar logs del test
+  2. 🔍 Revisar trigger en Supabase
+  3. 🔧 Ajustar según error específico
+
+
+═════════════════════════════════════════════════════════════════════
+
+⏰ TIEMPO ESTIMADO HASTA TEST: 2-3 minutos
+
+🔗 URL: https://yavlpro.github.io/YavlGold/test-registro-rapido.html
+
+═════════════════════════════════════════════════════════════════════
+
+¡Prepárate para probar! 🚀🎉
+
+═════════════════════════════════════════════════════════════════════
