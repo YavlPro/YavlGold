@@ -2521,7 +2521,7 @@
         <button id="btnProfile" class="profile-btn" style="display: none; width: 36px; height: 36px; border-radius: 50%; overflow: hidden; padding: 0; border: 2px solid var(--yavl-gold); background: var(--surface-3); cursor: pointer;" aria-label="Abrir menú de perfil" tabindex="0">
           <img src="/assets/images/logo.png" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
         </button>
-        <!-- Botones de autenticación (se ocultan cuando está autenticado) -->
+        <!-- Botones de autenticación desktop (ocultos automáticamente en móvil por CSS) -->
         <button type="button" id="loginBtn" class="btn btn-outline" data-modal-target="login-modal">Iniciar Sesión</button>
         <button type="button" id="registerBtn" class="btn btn-primary" data-modal-target="register-modal">Registrarse</button>
       </div>
@@ -2548,9 +2548,10 @@
       <a href="./dashboard/"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
     </nav>
 
+    <!-- Botones de autenticación mobile (solo en drawer) -->
     <div class="mobile-drawer-actions">
-      <button type="button" class="btn btn-outline" data-modal-target="login-modal">Iniciar Sesión</button>
-      <button type="button" class="btn btn-primary" data-modal-target="register-modal">Registrarse</button>
+      <button type="button" class="btn btn-outline" data-modal-target="login-modal" aria-label="Abrir modal de inicio de sesión">Iniciar Sesión</button>
+      <button type="button" class="btn btn-primary" data-modal-target="register-modal" aria-label="Abrir modal de registro">Registrarse</button>
     </div>
   </aside>
   
@@ -2956,14 +2957,13 @@
 
   <!-- 
   ==========================================
-  MODALES DE LOGIN/REGISTRO DESHABILITADOS
+  MODALES DE LOGIN/REGISTRO
   ==========================================
-  Estos modales con captchas de ejemplo (A2B3C4, X7Y8Z9) están ocultos
-  hasta implementar el flujo real de autenticación en /login y /signup.
-  Mantienen su código para referencia futura.
+  Modales funcionales con captchas de ejemplo (A2B3C4, X7Y8Z9).
+  Los botones están disponibles SOLO en el mobile drawer.
   ==========================================
   -->
-  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title" style="display: none !important;">
+  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title">
     <header>
       <h2 class="modal-title" id="login-modal-title">Inicia sesión en YavlGold</h2>
       <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
@@ -3017,7 +3017,7 @@
     </div>
   </div>
 
-  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title" style="display: none !important;">
+  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title">
     <header>
       <h2 class="modal-title" id="register-modal-title">Crea tu cuenta premium</h2>
       <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
