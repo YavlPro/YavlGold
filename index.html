@@ -1860,8 +1860,14 @@
         gap: 0.5rem;
       }
 
+      /* OCULTAR botones login/register del navbar en móvil */
       .navbar-actions .btn {
-        display: none;
+        display: none !important;
+      }
+
+      #loginBtn,
+      #registerBtn {
+        display: none !important;
       }
 
       .mobile-menu-toggle {
@@ -2540,6 +2546,12 @@
       </button>
     </div>
 
+    <!-- Botones de autenticación PRIMERO (arriba, visibles sin scroll) -->
+    <div class="mobile-drawer-actions" style="margin-top: 0; padding-top: 16px; border-top: none; margin-bottom: 16px; border-bottom: 1px solid rgba(194, 165, 82, 0.15); padding-bottom: 16px;">
+      <button type="button" class="btn btn-outline" data-modal-target="login-modal" aria-label="Abrir modal de inicio de sesión">Iniciar Sesión</button>
+      <button type="button" class="btn btn-primary" data-modal-target="register-modal" aria-label="Abrir modal de registro">Registrarse</button>
+    </div>
+
     <nav class="mobile-drawer-nav">
       <a href="#inicio"><i class="fas fa-home"></i>Inicio</a>
       <a href="#modulos"><i class="fas fa-th"></i>Módulos</a>
@@ -2547,12 +2559,6 @@
       <a href="#comunidad"><i class="fas fa-users"></i>Comunidad</a>
       <a href="./dashboard/"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
     </nav>
-
-    <!-- Botones de autenticación mobile (solo en drawer) -->
-    <div class="mobile-drawer-actions">
-      <button type="button" class="btn btn-outline" data-modal-target="login-modal" aria-label="Abrir modal de inicio de sesión">Iniciar Sesión</button>
-      <button type="button" class="btn btn-primary" data-modal-target="register-modal" aria-label="Abrir modal de registro">Registrarse</button>
-    </div>
   </aside>
   
   <!-- =========================================
