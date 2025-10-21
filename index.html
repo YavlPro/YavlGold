@@ -1752,15 +1752,62 @@
     }
     
     .footer-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       color: var(--text-secondary);
       text-decoration: none;
       transition: var(--transition-fast);
       font-size: 0.95rem;
+      position: relative;
+    }
+    
+    .footer-links a::before {
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: var(--yavl-gold);
+      opacity: 0.6;
+      transition: var(--transition-fast);
+    }
+    
+    /* Iconos específicos para enlaces legales */
+    .footer-links a[href*="privacidad"]::before {
+      content: "\f3ed"; /* fa-shield-alt */
+    }
+    
+    .footer-links a[href*="terminos"]::before {
+      content: "\f0f6"; /* fa-file-contract */
+    }
+    
+    .footer-links a[href*="cookies"]::before {
+      content: "\f563"; /* fa-cookie-bite */
+    }
+    
+    .footer-links a[href*="contacto"]::before {
+      content: "\f0e0"; /* fa-envelope */
+    }
+    
+    /* Iconos para otros enlaces (Dashboard, GitHub, etc) */
+    .footer-links a[href*="dashboard"]::before {
+      content: "\f3fd"; /* fa-tachometer-alt */
+    }
+    
+    .footer-links a[href*="github"]::before {
+      content: "\f09b"; /* fa-github */
+    }
+    
+    .footer-links a[href*="roadmap"]::before {
+      content: "\f018"; /* fa-road */
     }
     
     .footer-links a:hover {
       color: var(--yavl-gold);
-      padding-left: 5px;
+      transform: translateX(5px);
+    }
+    
+    .footer-links a:hover::before {
+      opacity: 1;
     }
     
     .footer-bottom {
@@ -1771,49 +1818,58 @@
       align-items: center;
     }
     
-    .footer-links {
-      list-style: none;
-    }
-    
-    .footer-links li {
-      margin-bottom: 0.75rem;
-    }
-    
-    .footer-links a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      transition: var(--transition-fast);
-      font-size: 0.95rem;
-    }
-    
-    .footer-links a:hover {
-      color: var(--yavl-gold);
-      padding-left: 5px;
-    }
-    
-    .footer-bottom {
-      padding-top: 2rem;
-      border-top: 1px solid rgba(200, 167, 82, 0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .footer-bottom p {
+      margin: 0;
       color: var(--text-muted);
       font-size: 0.9rem;
     }
     
     .footer-bottom-links {
       display: flex;
-      gap: 2rem;
+      gap: 1.5rem;
+      flex-wrap: wrap;
     }
     
     .footer-bottom-links a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       color: var(--text-muted);
       text-decoration: none;
+      font-size: 0.875rem;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
       transition: var(--transition-fast);
+      border: 1px solid transparent;
+    }
+    
+    .footer-bottom-links a::before {
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+    
+    .footer-bottom-links a[href*="privacidad"]::before {
+      content: "\f3ed"; /* fa-shield-alt */
+    }
+    
+    .footer-bottom-links a[href*="terminos"]::before {
+      content: "\f0f6"; /* fa-file-contract */
+    }
+    
+    .footer-bottom-links a[href*="cookies"]::before {
+      content: "\f563"; /* fa-cookie-bite */
     }
     
     .footer-bottom-links a:hover {
       color: var(--yavl-gold);
+      background: rgba(201, 168, 81, 0.08);
+      border-color: rgba(194, 165, 82, 0.3);
+    }
+    
+    .footer-bottom-links a:hover::before {
+      opacity: 1;
     }
     
     /* =========================================
