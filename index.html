@@ -1982,6 +1982,27 @@
         grid-template-columns: 1fr;
         gap: 1.5rem;
       }
+      
+      /* Asegurar que las tarjetas se vean igual que en desktop */
+      .feature-card {
+        background-color: var(--surface-2);
+        background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+        border: 1px solid var(--border-neutral);
+        padding: 2rem 1.75rem;
+        box-shadow: none;
+      }
+      
+      .feature-card:hover {
+        background-color: var(--surface-3);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-elev);
+        transform: translateY(-2px);
+      }
+      
+      .feature-card.priority-high {
+        border: 2px solid rgba(194, 165, 82, 0.3);
+        background-color: var(--surface-2);
+      }
 
       .footer-grid {
         grid-template-columns: 1fr;
@@ -2387,6 +2408,28 @@
     
     body.light-theme .theme-toggle:hover {
       background: rgba(212, 175, 55, 0.2);
+    }
+    
+    /* Responsive: Feature cards tema claro en móvil */
+    @media (max-width: 768px) {
+      body.light-theme .feature-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(212, 175, 55, 0.3);
+        box-shadow: var(--shadow-sm);
+      }
+      
+      body.light-theme .feature-card:hover {
+        background: rgba(255, 255, 255, 1);
+        border-color: rgba(212, 175, 55, 0.6);
+        box-shadow: 
+          0 4px 20px rgba(212, 175, 55, 0.2),
+          0 8px 30px rgba(0, 0, 0, 0.1);
+      }
+      
+      body.light-theme .feature-card.priority-high {
+        border: 2px solid rgba(194, 165, 82, 0.3);
+        background: rgba(255, 255, 255, 0.9);
+      }
     }
     
     /* Títulos h2, h3 tema claro */
