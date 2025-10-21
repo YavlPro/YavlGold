@@ -6,11 +6,36 @@
 [![Autenticación](https://img.shields.io/badge/Auth-Supabase%20%E2%9C%85-brightgreen)](https://supabase.com/)
 [![Accesibilidad](https://img.shields.io/badge/WCAG-AAA%20Compliant-gold)](docs/FASE-2-CONTRAST-FIXES.md)
 [![Mobile](https://img.shields.io/badge/Responsive-100%25-brightgreen)]()
-[![Última Actualización](https://img.shields.io/badge/Actualizado-20%20Oct%202025-gold)]()
+[![Última Actualización](https://img.shields.io/badge/Actualizado-21%20Oct%202025-gold)]()
 
 🌐 **Staging:** [https://yavlpro.github.io/YavlGold/](https://yavlpro.github.io/YavlGold/)  
 📚 **Docs:** [docs/](docs/)  
 🎨 **Identidad:** Cyber Champagne Gold con sistema de contraste profesional
+
+---
+
+## 🎉 Últimas Actualizaciones (21 Oct 2025)
+
+### 🔧 Fixes Críticos
+- ✅ **Botones login/registro móvil**: Funcionan correctamente desde el mobile drawer
+- ✅ **UX móvil optimizada**: Botones movidos arriba del drawer (sin scroll)
+- ✅ **Consistencia visual**: Tarjetas idénticas en móvil y desktop
+
+### 🎨 Mejoras de Diseño
+- ✅ **Footer premium**: Todos los enlaces con iconos Font Awesome
+- ✅ **Badge PRO**: Gradiente dorado (#FFD700 → #FFA500) en perfil
+- ✅ **Bottom sheet premium**: Header con gradiente, avatar glow, badge online
+- ✅ **Acciones rápidas**: Animaciones microinteractivas (rotate en hover)
+
+### 📝 Contenido Actualizado
+- ✅ **Descripción del proyecto**: "Trading educativo, estadístico y análisis del mercado"
+- ✅ **Fix tema claro**: Colores visibles (#374151 texto, #1F2937 strong)
+- ✅ **Meta SEO**: Description actualizado con palabras clave correctas
+
+### 🎯 Iconos Agregados
+- 📦 Módulos, 🛣️ Roadmap, 👥 Comunidad, 📊 Dashboard
+- ❓ FAQ, 🛟 Centro de Ayuda, 🐙 GitHub
+- 🛡️ Privacidad, 📄 Términos, 🍪 Cookies, ✉️ Contacto
 
 ---
 
@@ -51,7 +76,7 @@
 | **YavlSuite** | ⏳ 0% | DJ virtual, karaoke, editor multimedia |
 | **YavlAgro** | ⏳ 0% | Marketplace agrícola + cursos sostenibilidad |
 | **YavlChess** | 🧭 0% | Ajedrez con variantes exclusivas + IA |
-| **YavlTrading** | ⏳ 0% | Educación trading + análisis técnico |
+| **YavlTrading** | ⏳ 0% | Trading educativo, estadístico y análisis del mercado |
 
 ---
 
@@ -133,12 +158,18 @@ http://localhost:8000
 - [x] Páginas legales (privacidad, términos, cookies)
 - [x] Sistema de contraste AAA
 - [x] Tarjetas clicables completas
-- [x] Bottom sheet móvil
+- [x] Bottom sheet móvil premium con badge PRO
 - [x] Chips semánticos con iconos
 - [x] Logo optimizado (inline styles 40px)
 - [x] `rel="noopener noreferrer"` en externos
 - [x] `aria-current="page"` en nav
 - [x] Responsive ≤380px (chips)
+- [x] Footer con iconos Font Awesome completos
+- [x] Botones móvil funcionales (drawer)
+- [x] UX móvil optimizada (botones arriba)
+- [x] Consistencia visual móvil/desktop
+- [x] Tema claro: colores visibles (#374151)
+- [x] Descripción proyecto actualizada (trading educativo)
 
 ### 🔄 Pendiente
 - [ ] Crear logo-96.png y logo-192.png (702KB → 8KB)
