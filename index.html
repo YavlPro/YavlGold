@@ -32,12 +32,8 @@
   <!-- Keywords adicionales para SEO -->
   <meta name="keywords" content="academia cripto, blockchain español, cursos criptomonedas, trading cripto, DeFi, NFT, Web3, educación blockchain, YavlGold">
   
-  <!-- Preload Critical Fonts (Performance Optimization) -->
-  <link rel="preload" href="./assets/fonts/orbitron-v31-latin-700.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="./assets/fonts/rajdhani-v15-latin-regular.woff2" as="font" type="font/woff2" crossorigin>
-  
-  <!-- Self-Hosted Fonts (Faster than Google Fonts CDN) -->
-  <link rel="stylesheet" href="./assets/css/fonts.css">
+  <!-- Fuentes Sagradas YavlGold (Playfair Display + Montserrat) -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -99,53 +95,59 @@
   <style>
     /**
      * ============================================
-     * YAVL GOLD - CYBER CHAMPAGNE GOLD THEME
+     * YAVL GOLD - IDENTIDAD VISUAL SAGRADA
      * ============================================
-     * Tema suave para reducir fatiga visual
-     * Color oro: #C2A552 (Champagne Gold)
-     * Fuentes: Orbitron (títulos) + Rajdhani (texto)
+     * Color oro SAGRADO: #C8A752 (INSUSTITUIBLE)
+     * Fuentes SAGRADAS: Playfair Display + Montserrat
      * ============================================
      */
 
     /* =========================================
-       VARIABLES CSS - CYBER CHAMPAGNE GOLD
+       VARIABLES CSS - IDENTIDAD SAGRADA YAVLGOLD
        ========================================= */
     :root {
-      /* COLORES PRINCIPALES - CHAMPAGNE GOLD */
-      --yavl-gold: #C2A552;              /* Dorado suave champagne */
-      --yavl-gold-dark: #7D6B32;         /* Dorado oscuro para bordes/hover */
+      /* COLORES SAGRADOS - DORADO #C8A752 */
+      --yavl-gold: #C8A752;              /* ⚠️ DORADO SAGRADO - INSUSTITUIBLE */
+      --yavl-gold-dark: #8B7842;         /* Dorado oscuro para bordes/hover */
+      --yavl-gold-gradient: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
       --gold-light: #E4D08E;             /* Reflejos y acentos claros */
       --success-green: #2ecc71;          /* VERDE ÉXITO (para estados positivos) */
       
       /* BACKGROUNDS */
       --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
+      --yavl-bg-darker: #0B0C0F;         /* Alias identidad sagrada */
       --bg-dark: #101114;                /* Fondo oscuro general */
       --bg-darker: #0a0a0a;              /* Fondo más oscuro */
-      --bg-card: rgba(194, 165, 82, 0.06); /* Fondo de cards más suave */
+      --yavl-card-bg: #1A1A1A;           /* Fondo de cards sagrado */
+      --bg-card: rgba(200, 167, 82, 0.06); /* Fondo de cards más suave */
       --overlay-dark: rgba(11, 12, 15, 0.95); /* Overlay oscuro semi-transparente */
       
       /* TEXTOS */
-      --text-light: #f0f0f0;             /* Texto principal claro */
+      --text-light: #E5E5E5;             /* Texto principal claro (sagrado) */
+      --yavl-text-light: #E5E5E5;        /* Alias identidad sagrada */
       --text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
+      --yavl-text-muted: #888888;        /* Texto deshabilitado (sagrado) */
       --text-muted: #6b7280;             /* Texto deshabilitado/notas */
+      --yavl-text-dark: #0B0C0F;         /* Texto oscuro sobre fondos claros */
       
-      /* BORDES - MÁS SUTILES */
-      --border-gold: rgba(194, 165, 82, 0.28);      /* Borde suave */
-      --border-gold-hover: rgba(194, 165, 82, 0.70); /* Borde hover */
+      /* BORDES - IDENTIDAD SAGRADA */
+      --border-gold: rgba(200, 167, 82, 0.28);      /* Borde suave */
+      --border-gold-hover: rgba(200, 167, 82, 0.70); /* Borde hover */
       
-      /* EFECTOS GLOW - SUTILES PARA REDUCIR FATIGA */
-      --glow-gold: 0 0 10px rgba(194, 165, 82, 0.35);  /* Glow suave */
-      --glow-gold-intense: 0 0 18px rgba(194, 165, 82, 0.55); /* Glow intenso pero suave */
-      --glow-intense: 0 0 18px rgba(194, 165, 82, 0.55); /* Alias */
+      /* EFECTOS GLOW - IDENTIDAD SAGRADA */
+      --glow-gold: 0 0 10px rgba(200, 167, 82, 0.35);  /* Glow suave */
+      --glow-gold-intense: 0 0 18px rgba(200, 167, 82, 0.55); /* Glow intenso */
+      --glow-intense: 0 0 18px rgba(200, 167, 82, 0.55); /* Alias */
       --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
       
-      /* TIPOGRAFÍA */
-      --font-heading: 'Orbitron', sans-serif;  /* Fuente para títulos */
-      --font-body: 'Rajdhani', sans-serif;     /* Fuente para texto */
+      /* TIPOGRAFÍA SAGRADA */
+      --font-heading: 'Playfair Display', serif;  /* ⚠️ FUENTE SAGRADA TÍTULOS */
+      --font-body: 'Montserrat', sans-serif;      /* ⚠️ FUENTE SAGRADA TEXTO */
+      --font-title: 'Playfair Display', serif;    /* Alias identidad sagrada */
       
       /* ALIASES PARA COMPATIBILIDAD */
-      --gold-primary: #C2A552;
-      --gold-secondary: #7D6B32;
+      --gold-primary: #C8A752;
+      --gold-secondary: #8B7842;
       --bg-main: #0B0C0F;
       --bg-surface: #101114;
       --text-primary: #f0f0f0;
