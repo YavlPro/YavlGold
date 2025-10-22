@@ -88,12 +88,8 @@
 
 ### Dorados
 ```css
---gold-primary:    #C8A752  ██████  (principal)
---gold-secondary:  #D4AF37  ██████  (secundario)
---gold-light:      #E8D08B  ██████  (brillo)
---gold-dark:       #9B8240  ██████  (sombra)
 ```
-
+  --gold-secondary:  #C8A752  /* Dorado sagrado - secundario */
 ### Fondos Oscuros
 ```css
 --bg-primary:      #0B0C0F  ██████  (negro profundo)

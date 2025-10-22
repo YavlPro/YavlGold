@@ -29,7 +29,7 @@ Se ha creado un rediseño completo de la interfaz combinando los mejores element
 ```css
 Dorados Premium:
 - Gold Primary:   #C8A752 (dorado principal)
-- Gold Secondary: #D4AF37 (dorado secundario)
+-- Gold Secondary: #C8A752 (dorado secundario sagrado)
 - Gold Light:     #E8D08B (brillo)
 - Gold Dark:      #9B8240 (sombras)
 
