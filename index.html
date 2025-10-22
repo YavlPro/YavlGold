@@ -2006,10 +2006,15 @@
         text-shadow: 0 0 6px rgba(200, 167, 82, 0.9);
       }
 
-      /* Cards móvil con bordes dorados visibles */
+      /* Cards móvil con fondos sagrados y bordes sutiles */
       .feature-card, .info-card {
-        border: 2px solid rgba(200, 167, 82, 0.5);
-        background: rgba(200, 167, 82, 0.08);
+        background-color: var(--yavl-card-bg); /* Fondo sagrado #1A1A1A */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      /* Priority cards en móvil */
+      .feature-card.priority-high {
+        border: 2px solid rgba(200, 167, 82, 0.3);
       }
     }
 
