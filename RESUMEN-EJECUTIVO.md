@@ -36,7 +36,7 @@
 ## 🎨 Características Premium Implementadas
 
 ### ✨ Diseño Visual
-- ✅ Tema oscuro elegante con acentos dorados (#C8A752, #D4AF37)
+- ✅ Tema oscuro elegante con acentos dorados (#C8A752, #C8A752)
 - ✅ Gradientes suaves y sombras multicapa
 - ✅ Tipografía premium: Playfair Display + Inter
 - ✅ Logo con efecto glow pulsante animado

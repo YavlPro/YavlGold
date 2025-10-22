@@ -12,14 +12,14 @@
 
 #### ❌ Antes (Muy intenso):
 ```css
---glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
---glow-gold-intense: 0 0 25px rgba(212, 175, 55, 0.8);
+--glow-gold: 0 0 15px rgba(200,167,82, 0.5);
+--glow-gold-intense: 0 0 25px rgba(200,167,82, 0.8);
 ```
 
 #### ✅ Ahora (Más sutil):
 ```css
---glow-gold: 0 0 8px rgba(212, 175, 55, 0.3);  /* Más suave */
---glow-gold-intense: 0 0 15px rgba(212, 175, 55, 0.5); /* Menos intenso */
+--glow-gold: 0 0 8px rgba(200,167,82, 0.3);  /* Más suave */
+--glow-gold-intense: 0 0 15px rgba(200,167,82, 0.5); /* Menos intenso */
 --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
 ```
 
@@ -172,7 +172,7 @@ a:hover {
 ### Regla 4: Contraste
 ```css
 /* Texto dorado sobre fondo oscuro */
-color: #D4AF37; /* ✅ Buen contraste */
+color: #C8A752; /* ✅ Buen contraste */
 
 /* Con sombra negra para separar del fondo */
 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -211,7 +211,7 @@ text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 #### Plantilla de text-shadow:
 ```css
 /* Para títulos grandes (>32px) */
-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 8px rgba(212, 175, 55, 0.3);
+text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 8px rgba(200,167,82, 0.3);
 
 /* Para títulos medianos (24-32px) */
 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -258,7 +258,7 @@ text-shadow: none;
 /* ❌ NO HACER */
 .titulo-grande {
   color: var(--yavl-gold);
-  text-shadow: 0 0 25px rgba(212, 175, 55, 0.8); /* Glow muy intenso */
+  text-shadow: 0 0 25px rgba(200,167,82, 0.8); /* Glow muy intenso */
   /* Sin antialiasing */
 }
 ```

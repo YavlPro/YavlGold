@@ -310,7 +310,7 @@ lessons_completed INTEGER DEFAULT 0
    - Meta tags SEO actualizados
 
 3. ✅ **Unificar Cards - Estilo Champagne Gold**
-   - CSS champagne gold (#C2A552) aplicado
+   - CSS champagne gold (#C8A752) aplicado
    - Borders con opacity 0.28
    - Glow effects consistentes
    - Hover animations unificadas
@@ -401,7 +401,7 @@ lessons_completed INTEGER DEFAULT 0
 ### Tema: Cyber Champagne Gold
 
 **Colores Principales:**
-- `--yavl-gold: #C2A552` - Color primario
+- `--yavl-gold: #C8A752` - Color primario
 - `--yavl-gold-dark: #7D6B32` - Variante oscura
 - `--gold-light: #E4D08E` - Highlights
 - `--yavl-dark: #0B0C0F` - Background oscuro
@@ -409,8 +409,8 @@ lessons_completed INTEGER DEFAULT 0
 - `--text-light: #f0f0f0` - Texto principal
 - `--text-secondary: #a0a0a0` - Texto secundario
 
-**Border Opacity:** `rgba(194, 165, 82, 0.28)`  
-**Glow Effect:** `0 0 10px rgba(194, 165, 82, 0.35)`
+**Border Opacity:** `rgba(200,167,82, 0.28)`  
+**Glow Effect:** `0 0 10px rgba(200,167,82, 0.35)`
 
 ### Fonts
 
@@ -660,7 +660,7 @@ lessons_completed INTEGER DEFAULT 0
 
 **Fase 2:** Fase de optimización de Font Awesome
 
-**Champagne Gold:** Tema de diseño con color dorado (#C2A552)
+**Champagne Gold:** Tema de diseño con color dorado (#C8A752)
 
 **RLS:** Row Level Security - Seguridad a nivel de fila en PostgreSQL
 

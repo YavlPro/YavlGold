@@ -79,7 +79,7 @@ setTimeout(() => {
 ```css
 a:hover, a:focus {
   text-decoration: underline;
-  outline: 2px solid #D4AF37;
+  outline: 2px solid #C8A752;
   outline-offset: 4px;
 }
 ```

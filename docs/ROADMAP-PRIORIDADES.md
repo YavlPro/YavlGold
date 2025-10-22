@@ -110,7 +110,7 @@ Usuario debe probar en modo incógnito o limpiar cache SSL
 
 | # | Nombre | Color Principal | Uso Recomendado |
 |---|--------|----------------|-----------------|
-| 1 | Yavl Gold | #D4AF37 | Default - Academia |
+| 1 | Yavl Gold | #C8A752 | Default - Academia |
 | 2 | Neon Blue | #00d9ff | Gaming - YavlChess |
 | 3 | Magenta Punk | #ff006e | Agresivo - YavlSocial |
 | 4 | Emerald Matrix | #10b981 | Verde tech - YavlAgro |
@@ -368,7 +368,7 @@ Temas (Prioridad 3)
 ### Consideraciones de Marca
 - Mantener "Yavl Gold" como identidad principal
 - Sufijo "Yavl" en todas las apps (YavlSocial, YavlSuite, YavlAgro)
-- Tema gold (#D4AF37) como default profesional
+- Tema gold (#C8A752) como default profesional
 - Temas alternativos para personalización
 
 ### Comunicación con Usuario

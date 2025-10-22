@@ -23,7 +23,7 @@
 
 ### 🎨 Mejoras de Diseño
 - ✅ **Footer premium**: Todos los enlaces con iconos Font Awesome
-- ✅ **Badge PRO**: Gradiente dorado (#FFD700 → #FFA500) en perfil
+- ✅ **Badge PRO**: Gradiente dorado (#C8A752 → #FFA500) en perfil
 - ✅ **Bottom sheet premium**: Header con gradiente, avatar glow, badge online
 - ✅ **Acciones rápidas**: Animaciones microinteractivas (rotate en hover)
 
@@ -352,13 +352,13 @@ YavlGold sigue **estrictas guías de identidad corporativa** con colores, tipogr
 
 ```css
 /* COLORES PRINCIPALES - IDENTIDAD YAVL */
---yavl-gold: #D4AF37;              /* ORO PRINCIPAL - Color oficial YavlGold */
---yavl-gold-dark: #B8860B;         /* ORO OSCURO (hover/secondary) */
+--yavl-gold: #C8A752;              /* ORO PRINCIPAL - Color oficial YavlGold */
+--yavl-gold-dark: #8B7842;         /* ORO OSCURO (hover/secondary) */
 
 /* FONDOS OFICIALES */
 --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
 --bg-dark: #101114;                /* Fondo oscuro general */
---bg-card: rgba(212, 175, 55, 0.05); /* Cards con tinte dorado */
+--bg-card: rgba(200,167,82, 0.05); /* Cards con tinte dorado */
 
 /* TEXTOS - Máxima Legibilidad */
 --text-light: #f0f0f0;             /* Texto principal claro */
@@ -379,33 +379,33 @@ YavlGold sigue **estrictas guías de identidad corporativa** con colores, tipogr
 #### **Grid Background** (Presente en TODA la identidad)
 ```css
 background-image:
-  linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px),
-  linear-gradient(to right, rgba(212, 175, 55, 0.15) 1px, var(--bg-dark) 1px);
+  linear-gradient(rgba(200,167,82, 0.15) 1px, transparent 1px),
+  linear-gradient(to right, rgba(200,167,82, 0.15) 1px, var(--bg-dark) 1px);
 background-size: 40px 40px;  /* Grid de 40x40 píxeles */
 ```
 
 #### **Efectos Glow** (Valores optimizados v2.0)
 ```css
 /* Títulos con triple capa para máxima visibilidad */
-H1: text-shadow: 0 0 15px rgba(212,175,55,1), 0 0 30px rgba(...,0.8), 0 0 50px rgba(...,0.5);
-H2: text-shadow: 0 0 10px rgba(212,175,55,1), 0 0 20px rgba(...,0.8), 0 0 40px rgba(...,0.4);
-H3: text-shadow: 0 0 8px rgba(212,175,55,1), 0 0 15px rgba(...,0.6);
+H1: text-shadow: 0 0 15px rgba(200,167,82,1), 0 0 30px rgba(...,0.8), 0 0 50px rgba(...,0.5);
+H2: text-shadow: 0 0 10px rgba(200,167,82,1), 0 0 20px rgba(...,0.8), 0 0 40px rgba(...,0.4);
+H3: text-shadow: 0 0 8px rgba(200,167,82,1), 0 0 15px rgba(...,0.6);
 
 /* Cards con contraste máximo */
-border: 3px solid rgba(212, 175, 55, 0.5);  /* Visible y definido */
-box-shadow: 0 0 20px rgba(212,175,55,0.6), 0 4px 20px rgba(0,0,0,0.5);
+border: 3px solid rgba(200,167,82, 0.5);  /* Visible y definido */
+box-shadow: 0 0 20px rgba(200,167,82,0.6), 0 4px 20px rgba(0,0,0,0.5);
 
 /* Hover con glow intenso */
-box-shadow: 0 0 30px rgba(212,175,55,1), 0 0 60px rgba(...,0.6);
+box-shadow: 0 0 30px rgba(200,167,82,1), 0 0 60px rgba(...,0.6);
 ```
 
 ### ✨ Mejoras Implementadas (Octubre 2025)
 
 #### � Identidad Visual
-- **Color Oro Oficial**: #D4AF37 (100% consistente en toda la plataforma)
+- **Color Oro Oficial**: #C8A752 (100% consistente en toda la plataforma)
 - **Grid Background**: Patrón obligatorio 40×40px con líneas doradas
 - **Tipografía Oficial**: Orbitron (títulos futuristas) + Rajdhani (cuerpo moderno)
-- **Logo Animado**: Efecto glow pulsante con sombra dorada (#D4AF37)
+- **Logo Animado**: Efecto glow pulsante con sombra dorada (#C8A752)
 - **Transiciones Suaves**: 0.3s ease para interacciones
 
 #### 📝 Optimizaciones de Legibilidad
@@ -435,7 +435,7 @@ box-shadow: 0 0 30px rgba(212,175,55,1), 0 0 60px rgba(...,0.6);
 - **Refresh Dinámico**: Regeneración automática tras errores
 
 #### 🎭 Sistema de Temas
-- **Dark Theme**: Predeterminado con oro #D4AF37
+- **Dark Theme**: Predeterminado con oro #C8A752
 - **Light Theme**: Disponible con toggle suave
 - **Persistencia**: LocalStorage guarda preferencia
 
@@ -683,7 +683,7 @@ WHERE id = '68a4963b-2b86-4382-a04f-1f38f1873d1c';
 
 ### Fase 1: Foundation (Q4 2025) — 40% COMPLETADO
 - ✅ **Autenticación Supabase** (JWT + RLS)
-- ✅ **Identidad visual oficial** (#D4AF37, Orbitron, Grid)
+- ✅ **Identidad visual oficial** (#C8A752, Orbitron, Grid)
 - ✅ **Páginas legales básicas** (privacidad, términos)
 - ⚠️ **4 módulos educativos** (0/4 pendientes)
   - Bitcoin 101
@@ -865,7 +865,7 @@ MIT License - Ver [LICENSE](LICENSE) para más detalles.
 
 **Fundador y Desarrollador Principal:** Yerikson Varela  
 **Stack Técnico:** Vanilla JS + Supabase + GitHub Pages  
-**Identidad Visual:** #D4AF37 (yavl-gold oficial)  
+**Identidad Visual:** #C8A752 (yavl-gold oficial)  
 **Inspiración:** Hacer educación cripto accesible para todos 🌟
 
 ---

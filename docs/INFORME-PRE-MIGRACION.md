@@ -337,7 +337,7 @@ cat > themes/yavl-themes.css << 'EOF'
    TEMA 1: YAVL GOLD (Default)
    ============================================ */
 [data-theme="gold"] {
-  --primary: #D4AF37;
+  --primary: #C8A752;
   --primary-light: #E5C158;
   --primary-dark: #B8941F;
   --bg-primary: #0a0a0a;
@@ -345,8 +345,8 @@ cat > themes/yavl-themes.css << 'EOF'
   --bg-tertiary: #2a2a2a;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
-  --accent: #FFD700;
-  --gradient: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+  --accent: #C8A752;
+  --gradient: linear-gradient(135deg, #C8A752 0%, #C8A752 100%);
 }
 
 /* ============================================

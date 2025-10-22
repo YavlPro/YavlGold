@@ -567,7 +567,8 @@
       inset: 0;
       background: rgba(12, 16, 21, 0.65);
       backdrop-filter: blur(6px);
-      z-index: 950;
+      /* Keep overlay under the drawer but above page content */
+      z-index: 1990;
       opacity: 0;
       pointer-events: none;
       transition: var(--transition-normal);
@@ -590,7 +591,8 @@
       box-shadow: var(--shadow-md);
       transform: translateX(-100%);
       transition: var(--transition-normal);
-      z-index: 960;
+      /* Ensure drawer sits above overlays and modals so its buttons are clickable */
+      z-index: 2000;
       display: flex;
       flex-direction: column;
       padding: 16px 16px 20px;
@@ -703,6 +705,13 @@
       justify-content: center;
       padding: 10px 16px;
       font-size: 0.95rem;
+    }
+
+    /* Ensure action buttons are interactive above overlays */
+    .mobile-drawer-actions .btn {
+      position: relative;
+      z-index: 2001;
+      pointer-events: auto;
     }
 
     .modal-backdrop {

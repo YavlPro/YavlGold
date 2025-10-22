@@ -38,19 +38,19 @@
 ```css
 /* COPIAR ESTAS VARIABLES AL INICIO DEL <style> */
 :root {
-  --yavl-gold: #D4AF37;
-  --yavl-gold-dark: #B8860B;
+  --yavl-gold: #C8A752;
+  --yavl-gold-dark: #8B7842;
   --yavl-dark: #0B0C0F;
   --bg-dark: #101114;
   --bg-darker: #0a0a0a;
-  --bg-card: rgba(212, 175, 55, 0.05);
+  --bg-card: rgba(200,167,82, 0.05);
   --text-light: #f0f0f0;
   --text-secondary: #a0a0a0;
   --text-muted: #6b7280;
-  --border-gold: rgba(212, 175, 55, 0.3);
-  --border-gold-hover: rgba(212, 175, 55, 0.6);
-  --glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
-  --glow-gold-intense: 0 0 25px rgba(212, 175, 55, 0.8);
+  --border-gold: rgba(200,167,82, 0.3);
+  --border-gold-hover: rgba(200,167,82, 0.6);
+  --glow-gold: 0 0 15px rgba(200,167,82, 0.5);
+  --glow-gold-intense: 0 0 25px rgba(200,167,82, 0.8);
   --font-heading: 'Orbitron', sans-serif;
   --font-body: 'Rajdhani', sans-serif;
   --transition-normal: 0.3s ease;
@@ -114,8 +114,8 @@ sed -i 's/var(--gold-primary)/var(--yavl-gold)/g' archivo.html
 sed -i 's/var(--gold-400)/var(--yavl-gold)/g' archivo.html
 sed -i 's/var(--gold-500)/var(--yavl-gold)/g' archivo.html
 sed -i 's/var(--gold-600)/var(--yavl-gold-dark)/g' archivo.html
-sed -i 's/#E2C675/var(--yavl-gold)/g' archivo.html
-sed -i 's/#C9A851/var(--yavl-gold)/g' archivo.html
+sed -i 's/#C8A752/var(--yavl-gold)/g' archivo.html
+sed -i 's/#C8A752/var(--yavl-gold)/g' archivo.html
 sed -i "s/font-family: 'Inter'/font-family: 'Rajdhani'/g" archivo.html
 sed -i "s/font-family: 'Playfair Display'/font-family: 'Orbitron'/g" archivo.html
 ```
@@ -145,9 +145,9 @@ sed -i 's/var(--gold-400)/var(--yavl-gold)/g' "$ARCHIVO"
 sed -i 's/var(--gold-500)/var(--yavl-gold)/g' "$ARCHIVO"
 sed -i 's/var(--gold-600)/var(--yavl-gold-dark)/g' "$ARCHIVO"
 sed -i 's/var(--gold-light)/var(--yavl-gold)/g' "$ARCHIVO"
-sed -i 's/#E2C675/#D4AF37/g' "$ARCHIVO"
-sed -i 's/#C9A851/#D4AF37/g' "$ARCHIVO"
-sed -i 's/#A8863B/#B8860B/g' "$ARCHIVO"
+sed -i 's/#C8A752/#C8A752/g' "$ARCHIVO"
+sed -i 's/#C8A752/#C8A752/g' "$ARCHIVO"
+sed -i 's/#C8A752/#8B7842/g' "$ARCHIVO"
 
 # Reemplazar fuentes
 sed -i "s/font-family: 'Inter'/font-family: 'Rajdhani'/g" "$ARCHIVO"
@@ -189,7 +189,7 @@ Para cada archivo actualizado, verificar:
 - [ ] Fuentes Orbitron + Rajdhani cargadas
 - [ ] Variables CSS oficiales en :root
 - [ ] Grid background en body
-- [ ] Color oro #D4AF37 en toda la página
+- [ ] Color oro #C8A752 en toda la página
 - [ ] Botones con estilos oficiales
 - [ ] Títulos con font Orbitron
 - [ ] Texto con font Rajdhani

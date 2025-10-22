@@ -74,7 +74,7 @@
 **Objetivo:** 8 temas cyberpunk con theme switcher
 
 **Temas:**
-1. Yavl Gold (#D4AF37) - Default profesional
+1. Yavl Gold (#C8A752) - Default profesional
 2. Neon Blue (#00d9ff) - Gaming
 3. Magenta Punk (#ff006e) - Agresivo
 4. Emerald Matrix (#10b981) - Verde tech (YavlAgro)
@@ -205,7 +205,7 @@ git remote -v
 **Razón:** Escalable, SEO-friendly, fácil gestión de dominios
 
 ### 4. Tema por Defecto
-**Decisión:** Yavl Gold (#D4AF37)  
+**Decisión:** Yavl Gold (#C8A752)  
 **Razón:** Identidad oficial, profesional, transmite confianza para academia
 
 ---

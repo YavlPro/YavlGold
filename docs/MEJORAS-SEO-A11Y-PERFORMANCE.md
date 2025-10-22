@@ -174,7 +174,7 @@ Este documento detalla las mejoras implementadas y pendientes para optimizar SEO
 ```css
 @media (max-width: 768px) {
   .hero-logo-inner {
-    box-shadow: 0 0 15px rgba(212,175,55,0.5); /* Reducido de 0 0 30px */
+    box-shadow: 0 0 15px rgba(200,167,82,0.5); /* Reducido de 0 0 30px */
   }
 }
 ```
@@ -215,7 +215,7 @@ Este documento detalla las mejoras implementadas y pendientes para optimizar SEO
 ### Fase 4: Accesibilidad Avanzada (Prioridad MEDIA)
 
 #### Contraste de Colores
-- [ ] Auditar contraste de #D4AF37 sobre fondos oscuros
+- [ ] Auditar contraste de #C8A752 sobre fondos oscuros
 - [ ] Usar #E6C65A en textos pequeños si no cumple WCAG AA
 - [ ] Implementar modo de alto contraste opcional
 
@@ -395,11 +395,11 @@ grep -r "fa-" index.html | grep -v "fab" | grep -v "fas"
 
 ### 3. Contraste de Colores
 **Estado**: ⚠️ REVISAR  
-**Descripción**: Verificar que #D4AF37 cumpla WCAG AA en todos los casos.  
+**Descripción**: Verificar que #C8A752 cumpla WCAG AA en todos los casos.  
 **Herramienta**: https://webaim.org/resources/contrastchecker/
 
 ```
-#D4AF37 sobre #0B0C0F:
+#C8A752 sobre #0B0C0F:
 - Ratio: 6.5:1 (PASS AA para texto normal, PASS AAA para large text)
 - Acción: ✅ OK, no requiere cambios
 ```

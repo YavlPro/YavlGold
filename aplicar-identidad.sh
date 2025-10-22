@@ -50,12 +50,12 @@ aplicar_identidad() {
   echo -e "${GREEN}✓${NC} Backup creado"
   
   # Reemplazar colores champagne por oro oficial
-  sed -i 's/#E8D59B/#D4AF37/g' "$archivo"
-  sed -i 's/#E2C675/#D4AF37/g' "$archivo"
-  sed -i 's/#C9A851/#D4AF37/g' "$archivo"
-  sed -i 's/#A8863B/#B8860B/g' "$archivo"
-  sed -i 's/#8B6F30/#B8860B/g' "$archivo"
-  echo -e "${GREEN}✓${NC} Colores actualizados a oro oficial #D4AF37"
+  sed -i 's/#E8D59B/#C8A752/g' "$archivo"
+  sed -i 's/#C8A752/#C8A752/g' "$archivo"
+  sed -i 's/#C8A752/#C8A752/g' "$archivo"
+  sed -i 's/#C8A752/#8B7842/g' "$archivo"
+  sed -i 's/#C8A752/#8B7842/g' "$archivo"
+  echo -e "${GREEN}✓${NC} Colores actualizados a oro oficial #C8A752"
   
   # Reemplazar variables CSS
   sed -i 's/var(--gold-primary)/var(--yavl-gold)/g' "$archivo"

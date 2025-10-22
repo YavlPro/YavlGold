@@ -121,7 +121,7 @@ Contraste:
 | Chip dorado | #FFE7B0 | #14171D | **9.2:1** | AAA ✅ |
 | Chip verde | #C9F7D1 | #14171D | **8.5:1** | AAA ✅ |
 | Chip rojo | #FFB8B8 | #14171D | **7.1:1** | AAA ✅ |
-| Botón primario | #0B0C0F | #C2A552 | **8.3:1** | AAA ✅ |
+| Botón primario | #0B0C0F | #C8A752 | **8.3:1** | AAA ✅ |
 
 **WCAG Estándares**:
 - AA Normal: ≥ 4.5:1
@@ -155,7 +155,7 @@ Contraste:
 
 **Test 3**: Botón
 - Foreground: `#0B0C0F`
-- Background: `#C2A552`
+- Background: `#C8A752`
 - Esperado: Pass AAA (8.3:1)
 
 ---

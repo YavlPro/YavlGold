@@ -6,18 +6,18 @@
 
 ```css
 /* ⚠️ ESTOS VALORES SON SAGRADOS ⚠️ */
---yavl-gold: #D4AF37;        /* ORO PRINCIPAL */
---yavl-gold-dark: #B8860B;   /* ORO OSCURO */
+--yavl-gold: #C8A752;        /* ORO PRINCIPAL */
+--yavl-gold-dark: #8B7842;   /* ORO OSCURO */
 ```
 
 **NO uses:**
-- ❌ `#FFD700` (gold)
+- ❌ `#C8A752` (gold)
 - ❌ `#FFC107` (amber)
-- ❌ `#E2C675` (champagne)
-- ❌ `#C9A851` (soft gold)
+- ❌ `#C8A752` (champagne)
+- ❌ `#C8A752` (soft gold)
 
 **SÍ usa:**
-- ✅ `#D4AF37` (yavl gold oficial)
+- ✅ `#C8A752` (yavl gold oficial)
 - ✅ `var(--yavl-gold)` (variable CSS)
 
 ---
@@ -49,8 +49,8 @@ p, li, span {
 body {
   background-color: #101114;
   background-image:
-    linear-gradient(rgba(212, 175, 55, 0.3) 1px, transparent 1px),
-    linear-gradient(to right, rgba(212, 175, 55, 0.3) 1px, #101114 1px);
+    linear-gradient(rgba(200,167,82, 0.3) 1px, transparent 1px),
+    linear-gradient(to right, rgba(200,167,82, 0.3) 1px, #101114 1px);
   background-size: 40px 40px;
 }
 
@@ -76,19 +76,19 @@ body {
 
 ```css
 .btn-primary {
-  background: linear-gradient(135deg, #D4AF37, #B8860B);
+  background: linear-gradient(135deg, #C8A752, #8B7842);
   color: #0B0C0F;
   font-family: 'Orbitron', sans-serif;
   font-weight: 700;
   padding: 0.75rem 1.75rem;
   border-radius: 16px;
   border: none;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 15px rgba(200,167,82, 0.5);
   transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.8);
+  box-shadow: 0 0 25px rgba(200,167,82, 0.8);
   transform: translateY(-2px);
 }
 ```
@@ -104,8 +104,8 @@ body {
 ```css
 .btn-outline {
   background: transparent;
-  color: #D4AF37;
-  border: 2px solid #D4AF37;
+  color: #C8A752;
+  border: 2px solid #C8A752;
   font-family: 'Orbitron', sans-serif;
   font-weight: 700;
   padding: 0.75rem 1.75rem;
@@ -114,9 +114,9 @@ body {
 }
 
 .btn-outline:hover {
-  background: #D4AF37;
+  background: #C8A752;
   color: #0B0C0F;
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.8);
+  box-shadow: 0 0 25px rgba(200,167,82, 0.8);
   transform: translateY(-2px);
 }
 ```
@@ -135,17 +135,17 @@ body {
 
 ```css
 .card {
-  background: linear-gradient(135deg, rgba(11, 12, 15, 0.95), rgba(212, 175, 55, 0.03));
-  border: 2px solid rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg, rgba(11, 12, 15, 0.95), rgba(200,167,82, 0.03));
+  border: 2px solid rgba(200,167,82, 0.3);
   border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 15px rgba(200,167,82, 0.5);
   transition: all 0.3s ease;
 }
 
 .card:hover {
-  border-color: rgba(212, 175, 55, 0.6);
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.8);
+  border-color: rgba(200,167,82, 0.6);
+  box-shadow: 0 0 25px rgba(200,167,82, 0.8);
   transform: translateY(-3px);
 }
 ```
@@ -157,14 +157,14 @@ body {
 ```css
 :root {
   /* PRINCIPALES */
-  --yavl-gold: #D4AF37;
-  --yavl-gold-dark: #B8860B;
+  --yavl-gold: #C8A752;
+  --yavl-gold-dark: #8B7842;
   
   /* BACKGROUNDS */
   --yavl-dark: #0B0C0F;
   --bg-dark: #101114;
   --bg-darker: #0a0a0a;
-  --bg-card: rgba(212, 175, 55, 0.05);
+  --bg-card: rgba(200,167,82, 0.05);
   
   /* TEXTOS */
   --text-light: #f0f0f0;
@@ -172,12 +172,12 @@ body {
   --text-muted: #6b7280;
   
   /* BORDES */
-  --border-gold: rgba(212, 175, 55, 0.3);
-  --border-gold-hover: rgba(212, 175, 55, 0.6);
+  --border-gold: rgba(200,167,82, 0.3);
+  --border-gold-hover: rgba(200,167,82, 0.6);
   
   /* EFECTOS */
-  --glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
-  --glow-gold-intense: 0 0 25px rgba(212, 175, 55, 0.8);
+  --glow-gold: 0 0 15px rgba(200,167,82, 0.5);
+  --glow-gold-intense: 0 0 25px rgba(200,167,82, 0.8);
   
   /* TIPOGRAFÍA */
   --font-heading: 'Orbitron', sans-serif;
@@ -202,7 +202,7 @@ body {
 
 Antes de hacer commit, verifica:
 
-- [ ] Color oro es `#D4AF37` (no otro)
+- [ ] Color oro es `#C8A752` (no otro)
 - [ ] Fuentes son Orbitron + Rajdhani (no otras)
 - [ ] Grid background está presente en body
 - [ ] Botones usan clase `.btn` y `.btn-primary` o `.btn-outline`
@@ -220,7 +220,7 @@ Antes de hacer commit, verifica:
 ### ❌ NO HACER:
 ```css
 /* INCORRECTO */
-color: #FFD700;
+color: #C8A752;
 font-family: 'Inter', sans-serif;
 background: gold;
 border: 1px solid yellow;
@@ -255,13 +255,13 @@ border: 2px solid var(--border-gold);
   
   <style>
     :root {
-      --yavl-gold: #D4AF37;
-      --yavl-gold-dark: #B8860B;
+      --yavl-gold: #C8A752;
+      --yavl-gold-dark: #8B7842;
       --yavl-dark: #0B0C0F;
       --bg-dark: #101114;
       --text-light: #f0f0f0;
-      --border-gold: rgba(212, 175, 55, 0.3);
-      --glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
+      --border-gold: rgba(200,167,82, 0.3);
+      --glow-gold: 0 0 15px rgba(200,167,82, 0.5);
       --font-heading: 'Orbitron', sans-serif;
       --font-body: 'Rajdhani', sans-serif;
     }

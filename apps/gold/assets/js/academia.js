@@ -41,7 +41,7 @@ class AcademiaProgress {
             NOVICE: { min: 0, max: 99, name: 'Novice', icon: '👶', color: '#4CAF50' },
             ADEPT: { min: 100, max: 499, name: 'Adept', icon: '🎓', color: '#2196F3' },
             EXPERT: { min: 500, max: 999, name: 'Expert', icon: '🏆', color: '#FF9800' },
-            MASTER: { min: 1000, max: Infinity, name: 'Master', icon: '👑', color: '#D4AF37' }
+            MASTER: { min: 1000, max: Infinity, name: 'Master', icon: '👑', color: '#C8A752' }
         };
         
         this.init();

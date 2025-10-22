@@ -106,7 +106,7 @@
 - Testing de persistencia (localStorage)
 
 **8 Temas Cyberpunk:**
-1. 🟡 **Yavl Gold** (#D4AF37) - Default profesional
+1. 🟡 **Yavl Gold** (#C8A752) - Default profesional
 2. 🔵 **Neon Blue** (#00d9ff) - Gaming cyberpunk
 3. 🔴 **Magenta Punk** (#ff006e) - Agresivo
 4. 🟢 **Emerald Matrix** (#10b981) - YavlAgro default

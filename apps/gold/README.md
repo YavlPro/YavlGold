@@ -105,7 +105,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----
@@ -334,7 +334,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----
@@ -563,7 +563,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----
@@ -792,7 +792,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----
@@ -1021,7 +1021,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----
@@ -1217,7 +1217,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----
@@ -1427,7 +1427,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 	- **Backend**: Supabase (Auth, Database)
 	- **Seguridad**: hCaptcha
 	- **Hosting**: Próximamente en `yavlgold.com`
-	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#D4AF37`, `#0B0C0F`)
+	- **Diseño**: Sistema de tokens dorados (`#C8A752`, `#C8A752`, `#0B0C0F`)
 	- **Estilo**: Interfaz *Golden Cyberpunk* (neones dorados, fondo oscuro, microinteracciones)
 
 -----

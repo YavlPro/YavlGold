@@ -9,8 +9,8 @@
 ## 🎨 CAMBIOS APLICADOS
 
 ### **Color Principal:**
-- **ANTES:** `#D4AF37` (oro brillante, intenso)
-- **AHORA:** `#C2A552` (champagne gold, suave)
+- **ANTES:** `#C8A752` (oro brillante, intenso)
+- **AHORA:** `#C8A752` (champagne gold, suave)
 
 ### **Reducciones de Intensidad:**
 
@@ -33,16 +33,16 @@
 /* ANTES */
 h1 {
   text-shadow: 
-    0 0 15px rgba(212, 175, 55, 1),
-    0 0 30px rgba(212, 175, 55, 0.8),
-    0 0 50px rgba(212, 175, 55, 0.5);
+    0 0 15px rgba(200,167,82, 1),
+    0 0 30px rgba(200,167,82, 0.8),
+    0 0 50px rgba(200,167,82, 0.5);
 }
 
 /* AHORA */
 h1 {
   text-shadow: 
-    0 0 3px rgba(194, 165, 82, 0.45),
-    0 0 8px rgba(194, 165, 82, 0.25);
+    0 0 3px rgba(200,167,82, 0.45),
+    0 0 8px rgba(200,167,82, 0.25);
 }
 ```
 
@@ -50,12 +50,12 @@ h1 {
 ```css
 /* ANTES: Grid brillante visible */
 background-image:
-  linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px);
+  linear-gradient(rgba(200,167,82, 0.15) 1px, transparent 1px);
 
 /* AHORA: Grid casi invisible con gradientes radiales */
 background-image:
-  radial-gradient(circle at 20% 50%, rgba(194,165,82,0.03) 0%, transparent 50%),
-  radial-gradient(circle at 80% 80%, rgba(194,165,82,0.03) 0%, transparent 50%),
+  radial-gradient(circle at 20% 50%, rgba(200,167,82,0.03) 0%, transparent 50%),
+  radial-gradient(circle at 80% 80%, rgba(200,167,82,0.03) 0%, transparent 50%),
   linear-gradient(var(--border-gold) 1px, transparent 1px);
 ```
 
@@ -64,13 +64,13 @@ background-image:
 /* ANTES: Glow intenso */
 .btn-primary {
   box-shadow: 
-    0 0 20px rgba(212, 175, 55, 0.8),
+    0 0 20px rgba(200,167,82, 0.8),
     0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* AHORA: Glow suave */
 .btn-primary {
-  box-shadow: var(--glow-gold); /* 0 0 10px rgba(194,165,82,0.35) */
+  box-shadow: var(--glow-gold); /* 0 0 10px rgba(200,167,82,0.35) */
 }
 ```
 
@@ -80,7 +80,7 @@ background-image:
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(to bottom, var(--yavl-gold), var(--yavl-gold-dark));
   border-radius: 20px;
-  box-shadow: 0 0 8px rgba(194, 165, 82, 0.45);
+  box-shadow: 0 0 8px rgba(200,167,82, 0.45);
 }
 ```
 
@@ -193,18 +193,18 @@ background-image:
 
 **ANTES (Brillante):**
 ```
-Primary Gold:   #D4AF37 ████████
-Dark Gold:      #B8860B ████████
-Border:         rgba(212,175,55,0.5) ████████ (50% opacity)
+Primary Gold:   #C8A752 ████████
+Dark Gold:      #8B7842 ████████
+Border:         rgba(200,167,82,0.5) ████████ (50% opacity)
 Glow:           30px blur, 90% opacity
 ```
 
 **AHORA (Champagne):**
 ```
-Primary Gold:   #C2A552 ████████ (más suave)
+Primary Gold:   #C8A752 ████████ (más suave)
 Dark Gold:      #7D6B32 ████████ (más natural)
 Light Gold:     #E4D08E ████████ (acentos)
-Border:         rgba(194,165,82,0.28) ████████ (28% opacity)
+Border:         rgba(200,167,82,0.28) ████████ (28% opacity)
 Glow:           10px blur, 35% opacity
 ```
 
@@ -271,13 +271,13 @@ Glow:           10px blur, 35% opacity
 
 ```css
 :root {
-  --yavl-gold: #C2A552;              /* Champagne gold */
+  --yavl-gold: #C8A752;              /* Champagne gold */
   --yavl-gold-dark: #7D6B32;         /* Dark champagne */
   --gold-light: #E4D08E;             /* Light accent */
   
-  --border-gold: rgba(194,165,82,0.28);  /* Sutil */
-  --glow-gold: 0 0 10px rgba(194,165,82,0.35);  /* Suave */
-  --glow-gold-intense: 0 0 18px rgba(194,165,82,0.55);  /* Moderado */
+  --border-gold: rgba(200,167,82,0.28);  /* Sutil */
+  --glow-gold: 0 0 10px rgba(200,167,82,0.35);  /* Suave */
+  --glow-gold-intense: 0 0 18px rgba(200,167,82,0.55);  /* Moderado */
 }
 ```
 
@@ -294,7 +294,7 @@ git push origin main
 
 O manualmente cambiar:
 ```css
---yavl-gold: #D4AF37;  /* Volver a oro brillante */
+--yavl-gold: #C8A752;  /* Volver a oro brillante */
 ```
 
 ---

@@ -7,7 +7,7 @@
 [data-theme="dark"] {
   --color-primary: #111111;
   --color-secondary: #C8A752; /* Dorado principal */
-  --color-accent: #D4AF37;    /* Dorado secundario */
+  --color-accent: #C8A752;    /* Dorado secundario */
   --bg-dark: #0a0a0a;
   --bg-darker: #0B0C0F;
   --bg-body: #0B0C0F;
@@ -16,7 +16,7 @@
   --text-muted: #94a3b8;
   --card-bg: rgba(17, 17, 17, 0.9);
   --card-bg-solid: #111111;
-  --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+  --gradient-gold: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
   --border-radius: 15px;
   --transition: all 0.3s ease;
   --shadow: rgba(0, 0, 0, 0.5);
@@ -26,7 +26,7 @@
 [data-theme="light"] {
   --color-primary: #ffffff;
   --color-secondary: #C8A752;
-  --color-accent: #D4AF37;
+  --color-accent: #C8A752;
   --bg-dark: #f8f9fa;
   --bg-darker: #ffffff;
   --bg-body: #f5f5f5;
@@ -35,7 +35,7 @@
   --text-muted: #64748b;
   --card-bg: rgba(255, 255, 255, 0.95);
   --card-bg-solid: #ffffff;
-  --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+  --gradient-gold: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
   --border-radius: 15px;
   --transition: all 0.3s ease;
   --shadow: rgba(0, 0, 0, 0.1);

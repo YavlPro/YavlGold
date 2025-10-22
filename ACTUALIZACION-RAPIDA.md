@@ -3,8 +3,8 @@
 ## 🎨 Cambios Implementados
 
 ### 1. **Colores** ✅
-- ❌ Champagne (#E2C675, #C9A851)
-- ✅ **Oro Oficial #D4AF37**
+- ❌ Champagne (#C8A752, #C8A752)
+- ✅ **Oro Oficial #C8A752**
 
 ### 2. **Fuentes** ✅
 - ❌ Playfair Display + Inter
@@ -29,7 +29,7 @@ Todos los enlaces `#` → rutas reales:
 
 ## 🎯 Cumplimiento 100%
 
-- [x] Color #D4AF37 en toda la página
+- [x] Color #C8A752 en toda la página
 - [x] Fuentes Orbitron + Rajdhani
 - [x] Grid background presente
 - [x] Botones con estilos oficiales

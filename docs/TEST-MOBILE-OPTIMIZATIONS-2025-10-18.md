@@ -48,7 +48,7 @@
   right: 20px;
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #C8A752, #D4AF37);
+  background: linear-gradient(135deg, #C8A752, #C8A752);
   color: #0B0C0F;
   border: none;
   border-radius: 50%;
@@ -374,7 +374,7 @@ console.error(error.message)
 ### Colores
 ```css
 Background: linear-gradient(135deg, #0B0C0F, #1a1b1e)
-Dorado: #C8A752, #D4AF37, #FFD700
+Dorado: #C8A752, #C8A752, #C8A752
 Pass: #4CAF50
 Fail: #f44336
 Warn: #ff9800

@@ -335,7 +335,7 @@
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      background: linear-gradient(135deg, #C8A752, #C8A752);
       color: #0B0C0F;
       border: none;
       font-size: 1.2rem;

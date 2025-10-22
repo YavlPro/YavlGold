@@ -64,7 +64,7 @@
 ```css
 .mobile-drawer-header {
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(194,165,82,0.15); /* ✨ Separador visual */
+  border-bottom: 1px solid rgba(200,167,82,0.15); /* ✨ Separador visual */
 }
 
 .mobile-drawer-brand img {
@@ -135,7 +135,7 @@
 .mobile-drawer-actions {
   margin-top: auto;
   padding-top: 12px;                              /* ✨ Separación visual */
-  border-top: 1px solid rgba(194,165,82,0.15);   /* ✨ Separador visual */
+  border-top: 1px solid rgba(200,167,82,0.15);   /* ✨ Separador visual */
   gap: 8px;                                       /* ⬇️ -2px */
 }
 
@@ -187,8 +187,8 @@
   --text-primary: #E8EAED;                 /* Texto principal */
   --text-secondary: #B9C0CC;               /* Texto secundario */
   --text-muted: #8B92A0;                   /* Texto mutado */
-  --border-gold: rgba(194, 165, 82, 0.3);  /* Border gold */
-  --border-gold-light: rgba(194, 165, 82, 0.15); /* Border light */
+  --border-gold: rgba(200,167,82, 0.3);  /* Border gold */
+  --border-gold-light: rgba(200,167,82, 0.15); /* Border light */
   --gradient-gold: linear-gradient(135deg, #C2A551, #9A7F3B); /* Gradient */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
@@ -227,7 +227,7 @@ body {
 
 .navbar .nav-links a:hover {
   color: var(--yavl-gold);
-  background: rgba(194, 165, 82, 0.1);   /* ✨ Hover effect */
+  background: rgba(200,167,82, 0.1);   /* ✨ Hover effect */
 }
 ```
 
@@ -263,7 +263,7 @@ body {
 }
 
 .cookie-table thead {
-  background: rgba(194, 165, 82, 0.15);   /* ✨ Header gold light */
+  background: rgba(200,167,82, 0.15);   /* ✨ Header gold light */
 }
 
 .cookie-table th {
@@ -272,7 +272,7 @@ body {
 }
 
 .cookie-table tbody tr:hover {
-  background: rgba(194, 165, 82, 0.05);   /* ✨ Hover effect */
+  background: rgba(200,167,82, 0.05);   /* ✨ Hover effect */
 }
 ```
 
@@ -289,7 +289,7 @@ body {
 .tutorial-card:hover {
   transform: translateY(-4px);             /* ✨ Lift effect */
   border-color: var(--yavl-gold);
-  box-shadow: 0 8px 24px rgba(194, 165, 82, 0.2); /* ✨ Glow */
+  box-shadow: 0 8px 24px rgba(200,167,82, 0.2); /* ✨ Glow */
 }
 ```
 
@@ -321,7 +321,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--yavl-gold);          /* ✨ Focus gold */
-  box-shadow: 0 0 0 3px rgba(194, 165, 82, 0.1); /* ✨ Glow */
+  box-shadow: 0 0 0 3px rgba(200,167,82, 0.1); /* ✨ Glow */
 }
 ```
 
@@ -335,7 +335,7 @@ textarea:focus {
 .btn-primary:hover {
   background: linear-gradient(135deg, #D4B86A, #C2A551);
   transform: translateY(-2px);             /* ✨ Lift */
-  box-shadow: 0 4px 12px rgba(194, 165, 82, 0.3); /* ✨ Glow */
+  box-shadow: 0 4px 12px rgba(200,167,82, 0.3); /* ✨ Glow */
 }
 
 .btn-secondary {

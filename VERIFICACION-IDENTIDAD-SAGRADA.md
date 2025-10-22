@@ -51,11 +51,11 @@ background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,2
 
 ### 5. ✅ COLORES DORADOS PURIFICADOS
 **Status:** ✅ CORRECTO
-- ❌ `#D4AF37` ELIMINADO (0 instancias)
-- ❌ `#FFD700` ELIMINADO (0 instancias)
-- ❌ `#C2A552` ELIMINADO (0 instancias)
-- ❌ `rgba(194,165,82)` ELIMINADO (0 instancias)
-- ❌ `rgba(212,175,55)` ELIMINADO (0 instancias)
+- ❌ `#C8A752` ELIMINADO (0 instancias)
+- ❌ `#C8A752` ELIMINADO (0 instancias)
+- ❌ `#C8A752` ELIMINADO (0 instancias)
+- ❌ `rgba(200,167,82)` ELIMINADO (0 instancias)
+- ❌ `rgba(200,167,82)` ELIMINADO (0 instancias)
 - ✅ `#C8A752` ÚNICO dorado (sagrado)
 - ✅ `rgba(200,167,82)` ÚNICO rgba dorado
 
@@ -71,7 +71,7 @@ background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,2
 ### Commits de Purificación:
 1. **eeb1850** - Variables CSS sagradas implementadas
 2. **cb7865d** - Erradicación Orbitron/Rajdhani → Playfair/Montserrat
-3. **182c8f2** - Fix final rgba(194,165,82) → rgba(200,167,82)
+3. **182c8f2** - Fix final rgba(200,167,82) → rgba(200,167,82)
 4. **bca2510** - Purificación total D4AF37, FFD700, B8860B
 5. **1975d4e** - Fondos sagrados var(--yavl-card-bg) aplicados
 6. **147cc16** - Variables --surface corregidas

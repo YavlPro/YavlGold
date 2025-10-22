@@ -29,7 +29,7 @@
    └─ Test exitoso: 3 segundos total ✨
 
 2. ✅ Tema Cyber Champagne Gold
-   ├─ Color: #D4AF37 → #C2A552 (champagne)
+   ├─ Color: #C8A752 → #C8A752 (champagne)
    ├─ Reducción glows: 67-84%
    ├─ Grid sutil: 80% menos opacidad
    ├─ Mobile optimizations (<640px sin efectos)
@@ -81,7 +81,7 @@ Issue 5: Foreign Key Constraint ❌→✅
 ┌─────────────────┬──────────────┬──────────────┬──────────────┐
 │ Elemento        │ Antes        │ Ahora        │ Reducción    │
 ├─────────────────┼──────────────┼──────────────┼──────────────┤
-│ Color Gold      │ #D4AF37      │ #C2A552      │ Champagne    │
+│ Color Gold      │ #C8A752      │ #C8A752      │ Champagne    │
 │ Glow Principal  │ 30px @ 0.9   │ 10px @ 0.35  │ -67%         │
 │ Glow Intenso    │ 60px @ 0.6   │ 18px @ 0.55  │ -70%         │
 │ Bordes          │ 0.50 opacity │ 0.28 opacity │ -44%         │

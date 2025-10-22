@@ -18,7 +18,7 @@ export const ROUTES = {
  * Colores principales del tema Gold (default)
  */
 export const COLORS = {
-  PRIMARY: '#D4AF37',
+  PRIMARY: '#C8A752',
   PRIMARY_LIGHT: '#E5C158',
   PRIMARY_DARK: '#B8941F',
   BG_PRIMARY: '#0a0a0a',

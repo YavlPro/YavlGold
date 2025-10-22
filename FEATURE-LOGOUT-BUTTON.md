@@ -94,7 +94,7 @@ const mobileRegisterBtn = document.querySelector('.mobile-drawer-actions .btn-pr
 const mobileUserMenu = document.createElement('div');
 mobileUserMenu.className = 'mobile-user-menu';
 mobileUserMenu.innerHTML = `
-  <div style="background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.3); ...">
+  <div style="background: rgba(200,167,82, 0.1); border: 1px solid rgba(200,167,82, 0.3); ...">
     <div>
       <i class="fas fa-user-circle"></i> ${user.name}${adminBadgeMobile}
     </div>

@@ -959,8 +959,8 @@ export const useTheme = () => {
   --text-muted: #64748b;
   
   --gold-primary: #C8A752;
-  --gold-secondary: #D4AF37;
-  --gold-gradient: linear-gradient(45deg, #C8A752, #D4AF37);
+  --gold-secondary: #C8A752;
+  --gold-gradient: linear-gradient(45deg, #C8A752, #C8A752);
   
   --border-color: rgba(255, 255, 255, 0.1);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -977,8 +977,8 @@ export const useTheme = () => {
   --text-muted: #718096;
   
   --gold-primary: #996515;
-  --gold-secondary: #B8860B;
-  --gold-gradient: linear-gradient(45deg, #996515, #B8860B);
+  --gold-secondary: #8B7842;
+  --gold-gradient: linear-gradient(45deg, #996515, #8B7842);
   
   --border-color: rgba(0, 0, 0, 0.1);
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
