@@ -34,8 +34,8 @@ Sesión de **mejoras críticas de UX/UI** enfocadas en:
 
 ### 2. Bottom Sheet Perfil Premium (Commit: `2752a1c`)
 **Implementación:**
-- ✅ Header con gradiente dorado (`rgba(194,165,82,0.08) → 0.02`)
-- ✅ Avatar con glow dorado: `box-shadow: 0 0 12px rgba(194,165,82,0.3)`
+- ✅ Header con gradiente dorado (`rgba(200,167,82,0.08) → 0.02`)
+- ✅ Avatar con glow dorado: `box-shadow: 0 0 12px rgba(200,167,82,0.3)`
 - ✅ Badge de estado online (punto verde)
 - ✅ Botón "Ver perfil" con gradiente dorado brillante
 - ✅ Hover: `scale(1.05)` con transition
@@ -81,7 +81,7 @@ Sesión de **mejoras críticas de UX/UI** enfocadas en:
 ```html
 Usuario YavlGold [PRO]
 ```
-- Gradiente: `#FFD700 → #FFA500`
+- Gradiente: `#C8A752 → #FFA500`
 - Texto negro para máximo contraste
 - Tamaño: 0.6rem mobile, 0.55rem desktop
 
@@ -179,7 +179,7 @@ Usuario YavlGold [PRO]
 ```css
 body.light-theme .feature-card {
   background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(212, 175, 55, 0.3);
+  border-color: rgba(200,167,82, 0.3);
   box-shadow: var(--shadow-sm);
 }
 ```

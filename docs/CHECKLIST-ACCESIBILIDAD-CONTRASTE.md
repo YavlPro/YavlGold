@@ -68,9 +68,9 @@ box-shadow:
 ### Focus Visible (Navegación por Teclado)
 ```css
 .feature-card:focus-visible {
-  outline: 2px solid rgba(194,165,82,0.55); /* dorado suave */
+  outline: 2px solid rgba(200,167,82,0.55); /* dorado suave */
   outline-offset: 2px;
-  border-color: rgba(194,165,82,0.38);
+  border-color: rgba(200,167,82,0.38);
 }
 ```
 ✅ **Contraste con fondo**: ~4.8:1 (AA)

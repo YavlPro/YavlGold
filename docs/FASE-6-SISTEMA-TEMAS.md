@@ -25,7 +25,7 @@
 
 ### Temas Disponibles
 
-1. **Gold** - #D4AF37 (tema por defecto de Gold)
+1. **Gold** - #C8A752 (tema por defecto de Gold)
 2. **Neon Blue** - #00d9ff (cyberpunk azul)
 3. **Magenta Punk** - #ff006e (cyberpunk magenta)
 4. **Emerald Matrix** - #10b981 (verde Matrix, tema Agro)

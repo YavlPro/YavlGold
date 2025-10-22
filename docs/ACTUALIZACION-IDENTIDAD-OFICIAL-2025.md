@@ -13,22 +13,22 @@
 #### ❌ Antes (Champagne Soft Gold):
 ```css
 --gold-300: #E8D59B;
---gold-400: #E2C675;
---gold-500: #C9A851;
---gold-600: #A8863B;
---gold-700: #8B6F30;
+--gold-400: #C8A752;
+--gold-500: #C8A752;
+--gold-600: #C8A752;
+--gold-700: #C8A752;
 ```
 
 #### ✅ Ahora (Identidad Oficial YavlGold):
 ```css
---yavl-gold: #D4AF37;        /* ORO PRINCIPAL - NO CAMBIAR */
---yavl-gold-dark: #B8860B;   /* ORO OSCURO (hover/secondary) */
+--yavl-gold: #C8A752;        /* ORO PRINCIPAL - NO CAMBIAR */
+--yavl-gold-dark: #8B7842;   /* ORO OSCURO (hover/secondary) */
 --yavl-dark: #0B0C0F;        /* Negro Yavl principal */
 --bg-dark: #101114;          /* Fondo oscuro general */
 --text-light: #f0f0f0;       /* Texto principal claro */
 --text-secondary: #a0a0a0;   /* Texto secundario */
---border-gold: rgba(212, 175, 55, 0.3);
---glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
+--border-gold: rgba(200,167,82, 0.3);
+--glow-gold: 0 0 15px rgba(200,167,82, 0.5);
 ```
 
 ---
@@ -129,8 +129,8 @@ body {
 
 #### Resplandor Dorado (Glow):
 ```css
---glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
---glow-gold-intense: 0 0 25px rgba(212, 175, 55, 0.8);
+--glow-gold: 0 0 15px rgba(200,167,82, 0.5);
+--glow-gold-intense: 0 0 25px rgba(200,167,82, 0.8);
 ```
 
 Aplicado a:
@@ -162,7 +162,7 @@ Aplicado a:
    - Enlaces actualizados: ✅
 
 4. **Botones de Acción**
-   - Color #D4AF37: ✅
+   - Color #C8A752: ✅
    - Hover effect: ✅
    - Font Orbitron: ✅
 
@@ -182,7 +182,7 @@ Aplicado a:
 
 ### ✅ Cumplimiento Total:
 
-1. **Color oro exacto:** `#D4AF37` en toda la página ✅
+1. **Color oro exacto:** `#C8A752` en toda la página ✅
 2. **Fuentes oficiales:** Orbitron + Rajdhani ✅
 3. **Grid background:** Presente en body ✅
 4. **Glow dorado:** Aplicado a elementos importantes ✅
@@ -258,7 +258,7 @@ El diseño responsive se mantiene funcional con:
 ## 📝 Notas Importantes
 
 ### ⚠️ NUNCA CAMBIAR:
-- Color oro: `#D4AF37`
+- Color oro: `#C8A752`
 - Grid background en body
 - Fuentes: Orbitron + Rajdhani
 - Estructura de variables CSS
@@ -267,8 +267,8 @@ El diseño responsive se mantiene funcional con:
 Todas las variables están documentadas en el archivo y DEBEN usarse:
 ```css
 :root {
-  --yavl-gold: #D4AF37;
-  --yavl-gold-dark: #B8860B;
+  --yavl-gold: #C8A752;
+  --yavl-gold-dark: #8B7842;
   --yavl-dark: #0B0C0F;
   --bg-dark: #101114;
   --font-heading: 'Orbitron', sans-serif;

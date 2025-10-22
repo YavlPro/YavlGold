@@ -9,8 +9,8 @@ He actualizado completamente el archivo `index-premium.html` según la **Guía d
 ## ✨ Cambios Realizados
 
 ### 1️⃣ **Colores Corregidos**
-- ✅ Color oro oficial: **#D4AF37** (reemplazó champagne #E2C675, #C9A851)
-- ✅ Oro oscuro: **#B8860B**
+- ✅ Color oro oficial: **#C8A752** (reemplazó champagne #C8A752, #C8A752)
+- ✅ Oro oscuro: **#8B7842**
 - ✅ Fondos: **#0B0C0F** y **#101114**
 
 ### 2️⃣ **Fuentes Actualizadas**
@@ -72,7 +72,7 @@ Todos los enlaces `#` vacíos fueron actualizados:
 ## ✅ Verificación Final
 
 ### Cumplimiento 100% con Guía Oficial:
-- [x] Color oro exacto: `#D4AF37`
+- [x] Color oro exacto: `#C8A752`
 - [x] Fuentes: Orbitron + Rajdhani
 - [x] Grid background presente
 - [x] Botones con estilos oficiales
@@ -95,7 +95,7 @@ Todos los enlaces `#` vacíos fueron actualizados:
 ## 📝 Notas Importantes
 
 ### ⚠️ NUNCA CAMBIAR:
-- Color oro: `#D4AF37`
+- Color oro: `#C8A752`
 - Fuentes: Orbitron + Rajdhani
 - Grid background en body
 - Variables CSS definidas

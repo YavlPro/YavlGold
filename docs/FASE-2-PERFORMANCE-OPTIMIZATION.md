@@ -261,7 +261,7 @@ npm install @fortawesome/fontawesome-free
 ```html
 <style>
   /* Critical CSS (first paint) */
-  :root { --yavl-gold: #D4AF37; }
+  :root { --yavl-gold: #C8A752; }
   body { margin: 0; font-family: Rajdhani; }
   .hero { min-height: 100vh; }
   /* ... */

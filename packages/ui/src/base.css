@@ -59,8 +59,8 @@
 
 .theme-switcher__btn:hover {
   background: var(--bg-tertiary, rgba(255, 255, 255, 0.1));
-  border-color: var(--primary, #D4AF37);
-  box-shadow: 0 0 0 2px var(--primary, #D4AF37)33;
+  border-color: var(--primary, #C8A752);
+  box-shadow: 0 0 0 2px var(--primary, #C8A752)33;
 }
 
 .theme-switcher__icon {
@@ -157,8 +157,8 @@
 }
 
 .theme-switcher__item--active {
-  background: var(--primary, #D4AF37)22;
-  color: var(--primary, #D4AF37);
+  background: var(--primary, #C8A752)22;
+  color: var(--primary, #C8A752);
   font-weight: 600;
 }
 
@@ -178,7 +178,7 @@
 
 .theme-switcher__check {
   font-size: 16px;
-  color: var(--primary, #D4AF37);
+  color: var(--primary, #C8A752);
   margin-left: auto;
 }
 

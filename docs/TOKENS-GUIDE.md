@@ -19,8 +19,8 @@ Esta guía documenta el sistema de tokens CSS unificado de YavlGold, que garanti
 
 ```css
 --gg-gold-primary: #C8A752;   /* Uso general, botones, iconos */
---gg-gold-bright: #D4AF37;    /* Hover states, acentos */
---gg-gold-dark: #B8860B;      /* Texto sobre fondos claros */
+--gg-gold-bright: #C8A752;    /* Hover states, acentos */
+--gg-gold-dark: #8B7842;      /* Texto sobre fondos claros */
 --gg-gold-light: #E5D4A6;     /* Fondos sutiles */
 ```
 
@@ -33,8 +33,8 @@ Esta guía documenta el sistema de tokens CSS unificado de YavlGold, que garanti
 ### Gradientes Dorados
 
 ```css
---gg-gradient-gold: linear-gradient(135deg, #C8A752 0%, #D4AF37 100%);
---gg-gradient-shimmer: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+--gg-gradient-gold: linear-gradient(135deg, #C8A752 0%, #C8A752 100%);
+--gg-gradient-shimmer: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
 ```
 
 **Uso recomendado:**

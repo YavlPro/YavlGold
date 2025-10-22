@@ -10,7 +10,7 @@ Se aplicó **exactamente el mismo color y estilo dorado nítido** del logo "Yavl
 
 ```css
 /* Estilo Base Consistente */
-color: var(--yavl-gold);  /* #D4AF37 */
+color: var(--yavl-gold);  /* #C8A752 */
 text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra para profundidad */
 -webkit-font-smoothing: antialiased;
 -moz-osx-font-smoothing: grayscale;
@@ -95,7 +95,7 @@ text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra para profundidad */
 - Footer: Color primario gris ❌
 
 ### ✅ AHORA (Consistente):
-- **TODO en color dorado `#D4AF37`**
+- **TODO en color dorado `#C8A752`**
 - **TODO con antialiasing**
 - **TODO con text-shadow sutil**
 - **SIN gradientes con background-clip**
@@ -108,7 +108,7 @@ text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra para profundidad */
 /* Jerarquía Visual Consistente */
 
 /* 1. Títulos principales y destacados */
-color: var(--yavl-gold);  /* #D4AF37 - Oro oficial */
+color: var(--yavl-gold);  /* #C8A752 - Oro oficial */
 text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 
 /* 2. Texto de cuerpo y descripciones */
@@ -118,7 +118,7 @@ color: var(--text-light);  /* #f0f0f0 - Blanco suave */
 color: var(--text-secondary);  /* #a0a0a0 - Gris claro */
 
 /* 4. Enlaces hover */
-color: var(--yavl-gold-dark);  /* #B8860B - Oro oscuro */
+color: var(--yavl-gold-dark);  /* #8B7842 - Oro oscuro */
 ```
 
 ---
@@ -143,12 +143,12 @@ color: var(--yavl-gold-dark);  /* #B8860B - Oro oscuro */
 
 | Elemento | Color | Nitidez |
 |----------|-------|---------|
-| Logo navbar | #D4AF37 | ✅ 100% |
-| Título hero | #D4AF37 | ✅ 100% |
-| Títulos sección | #D4AF37 | ✅ 100% |
-| Cards h3 | #D4AF37 | ✅ 100% |
-| Footer h4 | #D4AF37 | ✅ 100% |
-| Modales | #D4AF37 | ✅ 100% |
+| Logo navbar | #C8A752 | ✅ 100% |
+| Título hero | #C8A752 | ✅ 100% |
+| Títulos sección | #C8A752 | ✅ 100% |
+| Cards h3 | #C8A752 | ✅ 100% |
+| Footer h4 | #C8A752 | ✅ 100% |
+| Modales | #C8A752 | ✅ 100% |
 
 **Consistencia:** ✅ **100% uniforme en toda la página**
 
@@ -158,7 +158,7 @@ color: var(--yavl-gold-dark);  /* #B8860B - Oro oscuro */
 
 ### 1. **Un Solo Color Oro**
 ```css
---yavl-gold: #D4AF37;  /* ÚNICO color oro en todo el sitio */
+--yavl-gold: #C8A752;  /* ÚNICO color oro en todo el sitio */
 ```
 
 ### 2. **Sin Background-Clip**
@@ -193,7 +193,7 @@ text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 ## 🔍 Verificación
 
 Ahora **TODOS los títulos** tienen:
-- ✅ Mismo color dorado (#D4AF37)
+- ✅ Mismo color dorado (#C8A752)
 - ✅ Misma nitidez (antialiased)
 - ✅ Misma profundidad (text-shadow)
 - ✅ Consistencia visual total

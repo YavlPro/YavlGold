@@ -38,7 +38,7 @@
 | Test | Estado | Detalle |
 |------|--------|---------|
 | Dimensiones (120x120px) | ✅ PASS | Tamaño óptimo |
-| Gradiente dorado | ✅ PASS | #C8A752 → #D4AF37 |
+| Gradiente dorado | ✅ PASS | #C8A752 → #C8A752 |
 | Bordes redondeados | ✅ PASS | border-radius: 20px |
 | Sombra dorada (glow) | ✅ PASS | Box-shadow presente |
 | Tamaño de fuente (48px) | ✅ PASS | Legible y balanceado |
@@ -55,7 +55,7 @@
 | Animación aplicada | ✅ PASS | 1s linear infinite |
 | Tamaño spinner (40x40px) | ✅ PASS | Visible sin ser intrusivo |
 | Borde dorado | ✅ PASS | Opacidad 0.2 para efecto sutil |
-| Border-top brillante | ✅ PASS | #D4AF37 crea rotación visible |
+| Border-top brillante | ✅ PASS | #C8A752 crea rotación visible |
 
 ---
 
@@ -155,7 +155,7 @@ El splash screen muestra:
 │                             │
 │         ╔═══════╗          │
 │         ║  YG   ║          │  ← Logo dorado 120x120px
-│         ╚═══════╝          │     Gradiente #C8A752→#D4AF37
+│         ╚═══════╝          │     Gradiente #C8A752→#C8A752
 │                             │
 │        YavlGold             │  ← Título con gradiente
 │                             │
@@ -236,7 +236,7 @@ setTimeout(() => {
 ```css
 --color-primary: #111111        /* Fondo principal */
 --color-secondary: #C8A752      /* Dorado principal */
---color-accent: #D4AF37         /* Dorado secundario */
+--color-accent: #C8A752         /* Dorado secundario */
 --bg-darker: #0B0C0F            /* Negro de fondo */
 --text-light: #e2e8f0           /* Texto claro */
 --text-muted: #94a3b8           /* Texto secundario */

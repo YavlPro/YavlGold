@@ -312,7 +312,7 @@ if (user) {
 <h2>¡Bienvenido a YavlGold! 🏆</h2>
 <p>Hola {{ .Email }},</p>
 <p>Gracias por registrarte. Haz clic en el botón para confirmar tu email:</p>
-<p><a href="{{ .ConfirmationURL }}" style="background: #D4AF37; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px;">✅ Confirmar Email</a></p>
+<p><a href="{{ .ConfirmationURL }}" style="background: #C8A752; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px;">✅ Confirmar Email</a></p>
 <p>Si no solicitaste esto, ignora este email.</p>
 <p>Equipo YavlGold 🌟</p>
 ```

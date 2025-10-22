@@ -30,7 +30,7 @@
 
     .header h1 {
       font-size: 2rem;
-      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      background: linear-gradient(135deg, #C8A752, #C8A752);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -63,18 +63,18 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      background: linear-gradient(135deg, #C8A752, #C8A752);
       color: #0a0a0a;
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+      box-shadow: 0 5px 20px rgba(200,167,82, 0.4);
     }
 
     .btn-secondary {
       background: rgba(200, 167, 82, 0.2);
-      color: #D4AF37;
+      color: #C8A752;
       border: 1px solid rgba(200, 167, 82, 0.5);
     }
 
@@ -136,7 +136,7 @@
     .test-section h3 {
       font-size: 1.2rem;
       margin-bottom: 15px;
-      color: #D4AF37;
+      color: #C8A752;
     }
 
     .test-item {
@@ -207,7 +207,7 @@
       display: inline-block;
       width: 120px;
       height: 120px;
-      background: linear-gradient(135deg, #C8A752, #D4AF37);
+      background: linear-gradient(135deg, #C8A752, #C8A752);
       border-radius: 20px;
       display: flex;
       align-items: center;
@@ -215,7 +215,7 @@
       font-size: 48px;
       font-weight: 900;
       color: #0B0C0F;
-      box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
+      box-shadow: 0 10px 40px rgba(200,167,82, 0.3);
       margin: 0 auto 20px;
     }
 
@@ -223,8 +223,8 @@
       width: 40px;
       height: 40px;
       margin: 20px auto;
-      border: 4px solid rgba(212, 175, 55, 0.2);
-      border-top-color: #D4AF37;
+      border: 4px solid rgba(200,167,82, 0.2);
+      border-top-color: #C8A752;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -234,15 +234,15 @@
     }
 
     .recommendations {
-      background: rgba(212, 175, 55, 0.1);
-      border-left: 4px solid #D4AF37;
+      background: rgba(200,167,82, 0.1);
+      border-left: 4px solid #C8A752;
       padding: 15px;
       border-radius: 8px;
       margin-top: 20px;
     }
 
     .recommendations h4 {
-      color: #D4AF37;
+      color: #C8A752;
       margin-bottom: 10px;
     }
 
@@ -268,7 +268,7 @@
       background: rgba(200, 167, 82, 0.1);
       border-radius: 8px;
       text-align: center;
-      color: #D4AF37;
+      color: #C8A752;
     }
   </style>
 </head>
@@ -462,12 +462,12 @@
         });
 
         // Test 2: Verificar gradiente dorado
-        const goldGradient = html.match(/linear-gradient\(135deg,\s*#C8A752,\s*#D4AF37\)/);
+        const goldGradient = html.match(/linear-gradient\(135deg,\s*#C8A752,\s*#C8A752\)/);
         section.tests.push({
           name: 'Gradiente dorado aplicado',
           status: goldGradient ? 'pass' : 'fail',
           details: goldGradient 
-            ? 'Gradiente dorado (#C8A752 → #D4AF37) aplicado correctamente'
+            ? 'Gradiente dorado (#C8A752 → #C8A752) aplicado correctamente'
             : 'No se encontró el gradiente dorado característico',
           icon: goldGradient ? '✓' : '✗'
         });
@@ -584,12 +584,12 @@
         });
 
         // Test 5: Verificar border-top-color
-        const borderTop = html.match(/\.loader\s*{[^}]*border-top-color:\s*#D4AF37/s);
+        const borderTop = html.match(/\.loader\s*{[^}]*border-top-color:\s*#C8A752/s);
         section.tests.push({
           name: 'Borde superior dorado brillante',
           status: borderTop ? 'pass' : 'fail',
           details: borderTop 
-            ? 'Border-top #D4AF37 crea el efecto de rotación visible'
+            ? 'Border-top #C8A752 crea el efecto de rotación visible'
             : 'El color del borde superior no es el esperado',
           icon: borderTop ? '✓' : '✗'
         });
@@ -907,12 +907,12 @@
         <h3>👁️ Preview del Logo de Carga</h3>
         <div class="preview-container">
           <div class="logo-preview">YG</div>
-          <p style="color: #D4AF37; font-weight: 600; margin-bottom: 10px;">YavlGold</p>
+          <p style="color: #C8A752; font-weight: 600; margin-bottom: 10px;">YavlGold</p>
           <p style="color: #94a3b8;">Redirigiendo a la academia...</p>
           <div class="spinner"></div>
           <p style="color: #808080; font-size: 0.9rem; margin-top: 15px;">
             Si no eres redirigido automáticamente, 
-            <a href="/apps/gold/" style="color: #D4AF37;">haz click aquí</a>
+            <a href="/apps/gold/" style="color: #C8A752;">haz click aquí</a>
           </p>
         </div>
       `;

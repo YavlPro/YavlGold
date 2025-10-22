@@ -8,15 +8,15 @@
        COLORES PRINCIPALES - DORADO YAVLGOLD
        ======================================== */
   --gg-gold-primary: #C8A752;        /* Dorado principal - Uso general */
-  --gg-gold-bright: #D4AF37;         /* Dorado brillante - Hover/Accent */
-  --gg-gold-dark: #B8860B;           /* Dorado oscuro - Texto sobre claro */
+  --gg-gold-bright: #C8A752;         /* Dorado brillante - Hover/Accent */
+  --gg-gold-dark: #8B7842;           /* Dorado oscuro - Texto sobre claro */
   --gg-gold-light: #E5D4A6;          /* Dorado claro - Fondos sutiles */
   
   /* Gradientes dorados */
-  --gg-gradient-gold: linear-gradient(135deg, #C8A752 0%, #D4AF37 100%);
-  --gg-gradient-gold-vertical: linear-gradient(180deg, #C8A752 0%, #D4AF37 100%);
-  --gg-gradient-gold-radial: radial-gradient(circle, #D4AF37 0%, #C8A752 100%);
-  --gg-gradient-shimmer: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+  --gg-gradient-gold: linear-gradient(135deg, #C8A752 0%, #C8A752 100%);
+  --gg-gradient-gold-vertical: linear-gradient(180deg, #C8A752 0%, #C8A752 100%);
+  --gg-gradient-gold-radial: radial-gradient(circle, #C8A752 0%, #C8A752 100%);
+  --gg-gradient-shimmer: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
   
   /* Transparencias doradas (para overlays y efectos) */
   --gg-gold-05: rgba(200, 167, 82, 0.05);

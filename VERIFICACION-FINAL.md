@@ -3,10 +3,10 @@
 ## Identidad Visual YavlGold - index-premium.html
 
 ### 🎨 Colores Oficiales
-- [x] Variable `--yavl-gold: #D4AF37` definida
-- [x] Variable `--yavl-gold-dark: #B8860B` definida
+- [x] Variable `--yavl-gold: #C8A752` definida
+- [x] Variable `--yavl-gold-dark: #8B7842` definida
 - [x] 35+ usos de `var(--yavl-gold)` en el archivo
-- [x] Sin referencias a colores champagne (#E2C675, #C9A851)
+- [x] Sin referencias a colores champagne (#C8A752, #C8A752)
 - [x] Backgrounds oscuros oficiales (#0B0C0F, #101114)
 
 ### 📝 Tipografía
@@ -66,15 +66,15 @@
 ### 📦 Estructura de Variables CSS
 ```css
 ✅ :root {
-  ✅ --yavl-gold: #D4AF37;
-  ✅ --yavl-gold-dark: #B8860B;
+  ✅ --yavl-gold: #C8A752;
+  ✅ --yavl-gold-dark: #8B7842;
   ✅ --yavl-dark: #0B0C0F;
   ✅ --bg-dark: #101114;
   ✅ --text-light: #f0f0f0;
   ✅ --text-secondary: #a0a0a0;
-  ✅ --border-gold: rgba(212, 175, 55, 0.3);
-  ✅ --glow-gold: 0 0 15px rgba(212, 175, 55, 0.5);
-  ✅ --glow-gold-intense: 0 0 25px rgba(212, 175, 55, 0.8);
+  ✅ --border-gold: rgba(200,167,82, 0.3);
+  ✅ --glow-gold: 0 0 15px rgba(200,167,82, 0.5);
+  ✅ --glow-gold-intense: 0 0 25px rgba(200,167,82, 0.8);
   ✅ --font-heading: 'Orbitron', sans-serif;
   ✅ --font-body: 'Rajdhani', sans-serif;
 }
@@ -101,7 +101,7 @@
 **RESULTADO:** ✅ **100% CONFORME CON GUÍA OFICIAL**
 
 Todos los aspectos de la identidad visual han sido correctamente aplicados:
-- Color oro oficial #D4AF37 ✅
+- Color oro oficial #C8A752 ✅
 - Fuentes Orbitron + Rajdhani ✅
 - Grid background presente ✅
 - Botones con estilos oficiales ✅

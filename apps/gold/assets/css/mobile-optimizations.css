@@ -150,7 +150,7 @@
   /* Botón "Registrarse" dorado sólido */
   .btn-register,
   .gg-header .btn-register {
-    background: linear-gradient(135deg, #C8A752, #D4AF37);
+    background: linear-gradient(135deg, #C8A752, #C8A752);
     color: #0B0C0F;
     border: none;
     font-weight: 600;
@@ -203,7 +203,7 @@
     font-size: clamp(2rem, 8vw, 3rem);
     line-height: 1.2;
     margin-bottom: 20px;
-    background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);
+    background: linear-gradient(135deg, #C8A752, #C8A752, #C8A752);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -259,7 +259,7 @@
 
   /* Botón "Ir a Herramientas" - Primario con gradiente */
   .cta-buttons .btn-primary {
-    background: linear-gradient(135deg, #C8A752, #D4AF37);
+    background: linear-gradient(135deg, #C8A752, #C8A752);
     color: #0B0C0F;
     border: none;
     box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
@@ -291,7 +291,7 @@
 
   /* Botón "Ir a Herramientas" con candado (legacy) */
   .btn-herramientas {
-    background: linear-gradient(135deg, #C8A752, #D4AF37);
+    background: linear-gradient(135deg, #C8A752, #C8A752);
     color: #0B0C0F;
     display: flex;
     align-items: center;
@@ -633,7 +633,7 @@
   right: 20px;
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #C8A752, #D4AF37);
+  background: linear-gradient(135deg, #C8A752, #C8A752);
   color: #0B0C0F;
   border: none;
   border-radius: 50%;

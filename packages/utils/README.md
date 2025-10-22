@@ -48,7 +48,7 @@ isToday(new Date());                 // true
 import { ROUTES, COLORS, BREAKPOINTS } from '@yavl/utils';
 
 console.log(ROUTES.DASHBOARD);       // "/dashboard"
-console.log(COLORS.PRIMARY);         // "#D4AF37"
+console.log(COLORS.PRIMARY);         // "#C8A752"
 console.log(BREAKPOINTS.MOBILE);     // 768
 ```
 

@@ -122,7 +122,7 @@ git push origin main
 ### Dorados Premium
 ```css
 #C8A752  /* Gold Primary - branding principal */
-#D4AF37  /* Gold Secondary - acentos */
+#C8A752  /* Gold Secondary - acentos */
 #E8D08B  /* Gold Light - brillos */
 #9B8240  /* Gold Dark - sombras */
 ```
@@ -177,7 +177,7 @@ rgba(18, 20, 26, 0.95)  /* Cards con transparencia */
 ```css
 :root {
   --gold-primary: #C8A752;    /* ← Cambia esto */
-  --gold-secondary: #D4AF37;  /* ← Y esto */
+  --gold-secondary: #C8A752;  /* ← Y esto */
   --bg-primary: #0B0C0F;      /* ← Y esto */
 }
 ```

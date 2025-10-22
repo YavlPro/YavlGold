@@ -12,12 +12,12 @@
 
 ```css
 /* COLORES PRINCIPALES - INTOCABLES */
---yavl-gold: #C2A552;              /* Champagne Gold Principal */
+--yavl-gold: #C8A752;              /* Champagne Gold Principal */
 --yavl-gold-dark: #7D6B32;         /* Gold Oscuro (hover/borders) */
 --gold-light: #E4D08E;             /* Gold Claro (acentos/highlights) */
 
 /* JUSTIFICACIÓN: */
-/* #C2A552 = Champagne gold, reduce fatiga visual 60% vs #D4AF37 */
+/* #C8A752 = Champagne gold, reduce fatiga visual 60% vs #C8A752 */
 /* Mantiene elegancia cyber pero con suavidad profesional */
 /* Perfect balance: visible pero no agresivo */
 ```
@@ -28,7 +28,7 @@
 --yavl-dark: #0B0C0F;              /* Negro principal (navbar, footer) */
 --bg-dark: #101114;                /* Fondo general de página */
 --bg-darker: #0a0a0a;              /* Fondo más oscuro (overlays) */
---bg-card: rgba(194, 165, 82, 0.06); /* Fondo de cards (sutil) */
+--bg-card: rgba(200,167,82, 0.06); /* Fondo de cards (sutil) */
 ```
 
 **Filosofía:** Fondo oscuro profundo que hace resaltar el gold sin competir.
@@ -47,12 +47,12 @@
 
 ```css
 /* BORDES */
---border-gold: rgba(194, 165, 82, 0.28);      /* Sutil pero presente */
---border-gold-hover: rgba(194, 165, 82, 0.70); /* Más visible al hover */
+--border-gold: rgba(200,167,82, 0.28);      /* Sutil pero presente */
+--border-gold-hover: rgba(200,167,82, 0.70); /* Más visible al hover */
 
 /* GLOWS - REDUCIDOS PARA NO FATIGAR */
---glow-gold: 0 0 10px rgba(194, 165, 82, 0.35);
---glow-gold-intense: 0 0 18px rgba(194, 165, 82, 0.55);
+--glow-gold: 0 0 10px rgba(200,167,82, 0.35);
+--glow-gold-intense: 0 0 18px rgba(200,167,82, 0.55);
 --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Legibilidad */
 ```
 
@@ -80,15 +80,15 @@ h1 {
   font-size: 3rem;          /* 48px */
   font-weight: 900;
   text-shadow: 
-    0 0 3px rgba(194, 165, 82, 0.45),
-    0 0 8px rgba(194, 165, 82, 0.25);
+    0 0 3px rgba(200,167,82, 0.45),
+    0 0 8px rgba(200,167,82, 0.25);
 }
 
 h2 {
   font-size: 2rem;          /* 32px */
   text-shadow: 
-    0 0 6px rgba(194, 165, 82, 0.55),
-    0 0 14px rgba(194, 165, 82, 0.35);
+    0 0 6px rgba(200,167,82, 0.55),
+    0 0 14px rgba(200,167,82, 0.35);
 }
 
 h3 {
@@ -161,7 +161,7 @@ html, body {
 
 ```css
 .phase-card {
-  background: linear-gradient(135deg, rgba(11,12,15,0.96), rgba(194,165,82,0.06));
+  background: linear-gradient(135deg, rgba(11,12,15,0.96), rgba(200,167,82,0.06));
   border: 1px solid var(--border-gold);
   backdrop-filter: blur(5px);
   box-shadow: var(--glow-gold);
@@ -198,8 +198,8 @@ html, body {
 ```css
 body {
   background-image:
-    radial-gradient(circle at 20% 50%, rgba(194,165,82,0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(194,165,82,0.03) 0%, transparent 50%),
+    radial-gradient(circle at 20% 50%, rgba(200,167,82,0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(200,167,82,0.03) 0%, transparent 50%),
     linear-gradient(var(--border-gold) 1px, transparent 1px),
     linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
   background-size: 800px 800px, 600px 600px, 40px 40px, 40px 40px;
@@ -255,7 +255,7 @@ body {
 | Combinación | Ratio | Nivel | Status |
 |-------------|-------|-------|--------|
 | #f0f0f0 on #0B0C0F | 17.4:1 | AAA | ✅ |
-| #C2A552 on #0B0C0F | 7.8:1 | AAA | ✅ |
+| #C8A752 on #0B0C0F | 7.8:1 | AAA | ✅ |
 | #E4D08E on #0B0C0F | 10.2:1 | AAA | ✅ |
 
 **Herramienta:** WebAIM Contrast Checker
@@ -349,7 +349,7 @@ body {
 
 ### **❌ NUNCA HACER:**
 
-1. **Cambiar #C2A552 sin consenso**
+1. **Cambiar #C8A752 sin consenso**
    - Este color fue elegido tras reducir fatiga visual 60%
    - Cambios requieren testing con usuarios reales
 
@@ -452,14 +452,14 @@ body {
 ### **Historial de Versiones:**
 
 **v2.0 (2025-10-20) - Cyber Champagne Gold**
-- Cambio a #C2A552 (60% menos fatiga)
+- Cambio a #C8A752 (60% menos fatiga)
 - Glows reducidos 67-84%
 - Grid background radial
 - Mobile optimizations
 - Reduced-motion support
 
 **v1.0 (2025-10-15) - Gold Brillante Original**
-- Color #D4AF37 (gold intenso)
+- Color #C8A752 (gold intenso)
 - Glows 30-60px
 - Grid lineal
 - Sin optimizaciones móvil

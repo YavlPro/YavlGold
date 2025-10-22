@@ -42,7 +42,7 @@ Mejorar significativamente la experiencia de usuario en dispositivos móviles, o
 - Icono de candado visible
 
 **Registrarse:**
-- Gradiente dorado sólido (#C8A752 → #D4AF37)
+- Gradiente dorado sólido (#C8A752 → #C8A752)
 - Box-shadow con glow effect
 - Mayor contraste para destacar CTA principal
 
@@ -73,7 +73,7 @@ Mejorar significativamente la experiencia de usuario en dispositivos móviles, o
 .hero h1 {
   font-size: clamp(2rem, 8vw, 3rem);
   line-height: 1.2;
-  background: linear-gradient(135deg, #C8A752, #D4AF37, #FFD700);
+  background: linear-gradient(135deg, #C8A752, #C8A752, #C8A752);
   -webkit-background-clip: text;
 }
 ```
@@ -87,7 +87,7 @@ Mejorar significativamente la experiencia de usuario en dispositivos móviles, o
 #### Ir a Herramientas 🔒
 ```css
 .btn-herramientas {
-  background: linear-gradient(135deg, #C8A752, #D4AF37);
+  background: linear-gradient(135deg, #C8A752, #C8A752);
   color: #0B0C0F;
   display: flex;
   align-items: center;

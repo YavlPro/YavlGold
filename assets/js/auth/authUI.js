@@ -268,7 +268,7 @@ const AuthUI = {
       toast = document.createElement('div'); toast.id = 'auth-toast'; document.body.appendChild(toast);
     }
     const style = type === 'success'
-      ? { bg: 'linear-gradient(135deg,#C8A752,#D4AF37)', color: '#0B0C0F', icon: 'fa-check-circle' }
+      ? { bg: 'linear-gradient(135deg,#C8A752,#C8A752)', color: '#0B0C0F', icon: 'fa-check-circle' }
       : { bg: 'linear-gradient(135deg,#ff6b6b,#ff5252)', color: '#fff', icon: 'fa-exclamation-circle' };
 
     toast.style.cssText = `

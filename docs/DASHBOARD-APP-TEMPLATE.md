@@ -60,10 +60,10 @@ Plantilla de aplicación responsive tipo dashboard con la identidad visual YavlG
 
 ```css
 --gold-300: #E8D59B  /* Lightest */
---gold-400: #E2C675  /* Primary */
---gold-500: #C9A851  /* Medium */
---gold-600: #A8863B  /* Dark */
---gold-700: #8B6F30  /* Darkest */
+--gold-400: #C8A752  /* Primary */
+--gold-500: #C8A752  /* Medium */
+--gold-600: #C8A752  /* Dark */
+--gold-700: #C8A752  /* Darkest */
 ```
 
 ### Backgrounds

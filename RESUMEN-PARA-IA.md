@@ -17,7 +17,7 @@
 - Admin: yeriksonvarela@gmail.com (is_admin = true)
 
 #### 🎨 Identidad Visual (100%)
-- Color oficial: `#D4AF37` (yavl-gold)
+- Color oficial: `#C8A752` (yavl-gold)
 - Fonts: Orbitron + Rajdhani
 - Grid 40×40px background
 - Glow dorado triple capa en títulos
@@ -260,7 +260,7 @@ WHERE id = '68a4963b-2b86-4382-a04f-1f38f1873d1c';
 3. **Landing /herramientas/** (4-6h)
    - Crear `herramientas/index.html`
    - 3 widgets funcionales (ver specs en `PLAN-ACCION-48H.md`)
-   - Mismo estilo que `index.html` (#D4AF37, Orbitron, Grid)
+   - Mismo estilo que `index.html` (#C8A752, Orbitron, Grid)
 
 4. **Landing /academia/** (3-4h)
    - Crear `academia/index.html`
@@ -284,8 +284,8 @@ WHERE id = '68a4963b-2b86-4382-a04f-1f38f1873d1c';
 
 ```css
 /* Colores oficiales */
---yavl-gold: #D4AF37;
---yavl-gold-dark: #B8860B;
+--yavl-gold: #C8A752;
+--yavl-gold-dark: #8B7842;
 --yavl-dark: #0B0C0F;
 --bg-dark: #101114;
 
@@ -295,15 +295,15 @@ WHERE id = '68a4963b-2b86-4382-a04f-1f38f1873d1c';
 
 /* Grid background (OBLIGATORIO) */
 background-image:
-  linear-gradient(rgba(212, 175, 55, 0.15) 1px, transparent 1px),
-  linear-gradient(to right, rgba(212, 175, 55, 0.15) 1px, var(--bg-dark) 1px);
+  linear-gradient(rgba(200,167,82, 0.15) 1px, transparent 1px),
+  linear-gradient(to right, rgba(200,167,82, 0.15) 1px, var(--bg-dark) 1px);
 background-size: 40px 40px;
 
 /* Glow en títulos */
 text-shadow: 
-  0 0 15px rgba(212,175,55,1), 
-  0 0 30px rgba(212,175,55,0.8), 
-  0 0 50px rgba(212,175,55,0.5);
+  0 0 15px rgba(200,167,82,1), 
+  0 0 30px rgba(200,167,82,0.8), 
+  0 0 50px rgba(200,167,82,0.5);
 ```
 
 ---
@@ -334,7 +334,7 @@ text-shadow:
 ## 💡 Tips para la IA
 
 1. **NO usar frameworks** — Todo es Vanilla JS
-2. **NO romper el diseño** — Mantener #D4AF37, Orbitron, Grid
+2. **NO romper el diseño** — Mantener #C8A752, Orbitron, Grid
 3. **Leer specs completas** — Ver `PLAN-ACCION-48H.md` antes de codear
 4. **Probar en mobile** — Responsive es crítico
 5. **Seguridad primero** — Todas las APIs deben pasar por Supabase Edge Functions

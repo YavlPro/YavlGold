@@ -288,7 +288,7 @@ YavlTrading:  0%  [PRÓXIMAMENTE - MUY IMPORTANTE]
 **Solución:**
 - [ ] Crear clase `.ecosystem-card` unificada
 - [ ] Aplicar mismo estilo en ambas páginas
-- [ ] Colores: champagne gold (#C2A552)
+- [ ] Colores: champagne gold (#C8A752)
 - [ ] Borders sutiles (0.28 opacity)
 - [ ] Hover effects consistentes
 

@@ -604,13 +604,13 @@ Estado: Hover
 
 ### Gradiente Dorado Principal
 ```
-linear-gradient(135deg, #C8A752 0%, #D4AF37 50%, #E8D08B 100%)
+linear-gradient(135deg, #C8A752 0%, #C8A752 50%, #E8D08B 100%)
 
 Visualización:
 ██████████████████████████████
 ██  →  →  →  →  →  →  →  →  ██
 ██  ░░░░▒▒▒▒▓▓▓▓████████████  ██
-██  #C8A752  →  #D4AF37  →  #E8D08B
+██  #C8A752  →  #C8A752  →  #E8D08B
 ██  Oro base    Oro medio    Oro claro
 ██████████████████████████████
 ```

@@ -50,7 +50,7 @@
 > "Cambiar a tema más suave que no fatigue la vista"
 
 **Implementación:**
-- Color gold: `#D4AF37` → `#C2A552` (champagne)
+- Color gold: `#C8A752` → `#C8A752` (champagne)
 - Glows: reducción 67-84% de intensidad
 - Grid: 0.15 → 0.03 opacity (80% más sutil)
 - Text-shadows: eliminados en h3+
@@ -316,7 +316,7 @@ ADD CONSTRAINT profiles_id_fkey
 
 | Elemento | Antes (Brillante) | Después (Champagne) |
 |----------|-------------------|---------------------|
-| Color Gold | #D4AF37 | #C2A552 |
+| Color Gold | #C8A752 | #C8A752 |
 | H1 Glow | 3 capas, 50px | 2 capas, 8px |
 | H2 Glow | 3 capas, 40px | 2 capas, 14px |
 | H3 Glow | 2 capas, 15px | Ninguno |

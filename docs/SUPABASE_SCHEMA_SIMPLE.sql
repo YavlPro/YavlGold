@@ -273,8 +273,8 @@ CREATE TRIGGER trigger_update_user_level
 INSERT INTO badges (badge_key, title, description, icon, color, xp_reward, rarity) VALUES
     ('primer_curso', 'Primer Paso', 'Completaste tu primera lección', 'fa-graduation-cap', '#4CAF50', 10, 'common'),
     ('racha_7_dias', 'Dedicación Total', 'Estudiaste 7 días seguidos', 'fa-fire', '#FF5722', 25, 'rare'),
-    ('quiz_perfecto', 'Cerebro de Oro', 'Sacaste 100% en un quiz', 'fa-star', '#FFD700', 15, 'rare'),
-    ('quiz_perfecto_5', 'Genio Académico', '5 quizzes perfectos', 'fa-crown', '#D4AF37', 50, 'epic'),
+    ('quiz_perfecto', 'Cerebro de Oro', 'Sacaste 100% en un quiz', 'fa-star', '#C8A752', 15, 'rare'),
+    ('quiz_perfecto_5', 'Genio Académico', '5 quizzes perfectos', 'fa-crown', '#C8A752', 50, 'epic'),
     ('modulo_completo', 'Maestro del Módulo', 'Completaste un módulo completo', 'fa-trophy', '#FF9800', 100, 'epic'),
     ('early_adopter', 'Pionero YavlGold', 'Uno de los primeros 100 estudiantes', 'fa-rocket', '#9C27B0', 50, 'legendary')
 ON CONFLICT (badge_key) DO NOTHING;

@@ -152,8 +152,8 @@ const TrueProtect = {
             text-align: center;
             padding: 20px;
           ">
-            <i class="fas fa-shield-alt" style="font-size: 80px; color: #D4AF37; margin-bottom: 20px;"></i>
-            <h1 style="color: #D4AF37; margin-bottom: 10px;">⛔ Acceso Denegado</h1>
+            <i class="fas fa-shield-alt" style="font-size: 80px; color: #C8A752; margin-bottom: 20px;"></i>
+            <h1 style="color: #C8A752; margin-bottom: 10px;">⛔ Acceso Denegado</h1>
             <p style="color: #999; margin-bottom: 20px;">TrueProtect ha bloqueado el acceso</p>
             <p style="color: #666; font-size: 14px;">Razón: ${reason}</p>
             <p style="color: #666; font-size: 12px; margin-top: 20px;">Redirigiendo en 2 segundos...</p>

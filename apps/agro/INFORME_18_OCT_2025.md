@@ -160,7 +160,7 @@ Hoy se completó exitosamente la transformación completa del proyecto "La Grita
 
 **Paleta de colores:**
 ```css
---yavl-gold: #D4AF37
+--yavl-gold: #C8A752
 --yavl-dark: #0B0C0F
 --bg-dark: #101114
 --earth-green: #2d5016
@@ -296,7 +296,7 @@ git remote set-url origin https://github.com/YavlPro/YavlAgro.git
 - Nombre: "YavlAgro"
 - Propietario: YavlPro
 - Archivo principal: YavlAgro.html
-- Paleta: Oro (#D4AF37) + Verde (#7cb342) + Tierra
+- Paleta: Oro (#C8A752) + Verde (#7cb342) + Tierra
 
 ### Narrativa
 **Tagline nuevo:** "Donde la tierra se encuentra con la blockchain"

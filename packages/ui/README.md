@@ -83,7 +83,7 @@ El CSS base incluye:
 ```css
 :root {
   /* Colores principales */
-  --color-primary: #D4AF37;
+  --color-primary: #C8A752;
   --color-secondary: #1a1a1a;
   
   /* Espaciado */

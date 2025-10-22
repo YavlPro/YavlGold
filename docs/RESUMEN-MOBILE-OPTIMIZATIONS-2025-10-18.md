@@ -159,7 +159,7 @@ Smooth scroll al top en clic
 ### Botones CTA
 ```
 🔒 Ir a Herramientas
-• Gradiente dorado sólido (#C8A752 → #D4AF37)
+• Gradiente dorado sólido (#C8A752 → #C8A752)
 • Box-shadow con glow
 • Icono de candado integrado
 • CTA principal destacado

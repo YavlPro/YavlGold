@@ -5,14 +5,14 @@
 :root {
   --color-primary: #111111;
   --color-secondary: #C8A752; /* Dorado principal */
-  --color-accent: #D4AF37;    /* Dorado secundario */
+  --color-accent: #C8A752;    /* Dorado secundario */
   --bg-dark: #0a0a0a;
   --bg-darker: #0B0C0F;
   --text-light: #e2e8f0;
   --text-muted: #94a3b8;
   --card-bg: rgba(17, 17, 17, 0.9);
   --card-bg-solid: #111111;
-  --gradient-gold: linear-gradient(45deg, #C8A752, #D4AF37, #C8A752);
+  --gradient-gold: linear-gradient(45deg, #C8A752, #C8A752, #C8A752);
   --border-radius: 15px;
   --transition: all 0.3s ease;
 }
@@ -347,14 +347,14 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
 [data-theme="light"] {
   --color-primary: #f8f9fa;
   --color-secondary: #996515; /* Dorado más oscuro para mejor contraste */
-  --color-accent: #B8860B;    /* DarkGoldenRod */
+  --color-accent: #8B7842;    /* DarkGoldenRod */
   --bg-dark: #ffffff;
   --bg-darker: #f8f9fa;
   --text-light: #1a202c;
   --text-muted: #4a5568;
   --card-bg: rgba(255, 255, 255, 0.95);
   --card-bg-solid: #ffffff;
-  --gradient-gold: linear-gradient(45deg, #996515, #B8860B, #996515);
+  --gradient-gold: linear-gradient(45deg, #996515, #8B7842, #996515);
 }
 
 [data-theme="light"] body {

@@ -287,8 +287,8 @@
 ### 9. 🎨 DISEÑO & BRANDING
 
 #### ✅ Tema Cyber Champagne Gold
-- [ ] Color primario: `#C2A552` (champagne gold)
-- [ ] Border gold: `rgba(194, 165, 82, 0.28)`
+- [ ] Color primario: `#C8A752` (champagne gold)
+- [ ] Border gold: `rgba(200,167,82, 0.28)`
 - [ ] Glow effects sutiles en hover
 - [ ] Background: `#101114` (dark)
 - [ ] Texto: `#f0f0f0` (light)

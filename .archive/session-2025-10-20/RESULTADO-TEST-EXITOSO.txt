@@ -111,7 +111,7 @@ Parámetros:
 Resultado visual:
 ┌──────────────────┐
 │                  │
-│       GG        │  ← Fondo dorado (#D4AF37)
+│       GG        │  ← Fondo dorado (#C8A752)
 │                  │     Texto negro (#0B0C0F)
 └──────────────────┘
 

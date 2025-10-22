@@ -130,7 +130,7 @@ Deploy: ⏳ GitHub Actions procesando
 3. Ingresa credenciales (yeriksonvarela@gmail.com)
 4. ✅ Autenticación exitosa con Supabase
 5. ✅ Redirección a ./dashboard/
-6. ✅ Dashboard carga con estilos dorados (#D4AF37)
+6. ✅ Dashboard carga con estilos dorados (#C8A752)
 7. ✅ Navegación funcional a herramientas, academia, etc.
 ```
 

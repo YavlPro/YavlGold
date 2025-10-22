@@ -10,7 +10,7 @@ export class ThemeManager {
       'gold': {
         name: 'Yavl Gold',
         description: 'Profesional y elegante',
-        color: '#D4AF37'
+        color: '#C8A752'
       },
       'neon-blue': {
         name: 'Neon Blue',

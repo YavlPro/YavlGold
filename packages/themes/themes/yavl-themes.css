@@ -9,7 +9,7 @@
    ============================================ */
 [data-theme="gold"],
 :root {
-  --primary: #D4AF37;
+  --primary: #C8A752;
   --primary-light: #E5C158;
   --primary-dark: #B8941F;
   
@@ -20,8 +20,8 @@
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   
-  --accent: #FFD700;
-  --gradient: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+  --accent: #C8A752;
+  --gradient: linear-gradient(135deg, #C8A752 0%, #C8A752 100%);
   
   --success: #10b981;
   --warning: #f59e0b;
