@@ -1433,7 +1433,6 @@
     }
     
     /* =========================================
-       KIT DE CONTRASTE REFINADO - CHIPS & BUTTONS
        Sistema semántico de clases para alta legibilidad
        ========================================= */
     
@@ -1472,50 +1471,12 @@
       border-color: rgba(200,167,82,0.38);
     }
     
-    /* Chips de estado - Sistema refinado */
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 600;
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.5rem;
-      border: 1px solid transparent;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
     
-    .chip-soon {
-      color: #D7E3FF;
-      background: rgba(142,230,255,0.10);
-      border-color: rgba(142,230,255,0.25);
-    }
     
-    .chip-hot {
-      color: #FFE7B0;
-      background: rgba(200,167,82,0.12);
-      border-color: rgba(200,167,82,0.35);
-    }
     
-    .chip-done {
-      color: #C9F7D1;
-      background: rgba(76,175,80,0.12);
-      border-color: rgba(76,175,80,0.25);
-    }
     
-    .chip-important {
-      color: #FFB8B8;
-      background: rgba(231,76,60,0.12);
-      border-color: rgba(231,76,60,0.25);
-    }
 
     /* Chip FUTURO - Morado frío para visión a largo plazo */
-    .chip-future {
-      color: #E3D6FF;
-      background: rgba(152,120,255,0.12);
-      border-color: rgba(152,120,255,0.25);
-    }
     
     /* Botones con alto contraste */
     .btn-primary {
@@ -2116,12 +2077,6 @@
 
     /* Responsive chips para móviles muy pequeños */
     @media (max-width: 380px) {
-      .chip {
-        font-size: 0.70rem;
-        padding: 0.2rem 0.4rem;
-        letter-spacing: 0.2px;
-        white-space: nowrap;
-      }
     }
 
     @media (max-width: 375px) {
@@ -2747,9 +2702,6 @@
           <div class="feature-icon">
             <i class="fas fa-users" aria-hidden="true"></i>
           </div>
-          <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
-          </div>
           <h3 class="card-title">YavlSocial</h3>
           <p class="card-text">Red social innovadora para compartir contenido, importar desde redes tradicionales y conectar con comunidades.</p>
           <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
@@ -2774,7 +2726,6 @@
             <i class="fas fa-layer-group" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlSuite</h3>
           <p class="card-text">Suite multimedia completa con DJ virtual, karaoke, editor de video, conversión de formatos y más.</p>
@@ -2800,7 +2751,6 @@
             <i class="fas fa-graduation-cap" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-done" aria-hidden="true">✅ 40% COMPLETO</span>
           </div>
           <h3 class="card-title">YavlAcademy</h3>
           <p class="card-text">Academia ÚNICA y CENTRAL con cursos y certificaciones de TODOS los módulos del ecosistema. Tu centro educativo completo.</p>
@@ -2824,10 +2774,6 @@
         <a href="./herramientas/" class="feature-card priority-high card-accent card-focusable block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Acceder a YavlCrypto, alta prioridad, 60 por ciento completo. Academia cripto más herramientas profesionales.">
           <div class="feature-icon">
             <i class="fas fa-bitcoin" aria-hidden="true"></i>
-          </div>
-          <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
-            <span class="chip chip-hot" aria-hidden="true">⚡ ALTA PRIORIDAD</span>
-            <span class="chip chip-done" aria-hidden="true">✅ 60% COMPLETO</span>
           </div>
           <h3 class="card-title">YavlCrypto</h3>
           <p class="card-text">Academia cripto + herramientas profesionales (calculadoras, conversores, análisis) para dominar el ecosistema blockchain.</p>
@@ -2853,7 +2799,6 @@
             <i class="fas fa-seedling" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlAgro</h3>
           <p class="card-text">Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión.</p>
@@ -2879,7 +2824,6 @@
             <i class="fas fa-chess" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem;">
-            <span class="chip chip-future" aria-hidden="true">🧭 FUTURO</span>
           </div>
           <h3 class="card-title">YavlChess</h3>
           <p class="card-text">Ajedrez con variantes exclusivas: modo turbo, probabilístico, explosivo y desafíos contra IA avanzada.</p>
@@ -2905,8 +2849,6 @@
             <i class="fas fa-chart-line" aria-hidden="true"></i>
           </div>
           <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
-            <span class="chip chip-important" aria-hidden="true">MUY IMPORTANTE</span>
-            <span class="chip chip-soon" aria-hidden="true">⏳ PRÓXIMAMENTE</span>
           </div>
           <h3 class="card-title">YavlTrading</h3>
           <p class="card-text">Educación completa en trading, análisis técnico profesional y estadísticas de mercado en tiempo real.</p>
