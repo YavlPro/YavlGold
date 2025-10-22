@@ -16,7 +16,17 @@
 
 ## 🎉 Últimas Actualizaciones (21 Oct 2025)
 
-### 🔧 Fixes Críticos
+### �️ 2025-10-22 — Branding purge & mobile QA
+
+- ✅ Purified visual identity across the active codebase: replaced all non-sacred gold tones with the sacred palette (`#C8A752` primary, `#8B7842` dark). Commit and branch history documented.
+- ✅ Removed bottom-sheet profile component and orphaned JS references from `index.html` and related assets.
+- ✅ Fixed mobile drawer overlay z-index and pointer-events so mobile drawer action buttons are clickable.
+- ✅ Replaced historical color tokens in documentation and added `docs/QA-BRANDING.md` containing a manual QA checklist.
+- ✅ Created and merged branches: `branding/purify-gold`, `branding/docs-cleanup`, `branding/docs-cleanup-2` (docs; QA checklist).
+- ⚠️ Pending: Mobile login/register modal (the form modal where users input credentials) appears obstructed on some devices — scheduled for tomorrow's triage and fix. Details captured in `docs/QA-BRANDING.md`.
+
+
+### �🔧 Fixes Críticos
 - ✅ **Botones login/registro móvil**: Funcionan correctamente desde el mobile drawer
 - ✅ **UX móvil optimizada**: Botones movidos arriba del drawer (sin scroll)
 - ✅ **Consistencia visual**: Tarjetas idénticas en móvil y desktop
