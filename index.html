@@ -728,15 +728,15 @@
       border-radius: var(--radius-xl);
       box-shadow: var(--shadow-lg);
       z-index: 980;
-      width: min(420px, calc(100% - 40px));
-      max-height: min(90vh, 800px);
-      padding: 32px 28px;
+      width: min(380px, calc(100% - 32px));
+      max-height: min(88vh, 650px);
+      padding: 20px 20px;
       opacity: 0;
       pointer-events: none;
       transition: var(--transition-normal);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 14px;
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -775,7 +775,7 @@
 
     .modal-title {
       font-family: var(--font-heading);
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--yavl-gold);
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -784,14 +784,15 @@
     }
 
     .modal-close {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       border: none;
       background: var(--bg-card);
       color: var(--text-secondary);
       cursor: pointer;
       transition: var(--transition-fast);
+      flex-shrink: 0;
     }
 
     .modal-close:hover {
@@ -801,30 +802,32 @@
 
     .modal-description {
       color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.6;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      margin-top: -6px;
     }
 
     .modal-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
     .modal-form label {
       font-weight: 600;
       color: var(--text-primary);
-      font-size: 0.92rem;
+      font-size: 0.85rem;
+      margin-bottom: -6px;
     }
 
     .modal-form input {
       width: 100%;
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-radius: var(--radius-md);
       border: 1px solid rgba(201, 168, 81, 0.25);
       background: var(--bg-card);
       color: var(--text-primary);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .modal-form input:focus {
@@ -884,18 +887,18 @@
     .captcha-container {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding: 16px;
+      gap: 8px;
+      padding: 12px;
       background: rgba(201, 168, 81, 0.05);
       border: 1px solid var(--border-gold);
       border-radius: var(--radius-md);
-      margin: 8px 0;
+      margin: 4px 0;
     }
     
     .captcha-label {
       font-weight: 600;
       color: var(--text-primary);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
     
     .captcha-challenge {
@@ -963,6 +966,64 @@
 
     .modal-footer a:hover {
       color: var(--yavl-gold);
+    }
+    
+    /* Mobile responsiveness para modales */
+    @media (max-width: 768px) {
+      .modal {
+        width: calc(100% - 24px);
+        max-height: 92vh;
+        padding: 16px;
+        gap: 12px;
+      }
+      
+      .modal-title {
+        font-size: 1.15rem;
+      }
+      
+      .modal-close {
+        width: 30px;
+        height: 30px;
+      }
+      
+      .modal-description {
+        font-size: 0.8rem;
+        margin-top: -6px;
+      }
+      
+      .modal-form {
+        gap: 10px;
+      }
+      
+      .modal-form label {
+        font-size: 0.8rem;
+        margin-bottom: -4px;
+      }
+      
+      .modal-form input {
+        padding: 9px 11px;
+        font-size: 0.88rem;
+      }
+      
+      .captcha-container {
+        padding: 10px;
+        gap: 6px;
+        margin: 2px 0;
+      }
+      
+      .captcha-label {
+        font-size: 0.75rem;
+      }
+      
+      .captcha-input {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+      }
+      
+      .modal-footer {
+        font-size: 0.8rem;
+        gap: 6px;
+      }
     }
     /* =========================================
        HERO SECTION
@@ -3046,16 +3107,16 @@
   -->
   <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title">
     <header>
-      <h2 class="modal-title" id="login-modal-title">Inicia sesión en YavlGold</h2>
+      <h2 class="modal-title" id="login-modal-title">Iniciar sesión</h2>
       <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
         <i class="fas fa-times"></i>
       </button>
     </header>
     <p class="modal-description">
-      Accede a tus herramientas profesionales, seguimiento en vivo y recursos personalizados.
+      Accede a tus herramientas y recursos
     </p>
     <form class="modal-form" id="login-form">
-      <label for="login-email">Correo electrónico</label>
+      <label for="login-email">Email</label>
       <input id="login-email" name="email" type="email" required autocomplete="email" placeholder="tu@email.com">
       
       <label for="login-password">Contraseña</label>
@@ -3066,9 +3127,9 @@
         </button>
       </div>
       
-      <div style="text-align: right; margin-top: 0.5rem; margin-bottom: 1rem;">
-        <a href="./recuperar-password.html" style="color: var(--yavl-gold); text-decoration: none; font-size: 0.9rem; transition: all 0.3s ease;">
-          <i class="fas fa-key" style="font-size: 0.85rem;"></i> ¿Olvidaste tu contraseña?
+      <div style="text-align: right; margin-top: -4px; margin-bottom: 4px;">
+        <a href="./recuperar-password.html" style="color: var(--yavl-gold); text-decoration: none; font-size: 0.8rem; transition: all 0.3s ease;">
+          <i class="fas fa-key" style="font-size: 0.75rem;"></i> ¿Olvidaste tu contraseña?
         </a>
       </div>
       
@@ -3100,19 +3161,19 @@
 
   <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title">
     <header>
-      <h2 class="modal-title" id="register-modal-title">Crea tu cuenta premium</h2>
+      <h2 class="modal-title" id="register-modal-title">Crear cuenta</h2>
       <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
         <i class="fas fa-times"></i>
       </button>
     </header>
     <p class="modal-description">
-      Regístrate para desbloquear dashboards personalizados, alertas y acompañamiento experto.
+      Desbloquea dashboards y alertas personalizadas
     </p>
     <form class="modal-form" id="register-form">
-      <label for="register-name">Nombre completo</label>
+      <label for="register-name">Nombre</label>
       <input id="register-name" name="name" type="text" required autocomplete="name" placeholder="Juan Pérez">
       
-      <label for="register-email">Correo electrónico</label>
+      <label for="register-email">Email</label>
       <input id="register-email" name="email" type="email" required autocomplete="email" placeholder="tu@email.com">
       
       <label for="register-password">Contraseña</label>
