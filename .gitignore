@@ -66,3 +66,10 @@ coverage/
 
 # Secrets
 secrets/
+.git_local_files.txt
+.git_remote_files.txt
+.git_missing_in_local.txt
+.git_extra_in_local.txt
+scripts/compareFiles.js
+scripts/compareFiles2.js
+scripts/compareFiles.ps1
