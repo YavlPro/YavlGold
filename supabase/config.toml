@@ -1,0 +1,13 @@
+project_id = "yavlgold"
+
+[api]
+port = 54321
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[auth]
+site_url = "http://127.0.0.1:3000"
