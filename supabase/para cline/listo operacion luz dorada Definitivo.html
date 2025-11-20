@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plan de Batalla Maestro: Operación Luz Dorada v2.2 Gold Standard+</title>
+  <meta name="description" content="Runbook definitivo v2.2 Gold Standard+: saneamiento previo, validación post-op, rollback de emergencia y captura de evidencias, con mejoras de robustez Git y selección de backups."/>
+  <meta name="theme-color" content="#1a1510"/>
+  <meta name="version" content="2.2"/>
+  <style>
+    :root{
+      --bg:#1a1510;
+      --panel:rgba(44,36,22,.92);
+      --panel2:rgba(44,36,22,.75);
+      --ink:#F5F5DC;
+      --muted:#cdbf9f;
+      --gold:#C8A752;
+      --gold-2:#D4AF37;
+      --bronze:#8B7355;
+      --violet:#9C27B0;
+      --blue:#2196F3;
+      --green:#4CAF50;
+      --amber:#ff9800;
+      --red:#f44336;
+      --border:1px solid rgba(139,115,85,.6);
+      --shadow:0 10px 30px rgba(0,0,0,.5);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,system-ui,sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      line-height:1.65;
+      padding:20px;
+    }
+    a{color:var(--gold-2);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .container{
+      max-width:1000px;margin:20px auto;padding:30px;
+      background:var(--panel);border:var(--border);border-radius:12px;box-shadow:var(--shadow)
+    }
+    h1,h2,h3,h4{color:var(--gold);margin:1.25em 0 .5em}
+    h1{
+      text-align:center;margin-top:0;font-size:2.35rem;padding-bottom:12px;
+      border-bottom:2px solid var(--bronze);text-shadow:0 2px 6px rgba(0,0,0,.5)
+    }
+    h2{font-size:1.85rem;border-left:4px solid var(--gold);padding-left:12px}
+    h3{font-size:1.35rem;color:var(--gold-2);margin-top:1.05em}
+    h4{font-size:1.15rem;color:#E5C158;margin:.8em 0}
+    p,li{font-size:1.05rem;margin:.55em 0}
+    strong{color:var(--gold)}
+    code{
+      background:#000;color:#efefef;padding:2px 6px;border-radius:6px;
+      font-family:ui-monospace,Consolas,Menlo,monospace;font-size:.95rem
+    }
+    .lead{
+      background:rgba(200,167,82,.12);border:var(--border);border-radius:10px;padding:16px;margin:12px 0 22px;color:var(--muted)
+    }
+    .toc{
+      background:var(--panel2);border:var(--border);border-radius:10px;padding:16px 18px;margin:6px 0 22px
+    }
+    .toc ul{list-style:none;padding-left:0;margin:0}
+    .toc li{margin:.4em 0;padding-left:8px;border-left:3px solid var(--bronze)}
+    .badge{
+      display:inline-block;background:var(--gold);color:#1a1510;
+      padding:2px 8px;border-radius:12px;font-size:.8em;font-weight:700;margin-left:8px
+    }
+    .badge-critical{background:var(--red);color:#fff}
+    .badge-warning{background:var(--amber);color:#1a1510}
+    .badge-new{background:var(--green);color:#fff}
+    .cp-guide{background:rgba(200,167,82,.08);border:var(--border);border-radius:10px;padding:14px;margin:12px 0}
+    .check{
+      display:flex;gap:8px;align-items:center;margin:.35em 0
+    }
+    .check input{width:1.1em;height:1.1em}
+    .card{
+      background:rgba(30,25,20,.65);
+      border:1px solid var(--bronze);
+      border-radius:10px;
+      padding:18px 18px 22px;
+      box-shadow:0 6px 20px rgba(0,0,0,.3);
+      margin:18px 0;
+    }
+    pre{
+      position:relative;
+      background:#000;color:#efefef;
+      border:1px solid var(--bronze);
+      border-radius:10px;
+      padding:16px 14px;
+      overflow:auto;
+      box-shadow:inset 0 3px 10px rgba(0,0,0,.55);
+      margin:.8em 0 1.2em;
+      line-height:1.4;
+    }
+    pre code{background:transparent;padding:0;border-radius:0}
+    .copy-btn{
+      position:absolute;right:10px;top:10px;
+      background:#1e6e34;border:none;color:#fff;
+      padding:6px 10px;border-radius:8px;cursor:pointer;font-size:.82rem
+    }
+    .copy-btn:hover{background:#238636}
+    footer{
+      text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid var(--bronze);
+      font-style:italic;color:#b79f7a
+    }
+    .skip-link{
+      position:absolute;left:-9999px;top:auto;background:var(--gold);color:#1a1510;
+      padding:6px 10px;border-radius:8px
+    }
+    .skip-link:focus{left:20px;top:16px;z-index:1000}
+    .warning-box{
+      background:rgba(255,152,0,.15);border:1px solid var(--amber);border-radius:10px;padding:14px;margin:12px 0;
+    }
+    .success-box{
+      background:rgba(76,175,80,.15);border:1px solid var(--green);border-radius:10px;padding:14px;margin:12px 0;
+    }
+    @media (max-width:760px){
+      .container{padding:20px;margin:12px}
+      h1{font-size:1.95rem}
+      h2{font-size:1.58rem}
+    }
+    @media print{
+      body{background:#fff;color:#000}
+      .container{box-shadow:none;border:1px solid #ccc}
+      .card{break-inside:avoid}
+      a{color:#000;text-decoration:underline}
+      @page{margin:16mm}
+    }
+  </style>
+</head>
+<body>
+<a href="#main" class="skip-link">Saltar al contenido</a>
+
+<div class="container" id="main" role="main" aria-labelledby="doc-title">
+  <h1 id="doc-title">Plan de Batalla Maestro: Operación Luz Dorada v2.2 <span class="badge-new">GOLD STANDARD+</span></h1>
+
+  <p class="lead">
+    Runbook definitivo v2.2 Gold Standard+ con saneamiento previo, validación post-operación, rollback de emergencia documentado y captura automatizada de evidencias.
+    Esta versión añade <strong>mayor robustez en Git</strong> (detección segura de repo, .gitignore sin duplicados, selección de ramas de backup más fiable) y
+    clarifica el alcance del script maestro. Estabiliza el repositorio, fija el puerto canónico <strong>3000</strong>, preserva el trabajo local y ejecuta la
+    <em>Prueba de Fuego</em> con orquestación reproducible (Supabase CLI 2.48.3 via npx + Vite + Mailpit).
+  </p>
+
+  <div class="toc" aria-label="Índice">
+    <ul>
+      <li><a href="#fase0">0. Fase 0: Saneamiento y Verificación (Ejecución Obligatoria)</a></li>
+      <li><a href="#parametros">1. Parámetros Canónicos del Entorno</a></li>
+      <li><a href="#fase1">2. Fase 1: Preservación de Emergencia (Backup Atómico)</a></li>
+      <li><a href="#fase1b">3. Fase 2: Saneamiento Inicial y .gitignore</a></li>
+      <li><a href="#fase2">4. Fase 3: Unificación a Puerto 3000 (Vite + Supabase)</a></li>
+      <li><a href="#fase3">5. Fase 4: Arranque Gold Standard y Prueba de Fuego</a></li>
+      <li><a href="#fase-validation">6. Fase 5: Validación Post-Operación <span class="badge-new">NUEVO</span></a></li>
+      <li><a href="#fase-rollback">7. Fase 6: Rollback de Emergencia <span class="badge-new">NUEVO</span></a></li>
+      <li><a href="#fase-evidence">8. Fase 7: Captura de Evidencias <span class="badge-new">NUEVO</span></a></li>
+      <li><a href="#fase4">9. Fase 8: Commits por Lotes &amp; Apertura de PR</a></li>
+      <li><a href="#qa-security">10. Plan Dorado de QA – Pruebas de Regresión de Seguridad</a></li>
+      <li><a href="#appendix">11. Anexos: Artefactos Listos para Pegar</a></li>
+    </ul>
+  </div>
+
+  <!-- ==== FASE 0: SANEAMIENTO ==== -->
+  <section id="fase0">
+    <h2>0. Fase 0: Saneamiento y Verificación (Ejecución Obligatoria)</h2>
+
+    <div class="card">
+      <p>
+        <strong>Líder Asignado:</strong> <span class="badge">Kimik2 / Operador de Campo</span>
+      </p>
+
+      <p>
+        Antes de cualquier manipulación del repositorio, es imperativo ejecutar la <em>Operación Saneamiento y Verificación</em>.
+        Esta fase audita el estado actual del terreno de batalla, mueve artefactos sensibles a cuarentena, verifica que todos los prerrequisitos
+        del entorno estén operativos y configura el entorno DX para el escuadrón.
+        <strong class="badge badge-critical">BLOQUEANTE</strong>: Si esta fase falla, no se debe proceder.
+      </p>
+
+      <h3>Script de Saneamiento: pre-op-cleanup.sh</h3>
+      <p>Copia el siguiente script, guárdalo como <code>pre-op-cleanup.sh</code> en la raíz del proyecto y ejecútalo:</p>
+
+      <pre><code id="code-cleanup">#!/usr/bin/env bash
+# pre-op-cleanup.sh — Operación Saneamiento y Verificación v1.1
+# Implementa Prioridades 1 y 2 del informe de auditoría Cline
+# Uso: bash pre-op-cleanup.sh
+
+set -euo pipefail
+
+# Detectar si estamos en un repo Git (mejora de robustez)
+HAS_GIT=0
+if [ -d .git ] &amp;&amp; git rev-parse --is-inside-work-tree &gt;/dev/null 2&gt;&amp;1; then
+  HAS_GIT=1
+else
+  echo "ℹ️ Aviso: no se detectó repo Git en el directorio actual. Se omitirán los pasos de commit."
+fi
+
+# ====
+# 1. CREAR Y EJECUTAR pre-op-audit.sh
+# ====
+echo "🚀 INICIANDO OPERACIÓN DE SANAMIENTO Y VERIFICACIÓN"
+echo "===="
+echo ""
+echo "📋 FASE 1: Creando auditor pre-operacional..."
+
+mkdir -p scripts
+
+cat &gt; scripts/pre-op-audit.sh &lt;&lt; 'EOF'
+#!/usr/bin/env bash
+# scripts/pre-op-audit.sh — PASO 0 v9.0 (Kimik2)
+set -euo pipefail
+
+echo "🔍 PASO 0 — AUDITORÍA PREVIA A OPERACIÓN LUZ DORADA"
+echo "===="
+echo "Estado de Git:"
+git status --porcelain || echo "✗ No hay repo git inicializado"
+echo ""
+echo "Rama actual: $(git branch --show-current 2&gt;/dev/null || echo 'N/A')"
+echo "Remoto: $(git remote -v 2&gt;/dev/null | head -n1 || echo 'N/A')"
+echo ""
+echo "Detección de archivos sensibles:"
+[ -d .quarantine ] &amp;&amp; echo "⚠️ Directorio .quarantine detectado" || echo "✅ Sin cuarentena previa"
+[ -f apps/gold/public/env.local.js ] &amp;&amp; echo "⚠️ apps/gold/public/env.local.js presente" || echo "✅ Limpio"
+[ -f assets/apps/gold/config.local.js ] &amp;&amp; echo "⚠️ assets/apps/gold/config.local.js presente" || echo "✅ Limpio"
+[ -f assets/js/supabase-config.local.js ] &amp;&amp; echo "⚠️ assets/js/supabase-config.local.js presente" || echo "✅ Limpio"
+echo ""
+echo "Verificación de Docker:"
+docker ps --format '{{.Names}}' 2&gt;/dev/null || echo "✗ Docker no accesible"
+echo ""
+echo "🔍 AUDITORÍA COMPLETA"
+EOF
+
+chmod +x scripts/pre-op-audit.sh
+echo "✅ Auditor creado: scripts/pre-op-audit.sh"
+echo ""
+echo "📊 EJECUTANDO AUDITORÍA INICIAL..."
+echo "----"
+bash scripts/pre-op-audit.sh
+echo ""
+
+# ====
+# 2. MOVER ARCHIVOS SENSIBLES A CUARENTENA
+# ====
+echo "🛡️ FASE 2: Cuarentena de archivos sensibles..."
+
+mkdir -p .quarantine
+
+# Buscar y mover archivos .local.js
+SENSITIVE_FILES=$(find . -type f -name "*.local.js" 2&gt;/dev/null || true)
+
+if [ -n "$SENSITIVE_FILES" ]; then
+  echo "Archivos sensibles detectados:"
+  echo "$SENSITIVE_FILES"
+  echo ""
+  while IFS= read -r file; do
+    if [ -f "$file" ]; then
+      # Crear subdirectorios en cuarentena si es necesario
+      dirpath=$(dirname "$file")
+      mkdir -p ".quarantine/$dirpath"
+      # Mover con timestamp para evitar colisiones
+      base=$(basename "$file")
+      timestamp=$(date +%Y%m%d_%H%M%S)
+      dest=".quarantine/${dirpath}/${base%.js}_${timestamp}.js"
+      echo "Moviendo: $file → $dest"
+      mv "$file" "$dest"
+    fi
+  done &lt;&lt;&lt; "$SENSITIVE_FILES"
+  echo "✅ Archivos sensibles movidos a .quarantine/"
+else
+  echo "✅ No se encontraron archivos *.local.js"
+fi
+
+echo ""
+
+# ====
+# 3. VERIFICAR Y ACTUALIZAR .gitignore
+# ====
+echo "📝 FASE 3: Verificando .gitignore..."
+
+if [ ! -f .gitignore ]; then
+  echo "# YavlGold .gitignore" &gt; .gitignore
+fi
+
+# Añadir entradas si no existen (evitar duplicados)
+for pattern in "*.local.js" ".quarantine/" ".env.development.local"; do
+  if ! grep -q "^${pattern}$" .gitignore 2&gt;/dev/null; then
+    echo "$pattern" &gt;&gt; .gitignore
+    echo "✅ Añadido: $pattern"
+  else
+    echo "✅ Ya presente: $pattern"
+  fi
+done
+
+echo ""
+
+# ====
+# 4. VERIFICAR PRERREQUISITOS DEL ENTORNO
+# ====
+echo "🔧 FASE 4: Verificación de prerrequisitos..."
+echo "----"
+
+# Verificar Supabase CLI
+echo "✓ Verificando Supabase CLI 2.48.3..."
+if ! npx supabase@2.48.3 --version &gt; /dev/null 2&gt;&amp;1; then
+  echo "✗ CRÍTICO: Supabase CLI 2.48.3 no pudo ejecutarse"
+  exit 1
+fi
+echo "  $(npx supabase@2.48.3 --version)"
+
+echo ""
+# Verificar Docker
+echo "✓ Verificando Docker..."
+if ! docker ps &gt; /dev/null 2&gt;&amp;1; then
+  echo "✗ CRÍTICO: Docker no está corriendo o no es accesible"
+  exit 1
+fi
+echo "  Daemon activo - $(docker ps --format '{{.Running}}' | wc -l) contenedores"
+echo ""
+
+# Verificar Node y pnpm
+echo "✓ Verificando Node.js..."
+if ! command -v node &gt; /dev/null; then
+  echo "✗ CRÍTICO: Node.js no está instalado"
+  exit 1
+fi
+echo "  $(node -v)"
+
+echo "✓ Verificando pnpm..."
+if ! command -v pnpm &gt; /dev/null; then
+  echo "✗ CRÍTICO: pnpm no está instalado"
+  exit 1
+fi
+echo "  $(pnpm -v)"
+
+echo "✅ Todos los prerrequisitos SATISFECHOS"
+echo ""
+
+# ====
+# 5. CREAR ARCHIVOS DE CONFIGURACIÓN DX
+# ====
+echo "💻 FASE 5: Configurando entorno DX..."
+
+mkdir -p .vscode
+
+cat &gt; .vscode/settings.json &lt;&lt; 'EOF'
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true
+}
+EOF
+
+echo "✅ Creado: .vscode/settings.json"
+echo ""
+
+# ====
+# 6. HACER COMMIT DE LA LIMPIEZA (SOLO SI HAY GIT)
+# ====
+echo "📦 FASE 6: Preparando commit de saneamiento..."
+
+if [ "$HAS_GIT" -eq 1 ]; then
+  git add .gitignore .vscode/settings.json scripts/pre-op-audit.sh || true
+
+  if ! git diff --cached --quiet; then
+    git commit -m "chore(setup): execute pre-op cleanup and sanitation
+- Cuarentena de archivos sensibles (*.local.js)
+- Refuerzo de .gitignore con patrones locales
+- Configuración DX (.vscode/settings.json)
+- Auditor pre-operacional (scripts/pre-op-audit.sh)
+- Validación de prerrequisitos completada" || true
+
+    echo "✅ Commit creado: $(git rev-parse --short HEAD)"
+    echo ""
+    echo "🎉 OPERACIÓN DE SANAMIENTO COMPLETADA CON ÉXITO"
+    echo "El campo de batalla está listo para la Operación Luz Dorada."
+  else
+    echo "ℹ️ No hay cambios para commitear (posiblemente ya estaba saneado)"
+  fi
+else
+  echo "ℹ️ No se ejecutó commit de saneamiento porque no se detectó repo Git."
+fi
+
+echo ""
+echo "===="
+echo "🚀 PRÓXIMO PASO: Ejecutar scripts/pre-op-audit.sh para validación adicional si lo deseas"
+echo "===="</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-cleanup')">Copiar Script</button>
+
+      <h3>Resultado de la Fase 0</h3>
+      <p>Al completar esta fase, tendrás:</p>
+      <ul>
+        <li>✅ Auditoría inicial ejecutada y visible</li>
+        <li>✅ Archivos sensibles en cuarentena (<code>.quarantine/</code>)</li>
+        <li>✅ <code>.gitignore</code> fortalecido y sin entradas duplicadas clave</li>
+        <li>✅ Prerrequisitos validados (Supabase CLI, Docker, Node, pnpm)</li>
+        <li>✅ Configuración DX para VS Code aplicada</li>
+        <li>✅ Commit inicial de saneamiento en el historial (si hay repo Git)</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ==== SECCIÓN: PARÁMETROS CANÓNICOS ==== -->
+  <section id="parametros">
+    <h2>1. Parámetros Canónicos del Entorno</h2>
+    <ul>
+      <li><strong>Puerto canónico:</strong> 3000 (Vite sirve apps/gold en http://127.0.0.1:3000).</li>
+      <li><strong>Supabase CLI:</strong> 2.48.3 via npx con <code>--workdir ./supabase</code>.</li>
+      <li><strong>Mailpit:</strong> SMTP 1025; UI = mapeo de 8025 → host:puerto (típicamente 54324).</li>
+      <li><strong>site_url (Supabase):</strong> http://127.0.0.1:3000</li>
+      <li><strong>redirectTo:</strong> /reset-password.html</li>
+      <li><strong>Whitelist Mailer:</strong> GOTRUE_MAILER_EXTERNAL_HOSTS incluye 127.0.0.1:3000</li>
+    </ul>
+  </section>
+
+  <hr class="section-divider"/>
+
+  <!-- ==== SECCIÓN: PRESERVACIÓN ==== -->
+  <section id="fase1">
+    <h2>2. Fase 1: Preservación de Emergencia (Backup Atómico + Tag)</h2>
+
+    <div class="card">
+      <p>Crea rama de backup y tag con estado crudo; abre sandbox para estabilización:</p>
+
+      <pre><code id="code-preserve">#!/usr/bin/env bash
+# scripts/emergency-git-preservation.sh
+set -euo pipefail
+
+echo "🚨 MODO PRESERVACIÓN DE EMERGENCIA ACTIVADO"
+
+[ -d .git ] || { echo "✗ Ejecuta en la raíz del repo (donde está .git)"; exit 1; }
+
+TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+BASE="$(git rev-parse --short HEAD 2&gt;/dev/null || echo 'nohead')"
+BACKUP_BRANCH="emergency_backup_${BASE}_${TIMESTAMP}"
+
+git remote -v &gt;/dev/null || { echo "✗ No hay remoto configurado"; exit 1; }
+
+git checkout -b "$BACKUP_BRANCH"
+git add -A
+git commit -m "EMERGENCY BACKUP: Estado crudo pre-estabilización ${TIMESTAMP}" --no-verify || true
+
+git tag -a "emergency/${TIMESTAMP}" -m "Snapshot ${TIMESTAMP}" || true
+
+git push -u origin "$BACKUP_BRANCH" --no-verify || true
+git push origin "emergency/${TIMESTAMP}" || true
+
+git checkout main
+git pull --rebase origin main || true
+git checkout -b "architectural_stabilization_${TIMESTAMP}"
+
+echo "✅ Backup en rama: ${BACKUP_BRANCH} (tag: emergency/${TIMESTAMP})"
+echo "✅ Sandbox listo: architectural_stabilization_${TIMESTAMP}"</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-preserve')">Copiar</button>
+    </div>
+  </section>
+
+  <!-- ==== SECCIÓN: SANEAMIENTO ==== -->
+  <section id="fase1b">
+    <h2>3. Fase 2: Saneamiento Inicial y .gitignore</h2>
+
+    <div class="card">
+      <p>Mueve duplicado <code>YavlGold/</code> a cuarentena. Refuerza .gitignore y quita del tracking archivos locales:</p>
+
+      <pre><code id="code-sanitize">#!/usr/bin/env bash
+# scripts/initial-sanitize.sh (opcional pero recomendado)
+set -euo pipefail
+
+# Mover duplicado a cuarentena, si existe
+mkdir -p .quarantine
+if [ -d YavlGold ]; then
+  mv YavlGold .quarantine/YavlGold-duplicate 2&gt;/dev/null || true
+  echo "✅ Directorio duplicado YavlGold/ movido a .quarantine/YavlGold-duplicate"
+else
+  echo "ℹ️ No se encontró directorio duplicado YavlGold/ en la raíz"
+fi
+
+# Refuerzo .gitignore (sin duplicados)
+if [ ! -f .gitignore ]; then
+  echo "# YavlGold .gitignore" &gt; .gitignore
+fi
+
+for pattern in \
+  "apps/gold/public/env.local.js" \
+  "assets/apps/gold/config.local.js" \
+  "assets/js/supabase-config.local.js" \
+  ".quarantine/" \
+  ".env.development.local"
+do
+  if ! grep -q "^${pattern}$" .gitignore 2&gt;/dev/null; then
+    echo "$pattern" &gt;&gt; .gitignore
+    echo "✅ Añadido a .gitignore: $pattern"
+  else
+    echo "ℹ️ Patrón ya presente en .gitignore: $pattern"
+  fi
+done
+
+# Quitar del tracking (si estaban versionados)
+git rm --cached -f apps/gold/public/env.local.js 2&gt;/dev/null || true
+git rm --cached -f assets/apps/gold/config.local.js 2&gt;/dev/null || true
+git rm --cached -f assets/js/supabase-config.local.js 2&gt;/dev/null || true
+
+git add .gitignore 2&gt;/dev/null || true
+git commit -m "chore(gitignore): ignore local env/config and quarantine dir" 2&gt;/dev/null || true
+
+echo "✅ Saneamiento inicial completado"</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-sanitize')">Copiar</button>
+    </div>
+  </section>
+
+  <!-- ==== SECCIÓN: UNIFICACIÓN ==== -->
+  <section id="fase2">
+    <h2>4. Fase 3: Unificación a Puerto 3000 (Vite + Supabase)</h2>
+
+    <div class="card">
+      <h3>4.1 Vite — server.port 3000 + HMR estable</h3>
+
+      <pre><code id="code-vite">import { defineConfig } from 'vite'
+import { resolve } from 'path'
+
+export default defineConfig({
+  root: resolve(__dirname),
+  server: {
+    port: 3000,
+    strictPort: true,
+    host: '127.0.0.1',
+    hmr: {
+      protocol: 'ws',
+      timeout: 30000
+    }
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
+    }
+  },
+  cacheDir: resolve(__dirname, '../../node_modules/.vite')
+})</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-vite')">Copiar</button>
+
+      <h3>4.2 Supabase — site_url &amp; whitelist</h3>
+
+      <pre><code id="code-siteurl"># supabase/config.toml
+[auth]
+site_url = "http://127.0.0.1:3000"</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-siteurl')">Copiar</button>
+
+      <pre><code id="code-whitelist"># supabase/.env.local
+GOTRUE_MAILER_EXTERNAL_HOSTS=127.0.0.1,localhost,127.0.0.1:3000,localhost:3000</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-whitelist')">Copiar</button>
+    </div>
+  </section>
+
+  <!-- ==== SECCIÓN: ARRANQUE ==== -->
+  <section id="fase3">
+    <h2>5. Fase 4: Arranque Gold Standard y Prueba de Fuego</h2>
+
+    <div class="card">
+      <h3>5.1 Arranque reproducible</h3>
+
+      <pre><code id="code-start"># Supabase CLI 2.48.3 via npx (workdir)
+npx -y supabase@2.48.3 stop --workdir ./supabase || true
+npx -y supabase@2.48.3 start --workdir ./supabase --debug &amp;
+
+# Vite (apps/gold) en 127.0.0.1:3000
+pnpm vite --config apps/gold/vite.config.js</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-start')">Copiar</button>
+
+      <h3>5.2 Smoke de correo /recover + Mailpit</h3>
+
+      <pre><code id="code-smoke"># Obtener anon_key desde config.toml (simple parsing)
+ANON=$(awk -F'=' '\$1 ~ /anon_key/ { v=\$2; gsub(/^[[:space:]]+|[[:space:]]+$/,"",v); gsub(/^"|"$/,"",v); print v; exit }' supabase/config.toml)
+
+curl -sS -i -X POST "http://127.0.0.1:54321/auth/v1/recover" \
+  -H "Authorization: Bearer ${ANON}" \
+  -H "Content-Type: application/json" \
+  --data '{"email":"test@yavlgold.local","redirect_to":"http://127.0.0.1:3000/reset-password.html"}' \
+  | sed -n '1,20p'
+
+# Detectar Mailpit UI
+HP=$(docker ps --format '{{.Ports}}' | sed -nE 's/.*:([0-9]+)->8025\/tcp.*/\1/p' | head -n1)
+echo "Mailpit UI: http://127.0.0.1:${HP}"
+
+curl -sS "http://127.0.0.1:${HP}/api/v1/messages" | jq '.total'</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-smoke')">Copiar</button>
+
+      <h3>5.3 Prueba de Fuego (checklist)</h3>
+      <div class="check"><input type="checkbox" id="c1"/><label for="c1">App en http://127.0.0.1:3000 (interfaz visible)</label></div>
+      <div class="check"><input type="checkbox" id="c2"/><label for="c2">Correo de reset visible en Mailpit UI</label></div>
+      <div class="check"><input type="checkbox" id="c3"/><label for="c3">Click en link → /reset-password.html → "Contraseña actualizada"</label></div>
+      <div class="check"><input type="checkbox" id="c4"/><label for="c4">Login con nueva contraseña funciona</label></div>
+    </div>
+  </section>
+
+  <!-- ==== NUEVA FASE 5: VALIDACIÓN POST-OP ==== -->
+  <section id="fase-validation">
+    <h2>6. Fase 5: Validación Post-Operación <span class="badge-new">NUEVO</span></h2>
+
+    <div class="card">
+      <p>Verificar que todos los componentes críticos están operativos después de completar las fases anteriores:</p>
+
+      <h3>Script de Validación: post-op-validation.sh</h3>
+
+      <pre><code id="code-validation">#!/usr/bin/env bash
+# scripts/post-op-validation.sh — Validación Post-Operacional v1.0
+set -euo pipefail
+
+echo "🔍 INICIANDO VALIDACIÓN POST-OPERACIÓN"
+echo "===="
+echo ""
+
+FAILURES=0
+
+# 1. Verificar puerto 3000 activo
+echo "✓ Verificando puerto 3000..."
+if curl -s http://127.0.0.1:3000 &gt; /dev/null 2&gt;&amp;1; then
+  echo "  ✅ Puerto 3000 responde correctamente"
+else
+  echo "  ❌ Puerto 3000 NO responde"
+  ((FAILURES++))
+fi
+echo ""
+
+# 2. Verificar Docker y contenedores Supabase
+echo "✓ Verificando Docker y Supabase..."
+if docker ps 2&gt;/dev/null | grep -q supabase; then
+  CONTAINERS=$(docker ps --format '{{.Names}}' | grep supabase | wc -l)
+  echo "  ✅ Docker OK - $CONTAINERS contenedores Supabase activos"
+else
+  echo "  ❌ Contenedores Supabase NO detectados"
+  ((FAILURES++))
+fi
+echo ""
+
+# 3. Verificar cuarentena creada
+echo "✓ Verificando directorio de cuarentena..."
+if [ -d .quarantine ]; then
+  FILES=$(find .quarantine -type f 2&gt;/dev/null | wc -l)
+  echo "  ✅ Cuarentena OK - $FILES archivos en cuarentena"
+else
+  echo "  ⚠️ Directorio .quarantine no existe (puede ser OK si no había archivos sensibles)"
+fi
+echo ""
+
+# 4. Verificar .gitignore
+echo "✓ Verificando .gitignore..."
+MISSING_PATTERNS=""
+
+for pattern in "*.local.js" ".quarantine/" ".env.development.local"; do
+  if grep -q "^${pattern}$" .gitignore 2&gt;/dev/null; then
+    echo "  ✅ Patrón presente: $pattern"
+  else
+    echo "  ❌ Patrón FALTANTE: $pattern"
+    MISSING_PATTERNS="${MISSING_PATTERNS} ${pattern}"
+    ((FAILURES++))
+  fi
+done
+echo ""
+
+# 5. Verificar scripts creados
+echo "✓ Verificando scripts de operación..."
+if [ -f scripts/pre-op-audit.sh ]; then
+  echo "  ✅ scripts/pre-op-audit.sh presente"
+else
+  echo "  ❌ scripts/pre-op-audit.sh FALTANTE"
+  ((FAILURES++))
+fi
+echo ""
+
+# 6. Verificar configuración VS Code
+echo "✓ Verificando configuración DX..."
+if [ -f .vscode/settings.json ]; then
+  echo "  ✅ .vscode/settings.json presente"
+else
+  echo "  ⚠️ .vscode/settings.json no encontrado"
+fi
+echo ""
+
+# 7. Verificar Mailpit UI
+echo "✓ Verificando Mailpit UI..."
+HP=$(docker ps --format '{{.Ports}}' 2&gt;/dev/null | sed -nE 's/.*:([0-9]+)->8025.*/\1/p' | head -n1)
+if [ -n "$HP" ]; then
+  if curl -s "http://127.0.0.1:${HP}/api/v1/messages" &gt; /dev/null 2&gt;&amp;1; then
+    echo "  ✅ Mailpit UI accesible en http://127.0.0.1:${HP}"
+  else
+    echo "  ⚠️ Puerto Mailpit detectado pero no responde"
+  fi
+else
+  echo "  ⚠️ Puerto Mailpit no detectado"
+fi
+echo ""
+
+# RESUMEN FINAL
+echo "===="
+if [ $FAILURES -eq 0 ]; then
+  echo "🎉 VALIDACIÓN POST-OPERACIÓN: ÉXITO TOTAL"
+  echo "✅ Todos los componentes críticos están operativos"
+  echo ""
+  echo "Próximo paso: Ejecutar Prueba de Fuego o proceder con Fase 8 (Commits)"
+else
+  echo "⚠️ VALIDACIÓN POST-OPERACIÓN: $FAILURES FALLOS DETECTADOS"
+  echo ""
+  echo "Revisa los errores arriba antes de continuar."
+  echo "Si es necesario, ejecuta el rollback de emergencia (Fase 6)."
+  exit 1
+fi
+echo "===="</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-validation')">Copiar Script</button>
+
+      <div class="success-box">
+        <h4>✅ Checklist de Validación</h4>
+        <div class="check"><input type="checkbox" id="v1"/><label for="v1">Puerto 3000 responde correctamente</label></div>
+        <div class="check"><input type="checkbox" id="v2"/><label for="v2">Contenedores Docker Supabase activos</label></div>
+        <div class="check"><input type="checkbox" id="v3"/><label for="v3">Directorio .quarantine creado</label></div>
+        <div class="check"><input type="checkbox" id="v4"/><label for="v4">.gitignore contiene todos los patrones requeridos</label></div>
+        <div class="check"><input type="checkbox" id="v5"/><label for="v5">Scripts operacionales presentes</label></div>
+        <div class="check"><input type="checkbox" id="v6"/><label for="v6">Mailpit UI accesible</label></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==== NUEVA FASE 6: ROLLBACK DE EMERGENCIA ==== -->
+  <section id="fase-rollback">
+    <h2>7. Fase 6: Rollback de Emergencia <span class="badge-new">NUEVO</span></h2>
+
+    <div class="card">
+      <div class="warning-box">
+        <p><strong>⚠️ USAR SOLO EN CASO DE EMERGENCIA</strong></p>
+        <p>Este procedimiento revierte todos los cambios realizados durante la Operación Luz Dorada y restaura el estado previo desde el backup de emergencia.</p>
+      </div>
+
+      <h3>Procedimiento Manual de Rollback (3 Pasos)</h3>
+      <ol>
+        <li><strong>Cambiar a la rama de backup:</strong>
+          <pre><code># Buscar la rama de backup más reciente (por fecha de commit)
+git for-each-ref --sort=-committerdate --format='%(refname:short)' 'refs/heads/emergency_backup_*'
+
+# Cambiar manualmente a la rama elegida
+git checkout emergency_backup_[hash]_[TIMESTAMP]</code></pre>
+        </li>
+        <li><strong>Resetear al estado limpio:</strong>
+          <pre><code>git reset --hard HEAD</code></pre>
+        </li>
+        <li><strong>Restaurar archivos desde cuarentena:</strong>
+          <pre><code>./scripts/restore-from-quarantine.sh</code></pre>
+        </li>
+      </ol>
+
+      <h3>Script Automatizado: emergency-rollback.sh</h3>
+
+      <pre><code id="code-rollback">#!/usr/bin/env bash
+# scripts/emergency-rollback.sh — Rollback Automático v1.1
+set -euo pipefail
+
+echo "🚨 INICIANDO ROLLBACK DE EMERGENCIA"
+echo "===="
+echo ""
+
+[ -d .git ] || { echo "❌ No se detectó repo Git en el directorio actual"; exit 1; }
+
+# 1. Encontrar rama de backup más reciente (por fecha de commit)
+echo "🔍 Buscando rama de backup más reciente..."
+
+BACKUP_BRANCH=$(git for-each-ref --sort=-committerdate --format='%(refname:short)' 'refs/heads/emergency_backup_*' | head -n1)
+
+if [ -z "$BACKUP_BRANCH" ]; then
+  echo "❌ No se encontró rama de backup de emergencia"
+  echo "Ramas disponibles (backup):"
+  git branch -a | grep emergency_backup || echo " (ninguna)"
+  exit 1
+fi
+
+echo "✅ Rama de backup seleccionada: $BACKUP_BRANCH"
+echo ""
+
+# 2. Guardar trabajo actual (por si acaso)
+echo "💾 Guardando trabajo actual en stash..."
+git stash push -m "Pre-rollback stash $(date +%Y%m%d_%H%M%S)" || true
+echo ""
+
+# 3. Cambiar a rama de backup
+echo "🔄 Cambiando a rama de backup..."
+git checkout "$BACKUP_BRANCH"
+echo ""
+
+# 4. Resetear a estado limpio
+echo "🧹 Reseteando a estado limpio..."
+git reset --hard HEAD
+echo ""
+
+# 5. Restaurar desde cuarentena
+echo "📦 Restaurando archivos desde cuarentena..."
+if [ -f scripts/restore-from-quarantine.sh ]; then
+  bash scripts/restore-from-quarantine.sh
+else
+  echo "⚠️ Script restore-from-quarantine.sh no encontrado"
+  echo "   Restauración manual requerida"
+fi
+
+echo ""
+echo "===="
+echo "✅ ROLLBACK DE EMERGENCIA COMPLETADO"
+echo ""
+echo "Estado actual:"
+echo "  Rama: $(git branch --show-current)"
+echo "  Commit: $(git rev-parse --short HEAD)"
+echo ""
+echo "⚠️ IMPORTANTE: Revisa el estado del sistema antes de continuar"
+echo "===="</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-rollback')">Copiar Script</button>
+
+      <h3>Script de Restauración desde Cuarentena</h3>
+
+      <pre><code id="code-restore">#!/usr/bin/env bash
+# scripts/restore-from-quarantine.sh — Restaurar archivos desde cuarentena v1.0
+set -euo pipefail
+
+echo "📦 RESTAURANDO ARCHIVOS DESDE CUARENTENA"
+echo "===="
+echo ""
+
+if [ ! -d .quarantine ]; then
+  echo "⚠️ Directorio .quarantine no existe"
+  echo "   No hay nada que restaurar"
+  exit 0
+fi
+
+FILES_RESTORED=0
+
+# Buscar todos los archivos .js en cuarentena
+find .quarantine -type f -name "*.js" 2&gt;/dev/null | while read -r quarantined_file; do
+  # Remover el prefijo .quarantine/ y el sufijo de timestamp
+  original_path=$(echo "$quarantined_file" | sed 's|^.quarantine/||' | sed 's|_[0-9]\{8\}_[0-9]\{6\}\.js$|.js|')
+  # Crear directorio destino si no existe
+  dest_dir=$(dirname "$original_path")
+  mkdir -p "$dest_dir"
+  echo "Restaurando: $quarantined_file → $original_path"
+  cp "$quarantined_file" "$original_path"
+  ((FILES_RESTORED++))
+done
+
+echo ""
+if [ $FILES_RESTORED -gt 0 ]; then
+  echo "✅ $FILES_RESTORED archivos restaurados desde cuarentena"
+else
+  echo "ℹ️ No se encontraron archivos para restaurar"
+fi
+echo ""
+echo "===="</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-restore')">Copiar Script</button>
+    </div>
+  </section>
+
+  <!-- ==== NUEVA FASE 7: CAPTURA DE EVIDENCIAS ==== -->
+  <section id="fase-evidence">
+    <h2>8. Fase 7: Captura de Evidencias <span class="badge-new">NUEVO</span></h2>
+
+    <div class="card">
+      <p>Documentar el éxito de la operación mediante captura automatizada de evidencias técnicas:</p>
+
+      <h3>Script de Captura: capture-evidence.sh</h3>
+
+      <pre><code id="code-evidence">#!/usr/bin/env bash
+# scripts/capture-evidence.sh — Captura de Evidencias v1.1
+set -euo pipefail
+
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+EVIDENCE_DIR="evidencias/operacion_luz_dorada_${TIMESTAMP}"
+
+echo "📸 INICIANDO CAPTURA DE EVIDENCIAS"
+echo "===="
+echo ""
+echo "Directorio de evidencias: $EVIDENCE_DIR"
+echo ""
+
+# Crear directorio de evidencias
+mkdir -p "$EVIDENCE_DIR"
+
+# 1. Capturar respuesta del puerto 3000
+echo "✓ Capturando respuesta de puerto 3000..."
+if curl -s http://127.0.0.1:3000 &gt; "$EVIDENCE_DIR/port-3000-response.html" 2&gt;&amp;1; then
+  echo "  ✅ Guardado: port-3000-response.html"
+else
+  echo "  ⚠️ Puerto 3000 no responde"
+  echo "Puerto 3000 no disponible" &gt; "$EVIDENCE_DIR/port-3000-ERROR.txt"
+fi
+
+# 2. Capturar mensajes de Mailpit
+echo "✓ Capturando mensajes de Mailpit..."
+HP=$(docker ps --format '{{.Ports}}' 2&gt;/dev/null | sed -nE 's/.*:([0-9]+)->8025.*/\1/p' | head -n1)
+if [ -n "$HP" ]; then
+  if curl -s "http://127.0.0.1:${HP}/api/v1/messages" &gt; "$EVIDENCE_DIR/mailpit-messages.json" 2&gt;&amp;1; then
+    if command -v jq &gt;/dev/null 2&gt;&amp;1; then
+      TOTAL=$(jq '.total // 0' "$EVIDENCE_DIR/mailpit-messages.json" 2&gt;/dev/null || echo "0")
+      echo "  ✅ Guardado: mailpit-messages.json (${TOTAL} mensajes)"
+    else
+      echo "  ✅ Guardado: mailpit-messages.json (jq no disponible, conteo omitido)"
+    fi
+  else
+    echo "  ⚠️ No se pudo acceder a Mailpit API"
+  fi
+else
+  echo "  ⚠️ Puerto Mailpit no detectado"
+  echo "Mailpit UI no disponible" &gt; "$EVIDENCE_DIR/mailpit-ERROR.txt"
+fi
+
+# 3. Capturar estado de Docker
+echo "✓ Capturando estado de Docker..."
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' &gt; "$EVIDENCE_DIR/docker-status.txt" 2&gt;&amp;1
+echo "  ✅ Guardado: docker-status.txt"
+
+# 4. Capturar log de commits recientes
+echo "✓ Capturando log de commits..."
+git log --oneline --graph --decorate -15 &gt; "$EVIDENCE_DIR/git-commits.txt" 2&gt;&amp;1
+echo "  ✅ Guardado: git-commits.txt"
+
+# 5. Capturar estado de Git
+echo "✓ Capturando estado de Git..."
+{
+  echo "=== GIT STATUS ==="
+  git status
+  echo ""
+  echo "=== RAMA ACTUAL ==="
+  git branch --show-current
+  echo ""
+  echo "=== REMOTO ==="
+  git remote -v
+} &gt; "$EVIDENCE_DIR/git-status.txt" 2&gt;&amp;1
+echo "  ✅ Guardado: git-status.txt"
+
+# 6. Capturar configuración de Supabase
+echo "✓ Capturando configuración de Supabase..."
+if [ -f supabase/config.toml ]; then
+  # Copiar config.toml sin secretos sensibles
+  grep -v 'jwt_secret\|anon_key\|service_role_key' supabase/config.toml &gt; "$EVIDENCE_DIR/supabase-config-safe.toml" 2&gt;&amp;1 || true
+  echo "  ✅ Guardado: supabase-config-safe.toml (sin secretos)"
+fi
+
+# 7. Capturar estructura del proyecto
+echo "✓ Capturando estructura del proyecto..."
+tree -L 3 -I 'node_modules|.git|dist|.quarantine' &gt; "$EVIDENCE_DIR/project-structure.txt" 2&gt;/dev/null || \
+  find . -maxdepth 3 \
+    -not -path '*/node_modules/*' \
+    -not -path '*/.git/*' \
+    -not -path '*/dist/*' \
+    -not -path '*/.quarantine/*' \
+    &gt; "$EVIDENCE_DIR/project-structure.txt" 2&gt;&amp;1
+echo "  ✅ Guardado: project-structure.txt"
+
+# 8. Capturar versiones de herramientas
+echo "✓ Capturando versiones de herramientas..."
+{
+  echo "=== NODE ==="
+  node -v
+  echo ""
+  echo "=== PNPM ==="
+  pnpm -v
+  echo ""
+  echo "=== DOCKER ==="
+  docker --version
+  echo ""
+  echo "=== SUPABASE CLI ==="
+  npx supabase@2.48.3 --version 2&gt;&amp;1 || echo "No disponible"
+} &gt; "$EVIDENCE_DIR/tool-versions.txt" 2&gt;&amp;1
+echo "  ✅ Guardado: tool-versions.txt"
+
+# 9. Crear README de evidencias
+cat &gt; "$EVIDENCE_DIR/README.md" &lt;&lt; EOF
+# Evidencias — Operación Luz Dorada v2.2
+
+**Timestamp:** $TIMESTAMP  
+**Operador:** \$(whoami)  
+**Hostname:** \$(hostname)
+
+## Archivos Capturados
+
+1. **port-3000-response.html** — Respuesta HTTP del puerto 3000 (Vite)
+2. **mailpit-messages.json** — Mensajes de correo capturados en Mailpit
+3. **docker-status.txt** — Estado de contenedores Docker
+4. **git-commits.txt** — Log de commits recientes
+5. **git-status.txt** — Estado actual de Git
+6. **supabase-config-safe.toml** — Configuración de Supabase (sin secretos)
+7. **project-structure.txt** — Estructura del proyecto
+8. **tool-versions.txt** — Versiones de herramientas
+
+## Validación de Prueba de Fuego
+
+- [ ] Puerto 3000 responde correctamente
+- [ ] Mailpit muestra correo de recuperación
+- [ ] Link de reset funciona
+- [ ] Login con nueva contraseña exitoso
+
+## Notas
+
+(Añade aquí cualquier observación relevante)
+EOF
+
+echo "  ✅ Guardado: README.md"
+echo ""
+echo "===="
+echo "🎉 CAPTURA DE EVIDENCIAS COMPLETADA"
+echo ""
+echo "📁 Ubicación: $EVIDENCE_DIR"
+echo "📄 Archivos capturados: $(find "$EVIDENCE_DIR" -type f | wc -l)"
+echo ""
+echo "Puedes revisar las evidencias con:"
+echo "  cd $EVIDENCE_DIR"
+echo "  cat README.md"
+echo "===="</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-evidence')">Copiar Script</button>
+
+      <h3>Contenido de Evidencias Capturadas</h3>
+      <ul>
+        <li>✅ <strong>port-3000-response.html</strong> — Respuesta HTTP del puerto 3000</li>
+        <li>✅ <strong>mailpit-messages.json</strong> — Mensajes de Mailpit</li>
+        <li>✅ <strong>docker-status.txt</strong> — Estado de contenedores</li>
+        <li>✅ <strong>git-commits.txt</strong> — Log de commits recientes</li>
+        <li>✅ <strong>git-status.txt</strong> — Estado de Git</li>
+        <li>✅ <strong>supabase-config-safe.toml</strong> — Config de Supabase (sin secretos)</li>
+        <li>✅ <strong>project-structure.txt</strong> — Estructura del proyecto</li>
+        <li>✅ <strong>tool-versions.txt</strong> — Versiones de herramientas</li>
+        <li>✅ <strong>README.md</strong> — Índice de evidencias</li>
+      </ul>
+
+      <div class="success-box">
+        <h4>💡 Uso Recomendado</h4>
+        <p>Ejecuta este script inmediatamente después de completar la <strong>Prueba de Fuego</strong> (Fase 4) y antes de hacer commits. Las evidencias servirán como:</p>
+        <ul>
+          <li>Documentación técnica del éxito de la operación</li>
+          <li>Referencia para troubleshooting futuro</li>
+          <li>Auditoría de cambios realizados</li>
+          <li>Base para reportes de progreso</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==== SECCIÓN: COMMITS Y PR ==== -->
+  <section id="fase4">
+    <h2>9. Fase 8: Commits por Lotes &amp; Apertura de PR</h2>
+
+    <div class="card">
+      <h3>9.1 Commit por lotes (legibles)</h3>
+      <p><em>Nota:</em> ajusta los paths según lo que realmente hayas tocado. Esto es una guía de estructura de commits, no un dogma.</p>
+
+      <pre><code id="code-commits"># Documentación
+git add docs/ *.md */*.md 2&gt;/dev/null || true
+git commit -m "docs: sync audit/roadmap/changelogs" || true
+
+# Assets
+git add assets/** 2&gt;/dev/null || true
+git commit -m "assets: organize and prep for optimization (imgs/fonts/fa-kit)" || true
+
+# Apps/Packages
+git add apps/** packages/** 2&gt;/dev/null || true
+git commit -m "feat(apps): sync modules and shared packages (v10 baseline)" || true
+
+# Config/Tooling
+git add vite.config.* vitest.config.* netlify.toml vercel.json .vscode/** 2&gt;/dev/null || true
+git commit -m "chore(config): unify dev port (3000) and DX; deploy headers" || true</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-commits')">Copiar</button>
+
+      <h3>9.2 Apertura de PR</h3>
+
+      <pre><code id="code-pr"># Rama (ejemplo)
+git push -u origin chore/auditoria-2025-11-14
+
+# Descripción del PR
+gh pr create --title "Auditoría 2025-11-14: limpieza segura + unificación puerto 3000" \
+  --body-file pr-description.md
+
+# Mostrar URL del PR
+gh pr view --json url -q .url</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-pr')">Copiar</button>
+    </div>
+  </section>
+
+  <!-- ==== NUEVA SECCIÓN QA: PLAN DORADO DE REGRESIÓN DE SEGURIDAD ==== -->
+  <section id="qa-security">
+    <h2>10. Plan Dorado de QA – Pruebas de Regresión de Seguridad</h2>
+
+    <div class="card">
+      <p>
+        Esta sección formaliza el <strong>Plan Dorado de QA</strong> para YavlGold: tres pruebas de regresión de
+        seguridad críticas que actúan como <em>guardianes</em> permanentes en el pipeline, alineadas con la
+        auditoría completa de 2025 y el análisis de Cline.
+      </p>
+
+      <div class="warning-box">
+        <p><strong>Prerequisito INFRA:</strong> estas pruebas se asumen activas una vez que el entorno local está estable:</p>
+        <ul>
+          <li>Árbol local sincronizado y saneado (Operación Luz Dorada v2.2 ejecutada).</li>
+          <li>Backups atómicos (Git + físicos) ya creados y verificados.</li>
+          <li>Tríada <strong>WSL–Docker–Supabase</strong> estable y validada por los scripts de INFRA.</li>
+        </ul>
+      </div>
+
+      <h3>10.1 Objetivo de las pruebas de regresión</h3>
+      <p>Las pruebas TSEC cubren los tres riesgos más críticos de seguridad:</p>
+      <ul>
+        <li><strong>TSEC-001 – Integridad SRI en recursos externos:</strong> evitar ataques de cadena de suministro por CDNs sin SRI.</li>
+        <li><strong>TSEC-002 – Sanitización de contenido (XSS / <code>innerHTML</code>):</strong> evitar inyección de HTML ejecutable desde inputs de usuario.</li>
+        <li><strong>TSEC-003 – Manejo seguro de sesiones (localStorage / sessionStorage):</strong> evitar exposición de tokens y banderas sensibles.</li>
+      </ul>
+      <p>
+        Estas pruebas deben fallar cualquier PR que reintroduzca vulnerabilidades previamente mitigadas. Se
+        integran en CI y forman parte del <strong>Gold Standard+</strong> de QA de YavlGold.
+      </p>
+
+      <h3>10.2 Estructura recomendada en el repositorio</h3>
+      <ul>
+        <li><code>tests/security/sri.spec.ts</code></li>
+        <li><code>tests/security/xss-innerhtml-static.spec.ts</code></li>
+        <li><code>tests/security/session-storage.spec.ts</code></li>
+      </ul>
+
+      <h4>Scripts en <code>package.json</code></h4>
+      <pre><code id="code-qa-package">{
+  "scripts": {
+    "test": "vitest",
+    "test:security": "vitest run tests/security --runInBand"
+  }
+}</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-qa-package')">Copiar</button>
+
+      <!-- TSEC-001 -->
+      <h3>10.3 TSEC-001 – Integridad SRI en Recursos Externos</h3>
+      <p><strong>Riesgo cubierto:</strong> scripts y estilos en CDNs sin <em>Subresource Integrity (SRI)</em>, con severidad CRÍTICA.</p>
+      <p><strong>Criterios de aceptación:</strong></p>
+      <ul>
+        <li>Todo <code>&lt;script src="http(s)://..."&gt;</code> externo debe incluir un atributo <code>integrity</code> no vacío.</li>
+        <li>Todo <code>&lt;link rel="stylesheet" href="http(s)://..."&gt;</code> externo debe incluir <code>integrity</code>.</li>
+        <li>Recomendado: uso coherente de <code>crossorigin="anonymous"</code> donde aplique.</li>
+      </ul>
+
+      <h4>Prueba (Vitest + JSDOM)</h4>
+      <pre><code id="code-qa-sri">// tests/security/sri.spec.ts
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { join } from 'path';
+import { JSDOM } from 'jsdom';
+import { describe, it, expect } from 'vitest';
+
+const DIST_DIR = join(__dirname, '..', '..', 'dist');
+
+function getHtmlFiles(dir: string): string[] {
+  return readdirSync(dir)
+    .map((name) =&gt; join(dir, name))
+    .filter((p) =&gt; statSync(p).isFile() &amp;&amp; p.endsWith('.html'));
+}
+
+describe('TSEC-001: Integridad SRI en recursos externos', () =&gt; {
+  const htmlFiles = getHtmlFiles(DIST_DIR);
+
+  it('debe encontrar al menos un HTML para analizar', () =&gt; {
+    expect(htmlFiles.length).toBeGreaterThan(0);
+  });
+
+  htmlFiles.forEach((filePath) =&gt; {
+    it(`todos los recursos externos deben tener atributo integrity (${filePath})`, () =&gt; {
+      const html = readFileSync(filePath, 'utf8');
+      const dom = new JSDOM(html);
+      const document = dom.window.document;
+
+      const scripts = Array.from(
+        document.querySelectorAll&lt;HTMLScriptElement&gt;(
+          'script[src^="http://"], script[src^="https://"]'
+        )
+      );
+
+      const links = Array.from(
+        document.querySelectorAll&lt;HTMLLinkElement&gt;(
+          'link[rel="stylesheet"][href^="http://"], link[rel="stylesheet"][href^="https://"]'
+        )
+      );
+
+      const nodes = [...scripts, ...links];
+
+      const offenders = nodes.filter((el) =&gt; {
+        const integrity = el.getAttribute('integrity');
+        return !integrity || integrity.trim() === '';
+      });
+
+      const offenderSummaries = offenders.map((el) =&gt; {
+        const tag = el.tagName.toLowerCase();
+        const srcOrHref =
+          el.getAttribute('src') ?? el.getAttribute('href') ?? '';
+        return `&lt;${tag} ${srcOrHref}&gt;`;
+      });
+
+      expect(
+        offenders.length,
+        `Recursos externos sin SRI en ${filePath}:\n${offenderSummaries.join(
+          '\n'
+        )}`
+      ).toBe(0);
+    });
+  });
+});</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-qa-sri')">Copiar</button>
+
+      <!-- TSEC-002 -->
+      <h3>10.4 TSEC-002 – XSS por innerHTML (Análisis Estático)</h3>
+      <p><strong>Riesgo cubierto:</strong> uso inseguro de <code>innerHTML</code> en el código frontend. Se permite únicamente cuando la línea lleva el marcador explícito <code>/* xss-allow */</code>.</p>
+      <p><strong>Criterios de aceptación:</strong></p>
+      <ul>
+        <li>Cualquier uso de <code>innerHTML</code> sin el marcador <code>/* xss-allow */</code> en la misma línea hace fallar la prueba.</li>
+        <li>Esto obliga a revisar manualmente y justificar cada excepción.</li>
+      </ul>
+
+      <pre><code id="code-qa-xss-static">// tests/security/xss-innerhtml-static.spec.ts
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { join } from 'path';
+import { describe, it, expect } from 'vitest';
+
+const ROOTS = [
+  join(__dirname, '..', '..', 'assets', 'js'),
+  join(__dirname, '..', '..', 'src')
+];
+
+const ALLOWED_MARKER = '/* xss-allow */';
+
+function getJsFiles(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+      .map((name) =&gt; join(dir, name))
+      .flatMap((p) =&gt; {
+        if (statSync(p).isDirectory()) {
+          return getJsFiles(p);
+        }
+        return p.endsWith('.js') || p.endsWith('.ts') ? [p] : [];
+      });
+  } catch {
+    return [];
+  }
+}
+
+describe('TSEC-002: Uso de innerHTML (análisis estático)', () =&gt; {
+  const files = ROOTS.flatMap((dir) =&gt; getJsFiles(dir));
+
+  it('debe escanear al menos un archivo JS/TS', () =&gt; {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  it('no debe haber usos de innerHTML sin marcador explícito /* xss-allow */', () =&gt; {
+    const offenders: { file: string; line: number; snippet: string }[] = [];
+
+    for (const file of files) {
+      const content = readFileSync(file, 'utf8');
+      const lines = content.split(/\r?\n/);
+
+      lines.forEach((line, idx) =&gt; {
+        if (line.includes('innerHTML') &amp;&amp; !line.includes(ALLOWED_MARKER)) {
+          offenders.push({
+            file,
+            line: idx + 1,
+            snippet: line.trim()
+          });
+        }
+      });
+    }
+
+    const msg =
+      offenders.length === 0
+        ? ''
+        : 'Usos de innerHTML sin marcador /* xss-allow */:\n' +
+          offenders
+            .map(
+              (o) =&gt; `${o.file}:${o.line} → ${o.snippet}`
+            )
+            .join('\n');
+
+    expect(offenders.length, msg).toBe(0);
+  });
+});</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-qa-xss-static')">Copiar</button>
+
+      <!-- TSEC-003 -->
+      <h3>10.5 TSEC-003 – Sesiones Seguras (localStorage / sessionStorage)</h3>
+      <p><strong>Riesgo cubierto:</strong> almacenamiento inseguro de tokens o datos sensibles en <code>localStorage</code> / <code>sessionStorage</code>.</p>
+      <p><strong>Estrategia:</strong> escanear el código en busca de claves peligrosas como <code>access_token</code>, <code>refresh_token</code>, <code>jwt</code>, etc. Se permite el uso sólo si la línea está marcada con <code>/* storage-allow */</code>.</p>
+
+      <pre><code id="code-qa-session">// tests/security/session-storage.spec.ts
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { join } from 'path';
+import { describe, it, expect } from 'vitest';
+
+const ROOTS = [
+  join(__dirname, '..', '..', 'assets', 'js'),
+  join(__dirname, '..', '..', 'src')
+];
+
+const SENSITIVE_KEYS = [
+  'access_token',
+  'refresh_token',
+  'jwt',
+  'id_token',
+  'supabase_auth_token'
+];
+
+const ALLOWED_MARKER = '/* storage-allow */';
+
+function getJsFiles(dir: string): string[] {
+  try {
+    return readdirSync(dir)
+      .map((name) =&gt; join(dir, name))
+      .flatMap((p) =&gt; {
+        if (statSync(p).isDirectory()) {
+          return getJsFiles(p);
+        }
+        return p.endsWith('.js') || p.endsWith('.ts') ? [p] : [];
+      });
+  } catch {
+    return [];
+  }
+}
+
+describe('TSEC-003: Sesiones seguras en localStorage/sessionStorage', () =&gt; {
+  const files = ROOTS.flatMap((dir) =&gt; getJsFiles(dir));
+
+  it('debe escanear al menos un archivo JS/TS', () =&gt; {
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  it('no debe almacenar tokens sensibles sin marcador /* storage-allow */', () =&gt; {
+    const offenders: { file: string; line: number; snippet: string }[] = [];
+
+    for (const file of files) {
+      const content = readFileSync(file, 'utf8');
+      const lines = content.split(/\r?\n/);
+
+      lines.forEach((line, idx) =&gt; {
+        const hasStorageCall =
+          line.includes('localStorage.setItem') ||
+          line.includes('sessionStorage.setItem');
+
+        if (!hasStorageCall) return;
+
+        const hasSensitiveKey = SENSITIVE_KEYS.some((key) =&gt;
+          line.includes(key)
+        );
+
+        if (hasSensitiveKey &amp;&amp; !line.includes(ALLOWED_MARKER)) {
+          offenders.push({
+            file,
+            line: idx + 1,
+            snippet: line.trim()
+          });
+        }
+      });
+    }
+
+    const msg =
+      offenders.length === 0
+        ? ''
+        : 'Almacenamiento inseguro de tokens en storage:\n' +
+          offenders
+            .map(
+              (o) =&gt; `${o.file}:${o.line} → ${o.snippet}`
+            )
+            .join('\n');
+
+    expect(offenders.length, msg).toBe(0);
+  });
+});</code></pre>
+      <button class="copy-btn" onclick="copyBlock(event,'code-qa-session')">Copiar</button>
+    </div>
+  </section>
+
+  <!-- ==== SECCIÓN: ANEXOS ==== -->
+  <section id="appendix">
+    <h2>11. Anexos — Artefactos Listos para Pegar</h2>
+
+    <h3>11.1 .gitignore (refuerzo)</h3>
+    <pre><code id="code-ign">apps/gold/public/env.local.js
+assets/apps/gold/config.local.js
+assets/js/supabase-config.local.js
+.quarantine/
+.env.development.local
+evidencias/</code></pre>
+    <button class="copy-btn" onclick="copyBlock(event,'code-ign')">Copiar</button>
+
+    <h3>11.2 .editorconfig (opcional)</h3>
+    <pre><code id="code-dx"># .editorconfig
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true</code></pre>
+    <button class="copy-btn" onclick="copyBlock(event,'code-dx')">Copiar</button>
+
+    <h3>11.3 Script Maestro: run-full-operation.sh</h3>
+    <p><em>Importante:</em> este script orquesta las fases críticas automáticas (0, 1, 5 y 7). Las fases 2, 3, 4, 6 y 8 requieren criterio humano y se ejecutan manualmente.</p>
+
+    <pre><code id="code-full">#!/usr/bin/env bash
+# scripts/run-full-operation.sh — Ejecuta las fases automáticas de Operación Luz Dorada v2.2
+set -euo pipefail
+
+echo "🚀 OPERACIÓN LUZ DORADA v2.2 — EJECUCIÓN AUTOMATIZADA (FASES 0, 1, 5, 7)"
+echo "===="
+echo ""
+
+# Fase 0: Saneamiento
+echo "📋 FASE 0: Saneamiento y Verificación"
+bash pre-op-cleanup.sh || { echo "❌ Fase 0 falló"; exit 1; }
+echo ""
+
+# Fase 1: Preservación
+echo "📋 FASE 1: Preservación de Emergencia"
+bash scripts/emergency-git-preservation.sh || { echo "❌ Fase 1 falló"; exit 1; }
+echo ""
+
+echo "ℹ️ Recuerda ejecutar manualmente:"
+echo "   - Fase 2: scripts/initial-sanitize.sh (saneamiento inicial y duplicado YavlGold/)"
+echo "   - Fase 3: ajustes de Vite/Supabase a puerto 3000"
+echo "   - Fase 4: Arranque Gold Standard + Prueba de Fuego"
+echo ""
+
+# Fase 5: Validación
+echo "📋 FASE 5: Validación Post-Operación"
+bash scripts/post-op-validation.sh || { echo "❌ Validación falló"; exit 1; }
+echo ""
+
+# Fase 7: Evidencias
+echo "📋 FASE 7: Captura de Evidencias"
+bash scripts/capture-evidence.sh || { echo "⚠️ Captura de evidencias falló (no crítico)"; }
+echo ""
+
+echo "===="
+echo "🎉 OPERACIÓN LUZ DORADA v2.2 COMPLETADA (FASES AUTOMÁTICAS)"
+echo "Revisa el README de evidencias y abre tu PR (Fase 8)."
+echo "===="</code></pre>
+    <button class="copy-btn" onclick="copyBlock(event,'code-full')">Copiar</button>
+  </section>
+
+  <!-- ==== FOOTER ==== -->
+  <footer>
+    <p><strong>Plan de Batalla Maestro: Operación Luz Dorada v2.2 Gold Standard+</strong></p>
+    <p>Runbook Definitivo con Validación, Rollback, Captura de Evidencias y QA de Seguridad</p>
+    <p style="margin-top:10px;color:var(--gold)">✨ Gold Standard Achieved ✨</p>
+  </footer>
+</div>
+
+<!-- ==== SCRIPT DE FUNCIONALIDAD ==== -->
+<div id="live" role="status" aria-live="polite" style="position:fixed;left:-9999px;top:auto;"></div>
+<script>
+  function copyBlock(ev, id) {
+    const el = document.getElementById(id);
+    const text = el ? el.textContent : '';
+    const btn = ev && ev.target ? ev.target : null;
+    const live = document.getElementById('live');
+
+    const setOK = (msg) => {
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copiado';
+        btn.style.background = '#2ea043';
+        setTimeout(() => {
+          btn.textContent = orig;
+          btn.style.background = '#1e6e34';
+        }, 1600);
+      }
+      if (live) live.textContent = msg || 'Copiado al portapapeles';
+    };
+
+    const setERR = (msg) => {
+      if (live) live.textContent = msg || 'No se pudo copiar';
+      alert(msg || 'No se pudo copiar. Copia manualmente.');
+    };
+
+    if (!text) {
+      setERR('Bloque vacío/no encontrado');
+      return;
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => setOK())
+        .catch(() => fallbackCopy(text, setOK, setERR));
+    } else {
+      fallbackCopy(text, setOK, setERR);
+    }
+  }
+
+  function fallbackCopy(text, ok, err) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const done = document.execCommand('copy');
+      document.body.removeChild(ta);
+      done ? ok('Contenido copiado (fallback)') : err('No se pudo copiar (fallback)');
+    } catch(e) {
+      err('No se pudo copiar (excepción)');
+    }
+  }
+</script>
+</body>
+</html>

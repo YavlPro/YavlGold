@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Camino Dorado v2.2 – Satélite de Mando y Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Satélite de mando Camino Dorado v2.2: visión estratégica, nodo maestro de la Operación Luz Dorada v2.2 Gold Standard y arquitectura YavlGold V9.1." />
+
+  <!-- Tipografías -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      /* Paleta YavlGold V9.1 */
+      --gold-elegant: #c8a752;
+      --gold-bright: #d4af37;
+      --bronze: #8b7355;
+      --black-warm: #2c2416;
+      --beige-soft: #f5f5dc;
+      --bg-deep-space: #050509;
+      --bg-panel: #131018;
+      --bg-card: #1b1722;
+      --text-primary: #f5f5dc;
+      --text-secondary: rgba(245, 245, 220, 0.78);
+      --border-soft: rgba(200, 167, 82, 0.22);
+      --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.6);
+      --glow-gold-soft: 0 0 22px rgba(200, 167, 82, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: radial-gradient(circle at top, #15121f 0%, var(--bg-deep-space) 55%, #020209 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 1280px;
+      background: radial-gradient(circle at top left, rgba(200, 167, 82, 0.15) 0%, rgba(0, 0, 0, 0.9) 38%, rgba(0, 0, 0, 1) 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(200, 167, 82, 0.25);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* HUD overlay lines */
+    .shell::before,
+    .shell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .shell::before {
+      background:
+        linear-gradient(90deg, rgba(200, 167, 82, 0.07) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(200, 167, 82, 0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.18;
+    }
+
+    .shell::after {
+      background: radial-gradient(circle at top, rgba(212, 175, 55, 0.22), transparent 55%);
+      mix-blend-mode: screen;
+      opacity: 0.5;
+    }
+
+    .inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr);
+      grid-auto-rows: auto;
+      gap: 16px;
+      padding: 22px 22px 24px;
+    }
+
+    /* HEADER / BRIDGE */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 14px;
+      padding: 18px 22px;
+      background: linear-gradient(135deg, rgba(11, 10, 18, 0.92), rgba(39, 31, 19, 0.97));
+      border: 1px solid rgba(200, 167, 82, 0.5);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at 20% -20%, rgba(212, 175, 55, 0.4), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .header-main {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-y-orbit {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 2px solid rgba(200, 167, 82, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 30% 0%, #d4af37 0%, #8b7355 38%, #2c2416 100%);
+      box-shadow: var(--glow-gold-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-y-orbit::before {
+      content: "";
+      position: absolute;
+      width: 130%;
+      height: 130%;
+      border-radius: 50%;
+      border: 1px dashed rgba(245, 245, 220, 0.16);
+      animation: orbit 16s linear infinite;
+    }
+
+    @keyframes orbit {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .logo-y-orbit span {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 38px;
+      color: var(--gold-elegant);
+      transform: rotate(30deg);
+      text-shadow: 0 0 16px rgba(200, 167, 82, 0.85);
+    }
+
+    .header-text h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #f5f5dc, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+    }
+
+    .header-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 0.75rem;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: 4px 10px;
+      border: 1px solid rgba(200, 167, 82, 0.58);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      color: var(--beige-soft);
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+    }
+
+    .badge-primary {
+      border-color: var(--gold-bright);
+      background: radial-gradient(circle at top, rgba(212, 175, 55, 0.38), rgba(0, 0, 0, 0.8));
+    }
+
+    .badge-gold-standard {
+      border-color: var(--gold-bright);
+      background: radial-gradient(circle at top, rgba(212, 175, 55, 0.7), rgba(0, 0, 0, 0.9));
+      color: #1b1308;
+      font-weight: 700;
+    }
+
+    .header-status {
+      position: relative;
+      z-index: 1;
+      text-align: right;
+      font-size: 0.8rem;
+    }
+
+    .status-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(245, 245, 220, 0.6);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(115, 230, 175, 0.8);
+      background: radial-gradient(circle at 20% 0, rgba(115, 230, 175, 0.25), rgba(0, 0, 0, 0.9));
+      color: #a7ffda;
+      box-shadow: 0 0 16px rgba(115, 230, 175, 0.4);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2effb5;
+      box-shadow: 0 0 12px rgba(46, 255, 181, 0.9);
+      animation: pulse-dot 1.5s ease-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      60% {
+        transform: scale(1.75);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1.75);
+        opacity: 0;
+      }
+    }
+
+    .status-meta {
+      margin-top: 8px;
+      color: rgba(245, 245, 220, 0.6);
+    }
+
+    .status-meta span {
+      color: var(--gold-elegant);
+      font-weight: 600;
+    }
+
+    /* GRID MAIN */
+    .grid-main {
+      display: grid;
+      grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.4fr);
+      grid-auto-rows: auto;
+      gap: 16px;
+    }
+
+    @media (max-width: 960px) {
+      .grid-main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    /* PANELS BASE */
+    .panel {
+      background: radial-gradient(circle at top left, rgba(200, 167, 82, 0.12), rgba(17, 14, 26, 0.94));
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      padding: 18px 18px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 40%);
+      pointer-events: none;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.98rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(245, 245, 220, 0.85);
+    }
+
+    .panel-subtitle {
+      font-size: 0.8rem;
+      color: rgba(245, 245, 220, 0.6);
+    }
+
+    .panel-body {
+      margin-top: 8px;
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+    }
+
+    /* TIMELINE – CAMINO DORADO */
+    .timeline {
+      position: relative;
+      padding: 16px 6px 10px 6px;
+    }
+
+    .timeline-track {
+      position: absolute;
+      top: 50%;
+      left: 4%;
+      right: 4%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(200, 167, 82, 0.05), rgba(200, 167, 82, 0.6), rgba(200, 167, 82, 0.05));
+      opacity: 0.35;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (max-width: 1040px) {
+      .timeline-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .timeline-track {
+        display: none;
+      }
+    }
+
+    .phase-card {
+      position: relative;
+      border-radius: 12px;
+      padding: 12px 11px 12px;
+      background: radial-gradient(circle at top, rgba(20, 19, 31, 0.96), rgba(9, 8, 15, 1));
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+      min-height: 118px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .phase-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(212, 175, 55, 0.22), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .phase-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 20px rgba(200, 167, 82, 0.45);
+      border-color: rgba(212, 175, 55, 0.9);
+      background: radial-gradient(circle at top, rgba(23, 20, 35, 1), rgba(5, 4, 9, 1));
+    }
+
+    .phase-card:hover::before {
+      opacity: 1;
+    }
+
+    .phase-tag {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(245, 245, 220, 0.75);
+      margin-bottom: 6px;
+    }
+
+    .phase-title {
+      font-weight: 700;
+      color: #f5f5dc;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .phase-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+      border: 1px solid rgba(170, 170, 170, 0.4);
+    }
+
+    .status-completed {
+      border-color: rgba(80, 200, 120, 0.8);
+      color: #9affc5;
+      background: rgba(10, 80, 40, 0.55);
+    }
+
+    .status-active {
+      border-color: rgba(255, 215, 0, 0.9);
+      color: #ffe97e;
+      background: rgba(90, 70, 10, 0.85);
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
+    }
+
+    .status-gold {
+      border-color: var(--gold-bright);
+      color: #fff4c7;
+      background: radial-gradient(circle at top, rgba(212, 175, 55, 0.4), rgba(60, 45, 15, 0.95));
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.9);
+    }
+
+    .status-planned {
+      border-color: rgba(100, 160, 230, 0.7);
+      color: #b8d7ff;
+      background: rgba(12, 36, 75, 0.75);
+    }
+
+    .status-future {
+      border-color: rgba(160, 160, 160, 0.7);
+      color: #e0e0e0;
+      background: rgba(40, 40, 40, 0.85);
+    }
+
+    .phase-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .phase-body {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    .phase-body strong {
+      color: var(--gold-elegant);
+      font-weight: 700;
+    }
+
+    .phase-central {
+      border-width: 2px;
+      background: radial-gradient(circle at top, rgba(212, 175, 55, 0.35), rgba(15, 11, 20, 0.98));
+    }
+
+    .phase-central::before {
+      opacity: 1;
+    }
+
+    /* DOCUMENTS PANEL */
+    .quick-links {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .doc-link {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 11px;
+      border-radius: 10px;
+      background: radial-gradient(circle at left, rgba(200, 167, 82, 0.18), rgba(12, 11, 18, 0.96));
+      border: 1px solid rgba(200, 167, 82, 0.38);
+      text-decoration: none;
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .doc-link::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.05), transparent 40%);
+      pointer-events: none;
+    }
+
+    .doc-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px rgba(200, 167, 82, 0.6);
+      border-color: rgba(212, 175, 55, 0.9);
+      background: radial-gradient(circle at left, rgba(212, 175, 55, 0.3), rgba(10, 10, 16, 1));
+    }
+
+    .doc-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #f5f5dc;
+    }
+
+    .doc-desc {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .doc-meta {
+      font-size: 0.72rem;
+      color: rgba(245, 245, 220, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .doc-tag {
+      padding: 1px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(200, 167, 82, 0.6);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .doc-tag-gold {
+      border-color: var(--gold-bright);
+      background: rgba(212, 175, 55, 0.2);
+      color: #fff4c7;
+      font-weight: 700;
+    }
+
+    /* SQUADRON PANEL */
+    .squad-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .squad-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 9px;
+      border-radius: 10px;
+      background: rgba(10, 9, 18, 0.96);
+      border: 1px solid rgba(200, 167, 82, 0.25);
+      font-size: 0.8rem;
+    }
+
+    .squad-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(200, 167, 82, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      color: var(--gold-bright);
+      background: radial-gradient(circle at 20% 0%, rgba(200, 167, 82, 0.6), rgba(6, 5, 10, 0.95));
+    }
+
+    .squad-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .squad-role {
+      font-size: 0.75rem;
+      color: rgba(245, 245, 220, 0.7);
+    }
+
+    .squad-status-pill {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(115, 230, 175, 0.75);
+      color: #a7ffda;
+      background: rgba(5, 35, 25, 0.9);
+    }
+
+    .squad-status-pill.offline {
+      border-color: rgba(220, 120, 80, 0.8);
+      color: #ffd0aa;
+      background: rgba(45, 22, 10, 0.95);
+    }
+
+    /* FOOTER / NOTE */
+    .footer {
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(200, 167, 82, 0.35);
+      font-size: 0.72rem;
+      color: rgba(245, 245, 220, 0.6);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .footer span {
+      color: var(--gold-elegant);
+    }
+
+    /* SMALL UTILITIES */
+    .hint {
+      font-size: 0.74rem;
+      color: rgba(245, 245, 220, 0.6);
+      margin-bottom: 6px;
+    }
+
+    .hint strong {
+      color: var(--gold-bright);
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="inner">
+      <!-- HEADER: PUENTE DE MANDO -->
+      <header class="header">
+        <div class="header-main">
+          <div class="logo-y-orbit">
+            <span>Y</span>
+          </div>
+          <div class="header-text">
+            <h1>Camino Dorado v2.2 – Satélite de Mando</h1>
+            <div class="header-subtitle">
+              Dashboard estratégico de conexión para el ecosistema YavlGold.<br />
+              Alineado con <strong>Operación Luz Dorada v2.2 Gold Standard</strong>.
+            </div>
+            <div class="header-badges">
+              <div class="badge badge-primary">MÓDULO: COMANDO CENTRAL</div>
+              <div class="badge">MODO: VISIÓN ESTRATÉGICA</div>
+              <div class="badge badge-gold-standard">Luz Dorada v2.2 – GOLD STANDARD</div>
+            </div>
+          </div>
+        </div>
+        <div class="header-status">
+          <div class="status-label">Estado actual de campaña</div>
+          <div class="status-pill">
+            <div class="status-dot"></div>
+            <span>Operación Luz Dorada v2.2 – ACTIVA</span>
+          </div>
+          <div class="status-meta">
+            Nodo táctico maestro: <span>Operacion-Luz-Dorada-v2.2.html</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- GRID MAIN -->
+      <div class="grid-main">
+        <!-- PANEL IZQUIERDO: ROADMAP -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Camino Dorado</div>
+            <div class="panel-subtitle">Línea de fases estratégicas del proyecto</div>
+          </div>
+          <div class="panel-body">
+            <div class="hint">
+              Haz clic en cada fase para enfocar mentalmente su contexto. Este panel es tu
+              <strong>mapa de conexión</strong>: de dónde venimos, dónde estamos y hacia dónde vamos.
+            </div>
+            <div class="timeline">
+              <div class="timeline-track"></div>
+              <div class="timeline-grid">
+                <!-- FASE 1 -->
+                <a href="javascript:void(0)" class="phase-card" title="Fundación y Caos – Fase 1">
+                  <div class="phase-tag">Fase 1</div>
+                  <div class="phase-title">Fundación y Caos</div>
+                  <div class="phase-status status-completed">
+                    <span class="phase-status-dot"></span>
+                    <span>Estado: Completada</span>
+                  </div>
+                  <div class="phase-body">
+                    Etapa donde nació YavlGold entre experimentos, prototipos y <strong>MVPs en crudo</strong>.
+                    Se sembró la semilla: primeros flujos de autenticación, conexión con Supabase y el ADN de la
+                    identidad visual, todavía sin armonizar.
+                  </div>
+                </a>
+
+                <!-- FASE 2 -->
+                <a href="AUDITORIA-COMPLETA-2025-11-14.html" class="phase-card" title="Auditoría y Estrategia – Fase 2">
+                  <div class="phase-tag">Fase 2</div>
+                  <div class="phase-title">Auditoría y Estrategia</div>
+                  <div class="phase-status status-completed">
+                    <span class="phase-status-dot"></span>
+                    <span>Estado: Completada</span>
+                  </div>
+                  <div class="phase-body">
+                    Ciclo de <strong>diagnóstico profundo</strong> con Cline, GPT‑5 y Claude Sonnet 4.5. Se identificaron
+                    claves rotadas, riesgos neutralizados y una foto honesta del sistema. Resultado: visión clara y plan
+                    maestro para la transición a modo enterprise.
+                    <br /><br />
+                    Haz clic para abrir el informe de auditoría completo.
+                  </div>
+                </a>
+
+                <!-- FASE 3 – OPERACIÓN LUZ DORADA v2.2 (CENTRAL) -->
+                <a href="Operacion-Luz-Dorada-v2.2.html" class="phase-card phase-central" title="Operación Luz Dorada v2.2 – Runbook Gold Standard">
+                  <div class="phase-tag">Fase 3</div>
+                  <div class="phase-title">Operación Luz Dorada v2.2</div>
+                  <div class="phase-status status-active status-gold">
+                    <span class="phase-status-dot"></span>
+                    <span>Estado: ACTIVA – GOLD STANDARD</span>
+                  </div>
+                  <div class="phase-body">
+                    El <strong>runbook definitivo v2.2</strong> para estabilizar el entorno y ejecutar la
+                    <strong>Fase de Ejecución Inicial (Comandos Unificados)</strong>: saneamiento previo, creación de
+                    rama de seguridad, fijado de licencias críticas, validación post-operación, rollback de emergencia y
+                    captura de evidencias.
+                    <br /><br />
+                    Haz clic para abrir el documento táctico maestro (Gold Standard).
+                  </div>
+                </a>
+
+                <!-- FASE 4 – ARQUITECTURA V9.1 -->
+                <a href="MegaPremium-YavlGold-V9.1-actualizado.html" class="phase-card" title="Arquitectura V9.1 – Evolución Enterprise">
+                  <div class="phase-tag">Fase 4</div>
+                  <div class="phase-title">Arquitectura V9.1</div>
+                  <div class="phase-status status-planned">
+                    <span class="phase-status-dot"></span>
+                    <span>Estado: Planificada</span>
+                  </div>
+                  <div class="phase-body">
+                    Implementación del <strong>Modelo V9.1</strong>, tomando como referencia el documento
+                    <strong>MegaPremium-YavlGold-V9.1-actualizado.html</strong>: ConfigManager Singleton, gestión de
+                    secretos por entorno, estructura de carpetas enterprise, identidad visual oficial (logo Y Angular,
+                    paleta V9.1) y suite de testing básica. Es la fase donde el proyecto deja de ser “solo funcional” y se
+                    vuelve <strong>robusto y escalable</strong>.
+                  </div>
+                </a>
+
+                <!-- FASE 5 – CRECIMIENTO Y ESCALA -->
+                <a href="javascript:void(0)" class="phase-card" title="Crecimiento y Escala – Horizonte futuro">
+                  <div class="phase-tag">Fase 5</div>
+                  <div class="phase-title">Crecimiento y Escala</div>
+                  <div class="phase-status status-future">
+                    <span class="phase-status-dot"></span>
+                    <span>Estado: Futuro</span>
+                  </div>
+                  <div class="phase-body">
+                    Espacio reservado para la expansión: despliegues multi‑entorno, features avanzadas, Modo Producción
+                    con monitoreo continuo, automatización CI/CD y nuevas líneas de negocio sobre la base establecida por
+                    V9.1. Aquí se escribe el capítulo de <strong>escala real</strong>.
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PANEL DERECHO: DOCUMENTOS + SQUAD -->
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Arsenal de Inteligencia</div>
+            <div class="panel-subtitle">Acceso rápido a los documentos maestros</div>
+          </div>
+          <div class="panel-body">
+            <div class="hint">
+              Usa estos nodos como <strong>portales directos</strong> a tu documentación estratégica. Cada enlace es una
+              pieza del sistema nervioso de YavlGold.
+            </div>
+
+            <!-- DOCUMENT LINKS -->
+            <div class="quick-links">
+              <a href="Arsenal ia v9.0.html" class="doc-link">
+                <div class="doc-name">Arsenal ia v9.0.html</div>
+                <div class="doc-desc">
+                  <strong>Nuestra Constitución:</strong> define quiénes somos, cómo operamos y cuáles son las reglas
+                  sagradas del proyecto. Marco mental y operativo para todo el escuadrón.
+                </div>
+                <div class="doc-meta">
+                  <span class="doc-tag">Identidad & Cultura</span>
+                  <span>Base doctrinal</span>
+                </div>
+              </a>
+
+              <a href="Operacion-Luz-Dorada-v2.2.html" class="doc-link">
+                <div class="doc-name">Operacion-Luz-Dorada-v2.2.html</div>
+                <div class="doc-desc">
+                  <strong>Runbook táctico Gold Standard:</strong> instrucción paso a paso con saneamiento, ejecución
+                  de la Fase de Ejecución Inicial (comandos unificados), validación post‑op, rollback de emergencia y
+                  captura de evidencias. Es el manual operativo de la campaña Luz Dorada v2.2.
+                </div>
+                <div class="doc-meta">
+                  <span class="doc-tag doc-tag-gold">Runbook GOLD</span>
+                  <span>Fase 3 en curso</span>
+                </div>
+              </a>
+
+              <!-- Opcional: enlace histórico a la versión previa de la operación -->
+              <a href="operacion luz dorada v2.0.html" class="doc-link">
+                <div class="doc-name">operacion luz dorada v2.0.html</div>
+                <div class="doc-desc">
+                  <strong>Versión anterior de la operación:</strong> referencia histórica de la evolución del plan.
+                  Útil para comparar con el estándar v2.2.
+                </div>
+                <div class="doc-meta">
+                  <span class="doc-tag">Histórico</span>
+                  <span>Legacy táctico</span>
+                </div>
+              </a>
+
+              <a href="MegaPremium-YavlGold-V9.1-actualizado.html" class="doc-link">
+                <div class="doc-name">MegaPremium-YavlGold-V9.1-actualizado.html</div>
+                <div class="doc-desc">
+                  <strong>Documento MegaPremium (actualizado):</strong> blueprint de arquitectura y estrategia V9.1,
+                  pensado como <strong>referencia de diseño y contexto</strong> alrededor de la Operación Luz Dorada
+                  v2.2. No es un informe de estado en tiempo real, sino el plano maestro que guía la evolución técnica.
+                </div>
+                <div class="doc-meta">
+                  <span class="doc-tag">Arquitectura V9.1</span>
+                  <span>Guía estratégica</span>
+                </div>
+              </a>
+
+              <a href="briefing-rescate-v9-YavlGold.html" class="doc-link">
+                <div class="doc-name">briefing-rescate-v9-YavlGold.html</div>
+                <div class="doc-desc">
+                  <strong>Kit de Rescate v9:</strong> instrucciones para estabilizar entornos locales, alinear puertos,
+                  Docker, Supabase y flujos de recuperación rápida. Tu “botón rojo” documentado.
+                </div>
+                <div class="doc-meta">
+                  <span class="doc-tag">Rescate Local</span>
+                  <span>Entorno Dev</span>
+                </div>
+              </a>
+
+              <a href="informe de QA (o3 deepresearch).html" class="doc-link">
+                <div class="doc-name">informe de QA (o3 deepresearch).html</div>
+                <div class="doc-desc">
+                  <strong>Informe de QA / Deep Research:</strong> síntesis de hallazgos de calidad y comportamiento del
+                  sistema, con enfoque en estabilidad de flujos y puntos de mejora detectados por o3.
+                </div>
+                <div class="doc-meta">
+                  <span class="doc-tag">QA & Research</span>
+                  <span>Validación</span>
+                </div>
+              </a>
+            </div>
+
+            <!-- SQUADRON STATUS -->
+            <div class="panel-header" style="margin-top: 16px;">
+              <div class="panel-title">Comando Estelar</div>
+              <div class="panel-subtitle">Estado del escuadrón y roles principales</div>
+            </div>
+            <div class="panel-body" style="margin-top: 6px;">
+              <div class="squad-list">
+                <div class="squad-row">
+                  <div class="squad-main">
+                    <div class="avatar">C</div>
+                    <div>
+                      <div class="squad-name">Capitán (Tú)</div>
+                      <div class="squad-role">
+                        Arquitecto táctico, estratega del sistema y operador principal de la campaña Luz Dorada v2.2.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="squad-status-pill">EN PUENTE DE MANDO</div>
+                </div>
+
+                <div class="squad-row">
+                  <div class="squad-main">
+                    <div class="avatar">G5</div>
+                    <div>
+                      <div class="squad-name">GPT‑5.1 – Analista Estratégico</div>
+                      <div class="squad-role">
+                        Diseño de arquitectura V9.1, patrones de diseño, mini‑roadmaps y soporte de alto nivel para la
+                        ejecución Gold Standard.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="squad-status-pill">ONLINE</div>
+                </div>
+
+                <div class="squad-row">
+                  <div class="squad-main">
+                    <div class="avatar">CL</div>
+                    <div>
+                      <div class="squad-name">Cline / Claude</div>
+                      <div class="squad-role">
+                        Auditor técnico, exploración profunda del código y señalización de riesgos críticos detectados en
+                        la fase de auditoría.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="squad-status-pill">ONLINE</div>
+                </div>
+
+                <div class="squad-row">
+                  <div class="squad-main">
+                    <div class="avatar">CS</div>
+                    <div>
+                      <div class="squad-name">Claude Sonnet 4.5</div>
+                      <div class="squad-role">
+                        Especialista en seguridad y buenas prácticas enterprise, guardián de secretos y flujos críticos de
+                        autenticación.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="squad-status-pill">ONLINE</div>
+                </div>
+
+                <div class="squad-row">
+                  <div class="squad-main">
+                    <div class="avatar">O3</div>
+                    <div>
+                      <div class="squad-name">o3 Deep Research</div>
+                      <div class="squad-role">
+                        Módulo de QA e investigación profunda: stress‑tests mentales, análisis cruzado y validación de la
+                        operación Gold Standard.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="squad-status-pill offline">EN STANDBY</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="footer">
+              <div>
+                Nodo maestro del sistema: <span>Camino Dorado v2.2</span>
+              </div>
+              <div>
+                Recuerda: este archivo no reemplaza a los demás, los <span>orquesta</span> alrededor de Luz Dorada v2.2 y
+                V9.1.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

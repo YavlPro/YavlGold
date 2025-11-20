@@ -1922,9 +1922,9 @@
      */
     async function loadAcademiaProgress() {
       try {
-        // Verificar que academia.js esté cargado
-        if (!window.academiaProgress) {
-          console.log('[Dashboard] ⏳ Academia.js aún no cargado, reintentando...');
+        // Verificar que academia.js esté cargado y listo (tiene la API esperada)
+        if (!(window.academiaProgress && typeof window.academiaProgress.getProgressStats === 'function')) {
+          console.log('[Dashboard] ⏳ Academia.js aún no cargado o no listo, reintentando...');
           setTimeout(loadAcademiaProgress, 500);
           return;
         }

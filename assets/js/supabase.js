@@ -7,7 +7,8 @@
 
 // Configuración de Supabase
 const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
+// Anon key removed from repo; prefer runtime injection via window.__YAVL_SUPABASE__
+const SUPABASE_ANON_KEY = (typeof window !== 'undefined' && window.__YAVL_SUPABASE__ && window.__YAVL_SUPABASE__.anon) || '__ANON_REMOVED__';
 
 /**
  * Crear cliente de Supabase
@@ -21,8 +22,12 @@ function createSupabaseClient() {
   }
 
   try {
+    if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === '__ANON_REMOVED__') {
+      console.error('[Supabase] ❌ Anon key not provided at runtime. Define window.__YAVL_SUPABASE__ or create apps/gold/config.local.js');
+      return null;
+    }
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[Supabase] ✅ Cliente creado correctamente');
+    console.log('[Supabase] ✅ Cliente creado correctamente (runtime anon)');
     return client;
   } catch (error) {
     console.error('[Supabase] ❌ Error al crear cliente:', error);

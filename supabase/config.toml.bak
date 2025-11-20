@@ -1,0 +1,26 @@
+# Supabase local config overrides for YavlGold
+# Auth mailer + site overrides
+
+[auth]
+site_url = "http://127.0.0.1:3000"
+mailer_autoconfirm = false
+
+[auth.external]
+email = true
+phone = false
+
+[auth.smtp]
+host = "supabase_inbucket_YavlGold"
+port = 1025
+user = ""
+pass = ""
+admin_email = "dev@yavlgold.local"
+sender_name = "YavlGold Dev"
+max_frequency = "1s"
+
+[auth.rate_limits]
+email_sent = 30_000 # 30s between emails (reduce from default 360000)
+
+[auth.debug]
+log_level = "debug"
+

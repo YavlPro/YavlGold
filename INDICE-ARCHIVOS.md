@@ -146,6 +146,16 @@ cp index-premium.html index.html
 │
 └── ⚡ GUÍAS RÁPIDAS
     └── INICIO-RAPIDO.md ................. Setup en 5 minutos
+
+### 🛠️ Documentos de Operaciones (Nuevos)
+
+#### 🧪 SOLUCION-DEFINITIVA-SUPABASE-CLI-V8.4.2.html
+**Descripción:** Guía táctica para rollback de Supabase CLI y resolución del problema de correo fantasma (mailer local). Incluye diagnóstico, pasos de verificación, contingencias generateLink y SMTP externo.
+**Uso Rápido:** Consultar antes de intentar pruebas de recuperación de contraseña en entornos locales.
+
+#### 🛡️ BRIEFING-V8-SUPREMO.html
+**Descripción:** Briefing estratégico consolidado de la sesión V8: estado de misión, decisiones de pausa, plan de downgrade y matriz de contingencia.
+**Uso Rápido:** Referencia ejecutiva para contexto histórico y planificación de la siguiente fase.
 ```
 
 ---

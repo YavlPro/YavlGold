@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YavlGold V9.1 - Documento MegaPremium (Contexto Operativo)</title>
+  <style>
+    /* ════ */
+    /*    YAVLGOLD V9.1 - ESTILOS DOCUMENTO MEGAPREMIUM    */
+    /* ════ */
+
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+    :root {
+      /* Paleta Oficial V9.1 */
+      --gold-elegant: #C8A752;
+      --gold-bright: #D4AF37;
+      --bronze: #8B7355;
+      --black-warm: #2C2416;
+      --beige-soft: #F5F5DC;
+
+      /* UI */
+      --bg-dark: #1a1510;
+      --bg-card: #2a2520;
+      --text-primary: #F5F5DC;
+      --text-secondary: rgba(245, 245, 220, 0.8);
+      --border: rgba(200, 167, 82, 0.2);
+
+      /* Sombras */
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --glow-gold: 0 0 20px rgba(200, 167, 82, 0.6);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, #0f0c08 100%);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    /* Header con Logo */
+    .header {
+      background: linear-gradient(135deg, var(--black-warm) 0%, var(--bronze) 100%);
+      padding: 40px;
+      text-align: center;
+      border-bottom: 2px solid var(--gold-elegant);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(200, 167, 82, 0.1) 0%, transparent 70%);
+      animation: rotate 30s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .logo-y {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 80px;
+      font-weight: 900;
+      color: var(--gold-elegant);
+      transform: rotate(30deg);
+      display: inline-block;
+      text-shadow: var(--glow-gold);
+      animation: logoGlow 2s ease-in-out infinite;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes logoGlow {
+      0%,
+      100% {
+        text-shadow: 0 0 20px rgba(200, 167, 82, 0.6);
+      }
+
+      50% {
+        text-shadow: 0 0 40px rgba(212, 175, 55, 0.9);
+      }
+    }
+
+    .header h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      margin: 20px 0 10px;
+      background: linear-gradient(90deg, var(--gold-elegant), var(--gold-bright));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      position: relative;
+      z-index: 1;
+    }
+
+    .version-badge {
+      display: inline-block;
+      background: var(--gold-elegant);
+      color: var(--black-warm);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Contenido */
+    .content {
+      padding: 40px;
+    }
+
+    /* Tabla de Contenidos */
+    .toc {
+      background: rgba(200, 167, 82, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 40px;
+    }
+
+    .toc h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--gold-elegant);
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .toc ol {
+      list-style-position: inside;
+      padding-left: 0;
+    }
+
+    .toc li {
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(200, 167, 82, 0.1);
+    }
+
+    .toc li:last-child {
+      border-bottom: none;
+    }
+
+    .toc a {
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      font-weight: 500;
+    }
+
+    .toc a:hover {
+      color: var(--gold-bright);
+    }
+
+    /* Secciones */
+    .section {
+      margin-bottom: 60px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--gold-elegant);
+      font-size: 2rem;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--gold-elegant);
+    }
+
+    .section h3 {
+      font-family: 'Orbitron', sans-serif;
+      color: var(--gold-bright);
+      font-size: 1.5rem;
+      margin: 30px 0 15px;
+    }
+
+    .section h4 {
+      color: var(--gold-elegant);
+      font-size: 1.2rem;
+      margin: 25px 0 12px;
+      font-weight: 700;
+    }
+
+    .section p {
+      margin-bottom: 15px;
+      color: var(--text-secondary);
+    }
+
+    /* Tablas */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: rgba(200, 167, 82, 0.03);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background: var(--gold-elegant);
+      color: var(--black-warm);
+      padding: 15px;
+      text-align: left;
+      font-weight: 700;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:hover {
+      background: rgba(200, 167, 82, 0.05);
+    }
+
+    /* Bloques de código */
+    pre {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 20px 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    code {
+      font-family: 'Courier New', monospace;
+      color: var(--gold-bright);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Badges de estado */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 0 5px;
+    }
+
+    .badge-critical {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .badge-high {
+      background: #f39c12;
+      color: white;
+    }
+
+    .badge-medium {
+      background: #f1c40f;
+      color: var(--black-warm);
+    }
+
+    .badge-low {
+      background: #3498db;
+      color: white;
+    }
+
+    .badge-success {
+      background: #27ae60;
+      color: white;
+    }
+
+    /* Cajas de alerta */
+    .alert {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid;
+    }
+
+    .alert-info {
+      background: rgba(52, 152, 219, 0.1);
+      border-color: #3498db;
+      color: var(--text-primary);
+    }
+
+    .alert-warning {
+      background: rgba(243, 156, 18, 0.1);
+      border-color: #f39c12;
+      color: var(--text-primary);
+    }
+
+    .alert-success {
+      background: rgba(39, 174, 96, 0.1);
+      border-color: #27ae60;
+      color: var(--text-primary);
+    }
+
+    .alert-danger {
+      background: rgba(231, 76, 60, 0.1);
+      border-color: #e74c3c;
+      color: var(--text-primary);
+    }
+
+    .alert-gold {
+      background: rgba(200, 167, 82, 0.1);
+      border-color: var(--gold-elegant);
+      color: var(--text-primary);
+    }
+
+    /* Listas */
+    ul,
+    ol {
+      margin: 15px 0;
+      padding-left: 30px;
+    }
+
+    li {
+      margin: 8px 0;
+      color: var(--text-secondary);
+    }
+
+    /* Blockquotes */
+    blockquote {
+      border-left: 4px solid var(--gold-elegant);
+      padding: 15px 20px;
+      margin: 20px 0;
+      background: rgba(200, 167, 82, 0.05);
+      font-style: italic;
+      color: var(--text-secondary);
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--black-warm);
+      padding: 30px;
+      text-align: center;
+      border-top: 2px solid var(--gold-elegant);
+    }
+
+    .footer p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Utilidades */
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-20 {
+      margin-top: 20px;
+    }
+
+    .mb-20 {
+      margin-bottom: 20px;
+    }
+
+    strong {
+      color: var(--gold-elegant);
+      font-weight: 700;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .header {
+        padding: 30px 20px;
+      }
+
+      .logo-y {
+        font-size: 60px;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .section h2 {
+        font-size: 1.5rem;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      th,
+      td {
+        padding: 10px;
+      }
+
+      pre {
+        padding: 15px;
+        font-size: 0.8rem;
+      }
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+        color: black;
+      }
+
+      .container {
+        box-shadow: none;
+      }
+
+      .header::before {
+        display: none;
+      }
+
+      .logo-y {
+        animation: none;
+        color: #C8A752;
+      }
+
+      a {
+        color: black;
+        text-decoration: underline;
+      }
+
+      pre {
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+      }
+
+      .section {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo-y">Y</div>
+      <h1>YAVLGOLD V9.1</h1>
+      <p>Documento MegaPremium Unificado Definitivo</p>
+      <span class="version-badge">VERSION 9.1 - NOVIEMBRE 2025 (Contexto sincronizado con Luz Dorada v2.2)</span>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="content">
+      <!-- BLOQUE DE CONTEXTO OPERATIVO -->
+      <div class="alert alert-gold">
+        <h2 style="margin-top: 0; margin-bottom: 10px; font-family: 'Orbitron', sans-serif; font-size: 1.4rem;">🛰️ Contexto Operativo y Uso de este Documento</h2>
+        <p>
+          <strong>Este archivo no es un informe de auditoría en tiempo real ni un runbook operativo.</strong>
+          Es el <strong>blueprint de arquitectura y estrategia V9.1</strong> de YavlGold, una pieza de referencia
+          estable que recoge el consenso de Cline, GPT‑5.1 y Claude Sonnet 4.5 a fecha de noviembre de 2025.
+        </p>
+        <ul>
+          <li>
+            Para <strong>instrucciones tácticas paso a paso</strong> (qué comandos ejecutar, en qué orden, y con qué
+            condiciones de rollback) la fuente de verdad es el runbook
+            <strong>Operacion-Luz-Dorada-v2.2.html</strong>.
+          </li>
+          <li>
+            Para <strong>visión de campaña, estado de fases y enlace entre documentos</strong>, utiliza el satélite de
+            mando <strong>camino-dorado-satelite-de-mando-v2.2.html</strong>.
+          </li>
+          <li>
+            Este documento MegaPremium define <strong>cómo debe verse y comportarse</strong> YavlGold V9.1 a nivel de
+            arquitectura, seguridad, identidad visual y testing. Es la referencia que guía refactors y nuevas
+            implementaciones.
+          </li>
+          <li>
+            Si alguna indicación aquí entra en conflicto con el runbook Luz Dorada v2.2 o con el satélite Camino Dorado
+            v2.2, <strong>manda siempre el runbook y la realidad operativa</strong>; este archivo no se actualiza al mismo
+            ritmo que los runbooks.
+          </li>
+          <li>
+            Uso recomendado: abrir este documento en paralelo a Copilot Pro / asistentes IA y
+            <strong>citar secciones concretas</strong> (arquitectura, ConfigManager, identidad, etc.) como contexto de
+            diseño, no como checklist de ejecución directa.
+          </li>
+        </ul>
+      </div>
+
+      <!-- TABLA DE CONTENIDOS -->
+      <div class="toc">
+        <h2>📋 Índice de Contenidos</h2>
+        <ol>
+          <li><a href="#resumen-ejecutivo">🎯 Resumen Ejecutivo</a></li>
+          <li><a href="#situacion-actual">📊 Situación Actual - Panorama Real</a></li>
+          <li><a href="#identidad-oficial">👑 Identidad Sagrada YavlGold V9.1</a></li>
+          <li><a href="#auditoria-cline">🔍 Auditoría Completa Cline</a></li>
+          <li><a href="#auditoria-gpt5">🤖 Auditoría GPT-5 Pro</a></li>
+          <li><a href="#auditoria-sonnet">🧠 Auditoría Claude Sonnet 4.5</a></li>
+          <li><a href="#arquitectura">🏗️ Arquitectura V9.1 Enterprise</a></li>
+          <li><a href="#configmanager">🔐 Sistema de Seguridad ConfigManager</a></li>
+          <li><a href="#logo-implementacion">✨ Implementación Logo Y Angular</a></li>
+          <li><a href="#animaciones">🎨 Sistema de Animaciones</a></li>
+          <li><a href="#roadmap">🗺️ Roadmap de Ejecución</a></li>
+          <li><a href="#codigo-completo">💻 Código Completo para Copilot Pro</a></li>
+          <li><a href="#prompts-copilot">🎯 Prompts Megapremium Copilot</a></li>
+          <li><a href="#testing">🧪 Suite de Testing Completa</a></li>
+          <li><a href="#deployment">🚀 Plan de Deployment</a></li>
+        </ol>
+      </div>
+
+      <!-- SECCIÓN 1: RESUMEN EJECUTIVO -->
+      <section id="resumen-ejecutivo" class="section">
+        <h2>🎯 1. RESUMEN EJECUTIVO</h2>
+
+        <h3>🏆 ESTADO GENERAL DEL PROYECTO</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Categoría</th>
+              <th>Estado</th>
+              <th>Descripción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Seguridad</strong></td>
+              <td><span class="badge badge-success">Claves Rotadas</span></td>
+              <td>Credenciales antiguas invalidadas</td>
+            </tr>
+            <tr>
+              <td><strong>Arquitectura</strong></td>
+              <td><span class="badge badge-medium">V9.1 Planificada</span></td>
+              <td>Sistema enterprise listo para implementar</td>
+            </tr>
+            <tr>
+              <td><strong>Identidad</strong></td>
+              <td><span class="badge badge-success">Definida Oficialmente</span></td>
+              <td>Paleta V9.1 + Logo Y Angular + Tipografías</td>
+            </tr>
+            <tr>
+              <td><strong>Prioridad</strong></td>
+              <td><span class="badge badge-critical">Implementación Inmediata</span></td>
+              <td>6-8 horas con Copilot Pro</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>📌 OBJETIVO DE ESTE DOCUMENTO</h3>
+
+        <div class="alert alert-gold">
+          <p>
+            <strong>Este documento unifica TODA la información crítica del proyecto YavlGold en un formato ejecutivo listo para Copilot Pro.</strong>
+          </p>
+        </div>
+
+        <p>Incluye:</p>
+        <ul>
+          <li><strong>Análisis completo de GPT-5 Pro</strong> sobre arquitectura y mejores prácticas</li>
+          <li><strong>Recomendaciones de Claude Sonnet 4.5</strong> sobre seguridad y optimización</li>
+          <li><strong>Auditoría detallada de Cline</strong> con panorama actual REAL</li>
+          <li><strong>Identidad visual completa V9.1</strong> (Logo Y Angular + Paleta Oficial + Brand Guidelines)</li>
+          <li><strong>Plan de ejecución completo</strong> con código listo para copiar</li>
+          <li><strong>Prompts optimizados</strong> para Copilot Pro</li>
+          <li><strong>Suite de testing</strong> y deployment</li>
+        </ul>
+
+        <h3>✅ LO QUE ESTÁ FUNCIONANDO</h3>
+
+        <h4>Seguridad:</h4>
+        <ul>
+          <li>✅ Claves de Supabase rotadas correctamente - Sin exposición activa</li>
+          <li>✅ Solución temporal <code>local.config</code> implementado y funcionando</li>
+        </ul>
+
+        <h4>Funcionalidad Core:</h4>
+        <ul>
+          <li>✅ Sistema de autenticación operativo</li>
+          <li>✅ Base de datos Supabase conectada</li>
+          <li>✅ UI básica funcional</li>
+        </ul>
+
+        <h4>Identidad Visual:</h4>
+        <ul>
+          <li>✅ Logo Y Angular diseñado y aprobado</li>
+          <li>✅ Paleta de colores V9.1 oficial definida</li>
+          <li>✅ Tipografías enterprise seleccionadas (Orbitron + Rajdhani)</li>
+        </ul>
+
+        <h4>Equipo IA:</h4>
+        <ul>
+          <li>✅ GPT-5 Pro, Claude Sonnet 4.5 y Cline alineados</li>
+          <li>✅ Auditorías completadas y consenso logrado</li>
+        </ul>
+
+        <h3>⚠️ DEUDA TÉCNICA IDENTIFICADA</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Área</th>
+              <th>Problema</th>
+              <th>Impacto</th>
+              <th>Prioridad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Seguridad</td>
+              <td>Claves viejas (inútiles) aún en código legacy</td>
+              <td>Deuda técnica</td>
+              <td><span class="badge badge-critical">ALTA</span></td>
+            </tr>
+            <tr>
+              <td>Arquitectura</td>
+              <td>Falta sistema centralizado de configuración</td>
+              <td>Escalabilidad</td>
+              <td><span class="badge badge-critical">CRÍTICA</span></td>
+            </tr>
+            <tr>
+              <td>Visual</td>
+              <td>Logo Y Angular no implementado en producción</td>
+              <td>Branding</td>
+              <td><span class="badge badge-medium">MEDIA</span></td>
+            </tr>
+            <tr>
+              <td>Testing</td>
+              <td>Falta suite de tests automatizados</td>
+              <td>Calidad</td>
+              <td><span class="badge badge-medium">MEDIA</span></td>
+            </tr>
+            <tr>
+              <td>Documentación</td>
+              <td>Código sin JSDoc completo</td>
+              <td>Mantenibilidad</td>
+              <td><span class="badge badge-low">BAJA</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>🎯 MISIÓN V9.1</h3>
+
+        <blockquote>
+          <strong>Transformar YavlGold de MVP funcional a aplicación enterprise-grade en una sesión de trabajo intensiva usando Copilot Pro.</strong>
+        </blockquote>
+
+        <ul>
+          <li><strong>Tiempo estimado:</strong> 6-8 horas</li>
+          <li><strong>Resultado:</strong> Aplicación lista para producción</li>
+          <li><strong>Stack:</strong> JavaScript Vanilla + Vite + Supabase</li>
+          <li><strong>Identidad:</strong> Logo Y Angular + Paleta V9.1 + Animaciones profesionales</li>
+        </ul>
+      </section>
+
+      <!-- SECCIÓN 2: SITUACIÓN ACTUAL -->
+      <section id="situacion-actual" class="section">
+        <h2>📊 2. SITUACIÓN ACTUAL - PANORAMA REAL</h2>
+
+        <h3>🔍 AUDITORÍA HONESTA DEL ESTADO ACTUAL</h3>
+
+        <h4>🚨 MITO vs REALIDAD - Aclarando el Panorama</h4>
+
+        <table>
+          <thead>
+            <tr>
+              <th>❌ Lo que Parecía (Pánico)</th>
+              <th>✅ Lo que ES Realmente (Controlado)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Claves de Supabase expuestas en GitHub</td>
+              <td>Claves <strong>VIEJAS</strong> expuestas, pero ya rotadas e <strong>inútiles</strong></td>
+            </tr>
+            <tr>
+              <td>Crisis de seguridad activa</td>
+              <td>Deuda técnica a resolver, sin riesgo inmediato</td>
+            </tr>
+            <tr>
+              <td>Proyecto vulnerable</td>
+              <td>Proyecto funcional con mejoras pendientes</td>
+            </tr>
+            <tr>
+              <td>Necesidad de reescribir todo</td>
+              <td>Refactorización estratégica de componentes clave</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>✅ ESTADO DE SEGURIDAD (ACTUALIZADO)</h3>
+
+        <h4>🔐 Claves de Supabase</h4>
+
+        <ul>
+          <li>✅ <strong>Claves antiguas</strong> identificadas en archivos legacy (<code>test-ini-V4.html</code>, <code>authClient.js</code>)</li>
+          <li>✅ <strong>Claves rotadas</strong> en panel de Supabase - Las viejas ahora son <strong>inútiles</strong></li>
+          <li>✅ <strong>Nuevas claves</strong> configuradas en <code>local.config</code> (no comiteado)</li>
+          <li>✅ <strong>Sistema temporal</strong> funcionando correctamente</li>
+          <li>⚠️ <strong>ConfigManager</strong> pendiente de implementación (V9.1)</li>
+          <li>⚠️ <strong>Variables de entorno</strong> pendientes (<code>.env</code>)</li>
+          <li>⚠️ <strong>Eliminación de archivos legacy</strong> pendiente</li>
+        </ul>
+
+        <h4>📁 ARCHIVOS CON CLAVES LEGACY (INÚTILES PERO PRESENTES)</h4>
+
+        <pre><code>/test-ini-V4.html
+├─ Contiene: SUPABASE_URL y SUPABASE_ANON_KEY viejas
+├─ Estado: ❌ Claves rotadas (no funcionan)
+├─ Acción: 🗑️ Eliminar en V9.1
+└─ Riesgo: 🟢 NULO (claves invalidadas)
+
+/scripts/authClient.js (versión antigua)
+├─ Contiene: Credenciales hardcoded
+├─ Estado: ⚠️ Actualmente usando local.config
+├─ Acción: 🔧 Refactorizar con ConfigManager
+└─ Riesgo: 🟡 BAJO (solución temporal activa)
+
+/local.config (NO comiteado)
+├─ Contiene: Nuevas claves válidas
+├─ Estado: ✅ Funcionando, en .gitignore
+├─ Acción: ♻️ Migrar a sistema .env + ConfigManager
+└─ Riesgo: 🟢 NULO (no está en Git)</code></pre>
+
+        <h3>🏗️ ESTADO DE ARQUITECTURA</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Componente</th>
+              <th>Estado Actual</th>
+              <th>V9.1 Objetivo</th>
+              <th>Prioridad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Sistema de Autenticación</td>
+              <td>✅ Funcional</td>
+              <td>Refactorizar con ConfigManager</td>
+              <td><span class="badge badge-critical">Alta</span></td>
+            </tr>
+            <tr>
+              <td>Gestión de Configuración</td>
+              <td>⚠️ Temporal</td>
+              <td>ConfigManager + .env + API endpoint</td>
+              <td><span class="badge badge-critical">Crítica</span></td>
+            </tr>
+            <tr>
+              <td>Logo e Identidad Visual</td>
+              <td>📋 Diseñado</td>
+              <td>Implementar Y Angular en toda la app</td>
+              <td><span class="badge badge-medium">Media</span></td>
+            </tr>
+            <tr>
+              <td>Sistema de Animaciones</td>
+              <td>❌ Inexistente</td>
+              <td>Animaciones profesionales con CSS/JS</td>
+              <td><span class="badge badge-medium">Media</span></td>
+            </tr>
+            <tr>
+              <td>Testing</td>
+              <td>❌ Inexistente</td>
+              <td>Suite completa Vitest + E2E</td>
+              <td><span class="badge badge-medium">Media</span></td>
+            </tr>
+            <tr>
+              <td>Documentación</td>
+              <td>⚠️ Parcial</td>
+              <td>JSDoc completo + README actualizado</td>
+              <td><span class="badge badge-low">Baja</span></td>
+            </tr>
+            <tr>
+              <td>Performance</td>
+              <td>✅ Buena</td>
+              <td>Optimización adicional (lazy loading)</td>
+              <td><span class="badge badge-low">Baja</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>📦 STACK TECNOLÓGICO ACTUAL</h3>
+
+        <h4>⚛️ Frontend</h4>
+        <ul>
+          <li><strong>JavaScript:</strong> Vanilla ES6+ (sin frameworks)</li>
+          <li><strong>HTML5 + CSS3:</strong> Estructura semántica y estilos modernos</li>
+          <li><strong>Build Tool:</strong> Vite (desarrollo rápido y HMR)</li>
+          <li><strong>Arquitectura:</strong> Modular con patrón Singleton</li>
+        </ul>
+
+        <h4>🗄️ Backend/Database</h4>
+        <ul>
+          <li><strong>Supabase:</strong> PostgreSQL + Auth + Real-time</li>
+          <li><strong>Auth:</strong> Sistema integrado de autenticación</li>
+          <li><strong>RLS:</strong> Row Level Security habilitado</li>
+          <li><strong>Real-time:</strong> Subscriptions disponibles</li>
+        </ul>
+
+        <h4>🔐 Seguridad</h4>
+        <ul>
+          <li><strong>Autenticación:</strong> Supabase Auth con JWT</li>
+          <li><strong>Protocolo:</strong> HTTPS only</li>
+          <li><strong>Claves:</strong> Rotadas ✅</li>
+          <li><strong>Headers:</strong> Security headers configurados</li>
+        </ul>
+
+        <h4>🚀 Deploy</h4>
+        <ul>
+          <li><strong>Hosting:</strong> Netlify (recomendado) / GitHub Pages (actual)</li>
+          <li><strong>CI/CD:</strong> GitHub Actions (pendiente)</li>
+          <li><strong>Variables:</strong> Configuración por entorno</li>
+          <li><strong>CDN:</strong> Edge network global</li>
+        </ul>
+      </section>
+
+      <!-- SECCIÓN 3: IDENTIDAD OFICIAL -->
+      <section id="identidad-oficial" class="section">
+        <h2>👑 3. IDENTIDAD SAGRADA YAVLGOLD V9.1</h2>
+
+        <h3>✨ EL LOGO Y ANGULAR - DISEÑO OFICIAL</h3>
+
+        <div class="text-center">
+          <div class="logo-y" style="font-size: 120px; margin: 30px 0;">Y</div>
+        </div>
+
+        <ul>
+          <li><strong>Rotación:</strong> 30° en sentido horario</li>
+          <li><strong>Concepto:</strong> "La Y que señala hacia el futuro"</li>
+          <li><strong>Estilo:</strong> Minimalista, elegante, premium</li>
+        </ul>
+
+        <h3>🎨 PALETA DE COLORES OFICIAL V9.1</h3>
+
+        <pre><code>/* ════ */
+/*    PALETA OFICIAL YAVLGOLD V9.1    */
+/* ════ */
+
+#C8A752  /* ⭐ ORO PRINCIPAL - Elegante */
+    /* Uso: Logo, CTA primarios, elementos destacados */
+    /* Contexto: Botones principales, headings importantes */
+
+#D4AF37  /* ✨ ORO BRILLANTE - Highlights */
+    /* Uso: Hover states, gradientes, acentos brillantes */
+    /* Contexto: Efectos de hover, iconos especiales */
+
+#8B7355  /* 🥉 BRONCE - Acentos Sutiles */
+    /* Uso: Bordes, sombras, elementos secundarios */
+    /* Contexto: Divisores, fondos de tarjetas */
+
+#2C2416  /* ⬛ NEGRO CÁLIDO - Fondo Principal */
+    /* Uso: Backgrounds, overlays, secciones oscuras */
+    /* Contexto: Fondo general, modals, headers */
+
+#F5F5DC  /* 📄 BEIGE SUAVE - Textos */
+    /* Uso: Textos principales, fondos claros */
+    /* Contexto: Contenido legible, áreas de lectura */</code></pre>
+
+        <h3>🔤 TIPOGRAFÍAS OFICIALES</h3>
+
+        <h4>Orbitron - Títulos y Logo</h4>
+        <pre><code>@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap');
+
+/* Uso */
+font-family: 'Orbitron', sans-serif;
+font-weight: 700; /* Bold para títulos */
+font-weight: 900; /* Black para logo */
+
+/* Contextos */
+- Logo Y Angular
+- Títulos principales (h1, h2)
+- Botones primarios
+- Nombres de marca</code></pre>
+
+        <h4>Rajdhani - Contenido</h4>
+        <pre><code>@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
+
+/* Uso */
+font-family: 'Rajdhani', sans-serif;
+font-weight: 500; /* Medium para cuerpo */
+font-weight: 600; /* Semibold para subtítulos */
+font-weight: 700; /* Bold para énfasis */
+
+/* Contextos */
+- Párrafos y contenido general
+- Navegación
+- Subtítulos (h3, h4, h5, h6)
+- Labels y formularios</code></pre>
+
+        <h3>📐 ESPECIFICACIONES TÉCNICAS DEL LOGO</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Propiedad</th>
+              <th>Valor</th>
+              <th>Código CSS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Rotación</td>
+              <td>30° horario</td>
+              <td><code>transform: rotate(30deg);</code></td>
+            </tr>
+            <tr>
+              <td>Color Principal</td>
+              <td>Oro Elegante</td>
+              <td><code>color: #C8A752;</code></td>
+            </tr>
+            <tr>
+              <td>Color Hover</td>
+              <td>Oro Brillante</td>
+              <td><code>color: #D4AF37;</code></td>
+            </tr>
+            <tr>
+              <td>Fuente</td>
+              <td>Orbitron Bold</td>
+              <td><code>font-family: 'Orbitron', sans-serif;</code></td>
+            </tr>
+            <tr>
+              <td>Peso</td>
+              <td>700 (Bold)</td>
+              <td><code>font-weight: 700;</code></td>
+            </tr>
+            <tr>
+              <td>Sombra Base</td>
+              <td>Glow dorado suave</td>
+              <td><code>text-shadow: 0 0 20px rgba(200,167,82,0.6);</code></td>
+            </tr>
+            <tr>
+              <td>Sombra Hover</td>
+              <td>Glow intenso</td>
+              <td><code>text-shadow: 0 0 30px rgba(212,175,55,0.8);</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>🎨 VARIANTES DEL LOGO</h3>
+
+        <h4>🏆 Versión Principal</h4>
+        <ul>
+          <li><strong>Uso:</strong> Hero sections, splash screens</li>
+          <li><strong>Tamaño mínimo:</strong> 80px</li>
+          <li><strong>Color:</strong> #C8A752 con glow animado</li>
+        </ul>
+
+        <h4>📱 Versión Compacta</h4>
+        <ul>
+          <li><strong>Uso:</strong> Header, navegación, favicon base</li>
+          <li><strong>Tamaño mínimo:</strong> 32px</li>
+          <li><strong>Color:</strong> #C8A752 sin animación</li>
+        </ul>
+
+        <h4>🌙 Versión Monocromática Blanca</h4>
+        <ul>
+          <li><strong>Color:</strong> #FFFF</li>
+          <li><strong>Sombra:</strong> Adaptada al contexto</li>
+          <li><strong>Uso:</strong> Fondos muy oscuros, impresión</li>
+        </ul>
+
+        <h4>✨ Versión Animada</h4>
+        <ul>
+          <li><strong>Animación:</strong> Glow pulsante 2s loop</li>
+          <li><strong>Uso:</strong> Loading screens, estados de carga</li>
+          <li><strong>Keyframes:</strong> logoGlow (ver sección animaciones)</li>
+        </ul>
+
+        <h3>📦 ASSETS A GENERAR</h3>
+
+        <pre><code>/assets/
+├── logo/
+│   ├── logo-y-main.svg    # ⭐ Logo principal vectorial
+│   ├── logo-y-main.png    # PNG 1024x1024 alta resolución
+│   ├── logo-y-compact.svg    # Versión compacta
+│   ├── logo-y-mono-white.svg    # Monocromático blanco
+│   ├── logo-y-mono-black.svg    # Monocromático negro
+│   └── logo-y-animated.svg    # Con animación incluida
+│
+├── favicon/
+│   ├── favicon.ico    # Multi-size (16, 32, 48)
+│   ├── favicon-16x16.png
+│   ├── favicon-32x32.png
+│   ├── apple-touch-icon.png    # 180x180
+│   ├── android-chrome-192x192.png
+│   ├── android-chrome-512x512.png
+│   └── site.webmanifest    # PWA manifest
+│
+└── og-images/
+    ├── og-image.png    # 1200x630 para social media
+    └── og-image-square.png    # 1200x1200 para Instagram</code></pre>
+
+        <h3>🎯 BRAND GUIDELINES</h3>
+
+        <h4>❌ PROHIBIDO</h4>
+        <ul>
+          <li>⛔ Cambiar el ángulo de rotación (siempre <strong>30°</strong>)</li>
+          <li>⛔ Usar la Y sin rotar (versión plana prohibida)</li>
+          <li>⛔ Cambiar los colores de la paleta V9.1</li>
+          <li>⛔ Añadir efectos 3D o sombras exageradas</li>
+          <li>⛔ Distorsionar las proporciones de la letra</li>
+          <li>⛔ Colocar sobre fondos que dificulten la lectura</li>
+          <li>⛔ Usar tipografías diferentes a Orbitron/Rajdhani</li>
+        </ul>
+
+        <h4>✅ BUENAS PRÁCTICAS</h4>
+        <ul>
+          <li>✅ Mantener espacio en blanco alrededor (mínimo 50% del tamaño del logo)</li>
+          <li>✅ Usar versión monocromática en fondos con poco contraste</li>
+          <li>✅ Aplicar el resplandor dorado sutilmente (no exagerar)</li>
+          <li>✅ Usar fuente Orbitron bold para coherencia visual</li>
+          <li>✅ Animar suavemente (glow, pulse) en contextos interactivos</li>
+          <li>✅ Respetar tamaños mínimos para legibilidad</li>
+          <li>✅ Probar en múltiples dispositivos y resoluciones</li>
+        </ul>
+
+        <h3>🏢 APLICACIONES DEL LOGO</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Contexto</th>
+              <th>Versión</th>
+              <th>Tamaño Recomendado</th>
+              <th>Animación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Hero / Landing</td>
+              <td>Principal</td>
+              <td>120-200px</td>
+              <td>✅ Glow pulse</td>
+            </tr>
+            <tr>
+              <td>Header / Navbar</td>
+              <td>Compacta</td>
+              <td>40-60px</td>
+              <td>❌ Estática</td>
+            </tr>
+            <tr>
+              <td>Favicon</td>
+              <td>Compacta</td>
+              <td>16x16, 32x32</td>
+              <td>❌ Estática</td>
+            </tr>
+            <tr>
+              <td>Loading Screen</td>
+              <td>Principal</td>
+              <td>100-150px</td>
+              <td>✅ Pulse + rotate</td>
+            </tr>
+            <tr>
+              <td>Email Signature</td>
+              <td>Principal</td>
+              <td>60-80px</td>
+              <td>❌ Estática</td>
+            </tr>
+            <tr>
+              <td>Social Media Avatar</td>
+              <td>Compacta</td>
+              <td>400x400px</td>
+              <td>❌ Estática</td>
+            </tr>
+            <tr>
+              <td>Splash Screen</td>
+              <td>Principal</td>
+              <td>150-250px</td>
+              <td>✅ Fade in + glow</td>
+            </tr>
+            <tr>
+              <td>Error Pages</td>
+              <td>Principal</td>
+              <td>80-120px</td>
+              <td>❌ Estática</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>🎨 GRADIENTES OFICIALES</h3>
+
+        <pre><code>/* Gradiente Principal - Oro Premium */
+background: linear-gradient(135deg, #8B7355 0%, #C8A752 50%, #D4AF37 100%);
+
+/* Gradiente Sutil - Fondos */
+background: linear-gradient(180deg, #2C2416 0%, #1a1510 100%);
+
+/* Gradiente Hover - Botones */
+background: linear-gradient(135deg, #C8A752 0%, #D4AF37 100%);
+
+/* Gradiente Text - Títulos especiales */
+background: linear-gradient(90deg, #C8A752, #D4AF37);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;</code></pre>
+      </section>
+
+      <!-- SECCIONES 4-7: AUDITORÍAS + ARQUITECTURA -->
+      <!-- Contenido idéntico al original V9.1, manteniendo el rol de auditoría y blueprint técnico -->
+
+      <!-- SECCIÓN 4: AUDITORÍA CLINE -->
+      <section id="auditoria-cline" class="section">
+        <h2>🔍 4. AUDITORÍA COMPLETA CLINE</h2>
+
+        <h3>📋 RESUMEN DE AUDITORÍA</h3>
+
+        <ul>
+          <li><strong>Fecha:</strong> Noviembre 2025</li>
+          <li><strong>Auditor:</strong> Cline (Claude Sonnet 4.5-based AI Assistant)</li>
+          <li><strong>Alcance:</strong> Seguridad, Arquitectura, Código, Mejores Prácticas</li>
+          <li><strong>Resultado General:</strong> ✅ <strong>Funcional con Deuda Técnica Controlada</strong></li>
+        </ul>
+
+        <h3>🔴 HALLAZGOS CRÍTICOS (S1 - SEGURIDAD)</h3>
+
+        <h4>S1.1 - Claves Hardcoded en Código Legacy</h4>
+
+        <p><strong>Severidad:</strong> <span class="badge badge-critical">ALTA</span></p>
+
+        <p><strong>Archivos Afectados:</strong></p>
+        <ul>
+          <li><code>/test-ini-V4.html</code></li>
+          <li><code>/scripts/authClient.js</code> (versión antigua)</li>
+          <li>Potencialmente otros archivos legacy</li>
+        </ul>
+
+        <p><strong>Descripción:</strong></p>
+        <p>Credenciales de Supabase (URL y Anon Key) están hardcoded directamente en el código fuente de archivos legacy.</p>
+
+        <p><strong>Estado Actual:</strong></p>
+        <ul>
+          <li>✅ <strong>Claves rotadas</strong> - Las credenciales expuestas fueron invalidadas</li>
+          <li>✅ <strong>Sin riesgo activo</strong> - Las claves viejas no funcionan</li>
+          <li>⚠️ <strong>Deuda técnica</strong> - Archivos legacy aún presentes</li>
+        </ul>
+
+        <p><strong>Acción Requerida:</strong></p>
+        <ol>
+          <li>Eliminar archivos legacy con claves viejas</li>
+          <li>Implementar ConfigManager (sistema centralizado)</li>
+          <li>Migrar a variables de entorno (.env)</li>
+        </ol>
+
+        <p><strong>Prioridad:</strong> <span class="badge badge-critical">ALTA</span></p>
+
+        <h4>S1.2 - Falta Sistema de Gestión de Secretos</h4>
+
+        <p><strong>Severidad:</strong> <span class="badge badge-critical">ALTA</span></p>
+
+        <p><strong>Problema:</strong></p>
+        <p>No existe una arquitectura centralizada y escalable para manejar configuración sensible. Actualmente se usa <code>local.config</code>, que es una solución temporal no enterprise.</p>
+
+        <p><strong>Riesgos:</strong></p>
+        <ul>
+          <li>Dificulta colaboración en equipo</li>
+          <li>No escala para múltiples entornos (dev, staging, prod)</li>
+          <li>Falta validación automática de credenciales</li>
+        </ul>
+
+        <p><strong>Solución Propuesta:</strong></p>
+        <ul>
+          <li><strong>ConfigManager</strong> (Singleton pattern)</li>
+          <li><strong>Variables de entorno</strong> (.env para desarrollo)</li>
+          <li><strong>API endpoint</strong> (/api/config para producción)</li>
+          <li><strong>Validación en runtime</strong> (formato de claves)</li>
+        </ul>
+
+        <h3>🟡 HALLAZGOS MEDIOS (A1 - ARQUITECTURA)</h3>
+
+        <h4>A1.1 - Falta Separación de Concerns</h4>
+
+        <p><strong>Severidad:</strong> <span class="badge badge-medium">MEDIA</span></p>
+
+        <p><strong>Problema:</strong></p>
+        <p>Lógica de configuración está mezclada con lógica de negocio en algunos componentes. Por ejemplo, <code>AuthClient</code> tiene responsabilidades que deberían estar en un módulo de configuración.</p>
+
+        <p><strong>Impacto:</strong></p>
+        <ul>
+          <li>Dificulta testing unitario</li>
+          <li>Código menos mantenible</li>
+          <li>Acoplamiento innecesario entre módulos</li>
+        </ul>
+
+        <p><strong>Solución:</strong></p>
+        <p>Refactorizar con <strong>patrón Singleton + Dependency Injection</strong>:</p>
+        <ul>
+          <li>ConfigManager maneja SOLO configuración</li>
+          <li>AuthClient CONSUME ConfigManager (DI)</li>
+          <li>Cada módulo tiene una responsabilidad única</li>
+        </ul>
+
+        <h4>A1.2 - Falta Testing Automatizado</h4>
+
+        <p><strong>Severidad:</strong> <span class="badge badge-medium">MEDIA</span></p>
+
+        <p><strong>Problema:</strong></p>
+        <p>No existe suite de tests (unitarios, integración, E2E). Esto aumenta el riesgo de regresiones al hacer cambios.</p>
+
+        <p><strong>Impacto:</strong></p>
+        <ul>
+          <li>Cambios requieren testing manual extenso</li>
+          <li>Riesgo de romper funcionalidad existente</li>
+          <li>Dificulta refactorización segura</li>
+        </ul>
+
+        <p><strong>Solución:</strong></p>
+        <p>Implementar <strong>pirámide de testing</strong>:</p>
+        <ul>
+          <li>70% tests unitarios (Vitest)</li>
+          <li>20% tests de integración</li>
+          <li>10% tests E2E (Playwright)</li>
+        </ul>
+
+        <h3>🔵 HALLAZGOS MENORES (C1 - CÓDIGO)</h3>
+
+        <h4>C1.1 - Falta Documentación JSDoc</h4>
+
+        <p><strong>Severidad:</strong> <span class="badge badge-low">BAJA</span></p>
+
+        <p><strong>Problema:</strong></p>
+        <p>Muchas funciones y clases carecen de comentarios JSDoc descriptivos.</p>
+
+        <p><strong>Impacto:</strong></p>
+        <ul>
+          <li>Dificulta comprensión del código para nuevos desarrolladores</li>
+          <li>IDEs no pueden proporcionar autocompletado completo</li>
+          <li>Falta de documentación inline</li>
+        </ul>
+
+        <h4>C1.2 - Código Legacy Sin Usar</h4>
+
+        <p><strong>Severidad:</strong> <span class="badge badge-low">BAJA</span></p>
+
+        <p><strong>Problema:</strong></p>
+        <p>Archivos viejos comentados pero no eliminados están presentes en el proyecto.</p>
+
+        <p><strong>Solución:</strong></p>
+        <p>Limpieza de código muerto:</p>
+        <ul>
+          <li>Eliminar archivos legacy confirmados como obsoletos</li>
+          <li>Usar Git para historial (no comentar código)</li>
+          <li>Mantener solo código activo</li>
+        </ul>
+
+        <h3>📊 MÉTRICAS DE CALIDAD</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Métrica</th>
+              <th>Estado Actual</th>
+              <th>Objetivo V9.1</th>
+              <th>Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Cobertura de Tests</td>
+              <td>0%</td>
+              <td>80%+</td>
+              <td><span class="badge badge-critical">-80%</span></td>
+            </tr>
+            <tr>
+              <td>Documentación JSDoc</td>
+              <td>30%</td>
+              <td>90%+</td>
+              <td><span class="badge badge-medium">-60%</span></td>
+            </tr>
+            <tr>
+              <td>Seguridad (Secretos)</td>
+              <td>⚠️ Temporal</td>
+              <td>✅ Enterprise</td>
+              <td><span class="badge badge-medium">Mejorar</span></td>
+            </tr>
+            <tr>
+              <td>Performance</td>
+              <td>✅ Buena</td>
+              <td>✅ Óptima</td>
+              <td><span class="badge badge-success">Mínimo</span></td>
+            </tr>
+            <tr>
+              <td>Código Legacy</td>
+              <td>⚠️ Presente</td>
+              <td>✅ Eliminado</td>
+              <td><span class="badge badge-critical">Limpiar</span></td>
+            </tr>
+            <tr>
+              <td>Modularidad</td>
+              <td>✅ Buena</td>
+              <td>✅ Excelente</td>
+              <td><span class="badge badge-success">Mejorar</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>✅ RECOMENDACIONES PRIORITARIAS DE CLINE</h3>
+
+        <div class="alert alert-info">
+          <h4>1. 🔴 Implementar ConfigManager (CRÍTICO)</h4>
+          <p><strong>Descripción:</strong> Sistema centralizado de configuración con patrón Singleton, validación de claves y soporte para múltiples entornos.</p>
+          <p><strong>Tiempo Estimado:</strong> 1-2 horas con Copilot Pro</p>
+        </div>
+
+        <div class="alert alert-info">
+          <h4>2. 🔴 Migrar a Variables de Entorno (CRÍTICO)</h4>
+          <p><strong>Descripción:</strong> Crear <code>.env.example</code>, configurar Vite para variables de entorno, y crear endpoint <code>/api/config</code> para producción.</p>
+          <p><strong>Tiempo Estimado:</strong> 1 hora</p>
+        </div>
+
+        <div class="alert alert-warning">
+          <h4>3. 🟡 Eliminar Archivos Legacy (ALTA)</h4>
+          <p><strong>Descripción:</strong> Borrar <code>test-ini-V4.html</code> y otros archivos con claves viejas después de confirmar migración exitosa.</p>
+          <p><strong>Tiempo Estimado:</strong> 30 minutos</p>
+        </div>
+
+        <div class="alert alert-warning">
+          <h4>4. 🟡 Implementar Logo Y Angular (MEDIA)</h4>
+          <p><strong>Descripción:</strong> Aplicar identidad visual V9.1 en toda la aplicación: header, favicon, loading screens, error pages.</p>
+          <p><strong>Tiempo Estimado:</strong> 1-2 horas con asistencia de IA</p>
+        </div>
+
+        <div class="alert alert-warning">
+          <h4>5. 🟡 Suite de Testing (MEDIA)</h4>
+          <p><strong>Descripción:</strong> Configurar Vitest para tests unitarios, crear tests para ConfigManager, AuthClient, y flujos críticos.</p>
+          <p><strong>Tiempo Estimado:</strong> 2-3 horas</p>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 5: AUDITORÍA GPT-5 PRO -->
+      <section id="auditoria-gpt5" class="section">
+        <h2>🤖 5. AUDITORÍA GPT-5 PRO</h2>
+
+        <h3>📐 ANÁLISIS DE ARQUITECTURA</h3>
+
+        <ul>
+          <li><strong>Auditor:</strong> GPT-5 Pro</li>
+          <li><strong>Fecha:</strong> Noviembre 2025</li>
+          <li><strong>Enfoque:</strong> Patrones de diseño, escalabilidad, mejores prácticas</li>
+        </ul>
+
+        <h3>🏗️ EVALUACIÓN GENERAL</h3>
+
+        <p><strong>Calificación Global:</strong> ⭐⭐⭐⭐☆ (4/5)</p>
+
+        <p><strong>Fortalezas Identificadas:</strong></p>
+        <ul>
+          <li>✅ Arquitectura modular bien estructurada</li>
+          <li>✅ Separación lógica de responsabilidades (auth, config, utils)</li>
+          <li>✅ Uso de JavaScript moderno (ES6+)</li>
+          <li>✅ Build tool apropiado (Vite)</li>
+        </ul>
+
+        <p><strong>Áreas de Mejora:</strong></p>
+        <ul>
+          <li>⚠️ Gestión de configuración no centralizada</li>
+          <li>⚠️ Falta de testing automatizado</li>
+          <li>⚠️ Documentación incompleta</li>
+        </ul>
+
+        <h3>📐 PATRÓN DE DISEÑO RECOMENDADO</h3>
+
+        <p>GPT-5 Pro recomienda implementar <strong>Singleton + Dependency Injection</strong>:</p>
+
+        <h4>✅ Por qué Singleton para ConfigManager</h4>
+
+        <pre><code>// RAZÓN 1: Una única fuente de verdad
+// ❌ PROBLEMA sin Singleton
+const config1 = new ConfigManager();
+const config2 = new ConfigManager();
+// ¿Son las mismas configuraciones? ¿Se sincronizan?
+
+// ✅ SOLUCIÓN con Singleton
+const config = ConfigManager.getInstance();
+// Siempre la misma instancia, garantizado</code></pre>
+
+        <pre><code>// RAZÓN 2: Control de inicialización
+// ❌ PROBLEMA sin Singleton
+const config = new ConfigManager();
+await config.init(); // ¿Quién controla que solo se inicialice una vez?
+
+// ✅ SOLUCIÓN con Singleton
+const config = ConfigManager.getInstance();
+await config.init(); // Controlado internamente</code></pre>
+
+        <h4>✅ Por qué Dependency Injection</h4>
+
+        <pre><code>// RAZÓN 1: Desacoplamiento
+// ❌ SIN DI
+class AuthClient {
+  constructor() {
+    // Acoplamiento directo - difícil de testear
+    this.config = new ConfigManager();
+  }
+}
+
+// ✅ CON DI
+class AuthClient {
+  constructor(configManager) {
+    // Inyección - fácil de testear con mocks
+    this.config = configManager;
+  }
+}</code></pre>
+
+        <h3>⚡ OPTIMIZACIÓN DE PERFORMANCE</h3>
+
+        <h4>1. 🚀 Lazy Loading de Módulos</h4>
+
+        <p><strong>Problema Actual:</strong> Todos los módulos se cargan al inicio, aumentando el tiempo de carga inicial.</p>
+
+        <p><strong>Solución:</strong></p>
+        <pre><code>// ❌ Carga inmediata (actual)
+import { AuthClient } from './auth/AuthClient.js';
+import { Dashboard } from './components/Dashboard.js';
+
+// ✅ Lazy loading (recomendado)
+const loadAuthClient = () => import('./auth/AuthClient.js');
+const loadDashboard = () => import('./components/Dashboard.js');
+
+// Cargar solo cuando se necesite
+async function showDashboard() {
+  const { Dashboard } = await loadDashboard();
+  // ...
+}</code></pre>
+
+        <p><strong>Beneficio:</strong> Reduce bundle inicial en ~30-40%</p>
+
+        <h4>2. 💾 Cache de Configuración</h4>
+
+        <p><strong>Solución Implementada en ConfigManager:</strong></p>
+        <pre><code>class ConfigManager {
+  #cache = new Map();
+
+  get(key) {
+    // Cache hit - retorna inmediatamente
+    if (this.#cache.has(key)) {
+      return this.#cache.get(key);
+    }
+
+    // Cache miss - busca y cachea
+    const value = this.#config[key];
+    this.#cache.set(key, value);
+    return value;
+  }
+}</code></pre>
+
+        <p><strong>Beneficio:</strong> Evita lookups repetidos, mejora performance en ~15%</p>
+
+        <h3>🧪 ESTRATEGIA DE TESTING RECOMENDADA</h3>
+
+        <p>GPT-5 Pro recomienda la <strong>pirámide de testing</strong>:</p>
+
+        <pre><code>    /\
+    /  \    10% E2E
+    /────\    (Playwright)
+    /    \
+    /────\   20% Integración
+   /    \  (Vitest)
+  /────\
+ /    \ 70% Unitarios
+/────\ (Vitest)</code></pre>
+
+        <h4>70% Tests Unitarios</h4>
+        <p><strong>Objetivo:</strong> Testear funciones individuales aisladas</p>
+
+        <pre><code>// ConfigManager.test.js
+describe('ConfigManager', () => {
+  test('getInstance siempre retorna la misma instancia', () => {
+    const instance1 = ConfigManager.getInstance();
+    const instance2 = ConfigManager.getInstance();
+    expect(instance1).toBe(instance2);
+  });
+
+  test('get lanza error si no está inicializado', () => {
+    ConfigManager._resetForTesting();
+    const config = ConfigManager.getInstance();
+    expect(() => config.get('KEY')).toThrow();
+  });
+});</code></pre>
+
+        <h4>20% Tests de Integración</h4>
+        <p><strong>Objetivo:</strong> Testear interacción entre módulos</p>
+
+        <pre><code>// Auth.integration.test.js
+describe('Auth Integration', () => {
+  test('AuthClient usa ConfigManager correctamente', async () => {
+    await config.init();
+    const authClient = AuthClient.getInstance();
+    await authClient.init();
+
+    expect(authClient.isInitialized()).toBe(true);
+  });
+});</code></pre>
+
+        <h4>10% Tests E2E</h4>
+        <p><strong>Objetivo:</strong> Testear flujos completos de usuario</p>
+
+        <pre><code>// LoginFlow.spec.js (Playwright)
+test('usuario puede hacer login exitosamente', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#login-button');
+  await page.fill('#email', 'test@example.com');
+  await page.fill('#password', 'password123');
+  await page.click('#submit');
+
+  await expect(page.locator('#dashboard')).toBeVisible();
+});</code></pre>
+
+        <h3>📊 MÉTRICAS DE CALIDAD RECOMENDADAS</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Métrica</th>
+              <th>Objetivo</th>
+              <th>Herramienta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Code Coverage</td>
+              <td>> 80%</td>
+              <td>Vitest + c8</td>
+            </tr>
+            <tr>
+              <td>Performance Score</td>
+              <td>> 90</td>
+              <td>Lighthouse</td>
+            </tr>
+            <tr>
+              <td>Accessibility</td>
+              <td>> 95</td>
+              <td>Lighthouse</td>
+            </tr>
+            <tr>
+              <td>Bundle Size</td>
+              <td>< 200KB</td>
+              <td>Vite build analyzer</td>
+            </tr>
+            <tr>
+              <td>First Contentful Paint</td>
+              <td>< 1.5s</td>
+              <td>Lighthouse</td>
+            </tr>
+            <tr>
+              <td>Time to Interactive</td>
+              <td>< 3s</td>
+              <td>Lighthouse</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SECCIÓN 6: AUDITORÍA CLAUDE SONNET 4.5 -->
+      <section id="auditoria-sonnet" class="section">
+        <h2>🧠 6. AUDITORÍA CLAUDE SONNET 4.5</h2>
+
+        <h3>🔐 ANÁLISIS DE SEGURIDAD</h3>
+
+        <ul>
+          <li><strong>Auditor:</strong> Claude Sonnet 4.5</li>
+          <li><strong>Fecha:</strong> Noviembre 2025</li>
+          <li><strong>Enfoque:</strong> Seguridad, privacidad, mejores prácticas enterprise</li>
+        </ul>
+
+        <h3>🏆 EVALUACIÓN GENERAL DE SEGURIDAD</h3>
+
+        <p><strong>Calificación:</strong> ⭐⭐⭐⭐☆ (4/5)</p>
+
+        <blockquote>
+          El proyecto muestra <strong>buenos reflejos de seguridad</strong> con la rotación inmediata de claves comprometidas. La arquitectura base es sólida, pero requiere implementación de gestión de secretos enterprise para alcanzar nivel producción.
+        </blockquote>
+
+        <h3>✅ ACCIONES DE SEGURIDAD CORRECTAS</h3>
+
+        <h4>1. ✅ Rotación Inmediata de Claves</h4>
+
+        <p><strong>Acción tomada:</strong> Ante la detección de claves expuestas en GitHub, se procedió inmediatamente a rotarlas en el panel de Supabase.</p>
+
+        <p><strong>Por qué es correcto:</strong></p>
+        <ul>
+          <li>Invalida credenciales comprometidas</li>
+          <li>Previene acceso no autorizado</li>
+          <li>Estándar de la industria ante exposición</li>
+        </ul>
+
+        <p><strong>Impacto:</strong> 🟢 <strong>Riesgo neutralizado</strong> - Las claves viejas son inútiles</p>
+
+        <h4>2. ✅ Uso de .gitignore Estricto</h4>
+
+        <p><strong>Configuración actual:</strong></p>
+        <pre><code># Archivos sensibles
+.env
+.env.local
+.env.production
+local.config
+local.config.js</code></pre>
+
+        <p><strong>Por qué es correcto:</strong></p>
+        <ul>
+          <li>Previene commits accidentales de secretos</li>
+          <li>Protege configuración local de desarrollo</li>
+          <li>Buena práctica estándar</li>
+        </ul>
+
+        <h4>3. ✅ Separación de Claves Públicas/Privadas</h4>
+
+        <p><strong>Implementación actual:</strong></p>
+        <ul>
+          <li>Frontend usa solo <code>SUPABASE_ANON_KEY</code> (pública)</li>
+          <li>Service Role Key nunca expuesta al cliente</li>
+          <li>Row Level Security (RLS) habilitado en Supabase</li>
+        </ul>
+
+        <p><strong>Por qué es correcto:</strong></p>
+        <ul>
+          <li><strong>Principio de mínimo privilegio</strong></li>
+          <li>ANON_KEY tiene permisos limitados por RLS</li>
+          <li>Service Role Key solo en backend (cuando sea necesario)</li>
+        </ul>
+
+        <h3>⚠️ ÁREAS DE MEJORA IDENTIFICADAS</h3>
+
+        <h4>1. ⚠️ Gestión de Secretos Temporal</h4>
+
+        <p><strong>Problema:</strong> Uso de <code>local.config</code> es una solución temporal, no escalable para producción.</p>
+
+        <p><strong>Riesgos:</strong></p>
+        <ul>
+          <li>No funciona en múltiples entornos</li>
+          <li>Dificulta colaboración en equipo</li>
+          <li>No es estándar de la industria</li>
+        </ul>
+
+        <p><strong>Solución Recomendada:</strong></p>
+        <pre><code>DESARROLLO:
+├─ .env (variables de entorno locales)
+├─ Vite expone variables con VITE_ prefix
+└─ ConfigManager lee desde import.meta.env
+
+PRODUCCIÓN:
+├─ Variables de entorno en hosting (Netlify/Vercel)
+├─ API endpoint /api/config expone solo claves públicas
+└─ ConfigManager fetch desde /api/config</code></pre>
+
+        <h4>2. ⚠️ Falta Validación en Runtime</h4>
+
+        <p><strong>Solución Recomendada:</strong></p>
+        <pre><code>class ConfigManager {
+  #validate() {
+    const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+    const missing = required.filter(key => !this.#config[key]);
+
+    if (missing.length > 0) {
+      throw new Error(`Claves faltantes: ${missing.join(', ')}`);
+    }
+
+    // Validar formato URL
+    try {
+      new URL(this.#config.SUPABASE_URL);
+    } catch {
+      throw new Error('SUPABASE_URL tiene formato inválido');
+    }
+
+    // Validar longitud de clave
+    if (this.#config.SUPABASE_ANON_KEY.length < 40) {
+      throw new Error('SUPABASE_ANON_KEY parece inválida');
+    }
+  }
+}</code></pre>
+
+        <h3>🏗️ ARQUITECTURA DE SEGURIDAD RECOMENDADA</h3>
+
+        <pre><code>┌────┐
+│    FRONTEND (Browser)    │
+├────┤
+│    │
+│  ┌────┐    │
+│  │    ConfigManager (Singleton)    │    │
+│  │  ┌────┐  │    │
+│  │  │  Cache (Map)    │  │    │
+│  │  │  - Optimización de lookups    │  │    │
+│  │  └────┘  │    │
+│  │  ┌────┐  │    │
+│  │  │  Validator    │  │    │
+│  │  │  - Formato de claves    │  │    │
+│  │  │  - Existencia de requeridas    │  │    │
+│  │  └────┘  │    │
+│  └────┬────┘    │
+│    │    │
+│    ▼    │
+│    ┌────┐    │
+│    │   Environment Loader    │    │
+│    │  - Detecta DEV vs PROD  │    │
+│    └────┬────┘    │
+│    │    │
+│    ┌────┴────┐    │
+│    ▼    ▼    │
+│ ┌────┐    ┌────┐    │
+│ │  .env   │    │ /api/config  │    │
+│ │  (DEV)  │    │   (PROD)    │    │
+│ └────┘    └────┬────┘    │
+│    │    │
+└────┼────┘
+    │
+    ▼
+    ┌────┐
+    │   BACKEND (Serverless)    │
+    │   Netlify/Vercel Function    │
+    ├────┤
+    │    │
+    │  ┌────┐  │
+    │  │  Environment Variables │  │
+    │  │  (Hosting Dashboard)   │  │
+    │  │    │  │
+    │  │  SUPABASE_URL    │  │
+    │  │  SUPABASE_ANON_KEY    │  │
+    │  │  HCAPTCHA_SITE_KEY    │  │
+    │  └────┘  │
+    │    │
+    │  ⚠️ NUNCA exponer:    │
+    │  - SUPABASE_SERVICE_KEY    │
+    │  - Database passwords    │
+    │  - API secrets    │
+    └────┘</code></pre>
+
+        <h3>🔐 MEJORES PRÁCTICAS DE SEGURIDAD</h3>
+
+        <h4>1. 🔑 Gestión de Claves</h4>
+
+        <pre><code>// ✅ BUENO - Separación clara
+const PUBLIC_KEYS = [
+  'SUPABASE_URL',
+  'SUPABASE_ANON_KEY',
+  'HCAPTCHA_SITE_KEY'
+];
+
+const PRIVATE_KEYS = [
+  'SUPABASE_SERVICE_KEY',  // ⚠️ NUNCA en frontend
+  'DATABASE_PASSWORD',    // ⚠️ NUNCA en frontend
+  'API_SECRET'    // ⚠️ NUNCA en frontend
+];
+
+// ❌ MALO - Mezclar claves públicas/privadas
+const ALL_KEYS = [...PUBLIC_KEYS, ...PRIVATE_KEYS];</code></pre>
+
+        <h4>2. 🛡️ Validación Estricta</h4>
+
+        <pre><code>// ✅ BUENO - Validación completa
+class ConfigValidator {
+  static validateURL(url) {
+    try {
+      const parsed = new URL(url);
+      if (!parsed.protocol.startsWith('https')) {
+        throw new Error('URL debe usar HTTPS');
+      }
+      return true;
+    } catch {
+      throw new Error('URL inválida');
+    }
+  }
+
+  static validateKey(key, minLength = 40) {
+    if (typeof key !== 'string') {
+      throw new Error('Key debe ser string');
+    }
+    if (key.length < minLength) {
+      throw new Error(`Key muy corta (mínimo ${minLength})`);
+    }
+    if (!/^[A-Za-z0-9_\-\.]+$/.test(key)) {
+      throw new Error('Key contiene caracteres inválidos');
+    }
+    return true;
+  }
+}</code></pre>
+
+        <h4>3. 🚫 Principio de Mínimo Privilegio</h4>
+
+        <pre><code>// ✅ BUENO - Solo exponer lo necesario
+// /api/config.js
+export default function handler(req, res) {
+  const publicConfig = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    // Solo claves públicas
+  };
+
+  res.json(publicConfig);
+}
+
+// ❌ MALO - Exponer todo
+export default function handler(req, res) {
+  res.json(process.env); // ⚠️ NUNCA hacer esto
+}</code></pre>
+
+        <h3>🔍 CHECKLIST DE SEGURIDAD</h3>
+
+        <pre><code>ANTES DE PRODUCCIÓN:
+├─ [ ] ConfigManager implementado y testeado
+├─ [ ] Variables de entorno configuradas en hosting
+├─ [ ] .env NUNCA comiteado (verificar .gitignore)
+├─ [ ] Validación de claves en runtime activa
+├─ [ ] Solo claves públicas expuestas al frontend
+├─ [ ] Service Role Key NUNCA en código cliente
+├─ [ ] HTTPS forzado en producción
+├─ [ ] Headers de seguridad configurados
+├─ [ ] Row Level Security (RLS) habilitado en Supabase
+├─ [ ] Logs no contienen secretos
+├─ [ ] Política de rotación de claves definida
+└─ [ ] Audit trail de acceso a configuración
+
+MONITOREO CONTINUO:
+├─ [ ] Alertas de acceso anómalo
+├─ [ ] Logs de seguridad revisados semanalmente
+├─ [ ] Dependencias actualizadas (npm audit)
+├─ [ ] Scans de seguridad automatizados
+└─ [ ] Revisión de permisos trimestral</code></pre>
+      </section>
+
+      <!-- SECCIÓN 7: ARQUITECTURA V9.1 -->
+      <section id="arquitectura" class="section">
+        <h2>🏗️ 7. ARQUITECTURA V9.1 ENTERPRISE</h2>
+
+        <h3>📐 ESTRUCTURA DE CARPETAS DEFINITIVA</h3>
+
+        <pre><code>yavlgold-v9.1/
+│
+├── src/
+│   ├── scripts/
+│   │   │
+│   │   ├── config/    # ⭐ CORE - Gestión de Configuración
+│   │   │   ├── ConfigManager.js    # Singleton - Una fuente de verdad
+│   │   │   ├── ConfigValidator.js    # Validación de claves y formatos
+│   │   │   └── EnvironmentLoader.js    # Detección dev/prod
+│   │   │
+│   │   ├── auth/    # 🔐 Autenticación
+│   │   │   ├── AuthClient.js    # Cliente Supabase (usa ConfigManager)
+│   │   │   ├── AuthUI.js    # Componentes de UI
+│   │   │   └── AuthService.js    # Lógica de negocio
+│   │   │
+│   │   ├── utils/    # 🛠️ Utilidades
+│   │   │   ├── Logger.js    # Sistema de logs centralizado
+│   │   │   ├── ErrorHandler.js    # Manejo global de errores
+│   │   │   └── Validators.js    # Validadores reutilizables
+│   │   │
+│   │   └── components/    # 🎨 Componentes UI
+│   │       ├── LoadingScreen.js    # Pantalla de carga con logo
+│   │       ├── ErrorBoundary.js    # Manejo de errores en UI
+│   │       └── Header.js    # Header con logo Y
+│   │
+│   ├── assets/    # 📦 Recursos Estáticos
+│   │   ├── logo/
+│   │   │   ├── logo-y-main.svg    # Logo principal
+│   │   │   ├── logo-y-main.png    # PNG alta resolución
+│   │   │   ├── logo-y-compact.svg    # Versión compacta
+│   │   │   ├── logo-y-mono-white.svg    # Monocromático blanco
+│   │   │   └── logo-y-mono-black.svg    # Monocromático negro
+│   │   │
+│   │   └── favicon/
+│   │       ├── favicon.ico    # Multi-size
+│   │       ├── favicon-16x16.png
+│   │       ├── favicon-32x32.png
+│   │       ├── apple-touch-icon.png    # iOS
+│   │       ├── android-chrome-192x192.png
+│   │       ├── android-chrome-512x512.png
+│   │       └── site.webmanifest    # PWA manifest
+│   │
+│   ├── styles/    # 🎨 Estilos
+│   │   ├── variables.css    # Variables CSS (colores V9.1)
+│   │   ├── animations.css    # Animaciones reutilizables
+│   │   └── global.css    # Estilos globales
+│   │
+│   ├── main.js    # 🚀 Entry point principal
+│   └── index.html    # HTML principal
+│
+├── api/    # ☁️ Funciones Serverless
+│   └── config.js    # Endpoint /api/config (Netlify/Vercel)
+│
+├── tests/    # 🧪 Suite de Tests
+│   ├── unit/
+│   │   ├── ConfigManager.test.js
+│   │   ├── AuthClient.test.js
+│   │   ├── Validators.test.js
+│   │   └── Logger.test.js
+│   │
+│   ├── integration/
+│   │   ├── Auth.integration.test.js
+│   │   └── Config.integration.test.js
+│   │
+│   └── e2e/
+│       ├── LoginFlow.spec.js
+│       └── Registration.spec.js
+│
+├── .env.example    # 📄 Template de variables (comitear)
+├── .env    # 🔒 Variables locales (NO comitear)
+├── .gitignore    # 🚫 Archivos ignorados
+│
+├── vite.config.js    # ⚙️ Configuración Vite
+├── vitest.config.js    # 🧪 Configuración testing
+├── playwright.config.js    # 🎭 Configuración E2E
+│
+├── package.json    # 📦 Dependencias
+├── package-lock.json
+│
+├── README.md    # 📚 Documentación principal
+├── CONTRIBUTING.md    # 👥 Guía de contribución
+├── SECURITY.md    # 🔐 Políticas de seguridad
+└── CHANGELOG.md    # 📝 Historial de cambios</code></pre>
+
+        <h3>🔗 DIAGRAMA DE DEPENDENCIAS</h3>
+
+        <pre><code>┌────┐
+│    CAPA DE PRESENTACIÓN    │
+├────┤
+│    │
+│  ┌────┐    │
+│  │  index.html  │    │
+│  └────┬────┘    │
+│    │    │
+│    ▼    │
+│  ┌────┐    ┌────┐    │
+│  │   main.js    │────▶│  LoadingScreen  │    │
+│  └────┬────┘    └────┘    │
+│    │    │
+│    ├────┐    │
+│    ▼    ▼    │
+│  ┌────┐    ┌────┐    │
+│  │   Header    │    │   AuthUI    │    │
+│  └────┘    └────┬────┘    │
+│    │    │
+└────┼────┘
+    │
+┌────┼────┐
+│    CAPA DE LÓGICA    │
+├────┼────┤
+│    │    │
+│    ▼    │
+│    ┌────┐    │
+│    │ AuthClient   │    │
+│    └────┬────┘    │
+│    │    │
+│    │ (usa vía DI)    │
+│    ▼    │
+│    ┌────┐    │
+│    │  ConfigManager   │◀────┐    │
+│    │   (Singleton)    │    │    │
+│    └────┬────┘    │    │
+│    │    │    │
+│    │ inicializa    │ usa    │
+│    ▼    │    │
+│    ┌────┐    │    │
+│    │ ConfigValidator │    │    │
+│    └────┘    │    │
+│    │    │
+│  ┌────┐    │    │
+│  │    Módulos Auxiliares    │    │    │
+│  ├────┤    │    │
+│  │  Logger  │  ErrorHandler  │ Utils  │────┘    │
+│  └────┘    │
+│    │
+└────┬────┘
+    │
+┌────┼────┐
+│    CAPA DE CONFIGURACIÓN    │
+├────┼────┤
+│    │    │
+│    ┌────┴────┐    │
+│    ▼    ▼    │
+│  ┌────┐    ┌────┐    │
+│  │  .env   │    │ /api/config  │    │
+│  │  (DEV)  │    │   (PROD)    │    │
+│  └────┘    └────┬────┘    │
+│    │    │
+└────┼────┘
+    │
+┌────┼────┐
+│    CAPA EXTERNA    │
+├────┼────┤
+│    ▼    │
+│    ┌────┐    │
+│    │  Environment Variables   │    │
+│    │   (Netlify/Vercel)    │    │
+│    └────┬────┘    │
+│    │    │
+│    ▼    │
+│    ┌────┐    │
+│    │    Supabase Backend    │    │
+│    │   - PostgreSQL    │    │
+│    │   - Auth    │    │
+│    │   - Real-time    │    │
+│    └────┘    │
+│    │
+└────┘</code></pre>
+
+        <h3>🔄 FLUJO DE INICIALIZACIÓN COMPLETO</h3>
+
+        <h4>TIMELINE DE INICIALIZACIÓN</h4>
+
+        <pre><code>0ms    │ HTML cargado, loading screen visible
+    │
+50ms    │ main.js ejecuta
+    │
+100ms   │ ConfigManager.init() comienza
+    │ ├─ Detecta entorno (DEV/PROD)
+    │ ├─ Carga configuración
+    │ └─ Valida claves
+    │
+500ms   │ ConfigManager listo ✅
+    │
+550ms   │ AuthClient.init() comienza
+    │ ├─ Lee config de ConfigManager
+    │ ├─ Crea cliente Supabase
+    │ └─ Carga sesión actual
+    │
+900ms   │ AuthClient listo ✅
+    │
+950ms   │ initUI() comienza
+    │ ├─ Renderiza header
+    │ └─ Configura error boundary
+    │
+1100ms  │ UI lista ✅
+    │
+1150ms  │ Verifica estado autenticación
+    │ ├─ loadDashboard() o
+    │ └─ loadLoginScreen()
+    │
+1400ms  │ Loading screen se oculta (fade out)
+    │
+1900ms  │ App visible y funcional ✅</code></pre>
+      </section>
+
+      <div class="alert alert-gold">
+        <h3>📦 DOCUMENTO COMPLETO DISPONIBLE</h3>
+        <p>Este documento HTML contiene todas las secciones principales del proyecto YavlGold V9.1.</p>
+        <p><strong>Secciones incluidas hasta aquí:</strong></p>
+        <ul>
+          <li>✅ Resumen Ejecutivo</li>
+          <li>✅ Situación Actual</li>
+          <li>✅ Identidad Oficial</li>
+          <li>✅ Auditoría Cline</li>
+          <li>✅ Auditoría GPT-5 Pro</li>
+          <li>✅ Auditoría Claude Sonnet 4.5</li>
+          <li>✅ Arquitectura V9.1</li>
+        </ul>
+        <p><strong>Secciones pendientes de agregar (puedes pedirlas):</strong></p>
+        <ul>
+          <li>📝 ConfigManager - Código completo</li>
+          <li>📝 Implementación Logo Y Angular</li>
+          <li>📝 Sistema de Animaciones</li>
+          <li>📝 Roadmap de Ejecución</li>
+          <li>📝 Código Completo para Copilot</li>
+          <li>📝 Prompts Megapremium</li>
+          <li>📝 Suite de Testing</li>
+          <li>📝 Plan de Deployment</li>
+        </ul>
+        <p style="margin-top: 10px;">
+          Recuerda: para <strong>operaciones en vivo</strong> usa siempre el runbook
+          <strong>Operacion-Luz-Dorada-v2.2.html</strong> y el satélite
+          <strong>camino-dorado-satelite-de-mando-v2.2.html</strong> como panel de situación.
+        </p>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <p><strong>YavlGold V9.1</strong> - Documento MegaPremium Unificado (edición contexto sincronizado con Luz Dorada v2.2)</p>
+      <p>Generado: Noviembre 2025 | Para uso con Copilot Pro y Operación Luz Dorada v2.2</p>
+      <p style="margin-top: 10px; color: #C8A752;">👑 Construyendo el futuro del trading 👑</p>
+    </div>
+  </div>
+</body>
+</html>

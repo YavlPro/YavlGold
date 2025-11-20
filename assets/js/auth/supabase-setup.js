@@ -76,7 +76,8 @@ async function verifySetup() {
 // Exportar configuración
 export const SUPABASE_CONFIG = {
   url: SUPABASE_URL,
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg',
+  // anonKey removed from repo; prefer runtime injection via window.__YAVL_SUPABASE__
+  anonKey: (typeof window !== 'undefined' && window.__YAVL_SUPABASE__ && window.__YAVL_SUPABASE__.anon) || '__ANON_REMOVED__',
   tables: {
     profiles: 'profiles',
     announcements: 'announcements'

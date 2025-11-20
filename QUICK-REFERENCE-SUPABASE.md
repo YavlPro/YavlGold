@@ -48,7 +48,26 @@ tests/verify-supabase.html
 
 ---
 
-## 📁 ARCHIVOS CLAVE
+## � Reset Password (DEV y Cloud)
+
+### Flujo general
+1. Click "Entrar" → Modal Premium → "¿Olvidaste tu contraseña?"
+2. Ingresa tu email y envía
+3. Abre el correo y haz clic en el enlace
+4. En `reset-password.html`, define una contraseña fuerte (≥8, mayúscula, número, sin espacios)
+5. Inicia sesión con la nueva contraseña
+
+### Emails en entorno local (supabase start)
+- Cuando ejecutas `supabase start`, los emails se interceptan en **Inbucket** (no llegan a Gmail).
+- Abre Inbucket: `http://localhost:54324` y selecciona tu buzón (email usado en el paso 2).
+- Localiza el correo de reseteo de Supabase y haz clic en el enlace.
+
+### Cloud (Proyecto hospedado en Supabase)
+- Revisa tu bandeja de entrada real o verifícalo desde Supabase Dashboard > Auth > Users (últimos emails).
+
+---
+
+## �📁 ARCHIVOS CLAVE
 
 | Archivo | Propósito |
 |---------|-----------|

@@ -8,11 +8,69 @@ const AuthClient = {
 
   init() {
     const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-    
-    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    this.loadSession();
-    console.log('[Auth] ✅ AuthClient v2.0 inicializado');
+    // Prefer runtime configuration injected via window.__YAVL_SUPABASE__
+    const runtime = (typeof window !== 'undefined' && window.__YAVL_SUPABASE__) || null;
+    const SUPABASE_ANON_KEY = (runtime && runtime.anon) || '__ANON_REMOVED__';
+
+    // If runtime config missing, attempt to auto-load apps/gold/config.local.js
+    if (!runtime || !runtime.anon) {
+      console.warn('[AuthClient] ⚠️ No runtime Supabase config found. Attempting to load /apps/gold/config.local.js automatically...');
+      // register as global so other code can access this client while we wait
+      window.AuthClient = this;
+
+      // Try to inject the runtime config script (absolute and relative as fallback)
+      const tryLoadConfig = (src) => new Promise((resolve) => {
+        try {
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.onload = () => resolve(true);
+          s.onerror = () => resolve(false);
+          document.head.appendChild(s);
+        } catch (e) {
+          resolve(false);
+        }
+      });
+
+      const waitForRuntime = (timeoutMs = 5000) => new Promise((resolve) => {
+        const start = Date.now();
+        const check = () => {
+          if (window.__YAVL_SUPABASE__ && window.__YAVL_SUPABASE__.anon) return resolve(true);
+          if (Date.now() - start > timeoutMs) return resolve(false);
+          setTimeout(check, 150);
+        };
+        check();
+      });
+
+      (async () => {
+        // try absolute path first
+        await tryLoadConfig('/apps/gold/config.local.js');
+        let ok = await waitForRuntime(2000);
+        if (!ok) {
+          // try relative path
+          await tryLoadConfig('apps/gold/config.local.js');
+          ok = await waitForRuntime(3000);
+        }
+
+        if (ok) {
+          // re-run init now that runtime is available
+          console.log('[AuthClient] ✅ Runtime config loaded dynamically');
+          this.init();
+        } else {
+          console.warn('[AuthClient] ⚠️ No runtime config found after auto-load attempts. Auth will remain inactive until config is provided.');
+        }
+      })();
+
+      return;
+    }
+
+    try {
+      this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      this.loadSession();
+      console.log('[Auth] ✅ AuthClient v2.0 inicializado (runtime anon)');
+    } catch (err) {
+      console.error('[AuthClient] ❌ Error inicializando Supabase con runtime config:', err);
+    }
   },
 
   async getCaptchaToken() {

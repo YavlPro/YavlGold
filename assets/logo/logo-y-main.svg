@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title">
+  <title id="title">YavlGold Main Logo 30deg</title>
+  <defs>
+    <clipPath id="circleClip">
+      <circle cx="50" cy="50" r="50" />
+    </clipPath>
+  </defs>
+  <!-- Rotación fija 30° sobre el centro; mantiene el requerimiento de identidad -->
+  <g transform="rotate(30 50 50)">
+    <!-- Reutilizamos la imagen oficial ya presente en el repo -->
+    <image href="/images/logo.png" x="0" y="0" width="100" height="100" clip-path="url(#circleClip)" preserveAspectRatio="xMidYMid slice" />
+  </g>
+</svg>

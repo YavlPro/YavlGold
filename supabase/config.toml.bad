@@ -1,0 +1,53 @@
+# Valid Supabase local configuration overrides for YavlGold# Supabase local config overrides for YavlGold
+
+# Focus: auth mailer + site URL + redirect# Auth mailer + site overrides
+
+
+
+[auth][auth]
+
+site_url = "http://127.0.0.1:3000"site_url = "http://127.0.0.1:3000"
+
+additional_redirect_urls = ["http://127.0.0.1:3000/reset-password.html"]mailer_autoconfirm = false
+
+# disable automatic confirmation so recovery email should be sent explicitly
+
+mailer_autoconfirm = false[auth.external]
+
+email = true
+
+[auth.smtp]phone = false
+
+# Use internal service hostname exposed by CLI (checked via env)
+
+host = "supabase_inbucket_supabase"[auth.smtp]
+
+port = 1025host = "supabase_inbucket_YavlGold"
+
+user = ""port = 1025
+
+pass = ""user = ""
+
+admin_email = "dev@yavlgold.local"pass = ""
+
+sender_name = "YavlGold Dev"admin_email = "dev@yavlgold.local"
+
+max_frequency = "1s"sender_name = "YavlGold Dev"
+
+max_frequency = "1s"
+
+[auth.email]
+
+# ensure email flows are enabled[auth.rate_limits]
+
+enabled = trueemail_sent = 30_000 # 30s between emails (reduce from default 360000)
+
+# optional flags (retain defaults where possible)
+
+double_confirm_changes = true[auth.debug]
+
+# confirmations for signuplog_level = "debug"
+
+enable_signup = true
+
+# resend etc (keep minimal)

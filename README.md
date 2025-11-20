@@ -10,7 +10,8 @@
 
 🌐 **Staging:** [https://yavlpro.github.io/YavlGold/](https://yavlpro.github.io/YavlGold/)  
 📚 **Docs:** [docs/](docs/)  
-🎨 **Identidad:** Cyber Champagne Gold con sistema de contraste profesional
+🎨 **Identidad:** Cyber Champagne Gold con sistema de contraste profesional  
+👑 **Branding (Logos V9.1):** [BRANDING-LOGOS.md](BRANDING-LOGOS.md)
 
 ---
 
@@ -136,14 +137,67 @@ git clone https://github.com/YavlPro/YavlGold.git
 cd YavlGold
 ```
 
-### 2. Configurar Supabase
-```bash
-# Crear archivo .env (opcional, ya está en HTML)
-SUPABASE_URL=https://pxdhllmmgtxqrtfcltbx.supabase.co
-SUPABASE_ANON_KEY=eyJhbG...
+## Desarrollo local: start-server.ps1
+
+Para levantar un servidor estático local sin instalaciones globales:
+
+- Requisitos: Node.js 18+, Corepack habilitado (corepack enable) y pnpm disponible en PATH.
+- El script intenta el puerto 3000 y, si está ocupado, usa 3001.
+
+Pasos (PowerShell):
+
+1) Ejecuta el script desde la raíz del repositorio:
+
+  ./start-server.ps1
+
+2) Abre en el navegador:
+
+  http://127.0.0.1:3000
+
+  Si el 3000 estaba ocupado, el script mostrará el 3001.
+
+Notas:
+- La caché está desactivada (-c -1) para ver cambios al instante.
+- Si no tienes pnpm, puedes usar de forma puntual:
+
+  npx http-server . -p 3000 -c -1
+
+Recuerda crear assets/apps/gold/config.local.js con tu configuración de Supabase (anon key y url) para que el login funcione en local. Este archivo está en .gitignore y no debe commitearse.
+
+### 2. Configurar Supabase (desarrollo local)
+
+Para desarrollo local preferimos no dejar claves en el código. Usamos un archivo local no versionado `config.local.js` dentro de `assets/apps/gold/` que define la configuración en runtime.
+
+Ejemplo de contenido (guardar en `assets/apps/gold/config.local.js`):
+
+```javascript
+// NO comitees este archivo. Solo para desarrollo local.
+window.__YAVL_SUPABASE__ = {
+  url: 'https://pxdhllmmgtxqrtfcltbx.supabase.co',
+  anonKey: 'PUBLIC_ANON_KEY_HERE'
+};
 ```
 
+Comando PowerShell de ejemplo para crear el archivo (sustituye la clave anon por la tuya):
+
+```powershell
+Set-Location 'C:\Users\yerik\gold\YavlGold\assets\apps\gold'
+$cfg = @"
+window.__YAVL_SUPABASE__ = {
+  url: 'https://pxdhllmmgtxqrtfcltbx.supabase.co',
+  anon: 'PUBLIC_ANON_KEY_HERE'
+};
+"@
+Set-Content -Path .\config.local.js -Value $cfg -Encoding UTF8
+```
+
+Notas de seguridad:
+- `config.local.js` ya está incluido en `.gitignore` — no lo comitees.
+- Rota las claves si alguna vez las subes accidentalmente al repositorio.
+- Para pruebas automatizadas o CI, usa variables de entorno o secretos del runner, nunca estas claves en plano.
+
 ### 3. Servir Localmente
+
 ```bash
 # Opción 1: Live Server (VS Code)
 # Opción 2: Python
@@ -154,6 +208,7 @@ npx http-server -p 8000
 ```
 
 ### 4. Acceder
+
 ```
 http://localhost:8000
 ```
@@ -257,6 +312,11 @@ Este proyecto está bajo la Licencia MIT. Ver [LICENSE](LICENSE) para más detal
 - ✅ `TEMA-CHAMPAGNE-GOLD-APLICADO.md`
 - ✅ `INFORME-EJECUTIVO-FINAL-2025-10-20.md`
 - ✅ 6 archivos SQL documentados en `/sql/`
+
+#### 🛠 Operaciones Críticas (Auth & Mailer)
+- `docs/SOLUCION-DEFINITIVA-SUPABASE-CLI-V8.4.2.html` — Guía de rollback de Supabase CLI y resolución del problema de correo fantasma (mailer local) + pasos de verificación.
+- `docs/BRIEFING-V8-SUPREMO.html` — Briefing estratégico de la sesión V8 (estado de misión, motivo del downgrade y matriz de contingencia).
+- `scripts/generateRecoveryLink.js` — Script fallback para generar enlaces de recuperación si el mailer local sigue fallando tras el downgrade.
 
 ---
 

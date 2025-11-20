@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  auth:
+    environment:
+      GOTRUE_MAILER_EXTERNAL_HOSTS: "127.0.0.1,localhost"
+    labels:
+      com.myproject.role: auth
+  mailpit:
+    labels:
+      com.myproject.role: mail
+  inbucket:
+    labels:
+      com.myproject.role: mail

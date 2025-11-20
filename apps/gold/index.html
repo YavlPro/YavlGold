@@ -30,16 +30,16 @@
   <meta property="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
   
   <!-- Favicon e íconos -->
-  <link rel="icon" href="/apps/gold/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/apps/gold/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/apps/gold/assets/images/logo.png">
+  <link rel="icon" href="assets/images/logo.png" type="image/png">
+  <link rel="alternate icon" href="assets/images/logo.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/images/logo.png">
   <meta name="theme-color" content="#0B0C0F">
 
   <!-- Hoja de estilos unificada (prueba en rama de unificación) -->
-  <link rel="stylesheet" href="/apps/gold/assets/css/unificacion.css">
+  <link rel="stylesheet" href="assets/css/unificacion.css">
   
   <!-- Optimizaciones Mobile -->
-  <link rel="stylesheet" href="/apps/gold/assets/css/mobile-optimizations.css">
+  <link rel="stylesheet" href="assets/css/mobile-optimizations.css">
 
   <!-- Cache busting (one-time) to avoid stale HTML in some browsers/CDNs -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -745,7 +745,7 @@
   <!-- Header con navegación profesional -->
   <header class="gg-header">
     <a class="brand" href="/apps/gold/">
-  <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="logo" />
+  <img src="assets/images/logo.png" alt="YavlGold" class="logo" />
   <span>YavlGold</span>
     </a>
     
@@ -790,7 +790,7 @@
   <!-- Hero Section -->
   <section class="hero" id="home">
     <div class="logo-hero">
-      <img src="/apps/gold/assets/images/logo.png" alt="YavlGold Logo">
+  <img src="assets/images/logo.png" alt="YavlGold Logo">
     </div>
     <h1>YavlGold</h1>
     <p>Academia y herramientas educativas en blockchain y finanzas digitales — aprende y practica con recursos gratuitos y didácticos.</p>
@@ -952,7 +952,7 @@
   <!-- Footer -->
   <footer>
     <div class="footer-brand">
-      <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="footer-logo">
+  <img src="assets/images/logo.png" alt="YavlGold" class="footer-logo">
       <span>YavlGold</span>
     </div>
     
@@ -982,7 +982,7 @@
     <button class="close-modal-btn" onclick="closeAuthModal()">&times;</button>
     
     <div class="modal-header">
-  <img src="/apps/gold/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
+  <img src="assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
       <h2 id="modal-title">Bienvenido</h2>
     </div>
     
@@ -1046,18 +1046,102 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
-  <script type="module" src="/apps/gold/assets/js/auth.js"></script>
+  <!-- Loader robusto: carga config.local.js en runtime y luego arranca el módulo de auth -->
+  <script>
+    (function() {
+      const configSrc = 'config.local.js'; // archivo local no versionado en apps/gold/
+
+      function waitForConfig(timeoutMs = 3000) {
+        return new Promise((resolve, reject) => {
+          if (window.__YAVL_SUPABASE__ && window.__YAVL_SUPABASE__.url && window.__YAVL_SUPABASE__.anon) {
+            return resolve(window.__YAVL_SUPABASE__);
+          }
+          const start = Date.now();
+          const iv = setInterval(() => {
+            if (window.__YAVL_SUPABASE__ && window.__YAVL_SUPABASE__.url && window.__YAVL_SUPABASE__.anon) {
+              clearInterval(iv);
+              return resolve(window.__YAVL_SUPABASE__);
+            }
+            if (Date.now() - start > timeoutMs) {
+              clearInterval(iv);
+              return reject(new Error('timeout waiting for __YAVL_SUPABASE__'));
+            }
+          }, 50);
+        });
+      }
+
+      const s = document.createElement('script');
+      s.src = configSrc;
+      s.async = true;
+      s.onload = () => {
+        waitForConfig(2000).then(cfg => {
+          console.log('config.local.js cargado', cfg);
+          // Ahora cargar el módulo de autenticación
+          const m = document.createElement('script');
+          m.type = 'module';
+          m.src = 'assets/js/auth.js';
+          m.onload = () => {
+            try {
+              if (window.AuthClient && typeof window.AuthClient.init === 'function') {
+                window.AuthClient.init();
+                console.log('AuthClient.init() llamado por loader (onload)');
+              }
+            } catch (err) {
+              console.error('Error al inicializar AuthClient desde loader:', err);
+            }
+          };
+          document.head.appendChild(m);
+        }).catch(err => {
+          console.error('config.local.js cargado pero __YAVL_SUPABASE__ no definido:', err);
+          // Cargar igualmente el módulo (este esperará la config internamente)
+          const m = document.createElement('script');
+          m.type = 'module';
+          m.src = 'assets/js/auth.js';
+          m.onload = () => {
+            try {
+              if (window.AuthClient && typeof window.AuthClient.init === 'function') {
+                window.AuthClient.init();
+                console.log('AuthClient.init() llamado por loader (onload)');
+              }
+            } catch (err) {
+              console.error('Error al inicializar AuthClient desde loader:', err);
+            }
+          };
+          document.head.appendChild(m);
+        });
+      };
+      s.onerror = (e) => {
+        console.warn('No se pudo cargar config.local.js (si no existe, se puede crear localmente):', e);
+        // Cargar igualmente el módulo; authClient ahora espera la config internamente
+        const m = document.createElement('script');
+        m.type = 'module';
+        m.src = 'assets/js/auth.js';
+        m.onload = () => {
+          try {
+            if (window.AuthClient && typeof window.AuthClient.init === 'function') {
+              window.AuthClient.init();
+              console.log('AuthClient.init() llamado por loader (onerror fallback)');
+            }
+          } catch (err) {
+            console.error('Error al inicializar AuthClient desde loader (fallback):', err);
+          }
+        };
+        document.head.appendChild(m);
+      };
+      document.head.appendChild(s);
+    })();
+  </script>
   
   <!-- Sistema de temas - Usando ThemeManager v2.0 (auto-inicializado en head) -->
   <!-- El selector de emojis se renderiza automáticamente en #theme-switcher-container -->
   
   <!--
   LEGACY CODE - Commented out, using new ThemeManager v2.0 instead
-  <link rel="stylesheet" href="/apps/gold/assets/packages/themes/yavl-themes.css">
-  <link rel="stylesheet" href="/apps/gold/assets/packages/ui/base.css">
+  <link rel="stylesheet" href="assets/packages/themes/yavl-themes.css">
+  <link rel="stylesheet" href="assets/packages/ui/base.css">
   <script type="module">
-    import { ThemeManager } from '/apps/gold/assets/packages/themes/theme-manager.js';
-    import { ThemeSwitcher } from '/apps/gold/assets/packages/ui/ThemeSwitcher.js';
+  import { ThemeManager } from './assets/packages/themes/theme-manager.js';
+  import { ThemeSwitcher } from './assets/packages/ui/ThemeSwitcher.js';
     
     function initThemes() {
       const themeManager = new ThemeManager();
@@ -1073,7 +1157,7 @@
   </script>
   -->
   
-  <script src="/apps/gold/assets/js/script.js"></script>
+  <script src="assets/js/script.js"></script>
   
   <script>
     // Modal control functions

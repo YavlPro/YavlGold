@@ -13,13 +13,24 @@ export const authClient = {
    * Inicializa el cliente de Supabase
    */
   init() {
-    // Configuración de Supabase - debe ser sobreescrita por cada app
+    // Configuración de Supabase - la app debe inyectar runtime config
     const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-    
-    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    this.loadSession();
-    console.log('[Auth] ✅ AuthClient inicializado');
+    const runtime = (typeof window !== 'undefined' && window.__YAVL_SUPABASE__) || null;
+    const SUPABASE_ANON_KEY = (runtime && runtime.anon) || '__ANON_REMOVED__';
+
+    if (!runtime || !runtime.anon) {
+      console.warn('[Auth] ⚠️ No runtime Supabase config found. The hosting app should define window.__YAVL_SUPABASE__ (e.g., apps/gold/config.local.js)');
+      window.authClient = this;
+      return;
+    }
+
+    try {
+      this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      this.loadSession();
+      console.log('[Auth] ✅ AuthClient inicializado (runtime anon)');
+    } catch (err) {
+      console.error('[Auth] ❌ Error inicializando Supabase con runtime config:', err);
+    }
   },
 
   /**

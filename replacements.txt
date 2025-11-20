@@ -1,0 +1,19 @@
+# Exact keys found (literal replacements)
+# Exact tokens found during scan (replace with marker)
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg
+__ANON_JWT_REMOVED__
+
+Rr-EQXUJa46OqPuxWt8Ix2S75V0pPDQ3N3Y7KkcCN_Y
+__OTHER_JWT_REMOVED__
+
+# Generic regex rules to catch other JWT-like tokens (header.payload.signature)
+regex:eyJ[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+\.[a-zA-Z0-9_\-]+
+__JWT_REMOVIDO__
+
+# Supabase project URL pattern (optional)
+regex:https:\/\/[a-z0-9-]+\.supabase\.co
+__SUPABASE_URL_REMOVIDO__
+
+# Generic sb_ keys (catch any remaining variants)
+regex:sb_(?:secret|publishable)_[A-Za-z0-9_\-]+
+__CLAVE_REMOVIDA__

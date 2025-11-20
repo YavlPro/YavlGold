@@ -4,10 +4,16 @@
   "description": "Monorepositorio del ecosistema Yavl - Trading, Social, Suite, Agro",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
     "build": "pnpm --filter './apps/*' build",
     "test": "pnpm --filter './apps/*' test",
-    "lint": "pnpm --filter './apps/*' lint"
+    "test:v9": "vitest --environment jsdom --run",
+    "lint": "pnpm --filter './apps/*' lint",
+    "dev:v9": "vite",
+    "build:v9": "vite build",
+    "preview:v9": "vite preview",
+    "verify:mpa": "KILL_ON_PORT=1 bash scripts/verify-mpa.sh",
+    "assets:optimize": "node scripts/optimize-images.mjs"
   },
   "keywords": [
     "yavl",
@@ -23,5 +29,15 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "jsdom": "^24.1.0",
+    "sharp": "^0.33.5",
+    "terser": "^5.36.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.40.0"
+  }
 }

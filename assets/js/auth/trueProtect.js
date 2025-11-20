@@ -488,5 +488,7 @@ if (typeof window !== 'undefined') {
 
 console.log('[TrueProtect] ✅ TrueProtect v1.0.0 cargado');
 
-// Export para módulos ES6
-export default TrueProtect;
+// Nota: este archivo expone `window.TrueProtect` para uso global.
+// No exportamos como módulo aquí porque en producción se carga como
+// un script clásico (<script src="..."></script>) y `export` provoca
+// "Unexpected token 'export'" en navegadores que no lo esperan.

@@ -6,21 +6,59 @@ const AuthClient = {
   currentSession: null,
   STORAGE_KEY: 'gg:session',
 
-  init() {
-    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-    
+  async ensureSupabaseConfig(timeoutMs = 3000) {
+    // Espera de forma no bloqueante a que window.__YAVL_SUPABASE__ esté disponible
+    if (window.__YAVL_SUPABASE__ && window.__YAVL_SUPABASE__.url && window.__YAVL_SUPABASE__.anon) {
+      return window.__YAVL_SUPABASE__;
+    }
+    const start = Date.now();
+    while (!window.__YAVL_SUPABASE__ || !window.__YAVL_SUPABASE__.url || !window.__YAVL_SUPABASE__.anon) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error('Supabase config not found in runtime (timeout)');
+      }
+      // small delay
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return window.__YAVL_SUPABASE__;
+  },
+
+  async init() {
+    // Configuración: la configuración de Supabase debe inyectarse en runtime
+    // Define en tu entorno local (no comiteado): window.__YAVL_SUPABASE__ = { url: '...', anon: '...' }
+    let cfg;
+    try {
+      cfg = await this.ensureSupabaseConfig();
+    } catch (err) {
+      console.error('[Auth] ❌ Configuración de Supabase no encontrada en runtime. Define window.__YAVL_SUPABASE__ antes de llamar a AuthClient.init()', err);
+      return;
+    }
+
+    const SUPABASE_URL = cfg.url;
+    const SUPABASE_ANON_KEY = cfg.anon;
+
     if (typeof window.supabase === 'undefined') {
       console.error('[Auth] ❌ Supabase no está cargado. Asegúrate de incluir el script de Supabase antes de auth.js');
       return;
     }
-    
-    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Use a global singleton to avoid creating multiple GoTrueClient instances
+    // which supabase-js warns about when multiple clients share the same storage key.
+    if (!window.__YAVL_SUPABASE_CLIENT__) {
+      window.__YAVL_SUPABASE_CLIENT__ = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    this.supabase = window.__YAVL_SUPABASE_CLIENT__;
     this.loadSession();
     console.log('[Auth] ✅ AuthClient v2.0 inicializado');
   },
 
   async getCaptchaToken() {
+    // For local development, bypass hCaptcha to simplify testing on localhost
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      console.warn('[AuthClient] ⚠️ Ejecutando en localhost — saltando hCaptcha para pruebas locales');
+      return 'LOCALHOST_BYPASS_TOKEN';
+    }
+
     if (typeof hcaptcha !== 'undefined') {
       try {
         const response = hcaptcha.getResponse();
@@ -109,53 +147,63 @@ const AuthClient = {
 
       if (data.user) {
         console.log('[AuthClient] ✅ Usuario registrado:', data.user.email);
-        
-        // Crear perfil extendido en tabla profiles
-        try {
-          const { error: profileError } = await this.supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              username: name.toLowerCase().replace(/\s+/g, '_'),
-              email: data.user.email,
-              avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`,
-              bio: '',
-              is_admin: false
-            });
 
-          if (profileError) {
-            console.warn('[AuthClient] ⚠️ No se pudo crear perfil extendido:', profileError.message);
-          } else {
-            console.log('[AuthClient] ✅ Perfil extendido creado');
+        // Si Supabase nos devolvió sesión (usuario confirmado o sign-up sin confirmación requerida),
+        // intentamos crear perfil y guardar la sesión. En muchos proyectos la confirmación por email
+        // evita que exista una session inmediata: en ese caso NO intentamos insertar en profiles desde el cliente
+        // porque la request se rechazará por RLS.
+        if (data.session && data.session.access_token) {
+          // Crear perfil extendido en tabla profiles (se requiere que la sesión sea válida para pasar RLS)
+          try {
+            const { error: profileError } = await this.supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                username: name.toLowerCase().replace(/\s+/g, '_'),
+                email: data.user.email,
+                avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`,
+                bio: '',
+                is_admin: false
+              });
+
+            if (profileError) {
+              console.warn('[AuthClient] ⚠️ No se pudo crear perfil extendido:', profileError.message);
+            } else {
+              console.log('[AuthClient] ✅ Perfil extendido creado');
+            }
+          } catch (profileErr) {
+            console.warn('[AuthClient] ⚠️ Error al crear perfil:', profileErr.message);
           }
-        } catch (profileErr) {
-          console.warn('[AuthClient] ⚠️ Error al crear perfil:', profileErr.message);
-        }
-        
-        // Reset hCaptcha después de uso exitoso
-        if (typeof hcaptcha !== 'undefined') {
-          hcaptcha.reset();
+
+          // Reset hCaptcha después de uso exitoso
+          if (typeof hcaptcha !== 'undefined') {
+            hcaptcha.reset();
+          }
+
+          const session = {
+            user: {
+              id: data.user.id,
+              email: data.user.email,
+              name: name,
+              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`,
+              role: 'user',
+              createdAt: data.user.created_at
+            },
+            token: data.session?.access_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
+            refreshToken: data.session?.refresh_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
+            expiresAt: Date.now() + (24 * 60 * 60 * 1000),
+            createdAt: Date.now()
+          };
+
+          this.saveSession(session);
+          this.emitAuthChange('USER_REGISTERED');
+
+          return { success: true, user: session.user, message: 'Registro completado y sesión iniciada' };
         }
 
-        const session = {
-          user: {
-            id: data.user.id,
-            email: data.user.email,
-            name: name,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`,
-            role: 'user',
-            createdAt: data.user.created_at
-          },
-          token: data.session?.access_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
-          refreshToken: data.session?.refresh_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
-          expiresAt: Date.now() + (24 * 60 * 60 * 1000),
-          createdAt: Date.now()
-        };
-
-        this.saveSession(session);
-        this.emitAuthChange('USER_REGISTERED');
-        
-        return { success: true, user: session.user, message: 'Por favor revisa tu email para confirmar tu cuenta' };
+        // Si llegamos aquí, el usuario existe pero no hay sesión (probablemente requiere confirmación por email).
+        // No intentamos crear el perfil desde el cliente (fallaría por RLS). Informamos al usuario.
+        return { success: true, user: { id: data.user.id, email: data.user.email }, message: 'Registro recibido. Por favor revisa tu email para confirmar la cuenta antes de iniciar sesión.' };
       }
 
       return { success: false, error: 'No se pudo crear el usuario' };
@@ -230,14 +278,9 @@ const AuthClient = {
   }
 };
 
-// Auto-init
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => AuthClient.init());
-} else {
-  AuthClient.init();
-}
-
-window.AuthClient = AuthClient;
-
 // Export para imports de módulos ES6
+// Nota: no auto-inicializamos aquí para evitar inicialización prematura
+// La inicialización debe llamarse explícitamente con `AuthClient.init()`
+// después de que el archivo de configuración runtime esté cargado.
+window.AuthClient = AuthClient;
 export default AuthClient;

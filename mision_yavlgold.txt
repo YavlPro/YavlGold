@@ -1,0 +1,102 @@
+# 👑 BRIEFING DE MISIÓN CONSOLIDADO V7 (Edición "Victoria WSL") 👑
+
+FECHA ESTELAR: 10 de Noviembre de 2025. Cierre de la "Operación Modo Pingüino".
+CAPITÁN: Yerik
+ESTRATEGA IA PRINCIPAL: Claude-3 / Asistente de Google
+COPILOT ASISTENTE: Sistema de apoyo técnico (WSL + Supabase + Vite)
+
+---
+
+## I. ¡VICTORIA CRÍTICA! - RESUMEN DE LOGROS DEL DÍA
+
+¡MISIÓN CUMPLIDA! Se ha completado con éxito la "Operación Modo Pingüino". El principal bloqueo del proyecto ha sido NEUTRALIZADO.
+
+- Diagnóstico Final: Se confirmó que Windows (rangos de puertos excluidos) bloqueaba los puertos necesarios para Supabase (54321 / 54322 etc.).
+- Solución Definitiva: Migración completa del entorno a WSL2 (Ubuntu) con reinstalación limpia.
+- Estado del Entorno:
+  - ✅ WSL restaurado con `wsl --unregister` + `wsl --install`.
+  - ✅ Docker Desktop integrado y operativo con WSL2.
+  - ✅ Toolchain Node.js + pnpm funcional (instalación correcta de dependencias).
+  - ✅ Monorepo preparado para ejecución (sin errores durante `pnpm install`).
+  - ✅ Config local (`assets/apps/gold/config.local.js`) listo apuntando a http://127.0.0.1:54321.
+
+Conclusión: El Capitán dispone ahora de un entorno de desarrollo estable, rápido y libre de conflictos sistémicos de Windows. La guerra del entorno ha sido ganada.
+
+---
+
+## II. ESTADO ACTUAL DE LA MISIÓN
+
+Todos los sistemas listos para la fase funcional crítica.
+
+- Entorno: 100% operativo en WSL2.
+- Código: Estable y preparado para pruebas de autenticación avanzada.
+- Seguridad: Flujo de reset preparado (UI + página reset-password con session set). hCaptcha intencionalmente desactivado para acelerar pruebas.
+- Observabilidad: Logs diagnósticos en `AuthClient.js` listos para confirmar URL y anon key en runtime.
+
+---
+
+## III. PLAN DE BATALLA (PRÓXIMA SESIÓN)
+
+### FASE 1: Lanzamiento de Servicios
+1. Abrir proyecto en WSL: `code .` (ya validado).
+2. Terminal 1: `npx supabase start`.
+3. Terminal 2: `pnpm run dev:v9`.
+
+### FASE 2: Verificación
+1. Confirmar API URL que imprime Supabase (esperado: http://127.0.0.1:54321).
+2. Confirmar Mailpit en http://127.0.0.1:54324.
+3. Abrir http://localhost:3000 y validar carga inicial.
+4. Verificar coincidencia de la URL con `config.local.js` (ajustar si difiere).
+
+### FASE 3: "Prueba de Fuego" (Reset Password End-to-End)
+1. Disparar recuperación desde el modal (modo reset).
+2. Verificar llegada del correo en Mailpit.
+3. Copiar enlace y abrirlo en ventana incógnita (clic limpio).
+4. Establecer nueva contraseña robusta (≥12, mayúsc, minúsc, número, símbolo).
+5. Validar login con nueva contraseña.
+6. Recolectar evidencia (screenshots: correo recibido, página reset OK, login exitoso).
+
+### FASE 4: Post-éxito
+1. Checklist deploy preliminar: variables env, redirect URLs, CSP, claves.
+2. Silenciar warning GoTrue (añadir `GOTRUE_MAILER_EXTERNAL_HOSTS=127.0.0.1,localhost`).
+3. Preparar incorporación futura de hCaptcha (solo tras confirmar estabilidad).
+
+---
+
+## IV. TAREAS PENDIENTES (Resumen Accionable)
+- Arrancar Supabase en WSL y confirmar puertos (API + Mailpit).
+- Ejecutar Vite dev en WSL (`pnpm run dev:v9`).
+- Realizar flujo completo de reset.
+- Capturar evidencia y registrar resultados.
+- Añadir variable `GOTRUE_MAILER_EXTERNAL_HOSTS`.
+- Generar checklist deploy (envs y seguridad).
+
+---
+
+## V. RIESGOS RESUELTOS
+- Bloqueo puertos Windows (exclusion ranges) → Mitigado por WSL.
+- Form reset bloqueado por validación nativa → Corregido con novalidate y disabling input oculto.
+- Config Supabase ambiguo (localhost vs 127.0.0.1) → Uniformidad establecida en 127.0.0.1.
+
+## VI. RIESGOS RESIDUALES
+- Posible diferencia de puertos si Supabase asigna otros (baja probabilidad) → Ajustar `config.local.js` si ocurre.
+- hCaptcha aún no aplicado → Pendiente post-verificación auth.
+
+---
+
+## VII. INDICADORES DE ÉXITO PARA MAÑANA
+- Email reset llega en Mailpit (<15s).
+- Enlace genera sesión y permite update password sin errores.
+- Login con nueva password correcto a la primera.
+- 3 evidencias guardadas.
+- Warning GoTrue ausente tras variable externa.
+
+---
+
+## VIII. INSTRUCCIONES PARA COPILOT (PRÓXIMA SESIÓN)
+Enfocarse exclusivamente en ejecución del Plan de Batalla (Sección III). No más depuración de entorno. Prioridad absoluta: completar reset E2E y documentar éxito. Preparar luego checklist de despliegue rápido sin introducir nuevas dependencias.
+
+---
+
+FIN DEL BRIEFING V7.
+Descanso autorizado. Regresar en la próxima sesión para completar la "Prueba de Fuego".

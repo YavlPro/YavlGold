@@ -1,0 +1,37 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* 🎨 VARIABLES CSS - YAVLGOLD V9.1 OFFICIAL       */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+:root {
+  /* 🎨 PALETA DORADA PREMIUM - BRANDING */
+  --gold-principal: #C8A752;
+  --gold-light: #E4D08E;
+  --gold-dark: #9D8040;
+  
+  /* ⚡ PALETA DORADA VIBRANTE - CTAs & ACCIONES */
+  --gold-vibrante: #D4AF37;
+  --gold-vibrante-light: #E8C65A;
+  --gold-vibrante-dark: #B8941F;
+  
+  /* 🖤 Paleta Negro (Modo Oscuro por defecto) */
+  --black: #0a0a0a;
+  --gray-darkest: #1a1a1a;
+  --gray-dark: #2a2a2a;
+  --gray-medium: #3a3a3a;
+  
+  /* ✨ Sombras Premium */
+  --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.3);
+  --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.5);
+  /* Añadido para coherencia con componentes que usan sombras vibrantes */
+  --shadow-vibrante-md: 0 5px 20px rgba(212, 175, 55, 0.3);
+  --shadow-vibrante-xl: 0 20px 60px rgba(212, 175, 55, 0.5);
+  
+  /* 🎨 Colores Tema - Modo Oscuro */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+
+  /* 🔤 Tipografías Oficiales */
+  --font-display: 'Orbitron', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+}

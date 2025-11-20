@@ -44,8 +44,32 @@ class AcademiaProgress {
             MASTER: { min: 1000, max: Infinity, name: 'Master', icon: '👑', color: '#C8A752' }
         };
         
-        this.init();
+    // Esperar a que Supabase/AuthClient esté listo antes de inicializar
+    this.waitForSupabaseThenInit();
     }
+
+        /**
+         * Esperar a que Supabase/AuthClient esté disponible antes de inicializar.
+         * Evita errores si el archivo se carga antes del init del cliente de auth.
+         */
+        async waitForSupabaseThenInit(retries = 40, intervalMs = 250) {
+            for (let i = 0; i < retries; i++) {
+                // Preferir window.supabase (SDK) o window.AuthClient.supabase
+                this.supabase = window.supabase || (window.AuthClient && window.AuthClient.supabase) || null;
+                if (this.supabase) {
+                    try {
+                        await this.init();
+                    } catch (e) {
+                        console.warn('[Academia] ⚠️ Init falló tras esperar Supabase:', e.message);
+                    }
+                    return;
+                }
+                // si no está, esperar
+                await new Promise(r => setTimeout(r, intervalMs));
+            }
+
+            console.warn('[Academia] ⚠️ Supabase no disponible tras espera; la funcionalidad académica quedará inactiva hasta que se inicialice el cliente.');
+        }
     
     /**
      * Inicializar el sistema de academia
