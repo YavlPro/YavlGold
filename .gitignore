@@ -82,3 +82,6 @@ assets/apps/gold/config.local.js
 *.local.js
 .quarantine/
 .env.development.local
+apps/gold/public/env.local.js
+assets/apps/gold/config.local.js
+assets/js/supabase-config.local.js
