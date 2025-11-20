@@ -1,3 +1,6 @@
+# YavlGold logos temp artifacts
+assets/logo/*.tmp
+assets/logo/*.backup
 # Ignorar snapshots y binarios pesados
 /backups/*.zip
 *.zip
@@ -73,3 +76,9 @@ secrets/
 scripts/compareFiles.js
 scripts/compareFiles2.js
 scripts/compareFiles.ps1
+
+# Local runtime config served by Vite (DEV only)
+assets/apps/gold/config.local.js
+*.local.js
+.quarantine/
+.env.development.local
