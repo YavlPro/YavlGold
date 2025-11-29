@@ -7,11 +7,18 @@ assets/logo/*.backup
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .env.local
 .env.*.local
 .env.production
 .env.staging
 .env.backup
+
+# Apps Gold secrets (CRÍTICO)
+apps/gold/.env
+apps/gold/.env.*
+!apps/gold/.env.example
 
 # Credentials and sensitive files
 .admin-credentials.md
@@ -67,6 +74,11 @@ coverage/
 
 # Supabase
 .supabase/
+
+# SUPABASE LOCAL (Protocolo Kimik2)
+supabase/.temp
+supabase/supabase/.temp
+supabase/.branches
 
 # Secrets
 secrets/

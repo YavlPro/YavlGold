@@ -2,14 +2,17 @@
  * ====================================
  * CONFIGURACIÓN Y SETUP DE SUPABASE
  * ====================================
- * 
+ *
  * Este script ejecuta las migraciones SQL necesarias
  * para configurar triggers, RLS policies y perfiles.
- * 
+ *
  * EJECUTAR UNA SOLA VEZ en Supabase SQL Editor
  */
 
-const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
+// Import centralized configuration (no hardcoded credentials)
+import { supabaseConfig } from '../config/supabase-config.js';
+
+// Service role key should NEVER be in client code - use environment variables
 const SUPABASE_SERVICE_ROLE_KEY = 'TU_SERVICE_ROLE_KEY_AQUI'; // ⚠️ NUNCA EN CLIENTE
 
 // Este archivo es solo documentación
@@ -22,7 +25,7 @@ console.warn(`
 
 Para configurar Supabase correctamente:
 
-1. Ve a Supabase Dashboard: ${SUPABASE_URL}
+1. Ve a Supabase Dashboard: ${supabaseConfig.url || 'URL not configured'}
 2. Navega a: SQL Editor (menú izquierdo)
 3. Copia y ejecuta el contenido de: /supabase/migrations/001_setup_profiles_trigger.sql
 4. Verifica que se ejecutó correctamente (✓ Query successful)
@@ -44,28 +47,32 @@ TESTING:
 
 // Funciones de verificación (requieren service_role)
 async function verifySetup() {
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  
+  if (!supabaseConfig.isValid()) {
+    console.error('[Setup] ❌ Supabase configuration missing. Cannot verify setup.');
+    return;
+  }
+  const supabase = window.supabase.createClient(supabaseConfig.url, SUPABASE_SERVICE_ROLE_KEY);
+
   console.log('🔍 Verificando configuración de Supabase...');
-  
+
   // Verificar triggers
   const { data: triggers, error: triggersError } = await supabase
     .from('pg_trigger')
     .select('*')
     .eq('tgname', 'create_profile_after_user_insert');
-  
+
   if (triggersError) {
     console.error('❌ Error verificando triggers:', triggersError);
   } else {
     console.log('✅ Trigger encontrado:', triggers);
   }
-  
+
   // Verificar políticas RLS
   const { data: policies, error: policiesError } = await supabase
     .from('pg_policies')
     .select('*')
     .eq('tablename', 'profiles');
-  
+
   if (policiesError) {
     console.error('❌ Error verificando políticas:', policiesError);
   } else {
@@ -73,10 +80,10 @@ async function verifySetup() {
   }
 }
 
-// Exportar configuración
+// Re-export configuration for backward compatibility
 export const SUPABASE_CONFIG = {
-  url: SUPABASE_URL,
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg',
+  url: supabaseConfig.url,
+  anonKey: supabaseConfig.anonKey,
   tables: {
     profiles: 'profiles',
     announcements: 'announcements'

@@ -1,1054 +1,935 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>Ecosistema YavlGold — Social, Cripto, Multimedia, Agro, Trading y Más</title>
-  <meta name="description" content="YavlGold: ecosistema global que integra red social, academia cripto, multimedia suite, agricultura innovadora, ajedrez exclusivo y trading educativo con análisis estadístico del mercado. Plataforma todo-en-uno.">
-  <link rel="canonical" href="https://yavlgold.com/">
-  <meta name="theme-color" content="#0B0C0F">
-  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo. La plataforma de aprendizaje más avanzada y única del mundo. Academia premium, Trading, Ajedrez, Agricultura, Suite Multimedia y más.">
+  <meta name="keywords"
+    content="yavlgold, educación premium, plataforma educativa, trading educativo, ajedrez, agricultura tecnológica, suite multimedia, ecosistema educativo">
+  <meta name="author" content="YavlGold Academy">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#C8A752">
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yavlgold.com/">
-  <meta property="og:title" content="Ecosistema YavlGold — 7 Módulos Integrados">
-  <meta property="og:description" content="Ecosistema completo: YavlSocial, YavlSuite, YavlAcademy, YavlCrypto, YavlAgro, YavlChess y YavlTrading. Tecnología, educación y comunidad en una plataforma.">
-  <meta property="og:image" content="https://yavlgold.com/assets/images/og-cover.png">
-  <meta property="og:locale" content="es_ES">
-  <meta property="og:site_name" content="YavlGold">
-  
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://yavlgold.com/">
-  <meta property="twitter:title" content="Ecosistema YavlGold — 7 Módulos Integrados">
-  <meta name="twitter:description" content="Red social + Academia cripto + Multimedia + Agricultura + Ajedrez + Trading — Todo en YavlGold">
-  <meta name="twitter:image" content="https://yavlgold.com/assets/images/og-cover.png">
-  <meta name="twitter:creator" content="@yavlgold">
-  
-  <!-- Favicon -->
-  <link rel="icon" href="./assets/images/logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="./assets/images/logo.png">
-  
-  <!-- Keywords adicionales para SEO -->
-  <meta name="keywords" content="academia cripto, blockchain español, cursos criptomonedas, trading cripto, DeFi, NFT, Web3, educación blockchain, YavlGold">
-  
-  <!-- Fuentes Sagradas YavlGold (Playfair Display + Montserrat) -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-  
-  <!-- Supabase Client Library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- JSON-LD Structured Data - Organization -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "YavlGold",
-    "url": "https://yavlgold.com",
-    "logo": "https://yavlgold.com/assets/images/logo.png",
-    "description": "Academia cripto en español con certificaciones NFT, comunidad y cursos desde básico hasta avanzado",
-    "foundingDate": "2024",
-    "sameAs": [
-      "https://youtube.com/@yavlgold",
-      "https://x.com/yavlgold",
-      "https://twitter.com/yavlgold"
-    ],
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "contactType": "Customer Support",
-      "availableLanguage": ["es", "en"]
-    }
-  }
-  </script>
-  
-  <!-- JSON-LD Structured Data - WebSite with SearchAction -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "YavlGold",
-    "url": "https://yavlgold.com",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://yavlgold.com/buscar?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
-  }
-  </script>
-  
-  <!-- JSON-LD Structured Data - EducationalOrganization -->
+  <meta property="og:title" content="YavlGold V9.1 - Ecosistema Educativo Prestigioso">
+  <meta property="og:description"
+    content="Ecosistema educativo único en el mundo. Academia, Trading, Ajedrez, Agricultura y más.">
+  <meta property="og:image" content="https://yavlgold.com/og-image.jpg">
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://yavlgold.com/">
+  <meta property="twitter:title" content="YavlGold V9.1 - Ecosistema Educativo">
+  <meta property="twitter:description" content="Ecosistema Educativo Prestigioso Multimodulo">
+  <meta property="twitter:image" content="https://yavlgold.com/twitter-image.jpg">
+  <!-- Structured Data para SEO -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "YavlGold Academia",
-    "url": "https://yavlgold.com/academia",
-    "description": "Academia cripto con cursos certificados en blockchain, trading, DeFi y NFTs",
-    "areaServed": "ES",
-    "availableLanguage": "es"
+    "name": "YavlGold V9.1",
+    "description": "Ecosistema Educativo Prestigioso Multimodulo",
+    "url": "https://yavlgold.com/",
+    "logo": "https://yavlgold.com/logo.svg",
+    "sameAs": [
+      "https://twitter.com/YavlGold",
+      "https://telegram.me/YavlEcosystem"
+    ]
   }
   </script>
-  
+  <!-- Preconexión para fuentes -->
+  <title>YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</title>
+  <!-- Favicon optimizado -->
+  <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet">
   <style>
-    /**
-     * ============================================
-     * YAVL GOLD - IDENTIDAD VISUAL SAGRADA
-     * ============================================
-     * Color oro SAGRADO: #C8A752 (INSUSTITUIBLE)
-     * Fuentes SAGRADAS: Playfair Display + Montserrat
-     * ============================================
-     */
-
-    /* =========================================
-       VARIABLES CSS - IDENTIDAD SAGRADA YAVLGOLD
-       ========================================= */
+    /* (Estilos completos del prototipo pegados sin cambios) */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 🎨 VARIABLES CSS - YAVLGOLD V9.1 OFFICIAL */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     :root {
-      /* COLORES SAGRADOS - DORADO #C8A752 */
-      --yavl-gold: #C8A752;              /* ⚠️ DORADO SAGRADO - INSUSTITUIBLE */
-      --yavl-gold-dark: #8B7842;         /* Dorado oscuro para bordes/hover */
-      --yavl-gold-gradient: linear-gradient(135deg, #C8A752 0%, #8B7842 100%);
-      --gold-light: #E4D08E;             /* Reflejos y acentos claros */
-      --success-green: #2ecc71;          /* VERDE ÉXITO (para estados positivos) */
-      
-      /* BACKGROUNDS */
-      --yavl-dark: #0B0C0F;              /* Negro Yavl principal */
-      --yavl-bg-darker: #0B0C0F;         /* Alias identidad sagrada */
-      --bg-dark: #101114;                /* Fondo oscuro general */
-      --bg-darker: #0a0a0a;              /* Fondo más oscuro */
-      --yavl-card-bg: #1A1A1A;           /* Fondo de cards sagrado */
-      --bg-card: rgba(200, 167, 82, 0.06); /* Fondo de cards más suave */
-      --overlay-dark: rgba(11, 12, 15, 0.95); /* Overlay oscuro semi-transparente */
-      
-      /* TEXTOS */
-      --text-light: #E5E5E5;             /* Texto principal claro (sagrado) */
-      --yavl-text-light: #E5E5E5;        /* Alias identidad sagrada */
-      --text-secondary: #a0a0a0;         /* Texto secundario/subtítulos */
-      --yavl-text-muted: #888888;        /* Texto deshabilitado (sagrado) */
-      --text-muted: #6b7280;             /* Texto deshabilitado/notas */
-      --yavl-text-dark: #0B0C0F;         /* Texto oscuro sobre fondos claros */
-      
-      /* BORDES - IDENTIDAD SAGRADA */
-      --border-gold: rgba(200, 167, 82, 0.28);      /* Borde suave */
-      --border-gold-hover: rgba(200, 167, 82, 0.70); /* Borde hover */
-      
-      /* EFECTOS GLOW - IDENTIDAD SAGRADA */
-      --glow-gold: 0 0 10px rgba(200, 167, 82, 0.35);  /* Glow suave */
-      --glow-gold-intense: 0 0 18px rgba(200, 167, 82, 0.55); /* Glow intenso */
-      --glow-intense: 0 0 18px rgba(200, 167, 82, 0.55); /* Alias */
-      --glow-text: 0 1px 2px rgba(0, 0, 0, 0.8); /* Sombra para legibilidad */
-      
-      /* TIPOGRAFÍA SAGRADA */
-      --font-heading: 'Playfair Display', serif;  /* ⚠️ FUENTE SAGRADA TÍTULOS */
-      --font-body: 'Montserrat', sans-serif;      /* ⚠️ FUENTE SAGRADA TEXTO */
-      --font-title: 'Playfair Display', serif;    /* Alias identidad sagrada */
-      
-      /* ALIASES PARA COMPATIBILIDAD */
-      --gold-primary: #C8A752;
-      --gold-secondary: #8B7842;
-      --bg-main: #0B0C0F;
-      --bg-surface: #101114;
-      --text-primary: #f0f0f0;
-      
-      /* TRANSICIONES Y EFECTOS */
-      --transition-fast: 0.2s ease;
-      --transition-normal: 0.3s ease;
-      --transition-slow: 0.5s ease;
-      
-      /* RADIOS DE BORDE */
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --radius-xl: 20px;
-      
-      /* SOMBRAS */
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-      --shadow-gold-soft: 0 4px 20px rgba(200, 167, 82, 0.20);
+      /* 🎨 PALETA DORADA PREMIUM - BRANDING */
+      --gold-principal: #C8A752;
+      --gold-light: #E4D08E;
+      --gold-dark: #9D8040;
+      /* ⚡ PALETA DORADA VIBRANTE - CTAs & ACCIONES */
+      --gold-vibrante: #D4AF37;
+      --gold-vibrante-light: #E8C65A;
+      --gold-vibrante-dark: #B8941F;
+      /* 🖤 Paleta Negro */
+      --black: #0a0a0a;
+      --gray-darkest: #1a1a1a;
+      --gray-dark: #2a2a2a;
+      --gray-medium: #3a3a3a;
+      /* ✨ Sombras Premium */
+      --shadow-gold-sm: 0 2px 10px rgba(200, 167, 82, 0.2);
+      --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.3);
+      --shadow-gold-lg: 0 10px 40px rgba(200, 167, 82, 0.4);
+      --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.5);
+      --shadow-vibrante-sm: 0 2px 10px rgba(212, 175, 55, 0.2);
+      --shadow-vibrante-md: 0 5px 20px rgba(212, 175, 55, 0.3);
+      --shadow-vibrante-lg: 0 10px 40px rgba(212, 175, 55, 0.4);
+      --shadow-vibrante-xl: 0 20px 60px rgba(212, 175, 55, 0.5);
+      /* 🎨 Colores Tema */
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #1a1a1a;
+      --text-primary: #ffffff;
+      --text-secondary: #cccccc;
+      --border-color: #2a2a2a;
     }
-    
-    /* =========================================
-       RESET Y ESTILOS BASE
-       ========================================= */
+
+    body.light-mode {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --text-primary: #0a0a0a;
+      --text-secondary: #666666;
+      --black: #0a0a0a;
+      --gray-darkest: #f0f0f0;
+      --gray-dark: #e0e0e0;
+      --gray-medium: #d0d0d0;
+      --border-color: #e0e0e0;
+      --shadow-gold-sm: 0 2px 10px rgba(200, 167, 82, 0.15);
+      --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.25);
+      --shadow-gold-lg: 0 10px 40px rgba(200, 167, 82, 0.35);
+      --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.45);
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 🏗️ BASE STYLES */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
-    /* Mejorar renderización de fuentes en toda la página */
-    html {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-    }
-    
-    body {
-      background-color: var(--yavl-bg-darker); /* ⚠️ FONDO SAGRADO #0B0C0F */
-      color: var(--text-light);
-      font-family: var(--font-body);
-      font-size: 16px;
-      line-height: 1.6;
-      overflow-x: hidden;
-      
-      /* FONDO SAGRADO: Gradientes radiales SUTILES (sin rejilla) */
-      background-image:
-        radial-gradient(circle at 20% 80%, rgba(200,167,82,0.05) 0%, transparent 40%),
-        radial-gradient(circle at 80% 20%, rgba(200,167,82,0.03) 0%, transparent 30%);
-      background-size: 100% 100%;
-      background-repeat: no-repeat;
-    }
-    
-    /* =========================================
-       TIPOGRAFÍA OFICIAL
-       ========================================= */
-    h1, h2, h3, h4, h5, h6 {
-      font-family: var(--font-heading);
-      color: var(--yavl-gold);
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 1rem;
-      /* Mejorar legibilidad - sin glow en títulos pequeños */
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    h1 {
-      font-size: 3rem;          /* 48px */
-      font-weight: 900;
-      /* GLOW SUAVE - NO CANSAR LA VISTA */
-      text-shadow: 
-        0 0 3px rgba(200, 167, 82, 0.45),
-        0 0 8px rgba(200, 167, 82, 0.25);
-    }
-    
-    h2 {
-      font-size: 2rem;          /* 32px */
-      /* GLOW MUY SUTIL */
-      text-shadow: 
-        0 0 6px rgba(200, 167, 82, 0.55),
-        0 0 14px rgba(200, 167, 82, 0.35);
-    }
-    
-    h3 {
-      font-size: 1.5rem;        /* 24px */
-      /* GLOW CASI IMPERCEPTIBLE */
-      text-shadow: none; /* Sin efectos en h3 y menores */
-    }
-    
-    h4 {
-      font-size: 1.2rem;        /* 19px */
-      text-shadow: none; /* Sin efectos para máxima nitidez */
-    }
-    
-    p {
-      margin-bottom: 1rem;
-      color: var(--text-light);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    strong {
-      color: #ffffff;
-      font-weight: 600;
-    }
-    
-    /* =========================================
-       ENLACES
-       ========================================= */
-    a {
-      color: var(--yavl-gold);
-      text-decoration: none;
-      transition: var(--transition-normal);
-    }
-    
-    a:hover {
-      color: var(--yavl-gold-dark);
-      /* Removido text-shadow para evitar borrosidad */
-    }
-    
-    /* =========================================
-       SCROLLBAR PERSONALIZADO
-       ========================================= */
-    ::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: var(--bg-darker);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: linear-gradient(to bottom, var(--yavl-gold), var(--yavl-gold-dark));
-      border-radius: 20px;
-      border: 2px solid var(--bg-darker);
-      box-shadow: 0 0 8px rgba(200, 167, 82, 0.45);
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--yavl-gold-dark);
-    }
-    
-    ::selection {
-      background: var(--yavl-gold);
-      color: var(--yavl-dark);
-    }
-    
+
     html {
       scroll-behavior: smooth;
     }
-    
-    /* =========================================
-       NAVEGACIÓN SUPERIOR
-       ========================================= */
+
+    body {
+      font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      transition: background-color 0.5s ease, color 0.5s ease;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 🎬 ANIMACIONES */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    @keyframes breathe {
+
+      0%,
+      100% {
+        transform: rotate(30deg) scale(1);
+        filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4));
+      }
+
+      50% {
+        transform: rotate(30deg) scale(1.08);
+        filter: drop-shadow(0 0 50px rgba(200, 167, 82, 0.8));
+      }
+    }
+
+    @keyframes textGlow {
+
+      0%,
+      100% {
+        text-shadow: 0 0 10px rgba(200, 167, 82, 0.5), 0 0 20px rgba(200, 167, 82, 0.3), 0 0 30px rgba(200, 167, 82, 0.2);
+      }
+
+      50% {
+        text-shadow: 0 0 20px rgba(200, 167, 82, 0.8), 0 0 40px rgba(200, 167, 82, 0.6), 0 0 60px rgba(200, 167, 82, 0.4);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1, 1);
+      }
+
+      50% {
+        transform: scale(1.05, 1.05);
+      }
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 🎯 HEADER & NAVIGATION */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .navbar {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 1000;
-      background: rgba(11, 12, 15, 0.85);
+      background: var(--bg-secondary);
       backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border-gold);
-      transition: var(--transition-normal);
-    }
-    
-    .navbar.scrolled {
-      background: rgba(11, 12, 15, 0.95);
-      /* GLOW SUAVE EN NAVBAR */
-      box-shadow: var(--glow-gold);
-    }
-    
-    .navbar-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 2rem;
+      padding: 1rem 2rem;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      height: 70px;
-      position: relative;
-      pointer-events: auto;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 30px rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border-color);
+      transition: all 0.3s ease;
     }
-    
-    .navbar-logo {
+
+    .logo-container {
       display: flex;
       align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      transition: var(--transition-fast);
+      gap: 1rem;
+      cursor: pointer;
     }
-    
-    .navbar-logo:hover {
-      transform: scale(1.02);
+
+    .logo-y {
+      font-size: 48px;
+      font-weight: 900;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transform: rotate(30deg);
+      display: inline-block;
+      animation: breathe 4s ease-in-out infinite;
+      will-change: transform, filter;
     }
-    
-    .navbar-logo img {
-      width: 40px;
-      height: 40px;
+
+    /* Nuevo: logo basado en imagen oficial */
+    .logo-img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
       border-radius: 50%;
-      border: 2px solid var(--yavl-gold);
-      padding: 2px;
+      /* Header usa PNG sin rotación */
+      transform: none;
+      box-shadow: var(--shadow-gold-sm);
     }
-    
-    .navbar-brand {
-      font-family: var(--font-heading);
+
+    .logo-main {
+      width: 48px;
+      height: 48px;
+      display: inline-block;
+      filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.5));
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    .logo-text {
       font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--yavl-gold);
-      letter-spacing: -0.5px;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Sombra sutil para legibilidad */
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
     }
-    
-    .navbar-menu {
+
+    .logo-text span {
+      color: var(--gold-principal);
+      animation: textGlow 3s ease-in-out infinite;
+    }
+
+    .nav-desktop {
       display: flex;
+      gap: 2rem;
       align-items: center;
-      gap: 2.5rem;
-      list-style: none;
     }
-    
-    .navbar-link {
+
+    .nav-desktop a {
       color: var(--text-secondary);
       text-decoration: none;
-      font-weight: 500;
-      font-size: 0.95rem;
-      transition: var(--transition-fast);
+      font-weight: 600;
+      font-family: 'Rajdhani', sans-serif;
+      transition: all 0.3s;
       position: relative;
       padding: 0.5rem 0;
     }
-    
-    .navbar-link::after {
+
+    .nav-desktop a::after {
       content: '';
       position: absolute;
       bottom: 0;
       left: 0;
       width: 0;
       height: 2px;
-      background: var(--gradient-gold);
-      transition: var(--transition-normal);
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal));
+      transition: width 0.3s;
     }
-    
-    .navbar-link:hover {
-      color: var(--yavl-gold);
+
+    .nav-desktop a:hover {
+      color: var(--gold-principal);
     }
-    
-    .navbar-link:hover::after {
+
+    .nav-desktop a:hover::after {
       width: 100%;
     }
-    
-    .navbar-actions {
+
+    .nav-actions {
       display: flex;
-      align-items: center;
       gap: 1rem;
-      position: relative;
-      z-index: 10;
+      align-items: center;
     }
-    
+
     .theme-toggle {
-      width: 44px;
-      height: 44px;
+      background: var(--gray-dark);
+      border: 2px solid var(--gray-medium);
+      color: var(--gold-principal);
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      background: var(--bg-card);
-      border: 1px solid var(--border-gold);
-      color: var(--yavl-gold);
       cursor: pointer;
+      font-size: 1.4rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      transition: var(--transition-normal);
+      transition: all 0.4s ease;
       position: relative;
-      z-index: 11;
-    }
-    
-    .theme-toggle:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--yavl-gold);
-      transform: rotate(15deg);
-      /* GLOW SUAVE EN HOVER */
-      box-shadow: var(--glow-gold);
-    }
-
-    /* Profile Button */
-    .profile-btn {
-      transition: all 0.2s ease;
-    }
-
-    .profile-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 0 2px rgba(200, 167, 82, 0.2);
-    }
-
-    .profile-btn:focus-visible {
-      outline: 2px solid rgba(200, 167, 82, 0.55);
-      outline-offset: 2px;
-    }
-
-    .profile-btn:active {
-      transform: scale(0.98);
-    }
-    
-    /* User Menu Styles - Desktop & Mobile */
-    .user-menu-desktop {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    
-    .user-menu-desktop .fa-user-circle {
-      font-size: 1.2rem;
-      color: var(--yavl-gold);
-    }
-    
-    .mobile-user-menu {
-      width: 100%;
-    }
-    
-    .mobile-user-menu .fa-user-circle {
-      font-size: 1.5rem;
-      color: var(--yavl-gold);
-    }
-    
-    .btn {
-      padding: 0.75rem 1.75rem;
-      border-radius: var(--radius-lg);
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
-      transition: var(--transition-normal);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      font-family: var(--font-heading);
-      min-width: 140px;
-      height: 44px;
-      position: relative;
-      z-index: 10;
-      pointer-events: auto;
-      /* Mejorar legibilidad del texto en botones */
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    
-    .btn-outline {
-      background: transparent;
-      color: var(--yavl-gold);
-      border: 2px solid var(--yavl-gold);
-      box-shadow: none;
-      text-shadow: none; /* Texto nítido sin sombras */
-    }
-    
-    .btn-outline:hover {
-      background: var(--yavl-gold);
-      color: var(--yavl-dark);
-      border-color: var(--yavl-gold);
-      /* GLOW MODERADO AL HOVER */
-      box-shadow: var(--glow-gold-intense);
-      transform: translateY(-3px);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, var(--yavl-gold), var(--yavl-gold-dark));
-      color: var(--yavl-dark);
-      border: none;
-      font-weight: 700;
-      /* GLOW SUAVE EN BOTONES */
-      box-shadow: var(--glow-gold);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
-    
-    .btn-primary:hover {
-      /* GLOW MODERADO AL HOVER */
-      box-shadow: var(--glow-gold-intense);
-      transform: translateY(-3px) scale(1.02);
-    }
-    
-    /* Menú móvil */
-    .mobile-menu-toggle {
-      display: none;
-      width: 40px;
-      height: 40px;
-      border: none;
-      background: var(--bg-card);
-      border-radius: var(--radius-sm);
-      color: var(--yavl-gold);
-      font-size: 1.2rem;
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-      transition: var(--transition-fast);
-    }
-    
-    .mobile-menu-toggle:hover {
-      background: var(--bg-card-hover);
-    }
-
-    body.drawer-open,
-    body.modal-open {
       overflow: hidden;
     }
 
-    .mobile-menu-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(12, 16, 21, 0.65);
-      backdrop-filter: blur(6px);
-      /* Keep overlay under the drawer but above page content */
-      z-index: 1990;
+    .theme-toggle:hover {
+      background: var(--gold-dark);
+      border-color: var(--gold-principal);
+      transform: rotate(180deg) scale(1.1);
+      box-shadow: var(--shadow-gold-md);
+    }
+
+    .btn-premium {
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+      transition: all 0.4s ease;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-premium::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-premium:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold-vibrante-dark) 0%, var(--gold-vibrante) 100%);
+      color: var(--black);
+      box-shadow: var(--shadow-vibrante-md);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-vibrante-xl);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--gold-principal);
+      color: var(--gold-principal);
+    }
+
+    .btn-outline:hover {
+      background: var(--gold-principal);
+      color: var(--black);
+      transform: translateY(-4px);
+    }
+
+    .btn-lg {
+      padding: 18px 48px;
+      font-size: 1.1rem;
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+      z-index: 1002;
+      position: relative;
+      width: 50px;
+      height: 50px;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 30px;
+      height: 3px;
+      background: var(--gold-principal);
+      border-radius: 3px;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: 0 0 10px rgba(200, 167, 82, 0.3);
+    }
+
+    .hamburger:hover span {
+      background: var(--gold-light);
+      box-shadow: 0 0 20px rgba(200, 167, 82, 0.6);
+    }
+
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg) translate(8px, 8px);
+    }
+
+    .hamburger.active span:nth-child(2) {
       opacity: 0;
-      pointer-events: none;
-      transition: var(--transition-normal);
+      transform: translateX(-20px);
     }
 
-    .mobile-menu-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg) translate(8px, -8px);
     }
 
-    .mobile-drawer {
+    .nav-mobile {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 100%;
+      max-width: 380px;
+      height: 100vh;
+      background: var(--bg-secondary);
+      padding: 6rem 2rem 2rem 2rem;
+      transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+      z-index: 1001;
+      overflow-y: auto;
+      border-left: 3px solid var(--gold-principal);
+    }
+
+    .nav-mobile.active {
+      right: 0;
+    }
+
+    .nav-mobile-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .nav-mobile-links a {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 1.3rem;
+      font-weight: 600;
+      font-family: 'Rajdhani', sans-serif;
+      padding: 1.2rem 1.5rem;
+      border-radius: 12px;
+      border-left: 4px solid transparent;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      background: var(--bg-primary);
+    }
+
+    .nav-mobile-links a:hover {
+      border-left-color: var(--gold-principal);
+      background: var(--gray-dark);
+      transform: translateX(10px);
+      box-shadow: var(--shadow-gold-sm);
+      color: var(--gold-principal);
+    }
+
+    .nav-mobile-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .nav-mobile-actions .btn-premium {
+      width: 100%;
+      text-align: center;
+    }
+
+    .mobile-overlay {
       position: fixed;
       top: 0;
       left: 0;
-      width: 85%;
-      max-width: 300px;
+      width: 100%;
       height: 100vh;
-      background: var(--bg-secondary);
-      border-right: 1px solid var(--border-gold);
-      box-shadow: var(--shadow-md);
-      transform: translateX(-100%);
-      transition: var(--transition-normal);
-      /* Ensure drawer sits above overlays and modals so its buttons are clickable */
-      z-index: 2000;
-      display: flex;
-      flex-direction: column;
-      padding: 16px 16px 20px;
-      gap: 16px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s ease;
     }
 
-    .mobile-drawer.active {
-      transform: translateX(0);
+    .mobile-overlay.active {
+      opacity: 1;
+      visibility: visible;
     }
 
-    .mobile-drawer-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(200, 167, 82, 0.15);
-    }
-
-    .mobile-drawer-brand {
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 👑 HERO SECTION */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .hero {
+      min-height: 100vh;
       display: flex;
       align-items: center;
-      gap: 8px;
-      text-decoration: none;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 2rem 2rem;
+      background: var(--bg-primary);
+      position: relative;
+      overflow: hidden;
     }
 
-    .mobile-drawer-brand img {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 2px solid var(--gold-secondary);
-      padding: 2px;
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1000px;
+      height: 1000px;
+      background: radial-gradient(circle, rgba(200, 167, 82, 0.15) 0%, transparent 70%);
+      animation: pulse 6s ease-in-out infinite;
+      pointer-events: none;
     }
 
-    .mobile-drawer-brand span {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      background: var(--gradient-gold);
+    .hero::after {
+      content: '🚧';
+      position: absolute;
+      font-size: 200px;
+      opacity: 0.03;
+      top: 20%;
+      right: 10%;
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+    }
+
+    .hero-logo {
+      font-size: 200px;
+      font-weight: 900;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      transform: rotate(30deg);
+      display: inline-block;
+      animation: breathe 4s ease-in-out infinite;
+      margin-bottom: 1rem;
+      will-change: transform, filter;
     }
 
-    .mobile-drawer-close {
-      width: 32px;
-      height: 32px;
-      border: none;
-      border-radius: 50%;
-      background: var(--bg-card);
+    .hero h1 {
+      font-size: 4.5rem;
+      font-weight: 900;
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: textGlow 3s ease-in-out infinite;
+    }
+
+    .hero-subtitle {
+      font-size: 1.6rem;
+      font-family: 'Rajdhani', sans-serif;
       color: var(--text-secondary);
-      font-size: 1rem;
-      cursor: pointer;
-      transition: var(--transition-fast);
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.5rem 1.2rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      margin: 0.3rem;
+    }
+
+    .version-badge {
+      background: linear-gradient(135deg, var(--gold-vibrante-dark), var(--gold-vibrante));
+      color: var(--black);
+      padding: 0.8rem 2rem;
+      font-size: 0.9rem;
+      box-shadow: var(--shadow-vibrante-md);
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    .badge-construction {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: white;
+      box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+    }
+
+    .badge-unique {
+      background: linear-gradient(135deg, #9b59b6, #8e44ad);
+      color: white;
+      box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+    }
+
+    .badge-premium {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
+      color: var(--black);
+      box-shadow: var(--shadow-gold-sm);
+    }
+
+    .hero-badges {
       display: flex;
-      align-items: center;
+      gap: 1rem;
       justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2.5rem;
     }
 
-    .mobile-drawer-close:hover {
-      background: var(--bg-card-hover);
-      color: var(--text-primary);
-    }
-
-    .mobile-drawer-nav {
+    .hero-actions {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .mobile-drawer-nav a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 500;
-      font-size: 0.95rem;
-      color: var(--text-secondary);
-      text-decoration: none;
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      transition: var(--transition-fast);
-      border: 1px solid transparent;
-    }
-
-    .mobile-drawer-nav a i {
-      color: var(--yavl-gold);
-      font-size: 1rem;
-      width: 18px;
-    }
-
-    .mobile-drawer-nav a:hover {
-      background: rgba(201, 168, 81, 0.08);
-      border-color: var(--border-gold);
-      color: var(--text-primary);
-    }
-
-    .mobile-drawer-actions {
-      margin-top: auto;
-      padding-top: 12px;
-      border-top: 1px solid rgba(200, 167, 82, 0.15);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .mobile-drawer-actions .btn {
-      width: 100%;
+      gap: 1.5rem;
       justify-content: center;
-      padding: 10px 16px;
-      font-size: 0.95rem;
+      flex-wrap: wrap;
     }
 
-    /* Ensure action buttons are interactive above overlays */
-    .mobile-drawer-actions .btn {
-      position: relative;
-      z-index: 2001;
-      pointer-events: auto;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(12, 16, 21, 0.7);
-      backdrop-filter: blur(8px);
-      z-index: 970;
-      opacity: 0;
-      pointer-events: none;
-      transition: var(--transition-normal);
-    }
-
-    .modal-backdrop.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0.95);
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 🌟 FEATURES SECTION */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .features {
+      padding: 6rem 2rem;
       background: var(--bg-secondary);
-      border: 1px solid var(--border-gold);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-lg);
-      z-index: 980;
-      width: min(380px, calc(100% - 32px));
-      max-height: min(88vh, 650px);
-      padding: 20px 20px;
-      opacity: 0;
-      pointer-events: none;
-      transition: var(--transition-normal);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    
-    /* Scrollbar personalizado para el modal */
-    .modal::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    .modal::-webkit-scrollbar-track {
-      background: rgba(201, 168, 81, 0.05);
-      border-radius: 4px;
-    }
-    
-    .modal::-webkit-scrollbar-thumb {
-      background: var(--yavl-gold);
-      border-radius: 4px;
-    }
-    
-    .modal::-webkit-scrollbar-thumb:hover {
-      background: var(--yavl-gold);
-    }
-
-    .modal.open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    .modal header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .modal-title {
-      font-family: var(--font-heading);
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--yavl-gold);
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    .modal-close {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: none;
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: var(--transition-fast);
-      flex-shrink: 0;
-    }
-
-    .modal-close:hover {
-      background: var(--bg-card-hover);
-      color: var(--text-primary);
-    }
-
-    .modal-description {
-      color: var(--text-secondary);
-      font-size: 0.85rem;
-      line-height: 1.4;
-      margin-top: -6px;
-    }
-
-    .modal-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .modal-form label {
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: 0.85rem;
-      margin-bottom: -6px;
-    }
-
-    .modal-form input {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(201, 168, 81, 0.25);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font-size: 0.9rem;
-    }
-
-    .modal-form input:focus {
-      outline: none;
-      border-color: var(--yavl-gold);
-      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.2);
-    }
-
-    /* Password input wrapper para botón mostrar/ocultar */
-    .password-input-wrapper {
       position: relative;
-      width: 100%;
     }
 
-    .password-input-wrapper input {
-      width: 100%;
-      padding-right: 45px; /* Espacio para el botón */
+    .features-container {
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .toggle-password-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      padding: 8px 12px;
-      border-radius: var(--radius-sm);
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .toggle-password-btn:hover {
-      color: var(--yavl-gold);
-      background: rgba(200, 167, 82, 0.1);
-    }
-
-    .toggle-password-btn:active {
-      transform: translateY(-50%) scale(0.95);
-    }
-
-    .toggle-password-btn i {
-      font-size: 0.95rem;
-    }
-
-    .modal-form .btn {
-      width: 100%;
-      justify-content: center;
-      margin-top: 4px;
-    }
-    
-    /* Captcha container */
-    .captcha-container {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px;
-      background: rgba(201, 168, 81, 0.05);
-      border: 1px solid var(--border-gold);
-      border-radius: var(--radius-md);
-      margin: 4px 0;
-    }
-    
-    .captcha-label {
-      font-weight: 600;
-      color: var(--text-primary);
-      font-size: 0.8rem;
-    }
-    
-    .captcha-challenge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 12px;
-      background: var(--bg-card);
-      border-radius: var(--radius-sm);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--yavl-gold);
-      letter-spacing: 4px;
-      user-select: none;
-    }
-    
-    .captcha-refresh {
-      background: transparent;
-      border: none;
-      color: var(--yavl-gold);
-      cursor: pointer;
-      font-size: 1.1rem;
-      padding: 4px;
-      transition: var(--transition-fast);
-    }
-    
-    .captcha-refresh:hover {
-      color: var(--yavl-gold);
-      transform: rotate(180deg);
-    }
-    
-    .captcha-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(201, 168, 81, 0.25);
-      background: var(--bg-card);
-      color: var(--text-primary);
-      font-size: 0.95rem;
+    .section-title {
       text-align: center;
-      letter-spacing: 2px;
-    }
-    
-    .captcha-input:focus {
-      outline: none;
-      border-color: var(--yavl-gold);
-      box-shadow: 0 0 0 3px rgba(201, 168, 81, 0.2);
+      font-size: 3.5rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      display: inline-block;
+      width: 100%;
     }
 
-    .modal-footer {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
+    .section-title::after {
+      content: '🎓';
+      display: block;
+      font-size: 2rem;
+      margin-top: 0.5rem;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .section-subtitle {
       text-align: center;
-    }
-
-    .modal-footer a {
-      color: var(--yavl-gold);
-      text-decoration: none;
+      font-size: 1.3rem;
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text-secondary);
+      margin-bottom: 4rem;
       font-weight: 600;
     }
 
-    .modal-footer a:hover {
-      color: var(--yavl-gold);
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem;
     }
-    
-    /* Mobile responsiveness para modales */
-    @media (max-width: 768px) {
-      .modal {
-        width: calc(100% - 24px);
-        max-height: 92vh;
-        padding: 16px;
-        gap: 12px;
-      }
-      
-      .modal-title {
-        font-size: 1.15rem;
-      }
-      
-      .modal-close {
-        width: 30px;
-        height: 30px;
-      }
-      
-      .modal-description {
-        font-size: 0.8rem;
-        margin-top: -6px;
-      }
-      
-      .modal-form {
-        gap: 10px;
-      }
-      
-      .modal-form label {
-        font-size: 0.8rem;
-        margin-bottom: -4px;
-      }
-      
-      .modal-form input {
-        padding: 9px 11px;
-        font-size: 0.88rem;
-      }
-      
-      .captcha-container {
-        padding: 10px;
-        gap: 6px;
-        margin: 2px 0;
-      }
-      
-      .captcha-label {
-        font-size: 0.75rem;
-      }
-      
-      .captcha-input {
-        padding: 8px 10px;
-        font-size: 0.85rem;
-      }
-      
-      .modal-footer {
-        font-size: 0.8rem;
-        gap: 6px;
-      }
-    }
-    /* =========================================
-       HERO SECTION
-       ========================================= */
-    .hero {
-      padding: 140px 2rem 80px;
-      text-align: center;
+
+    .feature-card {
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.5rem;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
       position: relative;
       overflow: hidden;
-      margin-top: 0 !important;
+      opacity: 0;
+      transform: translateY(20px);
     }
-    
-    .hero::before {
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
+      background-size: 200% 100%;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s ease;
+    }
+
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(200, 167, 82, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-12px) scale(1.02);
+      border-color: var(--gold-principal);
+      box-shadow: var(--shadow-gold-xl);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+      animation: shimmer 2s linear infinite;
+    }
+
+    .feature-card:hover::after {
+      opacity: 1;
+    }
+
+    .feature-status {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 0.4rem 1rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+      text-transform: uppercase;
+    }
+
+    .status-development {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    .status-coming {
+      background: linear-gradient(135deg, #9b59b6, #8e44ad);
+      color: white;
+      box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+    }
+
+    .status-star {
+      background: linear-gradient(135deg, var(--gold-vibrante-dark), var(--gold-vibrante));
+      color: var(--black);
+      box-shadow: var(--shadow-vibrante-sm);
+    }
+
+    .feature-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      display: inline-block;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .feature-title {
+      font-size: 1.6rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--gold-principal);
+      text-shadow: 0 0 20px rgba(200, 167, 82, 0.2);
+    }
+
+    .feature-description {
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      line-height: 1.8;
+      font-size: 1.05rem;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 💬 TESTIMONIALS SECTION */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .testimonials {
+      padding: 6rem 2rem;
+      background: var(--bg-primary);
+      position: relative;
+    }
+
+    .testimonials-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem;
+      margin-top: 3rem;
+    }
+
+    .testimonial-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.5rem;
+      transition: all 0.4s ease;
+      position: relative;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: 20px;
+      left: 25px;
+      font-size: 80px;
+      color: var(--gold-principal);
+      opacity: 0.2;
+      font-family: Georgia, serif;
+      line-height: 1;
+    }
+
+    .testimonial-card:hover {
+      transform: translateY(-10px);
+      border-color: var(--gold-principal);
+      box-shadow: var(--shadow-gold-lg);
+    }
+
+    .testimonial-content {
+      position: relative;
+      z-index: 1;
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .testimonial-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--black);
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .testimonial-info h4 {
+      color: var(--gold-principal);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .testimonial-info p {
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 🎯 CTA FINAL SECTION */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .cta-final {
+      padding: 6rem 2rem;
+      background: var(--bg-secondary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-final::before {
       content: '';
       position: absolute;
       top: 50%;
@@ -1056,3033 +937,1002 @@
       transform: translate(-50%, -50%);
       width: 800px;
       height: 800px;
-      background: radial-gradient(circle, rgba(201, 168, 81, 0.06) 0%, transparent 70%);
-      animation: pulse 8s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
-      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
-    }
-    
-    .hero-content {
-      max-width: 900px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
-    
-    .hero-logo {
-      width: 144px;  /* 20% más grande: 120px * 1.2 = 144px */
-      height: 144px;
-      margin: 0 auto 2rem;
-      position: relative;
-    }
-    
-    .hero-logo-inner {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: var(--bg-card);
-      border: 3px solid var(--yavl-gold);
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      /* GLOW MÁS INTENSO */
-      box-shadow: 
-        0 0 30px rgba(200, 167, 82, 0.8),
-        0 4px 25px rgba(200, 167, 82, 0.5),
-        inset 0 0 25px rgba(200, 167, 82, 0.1);
-      animation: glow 3s ease-in-out infinite;
-    }
-    
-    @keyframes glow {
-      0%, 100% { box-shadow: 
-        0 0 30px rgba(200, 167, 82, 0.8),
-        0 4px 25px rgba(200, 167, 82, 0.5),
-        inset 0 0 25px rgba(200, 167, 82, 0.1);
-      }
-      50% { box-shadow: 
-        0 0 50px rgba(200, 167, 82, 1),
-        0 4px 35px rgba(200, 167, 82, 0.7),
-        inset 0 0 40px rgba(200, 167, 82, 0.15);
-      }
-    }
-    
-    /* =========================================
-       ACCESIBILIDAD - REDUCED MOTION
-       ========================================= */
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
-      
-      .hero-logo,
-      .pulse,
-      .glow,
-      [class*="float"],
-      [class*="bounce"] {
-        animation: none !important;
-      }
-    }
-    
-    /* Skip Link para accesibilidad (lectores de pantalla) */
-    .skip-link {
-      position: absolute;
-      top: -40px;
-      left: 0;
-      background: var(--yavl-gold);
-      color: var(--bg-darker);
-      padding: 8px 16px;
-      text-decoration: none;
-      font-weight: 600;
-      border-radius: 0 0 4px 0;
-      z-index: 10000;
-      transition: top 0.2s;
-    }
-    
-    .skip-link:focus {
-      top: 0;
-    }
-    
-    /* Screen reader only class */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border-width: 0;
-    }
-    
-    .sr-only:focus {
-      position: static;
-      width: auto;
-      height: auto;
-      padding: 0.5rem;
-      margin: 0;
-      overflow: visible;
-      clip: auto;
-      white-space: normal;
-    }
-    
-    .hero-logo img {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    
-    .hero h1 {
-      font-family: var(--font-heading);
-      font-size: clamp(2.5rem, 6vw, 4rem);
-      font-weight: 800;
-      color: var(--yavl-gold);
-      margin-bottom: 1.25rem;
-      letter-spacing: -1px;
-      line-height: 1.1;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Mismo estilo que navbar */
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    .hero-subtitle {
-      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
-      color: var(--text-secondary);
-      max-width: 700px;
-      margin: 0 auto 2.5rem;
-      line-height: 1.7;
-      font-weight: 400;
-    }
-    
-    .hero-subtitle strong {
-      color: inherit;
-      font-weight: 600;
-    }
-    
-    .hero-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    
-    .btn-large {
-      padding: 0.9rem 2.25rem;
-      font-size: 1.05rem;
-      min-width: 180px;  /* Ancho mínimo para botones grandes */
-      height: 52px;  /* Altura consistente para botones grandes */
-    }
-    
-    /* =========================================
-       SECCIONES DE CONTENIDO
-       ========================================= */
-    .section {
-      padding: 80px 2rem;
-    }
-    
-    .section-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .section-header {
-      text-align: center;
-      margin-bottom: 4rem;
-    }
-    
-    .section-title {
-      font-family: var(--font-heading);
-      font-size: clamp(2rem, 4vw, 2.75rem);
-      font-weight: 800;
-      color: var(--text-light);
-      margin-bottom: 1rem;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    .section-title .highlight {
-      color: var(--yavl-gold);
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); /* Mismo estilo consistente */
-    }
-    
-    .section-description {
-      font-size: 1.15rem;
-      color: var(--text-secondary);
-      max-width: 700px;
-      margin: 0 auto;
-      line-height: 1.7;
-    }
-    
-    /* =========================================
-       TARJETAS DE FEATURES
-       ========================================= */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-      margin-top: 3rem;
-    }
-    
-    /* =========================================
-       SISTEMA DE CONTRASTE LIMPIO (SIN GLOW)
-       Premium por capas, bordes y elevación
-       ========================================= */
-    
-    /* 1) Escalera de superficies oscuras para contraste - VALORES SAGRADOS */
-    :root {
-      --surface-0: #0B0C0F;  /* fondo página SAGRADO */
-      --surface-1: #1A1A1A;  /* igual a --yavl-card-bg SAGRADO */
-      --surface-2: #1A1A1A;  /* base tarjeta SAGRADO */
-      --surface-3: #1A1A1A;  /* hover/elevación SAGRADO */
-      --border-neutral: rgba(255,255,255,0.06); /* borde base */
-      --border-strong: rgba(255,255,255,0.10);  /* hover/focus */
-      --inner-hairline: rgba(255,255,255,0.08); /* highlight interno 1px */
-      --outer-hairline: rgba(0,0,0,0.45);       /* sombra interna 1px */
-      --shadow-elev: 0 8px 24px -12px rgba(0,0,0,0.65);
-      
-      /* Textos accesibles */
-      --card-title-color: #F3F5F7;
-      --card-text-color: #CACDD3;
-    }
-    
-    /* 2) Tarjetas: contraste por capas + hairlines */
-    .feature-card {
-      background-color: var(--yavl-card-bg); /* ⚠️ FONDO SAGRADO #1A1A1A */
-      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)); /* tinta sutil */
-      border: 1px solid var(--border-neutral);
-      border-radius: var(--radius-xl);
-      padding: 2rem 1.75rem;
-      box-shadow: none; /* sin glow */
-      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-      position: relative;
-      text-align: center;
-      text-decoration: none;
-      color: var(--text-primary);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    
-    /* Hairlines internos para dar "edge" sin brillar */
-    .feature-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
+      background: radial-gradient(circle, rgba(200, 167, 82, 0.2) 0%, transparent 70%);
+      animation: pulse 6s ease-in-out infinite;
       pointer-events: none;
-      box-shadow:
-        inset 0 1px 0 var(--inner-hairline),  /* línea superior clara */
-        inset 0 -1px 0 var(--outer-hairline); /* línea inferior oscura */
-      border-radius: inherit;
-    }
-    
-    /* 3) Hover: elevar cambiando superficie y borde, sin brillo */
-    .feature-card:hover {
-      background-color: var(--yavl-card-bg);
-      border-color: var(--border-strong);
-      box-shadow: var(--shadow-elev);
-      transform: translateY(-2px);
-    }
-    
-    /* 4) Acento dorado minimal: línea de 2px arriba */
-    .card-accent::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--yavl-gold), rgba(200,167,82,0.0) 70%);
-      opacity: 0.8;
-      z-index: 1;
-    }
-    
-    /* Priority card styles */
-    .feature-card.priority-high {
-      border: 2px solid rgba(200, 167, 82, 0.3);
-      background-color: var(--yavl-card-bg);
-    }
-    
-    .feature-card.priority-high::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--yavl-gold), rgba(200,167,82,0.0) 80%);
-      opacity: 0.9;
-      z-index: 1;
-    }
-    
-    .feature-card.coming-soon {
-      opacity: 0.75;
-    }
-    
-    /* 5) Estados de foco accesibles */
-    .feature-card:focus-visible {
-      outline: 2px solid rgba(200,167,82,0.55); /* dorado suave */
-      outline-offset: 2px;
-      border-color: rgba(200,167,82,0.38);
     }
 
-    /* 6) Tarjetas como enlaces: mejorar interacción */
-    a.feature-card {
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-    }
-
-    a.feature-card:active {
-      transform: translateY(0);
-    }
-    
-    .feature-icon {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, rgba(200, 167, 82, 0.12), rgba(200, 167, 82, 0.05));
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      color: var(--yavl-gold);
-      margin: 0 auto 1.25rem auto;
-      transition: var(--transition-normal);
-      position: relative;
-      z-index: 2;
-    }
-    
-    .feature-card:hover .feature-icon {
-      transform: scale(1.05);
-      background: linear-gradient(135deg, rgba(200, 167, 82, 0.18), rgba(200, 167, 82, 0.08));
-    }
-    
-    /* 6) Texto dentro de tarjeta: títulos y párrafos accesibles */
-    .feature-card h3,
-    .card-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--card-title-color);
-      margin: 0 0 0.75rem 0;
-      position: relative;
-      z-index: 2;
-    }
-    
-    .feature-card p,
-    .card-text {
-      color: var(--card-text-color);
-      line-height: 1.6;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-      flex-grow: 1;
-      position: relative;
-      z-index: 2;
-    }
-    
-    .feature-link {
-      color: var(--yavl-gold);
-      text-decoration: none;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: var(--transition-fast);
-      margin-top: auto;
-      position: relative;
-      z-index: 2;
-    }
-    
-    .feature-link:hover {
-      gap: 0.75rem;
-      color: var(--yavl-gold);
-    }
-    
-    /* Feature card badges */
-    .feature-badge {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      padding: 0.35rem 0.85rem;
-      border-radius: 20px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      z-index: 2;
-    }
-    
-    .priority-badge {
-      position: absolute;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--gradient-gold);
-      color: var(--yavl-dark);
-      padding: 0.45rem 1.25rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 800;
-      box-shadow: 0 4px 12px rgba(200, 167, 82, 0.4);
-      white-space: nowrap;
-      z-index: 3;
-    }
-    
-    /* 7) Móvil: sin sombras innecesarias */
-    @media (max-width: 640px) {
-      .feature-card, .card, .phase-card, .stat-card {
-        box-shadow: none;
-      }
-      .feature-card:hover, .card:hover {
-        box-shadow: var(--shadow-elev);
-      }
-    }
-    
-    /* 8) Reduce motion: sin transforms */
-    @media (prefers-reduced-motion: reduce) {
-      .feature-card:hover,
-      .feature-icon,
-      .card:hover,
-      .phase-card:hover,
-      .stat-card:hover {
-        transform: none;
-      }
-      .feature-card,
-      .feature-icon,
-      .card,
-      .phase-card,
-      .stat-card {
-        transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
-      }
-    }
-    
-    /* =========================================
-       Sistema semántico de clases para alta legibilidad
-       ========================================= */
-    
-    /* Clase genérica .card para cualquier contenedor */
-    .card {
-      background-color: var(--yavl-card-bg);
-      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-      border: 1px solid var(--border-neutral);
-      box-shadow: none;
-      position: relative;
-      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-    }
-    
-    .card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      box-shadow:
-        inset 0 1px 0 var(--inner-hairline),
-        inset 0 -1px 0 var(--outer-hairline);
-      border-radius: inherit;
-    }
-    
-    .card:hover {
-      background-color: var(--yavl-card-bg);
-      border-color: var(--border-strong);
-      box-shadow: var(--shadow-elev);
-      transform: translateY(-2px);
-    }
-    
-    /* Clase card-focusable para navegación con teclado */
-    .card-focusable:focus-visible {
-      outline: 2px solid rgba(200,167,82,0.55);
-      outline-offset: 2px;
-      border-color: rgba(200,167,82,0.38);
-    }
-    
-    
-    
-    
-    
-
-    /* Chip FUTURO - Morado frío para visión a largo plazo */
-    
-    /* Botones con alto contraste */
-    .btn-primary {
-      background: linear-gradient(180deg, #C8A752, #8B7842);
-      color: #0B0C0F;
-      border: 1px solid rgba(0,0,0,0.35);
-      font-weight: 600;
-      transition: filter 0.2s ease, transform 0.2s ease;
-    }
-    
-    .btn-primary:hover {
-      filter: brightness(1.05);
-      transform: translateY(-1px);
-    }
-    
-    .btn-ghost {
-      background: transparent;
-      color: #EDEFF2;
-      border: 1px solid rgba(255,255,255,0.12);
-      font-weight: 500;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
-    }
-    
-    .btn-ghost:hover {
-      background: rgba(255,255,255,0.04);
-      border-color: rgba(255,255,255,0.22);
-    }
-    
-    /* =========================================
-       SECCIÓN ALTERNATIVA (IMAGEN + CONTENIDO)
-       ========================================= */
-    .section-alternate {
-      background: var(--bg-secondary);
-      border-top: 1px solid rgba(200, 167, 82, 0.1);
-      border-bottom: 1px solid rgba(200, 167, 82, 0.1);
-      padding: 60px 2rem;  /* Reducido de 80px a 60px */
-    }
-    
-    .alternate-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 3rem;  /* Reducido de 4rem a 3rem */
-      align-items: center;
-    }
-    
-    .alternate-content h2 {
-      font-family: var(--font-heading);
-      font-size: clamp(2rem, 4vw, 2.75rem);
-      font-weight: 800;
-      margin-bottom: 1.5rem;
-      color: var(--text-light);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    .alternate-content h2 .highlight {
-      color: var(--yavl-gold);
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-    }
-    
-    .alternate-content p {
-      color: var(--text-secondary);
-      line-height: 1.8;
-      margin-bottom: 1.25rem;
-      font-size: 1.05rem;
-    }
-    
-    .alternate-features {
-      margin: 2rem 0;
-    }
-    
-    .alternate-feature-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    .alternate-feature-icon {
-      width: 44px;  /* Consistente con otros elementos interactivos */
-      height: 44px;
-      background: linear-gradient(135deg, rgba(200, 167, 82, 0.2), rgba(200, 167, 82, 0.05));
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--yavl-gold);
-      flex-shrink: 0;
-      font-size: 1.1rem;  /* Tamaño de ícono proporcionado */
-    }
-    
-    .alternate-feature-text h4 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-      color: var(--yavl-gold);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    .alternate-feature-text p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      margin: 0;
-    }
-    
-    .alternate-image {
-      position: relative;
-      border-radius: var(--radius-xl);
-      overflow: hidden;
-      box-shadow: var(--shadow-lg);
-      max-height: 350px;  /* Altura máxima reducida */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .alternate-image img {
-      width: 100%;
-      height: auto;
-      display: block;
-      max-height: 350px;  /* Limitar altura de imagen */
-      object-fit: contain;
-    }
-    
-    /* =========================================
-       FOOTER
-       ========================================= */
-    .footer {
-      background: var(--bg-secondary);
-      border-top: 1px solid rgba(200, 167, 82, 0.2);
-      padding: 60px 2rem 30px;
-    }
-    
-    .footer-container {
-      max-width: 1200px;
+    .cta-container {
+      max-width: 800px;
       margin: 0 auto;
-    }
-    
-    .footer-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-      gap: 3rem;
-      margin-bottom: 3rem;
-    }
-    
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 1rem;
-    }
-    
-    .footer-brand img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+      text-align: center;
+      background: var(--bg-primary);
+      padding: 4rem 3rem;
+      border-radius: 30px;
+      border: 2px solid var(--gold-principal);
+      box-shadow: var(--shadow-gold-xl);
+      position: relative;
+      z-index: 1;
     }
 
-    /* Logo del footer: control de tamaño más robusto (fix logo gigante) */
-    .footer-logo {
-      height: clamp(32px, 2.8vw, 40px) !important;
-      width: clamp(32px, 2.8vw, 40px) !important;
-      max-width: 40px !important;
-      max-height: 40px !important;
-      aspect-ratio: 1 / 1;
-      object-fit: cover;
-      vertical-align: middle;
-      border-radius: 50%;
-    }
-
-    /* Ocultar cualquier logo huérfano al final de la página */
-    .end-of-page-logo {
-      display: none !important;
-    }
-    
-    .footer-brand-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-weight: 800;
-      background: var(--gradient-gold);
+    .cta-container h2 {
+      font-size: 3rem;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-    }
-    
-    .footer-about {
-      color: var(--text-secondary);
-      line-height: 1.7;
       margin-bottom: 1.5rem;
-      font-size: 0.95rem;
     }
-    
-    .footer-social {
-      display: flex;
-      gap: 0.75rem;
-    }
-    
-        .social-icon {
-      width: 44px;  /* Consistente con otros botones */
-      height: 44px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-gold);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--yavl-gold);
-      text-decoration: none;
-      transition: var(--transition-normal);
-      font-size: 1.1rem;  /* Tamaño de ícono consistente */
-    }
-    
-    .social-icon:hover {
-      background: linear-gradient(180deg, var(--yavl-gold), var(--yavl-gold-dark));
-      color: #0B0E11;
-      border-color: var(--yavl-gold);
-      transform: translateY(-3px);
-      /* GLOW BRILLANTE */
-      box-shadow: 
-        0 0 20px rgba(200, 167, 82, 0.8),
-        0 4px 15px rgba(200, 167, 82, 0.4);
-    }
-    
-    .footer-column h4 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 1.25rem;
-      color: var(--yavl-gold);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    
-    .footer-links {
-      list-style: none;
-    }
-    
-    .footer-links li {
-      margin-bottom: 0.75rem;
-    }
-    
-    .footer-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+
+    .cta-container p {
+      font-size: 1.4rem;
       color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      margin-bottom: 2.5rem;
+      font-weight: 600;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 📊 FOOTER */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .footer {
+      background: var(--bg-primary);
+      padding: 4rem 2rem;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-logo {
+      font-size: 80px;
+      font-weight: 900;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transform: rotate(30deg);
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    .footer-text {
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .footer-links a {
+      color: var(--gold-principal);
+      font-family: 'Rajdhani', sans-serif;
       text-decoration: none;
-      transition: var(--transition-fast);
-      font-size: 0.95rem;
+      transition: all 0.3s;
+      font-weight: 600;
       position: relative;
     }
-    
-    .footer-links a::before {
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      font-size: 0.85rem;
-      color: var(--yavl-gold);
-      opacity: 0.6;
-      transition: var(--transition-fast);
-    }
-    
-    /* Iconos específicos para enlaces legales */
-    .footer-links a[href*="privacidad"]::before {
-      content: "\f3ed"; /* fa-shield-alt */
-    }
-    
-    .footer-links a[href*="terminos"]::before {
-      content: "\f0f6"; /* fa-file-contract */
-    }
-    
-    .footer-links a[href*="cookies"]::before {
-      content: "\f563"; /* fa-cookie-bite */
-    }
-    
-    .footer-links a[href*="contacto"]::before {
-      content: "\f0e0"; /* fa-envelope */
-    }
-    
-    /* Iconos para otros enlaces (Dashboard, GitHub, etc) */
-    .footer-links a[href*="dashboard"]::before {
-      content: "\f3fd"; /* fa-tachometer-alt */
-    }
-    
-    .footer-links a[href*="github"]::before {
-      content: "\f09b"; /* fa-github */
-    }
-    
-    .footer-links a[href*="roadmap"]::before {
-      content: "\f018"; /* fa-road */
-    }
-    
-    .footer-links a[href*="modulos"]::before,
-    .footer-links a[href="#modulos"]::before {
-      content: "\f009"; /* fa-th */
-    }
-    
-    .footer-links a[href*="comunidad"]::before,
-    .footer-links a[href="#comunidad"]::before {
-      content: "\f0c0"; /* fa-users */
-    }
-    
-    .footer-links a[href*="faq"]::before {
-      content: "\f059"; /* fa-question-circle */
-    }
-    
-    .footer-links a[href*="soporte"]::before,
-    .footer-links a[href*="ayuda"]::before {
-      content: "\f4ad"; /* fa-life-ring */
-    }
-    
-    .footer-links a:hover {
-      color: var(--yavl-gold);
-      transform: translateX(5px);
-    }
-    
-    .footer-links a:hover::before {
-      opacity: 1;
-    }
-    
-    .footer-bottom {
-      padding-top: 2rem;
-      border-top: 1px solid var(--border-subtle);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .footer-bottom p {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-    
-    .footer-bottom-links {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
-    
-    .footer-bottom-links a {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.875rem;
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      transition: var(--transition-fast);
-      border: 1px solid transparent;
-    }
-    
-    .footer-bottom-links a::before {
-      font-family: "Font Awesome 6 Free";
-      font-weight: 900;
-      font-size: 0.75rem;
-      opacity: 0.7;
-    }
-    
-    .footer-bottom-links a[href*="privacidad"]::before {
-      content: "\f3ed"; /* fa-shield-alt */
-    }
-    
-    .footer-bottom-links a[href*="terminos"]::before {
-      content: "\f0f6"; /* fa-file-contract */
-    }
-    
-    .footer-bottom-links a[href*="cookies"]::before {
-      content: "\f563"; /* fa-cookie-bite */
-    }
-    
-    .footer-bottom-links a:hover {
-      color: var(--yavl-gold);
-      background: rgba(201, 168, 81, 0.08);
-      border-color: rgba(200, 167, 82, 0.3);
-    }
-    
-    .footer-bottom-links a:hover::before {
-      opacity: 1;
-    }
-    
-    /* =========================================
-       BOTÓN FLOTANTE WHATSAPP
-       ========================================= */
-    .whatsapp-float {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, #25D366, #20BA5C);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.7rem;
-      text-decoration: none;
-      box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
-      z-index: 999;
-      transition: var(--transition-normal);
-    }
-    
-    .whatsapp-float:hover {
-      transform: scale(1.1) translateY(-2px);
-      box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6);
-    }
-    
-    /* =========================================
-       RESPONSIVE DESIGN
-       ========================================= */
-    @media (max-width: 1024px) {
-      .navbar-container {
-        padding: 0 1.5rem;
-        height: 64px;
-      }
 
-      .navbar-menu {
+    .footer-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--gold-principal);
+      transition: width 0.3s;
+    }
+
+    .footer-links a:hover {
+      color: var(--gold-light);
+      text-shadow: 0 0 10px rgba(200, 167, 82, 0.5);
+    }
+
+    .footer-links a:hover::after {
+      width: 100%;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* 📱 RESPONSIVE */
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    @media (max-width: 968px) {
+      .nav-desktop {
         display: none;
       }
 
-      .navbar-actions {
-        gap: 0.5rem;
+      .hamburger {
+        display: flex;
       }
 
-      /* OCULTAR botones login/register del navbar en móvil */
-      .navbar-actions .btn {
-        display: none !important;
+      .nav-actions .btn-premium {
+        display: none;
       }
 
-      #loginBtn,
-      #registerBtn {
-        display: none !important;
+      .hero-logo {
+        font-size: 140px;
       }
 
-      .mobile-menu-toggle {
-        display: inline-flex;
+      .hero h1 {
+        font-size: 3rem;
       }
 
-      .footer-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-      }
-
-      .alternate-grid {
-        grid-template-columns: 1fr;
-        gap: 3rem;
-      }
-
-      .alternate-image {
-        order: -1;
+      .section-title {
+        font-size: 2.5rem;
       }
     }
 
     @media (max-width: 768px) {
-      .hero {
-        padding: 120px 1.5rem 60px;
+      .hero-logo {
+        font-size: 120px;
       }
 
-      .section {
-        padding: 60px 1.5rem;
+      .hero h1 {
+        font-size: 2.5rem;
       }
 
-      .features-grid {
+      .hero-subtitle {
+        font-size: 1.3rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .features-grid,
+      .testimonials-grid {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
-      
-      /* Asegurar que las tarjetas se vean igual que en desktop */
-      .feature-card {
-        background-color: var(--yavl-card-bg);
-        background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-        border: 1px solid var(--border-neutral);
-        padding: 2rem 1.75rem;
-        box-shadow: none;
-      }
-      
-      .feature-card:hover {
-        background-color: var(--yavl-card-bg);
-        border-color: var(--border-strong);
-        box-shadow: var(--shadow-elev);
-        transform: translateY(-2px);
-      }
-      
-      .feature-card.priority-high {
-        border: 2px solid rgba(200, 167, 82, 0.3);
-        background-color: var(--yavl-card-bg);
       }
 
-      .footer-grid {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+      .cta-container h2 {
+        font-size: 2.2rem;
       }
 
-      .footer-bottom {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-      }
-
-      .whatsapp-float {
-        bottom: 20px;
-        right: 20px;
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
-      }
-
-      .mobile-drawer {
-        width: 88%;
-      }
-
-      /* MÓVIL: Glow dorado reducido para performance */
-      h1 {
-        text-shadow: 
-          0 0 10px rgba(200, 167, 82, 1),
-          0 0 20px rgba(200, 167, 82, 0.7);
-      }
-
-      h2 {
-        text-shadow: 
-          0 0 8px rgba(200, 167, 82, 1),
-          0 0 15px rgba(200, 167, 82, 0.6);
-      }
-
-      h3 {
-        text-shadow: 0 0 6px rgba(200, 167, 82, 0.9);
-      }
-
-      /* Cards móvil con fondos sagrados y bordes sutiles */
-      .feature-card, .info-card {
-        background-color: var(--yavl-card-bg); /* Fondo sagrado #1A1A1A */
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      
-      /* Priority cards en móvil */
-      .feature-card.priority-high {
-        border: 2px solid rgba(200, 167, 82, 0.3);
+      .cta-container p {
+        font-size: 1.2rem;
       }
     }
 
     @media (max-width: 480px) {
-      .navbar-container {
-        padding: 0 1rem;
-        height: 60px;
+      .navbar {
+        padding: 1rem;
       }
 
-      .navbar-logo img {
-        width: 32px;
-        height: 32px;
+      .logo-y {
+        font-size: 36px;
       }
 
-      .navbar-brand {
-        font-size: 1.25rem;
-        text-shadow: 0 0 8px rgba(200, 167, 82, 0.9);
-      }
-
-      .theme-toggle {
-        width: 38px;
-        height: 38px;
-        font-size: 1rem;
-      }
-
-      .hero {
-        padding: 110px 1rem 50px;
+      .logo-text {
+        font-size: 1.2rem;
       }
 
       .hero-logo {
-        width: 110px;
-        height: 110px;
+        font-size: 90px;
       }
 
-      .hero-buttons {
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+
+      .version-badge {
+        font-size: 0.85rem;
+        padding: 0.6rem 1.5rem;
+      }
+
+      .hero-actions {
         flex-direction: column;
-        align-items: stretch;
-      }
-
-      .btn-large {
         width: 100%;
       }
 
-      .mobile-drawer {
-        width: 90%;
-        max-width: 300px;
-        padding: 24px 18px 28px;
-        background: rgba(16, 17, 20, 0.98);
-        border: 2px solid rgba(200, 167, 82, 0.4);
+      .btn-premium {
+        width: 100%;
       }
 
-      /* Botones móvil con glow dorado */
-      .btn-primary, .btn-secondary {
-        box-shadow: 
-          0 0 15px rgba(200, 167, 82, 0.6),
-          0 4px 12px rgba(0, 0, 0, 0.4);
+      .section-title {
+        font-size: 1.8rem;
       }
 
-      .btn-primary:hover, .btn-secondary:hover {
-        box-shadow: 
-          0 0 25px rgba(200, 167, 82, 0.9),
-          0 4px 18px rgba(200, 167, 82, 0.5);
+      .feature-icon {
+        font-size: 2.5rem;
+      }
+
+      .nav-mobile {
+        max-width: 100%;
+      }
+
+      .cta-container {
+        padding: 3rem 2rem;
+      }
+
+      .cta-container h2 {
+        font-size: 1.8rem;
       }
     }
 
-    @media (max-width: 380px) {
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
     }
 
-    @media (max-width: 375px) {
-      .navbar-container {
-        padding: 0 0.75rem;
-      }
+    .loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-      .navbar-brand {
-        font-size: 1.15rem;
-        text-shadow: 0 0 6px rgba(200, 167, 82, 0.8);
-      }
+    .loading-logo {
+      font-size: 120px;
+      font-weight: 900;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      transform: rotate(30deg);
+      display: inline-block;
+      animation: breathe 4s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
 
-      .hero {
-        padding: 105px 0.75rem 45px;
-      }
-
-      .mobile-drawer {
-        width: 92%;
-        border: 2px solid rgba(200, 167, 82, 0.5);
-      }
-
-      /* Optimización móvil pequeño: glow más suave */
-      h1 {
-        text-shadow: 0 0 8px rgba(200, 167, 82, 1);
-      }
-
-      h2 {
-        text-shadow: 0 0 6px rgba(200, 167, 82, 0.9);
-      }
-
-      h3 {
-        text-shadow: 0 0 5px rgba(200, 167, 82, 0.8);
-      }
-    }
-    
-    /* =========================================
-       TEMA CLARO (OPCIONAL)
-       ========================================= */
-    body.light-theme {
-      /* Variables de color para tema claro */
-      --bg-primary: #F8F9FA;
-      --bg-secondary: #FFFFFF;
-      --bg-dark: #FFFFFF;
-      --bg-darker: #F5F5F5;
-      --bg-card: rgba(255, 255, 255, 0.95);
-      --bg-card-hover: rgba(255, 255, 255, 1);
-      --overlay-dark: rgba(255, 255, 255, 0.95);
-      
-      --text-primary: #1A1A1A;
-      --text-light: #1A1A1A;
-      --text-secondary: #4B5563;
-      --text-muted: #9CA3AF;
-      
-      --border-gold: rgba(200, 167, 82, 0.3);
-      --border-gold-hover: rgba(200, 167, 82, 0.6);
-      
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-      
-      --glow-gold: 0 0 15px rgba(200, 167, 82, 0.3), 0 2px 10px rgba(0, 0, 0, 0.1);
-      --glow-gold-intense: 0 0 25px rgba(200, 167, 82, 0.5), 0 4px 20px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Fondo general tema claro */
-    body.light-theme {
-      background-color: #F8F9FA;
-      background-image:
-        linear-gradient(rgba(200, 167, 82, 0.08) 1px, transparent 1px),
-        linear-gradient(to right, rgba(200, 167, 82, 0.08) 1px, #F8F9FA 1px);
-    }
-    
-    body.light-theme::before {
-      background: 
-        radial-gradient(circle at 15% 85%, rgba(200, 167, 82, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 85% 15%, rgba(200, 167, 82, 0.06) 0%, transparent 50%);
-    }
-    
-    /* Navbar tema claro */
-    body.light-theme .navbar {
-      background: rgba(255, 255, 255, 0.95);
-      border-bottom-color: rgba(200, 167, 82, 0.2);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    }
-    
-    body.light-theme .navbar-link {
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .navbar-link:hover {
-      color: var(--yavl-gold);
-    }
-    
-    body.light-theme .navbar-brand {
-      color: #1A1A1A;
-      text-shadow: 0 0 10px rgba(200, 167, 82, 0.4);
-    }
-    
-    /* Hero section tema claro */
-    body.light-theme .hero {
-      background: linear-gradient(135deg, 
-        rgba(255, 255, 255, 0.9), 
-        rgba(200, 167, 82, 0.1));
-    }
-    
-    body.light-theme .hero h1 {
-      color: #1A1A1A;
-      text-shadow: 
-        0 0 20px rgba(200, 167, 82, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    body.light-theme .hero p {
-      color: #374151;
-    }
-    
-    body.light-theme .hero p strong {
-      color: #1F2937;
+    .loading-text {
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.5rem;
+      margin-bottom: 30px;
       font-weight: 600;
     }
-    
-    body.light-theme .hero-logo-inner {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(200, 167, 82, 0.4);
-      box-shadow: 
-        0 0 30px rgba(200, 167, 82, 0.3),
-        0 4px 20px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Sections tema claro */
-    body.light-theme .section {
-      background: transparent;
-    }
-    
-    body.light-theme .section-title {
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .section-title .highlight {
-      color: var(--yavl-gold);
-      text-shadow: 0 0 15px rgba(200, 167, 82, 0.4);
-    }
-    
-    body.light-theme .section-description {
-      color: #4B5563;
-    }
-    
-    /* Feature cards tema claro */
-    body.light-theme .feature-card {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(200, 167, 82, 0.3);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    body.light-theme .feature-card:hover {
-      background: rgba(255, 255, 255, 1);
-      border-color: rgba(200, 167, 82, 0.6);
-      box-shadow: 
-        0 4px 20px rgba(200, 167, 82, 0.2),
-        0 8px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    body.light-theme .feature-icon {
-      background: linear-gradient(135deg, 
-        rgba(200, 167, 82, 0.2), 
-        rgba(200, 167, 82, 0.1));
-      color: var(--yavl-gold);
-    }
-    
-    body.light-theme .feature-title {
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .feature-description {
-      color: #4B5563;
-    }
-    
-    body.light-theme .feature-link {
-      color: var(--yavl-gold);
-    }
-    
-    /* Botones tema claro */
-    body.light-theme .btn-primary {
-      background: linear-gradient(135deg, #C8A752, #8B7842);
-      color: #FFFFFF;
-      box-shadow: 
-        0 0 15px rgba(200, 167, 82, 0.4),
-        0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    body.light-theme .btn-primary:hover {
-      box-shadow: 
-        0 0 25px rgba(200, 167, 82, 0.6),
-        0 6px 20px rgba(0, 0, 0, 0.2);
-    }
-    
-    body.light-theme .btn-outline {
-      background: transparent;
-      color: var(--yavl-gold);
-      border-color: rgba(200, 167, 82, 0.5);
-    }
-    
-    body.light-theme .btn-outline:hover {
-      background: rgba(200, 167, 82, 0.1);
-      border-color: var(--yavl-gold);
-    }
-    
-    /* Footer tema claro */
-    body.light-theme .footer {
-      background: rgba(255, 255, 255, 0.95);
-      border-top: 2px solid rgba(200, 167, 82, 0.2);
-    }
-    
-    body.light-theme .footer-title {
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .footer a {
-      color: #4B5563;
-    }
-    
-    body.light-theme .footer a:hover {
-      color: var(--yavl-gold);
-    }
-    
-    /* Modal tema claro */
-    body.light-theme .modal {
-      background: rgba(255, 255, 255, 0.98);
-      border-color: rgba(200, 167, 82, 0.3);
-      box-shadow: 
-        0 0 40px rgba(200, 167, 82, 0.2),
-        0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-    
-    body.light-theme .modal-title {
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .modal-description {
-      color: #4B5563;
-    }
-    
-    body.light-theme .modal-form input {
-      background: rgba(248, 249, 250, 0.8);
-      border-color: rgba(200, 167, 82, 0.3);
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .modal-form input:focus {
-      background: #FFFFFF;
-      border-color: var(--yavl-gold);
-      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.15);
-    }
-    
-    body.light-theme .captcha-container {
-      background: rgba(200, 167, 82, 0.08);
-      border-color: rgba(200, 167, 82, 0.3);
-    }
-    
-    body.light-theme .captcha-text {
-      color: #1A1A1A;
-    }
-    
-    /* Mobile drawer tema claro */
-    body.light-theme .mobile-drawer {
-      background: rgba(255, 255, 255, 0.98);
-      border-color: rgba(200, 167, 82, 0.3);
-      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
-    }
-    
-    body.light-theme .mobile-drawer a {
-      color: #1A1A1A;
-    }
-    
-    body.light-theme .mobile-drawer a:hover {
-      background: rgba(200, 167, 82, 0.1);
-      color: var(--yavl-gold);
-    }
-    
-    /* Theme toggle tema claro */
-    body.light-theme .theme-toggle {
-      background: rgba(200, 167, 82, 0.1);
-      color: var(--yavl-gold);
-    }
-    
-    body.light-theme .theme-toggle:hover {
-      background: rgba(200, 167, 82, 0.2);
-    }
-    
-    /* Responsive: Feature cards tema claro en móvil */
-    @media (max-width: 768px) {
-      body.light-theme .feature-card {
-        background: rgba(255, 255, 255, 0.9);
-        border-color: rgba(200, 167, 82, 0.3);
-        box-shadow: var(--shadow-sm);
-      }
-      
-      body.light-theme .feature-card:hover {
-        background: rgba(255, 255, 255, 1);
-        border-color: rgba(200, 167, 82, 0.6);
-        box-shadow: 
-          0 4px 20px rgba(200, 167, 82, 0.2),
-          0 8px 30px rgba(0, 0, 0, 0.1);
-      }
-      
-      body.light-theme .feature-card.priority-high {
-        border: 2px solid rgba(200, 167, 82, 0.3);
-        background: rgba(255, 255, 255, 0.9);
-      }
-    }
-    
-    /* Títulos h2, h3 tema claro */
-    body.light-theme h2 {
-      color: #1A1A1A;
-      text-shadow: 
-        0 0 15px rgba(200, 167, 82, 0.4),
-        0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    
-    body.light-theme h3 {
-      color: #1A1A1A;
-      text-shadow: 
-        0 0 10px rgba(200, 167, 82, 0.3),
-        0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-    
-    /* WhatsApp float tema claro */
-    body.light-theme .whatsapp-float {
-      box-shadow: 
-        0 4px 20px rgba(37, 211, 102, 0.5),
-        0 2px 10px rgba(0, 0, 0, 0.1);
-    }
 
-    /* =========================================
-       CLASES ESPECIALES CHAMPAGNE GOLD
-       ========================================= */
-    
-    .gold-glow {
-      color: var(--yavl-gold);
-      text-shadow: 0 0 3px rgba(200, 167, 82, 0.45), 0 0 8px rgba(200, 167, 82, 0.25);
-    }
-    
-    .gold-glow-intense {
-      color: var(--gold-light);
-      text-shadow: 0 0 6px rgba(200, 167, 82, 0.55), 0 0 14px rgba(200, 167, 82, 0.35);
-    }
-    
-    .icon-gold {
-      color: var(--yavl-gold);
-      filter: drop-shadow(0 0 6px rgba(200, 167, 82, 0.35));
-    }
-    
-    .phase-card {
-      background-color: var(--yavl-card-bg);
-      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-      border: 1px solid var(--border-neutral);
-      box-shadow: none;
-      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-      position: relative;
+    .loading-bar {
+      width: 300px;
+      height: 4px;
+      background: rgba(200, 167, 82, 0.2);
+      border-radius: 2px;
       overflow: hidden;
     }
-    
-    .phase-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      box-shadow:
-        inset 0 1px 0 var(--inner-hairline),
-        inset 0 -1px 0 var(--outer-hairline);
-      border-radius: inherit;
+
+    .loading-progress {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
+      animation: loadingProgress 2s ease-in-out infinite;
     }
-    
-    .phase-card:hover {
-      background-color: var(--yavl-card-bg);
-      border-color: var(--border-strong);
-      box-shadow: var(--shadow-elev);
-      transform: translateY(-2px);
-    }
-    
-    .feature-item {
-      border-left: 3px solid var(--yavl-gold);
-      background-color: var(--yavl-card-bg);
-      background-image: linear-gradient(to right, rgba(200, 167, 82, 0.08), transparent);
-      border: 1px solid var(--border-neutral);
-      border-left: 3px solid var(--yavl-gold);
-      box-shadow: none;
-      transition: background-color .2s ease, border-color .2s ease, border-left-width .2s ease;
-      position: relative;
-    }
-    
-    .feature-item::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      box-shadow:
-        inset 0 1px 0 var(--inner-hairline),
-        inset 0 -1px 0 var(--outer-hairline);
-      border-radius: inherit;
-    }
-    
-    .feature-item:hover {
-      background-color: var(--yavl-card-bg);
-      background-image: linear-gradient(to right, rgba(200, 167, 82, 0.15), transparent);
-      border-left-width: 4px;
-      border-left-color: var(--yavl-gold);
-    }
-    
-    .stat-card {
-      background-color: var(--yavl-card-bg);
-      background-image: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-      border: 1px solid var(--border-neutral);
-      box-shadow: none;
-      transition: background-color .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-      position: relative;
-    }
-    
-    .stat-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      box-shadow:
-        inset 0 1px 0 var(--inner-hairline),
-        inset 0 -1px 0 var(--outer-hairline);
-      border-radius: inherit;
-    }
-    
-    .stat-card:hover {
-      background-color: var(--yavl-card-bg);
-      border-color: var(--border-strong);
-      box-shadow: var(--shadow-elev);
-      transform: translateY(-2px);
-    }
-    
-    .timeline-connector {
-      width: 3px;
-      height: 50px;
-      background: linear-gradient(to bottom, var(--yavl-gold), rgba(200, 167, 82, 0.3));
-      margin: 0 auto;
-      box-shadow: 0 0 8px rgba(200, 167, 82, 0.55);
-    }
-    
-    /* =========================================
-       OPTIMIZACIONES MÓVIL Y ACCESIBILIDAD
-       ========================================= */
-    
-    /* Reducir fatiga en móvil */
-    @media (max-width: 640px) {
-      .gold-glow,
-      .gold-glow-intense {
-        text-shadow: none;
+
+    @keyframes loadingProgress {
+      0% {
+        width: 0%;
       }
-      
-      .phase-card,
-      .stat-card {
-        box-shadow: none;
-      }
-      
-      h1, h2 {
-        text-shadow: none;
-      }
-    }
-    
-    /* Respetar preferencias de movimiento reducido */
-    @media (prefers-reduced-motion: reduce) {
-      .float-animation,
-      .pulse-border {
-        animation: none !important;
-      }
-      
-      * {
-        scroll-behavior: auto;
-      }
-      
-      .phase-card::before {
-        display: none;
-      }
-    }
-    
-    /* Animación pulse suave */
-    @keyframes pulse-gold {
-      0%, 100% {
-        box-shadow: 0 0 10px rgba(200, 167, 82, 0.30);
-        border-color: var(--border-gold);
-      }
+
       50% {
-        box-shadow: 0 0 22px rgba(200, 167, 82, 0.50);
-        border-color: var(--yavl-gold);
+        width: 70%;
       }
-    }
-    
-    .pulse-border {
-      animation: pulse-gold 3s ease-in-out infinite;
+
+      100% {
+        width: 100%;
+      }
     }
   </style>
 </head>
-<body>
-  
-  <!-- Skip Link para accesibilidad -->
-  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
-  
-  <!-- =========================================
-       BARRA DE NAVEGACIÓN
-       ========================================= -->
-  <nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
-    <div class="navbar-container">
-      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-drawer">
-        <i class="fas fa-bars" aria-hidden="true"></i>
-        <span class="sr-only">Menú</span>
-      </button>
 
-      <a href="/" class="navbar-logo">
-        <img src="/assets/images/logo.png" alt="YavlGold - Academia Cripto" style="width: 40px !important; height: 40px !important; max-width: 40px !important; max-height: 40px !important;">
-        <span class="navbar-brand">YavlGold</span>
-      </a>
-      
-      <ul class="navbar-menu">
-        <li><a href="#inicio" class="navbar-link" aria-current="page">Inicio</a></li>
-        <li><a href="#modulos" class="navbar-link">Módulos</a></li>
-        <li><a href="./roadmap/" class="navbar-link">Roadmap</a></li>
-        <li><a href="#comunidad" class="navbar-link">Comunidad</a></li>
-        <li><a href="./dashboard/" class="navbar-link">Dashboard</a></li>
-      </ul>
-      
-      <div class="navbar-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
-          <i class="fas fa-moon"></i>
-        </button>
-        <!-- Botón de perfil (solo visible cuando está autenticado) -->
-        <button id="btnProfile" class="profile-btn" style="display: none; width: 36px; height: 36px; border-radius: 50%; overflow: hidden; padding: 0; border: 2px solid var(--yavl-gold); background: var(--yavl-card-bg); cursor: pointer;" aria-label="Abrir menú de perfil" tabindex="0">
-          <img src="/assets/images/logo.png" alt="Perfil" style="width: 100%; height: 100%; object-fit: cover;">
-        </button>
-        <!-- Botones de autenticación desktop (ocultos automáticamente en móvil por CSS) -->
-        <button type="button" id="loginBtn" class="btn btn-outline" data-modal-target="login-modal">Iniciar Sesión</button>
-        <button type="button" id="registerBtn" class="btn btn-primary" data-modal-target="register-modal">Registrarse</button>
-      </div>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <img src="/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main" />
+    <div class="loading-text">Cargando YavlGold V9.1...</div>
+    <div class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+  </div>
+
+  <!-- Overlay Mobile -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar" role="navigation" aria-label="Navegación principal">
+    <div class="logo-container" id="logoLink">
+      <picture>
+        <source srcset="/images/logo.webp" type="image/webp" />
+        <source srcset="/images/logo.png" type="image/png" />
+        <img src="/images/logo.png" alt="YavlGold logo" class="logo-img" width="48" height="48" />
+      </picture>
+      <div class="logo-text">Yavl<span>Gold</span> V9.1</div>
+    </div>
+    <div class="nav-desktop">
+      <a href="#inicio">Inicio</a>
+      <a href="#modulos">Módulos</a>
+      <a href="#testimonios">Comunidad</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
+        aria-label="Cambiar entre modo claro y oscuro">🌙</button>
+      <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
+      <a href="#auth" id="nav-login" class="btn-premium btn-outline">Entrar</a>
+      <a href="#auth" id="nav-register" class="btn-premium btn-gold">Registro</a>
+      <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </nav>
 
-  <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true"></div>
-  <aside class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
-    <div class="mobile-drawer-header">
-      <a href="/" class="mobile-drawer-brand">
-        <img src="/assets/images/logo.png" alt="YavlGold Logo" style="width: 28px !important; height: 28px !important; max-width: 28px !important; max-height: 28px !important;">
-        <span>YavlGold</span>
-      </a>
-      <button type="button" class="mobile-drawer-close" data-drawer-close aria-label="Cerrar menú">
-        <i class="fas fa-times"></i>
-      </button>
+  <!-- Mobile Navigation -->
+  <div class="nav-mobile" id="navMobile" role="navigation" aria-label="Navegación móvil">
+    <div class="nav-mobile-links">
+      <a href="#inicio">🏠 Inicio</a>
+      <a href="#modulos">📚 Módulos</a>
+      <a href="#testimonios">👥 Comunidad</a>
     </div>
-
-    <!-- Botones de autenticación PRIMERO (arriba, visibles sin scroll) -->
-    <div class="mobile-drawer-actions" style="margin-top: 0; padding-top: 16px; border-top: none; margin-bottom: 16px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); padding-bottom: 16px;">
-      <button type="button" class="btn btn-outline" data-modal-target="login-modal" aria-label="Abrir modal de inicio de sesión">Iniciar Sesión</button>
-      <button type="button" class="btn btn-primary" data-modal-target="register-modal" aria-label="Abrir modal de registro">Registrarse</button>
+    <div class="nav-mobile-actions">
+      <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
     </div>
+  </div>
 
-    <nav class="mobile-drawer-nav">
-      <a href="#inicio"><i class="fas fa-home"></i>Inicio</a>
-      <a href="#modulos"><i class="fas fa-th"></i>Módulos</a>
-      <a href="./roadmap/"><i class="fas fa-road"></i>Roadmap</a>
-      <a href="#comunidad"><i class="fas fa-users"></i>Comunidad</a>
-      <a href="./dashboard/"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-    </nav>
-  </aside>
-  
-  <!-- =========================================
-       CONTENIDO PRINCIPAL
-       ========================================= -->
-  <main id="main-content" role="main" aria-label="Contenido principal">
-    
-    <!-- =========================================
-         HERO SECTION
-         ========================================= -->
-    <section class="hero" id="inicio" aria-labelledby="hero-title">
-      <div class="hero-content">
-        <div class="hero-logo">
-          <div class="hero-logo-inner">
-            <img src="/assets/images/logo.png" alt="YavlGold - Ecosistema Global Innovador">
-          </div>
-        </div>
-        
-        <h1 id="hero-title">Ecosistema YavlGold</h1>
-        <p class="hero-subtitle">
-          Plataforma integral que combina <strong>educación cripto</strong>, <strong>redes sociales</strong>, 
-          <strong>multimedia</strong>, <strong>agricultura innovadora</strong>, <strong>ajedrez exclusivo</strong> 
-          y <strong>trading educativo</strong>, <strong>estadístico</strong> y <strong>análisis del mercado</strong> — todo en un único ecosistema conectado.
-        </p>
-        
-        <div class="hero-buttons">
-          <a href="#modulos" class="btn btn-primary btn-large">
-            <i class="fas fa-th" aria-hidden="true"></i>
-            Explorar Módulos
-          </a>
-          <a href="./dashboard/" class="btn btn-outline btn-large">
-            <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
-            Acceder al Dashboard
-          </a>
-        </div>
+  <!-- Hero Section -->
+  <section class="hero" id="inicio">
+    <div class="hero-content">
+      <div class="hero-logo" aria-hidden="true">Y</div>
+      <h1>🎓 YAVLGOLD V9.1 🎓</h1>
+      <p class="hero-subtitle">Ecosistema Educativo Prestigioso Multimodulo</p>
+      <div class="hero-badges">
+        <span class="version-badge">VERSION 9.1 - 2024</span>
+        <span class="badge badge-construction">En Construcción</span>
+        <span class="badge badge-unique">Único en el Mundo</span>
+        <span class="badge badge-premium">Premium</span>
       </div>
-    </section>
-  
-  <!-- =========================================
-       MÓDULOS DEL ECOSISTEMA YAVLGOLD
-       ========================================= -->
-  <section class="section" id="modulos">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">
-          Explora Nuestros <span class="highlight">Módulos</span>
-        </h2>
-        <p class="section-description">
-          Un ecosistema completo que integra tecnología, educación, entretenimiento y comunidad en una sola plataforma.
-        </p>
+      <div class="hero-actions">
+        <a href="#modulos" class="btn-premium btn-gold btn-lg">Explorar Módulos 🚀</a>
+        <a href="#lista-espera" class="btn-premium btn-outline btn-lg">Únete a la Lista</a>
       </div>
-      
-      <div class="features-grid">
-        
-        <!-- 1. YavlSocial -->
-        <a href="./apps/social/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Abrir YavlSocial, próximamente disponible. Red social innovadora para compartir contenido.">
-          <div class="feature-icon">
-            <i class="fas fa-users" aria-hidden="true"></i>
-          </div>
-          <h3 class="card-title">YavlSocial</h3>
-          <p class="card-text">Red social innovadora para compartir contenido, importar desde redes tradicionales y conectar con comunidades.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Publicaciones multimedia
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Importación de redes sociales
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Chat en tiempo real
-            </p>
-          </div>
-        </a>
-        
-        <!-- 2. YavlSuite -->
-        <a href="./apps/suite/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Abrir YavlSuite, próximamente disponible. Suite multimedia completa con DJ virtual, karaoke y editor de video.">
-          <div class="feature-icon">
-            <i class="fas fa-layer-group" aria-hidden="true"></i>
-          </div>
-          <div style="position: absolute; top: 1rem; right: 1rem;">
-          </div>
-          <h3 class="card-title">YavlSuite</h3>
-          <p class="card-text">Suite multimedia completa con DJ virtual, karaoke, editor de video, conversión de formatos y más.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              DJ y mezclas en vivo
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Karaoke con letras sincronizadas
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Conversión de formatos multimedia
-            </p>
-          </div>
-        </a>
-        
-        <!-- 3. YavlAcademy -->
-        <a href="./academia/" class="feature-card card-accent card-focusable block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Explorar YavlAcademy, 40 por ciento completo. Academia central con cursos y certificaciones de todos los módulos.">
-          <div class="feature-icon">
-            <i class="fas fa-graduation-cap" aria-hidden="true"></i>
-          </div>
-          <div style="position: absolute; top: 1rem; right: 1rem;">
-          </div>
-          <h3 class="card-title">YavlAcademy</h3>
-          <p class="card-text">Academia ÚNICA y CENTRAL con cursos y certificaciones de TODOS los módulos del ecosistema. Tu centro educativo completo.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Cursos de todos los módulos
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Certificaciones unificadas
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Sistema de gamificación global
-            </p>
-          </div>
-        </a>
-        
-        <!-- 4. YavlCrypto (DESTACADO) -->
-        <a href="./herramientas/" class="feature-card priority-high card-accent card-focusable block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Acceder a YavlCrypto, alta prioridad, 60 por ciento completo. Academia cripto más herramientas profesionales.">
-          <div class="feature-icon">
-            <i class="fas fa-bitcoin" aria-hidden="true"></i>
-          </div>
-          <h3 class="card-title">YavlCrypto</h3>
-          <p class="card-text">Academia cripto + herramientas profesionales (calculadoras, conversores, análisis) para dominar el ecosistema blockchain.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.4);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Calculadoras de rentabilidad ROI
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Conversores en tiempo real
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Análisis de mercado y tendencias
-            </p>
-          </div>
-        </a>
-        
-        <!-- 5. YavlAgro -->
-        <a href="./apps/agro/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Ver más sobre YavlAgro, próximamente disponible. Plataforma para agricultura innovadora con marketplace.">
-          <div class="feature-icon">
-            <i class="fas fa-seedling" aria-hidden="true"></i>
-          </div>
-          <div style="position: absolute; top: 1rem; right: 1rem;">
-          </div>
-          <h3 class="card-title">YavlAgro</h3>
-          <p class="card-text">Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Marketplace agrícola
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Cursos de agricultura sostenible
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Gestión de cultivos y cosechas
-            </p>
-          </div>
-        </a>
-        
-        <!-- 6. YavlChess -->
-        <a href="./chess/" class="feature-card card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Ver más sobre YavlChess, planificado para el futuro. Ajedrez con variantes exclusivas y desafíos contra IA.">
-          <div class="feature-icon">
-            <i class="fas fa-chess" aria-hidden="true"></i>
-          </div>
-          <div style="position: absolute; top: 1rem; right: 1rem;">
-          </div>
-          <h3 class="card-title">YavlChess</h3>
-          <p class="card-text">Ajedrez con variantes exclusivas: modo turbo, probabilístico, explosivo y desafíos contra IA avanzada.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Variantes innovadoras de ajedrez
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Desafíos contra IA
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Torneos y rankings globales
-            </p>
-          </div>
-        </a>
-        
-        <!-- 7. YavlTrading -->
-        <a href="./trading/" class="feature-card card-accent card-focusable coming-soon block focus-visible:outline-2 focus-visible:outline-[rgba(200,167,82,0.55)] focus-visible:outline-offset-2" aria-label="Ver más sobre YavlTrading, muy importante, próximamente disponible. Educación completa en trading y análisis técnico.">
-          <div class="feature-icon">
-            <i class="fas fa-chart-line" aria-hidden="true"></i>
-          </div>
-          <div style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
-          </div>
-          <h3 class="card-title">YavlTrading</h3>
-          <p class="card-text">Educación completa en trading, análisis técnico profesional y estadísticas de mercado en tiempo real.</p>
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(200,167,82,0.2);">
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Educación en trading profesional
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Análisis técnico y fundamental
-            </p>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">
-              <i class="fas fa-check-circle" style="color: var(--yavl-gold);" aria-hidden="true"></i>
-              Estadísticas de mercado en vivo
-            </p>
-          </div>
-        </a>
-        
-      </div>
-      
-      <!-- Roadmap CTA -->
-      <div style="margin-top: 4rem; text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, rgba(11, 12, 15, 0.7), rgba(200, 167, 82, 0.05)); border: 1px solid var(--border-gold); border-radius: var(--radius-lg);">
-        <h3 style="font-size: 1.8rem; margin-bottom: 1rem; color: var(--yavl-gold); font-family: var(--font-heading);">
-          <i class="fas fa-road"></i> Roadmap del Ecosistema
-        </h3>
-        <p style="color: var(--text-secondary); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-          Conoce el progreso de cada módulo, próximas funcionalidades y los hitos que estamos alcanzando.
-        </p>
-        <a href="./roadmap/" class="btn btn-primary btn-large">
-          <i class="fas fa-map-marked-alt"></i>
-          Ver Roadmap Completo
-        </a>
-      </div>
-      
     </div>
   </section>
-  
-  <!-- =========================================
-       SECCIÓN: COMUNIDAD
-       ========================================= -->
-  <section class="section section-alternate" id="comunidad">
-    <div class="section-container">
-      <div class="section-header">
-        <h2 class="section-title">
-          Únete a la <span class="highlight">Comunidad</span>
-        </h2>
-        <p class="section-description">
-          Conecta con otros miembros del ecosistema YavlGold, comparte experiencias y mantente actualizado con las últimas novedades.
-        </p>
-      </div>
-      
+
+  <!-- Features Section -->
+  <section class="features" id="modulos">
+    <div class="features-container">
+      <h2 class="section-title">Módulos del Ecosistema</h2>
+      <p class="section-subtitle">Sistema educativo multimodulo único que no existe en ningún otro lugar</p>
       <div class="features-grid">
+        <!-- Academia - Producto Estrella -->
         <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fab fa-telegram"></i>
-          </div>
-          <h3>Telegram</h3>
-          <p>Únete a nuestros grupos de discusión y análisis de mercado.</p>
-          <a href="https://t.me/YavlEcosystem" target="_blank" rel="noopener noreferrer" class="feature-link">
-            Unirse <i class="fas fa-external-link-alt"></i>
-          </a>
+          <span class="feature-status status-star">⭐ Producto Estrella</span>
+          <div class="feature-icon">🎓</div>
+          <h3 class="feature-title">Academia Premium</h3>
+          <p class="feature-description">Biblioteca educativa con videos profesionales, quiz interactivos y sistema de
+            evaluación avanzado. Tu ruta de aprendizaje personalizada hacia la excelencia.</p>
         </div>
-        
+        <!-- Duelos en Vivo -->
         <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fab fa-twitter"></i>
-          </div>
-          <h3>Twitter</h3>
-          <p>Síguenos para noticias, actualizaciones y análisis diarios.</p>
-          <a href="https://x.com/Yavlcapitan" target="_blank" rel="noopener noreferrer" class="feature-link">
-            Seguir <i class="fas fa-external-link-alt"></i>
-          </a>
+          <span class="feature-status status-development">En Desarrollo</span>
+          <div class="feature-icon">⚔️</div>
+          <h3 class="feature-title">Duelos en Vivo</h3>
+          <p class="feature-description">Compite en tiempo real con estudiantes de todo el mundo. Obtén certificaciones
+            oficiales de todos los módulos al demostrar tu dominio en desafíos educativos.</p>
         </div>
-        
+        <!-- Herramientas Pro -->
         <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fab fa-youtube"></i>
-          </div>
-          <h3>YouTube</h3>
-          <p>Videos educativos, tutoriales y contenido del ecosistema.</p>
-          <a href="https://youtube.com/@yavlgoldpro" target="_blank" rel="noopener noreferrer" class="feature-link">
-            Suscribirse <i class="fas fa-external-link-alt"></i>
-          </a>
+          <span class="feature-status status-development">En Desarrollo</span>
+          <div class="feature-icon">🛠️</div>
+          <h3 class="feature-title">Herramientas Pro Educativas</h3>
+          <p class="feature-description">Suite completa de herramientas profesionales para análisis, investigación y
+            desarrollo de habilidades avanzadas en educación financiera.</p>
+        </div>
+        <!-- Ajedrez Único -->
+        <div class="feature-card">
+          <span class="feature-status status-coming">Próximamente</span>
+          <div class="feature-icon">♟️</div>
+          <h3 class="feature-title">Módulo de Ajedrez Único</h3>
+          <p class="feature-description">Sistema de aprendizaje de ajedrez jamás creado antes. Metodología
+            revolucionaria que combina IA, análisis profundo y pedagogía de élite para dominar el juego ciencia.</p>
+        </div>
+        <!-- Agricultura Tech -->
+        <div class="feature-card">
+          <span class="feature-status status-development">En Desarrollo</span>
+          <div class="feature-icon">🌾</div>
+          <h3 class="feature-title">Agricultura Tecnológica</h3>
+          <p class="feature-description">Ecosistema agrícola con tecnología única integrada. Incluye marketplace en
+            desarrollo para conectar productores, tecnología IoT y formación especializada.</p>
+        </div>
+        <!-- Suite Multimedia -->
+        <div class="feature-card">
+          <span class="feature-status status-development">En Desarrollo</span>
+          <div class="feature-icon">🎵</div>
+          <h3 class="feature-title">Suite Multimedia de Lujo</h3>
+          <p class="feature-description">Plataforma de alta categoría para producción musical, DJ profesional, edición
+            de video y contenido multimedia. Herramientas premium para creadores de élite.</p>
+        </div>
+        <!-- Trading Educativo -->
+        <div class="feature-card">
+          <span class="feature-status status-coming">Próximamente</span>
+          <div class="feature-icon">📈</div>
+          <h3 class="feature-title">Centro de Estudios Trading</h3>
+          <p class="feature-description">Centro educativo completo de trading. NO es simulado, NO es real. Es un sistema
+            único de aprendizaje profundo de mercados financieros con metodología exclusiva.</p>
         </div>
       </div>
     </div>
   </section>
-  
-  </main><!-- Cierre de main-content -->
-  
-  <!-- =========================================
-       FOOTER
-       ========================================= -->
-  <footer class="footer" role="contentinfo">
-    <div class="footer-container">
-      <div class="footer-grid">
-        <div class="footer-about-section">
-          <div class="footer-brand">
-            <img src="/assets/images/logo.png" alt="YavlGold - Academia Cripto" class="footer-logo" width="40" height="40" loading="lazy" style="width: 40px !important; height: 40px !important; max-width: 40px !important; max-height: 40px !important; display: block;">
-            <span class="footer-brand-name">YavlGold</span>
-          </div>
-          <p class="footer-about">
-            Ecosistema global que integra educación cripto, redes sociales, multimedia, 
-            agricultura innovadora, ajedrez exclusivo y trading educativo, estadístico y análisis del mercado — todo en una plataforma conectada.
+
+  <!-- Testimonials Section -->
+  <section class="testimonials" id="testimonios">
+    <div class="testimonials-container">
+      <h2 class="section-title">Comunidad YavlGold</h2>
+      <p class="section-subtitle">El futuro de la educación se está construyendo aquí</p>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <p class="testimonial-content">
+            Estoy siguiendo el desarrollo de YavlGold y es impresionante. La visión de un ecosistema educativo
+            multimodulo tan completo y único no tiene precedentes. Especialmente emocionado por el módulo de ajedrez y
+            la academia.
           </p>
-          
-          <!-- Aviso legal educativo -->
-          <p class="text-xs text-gray-500 mt-4 leading-relaxed" style="color: #9CA3AF; font-size: 0.75rem; margin-top: 1rem; line-height: 1.6;">
-            <strong>⚠️ Descargo de responsabilidad:</strong> El contenido de YavlGold es estrictamente educativo y no constituye asesoría financiera, de inversión ni legal. 
-            Los criptoactivos son altamente volátiles y conllevan riesgos significativos. Realiza tu propia investigación (DYOR) antes de tomar decisiones de inversión.
-          </p>
-          
-          <div class="footer-social">
-            <a href="https://t.me/YavlEcosystem" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Únete a nuestro Telegram">
-              <i class="fab fa-telegram" aria-hidden="true"></i>
-            </a>
-            <a href="https://x.com/Yavlcapitan" target="_blank" rel="noopener noreferrer me" class="social-icon" aria-label="Síguenos en Twitter">
-              <i class="fab fa-twitter" aria-hidden="true"></i>
-            </a>
-            <a href="https://youtube.com/@yavlgoldpro" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Suscríbete a nuestro canal de YouTube">
-              <i class="fab fa-youtube" aria-hidden="true"></i>
-            </a>
-            <a href="https://github.com/YavlPro" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Visita nuestro GitHub">
-              <i class="fab fa-github" aria-hidden="true"></i>
-            </a>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">R</div>
+            <div class="testimonial-info">
+              <h4>Ricardo Silva</h4>
+              <p>Early Adopter - Lista de Espera</p>
+            </div>
           </div>
         </div>
-        
-        <div class="footer-column">
-          <h4>Plataforma</h4>
-          <ul class="footer-links">
-            <li><a href="#modulos">Módulos</a></li>
-            <li><a href="./roadmap/">Roadmap</a></li>
-            <li><a href="#comunidad">Comunidad</a></li>
-            <li><a href="./dashboard/">Dashboard</a></li>
-          </ul>
+        <div class="testimonial-card">
+          <p class="testimonial-content">
+            Como educadora, veo en YavlGold el futuro de la enseñanza. La combinación de tecnología, pedagogía avanzada
+            y módulos especializados es exactamente lo que el mundo necesita. No puedo esperar a ver la academia
+            completa.
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">M</div>
+            <div class="testimonial-info">
+              <h4>María Fernández</h4>
+              <p>Educadora - Comunidad Beta</p>
+            </div>
+          </div>
         </div>
-        
-        <div class="footer-column">
-          <h4>Recursos</h4>
-          <ul class="footer-links">
-            <li><a href="./faq.html">FAQ</a></li>
-            <li><a href="./soporte.html">Centro de Ayuda</a></li>
-            <li><a href="./roadmap/">Roadmap</a></li>
-            <li><a href="https://github.com/YavlPro" target="_blank">GitHub</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-column">
-          <h4>Legal</h4>
-          <ul class="footer-links">
-            <li><a href="./privacidad.html">Privacidad</a></li>
-            <li><a href="./terminos.html">Términos</a></li>
-            <li><a href="./cookies.html">Cookies</a></li>
-            <li><a href="./contacto.html">Contacto</a></li>
-          </ul>
-        </div>
-      </div>
-      
-      <div class="footer-bottom">
-        <p>&copy; 2025 YavlGold. Todos los derechos reservados.</p>
-        <div class="footer-bottom-links">
-          <a href="./privacidad.html">Privacidad</a>
-          <a href="./terminos.html">Términos</a>
-          <a href="./cookies.html">Cookies</a>
+        <div class="testimonial-card">
+          <p class="testimonial-content">
+            La visión de YavlGold es revolucionaria. Un ecosistema que integra agricultura tecnológica, suite multimedia
+            profesional y educación de trading en un solo lugar es simplemente brillante. Esto va a cambiar el juego.
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">D</div>
+            <div class="testimonial-info">
+              <h4>David Torres</h4>
+              <p>Tech Enthusiast - Seguidor Activo</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- Auth Section (Login/Registro) -->
+  <section id="auth" style="padding: 4rem 2rem; background: var(--bg-primary);">
+    <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 2rem;">
+      <div
+        style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-gold-md);">
+        <h2 class="section-title" style="text-align:center; margin-bottom: 1.5rem;">Tu Cuenta</h2>
+        <p class="section-subtitle" style="text-align:center; margin-bottom: 2rem;">Accede con tu email y contraseña o
+          crea una cuenta nueva</p>
+
+        <div id="auth-container" style="display: none; margin: 0 auto; max-width: 420px;">
+          <div id="auth-error"
+            style="display: none; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+          </div>
+
+          <form id="login-form"
+            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
+            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Iniciar Sesión</h3>
+            <div style="margin-bottom: .75rem;">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required
+                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required
+                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <button id="auth-submit" type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
+            <p style="margin-top: .75rem; text-align: center; color: var(--text-secondary);">
+              ¿No tienes cuenta? <a href="#" id="switch-to-register"
+                style="color: var(--gold-principal);">Regístrate</a>
+              <a href="#" id="switch-to-login" style="display:none; color: var(--gold-principal);">Volver a iniciar
+                sesión</a>
+            </p>
+          </form>
+
+          <div id="user-profile"
+            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
+            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Bienvenido</h3>
+            <p>Usuario: <strong id="user-email" style="color: var(--gold-principal);">...</strong></p>
+            <button id="logout-button" class="btn-premium btn-outline" style="margin-top: 1rem; width: 100%;">Cerrar
+              Sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Final Section -->
+  <section class="cta-final">
+    <div class="cta-container">
+      <h2>🚧 En Construcción 🚧</h2>
+      <p>Estamos construyendo algo único. Únete a la lista de espera y sé parte de la revolución educativa.</p>
+      <a href="#lista-espera" class="btn-premium btn-gold btn-lg">Únete a la Lista de Espera 🎓</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-logo" aria-hidden="true">
+      <img src="/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main" />
+    </div>
+    <p class="footer-text">YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</p>
+    <p class="footer-text">🚧 En construcción - Creando el futuro de la educación 🚧</p>
+    <div class="footer-links">
+      <a href="#modulos">📚 Módulos</a>
+      <a href="#testimonios">👥 Comunidad</a>
+      <a href="#roadmap">🗺️ Roadmap</a>
+      <a href="#contacto">💬 Contacto</a>
+    </div>
+    <p class="footer-text" style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
+      © 2024 YavlGold V9.1. Todos los derechos reservados. | Ecosistema Único en el Mundo.
+    </p>
   </footer>
-  
-  <!-- =========================================
-       BOTÓN FLOTANTE WHATSAPP
-       ========================================= -->
-  <a href="https://wa.me/584247394025" 
-     target="_blank" 
-     class="whatsapp-float" 
-     aria-label="Contactar por WhatsApp">
-    <i class="fab fa-whatsapp"></i>
-  </a>
 
-  <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true"></div>
+  <!-- NoScript Fallback -->
+  <noscript>
+    <style>
+      .feature-card,
+      .testimonial-card {
+        opacity: 1 !important;
+        transform: none !important;
+      }
 
-  <!-- 
-  ==========================================
-  MODALES DE LOGIN/REGISTRO
-  ==========================================
-  Modales funcionales con captchas de ejemplo (A2B3C4, X7Y8Z9).
-  Los botones están disponibles SOLO en el mobile drawer.
-  ==========================================
-  -->
-  <div class="modal" id="login-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="login-modal-title">
-    <header>
-      <h2 class="modal-title" id="login-modal-title">Iniciar sesión</h2>
-      <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
-        <i class="fas fa-times"></i>
-      </button>
-    </header>
-    <p class="modal-description">
-      Accede a tus herramientas y recursos
-    </p>
-    <form class="modal-form" id="login-form">
-      <label for="login-email">Email</label>
-      <input id="login-email" name="email" type="email" required autocomplete="email" placeholder="tu@email.com">
-      
-      <label for="login-password">Contraseña</label>
-      <div class="password-input-wrapper">
-        <input id="login-password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••">
-        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('login-password')" aria-label="Mostrar contraseña">
-          <i class="fas fa-eye"></i>
-        </button>
-      </div>
-      
-      <div style="text-align: right; margin-top: -4px; margin-bottom: 4px;">
-        <a href="./recuperar-password.html" style="color: var(--yavl-gold); text-decoration: none; font-size: 0.8rem; transition: all 0.3s ease;">
-          <i class="fas fa-key" style="font-size: 0.75rem;"></i> ¿Olvidaste tu contraseña?
-        </a>
-      </div>
-      
-      <div class="captcha-container">
-        <label class="captcha-label">Verifica que no eres un robot</label>
-        <div class="captcha-challenge">
-          <span id="login-captcha-text">A2B3C4</span>
-          <button type="button" class="captcha-refresh" onclick="refreshCaptcha('login')" title="Generar nuevo código">
-            <i class="fas fa-sync-alt"></i>
-          </button>
-        </div>
-        <input 
-          type="text" 
-          id="login-captcha-input" 
-          class="captcha-input" 
-          placeholder="Escribe el código" 
-          required 
-          maxlength="6"
-          autocomplete="off">
-      </div>
-      
-      <button type="submit" class="btn btn-primary">Entrar</button>
-    </form>
-    <div class="modal-footer">
-      <span>¿Aún no tienes cuenta?</span>
-      <a href="#" data-alt-modal="register-modal">Crear cuenta</a>
+      body {
+        opacity: 1 !important;
+      }
+    </style>
+    <div
+      style="padding: 20px; background: #C8A752; color: #0a0a0a; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700;">
+      ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold V9.1
     </div>
-  </div>
+  </noscript>
 
-  <div class="modal" id="register-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="register-modal-title">
-    <header>
-      <h2 class="modal-title" id="register-modal-title">Crear cuenta</h2>
-      <button type="button" class="modal-close" data-modal-close aria-label="Cerrar">
-        <i class="fas fa-times"></i>
-      </button>
-    </header>
-    <p class="modal-description">
-      Desbloquea dashboards y alertas personalizadas
-    </p>
-    <form class="modal-form" id="register-form">
-      <label for="register-name">Nombre</label>
-      <input id="register-name" name="name" type="text" required autocomplete="name" placeholder="Juan Pérez">
-      
-      <label for="register-email">Email</label>
-      <input id="register-email" name="email" type="email" required autocomplete="email" placeholder="tu@email.com">
-      
-      <label for="register-password">Contraseña</label>
-      <div class="password-input-wrapper">
-        <input id="register-password" name="password" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
-        <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('register-password')" aria-label="Mostrar contraseña">
-          <i class="fas fa-eye"></i>
-        </button>
-      </div>
-      
-      <div class="captcha-container">
-        <label class="captcha-label">Verifica que no eres un robot</label>
-        <div class="captcha-challenge">
-          <span id="register-captcha-text">X7Y8Z9</span>
-          <button type="button" class="captcha-refresh" onclick="refreshCaptcha('register')" title="Generar nuevo código">
-            <i class="fas fa-sync-alt"></i>
-          </button>
-        </div>
-        <input 
-          type="text" 
-          id="register-captcha-input" 
-          class="captcha-input" 
-          placeholder="Escribe el código" 
-          required 
-          maxlength="6"
-          autocomplete="off">
-      </div>
-      
-      <button type="submit" class="btn btn-primary">Crear cuenta</button>
-    </form>
-    <div class="modal-footer">
-      <span>¿Ya eres miembro?</span>
-      <a href="#" data-alt-modal="login-modal">Iniciar sesión</a>
-    </div>
-  </div>
-  
-  <!-- =========================================
-       JAVASCRIPT
-       ========================================= -->
+  <!-- JavaScript Completo -->
   <script>
-    // Navbar scroll effect
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      if (window.pageYOffset > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
+    'use strict';
+    console.log('🎨 YavlGold V9.1 - Ecosistema Educativo en Construcción');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elementos del DOM
+      const themeToggle = document.getElementById('themeToggle');
+      const hamburger = document.getElementById('hamburger');
+      const navMobile = document.getElementById('navMobile');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      const logoLink = document.getElementById('logoLink');
+      const loadingScreen = document.getElementById('loadingScreen');
+
+      // Función para establecer el tema inicial
+      function setInitialTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.classList.toggle('light-mode', savedTheme === 'light');
+        themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
       }
-    });
 
-    // Theme toggle
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-      const themeIcon = themeToggle.querySelector('i');
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      if (savedTheme === 'light') {
-        document.body.classList.add('light-theme');
-        themeIcon.classList.replace('fa-moon', 'fa-sun');
+      // Función para cambiar el tema
+      function toggleTheme() {
+        const isLightMode = document.body.classList.toggle('light-mode');
+        localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+        themeToggle.textContent = isLightMode ? '☀️' : '🌙';
+        console.log(`🎨 Tema cambiado a: ${isLightMode ? 'light' : 'dark'}`);
       }
 
-      themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('light-theme');
+      // Función para mostrar el menú móvil
+      function showMobileMenu() {
+        navMobile.classList.add('active');
+        mobileOverlay.classList.add('active');
+        hamburger.classList.add('active');
+        hamburger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden'; // Prevenir scroll en el body
+      }
 
-        if (document.body.classList.contains('light-theme')) {
-          themeIcon.classList.replace('fa-moon', 'fa-sun');
-          localStorage.setItem('theme', 'light');
-        } else {
-          themeIcon.classList.replace('fa-sun', 'fa-moon');
-          localStorage.setItem('theme', 'dark');
-        }
-      });
-    }
+      // Función para ocultar el menú móvil
+      function hideMobileMenu() {
+        navMobile.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        hamburger.classList.remove('active');
+        hamburger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = ''; // Restaurar scroll
+      }
 
-    // Smooth scroll for anchor links
-    const anchorLinks = Array.from(document.querySelectorAll('a[href^="#"]')).filter(anchor => {
-      const href = anchor.getAttribute('href');
-      return href && href.length > 1 && !anchor.dataset.altModal;
-    });
-
-    anchorLinks.forEach(anchor => {
-      anchor.addEventListener('click', event => {
-        const target = document.querySelector(anchor.getAttribute('href'));
-        if (target) {
-          event.preventDefault();
-          const offsetTop = target.getBoundingClientRect().top + window.pageYOffset - 70;
+      // Función para scroll suave
+      function smoothScroll(targetId) {
+        const targetElement = document.getElementById(targetId.substring(1)); // Remover el #
+        if (targetElement) {
           window.scrollTo({
-            top: offsetTop,
+            top: targetElement.offsetTop - 100, // Ajuste para el navbar fijo
             behavior: 'smooth'
           });
         }
-      });
-    });
-
-    // Mobile drawer navigation
-    const body = document.body;
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const mobileDrawer = document.getElementById('mobile-drawer');
-    const mobileOverlay = document.getElementById('mobile-menu-overlay');
-    const drawerCloseButtons = document.querySelectorAll('[data-drawer-close]');
-
-    const closeDrawer = (restoreFocus = true) => {
-      if (!mobileDrawer || !mobileOverlay) return;
-      mobileDrawer.classList.remove('active');
-      mobileOverlay.classList.remove('active');
-      mobileDrawer.setAttribute('aria-hidden', 'true');
-      mobileOverlay.setAttribute('aria-hidden', 'true');
-      body.classList.remove('drawer-open');
-      if (mobileMenuToggle) {
-        mobileMenuToggle.setAttribute('aria-expanded', 'false');
-        if (restoreFocus) {
-          mobileMenuToggle.focus();
-        }
       }
-    };
 
-    const openDrawer = () => {
-      if (!mobileDrawer || !mobileOverlay) return;
-      mobileDrawer.classList.add('active');
-      mobileOverlay.classList.add('active');
-      mobileDrawer.setAttribute('aria-hidden', 'false');
-      mobileOverlay.setAttribute('aria-hidden', 'false');
-      body.classList.add('drawer-open');
-      if (mobileMenuToggle) {
-        mobileMenuToggle.setAttribute('aria-expanded', 'true');
-      }
-      const firstFocusable = mobileDrawer.querySelector('a, button');
-      if (firstFocusable) {
-        firstFocusable.focus();
-      }
-    };
-
-    if (mobileMenuToggle && mobileDrawer && mobileOverlay) {
-      mobileMenuToggle.addEventListener('click', () => {
-        const expanded = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
-        if (expanded) {
-          closeDrawer(false);
-        } else {
-          openDrawer();
-        }
-      });
-
-      mobileOverlay.addEventListener('click', () => closeDrawer());
-      drawerCloseButtons.forEach(button => button.addEventListener('click', () => closeDrawer()));
-
-      mobileDrawer.querySelectorAll('.mobile-drawer-nav a').forEach(link => {
-        link.addEventListener('click', () => closeDrawer(false));
-      });
-
-      window.addEventListener('resize', () => {
-        if (window.innerWidth > 1024) {
-          closeDrawer(false);
-        }
-      });
-    }
-
-    // Modal handling
-    const modalBackdrop = document.getElementById('modal-backdrop');
-    const modalTriggers = document.querySelectorAll('[data-modal-target]');
-    const modalCloseButtons = document.querySelectorAll('[data-modal-close]');
-    const modalAltLinks = document.querySelectorAll('[data-alt-modal]');
-    let activeModal = null;
-    let lastFocusedElement = null;
-
-    const closeModal = (restoreFocus = true) => {
-      if (!activeModal || !modalBackdrop) return;
-      activeModal.classList.remove('open');
-      activeModal.setAttribute('aria-hidden', 'true');
-      activeModal = null;
-      modalBackdrop.classList.remove('open');
-      modalBackdrop.setAttribute('aria-hidden', 'true');
-      body.classList.remove('modal-open');
-      if (restoreFocus && lastFocusedElement) {
-        lastFocusedElement.focus();
-      }
-    };
-
-    const openModal = id => {
-      const modal = document.getElementById(id);
-      if (!modal || !modalBackdrop) return;
-      closeDrawer(false);
-      if (activeModal && activeModal !== modal) {
-        closeModal(false);
-      }
-      lastFocusedElement = document.activeElement;
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
-      modalBackdrop.classList.add('open');
-      modalBackdrop.setAttribute('aria-hidden', 'false');
-      body.classList.add('modal-open');
-      activeModal = modal;
-      const focusable = modal.querySelector('input, button, [href], select, textarea');
-      if (focusable) {
-        focusable.focus();
-      }
-    };
-
-    modalTriggers.forEach(trigger => {
-      trigger.addEventListener('click', () => {
-        const targetId = trigger.getAttribute('data-modal-target');
-        if (targetId) {
-          openModal(targetId);
-        }
-      });
-    });
-
-    modalCloseButtons.forEach(button => button.addEventListener('click', () => closeModal()));
-    if (modalBackdrop) {
-      modalBackdrop.addEventListener('click', () => closeModal());
-    }
-
-    modalAltLinks.forEach(link => {
-      link.addEventListener('click', event => {
-        event.preventDefault();
-        const targetId = link.getAttribute('data-alt-modal');
-        if (targetId) {
-          closeModal(false);
-          openModal(targetId);
-        }
-      });
-    });
-
-    window.addEventListener('keydown', event => {
-      if (event.key === 'Escape') {
-        if (body.classList.contains('modal-open')) {
-          closeModal();
-        } else if (body.classList.contains('drawer-open')) {
-          closeDrawer();
-        }
-      }
-    });
-
-    // Captcha generation function
-    function refreshCaptcha(formType) {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin caracteres ambiguos (I, O, 0, 1)
-      let code = '';
-      for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      const captchaText = document.getElementById(`${formType}-captcha-text`);
-      const captchaInput = document.getElementById(`${formType}-captcha-input`);
-      if (captchaText) captchaText.textContent = code;
-      if (captchaInput) captchaInput.value = '';
-    }
-
-    // Toggle password visibility function
-    function togglePasswordVisibility(inputId) {
-      const input = document.getElementById(inputId);
-      const button = input.parentElement.querySelector('.toggle-password-btn');
-      const icon = button.querySelector('i');
-      
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-        button.setAttribute('aria-label', 'Ocultar contraseña');
-      } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-        button.setAttribute('aria-label', 'Mostrar contraseña');
-      }
-    }
-
-    // Initialize captchas on page load
-    refreshCaptcha('login');
-    refreshCaptcha('register');
-
-    // =========================================
-    // SISTEMA DE AUTENTICACIÓN CON SUPABASE
-    // =========================================
-    
-    // Configuración de Supabase
-    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-    
-    // Inicializar cliente de Supabase
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[Auth] ✅ Supabase inicializado');
-
-    // Verificar si el usuario está logueado
-    async function isLoggedIn() {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session !== null;
-    }
-
-    // Obtener usuario actual con datos del perfil
-    async function getCurrentUser() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Obtener perfil completo desde public.profiles
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profileError) {
-          console.warn('[Auth] ⚠️ Error obteniendo perfil:', profileError.message);
-          // Fallback a user_metadata si no hay perfil
-          return {
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-            username: session.user.user_metadata?.username || session.user.email.split('@')[0],
-            avatar: session.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email)}&background=C8A752&color=0B0C0F&bold=true`
-          };
-        }
-        
-        // Usar datos del perfil
-        return {
-          id: profile.id,
-          email: profile.email,
-          name: profile.username || profile.email.split('@')[0],
-          username: profile.username,
-          avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username || profile.email)}&background=C8A752&color=0B0C0F&bold=true`,
-          bio: profile.bio,
-          isAdmin: profile.is_admin,
-          xpPoints: profile.xp_points || 0,
-          currentLevel: profile.current_level || 1
-        };
-      }
-      return null;
-    }
-
-    // Registrar nuevo usuario con Supabase
-    async function registerUser(name, email, password) {
-      console.log('[Auth] 📝 Registrando usuario con Supabase...');
-      
-      try {
-        // Crear username a partir del nombre
-        const username = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-        
-        const { data, error } = await supabase.auth.signUp({
-          email: email,
-          password: password,
-          options: {
-            data: {
-              name: name,
-              full_name: name,
-              username: username
-            },
-            emailRedirectTo: window.location.origin
-          }
-        });
-
-        if (error) {
-          console.error('[Auth] ❌ Error en registro:', error.message);
-          return { success: false, message: error.message };
-        }
-
-        if (data.user) {
-          console.log('[Auth] ✅ Usuario registrado:', data.user.email);
-          
-          // El trigger ensure_profile_exists() creará automáticamente el perfil
-          // Esperar 1 segundo para asegurar que el trigger se ejecutó
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Verificar que el perfil se creó
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-          
-          if (profileError) {
-            console.warn('[Auth] ⚠️ Perfil no encontrado, creando manualmente...');
-            
-            // Crear perfil manualmente si el trigger falló
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert({
-                id: data.user.id,
-                email: email,
-                username: username,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
-            
-            if (insertError) {
-              console.error('[Auth] ❌ Error creando perfil:', insertError.message);
-            } else {
-              console.log('[Auth] ✅ Perfil creado manualmente');
+      // Función para animar elementos al hacer scroll
+      function setupScrollAnimations() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = '1';
+              entry.target.style.transform = 'translateY(0)';
+              entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
             }
-          } else {
-            console.log('[Auth] ✅ Perfil encontrado:', profile.username);
-          }
-          
-          return {
-            success: true,
-            user: {
-              id: data.user.id,
-              email: data.user.email,
-              name: name,
-              username: username,
-              avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C8A752&color=0B0C0F&bold=true`
-            }
-          };
-        }
-
-        return { success: false, message: 'No se pudo crear el usuario' };
-      } catch (error) {
-        console.error('[Auth] ❌ Error inesperado:', error);
-        return { success: false, message: 'Error del servidor' };
-      }
-    }
-
-    // Login de usuario con Supabase
-    async function loginUser(email, password) {
-      console.log('[Auth] 🔐 Iniciando sesión con Supabase...');
-      
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
-        if (error) {
-          console.error('[Auth] ❌ Error en login:', error.message);
-          
-          // Mensajes de error amigables
-          if (error.message.includes('Invalid login credentials')) {
-            return { success: false, message: 'Correo o contraseña incorrectos' };
-          } else if (error.message.includes('Email not confirmed')) {
-            return { success: false, message: 'Por favor, confirma tu correo electrónico primero' };
-          }
-          
-          return { success: false, message: error.message };
-        }
-
-        if (data.session && data.user) {
-          console.log('[Auth] ✅ Login exitoso:', data.user.email);
-          
-          // Obtener perfil completo desde public.profiles
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-          
-          if (profileError) {
-            console.warn('[Auth] ⚠️ Error obteniendo perfil:', profileError.message);
-            // Fallback a user_metadata
-            return {
-              success: true,
-              user: {
-                id: data.user.id,
-                email: data.user.email,
-                name: data.user.user_metadata?.name || data.user.email.split('@')[0],
-                username: data.user.user_metadata?.username || data.user.email.split('@')[0],
-                avatar: data.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.email)}&background=C8A752&color=0B0C0F&bold=true`
-              }
-            };
-          }
-          
-          // Usar datos del perfil
-          const userData = {
-            id: profile.id,
-            email: profile.email,
-            name: profile.username || profile.email.split('@')[0],
-            username: profile.username,
-            avatar: profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username || profile.email)}&background=C8A752&color=0B0C0F&bold=true`,
-            bio: profile.bio,
-            isAdmin: profile.is_admin,
-            xpPoints: profile.xp_points || 0,
-            currentLevel: profile.current_level || 1
-          };
-          
-          // Log detallado del perfil
-          console.log('[Auth] 👤 Perfil cargado:', {
-            username: userData.username,
-            email: userData.email,
-            role: userData.isAdmin ? '🛡️ ADMIN' : '👤 Usuario',
-            xp: userData.xpPoints,
-            level: userData.currentLevel
           });
-          
-          return {
-            success: true,
-            user: userData
-          };
-        }
+        }, {
+          threshold: 0.1,
+          rootMargin: '0px 0px -50px 0px'
+        });
 
-        return { success: false, message: 'No se pudo iniciar sesión' };
-      } catch (error) {
-        console.error('[Auth] ❌ Error inesperado:', error);
-        return { success: false, message: 'Error del servidor' };
-      }
-    }
-
-    // Logout de usuario
-    async function logoutUser() {
-      console.log('[Auth] 🚪 Cerrando sesión...');
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('[Auth] ❌ Error al cerrar sesión:', error);
-      } else {
-        console.log('[Auth] ✅ Sesión cerrada');
-        window.location.reload();
-      }
-    }
-
-    // Actualizar UI según estado de autenticación
-    async function updateAuthUI() {
-      const user = await getCurrentUser();
-      
-      // Actualizar navbar desktop
-      const loginBtn = document.querySelector('.navbar-actions .btn-outline[data-modal-target="login-modal"]');
-      const registerBtn = document.querySelector('.navbar-actions .btn-primary[data-modal-target="register-modal"]');
-      
-      if (user && loginBtn && registerBtn) {
-        // Usuario logueado - mostrar nombre, rol y logout
-        const userMenu = document.createElement('div');
-        userMenu.className = 'user-menu-desktop';
-        userMenu.style.cssText = `
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        `;
-        
-        // Badge de admin si corresponde
-        const adminBadge = user.isAdmin ? `
-          <span style="
-            background: linear-gradient(135deg, #C8A752 0%, #C8A752 100%);
-            color: #0B0C0F;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-left: 0.5rem;
-            text-transform: uppercase;
-            box-shadow: 0 0 10px rgba(200, 167, 82, 0.5);
-          ">
-            🛡️ ADMIN
-          </span>
-        ` : '';
-        
-        userMenu.innerHTML = `
-          <span style="color: var(--yavl-gold); font-weight: 600; display: flex; align-items: center;">
-            <i class="fas fa-user-circle" style="margin-right: 0.5rem;"></i> ${user.name}${adminBadge}
-          </span>
-          <button onclick="logoutUser()" class="btn btn-outline" style="padding: 0.5rem 1rem;">
-            <i class="fas fa-sign-out-alt"></i> Salir
-          </button>
-        `;
-        
-        loginBtn.replaceWith(userMenu);
-        if (registerBtn) registerBtn.style.display = 'none';
-        
-        // Log de sesión activa
-        console.log(`[Auth] 🎉 Sesión activa:`, {
-          user: user.username,
-          role: user.isAdmin ? '🛡️ ADMIN' : '👤 Usuario',
-          xp: user.xpPoints,
-          level: user.currentLevel
+        // Observar todas las tarjetas de características y testimonios
+        document.querySelectorAll('.feature-card, .testimonial-card').forEach(card => {
+          observer.observe(card);
         });
       }
-      
-      // Actualizar menú móvil
-      const mobileLoginBtn = document.querySelector('.mobile-drawer-actions .btn-outline[data-modal-target="login-modal"]');
-      const mobileRegisterBtn = document.querySelector('.mobile-drawer-actions .btn-primary[data-modal-target="register-modal"]');
-      
-      if (user && mobileLoginBtn && mobileRegisterBtn) {
-        const mobileUserMenu = document.createElement('div');
-        mobileUserMenu.className = 'mobile-user-menu';
-        mobileUserMenu.style.cssText = `
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          width: 100%;
-        `;
-        
-        const adminBadgeMobile = user.isAdmin ? `
-          <span style="
-            background: linear-gradient(135deg, #C8A752 0%, #C8A752 100%);
-            color: #0B0C0F;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-left: 0.5rem;
-            text-transform: uppercase;
-            box-shadow: 0 0 10px rgba(200, 167, 82, 0.5);
-          ">
-            🛡️ ADMIN
-          </span>
-        ` : '';
-        
-        mobileUserMenu.innerHTML = `
-          <div style="
-            background: rgba(200, 167, 82, 0.1);
-            border: 1px solid rgba(200, 167, 82, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-          ">
-            <div style="
-              color: var(--yavl-gold);
-              font-weight: 600;
-              font-size: 1.1rem;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              margin-bottom: 0.5rem;
-            ">
-              <i class="fas fa-user-circle" style="margin-right: 0.5rem; font-size: 1.5rem;"></i>
-              ${user.name}${adminBadgeMobile}
-            </div>
-            <div style="color: var(--text-secondary); font-size: 0.875rem;">
-              ${user.email}
-            </div>
-          </div>
-          <button onclick="logoutUser()" class="btn btn-outline" style="width: 100%; padding: 0.75rem;">
-            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-          </button>
-        `;
-        
-        // Reemplazar ambos botones con el nuevo menú
-        mobileLoginBtn.replaceWith(mobileUserMenu);
-        if (mobileRegisterBtn) mobileRegisterBtn.style.display = 'none';
+
+      // Función para ocultar el loading screen
+      function hideLoadingScreen() {
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+          loadingScreen.remove();
+        }, 500);
+      }
+
+      // Inicializar
+      function init() {
+        console.log('🚀 Iniciando YavlGold V9.1...');
+
+        // Establecer tema inicial
+        setInitialTheme();
+        console.log('✅ Tema inicial configurado');
+
+        // Configurar eventos de toggle de tema
+        themeToggle.addEventListener('click', toggleTheme);
+        console.log('✅ Toggle de tema configurado');
+
+        // Configurar eventos de menú móvil
+        hamburger.addEventListener('click', showMobileMenu);
+        mobileOverlay.addEventListener('click', hideMobileMenu);
+        logoLink.addEventListener('click', hideMobileMenu);
+        console.log('✅ Navegación móvil configurada');
+
+        // Configurar scroll suave para enlaces
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+          anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+
+            // Ocultar menú móvil si está abierto
+            if (navMobile.classList.contains('active')) {
+              hideMobileMenu();
+            }
+
+            // Scroll suave
+            smoothScroll(targetId);
+          });
+        });
+        console.log('✅ Scroll suave configurado');
+
+        // Configurar animaciones al hacer scroll
+        setupScrollAnimations();
+        console.log('✅ Animaciones de scroll configuradas');
+
+        // Ocultar loading screen después de un breve retraso
+        setTimeout(hideLoadingScreen, 1500);
+        console.log('✅ Loading screen programado');
+
+        console.log('✅ YavlGold V9.1 inicializado completamente');
+      }
+
+      // Ejecutar la inicialización
+      init();
+
+      // Conectar botones del navbar con el modal de autenticación
+      const navLogin = document.getElementById('nav-login');
+      const navRegister = document.getElementById('nav-register');
+
+      if (navLogin) {
+        navLogin.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Disparar evento para abrir modal en modo login
+          window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }));
+        });
+      }
+
+      if (navRegister) {
+        navRegister.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Disparar evento para abrir modal en modo registro
+          window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'signup' } }));
+        });
+      }
+    });
+  </script>
+
+  <!-- Auth Modal Container -->
+  <div id="auth-modal" class="hidden">
+    <div class="auth-modal-overlay"></div>
+    <div class="auth-modal-container">
+      <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
+      <h2 id="auth-modal-title">Iniciar Sesión</h2>
+      <div id="auth-modal-error" class="hidden auth-error-message"></div>
+      <div id="auth-modal-success" class="hidden auth-success-message"></div>
+      <form id="auth-modal-form">
+        <div class="form-group">
+          <label for="auth-modal-email">Correo electrónico</label>
+          <input type="email" id="auth-modal-email" placeholder="tu@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="auth-modal-password">Contraseña</label>
+          <input type="password" id="auth-modal-password" placeholder="••••••••" required>
+        </div>
+        <!-- hCaptcha (opcional) -->
+        <div id="hcaptcha-container" class="form-group" aria-live="polite"></div>
+        <button type="submit" id="auth-modal-submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
+        <div class="forgot-password-container">
+          <a href="#" id="forgot-password-link" class="forgot-password-link">¿Olvidaste tu contraseña?</a>
+        </div>
+        <div class="auth-switch">
+          ¿No tienes cuenta? <a href="#" id="auth-modal-toggle-mode">Regístrate</a>
+        </div>
+        <div class="back-to-login-container" style="display: none;">
+          <a href="#" id="back-to-login-link" class="back-to-login-link">← Volver a iniciar sesión</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <style>
+    /* Auth Modal Styles */
+    #auth-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    #auth-modal.hidden {
+      display: none;
+    }
+
+    .auth-modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+    }
+
+    .auth-modal-container {
+      position: relative;
+      background: var(--bg-secondary);
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 480px;
+      margin: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--gold-principal);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
-    // Llamar al cargar la página
-    updateAuthUI();
+    .auth-modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 28px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
 
-    // Form submission with captcha validation and Supabase
-    const forms = [document.getElementById('login-form'), document.getElementById('register-form')];
-    forms.forEach(form => {
-      if (!form) return;
-      form.addEventListener('submit', async event => {
-        event.preventDefault();
-        
-        // Determine form type
-        const formType = form.id === 'login-form' ? 'login' : 'register';
-        
-        // Get captcha values
-        const captchaText = document.getElementById(`${formType}-captcha-text`);
-        const captchaInput = document.getElementById(`${formType}-captcha-input`);
-        
-        // Validate captcha
-        if (!captchaText || !captchaInput) {
-          showErrorMessage('Error de configuración. Por favor, recarga la página.');
-          return;
-        }
-        
-        if (captchaInput.value.trim().toUpperCase() !== captchaText.textContent.trim()) {
-          showErrorMessage('❌ Código de verificación incorrecto. Por favor, inténtalo de nuevo.');
-          refreshCaptcha(formType);
-          captchaInput.value = '';
-          captchaInput.focus();
-          return;
-        }
-        
-        // Captcha valid, proceed with authentication
-        const formData = new FormData(form);
-        const payload = Object.fromEntries(formData.entries());
-        
-        // Mostrar loading
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-        submitBtn.disabled = true;
-        
-        if (form.id === 'login-form') {
-          // LOGIN CON SUPABASE
-          const result = await loginUser(payload.email, payload.password);
-          
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-          
-          if (result.success) {
-            showSuccessMessage(
-              '🎉 ¡Bienvenido de vuelta!',
-              `Hola ${result.user.name}, te has autenticado exitosamente.`,
-              'Redirigiendo al dashboard...'
-            );
-            
-            form.reset();
-            refreshCaptcha(formType);
-            
-            setTimeout(() => {
-              closeModal();
-              window.location.href = './dashboard/';
-            }, 2000);
-          } else {
-            showErrorMessage(result.message);
-            refreshCaptcha(formType);
-          }
-          
-        } else {
-          // REGISTRO CON SUPABASE
-          const result = await registerUser(payload.name, payload.email, payload.password);
-          
-          submitBtn.innerHTML = originalText;
-          submitBtn.disabled = false;
-          
-          if (result.success) {
-            showSuccessMessage(
-              '✨ ¡Registro Exitoso!',
-              `¡Bienvenido a YavlGold, ${result.user.name}! Tu cuenta ha sido creada.`,
-              'Por favor, revisa tu correo para confirmar tu cuenta. Redirigiendo...'
-            );
-            
-            form.reset();
-            refreshCaptcha(formType);
-            
-            setTimeout(() => {
-              closeModal();
-              // Mostrar mensaje de confirmación de email
-              showSuccessMessage(
-                '📧 Confirma tu correo',
-                'Hemos enviado un email de confirmación a tu correo.',
-                'Por favor, revisa tu bandeja de entrada y confirma tu cuenta para poder iniciar sesión.'
-              );
-            }, 3000);
-          } else {
-            showErrorMessage(result.message);
-            refreshCaptcha(formType);
-          }
-        }
-      });
-    });
+    .auth-modal-close:hover {
+      background: var(--gray-dark);
+      color: var(--gold-principal);
+      transform: rotate(90deg);
+    }
 
-    // Función para mostrar mensajes de error
-    function showErrorMessage(message) {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
+    #auth-modal-title {
+      font-size: 2rem;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--gold-principal);
+      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
+    }
+
+    .auth-switch {
+      margin-top: 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .auth-switch a {
+      color: var(--gold-principal);
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+
+    .auth-switch a:hover {
+      color: var(--gold-light);
+      text-decoration: underline;
+    }
+
+    .auth-error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .auth-success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid #22c55e;
+      color: #22c55e;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .forgot-password-container {
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .forgot-password-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .forgot-password-link:hover {
+      color: var(--gold-principal);
+      text-decoration: underline;
+    }
+
+    .back-to-login-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .back-to-login-link {
+      color: var(--gold-principal);
+      text-decoration: none;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .back-to-login-link:hover {
+      color: var(--gold-light);
+      transform: translateX(-3px);
+    }
+
+    @media (max-width: 480px) {
+      .auth-modal-container {
+        padding: 30px 20px;
+        margin: 0;
+        border-radius: 0;
+        max-width: 100%;
         height: 100%;
-        background: rgba(11, 12, 15, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        animation: fadeIn 0.3s ease;
-      `;
-      
-      const messageBox = document.createElement('div');
-      messageBox.style.cssText = `
-        background: linear-gradient(135deg, rgba(16, 17, 20, 0.98), rgba(220, 38, 38, 0.1));
-        border: 3px solid rgba(220, 38, 38, 0.6);
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 500px;
-        width: 90%;
-        text-align: center;
-        box-shadow: 
-          0 0 40px rgba(220, 38, 38, 0.6),
-          0 20px 60px rgba(0, 0, 0, 0.8);
-        animation: slideUp 0.4s ease;
-      `;
-      
-      messageBox.innerHTML = `
-        <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
-        <h2 style="
-          font-family: 'Playfair Display', sans-serif;
-          font-size: 1.8rem;
-          color: #ef4444;
-          margin-bottom: 1rem;
-          text-shadow: 0 0 20px rgba(220, 38, 38, 0.8);
-        ">Error</h2>
-        <p style="
-          font-size: 1.1rem;
-          color: #f0f0f0;
-          margin-bottom: 1rem;
-          line-height: 1.6;
-        ">${message}</p>
-        <button onclick="this.parentElement.parentElement.remove()" style="
-          margin-top: 2rem;
-          padding: 12px 32px;
-          background: linear-gradient(135deg, #ef4444, #dc2626);
-          color: #FFFFFF;
-          border: none;
-          border-radius: 12px;
-          font-family: 'Playfair Display', sans-serif;
-          font-weight: 700;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
-        " onmouseover="this.style.transform='scale(1.05)'" 
-           onmouseout="this.style.transform='scale(1)'">
-          Cerrar
-        </button>
-      `;
-      
-      overlay.appendChild(messageBox);
-      document.body.appendChild(overlay);
-      
-      setTimeout(() => {
-        overlay.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => overlay.remove(), 300);
-      }, 4000);
-    }
+      }
 
-    // Función para mostrar mensajes de éxito con estilo
-    function showSuccessMessage(title, message, subtitle) {
-      // Crear overlay
-      const overlay = document.createElement('div');
-      overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(11, 12, 15, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        animation: fadeIn 0.3s ease;
-      `;
-      
-      // Crear mensaje
-      const messageBox = document.createElement('div');
-      messageBox.style.cssText = `
-        background: linear-gradient(135deg, rgba(16, 17, 20, 0.98), rgba(200, 167, 82, 0.1));
-        border: 3px solid rgba(200, 167, 82, 0.6);
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 500px;
-        width: 90%;
-        text-align: center;
-        box-shadow: 
-          0 0 40px rgba(200, 167, 82, 0.6),
-          0 20px 60px rgba(0, 0, 0, 0.8);
-        animation: slideUp 0.4s ease;
-      `;
-      
-      messageBox.innerHTML = `
-        <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
-        <h2 style="
-          font-family: 'Playfair Display', sans-serif;
-          font-size: 1.8rem;
-          color: #C8A752;
-          margin-bottom: 1rem;
-          text-shadow: 0 0 20px rgba(200, 167, 82, 0.8);
-        ">${title}</h2>
-        <p style="
-          font-size: 1.1rem;
-          color: #f0f0f0;
-          margin-bottom: 1rem;
-          line-height: 1.6;
-        ">${message}</p>
-        <p style="
-          font-size: 0.95rem;
-          color: #a0a0a0;
-          line-height: 1.5;
-        ">${subtitle}</p>
-        <button onclick="this.parentElement.parentElement.remove()" style="
-          margin-top: 2rem;
-          padding: 12px 32px;
-          background: linear-gradient(135deg, #C8A752, #8B7842);
-          color: #0B0C0F;
-          border: none;
-          border-radius: 12px;
-          font-family: 'Playfair Display', sans-serif;
-          font-weight: 700;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 0 20px rgba(200, 167, 82, 0.6);
-        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 30px rgba(200, 167, 82, 0.9)'" 
-           onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 20px rgba(200, 167, 82, 0.6)'">
-          Entendido
-        </button>
-      `;
-      
-      overlay.appendChild(messageBox);
-      document.body.appendChild(overlay);
-      
-      // Cerrar automáticamente después de 6 segundos
-      setTimeout(() => {
-        overlay.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => overlay.remove(), 300);
-      }, 6000);
-    }
-  </script>
-  
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-    
-    @keyframes slideUp {
-      from { transform: translateY(50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      #auth-modal-title {
+        font-size: 1.6rem;
+      }
     }
   </style>
+
+  <!-- Entrypoint Vite (Config/Auth pipeline) -->
+  <script type="module" src="/main.js"></script>
 </body>
+
 </html>

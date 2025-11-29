@@ -55,6 +55,9 @@
 - `fix-rls-policies.md`: Guía de políticas RLS
 - `announcement-templates.md`: 5 plantillas profesionales
 - Múltiples herramientas de diagnóstico y testing
+- `docs/SOLUCION-DEFINITIVA-SUPABASE-CLI-V8.4.2.html`: Guía operacional para rollback de Supabase CLI y restauración de envíos de correo local.
+- `docs/BRIEFING-V8-SUPREMO.html`: Briefing estratégico de la sesión V8 (decisiones clave y plan de mitigación).
+- `scripts/generateRecoveryLink.js`: Script auxiliar para generar enlaces de recuperación cuando el mailer está degradado.
 
 #### 🧪 Testing
 - Suite completa de tests (4/4 pasando)

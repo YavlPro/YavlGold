@@ -5,16 +5,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "echo 'Servidor de desarrollo - usar Live Server o similar'",
-    "build": "echo 'Build process - TBD'",
-    "test": "echo 'Tests - TBD'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
   },
   "dependencies": {
-    "@yavl/auth": "workspace:*",
-    "@yavl/ui": "workspace:*",
-    "@yavl/utils": "workspace:*",
-    "@yavl/themes": "workspace:*",
-    "@supabase/supabase-js": "^2.38.0"
+    "@supabase/supabase-js": "^2.40.0"
   },
   "keywords": [
     "yavl",

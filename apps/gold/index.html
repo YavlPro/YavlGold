@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <!-- SEO Meta Tags -->
-  <meta name="description" content="YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo. La plataforma de aprendizaje más avanzada y única del mundo. Academia premium, Trading, Ajedrez, Agricultura, Suite Multimedia y más.">
-  <meta name="keywords" content="yavlgold, educación premium, plataforma educativa, trading educativo, ajedrez, agricultura tecnológica, suite multimedia, ecosistema educativo">
+  <meta name="description"
+    content="YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo. La plataforma de aprendizaje más avanzada y única del mundo. Academia premium, Trading, Ajedrez, Agricultura, Suite Multimedia y más.">
+  <meta name="keywords"
+    content="yavlgold, educación premium, plataforma educativa, trading educativo, ajedrez, agricultura tecnológica, suite multimedia, ecosistema educativo">
   <meta name="author" content="YavlGold Academy">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#C8A752">
@@ -14,7 +17,8 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yavlgold.com/">
   <meta property="og:title" content="YavlGold V9.1 - Ecosistema Educativo Prestigioso">
-  <meta property="og:description" content="Ecosistema educativo único en el mundo. Academia, Trading, Ajedrez, Agricultura y más.">
+  <meta property="og:description"
+    content="Ecosistema educativo único en el mundo. Academia, Trading, Ajedrez, Agricultura y más.">
   <meta property="og:image" content="https://yavlgold.com/og-image.jpg">
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
@@ -39,12 +43,14 @@
   </script>
   <!-- Preconexión para fuentes -->
   <title>YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</title>
-  <!-- Favicon optimizado -->
-  <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+  <!-- Favicon optimizado - Logo Circular Premium WebP -->
+  <link rel="icon" type="image/webp" href="/images/logo.webp">
   <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet">
   <style>
     /* (Estilos completos del prototipo pegados sin cambios) */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -80,6 +86,7 @@
       --text-secondary: #cccccc;
       --border-color: #2a2a2a;
     }
+
     body.light-mode {
       --bg-primary: #ffffff;
       --bg-secondary: #f8f9fa;
@@ -95,6 +102,7 @@
       --shadow-gold-lg: 0 10px 40px rgba(200, 167, 82, 0.35);
       --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.45);
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 🏗️ BASE STYLES */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -103,9 +111,11 @@
       padding: 0;
       box-sizing: border-box;
     }
+
     html {
       scroll-behavior: smooth;
     }
+
     body {
       font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg-primary);
@@ -115,40 +125,95 @@
       opacity: 0;
       animation: fadeIn 0.5s ease forwards;
     }
+
     @keyframes fadeIn {
-      to { opacity: 1; }
+      to {
+        opacity: 1;
+      }
     }
-    h1, h2, h3 {
+
+    h1,
+    h2,
+    h3 {
       font-family: 'Orbitron', sans-serif;
       font-weight: 900;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 🎬 ANIMACIONES */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     @keyframes breathe {
-      0%, 100% { transform: rotate(30deg) scale(1); filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4)); }
-      50% { transform: rotate(30deg) scale(1.08); filter: drop-shadow(0 0 50px rgba(200, 167, 82, 0.8)); }
+
+      0%,
+      100% {
+        transform: rotate(30deg) scale(1);
+        filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4));
+      }
+
+      50% {
+        transform: rotate(30deg) scale(1.08);
+        filter: drop-shadow(0 0 50px rgba(200, 167, 82, 0.8));
+      }
     }
+
     @keyframes textGlow {
-      0%, 100% { text-shadow: 0 0 10px rgba(200, 167, 82, 0.5), 0 0 20px rgba(200, 167, 82, 0.3), 0 0 30px rgba(200, 167, 82, 0.2); }
-      50% { text-shadow: 0 0 20px rgba(200, 167, 82, 0.8), 0 0 40px rgba(200, 167, 82, 0.6), 0 0 60px rgba(200, 167, 82, 0.4); }
+
+      0%,
+      100% {
+        text-shadow: 0 0 10px rgba(200, 167, 82, 0.5), 0 0 20px rgba(200, 167, 82, 0.3), 0 0 30px rgba(200, 167, 82, 0.2);
+      }
+
+      50% {
+        text-shadow: 0 0 20px rgba(200, 167, 82, 0.8), 0 0 40px rgba(200, 167, 82, 0.6), 0 0 60px rgba(200, 167, 82, 0.4);
+      }
     }
+
     @keyframes pulse {
-      0%, 100% { transform: scale(1, 1); }
-      50% { transform: scale(1.05, 1.05); }
+
+      0%,
+      100% {
+        transform: scale(1, 1);
+      }
+
+      50% {
+        transform: scale(1.05, 1.05);
+      }
     }
+
     @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
     }
+
     @keyframes shimmer {
-      0% { background-position: -1000px 0; }
-      100% { background-position: 1000px 0; }
+      0% {
+        background-position: -1000px 0;
+      }
+
+      100% {
+        background-position: 1000px 0;
+      }
     }
+
     @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 🎯 HEADER & NAVIGATION */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -168,12 +233,14 @@
       border-bottom: 1px solid var(--border-color);
       transition: all 0.3s ease;
     }
+
     .logo-container {
       display: flex;
       align-items: center;
       gap: 1rem;
       cursor: pointer;
     }
+
     .logo-y {
       font-size: 48px;
       font-weight: 900;
@@ -187,6 +254,7 @@
       animation: breathe 4s ease-in-out infinite;
       will-change: transform, filter;
     }
+
     /* Nuevo: logo basado en imagen oficial */
     .logo-img {
       width: 48px;
@@ -197,6 +265,7 @@
       transform: none;
       box-shadow: var(--shadow-gold-sm);
     }
+
     .logo-main {
       width: 48px;
       height: 48px;
@@ -204,6 +273,7 @@
       filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.5));
       animation: breathe 4s ease-in-out infinite;
     }
+
     .logo-text {
       font-size: 1.5rem;
       font-weight: 700;
@@ -211,15 +281,18 @@
       color: var(--text-primary);
       transition: color 0.3s ease;
     }
+
     .logo-text span {
       color: var(--gold-principal);
       animation: textGlow 3s ease-in-out infinite;
     }
+
     .nav-desktop {
       display: flex;
       gap: 2rem;
       align-items: center;
     }
+
     .nav-desktop a {
       color: var(--text-secondary);
       text-decoration: none;
@@ -229,6 +302,7 @@
       position: relative;
       padding: 0.5rem 0;
     }
+
     .nav-desktop a::after {
       content: '';
       position: absolute;
@@ -239,17 +313,21 @@
       background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal));
       transition: width 0.3s;
     }
+
     .nav-desktop a:hover {
       color: var(--gold-principal);
     }
+
     .nav-desktop a:hover::after {
       width: 100%;
     }
+
     .nav-actions {
       display: flex;
       gap: 1rem;
       align-items: center;
     }
+
     .theme-toggle {
       background: var(--gray-dark);
       border: 2px solid var(--gray-medium);
@@ -266,12 +344,14 @@
       position: relative;
       overflow: hidden;
     }
+
     .theme-toggle:hover {
       background: var(--gold-dark);
       border-color: var(--gold-principal);
       transform: rotate(180deg) scale(1.1);
       box-shadow: var(--shadow-gold-md);
     }
+
     .btn-premium {
       padding: 14px 32px;
       border-radius: 50px;
@@ -287,6 +367,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .btn-premium::before {
       content: '';
       position: absolute;
@@ -299,33 +380,40 @@
       transform: translate(-50%, -50%);
       transition: width 0.6s, height 0.6s;
     }
+
     .btn-premium:hover::before {
       width: 300px;
       height: 300px;
     }
+
     .btn-gold {
       background: linear-gradient(135deg, var(--gold-vibrante-dark) 0%, var(--gold-vibrante) 100%);
       color: var(--black);
       box-shadow: var(--shadow-vibrante-md);
     }
+
     .btn-gold:hover {
       transform: translateY(-4px);
       box-shadow: var(--shadow-vibrante-xl);
     }
+
     .btn-outline {
       background: transparent;
       border: 2px solid var(--gold-principal);
       color: var(--gold-principal);
     }
+
     .btn-outline:hover {
       background: var(--gold-principal);
       color: var(--black);
       transform: translateY(-4px);
     }
+
     .btn-lg {
       padding: 18px 48px;
       font-size: 1.1rem;
     }
+
     .hamburger {
       display: none;
       flex-direction: column;
@@ -340,6 +428,7 @@
       width: 50px;
       height: 50px;
     }
+
     .hamburger span {
       display: block;
       width: 30px;
@@ -349,20 +438,25 @@
       transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
       box-shadow: 0 0 10px rgba(200, 167, 82, 0.3);
     }
+
     .hamburger:hover span {
       background: var(--gold-light);
       box-shadow: 0 0 20px rgba(200, 167, 82, 0.6);
     }
+
     .hamburger.active span:nth-child(1) {
       transform: rotate(45deg) translate(8px, 8px);
     }
+
     .hamburger.active span:nth-child(2) {
       opacity: 0;
       transform: translateX(-20px);
     }
+
     .hamburger.active span:nth-child(3) {
       transform: rotate(-45deg) translate(8px, -8px);
     }
+
     .nav-mobile {
       position: fixed;
       top: 0;
@@ -378,15 +472,18 @@
       overflow-y: auto;
       border-left: 3px solid var(--gold-principal);
     }
+
     .nav-mobile.active {
       right: 0;
     }
+
     .nav-mobile-links {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
       margin-bottom: 3rem;
     }
+
     .nav-mobile-links a {
       color: var(--text-primary);
       text-decoration: none;
@@ -399,6 +496,7 @@
       transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
       background: var(--bg-primary);
     }
+
     .nav-mobile-links a:hover {
       border-left-color: var(--gold-principal);
       background: var(--gray-dark);
@@ -406,15 +504,18 @@
       box-shadow: var(--shadow-gold-sm);
       color: var(--gold-principal);
     }
+
     .nav-mobile-actions {
       display: flex;
       flex-direction: column;
       gap: 1rem;
     }
+
     .nav-mobile-actions .btn-premium {
       width: 100%;
       text-align: center;
     }
+
     .mobile-overlay {
       position: fixed;
       top: 0;
@@ -428,10 +529,12 @@
       visibility: hidden;
       transition: all 0.4s ease;
     }
+
     .mobile-overlay.active {
       opacity: 1;
       visibility: visible;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 👑 HERO SECTION */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -446,6 +549,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .hero::before {
       content: '';
       position: absolute;
@@ -458,6 +562,7 @@
       animation: pulse 6s ease-in-out infinite;
       pointer-events: none;
     }
+
     .hero::after {
       content: '🚧';
       position: absolute;
@@ -468,11 +573,13 @@
       animation: float 6s ease-in-out infinite;
       pointer-events: none;
     }
+
     .hero-content {
       position: relative;
       z-index: 1;
       max-width: 1000px;
     }
+
     .hero-logo {
       font-size: 200px;
       font-weight: 900;
@@ -481,12 +588,13 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-  transform: rotate(30deg);
+      transform: rotate(30deg);
       display: inline-block;
       animation: breathe 4s ease-in-out infinite;
       margin-bottom: 1rem;
       will-change: transform, filter;
     }
+
     .hero h1 {
       font-size: 4.5rem;
       font-weight: 900;
@@ -498,6 +606,7 @@
       background-clip: text;
       animation: textGlow 3s ease-in-out infinite;
     }
+
     .hero-subtitle {
       font-size: 1.6rem;
       font-family: 'Rajdhani', sans-serif;
@@ -505,6 +614,7 @@
       margin-bottom: 1.5rem;
       font-weight: 600;
     }
+
     .badge {
       display: inline-block;
       padding: 0.5rem 1.2rem;
@@ -515,6 +625,7 @@
       text-transform: uppercase;
       margin: 0.3rem;
     }
+
     .version-badge {
       background: linear-gradient(135deg, var(--gold-vibrante-dark), var(--gold-vibrante));
       color: var(--black);
@@ -523,21 +634,25 @@
       box-shadow: var(--shadow-vibrante-md);
       animation: bounce 2s ease-in-out infinite;
     }
+
     .badge-construction {
       background: linear-gradient(135deg, #f39c12, #e67e22);
       color: white;
       box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
     }
+
     .badge-unique {
       background: linear-gradient(135deg, #9b59b6, #8e44ad);
       color: white;
       box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
     }
+
     .badge-premium {
       background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
       color: var(--black);
       box-shadow: var(--shadow-gold-sm);
     }
+
     .hero-badges {
       display: flex;
       gap: 1rem;
@@ -545,12 +660,14 @@
       flex-wrap: wrap;
       margin-bottom: 2.5rem;
     }
+
     .hero-actions {
       display: flex;
       gap: 1.5rem;
       justify-content: center;
       flex-wrap: wrap;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 🌟 FEATURES SECTION */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -559,10 +676,12 @@
       background: var(--bg-secondary);
       position: relative;
     }
+
     .features-container {
       max-width: 1200px;
       margin: 0 auto;
     }
+
     .section-title {
       text-align: center;
       font-size: 3.5rem;
@@ -577,6 +696,7 @@
       display: inline-block;
       width: 100%;
     }
+
     .section-title::after {
       content: '🎓';
       display: block;
@@ -584,6 +704,7 @@
       margin-top: 0.5rem;
       animation: float 3s ease-in-out infinite;
     }
+
     .section-subtitle {
       text-align: center;
       font-size: 1.3rem;
@@ -592,11 +713,13 @@
       margin-bottom: 4rem;
       font-weight: 600;
     }
+
     .features-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 2.5rem;
     }
+
     .feature-card {
       background: var(--bg-primary);
       border: 2px solid var(--border-color);
@@ -608,6 +731,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     .feature-card::before {
       content: '';
       position: absolute;
@@ -621,6 +745,7 @@
       transform-origin: left;
       transition: transform 0.5s ease;
     }
+
     .feature-card::after {
       content: '';
       position: absolute;
@@ -632,18 +757,22 @@
       opacity: 0;
       transition: opacity 0.5s ease;
     }
+
     .feature-card:hover {
       transform: translateY(-12px) scale(1.02);
       border-color: var(--gold-principal);
       box-shadow: var(--shadow-gold-xl);
     }
+
     .feature-card:hover::before {
       transform: scaleX(1);
       animation: shimmer 2s linear infinite;
     }
+
     .feature-card:hover::after {
       opacity: 1;
     }
+
     .feature-status {
       position: absolute;
       top: 20px;
@@ -655,27 +784,32 @@
       font-family: 'Rajdhani', sans-serif;
       text-transform: uppercase;
     }
+
     .status-development {
       background: linear-gradient(135deg, #3498db, #2980b9);
       color: white;
       box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
     }
+
     .status-coming {
       background: linear-gradient(135deg, #9b59b6, #8e44ad);
       color: white;
       box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
     }
+
     .status-star {
       background: linear-gradient(135deg, var(--gold-vibrante-dark), var(--gold-vibrante));
       color: var(--black);
       box-shadow: var(--shadow-vibrante-sm);
     }
+
     .feature-icon {
       font-size: 3.5rem;
       margin-bottom: 1.5rem;
       display: inline-block;
       animation: float 4s ease-in-out infinite;
     }
+
     .feature-title {
       font-size: 1.6rem;
       font-family: 'Orbitron', sans-serif;
@@ -684,12 +818,14 @@
       color: var(--gold-principal);
       text-shadow: 0 0 20px rgba(200, 167, 82, 0.2);
     }
+
     .feature-description {
       color: var(--text-secondary);
       font-family: 'Rajdhani', sans-serif;
       line-height: 1.8;
       font-size: 1.05rem;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 💬 TESTIMONIALS SECTION */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -698,16 +834,19 @@
       background: var(--bg-primary);
       position: relative;
     }
+
     .testimonials-container {
       max-width: 1200px;
       margin: 0 auto;
     }
+
     .testimonials-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 2.5rem;
       margin-top: 3rem;
     }
+
     .testimonial-card {
       background: var(--bg-secondary);
       border: 2px solid var(--border-color);
@@ -718,6 +857,7 @@
       opacity: 0;
       transform: translateY(20px);
     }
+
     .testimonial-card::before {
       content: '"';
       position: absolute;
@@ -729,11 +869,13 @@
       font-family: Georgia, serif;
       line-height: 1;
     }
+
     .testimonial-card:hover {
       transform: translateY(-10px);
       border-color: var(--gold-principal);
       box-shadow: var(--shadow-gold-lg);
     }
+
     .testimonial-content {
       position: relative;
       z-index: 1;
@@ -743,11 +885,13 @@
       line-height: 1.8;
       margin-bottom: 2rem;
     }
+
     .testimonial-author {
       display: flex;
       align-items: center;
       gap: 1rem;
     }
+
     .testimonial-avatar {
       width: 60px;
       height: 60px;
@@ -761,17 +905,20 @@
       color: var(--black);
       font-family: 'Orbitron', sans-serif;
     }
+
     .testimonial-info h4 {
       color: var(--gold-principal);
       font-family: 'Orbitron', sans-serif;
       font-size: 1.1rem;
       margin-bottom: 0.3rem;
     }
+
     .testimonial-info p {
       color: var(--text-secondary);
       font-family: 'Rajdhani', sans-serif;
       font-size: 0.95rem;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 🎯 CTA FINAL SECTION */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -781,6 +928,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .cta-final::before {
       content: '';
       position: absolute;
@@ -793,6 +941,7 @@
       animation: pulse 6s ease-in-out infinite;
       pointer-events: none;
     }
+
     .cta-container {
       max-width: 800px;
       margin: 0 auto;
@@ -805,6 +954,7 @@
       position: relative;
       z-index: 1;
     }
+
     .cta-container h2 {
       font-size: 3rem;
       font-family: 'Orbitron', sans-serif;
@@ -814,6 +964,7 @@
       background-clip: text;
       margin-bottom: 1.5rem;
     }
+
     .cta-container p {
       font-size: 1.4rem;
       color: var(--text-secondary);
@@ -821,6 +972,7 @@
       margin-bottom: 2.5rem;
       font-weight: 600;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 📊 FOOTER */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -830,6 +982,7 @@
       text-align: center;
       border-top: 1px solid var(--border-color);
     }
+
     .footer-logo {
       font-size: 80px;
       font-weight: 900;
@@ -838,17 +991,19 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-  transform: rotate(30deg);
+      transform: rotate(30deg);
       display: inline-block;
       margin-bottom: 1.5rem;
       animation: breathe 4s ease-in-out infinite;
     }
+
     .footer-text {
       color: var(--text-secondary);
       font-family: 'Rajdhani', sans-serif;
       margin-bottom: 2rem;
       font-size: 1.1rem;
     }
+
     .footer-links {
       display: flex;
       justify-content: center;
@@ -856,6 +1011,7 @@
       flex-wrap: wrap;
       margin-bottom: 2rem;
     }
+
     .footer-links a {
       color: var(--gold-principal);
       font-family: 'Rajdhani', sans-serif;
@@ -864,6 +1020,7 @@
       font-weight: 600;
       position: relative;
     }
+
     .footer-links a::after {
       content: '';
       position: absolute;
@@ -874,13 +1031,16 @@
       background: var(--gold-principal);
       transition: width 0.3s;
     }
+
     .footer-links a:hover {
       color: var(--gold-light);
       text-shadow: 0 0 10px rgba(200, 167, 82, 0.5);
     }
+
     .footer-links a:hover::after {
       width: 100%;
     }
+
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     /* 📱 RESPONSIVE */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -888,91 +1048,119 @@
       .nav-desktop {
         display: none;
       }
+
       .hamburger {
         display: flex;
       }
+
       .nav-actions .btn-premium {
         display: none;
       }
+
       .hero-logo {
         font-size: 140px;
       }
+
       .hero h1 {
         font-size: 3rem;
       }
+
       .section-title {
         font-size: 2.5rem;
       }
     }
+
     @media (max-width: 768px) {
       .hero-logo {
         font-size: 120px;
       }
+
       .hero h1 {
         font-size: 2.5rem;
       }
+
       .hero-subtitle {
         font-size: 1.3rem;
       }
+
       .section-title {
         font-size: 2rem;
       }
-      .features-grid, .testimonials-grid {
+
+      .features-grid,
+      .testimonials-grid {
         grid-template-columns: 1fr;
       }
+
       .cta-container h2 {
         font-size: 2.2rem;
       }
+
       .cta-container p {
         font-size: 1.2rem;
       }
     }
+
     @media (max-width: 480px) {
       .navbar {
         padding: 1rem;
       }
+
       .logo-y {
         font-size: 36px;
       }
+
       .logo-text {
         font-size: 1.2rem;
       }
+
       .hero-logo {
         font-size: 90px;
       }
+
       .hero h1 {
         font-size: 2rem;
       }
+
       .hero-subtitle {
         font-size: 1.1rem;
       }
+
       .version-badge {
         font-size: 0.85rem;
         padding: 0.6rem 1.5rem;
       }
+
       .hero-actions {
         flex-direction: column;
         width: 100%;
       }
+
       .btn-premium {
         width: 100%;
       }
+
       .section-title {
         font-size: 1.8rem;
       }
+
       .feature-icon {
         font-size: 2.5rem;
       }
+
       .nav-mobile {
         max-width: 100%;
       }
+
       .cta-container {
         padding: 3rem 2rem;
       }
+
       .cta-container h2 {
         font-size: 1.8rem;
       }
     }
+
     /* Loading Screen */
     .loading-screen {
       position: fixed;
@@ -988,10 +1176,12 @@
       z-index: 9999;
       transition: opacity 0.5s ease-out;
     }
+
     .loading-screen.hidden {
       opacity: 0;
       pointer-events: none;
     }
+
     .loading-logo {
       font-size: 120px;
       font-weight: 900;
@@ -1000,11 +1190,12 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-  transform: rotate(30deg);
+      transform: rotate(30deg);
       display: inline-block;
       animation: breathe 4s ease-in-out infinite;
       margin-bottom: 20px;
     }
+
     .loading-text {
       color: var(--text-secondary);
       font-family: 'Rajdhani', sans-serif;
@@ -1012,6 +1203,7 @@
       margin-bottom: 30px;
       font-weight: 600;
     }
+
     .loading-bar {
       width: 300px;
       height: 4px;
@@ -1019,23 +1211,34 @@
       border-radius: 2px;
       overflow: hidden;
     }
+
     .loading-progress {
       width: 0%;
       height: 100%;
       background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
       animation: loadingProgress 2s ease-in-out infinite;
     }
+
     @keyframes loadingProgress {
-      0% { width: 0%; }
-      50% { width: 70%; }
-      100% { width: 100%; }
+      0% {
+        width: 0%;
+      }
+
+      50% {
+        width: 70%;
+      }
+
+      100% {
+        width: 100%;
+      }
     }
   </style>
 </head>
+
 <body>
   <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
-  <img src="/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main" />
+    <img src="/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main" />
     <div class="loading-text">Cargando YavlGold V9.1...</div>
     <div class="loading-bar">
       <div class="loading-progress"></div>
@@ -1044,7 +1247,7 @@
 
   <!-- Overlay Mobile -->
   <div class="mobile-overlay" id="mobileOverlay"></div>
-  
+
   <!-- Navigation -->
   <nav class="navbar" role="navigation" aria-label="Navegación principal">
     <div class="logo-container" id="logoLink">
@@ -1061,10 +1264,11 @@
       <a href="#testimonios">Comunidad</a>
     </div>
     <div class="nav-actions">
-      <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar entre modo claro y oscuro">🌙</button>
-  <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
-  <a href="#auth" id="nav-login" class="btn-premium btn-outline">Entrar</a>
-  <a href="#auth" id="nav-register" class="btn-premium btn-gold">Registro</a>
+      <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
+        aria-label="Cambiar entre modo claro y oscuro">🌙</button>
+      <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
+      <a href="#auth" id="nav-login" class="btn-premium btn-outline">Entrar</a>
+      <a href="#auth" id="nav-register" class="btn-premium btn-gold">Registro</a>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
         <span></span>
         <span></span>
@@ -1072,7 +1276,7 @@
       </button>
     </div>
   </nav>
-  
+
   <!-- Mobile Navigation -->
   <div class="nav-mobile" id="navMobile" role="navigation" aria-label="Navegación móvil">
     <div class="nav-mobile-links">
@@ -1084,7 +1288,7 @@
       <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
     </div>
   </div>
-  
+
   <!-- Hero Section -->
   <section class="hero" id="inicio">
     <div class="hero-content">
@@ -1103,7 +1307,7 @@
       </div>
     </div>
   </section>
-  
+
   <!-- Features Section -->
   <section class="features" id="modulos">
     <div class="features-container">
@@ -1115,54 +1319,61 @@
           <span class="feature-status status-star">⭐ Producto Estrella</span>
           <div class="feature-icon">🎓</div>
           <h3 class="feature-title">Academia Premium</h3>
-          <p class="feature-description">Biblioteca educativa con videos profesionales, quiz interactivos y sistema de evaluación avanzado. Tu ruta de aprendizaje personalizada hacia la excelencia.</p>
+          <p class="feature-description">Biblioteca educativa con videos profesionales, quiz interactivos y sistema de
+            evaluación avanzado. Tu ruta de aprendizaje personalizada hacia la excelencia.</p>
         </div>
         <!-- Duelos en Vivo -->
         <div class="feature-card">
           <span class="feature-status status-development">En Desarrollo</span>
           <div class="feature-icon">⚔️</div>
           <h3 class="feature-title">Duelos en Vivo</h3>
-          <p class="feature-description">Compite en tiempo real con estudiantes de todo el mundo. Obtén certificaciones oficiales de todos los módulos al demostrar tu dominio en desafíos educativos.</p>
+          <p class="feature-description">Compite en tiempo real con estudiantes de todo el mundo. Obtén certificaciones
+            oficiales de todos los módulos al demostrar tu dominio en desafíos educativos.</p>
         </div>
         <!-- Herramientas Pro -->
         <div class="feature-card">
           <span class="feature-status status-development">En Desarrollo</span>
           <div class="feature-icon">🛠️</div>
           <h3 class="feature-title">Herramientas Pro Educativas</h3>
-          <p class="feature-description">Suite completa de herramientas profesionales para análisis, investigación y desarrollo de habilidades avanzadas en educación financiera.</p>
+          <p class="feature-description">Suite completa de herramientas profesionales para análisis, investigación y
+            desarrollo de habilidades avanzadas en educación financiera.</p>
         </div>
         <!-- Ajedrez Único -->
         <div class="feature-card">
           <span class="feature-status status-coming">Próximamente</span>
           <div class="feature-icon">♟️</div>
           <h3 class="feature-title">Módulo de Ajedrez Único</h3>
-          <p class="feature-description">Sistema de aprendizaje de ajedrez jamás creado antes. Metodología revolucionaria que combina IA, análisis profundo y pedagogía de élite para dominar el juego ciencia.</p>
+          <p class="feature-description">Sistema de aprendizaje de ajedrez jamás creado antes. Metodología
+            revolucionaria que combina IA, análisis profundo y pedagogía de élite para dominar el juego ciencia.</p>
         </div>
         <!-- Agricultura Tech -->
         <div class="feature-card">
           <span class="feature-status status-development">En Desarrollo</span>
           <div class="feature-icon">🌾</div>
           <h3 class="feature-title">Agricultura Tecnológica</h3>
-          <p class="feature-description">Ecosistema agrícola con tecnología única integrada. Incluye marketplace en desarrollo para conectar productores, tecnología IoT y formación especializada.</p>
+          <p class="feature-description">Ecosistema agrícola con tecnología única integrada. Incluye marketplace en
+            desarrollo para conectar productores, tecnología IoT y formación especializada.</p>
         </div>
         <!-- Suite Multimedia -->
         <div class="feature-card">
           <span class="feature-status status-development">En Desarrollo</span>
           <div class="feature-icon">🎵</div>
           <h3 class="feature-title">Suite Multimedia de Lujo</h3>
-          <p class="feature-description">Plataforma de alta categoría para producción musical, DJ profesional, edición de video y contenido multimedia. Herramientas premium para creadores de élite.</p>
+          <p class="feature-description">Plataforma de alta categoría para producción musical, DJ profesional, edición
+            de video y contenido multimedia. Herramientas premium para creadores de élite.</p>
         </div>
         <!-- Trading Educativo -->
         <div class="feature-card">
           <span class="feature-status status-coming">Próximamente</span>
           <div class="feature-icon">📈</div>
           <h3 class="feature-title">Centro de Estudios Trading</h3>
-          <p class="feature-description">Centro educativo completo de trading. NO es simulado, NO es real. Es un sistema único de aprendizaje profundo de mercados financieros con metodología exclusiva.</p>
+          <p class="feature-description">Centro educativo completo de trading. NO es simulado, NO es real. Es un sistema
+            único de aprendizaje profundo de mercados financieros con metodología exclusiva.</p>
         </div>
       </div>
     </div>
   </section>
-  
+
   <!-- Testimonials Section -->
   <section class="testimonials" id="testimonios">
     <div class="testimonials-container">
@@ -1171,7 +1382,9 @@
       <div class="testimonials-grid">
         <div class="testimonial-card">
           <p class="testimonial-content">
-            Estoy siguiendo el desarrollo de YavlGold y es impresionante. La visión de un ecosistema educativo multimodulo tan completo y único no tiene precedentes. Especialmente emocionado por el módulo de ajedrez y la academia.
+            Estoy siguiendo el desarrollo de YavlGold y es impresionante. La visión de un ecosistema educativo
+            multimodulo tan completo y único no tiene precedentes. Especialmente emocionado por el módulo de ajedrez y
+            la academia.
           </p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">R</div>
@@ -1183,7 +1396,9 @@
         </div>
         <div class="testimonial-card">
           <p class="testimonial-content">
-            Como educadora, veo en YavlGold el futuro de la enseñanza. La combinación de tecnología, pedagogía avanzada y módulos especializados es exactamente lo que el mundo necesita. No puedo esperar a ver la academia completa.
+            Como educadora, veo en YavlGold el futuro de la enseñanza. La combinación de tecnología, pedagogía avanzada
+            y módulos especializados es exactamente lo que el mundo necesita. No puedo esperar a ver la academia
+            completa.
           </p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">M</div>
@@ -1195,7 +1410,8 @@
         </div>
         <div class="testimonial-card">
           <p class="testimonial-content">
-            La visión de YavlGold es revolucionaria. Un ecosistema que integra agricultura tecnológica, suite multimedia profesional y educación de trading en un solo lugar es simplemente brillante. Esto va a cambiar el juego.
+            La visión de YavlGold es revolucionaria. Un ecosistema que integra agricultura tecnológica, suite multimedia
+            profesional y educación de trading en un solo lugar es simplemente brillante. Esto va a cambiar el juego.
           </p>
           <div class="testimonial-author">
             <div class="testimonial-avatar">D</div>
@@ -1212,40 +1428,51 @@
   <!-- Auth Section (Login/Registro) -->
   <section id="auth" style="padding: 4rem 2rem; background: var(--bg-primary);">
     <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 2rem;">
-      <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-gold-md);">
+      <div
+        style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-gold-md);">
         <h2 class="section-title" style="text-align:center; margin-bottom: 1.5rem;">Tu Cuenta</h2>
-        <p class="section-subtitle" style="text-align:center; margin-bottom: 2rem;">Accede con tu email y contraseña o crea una cuenta nueva</p>
+        <p class="section-subtitle" style="text-align:center; margin-bottom: 2rem;">Accede con tu email y contraseña o
+          crea una cuenta nueva</p>
 
         <div id="auth-container" style="display: none; margin: 0 auto; max-width: 420px;">
-          <div id="auth-error" style="display: none; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;"></div>
+          <div id="auth-error"
+            style="display: none; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+          </div>
 
-          <form id="login-form" style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
+          <form id="login-form"
+            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
             <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Iniciar Sesión</h3>
             <div style="margin-bottom: .75rem;">
               <label for="email">Email</label>
-              <input type="email" id="email" name="email" required style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+              <input type="email" id="email" name="email" required
+                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
             <div style="margin-bottom: 1rem;">
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" required style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+              <input type="password" id="password" name="password" required
+                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
             </div>
             <button id="auth-submit" type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
             <p style="margin-top: .75rem; text-align: center; color: var(--text-secondary);">
-              ¿No tienes cuenta? <a href="#" id="switch-to-register" style="color: var(--gold-principal);">Regístrate</a>
-              <a href="#" id="switch-to-login" style="display:none; color: var(--gold-principal);">Volver a iniciar sesión</a>
+              ¿No tienes cuenta? <a href="#" id="switch-to-register"
+                style="color: var(--gold-principal);">Regístrate</a>
+              <a href="#" id="switch-to-login" style="display:none; color: var(--gold-principal);">Volver a iniciar
+                sesión</a>
             </p>
           </form>
 
-          <div id="user-profile" style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
+          <div id="user-profile"
+            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
             <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Bienvenido</h3>
             <p>Usuario: <strong id="user-email" style="color: var(--gold-principal);">...</strong></p>
-            <button id="logout-button" class="btn-premium btn-outline" style="margin-top: 1rem; width: 100%;">Cerrar Sesión</button>
+            <button id="logout-button" class="btn-premium btn-outline" style="margin-top: 1rem; width: 100%;">Cerrar
+              Sesión</button>
           </div>
         </div>
       </div>
     </div>
   </section>
-  
+
   <!-- CTA Final Section -->
   <section class="cta-final">
     <div class="cta-container">
@@ -1254,11 +1481,11 @@
       <a href="#lista-espera" class="btn-premium btn-gold btn-lg">Únete a la Lista de Espera 🎓</a>
     </div>
   </section>
-  
+
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-logo" aria-hidden="true">
-  <img src="/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main" />
+      <img src="/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main" />
     </div>
     <p class="footer-text">YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</p>
     <p class="footer-text">🚧 En construcción - Creando el futuro de la educación 🚧</p>
@@ -1272,23 +1499,31 @@
       © 2024 YavlGold V9.1. Todos los derechos reservados. | Ecosistema Único en el Mundo.
     </p>
   </footer>
-  
+
   <!-- NoScript Fallback -->
   <noscript>
     <style>
-      .feature-card, .testimonial-card { opacity: 1 !important; transform: none !important; }
-      body { opacity: 1 !important; }
+      .feature-card,
+      .testimonial-card {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      body {
+        opacity: 1 !important;
+      }
     </style>
-    <div style="padding: 20px; background: #C8A752; color: #0a0a0a; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700;">
+    <div
+      style="padding: 20px; background: #C8A752; color: #0a0a0a; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700;">
       ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold V9.1
     </div>
   </noscript>
-  
+
   <!-- JavaScript Completo -->
   <script>
     'use strict';
     console.log('🎨 YavlGold V9.1 - Ecosistema Educativo en Construcción');
-    
+
     document.addEventListener('DOMContentLoaded', () => {
       // Elementos del DOM
       const themeToggle = document.getElementById('themeToggle');
@@ -1297,14 +1532,14 @@
       const mobileOverlay = document.getElementById('mobileOverlay');
       const logoLink = document.getElementById('logoLink');
       const loadingScreen = document.getElementById('loadingScreen');
-      
+
       // Función para establecer el tema inicial
       function setInitialTheme() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.body.classList.toggle('light-mode', savedTheme === 'light');
         themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
       }
-      
+
       // Función para cambiar el tema
       function toggleTheme() {
         const isLightMode = document.body.classList.toggle('light-mode');
@@ -1312,7 +1547,7 @@
         themeToggle.textContent = isLightMode ? '☀️' : '🌙';
         console.log(`🎨 Tema cambiado a: ${isLightMode ? 'light' : 'dark'}`);
       }
-      
+
       // Función para mostrar el menú móvil
       function showMobileMenu() {
         navMobile.classList.add('active');
@@ -1321,7 +1556,7 @@
         hamburger.setAttribute('aria-expanded', 'true');
         document.body.style.overflow = 'hidden'; // Prevenir scroll en el body
       }
-      
+
       // Función para ocultar el menú móvil
       function hideMobileMenu() {
         navMobile.classList.remove('active');
@@ -1330,7 +1565,7 @@
         hamburger.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = ''; // Restaurar scroll
       }
-      
+
       // Función para scroll suave
       function smoothScroll(targetId) {
         const targetElement = document.getElementById(targetId.substring(1)); // Remover el #
@@ -1341,7 +1576,7 @@
           });
         }
       }
-      
+
       // Función para animar elementos al hacer scroll
       function setupScrollAnimations() {
         const observer = new IntersectionObserver((entries) => {
@@ -1356,13 +1591,13 @@
           threshold: 0.1,
           rootMargin: '0px 0px -50px 0px'
         });
-        
+
         // Observar todas las tarjetas de características y testimonios
         document.querySelectorAll('.feature-card, .testimonial-card').forEach(card => {
           observer.observe(card);
         });
       }
-      
+
       // Función para ocultar el loading screen
       function hideLoadingScreen() {
         loadingScreen.classList.add('hidden');
@@ -1370,60 +1605,60 @@
           loadingScreen.remove();
         }, 500);
       }
-      
+
       // Inicializar
       function init() {
         console.log('🚀 Iniciando YavlGold V9.1...');
-        
+
         // Establecer tema inicial
         setInitialTheme();
         console.log('✅ Tema inicial configurado');
-        
+
         // Configurar eventos de toggle de tema
         themeToggle.addEventListener('click', toggleTheme);
         console.log('✅ Toggle de tema configurado');
-        
+
         // Configurar eventos de menú móvil
         hamburger.addEventListener('click', showMobileMenu);
         mobileOverlay.addEventListener('click', hideMobileMenu);
         logoLink.addEventListener('click', hideMobileMenu);
         console.log('✅ Navegación móvil configurada');
-        
+
         // Configurar scroll suave para enlaces
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-          anchor.addEventListener('click', function(e) {
+          anchor.addEventListener('click', function (e) {
             e.preventDefault();
             const targetId = this.getAttribute('href');
-            
+
             // Ocultar menú móvil si está abierto
             if (navMobile.classList.contains('active')) {
               hideMobileMenu();
             }
-            
+
             // Scroll suave
             smoothScroll(targetId);
           });
         });
         console.log('✅ Scroll suave configurado');
-        
+
         // Configurar animaciones al hacer scroll
         setupScrollAnimations();
         console.log('✅ Animaciones de scroll configuradas');
-        
+
         // Ocultar loading screen después de un breve retraso
         setTimeout(hideLoadingScreen, 1500);
         console.log('✅ Loading screen programado');
-        
+
         console.log('✅ YavlGold V9.1 inicializado completamente');
       }
-      
+
       // Ejecutar la inicialización
       init();
-      
+
       // Conectar botones del navbar con el modal de autenticación
       const navLogin = document.getElementById('nav-login');
       const navRegister = document.getElementById('nav-register');
-      
+
       if (navLogin) {
         navLogin.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1431,7 +1666,7 @@
           window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }));
         });
       }
-      
+
       if (navRegister) {
         navRegister.addEventListener('click', (e) => {
           e.preventDefault();
@@ -1489,9 +1724,11 @@
       align-items: center;
       animation: fadeIn 0.3s ease;
     }
+
     #auth-modal.hidden {
       display: none;
     }
+
     .auth-modal-overlay {
       position: absolute;
       top: 0;
@@ -1501,6 +1738,7 @@
       background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(10px);
     }
+
     .auth-modal-container {
       position: relative;
       background: var(--bg-secondary);
@@ -1512,16 +1750,19 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--gold-principal);
       animation: slideUp 0.3s ease;
     }
+
     @keyframes slideUp {
       from {
         opacity: 0;
         transform: translateY(20px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
+
     .auth-modal-close {
       position: absolute;
       top: 20px;
@@ -1539,11 +1780,13 @@
       border-radius: 50%;
       transition: all 0.3s ease;
     }
+
     .auth-modal-close:hover {
       background: var(--gray-dark);
       color: var(--gold-principal);
       transform: rotate(90deg);
     }
+
     #auth-modal-title {
       font-size: 2rem;
       font-family: 'Orbitron', sans-serif;
@@ -1555,9 +1798,11 @@
       background-clip: text;
       text-align: center;
     }
+
     .form-group {
       margin-bottom: 20px;
     }
+
     .form-group label {
       display: block;
       margin-bottom: 8px;
@@ -1566,6 +1811,7 @@
       font-weight: 600;
       font-size: 0.95rem;
     }
+
     .form-group input {
       width: 100%;
       padding: 14px 16px;
@@ -1577,11 +1823,13 @@
       font-size: 1rem;
       transition: all 0.3s ease;
     }
+
     .form-group input:focus {
       outline: none;
       border-color: var(--gold-principal);
       box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
     }
+
     .auth-switch {
       margin-top: 20px;
       text-align: center;
@@ -1589,16 +1837,19 @@
       font-family: 'Rajdhani', sans-serif;
       font-size: 0.95rem;
     }
+
     .auth-switch a {
       color: var(--gold-principal);
       text-decoration: none;
       font-weight: 700;
       transition: all 0.3s ease;
     }
+
     .auth-switch a:hover {
       color: var(--gold-light);
       text-decoration: underline;
     }
+
     .auth-error-message {
       background: rgba(239, 68, 68, 0.1);
       border: 1px solid #ef4444;
@@ -1611,6 +1862,7 @@
       font-size: 0.95rem;
       font-weight: 600;
     }
+
     .auth-success-message {
       background: rgba(34, 197, 94, 0.1);
       border: 1px solid #22c55e;
@@ -1623,10 +1875,12 @@
       font-size: 0.95rem;
       font-weight: 600;
     }
+
     .forgot-password-container {
       margin-top: 12px;
       text-align: center;
     }
+
     .forgot-password-link {
       color: var(--text-secondary);
       text-decoration: none;
@@ -1634,14 +1888,17 @@
       font-size: 0.9rem;
       transition: all 0.3s ease;
     }
+
     .forgot-password-link:hover {
       color: var(--gold-principal);
       text-decoration: underline;
     }
+
     .back-to-login-container {
       margin-top: 20px;
       text-align: center;
     }
+
     .back-to-login-link {
       color: var(--gold-principal);
       text-decoration: none;
@@ -1653,10 +1910,12 @@
       gap: 5px;
       transition: all 0.3s ease;
     }
+
     .back-to-login-link:hover {
       color: var(--gold-light);
       transform: translateX(-3px);
     }
+
     @media (max-width: 480px) {
       .auth-modal-container {
         padding: 30px 20px;
@@ -1665,6 +1924,7 @@
         max-width: 100%;
         height: 100%;
       }
+
       #auth-modal-title {
         font-size: 1.6rem;
       }
@@ -1672,6 +1932,7 @@
   </style>
 
   <!-- Entrypoint Vite (Config/Auth pipeline) -->
-  <script type="module" src="/main.js"></script>
+  <script type="module" src="/assets/js/main.js"></script>
 </body>
+
 </html>

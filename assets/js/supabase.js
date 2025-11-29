@@ -5,15 +5,20 @@
  * =============================================
  */
 
-// Configuración de Supabase
-const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
+// Import centralized configuration (no hardcoded credentials)
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfig } from './config/supabase-config.js';
 
 /**
  * Crear cliente de Supabase
  * Requiere que el SDK de Supabase esté cargado globalmente
  */
 function createSupabaseClient() {
+  // Validate configuration before proceeding
+  if (!supabaseConfig.isValid()) {
+    console.error('[Supabase] ❌ Invalid configuration. Client will not be created.');
+    return null;
+  }
+
   // Verificar que el SDK esté disponible
   if (typeof window.supabase === 'undefined') {
     console.error('[Supabase] ❌ SDK no encontrado. Asegúrate de incluir: <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>');

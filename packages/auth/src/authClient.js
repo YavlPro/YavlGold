@@ -4,6 +4,9 @@
  * Migrado desde YavlGold/assets/js/auth/authClient.js
  */
 
+// Import centralized configuration (no hardcoded credentials)
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfig } from '../../../assets/js/config/supabase-config.js';
+
 export const authClient = {
   supabase: null,
   currentSession: null,
@@ -13,10 +16,18 @@ export const authClient = {
    * Inicializa el cliente de Supabase
    */
   init() {
-    // Configuración de Supabase - debe ser sobreescrita por cada app
-    const SUPABASE_URL = 'https://gerzlzprkarikblqxpjt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcnpsenBya2FyaWtibHF4cGp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MzY3NzUsImV4cCI6MjA3NDUxMjc3NX0.NAWaJp8I75SqjinKfoNWrlLjiQHGBmrbutIkFYo9kBg';
-    
+    // Validate configuration before proceeding
+    if (!supabaseConfig.isValid()) {
+      console.error('[Auth] ❌ Supabase configuration missing. Auth will not work.');
+      return;
+    }
+
+    // Ensure Supabase SDK is loaded
+    if (typeof window.supabase === 'undefined') {
+      console.error('[Auth] ❌ Supabase no está cargado. Asegúrate de incluir el script de Supabase antes de auth.js');
+      return;
+    }
+
     this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     this.loadSession();
     console.log('[Auth] ✅ AuthClient inicializado');
@@ -50,7 +61,7 @@ export const authClient = {
     console.log('[AuthClient] 🔐 Iniciando sesión...');
     try {
       const captchaToken = await this.getCaptchaToken();
-      
+
       const { data, error } = await this.supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -79,7 +90,7 @@ export const authClient = {
 
         this.saveSession(session);
         this.emitAuthChange('SIGNED_IN');
-        
+
         return { success: true, user: session.user };
       }
 
@@ -101,7 +112,7 @@ export const authClient = {
     console.log('[AuthClient] 📝 Registrando usuario...');
     try {
       const captchaToken = await this.getCaptchaToken();
-      
+
       if (!captchaToken) {
         return { success: false, error: 'Por favor completa el CAPTCHA' };
       }
@@ -123,7 +134,7 @@ export const authClient = {
 
       if (data.user) {
         console.log('[AuthClient] ✅ Usuario registrado:', data.user.email);
-        
+
         // Crear perfil extendido en tabla profiles
         try {
           const { error: profileError } = await this.supabase
@@ -145,7 +156,7 @@ export const authClient = {
         } catch (profileErr) {
           console.warn('[AuthClient] ⚠️ Error al crear perfil:', profileErr.message);
         }
-        
+
         // Reset hCaptcha después de uso exitoso
         if (typeof hcaptcha !== 'undefined') {
           hcaptcha.reset();
@@ -168,19 +179,19 @@ export const authClient = {
 
         this.saveSession(session);
         this.emitAuthChange('USER_REGISTERED');
-        
+
         return { success: true, user: session.user, message: 'Por favor revisa tu email para confirmar tu cuenta' };
       }
 
       return { success: false, error: 'No se pudo crear el usuario' };
     } catch (error) {
       console.error('[AuthClient] ❌ Error en registro:', error.message);
-      
+
       // Reset hCaptcha en caso de error
       if (typeof hcaptcha !== 'undefined') {
         hcaptcha.reset();
       }
-      
+
       return { success: false, error: error.message };
     }
   },
