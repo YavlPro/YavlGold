@@ -60,9 +60,8 @@
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
     rel="stylesheet">
   <style>
-    /* (Estilos completos del prototipo pegados sin cambios) */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🎨 VARIABLES CSS - YAVLGOLD V9.1 OFFICIAL */
+    /* 🎨 VARIABLES CSS - YAVLGOLD V9.2 OFFICIAL */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     :root {
       /* 🎨 PALETA DORADA PREMIUM - BRANDING */
@@ -154,14 +153,18 @@
 
       0%,
       100% {
-        transform: rotate(30deg) scale(1);
+        transform: scale(1);
         filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4));
       }
 
       50% {
-        transform: rotate(30deg) scale(1.08);
+        transform: scale(1.08);
         filter: drop-shadow(0 0 50px rgba(200, 167, 82, 0.8));
       }
+    }
+
+    .breathing-effect {
+      animation: breathe 4s ease-in-out infinite;
     }
 
     @keyframes textGlow {
@@ -1246,8 +1249,8 @@
 <body>
   <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
-    <img src="/assets/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main" />
-    <div class="loading-text">Cargando YavlGold V9.1...</div>
+    <img src="/assets/images/logo.webp" alt="YavlGold" width="120" height="120" class="logo-main breathing-effect" />
+    <div class="loading-text">Cargando YavlGold V9.2...</div>
     <div class="loading-bar">
       <div class="loading-progress"></div>
     </div>
@@ -1274,9 +1277,8 @@
     <div class="nav-actions">
       <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
         aria-label="Cambiar entre modo claro y oscuro">🌙</button>
-      <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
-      <a href="#auth" id="nav-login" class="btn-premium btn-outline">Entrar</a>
-      <a href="#auth" id="nav-register" class="btn-premium btn-gold">Registro</a>
+      <button onclick="openAuthModal('login')" class="btn-premium btn-outline">ENTRAR</button>
+      <button onclick="openAuthModal('signup')" class="btn-premium btn-gold">REGISTRO</button>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
         <span></span>
         <span></span>
@@ -1293,7 +1295,8 @@
       <a href="#testimonios">👥 Comunidad</a>
     </div>
     <div class="nav-mobile-actions">
-      <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
+      <button onclick="openAuthModal('login')" class="btn-premium btn-outline">ENTRAR</button>
+      <button onclick="openAuthModal('signup')" class="btn-premium btn-gold">REGISTRO</button>
     </div>
   </div>
 
@@ -1301,7 +1304,7 @@
   <section class="hero" id="inicio">
     <div class="hero-content">
       <div class="hero-logo" aria-hidden="true">Y</div>
-      <h1>🎓 YAVLGOLD V9.1 🎓</h1>
+      <h1>🎓 YAVLGOLD V9.2 🎓</h1>
       <p class="hero-subtitle">Ecosistema Educativo Prestigioso Multimodulo</p>
       <div class="hero-badges">
         <span class="version-badge">VERSION 9.2 - 2025</span>
@@ -1311,7 +1314,7 @@
       </div>
       <div class="hero-actions">
         <a href="#modulos" class="btn-premium btn-gold btn-lg">Explorar Módulos 🚀</a>
-        <a href="#lista-espera" class="btn-premium btn-outline btn-lg">Únete a la Lista</a>
+        <button onclick="openAuthModal('signup')" class="btn-premium btn-outline btn-lg">Crear Cuenta Gratis</button>
       </div>
     </div>
   </section>
@@ -1433,54 +1436,6 @@
     </div>
   </section>
 
-  <!-- Auth Section (Login/Registro) -->
-  <section id="auth" style="padding: 4rem 2rem; background: var(--bg-primary);">
-    <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 2rem;">
-      <div
-        style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-gold-md);">
-        <h2 class="section-title" style="text-align:center; margin-bottom: 1.5rem;">Tu Cuenta</h2>
-        <p class="section-subtitle" style="text-align:center; margin-bottom: 2rem;">Accede con tu email y contraseña o
-          crea una cuenta nueva</p>
-
-        <div id="auth-container" style="display: none; margin: 0 auto; max-width: 420px;">
-          <div id="auth-error"
-            style="display: none; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-          </div>
-
-          <form id="login-form"
-            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
-            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Iniciar Sesión</h3>
-            <div style="margin-bottom: .75rem;">
-              <label for="email">Email</label>
-              <input type="email" id="email" name="email" required
-                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
-            </div>
-            <div style="margin-bottom: 1rem;">
-              <label for="password">Password</label>
-              <input type="password" id="password" name="password" required
-                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
-            </div>
-            <button id="auth-submit" type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
-            <p style="margin-top: .75rem; text-align: center; color: var(--text-secondary);">
-              ¿No tienes cuenta? <a href="#" id="switch-to-register"
-                style="color: var(--gold-principal);">Regístrate</a>
-              <a href="#" id="switch-to-login" style="display:none; color: var(--gold-principal);">Volver a iniciar
-                sesión</a>
-            </p>
-          </form>
-
-          <div id="user-profile"
-            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
-            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Bienvenido</h3>
-            <p>Usuario: <strong id="user-email" style="color: var(--gold-principal);">...</strong></p>
-            <button id="logout-button" class="btn-premium btn-outline" style="margin-top: 1rem; width: 100%;">Cerrar
-              Sesión</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- CTA Final Section -->
   <section class="cta-final">
     <div class="cta-container">
@@ -1493,9 +1448,9 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-logo" aria-hidden="true">
-      <img src="/assets/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main" />
+      <img src="/assets/images/logo.webp" alt="YavlGold" width="80" height="80" class="logo-main breathing-effect" />
     </div>
-    <p class="footer-text">YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</p>
+    <p class="footer-text">YavlGold V9.2 - Ecosistema Educativo Prestigioso Multimodulo</p>
     <p class="footer-text">🚧 En construcción - Creando el futuro de la educación 🚧</p>
     <div class="footer-links">
       <a href="#modulos">📚 Módulos</a>
@@ -1503,8 +1458,20 @@
       <a href="#roadmap">🗺️ Roadmap</a>
       <a href="#contacto">💬 Contacto</a>
     </div>
-    <p class="footer-text" style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
-      © 2025 YavlGold V9.1. Todos los derechos reservados. | Ecosistema Único en el Mundo.
+    <div class="flex justify-center gap-6 text-sm text-gray-500 mb-4"
+      style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      <a href="cookies.html" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;"
+        onmouseover="this.style.color='var(--gold-principal)'"
+        onmouseout="this.style.color='var(--text-secondary)'">Cookies</a>
+      <a href="faq.html" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;"
+        onmouseover="this.style.color='var(--gold-principal)'"
+        onmouseout="this.style.color='var(--text-secondary)'">FAQ</a>
+      <a href="soporte.html" style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;"
+        onmouseover="this.style.color='var(--gold-principal)'"
+        onmouseout="this.style.color='var(--text-secondary)'">Soporte</a>
+    </div>
+    <p class="footer-text" style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">
+      © 2025 YavlGold V9.2. Todos los derechos reservados. | Ecosistema Único en el Mundo.
     </p>
   </footer>
 
@@ -1523,14 +1490,47 @@
     </style>
     <div
       style="padding: 20px; background: #C8A752; color: #0a0a0a; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700;">
-      ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold V9.1
+      ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold V9.2
     </div>
   </noscript>
 
   <!-- JavaScript Completo -->
   <script>
     'use strict';
-    console.log('🎨 YavlGold V9.1 - Ecosistema Educativo en Construcción');
+    console.log('🎨 YavlGold V9.2 - Ecosistema Educativo en Construcción');
+
+    // Función global para abrir modal de autenticación
+    function openAuthModal(mode) {
+      const modal = document.getElementById('auth-modal');
+      const title = document.getElementById('auth-modal-title');
+      const submitBtn = document.getElementById('auth-modal-submit');
+      const toggleLink = document.getElementById('auth-modal-toggle-mode');
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        if (mode === 'signup') {
+          title.textContent = 'Crear Cuenta';
+          submitBtn.textContent = 'Registrarse';
+          toggleLink.textContent = 'Inicia sesión';
+          modal.dataset.mode = 'signup';
+        } else {
+          title.textContent = 'Iniciar Sesión';
+          submitBtn.textContent = 'Entrar';
+          toggleLink.textContent = 'Regístrate';
+          modal.dataset.mode = 'login';
+        }
+      }
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       // Elementos del DOM
@@ -1616,7 +1616,7 @@
 
       // Inicializar
       function init() {
-        console.log('🚀 Iniciando YavlGold V9.1...');
+        console.log('🚀 Iniciando YavlGold V9.2...');
 
         // Establecer tema inicial
         setInitialTheme();
@@ -1657,39 +1657,52 @@
         setTimeout(hideLoadingScreen, 1500);
         console.log('✅ Loading screen programado');
 
-        console.log('✅ YavlGold V9.1 inicializado completamente');
+        console.log('✅ YavlGold V9.2 inicializado completamente');
       }
 
       // Ejecutar la inicialización
       init();
 
-      // Conectar botones del navbar con el modal de autenticación
-      const navLogin = document.getElementById('nav-login');
-      const navRegister = document.getElementById('nav-register');
+      // Configurar modal de autenticación
+      const authModalClose = document.getElementById('auth-modal-close');
+      const authModalOverlay = document.querySelector('.auth-modal-overlay');
+      const authModalToggle = document.getElementById('auth-modal-toggle-mode');
 
-      if (navLogin) {
-        navLogin.addEventListener('click', (e) => {
+      if (authModalClose) {
+        authModalClose.addEventListener('click', closeAuthModal);
+      }
+
+      if (authModalOverlay) {
+        authModalOverlay.addEventListener('click', closeAuthModal);
+      }
+
+      if (authModalToggle) {
+        authModalToggle.addEventListener('click', (e) => {
           e.preventDefault();
-          // Disparar evento para abrir modal en modo login
-          window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'login' } }));
+          const modal = document.getElementById('auth-modal');
+          const currentMode = modal.dataset.mode || 'login';
+          openAuthModal(currentMode === 'login' ? 'signup' : 'login');
         });
       }
 
-      if (navRegister) {
-        navRegister.addEventListener('click', (e) => {
-          e.preventDefault();
-          // Disparar evento para abrir modal en modo registro
-          window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode: 'signup' } }));
-        });
-      }
+      // Cerrar modal con Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeAuthModal();
+        }
+      });
     });
   </script>
 
   <!-- Auth Modal Container -->
-  <div id="auth-modal" class="hidden">
+  <div id="auth-modal" class="hidden" data-mode="login">
     <div class="auth-modal-overlay"></div>
     <div class="auth-modal-container">
       <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="/assets/images/logo.webp" alt="YavlGold" width="80" height="80" class="breathing-effect"
+          style="border-radius: 50%; box-shadow: var(--shadow-gold-md);" />
+      </div>
       <h2 id="auth-modal-title">Iniciar Sesión</h2>
       <div id="auth-modal-error" class="hidden auth-error-message"></div>
       <div id="auth-modal-success" class="hidden auth-success-message"></div>
