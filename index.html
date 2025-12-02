@@ -7,31 +7,35 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <!-- SEO Meta Tags -->
   <meta name="description"
-    content="YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo. La plataforma de aprendizaje más avanzada y única del mundo. Academia premium, Trading, Ajedrez, Agricultura, Suite Multimedia y más.">
+    content="YavlGold V9.2 - Ecosistema Educativo Prestigioso Multimodulo. La plataforma de aprendizaje más avanzada y única del mundo. Academia premium, Trading, Ajedrez, Agricultura, Suite Multimedia y más.">
   <meta name="keywords"
     content="yavlgold, educación premium, plataforma educativa, trading educativo, ajedrez, agricultura tecnológica, suite multimedia, ecosistema educativo">
   <meta name="author" content="YavlGold Academy">
   <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#C8A752">
+  <meta name="theme-color" content="#0b0a08">
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://yavlgold.com/">
-  <meta property="og:title" content="YavlGold V9.1 - Ecosistema Educativo Prestigioso">
+  <meta property="og:title" content="YavlGold V9.2 - Ecosistema Educativo Prestigioso">
   <meta property="og:description"
-    content="Ecosistema Educativo Prestigioso Multimódulo. Cripto, Agricultura y Tecnología.">
-  <meta property="og:image" content="/assets/images/logo.webp">
+    content="Ecosistema educativo único en el mundo. Academia, Trading, Ajedrez, Agricultura y más.">
+  <meta property="og:image" content="https://yavlgold.com/assets/images/logo.png">
+  <meta property="og:image:secure_url" content="https://yavlgold.com/assets/images/logo.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
   <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="https://yavlgold.com/">
-  <meta property="twitter:title" content="YavlGold V9.1 - Ecosistema Educativo">
-  <meta property="twitter:description" content="Ecosistema Educativo Prestigioso Multimodulo">
-  <meta property="twitter:image" content="https://yavlgold.com/twitter-image.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://yavlgold.com/">
+  <meta name="twitter:title" content="YavlGold V9.2 - Ecosistema Educativo">
+  <meta name="twitter:description" content="Ecosistema Educativo Prestigioso Multimodulo">
+  <meta name="twitter:image" content="https://yavlgold.com/assets/images/logo.png">
   <!-- Structured Data para SEO -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "YavlGold V9.1",
+    "name": "YavlGold V9.2",
     "description": "Ecosistema Educativo Prestigioso Multimodulo",
     "url": "https://yavlgold.com/",
     "logo": "https://yavlgold.com/logo.svg",
@@ -42,9 +46,13 @@
   }
   </script>
   <!-- Preconexión para fuentes -->
-  <title>YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</title>
-  <!-- Favicon optimizado -->
+  <title>YavlGold V9.2 - Ecosistema Educativo Prestigioso Multimodulo</title>
+  <!-- Favicon optimizado - Logo Circular Premium -->
   <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
+  <link rel="shortcut icon" type="image/webp" href="/assets/images/logo.webp">
+  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/site.webmanifest">
   <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1238,7 +1246,7 @@
 <body>
   <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
-    <img src="assets/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main" />
+    <img src="/assets/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main" />
     <div class="loading-text">Cargando YavlGold V9.1...</div>
     <div class="loading-bar">
       <div class="loading-progress"></div>
@@ -1251,8 +1259,12 @@
   <!-- Navigation -->
   <nav class="navbar" role="navigation" aria-label="Navegación principal">
     <div class="logo-container" id="logoLink">
-      <img src="assets/images/logo.webp" alt="YavlGold logo" class="logo-img" width="48" height="48" />
-      <div class="logo-text">Yavl<span>Gold</span> V9.1</div>
+      <picture>
+        <source srcset="/assets/images/logo.webp" type="image/webp" />
+        <source srcset="/assets/images/logo.png" type="image/png" />
+        <img src="/assets/images/logo.png" alt="YavlGold logo" class="logo-img" width="48" height="48" />
+      </picture>
+      <div class="logo-text">Yavl<span>Gold</span> V9.2</div>
     </div>
     <div class="nav-desktop">
       <a href="#inicio">Inicio</a>
@@ -1263,10 +1275,8 @@
       <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
         aria-label="Cambiar entre modo claro y oscuro">🌙</button>
       <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
-      <button id="nav-login" class="btn-premium btn-outline"
-        onclick="document.getElementById('auth-modal').style.display='flex'">Entrar</button>
-      <button id="nav-register" class="btn-premium btn-gold"
-        onclick="document.getElementById('auth-modal').style.display='flex'">Registro</button>
+      <a href="#auth" id="nav-login" class="btn-premium btn-outline">Entrar</a>
+      <a href="#auth" id="nav-register" class="btn-premium btn-gold">Registro</a>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
         <span></span>
         <span></span>
@@ -1294,13 +1304,14 @@
       <h1>🎓 YAVLGOLD V9.1 🎓</h1>
       <p class="hero-subtitle">Ecosistema Educativo Prestigioso Multimodulo</p>
       <div class="hero-badges">
-        <span class="version-badge">VERSION 9.1 - 2024</span>
+        <span class="version-badge">VERSION 9.2 - 2025</span>
         <span class="badge badge-construction">En Construcción</span>
         <span class="badge badge-unique">Único en el Mundo</span>
         <span class="badge badge-premium">Premium</span>
       </div>
       <div class="hero-actions">
         <a href="#modulos" class="btn-premium btn-gold btn-lg">Explorar Módulos 🚀</a>
+        <a href="#lista-espera" class="btn-premium btn-outline btn-lg">Únete a la Lista</a>
       </div>
     </div>
   </section>
@@ -1422,6 +1433,53 @@
     </div>
   </section>
 
+  <!-- Auth Section (Login/Registro) -->
+  <section id="auth" style="padding: 4rem 2rem; background: var(--bg-primary);">
+    <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 2rem;">
+      <div
+        style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-gold-md);">
+        <h2 class="section-title" style="text-align:center; margin-bottom: 1.5rem;">Tu Cuenta</h2>
+        <p class="section-subtitle" style="text-align:center; margin-bottom: 2rem;">Accede con tu email y contraseña o
+          crea una cuenta nueva</p>
+
+        <div id="auth-container" style="display: none; margin: 0 auto; max-width: 420px;">
+          <div id="auth-error"
+            style="display: none; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+          </div>
+
+          <form id="login-form"
+            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
+            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Iniciar Sesión</h3>
+            <div style="margin-bottom: .75rem;">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required
+                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label for="password">Password</label>
+              <input type="password" id="password" name="password" required
+                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
+            </div>
+            <button id="auth-submit" type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
+            <p style="margin-top: .75rem; text-align: center; color: var(--text-secondary);">
+              ¿No tienes cuenta? <a href="#" id="switch-to-register"
+                style="color: var(--gold-principal);">Regístrate</a>
+              <a href="#" id="switch-to-login" style="display:none; color: var(--gold-principal);">Volver a iniciar
+                sesión</a>
+            </p>
+          </form>
+
+          <div id="user-profile"
+            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
+            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Bienvenido</h3>
+            <p>Usuario: <strong id="user-email" style="color: var(--gold-principal);">...</strong></p>
+            <button id="logout-button" class="btn-premium btn-outline" style="margin-top: 1rem; width: 100%;">Cerrar
+              Sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- CTA Final Section -->
   <section class="cta-final">
@@ -1435,7 +1493,7 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-logo" aria-hidden="true">
-      <img src="assets/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main" />
+      <img src="/assets/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main" />
     </div>
     <p class="footer-text">YavlGold V9.1 - Ecosistema Educativo Prestigioso Multimodulo</p>
     <p class="footer-text">🚧 En construcción - Creando el futuro de la educación 🚧</p>
@@ -1446,7 +1504,7 @@
       <a href="#contacto">💬 Contacto</a>
     </div>
     <p class="footer-text" style="margin-top: 2rem; font-size: 0.9rem; opacity: 0.7;">
-      © 2024 YavlGold V9.1. Todos los derechos reservados. | Ecosistema Único en el Mundo.
+      © 2025 YavlGold V9.1. Todos los derechos reservados. | Ecosistema Único en el Mundo.
     </p>
   </footer>
 
@@ -1631,10 +1689,10 @@
   <div id="auth-modal" class="hidden">
     <div class="auth-modal-overlay"></div>
     <div class="auth-modal-container">
-      <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal"
-        onclick="document.getElementById('auth-modal').style.display='none'">✕</button>
-      <img src="assets/images/logo.webp" alt="YavlGold" class="modal-logo breathing-effect">
+      <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
       <h2 id="auth-modal-title">Iniciar Sesión</h2>
+      <div id="auth-modal-error" class="hidden auth-error-message"></div>
+      <div id="auth-modal-success" class="hidden auth-success-message"></div>
       <form id="auth-modal-form">
         <div class="form-group">
           <label for="auth-modal-email">Correo electrónico</label>
@@ -1866,62 +1924,43 @@
       transform: translateX(-3px);
     }
 
+    @media (max-width: 768px) {
+      #auth-modal {
+        height: 100dvh;
+        height: -webkit-fill-available;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .auth-modal-container {
+        padding: 28px 24px;
+        max-height: calc(100dvh - 40px);
+        overflow-y: auto;
+      }
+
+      .form-group input {
+        font-size: 16px;
+        /* Previene zoom en iOS */
+      }
+    }
+
     @media (max-width: 480px) {
       .auth-modal-container {
-        padding: 30px 20px;
-        margin: 0;
-        border-radius: 0;
-        max-width: 100%;
-        height: 100%;
+        padding: 24px 20px;
+        margin: 10px;
+        border-radius: 16px;
+        max-width: calc(100% - 20px);
+        max-height: calc(100dvh - 60px);
       }
 
       #auth-modal-title {
-        font-size: 1.6rem;
-      }
-    }
-  </style>
-
-  <style>
-    .modal-logo {
-      width: 80px;
-      margin: 0 auto 1rem;
-      display: block;
-    }
-
-    .breathing-effect {
-      animation: breathing 3s ease-out infinite;
-    }
-
-    @keyframes breathing {
-      0% {
-        transform: scale(0.95);
-        opacity: 0.9;
-      }
-
-      50% {
-        transform: scale(1.05);
-        opacity: 1;
-        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
-      }
-
-      100% {
-        transform: scale(0.95);
-        opacity: 0.9;
+        font-size: 1.5rem;
       }
     }
   </style>
 
   <!-- Entrypoint Vite (Config/Auth pipeline) -->
-  <script type="module" src="/main.js"></script>
+  <script type="module" src="/assets/js/main.js"></script>
 </body>
-
-<script>
-  window.onclick = function (event) {
-    const modal = document.getElementById('auth-modal');
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
-  }
-</script>
 
 </html>
