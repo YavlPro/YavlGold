@@ -2,13 +2,18 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preguntas Reales - YAVLGOLD</title>
-    <meta name="description" content="Respuestas honestas sobre YavlGold, Trading y Agricultura.">
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
-    <script type="application/ld+json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preguntas Frecuentes - YavlGold V9.2</title>
+  <meta name="description"
+    content="Respuestas a las preguntas más frecuentes sobre YavlGold V9.2, Ecosistema Educativo Prestigioso.">
+  <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet">
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -18,7 +23,7 @@
           "name": "¿Y si no sé nada de tecnología o cripto?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Estás en el lugar correcto. YavlGold nace en La Grita, Táchira, pensando en gente trabajadora. Nuestras guías empiezan desde cero absoluto."
+            "text": "Estás en el lugar correcto. YavlGold nace pensando en gente trabajadora. Nuestras guías empiezan desde cero absoluto."
           }
         },
         {
@@ -27,14 +32,6 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "YavlGold funciona como una interfaz de lectura. Nunca te pediremos tus claves privadas ni frases semilla."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "¿Qué tiene que ver la Agricultura con Cripto?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Todo. Aplicamos la paciencia y los ciclos del campo (siembra, cuidado, cosecha) al mundo de las inversiones. Creemos en la Agricultura Digital."
           }
         },
         {
@@ -48,81 +45,314 @@
       ]
     }
     </script>
+  <style>
+    :root {
+      --gold-principal: #C8A752;
+      --gold-dark: #8B7842;
+      --bg-primary: #0B0C0F;
+      --bg-secondary: #101114;
+      --text-primary: #ffffff;
+      --text-secondary: #cccccc;
+      --border-color: #2a2a2a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      background: var(--bg-secondary);
+      backdrop-filter: blur(20px);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .logo-container img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .logo-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .logo-text span {
+      color: var(--gold-principal);
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+
+    .nav-link:hover {
+      color: var(--gold-principal);
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      color: var(--gold-principal);
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    details {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    details[open] {
+      border-color: var(--gold-principal);
+    }
+
+    summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary .icon {
+      color: var(--gold-principal);
+      transition: transform 0.3s ease;
+    }
+
+    details[open] summary .icon {
+      transform: rotate(180deg);
+    }
+
+    .answer {
+      padding: 0 1.5rem 1.5rem 1.5rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .footer {
+      background: var(--bg-primary);
+      padding: 3rem 2rem;
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-logo {
+      margin-bottom: 1rem;
+    }
+
+    .footer-logo img {
+      width: 60px;
+      height: 60px;
+    }
+
+    .footer-text {
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-links a {
+      color: var(--gold-principal);
+      text-decoration: none;
+      font-weight: 600;
+      transition: opacity 0.3s;
+    }
+
+    .footer-links a:hover {
+      opacity: 0.8;
+    }
+
+    .footer-legal {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .footer-legal a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+    }
+
+    .footer-legal a:hover {
+      color: var(--gold-principal);
+    }
+
+    .footer-copy {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+  </style>
 </head>
 
-<body class="bg-black text-white font-sans">
-    <nav
-        class="p-4 border-b border-yellow-600/30 flex justify-between items-center backdrop-blur-sm bg-black/90 sticky top-0 z-50">
-        <a href="/"
-            class="text-yellow-500 font-bold text-xl flex items-center gap-2 hover:scale-105 transition-transform">
-            <img src="/assets/images/logo.webp" class="h-8 w-8" alt="Logo YavlGold">
-            <span class="gradient-text">YavlGold</span>
-        </a>
-        <a href="/" class="text-sm text-gray-400 hover:text-yellow-500 transition-colors relative group">
-            Volver al Palacio
-            <span class="absolute -bottom-1 left-0 w-0 group-hover:w-full h-0.5 bg-yellow-500 transition-all"></span>
-        </a>
-    </nav>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo-container">
+      <img src="/assets/images/logo.webp" alt="YavlGold">
+      <div class="logo-text">Yavl<span>Gold</span> V9.2</div>
+    </a>
+    <a href="/" class="nav-link">← Volver al Inicio</a>
+  </nav>
 
-    <main class="max-w-4xl mx-auto px-4 py-12">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-yellow-500 mb-2">Preguntas que importan</h1>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">Sin tecnicismos innecesarios. Respuestas directas.</p>
-        </header>
+  <main>
+    <header class="page-header">
+      <h1>❓ Preguntas Frecuentes</h1>
+      <p>Sin tecnicismos innecesarios. Respuestas directas.</p>
+    </header>
 
-        <div class="space-y-4">
-            <details
-                class="group bg-gray-900 rounded-lg border border-gray-800 open:border-yellow-600/50 transition-all">
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 text-lg">
-                    <span>😰 ¿Y si no sé nada de tecnología o cripto?</span>
-                    <span class="transition group-open:rotate-180 text-yellow-500">▼</span>
-                </summary>
-                <div class="text-gray-400 p-5 pt-0 leading-relaxed">
-                    Estás en el lugar correcto. YavlGold nace en los Andes, pensando en gente trabajadora, no en robots.
-                    Nuestras guías empiezan desde cero absoluto. Si sabes usar WhatsApp, puedes aprender a usar nuestras
-                    herramientas.
-                </div>
-            </details>
-
-            <details
-                class="group bg-gray-900 rounded-lg border border-gray-800 open:border-yellow-600/50 transition-all">
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 text-lg">
-                    <span>🔒 ¿Es seguro conectar mi billetera aquí?</span>
-                    <span class="transition group-open:rotate-180 text-yellow-500">▼</span>
-                </summary>
-                <div class="text-gray-400 p-5 pt-0 leading-relaxed">
-                    YavlGold funciona como una "interfaz de lectura". Nunca te pediremos tus claves privadas ni frases
-                    semilla. Para las herramientas Web3, usamos protocolos estándar auditados. Tú siempre tienes el
-                    control final de tus activos.
-                </div>
-            </details>
-
-            <details
-                class="group bg-gray-900 rounded-lg border border-gray-800 open:border-yellow-600/50 transition-all">
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 text-lg">
-                    <span>🌾 ¿Qué tiene que ver la Agricultura con Cripto?</span>
-                    <span class="transition group-open:rotate-180 text-yellow-500">▼</span>
-                </summary>
-                <div class="text-gray-400 p-5 pt-0 leading-relaxed">
-                    Todo. En YavlGold creemos en la "Agricultura Digital". Aplicamos la paciencia y los ciclos del campo
-                    (siembra, cuidado, cosecha) al mundo de las inversiones. Además, estamos construyendo puentes para
-                    comercializar productos reales (como nuestras vainitas y batatos) usando tecnología blockchain.
-                </div>
-            </details>
-
-            <details
-                class="group bg-gray-900 rounded-lg border border-gray-800 open:border-yellow-600/50 transition-all">
-                <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-5 text-lg">
-                    <span>💰 ¿Tengo que pagar para usar la plataforma?</span>
-                    <span class="transition group-open:rotate-180 text-yellow-500">▼</span>
-                </summary>
-                <div class="text-gray-400 p-5 pt-0 leading-relaxed">
-                    El acceso al conocimiento base y las herramientas esenciales es y será gratuito. Tendremos niveles
-                    Premium para analíticas avanzadas, pero nuestro corazón es educativo y abierto.
-                </div>
-            </details>
+    <div class="faq-list">
+      <details>
+        <summary>
+          <span>😰 ¿Y si no sé nada de tecnología o cripto?</span>
+          <span class="icon">▼</span>
+        </summary>
+        <div class="answer">
+          Estás en el lugar correcto. YavlGold nace pensando en gente trabajadora, no en robots.
+          Nuestras guías empiezan desde cero absoluto. Si sabes usar WhatsApp, puedes aprender a usar nuestras
+          herramientas.
         </div>
-    </main>
+      </details>
+
+      <details>
+        <summary>
+          <span>🔒 ¿Es seguro usar la plataforma?</span>
+          <span class="icon">▼</span>
+        </summary>
+        <div class="answer">
+          YavlGold es una plataforma educativa. Nunca te pediremos claves privadas ni información financiera sensible.
+          Usamos autenticación segura con Supabase y todas las conexiones están encriptadas.
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <span>🎓 ¿Qué módulos educativos están disponibles?</span>
+          <span class="icon">▼</span>
+        </summary>
+        <div class="answer">
+          YavlGold V9.2 incluye 7 módulos: Academia Premium, Duelos en Vivo, Herramientas Pro,
+          Módulo de Ajedrez, Agricultura Tecnológica, Suite Multimedia y Centro de Trading Educativo.
+          Algunos están en desarrollo activo.
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <span>💰 ¿Tengo que pagar para usar la plataforma?</span>
+          <span class="icon">▼</span>
+        </summary>
+        <div class="answer">
+          El acceso al conocimiento base y las herramientas esenciales es y será gratuito. Tendremos niveles
+          Premium para funciones avanzadas, pero nuestro corazón es educativo y abierto para todos.
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          <span>📧 ¿Cómo puedo contactar con soporte?</span>
+          <span class="icon">▼</span>
+        </summary>
+        <div class="answer">
+          Puedes escribirnos directamente a soporte@yavlgold.com o visitar nuestra
+          <a href="soporte.html" style="color: var(--gold-principal);">página de soporte</a>.
+          Respondemos en menos de 24 horas.
+        </div>
+      </details>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-logo">
+      <img src="/assets/images/logo.svg" alt="YavlGold">
+    </div>
+    <p class="footer-text">YavlGold V9.2 - Ecosistema Educativo Prestigioso Multimodulo</p>
+    <div class="footer-links">
+      <a href="/">🏠 Inicio</a>
+      <a href="/#modulos">📚 Módulos</a>
+      <a href="mailto:soporte@yavlgold.com">💬 Contacto</a>
+    </div>
+    <div class="footer-legal">
+      <a href="cookies.html">Cookies</a>
+      <a href="faq.html">FAQ</a>
+      <a href="soporte.html">Soporte</a>
+    </div>
+    <p class="footer-copy">© 2025 YavlGold V9.2. Todos los derechos reservados.</p>
+  </footer>
 </body>
 
 </html>
