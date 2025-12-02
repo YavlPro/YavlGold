@@ -1,28 +1,25 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [],
-  server: {
-    port: 3000,
-    host: '127.0.0.1',
-    strictPort: true
-  },
-  root: '.',
   build: {
-    outDir: 'dist',
-    sourcemap: true,
     rollupOptions: {
       input: {
-        main: './index.html',
-        'reset-password': './reset-password.html'
-      }
-    }
+        main: 'index.html',
+        cookies: 'cookies.html',
+        faq: 'faq.html',
+        soporte: 'soporte.html'
+      },
+    },
   },
-  publicDir: 'public',
-  resolve: {
-    alias: {
-      '@': '/src'
-    }
-  }
-})
+  server: {
+    port: 3000,
+    open: true,
+    headers: {
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  },
+  esbuild: {
+    target: 'es2020',
+  },
+});
