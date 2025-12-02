@@ -27,7 +27,8 @@ double_confirm_changes = true
 enable_signup = true
 
 [auth.rate_limits]
-email_sent = 30000
+# Rate limit: 30 seconds (30,000 ms) between emails
+email_sent = 30_000
 
 [auth.debug]
 log_level = "debug"

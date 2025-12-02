@@ -168,11 +168,11 @@ export const authClient = {
           console.log('[AuthClient] ℹ️ Registro exitoso, requiere confirmación de email');
           return {
             success: true,
-            user: {
+            user: data.user ? {
               id: data.user.id,
               email: data.user.email,
               name: name
-            },
+            } : { name },
             requiresConfirmation: true,
             message: 'Por favor revisa tu email para confirmar tu cuenta antes de iniciar sesión'
           };
