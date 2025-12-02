@@ -162,6 +162,23 @@ export const authClient = {
           hcaptcha.reset();
         }
 
+        // Verificar si el registro requiere confirmación de email
+        if (!data.session) {
+          // El usuario fue creado pero necesita confirmar email
+          console.log('[AuthClient] ℹ️ Registro exitoso, requiere confirmación de email');
+          return {
+            success: true,
+            user: {
+              id: data.user.id,
+              email: data.user.email,
+              name: name
+            },
+            requiresConfirmation: true,
+            message: 'Por favor revisa tu email para confirmar tu cuenta antes de iniciar sesión'
+          };
+        }
+
+        // Si hay sesión, el usuario puede acceder inmediatamente
         const session = {
           user: {
             id: data.user.id,
@@ -171,16 +188,16 @@ export const authClient = {
             role: 'user',
             createdAt: data.user.created_at
           },
-          token: data.session?.access_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
-          refreshToken: data.session?.refresh_token || btoa(Math.random().toString(36) + Date.now()).substring(0, 64),
-          expiresAt: Date.now() + (24 * 60 * 60 * 1000),
+          token: data.session.access_token,
+          refreshToken: data.session.refresh_token,
+          expiresAt: data.session.expires_at ? new Date(data.session.expires_at * 1000).getTime() : Date.now() + (24 * 60 * 60 * 1000),
           createdAt: Date.now()
         };
 
         this.saveSession(session);
         this.emitAuthChange('USER_REGISTERED');
 
-        return { success: true, user: session.user, message: 'Por favor revisa tu email para confirmar tu cuenta' };
+        return { success: true, user: session.user, message: '¡Cuenta creada exitosamente!' };
       }
 
       return { success: false, error: 'No se pudo crear el usuario' };
@@ -266,6 +283,82 @@ export const authClient = {
    */
   getSession() {
     return this.currentSession;
+  },
+
+  /**
+   * Refresca la sesión actual con Supabase
+   * @returns {Promise<{success: boolean, error?: string}>}
+   */
+  async refreshSession() {
+    console.log('[AuthClient] 🔄 Refrescando sesión...');
+    try {
+      if (!this.supabase) {
+        return { success: false, error: 'Supabase no inicializado' };
+      }
+
+      const { data, error } = await this.supabase.auth.refreshSession();
+
+      if (error) {
+        console.error('[AuthClient] ❌ Error al refrescar sesión:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      if (data.session && data.user) {
+        const session = {
+          user: {
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.user_metadata?.name || data.user.email.split('@')[0],
+            avatar: data.user.user_metadata?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.email)}&background=C8A752&color=0B0C0F&bold=true`,
+            role: 'user',
+            createdAt: data.user.created_at
+          },
+          token: data.session.access_token,
+          refreshToken: data.session.refresh_token,
+          expiresAt: new Date(data.session.expires_at * 1000).getTime(),
+          createdAt: Date.now()
+        };
+
+        this.saveSession(session);
+        this.emitAuthChange('SESSION_REFRESHED');
+        console.log('[AuthClient] ✅ Sesión refrescada correctamente');
+        return { success: true };
+      }
+
+      return { success: false, error: 'No se pudo refrescar la sesión' };
+    } catch (error) {
+      console.error('[AuthClient] ❌ Excepción al refrescar sesión:', error.message);
+      return { success: false, error: error.message };
+    }
+  },
+
+  /**
+   * Solicita restablecimiento de contraseña por email
+   * @param {string} email - Email del usuario
+   * @returns {Promise<{success: boolean, message?: string, error?: string}>}
+   */
+  async resetPassword(email) {
+    console.log('[AuthClient] 📧 Solicitando restablecimiento de contraseña...');
+    try {
+      if (!this.supabase) {
+        return { success: false, error: 'Supabase no inicializado' };
+      }
+
+      const { data, error } = await this.supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password.html`
+      });
+
+      if (error) {
+        console.error('[AuthClient] ❌ Error al enviar email de recuperación:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      console.log('[AuthClient] ✅ Email de recuperación enviado');
+      return { success: true, message: 'Se ha enviado un email con instrucciones para restablecer tu contraseña' };
+    } catch (error) {
+      console.error('[AuthClient] ❌ Excepción al enviar email de recuperación:', error.message);
+      return { success: false, error: error.message };
+    }
   },
 
   /**

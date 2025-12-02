@@ -12,8 +12,8 @@
 // Import centralized configuration (no hardcoded credentials)
 import { supabaseConfig } from '../config/supabase-config.js';
 
-// Service role key should NEVER be in client code - use environment variables
-const SUPABASE_SERVICE_ROLE_KEY = 'TU_SERVICE_ROLE_KEY_AQUI'; // ⚠️ NUNCA EN CLIENTE
+// NOTE: Service role key should NEVER be in client code
+// Use environment variables on the server side only
 
 // Este archivo es solo documentación
 // Las migraciones SQL se deben ejecutar directamente en Supabase Dashboard
@@ -45,40 +45,9 @@ TESTING:
 ====================================
 `);
 
-// Funciones de verificación (requieren service_role)
-async function verifySetup() {
-  if (!supabaseConfig.isValid()) {
-    console.error('[Setup] ❌ Supabase configuration missing. Cannot verify setup.');
-    return;
-  }
-  const supabase = window.supabase.createClient(supabaseConfig.url, SUPABASE_SERVICE_ROLE_KEY);
-
-  console.log('🔍 Verificando configuración de Supabase...');
-
-  // Verificar triggers
-  const { data: triggers, error: triggersError } = await supabase
-    .from('pg_trigger')
-    .select('*')
-    .eq('tgname', 'create_profile_after_user_insert');
-
-  if (triggersError) {
-    console.error('❌ Error verificando triggers:', triggersError);
-  } else {
-    console.log('✅ Trigger encontrado:', triggers);
-  }
-
-  // Verificar políticas RLS
-  const { data: policies, error: policiesError } = await supabase
-    .from('pg_policies')
-    .select('*')
-    .eq('tablename', 'profiles');
-
-  if (policiesError) {
-    console.error('❌ Error verificando políticas:', policiesError);
-  } else {
-    console.log('✅ Políticas RLS:', policies);
-  }
-}
+// NOTE: Verification functions were removed as they required service_role key
+// which should NEVER be used in client-side code.
+// To verify setup, use Supabase Dashboard SQL Editor directly.
 
 // Re-export configuration for backward compatibility
 export const SUPABASE_CONFIG = {
