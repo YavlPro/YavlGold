@@ -1,14 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="yavlgold-logo-title">
+  <title id="yavlgold-logo-title">YavlGold Logo</title>
   <defs>
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#C8A752;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#D4AF37;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#8B7355;stop-opacity:1" />
+    <!-- Gradiente dorado principal V9.1 -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9D8040;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#C8A752;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E4D08E;stop-opacity:1" />
     </linearGradient>
+    <!-- Sombra dorada para el glow -->
+    <filter id="goldGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Gradiente de fondo circular -->
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </radialGradient>
   </defs>
-  <g transform="rotate(30, 256, 256)">
-    <path d="M256 0C114.6 0 0 114.6 0 256s114.6 256 256 256 256-114.6 256-256S397.4 0 256 0zm0 472c-119.3 0-216-96.7-216-216S136.7 40 256 40s216 96.7 216 216-96.7 216-216 216z" fill="#000"/>
-    <path d="M256 72c-101.6 0-184 82.4-184 184s82.4 184 184 184 184-82.4 184-184S357.6 72 256 72zm0 344c-88.2 0-160-71.8-160-160s71.8-160 160-160 160 71.8 160 160-71.8 160-160 160z" fill="url(#goldGrad)"/>
-    <text x="50%" y="55%" text-anchor="middle" dy=".3em" font-family="Arial, sans-serif" font-weight="900" font-size="280" fill="url(#goldGrad)">Y</text>
+
+  <!-- Fondo circular premium -->
+  <circle cx="256" cy="256" r="250" fill="url(#bgGradient)" stroke="url(#goldGradient)" stroke-width="4"/>
+
+  <!-- Logo Y angular con rotación 30° - Identidad V9.1 -->
+  <g transform="translate(256, 256) rotate(30)" filter="url(#goldGlow)">
+    <text
+      x="0"
+      y="45"
+      font-family="Orbitron, Arial Black, sans-serif"
+      font-size="280"
+      font-weight="900"
+      fill="url(#goldGradient)"
+      text-anchor="middle"
+      dominant-baseline="middle"
+    >Y</text>
   </g>
+
+  <!-- Anillo decorativo premium -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="url(#goldGradient)" stroke-width="1" opacity="0.3"/>
 </svg>
