@@ -1263,8 +1263,10 @@
       <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
         aria-label="Cambiar entre modo claro y oscuro">🌙</button>
       <a href="#lista-espera" class="btn-premium btn-gold">Lista de Espera</a>
-      <a href="#auth" id="nav-login" class="btn-premium btn-outline">Entrar</a>
-      <a href="#auth" id="nav-register" class="btn-premium btn-gold">Registro</a>
+      <button id="nav-login" class="btn-premium btn-outline"
+        onclick="document.getElementById('auth-modal').style.display='flex'">Entrar</button>
+      <button id="nav-register" class="btn-premium btn-gold"
+        onclick="document.getElementById('auth-modal').style.display='flex'">Registro</button>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
         <span></span>
         <span></span>
@@ -1299,7 +1301,6 @@
       </div>
       <div class="hero-actions">
         <a href="#modulos" class="btn-premium btn-gold btn-lg">Explorar Módulos 🚀</a>
-        <a href="#lista-espera" class="btn-premium btn-outline btn-lg">Únete a la Lista</a>
       </div>
     </div>
   </section>
@@ -1421,53 +1422,6 @@
     </div>
   </section>
 
-  <!-- Auth Section (Login/Registro) -->
-  <section id="auth" style="padding: 4rem 2rem; background: var(--bg-primary);">
-    <div style="max-width: 960px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 2rem;">
-      <div
-        style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-gold-md);">
-        <h2 class="section-title" style="text-align:center; margin-bottom: 1.5rem;">Tu Cuenta</h2>
-        <p class="section-subtitle" style="text-align:center; margin-bottom: 2rem;">Accede con tu email y contraseña o
-          crea una cuenta nueva</p>
-
-        <div id="auth-container" style="display: none; margin: 0 auto; max-width: 420px;">
-          <div id="auth-error"
-            style="display: none; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-          </div>
-
-          <form id="login-form"
-            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
-            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Iniciar Sesión</h3>
-            <div style="margin-bottom: .75rem;">
-              <label for="email">Email</label>
-              <input type="email" id="email" name="email" required
-                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
-            </div>
-            <div style="margin-bottom: 1rem;">
-              <label for="password">Password</label>
-              <input type="password" id="password" name="password" required
-                style="width: 100%; padding: 10px; margin-top: 4px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px;">
-            </div>
-            <button id="auth-submit" type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
-            <p style="margin-top: .75rem; text-align: center; color: var(--text-secondary);">
-              ¿No tienes cuenta? <a href="#" id="switch-to-register"
-                style="color: var(--gold-principal);">Regístrate</a>
-              <a href="#" id="switch-to-login" style="display:none; color: var(--gold-principal);">Volver a iniciar
-                sesión</a>
-            </p>
-          </form>
-
-          <div id="user-profile"
-            style="display: none; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px;">
-            <h3 style="font-family: 'Orbitron', sans-serif; margin-bottom: .75rem;">Bienvenido</h3>
-            <p>Usuario: <strong id="user-email" style="color: var(--gold-principal);">...</strong></p>
-            <button id="logout-button" class="btn-premium btn-outline" style="margin-top: 1rem; width: 100%;">Cerrar
-              Sesión</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <!-- CTA Final Section -->
   <section class="cta-final">
@@ -1677,10 +1631,10 @@
   <div id="auth-modal" class="hidden">
     <div class="auth-modal-overlay"></div>
     <div class="auth-modal-container">
-      <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
+      <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal"
+        onclick="document.getElementById('auth-modal').style.display='none'">✕</button>
+      <img src="assets/images/logo.webp" alt="YavlGold" class="modal-logo breathing-effect">
       <h2 id="auth-modal-title">Iniciar Sesión</h2>
-      <div id="auth-modal-error" class="hidden auth-error-message"></div>
-      <div id="auth-modal-success" class="hidden auth-success-message"></div>
       <form id="auth-modal-form">
         <div class="form-group">
           <label for="auth-modal-email">Correo electrónico</label>
@@ -1927,8 +1881,47 @@
     }
   </style>
 
+  <style>
+    .modal-logo {
+      width: 80px;
+      margin: 0 auto 1rem;
+      display: block;
+    }
+
+    .breathing-effect {
+      animation: breathing 3s ease-out infinite;
+    }
+
+    @keyframes breathing {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.9;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 1;
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.5));
+      }
+
+      100% {
+        transform: scale(0.95);
+        opacity: 0.9;
+      }
+    }
+  </style>
+
   <!-- Entrypoint Vite (Config/Auth pipeline) -->
   <script type="module" src="/main.js"></script>
 </body>
+
+<script>
+  window.onclick = function (event) {
+    const modal = document.getElementById('auth-modal');
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+</script>
 
 </html>
