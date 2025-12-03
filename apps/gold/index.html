@@ -1500,6 +1500,15 @@
     'use strict';
     console.log('🎨 YavlGold V9.2 - Ecosistema Educativo en Construcción');
 
+    // Añadir clase para la animación breathing
+    const style = document.createElement('style');
+    style.textContent = `
+      .animate-breathing {
+        animation: breathe 3s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+
     // Función global para abrir modal de autenticación
     function openAuthModal(mode) {
       const modal = document.getElementById('auth-modal');
@@ -1701,20 +1710,20 @@
     <div class="auth-modal-container">
       <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
       <div style="text-align: center; margin-bottom: 1.5rem;">
-        <img src="/assets/images/logo.webp" alt="YavlGold" width="80" height="80" class="breathing-effect"
+        <img src="/assets/images/logo.webp" alt="YavlGold" width="80" height="80" class="animate-breathing"
           style="border-radius: 50%; box-shadow: var(--shadow-gold-md);" />
       </div>
       <h2 id="auth-modal-title">Iniciar Sesión</h2>
-      <div id="auth-modal-error" class="hidden auth-error-message" style="display: none;"></div>
-      <div id="auth-modal-success" class="hidden auth-success-message" style="display: none;"></div>
-      <form id="auth-modal-form">
+      <div id="auth-error" class="hidden auth-error-message" style="display: none;"></div>
+      <div id="auth-success" class="hidden auth-success-message" style="display: none;"></div>
+      <form id="auth-form">
         <div class="form-group">
-          <label for="auth-modal-email">Correo electrónico</label>
-          <input type="email" id="auth-modal-email" placeholder="tu@email.com" required>
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" name="email" placeholder="tu@email.com" required>
         </div>
         <div class="form-group">
-          <label for="auth-modal-password">Contraseña</label>
-          <input type="password" id="auth-modal-password" placeholder="••••••••" required>
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
         </div>
         <!-- hCaptcha (opcional) -->
         <div id="hcaptcha-container" class="form-group" aria-live="polite"></div>
@@ -1973,7 +1982,14 @@
     }
   </style>
 
-  <!-- Entrypoint Vite (Config/Auth pipeline) -->
+  <!-- SDK de Supabase (CDN) - DEBE cargar primero -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Pipeline de Autenticación -->
+  <script type="module" src="/assets/js/auth/authClient.js"></script>
+  <script type="module" src="/assets/js/auth/authUI.js"></script>
+
+  <!-- Entrypoint Principal -->
   <script type="module" src="/assets/js/main.js"></script>
 </body>
 
