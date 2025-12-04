@@ -72,7 +72,18 @@ const authClient = {
                 return { success: false, error: error.message };
             }
 
+            // ✅ Login exitoso - FORZAR redirección al Dashboard
             console.log('✅ [AuthClient] Login exitoso:', data.user.email);
+            console.log('🚀 Login autorizado. Redirigiendo al Dashboard...');
+
+            // Guardar sesión explícitamente por seguridad
+            localStorage.setItem('sb_session', JSON.stringify(data.session));
+
+            setTimeout(() => {
+                // Redirección absoluta a la carpeta raíz dashboard
+                window.location.href = '/dashboard/index.html';
+            }, 500);
+
             return { success: true, user: data.user };
         } catch (err) {
             console.error('❌ [AuthClient] Error:', err);

@@ -75,9 +75,9 @@ const AuthUI = {
     }
 
     // Listen to auth events (note: authClient emits 'signed_in', not 'login')
-    window.addEventListener('auth:signed_in', () => { 
-      this.updateUI(); 
-      this.hideLoginModal(); 
+    window.addEventListener('auth:signed_in', () => {
+      this.updateUI();
+      this.hideLoginModal();
       this.hideRegisterModal();
       // Auto-redirect to dashboard if not already there
       if (!window.location.pathname.includes('/dashboard')) {
@@ -101,7 +101,7 @@ const AuthUI = {
       setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
       return;
     }
-    
+
     // Sistema antiguo (auth-modal con tabs)
     if (this.elements.authModal) {
       this.elements.modalOverlay.style.display = 'block';
@@ -116,7 +116,7 @@ const AuthUI = {
       setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
     }
   },
-  
+
   hideLoginModal() {
     // Sistema nuevo
     if (this.elements.loginModal) {
@@ -125,7 +125,7 @@ const AuthUI = {
       this.elements.loginForm?.reset();
       return;
     }
-    
+
     // Sistema antiguo
     if (this.elements.authModal) {
       this.elements.modalOverlay.style.display = 'none';
@@ -134,7 +134,7 @@ const AuthUI = {
       this.elements.loginForm?.reset();
     }
   },
-  
+
   showRegisterModal() {
     // Sistema nuevo (registerModal separado)
     if (this.elements.registerModal) {
@@ -143,7 +143,7 @@ const AuthUI = {
       setTimeout(() => this.elements.registerForm?.querySelector('input[name="name"]')?.focus(), 80);
       return;
     }
-    
+
     // Sistema antiguo (auth-modal con tabs)
     if (this.elements.authModal) {
       this.elements.modalOverlay.style.display = 'block';
@@ -158,7 +158,7 @@ const AuthUI = {
       setTimeout(() => this.elements.registerForm?.querySelector('input[name="email"]')?.focus(), 80);
     }
   },
-  
+
   hideRegisterModal() {
     // Sistema nuevo
     if (this.elements.registerModal) {
@@ -167,7 +167,7 @@ const AuthUI = {
       this.elements.registerForm?.reset();
       return;
     }
-    
+
     // Sistema antiguo
     if (this.elements.authModal) {
       this.elements.modalOverlay.style.display = 'none';
@@ -236,15 +236,15 @@ const AuthUI = {
   },
 
   handleLogout() {
-    console.log('[AuthUI] 🚪 Logout iniciado');
+    console.log('[AuthUI] 👋 Cerrando sesión...');
     if (confirm('¿Estás seguro de cerrar sesión?')) {
       window.AuthClient.logout();
       this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
-      
+
       // Redirigir a la página principal después de cerrar sesión
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = '/index.html';
       }, 1000);
     }
   },
