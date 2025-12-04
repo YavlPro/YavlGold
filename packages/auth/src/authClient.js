@@ -5,7 +5,8 @@
  */
 
 // Import centralized configuration (no hardcoded credentials)
-import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfig } from '../../../assets/js/config/supabase-config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseConfig, supabase as supabaseClient } from '../../../assets/js/config/supabase-config.js';
+import { createClient } from '@supabase/supabase-js';
 
 export const authClient = {
   supabase: null,
@@ -22,13 +23,21 @@ export const authClient = {
       return;
     }
 
-    // Ensure Supabase SDK is loaded
-    if (typeof window.supabase === 'undefined') {
-      console.error('[Auth] ❌ Supabase no está cargado. Asegúrate de incluir el script de Supabase antes de auth.js');
+    // Usar el cliente ya creado en supabase-config.js o crear uno nuevo
+    if (supabaseClient) {
+      this.supabase = supabaseClient;
+      console.log('[Auth] ✅ Usando cliente Supabase existente');
+    } else if (createClient) {
+      this.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('[Auth] ✅ Cliente Supabase creado desde ES module');
+    } else if (typeof window.supabase !== 'undefined') {
+      this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('[Auth] ✅ Cliente Supabase creado desde window global');
+    } else {
+      console.error('[Auth] ❌ No se pudo crear el cliente Supabase');
       return;
     }
 
-    this.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     this.loadSession();
     console.log('[Auth] ✅ AuthClient inicializado');
   },
