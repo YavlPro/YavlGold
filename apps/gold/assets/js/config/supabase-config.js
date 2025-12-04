@@ -26,8 +26,8 @@ export const supabaseConfig = {
     }
 };
 
-// 5. Inicialización del cliente con @supabase/supabase-js
-import { createClient } from '@supabase/supabase-js';
+// 5. Inicialización del cliente con @supabase/supabase-js (CDN ESM)
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 // Patrón Singleton para no crear múltiples clientes
 let supabaseInstance = null;
