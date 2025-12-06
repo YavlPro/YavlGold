@@ -290,6 +290,13 @@ const AuthUI = {
 
   // Actualizar UI
   updateUI() {
+    // Chequeo de seguridad para evitar el crash
+    if (!window.AuthClient) {
+      // console.warn('AuthClient aún no está listo. Reintentando...');
+      setTimeout(() => this.updateUI(), 200); // Reintentar en 200ms
+      return;
+    }
+
     const authed = window.AuthClient.isAuthenticated();
     const user = window.AuthClient.getCurrentUser();
 

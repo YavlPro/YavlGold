@@ -2484,6 +2484,57 @@
       }
     }
   </script>
+  <script type="module">
+    import { supabase } from '../assets/js/config/supabase-config.js';
+
+    async function initDashboard() {
+        console.log("⚙️ [Dashboard] Iniciando sistemas...");
+
+        // 1. Preguntar a Supabase: "¿Quién está aquí?"
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            // --- USUARIO DETECTADO ---
+            const user = session.user;
+            const name = user.user_metadata?.full_name || user.email.split('@')[0];
+            console.log("✅ Piloto identificado:", name);
+
+            // A. INTERFAZ: Mostrar controles de usuario
+            document.getElementById('auth-buttons').style.display = 'none'; // Ocultar "Entrar"
+            const userMenu = document.getElementById('user-menu');
+            if (userMenu) userMenu.style.display = 'flex';    // Mostrar Avatar/Menú
+
+            // B. DATOS: Poner nombre real
+            const menuName = document.querySelector('#user-menu-btn span');
+            if (menuName) menuName.textContent = name;
+
+            const sidebarName = document.getElementById('user-name');
+            if (sidebarName) sidebarName.textContent = name;
+
+            const avatar = document.getElementById('user-avatar');
+            if (avatar) avatar.textContent = name.substring(0, 2).toUpperCase();
+
+            // C. LOGOUT: Activar el botón de eyección
+            const btnLogout = document.getElementById('logout-btn');
+            if (btnLogout) {
+                btnLogout.onclick = async (e) => {
+                    e.preventDefault();
+                    console.log("👋 Cerrando sesión...");
+                    await supabase.auth.signOut();
+                    window.location.href = '/index.html';
+                };
+            }
+        } else {
+            // --- NO HAY USUARIO ---
+            console.warn("⛔ No hay sesión activa.");
+            // Opcional: Si quieres que expulse a los visitantes, descomenta esto:
+            // window.location.href = '/index.html';
+        }
+    }
+
+    // Encender al cargar
+    initDashboard();
+  </script>
 </body>
 
 </html>

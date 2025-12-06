@@ -1,13 +1,18 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  appType: 'mpa', // Multi-Page Application - sirve index.html en subdirectorios
   build: {
     rollupOptions: {
       input: {
         main: 'index.html',
         cookies: 'cookies.html',
         faq: 'faq.html',
-        soporte: 'soporte.html'
+        soporte: 'soporte.html',
+        dashboard: 'dashboard/index.html',
+        creacion: 'creacion.html',
+        perfil: 'dashboard/perfil.html',
+        configuracion: 'dashboard/configuracion.html'
       },
     },
   },
