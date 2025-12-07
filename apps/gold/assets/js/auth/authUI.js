@@ -24,9 +24,11 @@ const AuthUI = {
       // Botones
       loginBtn: document.getElementById('login-btn'),
       registerBtn: document.getElementById('register-btn'),
-      // Formularios
-      loginForm: document.getElementById('login-form'),
-      registerForm: document.getElementById('register-form'),
+      // Formularios - buscar ambos IDs posibles
+      loginForm: document.getElementById('login-form') || document.getElementById('auth-form'),
+      registerForm: document.getElementById('register-form') || document.getElementById('auth-form'),
+      // Formulario único (homepage)
+      authForm: document.getElementById('auth-form'),
       // Cerrar modales
       closeLoginModal: document.querySelector('#loginModal .modal-close'),
       closeRegisterModal: document.querySelector('#registerModal .modal-close'),
@@ -51,11 +53,15 @@ const AuthUI = {
   attachEventListeners() {
     this.elements.loginBtn?.addEventListener('click', (e) => { e.preventDefault(); this.showLoginModal(); });
     this.elements.closeLoginModal?.addEventListener('click', () => this.hideLoginModal());
-    this.elements.loginForm?.addEventListener('submit', (e) => { e.preventDefault(); this.handleLogin(e); });
+
+    // 🔒 FIX CRÍTICO: Prevenir recarga del formulario de login
+    this._attachLoginFormHandler();
 
     this.elements.registerBtn?.addEventListener('click', (e) => { e.preventDefault(); this.showRegisterModal(); });
     this.elements.closeRegisterModal?.addEventListener('click', () => this.hideRegisterModal());
-    this.elements.registerForm?.addEventListener('submit', (e) => { e.preventDefault(); this.handleRegister(e); });
+
+    // 🔒 FIX CRÍTICO: Prevenir recarga del formulario de registro
+    this._attachRegisterFormHandler();
 
     this.elements.userMenuBtn?.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); this.toggleUserDropdown(); });
     this.elements.logoutBtn?.addEventListener('click', (e) => { e.preventDefault(); this.handleLogout(); });
@@ -74,8 +80,10 @@ const AuthUI = {
       this.elements.mainNav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => this.elements.mainNav.classList.remove('active')));
     }
 
-    // Listen to auth events (note: authClient emits 'signed_in', not 'login')
+    // Listen to auth events
+    // SIGNED_IN: Usuario hizo login manualmente
     window.addEventListener('auth:signed_in', () => {
+      console.log('[AuthUI] 🔔 Evento SIGNED_IN recibido');
       this.updateUI();
       this.hideLoginModal();
       this.hideRegisterModal();
@@ -86,7 +94,19 @@ const AuthUI = {
         }, 500);
       }
     });
-    window.addEventListener('auth:signed_out', () => this.updateUI());
+
+    // INITIAL_SESSION: Usuario ya tenía sesión activa (recarga de página)
+    window.addEventListener('auth:initial_session', () => {
+      console.log('[AuthUI] 🔔 Evento INITIAL_SESSION recibido');
+      this.updateUI();
+      // La redirección al dashboard la maneja authClient
+    });
+
+    window.addEventListener('auth:signed_out', () => {
+      console.log('[AuthUI] 🔔 Evento SIGNED_OUT recibido');
+      this.updateUI();
+    });
+
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
 
     this.elements.showRegisterLink?.addEventListener('click', (e) => { e.preventDefault(); this.hideLoginModal(); this.showRegisterModal(); });
@@ -192,47 +212,181 @@ const AuthUI = {
     }
   },
 
-  async handleLogin(e) {
-    const fd = new FormData(e.target);
-    const email = fd.get('email');
-    const password = fd.get('password');
-    if (!email || !password) return this.showError('login', 'Por favor completa todos los campos');
+  /**
+   * 🔒 Adjuntar handler seguro al formulario de login
+   * Maneja tanto el formulario único (auth-form) como separados (login-form)
+   */
+  _attachLoginFormHandler() {
+    // Buscar el formulario - priorizar auth-form (homepage)
+    let targetForm = this.elements.authForm || this.elements.loginForm;
 
-    const btn = e.target.querySelector('button[type="submit"]');
-    const txt = btn?.textContent || '';
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...'; }
-
-    try {
-      const res = await window.AuthClient.login(email, password);
-      if (res.success) this.showSuccess('¡Bienvenido de nuevo!');
-      else this.showError('login', res.error || 'Error al iniciar sesión');
-    } catch {
-      this.showError('login', 'Error inesperado. Intenta de nuevo.');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = txt; }
+    if (!targetForm) {
+      console.warn('[AuthUI] ⚠️ No se encontró formulario de login (auth-form ni login-form)');
+      return;
     }
+
+    console.log('[AuthUI] 📋 Formulario encontrado:', targetForm.id);
+
+    // Clonar para eliminar listeners anteriores
+    const newForm = targetForm.cloneNode(true);
+    targetForm.parentNode.replaceChild(newForm, targetForm);
+
+    // Actualizar referencias
+    if (this.elements.authForm) this.elements.authForm = newForm;
+    this.elements.loginForm = newForm;
+
+    // Prevenir action/method del HTML - MÚLTIPLES CAPAS DE SEGURIDAD
+    newForm.setAttribute('action', 'javascript:void(0);');
+    newForm.setAttribute('method', 'post');
+    newForm.setAttribute('onsubmit', 'return false;');
+    newForm.removeAttribute('target');
+
+    newForm.addEventListener('submit', async (e) => {
+      e.preventDefault();  // 🔒 PRIMERA LÍNEA - CRÍTICO
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      console.log('🔒 [AuthUI] Submit interceptado - procesando de forma segura...');
+
+      // Buscar campos con múltiples selectores
+      const email = newForm.querySelector('#email')?.value ||
+                    newForm.querySelector('input[name="email"]')?.value ||
+                    newForm.querySelector('input[type="email"]')?.value;
+
+      const password = newForm.querySelector('#password')?.value ||
+                       newForm.querySelector('input[name="password"]')?.value ||
+                       newForm.querySelector('input[type="password"]')?.value;
+
+      console.log('📧 Email capturado:', email ? '✓' : '✗');
+      console.log('🔑 Password capturado:', password ? '✓' : '✗');
+
+      if (!email || !password) {
+        this.showError('login', 'Por favor completa todos los campos');
+        return false;
+      }
+
+      const btn = newForm.querySelector('button[type="submit"]') ||
+                  newForm.querySelector('#auth-modal-submit');
+      const originalText = btn?.textContent || 'Entrar';
+
+      try {
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+        }
+
+        // Verificar que AuthClient existe
+        if (!window.AuthClient) {
+          throw new Error('AuthClient no está disponible');
+        }
+
+        console.log('🔐 [AuthUI] Llamando a AuthClient.login()...');
+        const res = await window.AuthClient.login(email, password);
+
+        if (res.success) {
+          console.log('✅ [AuthUI] Login exitoso. Redirigiendo al Dashboard...');
+          this.showSuccess('¡Bienvenido de nuevo!');
+
+          // Cerrar modal si existe
+          const modal = document.getElementById('auth-modal');
+          if (modal) modal.classList.add('hidden');
+
+          // Redirección manual al dashboard
+          setTimeout(() => {
+            window.location.href = '/dashboard/';
+          }, 800);
+        } else {
+          console.error('❌ [AuthUI] Login falló:', res.error);
+          this.showError('login', res.error || 'Error al iniciar sesión');
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }
+      } catch (err) {
+        console.error('❌ [AuthUI] Error de login:', err);
+        this.showError('login', err.message || 'Error inesperado. Intenta de nuevo.');
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
+
+      return false;  // 🔒 Prevenir cualquier submit residual
+    }, { capture: true });  // 🔒 Capturar en fase de captura para prioridad máxima
+
+    console.log('[AuthUI] ✅ Handler de login adjuntado de forma segura a:', newForm.id);
+  },
+
+  /**
+   * 🔒 Adjuntar handler seguro al formulario de registro
+   */
+  _attachRegisterFormHandler() {
+    const registerForm = this.elements.registerForm;
+    if (!registerForm) return;
+
+    // Clonar para eliminar listeners anteriores
+    const newRegisterForm = registerForm.cloneNode(true);
+    registerForm.parentNode.replaceChild(newRegisterForm, registerForm);
+
+    // Actualizar referencia
+    this.elements.registerForm = newRegisterForm;
+
+    // Prevenir action/method del HTML
+    newRegisterForm.setAttribute('action', 'javascript:void(0);');
+    newRegisterForm.setAttribute('method', 'post');
+    newRegisterForm.setAttribute('onsubmit', 'return false;');
+
+    newRegisterForm.addEventListener('submit', async (e) => {
+      e.preventDefault();  // 🔒 PRIMERA LÍNEA - CRÍTICO
+      e.stopPropagation();
+      console.log('🔒 [AuthUI] Registro seguro (sin recarga)...');
+
+      const name = newRegisterForm.querySelector('input[name="name"]')?.value || newRegisterForm.querySelector('#register-name')?.value;
+      const email = newRegisterForm.querySelector('input[name="email"]')?.value || newRegisterForm.querySelector('#register-email')?.value;
+      const password = newRegisterForm.querySelector('input[name="password"]')?.value || newRegisterForm.querySelector('#register-password')?.value;
+
+      if (!email || !password || !name) {
+        this.showError('register', 'Por favor completa todos los campos');
+        return false;
+      }
+
+      const btn = newRegisterForm.querySelector('button[type="submit"]');
+      const originalText = btn?.textContent || 'Crear cuenta';
+
+      try {
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+        }
+
+        const res = await window.AuthClient.register(email, password, name);
+
+        if (res.success) {
+          console.log('✅ [AuthUI] Registro exitoso');
+          this.showSuccess('¡Cuenta creada exitosamente! Revisa tu email para confirmar.');
+          this.hideRegisterModal();
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        } else {
+          this.showError('register', res.error || 'Error al registrarse');
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }
+      } catch (err) {
+        console.error('❌ [AuthUI] Error de registro:', err);
+        this.showError('register', 'Error inesperado. Intenta de nuevo.');
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
+
+      return false;  // 🔒 Prevenir cualquier submit residual
+    });
+
+    console.log('[AuthUI] ✅ Handler de registro adjuntado de forma segura');
+  },
+
+  async handleLogin(e) {
+    // Método legacy - ahora manejado por _attachLoginFormHandler
+    e?.preventDefault?.();
+    console.warn('[AuthUI] handleLogin legacy llamado - usar _attachLoginFormHandler');
   },
 
   async handleRegister(e) {
-    const fd = new FormData(e.target);
-    const email = fd.get('email');
-    const password = fd.get('password');
-    const name = fd.get('name');
-    if (!email || !password || !name) return this.showError('register', 'Por favor completa todos los campos');
-
-    const btn = e.target.querySelector('button[type="submit"]');
-    const txt = btn?.textContent || '';
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...'; }
-
-    try {
-      const res = await window.AuthClient.register(email, password, name);
-      if (res.success) this.showSuccess('¡Cuenta creada exitosamente!');
-      else this.showError('register', res.error || 'Error al registrarse');
-    } catch {
-      this.showError('register', 'Error inesperado. Intenta de nuevo.');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = txt; }
-    }
+    // Método legacy - ahora manejado por _attachRegisterFormHandler
+    e?.preventDefault?.();
+    console.warn('[AuthUI] handleRegister legacy llamado - usar _attachRegisterFormHandler');
   },
 
   handleLogout() {
