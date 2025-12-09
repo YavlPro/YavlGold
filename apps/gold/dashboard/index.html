@@ -49,11 +49,121 @@
   <link rel="stylesheet" href="/apps/gold/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap"
     rel="stylesheet">
 
   <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 🎨 YAVLGOLD DARK PREMIUM THEME -->
+  <style>
+    :root {
+      --yavl-black: #0a0a0a;
+      --yavl-dark: #1a1a1a;
+      --yavl-gold: #D4AF37;
+      --yavl-white: #ffffff;
+      --yavl-border: rgba(212, 175, 55, 0.3);
+    }
+
+    * {
+      font-family: 'Rajdhani', sans-serif !important;
+    }
+
+    body {
+      background: var(--yavl-black) !important;
+      color: var(--yavl-white) !important;
+    }
+
+    .gg-header,
+    .dashboard-container,
+    footer {
+      background: var(--yavl-black) !important;
+      color: var(--yavl-white) !important;
+    }
+
+    .stat-card,
+    .action-card,
+    .announcement-card,
+    .modal,
+    .sidebar,
+    .academia-stat-card,
+    .course-card,
+    .badge-card,
+    .next-lesson-card {
+      background: var(--yavl-dark) !important;
+      border: 1px solid var(--yavl-border) !important;
+      color: var(--yavl-white) !important;
+    }
+
+    .btn-primary,
+    .btn-register,
+    .create-announcement-btn,
+    .btn-start-lesson {
+      background: linear-gradient(135deg, var(--yavl-gold), #BFA030) !important;
+      color: var(--yavl-black) !important;
+      border: none !important;
+      font-weight: 600 !important;
+    }
+
+    .btn-login,
+    .btn-secondary {
+      border: 2px solid var(--yavl-gold) !important;
+      color: var(--yavl-gold) !important;
+      background: transparent !important;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    .announcement-title,
+    .stat-value,
+    .stat-number {
+      color: var(--yavl-gold) !important;
+    }
+
+    .nav-item.active,
+    .auth-tab.active {
+      color: var(--yavl-gold) !important;
+      border-color: var(--yavl-gold) !important;
+    }
+
+    input,
+    textarea,
+    select {
+      background: rgba(212, 175, 55, 0.05) !important;
+      border: 1px solid var(--yavl-border) !important;
+      color: var(--yavl-white) !important;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--yavl-gold) !important;
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+    }
+
+    .btn-logout-header {
+      background: transparent !important;
+      border: 2px solid #ff6b6b !important;
+      color: #ff6b6b !important;
+      padding: 10px 20px !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.3s ease !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+
+    .btn-logout-header:hover {
+      background: #ff6b6b !important;
+      color: white !important;
+    }
+  </style>
 
   <style>
     /* Estilos específicos del dashboard (manteniendo layout propio) */
@@ -1292,6 +1402,13 @@
         <i class="fas fa-user-plus"></i> Registrarse
       </button>
     </div>
+
+    <!-- 🔴 BOTÓN CERRAR SESIÓN EXPLÍCITO -->
+    <button id="force-logout-btn" class="btn-logout-header" style="display: none;"
+      onclick="console.log('🔴 Logout inline...'); localStorage.clear(); sessionStorage.clear(); window.location.href='../index.html';">
+      <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
+    </button>
+
     <div id="user-menu" class="user-menu" style="display: none;">
       <button id="user-menu-btn" class="user-menu-btn">
         <img src="" alt="" class="user-avatar-sm">
@@ -1802,16 +1919,22 @@
   <!-- CRÍTICO: Supabase primero (carga al final del body, no bloquea inicial paint) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Guardián del Dashboard - DEBE cargar antes que auth.js -->
+  <!-- Guardián del Dashboard -->
   <script type="module" src="./auth-guard.js"></script>
 
-  <!-- Auth carga después -->
-  <script type="module" src="/apps/gold/assets/js/auth.js"></script>
+  <!-- 🌍 PUENTE GLOBAL: AuthClient disponible para todos los scripts -->
+  <script type="module">
+    import { AuthClient } from '../assets/js/auth/authClient.js';
+
+    // Exponer al objeto window GLOBALMENTE
+    window.AuthClient = AuthClient;
+    console.log('✅ AuthClient expuesto globalmente en window.');
+  </script>
 
   <!-- Otros scripts -->
-  <script src="/apps/gold/assets/js/profile/profileManager.js"></script>
-  <script src="/apps/gold/assets/js/announcements/announcementsManager.js"></script>
-  <script src="/apps/gold/assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
+  <script src="../assets/js/profile/profileManager.js"></script>
+  <script src="../assets/js/announcements/announcementsManager.js"></script>
+  <script src="../assets/js/academia.js"></script> <!-- Sistema de progreso académico -->
 
   <script>
     // Función para cambiar de pestaña en el dashboard
@@ -2488,52 +2611,96 @@
     import { supabase } from '../assets/js/config/supabase-config.js';
 
     async function initDashboard() {
-        console.log("⚙️ [Dashboard] Iniciando sistemas...");
+      console.log("⚙️ [Dashboard] Iniciando sistemas...");
 
-        // 1. Preguntar a Supabase: "¿Quién está aquí?"
-        const { data: { session } } = await supabase.auth.getSession();
+      // 1. Preguntar a Supabase: "¿Quién está aquí?"
+      const { data: { session } } = await supabase.auth.getSession();
 
-        if (session) {
-            // --- USUARIO DETECTADO ---
-            const user = session.user;
-            const name = user.user_metadata?.full_name || user.email.split('@')[0];
-            console.log("✅ Piloto identificado:", name);
+      if (session) {
+        // --- USUARIO DETECTADO ---
+        const user = session.user;
+        const name = user.user_metadata?.full_name || user.email.split('@')[0];
+        console.log("✅ Piloto identificado:", name);
 
-            // A. INTERFAZ: Mostrar controles de usuario
-            document.getElementById('auth-buttons').style.display = 'none'; // Ocultar "Entrar"
-            const userMenu = document.getElementById('user-menu');
-            if (userMenu) userMenu.style.display = 'flex';    // Mostrar Avatar/Menú
+        // A. INTERFAZ: Mostrar controles de usuario
+        document.getElementById('auth-buttons').style.display = 'none'; // Ocultar "Entrar"
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu) userMenu.style.display = 'flex';    // Mostrar Avatar/Menú
 
-            // B. DATOS: Poner nombre real
-            const menuName = document.querySelector('#user-menu-btn span');
-            if (menuName) menuName.textContent = name;
+        // B. DATOS: Poner nombre real
+        const menuName = document.querySelector('#user-menu-btn span');
+        if (menuName) menuName.textContent = name;
 
-            const sidebarName = document.getElementById('user-name');
-            if (sidebarName) sidebarName.textContent = name;
+        const sidebarName = document.getElementById('user-name');
+        if (sidebarName) sidebarName.textContent = name;
 
-            const avatar = document.getElementById('user-avatar');
-            if (avatar) avatar.textContent = name.substring(0, 2).toUpperCase();
+        const avatar = document.getElementById('user-avatar');
+        if (avatar) avatar.textContent = name.substring(0, 2).toUpperCase();
 
-            // C. LOGOUT: Activar el botón de eyección
-            const btnLogout = document.getElementById('logout-btn');
-            if (btnLogout) {
-                btnLogout.onclick = async (e) => {
-                    e.preventDefault();
-                    console.log("👋 Cerrando sesión...");
-                    await supabase.auth.signOut();
-                    window.location.href = '/index.html';
-                };
+        // C. LOGOUT: Activar el botón de eyección (DROPDOWN)
+        const btnLogout = document.getElementById('logout-btn');
+        if (btnLogout) {
+          btnLogout.onclick = async (e) => {
+            e.preventDefault();
+            if (!confirm('¿Estás seguro de cerrar sesión?')) return;
+            console.log("👋 Cerrando sesión desde dropdown...");
+            try {
+              await supabase.auth.signOut();
+            } catch (err) {
+              console.warn('Logout warning:', err);
+            } finally {
+              // REDIRECCIÓN FORZADA
+              window.location.href = '../index.html';
             }
-        } else {
-            // --- NO HAY USUARIO ---
-            console.warn("⛔ No hay sesión activa.");
-            // Opcional: Si quieres que expulse a los visitantes, descomenta esto:
-            // window.location.href = '/index.html';
+          };
         }
+      } else {
+        // --- NO HAY USUARIO ---
+        console.warn("⛔ No hay sesión activa.");
+        // Opcional: Si quieres que expulse a los visitantes, descomenta esto:
+        // window.location.href = '/index.html';
+      }
     }
 
     // Encender al cargar
     initDashboard();
+  </script>
+
+  <!-- 🔴 SCRIPT VISIBILIDAD BOTÓN LOGOUT -->
+  <script>
+    // Mostrar/ocultar botón según autenticación (sin imports)
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('force-logout-btn');
+      const authButtons = document.getElementById('auth-buttons');
+
+      if (btn) {
+        console.log('✅ Botón Logout listo (lógica inline).');
+
+        // Mostrar/ocultar según eventos
+        window.addEventListener('auth:signed_in', () => {
+          btn.style.display = 'flex';
+          if (authButtons) authButtons.style.display = 'none';
+        });
+
+        window.addEventListener('auth:initial_session', () => {
+          btn.style.display = 'flex';
+          if (authButtons) authButtons.style.display = 'none';
+        });
+
+        window.addEventListener('auth:signed_out', () => {
+          btn.style.display = 'none';
+          if (authButtons) authButtons.style.display = 'flex';
+        });
+
+        // Verificar estado inicial (usando window.AuthClient si existe)
+        setTimeout(() => {
+          if (window.AuthClient && window.AuthClient.isAuthenticated()) {
+            btn.style.display = 'flex';
+            if (authButtons) authButtons.style.display = 'none';
+          }
+        }, 500);
+      }
+    });
   </script>
 </body>
 

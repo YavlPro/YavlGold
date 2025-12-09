@@ -446,4 +446,6 @@ if (typeof window !== 'undefined') {
     window.AuthClient = authClient;
 }
 
+// Named export para compatibilidad con imports
+export { authClient as AuthClient };
 export default authClient;

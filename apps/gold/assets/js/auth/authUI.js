@@ -250,12 +250,12 @@ const AuthUI = {
 
       // Buscar campos con múltiples selectores
       const email = newForm.querySelector('#email')?.value ||
-                    newForm.querySelector('input[name="email"]')?.value ||
-                    newForm.querySelector('input[type="email"]')?.value;
+        newForm.querySelector('input[name="email"]')?.value ||
+        newForm.querySelector('input[type="email"]')?.value;
 
       const password = newForm.querySelector('#password')?.value ||
-                       newForm.querySelector('input[name="password"]')?.value ||
-                       newForm.querySelector('input[type="password"]')?.value;
+        newForm.querySelector('input[name="password"]')?.value ||
+        newForm.querySelector('input[type="password"]')?.value;
 
       console.log('📧 Email capturado:', email ? '✓' : '✗');
       console.log('🔑 Password capturado:', password ? '✓' : '✗');
@@ -266,7 +266,7 @@ const AuthUI = {
       }
 
       const btn = newForm.querySelector('button[type="submit"]') ||
-                  newForm.querySelector('#auth-modal-submit');
+        newForm.querySelector('#auth-modal-submit');
       const originalText = btn?.textContent || 'Entrar';
 
       try {
@@ -318,6 +318,12 @@ const AuthUI = {
   _attachRegisterFormHandler() {
     const registerForm = this.elements.registerForm;
     if (!registerForm) return;
+
+    // 🔒 VALIDACIÓN CRÍTICA: Verificar que el formulario tenga padre antes de replaceChild
+    if (!registerForm.parentNode) {
+      console.warn('[AuthUI] ⚠️ Formulario de registro no tiene padre - saltando attach');
+      return;
+    }
 
     // Clonar para eliminar listeners anteriores
     const newRegisterForm = registerForm.cloneNode(true);
