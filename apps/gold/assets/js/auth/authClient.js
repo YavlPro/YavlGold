@@ -1,11 +1,13 @@
 /**
- * YavlGold - Cliente Auth (V9.5 - Fix Completo de Sesión)
+ * YavlGold - Cliente Auth (V9.5 - Refactorización Forense)
  * Ruta: apps/gold/assets/js/auth/authClient.js
  *
- * FIXES:
- * - Sincronización de keys de localStorage
- * - updateDashboardUI para actualización directa
- * - Mejor manejo de INITIAL_SESSION
+ * ESCUADRÓN KIMI - FIXES CRÍTICOS:
+ * 1. Configuración explícita de detectSessionInUrl + persistSession + autoRefreshToken
+ * 2. Orden de hidratación correcto: Hash URL → getSession() → localStorage
+ * 3. Race condition eliminada: cliente listo antes de cualquier getSession
+ * 4. Listener robusto manejando INITIAL_SESSION
+ * 5. Key unificada yavl:session
  */
 
 const authClient = {
@@ -13,12 +15,13 @@ const authClient = {
     currentSession: null,
     STORAGE_KEY: 'yavl:session',
     _initPromise: null,
+    _clientReady: false,
 
     /**
      * Inicializar el cliente de autenticación
      */
     async init() {
-        console.log('[AuthClient] 🚀 Inicializando...');
+        console.log('[AuthClient] 🚀 Inicializando con lógica forense corregida...');
 
         if (this._initPromise) return this._initPromise;
 
@@ -27,84 +30,232 @@ const authClient = {
     },
 
     async _doInit() {
-        // Buscar cliente Supabase
-        if (typeof window !== 'undefined' && window.supabase && window.supabase.auth) {
-            this.supabase = window.supabase;
-            console.log('[AuthClient] ✅ Usando cliente global existente');
-        } else {
-            try {
-                const config = await import('../config/supabase-config.js');
-                if (config.supabase && config.supabase.auth) {
-                    this.supabase = config.supabase;
-                    console.log('[AuthClient] ✅ Usando cliente importado');
-                } else if (config.getSupabaseClient) {
-                    this.supabase = await config.getSupabaseClient();
-                    console.log('[AuthClient] ✅ Cliente obtenido con getSupabaseClient');
-                }
-            } catch (e) {
-                console.warn('[AuthClient] ⚠️ Import de supabase-config falló:', e.message);
-            }
-        }
-
-        if (!this.supabase) {
-            this._tryCreateClient();
-        }
-
-        if (!this.supabase) {
-            console.warn('[AuthClient] ⚠️ Supabase no disponible. Esperando...');
-            await this._waitForSupabase();
-        }
+        // PASO 1: INICIALIZAR CLIENTE SUPABASE CON CONFIGURACIÓN CORRECTA
+        await this._ensureSupabaseClient();
 
         if (!this.supabase) {
             console.error('[AuthClient] ❌ No se pudo inicializar Supabase');
-            // Aún así intentar cargar sesión local
-            this.loadSession();
+            // Como último recurso, cargar sesión local
+            this._loadSessionFromLocalStorage();
             return;
         }
 
-        // Cargar sesión local primero
-        this.loadSession();
+        // Marcar cliente como listo ANTES de cualquier operación
+        this._clientReady = true;
+        console.log('[AuthClient] ✅ Cliente Supabase listo y configurado');
 
-        // Luego verificar con Supabase
-        await this.checkSupabaseSession();
+        // PASO 2: VERIFICAR SI HAY HASH EN URL (Magic Link)
+        const hasHashInUrl = this._checkForUrlHash();
 
-        // Escuchar cambios futuros
-        this.listenAuthChanges();
+        if (hasHashInUrl) {
+            console.log('[AuthClient] 🔗 Hash detectado en URL, esperando procesamiento de Supabase...');
+            // Esperar un momento para que Supabase procese el hash
+            await this._waitForHashProcessing();
+        }
+
+        // PASO 3: VERIFICAR SESIÓN CON SUPABASE (getSession)
+        const supabaseSession = await this._getSupabaseSession();
+
+        if (supabaseSession) {
+            console.log('[AuthClient] ✅ Sesión activa de Supabase:', supabaseSession.user.email);
+            this._processSession(supabaseSession);
+        } else {
+            // PASO 4: SOLO SI NO HAY SESIÓN EN SUPABASE, USAR LOCALSTORAGE
+            console.log('[AuthClient] ℹ️ No hay sesión en Supabase, verificando localStorage...');
+            this._loadSessionFromLocalStorage();
+        }
+
+        // Configurar listener de cambios (DEBE incluir INITIAL_SESSION)
+        this._setupAuthListener();
 
         // Actualizar UI inmediatamente
         this.updateDashboardUI();
 
-        console.log('[AuthClient] ✅ Sistema auth inicializado');
+        console.log('[AuthClient] ✅ Sistema auth completamente inicializado');
     },
 
     /**
-     * Verificar sesión directamente con Supabase
+     * FIX #1 y #3: Asegurar cliente Supabase con configuración correcta
      */
-    async checkSupabaseSession() {
-        if (!this.supabase) return;
+    async _ensureSupabaseClient() {
+        // Intentar usar cliente global
+        if (typeof window !== 'undefined' && window.supabase?.auth) {
+            this.supabase = window.supabase;
+            console.log('[AuthClient] ✅ Usando cliente global existente');
+            return;
+        }
+
+        // Intentar importar configuración
+        try {
+            const config = await import('../config/supabase-config.js');
+            if (config.supabase?.auth) {
+                this.supabase = config.supabase;
+                console.log('[AuthClient] ✅ Cliente importado desde config');
+                return;
+            } else if (config.getSupabaseClient) {
+                this.supabase = await config.getSupabaseClient();
+                console.log('[AuthClient] ✅ Cliente obtenido con getSupabaseClient');
+                return;
+            }
+        } catch (e) {
+            console.warn('[AuthClient] ⚠️ Import de supabase-config falló:', e.message);
+        }
+
+        // Intentar crear cliente con configuración CORRECTA
+        this._tryCreateClientWithCorrectConfig();
+
+        // Si aún no hay cliente, esperar
+        if (!this.supabase) {
+            console.log('[AuthClient] ⏳ Esperando cliente Supabase global...');
+            await this._waitForSupabase();
+        }
+    },
+
+    /**
+     * FIX #1: Crear cliente con auth config obligatoria
+     */
+    _tryCreateClientWithCorrectConfig() {
+        try {
+            let url, key;
+
+            if (typeof import.meta !== 'undefined' && import.meta.env) {
+                url = import.meta.env.VITE_SUPABASE_URL;
+                key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+            }
+
+            if (url && key && typeof window !== 'undefined' && window.supabase?.createClient) {
+                // FIX CRÍTICO: Pasar configuración de auth explícitamente
+                this.supabase = window.supabase.createClient(url, key, {
+                    auth: {
+                        detectSessionInUrl: true,    // CRÍTICO: detectar hash en URL
+                        persistSession: true,          // Mantener sesión en localStorage
+                        autoRefreshToken: true         // Refrescar token automáticamente
+                    }
+                });
+
+                window.supabase = this.supabase;
+                console.log('[AuthClient] ✅ Cliente creado con configuración auth correcta');
+            }
+        } catch (e) {
+            console.warn('[AuthClient] ⚠️ Error creando cliente:', e.message);
+        }
+    },
+
+    /**
+     * FIX #2: Verificar si hay hash en URL
+     */
+    _checkForUrlHash() {
+        if (typeof window === 'undefined') return false;
+
+        const hash = window.location.hash;
+
+        // Buscar parámetros de autenticación en el hash
+        const hasAccessToken = hash.includes('access_token=');
+        const hasRefreshToken = hash.includes('refresh_token=');
+        const hasType = hash.includes('type=');
+
+        return hasAccessToken || hasRefreshToken || hasType;
+    },
+
+    /**
+     * FIX #2: Esperar a que Supabase procese el hash
+     */
+    async _waitForHashProcessing() {
+        return new Promise((resolve) => {
+            // Dar tiempo a Supabase para procesar el hash
+            setTimeout(resolve, 500);
+        });
+    },
+
+    /**
+     * FIX #2 y #3: Obtener sesión de Supabase (solo cuando cliente esté listo)
+     */
+    async _getSupabaseSession() {
+        if (!this.supabase || !this._clientReady) {
+            console.warn('[AuthClient] ⚠️ Cliente no listo para getSession');
+            return null;
+        }
 
         try {
             const { data: { session }, error } = await this.supabase.auth.getSession();
 
             if (error) {
                 console.warn('[AuthClient] ⚠️ Error al obtener sesión:', error.message);
-                return;
+                return null;
             }
 
-            if (session) {
-                console.log('[AuthClient] ✅ Sesión de Supabase encontrada:', session.user.email);
-                this._processSession(session);
-            } else {
-                console.log('[AuthClient] ℹ️ No hay sesión activa en Supabase');
-                // Si no hay sesión en Supabase pero sí local, la sesión expiró
-                if (this.currentSession) {
-                    console.log('[AuthClient] ⚠️ Sesión local expirada, limpiando...');
-                    this.currentSession = null;
-                    localStorage.removeItem(this.STORAGE_KEY);
-                }
-            }
+            return session;
         } catch (e) {
             console.error('[AuthClient] ❌ Error verificando sesión:', e);
+            return null;
+        }
+    },
+
+    /**
+     * FIX #4: Listener robusto que maneja INITIAL_SESSION
+     */
+    _setupAuthListener() {
+        if (!this.supabase) return;
+
+        this.supabase.auth.onAuthStateChange((event, session) => {
+            console.log('[AuthClient] 🔔 Auth cambió:', event, '| Session:', session ? 'EXISTS' : 'NULL');
+
+            // FIX CRÍTICO: Manejar INITIAL_SESSION explícitamente
+            if (event === 'INITIAL_SESSION') {
+                if (session) {
+                    console.log('[AuthClient] 🎯 INITIAL_SESSION detectada:', session.user.email);
+                    this._processSession(session);
+                    this._checkRedirectToHome();
+                } else {
+                    console.log('[AuthClient] ℹ️ INITIAL_SESSION sin sesión activa');
+                }
+            }
+            // Manejar login y refresh de token
+            else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                if (session) {
+                    console.log('[AuthClient] ✅ Sesión detectada:', session.user.email);
+                    this._processSession(session);
+                    this._checkRedirectToHome();
+                }
+            }
+            // Manejar logout
+            else if (event === 'SIGNED_OUT') {
+                console.log('[AuthClient] 🚪 Sesión cerrada');
+                this.currentSession = null;
+                localStorage.removeItem(this.STORAGE_KEY);
+                this.updateDashboardUI();
+                this.emitAuthChange('SIGNED_OUT');
+            }
+        });
+    },
+
+    /**
+     * FIX #2: Cargar de localStorage SOLO como último recurso
+     */
+    _loadSessionFromLocalStorage() {
+        try {
+            const stored = localStorage.getItem(this.STORAGE_KEY);
+            if (stored) {
+                const session = JSON.parse(stored);
+
+                // Verificar si la sesión no ha expirado
+                if (session.expiresAt && session.expiresAt < Date.now()) {
+                    console.log('[AuthClient] ⚠️ Sesión local expirada, limpiando...');
+                    localStorage.removeItem(this.STORAGE_KEY);
+                    return;
+                }
+
+                this.currentSession = session;
+                console.log('[AuthClient] ✅ Sesión cargada de localStorage:', this.currentSession.user?.email);
+
+                this._checkRedirectToHome();
+                this.updateDashboardUI();
+            } else {
+                console.log('[AuthClient] ℹ️ No hay sesión guardada en localStorage');
+            }
+        } catch (e) {
+            console.error('[AuthClient] ❌ Error al cargar sesión:', e);
+            localStorage.removeItem(this.STORAGE_KEY);
         }
     },
 
@@ -128,7 +279,7 @@ const authClient = {
         };
 
         // Guardar en localStorage
-        this.saveSession(this.currentSession);
+        this._saveSessionToLocalStorage(this.currentSession);
 
         // Actualizar UI
         this.updateDashboardUI();
@@ -137,6 +288,9 @@ const authClient = {
         this.emitAuthChange('SIGNED_IN');
     },
 
+    /**
+     * Esperar a que Supabase esté disponible
+     */
     _waitForSupabase() {
         return new Promise((resolve) => {
             let attempts = 0;
@@ -145,7 +299,7 @@ const authClient = {
             const check = () => {
                 attempts++;
 
-                if (typeof window !== 'undefined' && window.supabase && window.supabase.auth) {
+                if (typeof window !== 'undefined' && window.supabase?.auth) {
                     this.supabase = window.supabase;
                     resolve(true);
                     return;
@@ -160,51 +314,6 @@ const authClient = {
             };
 
             setTimeout(check, 100);
-        });
-    },
-
-    _tryCreateClient() {
-        try {
-            let url, key;
-
-            if (typeof import.meta !== 'undefined' && import.meta.env) {
-                url = import.meta.env.VITE_SUPABASE_URL;
-                key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-            }
-
-            if (url && key && typeof window !== 'undefined') {
-                if (window.supabase?.createClient) {
-                    this.supabase = window.supabase.createClient(url, key);
-                    window.supabase = this.supabase;
-                    console.log('[AuthClient] ✅ Cliente creado con env vars');
-                }
-            }
-        } catch (e) {
-            console.warn('[AuthClient] ⚠️ Error creando cliente:', e.message);
-        }
-    },
-
-    listenAuthChanges() {
-        if (!this.supabase) return;
-
-        this.supabase.auth.onAuthStateChange((event, session) => {
-            console.log('[AuthClient] 🔔 Auth cambió:', event, '| Session:', session ? 'EXISTS' : 'NULL');
-
-            if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-                console.log('[AuthClient] ✅ Sesión detectada:', session.user.email);
-                this._processSession(session);
-
-                // Redirección si estamos en homepage
-                this._checkRedirectToHome();
-
-            } else if (event === 'SIGNED_OUT') {
-                console.log('[AuthClient] 🚪 Sesión cerrada');
-                this.currentSession = null;
-                localStorage.removeItem(this.STORAGE_KEY);
-                this.updateDashboardUI();
-                this.emitAuthChange('SIGNED_OUT');
-            }
-            // INITIAL_SESSION se maneja en checkSupabaseSession()
         });
     },
 
@@ -226,7 +335,6 @@ const authClient = {
 
     /**
      * 🎯 ACTUALIZACIÓN DIRECTA DE UI
-     * Esta función actualiza los elementos del DOM directamente
      */
     updateDashboardUI() {
         const user = this.currentSession?.user;
@@ -392,35 +500,14 @@ const authClient = {
         return this.currentSession;
     },
 
-    saveSession(session) {
+    _saveSessionToLocalStorage(session) {
         try {
             if (!session?.user) return;
             this.currentSession = session;
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(session));
             console.log('[AuthClient] ✅ Sesión guardada en localStorage');
         } catch (e) {
-            console.error('[AuthClient] Error al guardar sesión:', e);
-        }
-    },
-
-    loadSession() {
-        try {
-            const stored = localStorage.getItem(this.STORAGE_KEY);
-            if (stored) {
-                this.currentSession = JSON.parse(stored);
-                console.log('[AuthClient] ✅ Sesión cargada de localStorage:', this.currentSession.user?.email);
-
-                // Verificar si debemos redirigir
-                this._checkRedirectToHome();
-
-                // Actualizar UI con la sesión local
-                this.updateDashboardUI();
-            } else {
-                console.log('[AuthClient] ℹ️ No hay sesión guardada en localStorage');
-            }
-        } catch (e) {
-            console.error('[AuthClient] Error al cargar sesión:', e);
-            localStorage.removeItem(this.STORAGE_KEY);
+            console.error('[AuthClient] ❌ Error al guardar sesión:', e);
         }
     },
 
