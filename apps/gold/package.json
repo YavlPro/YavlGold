@@ -13,7 +13,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.40.0"
+    "@supabase/supabase-js": "^2.87.1"
   },
   "keywords": [
     "yavl",
