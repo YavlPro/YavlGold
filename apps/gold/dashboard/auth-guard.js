@@ -46,16 +46,9 @@
     };
 
     try {
-        // Intentar crear el cliente si no existe
-        if (!window.supabase && typeof supabase !== 'undefined' && supabase.createClient) {
-            // Variables de entorno de Vite (solo funciona en desarrollo)
-            const url = import.meta?.env?.VITE_SUPABASE_URL;
-            const key = import.meta?.env?.VITE_SUPABASE_ANON_KEY;
-
-            if (url && key) {
-                window.supabase = supabase.createClient(url, key);
-                console.log("🛡️ [AuthGuard] ✅ Cliente Supabase creado");
-            }
+        // NO fallback: obliga uso del cliente central desde supabase-config.js
+        if (!window.supabase) {
+            console.error("🛡️ [AuthGuard] ❌ Cliente Supabase no disponible. Verifica carga de supabase-config.js");
         }
 
         const client = await waitForSupabase();

@@ -95,31 +95,13 @@ const authClient = {
             this.supabase = window.supabase;
             return;
         }
-        try {
-            const config = await import('../config/supabase-config.js');
-            if (config.supabase?.auth) {
-                this.supabase = config.supabase;
-                return;
-            }
-        } catch (e) { }
-        this._tryCreateClientWithCorrectConfig();
+        const config = await import('../config/supabase-config.js');
+        if (!config.supabase?.auth) {
+            throw new Error('[AuthClient] ❌ No se pudo cargar el cliente Supabase desde config/supabase-config.js. Verifica las VITE_ en .env');
+        }
+        this.supabase = config.supabase;
     },
 
-    _tryCreateClientWithCorrectConfig() {
-        try {
-            let url, key;
-            if (typeof import.meta !== 'undefined' && import.meta.env) {
-                url = import.meta.env.VITE_SUPABASE_URL;
-                key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-            }
-            if (url && key && window.supabase?.createClient) {
-                this.supabase = window.supabase.createClient(url, key, {
-                    auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true }
-                });
-                window.supabase = this.supabase;
-            }
-        } catch (e) { }
-    },
 
     async _getSupabaseSession() {
         if (!this.supabase) return null;
