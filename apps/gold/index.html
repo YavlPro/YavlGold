@@ -1514,28 +1514,54 @@
     `;
     document.head.appendChild(style);
 
-    // Función global para abrir modal de autenticación
+    // Función global para abrir modal de autenticación con sistema de TABS
     function openAuthModal(mode) {
+      // Intentar usar AuthUI si está disponible (más robusto)
+      if (window.AuthUI && typeof window.AuthUI.openAuthModal === 'function') {
+        window.AuthUI.openAuthModal(mode);
+        return;
+      }
+
+      // Fallback: manipulación directa del DOM
       const modal = document.getElementById('auth-modal');
-      const title = document.getElementById('auth-modal-title');
-      const submitBtn = document.getElementById('auth-modal-submit');
-      const toggleLink = document.getElementById('auth-modal-toggle-mode');
+      const loginTab = document.getElementById('login-tab');
+      const registerTab = document.getElementById('register-tab');
+      const loginForm = document.getElementById('login-form');
+      const registerForm = document.getElementById('register-form');
 
-      if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+      if (!modal) return;
 
-        if (mode === 'signup') {
-          title.textContent = 'Crear Cuenta';
-          submitBtn.textContent = 'Registrarse';
-          toggleLink.textContent = 'Inicia sesión';
-          modal.dataset.mode = 'signup';
-        } else {
-          title.textContent = 'Iniciar Sesión';
-          submitBtn.textContent = 'Entrar';
-          toggleLink.textContent = 'Regístrate';
-          modal.dataset.mode = 'login';
-        }
+      // Mostrar modal
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+
+      // Activar el tab y formulario correspondiente
+      if (mode === 'signup' || mode === 'register') {
+        // Activar tab de registro
+        registerTab?.classList.add('active');
+        loginTab?.classList.remove('active');
+        // Mostrar formulario de registro
+        registerForm.style.display = 'block';
+        registerForm?.classList.add('active');
+        loginForm.style.display = 'none';
+        loginForm?.classList.remove('active');
+        // Focus en primer input
+        setTimeout(() => {
+          registerForm?.querySelector('#register-name')?.focus();
+        }, 100);
+      } else {
+        // Activar tab de login (por defecto)
+        loginTab?.classList.add('active');
+        registerTab?.classList.remove('active');
+        // Mostrar formulario de login
+        loginForm.style.display = 'block';
+        loginForm?.classList.add('active');
+        registerForm.style.display = 'none';
+        registerForm?.classList.remove('active');
+        // Focus en primer input
+        setTimeout(() => {
+          loginForm?.querySelector('#login-email')?.focus();
+        }, 100);
       }
     }
 

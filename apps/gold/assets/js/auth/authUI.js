@@ -182,6 +182,15 @@ const AuthUI = {
     }
   },
 
+  // Método público para compatibilidad con openAuthModal() global
+  openAuthModal(mode) {
+    if (mode === 'signup' || mode === 'register') {
+      this.showRegisterModal();
+    } else {
+      this.showLoginModal();
+    }
+  },
+
   hideAuthModal() {
     if (this.elements.authModal) {
       this.elements.authModal.classList.add('hidden');
