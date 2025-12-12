@@ -56,6 +56,11 @@
   <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Font Awesome para iconos ojo contraseña -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link
     href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
     rel="stylesheet">
@@ -1723,7 +1728,10 @@
         </div>
         <div class="form-group">
           <label for="password">Contraseña</label>
-          <input type="password" id="password" name="password" placeholder="••••••••" required>
+          <div class="input-group">
+            <input type="password" id="password" name="password" placeholder="••••••••" required>
+            <span class="password-toggle"><i class="fas fa-eye"></i></span>
+          </div>
         </div>
         <!-- hCaptcha (opcional) -->
         <div id="hcaptcha-container" class="form-group" aria-live="polite"></div>
@@ -1945,6 +1953,39 @@
     .back-to-login-link:hover {
       color: var(--gold-light);
       transform: translateX(-3px);
+    }
+
+    /* Toggle contraseña */
+    .input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-group input {
+      flex: 1;
+      padding-right: 45px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: color 0.3s ease;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding: 0 8px;
+    }
+
+    .password-toggle:hover {
+      color: var(--gold-principal);
+    }
+
+    .password-toggle i {
+      font-size: 1.1rem;
     }
 
     @media (max-width: 768px) {

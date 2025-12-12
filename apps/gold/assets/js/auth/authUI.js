@@ -7,6 +7,7 @@ const AuthUI = {
   init() {
     this.cacheElements();
     this.attachEventListeners();
+    this.setupPasswordToggles();
     this.updateUI();
     console.log('[AuthUI] ✅ AuthUI v2.0 inicializado');
   },
@@ -47,6 +48,7 @@ const AuthUI = {
       // Links para cambiar entre login/register
       showRegisterLink: document.getElementById('show-register-link'),
       showLoginLink: document.getElementById('show-login-link'),
+      forgotPasswordLink: document.getElementById('forgot-password-link'),
     };
   },
 
@@ -111,6 +113,12 @@ const AuthUI = {
 
     this.elements.showRegisterLink?.addEventListener('click', (e) => { e.preventDefault(); this.hideLoginModal(); this.showRegisterModal(); });
     this.elements.showLoginLink?.addEventListener('click', (e) => { e.preventDefault(); this.hideRegisterModal(); this.showLoginModal(); });
+
+    // Reset password link
+    this.elements.forgotPasswordLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.handleForgotPassword();
+    });
   },
 
   showLoginModal() {
@@ -234,6 +242,7 @@ const AuthUI = {
     // Actualizar referencias
     if (this.elements.authForm) this.elements.authForm = newForm;
     this.elements.loginForm = newForm;
+    this.elements.registerForm = newForm;
 
     // Prevenir action/method del HTML - MÚLTIPLES CAPAS DE SEGURIDAD
     newForm.setAttribute('action', 'javascript:void(0);');
@@ -446,6 +455,58 @@ const AuthUI = {
       toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)';
       setTimeout(() => { toast.remove?.(); }, 300);
     }, 3500);
+  },
+
+  setupPasswordToggles() {
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.password-toggle')) {
+        const toggle = e.target.closest('.password-toggle');
+        const input = toggle.parentElement.querySelector('input[type="password"], input[type="text"]');
+        if (!input) return;
+
+        const icon = toggle.querySelector('i');
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+        } else {
+          input.type = 'password';
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+        }
+      }
+    });
+  },
+
+  handleForgotPassword() {
+    const emailInput = this.elements.authForm?.querySelector('#email') || this.elements.authForm?.querySelector('input[name="email"]');
+    const email = emailInput?.value?.trim();
+    if (!email) {
+      this.showError('login', 'Por favor, ingresa tu correo electrónico primero');
+      emailInput?.focus();
+      return;
+    }
+
+    const btn = this.elements.forgotPasswordLink;
+    const originalText = btn?.textContent;
+    if (btn) {
+      btn.textContent = 'Enviando...';
+      btn.style.opacity = '0.7';
+      btn.style.pointerEvents = 'none';
+    }
+
+    window.AuthClient.resetPassword(email).then((res) => {
+      if (res.success) {
+        this.showSuccess('¡Email de recuperación enviado! Revisa tu bandeja de entrada.');
+      } else {
+        this.showError('login', res.error || 'Error al enviar email de recuperación');
+      }
+      if (btn) {
+        btn.textContent = originalText;
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+      }
+    });
   },
 
   // Actualizar UI

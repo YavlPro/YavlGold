@@ -229,12 +229,28 @@ const authClient = {
         window.dispatchEvent(new CustomEvent('auth:ui:updated', { detail: { user } }));
     },
 
-    register: async function (email, password, name) {
+    register: async function (email, password, name = '') {
         if (!this.supabase) return { success: false, error: 'Error sistema' };
+        const options = name ? { data: { full_name: name } } : {};
         const { data, error } = await this.supabase.auth.signUp({
-            email, password, options: { data: { full_name: name } }
+            email, password, options
         });
         return error ? { success: false, error: error.message } : { success: true, user: data.user };
+    },
+
+    resetPassword: async function (email) {
+        if (!this.supabase) return { success: false, error: 'Sistema no inicializado' };
+        try {
+            const { data, error } = await this.supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/`
+            });
+            if (error) throw error;
+            console.log('[AuthClient] ✅ Email de reset enviado');
+            return { success: true };
+        } catch (error) {
+            console.error('[AuthClient] ❌ Error reset:', error.message);
+            return { success: false, error: error.message };
+        }
     },
     isAuthenticated: function () { return !!this.currentSession; },
     getCurrentUser: function () { return this.currentSession?.user; },
