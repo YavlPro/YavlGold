@@ -24,6 +24,9 @@ build/
 .vercel/
 .netlify/
 
+# Legacy/archived files (deprecated)
+netlify.toml
+
 # SO / editor
 .DS_Store
 Thumbs.db

@@ -42,6 +42,13 @@ build/
 .vercel/
 .netlify/
 
+# Legacy/archived files (deprecated)
+netlify.toml
+apps/gold/netlify.toml
+INFORME_ESTADO_REPOSITORIO.md
+INFORME_FORENSE_AUTENTICACION.md
+Doc roadmapv9.2.html
+
 # SO / editor
 .DS_Store
 Thumbs.db
