@@ -44,7 +44,7 @@
 ">
 ```
 
-**Or in `vercel.json`/`netlify.toml`:**
+**Or in `vercel.json`:**
 Already added in deployment configs ✅
 
 ---
@@ -163,7 +163,7 @@ element.textContent = sanitizeHTML(userInput); // Safe
 ```
 
 **Redirect HTTP to HTTPS:**
-Automatic on Vercel, Netlify, GitHub Pages ✅
+Automatic on Vercel, GitHub Pages ✅
 
 ---
 

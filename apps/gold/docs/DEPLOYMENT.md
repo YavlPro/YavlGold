@@ -81,38 +81,7 @@ VITE_APP_URL=https://yavlgold.com
 
 ---
 
-### Option 3: Netlify
-
-**Pros:**
-- ✅ Easy deployment
-- ✅ Form handling
-- ✅ Split testing
-- ✅ Serverless functions
-
-**Setup:**
-1. Install Netlify CLI:
-```bash
-npm i -g netlify-cli
-```
-
-2. Login and deploy:
-```bash
-netlify login
-netlify init
-netlify deploy --prod
-```
-
-3. Or drag-and-drop in Netlify UI:
-- Go to https://app.netlify.com/drop
-- Drag your project folder
-- Configure custom domain
-
-**Environment Variables (Netlify Dashboard):**
-Same as Vercel (see above)
-
----
-
-### Option 4: Cloudflare Pages
+### Option 3: Cloudflare Pages
 
 **Pros:**
 - ✅ Ultra-fast CDN
@@ -163,13 +132,6 @@ Value: 185.199.108.153
 Type: CNAME
 Name: @
 Value: cname.vercel-dns.com
-```
-
-### Netlify
-```
-Type: CNAME
-Name: @
-Value: yavlgold.netlify.app
 ```
 
 ### Cloudflare Pages
@@ -224,7 +186,7 @@ Value: yavlgold.pages.dev
 
 ## 🔒 Security Headers
 
-Already configured in `vercel.json` and `netlify.toml`:
+Already configured in `vercel.json`:
 
 ```
 X-Frame-Options: DENY
@@ -248,7 +210,7 @@ Consider adding in production for extra security.
 
 ### Issue: SSL certificate error
 - GitHub Pages: Enable "Enforce HTTPS" in settings
-- Vercel/Netlify: Auto-provisioned, wait 5-10 minutes
+- Vercel: Auto-provisioned, wait 5-10 minutes
 
 ### Issue: Forms not working
 - Check hCaptcha site key

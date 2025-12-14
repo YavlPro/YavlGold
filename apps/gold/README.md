@@ -94,7 +94,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----
@@ -323,7 +323,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----
@@ -552,7 +552,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----
@@ -781,7 +781,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----
@@ -1010,7 +1010,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----
@@ -1206,7 +1206,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----
@@ -1416,7 +1416,7 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 ### 3. Desplegar
 
 	- **GitHub Pages**: Settings → Pages
-	- **Vercel/Netlify**: Conexión automática
+	- **Vercel**: Conexión automática
 	- **Servidor propio**: FTP/SSH
 
 -----

@@ -573,7 +573,6 @@ YavlGold/
 │
 ├── package.json
 ├── pnpm-lock.yaml
-├── netlify.toml
 ├── vercel.json
 ├── robots.txt
 ├── sitemap.xml

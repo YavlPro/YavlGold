@@ -220,7 +220,7 @@ Register in HTML:
 
 **Brotli/Gzip:**
 
-Most hosting platforms (Vercel, Netlify) handle this automatically.
+Most hosting platforms (Vercel) handle this automatically.
 
 **Manual setup for Apache (.htaccess):**
 ```apache
@@ -290,8 +290,8 @@ Or use Chrome DevTools → Lighthouse tab
 1. ✅ Add `loading="lazy"` to all images
 2. ✅ Minify CSS and JS
 3. ✅ Add resource hints (dns-prefetch, preconnect)
-4. ✅ Enable compression (automatic on Vercel/Netlify)
-5. ✅ Add cache headers (configured in vercel.json/netlify.toml)
+4. ✅ Enable compression (automatic on Vercel)
+5. ✅ Add cache headers (configured in vercel.json)
 
 ---
 
