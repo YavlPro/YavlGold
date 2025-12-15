@@ -3,6 +3,7 @@
  */
 const AuthUI = {
   elements: {},
+  isRecoveryMode: false,
 
   init() {
     this.cacheElements();
@@ -96,7 +97,7 @@ const AuthUI = {
     // Reset password link
     this.elements.forgotPasswordLink?.addEventListener('click', (e) => {
       e.preventDefault();
-      this.handleForgotPassword();
+      this.toggleRecoveryMode(true);
     });
 
     // Listen to auth events
@@ -265,19 +266,61 @@ const AuthUI = {
     loginForm.parentNode.replaceChild(newLoginForm, loginForm);
     this.elements.loginForm = newLoginForm;
 
+    // Re-bind Toggle/Back links dynamically since we cloned the form
+    const forgotLink = newLoginForm.querySelector('#forgot-password-link');
+    forgotLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.toggleRecoveryMode(true);
+    });
+
+    // Create or bind Back to Login link
+    let backLink = newLoginForm.querySelector('.back-to-login-link');
+    if (!backLink) {
+      // It might be created dynamically in toggleRecoveryMode, but we need to bind if it exists or when created
+    }
+
     newLoginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       e.stopPropagation();
-      e.stopImmediatePropagation();
 
+      const email = newLoginForm.querySelector('#login-email')?.value?.trim();
+
+      // 🔄 MODO RECUPERACIÓN
+      if (this.isRecoveryMode) {
+        console.log('[AuthUI] 🔄 Procesando solicitud de RECUPERACIÓN');
+
+        if (!email) {
+          this.showError('login', 'Ingresa tu correo electrónico para recuperarlo');
+          return false;
+        }
+
+        const btn = newLoginForm.querySelector('button[type="submit"]');
+        const originalText = btn?.textContent || 'Enviar Enlace';
+
+        try {
+          if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...'; }
+
+          const res = await window.AuthClient.resetPassword(email);
+
+          if (res.success) {
+            this.showSuccess('¡Enlace enviado! Revisa tu correo.');
+            // Volver al login después de un momento
+            setTimeout(() => this.toggleRecoveryMode(false), 3000);
+          } else {
+            this.showError('login', res.error || 'Error al enviar enlace');
+          }
+        } catch (err) {
+          this.showError('login', err.message);
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }
+        return false;
+      }
+
+      // 🔐 MODO LOGIN NORMAL
       console.log('🔐 [AuthUI] Submit LOGIN interceptado');
 
-      // Campos específicos del formulario de LOGIN
-      const email = newLoginForm.querySelector('#login-email')?.value?.trim();
       const password = newLoginForm.querySelector('#login-password')?.value;
-
-      console.log('📧 Email:', email ? '✓' : '✗');
-      console.log('🔑 Password:', password ? '✓' : '✗');
 
       if (!email || !password) {
         this.showError('login', 'Por favor completa todos los campos');
@@ -297,7 +340,6 @@ const AuthUI = {
           throw new Error('AuthClient no está disponible');
         }
 
-        console.log('🔐 [AuthUI] Llamando a AuthClient.login()...');
         const res = await window.AuthClient.login(email, password);
 
         if (res.success) {
@@ -515,37 +557,8 @@ const AuthUI = {
   },
 
   handleForgotPassword() {
-    // Obtener email del formulario de login (ID único)
-    const emailInput = this.elements.loginForm?.querySelector('#login-email');
-    const email = emailInput?.value?.trim();
-
-    if (!email) {
-      this.showError('login', 'Por favor, ingresa tu correo electrónico primero');
-      emailInput?.focus();
-      return;
-    }
-
-    const btn = this.elements.forgotPasswordLink;
-    const originalText = btn?.textContent;
-
-    if (btn) {
-      btn.textContent = 'Enviando...';
-      btn.style.opacity = '0.7';
-      btn.style.pointerEvents = 'none';
-    }
-
-    window.AuthClient.resetPassword(email).then((res) => {
-      if (res.success) {
-        this.showSuccess('¡Email de recuperación enviado! Revisa tu bandeja de entrada.');
-      } else {
-        this.showError('login', res.error || 'Error al enviar email de recuperación');
-      }
-      if (btn) {
-        btn.textContent = originalText;
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'auto';
-      }
-    });
+    // Legacy wrapper
+    this.toggleRecoveryMode(true);
   },
 
   // Actualizar UI
@@ -580,6 +593,77 @@ const AuthUI = {
       this.elements.authButtons && (this.elements.authButtons.style.display = 'flex');
       this.elements.userMenu && (this.elements.userMenu.style.display = 'none');
     }
+  },
+  toggleRecoveryMode(active) {
+    this.isRecoveryMode = active;
+    const form = this.elements.loginForm;
+    if (!form) return;
+
+    const tabsParams = document.querySelector('.auth-tabs'); // En el modal general
+    const passwordGroup = form.querySelector('.form-group:nth-of-type(2)'); // Password
+    const rememberGroup = form.querySelector('.form-group:nth-of-type(3)'); // Remember me
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const forgotContainer = form.querySelector('.forgot-password-container');
+
+    // Título dinámico
+    let titleEl = document.getElementById('auth-dynamic-title');
+    if (!titleEl && active) {
+      titleEl = document.createElement('h2');
+      titleEl.id = 'auth-dynamic-title';
+      titleEl.style.cssText = 'text-align: center; font-size: 1.8rem; margin-bottom: 20px; color: var(--gold-principal);';
+      titleEl.textContent = 'Recuperar Contraseña';
+      form.insertBefore(titleEl, form.firstChild);
+    }
+
+    if (active) {
+      // Ocultar Tabs si existen
+      if (tabsParams) tabsParams.style.display = 'none';
+      if (titleEl) titleEl.style.display = 'block';
+
+      // Ocultar Password y Remember
+      if (passwordGroup) passwordGroup.style.display = 'none';
+      if (rememberGroup) rememberGroup.style.display = 'none';
+
+      // Cambiar Botón
+      if (submitBtn) submitBtn.textContent = 'Enviar Enlace de Recuperación';
+
+      // Ocultar link "Olvide contraseña"
+      if (forgotContainer) forgotContainer.style.display = 'none';
+
+      // Mostrar "Volver a Login"
+      let backLink = document.getElementById('back-to-login-dynamic');
+      if (!backLink) {
+        backLink = document.createElement('div');
+        backLink.id = 'back-to-login-dynamic';
+        backLink.style.textAlign = 'center';
+        backLink.style.marginTop = '15px';
+        backLink.innerHTML = `<a href="#" class="back-to-login-link"><i class="fas fa-arrow-left"></i> Volver a Iniciar Sesión</a>`;
+        form.appendChild(backLink);
+
+        backLink.querySelector('a').addEventListener('click', (e) => {
+          e.preventDefault();
+          this.toggleRecoveryMode(false);
+        });
+      }
+      backLink.style.display = 'block';
+
+    } else {
+      // Restaurar UI Normal
+      if (tabsParams) tabsParams.style.display = 'flex';
+      if (titleEl) titleEl.style.display = 'none';
+
+      if (passwordGroup) passwordGroup.style.display = 'block';
+      if (rememberGroup) rememberGroup.style.display = 'flex'; // Usually flex
+
+      if (submitBtn) submitBtn.textContent = 'Entrar';
+
+      if (forgotContainer) forgotContainer.style.display = 'block';
+
+      const backLink = document.getElementById('back-to-login-dynamic');
+      if (backLink) backLink.style.display = 'none';
+    }
+
+    this.clearError('login');
   },
 };
 
