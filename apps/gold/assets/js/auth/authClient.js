@@ -73,8 +73,8 @@ const authClient = {
             if (data?.session) {
                 console.log('[AuthClient] ✅ Sesión capturada del Hash');
                 // Limpiar URL
-                const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
-                window.history.replaceState(null, document.title, cleanUrl);
+                // const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+                // window.history.replaceState(null, document.title, cleanUrl);
                 return data.session;
             }
             return null;
