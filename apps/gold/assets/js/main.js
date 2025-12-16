@@ -44,9 +44,34 @@ window.addEventListener('load', async () => {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         console.log(`[VerificationHandler] 🔔 Evento: ${event}`);
 
+        if (event === 'PASSWORD_RECOVERY') {
+          console.log('[VerificationHandler] 🔄 Recuperación de Password detectada');
+          // Asegurarnos que AuthUI esté listo
+          const checkAuthUI = setInterval(() => {
+            if (window.AuthUI) {
+              clearInterval(checkAuthUI);
+              window.AuthUI.showUpdatePasswordMode();
+            }
+          }, 100);
+          return;
+        }
+
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           // Confirmar que realmente hay sesión
           if (session) {
+            // CHECK FOR RECOVERY IN HASH
+            const hash = window.location.hash;
+            if (hash && hash.includes('type=recovery')) {
+              console.log('[VerificationHandler] 🔄 Detectado type=recovery en hash. Interrumpiendo redirect.');
+              const checkAuthUI = setInterval(() => {
+                if (window.AuthUI) {
+                  clearInterval(checkAuthUI);
+                  window.AuthUI.showUpdatePasswordMode();
+                }
+              }, 100);
+              return;
+            }
+
             console.log('[VerificationHandler] ✅ Verificación Exitosa.');
 
             // 3. Feedback Visual (Toast Dorado Premium)

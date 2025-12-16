@@ -4,6 +4,7 @@
 const AuthUI = {
   elements: {},
   isRecoveryMode: false,
+  isUpdatePasswordMode: false,
 
   init() {
     this.cacheElements();
@@ -314,6 +315,50 @@ const AuthUI = {
         } finally {
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
+        return false;
+      }
+
+      // 🔄 MODO UPDATE PASSWORD (NUEVO)
+      if (this.isUpdatePasswordMode) {
+        console.log('[AuthUI] 🔄 Procesando ACTUALIZACIÓN DE CONTRASEÑA');
+
+        const password = newLoginForm.querySelector('#login-password')?.value;
+
+        if (!password || password.length < 6) {
+          this.showError('login', 'La contraseña debe tener al menos 6 caracteres');
+          return false;
+        }
+
+        const btn = newLoginForm.querySelector('button[type="submit"]');
+        const originalText = btn?.textContent || 'Guardar';
+
+        try {
+          if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; }
+
+          // Usar AuthClient.supabase directamente o añadir método wrapper.
+          // Accedemos a supabase a través de AuthClient si está expuesto, o importamos supabase-config si fuera necesario.
+          // window.AuthClient.supabase debería estar disponible.
+
+          if (!window.AuthClient?.supabase) {
+            throw new Error('Supabase no disponible');
+          }
+
+          const { data, error } = await window.AuthClient.supabase.auth.updateUser({ password: password });
+
+          if (error) throw error;
+
+          this.showSuccess('Contraseña Actualizada Correctamente');
+
+          setTimeout(() => {
+            window.location.href = '/dashboard/';
+          }, 1000);
+
+        } catch (err) {
+          console.error('[AuthUI] Update password error:', err);
+          this.showError('login', err.message);
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }
+
         return false;
       }
 
@@ -664,6 +709,49 @@ const AuthUI = {
     }
 
     this.clearError('login');
+  },
+
+  showUpdatePasswordMode() {
+    this.isUpdatePasswordMode = true;
+    this.showLoginModal();
+
+    const form = this.elements.loginForm;
+    if (!form) return;
+
+    // UI Adjustments
+    const emailGroup = form.querySelector('.form-group:nth-of-type(1)'); // Email
+    const passwordGroup = form.querySelector('.form-group:nth-of-type(2)'); // Password
+    const rememberGroup = form.querySelector('.form-group:nth-of-type(3)'); // Remember me
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const forgotContainer = form.querySelector('.forgot-password-container');
+    const tabsParams = document.querySelector('.auth-tabs');
+
+    // Título dinámico
+    let titleEl = document.getElementById('auth-dynamic-title');
+    if (!titleEl) {
+      titleEl = document.createElement('h2');
+      titleEl.id = 'auth-dynamic-title';
+      titleEl.style.cssText = 'text-align: center; font-size: 1.8rem; margin-bottom: 20px; color: var(--gold-principal);';
+      form.insertBefore(titleEl, form.firstChild);
+    }
+
+    titleEl.textContent = 'Establecer Nueva Contraseña';
+    titleEl.style.display = 'block';
+
+    if (tabsParams) tabsParams.style.display = 'none';
+    if (emailGroup) emailGroup.style.display = 'none';
+    if (passwordGroup) passwordGroup.style.display = 'block';
+    if (rememberGroup) rememberGroup.style.display = 'none';
+    if (forgotContainer) forgotContainer.style.display = 'none';
+
+    if (submitBtn) submitBtn.textContent = 'Guardar Nueva Contraseña';
+
+    // Ensure password input is visible and required
+    const passwordInput = form.querySelector('#login-password');
+    if (passwordInput) {
+      passwordInput.value = '';
+      passwordInput.placeholder = 'Nueva contraseña';
+    }
   },
 };
 
