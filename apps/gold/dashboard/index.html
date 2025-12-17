@@ -154,9 +154,9 @@
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error || !session) {
-          console.warn('[Dashboard] Sin sesión. Redirigiendo...');
-          window.location.href = '/';
-          return;
+        console.warn('[Dashboard] Sin sesión. Redirigiendo...');
+        window.location.href = '/';
+        return;
       }
 
       // 2. Update UI
@@ -170,16 +170,34 @@
       const logoutButtons = document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout');
 
       logoutButtons.forEach(btn => {
-          btn.style.display = 'inline-flex'; // Force visibility
-          btn.onclick = async (e) => {
-              e.preventDefault();
-              await supabase.auth.signOut();
-              window.location.href = '/';
-          };
+        btn.style.display = 'inline-flex'; // Force visibility
+        btn.onclick = async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = '/';
+        };
       });
     }
 
     initDashboard();
+  </script>
+
+  <button id="mobile-logout-fab" class="mobile-logout-btn" style="display: none;">
+    <i class="fas fa-sign-out-alt"></i>
+  </button>
+
+  <script>
+    // Logic to show FAB only on mobile
+    if (window.innerWidth <= 991) {
+      document.getElementById('mobile-logout-fab').style.display = 'flex';
+    }
+    // Attach same logout logic
+    document.getElementById('mobile-logout-fab').addEventListener('click', async () => {
+      // Import supabase dynamically if needed or rely on main script
+      const { supabase } = await import('/assets/js/main.js');
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    });
   </script>
 
 </body>

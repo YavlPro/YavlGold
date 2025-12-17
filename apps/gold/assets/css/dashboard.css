@@ -448,3 +448,26 @@
         display: flex !important;
     }
 }
+
+/* --- Mobile Floating Button Styles --- */
+.mobile-logout-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999; /* Always on top */
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #ffd700;
+    color: #ffd700;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    backdrop-filter: blur(5px);
+}
+@media (min-width: 992px) {
+    .mobile-logout-btn { display: none !important; } /* Hide on Desktop */
+}
