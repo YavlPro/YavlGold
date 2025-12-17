@@ -432,3 +432,19 @@
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
     transform: translateY(-2px);
 }
+
+/* --- Mobile Adjustments for Logout Button --- */
+@media (max-width: 991px) {
+    #logout-btn-nav {
+        display: inline-flex !important; /* Force visibility */
+        margin-left: 0; /* Reset desktop margin */
+        margin-top: 15px; /* Add spacing in mobile menu flow */
+        width: auto; /* Allow it to size naturally or set to 100% if preferred */
+        justify-content: center;
+    }
+
+    /* Ensure parent container doesn't hide it if necessary (adjust selector based on actual nav structure if needed) */
+    .navbar-collapse.show #logout-btn-nav {
+        display: flex !important;
+    }
+}
