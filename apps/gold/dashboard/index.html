@@ -187,7 +187,7 @@
   </button>
 
   <script>
-    // Mobile FAB Logic
+    // Mobile FAB Logic (Fixed Loop)
     const fab = document.getElementById('mobile-logout-fab');
 
     // 1. Visibility Check
@@ -195,24 +195,35 @@
       fab.style.display = 'flex';
     }
 
-    // 2. Click Handler with Feedback
+    // 2. Click Handler
     fab.addEventListener('click', async () => {
       try {
-        // Visual feedback
         fab.style.opacity = '0.5';
 
-        // Import Supabase
+        // Try graceful logout first
         const module = await import('/assets/js/main.js');
         const supabase = module.supabase;
-
         if (!supabase) throw new Error("Supabase client not found");
 
         await supabase.auth.signOut();
+        // Clear storage just in case
+        localStorage.clear();
         window.location.href = '/';
+
       } catch (err) {
-        console.error('Logout failed:', err);
-        // Fallback: If import fails (404), force redirect to home anyway
-        alert('Cerrando sesión... (Modo Fallback)');
+        console.error('Logout failed, forcing local cleanup:', err);
+
+        // --- NUCLEAR OPTION (Prevent Redirect Loop) ---
+        // Manually clear all Supabase tokens/data
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Optional: Clear specific cookies if accessible via JS (usually httpOnly, but good practice to try)
+        document.cookie.split(";").forEach(function (c) {
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+
+        alert('Sesión cerrada (Modo Local).');
         window.location.href = '/';
       }
     });
