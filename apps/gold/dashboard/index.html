@@ -187,16 +187,34 @@
   </button>
 
   <script>
-    // Logic to show FAB only on mobile
+    // Mobile FAB Logic
+    const fab = document.getElementById('mobile-logout-fab');
+
+    // 1. Visibility Check
     if (window.innerWidth <= 991) {
-      document.getElementById('mobile-logout-fab').style.display = 'flex';
+      fab.style.display = 'flex';
     }
-    // Attach same logout logic
-    document.getElementById('mobile-logout-fab').addEventListener('click', async () => {
-      // Import supabase dynamically if needed or rely on main script
-      const { supabase } = await import('/assets/js/main.js');
-      await supabase.auth.signOut();
-      window.location.href = '/';
+
+    // 2. Click Handler with Feedback
+    fab.addEventListener('click', async () => {
+      try {
+        // Visual feedback
+        fab.style.opacity = '0.5';
+
+        // Import Supabase
+        const module = await import('/assets/js/main.js');
+        const supabase = module.supabase;
+
+        if (!supabase) throw new Error("Supabase client not found");
+
+        await supabase.auth.signOut();
+        window.location.href = '/';
+      } catch (err) {
+        console.error('Logout failed:', err);
+        // Fallback: If import fails (404), force redirect to home anyway
+        alert('Cerrando sesión... (Modo Fallback)');
+        window.location.href = '/';
+      }
     });
   </script>
 
