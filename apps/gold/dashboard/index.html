@@ -143,92 +143,43 @@
   <script type="module" src="/assets/js/main.js"></script>
 
   <!-- Dashboard UI Logic -->
-  <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-      // Wait for auth state
-      const checkAuth = async () => {
-        try {
-          // Check if supabase is available
-          if (typeof supabase === 'undefined') {
-            console.log('[Dashboard] Supabase not loaded yet');
-            return;
-          }
+  <script type="module">
+    // Import directly to guarantee execution order
+    import { supabase } from '/assets/js/main.js';
 
-          const { data: { user } } = await supabase.auth.getUser();
+    async function initDashboard() {
+      console.log('[Dashboard] Verificando sesión...');
 
-          if (user) {
-            // User is logged in
-            const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
-            const initials = userName.substring(0, 2).toUpperCase();
+      // 1. Get Session safely
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-            // Update UI elements
-            document.getElementById('user-name-display').textContent = userName;
-            document.getElementById('hero-avatar-initials').textContent = initials;
-            document.getElementById('user-menu-name').textContent = userName;
-
-            // Show user menu and logout button, hide auth buttons
-            document.getElementById('user-menu').style.display = 'flex';
-            document.getElementById('auth-buttons').style.display = 'none';
-            document.getElementById('logout-btn-nav').style.display = 'inline-flex';
-
-            // Set avatar image if available
-            const avatarUrl = user.user_metadata?.avatar_url;
-            if (avatarUrl) {
-              const avatarImg = document.getElementById('user-avatar-img');
-              avatarImg.src = avatarUrl;
-              avatarImg.style.display = 'block';
-              document.getElementById('hero-avatar-initials').style.display = 'none';
-            }
-          } else {
-            // Not logged in - show auth buttons
-            document.getElementById('auth-buttons').style.display = 'flex';
-            document.getElementById('user-menu').style.display = 'none';
-          }
-        } catch (error) {
-          console.error('[Dashboard] Auth check error:', error);
-        }
-      };
-
-      // User menu toggle
-      const userMenuBtn = document.getElementById('user-menu-btn');
-      const userDropdown = document.getElementById('user-dropdown');
-
-      if (userMenuBtn && userDropdown) {
-        userMenuBtn.addEventListener('click', () => {
-          const isOpen = userDropdown.style.display === 'block';
-          userDropdown.style.display = isOpen ? 'none' : 'block';
-        });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-          if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-            userDropdown.style.display = 'none';
-          }
-        });
+      if (error || !session) {
+          console.warn('[Dashboard] Sin sesión. Redirigiendo...');
+          window.location.href = '/';
+          return;
       }
 
-      // Logout functionality - shared handler for both buttons
-      const handleLogout = async () => {
-        try {
-          await supabase.auth.signOut();
-          window.location.href = '/';
-        } catch (error) {
-          console.error('[Dashboard] Logout error:', error);
-          // Force redirect anyway
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = '/';
-        }
-      };
+      // 2. Update UI
+      console.log('[Dashboard] Sesión activa:', session.user.email);
+      const user = session.user;
+      const emailName = user.email.split('@')[0];
+      const nameDisplay = document.getElementById('user-name-display');
+      if (nameDisplay) nameDisplay.textContent = emailName;
 
-      // Logout functionality - attach handler to all logout buttons
-      document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout').forEach(btn => {
-        btn.addEventListener('click', handleLogout);
+      // 3. Activate Logout Buttons (Nav & Mobile)
+      const logoutButtons = document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout');
+
+      logoutButtons.forEach(btn => {
+          btn.style.display = 'inline-flex'; // Force visibility
+          btn.onclick = async (e) => {
+              e.preventDefault();
+              await supabase.auth.signOut();
+              window.location.href = '/';
+          };
       });
+    }
 
-      // Initial auth check with delay to ensure supabase is loaded
-      setTimeout(checkAuth, 500);
-    });
+    initDashboard();
   </script>
 
 </body>
