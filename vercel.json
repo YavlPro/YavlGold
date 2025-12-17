@@ -1,10 +1,25 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "vite",
-  "installCommand": "pnpm install",
-  "buildCommand": "test ! -f index.html && pnpm -C apps/gold build",
-  "outputDirectory": "apps/gold/dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/assets/:path*",
+      "destination": "/apps/gold/assets/:path*"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/apps/gold/dashboard/index.html"
+    },
+    {
+      "source": "/apps/academia/:path*",
+      "destination": "/apps/academia/:path*"
+    },
+    {
+      "source": "/apps/suite/:path*",
+      "destination": "/apps/suite/:path*"
+    },
+    {
+      "source": "/",
+      "destination": "/apps/gold/index.html"
+    }
+  ],
+  "cleanUrls": true
 }
