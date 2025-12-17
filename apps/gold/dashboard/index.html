@@ -34,16 +34,19 @@
 
   <!-- Header -->
   <header class="gg-header">
-    <a class="brand" href="/apps/gold/">
+    <a class="brand" href="/">
       <img src="/assets/images/logo.png" alt="YavlGold" class="logo">
       <span>YavlGold</span>
     </a>
 
     <nav class="main-nav">
-      <a href="/apps/gold/">Inicio</a>
-      <a href="/apps/academia/index.html">Academia</a>
-      <a href="/apps/suite/index.html">Suite</a>
-      <a href="/apps/gold/dashboard/" class="active">Dashboard</a>
+      <a href="/">Inicio</a>
+      <a href="/apps/academia/">Academia</a>
+      <a href="/apps/suite/">Suite</a>
+      <a href="/dashboard" class="active">Dashboard</a>
+      <button id="logout-btn" class="nav-link btn-logout" style="cursor: pointer; display: none;">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+      </button>
     </nav>
 
     <!-- Auth Buttons (hidden when logged in) -->
@@ -64,11 +67,11 @@
         <i class="fas fa-chevron-down"></i>
       </button>
       <div id="user-dropdown" class="user-dropdown" style="display: none;">
-        <a href="/apps/gold/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/apps/gold/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
-        <a href="/apps/gold/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="/dashboard/perfil"><i class="fas fa-user"></i> Mi Perfil</a>
+        <a href="/dashboard/configuracion"><i class="fas fa-cog"></i> Configuración</a>
         <hr>
-        <button id="logout-btn" class="logout-btn">
+        <button id="dropdown-logout-btn" class="logout-btn">
           <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
         </button>
       </div>
@@ -94,7 +97,7 @@
       <div class="modules-grid">
 
         <!-- Academia Module -->
-        <a href="/apps/academia/index.html" class="module-card">
+        <a href="/apps/academia/" class="module-card">
           <span class="module-icon">🎓</span>
           <h3>Academia YavlGold</h3>
           <p>Educación financiera premium. Aprende trading, criptomonedas y más.</p>
@@ -102,7 +105,7 @@
         </a>
 
         <!-- Suite Multimedia Module -->
-        <a href="/apps/suite/index.html" class="module-card">
+        <a href="/apps/suite/" class="module-card">
           <span class="module-icon">🎬</span>
           <h3>Suite Multimedia</h3>
           <p>Herramientas creativas para producción de contenido audiovisual.</p>
@@ -132,7 +135,7 @@
 
   <!-- Footer -->
   <footer class="dashboard-footer">
-    <p>YavlGold © 2025 — <a href="/apps/gold/">Volver al Inicio</a></p>
+    <p>YavlGold © 2025 — <a href="/">Volver al Inicio</a></p>
   </footer>
 
   <!-- Scripts -->
@@ -163,9 +166,10 @@
             document.getElementById('hero-avatar-initials').textContent = initials;
             document.getElementById('user-menu-name').textContent = userName;
 
-            // Show user menu, hide auth buttons
+            // Show user menu and logout button, hide auth buttons
             document.getElementById('user-menu').style.display = 'flex';
             document.getElementById('auth-buttons').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'inline-flex';
 
             // Set avatar image if available
             const avatarUrl = user.user_metadata?.avatar_url;
@@ -203,21 +207,28 @@
         });
       }
 
-      // Logout functionality
+      // Logout functionality - shared handler for both buttons
+      const handleLogout = async () => {
+        try {
+          await supabase.auth.signOut();
+          window.location.href = '/';
+        } catch (error) {
+          console.error('[Dashboard] Logout error:', error);
+          // Force redirect anyway
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/';
+        }
+      };
+
       const logoutBtn = document.getElementById('logout-btn');
+      const dropdownLogoutBtn = document.getElementById('dropdown-logout-btn');
+
       if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-          try {
-            await supabase.auth.signOut();
-            window.location.href = '/apps/gold/';
-          } catch (error) {
-            console.error('[Dashboard] Logout error:', error);
-            // Force redirect anyway
-            localStorage.clear();
-            sessionStorage.clear();
-            window.location.href = '/apps/gold/';
-          }
-        });
+        logoutBtn.addEventListener('click', handleLogout);
+      }
+      if (dropdownLogoutBtn) {
+        dropdownLogoutBtn.addEventListener('click', handleLogout);
       }
 
       // Initial auth check with delay to ensure supabase is loaded
