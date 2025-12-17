@@ -41,10 +41,10 @@
 
     <nav class="main-nav">
       <a href="/">Inicio</a>
-      <a href="/apps/academia/">Academia</a>
-      <a href="/apps/suite/">Suite</a>
+      <a href="/academia">Academia</a>
+      <a href="/suite">Suite</a>
       <a href="/dashboard" class="active">Dashboard</a>
-      <button id="logout-btn" class="nav-link btn-logout" style="cursor: pointer; display: none;">
+      <button id="logout-btn-nav" class="nav-link btn-logout" style="cursor: pointer; display: none;">
         <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
       </button>
     </nav>
@@ -97,7 +97,7 @@
       <div class="modules-grid">
 
         <!-- Academia Module -->
-        <a href="/apps/academia/" class="module-card">
+        <a href="/academia" class="module-card">
           <span class="module-icon">🎓</span>
           <h3>Academia YavlGold</h3>
           <p>Educación financiera premium. Aprende trading, criptomonedas y más.</p>
@@ -105,7 +105,7 @@
         </a>
 
         <!-- Suite Multimedia Module -->
-        <a href="/apps/suite/" class="module-card">
+        <a href="/suite" class="module-card">
           <span class="module-icon">🎬</span>
           <h3>Suite Multimedia</h3>
           <p>Herramientas creativas para producción de contenido audiovisual.</p>
@@ -169,7 +169,7 @@
             // Show user menu and logout button, hide auth buttons
             document.getElementById('user-menu').style.display = 'flex';
             document.getElementById('auth-buttons').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'inline-flex';
+            document.getElementById('logout-btn-nav').style.display = 'inline-flex';
 
             // Set avatar image if available
             const avatarUrl = user.user_metadata?.avatar_url;
@@ -221,15 +221,10 @@
         }
       };
 
-      const logoutBtn = document.getElementById('logout-btn');
-      const dropdownLogoutBtn = document.getElementById('dropdown-logout-btn');
-
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-      }
-      if (dropdownLogoutBtn) {
-        dropdownLogoutBtn.addEventListener('click', handleLogout);
-      }
+      // Logout functionality - attach handler to all logout buttons
+      document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout').forEach(btn => {
+        btn.addEventListener('click', handleLogout);
+      });
 
       // Initial auth check with delay to ensure supabase is loaded
       setTimeout(checkAuth, 500);
