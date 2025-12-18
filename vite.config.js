@@ -14,6 +14,7 @@ export default defineConfig({
                 dashboard: resolve(__dirname, "apps/gold/dashboard/index.html"),
                 academia: resolve(__dirname, "apps/academia/index.html"),
                 suite: resolve(__dirname, "apps/suite/index.html"),
+                herramientas: resolve(__dirname, "apps/herramientas/index.html"),
             },
         },
     },

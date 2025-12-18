@@ -463,10 +463,14 @@ const AuthUI = {
 
       const btn = newRegisterForm.querySelector('button[type="submit"]');
       const originalText = btn?.textContent || 'Crear Cuenta';
+      const logoBox = document.querySelector('.auth-logo-box'); // Assuming this element exists in the DOM
 
       try {
         if (btn) {
           btn.disabled = true;
+          if (logoBox) { // Only update if logoBox exists
+            logoBox.innerHTML = '<img src="/brand/breathing.webp" alt="YavlGold" style="width: 80px; height: 80px;">';
+          }
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
         }
 

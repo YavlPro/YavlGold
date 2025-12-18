@@ -118,7 +118,15 @@ const authClient = {
             if (['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(event)) {
                 if (session) {
                     this._processSession(session);
-                    this._checkRedirectToHome();
+                    const currentPath = window.location.pathname;
+                    // Solo redirigir si está en Home, Login o Raíz pública
+                    const isPublicPage = currentPath === '/' ||
+                        currentPath === '/index.html' ||
+                        (currentPath.includes('apps/gold') && !currentPath.includes('dashboard'));
+
+                    if (isPublicPage) {
+                        window.location.href = '/apps/gold/dashboard/index.html';
+                    }
                 }
             } else if (event === 'SIGNED_OUT') {
                 this.logout();
