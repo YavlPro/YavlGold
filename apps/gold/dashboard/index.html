@@ -9,8 +9,8 @@
   <meta name="theme-color" content="#0B0C0F">
 
   <!-- Favicon -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <link rel="icon" href="/apps/gold/assets/images/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="/apps/gold/assets/images/logo.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,8 +23,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
-  <link rel="stylesheet" href="/assets/css/dashboard.css">
+  <link rel="stylesheet" href="/apps/gold/assets/css/unificacion.css">
+  <link rel="stylesheet" href="/apps/gold/assets/css/dashboard.css">
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -35,7 +35,7 @@
   <!-- Header -->
   <header class="gg-header">
     <a class="brand" href="/">
-      <img src="/assets/images/logo.png" alt="YavlGold" class="logo">
+      <img src="/apps/gold/assets/images/logo.png" alt="YavlGold" class="logo">
       <span>YavlGold</span>
     </a>
 
@@ -140,12 +140,12 @@
 
   <!-- Scripts -->
   <!-- Auth Guard & Main Logic -->
-  <script type="module" src="/assets/js/main.js"></script>
+  <script type="module" src="/apps/gold/assets/js/main.js"></script>
 
   <!-- Dashboard UI Logic -->
   <script type="module">
     // Import directly to guarantee execution order
-    import { supabase } from '/assets/js/main.js';
+    import { supabase } from '/apps/gold/assets/js/main.js';
 
     async function initDashboard() {
       console.log('[Dashboard] Verificando sesión...');
@@ -201,7 +201,7 @@
         fab.style.opacity = '0.5';
 
         // Try graceful logout first
-        const module = await import('/assets/js/main.js');
+        const module = await import('/apps/gold/assets/js/main.js');
         const supabase = module.supabase;
         if (!supabase) throw new Error("Supabase client not found");
 

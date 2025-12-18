@@ -15,49 +15,50 @@ limitations under the License.
 -->
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YavlSuite - Suite Multimedia</title>
-    
+
     <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
     <script>
-      (function() {
-        function checkSupabaseSession() {
-          try {
-            const keys = Object.keys(localStorage);
-            const authTokenKey = keys.find(key => key.includes('auth-token'));
-            
-            if (authTokenKey) {
-              const token = localStorage.getItem(authTokenKey);
-              if (token) {
+        (function () {
+            function checkSupabaseSession() {
                 try {
-                  const parsed = JSON.parse(token);
-                  if (parsed && parsed.access_token) {
-                    console.log('[YavlSuite] ✅ Sesión encontrada');
-                    return true;
-                  }
+                    const keys = Object.keys(localStorage);
+                    const authTokenKey = keys.find(key => key.includes('auth-token'));
+
+                    if (authTokenKey) {
+                        const token = localStorage.getItem(authTokenKey);
+                        if (token) {
+                            try {
+                                const parsed = JSON.parse(token);
+                                if (parsed && parsed.access_token) {
+                                    console.log('[YavlSuite] ✅ Sesión encontrada');
+                                    return true;
+                                }
+                            } catch (e) {
+                                console.error('[YavlSuite] Error verificando sesión:', e);
+                            }
+                        }
+                    }
+
+                    console.log('[YavlSuite] ⛔ No hay sesión, redirigiendo...');
+                    return false;
                 } catch (e) {
-                  console.error('[YavlSuite] Error verificando sesión:', e);
+                    console.error('[YavlSuite] Error al verificar sesión:', e);
+                    return false;
                 }
-              }
             }
-            
-            console.log('[YavlSuite] ⛔ No hay sesión, redirigiendo...');
-            return false;
-          } catch (e) {
-            console.error('[YavlSuite] Error al verificar sesión:', e);
-            return false;
-          }
-        }
-        
-        if (!checkSupabaseSession()) {
-          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/../../#login');
-        } else {
-          console.log('[YavlSuite] ✅ Sesión válida, permitiendo acceso');
-        }
-      })();
+
+            if (!checkSupabaseSession()) {
+                sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+                window.location.replace('/#login');
+            } else {
+                console.log('[YavlSuite] ✅ Sesión válida, permitiendo acceso');
+            }
+        })();
     </script>
     <!-- Tailwind CSS para un diseño responsivo y moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -66,7 +67,9 @@ limitations under the License.
     <!-- Google Fonts para una tipografía cyberpunk -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap"
+        rel="stylesheet">
     <style>
         /* Estilos personalizados para la estética Cyberpunk Neon */
         :root {
@@ -77,7 +80,8 @@ limitations under the License.
             --text-color: #e0e0e0;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             overflow: hidden;
         }
@@ -96,10 +100,10 @@ limitations under the License.
         .neon-border {
             border: 2px solid var(--primary-blue);
             box-shadow: 0 0 5px var(--primary-blue),
-                        0 0 10px var(--primary-blue),
-                        0 0 15px var(--primary-blue);
+                0 0 10px var(--primary-blue),
+                0 0 15px var(--primary-blue);
         }
-        
+
         /* Botones con animación de brillo suave */
         .neon-button {
             transition: all 0.3s ease;
@@ -114,10 +118,10 @@ limitations under the License.
         .neon-button:hover {
             background-color: rgba(0, 255, 255, 0.1);
             box-shadow: 0 0 8px var(--primary-blue),
-                        inset 0 0 8px var(--primary-blue),
-                        0 0 15px var(--accent-orange);
+                inset 0 0 8px var(--primary-blue),
+                0 0 15px var(--accent-orange);
         }
-        
+
         .neon-button.active {
             border-color: var(--accent-orange);
             color: var(--accent-orange);
@@ -133,9 +137,17 @@ limitations under the License.
 
         /* Animación de pulso para el brillo */
         @keyframes pulse-shadow {
-            0% { box-shadow: 0 0 3px var(--primary-blue), inset 0 0 3px var(--primary-blue); }
-            50% { box-shadow: 0 0 8px var(--secondary-green), inset 0 0 8px var(--secondary-green); }
-            100% { box-shadow: 0 0 3px var(--primary-blue), inset 0 0 3px var(--primary-blue); }
+            0% {
+                box-shadow: 0 0 3px var(--primary-blue), inset 0 0 3px var(--primary-blue);
+            }
+
+            50% {
+                box-shadow: 0 0 8px var(--secondary-green), inset 0 0 8px var(--secondary-green);
+            }
+
+            100% {
+                box-shadow: 0 0 3px var(--primary-blue), inset 0 0 3px var(--primary-blue);
+            }
         }
 
         /* Estilo de la barra de progreso */
@@ -160,7 +172,7 @@ limitations under the License.
             border: 2px solid var(--bg-color);
             box-shadow: 0 0 5px var(--primary-blue), 0 0 10px var(--primary-blue);
         }
-        
+
         input[type="range"]::-moz-range-thumb {
             width: 15px;
             height: 15px;
@@ -174,38 +186,43 @@ limitations under the License.
         .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
         }
+
         .custom-scrollbar::-webkit-scrollbar-track {
             background: transparent;
         }
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background-color: var(--primary-blue);
             border-radius: 20px;
             border: 1px solid var(--bg-color);
         }
 
-        .neon-input, .neon-select {
+        .neon-input,
+        .neon-select {
             background-color: transparent;
             border: 1px solid var(--primary-blue);
             color: var(--primary-blue);
             box-shadow: 0 0 3px var(--primary-blue), inset 0 0 3px var(--primary-blue);
             transition: all 0.3s ease;
         }
+
         .neon-select {
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            padding-right: 2rem; 
+            padding-right: 2rem;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2300ffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em;
         }
 
-        .neon-input:focus, .neon-select:focus {
+        .neon-input:focus,
+        .neon-select:focus {
             outline: none;
             box-shadow: 0 0 8px var(--primary-blue),
-                        inset 0 0 8px var(--primary-blue),
-                        0 0 15px var(--accent-orange);
+                inset 0 0 8px var(--primary-blue),
+                0 0 15px var(--accent-orange);
         }
 
         .neon-input::placeholder {
@@ -213,40 +230,59 @@ limitations under the License.
         }
     </style>
 </head>
+
 <body class="bg-black text-gray-200 flex items-center justify-center h-screen p-2 sm:p-4">
 
-    <div id="app-container" class="w-full max-w-5xl h-full md:h-[90vh] bg-black bg-opacity-80 backdrop-blur-sm rounded-lg shadow-lg flex flex-col neon-border overflow-hidden relative">
-        
+    <div id="app-container"
+        class="w-full max-w-5xl h-full md:h-[90vh] bg-black bg-opacity-80 backdrop-blur-sm rounded-lg shadow-lg flex flex-col neon-border overflow-hidden relative">
+
         <!-- Encabezado -->
         <header class="p-2 sm:p-4 border-b-2 border-blue-500/30 text-center shadow-md flex-shrink-0">
-            <h1 class="text-2xl sm:text-3xl font-orbitron text-[var(--primary-blue)] text-shadow-lg" style="text-shadow: 0 0 10px var(--primary-blue);">YavlMusic V2.0</h1>
+            <h1 class="text-2xl sm:text-3xl font-orbitron text-[var(--primary-blue)] text-shadow-lg"
+                style="text-shadow: 0 0 10px var(--primary-blue);">YavlMusic V2.0</h1>
         </header>
 
         <!-- Contenido principal: Reproductor y Lista de canciones -->
         <main class="flex-grow flex flex-col md:flex-row p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden">
-            
+
             <!-- Panel Izquierdo: Carátula y Controles -->
-            <div class="w-full md:w-1/3 flex flex-col items-center justify-center p-2 sm:p-4 bg-gray-900/30 rounded-lg space-y-2 sm:space-y-4">
-                <div id="art-container" class="w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-black rounded-md flex items-center justify-center neon-border relative overflow-hidden">
-                     <svg id="default-art" xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 text-[var(--primary-blue)] opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+            <div
+                class="w-full md:w-1/3 flex flex-col items-center justify-center p-2 sm:p-4 bg-gray-900/30 rounded-lg space-y-2 sm:space-y-4">
+                <div id="art-container"
+                    class="w-40 h-40 sm:w-48 sm:h-48 md:w-64 md:h-64 bg-black rounded-md flex items-center justify-center neon-border relative overflow-hidden">
+                    <svg id="default-art" xmlns="http://www.w3.org/2000/svg"
+                        class="w-24 h-24 text-[var(--primary-blue)] opacity-50" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
                     </svg>
                     <canvas id="visualizer-canvas" class="hidden w-full h-full"></canvas>
                     <img id="custom-art-img" class="hidden w-full h-full object-cover" src="" alt="Custom Album Art">
                     <input type="file" id="image-input" class="hidden" accept="image/*">
-                    <button id="upload-image-btn" class="absolute top-2 right-2 neon-button p-1.5 rounded-full opacity-50 hover:opacity-100" title="Subir carátula para esta canción" aria-label="Subir carátula para esta canción">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H5.5z" /><path d="M9 13l3-3m0 0l3 3m-3-3v8" /></svg>
+                    <button id="upload-image-btn"
+                        class="absolute top-2 right-2 neon-button p-1.5 rounded-full opacity-50 hover:opacity-100"
+                        title="Subir carátula para esta canción" aria-label="Subir carátula para esta canción">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H5.5z" />
+                            <path d="M9 13l3-3m0 0l3 3m-3-3v8" />
+                        </svg>
                     </button>
                 </div>
-                
+
                 <div class="text-center">
                     <div class="flex items-center justify-center gap-2">
                         <div>
-                            <h2 id="song-title" class="text-lg sm:text-xl font-orbitron text-white">Selecciona una canción</h2>
+                            <h2 id="song-title" class="text-lg sm:text-xl font-orbitron text-white">Selecciona una
+                                canción</h2>
                             <p id="song-artist" class="text-sm text-[var(--secondary-green)]">YavlMusic</p>
                         </div>
-                        <button id="favorite-current-btn" class="neon-button p-2 rounded-full text-gray-400" aria-label="Marcar como favorita la canción actual">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                        <button id="favorite-current-btn" class="neon-button p-2 rounded-full text-gray-400"
+                            aria-label="Marcar como favorita la canción actual">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -256,7 +292,8 @@ limitations under the License.
                     <input type="range" id="progress-bar" value="0" step="1" class="w-full">
                     <div class="flex justify-between items-center text-xs mt-1">
                         <span id="current-time">0:00</span>
-                        <button id="art-mode-btn" class="neon-button px-2 py-0.5 rounded-md text-xs" title="Cambiar modo de visualización">Visualizador</button>
+                        <button id="art-mode-btn" class="neon-button px-2 py-0.5 rounded-md text-xs"
+                            title="Cambiar modo de visualización">Visualizador</button>
                         <span id="total-duration">0:00</span>
                     </div>
                 </div>
@@ -264,28 +301,55 @@ limitations under the License.
                 <!-- Controles Principales -->
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <button id="shuffle-btn" class="neon-button p-3 rounded-full" aria-label="Reproducción aleatoria">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-2 2m0 0l-2-2m2 2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4m12 0a2 2 0 012 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4m16 8l-2-2m0 0l-2 2m2-2v-4" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 9l-2 2m0 0l-2-2m2 2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4m12 0a2 2 0 012 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4m16 8l-2-2m0 0l-2 2m2-2v-4" />
+                        </svg>
                     </button>
                     <button id="prev-btn" class="neon-button p-3 rounded-full" aria-label="Canción anterior">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
                     </button>
-                    <button id="play-pause-btn" class="neon-button p-4 rounded-full bg-[var(--primary-blue)] text-black" style="box-shadow: 0 0 15px var(--accent-orange);" aria-label="Reproducir o pausar">
-                        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
-                        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" /></svg>
+                    <button id="play-pause-btn" class="neon-button p-4 rounded-full bg-[var(--primary-blue)] text-black"
+                        style="box-shadow: 0 0 15px var(--accent-orange);" aria-label="Reproducir o pausar">
+                        <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        </svg>
+                        <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 hidden" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+                        </svg>
                     </button>
                     <button id="next-btn" class="neon-button p-3 rounded-full" aria-label="Siguiente canción">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
                     </button>
-                    <button id="repeat-btn" class="neon-button p-3 rounded-full" aria-label="Repetición: desactivado" title="Cambiar modo de repetición">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v6h6M20 20v-6h-6M20 4l-5 5m5-5h-5m-6 16l5-5m-5 5h5" />
+                    <button id="repeat-btn" class="neon-button p-3 rounded-full" aria-label="Repetición: desactivado"
+                        title="Cambiar modo de repetición">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4 4v6h6M20 20v-6h-6M20 4l-5 5m5-5h-5m-6 16l5-5m-5 5h5" />
                         </svg>
                     </button>
                 </div>
 
-                 <!-- Control de Volumen -->
-                 <div class="flex items-center space-x-2 w-full max-w-xs pt-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                <!-- Control de Volumen -->
+                <div class="flex items-center space-x-2 w-full max-w-xs pt-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
                     <input type="range" id="volume-control" min="0" max="1" step="0.01" value="0.5" class="w-full">
                 </div>
             </div>
@@ -293,29 +357,40 @@ limitations under the License.
             <!-- Panel Derecho: Lista de Canciones y Búsqueda -->
             <div class="w-full md:w-2/3 flex flex-col bg-gray-900/30 rounded-lg p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-                     <input type="file" id="file-input" multiple accept=".mp3,audio/mpeg" class="hidden">
-                    <button id="add-files-btn" class="neon-button py-1 px-2 text-base sm:py-2 sm:px-4 sm:text-lg rounded-md col-span-2 sm:col-span-1">Añadir Archivos</button>
+                    <input type="file" id="file-input" multiple accept=".mp3,audio/mpeg" class="hidden">
+                    <button id="add-files-btn"
+                        class="neon-button py-1 px-2 text-base sm:py-2 sm:px-4 sm:text-lg rounded-md col-span-2 sm:col-span-1">Añadir
+                        Archivos</button>
                     <button id="show-favorites-btn" class="neon-button py-1 px-2 text-base sm:py-2 sm:px-4 rounded-md">
                         Favoritos ★
                     </button>
-                    <select id="genre-filter" class="neon-select bg-black border border-[var(--primary-blue)] rounded-md p-1.5 sm:p-2 text-[var(--primary-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-orange)]">
+                    <select id="genre-filter"
+                        class="neon-select bg-black border border-[var(--primary-blue)] rounded-md p-1.5 sm:p-2 text-[var(--primary-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-orange)]">
                         <option>Todos los Géneros</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-                    <button id="export-btn" class="neon-button py-1 px-2 sm:py-2 sm:px-4 rounded-md" title="Exportar biblioteca (metadatos y carátulas)">Exportar</button>
+                    <button id="export-btn" class="neon-button py-1 px-2 sm:py-2 sm:px-4 rounded-md"
+                        title="Exportar biblioteca (metadatos y carátulas)">Exportar</button>
                     <div>
                         <input type="file" id="import-input" accept="application/json" class="hidden">
-                        <button id="import-btn" class="neon-button w-full py-1 px-2 sm:py-2 sm:px-4 rounded-md" title="Importar biblioteca desde JSON">Importar</button>
+                        <button id="import-btn" class="neon-button w-full py-1 px-2 sm:py-2 sm:px-4 rounded-md"
+                            title="Importar biblioteca desde JSON">Importar</button>
                     </div>
-                    <button id="reset-btn" class="neon-button py-1 px-2 sm:py-2 sm:px-4 rounded-md text-red-400" title="Borrar biblioteca local">Reset</button>
+                    <button id="reset-btn" class="neon-button py-1 px-2 sm:py-2 sm:px-4 rounded-md text-red-400"
+                        title="Borrar biblioteca local">Reset</button>
                 </div>
-                
+
                 <!-- Barra de Búsqueda -->
                 <div class="relative">
-                    <input type="text" id="search-bar" placeholder="Buscar en la lista..." class="w-full p-1.5 sm:p-2 rounded-md neon-input pl-8">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-[var(--primary-blue)]/50" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    <input type="text" id="search-bar" placeholder="Buscar en la lista..."
+                        class="w-full p-1.5 sm:p-2 rounded-md neon-input pl-8">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5 absolute left-2 top-1/2 -translate-y-1/2 text-[var(--primary-blue)]/50"
+                        viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clip-rule="evenodd" />
                     </svg>
                 </div>
 
@@ -328,7 +403,7 @@ limitations under the License.
             </div>
 
         </main>
-        
+
         <!-- Créditos del creador -->
         <footer class="p-2 text-center border-t border-blue-500/10 flex-shrink-0">
             <p class="text-xs text-gray-600">Creado por Yerikson Varela</p>
@@ -336,51 +411,70 @@ limitations under the License.
 
         <audio id="audio-player" crossorigin="anonymous"></audio>
         <!-- Drag & Drop overlay -->
-        <div id="drop-overlay" class="hidden absolute inset-0 z-40 bg-[rgba(0,255,255,0.08)] backdrop-blur-[1px] border-2 border-dashed border-[var(--primary-blue)] flex items-center justify-center text-[var(--primary-blue)] font-orbitron text-xl">
+        <div id="drop-overlay"
+            class="hidden absolute inset-0 z-40 bg-[rgba(0,255,255,0.08)] backdrop-blur-[1px] border-2 border-dashed border-[var(--primary-blue)] flex items-center justify-center text-[var(--primary-blue)] font-orbitron text-xl">
             Suelta tus archivos MP3 aquí
         </div>
-        
+
         <!-- Botón Flotante de Información -->
-        <button id="info-modal-btn" class="absolute bottom-4 right-4 z-20 neon-button p-3 rounded-full" aria-label="Abrir información y soporte">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <button id="info-modal-btn" class="absolute bottom-4 right-4 z-20 neon-button p-3 rounded-full"
+            aria-label="Abrir información y soporte">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         </button>
 
         <!-- Modal de Información -->
-        <div id="info-modal" class="hidden absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div class="w-full max-w-2xl max-h-[85vh] bg-black/80 neon-border rounded-lg flex flex-col p-4 relative text-gray-300">
-                <button id="close-modal-btn" class="absolute top-3 right-4 text-3xl text-gray-400 hover:text-white" aria-label="Cerrar modal">&times;</button>
+        <div id="info-modal"
+            class="hidden absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div
+                class="w-full max-w-2xl max-h-[85vh] bg-black/80 neon-border rounded-lg flex flex-col p-4 relative text-gray-300">
+                <button id="close-modal-btn" class="absolute top-3 right-4 text-3xl text-gray-400 hover:text-white"
+                    aria-label="Cerrar modal">&times;</button>
                 <h2 class="text-2xl font-orbitron text-[var(--primary-blue)] text-center mb-4">Información</h2>
                 <div class="flex border-b border-blue-500/30 mb-4">
-                    <button data-tab="readme" class="tab-btn flex-1 p-2 neon-button rounded-t-md rounded-b-none">README</button>
-                    <button data-tab="support" class="tab-btn flex-1 p-2 neon-button rounded-t-md rounded-b-none">Soporte</button>
+                    <button data-tab="readme"
+                        class="tab-btn flex-1 p-2 neon-button rounded-t-md rounded-b-none">README</button>
+                    <button data-tab="support"
+                        class="tab-btn flex-1 p-2 neon-button rounded-t-md rounded-b-none">Soporte</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
                     <div id="readme-content" class="tab-content space-y-3">
                         <h3 class="font-orbitron text-lg text-[var(--secondary-green)]">Bienvenido a YavlMusic V2.0</h3>
-                        <p>Un reproductor de música local con una estética cyberpunk, diseñado para ser rápido, personalizable y visualmente atractivo.</p>
+                        <p>Un reproductor de música local con una estética cyberpunk, diseñado para ser rápido,
+                            personalizable y visualmente atractivo.</p>
                         <h4 class="font-bold text-[var(--primary-blue)]">Novedades en V2.0:</h4>
                         <ul class="list-disc list-inside space-y-1 pl-4">
-                            <li><strong>¡Modo Offline!</strong> Tu música, carátulas y listas se guardan en el navegador. ¡No necesitas volver a cargar los archivos!</li>
+                            <li><strong>¡Modo Offline!</strong> Tu música, carátulas y listas se guardan en el
+                                navegador. ¡No necesitas volver a cargar los archivos!</li>
                             <li><strong>Reproducción Aleatoria:</strong> Un nuevo botón para mezclar tu música.</li>
                         </ul>
                         <h4 class="font-bold text-[var(--primary-blue)]">Características Principales:</h4>
                         <ul class="list-disc list-inside space-y-1 pl-4">
-                            <li><strong>Reproducción Local y Persistente:</strong> Añade tus archivos .mp3 y disfruta sin conexión, siempre.</li>
+                            <li><strong>Reproducción Local y Persistente:</strong> Añade tus archivos .mp3 y disfruta
+                                sin conexión, siempre.</li>
                             <li><strong>Visualizador de Audio:</strong> Barras de neón que reaccionan a tu música.</li>
                             <li><strong>Carátulas Personalizadas:</strong> Sube una imagen para cada canción.</li>
-                            <li><strong>Organización por Géneros:</strong> Crea y asigna tus propios géneros musicales.</li>
+                            <li><strong>Organización por Géneros:</strong> Crea y asigna tus propios géneros musicales.
+                            </li>
                             <li><strong>Lista de Favoritos:</strong> Guarda tus canciones preferidas.</li>
                             <li><strong>Búsqueda y Filtros:</strong> Encuentra canciones fácilmente.</li>
                         </ul>
-                         <h4 class="font-bold text-[var(--primary-blue)]">¿Cómo usar?</h4>
-                         <p>1. Haz clic en "Añadir Archivos" para seleccionar tus canciones.<br>2. Usa los controles para reproducir, pausar, y cambiar de pista.<br>3. Personaliza el género de cada canción y márcalas como favoritas.<br>4. ¡Explora los modos de visualización y sube tus propias carátulas!</p>
+                        <h4 class="font-bold text-[var(--primary-blue)]">¿Cómo usar?</h4>
+                        <p>1. Haz clic en "Añadir Archivos" para seleccionar tus canciones.<br>2. Usa los controles para
+                            reproducir, pausar, y cambiar de pista.<br>3. Personaliza el género de cada canción y
+                            márcalas como favoritas.<br>4. ¡Explora los modos de visualización y sube tus propias
+                            carátulas!</p>
                     </div>
                     <div id="support-content" class="hidden tab-content text-center pt-8 space-y-4">
                         <h3 class="font-orbitron text-lg text-[var(--secondary-green)]">Soporte y Sugerencias</h3>
-                        <p>Para dudas, problemas técnicos o para enviar sugerencias, puedes contactar directamente al desarrollador a través de Telegram.</p>
-                        <a href="https://t.me/YavlPro" target="_blank" class="mt-4 inline-block neon-button py-2 px-6 rounded-md text-lg">Contactar por Telegram</a>
+                        <p>Para dudas, problemas técnicos o para enviar sugerencias, puedes contactar directamente al
+                            desarrollador a través de Telegram.</p>
+                        <a href="https://t.me/YavlPro" target="_blank"
+                            class="mt-4 inline-block neon-button py-2 px-6 rounded-md text-lg">Contactar por
+                            Telegram</a>
                     </div>
                 </div>
             </div>
@@ -470,7 +564,7 @@ limitations under the License.
                         if (!dbInstance.objectStoreNames.contains(STORES.IMAGES)) {
                             dbInstance.createObjectStore(STORES.IMAGES);
                         }
-                         if (!dbInstance.objectStoreNames.contains(STORES.METADATA)) {
+                        if (!dbInstance.objectStoreNames.contains(STORES.METADATA)) {
                             dbInstance.createObjectStore(STORES.METADATA);
                         }
                     };
@@ -488,7 +582,7 @@ limitations under the License.
             }
 
             function saveDataToDB() {
-                 if (!db) return;
+                if (!db) return;
                 const transaction = db.transaction([STORES.METADATA], 'readwrite');
                 const store = transaction.objectStore(STORES.METADATA);
                 const favoriteNames = favorites.map(i => playlist[i]?.name).filter(Boolean);
@@ -500,13 +594,13 @@ limitations under the License.
             async function loadDataFromDB() {
                 if (!db) return;
                 const transaction = db.transaction([STORES.SONGS, STORES.METADATA], 'readonly');
-                
+
                 // Cargar canciones
                 const songsStore = transaction.objectStore(STORES.SONGS);
                 const songKeysRequest = songsStore.getAllKeys();
                 songKeysRequest.onsuccess = () => {
                     playlist = songKeysRequest.result.map(name => ({ name }));
-                    
+
                     // Cargar metadatos después de cargar las canciones
                     const metadataStore = transaction.objectStore(STORES.METADATA);
                     const genresRequest = metadataStore.get('genres');
@@ -580,7 +674,7 @@ limitations under the License.
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * height * 0.9;
                     const gradient = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
-                    gradient.addColorStop(0, `hsl(${200 + dataArray[i]/2}, 100%, 50%)`);
+                    gradient.addColorStop(0, `hsl(${200 + dataArray[i] / 2}, 100%, 50%)`);
                     gradient.addColorStop(1, `hsl(${180}, 100%, 70%)`);
 
                     canvasCtx.fillStyle = gradient;
@@ -629,7 +723,7 @@ limitations under the License.
                     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 }
             }
-            
+
             async function cycleArtMode() {
                 artMode = (artMode + 1) % 3;
                 const currentSongFile = playlist[currentTrackIndex];
@@ -643,7 +737,7 @@ limitations under the License.
             // SECTION: Core Player Logic
             // =================================================================
             function addFilesToPlaylist(files) {
-                 if (files.length === 0 || !db) return;
+                if (files.length === 0 || !db) return;
                 const transaction = db.transaction([STORES.SONGS], 'readwrite');
                 const store = transaction.objectStore(STORES.SONGS);
 
@@ -654,17 +748,17 @@ limitations under the License.
                             continue;
                         }
                         if (!playlist.some(p => p.name === file.name)) {
-                           store.put(file, file.name);
-                           const item = { name: file.name };
-                           // Intentar leer ID3 para título/artista usando jsmediatags
-                           if (window.jsmediatags) {
-                               try {
-                                   jsmediatags.read(file, {
+                            store.put(file, file.name);
+                            const item = { name: file.name };
+                            // Intentar leer ID3 para título/artista usando jsmediatags
+                            if (window.jsmediatags) {
+                                try {
+                                    jsmediatags.read(file, {
                                         onSuccess: ({ tags }) => {
-                                           const title = tags?.title?.trim();
-                                           const artist = tags?.artist?.trim();
-                                           if (title) item.title = title;
-                                           if (artist) item.artist = artist;
+                                            const title = tags?.title?.trim();
+                                            const artist = tags?.artist?.trim();
+                                            if (title) item.title = title;
+                                            if (artist) item.artist = artist;
                                             // Cover embebida
                                             const pic = tags?.picture;
                                             if (pic && pic.data && pic.format) {
@@ -685,22 +779,22 @@ limitations under the License.
                                                         };
                                                     };
                                                     reader.readAsDataURL(blob);
-                                                } catch {}
+                                                } catch { }
                                             }
-                                           // Si es la canción actual, actualizar UI
-                                           if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
-                                               songTitle.textContent = item.title || item.name.replace('.mp3','');
-                                               songArtist.textContent = songGenres[item.name] || item.artist || "Sin Género";
-                                           }
-                                       },
-                                       onError: () => {}
-                                   });
-                               } catch {}
-                           }
-                           playlist.push(item);
+                                            // Si es la canción actual, actualizar UI
+                                            if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
+                                                songTitle.textContent = item.title || item.name.replace('.mp3', '');
+                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin Género";
+                                            }
+                                        },
+                                        onError: () => { }
+                                    });
+                                } catch { }
+                            }
+                            playlist.push(item);
                         }
                     } catch (error) {
-                         console.error(`No se pudo procesar el archivo ${file.name}:`, error);
+                        console.error(`No se pudo procesar el archivo ${file.name}:`, error);
                     }
                 }
                 transaction.oncomplete = () => {
@@ -711,7 +805,7 @@ limitations under the License.
                     }
                 };
             }
-            
+
             function getSongFromDB(songName) {
                 return new Promise((resolve, reject) => {
                     if (!db) return reject("DB not initialized");
@@ -737,7 +831,7 @@ limitations under the License.
 
             async function loadTrack(trackIndex) {
                 if (trackIndex < 0 || trackIndex >= playlist.length) return;
-                
+
                 try {
                     const songData = playlist[trackIndex];
                     const file = await getSongFromDB(songData.name);
@@ -745,19 +839,19 @@ limitations under the License.
                         console.error("No se pudo cargar la canción de la base de datos.");
                         return;
                     }
-                    
+
                     currentTrackIndex = trackIndex;
 
                     progressBar.value = 0;
                     currentTimeEl.textContent = "0:00";
                     totalDurationEl.textContent = "0:00";
 
-                    if(audioPlayer.src) URL.revokeObjectURL(audioPlayer.src); // Limpiar URL anterior
+                    if (audioPlayer.src) URL.revokeObjectURL(audioPlayer.src); // Limpiar URL anterior
                     audioPlayer.src = URL.createObjectURL(file);
                     const item = playlist[trackIndex] || { name: file.name };
                     songTitle.textContent = (item.title && item.title.trim()) ? item.title : file.name.replace('.mp3', '');
                     songArtist.textContent = songGenres[file.name] || item.artist || "Sin Género";
-                    
+
                     const imageData = await getImageFromDB(file.name);
                     if (imageData) {
                         customArtImg.src = imageData;
@@ -766,7 +860,7 @@ limitations under the License.
                         customArtImg.src = "";
                         if (artMode === 2) cycleArtMode();
                     }
-                    
+
                     highlightCurrentTrack();
                     updateCurrentFavoriteButton();
 
@@ -779,14 +873,14 @@ limitations under the License.
                 if (playlist.length === 0 || currentTrackIndex < 0) return;
                 setupAudioContext();
                 if (audioContext && audioContext.state === 'suspended') {
-                    audioContext.resume().catch(e=>{});
+                    audioContext.resume().catch(e => { });
                 }
                 isPlaying = true;
                 playIcon.classList.add('hidden');
                 pauseIcon.classList.remove('hidden');
-                
+
                 audioPlayer.play().catch(e => console.warn("Error de reproducción:", e.name));
-                
+
                 if (artMode === 1) drawVisualizer();
             }
 
@@ -796,12 +890,12 @@ limitations under the License.
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
             }
-            
+
             function deleteSong(indexToDelete) {
                 if (indexToDelete < 0 || indexToDelete >= playlist.length || !db) return;
 
                 const fileToDelete = playlist[indexToDelete];
-                
+
                 const transaction = db.transaction([STORES.SONGS, STORES.IMAGES], 'readwrite');
                 const songsStore = transaction.objectStore(STORES.SONGS);
                 const imagesStore = transaction.objectStore(STORES.IMAGES);
@@ -820,10 +914,10 @@ limitations under the License.
                         totalDurationEl.textContent = "0:00";
                         currentTrackIndex = -1;
                     }
-                    
+
                     playlist.splice(indexToDelete, 1);
                     delete songGenres[fileToDelete.name];
-                    
+
                     // Re-calcular favoritos
                     const favoriteNames = favorites.map(idx => playlist[idx]?.name).filter(Boolean);
                     favorites = [];
@@ -836,7 +930,7 @@ limitations under the License.
                     if (currentTrackIndex > indexToDelete) {
                         currentTrackIndex--;
                     }
-                    
+
                     saveDataToDB();
                     renderPlaylist();
                     updateCurrentFavoriteButton();
@@ -850,8 +944,8 @@ limitations under the License.
                 playlistElement.innerHTML = '';
                 const searchTerm = searchBar.value.toLowerCase();
                 const selectedGenre = genreFilter.value;
-                let sourceList = showingFavorites 
-                    ? favorites.map(i => ({ file: playlist[i], originalIndex: i })) 
+                let sourceList = showingFavorites
+                    ? favorites.map(i => ({ file: playlist[i], originalIndex: i }))
                     : playlist.map((file, i) => ({ file, originalIndex: i }));
                 let filteredList = sourceList
                     .filter(item => item && item.file)
@@ -859,7 +953,7 @@ limitations under the License.
                     .filter(item => selectedGenre === 'Todos los Géneros' || songGenres[item.file.name] === selectedGenre);
 
                 if (filteredList.length === 0) {
-                    const message = playlist.length === 0 
+                    const message = playlist.length === 0
                         ? 'Tu biblioteca está vacía. Añade archivos para empezar.'
                         : 'No se encontraron resultados.';
                     playlistElement.innerHTML = `<li class="p-3 text-gray-500 text-center">${message}</li>`;
@@ -874,10 +968,10 @@ limitations under the License.
                     infoDiv.className = 'flex-grow truncate cursor-pointer';
                     infoDiv.innerHTML = `<span class="block truncate">${file.name.replace('.mp3', '')}</span>`;
                     infoDiv.addEventListener('click', () => { loadTrack(originalIndex).then(playTrack); });
-                    
+
                     const controlsDiv = document.createElement('div');
                     controlsDiv.className = 'flex items-center gap-2 flex-shrink-0';
-                    
+
                     const genreSelect = document.createElement('select');
                     genreSelect.className = 'neon-select bg-black/50 text-xs rounded p-1 w-28';
                     updateGenreOptionsForSelect(genreSelect, songGenres[file.name]);
@@ -928,18 +1022,18 @@ limitations under the License.
             // SECTION: Utility & UI Helper Functions
             // =================================================================
             const getHeartSVG = (f) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`;
-            function toggleFavorite(idx){const i=favorites.indexOf(idx);if(i>-1)favorites.splice(i,1);else favorites.push(idx);saveDataToDB();renderPlaylist();updateCurrentFavoriteButton();}
-            function updateMainGenreFilter(){const c=genreFilter.value;const u=["Todos los Géneros",...new Set(Object.values(songGenres))];genreFilter.innerHTML='';u.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;genreFilter.appendChild(o)});if(u.includes(c))genreFilter.value=c;}
-            function updateGenreOptionsForSelect(s,g){const u=[...new Set(Object.values(songGenres))];s.innerHTML=`<option value="none">Sin Género</option>`;u.forEach(gn=>{const o=document.createElement('option');o.value=gn;o.textContent=gn;s.appendChild(o)});s.innerHTML+=`<option value="add_new" class="text-[var(--accent-orange)]">Añadir nuevo...</option>`;s.value=g||'none';}
-            function highlightCurrentTrack(){document.querySelectorAll('#playlist li').forEach(i=>{i.style.backgroundColor='';i.style.color='';if(parseInt(i.dataset.index)===currentTrackIndex){i.style.backgroundColor='rgba(0,255,255,0.7)';i.style.color='black';i.scrollIntoView({behavior:'smooth',block:'nearest'})}});}
-            function updateCurrentFavoriteButton(){if(currentTrackIndex<0||!playlist.length){favoriteCurrentBtn.innerHTML=getHeartSVG(false);favoriteCurrentBtn.classList.remove('text-pink-500');favoriteCurrentBtn.classList.add('text-gray-400');return;}const f=favorites.includes(currentTrackIndex);favoriteCurrentBtn.innerHTML=getHeartSVG(f);favoriteCurrentBtn.classList.toggle('text-pink-500',f);favoriteCurrentBtn.classList.toggle('text-gray-400',!f);}
-            const playPauseHandler=()=>isPlaying?pauseTrack():playTrack();
-            const prevTrackHandler=()=>{if(!playlist.length)return;let newIndex=currentTrackIndex<0?playlist.length-1:(currentTrackIndex-1+playlist.length)%playlist.length;loadTrack(newIndex).then(playTrack);};
-            const nextTrackHandler=()=>{
-                if(!playlist.length) return;
+            function toggleFavorite(idx) { const i = favorites.indexOf(idx); if (i > -1) favorites.splice(i, 1); else favorites.push(idx); saveDataToDB(); renderPlaylist(); updateCurrentFavoriteButton(); }
+            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los Géneros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
+            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin Género</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">Añadir nuevo...</option>`; s.value = g || 'none'; }
+            function highlightCurrentTrack() { document.querySelectorAll('#playlist li').forEach(i => { i.style.backgroundColor = ''; i.style.color = ''; if (parseInt(i.dataset.index) === currentTrackIndex) { i.style.backgroundColor = 'rgba(0,255,255,0.7)'; i.style.color = 'black'; i.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) } }); }
+            function updateCurrentFavoriteButton() { if (currentTrackIndex < 0 || !playlist.length) { favoriteCurrentBtn.innerHTML = getHeartSVG(false); favoriteCurrentBtn.classList.remove('text-pink-500'); favoriteCurrentBtn.classList.add('text-gray-400'); return; } const f = favorites.includes(currentTrackIndex); favoriteCurrentBtn.innerHTML = getHeartSVG(f); favoriteCurrentBtn.classList.toggle('text-pink-500', f); favoriteCurrentBtn.classList.toggle('text-gray-400', !f); }
+            const playPauseHandler = () => isPlaying ? pauseTrack() : playTrack();
+            const prevTrackHandler = () => { if (!playlist.length) return; let newIndex = currentTrackIndex < 0 ? playlist.length - 1 : (currentTrackIndex - 1 + playlist.length) % playlist.length; loadTrack(newIndex).then(playTrack); };
+            const nextTrackHandler = () => {
+                if (!playlist.length) return;
                 let newIndex;
-                if(isShuffle) {
-                     if (playlist.length === 1) {
+                if (isShuffle) {
+                    if (playlist.length === 1) {
                         newIndex = 0;
                     } else {
                         do {
@@ -947,32 +1041,32 @@ limitations under the License.
                         } while (newIndex === currentTrackIndex);
                     }
                 } else {
-                   if (repeatMode === 2) {
-                       newIndex = currentTrackIndex; // repetir una
-                   } else {
-                       newIndex = currentTrackIndex < 0 ? 0 : (currentTrackIndex + 1);
-                       if (newIndex >= playlist.length) {
-                           newIndex = (repeatMode === 1) ? 0 : currentTrackIndex; // repetir lista o quedarse
-                           if (repeatMode === 0) {
-                               pauseTrack();
-                               return;
-                           }
-                       }
-                   }
+                    if (repeatMode === 2) {
+                        newIndex = currentTrackIndex; // repetir una
+                    } else {
+                        newIndex = currentTrackIndex < 0 ? 0 : (currentTrackIndex + 1);
+                        if (newIndex >= playlist.length) {
+                            newIndex = (repeatMode === 1) ? 0 : currentTrackIndex; // repetir lista o quedarse
+                            if (repeatMode === 0) {
+                                pauseTrack();
+                                return;
+                            }
+                        }
+                    }
                 }
                 loadTrack(newIndex).then(playTrack);
             };
-            const setProgressHandler=(e)=>{if(!isNaN(audioPlayer.duration))audioPlayer.currentTime=e.target.value;};
-            const formatTime=(s)=>{ if(isNaN(s))return"0:00";return`${Math.floor(s/60)}:${(Math.floor(s%60)<10?'0':'')+Math.floor(s%60)}`;}
-            const updateVolumeHandler=()=>{audioPlayer.volume=volumeControl.value;};
-            volumeControl.addEventListener('change', ()=>{ settings.volume = Number(volumeControl.value)||0.5; saveDataToDB(); });
+            const setProgressHandler = (e) => { if (!isNaN(audioPlayer.duration)) audioPlayer.currentTime = e.target.value; };
+            const formatTime = (s) => { if (isNaN(s)) return "0:00"; return `${Math.floor(s / 60)}:${(Math.floor(s % 60) < 10 ? '0' : '') + Math.floor(s % 60)}`; }
+            const updateVolumeHandler = () => { audioPlayer.volume = volumeControl.value; };
+            volumeControl.addEventListener('change', () => { settings.volume = Number(volumeControl.value) || 0.5; saveDataToDB(); });
 
             // =================================================================
             // SECTION: Event Listeners
             // =================================================================
             addFilesBtn.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', (event) => { addFilesToPlaylist(event.target.files); fileInput.value = ''; });
-            uploadImageBtn.addEventListener('click', () => { if(currentTrackIndex > -1) imageInput.click() });
+            uploadImageBtn.addEventListener('click', () => { if (currentTrackIndex > -1) imageInput.click() });
             imageInput.addEventListener('change', (event) => {
                 if (currentTrackIndex < 0 || !db) return;
                 const file = event.target.files[0];
@@ -1005,14 +1099,14 @@ limitations under the License.
                 repeatMode = (repeatMode + 1) % 3;
                 // Visual feedback
                 repeatBtn.classList.toggle('active', repeatMode > 0);
-                const titles = ['Repetición: desactivado','Repetición: lista','Repetición: pista'];
+                const titles = ['Repetición: desactivado', 'Repetición: lista', 'Repetición: pista'];
                 repeatBtn.setAttribute('aria-label', titles[repeatMode]);
                 repeatBtn.setAttribute('title', titles[repeatMode]);
                 settings.repeat = repeatMode; saveDataToDB();
             });
             audioPlayer.addEventListener('ended', nextTrackHandler);
             audioPlayer.addEventListener('loadedmetadata', () => {
-                if(!isNaN(audioPlayer.duration)) {
+                if (!isNaN(audioPlayer.duration)) {
                     progressBar.max = audioPlayer.duration;
                     totalDurationEl.textContent = formatTime(audioPlayer.duration);
                 }
@@ -1024,15 +1118,15 @@ limitations under the License.
                 }
             });
             progressBar.addEventListener('input', (e) => {
-                 if(!isNaN(audioPlayer.duration)) {
+                if (!isNaN(audioPlayer.duration)) {
                     currentTimeEl.textContent = formatTime(e.target.value);
-                 }
+                }
             });
             progressBar.addEventListener('change', setProgressHandler);
             volumeControl.addEventListener('input', updateVolumeHandler);
             searchBar.addEventListener('input', renderPlaylist);
             genreFilter.addEventListener('change', renderPlaylist);
-            artModeBtn.addEventListener('click', ()=>{ cycleArtMode(); settings.artMode = artMode; saveDataToDB(); });
+            artModeBtn.addEventListener('click', () => { cycleArtMode(); settings.artMode = artMode; saveDataToDB(); });
             favoriteCurrentBtn.addEventListener('click', () => { if (currentTrackIndex >= 0) toggleFavorite(currentTrackIndex); });
             showFavoritesBtn.addEventListener('click', () => {
                 showingFavorites = !showingFavorites;
@@ -1058,7 +1152,7 @@ limitations under the License.
             // Exportar biblioteca
             exportBtn.addEventListener('click', async () => {
                 if (!db) return;
-                const exportData = { songs: playlist.map(p=>p.name), genres: songGenres, favorites: favorites.map(i=>playlist[i]?.name).filter(Boolean), images: {}, settings };
+                const exportData = { songs: playlist.map(p => p.name), genres: songGenres, favorites: favorites.map(i => playlist[i]?.name).filter(Boolean), images: {}, settings };
                 const tx = db.transaction([STORES.IMAGES], 'readonly');
                 const imgStore = tx.objectStore(STORES.IMAGES);
                 const keysReq = imgStore.getAllKeys();
@@ -1068,21 +1162,21 @@ limitations under the License.
                     let remaining = keys.length;
                     keys.forEach(k => {
                         const r = imgStore.get(k);
-                        r.onsuccess = () => { exportData.images[k] = r.result; if(--remaining===0) finish(); };
-                        r.onerror = () => { if(--remaining===0) finish(); };
+                        r.onsuccess = () => { exportData.images[k] = r.result; if (--remaining === 0) finish(); };
+                        r.onerror = () => { if (--remaining === 0) finish(); };
                     });
                 };
-                function finish(){
+                function finish() {
                     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = 'YavlMusicLibrary.json';
                     document.body.appendChild(a); a.click(); a.remove();
-                    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+                    setTimeout(() => URL.revokeObjectURL(url), 2000);
                 }
             });
 
             // Importar biblioteca
-            importBtn.addEventListener('click', ()=> importInput.click());
+            importBtn.addEventListener('click', () => importInput.click());
             importInput.addEventListener('change', async (e) => {
                 const file = e.target.files?.[0];
                 if (!file || !db) return;
@@ -1092,18 +1186,18 @@ limitations under the License.
                     const tx = db.transaction([STORES.METADATA, STORES.IMAGES], 'readwrite');
                     const meta = tx.objectStore(STORES.METADATA);
                     const images = tx.objectStore(STORES.IMAGES);
-                    meta.put(data.genres||{}, 'genres');
-                    meta.put(Array.isArray(data.favorites)?data.favorites:[], 'favorites');
-                    meta.put(data.settings||settings, 'settings');
+                    meta.put(data.genres || {}, 'genres');
+                    meta.put(Array.isArray(data.favorites) ? data.favorites : [], 'favorites');
+                    meta.put(data.settings || settings, 'settings');
                     if (data.images && typeof data.images === 'object') {
                         for (const [name, b64] of Object.entries(data.images)) images.put(b64, name);
                     }
                     tx.oncomplete = () => {
                         songGenres = data.genres || {};
-                        const favoriteNames = Array.isArray(data.favorites)?data.favorites:[];
+                        const favoriteNames = Array.isArray(data.favorites) ? data.favorites : [];
                         favorites = [];
-                        playlist.forEach((s, i)=>{ if (favoriteNames.includes(s.name)) favorites.push(i); });
-                        settings = { ...settings, ...(data.settings||{}) };
+                        playlist.forEach((s, i) => { if (favoriteNames.includes(s.name)) favorites.push(i); });
+                        settings = { ...settings, ...(data.settings || {}) };
                         updateMainGenreFilter();
                         renderPlaylist();
                         volumeControl.value = settings.volume; audioPlayer.volume = settings.volume;
@@ -1112,7 +1206,7 @@ limitations under the License.
                         setArtDisplay(artMode);
                         saveDataToDB();
                     };
-                } catch(err) {
+                } catch (err) {
                     console.error('Error al importar biblioteca:', err);
                     alert('No se pudo importar el archivo JSON.');
                 } finally {
@@ -1142,8 +1236,8 @@ limitations under the License.
             window.addEventListener('resize', () => { if (typeof resizeVisualizerCanvas === 'function' && artMode === 1) resizeVisualizerCanvas(); });
 
             // Drag & Drop para añadir archivos
-            function suppressDefaults(e){ e.preventDefault(); e.stopPropagation(); }
-            ['dragenter','dragover','dragleave','drop'].forEach(eventName => {
+            function suppressDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 document.addEventListener(eventName, suppressDefaults, false);
             });
             document.addEventListener('dragenter', () => dropOverlay.classList.remove('hidden'));
@@ -1164,7 +1258,7 @@ limitations under the License.
             document.addEventListener('keydown', (e) => {
                 const tag = (e.target && (e.target.tagName || '')).toLowerCase();
                 if (tag === 'input' || tag === 'textarea' || e.ctrlKey || e.metaKey || e.altKey) return;
-                switch(e.code){
+                switch (e.code) {
                     case 'Space':
                         e.preventDefault();
                         playPauseHandler();
@@ -1197,7 +1291,7 @@ limitations under the License.
                 try {
                     await initDB();
                     await loadDataFromDB();
-                } catch(error) {
+                } catch (error) {
                     console.error("No se pudo inicializar la app:", error);
                     playlistElement.innerHTML = `<li class="p-3 text-red-500 text-center">Error al cargar la base de datos.</li>`;
                 }
@@ -1207,4 +1301,5 @@ limitations under the License.
         });
     </script>
 </body>
+
 </html>

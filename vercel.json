@@ -1,16 +1,13 @@
 {
   "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/apps/gold/assets/$1" },
     { "source": "/dashboard", "destination": "/apps/gold/dashboard/index.html" },
-
+    { "source": "/dashboard/:path*", "destination": "/apps/gold/dashboard/index.html" },
     { "source": "/academia", "destination": "/apps/academia/index.html" },
-    { "source": "/academia/(.*)", "destination": "/apps/academia/$1" },
-
+    { "source": "/academia/:path*", "destination": "/apps/academia/index.html" },
     { "source": "/suite", "destination": "/apps/suite/index.html" },
-    { "source": "/suite/(.*)", "destination": "/apps/suite/$1" },
-
+    { "source": "/suite/:path*", "destination": "/apps/suite/index.html" },
     { "source": "/", "destination": "/apps/gold/index.html" }
   ],
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false
 }
