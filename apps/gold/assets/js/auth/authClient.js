@@ -111,9 +111,12 @@ const authClient = {
         } catch (e) { return null; }
     },
 
-    // --- SMART AUTH GUARD V9.3 ---
+    // --- SMART AUTH GUARD V9.4 (ANTI-LOOP ENHANCED) ---
     PROTECTED_PREFIXES: ["/dashboard", "/academia", "/suite", "/herramientas",
         "/apps/gold/dashboard", "/apps/academia", "/apps/suite", "/apps/herramientas"],
+
+    _authGuardInitialized: false,
+    _isRedirecting: false,  // Lock para evitar múltiples redirects
 
     _normalizePath(p) { return (p || "").replace(/\/+$/, "") || "/"; },
     _currentPath() { return this._normalizePath(window.location.pathname); },
@@ -127,51 +130,88 @@ const authClient = {
     },
 
     async _enforceAuth() {
+        // Evitar múltiples redirects simultáneos
+        if (this._isRedirecting) {
+            console.log('[AuthGuard] ⏳ Redirect en curso, ignorando...');
+            return;
+        }
+
         const { data } = await this.supabase.auth.getSession();
         const session = data?.session;
         const path = this._currentPath();
 
+        console.log('[AuthGuard] enforce()', { path, hasSession: !!session });
+
         // Intruso en área protegida -> Login
         if (this._isProtected(path) && !session) {
+            this._isRedirecting = true;
             sessionStorage.setItem("__returnTo", window.location.href);
+            console.log('[AuthGuard] REDIRECT -> / (protected-no-session)');
             window.location.replace("/");
             return;
         }
+
         // Usuario logueado en Home -> Dashboard (o returnTo)
         if (this._isAuthEntry(path) && session) {
+            this._isRedirecting = true;
             this._processSession(session);
             const returnTo = sessionStorage.getItem("__returnTo");
             sessionStorage.removeItem("__returnTo");
-            window.location.replace(returnTo || "/dashboard");
+            const dest = returnTo || "/dashboard";
+            console.log('[AuthGuard] REDIRECT ->', dest, '(already-logged-in)');
+            window.location.replace(dest);
         }
     },
 
     _setupAuthListener() {
         if (!this.supabase) return;
 
-        // Listener filtrado para evitar bucles móviles
-        this.supabase.auth.onAuthStateChange((event, session) => {
-            console.log(`[AuthClient] 🔔 Evento: ${event}`);
+        // Evitar doble inicialización (Race Condition Fix)
+        if (this._authGuardInitialized) {
+            console.log('[AuthGuard] ⚠️ Ya inicializado, ignorando...');
+            return;
+        }
+        this._authGuardInitialized = true;
+        console.log('[AuthGuard] 🛡️ Smart AuthGuard V9.4 inicializado');
 
-            if (event === "SIGNED_OUT" && this._isProtected(this._currentPath())) {
-                window.location.replace("/");
+        // Listener INTELIGENTE: Solo actúa en contextos específicos
+        this.supabase.auth.onAuthStateChange((event, session) => {
+            const path = this._currentPath();
+            console.log(`[AuthGuard] 🔔 Evento: ${event} (path: ${path})`);
+
+            // SIGNED_OUT en área protegida -> Login
+            if (event === "SIGNED_OUT" && this._isProtected(path)) {
+                if (!this._isRedirecting) {
+                    this._isRedirecting = true;
+                    window.location.replace("/");
+                }
                 return;
             }
 
-            // Procesar sesión en eventos relevantes
+            // Procesar sesión en eventos relevantes (SIN redirigir)
             if (['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(event) && session) {
                 this._processSession(session);
             }
 
-            // Solo redirigir a SIGNED_IN si estamos en la puerta (Home)
-            if (event === "SIGNED_IN" && this._isAuthEntry(this._currentPath())) {
+            // CRÍTICO: Solo redirigir en SIGNED_IN si estamos en Home/Login
+            // Si ya estamos dentro de un módulo, IGNORAR para evitar bucles
+            if (event === "SIGNED_IN" && this._isAuthEntry(path) && !this._isRedirecting) {
                 this._enforceAuth();
             }
         });
 
-        // Chequeo inicial y al volver de segundo plano (bfcache móvil)
-        this._enforceAuth();
-        window.addEventListener("pageshow", (e) => { if (e.persisted) this._enforceAuth(); });
+        // Chequeo inicial (solo si no estamos ya redirigiendo)
+        if (!this._isRedirecting) {
+            this._enforceAuth();
+        }
+
+        // Fix para iOS/Safari (Back/Forward Cache)
+        window.addEventListener("pageshow", (e) => {
+            if (e.persisted && !this._isRedirecting) {
+                console.log('[AuthGuard] 📱 pageshow (bfcache)');
+                this._enforceAuth();
+            }
+        });
     },
 
     _processSession(session) {
