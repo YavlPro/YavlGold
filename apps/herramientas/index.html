@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Herramientas - YavlGold</title>
-  <meta name="description" content="Herramientas profesionales para trading e inversión en criptomonedas. Calculadoras, conversores y análisis de mercado para maximizar tus ganancias.">
-  <meta name="keywords" content="herramientas cripto, calculadora trading, conversor criptomonedas, análisis mercado, YavlGold">
+  <meta name="description"
+    content="Herramientas profesionales para trading e inversión en criptomonedas. Calculadoras, conversores y análisis de mercado para maximizar tus ganancias.">
+  <meta name="keywords"
+    content="herramientas cripto, calculadora trading, conversor criptomonedas, análisis mercado, YavlGold">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://yavlgold.com/herramientas/">
 
@@ -14,21 +17,21 @@
   <meta property="og:url" content="https://yavlgold.com/herramientas/">
   <meta property="og:title" content="Herramientas Profesionales - YavlGold">
   <meta property="og:description" content="Herramientas avanzadas para trading e inversión en criptomonedas">
-  <meta property="og:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+  <meta property="og:image" content="https://yavlgold.com/brand/logo.webp">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://yavlgold.com/herramientas/">
   <meta property="twitter:title" content="Herramientas Profesionales - YavlGold">
   <meta property="twitter:description" content="Herramientas avanzadas para trading e inversión en criptomonedas">
-  <meta property="twitter:image" content="https://yavlgold.com/assets/brand/og-cover.png">
+  <meta property="twitter:image" content="https://yavlgold.com/brand/logo.webp">
 
   <!-- Favicon -->
-  <link rel="icon" href="/assets/images/logo.png" type="image/png">
-  <link rel="alternate icon" href="/assets/images/logo.png" sizes="32x32">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <link rel="icon" href="/brand/logo.webp" type="image/webp">
+  <link rel="alternate icon" href="/brand/logo.webp" sizes="32x32">
+  <link rel="apple-touch-icon" href="/brand/logo.webp">
   <meta name="theme-color" content="#0B0C0F">
-  
+
   <!-- Schema.org structured data -->
   <script type="application/ld+json">
   {
@@ -36,7 +39,7 @@
   "@type": "Organization",
   "name": "YavlGold",
   "url": "https://yavlgold.com",
-  "logo": "https://yavlgold.com/assets/images/logo.png",
+  "logo": "https://yavlgold.com/brand/logo.webp",
   "description": "Academia y herramientas educativas en blockchain y finanzas digitales",
     "foundingDate": "2024",
     "founder": {
@@ -57,20 +60,22 @@
     }
   }
   </script>
-  
+
   <!-- Hoja unificada de CSS -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css">
-  
+  <link rel="stylesheet" href="../gold/assets/css/style.css">
+
   <!-- Fuentes y librerías -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <!-- Protección de acceso - Ejecutar antes de mostrar contenido -->
   <script>
-    (function() {
+    (function () {
       // Verificar si hay sesión de Supabase
       function checkSupabaseSession() {
         try {
@@ -104,15 +109,18 @@
       }
     })();
   </script>
-  
+
   <style>
     /* --- VARIABLES DEL SISTEMA DE DISEÑO --- */
     :root {
       --color-primary: #111111;
-      --color-secondary: #C8A752;  /* Dorado principal */
-      --color-accent: #C8A752;     /* Dorado secundario */
+      --color-secondary: #C8A752;
+      /* Dorado principal */
+      --color-accent: #C8A752;
+      /* Dorado secundario */
       --bg-dark: #0a0a0a;
-      --bg-darker: #0B0C0F;        /* Negro de fondo */
+      --bg-darker: #0B0C0F;
+      /* Negro de fondo */
       --text-light: #e2e8f0;
       --text-muted: #94a3b8;
       --card-bg: rgba(17, 17, 17, 0.9);
@@ -124,13 +132,13 @@
       --border-radius: 15px;
       --transition: all 0.3s ease;
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       font-family: 'Montserrat', sans-serif;
       background: var(--bg-darker);
@@ -139,7 +147,7 @@
       scroll-behavior: smooth;
       overflow-x: hidden;
     }
-    
+
     /* --- FONDO MODERNO CON EFECTOS --- */
     body::before {
       content: '';
@@ -148,15 +156,15 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
+      background:
         radial-gradient(circle at 20% 80%, rgba(200, 167, 82, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(200, 167, 82, 0.05) 0%, transparent 50%),
         radial-gradient(circle at 40% 40%, rgba(17, 17, 17, 0.1) 0%, transparent 50%);
       z-index: -1;
     }
-    
+
     /* Header, navegación y botones están unificados en /assets/css/unificacion.css */
-    
+
     /* --- HERO SECTION MEJORADO --- */
     .hero {
       text-align: center;
@@ -171,7 +179,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .hero::before {
       content: '';
       position: absolute;
@@ -179,16 +187,23 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
+      background:
         radial-gradient(circle at 50% 50%, rgba(200, 167, 82, 0.1) 0%, transparent 70%);
       animation: pulse 8s infinite alternate;
     }
-    
+
     @keyframes pulse {
-      0% { opacity: 0.3; transform: scale(1); }
-      100% { opacity: 0.6; transform: scale(1.1); }
+      0% {
+        opacity: 0.3;
+        transform: scale(1);
+      }
+
+      100% {
+        opacity: 0.6;
+        transform: scale(1.1);
+      }
     }
-    
+
     .logo-hero {
       width: 140px;
       height: 140px;
@@ -202,14 +217,14 @@
       z-index: 2;
       box-shadow: 0 0 30px rgba(200, 167, 82, 0.3);
     }
-    
+
     .logo-hero img {
       width: 100%;
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
     }
-    
+
     .hero h1 {
       font-family: 'Playfair Display', serif;
       font-size: 4.5rem;
@@ -226,7 +241,7 @@
       z-index: 2;
       text-shadow: 0 0 30px rgba(200, 167, 82, 0.5);
     }
-    
+
     .hero p {
       font-size: 1.3rem;
       max-width: 700px;
@@ -237,13 +252,19 @@
       z-index: 2;
       font-weight: 300;
     }
-    
-    .cta-buttons { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
-    
+
+    .cta-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
     /* Botones: usar .btn, .btn-primary, .btn-secondary de unificacion.css */
-    
+
     /* Secciones/cards: usar .section, .section-title, .tools-grid, .tool-card de unificacion.css */
-    
+
     /* --- SECCIÓN ACADEMIA --- */
     .academy-modules {
       display: grid;
@@ -251,7 +272,7 @@
       gap: 25px;
       margin-top: 40px;
     }
-    
+
     .module-card {
       background: var(--card-bg);
       padding: 25px;
@@ -266,24 +287,24 @@
       flex-direction: column;
       justify-content: space-between;
     }
-    
+
     .module-card:hover {
       border-color: var(--color-secondary);
       transform: translateY(-8px);
       box-shadow: 0 10px 25px rgba(200, 167, 82, 0.2);
     }
-    
+
     .module-icon {
       font-size: 3em;
       margin-bottom: 20px;
       color: var(--color-secondary);
     }
-    
+
     /* --- ROADMAP --- */
     .roadmap {
       margin: 50px 0;
     }
-    
+
     .roadmap-phase {
       background: var(--card-bg);
       padding: 30px;
@@ -293,11 +314,11 @@
       backdrop-filter: blur(10px);
       transition: var(--transition);
     }
-    
+
     .roadmap-phase:hover {
       transform: translateX(5px);
     }
-    
+
     .roadmap-phase h3 {
       color: var(--color-secondary);
       margin-bottom: 20px;
@@ -306,23 +327,23 @@
       gap: 15px;
       font-family: 'Playfair Display', serif;
     }
-    
+
     .roadmap-phase ul {
       padding-left: 25px;
     }
-    
+
     .roadmap-phase li {
       margin-bottom: 10px;
       position: relative;
     }
-    
+
     .roadmap-phase li::before {
       content: '✦';
       color: var(--color-secondary);
       position: absolute;
       left: -20px;
     }
-    
+
     /* --- COMUNIDAD --- */
     .community-section {
       text-align: center;
@@ -333,7 +354,7 @@
       border: 1px solid var(--color-secondary);
       backdrop-filter: blur(10px);
     }
-    
+
     .social-links {
       display: flex;
       justify-content: center;
@@ -341,7 +362,7 @@
       flex-wrap: wrap;
       margin-top: 30px;
     }
-    
+
     .social-link {
       color: var(--color-secondary);
       text-decoration: none;
@@ -355,13 +376,13 @@
       gap: 10px;
       backdrop-filter: blur(10px);
     }
-    
+
     .social-link:hover {
       background: rgba(200, 167, 82, 0.3);
       transform: translateY(-3px);
       box-shadow: 0 5px 15px rgba(200, 167, 82, 0.2);
     }
-    
+
     /* --- SECCIÓN CONTACTO (NUEVA) --- */
     .contact-section {
       text-align: center;
@@ -372,14 +393,14 @@
       border: 1px solid var(--color-secondary);
       backdrop-filter: blur(10px);
     }
-    
+
     .contact-methods {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 30px;
       margin-top: 40px;
     }
-    
+
     .contact-method {
       background: rgba(255, 255, 255, 0.05);
       padding: 30px;
@@ -388,30 +409,30 @@
       transition: var(--transition);
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .contact-method:hover {
       border-color: var(--color-secondary);
       transform: translateY(-5px);
     }
-    
+
     .contact-icon {
       font-size: 3rem;
       color: var(--color-secondary);
       margin-bottom: 20px;
     }
-    
+
     .contact-method h3 {
       margin-bottom: 15px;
       color: var(--text-light);
     }
-    
+
     .contact-method p {
       color: var(--text-muted);
       margin-bottom: 20px;
     }
-    
+
     /* Footer: usar estilos de unificacion.css */
-    
+
     /* --- BOTÓN FLOTANTE WHATSAPP --- */
     #wafloat {
       position: fixed;
@@ -431,29 +452,29 @@
       box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
       transition: var(--transition);
     }
-    
+
     #wafloat:hover {
       transform: scale(1.1);
       box-shadow: 0 6px 25px rgba(37, 211, 102, 0.6);
     }
-    
+
     /* --- MODAL DE AUTENTICACIÓN MEJORADO --- */
     #modal-overlay {
       display: none;
       position: fixed;
-      top: 0; 
+      top: 0;
       left: 0;
-      width: 100%; 
+      width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.8);
       z-index: 9999;
       backdrop-filter: blur(5px);
     }
-    
+
     .modal {
       display: none;
       position: fixed;
-      top: 50%; 
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 90%;
@@ -465,17 +486,17 @@
       max-height: 90vh;
       overflow-y: auto;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(20px);
     }
-    
+
     .modal-header {
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-bottom: 20px;
     }
-    
+
     .modal-logo {
       width: 60px;
       height: 60px;
@@ -484,9 +505,9 @@
       border: 2px solid var(--color-secondary);
       margin-bottom: 15px;
     }
-    
-    .modal-header h2 { 
-      margin: 0; 
+
+    .modal-header h2 {
+      margin: 0;
       color: transparent;
       background: var(--gradient-gold);
       -webkit-background-clip: text;
@@ -494,7 +515,7 @@
       font-family: 'Playfair Display', serif;
       text-align: center;
     }
-    
+
     .close-modal-btn {
       position: absolute;
       top: 15px;
@@ -512,18 +533,18 @@
       border-radius: 50%;
       transition: var(--transition);
     }
-    
+
     .close-modal-btn:hover {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       color: var(--color-secondary);
     }
-    
+
     .auth-tabs {
       display: flex;
       border-bottom: 2px solid rgba(255, 255, 255, 0.1);
       margin-bottom: 25px;
     }
-    
+
     .auth-tab {
       flex: 1;
       text-align: center;
@@ -534,24 +555,24 @@
       transition: var(--transition);
       border-bottom: 3px solid transparent;
     }
-    
+
     .auth-tab.active {
       color: var(--color-secondary);
       border-bottom-color: var(--color-secondary);
     }
-    
-    .auth-form { 
-      display: none; 
+
+    .auth-form {
+      display: none;
     }
-    
-    .auth-form.active { 
-      display: block; 
+
+    .auth-form.active {
+      display: block;
     }
-    
-    .form-group { 
+
+    .form-group {
       margin-bottom: 20px;
     }
-    
+
     label {
       display: block;
       margin-bottom: 8px;
@@ -559,8 +580,10 @@
       color: var(--color-secondary);
       font-family: 'Montserrat', sans-serif;
     }
-    
-    input, select, textarea {
+
+    input,
+    select,
+    textarea {
       padding: 14px;
       width: 100%;
       border-radius: 10px;
@@ -571,26 +594,28 @@
       transition: var(--transition);
       font-family: 'Montserrat', sans-serif;
     }
-    
-    input:focus, select:focus, textarea:focus {
+
+    input:focus,
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: var(--color-secondary);
       box-shadow: 0 0 0 2px rgba(200, 167, 82, 0.2);
       background: rgba(255, 255, 255, 0.08);
     }
-    
-    .password-container { 
-      position: relative; 
+
+    .password-container {
+      position: relative;
       display: flex;
       align-items: center;
     }
-    
+
     .password-container input {
       padding-right: 50px;
       width: 100%;
       margin: 0;
     }
-    
+
     .toggle-password {
       position: absolute;
       right: 5px;
@@ -609,12 +634,12 @@
       height: 40px;
       transition: var(--transition);
     }
-    
+
     .toggle-password:hover {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       color: var(--color-secondary);
     }
-    
+
     .password-strength {
       height: 6px;
       margin-top: 8px;
@@ -622,11 +647,22 @@
       transition: var(--transition);
       width: 0%;
     }
-    
-    .strength-weak { background: var(--error-color); width: 33%; }
-    .strength-medium { background: var(--warning-color); width: 66%; }
-    .strength-strong { background: var(--success-color); width: 100%; }
-    
+
+    .strength-weak {
+      background: var(--error-color);
+      width: 33%;
+    }
+
+    .strength-medium {
+      background: var(--warning-color);
+      width: 66%;
+    }
+
+    .strength-strong {
+      background: var(--success-color);
+      width: 100%;
+    }
+
     /* --- NOTIFICACIONES --- */
     .notification {
       position: fixed;
@@ -641,62 +677,104 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       max-width: 400px;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
-    .notification-success { background: var(--success-color); }
-    .notification-error { background: var(--error-color); }
-    .notification-warning { background: var(--warning-color); }
-    .notification-info { background: var(--color-primary); }
-    
+
+    .notification-success {
+      background: var(--success-color);
+    }
+
+    .notification-error {
+      background: var(--error-color);
+    }
+
+    .notification-warning {
+      background: var(--warning-color);
+    }
+
+    .notification-info {
+      background: var(--color-primary);
+    }
+
     @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
-    
+
     @keyframes shimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
     }
-    
+
     /* --- RESPONSIVE --- */
     @media (max-width: 768px) {
-      .hero h1 { font-size: 3rem; }
-      .hero p { font-size: 1.1rem; }
-      .cta-buttons { flex-direction: column; align-items: center; }
-      .btn { width: 100%; max-width: 280px; }
-      .contact-methods { grid-template-columns: 1fr; }
+      .hero h1 {
+        font-size: 3rem;
+      }
+
+      .hero p {
+        font-size: 1.1rem;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn {
+        width: 100%;
+        max-width: 280px;
+      }
+
+      .contact-methods {
+        grid-template-columns: 1fr;
+      }
     }
-    
+
     @media (min-width: 769px) {
       #wafloat {
         display: none;
       }
     }
-    
+
     @media (max-width: 480px) {
       .hero h1 {
         font-size: 2.5rem;
       }
-      
+
       .main-nav {
         gap: 15px;
         font-size: 0.9rem;
       }
-      
+
       .auth-buttons {
         flex-direction: column;
         gap: 10px;
       }
-      
+
       .section-title h2 {
         font-size: 2rem;
       }
-      
+
       .modal {
         padding: 20px;
         width: 95%;
@@ -704,14 +782,15 @@
     }
   </style>
 </head>
+
 <body>
   <!-- Header con navegación profesional -->
   <header class="gg-header">
     <a class="brand" href="/">
-  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
-  <span>YavlGold</span>
+      <img src="/brand/logo.webp" alt="YavlGold" class="logo" />
+      <span>YavlGold</span>
     </a>
-    
+
     <!-- ##### MENÚ DE NAVEGACIÓN ACTUALIZADO ##### -->
     <nav class="main-nav">
       <a href="/herramientas/" class="active" data-protected="true">Herramientas</a>
@@ -719,7 +798,7 @@
       <a href="/go/telegram.html">Comunidad</a>
       <a href="/dashboard/" data-protected="true">Dashboard</a>
     </nav>
-    
+
     <div class="auth-buttons" id="auth-buttons">
       <!-- Theme Toggle Button -->
       <button id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">
@@ -729,17 +808,24 @@
     </div>
   </header>
 
+  <!-- Scripts -->
+  <script type="module" src="../gold/assets/js/auth/authClient.js"></script>
+  <script type="module" src="../gold/assets/js/auth/authUI.js"></script>
+  <script type="module" src="../gold/assets/js/auth/authGuard.js"></script>
+  <script type="module" src="../gold/assets/js/script.js"></script>
+
   <!-- Hero Section -->
   <section class="hero" id="home">
     <div class="logo-hero">
-  <img src="/assets/images/logo.png" alt="YavlGold Logo">
+      <img src="/brand/logo.webp" alt="YavlGold Logo">
     </div>
     <h1>Herramientas Pro</h1>
-    <p>Calculadoras avanzadas, conversores y análisis de mercado para tomar decisiones informadas en el mundo cripto.</p>
-    
+    <p>Calculadoras avanzadas, conversores y análisis de mercado para tomar decisiones informadas en el mundo cripto.
+    </p>
+
     <div class="cta-buttons">
-  <a href="/herramientas/calculadora.html" class="btn btn-primary" data-protected="true">Calculadora</a>
-  <a href="/herramientas/conversor.html" class="btn btn-secondary" data-protected="true">Conversor Cripto</a>
+      <a href="/herramientas/calculadora.html" class="btn btn-primary" data-protected="true">Calculadora</a>
+      <a href="/herramientas/conversor.html" class="btn btn-secondary" data-protected="true">Conversor Cripto</a>
     </div>
   </section>
 
@@ -749,22 +835,22 @@
       <h2>Nuestras Herramientas</h2>
       <p>Potencia tu trading con nuestras herramientas profesionales.</p>
     </div>
-    
+
     <div class="tools-grid">
       <div class="tool-card">
         <div class="tool-icon"><i class="fas fa-calculator"></i></div>
         <h3>Calculadora de Inversión</h3>
         <p>Calcula ganancias, pérdidas y proyecciones de inversión con precisión.</p>
-  <a href="/herramientas/calculadora.html" class="btn btn-secondary" data-protected="true">Usar Calculadora</a>
+        <a href="/herramientas/calculadora.html" class="btn btn-secondary" data-protected="true">Usar Calculadora</a>
       </div>
-      
+
       <div class="tool-card">
         <div class="tool-icon"><i class="fas fa-exchange-alt"></i></div>
         <h3>Conversor de Divisas</h3>
         <p>Convierte entre criptomonedas y monedas fiat en tiempo real.</p>
-  <a href="/herramientas/conversor.html" class="btn btn-secondary" data-protected="true">Usar Conversor</a>
+        <a href="/herramientas/conversor.html" class="btn btn-secondary" data-protected="true">Usar Conversor</a>
       </div>
-      
+
       <div class="tool-card">
         <div class="tool-icon"><i class="fas fa-chart-line"></i></div>
         <h3>Análisis de Mercado</h3>
@@ -773,16 +859,16 @@
       </div>
     </div>
   </section>
-  
+
   <!-- Footer -->
   <footer>
     <div class="footer-brand">
-  <img src="/assets/images/logo.png" alt="YavlGold" class="footer-logo">
-  <span>YavlGold</span>
+      <img src="/brand/logo.svg" alt="YavlGold" class="footer-logo">
+      <span>YavlGold</span>
     </div>
-    
+
     <p>Ecosistema Global Innovador en Cripto</p>
-    
+
     <div class="footer-links">
       <a href="#herramientas">Herramientas</a>
       <a href="#academia">Academia</a>
@@ -790,12 +876,12 @@
       <a href="/dashboard/" data-protected="true">Dashboard</a>
       <a href="#contacto">Contacto</a>
     </div>
-    
+
     <div class="copyright">
-  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+      <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
-  
+
   <!-- Botón de WhatsApp flotante para móviles -->
   <a id="wafloat" href="https://wa.me/584247394025" target="_blank" aria-label="Contactar por WhatsApp">
     <i class="fab fa-whatsapp"></i>
@@ -805,17 +891,17 @@
   <div id="modal-overlay"></div>
   <div class="modal" id="auth-modal">
     <button class="close-modal-btn" onclick="closeAuthModal()">&times;</button>
-    
+
     <div class="modal-header">
-  <img src="/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
+      <img src="/assets/images/logo.png" alt="YavlGold Logo" class="modal-logo">
       <h2 id="modal-title">Bienvenido</h2>
     </div>
-    
+
     <div class="auth-tabs">
       <div class="auth-tab active" id="login-tab" onclick="switchAuthTab('login')">Iniciar Sesión</div>
       <div class="auth-tab" id="register-tab" onclick="switchAuthTab('register')">Registrarse</div>
     </div>
-    
+
     <!-- Formulario de Login -->
     <form class="auth-form active" id="login-form">
       <div class="form-group">
@@ -826,12 +912,13 @@
         <label for="password">Contraseña</label>
         <div class="password-container">
           <input type="password" id="password" name="password" required>
-          <button type="button" class="toggle-password" onclick="togglePassword('password')"><i class="fas fa-eye"></i></button>
+          <button type="button" class="toggle-password" onclick="togglePassword('password')"><i
+              class="fas fa-eye"></i></button>
         </div>
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
     </form>
-    
+
     <!-- Formulario de Registro -->
     <form class="auth-form" id="register-form">
       <div class="form-group">
@@ -846,30 +933,27 @@
         <label for="register-password">Contraseña</label>
         <div class="password-container">
           <input type="password" id="register-password" required onkeyup="checkPasswordStrength(this.value)">
-          <button type="button" class="toggle-password" onclick="togglePasswordVisibility('register-password')"><i class="fas fa-eye"></i></button>
+          <button type="button" class="toggle-password" onclick="togglePasswordVisibility('register-password')"><i
+              class="fas fa-eye"></i></button>
         </div>
         <div class="password-strength" id="password-strength-bar"></div>
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Cuenta</button>
     </form>
   </div>
-  
+
   <!-- Scripts -->
-  <script src="/assets/js/themeManager.js"></script>
-  <script src="/assets/js/auth/authClient.js"></script>
-  <script src="/assets/js/auth/authUI.js"></script>
-  <script src="/assets/js/auth/authGuard.js"></script>
-  <script src="/assets/js/script.js"></script>
-  
+
+
   <script>
     // Inicializar el botón de cambio de tema
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       if (window.ThemeManager) {
         ThemeManager.setupToggleButton('theme-toggle');
       }
     });
   </script>
-  
+
   <script>
     // Modal control functions
     function showAuthModal(tab) {
@@ -883,7 +967,7 @@
         }
       }
     }
-    
+
     function hideAuthModal() {
       const overlay = document.getElementById('modal-overlay');
       const modal = document.getElementById('auth-modal');
@@ -896,18 +980,18 @@
         history.replaceState(null, null, window.location.pathname);
       }
     }
-    
+
     function closeAuthModal() {
       hideAuthModal();
     }
-    
+
     function setAuthTab(tab) {
       const loginTab = document.getElementById('login-tab');
       const registerTab = document.getElementById('register-tab');
       const loginForm = document.getElementById('login-form');
       const registerForm = document.getElementById('register-form');
       const modalTitle = document.getElementById('modal-title');
-      
+
       if (tab === 'login') {
         loginTab?.classList.add('active');
         registerTab?.classList.remove('active');
@@ -922,11 +1006,11 @@
         if (modalTitle) modalTitle.textContent = 'Registrarse';
       }
     }
-    
+
     function switchAuthTab(tab) {
       setAuthTab(tab);
     }
-    
+
     function togglePassword(inputId) {
       const input = document.getElementById(inputId);
       const icon = input?.parentElement?.querySelector('.toggle-password i');
@@ -940,24 +1024,24 @@
         }
       }
     }
-    
+
     function togglePasswordVisibility(inputId) {
       togglePassword(inputId);
     }
-    
+
     function checkPasswordStrength(password) {
       const bar = document.getElementById('password-strength-bar');
       if (!bar) return;
-      
+
       let strength = 0;
       if (password.length >= 8) strength++;
       if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
       if (/\d/.test(password)) strength++;
       if (/[^a-zA-Z\d]/.test(password)) strength++;
-      
+
       const colors = ['#ef4444', '#f59e0b', '#eab308', '#10b981'];
       const widths = ['25%', '50%', '75%', '100%'];
-      
+
       if (password.length > 0) {
         bar.style.width = widths[strength - 1] || '0%';
         bar.style.background = colors[strength - 1] || '#ef4444';
@@ -968,7 +1052,7 @@
         bar.style.width = '0%';
       }
     }
-    
+
     // Hash change handler for deep linking
     function handleHashChange() {
       const hash = window.location.hash.substring(1); // Remove '#'
@@ -976,14 +1060,15 @@
         showAuthModal(hash);
       }
     }
-    
+
     // Close modal when clicking overlay
     document.getElementById('modal-overlay')?.addEventListener('click', hideAuthModal);
-    
+
     // Handle hash on page load and hash changes
     window.addEventListener('hashchange', handleHashChange);
     document.addEventListener('DOMContentLoaded', handleHashChange);
   </script>
-  
+
 </body>
+
 </html>
