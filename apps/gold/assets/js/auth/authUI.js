@@ -106,9 +106,17 @@ const AuthUI = {
       console.log('[AuthUI] 🔔 Evento SIGNED_IN recibido');
       this.updateUI();
       this.hideAuthModal();
-      if (!window.location.pathname.includes('/dashboard')) {
+
+      // SOLO redirigir si estamos en Login/Home, NO desde módulos
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/' ||
+        currentPath === '/index.html' ||
+        currentPath.endsWith('/gold/index.html');
+
+      if (isLoginPage) {
         setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
       }
+      // Si estamos en /academia, /suite, /herramientas, /dashboard - NO hacer nada
     });
 
     window.addEventListener('auth:initial_session', () => {
