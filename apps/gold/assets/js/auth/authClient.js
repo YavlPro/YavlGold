@@ -111,27 +111,67 @@ const authClient = {
         } catch (e) { return null; }
     },
 
+    // --- SMART AUTH GUARD V9.3 ---
+    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/suite", "/herramientas",
+        "/apps/gold/dashboard", "/apps/academia", "/apps/suite", "/apps/herramientas"],
+
+    _normalizePath(p) { return (p || "").replace(/\/+$/, "") || "/"; },
+    _currentPath() { return this._normalizePath(window.location.pathname); },
+
+    _isProtected(path) {
+        return this.PROTECTED_PREFIXES.some(prefix => path.includes(prefix));
+    },
+
+    _isAuthEntry(path) {
+        return path === "/" || path === "/index.html" || path.endsWith("/gold/index.html");
+    },
+
+    async _enforceAuth() {
+        const { data } = await this.supabase.auth.getSession();
+        const session = data?.session;
+        const path = this._currentPath();
+
+        // Intruso en área protegida -> Login
+        if (this._isProtected(path) && !session) {
+            sessionStorage.setItem("__returnTo", window.location.href);
+            window.location.replace("/");
+            return;
+        }
+        // Usuario logueado en Home -> Dashboard (o returnTo)
+        if (this._isAuthEntry(path) && session) {
+            this._processSession(session);
+            const returnTo = sessionStorage.getItem("__returnTo");
+            sessionStorage.removeItem("__returnTo");
+            window.location.replace(returnTo || "/dashboard");
+        }
+    },
+
     _setupAuthListener() {
         if (!this.supabase) return;
+
+        // Listener filtrado para evitar bucles móviles
         this.supabase.auth.onAuthStateChange((event, session) => {
             console.log(`[AuthClient] 🔔 Evento: ${event}`);
-            if (['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(event)) {
-                if (session) {
-                    this._processSession(session);
-                    const currentPath = window.location.pathname;
-                    // Solo redirigir si está en Home, Login o Raíz pública
-                    const isPublicPage = currentPath === '/' ||
-                        currentPath === '/index.html' ||
-                        (currentPath.includes('apps/gold') && !currentPath.includes('dashboard'));
 
-                    if (isPublicPage) {
-                        window.location.href = '/apps/gold/dashboard/index.html';
-                    }
-                }
-            } else if (event === 'SIGNED_OUT') {
-                this.logout();
+            if (event === "SIGNED_OUT" && this._isProtected(this._currentPath())) {
+                window.location.replace("/");
+                return;
+            }
+
+            // Procesar sesión en eventos relevantes
+            if (['SIGNED_IN', 'TOKEN_REFRESHED', 'INITIAL_SESSION'].includes(event) && session) {
+                this._processSession(session);
+            }
+
+            // Solo redirigir a SIGNED_IN si estamos en la puerta (Home)
+            if (event === "SIGNED_IN" && this._isAuthEntry(this._currentPath())) {
+                this._enforceAuth();
             }
         });
+
+        // Chequeo inicial y al volver de segundo plano (bfcache móvil)
+        this._enforceAuth();
+        window.addEventListener("pageshow", (e) => { if (e.persisted) this._enforceAuth(); });
     },
 
     _processSession(session) {
