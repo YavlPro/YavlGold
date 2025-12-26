@@ -1,6 +1,9 @@
 /**
  * YAVLGOLD - AUTH UI v2.0.1
  */
+// YAVLGOLD - AUTH UI v2.0.1
+import logoWebp from '../../images/logo.webp';
+
 const AuthUI = {
   elements: {},
   isRecoveryMode: false,
@@ -477,7 +480,7 @@ const AuthUI = {
         if (btn) {
           btn.disabled = true;
           if (logoBox) { // Only update if logoBox exists
-            logoBox.innerHTML = '<img src="/brand/breathing.webp" alt="YavlGold" style="width: 80px; height: 80px;">';
+            logoBox.innerHTML = `<img src="${logoWebp}" alt="YavlGold" style="width: 80px; height: 80px;">`;
           }
           btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
         }
