@@ -67,6 +67,7 @@ body {
 .main-nav a:hover, .main-nav a.active { color: var(--color-secondary); }
 .main-nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gradient-gold); transition: width .3s; }
 .main-nav a:hover::after, .main-nav a.active::after { width: 100%; }
+.main-nav a.nav-disabled { color: var(--text-muted); opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .auth-buttons { display: flex; gap: 12px; align-items: center; }
 
 /* Botones de autenticación específicos */
@@ -234,33 +235,33 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
     width: 50px;
     height: 50px;
   }
-  
+
   /* Header responsive */
   .gg-header {
     padding: 12px 4%;
   }
-  
+
   /* Ocultar navegación en móvil (mostrar hamburger en futuro) */
   .main-nav {
     display: none;
   }
-  
+
   /* Botones de auth en móvil - más compactos */
   .auth-buttons {
     gap: 8px;
   }
-  
+
   .btn-login,
   .btn-register {
     padding: 8px 12px;
     font-size: 0.85rem;
   }
-  
+
   .btn-login i,
   .btn-register i {
     display: none; /* Ocultar iconos en móvil para ahorrar espacio */
   }
-  
+
   /* User menu en móvil - mostrar solo avatar */
   .user-menu-btn span {
     display: none;
@@ -404,7 +405,7 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
     gap: 4px;
     padding: 3px;
   }
-  
+
   .theme-emoji-btn {
     width: 32px;
     height: 32px;

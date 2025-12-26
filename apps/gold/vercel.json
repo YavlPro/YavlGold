@@ -36,5 +36,13 @@
         }
       ]
     }
+  ],
+  "routes": [
+    { "src": "^/academia/?$", "dest": "/apps/academia/index.html" },
+    { "src": "^/academia/(.*)$", "dest": "/apps/academia/$1" },
+    { "src": "^/suite/?$", "dest": "/apps/suite/index.html" },
+    { "src": "^/suite/(.*)$", "dest": "/apps/suite/$1" },
+    { "src": "^/herramientas/?$", "dest": "/apps/herramientas/index.html" },
+    { "src": "^/herramientas/(.*)$", "dest": "/apps/herramientas/$1" }
   ]
 }
