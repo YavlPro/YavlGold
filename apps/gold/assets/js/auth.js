@@ -5,7 +5,7 @@
  */
 
 // ⚠️ NOTA: Este archivo debe cargarse como module:
-// <script type="module" src="/apps/gold/assets/js/auth.js"></script>
+// <script type="module" src="../assets/js/auth.js"></script>
 
 // Importar desde archivos locales (GitHub Pages compatible)
 import authClient from './auth/authClient.js';
@@ -20,27 +20,27 @@ window.AuthUI = authUI;
 console.log('[YavlGold Auth] ✅ Sistema de autenticación cargado desde @yavl/auth');
 
 // Funciones legacy (backward compatibility)
-window.checkAuth = function() {
+window.checkAuth = function () {
   return authClient.isAuthenticated();
 };
 
-window.login = async function(email, password) {
+window.login = async function (email, password) {
   return await authClient.login(email, password);
 };
 
-window.register = async function(email, password, name) {
+window.register = async function (email, password, name) {
   return await authClient.register(email, password, name);
 };
 
-window.logout = function() {
+window.logout = function () {
   authClient.logout();
 };
 
-window.showNotification = function(message, type = 'success') {
+window.showNotification = function (message, type = 'success') {
   if (type === 'success') authUI.showSuccess(message);
   else authUI.showError('generic', message);
 };
 
-window.checkProtectedPage = function() {
+window.checkProtectedPage = function () {
   return authGuard.check();
 };

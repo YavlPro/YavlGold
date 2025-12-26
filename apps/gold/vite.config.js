@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: './',
   appType: 'mpa', // Multi-Page Application - sirve index.html en subdirectorios
   build: {
     rollupOptions: {

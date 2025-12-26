@@ -112,8 +112,7 @@ const authClient = {
     },
 
     // --- SMART AUTH GUARD V9.4 (ANTI-LOOP ENHANCED) ---
-    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/suite", "/herramientas",
-        "/apps/gold/dashboard", "/apps/academia", "/apps/suite", "/apps/herramientas"],
+    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/suite", "/herramientas"],
 
     _authGuardInitialized: false,
     _isRedirecting: false,  // Lock para evitar múltiples redirects
@@ -126,7 +125,7 @@ const authClient = {
     },
 
     _isAuthEntry(path) {
-        return path === "/" || path === "/index.html" || path.endsWith("/gold/index.html");
+        return path === "/" || path === "/index.html";
     },
 
     async _enforceAuth() {

@@ -47,15 +47,15 @@ const AuthGuard = {
   },
 
   redirectToLogin(intended = null) {
-    try { if (intended && intended !== '/apps/gold/' && intended !== '/') sessionStorage.setItem('gg:redirectAfterLogin', intended); } catch (_) {}
+    try { if (intended && intended !== '/' && intended !== '/') sessionStorage.setItem('gg:redirectAfterLogin', intended); } catch (_) { }
     if (window.AuthUI?.showLoginModal) window.AuthUI.showLoginModal();
-    else { alert('Debes iniciar sesión para acceder.'); setTimeout(() => (window.location.href = '/apps/gold/'), 1500); }
+    else { alert('Debes iniciar sesión para acceder.'); setTimeout(() => (window.location.href = '/'), 1500); }
   },
 
   redirectAfterLogin() {
     const intended = sessionStorage.getItem('gg:redirectAfterLogin');
     if (intended) { sessionStorage.removeItem('gg:redirectAfterLogin'); setTimeout(() => (window.location.href = intended), 800); return; }
-    setTimeout(() => (window.location.href = '/apps/gold/dashboard/'), 800);
+    setTimeout(() => (window.location.href = '/dashboard/'), 800);
   },
 
   async hasRole(requiredRole) {
@@ -91,7 +91,7 @@ const AuthGuard = {
       console.warn(`[AuthGuard] ⛔ Rol insuficiente: ${requiredRole}`);
       if (window.AuthUI) window.AuthUI.showError('generic', 'No tienes permisos para acceder.');
       else alert('No tienes permisos para acceder.');
-      setTimeout(() => (window.location.href = '/apps/gold/dashboard/'), 1500);
+      setTimeout(() => (window.location.href = '/dashboard/'), 1500);
       return false;
     }
     return true;
@@ -134,7 +134,7 @@ const AuthGuard = {
       if (window.AuthClient?.isAuthenticated()) this.protectByRole();
     });
     window.addEventListener('auth:login', () => { this.protectLinks(); this.protectByRole(); this.redirectAfterLogin(); });
-    window.addEventListener('auth:logout', () => { this.protectLinks(); if (this.isProtectedRoute()) setTimeout(() => (window.location.href = '/apps/gold/'), 500); });
+    window.addEventListener('auth:logout', () => { this.protectLinks(); if (this.isProtectedRoute()) setTimeout(() => (window.location.href = '/'), 500); });
   },
 };
 
