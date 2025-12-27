@@ -1,321 +1,3 @@
-﻿<!--
-Copyright 2025 Yerikson Varela - Apache License 2.0
--->
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlMusic - Suite Multimedia</title>
-    <link rel="icon" type="image/webp" href="/brand/logo.webp">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.7/dist/jsmediatags.min.js"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #050505;
-            --glass-bg: rgba(20, 20, 20, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --gold-gradient: linear-gradient(135deg, #D4AF37 0%, #FDB931 50%, #D4AF37 100%);
-            --gold-text: #FDB931;
-            --gold-base: #D4AF37;
-            --text-main: #e5e5e5;
-            --primary-blue: #D4AF37;
-            --secondary-green: #FDB931;
-            --accent-orange: #C8A752;
-        }
-
-        html,
-        body {
-            height: 100%;
-            overflow: hidden;
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: var(--bg-dark) !important;
-            color: var(--text-main);
-            background-image: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.05), transparent 70%);
-        }
-
-        h1,
-        h2,
-        h3 {
-            font-family: 'Playfair Display', serif;
-        }
-
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            border-radius: 16px;
-        }
-
-        .btn-gold {
-            background: var(--gold-gradient);
-            border: none;
-            color: #000;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            padding: 10px 20px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
-        }
-
-        .btn-gold:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: var(--text-main);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-outline:hover {
-            border-color: var(--gold-text);
-            color: var(--gold-text);
-        }
-
-        .control-btn {
-            color: var(--text-main);
-            transition: all 0.2s;
-        }
-
-        .control-btn:hover {
-            color: var(--gold-text);
-            transform: scale(1.1);
-        }
-
-        .control-btn.active {
-            color: var(--gold-text);
-        }
-
-        .play-btn-main {
-            background: var(--gold-gradient);
-            color: black;
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .play-btn-main:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-        }
-
-        .input-dark,
-        .neon-select {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-main);
-            border-radius: 6px;
-            padding: 8px 12px;
-        }
-
-        .input-dark:focus,
-        .neon-select:focus {
-            outline: none;
-            border-color: var(--gold-text);
-        }
-
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-        }
-
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-            width: 100%;
-        }
-
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            background: var(--gold-text);
-            margin-top: -4px;
-            box-shadow: 0 0 8px rgba(253, 185, 49, 0.5);
-        }
-
-        input[type=range]::-webkit-slider-runnable-track {
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-        }
-
-        .neon-button {
-            display: none;
-        }
-    </style>
-</head>
-
-<body class="flex items-center justify-center p-4">
-    <div id="app-container" class="w-full max-w-6xl h-[90vh] glass-panel flex flex-col overflow-hidden relative">
-        <header class="p-4 border-b border-white/5 flex justify-between items-center bg-black/20">
-            <div class="flex items-center gap-3">
-                <img src="/brand/logo.webp" alt="YavlMusic" class="w-8 h-8">
-                <h1 class="text-2xl font-bold"
-                    style="background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    YavlMusic</h1>
-            </div>
-            <div class="text-xs text-gray-500 uppercase tracking-widest">Suite V2.0</div>
-        </header>
-        <main class="flex-grow flex flex-col md:flex-row overflow-hidden">
-            <aside class="w-full md:w-[380px] flex flex-col p-5 border-r border-white/5 bg-black/20">
-                <div id="art-container"
-                    class="aspect-square w-full bg-black/40 rounded-xl border border-white/5 mb-5 relative overflow-hidden shadow-2xl group">
-                    <div id="default-art" class="absolute inset-0 flex items-center justify-center"><svg
-                            class="h-20 w-20 opacity-20 text-gray-700" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
-                        </svg></div>
-                    <canvas id="visualizer-canvas" class="hidden absolute inset-0 w-full h-full"></canvas>
-                    <img id="custom-art-img" class="hidden absolute inset-0 w-full h-full object-cover" src=""
-                        alt="Album Art">
-                    <div
-                        class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <button id="upload-image-btn" class="btn-outline px-4 py-2 text-xs uppercase">Cambiar
-                            Caratula</button>
-                    </div>
-                    <input type="file" id="image-input" class="hidden" accept="image/*">
-                </div>
-                <div class="text-center mb-5">
-                    <div class="flex items-center justify-center gap-2">
-                        <div class="flex-grow min-w-0">
-                            <h2 id="song-title" class="text-lg font-bold text-white truncate">Selecciona una cancion
-                            </h2>
-                            <p id="song-artist" class="text-sm text-[var(--gold-text)] truncate">Biblioteca Local</p>
-                        </div>
-                        <button id="favorite-current-btn" class="control-btn p-2"><svg class="h-5 w-5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg></button>
-                    </div>
-                </div>
-                <div class="mb-5">
-                    <input type="range" id="progress-bar" value="0" step="1" class="w-full mb-2">
-                    <div class="flex justify-between text-xs text-gray-500 font-mono"><span
-                            id="current-time">0:00</span><span id="total-duration">0:00</span></div>
-                </div>
-                <div class="flex items-center justify-center gap-4 mb-5">
-                    <button id="shuffle-btn" class="control-btn p-2"><svg class="w-5 h-5" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 9l-2 2m0 0l-2-2m2 2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4m12 0a2 2 0 012 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4m16 8l-2-2m0 0l-2 2m2-2v-4" />
-                        </svg></button>
-                    <button id="prev-btn" class="control-btn p-2"><svg class="w-7 h-7" fill="currentColor"
-                            viewBox="0 0 24 24">
-                            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                        </svg></button>
-                    <button id="play-pause-btn" class="play-btn-main w-14 h-14 flex items-center justify-center">
-                        <svg id="play-icon" class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                        <svg id="pause-icon" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                        </svg>
-                    </button>
-                    <button id="next-btn" class="control-btn p-2"><svg class="w-7 h-7" fill="currentColor"
-                            viewBox="0 0 24 24">
-                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                        </svg></button>
-                    <button id="repeat-btn" class="control-btn p-2"><svg class="w-5 h-5" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg></button>
-                </div>
-                <div class="flex items-center gap-3">
-                    <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
-                    </svg>
-                    <input type="range" id="volume-control" min="0" max="1" step="0.01" value="0.5" class="flex-grow">
-                    <button id="art-mode-btn"
-                        class="text-xs text-gray-500 hover:text-[var(--gold-text)] uppercase font-semibold">VIS</button>
-                </div>
-            </aside>
-            <section class="flex-grow flex flex-col p-5 bg-black/10">
-                <div class="flex flex-wrap gap-3 mb-5">
-                    <button id="add-files-btn" class="btn-gold"><span class="mr-1">+</span> Anadir</button>
-                    <div class="flex-grow relative min-w-[150px]">
-                        <input type="text" id="search-bar" placeholder="Buscar..." class="input-dark pl-9 w-full">
-                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <select id="genre-filter" class="input-dark w-auto">
-                        <option>Todos los Generos</option>
-                    </select>
-                    <button id="show-favorites-btn" class="btn-outline px-3">â˜…</button>
-                    <div class="flex gap-1">
-                        <button id="export-btn" class="btn-outline px-2 text-sm">â†“</button>
-                        <button id="import-btn" class="btn-outline px-2 text-sm">â†‘</button>
-                        <button id="reset-btn"
-                            class="btn-outline px-2 text-sm text-red-400 hover:text-red-500">âœ•</button>
-                    </div>
-                </div>
-                <div id="playlist-container" class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
-                    <ul id="playlist" class="space-y-1">
-                        <li class="p-8 text-center text-gray-500 italic">Tu biblioteca esta vacia. Arrastra MP3 o usa
-                            Anadir.</li>
-                    </ul>
-                </div>
-                <input type="file" id="file-input" multiple accept=".mp3,audio/mpeg" class="hidden">
-                <input type="file" id="import-input" accept="application/json" class="hidden">
-            </section>
-        </main>
-        <footer class="py-2 text-center text-[10px] text-gray-600 border-t border-white/5 uppercase tracking-widest">
-            YavlMusic V2.0 - YavlGold Ecosystem</footer>
-        <audio id="audio-player" crossorigin="anonymous"></audio>
-        <div id="drop-overlay"
-            class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center border-4 border-dashed border-[var(--gold-text)] m-4 rounded-xl">
-            <h2 class="text-2xl font-bold text-[var(--gold-text)] animate-pulse">SUELTA TU MUSICA AQUI</h2>
-        </div>
-        <button id="info-modal-btn" class="absolute bottom-3 right-4 text-gray-500 hover:text-white"><svg
-                class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg></button>
-        <div id="info-modal" class="hidden absolute inset-0 z-40 bg-black/90 flex items-center justify-center p-4">
-            <div class="glass-panel max-w-lg w-full p-6 relative">
-                <button id="close-modal-btn"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">âœ•</button>
-                <h3 class="text-xl font-bold text-[var(--gold-text)] mb-4">Sobre YavlMusic</h3>
-                <div class="space-y-4 text-sm text-gray-300">
-                    <p>Reproductor del ecosistema YavlGold. Musica almacenada localmente.</p>
-                    <div class="flex border-b border-white/10 mb-4">
-                        <button data-tab="readme" class="tab-btn flex-1 p-2 btn-outline">README</button>
-                        <button data-tab="support" class="tab-btn flex-1 p-2 btn-outline">Soporte</button>
-                    </div>
-                    <div id="readme-content" class="tab-content">Reproductor MP3, Visualizador, Favoritos, 100% Offline
-                    </div>
-                    <div id="support-content" class="hidden tab-content"><a href="https://t.me/YavlPro" target="_blank"
-                            class="block w-full text-center btn-outline py-3">Soporte Telegram</a></div>
-                </div>
-            </div>
-        </div>
-    </div>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // =================================================================
@@ -435,7 +117,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 songKeysRequest.onsuccess = () => {
                     playlist = songKeysRequest.result.map(name => ({ name }));
 
-                    // Cargar metadatos despuÃ©s de cargar las canciones
+                    // Cargar metadatos después de cargar las canciones
                     const metadataStore = transaction.objectStore(STORES.METADATA);
                     const genresRequest = metadataStore.get('genres');
                     const favoritesRequest = metadataStore.get('favorites');
@@ -488,7 +170,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     const bufferLength = analyser.frequencyBinCount;
                     dataArray = new Uint8Array(bufferLength);
                 } catch (e) {
-                    console.error("Web Audio API no es soportada o fallÃ³ al iniciar:", e);
+                    console.error("Web Audio API no es soportada o falló al iniciar:", e);
                 }
             }
 
@@ -508,7 +190,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * height * 0.9;
                     const gradient = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
-                    // âœ¨ PREMIUM METALLIC GRADIENT: Dark gold base â†’ Bright gold tip
+                    // ✨ PREMIUM METALLIC GRADIENT: Dark gold base → Bright gold tip
                     gradient.addColorStop(0, '#996515');   // Gold Dark (base)
                     gradient.addColorStop(0.4, '#D4AF37'); // Gold Base (middle)
                     gradient.addColorStop(0.7, '#FDB931'); // Gold Bright
@@ -541,7 +223,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     artModeBtn.textContent = "Visualizador";
                 } else if (mode === 2) {
                     customArtImg.classList.remove('hidden');
-                    artModeBtn.textContent = "CarÃ¡tula";
+                    artModeBtn.textContent = "Carátula";
                 }
             }
 
@@ -587,7 +269,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                         if (!playlist.some(p => p.name === file.name)) {
                             store.put(file, file.name);
                             const item = { name: file.name };
-                            // Intentar leer ID3 para tÃ­tulo/artista usando jsmediatags
+                            // Intentar leer ID3 para título/artista usando jsmediatags
                             if (window.jsmediatags) {
                                 try {
                                     jsmediatags.read(file, {
@@ -608,7 +290,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                                                         const tx2 = db.transaction([STORES.IMAGES], 'readwrite');
                                                         tx2.objectStore(STORES.IMAGES).put(dataURL, file.name);
                                                         tx2.oncomplete = () => {
-                                                            // Si es la canciÃ³n actual y estamos en modo carÃ¡tula, actualizarla
+                                                            // Si es la canción actual y estamos en modo carátula, actualizarla
                                                             if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
                                                                 customArtImg.src = dataURL;
                                                                 if (artMode === 2) setArtDisplay(2);
@@ -618,10 +300,10 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                                                     reader.readAsDataURL(blob);
                                                 } catch { }
                                             }
-                                            // Si es la canciÃ³n actual, actualizar UI
+                                            // Si es la canción actual, actualizar UI
                                             if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
                                                 songTitle.textContent = item.title || item.name.replace('.mp3', '');
-                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin GÃ©nero";
+                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin Género";
                                             }
                                         },
                                         onError: () => { }
@@ -673,7 +355,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     const songData = playlist[trackIndex];
                     const file = await getSongFromDB(songData.name);
                     if (!file) {
-                        console.error("No se pudo cargar la canciÃ³n de la base de datos.");
+                        console.error("No se pudo cargar la canción de la base de datos.");
                         return;
                     }
 
@@ -687,7 +369,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     audioPlayer.src = URL.createObjectURL(file);
                     const item = playlist[trackIndex] || { name: file.name };
                     songTitle.textContent = (item.title && item.title.trim()) ? item.title : file.name.replace('.mp3', '');
-                    songArtist.textContent = songGenres[file.name] || item.artist || "Sin GÃ©nero";
+                    songArtist.textContent = songGenres[file.name] || item.artist || "Sin Género";
 
                     const imageData = await getImageFromDB(file.name);
                     if (imageData) {
@@ -716,7 +398,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 playIcon.classList.add('hidden');
                 pauseIcon.classList.remove('hidden');
 
-                audioPlayer.play().catch(e => console.warn("Error de reproducciÃ³n:", e.name));
+                audioPlayer.play().catch(e => console.warn("Error de reproducción:", e.name));
 
                 if (artMode === 1) drawVisualizer();
             }
@@ -744,7 +426,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     if (indexToDelete === currentTrackIndex) {
                         pauseTrack();
                         audioPlayer.src = "";
-                        songTitle.textContent = "Selecciona una canciÃ³n";
+                        songTitle.textContent = "Selecciona una canción";
                         songArtist.textContent = "YavlMusic";
                         progressBar.value = 0;
                         currentTimeEl.textContent = "0:00";
@@ -787,11 +469,11 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 let filteredList = sourceList
                     .filter(item => item && item.file)
                     .filter(item => item.file.name.toLowerCase().includes(searchTerm))
-                    .filter(item => selectedGenre === 'Todos los GÃ©neros' || songGenres[item.file.name] === selectedGenre);
+                    .filter(item => selectedGenre === 'Todos los Géneros' || songGenres[item.file.name] === selectedGenre);
 
                 if (filteredList.length === 0) {
                     const message = playlist.length === 0
-                        ? 'Tu biblioteca estÃ¡ vacÃ­a. AÃ±ade archivos para empezar.'
+                        ? 'Tu biblioteca está vacía. Añade archivos para empezar.'
                         : 'No se encontraron resultados.';
                     playlistElement.innerHTML = `<li class="p-3 text-gray-500 text-center">${message}</li>`;
                     return;
@@ -815,7 +497,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     genreSelect.addEventListener('change', (e) => {
                         e.stopPropagation();
                         if (e.target.value === 'add_new') {
-                            const newGenre = prompt('Introduce el nuevo nombre del gÃ©nero:');
+                            const newGenre = prompt('Introduce el nuevo nombre del género:');
                             if (newGenre && newGenre.trim()) {
                                 songGenres[file.name] = newGenre.trim();
                                 saveDataToDB();
@@ -829,7 +511,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                             else songGenres[file.name] = e.target.value;
                             saveDataToDB();
                             updateMainGenreFilter();
-                            if (currentTrackIndex === originalIndex) songArtist.textContent = songGenres[file.name] || "Sin GÃ©nero";
+                            if (currentTrackIndex === originalIndex) songArtist.textContent = songGenres[file.name] || "Sin Género";
                         }
                     });
 
@@ -860,8 +542,8 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             // =================================================================
             const getHeartSVG = (f) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`;
             function toggleFavorite(idx) { const i = favorites.indexOf(idx); if (i > -1) favorites.splice(i, 1); else favorites.push(idx); saveDataToDB(); renderPlaylist(); updateCurrentFavoriteButton(); }
-            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los GÃ©neros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
-            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin GÃ©nero</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">AÃ±adir nuevo...</option>`; s.value = g || 'none'; }
+            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los Géneros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
+            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin Género</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">Añadir nuevo...</option>`; s.value = g || 'none'; }
             function highlightCurrentTrack() { document.querySelectorAll('#playlist li').forEach(i => { i.style.backgroundColor = ''; i.style.color = ''; if (parseInt(i.dataset.index) === currentTrackIndex) { i.style.backgroundColor = 'rgba(0,255,255,0.7)'; i.style.color = 'black'; i.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) } }); }
             function updateCurrentFavoriteButton() { if (currentTrackIndex < 0 || !playlist.length) { favoriteCurrentBtn.innerHTML = getHeartSVG(false); favoriteCurrentBtn.classList.remove('text-pink-500'); favoriteCurrentBtn.classList.add('text-gray-400'); return; } const f = favorites.includes(currentTrackIndex); favoriteCurrentBtn.innerHTML = getHeartSVG(f); favoriteCurrentBtn.classList.toggle('text-pink-500', f); favoriteCurrentBtn.classList.toggle('text-gray-400', !f); }
             const playPauseHandler = () => isPlaying ? pauseTrack() : playTrack();
@@ -936,7 +618,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 repeatMode = (repeatMode + 1) % 3;
                 // Visual feedback
                 repeatBtn.classList.toggle('active', repeatMode > 0);
-                const titles = ['RepeticiÃ³n: desactivado', 'RepeticiÃ³n: lista', 'RepeticiÃ³n: pista'];
+                const titles = ['Repetición: desactivado', 'Repetición: lista', 'Repetición: pista'];
                 repeatBtn.setAttribute('aria-label', titles[repeatMode]);
                 repeatBtn.setAttribute('title', titles[repeatMode]);
                 settings.repeat = repeatMode; saveDataToDB();
@@ -1054,7 +736,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             // Reset biblioteca
             resetBtn.addEventListener('click', () => {
                 if (!db) return;
-                if (!confirm('Â¿Seguro que quieres borrar toda tu biblioteca local?')) return;
+                if (!confirm('¿Seguro que quieres borrar toda tu biblioteca local?')) return;
                 const tx = db.transaction([STORES.SONGS, STORES.IMAGES, STORES.METADATA], 'readwrite');
                 tx.objectStore(STORES.SONGS).clear();
                 tx.objectStore(STORES.IMAGES).clear();
@@ -1063,7 +745,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     pauseTrack(); audioPlayer.src = '';
                     playlist = []; favorites = []; songGenres = {};
                     settings = { volume: 0.5, shuffle: false, repeat: 0, artMode: 1 };
-                    songTitle.textContent = 'Selecciona una canciÃ³n'; songArtist.textContent = 'YavlMusic';
+                    songTitle.textContent = 'Selecciona una canción'; songArtist.textContent = 'YavlMusic';
                     progressBar.value = 0; currentTimeEl.textContent = '0:00'; totalDurationEl.textContent = '0:00'; currentTrackIndex = -1;
                     renderPlaylist(); updateMainGenreFilter(); saveDataToDB();
                 };
@@ -1072,14 +754,14 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             // Redimensionar visualizador en resize
             window.addEventListener('resize', () => { if (typeof resizeVisualizerCanvas === 'function' && artMode === 1) resizeVisualizerCanvas(); });
 
-            // Drag & Drop para aÃ±adir archivos
+            // Drag & Drop para añadir archivos
             function suppressDefaults(e) { e.preventDefault(); e.stopPropagation(); }
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 document.addEventListener(eventName, suppressDefaults, false);
             });
             document.addEventListener('dragenter', () => dropOverlay.classList.remove('hidden'));
             document.addEventListener('dragleave', (e) => {
-                // SÃ³lo ocultar cuando salimos del documento
+                // Sólo ocultar cuando salimos del documento
                 if (e.target === document || e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
                     dropOverlay.classList.add('hidden');
                 }
@@ -1091,7 +773,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 dropOverlay.classList.add('hidden');
             });
 
-            // Atajos de teclado bÃ¡sicos
+            // Atajos de teclado básicos
             document.addEventListener('keydown', (e) => {
                 const tag = (e.target && (e.target.tagName || '')).toLowerCase();
                 if (tag === 'input' || tag === 'textarea' || e.ctrlKey || e.metaKey || e.altKey) return;
