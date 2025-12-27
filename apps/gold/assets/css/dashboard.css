@@ -52,11 +52,12 @@
 /* ━━━ BASE LAYOUT ━━━ */
 .dashboard-page {
   min-height: 100vh;
-  background: var(--bg-darker);
+  background: #050505 !important; /* Matched to Herramientas */
   position: relative;
   overflow-x: hidden;
 }
 
+/* Gradient overlay disabled for consistency with Herramientas
 .dashboard-page::before {
   content: '';
   position: fixed;
@@ -70,6 +71,7 @@
   pointer-events: none;
   z-index: 0;
 }
+*/
 
 .dashboard-main {
   position: relative;
