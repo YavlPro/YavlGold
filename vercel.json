@@ -21,6 +21,12 @@
     { "source": "/academia", "destination": "/apps/academia/index.html" },
     { "source": "/academia/:path*", "destination": "/apps/academia/index.html" },
 
+    { "source": "/agro", "destination": "/apps/agro/index.html" },
+    { "source": "/agro/:path*", "destination": "/apps/agro/index.html" },
+
+    { "source": "/social", "destination": "/apps/social/index.html" },
+    { "source": "/social/:path*", "destination": "/apps/social/index.html" },
+
     { "source": "/", "destination": "/apps/gold/index.html" }
   ],
   "cleanUrls": false,
