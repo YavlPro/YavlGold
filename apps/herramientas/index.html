@@ -142,14 +142,16 @@
 
     body {
       font-family: 'Montserrat', sans-serif;
-      background: var(--bg-darker);
+      /* background: var(--bg-darker); REMOVED FOR STANDARDIZATION */
+      background: #050505 !important;
       color: var(--text-light);
       line-height: 1.7;
       scroll-behavior: smooth;
       overflow-x: hidden;
     }
 
-    /* --- FONDO MODERNO CON EFECTOS --- */
+    /* --- FONDO MODERNO CON EFECTOS (DESACTIVADO POR STANDARDIZACION) --- */
+    /*
     body::before {
       content: '';
       position: fixed;
@@ -163,6 +165,7 @@
         radial-gradient(circle at 40% 40%, rgba(17, 17, 17, 0.1) 0%, transparent 50%);
       z-index: -1;
     }
+    */
 
     /* Header, navegación y botones están unificados en /assets/css/unificacion.css */
 
@@ -784,7 +787,7 @@
   </style>
 </head>
 
-<body>
+<body class="bg-[#050505] text-[#e5e5e5]" style="background-color: #050505 !important;">
   <!-- Header con navegación profesional -->
   <header class="gg-header">
     <a class="brand" href="/">
@@ -864,7 +867,7 @@
   <!-- Footer -->
   <footer>
     <div class="footer-brand">
-      <img src="/brand/logo.webp" alt="YavlGold" class="footer-logo" style="width: 50px; height: auto;">
+      <img src="/brand/logo.svg" alt="YavlGold" class="footer-logo" style="width: 50px; height: auto;">
       <span>YavlGold</span>
     </div>
 
