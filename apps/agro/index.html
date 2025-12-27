@@ -1,20 +1,22 @@
 <!doctype html>
 <html lang="es" data-theme="dark">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>YavlAgro — Plataforma Agrícola</title>
-  <meta name="description" content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión. YavlAgro by YAVL Pro.">
+  <meta name="description"
+    content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión. YavlAgro by YAVL Pro.">
   <link rel="canonical" href="https://yavlgold.com/apps/agro/">
-  
+
   <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
   <script>
-    (function() {
+    (function () {
       function checkSupabaseSession() {
         try {
           const keys = Object.keys(localStorage);
           const authTokenKey = keys.find(key => key.includes('auth-token'));
-          
+
           if (authTokenKey) {
             const token = localStorage.getItem(authTokenKey);
             if (token) {
@@ -29,7 +31,7 @@
               }
             }
           }
-          
+
           console.log('[YavlAgro] ⛔ No hay sesión, redirigiendo...');
           return false;
         } catch (e) {
@@ -37,7 +39,7 @@
           return false;
         }
       }
-      
+
       if (!checkSupabaseSession()) {
         sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
         window.location.replace('/../../#login');
@@ -52,105 +54,492 @@
   <meta property="og:title" content="YavlAgro">
   <meta property="og:description" content="Hortalizas y frutas de Táchira, Venezuela. YavlAgro by YAVL Pro.">
   <meta property="og:url" content="https://yavlgold.com/apps/agro/YavlAgro.html">
-  <meta property="og:image" content="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=1200&auto=format&fit=crop">
+  <meta property="og:image"
+    content="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=1200&auto=format&fit=crop">
 
   <!-- Favicon opcional -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24'%3E%3Cpath fill='%2338d39f' d='M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z'/%3E%3C/svg%3E">
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24'%3E%3Cpath fill='%2338d39f' d='M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z'/%3E%3C/svg%3E">
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Theme Manager -->
-  <script src="/assets/js/themeManager.js"></script>
+  <!-- <script src="/assets/js/themeManager.js"></script> Corregido: No existe en el root -->
+  <script src="../gold/assets/js/mobile-optimizations.js"></script>
 
   <style>
-    :root{
-      --bg:#0e0f12; --card:#15171b; --elev:#1b1e24; --text:#e8eaed; --muted:#b9c0cc;
-      --acc:#38d39f; --acc-2:#1fb980; --border:#252a33; --shadow:0 10px 30px rgba(0,0,0,.35);
+    :root {
+      --bg: #0e0f12;
+      --card: #15171b;
+      --elev: #1b1e24;
+      --text: #e8eaed;
+      --muted: #b9c0cc;
+      --acc: #38d39f;
+      --acc-2: #1fb980;
+      --border: #252a33;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .35);
     }
-    html[data-theme="light"]{
-      --bg:#f7f8fb; --card:#ffffff; --elev:#ffffff; --text:#111417; --muted:#586071;
-      --acc:#1fb980; --acc-2:#109e6b; --border:#e8ecf2; --shadow:0 10px 25px rgba(0,0,0,.08);
+
+    html[data-theme="light"] {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --elev: #ffffff;
+      --text: #111417;
+      --muted: #586071;
+      --acc: #1fb980;
+      --acc-2: #109e6b;
+      --border: #e8ecf2;
+      --shadow: 0 10px 25px rgba(0, 0, 0, .08);
     }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif}
-    .container{max-width:1100px;margin-inline:auto;padding:0 20px}
-    .section{padding:56px 0}
-    .section__head{margin-bottom:18px}
-    h1,h2,h3{margin:0 0 10px}
-    h1{font-size:clamp(30px,5vw,44px);line-height:1.15}
-    h2{font-size:clamp(22px,3.2vw,30px)}
-    h3{font-size:18px}
-    .muted{color:var(--muted)}
-    .ticks{list-style:none;padding:0;margin:14px 0 0}
-    .ticks li{padding-left:26px;position:relative;margin:8px 0}
-    .ticks li:before{content:"✓";position:absolute;left:0;color:var(--acc)}
-    .skip{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden}
-    .skip:focus{left:12px;top:12px;width:auto;height:auto;background:var(--card);color:var(--text);padding:8px 10px;border-radius:8px;z-index:999}
-    .site-header{position:sticky;top:0;z-index:50;background:rgba(14,15,18,.7);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-    html[data-theme="light"] .site-header{background:rgba(255,255,255,.7)}
-    .nav{display:flex;align-items:center;justify-content:space-between;min-height:64px}
-    .brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-weight:700}
-    .brand svg{display:block}
-    .menu{display:flex;align-items:center;gap:14px}
-    .menu a{color:var(--text);text-decoration:none;padding:8px 10px;border-radius:10px}
-    .menu a:hover{background:var(--elev)}
-    .nav-toggle{display:none;flex-direction:column;gap:5px;background:transparent;border:0}
-    .nav-toggle .bar{width:24px;height:2px;background:var(--text);border-radius:2px}
-    .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--acc),var(--acc-2));color:#07341f;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
-    .btn:hover{filter:brightness(1.05)}
-    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border);box-shadow:none}
-    .btn.whats{background:#25D366;color:#08361c}
-    .chip{border:1px solid var(--border);background:var(--card);color:var(--text);padding:8px 12px;border-radius:999px;cursor:pointer}
-    .chip.is-active{background:linear-gradient(135deg,var(--acc),var(--acc-2));color:#08361c;border-color:transparent}
-    .hero{position:relative;padding:64px 0 32px;overflow:hidden;border-bottom:1px solid var(--border)}
-    .hero__inner{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;align-items:center}
-    .hero__cta{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-    .hero__badges{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 0;padding:0;list-style:none;color:var(--muted);font-size:14px}
-    .hero__img img{width:100%;height:auto;border-radius:18px;border:1px solid var(--border);box-shadow:var(--shadow)}
-    .hero__fade{position:absolute;inset:auto 0 0 0;height:120px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.25));pointer-events:none}
-    .features__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-    .feature{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
-    .feature .icon{font-size:22px;margin-bottom:6px}
-    .filters{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px}
-    .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transform:translateY(8px);opacity:0;transition:opacity .5s ease, transform .5s ease}
-    .card.reveal{opacity:1;transform:none}
-    .card img{width:100%;height:170px;object-fit:cover;display:block}
-    .card .body{padding:14px}
-    .badge{display:inline-block;font-size:12px;color:#0d2917;background:linear-gradient(180deg,#aaf0c6,#79dfa4);padding:4px 8px;border-radius:999px;margin-bottom:8px}
-    .meta{color:var(--muted);font-size:13px;margin-top:8px}
-    .card .actions{display:flex;gap:8px;margin-top:auto;padding:0 14px 14px}
-    .about{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:center}
-    .about__img{width:100%;height:auto;border-radius:16px;border:1px solid var(--border);object-fit:cover}
-    .form{display:grid;gap:12px;max-width:560px}
-    .form label{display:grid;gap:6px;font-weight:600}
-    .form input,.form textarea{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--elev);color:var(--text)}
-    .form input:focus,.form textarea:focus{outline:2px solid var(--acc)}
-    .site-footer{border-top:1px solid var(--border);padding:18px 0}
-    .footer__inner{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted)}
-    .fab-whats{
-      position:fixed;right:16px;bottom:16px;background:#25D366;color:white;border-radius:999px;
-      width:56px;height:56px;display:grid;place-items:center;box-shadow:var(--shadow);z-index:40;
-      text-decoration:none;font-weight:700;font-size:22px
+
+    * {
+      box-sizing: border-box
     }
-    @media (max-width: 900px){
-      .hero__inner{grid-template-columns:1fr}
-      .about{grid-template-columns:1fr}
-      .menu{position:fixed;inset:64px 0 auto 0;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 20px;gap:10px;transform:translateY(-120%);transition:transform .3s ease}
-      .menu.open{transform:none}
-      .nav-toggle{display:flex}
+
+    html {
+      scroll-behavior: smooth
     }
-    @media (prefers-reduced-motion: reduce){
-      *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif
+    }
+
+    .container {
+      max-width: 1100px;
+      margin-inline: auto;
+      padding: 0 20px
+    }
+
+    .section {
+      padding: 56px 0
+    }
+
+    .section__head {
+      margin-bottom: 18px
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0 0 10px
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.15
+    }
+
+    h2 {
+      font-size: clamp(22px, 3.2vw, 30px)
+    }
+
+    h3 {
+      font-size: 18px
+    }
+
+    .muted {
+      color: var(--muted)
+    }
+
+    .ticks {
+      list-style: none;
+      padding: 0;
+      margin: 14px 0 0
+    }
+
+    .ticks li {
+      padding-left: 26px;
+      position: relative;
+      margin: 8px 0
+    }
+
+    .ticks li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--acc)
+    }
+
+    .skip {
+      position: absolute;
+      left: -999px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden
+    }
+
+    .skip:focus {
+      left: 12px;
+      top: 12px;
+      width: auto;
+      height: auto;
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      z-index: 999
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(14, 15, 18, .7);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border)
+    }
+
+    html[data-theme="light"] .site-header {
+      background: rgba(255, 255, 255, .7)
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700
+    }
+
+    .brand svg {
+      display: block
+    }
+
+    .menu {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .menu a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 10px
+    }
+
+    .menu a:hover {
+      background: var(--elev)
+    }
+
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: transparent;
+      border: 0
+    }
+
+    .nav-toggle .bar {
+      width: 24px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--acc), var(--acc-2));
+      color: #07341f;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow)
+    }
+
+    .btn:hover {
+      filter: brightness(1.05)
+    }
+
+    .btn.ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none
+    }
+
+    .btn.whats {
+      background: #25D366;
+      color: #08361c
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer
+    }
+
+    .chip.is-active {
+      background: linear-gradient(135deg, var(--acc), var(--acc-2));
+      color: #08361c;
+      border-color: transparent
+    }
+
+    .hero {
+      position: relative;
+      padding: 64px 0 32px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .hero__inner {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 26px;
+      align-items: center
+    }
+
+    .hero__cta {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap
+    }
+
+    .hero__badges {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .hero__img img {
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow)
+    }
+
+    .hero__fade {
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 120px;
+      background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .25));
+      pointer-events: none
+    }
+
+    .features__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px
+    }
+
+    .feature {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px
+    }
+
+    .feature .icon {
+      font-size: 22px;
+      margin-bottom: 6px
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px 0 18px
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: opacity .5s ease, transform .5s ease
+    }
+
+    .card.reveal {
+      opacity: 1;
+      transform: none
+    }
+
+    .card img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      display: block
+    }
+
+    .card .body {
+      padding: 14px
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      color: #0d2917;
+      background: linear-gradient(180deg, #aaf0c6, #79dfa4);
+      padding: 4px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px
+    }
+
+    .card .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: auto;
+      padding: 0 14px 14px
+    }
+
+    .about {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      align-items: center
+    }
+
+    .about__img {
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      object-fit: cover
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+      max-width: 560px
+    }
+
+    .form label {
+      display: grid;
+      gap: 6px;
+      font-weight: 600
+    }
+
+    .form input,
+    .form textarea {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--elev);
+      color: var(--text)
+    }
+
+    .form input:focus,
+    .form textarea:focus {
+      outline: 2px solid var(--acc)
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 18px 0
+    }
+
+    .footer__inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted)
+    }
+
+    .fab-whats {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #25D366;
+      color: white;
+      border-radius: 999px;
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow);
+      z-index: 40;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 22px
+    }
+
+    @media (max-width: 900px) {
+      .hero__inner {
+        grid-template-columns: 1fr
+      }
+
+      .about {
+        grid-template-columns: 1fr
+      }
+
+      .menu {
+        position: fixed;
+        inset: 64px 0 auto 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 20px;
+        gap: 10px;
+        transform: translateY(-120%);
+        transition: transform .3s ease
+      }
+
+      .menu.open {
+        transform: none
+      }
+
+      .nav-toggle {
+        display: flex
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important
+      }
     }
   </style>
 </head>
+
 <body>
   <script>
     // Redirección con JS (más fiable que meta refresh)
-    (function(){
+    (function () {
       var target = 'YavlAgro.html';
       if (location.pathname.endsWith('/') || location.pathname.endsWith('/index.html')) {
         try { window.location.replace(target); } catch (_) { window.location.href = target; }
@@ -158,9 +547,10 @@
     })();
   </script>
   <noscript>
-    <div style="padding:12px;background:#fff3cd;color:#5c4600;border:1px solid #ffe69c;margin:8px;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;border-radius:8px">
-  Si no eres redirigido automáticamente, haz clic aquí: 
-  <a href="YavlAgro.html">Abrir YavlAgro</a>
+    <div
+      style="padding:12px;background:#fff3cd;color:#5c4600;border:1px solid #ffe69c;margin:8px;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;border-radius:8px">
+      Si no eres redirigido automáticamente, haz clic aquí:
+      <a href="YavlAgro.html">Abrir YavlAgro</a>
     </div>
   </noscript>
   <a class="skip" href="#productos">Saltar al contenido</a>
@@ -169,7 +559,10 @@
     <div class="container nav">
       <a class="brand" href="#top" aria-label="Ir al inicio">
         <!-- Logo inline -->
-        <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><path fill="#38d39f" d="M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#38d39f"
+            d="M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z" />
+        </svg>
         <span>YavlAgro</span>
       </a>
 
@@ -185,7 +578,8 @@
         <a href="#contacto">Contacto</a>
         <a href="roadmap.html">Roadmap</a>
         <button id="themeToggle" class="btn ghost" aria-label="Cambiar tema">🌙</button>
-  <a class="btn whats" href="https://wa.me/584247394025" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">WhatsApp</a>
+        <a class="btn whats" href="https://wa.me/584247394025" target="_blank" rel="noopener"
+          aria-label="Escribir por WhatsApp">WhatsApp</a>
       </nav>
     </div>
   </header>
@@ -207,7 +601,8 @@
           </ul>
         </div>
         <picture class="hero__img">
-          <img src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=900&auto=format&fit=crop" alt="Canastas con hortalizas frescas de Táchira" width="640" height="420" loading="eager">
+          <img src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=900&auto=format&fit=crop"
+            alt="Canastas con hortalizas frescas de Táchira" width="640" height="420" loading="eager">
         </picture>
       </div>
       <div class="hero__fade" aria-hidden="true"></div>
@@ -253,9 +648,12 @@
         <h2>Sobre mí</h2>
       </header>
       <div class="about">
-        <img class="about__img" src="https://images.unsplash.com/photo-1471193945509-9ad0617afabf?q=80&w=700&auto=format&fit=crop" alt="Yerikson en zona de cultivo" width="320" height="320" loading="lazy">
+        <img class="about__img"
+          src="https://images.unsplash.com/photo-1471193945509-9ad0617afabf?q=80&w=700&auto=format&fit=crop"
+          alt="Yerikson en zona de cultivo" width="320" height="320" loading="lazy">
         <div class="about__text">
-          <p>Hola, soy Yerikson. Promuevo los productos agrícolas de Táchira conectando a productores con consumidores y comercios. Mi meta: ofrecer frescura real y precios justos para todos.</p>
+          <p>Hola, soy Yerikson. Promuevo los productos agrícolas de Táchira conectando a productores con consumidores y
+            comercios. Mi meta: ofrecer frescura real y precios justos para todos.</p>
           <ul class="ticks">
             <li>+5 años acompañando a productores</li>
             <li>Relaciones directas con fincas locales</li>
@@ -284,7 +682,8 @@
           <textarea name="mensaje" rows="4" required></textarea>
         </label>
         <button class="btn" type="submit">Enviar</button>
-  <p class="muted">O escríbeme directo por <a href="https://wa.me/584247394025" target="_blank" rel="noopener">WhatsApp</a>.</p>
+        <p class="muted">O escríbeme directo por <a href="https://wa.me/584247394025" target="_blank"
+            rel="noopener">WhatsApp</a>.</p>
       </form>
     </section>
   </main>
@@ -297,7 +696,8 @@
   </footer>
 
   <!-- Botón flotante WhatsApp -->
-  <a class="fab-whats" aria-label="Abrir WhatsApp" href="https://wa.me/584247394025" target="_blank" rel="noopener">✆</a>
+  <a class="fab-whats" aria-label="Abrir WhatsApp" href="https://wa.me/584247394025" target="_blank"
+    rel="noopener">✆</a>
 
   <script type="application/ld+json">
   {
@@ -378,7 +778,7 @@
     const grid = d.getElementById("grid");
     const chips = d.querySelectorAll(".chip");
 
-    function cardHTML(p){
+    function cardHTML(p) {
       const beneficios = p.beneficios.map(b => `<li>${b}</li>`).join("");
       const usos = p.usos.join(" • ");
       const wa = `https://wa.me/584247394025?text=${encodeURIComponent("Hola, quiero " + p.nombre + ". ¿Disponibilidad y precio?")}`;
@@ -398,7 +798,7 @@
       </article>`;
     }
 
-    function render(filter = "all"){
+    function render(filter = "all") {
       grid.innerHTML = productos
         .filter(p => filter === "all" ? true : p.tipo === filter)
         .map(cardHTML)
@@ -410,15 +810,15 @@
     // Filtros
     chips.forEach(chip => {
       chip.addEventListener("click", () => {
-        chips.forEach(c => { c.classList.remove("is-active"); c.setAttribute("aria-selected","false"); });
+        chips.forEach(c => { c.classList.remove("is-active"); c.setAttribute("aria-selected", "false"); });
         chip.classList.add("is-active");
-        chip.setAttribute("aria-selected","true");
+        chip.setAttribute("aria-selected", "true");
         render(chip.dataset.filter);
       });
     });
 
     // Guardar en localStorage (simple)
-    function attachSave(){
+    function attachSave() {
       d.querySelectorAll("[data-save]").forEach(btn => {
         const id = btn.getAttribute("data-save");
         const saved = JSON.parse(localStorage.getItem("saved") || "[]");
@@ -433,16 +833,16 @@
     }
 
     // Animación al aparecer
-    function revealOnScroll(){
+    function revealOnScroll() {
       const cards = d.querySelectorAll(".card");
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (prefersReduced){
+      if (prefersReduced) {
         cards.forEach(c => c.classList.add("reveal"));
         return;
       }
       const io = new IntersectionObserver(entries => {
-        entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add("reveal"); io.unobserve(e.target); } });
-      }, {threshold: .12});
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("reveal"); io.unobserve(e.target); } });
+      }, { threshold: .12 });
       cards.forEach(c => io.observe(c));
     }
 
@@ -457,21 +857,21 @@
     // Tema claro/oscuro usando ThemeManager
     if (typeof ThemeManager !== 'undefined') {
       ThemeManager.init();
-      
+
       // Conectar el botón de tema
       const themeBtn = d.getElementById("themeToggle");
       if (themeBtn) {
         themeBtn.addEventListener("click", () => {
           ThemeManager.toggle();
         });
-        
+
         // Actualizar icono del botón
         const updateIcon = () => {
           const current = ThemeManager.getCurrentTheme();
           themeBtn.textContent = current === "light" ? "🌞" : "🌙";
         };
         updateIcon();
-        
+
         // Observar cambios de tema
         const observer = new MutationObserver(updateIcon);
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -480,7 +880,7 @@
       // Fallback si ThemeManager no está disponible
       const root = d.documentElement;
       const themeBtn = d.getElementById("themeToggle");
-      function setTheme(t){ root.setAttribute("data-theme", t); localStorage.setItem("theme", t); themeBtn.textContent = t === "light" ? "🌞" : "🌙"; }
+      function setTheme(t) { root.setAttribute("data-theme", t); localStorage.setItem("theme", t); themeBtn.textContent = t === "light" ? "🌞" : "🌙"; }
       const saved = localStorage.getItem("theme");
       setTheme(saved || "dark");
       themeBtn?.addEventListener("click", () => {
@@ -498,19 +898,19 @@
 
   <!-- Auth Guard para protección de página -->
   <script type="module">
-    import { supabase } from '/assets/js/supabase.js';
+    import { supabase } from '../gold/assets/js/main.js';
 
     // Verificar autenticación al cargar la página
     async function checkAuth() {
       const { data: { session }, error } = await supabase.auth.getSession();
-      
+
       if (error || !session) {
         // Guardar la URL actual para redireccionar después del login
         sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
         window.location.href = '/login.html';
         return;
       }
-      
+
       // Si está autenticado, redirigir inmediatamente a YavlAgro.html
       window.location.replace('YavlAgro.html');
     }
@@ -519,4 +919,5 @@
     checkAuth();
   </script>
 </body>
+
 </html>
