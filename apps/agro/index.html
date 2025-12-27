@@ -54,7 +54,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="YavlAgro">
   <meta property="og:description" content="Hortalizas y frutas de Táchira, Venezuela. YavlAgro by YAVL Pro.">
-  <meta property="og:url" content="https://yavlgold.com/apps/agro/YavlAgro.html">
+  <meta property="og:url" content="https://yavlgold.com/apps/agro/">
   <meta property="og:image"
     content="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=1200&auto=format&fit=crop">
 
@@ -66,7 +66,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- <script src="/assets/js/themeManager.js"></script> Corregido: No existe en el root -->
-  <script src="../gold/assets/js/mobile-optimizations.js"></script>
+  <!-- <script src="../gold/assets/js/mobile-optimizations.js"></script> Script no encontrado/legacy -->
 
   <style>
     :root {
@@ -706,7 +706,7 @@
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "YavlAgro",
-    "url": "https://yavlgold.com/apps/agro/YavlAgro.html",
+    "url": "https://yavlgold.com/apps/agro/",
     "logo": "https://yavlgold.com/assets/images/logo.png"
   }
   </script>
@@ -913,8 +913,9 @@
         return;
       }
 
-      // Si está autenticado, redirigir inmediatamente a YavlAgro.html
-      window.location.replace('YavlAgro.html');
+      // Si está autenticado, permanecemos aquí (ya estamos en /agro)
+      console.log('✅ Auth verificado. Bienvenido a Agro.');
+      // window.location.replace('/agro'); // Redirección eliminada para evitar bucle infinito
     }
 
     // Ejecutar verificación
