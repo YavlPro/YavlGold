@@ -74,13 +74,16 @@ limitations under the License.
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap"
         rel="stylesheet">
     <style>
-        /* Estilos personalizados para la estética Cyberpunk Neon */
+        /* Estilos personalizados - GOLD/DARK THEME (Reskinned from Cyberpunk) */
         :root {
-            --bg-color: #0a0a0a;
-            --primary-blue: #00ffff;
-            --secondary-green: #39ff14;
-            --accent-orange: #ff8c00;
-            --text-color: #e0e0e0;
+            --bg-color: #050505;
+            --primary-blue: #D4AF37;
+            /* GOLD - was cyan */
+            --secondary-green: #FDB931;
+            /* GOLD ACCENT - was green */
+            --accent-orange: #C8A752;
+            /* GOLD VARIANT - was orange */
+            --text-color: #e5e5e5;
         }
 
         html,
@@ -91,7 +94,8 @@ limitations under the License.
 
         body {
             font-family: 'Rajdhani', sans-serif;
-            background-color: var(--bg-color);
+            background-color: #050505 !important;
+            /* GOLD THEME: Deep black */
             color: var(--text-color);
         }
 
@@ -677,11 +681,12 @@ limitations under the License.
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * height * 0.9;
                     const gradient = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
-                    gradient.addColorStop(0, `hsl(${200 + dataArray[i] / 2}, 100%, 50%)`);
-                    gradient.addColorStop(1, `hsl(${180}, 100%, 70%)`);
+                    // GOLD THEME: Changed from cyan/blue to gold/amber
+                    gradient.addColorStop(0, `hsl(${40 + dataArray[i] / 10}, 80%, 45%)`);
+                    gradient.addColorStop(1, `hsl(${45}, 90%, 55%)`);
 
                     canvasCtx.fillStyle = gradient;
-                    canvasCtx.shadowColor = 'cyan';
+                    canvasCtx.shadowColor = '#D4AF37'; // GOLD instead of cyan
                     canvasCtx.shadowBlur = 5;
                     canvasCtx.fillRect(x, height - barHeight, barWidth, barHeight);
                     x += barWidth + 2;
