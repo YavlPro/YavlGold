@@ -8,10 +8,10 @@
         var auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
         if (!auth.ok) {
           sessionStorage.setItem('gg:intended', window.location.pathname);
-          window.location.href = '/dashboard.html?needLogin=1#login';
+          window.location.href = '/dashboard?needLogin=1#login';
         }
       } catch (e) {
-        window.location.href = '/dashboard.html?needLogin=1#login';
+        window.location.href = '/dashboard?needLogin=1#login';
       }
     })();
   </script>
@@ -399,7 +399,7 @@
     </div>
   </footer>
 
-  <script src="../gold/assets/js/auth.js"></script>
+  <!-- Removed broken auth.js reference - no native script for this module -->
 </body>
 
 </html>
