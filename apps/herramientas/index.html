@@ -1,20 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 
+
 <head>
-  <script>
-    (function () {
-      try {
-        var auth = JSON.parse(localStorage.getItem('gg:auth') || '{}');
-        if (!auth.ok) {
-          sessionStorage.setItem('gg:intended', window.location.pathname);
-          window.location.href = '/dashboard?needLogin=1#login';
-        }
-      } catch (e) {
-        window.location.href = '/dashboard?needLogin=1#login';
-      }
-    })();
-  </script>
+  <!-- Legacy manual auth guard removed - Supabase AuthGuard handles protection -->
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
