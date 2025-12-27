@@ -9,6 +9,10 @@
   <meta name="description"
     content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión. YavlAgro by YAVL Pro.">
   <link rel="canonical" href="https://yavlgold.com/apps/agro/">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap"
+    rel="stylesheet">
 
   <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
   <script>
@@ -70,15 +74,26 @@
 
   <style>
     :root {
-      --bg: #0e0f12;
-      --card: #15171b;
-      --elev: #1b1e24;
-      --text: #e8eaed;
-      --muted: #b9c0cc;
-      --acc: #38d39f;
-      --acc-2: #1fb980;
-      --border: #252a33;
-      --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+      --bg: #050505;
+      --card: #0a0a0a;
+      --elev: #111;
+      --text: #e5e5e5;
+      --muted: #a0a0a0;
+      --acc: #D4AF37;
+      --acc-2: #FDB931;
+      --border: rgba(212, 175, 55, 0.2);
+      --shadow: 0 10px 30px rgba(0, 0, 0, .5);
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    --card: #15171b;
+    --elev: #1b1e24;
+    --text: #e8eaed;
+    --muted: #b9c0cc;
+    --acc: #38d39f;
+    --acc-2: #1fb980;
+    --border: #252a33;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
     }
 
     html[data-theme="light"] {
@@ -129,8 +144,12 @@
     }
 
     h1 {
+      font-family: 'Playfair Display', serif;
       font-size: clamp(30px, 5vw, 44px);
-      line-height: 1.15
+      line-height: 1.15;
+      background: linear-gradient(to right, #D4AF37, #FDB931);
+      -webkit-background-clip: text;
+      color: transparent;
     }
 
     h2 {
@@ -557,34 +576,18 @@
   </noscript>
   <a class="skip" href="#productos">Saltar al contenido</a>
 
-  <header class="site-header">
-    <div class="container nav">
-      <a class="brand" href="#top" aria-label="Ir al inicio">
-        <!-- Logo inline -->
-        <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#38d39f"
-            d="M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z" />
-        </svg>
-        <span>Agro</span>
-      </a>
-
-      <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
-        <span class="bar" aria-hidden="true"></span>
-        <span class="bar" aria-hidden="true"></span>
-        <span class="bar" aria-hidden="true"></span>
-      </button>
-
-      <nav class="menu" aria-label="Principal">
-        <a href="#productos">Productos</a>
-        <a href="#sobre-mi">Sobre mí</a>
-        <a href="#contacto">Contacto</a>
-        <a href="roadmap.html">Roadmap</a>
-        <button id="themeToggle" class="btn ghost" aria-label="Cambiar tema">🌙</button>
-        <a class="btn whats" href="https://wa.me/584247394025" target="_blank" rel="noopener"
-          aria-label="Escribir por WhatsApp">WhatsApp</a>
-      </nav>
+  <nav
+    class="flex justify-between items-center p-6 border-b border-[#D4AF37]/20 bg-black/40 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <img src="/brand/logo.webp" alt="YavlGold" class="w-10 h-10 object-contain">
+      <span class="text-xl font-bold text-[#D4AF37] font-serif tracking-wide">Agro</span>
     </div>
-  </header>
+    <div class="hidden md:flex gap-8 text-sm font-medium text-gray-300">
+      <a href="/dashboard" class="hover:text-[#D4AF37] transition-colors">Dashboard</a>
+      <a href="/apps/suite" class="hover:text-[#D4AF37] transition-colors">Suite</a>
+      <a href="/social" class="hover:text-[#D4AF37] transition-colors">Social</a>
+    </div>
+  </nav>
 
   <main id="top">
     <section class="hero">
@@ -593,8 +596,10 @@
           <h1>Del surco a tu mesa</h1>
           <p>Hortalizas y frutas de Táchira, Venezuela. Frescura, sabor y tradición agrícola.</p>
           <div class="hero__cta">
-            <a class="btn" href="#productos">Ver productos</a>
-            <a class="btn ghost" href="https://wa.me/584247394025" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+            <a class="bg-gradient-to-r from-[#D4AF37] to-[#FDB931] text-black font-bold uppercase tracking-wider px-6 py-3 rounded hover:scale-105 transition-transform"
+              href="#productos">Ver productos</a>
+            <a class="border border-[#D4AF37] text-[#D4AF37] px-6 py-3 rounded uppercase tracking-wider hover:bg-[#D4AF37]/10 transition-colors"
+              href="https://wa.me/584247394025" target="_blank" rel="noopener">WhatsApp</a>
           </div>
           <ul class="hero__badges">
             <li>✅ Productores locales</li>
@@ -604,7 +609,8 @@
         </div>
         <picture class="hero__img">
           <img src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=900&auto=format&fit=crop"
-            alt="Canastas con hortalizas frescas de Táchira" width="640" height="420" loading="eager">
+            alt="Canastas con hortalizas frescas de Táchira" width="640" height="420" loading="eager"
+            class="border border-[#D4AF37]/30 shadow-[0_0_30px_rgba(0,0,0,0.5)] rounded-2xl">
         </picture>
       </div>
       <div class="hero__fade" aria-hidden="true"></div>
