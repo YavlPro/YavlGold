@@ -63,7 +63,17 @@ body {
 .brand { display: flex; gap: 12px; align-items: center; text-decoration: none; color: #fff; font-weight: 700; font-size: 1.2rem; font-family: 'Playfair Display', serif; }
 .brand-logo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 2px solid var(--color-secondary); }
 .main-nav { display: flex; gap: 24px; }
-.main-nav a { color: var(--text-light); text-decoration: none; font-weight: 500; transition: var(--transition); padding: 8px 0; position: relative; }
+.main-nav a {
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem; /* Increased for legibility */
+  letter-spacing: 0.5px;
+  font-family: 'Montserrat', sans-serif;
+  transition: var(--transition);
+  padding: 8px 0;
+  position: relative;
+}
 .main-nav a:hover, .main-nav a.active { color: var(--color-secondary); }
 .main-nav a::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gradient-gold); transition: width .3s; }
 .main-nav a:hover::after, .main-nav a.active::after { width: 100%; }
