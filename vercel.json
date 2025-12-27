@@ -2,15 +2,25 @@
   "rewrites": [
     { "source": "/dashboard", "destination": "/apps/gold/dashboard/index.html" },
     { "source": "/dashboard/:path*", "destination": "/apps/gold/dashboard/index.html" },
-    { "source": "/academia", "destination": "/apps/academia/index.html" },
-    { "source": "/academia/:path*", "destination": "/apps/academia/index.html" },
+
+    { "source": "/roadmap", "destination": "/apps/gold/roadmap.html" },
+    { "source": "/roadmap.html", "destination": "/apps/gold/roadmap.html" },
+
+    { "source": "/cookies", "destination": "/apps/gold/cookies.html" },
+    { "source": "/cookies.html", "destination": "/apps/gold/cookies.html" },
+
+    { "source": "/faq", "destination": "/apps/gold/faq.html" },
+    { "source": "/faq.html", "destination": "/apps/gold/faq.html" },
+
     { "source": "/herramientas", "destination": "/apps/herramientas/index.html" },
     { "source": "/herramientas/:path*", "destination": "/apps/herramientas/index.html" },
+
     { "source": "/suite", "destination": "/apps/suite/index.html" },
     { "source": "/suite/:path*", "destination": "/apps/suite/index.html" },
-    { "source": "/roadmap", "destination": "/apps/gold/roadmap.html" },
-    { "source": "/cookies", "destination": "/apps/gold/cookies.html" },
-    { "source": "/faq", "destination": "/apps/gold/faq.html" },
+
+    { "source": "/academia", "destination": "/apps/academia/index.html" },
+    { "source": "/academia/:path*", "destination": "/apps/academia/index.html" },
+
     { "source": "/", "destination": "/apps/gold/index.html" }
   ],
   "cleanUrls": false,

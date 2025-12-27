@@ -1,0 +1,21 @@
+{
+    "name": "YavlGold",
+    "short_name": "YavlGold",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0B0C0F",
+    "theme_color": "#C8A752",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/brand/logo.webp",
+            "sizes": "192x192",
+            "type": "image/webp"
+        },
+        {
+            "src": "/brand/logo.webp",
+            "sizes": "512x512",
+            "type": "image/webp"
+        }
+    ]
+}
