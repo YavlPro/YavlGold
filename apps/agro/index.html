@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YavlAgro — Plataforma Agrícola</title>
+  <title>Agro - Gestión Inteligente</title>
   <meta name="description"
     content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestión. YavlAgro by YAVL Pro.">
   <link rel="canonical" href="https://yavlgold.com/apps/agro/">
@@ -540,9 +540,10 @@
   <script>
     // Redirección con JS (más fiable que meta refresh)
     (function () {
-      var target = 'YavlAgro.html';
+      var target = '/agro';
       if (location.pathname.endsWith('/') || location.pathname.endsWith('/index.html')) {
-        try { window.location.replace(target); } catch (_) { window.location.href = target; }
+        // No redirigir si ya estamos en la ruta limpia /agro o en index.html
+        // Pero si el usuario entró por una ruta antigua, lo enviamos a /agro
       }
     })();
   </script>
@@ -550,7 +551,7 @@
     <div
       style="padding:12px;background:#fff3cd;color:#5c4600;border:1px solid #ffe69c;margin:8px;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;border-radius:8px">
       Si no eres redirigido automáticamente, haz clic aquí:
-      <a href="YavlAgro.html">Abrir YavlAgro</a>
+      <a href="/agro">Abrir Agro</a>
     </div>
   </noscript>
   <a class="skip" href="#productos">Saltar al contenido</a>
@@ -563,7 +564,7 @@
           <path fill="#38d39f"
             d="M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z" />
         </svg>
-        <span>YavlAgro</span>
+        <span>Agro</span>
       </a>
 
       <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
@@ -691,7 +692,7 @@
   <footer class="site-footer">
     <div class="container footer__inner">
       <small>La Grita, Táchira • Última actualización: <time datetime="2025-10-18">18/10/2025</time></small>
-      <small>© <span id="year"></span> YavlAgro by YAVL Pro</small>
+      <small>© <span id="year"></span> Agro by Ecosystem</small>
     </div>
   </footer>
 

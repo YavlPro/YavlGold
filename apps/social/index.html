@@ -1,52 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlSocial - Red Social Cripto</title>
-    
+    <title>Social - Comunidad Cripto</title>
+
     <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
     <script>
-      (function() {
-        function checkSupabaseSession() {
-          try {
-            const keys = Object.keys(localStorage);
-            const authTokenKey = keys.find(key => key.includes('auth-token'));
-            
-            if (authTokenKey) {
-              const token = localStorage.getItem(authTokenKey);
-              if (token) {
+        (function () {
+            function checkSupabaseSession() {
                 try {
-                  const parsed = JSON.parse(token);
-                  if (parsed && parsed.access_token) {
-                    console.log('[YavlSocial] ✅ Sesión encontrada');
-                    return true;
-                  }
+                    const keys = Object.keys(localStorage);
+                    const authTokenKey = keys.find(key => key.includes('auth-token'));
+
+                    if (authTokenKey) {
+                        const token = localStorage.getItem(authTokenKey);
+                        if (token) {
+                            try {
+                                const parsed = JSON.parse(token);
+                                if (parsed && parsed.access_token) {
+                                    console.log('[YavlSocial] ✅ Sesión encontrada');
+                                    return true;
+                                }
+                            } catch (e) {
+                                console.error('[YavlSocial] Error verificando sesión:', e);
+                            }
+                        }
+                    }
+
+                    console.log('[YavlSocial] ⛔ No hay sesión, redirigiendo...');
+                    return false;
                 } catch (e) {
-                  console.error('[YavlSocial] Error verificando sesión:', e);
+                    console.error('[YavlSocial] Error al verificar sesión:', e);
+                    return false;
                 }
-              }
             }
-            
-            console.log('[YavlSocial] ⛔ No hay sesión, redirigiendo...');
-            return false;
-          } catch (e) {
-            console.error('[YavlSocial] Error al verificar sesión:', e);
-            return false;
-          }
-        }
-        
-        if (!checkSupabaseSession()) {
-          sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-          window.location.replace('/../../#login');
-        } else {
-          console.log('[YavlSocial] ✅ Sesión válida, permitiendo acceso');
-        }
-      })();
+
+            if (!checkSupabaseSession()) {
+                sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+                window.location.replace('/../../#login');
+            } else {
+                console.log('[YavlSocial] ✅ Sesión válida, permitiendo acceso');
+            }
+        })();
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@300;400&display=swap');
-        
+
         :root {
             --bg-dark: #0a0a0a;
             --neon-green: #00ff41;
@@ -95,8 +96,13 @@
         }
 
         @keyframes matrix-fall {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100vh); }
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(100vh);
+            }
         }
 
         /* Scan Lines */
@@ -107,9 +113,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, 
-                transparent 50%, 
-                rgba(0, 255, 65, 0.03) 50%);
+            background: linear-gradient(to bottom,
+                    transparent 50%,
+                    rgba(0, 255, 65, 0.03) 50%);
             background-size: 100% 2px;
             animation: scan 4s linear infinite;
             z-index: -1;
@@ -117,8 +123,13 @@
         }
 
         @keyframes scan {
-            0% { transform: translateY(-2px); }
-            100% { transform: translateY(100vh); }
+            0% {
+                transform: translateY(-2px);
+            }
+
+            100% {
+                transform: translateY(100vh);
+            }
         }
 
         /* Hero Section */
@@ -147,33 +158,75 @@
         }
 
         @keyframes neon-flow {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
         }
-        
+
         @keyframes color-cycle-shadow {
-            0%, 100% {
+
+            0%,
+            100% {
                 text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-green);
             }
+
             33% {
                 text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green), 0 0 30px var(--neon-gold);
             }
+
             66% {
                 text-shadow: 0 0 10px var(--neon-gold), 0 0 20px var(--neon-gold), 0 0 30px var(--neon-cyan);
             }
         }
 
         @keyframes glitch {
-            0%, 100% { transform: translate(0); }
-            10% { transform: translate(-2px, 2px); }
-            20% { transform: translate(2px, -2px); }
-            30% { transform: translate(-1px, 1px); }
-            40% { transform: translate(1px, -1px); }
-            50% { transform: translate(-2px, 2px); }
-            60% { transform: translate(2px, -2px); }
-            70% { transform: translate(-1px, 1px); }
-            80% { transform: translate(1px, -1px); }
-            90% { transform: translate(-2px, 2px); }
+
+            0%,
+            100% {
+                transform: translate(0);
+            }
+
+            10% {
+                transform: translate(-2px, 2px);
+            }
+
+            20% {
+                transform: translate(2px, -2px);
+            }
+
+            30% {
+                transform: translate(-1px, 1px);
+            }
+
+            40% {
+                transform: translate(1px, -1px);
+            }
+
+            50% {
+                transform: translate(-2px, 2px);
+            }
+
+            60% {
+                transform: translate(2px, -2px);
+            }
+
+            70% {
+                transform: translate(-1px, 1px);
+            }
+
+            80% {
+                transform: translate(1px, -1px);
+            }
+
+            90% {
+                transform: translate(-2px, 2px);
+            }
         }
 
         .hero-subtitle {
@@ -188,13 +241,26 @@
         }
 
         @keyframes typing {
-            from { width: 0; }
-            to { width: 100%; }
+            from {
+                width: 0;
+            }
+
+            to {
+                width: 100%;
+            }
         }
 
         @keyframes blink {
-            0%, 50% { border-color: transparent; }
-            51%, 100% { border-color: var(--neon-green); }
+
+            0%,
+            50% {
+                border-color: transparent;
+            }
+
+            51%,
+            100% {
+                border-color: var(--neon-green);
+            }
         }
 
         .hero-buttons {
@@ -241,8 +307,15 @@
             left: 100%;
         }
 
-        .btn-cyan { border-color: var(--neon-cyan); color: var(--neon-cyan); }
-        .btn-cyan:hover { background: var(--neon-cyan); box-shadow: 0 0 20px var(--neon-cyan); }
+        .btn-cyan {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .btn-cyan:hover {
+            background: var(--neon-cyan);
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
 
         /* Sections */
         .container {
@@ -279,7 +352,7 @@
             gap: 30px;
             margin-top: 40px;
         }
-        
+
         .project-card-link {
             text-decoration: none;
             color: inherit;
@@ -310,13 +383,18 @@
         }
 
         @keyframes neon-border {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
         }
 
         .project-card-link:hover .project-card {
             transform: translateY(-10px) scale(1.02);
-            box-shadow: 
+            box-shadow:
                 0 20px 40px rgba(0, 255, 65, 0.2),
                 0 0 30px rgba(0, 255, 65, 0.1);
             border-color: var(--neon-green);
@@ -352,8 +430,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 65, 0.3); }
-            50% { box-shadow: 0 0 15px rgba(0, 255, 65, 0.6); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+            }
         }
 
         /* Skills Section */
@@ -387,8 +472,13 @@
         }
 
         @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .skill-icon {
@@ -400,8 +490,15 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         .skill-progress {
@@ -456,13 +553,26 @@
 
         /* Responsive */
         @media (max-width: 768px) {
-            .hero-buttons { flex-direction: column; align-items: center; }
-            .btn-neon { width: 100%; max-width: 250px; }
-            .projects-grid, .skills-grid, .contact-grid { 
-                grid-template-columns: 1fr; 
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-neon {
+                width: 100%;
+                max-width: 250px;
+            }
+
+            .projects-grid,
+            .skills-grid,
+            .contact-grid {
+                grid-template-columns: 1fr;
                 gap: 20px;
             }
-            .section-title { font-size: 2rem; }
+
+            .section-title {
+                font-size: 2rem;
+            }
         }
 
         /* Scroll Indicator */
@@ -483,6 +593,7 @@
             border-radius: 2px;
             transition: height 0.1s;
         }
+
         /* Mejoras visuales secundarias */
         .contact-item:hover .contact-icon {
             color: var(--neon-purple);
@@ -492,6 +603,7 @@
         .project-card-link {
             transition: color 0.3s;
         }
+
         .project-card-link:hover {
             color: var(--neon-gold);
         }
@@ -503,10 +615,11 @@
         }
     </style>
 </head>
+
 <body class="scan-lines">
     <!-- Matrix Rain -->
     <div class="matrix-bg" id="matrix"></div>
-    
+
     <!-- Scroll Indicator -->
     <div class="scroll-indicator">
         <div class="scroll-progress" id="scrollProgress"></div>
@@ -514,7 +627,7 @@
 
     <!-- Hero -->
     <section class="hero">
-        <h1>YavlPro</h1>
+        <h1>Social</h1>
         <div class="hero-subtitle" id="subtitle">
             Developer | Crypto Enthusiast | AI Innovator
         </div>
@@ -530,8 +643,9 @@
             <!-- Proyecto actualizado: YavlAgro -->
             <a href="/apps/agro/" target="_blank" class="project-card-link">
                 <div class="project-card">
-                    <h3>🌱 YavlAgro</h3>
-                    <p>Plataforma digital para la comunidad agrícola de La Grita, facilitando la conexión, información y el comercio local.</p>
+                    <h3>🌱 Agro</h3>
+                    <p>Plataforma digital para la comunidad agrícola de La Grita, facilitando la conexión, información y
+                        el comercio local.</p>
                     <div class="project-tech">
                         <span class="tech-tag">HTML/CSS</span>
                         <span class="tech-tag">JavaScript</span>
@@ -540,12 +654,13 @@
                     </div>
                 </div>
             </a>
-            
+
             <!-- Proyecto: YavlSuite -->
             <a href="/apps/suite/" target="_blank" class="project-card-link">
                 <div class="project-card">
-                    <h3>🛠️ YavlSuite</h3>
-                    <p>Una suite de herramientas en línea diseñadas para desarrolladores y entusiastas de la tecnología. Simple y efectivo.</p>
+                    <h3>🛠️ Suite</h3>
+                    <p>Una suite de herramientas en línea diseñadas para desarrolladores y entusiastas de la tecnología.
+                        Simple y efectivo.</p>
                     <div class="project-tech">
                         <span class="tech-tag">JavaScript</span>
                         <span class="tech-tag">HTML/CSS</span>
@@ -559,7 +674,8 @@
             <a href="https://globalgold.gold/" target="_blank" class="project-card-link">
                 <div class="project-card">
                     <h3>⛏ Global Gold</h3>
-                    <p>Plataforma educativa de criptominería con dashboard interactivo. Proyecto estrella en desarrollo con enfoque venezolano.</p>
+                    <p>Plataforma educativa de criptominería con dashboard interactivo. Proyecto estrella en desarrollo
+                        con enfoque venezolano.</p>
                     <div class="project-tech">
                         <span class="tech-tag">HTML/CSS</span>
                         <span class="tech-tag">JavaScript</span>
@@ -628,7 +744,8 @@
                 <span class="contact-icon">🐦</span>
                 <h3>X (Twitter)</h3>
                 <p>Sígueme para noticias crypto y tech</p>
-                <a href="https://x.com/Yavlcapitan?t=CTvaEVF3bpP4utIomXBLAg&s=09" target="_blank" class="btn-neon">@Yavlcapitan</a>
+                <a href="https://x.com/Yavlcapitan?t=CTvaEVF3bpP4utIomXBLAg&s=09" target="_blank"
+                    class="btn-neon">@Yavlcapitan</a>
             </div>
 
             <div class="contact-item">
@@ -645,21 +762,21 @@
         function createMatrixRain() {
             const matrix = document.getElementById('matrix');
             const columns = Math.floor(window.innerWidth / 20);
-            
+
             for (let i = 0; i < columns; i++) {
                 const column = document.createElement('div');
                 column.className = 'matrix-column';
                 column.style.left = `${i * 20}px`;
                 column.style.animationDuration = `${5 + Math.random() * 5}s`;
                 column.style.opacity = Math.random() * 0.5 + 0.2;
-                
+
                 const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
                 let text = '';
                 for (let j = 0; j < 50; j++) {
                     text += chars[Math.floor(Math.random() * chars.length)];
                 }
                 column.textContent = text;
-                
+
                 matrix.appendChild(column);
 
                 setTimeout(() => {
@@ -676,7 +793,7 @@
             if (!subtitle) return;
             const text = subtitle.textContent.trim(); // Trim to handle whitespace
             subtitle.textContent = '';
-            
+
             let i = 0;
             function type() {
                 if (i < text.length) {
@@ -748,7 +865,7 @@
         });
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             typeWriter();
             if (document.getElementById('matrix')) {
                 createMatrixRain();
@@ -756,13 +873,13 @@
             }
             animateProgressBars();
             animateOnScroll();
-            
+
             updateScrollProgress();
             window.addEventListener('scroll', updateScrollProgress);
         });
 
         // Parallax effect on hero
-        window.addEventListener('scroll', function() {
+        window.addEventListener('scroll', function () {
             const scrolled = window.pageYOffset;
             const hero = document.querySelector('.hero');
             if (hero) {
@@ -772,5 +889,5 @@
         });
     </script>
 </body>
-</html>
 
+</html>
