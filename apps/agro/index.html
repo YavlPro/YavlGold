@@ -62,9 +62,8 @@
   <meta property="og:image"
     content="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=1200&auto=format&fit=crop">
 
-  <!-- Favicon opcional -->
-  <link rel="icon"
-    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24'%3E%3Cpath fill='%2338d39f' d='M3 20q-.425 0-.712-.288T2 19v-5q0-.825.588-1.412T4 12h4q.825 0 1.413.588T10 14v5q0 .425-.288.713T9 20zM14 20q-.425 0-.712-.288T13 19v-7q0-.825.588-1.412T15 10h4q.825 0 1.413.588T21 12v7q0 .425-.288.713T20 20zM7 10q-.425 0-.712-.288T6 9V5q0-.825.588-1.412T8 3h8q.825 0 1.413.588T18 5v4q0 .425-.288.713T17 10z'/%3E%3C/svg%3E">
+  <!-- Favicon oficial -->
+  <link rel="icon" type="image/webp" href="/brand/logo.webp">
 
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -502,8 +501,10 @@
       position: fixed;
       right: 16px;
       bottom: 16px;
-      background: #25D366;
-      color: white;
+      right: 16px;
+      bottom: 16px;
+      /* background: #25D366; Removed: using Tailwind classes inline */
+      /* color: white; Removed: using Tailwind classes inline */
       border-radius: 999px;
       width: 56px;
       height: 56px;
@@ -513,7 +514,12 @@
       z-index: 40;
       text-decoration: none;
       font-weight: 700;
-      font-size: 22px
+      font-size: 22px;
+      transition: transform 0.3s ease;
+    }
+
+    .fab-whats:hover {
+      transform: scale(1.1);
     }
 
     @media (max-width: 900px) {
@@ -610,7 +616,7 @@
         <picture class="hero__img">
           <img src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=900&auto=format&fit=crop"
             alt="Canastas con hortalizas frescas de Táchira" width="640" height="420" loading="eager"
-            class="border border-[#D4AF37]/30 shadow-[0_0_30px_rgba(0,0,0,0.5)] rounded-2xl">
+            class="shadow-[0_0_50px_rgba(212,175,55,0.3)] border-none rounded-2xl">
         </picture>
       </div>
       <div class="hero__fade" aria-hidden="true"></div>
@@ -704,8 +710,8 @@
   </footer>
 
   <!-- Botón flotante WhatsApp -->
-  <a class="fab-whats" aria-label="Abrir WhatsApp" href="https://wa.me/584247394025" target="_blank"
-    rel="noopener">✆</a>
+  <a class="fab-whats bg-gradient-to-r from-[#D4AF37] to-[#FDB931] text-black shadow-lg shadow-[#D4AF37]/40"
+    aria-label="Abrir WhatsApp" href="https://wa.me/584247394025" target="_blank" rel="noopener">✆</a>
 
   <script type="application/ld+json">
   {
