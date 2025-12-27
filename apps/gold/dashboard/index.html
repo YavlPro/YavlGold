@@ -88,9 +88,11 @@
       <div class="hero-avatar" id="hero-avatar">
         <span id="hero-avatar-initials">YG</span>
       </div>
-      <h1
-        style="background: linear-gradient(to right, #D4AF37, #FDB931, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-        Bienvenido, <span id="user-name-display">Usuario</span></h1>
+      <h1 class="welcome-title"
+        style="background: linear-gradient(to right, #D4AF37, #FDB931, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">
+        Bienvenido, <span id="user-name-display"
+          style="background: inherit; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">Usuario</span>
+      </h1>
       <p>Tu centro de control del Ecosistema YavlGold</p>
     </section>
 
@@ -132,13 +134,21 @@
           <span class="status-badge">Próximamente</span>
         </div>
 
-        <!-- Agro Module (In Development) -->
-        <div class="module-card disabled">
+        <!-- Agro Module -->
+        <a href="/agro" class="module-card">
           <span class="module-icon">🌱</span>
           <h3>YavlAgro</h3>
           <p>Agricultura inteligente y tecnología aplicada al campo.</p>
-          <span class="status-badge">En Desarrollo</span>
-        </div>
+          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
+        </a>
+
+        <!-- Social Module -->
+        <a href="/social" class="module-card">
+          <span class="module-icon"><i class="fas fa-users" style="font-size: 2rem; color: #D4AF37;"></i></span>
+          <h3>YavlSocial</h3>
+          <p>Conecta con la comunidad, comparte ideas y crece en el ecosistema.</p>
+          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
+        </a>
 
       </div>
     </section>
