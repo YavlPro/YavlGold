@@ -8,6 +8,9 @@
     { "source": "/herramientas/:path*", "destination": "/apps/herramientas/index.html" },
     { "source": "/suite", "destination": "/apps/suite/index.html" },
     { "source": "/suite/:path*", "destination": "/apps/suite/index.html" },
+    { "source": "/roadmap", "destination": "/apps/gold/roadmap.html" },
+    { "source": "/cookies", "destination": "/apps/gold/cookies.html" },
+    { "source": "/faq", "destination": "/apps/gold/faq.html" },
     { "source": "/", "destination": "/apps/gold/index.html" }
   ],
   "cleanUrls": false,
