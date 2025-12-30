@@ -6,8 +6,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     base: "/",
+
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, 'apps/gold/assets'),
+            '@css': resolve(__dirname, 'apps/gold/assets/css'),
+            '@js': resolve(__dirname, 'apps/gold/assets/js'),
+            '@images': resolve(__dirname, 'apps/gold/assets/images'),
+            '@utils': resolve(__dirname, 'apps/gold/assets/js/utils'),
+        }
+    },
+
     build: {
         outDir: "dist",
+        emptyOutDir: true,
         rollupOptions: {
             input: {
                 main: resolve(__dirname, "apps/gold/index.html"),
@@ -22,5 +34,11 @@ export default defineConfig({
                 roadmap: resolve(__dirname, "apps/gold/roadmap.html"),
             },
         },
+        cssCodeSplit: false,
+    },
+
+    server: {
+        port: 5173,
+        open: true,
     },
 });
