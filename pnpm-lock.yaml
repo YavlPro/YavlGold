@@ -34,6 +34,15 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@25.0.0)(jsdom@24.1.3)(terser@5.44.1)
 
+  apps/academia:
+    dependencies:
+      '@yavl/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@yavl/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+
   apps/agro:
     dependencies:
       '@yavl/themes':
@@ -55,6 +64,15 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.21(@types/node@25.0.0)(terser@5.44.1)
+
+  apps/herramientas:
+    dependencies:
+      '@yavl/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@yavl/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
 
   apps/social:
     dependencies:
