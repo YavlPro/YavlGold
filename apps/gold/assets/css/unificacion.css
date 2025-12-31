@@ -60,7 +60,7 @@ body {
   top: 0;
   z-index: 1000;
 }
-.brand { display: flex; gap: 12px; align-items: center; text-decoration: none; color: #fff; font-weight: 700; font-size: 1.2rem; font-family: 'Playfair Display', serif; }
+.brand { display: flex; gap: 12px; align-items: center; text-decoration: none; color: #fff; font-weight: 700; font-size: 1.2rem; font-family: var(--font-heading); }
 .brand-logo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; border: 2px solid var(--color-secondary); }
 .main-nav { display: flex; gap: 24px; }
 .main-nav a {
@@ -69,7 +69,7 @@ body {
   font-weight: 600;
   font-size: 1.1rem; /* Increased for legibility */
   letter-spacing: 0.5px;
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   transition: var(--transition);
   padding: 8px 0;
   position: relative;
@@ -88,7 +88,7 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   font-size: 0.95rem;
   border: none;
   display: inline-flex;
@@ -129,7 +129,7 @@ body {
 /* Secciones y tarjetas genéricas */
 .section { padding: 100px 5% 60px; }
 .section-title { text-align: center; margin-bottom: 40px; }
-.section-title h2 { color: transparent; background: var(--gradient-gold); -webkit-background-clip: text; background-clip: text; font-size: 2.2rem; font-family: 'Playfair Display', serif; margin-bottom: 12px; }
+.section-title h2 { color: transparent; background: var(--gradient-gold); -webkit-background-clip: text; background-clip: text; font-size: 2.2rem;   font-family: var(--font-heading); margin-bottom: 12px; }
 .section-title p { color: var(--text-muted); max-width: 600px; margin: 0 auto; }
 .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 30px; }
 .tool-card { background: var(--card-bg); padding: 24px; border-radius: var(--border-radius); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); transition: var(--transition); text-align: center; display: flex; flex-direction: column; height: 100%; }
@@ -296,7 +296,7 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
   color: var(--text-light);
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   font-weight: 600;
 }
 
@@ -339,7 +339,7 @@ footer { text-align: center; padding: 40px 5% 30px; color: var(--text-muted); fo
   background: transparent;
   border: none;
   cursor: pointer;
-  font-family: 'Montserrat', sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
 }
 
