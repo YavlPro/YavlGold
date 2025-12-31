@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -26,7 +26,7 @@
   
   <!-- Fuentes y librerías -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -50,7 +50,7 @@
     }
 
     body {
-      font-family: 'Montserrat', sans-serif;
+      font-family: var(--font-body);
       background: var(--bg-dark);
       color: var(--text-light);
       line-height: 1.6;
@@ -84,7 +84,7 @@
       -webkit-background-clip: text;
       background-clip: text;
       font-size: 2.5rem;
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       margin-bottom: 20px;
     }
 
@@ -108,7 +108,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
-      font-family: 'Montserrat', sans-serif;
+      font-family: var(--font-body);
       font-size: 1rem;
       text-decoration: none;
       display: inline-block;
@@ -183,7 +183,7 @@
       background: rgba(255, 255, 255, 0.05);
       color: var(--text-light);
       font-size: 1rem;
-      font-family: 'Montserrat', sans-serif;
+      font-family: var(--font-body);
       transition: var(--transition);
     }
 
@@ -233,7 +233,7 @@
       font-weight: 700;
       color: var(--color-secondary);
       margin-bottom: 15px;
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
     }
 
     .result-rate {

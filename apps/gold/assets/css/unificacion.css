@@ -5,6 +5,10 @@
 /* Variables de tema - DARK (por defecto) */
 :root,
 [data-theme="dark"] {
+  /* 🔤 TIPOGRAFÍAS OFICIALES - ADN VISUAL */
+  --font-heading: 'Orbitron', sans-serif;
+  --font-body: 'Rajdhani', sans-serif;
+
   --color-primary: #111111;
   --color-secondary: #C8A752; /* Dorado principal */
   --color-accent: #C8A752;    /* Dorado secundario */
@@ -120,7 +124,7 @@ body {
 }
 
 /* Botones */
-.btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: 'Montserrat', sans-serif; font-size: 1rem; text-decoration: none; display: inline-block; text-align: center; }
+.btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: var(--font-body); font-size: 1rem; text-decoration: none; display: inline-block; text-align: center; }
 .btn-primary { background: var(--gradient-gold); color: var(--bg-darker); }
 .btn-secondary { background: transparent; color: var(--color-secondary); border: 2px solid var(--color-secondary); backdrop-filter: blur(10px); }
 .btn-outline { background: transparent; color: var(--text-light); border: 1px solid rgba(255,255,255,0.3); }

@@ -11,12 +11,16 @@
   <link rel="apple-touch-icon" href="/brand/logo.webp">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
+      /* 🔤 TIPOGRAFÍAS OFICIALES */
+      --font-heading: 'Orbitron', sans-serif;
+      --font-body: 'Rajdhani', sans-serif;
+
       --color-primary: #111111;
       --color-secondary: #C8A752;
       --color-accent: #C8A752;
@@ -36,7 +40,7 @@
     }
 
     body {
-      font-family: 'Montserrat', sans-serif;
+      font-family: var(--font-body);
       background: var(--bg-darker);
       color: var(--text-light);
       line-height: 1.7;
@@ -75,7 +79,7 @@
     }
 
     .academy-hero h1 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 4rem;
       color: transparent;
       background: var(--gradient-gold);
@@ -148,7 +152,7 @@
     }
 
     .section-title h2 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 2.5rem;
       color: var(--color-secondary);
       margin-bottom: 15px;
@@ -321,7 +325,7 @@
     }
 
     .cta-section h2 {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 2.5rem;
       color: var(--color-secondary);
       margin-bottom: 20px;
@@ -426,7 +430,7 @@
     }
 
     .coming-soon-title {
-      font-family: 'Playfair Display', serif;
+      font-family: var(--font-heading);
       font-size: 3rem;
       color: var(--color-secondary);
       text-align: center;
