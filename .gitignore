@@ -105,3 +105,5 @@ assets/apps/gold/config.local.js
 apps/gold/public/env.local.js
 assets/apps/gold/config.local.js
 assets/js/supabase-config.local.js
+
+docs/AUDITORIA_REPOSITORIO.md
