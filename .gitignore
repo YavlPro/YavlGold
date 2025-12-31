@@ -103,7 +103,9 @@ assets/apps/gold/config.local.js
 .quarantine/
 .env.development.local
 apps/gold/public/env.local.js
-assets/apps/gold/config.local.js
-assets/js/supabase-config.local.js
-
+ assets/apps/gold/config.local.js
+ assets/js/supabase-config.local.js
+ 
+# Documentación interna (NO subir al repo)
 docs/AUDITORIA_REPOSITORIO.md
+docs/ADN_VISUAL_YAVLGOLD.md
