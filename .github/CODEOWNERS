@@ -14,5 +14,7 @@ vite.config.ts                  @YeriksonVarela
 .gitignore                      @YeriksonVarela
 .gitattributes                  @YeriksonVarela
 
-# Este archivo
+# Este archivo y directorio .github/
+/.github/                       @YeriksonVarela
 .github/CODEOWNERS              @YeriksonVarela
+
