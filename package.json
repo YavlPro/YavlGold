@@ -30,7 +30,6 @@
     "pnpm": ">=8.0.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.1",
     "esbuild": "0.25.0",
     "jsdom": "^24.1.0",
     "sharp": "^0.33.5",
