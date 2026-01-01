@@ -1,0 +1,18 @@
+# YavlGold CODEOWNERS
+# Requiere aprobación del Lead Developer para cambios críticos
+
+# Documentación crítica del módulo Gold
+apps/gold/docs/*                @YeriksonVarela
+
+# Configuración de deploy y build
+vercel.json                     @YeriksonVarela
+vite.config.js                  @YeriksonVarela
+vite.config.ts                  @YeriksonVarela
+
+# Variables de entorno y seguridad
+.env*                           @YeriksonVarela
+.gitignore                      @YeriksonVarela
+.gitattributes                  @YeriksonVarela
+
+# Este archivo
+.github/CODEOWNERS              @YeriksonVarela
