@@ -1,4 +1,13 @@
 {
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
   "rewrites": [
     { "source": "/dashboard", "destination": "/apps/gold/dashboard/index.html" },
     { "source": "/dashboard/:path*", "destination": "/apps/gold/dashboard/index.html" },
