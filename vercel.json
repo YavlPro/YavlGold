@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm build:v9",
-  "outputDirectory": "dist",
+  "outputDirectory": "apps/gold/dist",
   "framework": null,
   "installCommand": "pnpm install",
   "rewrites": [
