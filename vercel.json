@@ -1,0 +1,29 @@
+{
+  "buildCommand": "pnpm build:v9",
+  "outputDirectory": "dist",
+  "framework": null,
+  "installCommand": "pnpm install",
+  "rewrites": [
+    { "source": "/dashboard", "destination": "/dashboard/index.html" },
+    { "source": "/dashboard/configuracion", "destination": "/dashboard/configuracion.html" },
+    { "source": "/dashboard/perfil", "destination": "/dashboard/perfil.html" },
+    { "source": "/profile", "destination": "/profile/index.html" },
+    { "source": "/cookies", "destination": "/cookies.html" },
+    { "source": "/faq", "destination": "/faq.html" },
+    { "source": "/roadmap", "destination": "/roadmap.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*).html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
+}
