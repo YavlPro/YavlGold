@@ -584,7 +584,14 @@ const AuthUI = {
       transition: all .3s cubic-bezier(.68,-.55,.265,1.55);
       display: flex; align-items: center; gap: 12px; max-width: 350px;
     `;
-    toast.innerHTML = `<i class="fas ${style.icon}"></i><span>${message}</span>`;
+    // XSS Prevention: Use DOM methods instead of innerHTML for message
+    toast.innerHTML = '';
+    const icon = document.createElement('i');
+    icon.className = `fas ${style.icon}`;
+    const span = document.createElement('span');
+    span.textContent = message; // textContent = safe from XSS
+    toast.appendChild(icon);
+    toast.appendChild(span);
     setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
     setTimeout(() => {
       toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)';

@@ -1,49 +1,61 @@
 /**
- * YAVLGOLD - PROFILE MANAGER v1.0
+ * YAVLGOLD - PROFILE MANAGER v1.1 (Security Hardened)
  * Gestión de perfiles extendidos de usuarios
+ *
+ * SECURITY FIXES v1.1:
+ * - Explicit column selection (no select('*'))
+ * - maybeSingle() instead of single() for existence checks
+ * - Bio validation in updateProfile
+ * - Logger instead of console.log
+ * - isAdmin scoped to current user only
  */
+import { logger } from '../utils/logger.js';
+
+// Columnas seguras para diferentes contextos
+const PROFILE_COLUMNS = {
+  public: 'id, username, avatar_url, bio',
+  own: 'id, username, avatar_url, bio, updated_at, created_at',
+  admin: 'id, is_admin'
+};
+
 const ProfileManager = {
   supabase: null,
 
   init() {
     if (!AuthClient.supabase) {
-      console.error('[ProfileManager] ❌ AuthClient no inicializado');
+      logger.error('[ProfileManager] AuthClient no inicializado');
       return false;
     }
     this.supabase = AuthClient.supabase;
-    console.log('[ProfileManager] ✅ Inicializado');
+    logger.success('[ProfileManager] Inicializado');
     return true;
   },
 
   /**
    * Obtener perfil de usuario por ID
+   * Usa columnas explícitas para evitar fuga de datos
    */
   async getProfile(userId) {
     try {
-      console.log('[ProfileManager] 🔍 Consultando perfil para ID:', userId);
-      
+      logger.debug('[ProfileManager] Consultando perfil');
+
       const { data, error } = await this.supabase
         .from('profiles')
-        .select('*')
-        .eq('id', userId);
-
-      console.log('[ProfileManager] 📊 Respuesta Supabase:', { data, error, count: data?.length });
+        .select(PROFILE_COLUMNS.own)
+        .eq('id', userId)
+        .maybeSingle(); // Fix: maybeSingle en lugar de array
 
       if (error) throw error;
 
-      // Verificar si hay resultados
-      if (!data || data.length === 0) {
-        console.warn('[ProfileManager] ⚠️ No se encontraron resultados para ID:', userId);
+      if (!data) {
+        logger.warn('[ProfileManager] Perfil no encontrado');
         return { success: false, error: 'Perfil no encontrado' };
       }
 
-      // Si hay múltiples (no debería pasar), tomar el primero
-      const profile = data[0];
-
-      console.log('[ProfileManager] ✅ Perfil obtenido:', profile.username);
-      return { success: true, profile: profile };
+      logger.debug('[ProfileManager] Perfil obtenido', { hasData: !!data });
+      return { success: true, profile: data };
     } catch (error) {
-      console.error('[ProfileManager] ❌ Error al obtener perfil:', error.message);
+      logger.error('[ProfileManager] Error al obtener perfil:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -61,17 +73,23 @@ const ProfileManager = {
 
   /**
    * Actualizar perfil de usuario
+   * Incluye validación de bio dentro del método
    */
   async updateProfile(userId, updates) {
     try {
-      // Validar campos
+      // Validar campos permitidos (whitelist)
       const allowedFields = ['username', 'bio', 'avatar_url'];
       const sanitizedUpdates = {};
-      
+
       for (const field of allowedFields) {
         if (updates[field] !== undefined) {
           sanitizedUpdates[field] = updates[field];
         }
+      }
+
+      // Validar bio si se está actualizando (fix: validación centralizada)
+      if (sanitizedUpdates.bio && sanitizedUpdates.bio.length > 500) {
+        return { success: false, error: 'La biografía no puede tener más de 500 caracteres' };
       }
 
       // Validar username si se está actualizando
@@ -82,15 +100,16 @@ const ProfileManager = {
         if (!/^[a-z0-9_]+$/.test(sanitizedUpdates.username)) {
           return { success: false, error: 'El username solo puede contener letras minúsculas, números y guiones bajos' };
         }
-        
-        // Verificar que el username no esté en uso
-        const { data: existing } = await this.supabase
+
+        // Fix: usar maybeSingle() en lugar de single()
+        const { data: existing, error: existErr } = await this.supabase
           .from('profiles')
           .select('id')
           .eq('username', sanitizedUpdates.username)
           .neq('id', userId)
-          .single();
-        
+          .maybeSingle();
+
+        if (existErr) throw existErr;
         if (existing) {
           return { success: false, error: 'Este username ya está en uso' };
         }
@@ -103,16 +122,16 @@ const ProfileManager = {
         .from('profiles')
         .update(sanitizedUpdates)
         .eq('id', userId)
-        .select()
-        .single();
+        .select(PROFILE_COLUMNS.own)
+        .maybeSingle();
 
       if (error) throw error;
 
-      console.log('[ProfileManager] ✅ Perfil actualizado');
-      
+      logger.success('[ProfileManager] Perfil actualizado');
+
       // Actualizar sesión local si es el usuario actual
       const session = AuthClient.getSession();
-      if (session?.user?.id === userId) {
+      if (session?.user?.id === userId && data) {
         session.user.name = data.username;
         session.user.avatar = data.avatar_url;
         AuthClient.saveSession(session);
@@ -120,7 +139,7 @@ const ProfileManager = {
 
       return { success: true, profile: data };
     } catch (error) {
-      console.error('[ProfileManager] ❌ Error al actualizar perfil:', error.message);
+      logger.error('[ProfileManager] Error al actualizar perfil:', error.message);
       return { success: false, error: error.message };
     }
   },
@@ -136,9 +155,7 @@ const ProfileManager = {
    * Actualizar biografía
    */
   async updateBio(userId, bio) {
-    if (bio.length > 500) {
-      return { success: false, error: 'La biografía no puede tener más de 500 caracteres' };
-    }
+    // La validación ahora está centralizada en updateProfile
     return await this.updateProfile(userId, { bio: bio });
   },
 
@@ -150,14 +167,21 @@ const ProfileManager = {
   },
 
   /**
-   * Verificar si un usuario es admin
+   * Verificar si el USUARIO ACTUAL es admin
+   * Fix: Solo permite verificar el usuario logueado, no cualquier userId
    */
-  async isAdmin(userId) {
+  async isCurrentUserAdmin() {
     try {
+      const session = AuthClient.getSession();
+      const uid = session?.user?.id;
+
+      if (!uid) {
+        return { success: false, isAdmin: false, error: 'No hay sesión activa' };
+      }
+
       // Verificar que ProfileManager esté inicializado
       if (!this.supabase) {
-        console.warn('[ProfileManager] ⚠️ No inicializado aún, esperando...');
-        // Esperar un momento para que se inicialice
+        logger.warn('[ProfileManager] No inicializado aún, esperando...');
         await new Promise(resolve => setTimeout(resolve, 150));
         if (!this.supabase) {
           return { success: false, isAdmin: false, error: 'ProfileManager no inicializado' };
@@ -166,32 +190,45 @@ const ProfileManager = {
 
       const { data, error } = await this.supabase
         .from('profiles')
-        .select('is_admin')
-        .eq('id', userId);
+        .select(PROFILE_COLUMNS.admin)
+        .eq('id', uid)
+        .maybeSingle();
 
-      if (error) throw error;
-
-      // Verificar si hay resultados
-      if (!data || data.length === 0) {
-        return { success: false, isAdmin: false, error: 'Perfil no encontrado' };
+      if (error) {
+        logger.error('[ProfileManager] Error al verificar admin:', error.message);
+        return { success: false, isAdmin: false, error: error.message };
       }
 
-      // Tomar el primer resultado (debería ser único por PK)
-      const profile = data[0];
-
-      return { success: true, isAdmin: profile.is_admin === true };
+      return { success: true, isAdmin: data?.is_admin === true };
     } catch (error) {
-      console.error('[ProfileManager] ❌ Error al verificar admin:', error.message);
+      logger.error('[ProfileManager] Error al verificar admin:', error.message);
       return { success: false, isAdmin: false };
     }
   },
 
   /**
+   * @deprecated Use isCurrentUserAdmin() instead
+   * Mantiene compatibilidad pero solo verifica usuario actual
+   */
+  async isAdmin(userId) {
+    logger.warn('[ProfileManager] isAdmin(userId) deprecado, usar isCurrentUserAdmin()');
+    const session = AuthClient.getSession();
+    // Solo permitir verificar si es el usuario actual
+    if (userId !== session?.user?.id) {
+      return { success: false, isAdmin: false, error: 'Solo puedes verificar tu propio estado de admin' };
+    }
+    return await this.isCurrentUserAdmin();
+  },
+
+  /**
    * Obtener múltiples perfiles (para mostrar usuarios)
+   * Fix: Solo columnas públicas, nunca select('*')
    */
   async getProfiles(options = {}) {
     try {
-      let query = this.supabase.from('profiles').select('*');
+      let query = this.supabase
+        .from('profiles')
+        .select(PROFILE_COLUMNS.public); // Fix: columnas explícitas
 
       // Aplicar filtros
       if (options.limit) query = query.limit(options.limit);
@@ -204,19 +241,20 @@ const ProfileManager = {
 
       return { success: true, profiles: data };
     } catch (error) {
-      console.error('[ProfileManager] ❌ Error al obtener perfiles:', error.message);
+      logger.error('[ProfileManager] Error al obtener perfiles:', error.message);
       return { success: false, error: error.message };
     }
   },
 
   /**
    * Buscar perfiles por username
+   * Fix: Solo columnas públicas, nunca select('*')
    */
   async searchProfiles(searchTerm) {
     try {
       const { data, error } = await this.supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_COLUMNS.public) // Fix: columnas explícitas
         .ilike('username', `%${searchTerm}%`)
         .limit(10);
 
@@ -224,7 +262,7 @@ const ProfileManager = {
 
       return { success: true, profiles: data };
     } catch (error) {
-      console.error('[ProfileManager] ❌ Error al buscar perfiles:', error.message);
+      logger.error('[ProfileManager] Error al buscar perfiles:', error.message);
       return { success: false, error: error.message };
     }
   }

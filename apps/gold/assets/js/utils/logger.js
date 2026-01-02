@@ -31,6 +31,24 @@ export const logger = {
 
   auth: (...args) => {
     if (isDev) console.log(`${PREFIX} 🔐`, ...args);
+  },
+
+  /**
+   * PII/Datos sensibles - NUNCA se muestra en producción
+   * Auto-redacta emails incluso en dev para máxima seguridad
+   * Usar para: emails, tokens, IDs de usuario, sesiones
+   */
+  pii: (...args) => {
+    if (!isDev) return;
+    const redactEmail = (s) => String(s).replace(/(.{2}).+(@.+)/, '$1***$2');
+    const redactToken = (s) => String(s).length > 20 ? String(s).slice(0, 8) + '...[REDACTED]' : s;
+    const safe = args.map(a => {
+      if (typeof a !== 'string') return a;
+      if (a.includes('@')) return redactEmail(a);
+      if (a.length > 40) return redactToken(a);
+      return a;
+    });
+    console.log(`${PREFIX} 🔒 [PII]`, ...safe);
   }
 };
 
