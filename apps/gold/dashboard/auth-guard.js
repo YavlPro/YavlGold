@@ -74,8 +74,9 @@
             return;
         }
 
-        // ✅ Sesión válida
-        console.log("✅ [AuthGuard] Acceso concedido Comandante:", session.user.email);
+        // ✅ Sesión válida (email redactado por privacidad)
+        const emailMasked = session.user.email.replace(/(.{2}).+(@.+)/, '$1***$2');
+        console.log("✅ [AuthGuard] Acceso concedido Comandante:", emailMasked);
 
         // Emitir evento para que otros scripts sepan que el usuario está autenticado
         window.dispatchEvent(new CustomEvent('auth:guard:passed', {

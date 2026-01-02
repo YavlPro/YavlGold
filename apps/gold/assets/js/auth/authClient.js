@@ -42,7 +42,8 @@ const authClient = {
         }
 
         if (activeSession) {
-            console.log('[AuthClient] ✅ Sesión activa confirmada:', activeSession.user.email);
+            const emailMasked = activeSession.user.email.replace(/(.{2}).+(@.+)/, '$1***$2');
+            console.log('[AuthClient] ✅ Sesión activa confirmada:', emailMasked);
             this._processSession(activeSession);
         } else {
             // 4. FALLBACK A LOCALSTORAGE
