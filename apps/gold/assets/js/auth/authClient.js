@@ -38,16 +38,10 @@ const authClient = {
         // 2.5 FRENO DE EMERGENCIA: Detectar flujo de recuperación de contraseña
         const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
         if (isRecoveryFlow && sessionFromHash) {
-            console.log('[AuthClient] 🔑 Flujo de RECOVERY detectado. Mostrando formulario...');
+            console.log('[AuthClient] 🔑 Flujo de RECOVERY detectado. Dejando nota para AuthUI...');
             this._processSession(sessionFromHash);
-            // Mostrar UI de cambio de contraseña con pequeño delay para asegurar que esté lista
-            setTimeout(() => {
-                if (window.AuthUI && typeof window.AuthUI.showUpdatePasswordMode === 'function') {
-                    window.AuthUI.showUpdatePasswordMode();
-                } else {
-                    console.warn('[AuthClient] ⚠️ AuthUI.showUpdatePasswordMode no disponible');
-                }
-            }, 100);
+            // NOTA EN LA NEVERA: AuthUI leerá esto cuando esté lista
+            sessionStorage.setItem('yavl_recovery_pending', 'true');
             // STOP: No continuar con el flujo normal (evita redirección al Dashboard)
             return;
         }
@@ -211,13 +205,10 @@ const authClient = {
             // PASO B: Interceptar SIGNED_IN en flujo de recovery
             const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
             if (event === 'SIGNED_IN' && isRecoveryFlow) {
-                console.log('[AuthGuard] 🔑 SIGNED_IN en flujo RECOVERY - Mostrando formulario');
+                console.log('[AuthGuard] 🔑 SIGNED_IN en flujo RECOVERY - Dejando nota para AuthUI');
                 this._processSession(session);
-                setTimeout(() => {
-                    if (window.AuthUI && typeof window.AuthUI.showUpdatePasswordMode === 'function') {
-                        window.AuthUI.showUpdatePasswordMode();
-                    }
-                }, 100);
+                // NOTA EN LA NEVERA: AuthUI leerá esto cuando esté lista
+                sessionStorage.setItem('yavl_recovery_pending', 'true');
                 return; // STOP: No continuar con el flujo normal
             }
 

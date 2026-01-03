@@ -12,6 +12,17 @@ const AuthUI = {
     this.setupPasswordToggles();
     this.updateUI();
     console.log('[AuthUI] ✅ AuthUI v2.0 inicializado');
+
+    // 🔑 RECEPTOR: Leer la "nota de la nevera" que dejó authClient
+    if (sessionStorage.getItem('yavl_recovery_pending') === 'true') {
+      console.log('[AuthUI] 📬 Nota de recovery encontrada. Ejecutando orden...');
+      // Borrar la nota para que no se repita en cada recarga
+      sessionStorage.removeItem('yavl_recovery_pending');
+      // Pequeño delay para asegurar transición suave
+      setTimeout(() => {
+        this.showUpdatePasswordMode();
+      }, 500);
+    }
   },
 
   cacheElements() {
