@@ -170,7 +170,9 @@ const authClient = {
         }
 
         // Usuario logueado en Home -> Dashboard (o returnTo)
-        if (this._isAuthEntry(path) && session) {
+        // PASO A: NO redirigir si estamos en flujo de recovery
+        const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
+        if (this._isAuthEntry(path) && session && !isRecoveryFlow) {
             this._isRedirecting = true;
             this._processSession(session);
             const returnTo = sessionStorage.getItem("__returnTo");
@@ -204,6 +206,19 @@ const authClient = {
                     window.location.replace("/");
                 }
                 return;
+            }
+
+            // PASO B: Interceptar SIGNED_IN en flujo de recovery
+            const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
+            if (event === 'SIGNED_IN' && isRecoveryFlow) {
+                console.log('[AuthGuard] 🔑 SIGNED_IN en flujo RECOVERY - Mostrando formulario');
+                this._processSession(session);
+                setTimeout(() => {
+                    if (window.AuthUI && typeof window.AuthUI.showUpdatePasswordMode === 'function') {
+                        window.AuthUI.showUpdatePasswordMode();
+                    }
+                }, 100);
+                return; // STOP: No continuar con el flujo normal
             }
 
             // Procesar sesión en eventos relevantes (SIN redirigir)
