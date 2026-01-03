@@ -29,10 +29,27 @@ const authClient = {
 
         this._clientReady = true;
 
-        // 2. PROCESAR HASH (MAGIC LINK) - INTERCAMBIO FORZADO
+        // 2. PROCESAR HASH (MAGIC LINK / RECOVERY) - INTERCAMBIO FORZADO
         let sessionFromHash = null;
         if (this._checkForUrlHash()) {
             sessionFromHash = await this._processUrlHash();
+        }
+
+        // 2.5 FRENO DE EMERGENCIA: Detectar flujo de recuperación de contraseña
+        const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
+        if (isRecoveryFlow && sessionFromHash) {
+            console.log('[AuthClient] 🔑 Flujo de RECOVERY detectado. Mostrando formulario...');
+            this._processSession(sessionFromHash);
+            // Mostrar UI de cambio de contraseña con pequeño delay para asegurar que esté lista
+            setTimeout(() => {
+                if (window.AuthUI && typeof window.AuthUI.showUpdatePasswordMode === 'function') {
+                    window.AuthUI.showUpdatePasswordMode();
+                } else {
+                    console.warn('[AuthClient] ⚠️ AuthUI.showUpdatePasswordMode no disponible');
+                }
+            }, 100);
+            // STOP: No continuar con el flujo normal (evita redirección al Dashboard)
+            return;
         }
 
         // 3. DETERMINAR SESIÓN ACTIVA
@@ -88,7 +105,8 @@ const authClient = {
     _checkForUrlHash() {
         if (typeof window === 'undefined') return false;
         const hash = window.location.hash || '';
-        return hash.includes('access_token=') || hash.includes('type=magiclink');
+        // Detectar: Token O MagicLink O Recovery
+        return hash.includes('access_token=') || hash.includes('type=magiclink') || hash.includes('type=recovery');
     },
 
     async _ensureSupabaseClient() {
