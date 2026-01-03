@@ -118,6 +118,12 @@ const AuthUI = {
       this.updateUI();
       this.hideAuthModal();
 
+      // 🛑 NO redirigir si hay recovery pendiente
+      if (sessionStorage.getItem('yavl_recovery_pending') === 'true') {
+        console.log('[AuthUI] 🛑 Recovery pendiente. NO redirigir.');
+        return;
+      }
+
       // SOLO redirigir si estamos en Login/Home, NO desde módulos
       const currentPath = window.location.pathname;
       const isLoginPage = currentPath === '/' ||

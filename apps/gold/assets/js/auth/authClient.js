@@ -373,12 +373,6 @@ const authClient = {
     isAuthenticated: function () { return !!this.currentSession; },
     getCurrentUser: function () { return this.currentSession?.user; },
 
-    _checkRedirectToHome() {
-        const path = window.location.pathname;
-        if ((path === '/' || path.includes('index.html')) && this.currentSession) {
-            setTimeout(() => window.location.href = '/dashboard/', 300);
-        }
-    },
     emitAuthChange(event) {
         window.dispatchEvent(new CustomEvent(`auth:${event.toLowerCase()}`, { detail: { user: this.currentSession?.user } }));
     }
