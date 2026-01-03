@@ -731,7 +731,9 @@ const AuthUI = {
   },
 
   showUpdatePasswordMode() {
+    console.log('[AuthUI] 🔑 Activando modo UPDATE PASSWORD');
     this.isUpdatePasswordMode = true;
+    this.isRecoveryMode = false; // CRÍTICO: Apagar Recovery para evitar conflicto
     this.showLoginModal();
 
     const form = this.elements.loginForm;
