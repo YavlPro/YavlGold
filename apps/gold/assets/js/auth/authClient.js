@@ -3,6 +3,15 @@
  * Ruta: apps/gold/assets/js/auth/authClient.js
  */
 
+// 🚨 INYECCIÓN TEMPRANA: Detectar recovery ANTES de que Supabase despierte
+(function () {
+    const hash = window.location.hash || '';
+    if (hash.includes('type=recovery')) {
+        sessionStorage.setItem('yavl_recovery_pending', 'true');
+        console.log('[AuthClient] ⚡ INSTANTE CERO: Recovery detectado. Bandera plantada.');
+    }
+})();
+
 const authClient = {
     supabase: null,
     currentSession: null,
