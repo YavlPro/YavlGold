@@ -142,6 +142,12 @@ const authClient = {
     },
 
     async _enforceAuth() {
+        // PUNTO C: BLOQUEO ABSOLUTO - Si hay recovery pendiente, NO redirigir a ningún lado
+        if (sessionStorage.getItem('yavl_recovery_pending') === 'true') {
+            console.log('[AuthGuard] 🛑 Recovery pendiente detectado. Guardián PARALIZADO.');
+            return;
+        }
+
         // Evitar múltiples redirects simultáneos
         if (this._isRedirecting) {
             console.log('[AuthGuard] ⏳ Redirect en curso, ignorando...');
