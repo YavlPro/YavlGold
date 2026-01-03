@@ -16,8 +16,7 @@ const AuthUI = {
     // 🔑 RECEPTOR: Leer la "nota de la nevera" que dejó authClient
     if (sessionStorage.getItem('yavl_recovery_pending') === 'true') {
       console.log('[AuthUI] 📬 Nota de recovery encontrada. Ejecutando orden...');
-      // Borrar la nota para que no se repita en cada recarga
-      sessionStorage.removeItem('yavl_recovery_pending');
+      // ⚠️ NO borrar la nota aquí - se borra SOLO al éxito del cambio de contraseña
       // Pequeño delay para asegurar transición suave
       setTimeout(() => {
         this.showUpdatePasswordMode();
@@ -373,6 +372,10 @@ const AuthUI = {
           if (error) throw error;
 
           this.showSuccess('Contraseña Actualizada Correctamente');
+
+          // 🧽 AHORA SÍ: Borrar la nota porque el cambio fue exitoso
+          sessionStorage.removeItem('yavl_recovery_pending');
+          console.log('[AuthUI] ✅ Recovery completado. Nota borrada.');
 
           setTimeout(() => {
             window.location.href = '/dashboard/';
