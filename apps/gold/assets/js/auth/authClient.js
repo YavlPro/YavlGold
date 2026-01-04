@@ -151,9 +151,12 @@ const authClient = {
     },
 
     async _enforceAuth() {
-        // PUNTO C: BLOQUEO ABSOLUTO - Si hay recovery pendiente, NO redirigir a ningún lado
-        if (sessionStorage.getItem('yavl_recovery_pending') === 'true') {
-            console.log('[AuthGuard] 🛑 Recovery pendiente detectado. Guardián PARALIZADO.');
+        // 🔒 REFUERZO DE TITANIO: Doble candado - Si hay bandera O hash de recovery, PARALIZAR
+        const hasRecoveryFlag = sessionStorage.getItem('yavl_recovery_pending') === 'true';
+        const hasRecoveryHash = (window.location.hash || '').includes('type=recovery');
+
+        if (hasRecoveryFlag || hasRecoveryHash) {
+            console.log('[AuthGuard] 🛑 Recovery detectado (flag:', hasRecoveryFlag, 'hash:', hasRecoveryHash, '). PARALIZADO.');
             return;
         }
 
