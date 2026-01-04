@@ -304,7 +304,11 @@ const authClient = {
             }
 
             this._processSession(data.session);
-            setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
+            if (!sessionStorage.getItem('yavl_recovery_pending')) {
+              setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
+            } else {
+              console.log('[AuthClient] 🛑 Redirección al Dashboard bloqueada por Recovery');
+            }
             return { success: true, user: data.user };
         } catch (err) {
             return { success: false, error: 'Error de conexión' };

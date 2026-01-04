@@ -378,7 +378,11 @@ const AuthUI = {
           console.log('[AuthUI] ✅ Recovery completado. Nota borrada.');
 
           setTimeout(() => {
-            window.location.href = '/dashboard/';
+            if (!sessionStorage.getItem('yavl_recovery_pending')) {
+              window.location.href = '/dashboard/';
+            } else {
+              console.log('[AuthUI] 🛑 Redirección al Dashboard bloqueada por Recovery');
+            }
           }, 1000);
 
         } catch (err) {
@@ -421,7 +425,11 @@ const AuthUI = {
           this.hideAuthModal();
 
           setTimeout(() => {
-            window.location.href = '/dashboard/';
+            if (!sessionStorage.getItem('yavl_recovery_pending')) {
+              window.location.href = '/dashboard/';
+            } else {
+              console.log('[AuthUI] 🛑 Redirección al Dashboard bloqueada por Recovery');
+            }
           }, 800);
         } else {
           console.error('❌ [AuthUI] Login falló:', res.error);
