@@ -787,11 +787,19 @@ const AuthUI = {
 
     if (submitBtn) submitBtn.textContent = 'Guardar Nueva Contraseña';
 
+    // 🔓 DESARMAR validación del email (oculto pero aún required = bloqueo del navegador)
+    const emailInput = form.querySelector('#login-email');
+    if (emailInput) {
+      emailInput.required = false;
+      emailInput.value = 'recovery@placeholder.com'; // Valor dummy para evitar validación
+    }
+
     // Ensure password input is visible and required
     const passwordInput = form.querySelector('#login-password');
     if (passwordInput) {
       passwordInput.value = '';
       passwordInput.placeholder = 'Nueva contraseña';
+      passwordInput.required = true; // El password SÍ es obligatorio
     }
   },
 };
