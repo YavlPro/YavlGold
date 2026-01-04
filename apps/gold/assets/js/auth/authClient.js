@@ -220,14 +220,19 @@ const authClient = {
                 return;
             }
 
-            // PASO B: Interceptar SIGNED_IN en flujo de recovery
-            const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
-            if (event === 'SIGNED_IN' && isRecoveryFlow) {
-                console.log('[AuthGuard] 🔑 SIGNED_IN en flujo RECOVERY - Dejando nota para AuthUI');
-                this._processSession(session);
-                // NOTA EN LA NEVERA: AuthUI leerá esto cuando esté lista
-                sessionStorage.setItem('yavl_recovery_pending', 'true');
-                return; // STOP: No continuar con el flujo normal
+            // 🧱 MURO DE CONTENCIÓN TOTAL: Bloquear TODO en SIGNED_IN si hay recovery
+            if (event === 'SIGNED_IN') {
+                const hasRecoveryFlag = sessionStorage.getItem('yavl_recovery_pending') === 'true';
+                const hasRecoveryHash = (window.location.hash || '').includes('type=recovery');
+
+                if (hasRecoveryFlag || hasRecoveryHash) {
+                    console.log('[AuthGuard] 🧱 MURO: SIGNED_IN bloqueado por recovery. Sesión activa, sin redirect.');
+                    // Procesar sesión (para mantener permisos) pero NO redirigir
+                    if (session) this._processSession(session);
+                    // Asegurar que la bandera esté puesta
+                    sessionStorage.setItem('yavl_recovery_pending', 'true');
+                    return; // STOP TOTAL
+                }
             }
 
             // Procesar sesión en eventos relevantes (SIN redirigir)
