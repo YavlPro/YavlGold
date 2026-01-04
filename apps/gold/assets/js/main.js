@@ -73,18 +73,23 @@ window.addEventListener('load', async () => {
 
             console.log('[VerificationHandler] ✅ Verificación Exitosa.');
 
-            // 3. Feedback Visual (Toast Dorado Premium)
-            showGoldToast('Cuenta Verificada con Éxito');
+            // 🛑 NO redirigir si hay recovery pendiente
+            if (!sessionStorage.getItem('yavl_recovery_pending')) {
+              // 3. Feedback Visual (Toast Dorado Premium)
+              showGoldToast('Cuenta Verificada con Éxito');
 
-            // 4. Limpieza de URL
-            const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
-            window.history.replaceState(null, '', cleanUrl);
+              // 4. Limpieza de URL
+              const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
+              window.history.replaceState(null, '', cleanUrl);
 
-            // 5. Redirección
-            setTimeout(() => {
-              console.log('[VerificationHandler] 🚀 Redirigiendo a Dashboard...');
-              window.location.href = '/dashboard/';
-            }, 2000);
+              // 5. Redirección
+              setTimeout(() => {
+                console.log('[VerificationHandler] 🚀 Redirigiendo a Dashboard...');
+                window.location.href = '/dashboard/';
+              }, 2000);
+            } else {
+              console.log('[VerificationHandler] 🛑 Redirección bloqueada por Recovery pendiente');
+            }
 
             // Desuscribir para evitar múltiples disparos
             if (subscription) subscription.unsubscribe();

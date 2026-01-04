@@ -55,7 +55,11 @@ const AuthGuard = {
   redirectAfterLogin() {
     const intended = sessionStorage.getItem('gg:redirectAfterLogin');
     if (intended) { sessionStorage.removeItem('gg:redirectAfterLogin'); setTimeout(() => (window.location.href = intended), 800); return; }
-    setTimeout(() => (window.location.href = '/dashboard/'), 800);
+    if (!sessionStorage.getItem('yavl_recovery_pending')) {
+      setTimeout(() => (window.location.href = '/dashboard/'), 800);
+    } else {
+      console.log('[AuthGuard] 🛑 Redirección al Dashboard bloqueada por Recovery');
+    }
   },
 
   async hasRole(requiredRole) {
@@ -91,7 +95,11 @@ const AuthGuard = {
       console.warn(`[AuthGuard] ⛔ Rol insuficiente: ${requiredRole}`);
       if (window.AuthUI) window.AuthUI.showError('generic', 'No tienes permisos para acceder.');
       else alert('No tienes permisos para acceder.');
-      setTimeout(() => (window.location.href = '/dashboard/'), 1500);
+      if (!sessionStorage.getItem('yavl_recovery_pending')) {
+        setTimeout(() => (window.location.href = '/dashboard/'), 1500);
+      } else {
+        console.log('[AuthGuard] 🛑 Redirección al Dashboard bloqueada por Recovery');
+      }
       return false;
     }
     return true;
