@@ -1,62 +1,74 @@
+<!-- ⚠️ ARCHIVO QUIRÚRGICO: Logout es CAJA NEGRA. No refactorizar. v9.3 Pathfinder -->
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - YavlGold</title>
+  <title>El Santuario Digital | Dashboard</title>
   <meta name="description" content="Panel de control del Ecosistema YavlGold">
-  <meta name="theme-color" content="#0B0C0F">
+  <meta name="theme-color" content="#0a0a0a">
 
   <!-- Favicon (YavlGold V9.2 Glow Logo) -->
   <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
   <link rel="apple-touch-icon" href="/brand/logo.webp">
 
-  <!-- Fonts -->
+  <!-- FUENTES OFICIALES -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/assets/css/unificacion.css?v=9.2.1">
-  <!-- External CSS commented out to force style update -->
-  <!-- <link rel="stylesheet" href="/assets/css/dashboard.css?v=9.2.1"> -->
+  <link rel="stylesheet" href="/assets/css/unificacion.css?v=9.3">
 
   <style>
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   🎨 YAVLGOLD DASHBOARD - PREMIUM DARK THEME
-   Inherits from unificacion.css variables
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    /* ============================================
+           🎨 VARIABLES CSS - ADN VISUAL V9.3
+        ============================================ */
+    :root {
+      /* Colores Base Inmutables */
+      --negro-puro: #0a0a0a;
+      --negro-tarjeta: #1a1a1a;
+      --negro-tarjeta-alpha: rgba(17, 17, 17, 0.9);
+      --blanco: #ffffff;
+      --dorado-yavl: #C8A752;
+      --dorado-claro: #e8d5a3;
+      --dorado-oscuro: #9a7b3a;
 
-    /* ━━━ ANIMATIONS ━━━ */
-    @keyframes breathe {
+      /* Gradientes para Badges SOLAMENTE */
+      --badge-azul: linear-gradient(135deg, #3498db, #2980b9);
+      --badge-morado: linear-gradient(135deg, #9b59b6, #8e44ad);
+      --badge-dorado: linear-gradient(135deg, #C8A752, #9a7b3a);
 
-      0%,
-      100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4));
-      }
+      /* Tipografía */
+      --font-titulo: 'Orbitron', sans-serif;
+      --font-cuerpo: 'Rajdhani', sans-serif;
 
-      50% {
-        transform: scale(1.05);
-        filter: drop-shadow(0 0 40px rgba(200, 167, 82, 0.7));
-      }
+      /* Efectos */
+      --sombra-dorada: 0 0 30px rgba(200, 167, 82, 0.3);
+      --sombra-tarjeta: 0 10px 40px rgba(0, 0, 0, 0.5);
+      --borde-dorado: 1px solid rgba(200, 167, 82, 0.3);
     }
 
-    @keyframes textGlow {
+    /* ============================================
+           🌟 ANIMACIONES - PULSO VITAL
+        ============================================ */
+    @keyframes pulse {
 
       0%,
       100% {
-        text-shadow: 0 0 10px rgba(200, 167, 82, 0.5), 0 0 20px rgba(200, 167, 82, 0.3);
+        opacity: 0.15;
+        transform: translate(-50%, -50%) scale(1);
       }
 
       50% {
-        text-shadow: 0 0 20px rgba(200, 167, 82, 0.8), 0 0 40px rgba(200, 167, 82, 0.5);
+        opacity: 0.25;
+        transform: translate(-50%, -50%) scale(1.1);
       }
     }
 
@@ -68,19 +80,29 @@
       }
 
       50% {
-        transform: translateY(-15px);
+        transform: translateY(-10px);
       }
     }
 
-    @keyframes cardGlow {
+    @keyframes shimmer {
+      0% {
+        background-position: -200% center;
+      }
+
+      100% {
+        background-position: 200% center;
+      }
+    }
+
+    @keyframes borderGlow {
 
       0%,
       100% {
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(200, 167, 82, 0.1);
+        border-color: rgba(200, 167, 82, 0.3);
       }
 
       50% {
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 167, 82, 0.15);
+        border-color: rgba(200, 167, 82, 0.6);
       }
     }
 
@@ -96,147 +118,302 @@
       }
     }
 
-    /* ━━━ BASE LAYOUT ━━━ */
-    .dashboard-page {
+    /* ============================================
+           📦 RESET & BASE
+        ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-cuerpo);
+      background-color: var(--negro-puro);
+      color: var(--blanco);
       min-height: 100vh;
-      background: #0a0a0a !important;
-      /* Aligned with index.html --bg-primary */
-      position: relative;
       overflow-x: hidden;
-    }
-
-    /* Gradient overlay disabled for consistency with Herramientas
-.dashboard-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background:
-    radial-gradient(ellipse at 20% 0%, rgba(200, 167, 82, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgba(200, 167, 82, 0.05) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-*/
-
-    .dashboard-main {
-      position: relative;
-      z-index: 1;
-      padding-top: 100px;
-      padding-bottom: 60px;
-    }
-
-    /* ━━━ HERO SECTION ━━━ */
-    .dashboard-hero {
-      text-align: center;
-      padding: 60px 20px 80px;
       position: relative;
     }
 
-    .dashboard-hero::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
+    /* ============================================
+           🎆 FONDO PULSO VITAL - GRADIENTE QUE RESPIRA
+        ============================================ */
+    .pulso-vital {
+      position: fixed;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      width: 200px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--color-secondary), transparent);
+      width: 150vmax;
+      height: 150vmax;
+      background: radial-gradient(circle,
+          rgba(200, 167, 82, 0.4) 0%,
+          rgba(200, 167, 82, 0.15) 25%,
+          rgba(200, 167, 82, 0.05) 50%,
+          transparent 70%);
+      transform: translate(-50%, -50%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    .hero-avatar {
-      width: 100px;
-      height: 100px;
+    /* Partículas sutiles */
+    .particulas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particula {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--dorado-yavl);
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--color-secondary), #9D8040);
+      opacity: 0.3;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    /* ============================================
+           📍 CONTENEDOR PRINCIPAL
+        ============================================ */
+    .dashboard-container {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    /* ============================================
+           🔝 HEADER
+        ============================================ */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: var(--negro-tarjeta-alpha);
+      border: var(--borde-dorado);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      margin-bottom: 3rem;
+      animation: borderGlow 4s ease-in-out infinite;
+    }
+
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--dorado-yavl), var(--dorado-oscuro));
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--bg-darker);
-      margin: 0 auto 24px;
-      animation: breathe 4s ease-in-out infinite;
-      border: 3px solid #D4AF37;
-      /* Premium gold border */
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
-      /* Elegant glow */
+      font-size: 1.5rem;
+      box-shadow: var(--sombra-dorada);
     }
 
-    .hero-avatar img {
+    .logo-icon img {
       width: 100%;
       height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
+      object-fit: contain;
+      border-radius: 12px;
     }
 
-    .dashboard-hero h1 {
-      font-family: 'Orbitron', sans-serif;
-      /* Aligned with index.html */
-      font-size: 3rem;
+    .logo-text h1 {
+      font-family: var(--font-titulo);
       font-weight: 900;
-      color: #e5e5e5;
-      /* Elegant off-white, not pure white */
-      margin-bottom: 12px;
-      animation: fadeInUp 0.6s ease-out;
-    }
-
-    .dashboard-hero h1 span {
-      background: linear-gradient(135deg, #9D8040, var(--color-secondary), #E4D08E);
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, var(--dorado-claro), var(--dorado-yavl));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: textGlow 3s ease-in-out infinite;
+      letter-spacing: 2px;
     }
 
-    .dashboard-hero p {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.2rem;
-      color: var(--text-muted);
+    .logo-text span {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           🔴 ZONA SAGRADA: BOTÓN LOGOUT
+           ⚠️ NO MODIFICAR ESTE BLOQUE CSS
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .btn-logout {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: var(--font-cuerpo);
+      font-size: 0.9rem;
       font-weight: 500;
-      animation: fadeInUp 0.6s ease-out 0.1s both;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    /* ━━━ MODULES GRID ━━━ */
-    .modules-section {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 20px;
+    .btn-logout:hover {
+      border-color: rgba(200, 167, 82, 0.5);
+      color: var(--dorado-yavl);
+      background: rgba(200, 167, 82, 0.1);
     }
 
-    .modules-section h2 {
-      font-family: 'Orbitron', sans-serif;
-      /* Aligned with index.html */
-      font-size: 1.8rem;
-      font-weight: 900;
-      color: var(--color-secondary);
+    .btn-logout svg,
+    .btn-logout i {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    .btn-logout:hover svg,
+    .btn-logout:hover i {
+      transform: translateX(3px);
+    }
+
+    /* Logout Nav Button Override */
+    #logout-btn-nav {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.6);
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-family: var(--font-cuerpo);
+      font-weight: 500;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    #logout-btn-nav:hover {
+      border-color: rgba(200, 167, 82, 0.5);
+      color: var(--dorado-yavl);
+      background: rgba(200, 167, 82, 0.1);
+    }
+
+    /* Mobile Logout FAB */
+    .mobile-logout-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      background: var(--negro-tarjeta);
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      color: var(--dorado-yavl);
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: var(--sombra-dorada);
+      backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+    }
+
+    .mobile-logout-btn:hover {
+      background: linear-gradient(135deg, var(--dorado-yavl), var(--dorado-oscuro));
+      color: var(--negro-puro);
+    }
+
+    @media (min-width: 992px) {
+      .mobile-logout-btn {
+        display: none !important;
+      }
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+           🔴 FIN ZONA SAGRADA LOGOUT
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+    /* ============================================
+           👋 SECCIÓN DE BIENVENIDA
+        ============================================ */
+    .welcome-section {
       text-align: center;
-      margin-bottom: 40px;
-      position: relative;
+      margin-bottom: 4rem;
+      padding: 2rem;
+      animation: fadeInUp 0.6s ease-out;
     }
 
+    .welcome-section h2 {
+      font-family: var(--font-titulo);
+      font-weight: 700;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--blanco);
+    }
+
+    .welcome-section h2 span {
+      color: var(--dorado-yavl);
+    }
+
+    .welcome-section p {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.7);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .welcome-divider {
+      width: 100px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--dorado-yavl), transparent);
+      margin: 2rem auto;
+      border-radius: 3px;
+    }
+
+    /* ============================================
+           🃏 GRID DE MÓDULOS
+        ============================================ */
     .modules-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 28px;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
     }
 
-    /* ━━━ MODULE CARDS - GLASSMORPHISM ━━━ */
+    /* ============================================
+           🎴 TARJETA DE MÓDULO
+        ============================================ */
     .module-card {
-      background: rgba(17, 17, 17, 0.85);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(200, 167, 82, 0.15);
+      background: var(--negro-tarjeta);
+      border: var(--borde-dorado);
       border-radius: 24px;
-      /* Aligned with index.html feature-card */
-      padding: 36px 28px;
-      text-align: center;
-      text-decoration: none;
-      color: var(--text-primary);
+      padding: 2rem;
       position: relative;
       overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
       animation: fadeInUp 0.6s ease-out both;
     }
 
@@ -245,22 +422,25 @@
     }
 
     .module-card:nth-child(2) {
-      animation-delay: 0.2s;
+      animation-delay: 0.15s;
     }
 
     .module-card:nth-child(3) {
-      animation-delay: 0.3s;
+      animation-delay: 0.2s;
     }
 
     .module-card:nth-child(4) {
-      animation-delay: 0.4s;
+      animation-delay: 0.25s;
     }
 
     .module-card:nth-child(5) {
-      animation-delay: 0.5s;
+      animation-delay: 0.3s;
     }
 
-    /* Card top accent line */
+    .module-card:nth-child(6) {
+      animation-delay: 0.35s;
+    }
+
     .module-card::before {
       content: '';
       position: absolute;
@@ -268,298 +448,288 @@
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--color-secondary), #E4D08E, var(--color-secondary));
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.4s ease;
-    }
-
-    /* Card glow effect */
-    .module-card::after {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 22px;
-      background: linear-gradient(135deg, rgba(200, 167, 82, 0.3), transparent, rgba(200, 167, 82, 0.1));
+      background: linear-gradient(90deg, transparent, var(--dorado-yavl), transparent);
       opacity: 0;
-      z-index: -1;
-      transition: opacity 0.4s ease;
+      transition: opacity 0.3s ease;
     }
 
     .module-card:hover {
-      transform: translateY(-12px) scale(1.02);
-      border-color: rgba(200, 167, 82, 0.4);
-      box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        0 0 40px rgba(200, 167, 82, 0.15);
+      transform: translateY(-10px);
+      border-color: rgba(200, 167, 82, 0.6);
+      box-shadow: var(--sombra-dorada);
     }
 
     .module-card:hover::before {
-      transform: scaleX(1);
-    }
-
-    .module-card:hover::after {
       opacity: 1;
     }
 
-    .module-card:hover .module-icon {
-      transform: scale(1.15);
-      filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.6));
-    }
-
-    /* Card Icon */
+    /* Ícono del Módulo */
     .module-icon {
-      font-size: 3.5rem;
-      margin-bottom: 20px;
-      display: block;
-      transition: all 0.4s ease;
-      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-    }
-
-    /* Card Title */
-    .module-card h3 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--color-secondary);
-      margin-bottom: 10px;
-    }
-
-    /* Card Description */
-    .module-card p {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    /* Card CTA Button */
-    .module-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 28px;
-      background: linear-gradient(135deg, var(--color-secondary), #9D8040);
-      color: var(--bg-darker);
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border-radius: 50px;
-      transition: all 0.3s ease;
-    }
-
-    .module-card:hover .module-cta {
-      box-shadow: 0 6px 20px rgba(200, 167, 82, 0.4);
-      transform: translateY(-2px);
-    }
-
-    /* ━━━ DISABLED CARDS ━━━ */
-    .module-card.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-    .module-card.disabled::before,
-    .module-card.disabled::after {
-      display: none;
-    }
-
-    .module-card.disabled .module-icon {
-      filter: grayscale(100%) brightness(0.7);
-    }
-
-    .module-card.disabled h3 {
-      color: var(--text-muted);
-    }
-
-    .module-card.disabled .module-cta {
-      background: rgba(100, 100, 100, 0.3);
-      color: var(--text-muted);
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 6px 14px;
+      width: 70px;
+      height: 70px;
       background: rgba(200, 167, 82, 0.1);
       border: 1px solid rgba(200, 167, 82, 0.3);
       border-radius: 20px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--color-secondary);
-      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .module-card:hover .module-icon {
+      background: rgba(200, 167, 82, 0.2);
+      transform: scale(1.05);
+    }
+
+    /* Header de Tarjeta */
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .module-title {
+      font-family: var(--font-titulo);
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: var(--blanco);
       letter-spacing: 1px;
     }
 
-    .module-card.disabled .status-badge {
-      background: rgba(100, 100, 100, 0.2);
-      border-color: rgba(100, 100, 100, 0.3);
-      color: var(--text-muted);
+    /* ============================================
+           🏷️ BADGES DE ESTADO
+        ============================================ */
+    .badge {
+      padding: 0.35rem 0.9rem;
+      border-radius: 50px;
+      font-family: var(--font-cuerpo);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--blanco);
+      white-space: nowrap;
     }
 
-    /* ━━━ DASHBOARD FOOTER ━━━ */
-    .dashboard-footer {
-      text-align: center;
-      padding: 40px 20px;
-      margin-top: 60px;
-      border-top: 1px solid rgba(200, 167, 82, 0.1);
+    /* Badge Dorado - Producto Estrella / Activo */
+    .badge-estrella {
+      background: var(--badge-dorado);
+      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.4);
+      animation: shimmer 3s ease-in-out infinite;
+      background-size: 200% auto;
+      background-image: linear-gradient(90deg,
+          var(--dorado-oscuro) 0%,
+          var(--dorado-claro) 50%,
+          var(--dorado-oscuro) 100%);
     }
 
-    .dashboard-footer p {
-      font-family: 'Rajdhani', sans-serif;
+    /* Badge Azul - En Desarrollo */
+    .badge-desarrollo {
+      background: var(--badge-azul);
+      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    }
+
+    /* Badge Morado - Próximamente */
+    .badge-proximo {
+      background: var(--badge-morado);
+      box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+    }
+
+    /* Badge Activo (Dorado sutil) */
+    .badge-activo {
+      background: transparent;
+      border: 1px solid var(--dorado-yavl);
+      color: var(--dorado-yavl);
+    }
+
+    /* Descripción */
+    .module-description {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Features List */
+    .module-features {
+      list-style: none;
+      margin-bottom: 2rem;
+    }
+
+    .module-features li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: rgba(255, 255, 255, 0.7);
       font-size: 0.9rem;
-      color: var(--text-muted);
+      margin-bottom: 0.5rem;
     }
 
-    .dashboard-footer a {
-      color: var(--color-secondary);
+    .module-features li::before {
+      content: '◆';
+      color: var(--dorado-yavl);
+      font-size: 0.6rem;
+    }
+
+    /* ============================================
+           🔘 BOTONES - PILL SHAPE (OBLIGATORIO)
+        ============================================ */
+    .btn-modulo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, var(--dorado-yavl), var(--dorado-oscuro));
+      border: none;
+      border-radius: 50px;
+      /* PILL SHAPE */
+      color: var(--negro-puro);
+      font-family: var(--font-titulo);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
       text-decoration: none;
-      transition: opacity 0.3s;
     }
 
-    .dashboard-footer a:hover {
-      opacity: 0.8;
+    .btn-modulo:hover {
+      transform: scale(1.02);
+      box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
     }
 
-    /* ━━━ RESPONSIVE ━━━ */
+    .btn-modulo svg,
+    .btn-modulo i {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    .btn-modulo:hover svg,
+    .btn-modulo:hover i {
+      transform: translateX(5px);
+    }
+
+    /* Botón Deshabilitado */
+    .btn-modulo.disabled {
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.4);
+      cursor: not-allowed;
+    }
+
+    .btn-modulo.disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Card Disabled State */
+    .module-card.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .module-card.disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ============================================
+           📊 ESTADÍSTICAS RÁPIDAS
+        ============================================ */
+    .stats-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--negro-tarjeta-alpha);
+      border: var(--borde-dorado);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .stat-card:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .stat-card:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .stat-card:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .stat-card:nth-child(4) {
+      animation-delay: 0.2s;
+    }
+
+    .stat-number {
+      font-family: var(--font-titulo);
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--dorado-yavl);
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* ============================================
+           📱 RESPONSIVE
+        ============================================ */
     @media (max-width: 768px) {
-      .dashboard-main {
-        padding-top: 80px;
+      .dashboard-container {
+        padding: 1rem;
       }
 
-      .dashboard-hero {
-        padding: 40px 20px 60px;
+      .header {
+        flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
       }
 
-      .hero-avatar {
-        width: 80px;
-        height: 80px;
-        font-size: 2rem;
+      .logo-section {
+        flex-direction: column;
       }
 
-      .dashboard-hero h1 {
-        font-size: 2rem;
-      }
-
-      .dashboard-hero p {
-        font-size: 1rem;
+      .welcome-section h2 {
+        font-size: 1.8rem;
       }
 
       .modules-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
       }
 
       .module-card {
-        padding: 28px 20px;
-      }
-
-      .module-icon {
-        font-size: 2.8rem;
-      }
-
-      .module-card h3 {
-        font-size: 1.2rem;
+        padding: 1.5rem;
       }
     }
 
-    @media (max-width: 480px) {
-      .dashboard-hero h1 {
-        font-size: 1.6rem;
-      }
-
-      .modules-section h2 {
-        font-size: 1.4rem;
-      }
+    /* ============================================
+           ⚡ UTILIDADES
+        ============================================ */
+    .text-gold {
+      color: var(--dorado-yavl);
     }
 
-    /* --- Logout Button Styles --- */
-    #logout-btn-nav {
-      background: var(--bg-darker);
-      border: 1px solid var(--color-secondary);
-      color: var(--color-secondary);
-      padding: 8px 24px;
-      border-radius: 50px;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-left: 20px;
-      box-shadow: 0 0 10px rgba(200, 167, 82, 0.15);
-    }
-
-    #logout-btn-nav:hover {
-      background: linear-gradient(135deg, var(--color-secondary), #9D8040);
-      color: var(--bg-darker);
-      box-shadow: 0 0 20px rgba(200, 167, 82, 0.5);
-      transform: translateY(-2px);
-    }
-
-    /* --- Mobile Adjustments for Logout Button --- */
-    @media (max-width: 991px) {
-      #logout-btn-nav {
-        display: inline-flex !important;
-        /* Force visibility */
-        margin-left: 0;
-        /* Reset desktop margin */
-        margin-top: 15px;
-        /* Add spacing in mobile menu flow */
-        width: auto;
-        /* Allow it to size naturally or set to 100% if preferred */
-        justify-content: center;
-      }
-
-      /* Ensure parent container doesn't hide it if necessary (adjust selector based on actual nav structure if needed) */
-      .navbar-collapse.show #logout-btn-nav {
-        display: flex !important;
-      }
-    }
-
-    /* --- Mobile Floating Button Styles --- */
-    .mobile-logout-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      /* Always on top */
-      background: var(--bg-darker);
-      border: 1px solid var(--color-secondary);
-      color: var(--color-secondary);
-      width: 45px;
-      height: 45px;
-      border-radius: 50%;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      cursor: pointer;
-      box-shadow: 0 0 15px rgba(200, 167, 82, 0.25);
-      backdrop-filter: blur(5px);
-      transition: all 0.3s ease;
-    }
-
-    .mobile-logout-btn:hover {
-      background: linear-gradient(135deg, var(--color-secondary), #9D8040);
-      color: var(--bg-darker);
-      box-shadow: 0 0 20px rgba(200, 167, 82, 0.5);
-    }
-
-    @media (min-width: 992px) {
-      .mobile-logout-btn {
-        display: none !important;
-      }
-
-      /* Hide on Desktop */
+    .glow-gold {
+      text-shadow: 0 0 20px rgba(200, 167, 82, 0.5);
     }
   </style>
 
@@ -567,142 +737,222 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="dashboard-page" data-page-protected="true">
+<body data-page-protected="true">
+  <!-- 🎆 FONDO PULSO VITAL -->
+  <div class="pulso-vital"></div>
 
-  <!-- Header -->
-  <header class="gg-header">
-    <a class="brand" href="/">
-      <img src="/brand/logo.webp" alt="YavlGold" class="logo" width="36" height="36">
-      <span>YavlGold</span>
-    </a>
+  <!-- ✨ PARTÍCULAS DECORATIVAS -->
+  <div class="particulas">
+    <div class="particula" style="top: 10%; left: 20%; animation-delay: 0s;"></div>
+    <div class="particula" style="top: 20%; left: 80%; animation-delay: 1s;"></div>
+    <div class="particula" style="top: 60%; left: 10%; animation-delay: 2s;"></div>
+    <div class="particula" style="top: 80%; left: 70%; animation-delay: 3s;"></div>
+    <div class="particula" style="top: 40%; left: 90%; animation-delay: 4s;"></div>
+    <div class="particula" style="top: 70%; left: 40%; animation-delay: 5s;"></div>
+  </div>
 
-    <nav class="main-nav">
-      <a href="/">Inicio</a>
-      <a href="/academia/">Academia</a>
-      <a href="/suite/">Suite</a>
-      <a href="/dashboard/" class="active">Dashboard</a>
-      <button id="logout-btn-nav"
-        class="nav-link btn-logout border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
-        style="cursor: pointer; display: none;">
-        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-      </button>
-    </nav>
+  <!-- 📦 CONTENEDOR PRINCIPAL -->
+  <div class="dashboard-container">
 
-    <!-- Auth Buttons (hidden when logged in) -->
-    <div class="auth-buttons" id="auth-buttons" style="display: none;">
-      <button class="btn-login" onclick="window.AuthUI?.showLoginModal()">
-        <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
-      </button>
-      <button class="btn-register" onclick="window.AuthUI?.showRegisterModal()">
-        <i class="fas fa-user-plus"></i> Registrarse
-      </button>
-    </div>
+    <!-- 🔝 HEADER -->
+    <header class="header">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <img src="/brand/logo.webp" alt="YavlGold">
+        </div>
+        <div class="logo-text">
+          <h1>EL SANTUARIO DIGITAL</h1>
+          <span>Panel de Control v9.3</span>
+        </div>
+      </div>
 
-    <!-- User Menu (shown when logged in) -->
-    <div id="user-menu" class="user-menu" style="display: none;">
-      <button id="user-menu-btn" class="user-menu-btn">
-        <img src="" alt="" class="user-avatar-sm" id="user-avatar-img">
-        <span id="user-menu-name">Usuario</span>
-        <i class="fas fa-chevron-down"></i>
+      <!-- 🔴 ZONA SAGRADA: Botón Cerrar Sesión -->
+      <button id="logout-btn-nav" class="btn-logout" style="display: none;">
+        <span>Cerrar Sesión</span>
+        <i class="fas fa-sign-out-alt"></i>
       </button>
-      <div id="user-dropdown" class="user-dropdown" style="display: none;">
-        <a href="/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-        <a href="/dashboard/perfil"><i class="fas fa-user"></i> Mi Perfil</a>
-        <a href="/dashboard/configuracion"><i class="fas fa-cog"></i> Configuración</a>
-        <hr>
-        <button id="dropdown-logout-btn" class="logout-btn">
-          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+    </header>
+
+    <!-- 👋 BIENVENIDA -->
+    <section class="welcome-section">
+      <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
+      <div class="welcome-divider"></div>
+      <p>Tu ecosistema digital de aprendizaje, herramientas y comunidad. Explora los módulos disponibles y potencia tu
+        conocimiento.</p>
+    </section>
+
+    <!-- 📊 ESTADÍSTICAS RÁPIDAS -->
+    <section class="stats-section">
+      <div class="stat-card">
+        <span class="stat-number">6</span>
+        <span class="stat-label">Módulos</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">1</span>
+        <span class="stat-label">Estrella</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">3</span>
+        <span class="stat-label">En Desarrollo</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">∞</span>
+        <span class="stat-label">Potencial</span>
+      </div>
+    </section>
+
+    <!-- 🃏 GRID DE MÓDULOS -->
+    <section class="modules-grid">
+
+      <!-- 🎓 ACADEMIA - PRODUCTO ESTRELLA -->
+      <a href="/academia/" class="module-card">
+        <div class="module-icon">🎓</div>
+        <div class="module-header">
+          <h3 class="module-title">ACADEMIA</h3>
+          <span class="badge badge-estrella">⭐ PRODUCTO ESTRELLA</span>
+        </div>
+        <p class="module-description">
+          El corazón del Santuario. Plataforma educativa completa con cursos interactivos, evaluaciones y
+          certificaciones.
+        </p>
+        <ul class="module-features">
+          <li>Cursos estructurados por niveles</li>
+          <li>Sistema de evaluación inteligente</li>
+          <li>Certificados digitales verificables</li>
+          <li>Progreso en tiempo real</li>
+        </ul>
+        <span class="btn-modulo">
+          Explorar Academia
+          <i class="fas fa-arrow-right"></i>
+        </span>
+      </a>
+
+      <!-- 🌱 AGRO - EN DESARROLLO -->
+      <a href="/agro/" class="module-card">
+        <div class="module-icon">🌱</div>
+        <div class="module-header">
+          <h3 class="module-title">AGRO</h3>
+          <span class="badge badge-desarrollo">🔧 EN DESARROLLO</span>
+        </div>
+        <p class="module-description">
+          Herramientas para el sector agrícola. Gestión de cultivos, calendario de siembra y análisis de rendimiento.
+        </p>
+        <ul class="module-features">
+          <li>Calendario de cultivos inteligente</li>
+          <li>Análisis de suelo y clima</li>
+          <li>Gestión de inventario agrícola</li>
+        </ul>
+        <span class="btn-modulo">
+          Explorar Agro
+          <i class="fas fa-arrow-right"></i>
+        </span>
+      </a>
+
+      <!-- 🛠️ HERRAMIENTAS - EN DESARROLLO -->
+      <a href="/herramientas/" class="module-card">
+        <div class="module-icon">🛠️</div>
+        <div class="module-header">
+          <h3 class="module-title">HERRAMIENTAS</h3>
+          <span class="badge badge-desarrollo">🔧 EN DESARROLLO</span>
+        </div>
+        <p class="module-description">
+          Suite de utilidades digitales para optimizar tu productividad. Calculadoras, convertidores y más.
+        </p>
+        <ul class="module-features">
+          <li>Calculadoras especializadas</li>
+          <li>Generadores de documentos</li>
+          <li>Convertidores de formatos</li>
+        </ul>
+        <span class="btn-modulo">
+          Explorar Herramientas
+          <i class="fas fa-arrow-right"></i>
+        </span>
+      </a>
+
+      <!-- ♟️ AJEDREZ - PRÓXIMAMENTE -->
+      <div class="module-card disabled">
+        <div class="module-icon">♟️</div>
+        <div class="module-header">
+          <h3 class="module-title">AJEDREZ</h3>
+          <span class="badge badge-proximo">🔮 PRÓXIMAMENTE</span>
+        </div>
+        <p class="module-description">
+          Arena de ajedrez en línea. Juega, aprende y mejora tu estrategia con análisis de partidas y torneos.
+        </p>
+        <ul class="module-features">
+          <li>Partidas en tiempo real</li>
+          <li>Análisis con IA integrada</li>
+          <li>Torneos y rankings</li>
+        </ul>
+        <button class="btn-modulo disabled">
+          En Planificación
         </button>
       </div>
-    </div>
-  </header>
 
-  <!-- Main Content -->
-  <main class="dashboard-main">
-
-    <!-- Hero Section -->
-    <section class="dashboard-hero">
-      <div class="hero-avatar" id="hero-avatar">
-        <span id="hero-avatar-initials">YG</span>
-      </div>
-      <h1 class="welcome-title"
-        style="background: linear-gradient(to right, #D4AF37, #FDB931, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">
-        Bienvenido, <span id="user-name-display"
-          style="background: inherit; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">Usuario</span>
-      </h1>
-      <p>Tu centro de control del Ecosistema YavlGold</p>
-    </section>
-
-    <!-- Modules Grid -->
-    <section class="modules-section">
-      <h2>Explora el Ecosistema</h2>
-
-      <div class="modules-grid">
-
-        <!-- Academia Module -->
-        <a href="/academia/" class="module-card">
-          <span class="module-icon">🎓</span>
-          <h3>Academia YavlGold</h3>
-          <p>Educación financiera premium. Aprende trading, criptomonedas y más.</p>
-          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
-        </a>
-
-        <!-- Suite Multimedia Module -->
-        <a href="/suite/" class="module-card">
-          <span class="module-icon">🎬</span>
-          <h3>Suite Multimedia</h3>
-          <p>Herramientas creativas para producción de contenido audiovisual.</p>
-          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
-        </a>
-
-        <!-- Herramientas Module -->
-        <a href="/herramientas/" class="module-card">
-          <span class="module-icon">🧩</span>
-          <h3>Herramientas</h3>
-          <p>Utilidades prácticas para tu día a día: conversor, calculadora y más.</p>
-          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
-        </a>
-
-        <!-- Trading Module (Coming Soon) -->
-        <div class="module-card disabled">
-          <span class="module-icon">📈</span>
-          <h3>Trading Pro</h3>
-          <p>Análisis de mercados, señales y herramientas avanzadas de trading.</p>
-          <span class="status-badge">Próximamente</span>
+      <!-- 🎵 SUITE MULTIMEDIA - EN DESARROLLO -->
+      <a href="/suite/" class="module-card">
+        <div class="module-icon">🎵</div>
+        <div class="module-header">
+          <h3 class="module-title">SUITE MULTIMEDIA</h3>
+          <span class="badge badge-desarrollo">🔧 EN DESARROLLO</span>
         </div>
+        <p class="module-description">
+          Centro de entretenimiento y creatividad. Reproduce, crea y comparte contenido multimedia.
+        </p>
+        <ul class="module-features">
+          <li>Reproductor de audio avanzado</li>
+          <li>Biblioteca de medios</li>
+          <li>Herramientas de edición básica</li>
+        </ul>
+        <span class="btn-modulo">
+          Explorar Suite
+          <i class="fas fa-arrow-right"></i>
+        </span>
+      </a>
 
-        <!-- Agro Module -->
-        <a href="/agro" class="module-card">
-          <span class="module-icon">🌱</span>
-          <h3>Agro</h3>
-          <!-- Link fix forced -->
-          <p>Agricultura inteligente y tecnología aplicada al campo.</p>
-          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
-        </a>
+      <!-- 👥 SOCIAL - ACTIVO -->
+      <a href="/social/" class="module-card">
+        <div class="module-icon">👥</div>
+        <div class="module-header">
+          <h3 class="module-title">SOCIAL</h3>
+          <span class="badge badge-activo">● ACTIVO</span>
+        </div>
+        <p class="module-description">
+          Conecta con la comunidad del Santuario. Foros, grupos de estudio y networking profesional.
+        </p>
+        <ul class="module-features">
+          <li>Foros de discusión</li>
+          <li>Grupos de estudio</li>
+          <li>Perfiles profesionales</li>
+          <li>Mensajería directa</li>
+        </ul>
+        <span class="btn-modulo">
+          Ir a Comunidad
+          <i class="fas fa-arrow-right"></i>
+        </span>
+      </a>
 
-        <!-- Social Module -->
-        <a href="/social" class="module-card">
-          <span class="module-icon"><i class="fas fa-users" style="font-size: 2rem; color: #D4AF37;"></i></span>
-          <h3>Social</h3>
-          <p>Conecta con la comunidad, comparte ideas y crece en el ecosistema.</p>
-          <span class="module-cta">Entrar <i class="fas fa-arrow-right"></i></span>
-        </a>
-
-      </div>
     </section>
 
-  </main>
+    <!-- 📌 FOOTER -->
+    <footer style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
+      <p>© 2025 El Santuario Digital · Todos los derechos reservados</p>
+      <p style="margin-top: 0.5rem; color: var(--dorado-yavl);">Versión 9.3 · Pulso Vital Edition — <a href="/"
+          style="color: var(--dorado-yavl); text-decoration: none;">Volver al Inicio</a></p>
+    </footer>
 
-  <!-- Footer -->
-  <footer class="dashboard-footer">
-    <p>YavlGold Version 9.2.1 (Patch UI) © 2025 — <a href="/">Volver al Inicio</a></p>
-  </footer>
+  </div>
+
+  <!-- 🔴 ZONA SAGRADA: Mobile Logout FAB -->
+  <button id="mobile-logout-fab" class="mobile-logout-btn" style="display: none;">
+    <i class="fas fa-sign-out-alt"></i>
+  </button>
 
   <!-- Scripts -->
   <!-- Auth Guard & Main Logic -->
   <script type="module" src="../assets/js/main.js"></script>
 
-  <!-- Dashboard UI Logic -->
+  <!-- 🔴 ZONA SAGRADA: Dashboard UI Logic - NO MODIFICAR -->
   <script type="module">
     // Import directly to guarantee execution order
     import { supabase } from '../assets/js/main.js';
@@ -742,10 +992,7 @@
     initDashboard();
   </script>
 
-  <button id="mobile-logout-fab" class="mobile-logout-btn" style="display: none;">
-    <i class="fas fa-sign-out-alt"></i>
-  </button>
-
+  <!-- 🔴 ZONA SAGRADA: Mobile FAB Logic - NO MODIFICAR -->
   <script>
     // Mobile FAB Logic (Fixed Loop)
     const fab = document.getElementById('mobile-logout-fab');
