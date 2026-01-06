@@ -434,11 +434,13 @@ const AuthUI = {
         } else {
           console.error('❌ [AuthUI] Login falló:', res.error);
           this.showError('login', res.error || 'Error al iniciar sesión');
+          this.resetCaptcha();
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
       } catch (err) {
         console.error('❌ [AuthUI] Error de login:', err);
         this.showError('login', err.message || 'Error inesperado');
+        this.resetCaptcha();
         if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
 

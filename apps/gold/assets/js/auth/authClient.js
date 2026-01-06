@@ -283,8 +283,21 @@ const authClient = {
         console.log('[AuthClient] 🔐 Login...');
         if (!this.supabase) return { success: false, error: 'Sistema no inicializado' };
 
+        // Validar captcha
+        let captchaToken = null;
+        if (typeof hcaptcha !== 'undefined') {
+            captchaToken = hcaptcha.getResponse();
+            if (!captchaToken) {
+                return { success: false, error: 'Por favor completa el captcha' };
+            }
+        }
+
         try {
-            const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await this.supabase.auth.signInWithPassword({
+                email,
+                password,
+                options: { captchaToken: captchaToken }
+            });
 
             if (error) {
                 // LOG FORENSE PARA DIAGNÓSTICO
