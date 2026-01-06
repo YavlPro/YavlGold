@@ -31,6 +31,8 @@ export default defineConfig({
                 cookies: resolve(__dirname, "apps/gold/cookies.html"),
                 faq: resolve(__dirname, "apps/gold/faq.html"),
                 roadmap: resolve(__dirname, "apps/gold/roadmap.html"),
+                terms: resolve(__dirname, "apps/gold/terms.html"),
+                privacy: resolve(__dirname, "apps/gold/privacy.html"),
             },
         },
         cssCodeSplit: false,
