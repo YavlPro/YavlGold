@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - YavlGold</title>
+    <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --gold-principal: #C8A752;
+            --gold-light: #E4D08E;
+            --gold-dark: #9D8040;
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+            flex: 1;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--gold-dark);
+            margin-bottom: 2rem;
+        }
+
+        .content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .content ul {
+            margin: 1rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight {
+            color: var(--gold-principal);
+            font-weight: 600;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
+            color: #0a0a0a;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
+        }
+
+        .nav-container {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--gold-principal);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--gold-principal);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <span class="badge">🔒 Documento Legal</span>
+        <h1>Política de Privacidad</h1>
+        <div class="content">
+            <p><strong>Estado:</strong> Documento completo en redacción.</p>
+            <p><strong>Fecha estimada de publicación:</strong> Enero 2026.</p>
+            <p>Sus datos están seguros con nosotros. Utilizamos tecnologías de seguridad líderes en la industria:</p>
+            <ul>
+                <li><span class="highlight">Supabase</span> - Base de datos y autenticación segura con cifrado de
+                    extremo a extremo.</li>
+                <li><span class="highlight">hCaptcha</span> - Protección contra bots y spam sin comprometer su
+                    privacidad.</li>
+            </ul>
+            <p>Estamos comprometidos con la protección de sus datos personales y el cumplimiento de las regulaciones de
+                privacidad aplicables.</p>
+            <p>Para cualquier consulta sobre privacidad, contáctanos en <a href="mailto:soporte@yavlgold.com"
+                    style="color: var(--gold-principal);">soporte@yavlgold.com</a></p>
+        </div>
+        <div class="nav-container">
+            <a href="./" class="back-btn">← Volver al Inicio</a>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,4 +1,6 @@
-# YavlGold V9.3 - Ecosistema Global Educativo
+# YavlGold V9.4 (Beta) - Ecosistema Global Educativo
+
+🌐 **Producción:** [https://www.yavlgold.com](https://www.yavlgold.com)
 
 Bienvenido al repositorio oficial de **YavlGold**, un ecosistema educativo multi-módulo enfocado en Blockchain, Trading y Herramientas Digitales.
 
