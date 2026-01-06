@@ -319,6 +319,12 @@ const AuthUI = {
           return false;
         }
 
+        // Validar captcha visualmente (opcional, ya lo hace authClient pero mejora UX)
+        if (typeof hcaptcha !== 'undefined' && !hcaptcha.getResponse()) {
+          this.showError('login', 'Por favor completa el captcha');
+          return false;
+        }
+
         const btn = newLoginForm.querySelector('button[type="submit"]');
         const originalText = btn?.textContent || 'Enviar Enlace';
 
@@ -333,9 +339,11 @@ const AuthUI = {
             setTimeout(() => this.toggleRecoveryMode(false), 3000);
           } else {
             this.showError('login', res.error || 'Error al enviar enlace');
+            this.resetCaptcha();
           }
         } catch (err) {
           this.showError('login', err.message);
+          this.resetCaptcha();
         } finally {
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
@@ -712,6 +720,7 @@ const AuthUI = {
   },
   toggleRecoveryMode(active) {
     this.isRecoveryMode = active;
+    this.resetCaptcha(); // Siempre limpiar captcha al cambiar de modo
     const form = this.elements.loginForm;
     if (!form) return;
 

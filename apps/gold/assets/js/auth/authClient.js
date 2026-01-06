@@ -406,9 +406,20 @@ const authClient = {
 
     resetPassword: async function (email) {
         if (!this.supabase) return { success: false, error: 'Sistema no inicializado' };
+
+        // Validar captcha
+        let captchaToken = null;
+        if (typeof hcaptcha !== 'undefined') {
+            captchaToken = hcaptcha.getResponse();
+            if (!captchaToken) {
+                return { success: false, error: 'Por favor completa el captcha' };
+            }
+        }
+
         try {
             const { data, error } = await this.supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/`
+                redirectTo: `${window.location.origin}/`,
+                captchaToken: captchaToken
             });
             if (error) throw error;
             console.log('[AuthClient] ✅ Email de reset enviado');
