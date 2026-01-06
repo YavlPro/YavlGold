@@ -348,8 +348,8 @@ const AuthUI = {
 
         const password = newLoginForm.querySelector('#login-password')?.value;
 
-        if (!password || password.length < 6) {
-          this.showError('login', 'La contraseña debe tener al menos 6 caracteres');
+        if (!password || password.length < 8) {
+          this.showError('login', 'La contraseña debe tener al menos 8 caracteres');
           return false;
         }
 
@@ -492,8 +492,8 @@ const AuthUI = {
         return false;
       }
 
-      if (password.length < 6) {
-        this.showError('register', 'La contraseña debe tener al menos 6 caracteres');
+      if (password.length < 8) {
+        this.showError('register', 'La contraseña debe tener al menos 8 caracteres');
         return false;
       }
 
