@@ -1,108 +1,55 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social - YavlGold</title>
-    <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
+    <title>Social - Comunidad YavlGold</title>
+    <link rel="icon" type="image/webp" href="/brand/logo.webp">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap"
         rel="stylesheet">
     <style>
-        :root {
-            --gold-principal: #C8A752;
-            --gold-light: #E4D08E;
-            --gold-dark: #9D8040;
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #1a1a1a;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
+            background-color: #050505;
+            color: #e5e5e5;
+            font-family: var(--font-body);
+            height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .icon {
-            font-size: 5rem;
-            margin-bottom: 1.5rem;
+            overflow: hidden;
         }
 
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
+            font-family: var(--font-heading);
+            background: linear-gradient(135deg, #D4AF37, #FDB931, #D4AF37);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1rem;
         }
 
-        .badge {
-            display: inline-block;
-            padding: 0.5rem 1.5rem;
-            background: transparent;
-            border: 1px solid var(--gold-principal);
-            color: var(--gold-principal);
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            margin-bottom: 2rem;
+        .gold-btn {
+            border: 1px solid #D4AF37;
+            color: #D4AF37;
+            padding: 10px 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
         }
 
-        p {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            max-width: 500px;
-            line-height: 1.6;
-            margin-bottom: 2rem;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: transparent;
-            border: 2px solid var(--gold-principal);
-            color: var(--gold-principal);
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 700;
-            font-family: 'Rajdhani', sans-serif;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            background: var(--gold-principal);
-            color: #0a0a0a;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
+        .gold-btn:hover {
+            background: #D4AF37;
+            color: #000;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
         }
     </style>
 </head>
 
-<body>
-    <div class="icon">👥</div>
-    <h1>Comunidad Social</h1>
-    <span class="badge">● Activo</span>
-    <p>Conecta con la comunidad del Santuario. Foros de discusión, grupos de estudio y networking profesional.
-        ¡Próximamente más funciones!</p>
-    <a href="/dashboard/" class="btn">← Volver al Dashboard</a>
+<body class="flex flex-col text-center">
+    <h1 class="text-6xl md:text-8xl font-bold mb-4 tracking-tighter">Social</h1>
+    <p class="text-xl text-gray-400 mb-8 tracking-widest uppercase">Comunidad & Networking</p>
+    <button class="gold-btn">Próximamente</button>
 </body>
 
 </html>
