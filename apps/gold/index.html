@@ -1728,7 +1728,7 @@
     <div class="auth-modal-overlay"></div>
     <div class="auth-modal-container">
       <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
-      <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div class="auth-logo-box" style="text-align: center; margin-bottom: 1.5rem;">
         <img src="/brand/logo.webp" alt="YavlGold" width="80" height="80" class="animate-breathing"
           style="border-radius: 50%; box-shadow: var(--shadow-gold-md);" />
       </div>
@@ -1871,6 +1871,23 @@
       margin: 20px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--gold-principal);
       animation: slideUp 0.3s ease;
+    }
+
+    /* 📱 Ajuste Móvil Logo */
+    @media (max-width: 768px) {
+      .auth-logo-box {
+        margin-bottom: 0.5rem !important;
+      }
+
+      .auth-logo-box img {
+        width: 60px !important;
+        height: 60px !important;
+      }
+
+      .auth-modal-container {
+        padding: 20px;
+        /* Reducir padding también para ganar espacio */
+      }
     }
 
     @keyframes slideUp {
