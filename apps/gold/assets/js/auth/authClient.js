@@ -305,9 +305,9 @@ const authClient = {
 
             this._processSession(data.session);
             if (!sessionStorage.getItem('yavl_recovery_pending')) {
-              setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
+                setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
             } else {
-              console.log('[AuthClient] 🛑 Redirección al Dashboard bloqueada por Recovery');
+                console.log('[AuthClient] 🛑 Redirección al Dashboard bloqueada por Recovery');
             }
             return { success: true, user: data.user };
         } catch (err) {
@@ -370,7 +370,21 @@ const authClient = {
 
     register: async function (email, password, name = '') {
         if (!this.supabase) return { success: false, error: 'Error sistema' };
-        const options = name ? { data: { full_name: name } } : {};
+
+        // Validar captcha
+        let captchaToken = null;
+        if (typeof hcaptcha !== 'undefined') {
+            captchaToken = hcaptcha.getResponse();
+            if (!captchaToken) {
+                return { success: false, error: 'Por favor completa el captcha' };
+            }
+        }
+
+        const options = {
+            data: name ? { full_name: name } : {},
+            captchaToken: captchaToken
+        };
+
         const { data, error } = await this.supabase.auth.signUp({
             email, password, options
         });

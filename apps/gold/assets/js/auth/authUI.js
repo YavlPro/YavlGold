@@ -497,6 +497,12 @@ const AuthUI = {
         return false;
       }
 
+      // Validar captcha visualmente
+      if (typeof hcaptcha !== 'undefined' && !hcaptcha.getResponse()) {
+        this.showError('register', 'Por favor completa el captcha');
+        return false;
+      }
+
       const btn = newRegisterForm.querySelector('button[type="submit"]');
       const originalText = btn?.textContent || 'Crear Cuenta';
       const logoBox = document.querySelector('.auth-logo-box'); // Assuming this element exists in the DOM
@@ -527,11 +533,13 @@ const AuthUI = {
         } else {
           console.error('❌ [AuthUI] Registro falló:', res.error);
           this.showError('register', res.error || 'Error al registrarse');
+          this.resetCaptcha();
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
       } catch (err) {
         console.error('❌ [AuthUI] Error de registro:', err);
         this.showError('register', err.message || 'Error inesperado');
+        this.resetCaptcha();
         if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
 
@@ -646,6 +654,20 @@ const AuthUI = {
         }
       }
     });
+  },
+
+  /**
+   * 🔄 Reset hCaptcha widget (para reintentos después de errores)
+   */
+  resetCaptcha() {
+    if (typeof hcaptcha !== 'undefined') {
+      try {
+        hcaptcha.reset();
+        console.log('[AuthUI] 🔄 hCaptcha reseteado');
+      } catch (e) {
+        console.warn('[AuthUI] ⚠️ No se pudo resetear hCaptcha:', e.message);
+      }
+    }
   },
 
   handleForgotPassword() {
