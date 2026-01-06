@@ -1,20 +1,20 @@
-Ôªø<!doctype html>
+<!doctype html>
 <html lang="es" data-theme="dark">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agro - Gesti√≥n Inteligente</title>
+  <title>Agro - GestiÛn Inteligente</title>
   <link rel="icon" type="image/webp" href="/brand/logo.webp">
   <meta name="description"
-    content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gesti√≥n. YavlAgro by YAVL Pro.">
+    content="Plataforma para agricultura innovadora con marketplace, cursos especializados y herramientas de gestiÛn. YavlAgro by YAVL Pro.">
   <link rel="canonical" href="https://yavlgold.com/apps/agro/">
   <script src="https://cdn.tailwindcss.com"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap"
     rel="stylesheet">
 
-  <!-- üîí PROTECCI√ìN DE RUTA: Verificar autenticaci√≥n antes de cargar la p√°gina -->
+  <!-- ?? PROTECCI”N DE RUTA: Verificar autenticaciÛn antes de cargar la p·gina -->
   <script>
     (function () {
       function checkSupabaseSession() {
@@ -28,19 +28,19 @@
               try {
                 const parsed = JSON.parse(token);
                 if (parsed && parsed.access_token) {
-                  console.log('[YavlAgro] ‚úÖ Sesi√≥n encontrada');
+                  console.log('[YavlAgro] ? SesiÛn encontrada');
                   return true;
                 }
               } catch (e) {
-                console.error('[YavlAgro] Error verificando sesi√≥n:', e);
+                console.error('[YavlAgro] Error verificando sesiÛn:', e);
               }
             }
           }
 
-          console.log('[YavlAgro] ‚õî No hay sesi√≥n, redirigiendo...');
+          console.log('[YavlAgro] ? No hay sesiÛn, redirigiendo...');
           return false;
         } catch (e) {
-          console.error('[YavlAgro] Error al verificar sesi√≥n:', e);
+          console.error('[YavlAgro] Error al verificar sesiÛn:', e);
           return false;
         }
       }
@@ -49,7 +49,7 @@
         sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
         window.location.replace('/../../#login');
       } else {
-        console.log('[YavlAgro] ‚úÖ Sesi√≥n v√°lida, permitiendo acceso');
+        console.log('[YavlAgro] ? SesiÛn v·lida, permitiendo acceso');
       }
     })();
   </script>
@@ -57,7 +57,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="YavlAgro">
-  <meta property="og:description" content="Hortalizas y frutas de T√°chira, Venezuela. YavlAgro by YAVL Pro.">
+  <meta property="og:description" content="Hortalizas y frutas de T·chira, Venezuela. YavlAgro by YAVL Pro.">
   <meta property="og:url" content="https://yavlgold.com/apps/agro/">
   <meta property="og:image"
     content="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=1200&auto=format&fit=crop">
@@ -69,7 +69,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- <script src="/assets/js/themeManager.js"></script> Corregido: No existe en el root -->
-  <!-- <script src="../gold/assets/js/mobile-optimizations.js"></script> Script no encontrado/legacy -->
+  <!-- <script src="../assets/js/mobile-optimizations.js"></script> Script no encontrado/legacy -->
 
   <style>
     :root {
@@ -176,7 +176,7 @@
     }
 
     .ticks li:before {
-      content: "‚úì";
+      content: "?";
       position: absolute;
       left: 0;
       color: var(--acc)
@@ -564,19 +564,19 @@
 
 <body>
   <script>
-    // Redirecci√≥n con JS (m√°s fiable que meta refresh)
+    // RedirecciÛn con JS (m·s fiable que meta refresh)
     (function () {
       var target = '/agro';
       if (location.pathname.endsWith('/') || location.pathname.endsWith('/index.html')) {
         // No redirigir si ya estamos en la ruta limpia /agro o en index.html
-        // Pero si el usuario entr√≥ por una ruta antigua, lo enviamos a /agro
+        // Pero si el usuario entrÛ por una ruta antigua, lo enviamos a /agro
       }
     })();
   </script>
   <noscript>
     <div
       style="padding:12px;background:#fff3cd;color:#5c4600;border:1px solid #ffe69c;margin:8px;font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;border-radius:8px">
-      Si no eres redirigido autom√°ticamente, haz clic aqu√≠:
+      Si no eres redirigido autom·ticamente, haz clic aquÌ:
       <a href="/agro">Abrir Agro</a>
     </div>
   </noscript>
@@ -607,7 +607,7 @@
           <h2 class="text-2xl md:text-3xl text-gray-300 font-light mb-8 border-l-4 border-[#D4AF37] pl-4">
             Del surco a tu mesa
           </h2>
-          <p>Hortalizas y frutas de T√°chira, Venezuela. Frescura, sabor y tradici√≥n agr√≠cola.</p>
+          <p>Hortalizas y frutas de T·chira, Venezuela. Frescura, sabor y tradiciÛn agrÌcola.</p>
           <div class="hero__cta">
             <a class="bg-gradient-to-r from-[#D4AF37] to-[#FDB931] text-black font-bold uppercase tracking-wider px-6 py-3 rounded hover:scale-105 transition-transform"
               href="#productos">Ver productos</a>
@@ -615,14 +615,14 @@
               href="https://wa.me/584247394025" target="_blank" rel="noopener">WhatsApp</a>
           </div>
           <ul class="hero__badges">
-            <li>‚úÖ Productores locales</li>
-            <li>üöö Env√≠os regionales</li>
-            <li>üå± Cosecha responsable</li>
+            <li>? Productores locales</li>
+            <li>?? EnvÌos regionales</li>
+            <li>?? Cosecha responsable</li>
           </ul>
         </div>
         <picture class="hero__img">
           <img src="https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?q=80&w=900&auto=format&fit=crop"
-            alt="Canastas con hortalizas frescas de T√°chira" width="640" height="420" loading="eager"
+            alt="Canastas con hortalizas frescas de T·chira" width="640" height="420" loading="eager"
             class="shadow-[0_0_50px_rgba(212,175,55,0.3)] border-none rounded-2xl">
         </picture>
       </div>
@@ -632,7 +632,7 @@
     <section id="productos" class="section container">
       <header class="section__head">
         <h2>Productos</h2>
-        <p class="muted">Explora por categor√≠a y descubre beneficios, temporada y usos.</p>
+        <p class="muted">Explora por categorÌa y descubre beneficios, temporada y usos.</p>
       </header>
 
       <div class="filters" role="tablist" aria-label="Filtrar productos">
@@ -647,17 +647,17 @@
     <section class="features container section">
       <div class="features__grid">
         <article class="feature">
-          <div class="icon">ü•ï</div>
+          <div class="icon">??</div>
           <h3>Frescura garantizada</h3>
-          <p class="muted">Cosecha cercana para m√°xima calidad y sabor.</p>
+          <p class="muted">Cosecha cercana para m·xima calidad y sabor.</p>
         </article>
         <article class="feature">
-          <div class="icon">üì¶</div>
+          <div class="icon">??</div>
           <h3>Presentaciones a medida</h3>
           <p class="muted">Desde cajas mixtas hasta pedidos por rubro.</p>
         </article>
         <article class="feature">
-          <div class="icon">ü§ù</div>
+          <div class="icon">??</div>
           <h3>Trato directo</h3>
           <p class="muted">Conecta con productores y apoya lo local.</p>
         </article>
@@ -666,19 +666,19 @@
 
     <section id="sobre-mi" class="section container">
       <header class="section__head">
-        <h2>Sobre m√≠</h2>
+        <h2>Sobre mÌ</h2>
       </header>
       <div class="about">
         <img class="about__img"
           src="https://images.unsplash.com/photo-1471193945509-9ad0617afabf?q=80&w=700&auto=format&fit=crop"
           alt="Yerikson en zona de cultivo" width="320" height="320" loading="lazy">
         <div class="about__text">
-          <p>Hola, soy Yerikson. Promuevo los productos agr√≠colas de T√°chira conectando a productores con consumidores y
+          <p>Hola, soy Yerikson. Promuevo los productos agrÌcolas de T·chira conectando a productores con consumidores y
             comercios. Mi meta: ofrecer frescura real y precios justos para todos.</p>
           <ul class="ticks">
-            <li>+5 a√±os acompa√±ando a productores</li>
+            <li>+5 aÒos acompaÒando a productores</li>
             <li>Relaciones directas con fincas locales</li>
-            <li>Calidad y saz√≥n tachirense</li>
+            <li>Calidad y sazÛn tachirense</li>
           </ul>
         </div>
       </div>
@@ -687,7 +687,7 @@
     <section id="contacto" class="section container">
       <header class="section__head">
         <h2>Contacto</h2>
-        <p class="muted">¬øTienes un pedido o consulta? Escr√≠beme y te respondo a la brevedad.</p>
+        <p class="muted">øTienes un pedido o consulta? EscrÌbeme y te respondo a la brevedad.</p>
       </header>
       <form class="form" action="https://formspree.io/f/tu_codigo" method="POST">
         <label>
@@ -703,7 +703,7 @@
           <textarea name="mensaje" rows="4" required></textarea>
         </label>
         <button class="btn" type="submit">Enviar</button>
-        <p class="muted">O escr√≠beme directo por <a href="https://wa.me/584247394025" target="_blank"
+        <p class="muted">O escrÌbeme directo por <a href="https://wa.me/584247394025" target="_blank"
             rel="noopener">WhatsApp</a>.</p>
       </form>
     </section>
@@ -711,12 +711,12 @@
 
   <footer class="site-footer">
     <div class="container footer__inner">
-      <small>La Grita, T√°chira ‚Ä¢ √öltima actualizaci√≥n: <time datetime="2025-10-18">18/10/2025</time></small>
-      <small>¬© <span id="year"></span> Agro by Ecosystem</small>
+      <small>La Grita, T·chira ï ⁄ltima actualizaciÛn: <time datetime="2025-10-18">18/10/2025</time></small>
+      <small>© <span id="year"></span> Agro by Ecosystem</small>
     </div>
   </footer>
 
-  <!-- Bot√≥n flotante WhatsApp -->
+  <!-- BotÛn flotante WhatsApp -->
   <a class="fab-whats flex items-center justify-center hover:scale-110 transition-transform bg-gradient-to-r from-[#D4AF37] to-[#FDB931] text-black shadow-lg shadow-[#D4AF37]/40"
     aria-label="Contactar por WhatsApp" href="https://wa.me/584247394025" target="_blank" rel="noopener"
     style="width: 64px; height: 64px; border-radius: 50%; position: fixed; bottom: 24px; right: 24px; z-index: 100;">
@@ -743,17 +743,17 @@
         id: "papa",
         nombre: "Papa",
         tipo: "hortaliza",
-        temporada: "Todo el a√±o",
-        beneficios: ["Fuente de potasio", "Energ√≠a de liberaci√≥n lenta"],
-        usos: ["Pur√©s", "Hervida", "Al horno"],
+        temporada: "Todo el aÒo",
+        beneficios: ["Fuente de potasio", "EnergÌa de liberaciÛn lenta"],
+        usos: ["PurÈs", "Hervida", "Al horno"],
         img: "https://picsum.photos/seed/papa/640/420",
-        alt: "Papas frescas reci√©n cosechadas"
+        alt: "Papas frescas reciÈn cosechadas"
       },
       {
         id: "zanahoria",
         nombre: "Zanahoria",
         tipo: "hortaliza",
-        temporada: "Todo el a√±o",
+        temporada: "Todo el aÒo",
         beneficios: ["Vitamina A", "Antioxidantes"],
         usos: ["Ensaladas", "Sopas", "Jugos"],
         img: "https://picsum.photos/seed/zanahoria/640/420",
@@ -761,20 +761,20 @@
       },
       {
         id: "cebollin",
-        nombre: "Ceboll√≠n",
+        nombre: "CebollÌn",
         tipo: "hortaliza",
-        temporada: "Todo el a√±o",
-        beneficios: ["Vitamina K", "Sabor arom√°tico"],
+        temporada: "Todo el aÒo",
+        beneficios: ["Vitamina K", "Sabor arom·tico"],
         usos: ["Guarniciones", "Arepas", "Salteados"],
         img: "https://picsum.photos/seed/cebollin/640/420",
-        alt: "Manojo de ceboll√≠n fresco"
+        alt: "Manojo de cebollÌn fresco"
       },
       {
         id: "fresa",
         nombre: "Fresa",
         tipo: "fruta",
-        temporada: "Octubre‚ÄìMayo",
-        beneficios: ["Vitamina C", "Baja en calor√≠as"],
+        temporada: "OctubreñMayo",
+        beneficios: ["Vitamina C", "Baja en calorÌas"],
         usos: ["Batidos", "Postres", "Mermeladas"],
         img: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?q=80&w=800&auto=format&fit=crop",
         alt: "Fresas rojas en canasta"
@@ -783,7 +783,7 @@
         id: "mora",
         nombre: "Mora",
         tipo: "fruta",
-        temporada: "Junio‚ÄìNoviembre",
+        temporada: "JunioñNoviembre",
         beneficios: ["Antocianinas", "Fibra"],
         usos: ["Jugos", "Salsas", "Helados"],
         img: "https://images.unsplash.com/photo-1591780042342-df93d2e31c61?q=80&w=800&auto=format&fit=crop",
@@ -791,13 +791,13 @@
       },
       {
         id: "aji",
-        nombre: "Aj√≠",
+        nombre: "AjÌ",
         tipo: "hortaliza",
-        temporada: "Todo el a√±o",
+        temporada: "Todo el aÒo",
         beneficios: ["Vitamina C", "Capsaicina"],
         usos: ["Salsas", "Encurtidos", "Guisos"],
         img: "https://images.unsplash.com/photo-1615485737651-6e01cf4f1e46?q=80&w=800&auto=format&fit=crop",
-        alt: "Aj√≠es rojos y verdes"
+        alt: "AjÌes rojos y verdes"
       }
     ];
 
@@ -807,8 +807,8 @@
 
     function cardHTML(p) {
       const beneficios = p.beneficios.map(b => `<li>${b}</li>`).join("");
-      const usos = p.usos.join(" ‚Ä¢ ");
-      const wa = `https://wa.me/584247394025?text=${encodeURIComponent("Hola, quiero " + p.nombre + ". ¬øDisponibilidad y precio?")}`;
+      const usos = p.usos.join(" ï ");
+      const wa = `https://wa.me/584247394025?text=${encodeURIComponent("Hola, quiero " + p.nombre + ". øDisponibilidad y precio?")}`;
       return `
       <article class="card" data-kind="${p.tipo}">
         <img src="${p.img}" alt="${p.alt}" loading="lazy" width="640" height="420">
@@ -849,17 +849,17 @@
       d.querySelectorAll("[data-save]").forEach(btn => {
         const id = btn.getAttribute("data-save");
         const saved = JSON.parse(localStorage.getItem("saved") || "[]");
-        if (saved.includes(id)) btn.textContent = "Guardado ‚úì";
+        if (saved.includes(id)) btn.textContent = "Guardado ?";
         btn.addEventListener("click", () => {
           let list = JSON.parse(localStorage.getItem("saved") || "[]");
           if (!list.includes(id)) list.push(id);
           localStorage.setItem("saved", JSON.stringify(list));
-          btn.textContent = "Guardado ‚úì";
+          btn.textContent = "Guardado ?";
         });
       });
     }
 
-    // Animaci√≥n al aparecer
+    // AnimaciÛn al aparecer
     function revealOnScroll() {
       const cards = d.querySelectorAll(".card");
       const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -873,7 +873,7 @@
       cards.forEach(c => io.observe(c));
     }
 
-    // Men√∫ m√≥vil
+    // Men˙ mÛvil
     const navToggle = d.querySelector(".nav-toggle");
     const menu = d.querySelector(".menu");
     navToggle?.addEventListener("click", () => {
@@ -885,17 +885,17 @@
     if (typeof ThemeManager !== 'undefined') {
       ThemeManager.init();
 
-      // Conectar el bot√≥n de tema
+      // Conectar el botÛn de tema
       const themeBtn = d.getElementById("themeToggle");
       if (themeBtn) {
         themeBtn.addEventListener("click", () => {
           ThemeManager.toggle();
         });
 
-        // Actualizar icono del bot√≥n
+        // Actualizar icono del botÛn
         const updateIcon = () => {
           const current = ThemeManager.getCurrentTheme();
-          themeBtn.textContent = current === "light" ? "üåû" : "üåô";
+          themeBtn.textContent = current === "light" ? "??" : "??";
         };
         updateIcon();
 
@@ -904,10 +904,10 @@
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
       }
     } else {
-      // Fallback si ThemeManager no est√° disponible
+      // Fallback si ThemeManager no est· disponible
       const root = d.documentElement;
       const themeBtn = d.getElementById("themeToggle");
-      function setTheme(t) { root.setAttribute("data-theme", t); localStorage.setItem("theme", t); themeBtn.textContent = t === "light" ? "üåû" : "üåô"; }
+      function setTheme(t) { root.setAttribute("data-theme", t); localStorage.setItem("theme", t); themeBtn.textContent = t === "light" ? "??" : "??"; }
       const saved = localStorage.getItem("theme");
       setTheme(saved || "dark");
       themeBtn?.addEventListener("click", () => {
@@ -916,34 +916,34 @@
       });
     }
 
-    // A√±o en footer
+    // AÒo en footer
     d.getElementById("year").textContent = new Date().getFullYear();
 
     // Inicial
     render("all");
   </script>
 
-  <!-- Auth Guard para protecci√≥n de p√°gina -->
+  <!-- Auth Guard para protecciÛn de p·gina -->
   <script type="module">
-    import { supabase } from '../gold/assets/js/main.js';
+    import { supabase } from '../assets/js/main.js';
 
-    // Verificar autenticaci√≥n al cargar la p√°gina
+    // Verificar autenticaciÛn al cargar la p·gina
     async function checkAuth() {
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error || !session) {
-        // Guardar la URL actual para redireccionar despu√©s del login
+        // Guardar la URL actual para redireccionar despuÈs del login
         sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
         window.location.href = '/login.html';
         return;
       }
 
-      // Si est√° autenticado, permanecemos aqu√≠ (ya estamos en /agro)
-      console.log('‚úÖ Auth verificado. Bienvenido a Agro.');
-      // window.location.replace('/agro'); // Redirecci√≥n eliminada para evitar bucle infinito
+      // Si est· autenticado, permanecemos aquÌ (ya estamos en /agro)
+      console.log('? Auth verificado. Bienvenido a Agro.');
+      // window.location.replace('/agro'); // RedirecciÛn eliminada para evitar bucle infinito
     }
 
-    // Ejecutar verificaci√≥n
+    // Ejecutar verificaciÛn
     checkAuth();
   </script>
 </body>
