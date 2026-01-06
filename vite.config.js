@@ -33,6 +33,12 @@ export default defineConfig({
                 roadmap: resolve(__dirname, "apps/gold/roadmap.html"),
                 terms: resolve(__dirname, "apps/gold/terms.html"),
                 privacy: resolve(__dirname, "apps/gold/privacy.html"),
+                // Módulos del Ecosistema
+                academia: resolve(__dirname, "apps/gold/academia/index.html"),
+                agro: resolve(__dirname, "apps/gold/agro/index.html"),
+                herramientas: resolve(__dirname, "apps/gold/herramientas/index.html"),
+                suite: resolve(__dirname, "apps/gold/suite/index.html"),
+                social: resolve(__dirname, "apps/gold/social/index.html"),
             },
         },
         cssCodeSplit: false,
