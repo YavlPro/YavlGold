@@ -1,5 +1,5 @@
 /**
- * YAVLGOLD - PROFILE MANAGER v1.1 (Security Hardened)
+ * YAVLGOLD - PROFILE MANAGER v1.2 (Fixed Imports)
  * Gestión de perfiles extendidos de usuarios
  *
  * SECURITY FIXES v1.1:
@@ -8,8 +8,12 @@
  * - Bio validation in updateProfile
  * - Logger instead of console.log
  * - isAdmin scoped to current user only
+ *
+ * v1.2 FIX: Import supabase and authClient properly for bundler compatibility
  */
 import { logger } from '../utils/logger.js';
+import { supabase } from '../config/supabase-config.js';
+import authClient from '../auth/authClient.js';
 
 // Columnas seguras para diferentes contextos
 const PROFILE_COLUMNS = {
@@ -22,11 +26,12 @@ const ProfileManager = {
   supabase: null,
 
   init() {
-    if (!AuthClient.supabase) {
-      logger.error('[ProfileManager] AuthClient no inicializado');
+    // Use imported supabase directly instead of relying on global AuthClient
+    if (!supabase) {
+      logger.error('[ProfileManager] Supabase client not available');
       return false;
     }
-    this.supabase = AuthClient.supabase;
+    this.supabase = supabase;
     logger.success('[ProfileManager] Inicializado');
     return true;
   },
@@ -64,7 +69,7 @@ const ProfileManager = {
    * Obtener perfil actual del usuario logueado
    */
   async getCurrentProfile() {
-    const session = AuthClient.getSession();
+    const session = authClient.currentSession;
     if (!session?.user?.id) {
       return { success: false, error: 'No hay sesión activa' };
     }
@@ -130,11 +135,11 @@ const ProfileManager = {
       logger.success('[ProfileManager] Perfil actualizado');
 
       // Actualizar sesión local si es el usuario actual
-      const session = AuthClient.getSession();
+      const session = authClient.currentSession;
       if (session?.user?.id === userId && data) {
         session.user.name = data.username;
         session.user.avatar = data.avatar_url;
-        AuthClient.saveSession(session);
+        // Note: authClient auto-saves on state changes
       }
 
       return { success: true, profile: data };
@@ -237,7 +242,7 @@ const ProfileManager = {
    */
   async isCurrentUserAdmin() {
     try {
-      const session = AuthClient.getSession();
+      const session = authClient.currentSession;
       const uid = session?.user?.id;
 
       if (!uid) {
@@ -277,7 +282,7 @@ const ProfileManager = {
    */
   async isAdmin(userId) {
     logger.warn('[ProfileManager] isAdmin(userId) deprecado, usar isCurrentUserAdmin()');
-    const session = AuthClient.getSession();
+    const session = authClient.currentSession;
     // Solo permitir verificar si es el usuario actual
     if (userId !== session?.user?.id) {
       return { success: false, isAdmin: false, error: 'Solo puedes verificar tu propio estado de admin' };
