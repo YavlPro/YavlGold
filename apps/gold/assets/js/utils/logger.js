@@ -1,5 +1,5 @@
-/**
- * YavlGold Logger V9.3
+﻿/**
+ * YavlGold Logger V9.4
  * Control de logs por entorno
  * En producción: Solo errores
  * En desarrollo: Todo visible

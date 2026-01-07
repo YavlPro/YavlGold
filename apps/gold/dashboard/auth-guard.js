@@ -1,6 +1,6 @@
-/**
+﻿/**
  * Guardián del Dashboard - Protección de Acceso V2.0
- * YavlGold V9.3 - Fix de compatibilidad módulo/global
+ * YavlGold V9.4 - Fix de compatibilidad módulo/global
  *
  * IMPORTANTE: Este script usa el cliente Supabase GLOBAL (window.supabase)
  * que ya está cargado en el HTML. No usamos imports ESM aquí para evitar
