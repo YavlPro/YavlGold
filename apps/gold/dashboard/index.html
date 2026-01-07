@@ -1022,10 +1022,17 @@
 
     <!-- 👋 BIENVENIDA -->
     <section class="welcome-section">
-      <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
+      <div class="welcome-header">
+        <img id="header-avatar" class="header-avatar"
+          src="https://ui-avatars.com/api/?name=U&background=1a1a1a&color=D4AF37&size=128&bold=true" alt="Avatar"
+          onerror="this.src='https://ui-avatars.com/api/?name=U&background=1a1a1a&color=D4AF37&size=128&bold=true'">
+        <div class="welcome-text">
+          <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
+          <p>Tu ecosistema digital de aprendizaje, herramientas y comunidad.</p>
+        </div>
+      </div>
       <div class="welcome-divider"></div>
-      <p>Tu ecosistema digital de aprendizaje, herramientas y comunidad. Explora los módulos disponibles y potencia tu
-        conocimiento.</p>
+      <p>Explora los módulos disponibles y potencia tu conocimiento.</p>
     </section>
 
     <!-- 📊 ESTADÍSTICAS RÁPIDAS -->
@@ -1267,14 +1274,44 @@
         return;
       }
 
-      // 2. Update UI
+      // 2. Update UI with basic info
       console.log('[Dashboard] Sesión activa:', session.user.email);
       const user = session.user;
       const emailName = user.email.split('@')[0];
       const nameDisplay = document.getElementById('user-name-display');
-      if (nameDisplay) nameDisplay.textContent = emailName;
+      const headerAvatar = document.getElementById('header-avatar');
+      const settingsBtn = document.getElementById('settings-btn');
 
-      // 3. Activate Logout Buttons (Nav & Mobile)
+      // Show settings button
+      if (settingsBtn) settingsBtn.style.display = 'inline-flex';
+
+      // 3. Load Profile from DB for avatar and username
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (!profileError && profile) {
+          // Update username if available
+          if (nameDisplay) {
+            nameDisplay.textContent = profile.username || emailName;
+          }
+          // Update avatar if available
+          if (headerAvatar && profile.avatar_url) {
+            headerAvatar.src = profile.avatar_url;
+          }
+        } else {
+          // Fallback to email name
+          if (nameDisplay) nameDisplay.textContent = emailName;
+        }
+      } catch (err) {
+        console.warn('[Dashboard] No se pudo cargar perfil:', err.message);
+        if (nameDisplay) nameDisplay.textContent = emailName;
+      }
+
+      // 4. Activate Logout Buttons (Nav & Mobile) - EXCLUDE .btn-settings
       const logoutButtons = document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout');
 
       logoutButtons.forEach(btn => {
@@ -1420,10 +1457,17 @@
 
         showStatus('¡Cambios guardados!', 'success');
 
-        // Update dashboard UI
+        // Update dashboard UI reactively (no reload needed!)
         const nameDisplay = document.getElementById('user-name-display');
+        const headerAvatar = document.getElementById('header-avatar');
+
         if (nameDisplay && updates.username) {
           nameDisplay.textContent = updates.username;
+        }
+
+        // Reactive avatar update with cache busting
+        if (headerAvatar && avatarImg.src && avatarImg.src.startsWith('http')) {
+          headerAvatar.src = avatarImg.src + '?' + Date.now();
         }
 
         // Close modal after delay

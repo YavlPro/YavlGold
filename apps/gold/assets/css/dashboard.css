@@ -87,6 +87,57 @@
   position: relative;
 }
 
+/* ━━━ WELCOME HEADER WITH AVATAR ━━━ */
+.welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.welcome-text {
+  text-align: left;
+}
+
+.welcome-text p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.header-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-secondary, #D4AF37);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.header-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+}
+
+@media (max-width: 768px) {
+  .welcome-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .welcome-text {
+    text-align: center;
+  }
+
+  .header-avatar {
+    width: 56px;
+    height: 56px;
+  }
+}
+
 .dashboard-hero::after {
   content: '';
   position: absolute;
