@@ -1055,137 +1055,13 @@
       </div>
     </section>
 
-    <!-- 🃏 GRID DE MÓDULOS -->
-    <section class="modules-grid">
-
-      <!-- 🎓 ACADEMIA - PRODUCTO ESTRELLA -->
-      <a href="/academia/" class="module-card">
-        <div class="module-icon">🎓</div>
-        <div class="module-header">
-          <h3 class="module-title">ACADEMIA</h3>
-          <span class="badge badge-estrella">⭐ PRODUCTO ESTRELLA</span>
-        </div>
-        <p class="module-description">
-          El corazón del Santuario. Plataforma educativa completa con cursos interactivos, evaluaciones y
-          certificaciones.
-        </p>
-        <ul class="module-features">
-          <li>Cursos estructurados por niveles</li>
-          <li>Sistema de evaluación inteligente</li>
-          <li>Certificados digitales verificables</li>
-          <li>Progreso en tiempo real</li>
-        </ul>
-        <span class="btn-modulo">
-          Explorar Academia
-          <i class="fas fa-arrow-right"></i>
-        </span>
-      </a>
-
-      <!-- 🌱 AGRO - EN DESARROLLO -->
-      <a href="/agro/" class="module-card">
-        <div class="module-icon">🌱</div>
-        <div class="module-header">
-          <h3 class="module-title">AGRO</h3>
-          <span class="badge badge-desarrollo">🔧 EN DESARROLLO</span>
-        </div>
-        <p class="module-description">
-          Herramientas para el sector agrícola. Gestión de cultivos, calendario de siembra y análisis de rendimiento.
-        </p>
-        <ul class="module-features">
-          <li>Calendario de cultivos inteligente</li>
-          <li>Análisis de suelo y clima</li>
-          <li>Gestión de inventario agrícola</li>
-        </ul>
-        <span class="btn-modulo">
-          Explorar Agro
-          <i class="fas fa-arrow-right"></i>
-        </span>
-      </a>
-
-      <!-- 🛠️ HERRAMIENTAS - EN DESARROLLO -->
-      <a href="/herramientas/" class="module-card">
-        <div class="module-icon">🛠️</div>
-        <div class="module-header">
-          <h3 class="module-title">HERRAMIENTAS</h3>
-          <span class="badge badge-desarrollo">🔧 EN DESARROLLO</span>
-        </div>
-        <p class="module-description">
-          Suite de utilidades digitales para optimizar tu productividad. Calculadoras, convertidores y más.
-        </p>
-        <ul class="module-features">
-          <li>Calculadoras especializadas</li>
-          <li>Generadores de documentos</li>
-          <li>Convertidores de formatos</li>
-        </ul>
-        <span class="btn-modulo">
-          Explorar Herramientas
-          <i class="fas fa-arrow-right"></i>
-        </span>
-      </a>
-
-      <!-- ♟️ AJEDREZ - PRÓXIMAMENTE -->
-      <div class="module-card disabled">
-        <div class="module-icon">♟️</div>
-        <div class="module-header">
-          <h3 class="module-title">AJEDREZ</h3>
-          <span class="badge badge-proximo">🔮 PRÓXIMAMENTE</span>
-        </div>
-        <p class="module-description">
-          Arena de ajedrez en línea. Juega, aprende y mejora tu estrategia con análisis de partidas y torneos.
-        </p>
-        <ul class="module-features">
-          <li>Partidas en tiempo real</li>
-          <li>Análisis con IA integrada</li>
-          <li>Torneos y rankings</li>
-        </ul>
-        <button class="btn-modulo disabled">
-          En Planificación
-        </button>
+    <!-- 🃏 GRID DE MÓDULOS (DINÁMICO) -->
+    <section id="modules-grid" class="modules-grid">
+      <!-- Loading placeholder -->
+      <div id="modules-loading" class="modules-loading">
+        <div class="loading-spinner"></div>
+        <p>Cargando módulos...</p>
       </div>
-
-      <!-- 🎵 SUITE MULTIMEDIA - EN DESARROLLO -->
-      <a href="/suite/" class="module-card">
-        <div class="module-icon">🎵</div>
-        <div class="module-header">
-          <h3 class="module-title">SUITE MULTIMEDIA</h3>
-          <span class="badge badge-desarrollo">🔧 EN DESARROLLO</span>
-        </div>
-        <p class="module-description">
-          Centro de entretenimiento y creatividad. Reproduce, crea y comparte contenido multimedia.
-        </p>
-        <ul class="module-features">
-          <li>Reproductor de audio avanzado</li>
-          <li>Biblioteca de medios</li>
-          <li>Herramientas de edición básica</li>
-        </ul>
-        <span class="btn-modulo">
-          Explorar Suite
-          <i class="fas fa-arrow-right"></i>
-        </span>
-      </a>
-
-      <!-- 👥 SOCIAL - ACTIVO -->
-      <a href="/social/" class="module-card">
-        <div class="module-icon">👥</div>
-        <div class="module-header">
-          <h3 class="module-title">SOCIAL</h3>
-          <span class="badge badge-activo">● ACTIVO</span>
-        </div>
-        <p class="module-description">
-          Conecta con la comunidad del Santuario. Foros, grupos de estudio y networking profesional.
-        </p>
-        <ul class="module-features">
-          <li>Foros de discusión</li>
-          <li>Grupos de estudio</li>
-          <li>Perfiles profesionales</li>
-          <li>Mensajería directa</li>
-        </ul>
-        <span class="btn-modulo">
-          Ir a Comunidad
-          <i class="fas fa-arrow-right"></i>
-        </span>
-      </a>
-
     </section>
 
     <!-- 📌 FOOTER -->
@@ -1322,6 +1198,117 @@
           window.location.href = '/';
         };
       });
+
+      // 5. Load Modules from Database
+      await loadModules();
+    }
+
+    /**
+     * Load modules from Supabase and render them dynamically
+     */
+    async function loadModules() {
+      const grid = document.getElementById('modules-grid');
+      const loading = document.getElementById('modules-loading');
+
+      try {
+        console.log('[Dashboard] Loading modules from database...');
+
+        const { data: modules, error } = await supabase
+          .from('modules')
+          .select('*')
+          .order('min_level', { ascending: true });
+
+        if (error) {
+          console.error('[Dashboard] Error loading modules:', error.message);
+          if (loading) loading.innerHTML = '<p style="color: var(--gold-vibrante);">Error al cargar módulos</p>';
+          return;
+        }
+
+        console.log(`[Dashboard] Loaded ${modules?.length || 0} modules`);
+
+        // Hide loading
+        if (loading) loading.style.display = 'none';
+
+        // Render modules
+        if (modules && modules.length > 0) {
+          renderModules(modules, grid);
+        } else {
+          grid.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay módulos disponibles</p>';
+        }
+      } catch (err) {
+        console.error('[Dashboard] Unexpected error:', err);
+        if (loading) loading.innerHTML = '<p style="color: #ff6b6b;">Error inesperado</p>';
+      }
+    }
+
+    /**
+     * Render module cards HTML
+     */
+    function renderModules(modules, container) {
+      const html = modules.map(mod => {
+        // Determine badge class and text based on status
+        const badgeMap = {
+          'active': { class: 'badge-activo', text: '● ACTIVO', icon: '' },
+          'development': { class: 'badge-desarrollo', text: '🔧 EN DESARROLLO', icon: '' },
+          'coming_soon': { class: 'badge-proximo', text: '🔮 PRÓXIMAMENTE', icon: '' },
+          'locked': { class: 'badge-locked', text: '🔒 BLOQUEADO', icon: '' }
+        };
+
+        const badge = badgeMap[mod.status] || badgeMap['development'];
+        const isDisabled = mod.is_locked || mod.status === 'coming_soon';
+        const icon = mod.icon || '📦';
+        const title = mod.name?.toUpperCase() || 'MÓDULO';
+        const description = mod.description || 'Descripción no disponible';
+        const slug = mod.slug || '#';
+        const url = mod.path || `/${slug}/`;
+
+        // Build feature list from features JSON or fallback
+        let featuresHtml = '';
+        if (mod.features && Array.isArray(mod.features)) {
+          featuresHtml = `<ul class="module-features">${mod.features.map(f => `<li>${f}</li>`).join('')}</ul>`;
+        }
+
+        // Thumbnail image if available
+        const thumbnailHtml = mod.thumbnail_url
+          ? `<img src="${mod.thumbnail_url}" alt="${mod.name}" class="module-thumbnail" loading="lazy">`
+          : '';
+
+        // Build card
+        if (isDisabled) {
+          return `
+            <div class="module-card disabled">
+              ${thumbnailHtml}
+              <div class="module-icon">${icon}</div>
+              <div class="module-header">
+                <h3 class="module-title">${title}</h3>
+                <span class="badge ${badge.class}">${badge.text}</span>
+              </div>
+              <p class="module-description">${description}</p>
+              ${featuresHtml}
+              <button class="btn-modulo disabled">No Disponible</button>
+            </div>
+          `;
+        }
+
+        return `
+          <a href="${url}" class="module-card">
+            ${thumbnailHtml}
+            <div class="module-icon">${icon}</div>
+            <div class="module-header">
+              <h3 class="module-title">${title}</h3>
+              <span class="badge ${badge.class}">${badge.text}</span>
+            </div>
+            <p class="module-description">${description}</p>
+            ${featuresHtml}
+            <span class="btn-modulo">
+              Explorar ${mod.name || 'Módulo'}
+              <i class="fas fa-arrow-right"></i>
+            </span>
+          </a>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
     }
 
     initDashboard();
