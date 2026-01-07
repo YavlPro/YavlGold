@@ -731,6 +731,241 @@
     .glow-gold {
       text-shadow: 0 0 20px rgba(200, 167, 82, 0.5);
     }
+
+    /* ============================================
+           ⚙️ SETTINGS MODAL - GLASSMORPHISM
+        ============================================ */
+    .settings-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .settings-modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .settings-modal-content {
+      background: var(--negro-tarjeta);
+      border: var(--borde-dorado);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 90%;
+      max-width: 450px;
+      position: relative;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+      box-shadow: var(--sombra-dorada);
+    }
+
+    .settings-modal.active .settings-modal-content {
+      transform: translateY(0);
+    }
+
+    .settings-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .settings-modal-header h3 {
+      font-family: var(--font-titulo);
+      font-size: 1.5rem;
+      color: var(--dorado-yavl);
+      letter-spacing: 2px;
+    }
+
+    .settings-close-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .settings-close-btn:hover {
+      color: var(--dorado-yavl);
+    }
+
+    /* Avatar Section */
+    .settings-avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .settings-avatar-container {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid var(--dorado-yavl);
+      box-shadow: var(--sombra-dorada);
+    }
+
+    .settings-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .settings-avatar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      cursor: pointer;
+    }
+
+    .settings-avatar-container:hover .settings-avatar-overlay {
+      opacity: 1;
+    }
+
+    .settings-avatar-overlay i {
+      color: var(--dorado-yavl);
+      font-size: 2rem;
+    }
+
+    #avatar-file-input {
+      display: none;
+    }
+
+    /* Form Fields */
+    .settings-form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .settings-form-group input,
+    .settings-form-group textarea {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      border-radius: 12px;
+      color: var(--blanco);
+      font-family: var(--font-cuerpo);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .settings-form-group input:focus,
+    .settings-form-group textarea:focus {
+      outline: none;
+      border-color: var(--dorado-yavl);
+      box-shadow: 0 0 15px rgba(200, 167, 82, 0.2);
+    }
+
+    .settings-form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Action Buttons */
+    .settings-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .settings-btn-save {
+      flex: 1;
+      padding: 0.9rem;
+      background: linear-gradient(135deg, var(--dorado-yavl), var(--dorado-oscuro));
+      border: none;
+      border-radius: 50px;
+      color: var(--negro-puro);
+      font-family: var(--font-titulo);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .settings-btn-save:hover {
+      transform: scale(1.02);
+      box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
+    }
+
+    .settings-btn-save:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .settings-btn-cancel {
+      flex: 1;
+      padding: 0.9rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: var(--font-cuerpo);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .settings-btn-cancel:hover {
+      border-color: rgba(200, 167, 82, 0.5);
+      color: var(--dorado-yavl);
+    }
+
+    /* Status Message */
+    .settings-status {
+      text-align: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .settings-status.success {
+      display: block;
+      background: rgba(39, 174, 96, 0.2);
+      color: #27ae60;
+      border: 1px solid rgba(39, 174, 96, 0.3);
+    }
+
+    .settings-status.error {
+      display: block;
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.3);
+    }
   </style>
 
   <!-- Supabase -->
@@ -765,6 +1000,12 @@
           <span>Panel de Control v9.3</span>
         </div>
       </div>
+
+      <!-- ⚙️ Botón Ajustes -->
+      <button id="settings-btn" class="btn-logout" title="Ajustes de Perfil" style="display: none;">
+        <i class="fas fa-cog"></i>
+        <span>Ajustes</span>
+      </button>
 
       <!-- 🔴 ZONA SAGRADA: Botón Cerrar Sesión -->
       <button id="logout-btn-nav" class="btn-logout" style="display: none;">
@@ -943,6 +1184,55 @@
 
   </div>
 
+  <!-- ⚙️ SETTINGS MODAL -->
+  <div id="settings-modal" class="settings-modal">
+    <div class="settings-modal-content">
+      <div class="settings-modal-header">
+        <h3>AJUSTES</h3>
+        <button id="settings-close-btn" class="settings-close-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Avatar Section -->
+      <div class="settings-avatar-section">
+        <div class="settings-avatar-container">
+          <img id="settings-avatar-img" class="settings-avatar-img"
+            src="https://ui-avatars.com/api/?name=User&background=C8A752&color=0B0C0F&bold=true" alt="Avatar">
+          <label for="avatar-file-input" class="settings-avatar-overlay">
+            <i class="fas fa-camera"></i>
+          </label>
+        </div>
+        <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/gif,image/webp">
+        <p style="margin-top: 0.75rem; color: rgba(255,255,255,0.5); font-size: 0.8rem;">
+          Click para cambiar foto
+        </p>
+      </div>
+
+      <!-- Form Fields -->
+      <div class="settings-form-group">
+        <label for="settings-username">Username</label>
+        <input type="text" id="settings-username" placeholder="tu_nombre_unico" maxlength="30">
+      </div>
+
+      <div class="settings-form-group">
+        <label for="settings-bio">Biografía</label>
+        <textarea id="settings-bio" placeholder="Cuéntanos sobre ti..." maxlength="500"></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="settings-actions">
+        <button id="settings-cancel-btn" class="settings-btn-cancel">Cancelar</button>
+        <button id="settings-save-btn" class="settings-btn-save">
+          <span>Guardar Cambios</span>
+        </button>
+      </div>
+
+      <!-- Status Message -->
+      <div id="settings-status" class="settings-status"></div>
+    </div>
+  </div>
+
   <!-- 🔴 ZONA SAGRADA: Mobile Logout FAB -->
   <button id="mobile-logout-fab" class="mobile-logout-btn" style="display: none;">
     <i class="fas fa-sign-out-alt"></i>
@@ -951,6 +1241,8 @@
   <!-- Scripts -->
   <!-- Auth Guard & Main Logic -->
   <script type="module" src="../assets/js/main.js"></script>
+  <!-- Profile Manager -->
+  <script type="module" src="../assets/js/profile/profileManager.js"></script>
 
   <!-- 🔴 ZONA SAGRADA: Dashboard UI Logic - NO MODIFICAR -->
   <script type="module">
@@ -990,6 +1282,177 @@
     }
 
     initDashboard();
+  </script>
+
+  <!-- ⚙️ Settings Modal Logic -->
+  <script type="module">
+    import { supabase } from '../assets/js/main.js';
+
+    // DOM Elements
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeBtn = document.getElementById('settings-close-btn');
+    const cancelBtn = document.getElementById('settings-cancel-btn');
+    const saveBtn = document.getElementById('settings-save-btn');
+    const avatarImg = document.getElementById('settings-avatar-img');
+    const avatarInput = document.getElementById('avatar-file-input');
+    const usernameInput = document.getElementById('settings-username');
+    const bioInput = document.getElementById('settings-bio');
+    const statusDiv = document.getElementById('settings-status');
+
+    let currentUserId = null;
+    let pendingAvatarFile = null;
+
+    // Show/Hide Modal
+    function openModal() {
+      settingsModal.classList.add('active');
+      loadProfileData();
+    }
+
+    function closeModal() {
+      settingsModal.classList.remove('active');
+      pendingAvatarFile = null;
+      statusDiv.className = 'settings-status';
+      statusDiv.textContent = '';
+    }
+
+    // Load Profile Data
+    async function loadProfileData() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        currentUserId = session.user.id;
+
+        // Fetch profile from DB
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('username, bio, avatar_url')
+          .eq('id', currentUserId)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        // Populate form
+        if (profile) {
+          usernameInput.value = profile.username || '';
+          bioInput.value = profile.bio || '';
+          if (profile.avatar_url) {
+            avatarImg.src = profile.avatar_url;
+          }
+        }
+      } catch (err) {
+        console.error('[Settings] Error cargando perfil:', err);
+        showStatus('Error cargando perfil', 'error');
+      }
+    }
+
+    // Handle Avatar Preview
+    avatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Validate
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        showStatus('Tipo de archivo no válido', 'error');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        showStatus('Archivo muy grande (max 2MB)', 'error');
+        return;
+      }
+
+      // Preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        avatarImg.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      pendingAvatarFile = file;
+      showStatus('Foto lista para subir', 'success');
+    });
+
+    // Save Changes
+    saveBtn.addEventListener('click', async () => {
+      if (!currentUserId) return;
+
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+      try {
+        // 1. Upload avatar if pending
+        if (pendingAvatarFile && window.ProfileManager) {
+          const uploadResult = await window.ProfileManager.uploadAvatarFile(currentUserId, pendingAvatarFile);
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error);
+          }
+          pendingAvatarFile = null;
+        }
+
+        // 2. Update text fields
+        const updates = {};
+        if (usernameInput.value.trim()) updates.username = usernameInput.value.trim().toLowerCase();
+        if (bioInput.value.trim()) updates.bio = bioInput.value.trim();
+
+        if (Object.keys(updates).length > 0) {
+          if (window.ProfileManager) {
+            const updateResult = await window.ProfileManager.updateProfile(currentUserId, updates);
+            if (!updateResult.success) {
+              throw new Error(updateResult.error);
+            }
+          } else {
+            // Fallback directo a Supabase
+            const { error } = await supabase
+              .from('profiles')
+              .update(updates)
+              .eq('id', currentUserId);
+            if (error) throw error;
+          }
+        }
+
+        showStatus('¡Cambios guardados!', 'success');
+
+        // Update dashboard UI
+        const nameDisplay = document.getElementById('user-name-display');
+        if (nameDisplay && updates.username) {
+          nameDisplay.textContent = updates.username;
+        }
+
+        // Close modal after delay
+        setTimeout(closeModal, 1500);
+
+      } catch (err) {
+        console.error('[Settings] Error guardando:', err);
+        showStatus(err.message || 'Error al guardar', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>Guardar Cambios</span>';
+      }
+    });
+
+    // Status Helper
+    function showStatus(message, type) {
+      statusDiv.textContent = message;
+      statusDiv.className = `settings-status ${type}`;
+    }
+
+    // Event Listeners
+    settingsBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) closeModal();
+    });
+
+    // Show Settings button when logged in
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        settingsBtn.style.display = 'inline-flex';
+      }
+    })();
   </script>
 
   <!-- 🔴 ZONA SAGRADA: Mobile FAB Logic - NO MODIFICAR -->

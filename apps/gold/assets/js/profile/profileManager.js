@@ -143,6 +143,71 @@ const ProfileManager = {
       return { success: false, error: error.message };
     }
   },
+  /**
+   * Subir archivo de avatar a Supabase Storage
+   * @param {string} userId - ID del usuario
+   * @param {File} file - Archivo de imagen a subir
+   * @returns {Promise<{success: boolean, avatarUrl?: string, error?: string}>}
+   */
+  async uploadAvatarFile(userId, file) {
+    try {
+      // Validar archivo
+      if (!file) {
+        return { success: false, error: 'No se proporcionó archivo' };
+      }
+
+      // Validar tipo de archivo
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        return { success: false, error: 'Tipo de archivo no válido. Use JPG, PNG, GIF o WebP' };
+      }
+
+      // Validar tamaño (max 2MB)
+      const maxSize = 2 * 1024 * 1024;
+      if (file.size > maxSize) {
+        return { success: false, error: 'El archivo es muy grande. Máximo 2MB' };
+      }
+
+      // Generar ruta única: userId/timestamp.extension
+      const timestamp = Date.now();
+      const extension = file.name.split('.').pop();
+      const filePath = `${userId}/${timestamp}.${extension}`;
+
+      logger.debug('[ProfileManager] Subiendo avatar...', { filePath });
+
+      // Subir a Supabase Storage
+      const { data, error } = await this.supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) {
+        logger.error('[ProfileManager] Error al subir avatar:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      // Obtener URL pública
+      const { data: urlData } = this.supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const avatarUrl = urlData.publicUrl;
+      logger.success('[ProfileManager] Avatar subido:', avatarUrl);
+
+      // Actualizar perfil con la nueva URL
+      const updateResult = await this.updateProfile(userId, { avatar_url: avatarUrl });
+      if (!updateResult.success) {
+        return { success: false, error: updateResult.error };
+      }
+
+      return { success: true, avatarUrl };
+    } catch (error) {
+      logger.error('[ProfileManager] Error subiendo avatar:', error.message);
+      return { success: false, error: error.message };
+    }
+  },
 
   /**
    * Actualizar avatar
