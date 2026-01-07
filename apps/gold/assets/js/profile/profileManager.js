@@ -37,31 +37,110 @@ const ProfileManager = {
   },
 
   /**
-   * Obtener perfil de usuario por ID
-   * Usa columnas explícitas para evitar fuga de datos
+   * Obtener perfil de usuario por ID (FAIL-SAFE v1.3)
+   * Si el perfil no existe, lo crea automáticamente con valores por defecto
    */
   async getProfile(userId) {
     try {
-      logger.debug('[ProfileManager] Consultando perfil');
+      logger.debug('[ProfileManager] Consultando perfil...');
+
+      // Ensure supabase is initialized
+      if (!this.supabase) {
+        this.init();
+      }
 
       const { data, error } = await this.supabase
         .from('profiles')
         .select(PROFILE_COLUMNS.own)
         .eq('id', userId)
-        .maybeSingle(); // Fix: maybeSingle en lugar de array
+        .maybeSingle();
 
-      if (error) throw error;
-
-      if (!data) {
-        logger.warn('[ProfileManager] Perfil no encontrado');
-        return { success: false, error: 'Perfil no encontrado' };
+      // FAIL-SAFE: Handle PGRST116 (no rows) or null data gracefully
+      if (error && error.code === 'PGRST116') {
+        logger.warn('[ProfileManager] Perfil no existe (PGRST116), creando...');
+        return await this._createDefaultProfile(userId);
       }
 
-      logger.debug('[ProfileManager] Perfil obtenido', { hasData: !!data });
+      if (error) {
+        // Log but DON'T throw - return safe default
+        logger.error('[ProfileManager] Error consultando perfil:', error.message);
+        return {
+          success: true,
+          profile: this._getDefaultProfileData(userId),
+          isDefault: true
+        };
+      }
+
+      if (!data) {
+        logger.warn('[ProfileManager] Perfil no encontrado, creando...');
+        return await this._createDefaultProfile(userId);
+      }
+
+      logger.debug('[ProfileManager] Perfil obtenido');
       return { success: true, profile: data };
     } catch (error) {
-      logger.error('[ProfileManager] Error al obtener perfil:', error.message);
-      return { success: false, error: error.message };
+      // FAIL-SAFE: Never crash, never logout - return safe default
+      logger.error('[ProfileManager] Error inesperado en getProfile:', error.message);
+      return {
+        success: true,
+        profile: this._getDefaultProfileData(userId),
+        isDefault: true,
+        _error: error.message
+      };
+    }
+  },
+
+  /**
+   * Genera datos de perfil por defecto (sin DB)
+   */
+  _getDefaultProfileData(userId) {
+    return {
+      id: userId,
+      username: null,
+      avatar_url: null,
+      bio: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  },
+
+  /**
+   * Crea un perfil por defecto en la DB
+   */
+  async _createDefaultProfile(userId) {
+    try {
+      const defaultData = {
+        id: userId,
+        username: null,
+        avatar_url: null,
+        bio: null
+      };
+
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .insert(defaultData)
+        .select(PROFILE_COLUMNS.own)
+        .single();
+
+      if (error) {
+        // If insert fails (maybe RLS or duplicate), just return defaults
+        logger.warn('[ProfileManager] No se pudo crear perfil:', error.message);
+        return {
+          success: true,
+          profile: this._getDefaultProfileData(userId),
+          isDefault: true
+        };
+      }
+
+      logger.success('[ProfileManager] Perfil creado automáticamente');
+      return { success: true, profile: data, wasCreated: true };
+    } catch (err) {
+      logger.error('[ProfileManager] Error creando perfil:', err.message);
+      return {
+        success: true,
+        profile: this._getDefaultProfileData(userId),
+        isDefault: true
+      };
     }
   },
 
