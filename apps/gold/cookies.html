@@ -4,27 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Política de Cookies - YavlGold V9.4</title>
+    <title>Politica de Cookies - YavlGold V9.4</title>
     <meta name="description"
-        content="Política de cookies de YavlGold V9.4, Ecosistema Educativo Prestigioso Multimodulo.">
-    <link rel="icon" type="image/png" href="/brand/logo.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        content="Politica de cookies de YavlGold V9.4, Ecosistema Educativo Prestigioso Multimodulo.">
+    <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
         rel="stylesheet">
     <style>
         :root {
-      /*  TIPOGRAFÍAS OFICIALES */
-      --font-heading: 'Orbitron', sans-serif;
-      --font-body: 'Rajdhani', sans-serif;
             --gold-principal: #C8A752;
-            --gold-dark: #8B7842;
-            --bg-primary: #0B0C0F;
-            --bg-secondary: #101114;
+            --gold-light: #E4D08E;
+            --gold-dark: #9D8040;
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
             --text-primary: #ffffff;
             --text-secondary: #cccccc;
-            --border-color: #2a2a2a;
         }
 
         * {
@@ -38,319 +33,133 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
-        }
-
-        h1,
-        h2,
-        h3 {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .navbar {
-            position: sticky;
-            top: 0;
-            background: var(--bg-secondary);
-            backdrop-filter: blur(20px);
-            padding: 1rem 2rem;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-            border-bottom: 1px solid var(--border-color);
+            flex-direction: column;
         }
 
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-container img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-
-        .logo-text {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .logo-text span {
-            color: var(--gold-principal);
-        }
-
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s;
-        }
-
-        .nav-link:hover {
-            color: var(--gold-principal);
-        }
-
-        main {
-            max-width: 900px;
+        .container {
+            max-width: 800px;
             margin: 0 auto;
-            padding: 3rem 1.5rem;
+            padding: 4rem 2rem;
+            flex: 1;
         }
 
-        .page-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .page-header h1 {
+        h1 {
+            font-family: 'Orbitron', sans-serif;
             font-size: 2.5rem;
-            color: var(--gold-principal);
-            margin-bottom: 0.5rem;
-        }
-
-        .page-header p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .content-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .content-section h2 {
-            font-size: 1.5rem;
-            color: var(--gold-principal);
-            margin-bottom: 1rem;
-        }
-
-        .content-section h3 {
-            font-size: 1.2rem;
-            color: var(--gold-principal);
-            margin-bottom: 0.5rem;
-            opacity: 0.9;
-        }
-
-        .content-section p {
-            color: var(--text-secondary);
-            line-height: 1.7;
-            margin-bottom: 1rem;
-        }
-
-        .content-section ul {
-            list-style: disc;
-            padding-left: 1.5rem;
-            color: var(--text-secondary);
-        }
-
-        .content-section ul li {
-            margin-bottom: 0.5rem;
-        }
-
-        .content-section a {
-            color: var(--gold-principal);
-            text-decoration: none;
-        }
-
-        .content-section a:hover {
-            text-decoration: underline;
-        }
-
-        .sub-section {
-            margin-bottom: 1.5rem;
-        }
-
-        .sub-section:last-child {
-            margin-bottom: 0;
-        }
-
-        .text-muted {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-
-        .footer {
-            background: var(--bg-primary);
-            padding: 3rem 2rem;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
             text-align: center;
-            border-top: 1px solid var(--border-color);
         }
 
-        .footer-logo {
-            margin-bottom: 1rem;
-        }
-
-        .footer-logo img {
-            width: 60px;
-            height: 60px;
-        }
-
-        .footer-text {
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-            font-size: 1rem;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .footer-links a {
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
             color: var(--gold-principal);
-            text-decoration: none;
-            font-weight: 600;
-            transition: opacity 0.3s;
+            margin: 1.5rem 0 0.75rem;
         }
 
-        .footer-links a:hover {
-            opacity: 0.8;
+        .content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--gold-dark);
+            margin-bottom: 2rem;
         }
 
-        .footer-legal {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
+        .content p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
             margin-bottom: 1rem;
         }
 
-        .footer-legal a {
+        .content ul {
+            margin: 1rem 0 1rem 1.5rem;
             color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s;
         }
 
-        .footer-legal a:hover {
+        .content li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+
+        .content a {
             color: var(--gold-principal);
         }
 
-        .footer-copy {
-            color: var(--text-secondary);
+        .back-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
+            color: #0a0a0a;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
+        }
+
+        .nav-container {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--gold-principal);
+            border-radius: 50px;
             font-size: 0.85rem;
-            opacity: 0.7;
+            color: var(--gold-principal);
+            margin-bottom: 1rem;
         }
     </style>
 </head>
 
 <body>
-    <nav class="navbar">
-        <a href="/" class="logo-container">
-            <img src="./assets/images/logo.webp" alt="YavlGold">
-            <div class="logo-text">Yavl<span>Gold</span> V9.4</div>
-        </a>
-        <a href="/" class="nav-link">? Volver al Inicio</a>
-    </nav>
+    <div class="container">
+        <span class="badge">Documento Legal</span>
+        <h1>Politica de Cookies</h1>
+        <div class="content">
+            <p><strong>Ultima actualizacion:</strong> Enero 2026</p>
 
-    <main>
-        <header class="page-header">
-            <h1>?? Política de Cookies</h1>
-            <p>Transparencia en el uso de tecnologías web</p>
-        </header>
+            <h2>Que son las cookies?</h2>
+            <p>Las cookies son pequenos archivos de texto que se almacenan en tu dispositivo cuando visitas nuestra
+                plataforma. Nos ayudan a mejorar tu experiencia de navegacion.</p>
 
-        <section class="content-section">
-            <h2>¿Qué son las cookies?</h2>
-            <p>
-                Las cookies son pequeños archivos de texto que los sitios web colocan en su dispositivo para
-                almacenar información sobre sus preferencias y actividad. Ayudan a mejorar su experiencia de
-                navegación recordando sus ajustes y preferencias.
-            </p>
-        </section>
-
-        <section class="content-section">
             <h2>Cookies que utilizamos</h2>
-            <div class="sub-section">
-                <h3>Cookies esenciales</h3>
-                <p>
-                    Son necesarias para el funcionamiento básico del sitio, como la autenticación de usuarios y
-                    la seguridad. No se pueden desactivar.
-                </p>
-            </div>
-            <div class="sub-section">
-                <h3>Cookies de rendimiento</h3>
-                <p>
-                    Recopilan información anónima sobre cómo los visitantes usan nuestro sitio para mejorar su
-                    funcionamiento.
-                </p>
-            </div>
-            <div class="sub-section">
-                <h3>Cookies de funcionalidad</h3>
-                <p>
-                    Permiten recordar sus preferencias (como idioma o región) para ofrecer una experiencia
-                    personalizada.
-                </p>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>Gestión de cookies</h2>
-            <p>
-                Puede gestionar sus preferencias de cookies a través de la configuración de su navegador. A
-                continuación encontrará enlaces a las instrucciones de los navegadores más populares:
-            </p>
             <ul>
-                <li><a href="https://support.google.com/chrome/answer/95647" target="_blank"
-                        rel="noopener noreferrer">Google Chrome</a></li>
-                <li><a href="https://support.mozilla.org/es/kb/habilitar-y-deshabilitar-cookies-sitios-web-rastrear-preferencias"
-                        target="_blank" rel="noopener noreferrer">Mozilla Firefox</a></li>
-                <li><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank"
-                        rel="noopener noreferrer">Safari</a></li>
-                <li><a href="https://support.microsoft.com/es-es/microsoft-edge/eliminar-las-cookies-en-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09"
-                        target="_blank" rel="noopener noreferrer">Microsoft Edge</a></li>
+                <li><strong>Cookies esenciales:</strong> Necesarias para el funcionamiento basico del sitio, incluyendo
+                    autenticacion y sesiones de usuario.</li>
+                <li><strong>Cookies de preferencias:</strong> Guardan tus configuraciones como idioma y modo oscuro.
+                </li>
+                <li><strong>Cookies analiticas:</strong> Nos ayudan a entender como interactuas con la plataforma para
+                    mejorar nuestros servicios.</li>
             </ul>
-        </section>
 
-        <section class="content-section">
-            <h2>Cambios en esta política</h2>
-            <p>
-                Nos reservamos el derecho de actualizar esta política periódicamente. Cualquier cambio significativo
-                será comunicado a través de nuestro sitio web. La fecha de última actualización se indica al final
-                de este documento.
-            </p>
-        </section>
+            <h2>Como gestionar las cookies</h2>
+            <p>Puedes configurar tu navegador para rechazar todas las cookies o para que te avise cuando se envie una
+                cookie. Sin embargo, algunas funciones del sitio pueden no funcionar correctamente si desactivas las
+                cookies.</p>
 
-        <section class="content-section">
             <h2>Contacto</h2>
-            <p>
-                Si tiene preguntas sobre nuestra política de cookies, contáctenos a través de nuestro
-                <a href="soporte.html">formulario de soporte</a>.
-            </p>
-            <p class="text-muted">
-                Última actualización: 2 de diciembre de 2025
-            </p>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <div class="footer-logo">
-            <img src="./assets/images/logo.svg" alt="YavlGold">
+            <p>Para cualquier consulta sobre nuestra politica de cookies, contactanos en <a
+                    href="mailto:soporte@yavlgold.com">soporte@yavlgold.com</a></p>
         </div>
-        <p class="footer-text">YavlGold V9.4 - Ecosistema Educativo Prestigioso Multimodulo</p>
-        <div class="footer-links">
-            <a href="/">?? Inicio</a>
-            <a href="/#modulos">?? Módulos</a>
-            <a href="mailto:soporte@yavlgold.com">?? Contacto</a>
+        <div class="nav-container">
+            <a href="./" class="back-btn">Volver al Inicio</a>
         </div>
-        <div class="footer-legal">
-            <a href="cookies.html">Cookies</a>
-            <a href="faq.html">FAQ</a>
-            <a href="soporte.html">Soporte</a>
-        </div>
-        <p class="footer-copy">© 2025 YavlGold V9.4. Todos los derechos reservados.</p>
-    </footer>
-
-    <!-- Entry Point - Carga CSS y JS -->
-    <script type="module" src="./assets/js/main.js"></script>
+    </div>
 </body>
 
 </html>
