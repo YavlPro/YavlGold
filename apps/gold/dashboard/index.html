@@ -257,7 +257,8 @@
            🔴 ZONA SAGRADA: BOTÓN LOGOUT
            ⚠️ NO MODIFICAR ESTE BLOQUE CSS
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .btn-logout {
+    .btn-logout,
+    .btn-settings {
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -273,21 +274,26 @@
       transition: all 0.3s ease;
     }
 
-    .btn-logout:hover {
+    .btn-logout:hover,
+    .btn-settings:hover {
       border-color: rgba(200, 167, 82, 0.5);
       color: var(--dorado-yavl);
       background: rgba(200, 167, 82, 0.1);
     }
 
     .btn-logout svg,
-    .btn-logout i {
+    .btn-logout i,
+    .btn-settings svg,
+    .btn-settings i {
       width: 18px;
       height: 18px;
       transition: transform 0.3s ease;
     }
 
     .btn-logout:hover svg,
-    .btn-logout:hover i {
+    .btn-logout:hover i,
+    .btn-settings:hover svg,
+    .btn-settings:hover i {
       transform: translateX(3px);
     }
 
@@ -1002,7 +1008,7 @@
       </div>
 
       <!-- ⚙️ Botón Ajustes -->
-      <button id="settings-btn" class="btn-logout" title="Ajustes de Perfil" style="display: none;">
+      <button id="settings-btn" class="btn-settings" title="Ajustes de Perfil" style="display: none;">
         <i class="fas fa-cog"></i>
         <span>Ajustes</span>
       </button>
