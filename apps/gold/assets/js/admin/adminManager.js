@@ -14,25 +14,15 @@ export const AdminManager = {
      * Initialize admin system - checks if current user is admin
      */
     async init() {
-        console.log('👑 [AdminManager] init() llamado');
-        if (this._initialized) {
-            console.log('👑 [AdminManager] Ya inicializado, saliendo');
-            return;
-        }
+        if (this._initialized) return;
         this._initialized = true;
 
         await this._checkAdminStatus();
 
-        console.log('👑 [AdminManager] _isAdmin =', this._isAdmin);
-
         if (this._isAdmin) {
-            console.log('👑 [AdminManager] Inyectando botón...');
             this._injectAdminButton();
             this._injectStyles();
-            console.log('👑 [AdminManager] ¡Admin mode ACTIVADO!');
             logger.success('[AdminManager] 👑 Admin mode activated');
-        } else {
-            console.log('👑 [AdminManager] Usuario NO es admin');
         }
     },
 
@@ -41,15 +31,9 @@ export const AdminManager = {
      * @private
      */
     async _checkAdminStatus() {
-        console.log('👑 [AdminManager] Verificando status de admin...');
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                console.log('👑 [AdminManager] No hay sesión');
-                return;
-            }
-
-            console.log('👑 [AdminManager] User ID:', session.user.id);
+            if (!session) return;
 
             const { data, error } = await supabase
                 .from('app_admins')
@@ -57,10 +41,7 @@ export const AdminManager = {
                 .eq('user_id', session.user.id)
                 .maybeSingle();
 
-            console.log('👑 [AdminManager] Query result:', { data, error });
-
             if (error) {
-                console.warn('👑 [AdminManager] Error en query:', error.message);
                 logger.debug('[AdminManager] Not an admin or table not exists');
                 return;
             }
@@ -68,13 +49,9 @@ export const AdminManager = {
             if (data) {
                 this._isAdmin = true;
                 this._adminRole = data.role;
-                console.log('👑 [AdminManager] ¡ES ADMIN! Role:', data.role);
                 logger.debug(`[AdminManager] Admin detected: ${data.role}`);
-            } else {
-                console.log('👑 [AdminManager] No está en app_admins');
             }
         } catch (err) {
-            console.error('👑 [AdminManager] Error inesperado:', err);
             logger.error('[AdminManager] Check status error:', err.message);
         }
     },
@@ -84,8 +61,6 @@ export const AdminManager = {
      * @private
      */
     _injectAdminButton() {
-        console.log('👑 [AdminManager] _injectAdminButton() ejecutándose...');
-
         // Create the admin button
         const adminBtn = document.createElement('button');
         adminBtn.id = 'admin-btn';
@@ -96,39 +71,31 @@ export const AdminManager = {
 
         // Strategy 1: Find settings button by ID
         let settingsBtn = document.getElementById('settings-btn');
-        console.log('👑 [AdminManager] settings-btn por ID:', settingsBtn);
 
         // Strategy 2: Find any button with fa-cog icon
         if (!settingsBtn) {
             settingsBtn = document.querySelector('button .fa-cog')?.closest('button');
-            console.log('👑 [AdminManager] settings-btn por fa-cog:', settingsBtn);
         }
 
         // Strategy 3: Find notification bell as reference
         if (!settingsBtn) {
             settingsBtn = document.getElementById('notification-bell');
-            console.log('👑 [AdminManager] usando notification-bell como ref:', settingsBtn);
         }
 
         // Try to insert before the reference button
         if (settingsBtn && settingsBtn.parentNode) {
-            console.log('👑 [AdminManager] Insertando antes de:', settingsBtn.id || 'button');
             settingsBtn.parentNode.insertBefore(adminBtn, settingsBtn);
-            console.log('👑 [AdminManager] ✅ Botón insertado en header');
             return;
         }
 
         // Strategy 4: Find dashboard header
         const header = document.querySelector('.dashboard-header');
         if (header) {
-            console.log('👑 [AdminManager] Insertando en .dashboard-header');
             header.appendChild(adminBtn);
-            console.log('👑 [AdminManager] ✅ Botón anexado a header');
             return;
         }
 
         // FALLBACK: Floating button (always visible)
-        console.warn('👑 [AdminManager] ⚠️ No se encontró contenedor, usando botón flotante');
         adminBtn.style.cssText = `
             position: fixed !important;
             bottom: 80px !important;
@@ -148,7 +115,6 @@ export const AdminManager = {
             color: #000 !important;
         `;
         document.body.appendChild(adminBtn);
-        console.log('👑 [AdminManager] ✅ Botón flotante creado');
     },
 
     /**
