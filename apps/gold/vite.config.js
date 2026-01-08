@@ -13,7 +13,13 @@ export default defineConfig({
         dashboard: 'dashboard/index.html',
         creacion: 'creacion.html',
         perfil: 'dashboard/perfil.html',
-        configuracion: 'dashboard/configuracion.html'
+        configuracion: 'dashboard/configuracion.html',
+        // Module apps
+        academia: 'academia/index.html',
+        agro: 'agro/index.html',
+        herramientas: 'herramientas/index.html',
+        suite: 'suite/index.html',
+        social: 'social/index.html'
       },
     },
   },
