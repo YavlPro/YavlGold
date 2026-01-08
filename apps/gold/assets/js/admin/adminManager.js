@@ -84,25 +84,71 @@ export const AdminManager = {
      * @private
      */
     _injectAdminButton() {
-        const header = document.querySelector('.dashboard-header');
-        if (!header) return;
+        console.log('👑 [AdminManager] _injectAdminButton() ejecutándose...');
 
-        // Find settings button to insert before it
-        const settingsBtn = document.getElementById('settings-btn');
-
+        // Create the admin button
         const adminBtn = document.createElement('button');
         adminBtn.id = 'admin-btn';
         adminBtn.className = 'btn-admin';
         adminBtn.title = 'Panel de Administración';
         adminBtn.innerHTML = '<i class="fas fa-crown"></i>';
-
         adminBtn.addEventListener('click', () => this.showAdminPanel());
 
-        if (settingsBtn && settingsBtn.parentNode) {
-            settingsBtn.parentNode.insertBefore(adminBtn, settingsBtn);
-        } else {
-            header.appendChild(adminBtn);
+        // Strategy 1: Find settings button by ID
+        let settingsBtn = document.getElementById('settings-btn');
+        console.log('👑 [AdminManager] settings-btn por ID:', settingsBtn);
+
+        // Strategy 2: Find any button with fa-cog icon
+        if (!settingsBtn) {
+            settingsBtn = document.querySelector('button .fa-cog')?.closest('button');
+            console.log('👑 [AdminManager] settings-btn por fa-cog:', settingsBtn);
         }
+
+        // Strategy 3: Find notification bell as reference
+        if (!settingsBtn) {
+            settingsBtn = document.getElementById('notification-bell');
+            console.log('👑 [AdminManager] usando notification-bell como ref:', settingsBtn);
+        }
+
+        // Try to insert before the reference button
+        if (settingsBtn && settingsBtn.parentNode) {
+            console.log('👑 [AdminManager] Insertando antes de:', settingsBtn.id || 'button');
+            settingsBtn.parentNode.insertBefore(adminBtn, settingsBtn);
+            console.log('👑 [AdminManager] ✅ Botón insertado en header');
+            return;
+        }
+
+        // Strategy 4: Find dashboard header
+        const header = document.querySelector('.dashboard-header');
+        if (header) {
+            console.log('👑 [AdminManager] Insertando en .dashboard-header');
+            header.appendChild(adminBtn);
+            console.log('👑 [AdminManager] ✅ Botón anexado a header');
+            return;
+        }
+
+        // FALLBACK: Floating button (always visible)
+        console.warn('👑 [AdminManager] ⚠️ No se encontró contenedor, usando botón flotante');
+        adminBtn.style.cssText = `
+            position: fixed !important;
+            bottom: 80px !important;
+            right: 20px !important;
+            z-index: 9999 !important;
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, #C8A752, #B8941A) !important;
+            border: 2px solid #fff !important;
+            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.5) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            font-size: 1.2rem !important;
+            color: #000 !important;
+        `;
+        document.body.appendChild(adminBtn);
+        console.log('👑 [AdminManager] ✅ Botón flotante creado');
     },
 
     /**
