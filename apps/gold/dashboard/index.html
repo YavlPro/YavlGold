@@ -739,16 +739,18 @@
     }
 
     /* ============================================
-           ⚙️ SETTINGS MODAL - GLASSMORPHISM
+           ⚙️ PROFILE SUPER-PANEL
         ============================================ */
-    .settings-modal {
+
+    /* Modal Overlay */
+    .yg-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -758,87 +760,191 @@
       transition: all 0.3s ease;
     }
 
-    .settings-modal.active {
+    .yg-modal.active {
       opacity: 1;
       visibility: visible;
     }
 
-    .settings-modal-content {
-      background: var(--negro-tarjeta);
-      border: var(--borde-dorado);
-      border-radius: 24px;
-      padding: 2.5rem;
-      width: 90%;
-      max-width: 450px;
-      max-height: 85vh;
-      overflow-y: auto;
-      position: relative;
-      transform: translateY(20px);
-      transition: transform 0.3s ease;
-      box-shadow: var(--sombra-dorada);
-    }
-
-    .settings-modal.active .settings-modal-content {
-      transform: translateY(0);
-    }
-
-    .settings-modal-header {
+    /* Panel Container */
+    .yg-profile-panel {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
+      width: min(980px, 92vw);
+      height: min(640px, 85vh);
+      background: #0a0a0a;
+      border-radius: 20px;
+      border: 1px solid rgba(200, 167, 82, 0.25);
+      overflow: hidden;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(200, 167, 82, 0.1);
+      transform: translateY(20px) scale(0.98);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .settings-modal-header h3 {
-      font-family: var(--font-titulo);
-      font-size: 1.5rem;
-      color: var(--dorado-yavl);
-      letter-spacing: 2px;
+    .yg-modal.active .yg-profile-panel {
+      transform: translateY(0) scale(1);
     }
 
-    .settings-close-btn {
-      background: transparent;
-      border: none;
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: color 0.3s ease;
-    }
-
-    .settings-close-btn:hover {
-      color: var(--dorado-yavl);
-    }
-
-    /* Avatar Section */
-    .settings-avatar-section {
+    /* Sidebar */
+    .yg-profile-sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #0f0f0f 0%, #080808 100%);
+      border-right: 1px solid rgba(200, 167, 82, 0.15);
+      padding: 24px 0;
       display: flex;
       flex-direction: column;
+    }
+
+    .yg-profile-sidebar__title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--dorado-yavl, #C8A752);
+      padding: 0 24px 20px;
+      border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+      letter-spacing: 1px;
+    }
+
+    .yg-profile-nav {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .yg-profile-nav__item {
+      display: flex;
       align-items: center;
-      margin-bottom: 2rem;
-    }
-
-    .settings-avatar-container {
+      gap: 12px;
+      width: 100%;
+      padding: 14px 24px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
       position: relative;
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 3px solid var(--dorado-yavl);
-      box-shadow: var(--sombra-dorada);
     }
 
-    .settings-avatar-img {
+    .yg-profile-nav__item:hover:not(:disabled) {
+      background: rgba(200, 167, 82, 0.08);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .yg-profile-nav__item.is-active {
+      background: rgba(200, 167, 82, 0.12);
+      color: var(--dorado-yavl, #C8A752);
+      border-left: 3px solid var(--dorado-yavl, #C8A752);
+    }
+
+    .yg-profile-nav__item:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .yg-ico {
+      font-size: 1.1rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .yg-badge {
+      margin-left: auto;
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      background: rgba(200, 167, 82, 0.2);
+      color: var(--dorado-yavl, #C8A752);
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Content Area */
+    .yg-profile-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Cover Header */
+    .yg-profile-cover {
+      height: 120px;
+      background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .yg-profile-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .yg-profile-close:hover {
+      background: rgba(200, 167, 82, 0.3);
+      color: #fff;
+      border-color: var(--dorado-yavl, #C8A752);
+    }
+
+    .yg-profile-close:focus {
+      outline: 2px solid var(--dorado-yavl, #C8A752);
+      outline-offset: 2px;
+    }
+
+    /* Body (Scrollable) */
+    .yg-profile-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 32px 32px;
+    }
+
+    /* Avatar Row */
+    .yg-profile-avatarRow {
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+      margin-top: -50px;
+      margin-bottom: 32px;
+    }
+
+    .yg-profile-avatarWrap {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+
+    .yg-profile-avatar {
       width: 100%;
       height: 100%;
+      border-radius: 50%;
       object-fit: cover;
+      border: 4px solid #0a0a0a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 167, 82, 0.2);
     }
 
-    .settings-avatar-overlay {
+    .yg-profile-avatarOverlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      border-radius: 50%;
       background: rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
@@ -848,131 +954,270 @@
       cursor: pointer;
     }
 
-    .settings-avatar-container:hover .settings-avatar-overlay {
+    .yg-profile-avatarWrap:hover .yg-profile-avatarOverlay {
       opacity: 1;
     }
 
-    .settings-avatar-overlay i {
-      color: var(--dorado-yavl);
-      font-size: 2rem;
+    .yg-profile-avatarOverlay i {
+      color: var(--dorado-yavl, #C8A752);
+      font-size: 1.5rem;
     }
 
     #avatar-file-input {
       display: none;
     }
 
-    /* Form Fields */
-    .settings-form-group {
-      margin-bottom: 1.5rem;
+    .yg-profile-identity {
+      padding-bottom: 8px;
     }
 
-    .settings-form-group label {
-      display: block;
-      font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.7);
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .settings-form-group input,
-    .settings-form-group textarea {
-      width: 100%;
-      padding: 0.9rem 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(200, 167, 82, 0.3);
-      border-radius: 12px;
-      color: var(--blanco);
-      font-family: var(--font-cuerpo);
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .settings-form-group input:focus,
-    .settings-form-group textarea:focus {
-      outline: none;
-      border-color: var(--dorado-yavl);
-      box-shadow: 0 0 15px rgba(200, 167, 82, 0.2);
-    }
-
-    .settings-form-group textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    /* Action Buttons */
-    .settings-actions {
-      display: flex;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .settings-btn-save {
-      flex: 1;
-      padding: 0.9rem;
-      background: linear-gradient(135deg, var(--dorado-yavl), var(--dorado-oscuro));
-      border: none;
-      border-radius: 50px;
-      color: var(--negro-puro);
-      font-family: var(--font-titulo);
+    .yg-profile-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
       font-weight: 700;
-      font-size: 0.9rem;
-      letter-spacing: 1px;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      color: #fff;
     }
 
-    .settings-btn-save:hover {
-      transform: scale(1.02);
-      box-shadow: 0 10px 30px rgba(200, 167, 82, 0.4);
+    .yg-profile-sub {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 4px;
     }
 
-    .settings-btn-save:disabled {
-      opacity: 0.5;
+    /* Form */
+    .yg-profile-form {
+      margin-top: 8px;
+    }
+
+    .yg-profile-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 20px;
+    }
+
+    .yg-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .yg-col-6 {
+      grid-column: span 6;
+    }
+
+    .yg-col-12 {
+      grid-column: span 12;
+    }
+
+    .yg-field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .yg-field input,
+    .yg-field textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .yg-field input:focus,
+    .yg-field textarea:focus {
+      outline: none;
+      border-color: var(--dorado-yavl, #C8A752);
+      background: rgba(200, 167, 82, 0.05);
+      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
+    }
+
+    .yg-field input:read-only {
+      opacity: 0.6;
       cursor: not-allowed;
-      transform: none;
     }
 
-    .settings-btn-cancel {
-      flex: 1;
-      padding: 0.9rem;
+    .yg-field textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Actions */
+    .yg-profile-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .yg-btn {
+      padding: 12px 28px;
+      border-radius: 10px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .yg-btn:focus {
+      outline: 2px solid var(--dorado-yavl, #C8A752);
+      outline-offset: 2px;
+    }
+
+    .yg-btn--ghost {
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 50px;
-      color: rgba(255, 255, 255, 0.6);
-      font-family: var(--font-cuerpo);
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      color: rgba(255, 255, 255, 0.7);
     }
 
-    .settings-btn-cancel:hover {
+    .yg-btn--ghost:hover {
       border-color: rgba(200, 167, 82, 0.5);
-      color: var(--dorado-yavl);
+      color: var(--dorado-yavl, #C8A752);
+    }
+
+    .yg-btn--primary {
+      background: linear-gradient(135deg, var(--dorado-yavl, #C8A752) 0%, #A8903A 100%);
+      border: none;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .yg-btn--primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(200, 167, 82, 0.4);
+    }
+
+    .yg-btn--primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
 
     /* Status Message */
     .settings-status {
       text-align: center;
-      padding: 0.75rem;
+      padding: 12px;
       border-radius: 8px;
-      margin-top: 1rem;
+      margin-top: 16px;
       font-size: 0.9rem;
       display: none;
     }
 
     .settings-status.success {
       display: block;
-      background: rgba(39, 174, 96, 0.2);
+      background: rgba(39, 174, 96, 0.15);
       color: #27ae60;
       border: 1px solid rgba(39, 174, 96, 0.3);
     }
 
     .settings-status.error {
       display: block;
-      background: rgba(231, 76, 60, 0.2);
+      background: rgba(231, 76, 60, 0.15);
       color: #e74c3c;
       border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+
+    /* Tab Placeholders */
+    .yg-profile-tabPlaceholder {
+      padding: 40px;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ============================================
+           📱 RESPONSIVE - MOBILE
+        ============================================ */
+    @media (max-width: 768px) {
+      .yg-profile-panel {
+        flex-direction: column;
+        width: 95vw;
+        height: 90vh;
+        max-height: 90vh;
+      }
+
+      .yg-profile-sidebar {
+        width: 100%;
+        padding: 12px 16px;
+        border-right: none;
+        border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+      }
+
+      .yg-profile-sidebar__title {
+        display: none;
+      }
+
+      .yg-profile-nav {
+        flex-direction: row;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        margin-top: 0;
+      }
+
+      .yg-profile-nav__item {
+        padding: 10px 16px;
+        white-space: nowrap;
+        border-radius: 8px;
+        font-size: 0.85rem;
+      }
+
+      .yg-profile-nav__item.is-active {
+        border-left: none;
+        background: rgba(200, 167, 82, 0.2);
+      }
+
+      .yg-badge {
+        display: none;
+      }
+
+      .yg-profile-cover {
+        height: 80px;
+      }
+
+      .yg-profile-body {
+        padding: 0 16px 24px;
+      }
+
+      .yg-profile-avatarRow {
+        margin-top: -35px;
+        gap: 16px;
+      }
+
+      .yg-profile-avatarWrap {
+        width: 70px;
+        height: 70px;
+      }
+
+      .yg-profile-name {
+        font-size: 1.1rem;
+      }
+
+      .yg-profile-grid {
+        gap: 16px;
+      }
+
+      .yg-col-6 {
+        grid-column: span 12;
+      }
+
+      .yg-profile-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .yg-btn {
+        width: 100%;
+        text-align: center;
+      }
     }
   </style>
 
@@ -1087,52 +1332,88 @@
 
   </div>
 
-  <!-- ⚙️ SETTINGS MODAL -->
-  <div id="settings-modal" class="settings-modal">
-    <div class="settings-modal-content">
-      <div class="settings-modal-header">
-        <h3>AJUSTES</h3>
-        <button id="settings-close-btn" class="settings-close-btn">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
+  <!-- ⚙️ SETTINGS MODAL - SUPER PANEL -->
+  <div id="settings-modal" class="yg-modal yg-profile-modal" role="dialog" aria-modal="true">
+    <div class="yg-profile-panel">
+      <!-- Sidebar -->
+      <aside class="yg-profile-sidebar">
+        <div class="yg-profile-sidebar__title">Ajustes</div>
+        <nav class="yg-profile-nav" aria-label="Secciones del perfil">
+          <button class="yg-profile-nav__item is-active" data-tab="profile">
+            <span class="yg-ico">👤</span><span>Datos Personales</span>
+          </button>
+          <button class="yg-profile-nav__item" data-tab="security" disabled>
+            <span class="yg-ico">🔒</span><span>Seguridad</span>
+            <span class="yg-badge">Pronto</span>
+          </button>
+          <button class="yg-profile-nav__item" data-tab="prefs" disabled>
+            <span class="yg-ico">🔔</span><span>Preferencias</span>
+            <span class="yg-badge">Pronto</span>
+          </button>
+        </nav>
+      </aside>
 
-      <!-- Avatar Section -->
-      <div class="settings-avatar-section">
-        <div class="settings-avatar-container">
-          <img id="settings-avatar-img" class="settings-avatar-img"
-            src="https://ui-avatars.com/api/?name=User&background=C8A752&color=0B0C0F&bold=true" alt="Avatar">
-          <label for="avatar-file-input" class="settings-avatar-overlay">
-            <i class="fas fa-camera"></i>
-          </label>
+      <!-- Content -->
+      <section class="yg-profile-content">
+        <header class="yg-profile-cover">
+          <button id="settings-close-btn" class="yg-profile-close" aria-label="Cerrar">✕</button>
+        </header>
+
+        <div class="yg-profile-body">
+          <div class="yg-profile-avatarRow">
+            <div class="yg-profile-avatarWrap">
+              <img id="settings-avatar-img" class="yg-profile-avatar"
+                src="https://ui-avatars.com/api/?name=User&background=C8A752&color=0B0C0F&bold=true" alt="Avatar">
+              <label for="avatar-file-input" class="yg-profile-avatarOverlay">
+                <i class="fas fa-camera"></i>
+              </label>
+              <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/gif,image/webp">
+            </div>
+            <div class="yg-profile-identity">
+              <div class="yg-profile-name" id="ygProfileName">Tu Perfil</div>
+              <div class="yg-profile-sub" id="ygProfileRole">Miembro de YavlGold</div>
+            </div>
+          </div>
+
+          <form class="yg-profile-form" id="ygProfileForm">
+            <div class="yg-profile-grid">
+              <!-- Grid 2 columnas -->
+              <div class="yg-field yg-col-6">
+                <label for="settings-username">Username</label>
+                <input type="text" id="settings-username" placeholder="Tu nombre único" maxlength="30">
+              </div>
+
+              <div class="yg-field yg-col-6">
+                <label for="settings-email">Email</label>
+                <input type="email" id="settings-email" placeholder="tu@email.com" readonly>
+              </div>
+
+              <div class="yg-field yg-col-12">
+                <label for="settings-bio">Bio</label>
+                <textarea id="settings-bio" placeholder="Cuéntanos sobre ti..." maxlength="500"></textarea>
+              </div>
+            </div>
+
+            <div class="yg-profile-actions">
+              <button type="button" class="yg-btn yg-btn--ghost" id="settings-cancel-btn">Cancelar</button>
+              <button type="button" class="yg-btn yg-btn--primary" id="settings-save-btn">
+                <span>Guardar Cambios</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Status Message -->
+          <div id="settings-status" class="settings-status"></div>
+
+          <!-- Placeholder para tabs futuros -->
+          <div class="yg-profile-tabPlaceholder" data-tab-panel="security" hidden>
+            <p>🔒 Opciones de Seguridad (próximamente).</p>
+          </div>
+          <div class="yg-profile-tabPlaceholder" data-tab-panel="prefs" hidden>
+            <p>🔔 Preferencias y Notificaciones (próximamente).</p>
+          </div>
         </div>
-        <input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/gif,image/webp">
-        <p style="margin-top: 0.75rem; color: rgba(255,255,255,0.5); font-size: 0.8rem;">
-          Click para cambiar foto
-        </p>
-      </div>
-
-      <!-- Form Fields -->
-      <div class="settings-form-group">
-        <label for="settings-username">Username</label>
-        <input type="text" id="settings-username" placeholder="tu_nombre_unico" maxlength="30">
-      </div>
-
-      <div class="settings-form-group">
-        <label for="settings-bio">Biografía</label>
-        <textarea id="settings-bio" placeholder="Cuéntanos sobre ti..." maxlength="500"></textarea>
-      </div>
-
-      <!-- Actions -->
-      <div class="settings-actions">
-        <button id="settings-cancel-btn" class="settings-btn-cancel">Cancelar</button>
-        <button id="settings-save-btn" class="settings-btn-save">
-          <span>Guardar Cambios</span>
-        </button>
-      </div>
-
-      <!-- Status Message -->
-      <div id="settings-status" class="settings-status"></div>
+      </section>
     </div>
   </div>
 
@@ -1402,6 +1683,15 @@
         if (!session) return;
 
         currentUserId = session.user.id;
+        const userEmail = session.user.email;
+
+        // Populate email field (readonly)
+        const emailInput = document.getElementById('settings-email');
+        if (emailInput) emailInput.value = userEmail || '';
+
+        // Update profile header
+        const profileName = document.getElementById('ygProfileName');
+        const profileRole = document.getElementById('ygProfileRole');
 
         // Fetch profile from DB
         const { data: profile, error } = await supabase
@@ -1419,7 +1709,12 @@
           if (profile.avatar_url) {
             avatarImg.src = profile.avatar_url;
           }
+          // Update header info
+          if (profileName) profileName.textContent = profile.username || userEmail.split('@')[0];
+        } else {
+          if (profileName) profileName.textContent = userEmail.split('@')[0];
         }
+        if (profileRole) profileRole.textContent = 'Miembro de YavlGold';
       } catch (err) {
         console.error('[Settings] Error cargando perfil:', err);
         showStatus('Error cargando perfil', 'error');
@@ -1530,6 +1825,13 @@
     cancelBtn.addEventListener('click', closeModal);
     settingsModal.addEventListener('click', (e) => {
       if (e.target === settingsModal) closeModal();
+    });
+
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && settingsModal.classList.contains('active')) {
+        closeModal();
+      }
     });
 
     // Show Settings button when logged in
