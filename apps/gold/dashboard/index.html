@@ -1151,6 +1151,7 @@
     import { supabase } from '../assets/js/main.js';
     import { NotificationsManager } from '../assets/js/components/notifications.js';
     import { FeedbackManager } from '../assets/js/components/feedbackManager.js';
+    import { AnnouncementManager } from '../assets/js/components/announcementManager.js';
 
     async function initDashboard() {
       console.log('[Dashboard] Verificando sesión...');
@@ -1216,9 +1217,10 @@
       // 5. Load Modules from Database
       await loadModules();
 
-      // 6. Initialize Notifications & Feedback Systems
+      // 6. Initialize Notifications, Feedback & Announcements Systems
       NotificationsManager.init();
       FeedbackManager.init();
+      AnnouncementManager.init();
     }
 
     /**
