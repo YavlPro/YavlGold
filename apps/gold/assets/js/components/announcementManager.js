@@ -161,98 +161,108 @@ export const AnnouncementManager = {
         const style = document.createElement('style');
         style.id = 'announcement-styles';
         style.textContent = `
+            /* Floating Minimalist Banner */
             .announcement-banner {
                 position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
+                top: 1rem;
+                left: 50%;
+                transform: translateX(-50%) translateY(-20px);
+                width: auto;
+                max-width: 500px;
+                min-width: 280px;
                 z-index: 9999;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 12px 20px;
+                padding: 0.75rem 1rem;
                 font-family: 'Rajdhani', sans-serif;
-                transform: translateY(-100%);
-                transition: transform 0.3s ease, opacity 0.3s ease;
+                border-radius: 12px;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 10px -2px rgba(0, 0, 0, 0.2);
                 opacity: 0;
+                transition: transform 0.4s ease, opacity 0.4s ease;
             }
             .announcement-banner.visible {
-                transform: translateY(0);
+                transform: translateX(-50%) translateY(0);
                 opacity: 1;
             }
             .announcement-banner.hiding {
-                transform: translateY(-100%);
+                transform: translateX(-50%) translateY(-20px);
                 opacity: 0;
             }
             .announcement-content {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: 10px;
                 flex: 1;
             }
             .announcement-icon {
-                font-size: 1.3rem;
+                font-size: 1.1rem;
             }
             .announcement-text {
                 display: flex;
                 flex-direction: column;
-                gap: 2px;
+                gap: 1px;
             }
             .announcement-text strong {
-                font-size: 1rem;
+                font-size: 0.9rem;
                 font-weight: 700;
             }
             .announcement-text span {
-                font-size: 0.9rem;
-                opacity: 0.9;
+                font-size: 0.8rem;
+                opacity: 0.85;
             }
             .announcement-close {
-                background: rgba(255, 255, 255, 0.2);
+                background: rgba(255, 255, 255, 0.15);
                 border: none;
                 color: inherit;
-                font-size: 1.5rem;
-                width: 32px;
-                height: 32px;
+                font-size: 1.2rem;
+                width: 28px;
+                height: 28px;
                 border-radius: 50%;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 line-height: 1;
+                margin-left: 8px;
                 transition: background 0.2s;
+                flex-shrink: 0;
             }
             .announcement-close:hover {
-                background: rgba(255, 255, 255, 0.3);
+                background: rgba(255, 255, 255, 0.25);
             }
 
-            /* Type-specific colors */
+            /* Type-specific colors with subtle gradients */
             .banner-info {
-                background: linear-gradient(135deg, #1E88E5, #1565C0);
+                background: linear-gradient(135deg, #1976D2, #1565C0);
                 color: #fff;
             }
             .banner-success {
-                background: linear-gradient(135deg, #C8A752, #B8941A);
+                background: linear-gradient(135deg, #C8A752, #A8903A);
                 color: #000;
             }
             .banner-warning {
-                background: linear-gradient(135deg, #FFA726, #FB8C00);
+                background: linear-gradient(135deg, #FB8C00, #E65100);
                 color: #000;
             }
             .banner-danger {
-                background: linear-gradient(135deg, #EF5350, #D32F2F);
+                background: linear-gradient(135deg, #E53935, #C62828);
                 color: #fff;
             }
 
             /* Mobile adjustments */
             @media (max-width: 600px) {
                 .announcement-banner {
-                    padding: 10px 16px;
+                    top: 0.75rem;
+                    min-width: 260px;
+                    max-width: calc(100% - 2rem);
+                    padding: 0.6rem 0.8rem;
                 }
                 .announcement-text strong {
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
                 }
                 .announcement-text span {
-                    font-size: 0.8rem;
+                    font-size: 0.75rem;
                 }
             }
         `;
