@@ -14,15 +14,25 @@ export const AdminManager = {
      * Initialize admin system - checks if current user is admin
      */
     async init() {
-        if (this._initialized) return;
+        console.log('👑 [AdminManager] init() llamado');
+        if (this._initialized) {
+            console.log('👑 [AdminManager] Ya inicializado, saliendo');
+            return;
+        }
         this._initialized = true;
 
         await this._checkAdminStatus();
 
+        console.log('👑 [AdminManager] _isAdmin =', this._isAdmin);
+
         if (this._isAdmin) {
+            console.log('👑 [AdminManager] Inyectando botón...');
             this._injectAdminButton();
             this._injectStyles();
+            console.log('👑 [AdminManager] ¡Admin mode ACTIVADO!');
             logger.success('[AdminManager] 👑 Admin mode activated');
+        } else {
+            console.log('👑 [AdminManager] Usuario NO es admin');
         }
     },
 
@@ -31,9 +41,15 @@ export const AdminManager = {
      * @private
      */
     async _checkAdminStatus() {
+        console.log('👑 [AdminManager] Verificando status de admin...');
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) return;
+            if (!session) {
+                console.log('👑 [AdminManager] No hay sesión');
+                return;
+            }
+
+            console.log('👑 [AdminManager] User ID:', session.user.id);
 
             const { data, error } = await supabase
                 .from('app_admins')
@@ -41,7 +57,10 @@ export const AdminManager = {
                 .eq('user_id', session.user.id)
                 .maybeSingle();
 
+            console.log('👑 [AdminManager] Query result:', { data, error });
+
             if (error) {
+                console.warn('👑 [AdminManager] Error en query:', error.message);
                 logger.debug('[AdminManager] Not an admin or table not exists');
                 return;
             }
@@ -49,9 +68,13 @@ export const AdminManager = {
             if (data) {
                 this._isAdmin = true;
                 this._adminRole = data.role;
+                console.log('👑 [AdminManager] ¡ES ADMIN! Role:', data.role);
                 logger.debug(`[AdminManager] Admin detected: ${data.role}`);
+            } else {
+                console.log('👑 [AdminManager] No está en app_admins');
             }
         } catch (err) {
+            console.error('👑 [AdminManager] Error inesperado:', err);
             logger.error('[AdminManager] Check status error:', err.message);
         }
     },
