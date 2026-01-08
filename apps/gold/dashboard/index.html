@@ -1257,7 +1257,8 @@
         const badge = badgeMap[mod.status] || badgeMap['development'];
         const isDisabled = mod.is_locked || mod.status === 'coming_soon';
         const icon = mod.icon || '📦';
-        const title = mod.name?.toUpperCase() || 'MÓDULO';
+        // FIX: Use mod.title (not mod.name)
+        const title = (mod.title || mod.name || 'MÓDULO').toUpperCase();
         const description = mod.description || 'Descripción no disponible';
         const slug = mod.slug || '#';
         const url = mod.path || `/${slug}/`;
@@ -1268,10 +1269,13 @@
           featuresHtml = `<ul class="module-features">${mod.features.map(f => `<li>${f}</li>`).join('')}</ul>`;
         }
 
-        // Thumbnail image if available
+        // Thumbnail image if available - with fallback
         const thumbnailHtml = mod.thumbnail_url
-          ? `<img src="${mod.thumbnail_url}" alt="${mod.name}" class="module-thumbnail" loading="lazy">`
+          ? `<img src="${mod.thumbnail_url}" alt="${mod.title || mod.name}" class="module-thumbnail" loading="lazy" onerror="this.style.display='none'">`
           : '';
+
+        // Button text
+        const btnText = mod.title || mod.name || 'Módulo';
 
         // Build card
         if (isDisabled) {
@@ -1301,7 +1305,7 @@
             <p class="module-description">${description}</p>
             ${featuresHtml}
             <span class="btn-modulo">
-              Explorar ${mod.name || 'Módulo'}
+              Explorar ${btnText}
               <i class="fas fa-arrow-right"></i>
             </span>
           </a>
