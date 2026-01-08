@@ -1261,7 +1261,8 @@
         const title = (mod.title || mod.name || 'MÓDULO').toUpperCase();
         const description = mod.description || 'Descripción no disponible';
         const slug = mod.slug || '#';
-        const url = mod.path || `/${slug}/`;
+        // FIX: Use mod.route (the actual DB column), fallback to path then slug
+        const url = mod.route || mod.path || `/${slug}/`;
 
         // Build feature list from features JSON or fallback
         let featuresHtml = '';
