@@ -1035,18 +1035,18 @@
       <p>Explora los módulos disponibles y potencia tu conocimiento.</p>
     </section>
 
-    <!-- 📊 ESTADÍSTICAS RÁPIDAS -->
+    <!-- 📊 ESTADÍSTICAS RÁPIDAS (Dynamic) -->
     <section class="stats-section">
       <div class="stat-card">
-        <span class="stat-number">6</span>
+        <span class="stat-number" id="stat-modules">-</span>
         <span class="stat-label">Módulos</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number">1</span>
-        <span class="stat-label">Estrella</span>
+        <span class="stat-number" id="stat-stars">0</span>
+        <span class="stat-label">Favoritos</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number">3</span>
+        <span class="stat-number" id="stat-dev">-</span>
         <span class="stat-label">En Desarrollo</span>
       </div>
       <div class="stat-card">
@@ -1065,10 +1065,11 @@
     </section>
 
     <!-- 📌 FOOTER (Dynamic Version) -->
-    <footer id="app-footer" style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
+    <footer id="app-footer"
+      style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
       <p>© <span id="footer-year">2026</span> El Santuario Digital · Todos los derechos reservados</p>
-      <p style="margin-top: 0.5rem; color: var(--dorado-yavl);">Versión <span id="footer-version">9.4.0</span> · Pulso Vital Edition — <a href="/"
-          style="color: var(--dorado-yavl); text-decoration: none;">Volver al Inicio</a></p>
+      <p style="margin-top: 0.5rem; color: var(--dorado-yavl);">Versión <span id="footer-version">9.4.0</span> · Pulso
+        Vital Edition — <a href="/" style="color: var(--dorado-yavl); text-decoration: none;">Volver al Inicio</a></p>
     </footer>
 
   </div>
@@ -1231,9 +1232,19 @@
 
         // Render modules
         if (modules && modules.length > 0) {
-          renderModules(modules, grid);
+          // Get user favorites before rendering
+          let userFavorites = new Set();
+          if (window.FavoritesManager) {
+            userFavorites = await window.FavoritesManager.getUserFavorites();
+          }
+          renderModules(modules, grid, userFavorites);
         } else {
           grid.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay módulos disponibles</p>';
+        }
+
+        // Update stats after loading
+        if (window.StatsManager) {
+          window.StatsManager.updateAllStats();
         }
       } catch (err) {
         console.error('[Dashboard] Unexpected error:', err);
@@ -1242,9 +1253,9 @@
     }
 
     /**
-     * Render module cards HTML
+     * Render module cards HTML with star favorites
      */
-    function renderModules(modules, container) {
+    function renderModules(modules, container, userFavorites = new Set()) {
       const html = modules.map(mod => {
         // Determine badge class and text based on status
         const badgeMap = {
@@ -1263,6 +1274,11 @@
         const slug = mod.slug || '#';
         // FIX: Use mod.route (the actual DB column), fallback to path then slug
         const url = mod.route || mod.path || `/${slug}/`;
+
+        // ⭐ Star favorite state
+        const isFavorite = userFavorites.has(slug);
+        const starClass = isFavorite ? 'fa-solid' : 'fa-regular';
+        const starColor = isFavorite ? 'color: #C8A752;' : '';
 
         // Build feature list from features JSON or fallback
         let featuresHtml = '';
@@ -1296,7 +1312,10 @@
         }
 
         return `
-          <a href="${url}" class="module-card">
+          <div class="module-card" data-module="${slug}">
+            <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${slug}', this.querySelector('i'))" title="Agregar a favoritos">
+              <i class="${starClass} fa-star" style="${starColor}"></i>
+            </button>
             ${thumbnailHtml}
             <div class="module-icon">${icon}</div>
             <div class="module-header">
@@ -1305,11 +1324,11 @@
             </div>
             <p class="module-description">${description}</p>
             ${featuresHtml}
-            <span class="btn-modulo">
+            <a href="${url}" class="btn-modulo">
               Explorar ${btnText}
               <i class="fas fa-arrow-right"></i>
-            </span>
-          </a>
+            </a>
+          </div>
         `;
       }).join('');
 

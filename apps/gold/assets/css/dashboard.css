@@ -577,3 +577,40 @@
   border: 1px solid rgba(100, 100, 100, 0.5);
 }
 
+/* ━━━ STAR TOGGLE (FAVORITES) ━━━ */
+.star-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.star-toggle:hover {
+  background: rgba(200, 167, 82, 0.2);
+  border-color: rgba(200, 167, 82, 0.6);
+  transform: scale(1.1);
+}
+
+.star-toggle i {
+  font-size: 1rem;
+  color: rgba(200, 167, 82, 0.6);
+  transition: color 0.3s ease;
+}
+
+.star-toggle:hover i {
+  color: #C8A752;
+}
+
+.star-toggle i.fa-solid {
+  color: #C8A752;
+}
