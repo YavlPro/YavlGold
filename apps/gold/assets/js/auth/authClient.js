@@ -294,7 +294,7 @@ const authClient = {
 
     // Login with pre-obtained captcha token (for invisible hCaptcha)
     async loginWithToken(email, password, captchaToken) {
-        console.log('[AuthClient] 🔐 LoginWithToken...');
+        console.log('[AuthClient] 🔐 LoginWithToken iniciado (Invisible Captcha)');
         if (!this.supabase) return { success: false, error: 'Sistema no inicializado' };
         return this._doLogin(email, password, captchaToken);
     },

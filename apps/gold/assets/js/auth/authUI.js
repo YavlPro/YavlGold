@@ -403,7 +403,7 @@ const AuthUI = {
       }
 
       // 🔐 MODO LOGIN NORMAL (INVISIBLE CAPTCHA)
-      console.log('🔐 [AuthUI] Submit LOGIN interceptado');
+      console.log('🔐 [AuthUI] Submit LOGIN interceptado. Verificando hCaptcha...');
 
       const password = newLoginForm.querySelector('#login-password')?.value;
 
@@ -420,38 +420,33 @@ const AuthUI = {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
       }
 
-      // Use invisible hCaptcha - execute programmatically
+      // 1. INTENTO PRIMARIO: Ejecutar Captcha Invisible (Definido en index.html)
       if (typeof window.executeLoginCaptcha === 'function') {
+        console.log('[AuthUI] 🤖 Ejecutando hCaptcha Invisible...');
         window.executeLoginCaptcha(email, password, btn, originalText);
-      } else {
-        // Fallback to direct login if invisible captcha not available
-        console.warn('[AuthUI] executeLoginCaptcha not available, using direct login');
+      }
+      // 2. FALLBACK DE EMERGENCIA: Login directo (si hCaptcha falló al cargar)
+      else {
+        console.warn('[AuthUI] ⚠️ executeLoginCaptcha no disponible. Probando login directo...');
         try {
-          if (!window.AuthClient) {
-            throw new Error('AuthClient no está disponible');
-          }
+          if (!window.AuthClient) throw new Error('AuthClient no disponible');
 
           const res = await window.AuthClient.login(email, password);
 
           if (res.success) {
-            console.log('✅ [AuthUI] Login exitoso');
+            console.log('✅ [AuthUI] Login directo exitoso');
             this.showSuccess('¡Bienvenido de nuevo!');
             this.hideAuthModal();
-
             setTimeout(() => {
-              if (!sessionStorage.getItem('yavl_recovery_pending')) {
-                window.location.href = '/dashboard/';
-              }
+              const pendingRecovery = sessionStorage.getItem('yavl_recovery_pending');
+              if (!pendingRecovery) window.location.href = '/dashboard/';
             }, 800);
           } else {
-            console.error('❌ [AuthUI] Login falló:', res.error);
-            this.showError('login', res.error || 'Error al iniciar sesión');
-            this.resetCaptcha();
-            if (btn) { btn.disabled = false; btn.textContent = originalText; }
+            throw new Error(res.error || 'Error al iniciar sesión');
           }
         } catch (err) {
-          console.error('❌ [AuthUI] Error de login:', err);
-          this.showError('login', err.message || 'Error inesperado');
+          console.error('❌ [AuthUI] Login error:', err);
+          this.showError('login', err.message);
           this.resetCaptcha();
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
