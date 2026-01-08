@@ -1,3 +1,4 @@
+// YavlGold Vite Config - Build v9.4.1 (2026-01-07 - Force rebuild with module apps)
 import { defineConfig } from 'vite';
 
 export default defineConfig({
