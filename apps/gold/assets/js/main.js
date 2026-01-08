@@ -20,9 +20,23 @@ import './utils/auditLogger.js';
 
 export { supabase };
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🦶 YAVLGOLD V9.4 - DYNAMIC FOOTER (Single Source of Truth)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 document.addEventListener('DOMContentLoaded', function () {
+  // Dynamic Year (Always Current)
   const yearEl = document.getElementById('current-year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  const footerYearEl = document.getElementById('footer-year');
+  if (footerYearEl) footerYearEl.textContent = new Date().getFullYear();
+
+  // Dynamic Version (Injected by Vite at build time from package.json)
+  const footerVersionEl = document.getElementById('footer-version');
+  if (footerVersionEl && typeof __APP_VERSION__ !== 'undefined') {
+    footerVersionEl.textContent = __APP_VERSION__;
+    console.log(`[YavlGold] 🏷️ Version: ${__APP_VERSION__}`);
+  }
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

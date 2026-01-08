@@ -1,9 +1,20 @@
-// YavlGold Vite Config - Build v9.4.1 (2026-01-07 - Force rebuild with module apps)
+// YavlGold Vite Config - Build v9.4.2 (2026-01-08 - Version injection)
 import { defineConfig } from 'vite';
+import { readFileSync } from 'fs';
+
+// Read version from package.json (Single Source of Truth)
+const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
 export default defineConfig({
   base: './',
   appType: 'mpa', // Multi-Page Application - sirve index.html en subdirectorios
+
+  // 🔧 BUILD-TIME VARIABLES: Inyecta versión y fecha en todo el código
+  define: {
+    '__APP_VERSION__': JSON.stringify(pkg.version),
+    '__BUILD_DATE__': JSON.stringify(new Date().toISOString().split('T')[0])
+  },
+
   build: {
     rollupOptions: {
       input: {
@@ -36,3 +47,4 @@ export default defineConfig({
     target: 'es2020',
   },
 });
+

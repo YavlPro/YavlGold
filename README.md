@@ -1,44 +1,102 @@
-# YavlGold V9.3 - Ecosistema Global Educativo
+# YavlGold V9.4 — Ecosistema Educativo Descentralizado
 
-Bienvenido al repositorio oficial de **YavlGold**, un ecosistema educativo multi-módulo enfocado en Blockchain, Trading y Herramientas Digitales.
+![Version](https://img.shields.io/badge/version-9.4.0-C8A752?style=flat-square)
+![Status](https://img.shields.io/badge/status-Beta-orange?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-## 🏗 Arquitectura
+Bienvenido al repositorio oficial de **YavlGold**, un ecosistema educativo multi-módulo enfocado en Blockchain, Trading, Agricultura y Herramientas Digitales.
 
-El proyecto es un **Monorepo** basado en **Vite** (Vanilla JS) optimizado para despliegue en Vercel.
-Funciona como una **Multi-Page App (MPA)** donde cada carpeta en `/apps` es un módulo independiente pero conectado visualmente.
+---
 
-### Estructura Clave
+## 🏗️ Arquitectura
 
-- **`/apps`**: Contiene los módulos funcionales.
-  - `gold/`: Landing page principal (`/`) y Dashboard (`/dashboard`).
-  - `academia/`: Plataforma educativa con cursos.
-  - `suite/`: Suite multimedia.
-  - `herramientas/`: Calculadoras y utilidades (Trading/Cripto).
-- **`/public/brand`**: **Assets Blindados**. Contiene los logos oficiales (`logo.webp`, `logo.svg`).
-- **`/dist`**: Carpeta de salida generada por el build (no versionar).
-- **`vite.config.js`**: Configuración central que mapea cada entrada (input) para el build.
+Este proyecto es un **Monorepo** basado en **Vite** (Vanilla JS + ES Modules) optimizado para despliegue en **Vercel**.
+Funciona como una **Multi-Page Application (MPA)** donde cada módulo es independiente pero conectado visualmente.
 
-## 🚀 Comandos
+### Stack Tecnológico
 
-### Desarrollo
-Para iniciar el servidor local:
+| Capa | Tecnología |
+|------|------------|
+| Frontend | Vite + Vanilla JS + CSS Tokens |
+| Backend | Supabase (Auth + PostgreSQL + Realtime) |
+| Auth | Smart AuthGuard V9.4 + hCaptcha Invisible |
+| Deploy | Vercel (Git-based CI/CD) |
+
+### Estructura del Proyecto
+
+```
+gold/
+├── apps/gold/                 # Dashboard Principal & Auth
+│   ├── academia/              # Módulo: Cursos Educativos
+│   ├── agro/                  # Módulo: Agricultura & Clima
+│   ├── herramientas/          # Módulo: Calculadoras Cripto
+│   ├── social/                # Módulo: Red Social
+│   ├── suite/                 # Módulo: Suite Multimedia
+│   └── dashboard/             # Panel de Control
+├── package.json               # Monorepo Root
+└── vite.config.js             # Multi-Page Configuration
+```
+
+---
+
+## 🚀 Setup Rápido
+
+### Requisitos
+- Node.js 18+
+- pnpm 8+
+
+### Instalación
 ```bash
+# Clonar
+git clone https://github.com/YavlPro/YavlGold.git
+cd gold
+
+# Instalar dependencias
+pnpm install
+
+# Desarrollo local
 pnpm dev
 ```
 
-### Producción
-Para generar el build de producción (Vite build):
+### Build Producción
 ```bash
 pnpm build:v9
+pnpm preview:v9
 ```
 
-## 🔐 Autenticación
+---
 
-El sistema utiliza **Supabase** para la autenticación.
-Se implementa un **Smart AuthGuard V9.4** en `authClient.js` que gestiona:
-- Redirección inteligente.
-- Prevención de bucles de redirección en dispositivos móviles.
-- Protección de rutas privadas (`/dashboard`, `/herramientas`, etc.).
+## 🔐 Variables de Entorno
+
+Crea un archivo `.env` en la raíz con:
+
+```env
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-anon-key
+```
 
 ---
-*Desarrollado por el equipo de YavlGold.*
+
+## 📋 Changelog Reciente
+
+### V9.4.0 (Enero 2026)
+- ✅ **Módulos Dinámicos:** Cards renderizados desde Supabase `modules` table.
+- ✅ **hCaptcha Invisible:** Protección anti-bot sin fricción.
+- ✅ **Security Patch:** Eliminación de localStorage inseguro.
+- ✅ **Smart AuthGuard V9.4:** Anti-loop redirects en móviles.
+- ✅ **Single Source of Truth:** Versión inyectada desde `package.json` via Vite.
+
+### V9.3.0 (Diciembre 2025)
+- Avatar dinámico en dashboard.
+- Settings modal con perfil editable.
+- Glassmorphism UI overhaul.
+
+---
+
+## 📄 Licencia
+
+MIT © 2026 [YavlPro](https://github.com/YavlPro)
+
+---
+
+*Desarrollado con 🦅 por el equipo de YavlGold.*
