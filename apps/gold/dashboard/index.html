@@ -396,6 +396,130 @@
     }
 
     /* ============================================
+           🔍 MODULE TOOLBAR (Search + Filters)
+        ============================================ */
+    .module-toolbar {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding: 0 0.5rem;
+    }
+
+    .search-container {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+      min-width: 200px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.5;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    #moduleSearch {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(200, 167, 82, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    #moduleSearch:focus {
+      outline: none;
+      border-color: var(--dorado-yavl, #C8A752);
+      background: rgba(200, 167, 82, 0.08);
+      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
+    }
+
+    #moduleSearch::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.7);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: rgba(200, 167, 82, 0.15);
+      border-color: rgba(200, 167, 82, 0.4);
+      color: #fff;
+    }
+
+    .filter-btn.active {
+      background: var(--dorado-yavl, #C8A752);
+      border-color: var(--dorado-yavl, #C8A752);
+      color: #000;
+      font-weight: 700;
+    }
+
+    /* No results message */
+    .no-results-message {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3rem 2rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .no-results-message span {
+      font-size: 3rem;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .no-results-message p {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    @media (max-width: 768px) {
+      .module-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-container {
+        max-width: 100%;
+      }
+
+      .filter-pills {
+        justify-content: center;
+      }
+
+      .filter-btn {
+        padding: 6px 14px;
+        font-size: 0.85rem;
+      }
+    }
+
+    /* ============================================
            🃏 GRID DE MÓDULOS
         ============================================ */
     .modules-grid {
@@ -1313,6 +1437,20 @@
       </div>
     </section>
 
+    <!-- 🔍 MODULE TOOLBAR (Search + Filters) -->
+    <div class="module-toolbar">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="moduleSearch" placeholder="Buscar módulo..." autocomplete="off">
+      </div>
+      <div class="filter-pills">
+        <button class="filter-btn active" data-filter="all">Todos</button>
+        <button class="filter-btn" data-filter="active">Activos</button>
+        <button class="filter-btn" data-filter="development">En Desarrollo</button>
+        <button class="filter-btn" data-filter="locked">Bloqueados</button>
+      </div>
+    </div>
+
     <!-- 🃏 GRID DE MÓDULOS (DINÁMICO) -->
     <section id="modules-grid" class="modules-grid">
       <!-- Loading placeholder -->
@@ -1543,6 +1681,11 @@
           if (window.FavoritesManager) {
             userFavorites = await window.FavoritesManager.getUserFavorites();
           }
+
+          // Store globally for filter/search system
+          allModules = modules;
+          allUserFavorites = userFavorites;
+
           renderModules(modules, grid, userFavorites);
         } else {
           grid.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay módulos disponibles</p>';
@@ -1640,6 +1783,90 @@
 
       container.innerHTML = html;
     }
+
+    // ========================================
+    // 🔍 MODULE SEARCH & FILTER SYSTEM
+    // ========================================
+    let allModules = [];
+    let allUserFavorites = new Set();
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    /**
+     * Apply filters and search to modules
+     */
+    function applyFilters() {
+      const grid = document.getElementById('modules-grid');
+      if (!grid || !allModules.length) return;
+
+      let filtered = [...allModules];
+
+      // Apply status filter
+      if (currentFilter !== 'all') {
+        filtered = filtered.filter(mod => mod.status === currentFilter);
+      }
+
+      // Apply search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase().trim();
+        filtered = filtered.filter(mod => {
+          const title = (mod.title || mod.name || '').toLowerCase();
+          const desc = (mod.description || '').toLowerCase();
+          const slug = (mod.slug || '').toLowerCase();
+          return title.includes(query) || desc.includes(query) || slug.includes(query);
+        });
+      }
+
+      // Render results
+      if (filtered.length > 0) {
+        renderModules(filtered, grid, allUserFavorites);
+      } else {
+        grid.innerHTML = `
+          <div class="no-results-message">
+            <span>🔍</span>
+            <p>No se encontraron módulos con esos criterios</p>
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * Setup filter and search event listeners
+     */
+    function setupFilterSystem() {
+      const searchInput = document.getElementById('moduleSearch');
+      const filterBtns = document.querySelectorAll('.filter-btn');
+
+      // Search with debounce
+      let searchTimeout;
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(searchTimeout);
+          searchTimeout = setTimeout(() => {
+            searchQuery = e.target.value;
+            applyFilters();
+          }, 300);
+        });
+      }
+
+      // Filter pills
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Update active state
+          filterBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          // Apply filter
+          currentFilter = btn.dataset.filter;
+          applyFilters();
+        });
+      });
+    }
+
+    // Initialize filter system after DOM ready
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(setupFilterSystem, 100);
+    });
 
     initDashboard();
   </script>
