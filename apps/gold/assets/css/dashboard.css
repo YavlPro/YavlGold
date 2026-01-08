@@ -614,3 +614,69 @@
 .star-toggle i.fa-solid {
   color: #C8A752;
 }
+
+/* ━━━ NOTIFICATION BELL ━━━ */
+.btn-notification {
+  position: relative;
+  background: transparent;
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-notification:hover {
+  background: rgba(200, 167, 82, 0.15);
+  border-color: rgba(200, 167, 82, 0.6);
+}
+
+.btn-notification i {
+  color: rgba(200, 167, 82, 0.8);
+  font-size: 1rem;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #FF4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* ━━━ FEEDBACK BUTTON ━━━ */
+.btn-feedback {
+  background: transparent;
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-feedback:hover {
+  background: rgba(200, 167, 82, 0.15);
+  border-color: rgba(200, 167, 82, 0.6);
+}
+
+.btn-feedback i {
+  color: rgba(200, 167, 82, 0.8);
+  font-size: 1rem;
+}

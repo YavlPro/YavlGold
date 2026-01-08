@@ -1007,6 +1007,17 @@
         </div>
       </div>
 
+      <!-- 🔔 Notification Bell -->
+      <button id="notification-bell" class="btn-notification notification-bell" title="Notificaciones">
+        <i class="fas fa-bell"></i>
+        <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
+      </button>
+
+      <!-- 📝 Feedback Button -->
+      <button id="feedback-btn" class="btn-feedback feedback-btn" title="Enviar Feedback">
+        <i class="fas fa-comment-dots"></i>
+      </button>
+
       <!-- ⚙️ Botón Ajustes -->
       <button id="settings-btn" class="btn-settings" title="Ajustes de Perfil" style="display: none;">
         <i class="fas fa-cog"></i>
@@ -1138,6 +1149,8 @@
   <script type="module">
     // Import directly to guarantee execution order
     import { supabase } from '../assets/js/main.js';
+    import { NotificationsManager } from '../assets/js/components/notifications.js';
+    import { FeedbackManager } from '../assets/js/components/feedbackManager.js';
 
     async function initDashboard() {
       console.log('[Dashboard] Verificando sesión...');
@@ -1202,6 +1215,10 @@
 
       // 5. Load Modules from Database
       await loadModules();
+
+      // 6. Initialize Notifications & Feedback Systems
+      NotificationsManager.init();
+      FeedbackManager.init();
     }
 
     /**
