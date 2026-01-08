@@ -130,13 +130,17 @@ export const NotificationsManager = {
     },
 
     /**
-     * Render notifications dropdown
+     * Render notifications dropdown with split sections
      * @private
      */
     _renderDropdown() {
         // Remove existing dropdown
         const existing = document.getElementById('notifications-dropdown');
         if (existing) existing.remove();
+
+        // Split notifications into unread and read
+        const unread = this._notifications.filter(n => !n.is_read);
+        const read = this._notifications.filter(n => n.is_read);
 
         const dropdown = document.createElement('div');
         dropdown.id = 'notifications-dropdown';
@@ -147,24 +151,40 @@ export const NotificationsManager = {
                 <button class="notifications-close" onclick="this.parentElement.parentElement.remove()">×</button>
             </div>
             <div class="notifications-list">
-                ${this._notifications.map(n => `
-                    <div class="notification-item ${n.is_read ? 'read' : 'unread'}" data-id="${n.id}">
-                        <div class="notification-icon">${this._getIcon(n.type)}</div>
-                        <div class="notification-content">
-                            <strong>${n.title}</strong>
-                            <p>${n.message || ''}</p>
-                            <small>${this._formatDate(n.created_at)}</small>
-                        </div>
+                ${unread.length > 0 ? `
+                    <div class="notifications-section">
+                        <div class="notifications-section-title">✨ Nuevas (${unread.length})</div>
+                        ${unread.map(n => this._renderNotificationItem(n)).join('')}
                     </div>
-                `).join('')}
+                ` : `
+                    <div class="notifications-empty">
+                        <span>✅</span>
+                        <p>¡Todo al día!</p>
+                    </div>
+                `}
+                ${read.length > 0 ? `
+                    <div class="notifications-section history">
+                        <div class="notifications-section-title">📜 Historial</div>
+                        ${read.map(n => this._renderNotificationItem(n)).join('')}
+                    </div>
+                ` : ''}
             </div>
             <div class="notifications-footer">
-                <button onclick="window.NotificationsManager.markAllRead()">Marcar todo como leído</button>
+                ${unread.length > 0 ? `
+                    <button onclick="window.NotificationsManager.markAllRead()">Marcar todo como leído</button>
+                ` : `
+                    <button onclick="document.getElementById('notifications-dropdown').remove()">Cerrar</button>
+                `}
             </div>
         `;
 
         // Add styles if not present
         this._injectStyles();
+
+        // Setup click handlers for unread notifications
+        dropdown.querySelectorAll('.notification-item.unread').forEach(item => {
+            item.addEventListener('click', () => this._markAsRead(item.dataset.id));
+        });
 
         // Position near the bell
         const bell = document.getElementById('notification-bell') || document.querySelector('.notification-bell');
@@ -221,6 +241,64 @@ export const NotificationsManager = {
             if (dropdown) dropdown.remove();
 
             this._showToast('✅ Todas marcadas como leídas', 'success');
+
+        } catch (err) {
+            logger.error('[NotificationsManager] Error:', err.message);
+        }
+    },
+
+    /**
+     * Render a single notification item
+     * @private
+     */
+    _renderNotificationItem(n) {
+        return `
+            <div class="notification-item ${n.is_read ? 'read' : 'unread'}" data-id="${n.id}">
+                <div class="notification-icon">${this._getIcon(n.type)}</div>
+                <div class="notification-content">
+                    <strong>${n.title}</strong>
+                    <p>${n.message || ''}</p>
+                    <small>${this._formatDate(n.created_at)}</small>
+                </div>
+                ${!n.is_read ? '<div class="notification-new-dot"></div>' : ''}
+            </div>
+        `;
+    },
+
+    /**
+     * Mark a single notification as read
+     * @private
+     */
+    async _markAsRead(notificationId) {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+
+            const { error } = await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', notificationId)
+                .eq('user_id', session.user.id);
+
+            if (error) {
+                logger.error('[NotificationsManager] Mark read error:', error.message);
+                return;
+            }
+
+            // Update local state
+            const notification = this._notifications.find(n => n.id === notificationId);
+            if (notification) {
+                notification.is_read = true;
+            }
+
+            // Update badge count
+            this._unreadCount = Math.max(0, this._unreadCount - 1);
+            this._updateBadge();
+
+            // Re-render dropdown with updated data
+            this._renderDropdown();
+
+            logger.debug('[NotificationsManager] Marked as read:', notificationId);
 
         } catch (err) {
             logger.error('[NotificationsManager] Error:', err.message);
@@ -349,6 +427,44 @@ export const NotificationsManager = {
             }
             .notification-item.unread strong {
                 color: #C8A752;
+            }
+            .notification-item.unread {
+                cursor: pointer;
+            }
+            .notifications-section-title {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: rgba(200, 167, 82, 0.8);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                background: rgba(0, 0, 0, 0.3);
+                border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+            }
+            .notifications-section.history {
+                opacity: 0.7;
+            }
+            .notifications-empty {
+                padding: 30px 16px;
+                text-align: center;
+                color: rgba(255, 255, 255, 0.5);
+            }
+            .notifications-empty span {
+                font-size: 2rem;
+                display: block;
+                margin-bottom: 8px;
+            }
+            .notifications-empty p {
+                margin: 0;
+                font-size: 0.9rem;
+            }
+            .notification-new-dot {
+                width: 8px;
+                height: 8px;
+                background: #C8A752;
+                border-radius: 50%;
+                flex-shrink: 0;
+                align-self: center;
             }
             .notification-icon {
                 font-size: 1.2rem;

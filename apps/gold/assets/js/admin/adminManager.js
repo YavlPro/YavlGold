@@ -137,6 +137,7 @@ export const AdminManager = {
                 <div class="admin-tabs">
                     <button class="admin-tab active" data-tab="announcements">📢 Anuncios</button>
                     <button class="admin-tab" data-tab="stats">📊 Stats</button>
+                    <button class="admin-tab" data-tab="feedback">💬 Feedback</button>
                 </div>
 
                 <div class="admin-tab-content active" id="tab-announcements">
@@ -203,6 +204,15 @@ export const AdminManager = {
                         </div>
                     </div>
                 </div>
+
+                <div class="admin-tab-content" id="tab-feedback">
+                    <div class="admin-section">
+                        <h3>💬 Mensajes de Usuarios</h3>
+                        <div id="admin-feedback-list" class="admin-list">
+                            <div class="admin-loading">Cargando...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -223,11 +233,16 @@ export const AdminManager = {
     _setupPanelEvents(modal) {
         // Tab switching
         modal.querySelectorAll('.admin-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
+            tab.addEventListener('click', async () => {
                 modal.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
                 modal.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
                 tab.classList.add('active');
                 document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+
+                // Load feedback list when clicking Feedback tab
+                if (tab.dataset.tab === 'feedback') {
+                    await this._loadFeedbackList();
+                }
             });
         });
 
@@ -422,6 +437,96 @@ export const AdminManager = {
 
         } catch (err) {
             logger.error('[AdminManager] Stats error:', err.message);
+        }
+    },
+
+    /**
+     * Load feedback list
+     * @private
+     */
+    async _loadFeedbackList() {
+        const container = document.getElementById('admin-feedback-list');
+        if (!container) return;
+
+        container.innerHTML = '<div class="admin-loading">Cargando feedback...</div>';
+
+        try {
+            const { data, error } = await supabase
+                .from('feedback')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="admin-empty">
+                        <span>📭</span>
+                        <p>No hay mensajes de feedback</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map(f => `
+                <div class="admin-feedback-item" data-id="${f.id}">
+                    <div class="feedback-header">
+                        <span class="feedback-type">${this._getFeedbackTypeIcon(f.type)}</span>
+                        <span class="feedback-date">${this._formatDate(f.created_at)}</span>
+                    </div>
+                    <div class="feedback-message">${f.message || 'Sin mensaje'}</div>
+                    ${f.email ? `<div class="feedback-email">${f.email}</div>` : ''}
+                    <button class="btn-feedback-delete" onclick="AdminManager.deleteFeedback('${f.id}')">
+                        🗑️ Eliminar
+                    </button>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            logger.error('[AdminManager] Feedback load error:', err.message);
+            container.innerHTML = `<div class="admin-error">Error al cargar feedback</div>`;
+        }
+    },
+
+    /**
+     * Get feedback type icon
+     * @private
+     */
+    _getFeedbackTypeIcon(type) {
+        const icons = { 'bug': '🐛', 'feature': '💡', 'question': '❓', 'other': '💬' };
+        return icons[type] || '💬';
+    },
+
+    /**
+     * Format date for display
+     * @private
+     */
+    _formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    },
+
+    /**
+     * Delete feedback item
+     */
+    async deleteFeedback(id) {
+        if (!confirm('¿Eliminar este feedback?')) return;
+
+        try {
+            const { error } = await supabase
+                .from('feedback')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+
+            this._showToast('🗑️ Feedback eliminado', 'success');
+            await this._loadFeedbackList();
+
+        } catch (err) {
+            logger.error('[AdminManager] Feedback delete error:', err.message);
+            this._showToast('❌ Error: ' + err.message, 'error');
         }
     },
 
@@ -772,8 +877,59 @@ export const AdminManager = {
                 padding: 20px;
                 color: rgba(255, 255, 255, 0.5);
             }
+            .admin-empty span {
+                font-size: 2rem;
+                display: block;
+                margin-bottom: 8px;
+            }
             .admin-error {
                 color: #EF5350;
+            }
+
+            /* Feedback Items */
+            .admin-feedback-item {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 10px;
+                border-left: 3px solid rgba(200, 167, 82, 0.5);
+            }
+            .feedback-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+            .feedback-type {
+                font-size: 1.2rem;
+            }
+            .feedback-date {
+                font-size: 0.75rem;
+                color: rgba(255, 255, 255, 0.5);
+            }
+            .feedback-message {
+                color: #fff;
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+            .feedback-email {
+                font-size: 0.8rem;
+                color: #C8A752;
+                margin-bottom: 8px;
+            }
+            .btn-feedback-delete {
+                background: rgba(239, 83, 80, 0.15);
+                border: 1px solid rgba(239, 83, 80, 0.3);
+                color: #EF5350;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .btn-feedback-delete:hover {
+                background: rgba(239, 83, 80, 0.3);
             }
 
             @keyframes fadeIn {
