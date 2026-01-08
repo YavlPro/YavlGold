@@ -1152,6 +1152,7 @@
     import { NotificationsManager } from '../assets/js/components/notifications.js';
     import { FeedbackManager } from '../assets/js/components/feedbackManager.js';
     import { AnnouncementManager } from '../assets/js/components/announcementManager.js';
+    import { AdminManager } from '../assets/js/admin/adminManager.js';
 
     async function initDashboard() {
       console.log('[Dashboard] Verificando sesión...');
@@ -1217,10 +1218,11 @@
       // 5. Load Modules from Database
       await loadModules();
 
-      // 6. Initialize Notifications, Feedback & Announcements Systems
+      // 6. Initialize Notifications, Feedback, Announcements & Admin Systems
       NotificationsManager.init();
       FeedbackManager.init();
       AnnouncementManager.init();
+      AdminManager.init(); // Will only show crown button if user is admin
     }
 
     /**
