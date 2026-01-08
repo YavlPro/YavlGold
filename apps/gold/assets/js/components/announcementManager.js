@@ -392,19 +392,33 @@ export const AnnouncementManager = {
                 color: #fff;
             }
 
-            /* Mobile adjustments */
-            @media (max-width: 600px) {
+            /* Mobile adjustments - Below header, smaller */
+            @media (max-width: 768px) {
                 .announcement-banner {
-                    top: 0.75rem;
-                    min-width: 260px;
-                    max-width: calc(100% - 1.5rem);
-                    padding: 0.6rem 0.8rem;
+                    top: 70px;
+                    min-width: 90%;
+                    max-width: 95%;
+                    padding: 0.5rem 0.75rem;
+                    font-size: 0.85rem;
+                    border-radius: 8px;
+                    z-index: 9990;
+                }
+                .announcement-icon {
+                    font-size: 1rem;
                 }
                 .announcement-title {
-                    font-size: 0.85rem;
+                    font-size: 0.8rem;
                 }
                 .announcement-message {
-                    font-size: 0.75rem;
+                    font-size: 0.7rem;
+                }
+                .announcement-close {
+                    width: 24px;
+                    height: 24px;
+                    font-size: 1rem;
+                }
+                .announcement-counter {
+                    font-size: 0.65rem;
                 }
             }
         `;

@@ -1212,6 +1212,8 @@
         btn.style.display = 'inline-flex'; // Force visibility
         btn.onclick = async (e) => {
           e.preventDefault();
+          // Clear session-based storage before logout
+          sessionStorage.removeItem('yavl_dismissed_announcements');
           await supabase.auth.signOut();
           window.location.href = '/';
         };

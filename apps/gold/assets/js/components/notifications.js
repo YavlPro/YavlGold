@@ -398,6 +398,30 @@ export const NotificationsManager = {
                 from { transform: translateX(100%); opacity: 0; }
                 to { transform: translateX(0); opacity: 1; }
             }
+
+            /* Mobile Responsive */
+            @media (max-width: 768px) {
+                .notifications-dropdown {
+                    width: 90vw !important;
+                    max-width: 90vw !important;
+                    left: 50% !important;
+                    right: auto !important;
+                    transform: translateX(-50%);
+                    top: 65px !important;
+                }
+                .notifications-list {
+                    max-height: 60vh;
+                }
+                .notification-item {
+                    padding: 10px 12px;
+                }
+                .notification-content strong {
+                    font-size: 0.85rem;
+                }
+                .notification-content p {
+                    font-size: 0.75rem;
+                }
+            }
         `;
         document.head.appendChild(style);
     }
