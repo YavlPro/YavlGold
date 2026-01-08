@@ -181,11 +181,12 @@ const ProfileManager = {
         if (sanitizedUpdates.username.length < 3) {
           return { success: false, error: 'El username debe tener al menos 3 caracteres' };
         }
-        if (!/^[a-z0-9_]+$/.test(sanitizedUpdates.username)) {
-          return { success: false, error: 'El username solo puede contener letras minúsculas, números y guiones bajos' };
+        // Friendly validation: letters (with accents), numbers, spaces
+        if (!/^[a-zA-Z0-9 áéíóúÁÉÍÓÚñÑ]+$/.test(sanitizedUpdates.username)) {
+          return { success: false, error: 'El username solo puede contener letras, números y espacios' };
         }
 
-        // Fix: usar maybeSingle() en lugar de single()
+        // Check if username is already taken
         const { data: existing, error: existErr } = await this.supabase
           .from('profiles')
           .select('id')

@@ -335,12 +335,20 @@ export const NotificationsManager = {
                 padding: 12px 16px;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                 transition: background 0.2s;
+                border-left: 3px solid transparent;
             }
             .notification-item:hover {
                 background: rgba(200, 167, 82, 0.1);
             }
+            .notification-item.read {
+                opacity: 0.6;
+            }
             .notification-item.unread {
-                background: rgba(200, 167, 82, 0.05);
+                background: rgba(200, 167, 82, 0.08);
+                border-left-color: #C8A752;
+            }
+            .notification-item.unread strong {
+                color: #C8A752;
             }
             .notification-icon {
                 font-size: 1.2rem;
