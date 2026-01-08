@@ -402,7 +402,7 @@ const AuthUI = {
         return false;
       }
 
-      // 🔐 MODO LOGIN NORMAL
+      // 🔐 MODO LOGIN NORMAL (INVISIBLE CAPTCHA)
       console.log('🔐 [AuthUI] Submit LOGIN interceptado');
 
       const password = newLoginForm.querySelector('#login-password')?.value;
@@ -415,41 +415,46 @@ const AuthUI = {
       const btn = newLoginForm.querySelector('button[type="submit"]');
       const originalText = btn?.textContent || 'Entrar';
 
-      try {
-        if (btn) {
-          btn.disabled = true;
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
-        }
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+      }
 
-        if (!window.AuthClient) {
-          throw new Error('AuthClient no está disponible');
-        }
+      // Use invisible hCaptcha - execute programmatically
+      if (typeof window.executeLoginCaptcha === 'function') {
+        window.executeLoginCaptcha(email, password, btn, originalText);
+      } else {
+        // Fallback to direct login if invisible captcha not available
+        console.warn('[AuthUI] executeLoginCaptcha not available, using direct login');
+        try {
+          if (!window.AuthClient) {
+            throw new Error('AuthClient no está disponible');
+          }
 
-        const res = await window.AuthClient.login(email, password);
+          const res = await window.AuthClient.login(email, password);
 
-        if (res.success) {
-          console.log('✅ [AuthUI] Login exitoso');
-          this.showSuccess('¡Bienvenido de nuevo!');
-          this.hideAuthModal();
+          if (res.success) {
+            console.log('✅ [AuthUI] Login exitoso');
+            this.showSuccess('¡Bienvenido de nuevo!');
+            this.hideAuthModal();
 
-          setTimeout(() => {
-            if (!sessionStorage.getItem('yavl_recovery_pending')) {
-              window.location.href = '/dashboard/';
-            } else {
-              console.log('[AuthUI] 🛑 Redirección al Dashboard bloqueada por Recovery');
-            }
-          }, 800);
-        } else {
-          console.error('❌ [AuthUI] Login falló:', res.error);
-          this.showError('login', res.error || 'Error al iniciar sesión');
+            setTimeout(() => {
+              if (!sessionStorage.getItem('yavl_recovery_pending')) {
+                window.location.href = '/dashboard/';
+              }
+            }, 800);
+          } else {
+            console.error('❌ [AuthUI] Login falló:', res.error);
+            this.showError('login', res.error || 'Error al iniciar sesión');
+            this.resetCaptcha();
+            if (btn) { btn.disabled = false; btn.textContent = originalText; }
+          }
+        } catch (err) {
+          console.error('❌ [AuthUI] Error de login:', err);
+          this.showError('login', err.message || 'Error inesperado');
           this.resetCaptcha();
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
-      } catch (err) {
-        console.error('❌ [AuthUI] Error de login:', err);
-        this.showError('login', err.message || 'Error inesperado');
-        this.resetCaptcha();
-        if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
 
       return false;
@@ -507,50 +512,46 @@ const AuthUI = {
         return false;
       }
 
-      // Validar captcha visualmente
-      if (typeof hcaptcha !== 'undefined' && !hcaptcha.getResponse()) {
-        this.showError('register', 'Por favor completa el captcha');
-        return false;
-      }
-
       const btn = newRegisterForm.querySelector('button[type="submit"]');
       const originalText = btn?.textContent || 'Crear Cuenta';
-      const logoBox = document.querySelector('.auth-logo-box'); // Assuming this element exists in the DOM
 
-      try {
-        if (btn) {
-          btn.disabled = true;
-          if (logoBox) { // Only update if logoBox exists
-            logoBox.innerHTML = `<img src="${logo3D}" alt="YavlGold" style="width: 80px; height: 80px;">`;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
+      }
+
+      // Use invisible hCaptcha - execute programmatically
+      if (typeof window.executeRegisterCaptcha === 'function') {
+        window.executeRegisterCaptcha(name, email, password, btn, originalText);
+      } else {
+        // Fallback to direct register if invisible captcha not available
+        console.warn('[AuthUI] executeRegisterCaptcha not available, using direct register');
+        try {
+          if (!window.AuthClient) {
+            throw new Error('AuthClient no está disponible');
           }
-          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando...';
-        }
 
-        if (!window.AuthClient) {
-          throw new Error('AuthClient no está disponible');
-        }
+          console.log('📝 [AuthUI] Llamando a AuthClient.register()...');
+          const res = await window.AuthClient.register(email, password, name);
 
-        console.log('📝 [AuthUI] Llamando a AuthClient.register()...');
-        const res = await window.AuthClient.register(email, password, name);
-
-        if (res.success) {
-          console.log('✅ [AuthUI] Registro exitoso');
-          this.showSuccess('¡Cuenta creada! Revisa tu email para confirmar.');
-          newRegisterForm.reset();
-          // Cambiar a tab de login después del registro
-          setTimeout(() => this.switchToLogin(), 2000);
-          if (btn) { btn.disabled = false; btn.textContent = originalText; }
-        } else {
-          console.error('❌ [AuthUI] Registro falló:', res.error);
-          this.showError('register', res.error || 'Error al registrarse');
+          if (res.success) {
+            console.log('✅ [AuthUI] Registro exitoso');
+            this.showSuccess('¡Cuenta creada! Revisa tu email para confirmar.');
+            newRegisterForm.reset();
+            setTimeout(() => this.switchToLogin(), 2000);
+            if (btn) { btn.disabled = false; btn.textContent = originalText; }
+          } else {
+            console.error('❌ [AuthUI] Registro falló:', res.error);
+            this.showError('register', res.error || 'Error al registrarse');
+            this.resetCaptcha();
+            if (btn) { btn.disabled = false; btn.textContent = originalText; }
+          }
+        } catch (err) {
+          console.error('❌ [AuthUI] Error de registro:', err);
+          this.showError('register', err.message || 'Error inesperado');
           this.resetCaptcha();
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
-      } catch (err) {
-        console.error('❌ [AuthUI] Error de registro:', err);
-        this.showError('register', err.message || 'Error inesperado');
-        this.resetCaptcha();
-        if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
 
       return false;

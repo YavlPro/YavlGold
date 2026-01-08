@@ -283,7 +283,7 @@ const authClient = {
         console.log('[AuthClient] 🔐 Login...');
         if (!this.supabase) return { success: false, error: 'Sistema no inicializado' };
 
-        // Validar captcha
+        // Validar captcha (for non-invisible mode fallback)
         let captchaToken = null;
         if (typeof hcaptcha !== 'undefined') {
             captchaToken = hcaptcha.getResponse();
@@ -292,6 +292,18 @@ const authClient = {
             }
         }
 
+        return this._doLogin(email, password, captchaToken);
+    },
+
+    // Login with pre-obtained captcha token (for invisible hCaptcha)
+    async loginWithToken(email, password, captchaToken) {
+        console.log('[AuthClient] 🔐 LoginWithToken...');
+        if (!this.supabase) return { success: false, error: 'Sistema no inicializado' };
+        return this._doLogin(email, password, captchaToken);
+    },
+
+    // Internal login logic
+    async _doLogin(email, password, captchaToken) {
         try {
             const { data, error } = await this.supabase.auth.signInWithPassword({
                 email,
@@ -384,7 +396,7 @@ const authClient = {
     register: async function (email, password, name = '') {
         if (!this.supabase) return { success: false, error: 'Error sistema' };
 
-        // Validar captcha
+        // Validar captcha (for non-invisible mode fallback)
         let captchaToken = null;
         if (typeof hcaptcha !== 'undefined') {
             captchaToken = hcaptcha.getResponse();
@@ -393,6 +405,18 @@ const authClient = {
             }
         }
 
+        return this._doRegister(email, password, name, captchaToken);
+    },
+
+    // Register with pre-obtained captcha token (for invisible hCaptcha)
+    async registerWithToken(email, password, name = '', captchaToken) {
+        console.log('[AuthClient] 📝 RegisterWithToken...');
+        if (!this.supabase) return { success: false, error: 'Error sistema' };
+        return this._doRegister(email, password, name, captchaToken);
+    },
+
+    // Internal register logic
+    async _doRegister(email, password, name, captchaToken) {
         const options = {
             data: name ? { full_name: name } : {},
             captchaToken: captchaToken

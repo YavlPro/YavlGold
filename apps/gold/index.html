@@ -1733,9 +1733,9 @@
           <input type="checkbox" id="remember-me" name="remember" style="width: auto; margin: 0;">
           <label for="remember-me" style="margin: 0; cursor: pointer; user-select: none;">Recordarme</label>
         </div>
-        <!-- hCaptcha Widget (PRODUCTION - COMPACT FOR MOBILE) -->
-        <div class="h-captcha" data-sitekey="22069708-c388-4a48-b054-fc12c4ee0ab6" data-theme="dark" data-size="compact"
-          style="margin: 1rem 0; display: flex; justify-content: center;"></div>
+        <!-- hCaptcha Widget (INVISIBLE MODE) -->
+        <div id="hcaptcha-login" class="h-captcha" data-sitekey="22069708-c388-4a48-b054-fc12c4ee0ab6" data-theme="dark"
+          data-size="invisible" data-callback="onLoginCaptchaSuccess" style="margin: 0.5rem 0;"></div>
         <button type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
         <div class="forgot-password-container">
           <a href="#" id="forgot-password-link" class="forgot-password-link">¿Olvidaste tu contraseña?</a>
@@ -1760,9 +1760,10 @@
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
-        <!-- hCaptcha Widget (PRODUCTION - COMPACT FOR MOBILE) -->
-        <div class="h-captcha" data-sitekey="22069708-c388-4a48-b054-fc12c4ee0ab6" data-theme="dark" data-size="compact"
-          style="margin: 1rem 0; display: flex; justify-content: center;"></div>
+        <!-- hCaptcha Widget (INVISIBLE MODE) -->
+        <div id="hcaptcha-register" class="h-captcha" data-sitekey="22069708-c388-4a48-b054-fc12c4ee0ab6"
+          data-theme="dark" data-size="invisible" data-callback="onRegisterCaptchaSuccess" style="margin: 0.5rem 0;">
+        </div>
         <button type="submit" class="btn-premium btn-gold" style="width: 100%;">Crear Cuenta</button>
         <div
           style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-size: 0.9rem;">
@@ -2104,6 +2105,161 @@
 
   <!-- Entrypoint Principal -->
   <script type="module" src="./assets/js/main.js"></script>
+
+  <!-- hCaptcha SDK (INVISIBLE MODE) -->
+  <script src="https://js.hcaptcha.com/1/api.js?render=explicit&onload=onHCaptchaLoad" async defer></script>
+
+  <!-- hCaptcha Invisible Mode - Global Callbacks -->
+  <script>
+    // Widget IDs
+    let loginCaptchaWidgetId = null;
+    let registerCaptchaWidgetId = null;
+
+    // Pending form data (stored when user clicks submit, before captcha completes)
+    window._pendingLogin = null;
+    window._pendingRegister = null;
+
+    // Called when hCaptcha SDK loads
+    function onHCaptchaLoad() {
+      console.log('[hCaptcha] SDK loaded, rendering invisible widgets...');
+
+      // Render login captcha
+      const loginContainer = document.getElementById('hcaptcha-login');
+      if (loginContainer) {
+        loginCaptchaWidgetId = hcaptcha.render('hcaptcha-login', {
+          sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6',
+          size: 'invisible',
+          theme: 'dark',
+          callback: 'onLoginCaptchaSuccess'
+        });
+        console.log('[hCaptcha] Login widget rendered, ID:', loginCaptchaWidgetId);
+      }
+
+      // Render register captcha
+      const registerContainer = document.getElementById('hcaptcha-register');
+      if (registerContainer) {
+        registerCaptchaWidgetId = hcaptcha.render('hcaptcha-register', {
+          sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6',
+          size: 'invisible',
+          theme: 'dark',
+          callback: 'onRegisterCaptchaSuccess'
+        });
+        console.log('[hCaptcha] Register widget rendered, ID:', registerCaptchaWidgetId);
+      }
+    }
+
+    // Called when login captcha is solved
+    function onLoginCaptchaSuccess(token) {
+      console.log('[hCaptcha] Login captcha solved, proceeding with auth...');
+
+      if (window._pendingLogin) {
+        const { email, password, btn, originalText } = window._pendingLogin;
+        window._pendingLogin = null;
+
+        // Now actually do the login
+        doActualLogin(email, password, token, btn, originalText);
+      }
+    }
+
+    // Called when register captcha is solved
+    function onRegisterCaptchaSuccess(token) {
+      console.log('[hCaptcha] Register captcha solved, proceeding with registration...');
+
+      if (window._pendingRegister) {
+        const { name, email, password, btn, originalText } = window._pendingRegister;
+        window._pendingRegister = null;
+
+        // Now actually do the registration
+        doActualRegister(name, email, password, token, btn, originalText);
+      }
+    }
+
+    // Execute login captcha programmatically
+    window.executeLoginCaptcha = function (email, password, btn, originalText) {
+      window._pendingLogin = { email, password, btn, originalText };
+
+      if (loginCaptchaWidgetId !== null) {
+        hcaptcha.execute(loginCaptchaWidgetId);
+      } else {
+        console.error('[hCaptcha] Login widget not ready');
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
+    };
+
+    // Execute register captcha programmatically
+    window.executeRegisterCaptcha = function (name, email, password, btn, originalText) {
+      window._pendingRegister = { name, email, password, btn, originalText };
+
+      if (registerCaptchaWidgetId !== null) {
+        hcaptcha.execute(registerCaptchaWidgetId);
+      } else {
+        console.error('[hCaptcha] Register widget not ready');
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
+    };
+
+    // Actual login function (called after captcha success)
+    async function doActualLogin(email, password, captchaToken, btn, originalText) {
+      try {
+        if (!window.AuthClient) {
+          throw new Error('AuthClient no disponible');
+        }
+
+        const res = await window.AuthClient.loginWithToken(email, password, captchaToken);
+
+        if (res.success) {
+          console.log('[Auth] Login successful');
+          window.AuthUI?.showSuccess('Bienvenido de nuevo!');
+          window.AuthUI?.hideAuthModal();
+
+          setTimeout(() => {
+            if (!sessionStorage.getItem('yavl_recovery_pending')) {
+              window.location.href = '/dashboard/';
+            }
+          }, 800);
+        } else {
+          console.error('[Auth] Login failed:', res.error);
+          window.AuthUI?.showError('login', res.error || 'Error al iniciar sesion');
+          hcaptcha.reset(loginCaptchaWidgetId);
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }
+      } catch (err) {
+        console.error('[Auth] Login error:', err);
+        window.AuthUI?.showError('login', err.message || 'Error inesperado');
+        hcaptcha.reset(loginCaptchaWidgetId);
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
+    }
+
+    // Actual register function (called after captcha success)
+    async function doActualRegister(name, email, password, captchaToken, btn, originalText) {
+      try {
+        if (!window.AuthClient) {
+          throw new Error('AuthClient no disponible');
+        }
+
+        const res = await window.AuthClient.registerWithToken(email, password, name, captchaToken);
+
+        if (res.success) {
+          console.log('[Auth] Registration successful');
+          window.AuthUI?.showSuccess('Cuenta creada! Revisa tu email.');
+          document.getElementById('register-form')?.reset();
+          setTimeout(() => window.AuthUI?.switchToLogin(), 2000);
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        } else {
+          console.error('[Auth] Registration failed:', res.error);
+          window.AuthUI?.showError('register', res.error || 'Error al registrarse');
+          hcaptcha.reset(registerCaptchaWidgetId);
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        }
+      } catch (err) {
+        console.error('[Auth] Register error:', err);
+        window.AuthUI?.showError('register', err.message || 'Error inesperado');
+        hcaptcha.reset(registerCaptchaWidgetId);
+        if (btn) { btn.disabled = false; btn.textContent = originalText; }
+      }
+    }
+  </script>
 </body>
 
 </html>
