@@ -1949,7 +1949,7 @@
     initDashboard();
   </script>
 
-  <!-- ⚙️ Settings Modal Logic -->
+  <!-- ⚙️ Settings Modal Logic (Refactored v2.0 - Delegates to ProfileManager) -->
   <script type="module">
     import { supabase } from '../assets/js/main.js';
 
@@ -1968,7 +1968,28 @@
     let currentUserId = null;
     let pendingAvatarFile = null;
 
-    // Show/Hide Modal
+    // ========================================
+    // 🛡️ HELPER: Wait for ProfileManager
+    // ========================================
+    async function waitForProfileManager(maxWait = 3000) {
+      const start = Date.now();
+      while (!window.ProfileManager && (Date.now() - start) < maxWait) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+      if (!window.ProfileManager) {
+        console.warn('[Settings] ProfileManager no disponible después de esperar');
+        return false;
+      }
+      // Ensure it's initialized
+      if (!window.ProfileManager.supabase) {
+        window.ProfileManager.init();
+      }
+      return true;
+    }
+
+    // ========================================
+    // 📂 MODAL CONTROLS
+    // ========================================
     function openModal() {
       settingsModal.classList.add('active');
       loadProfileData();
@@ -1984,7 +2005,9 @@
     // EXPOSE TO WINDOW FOR INLINE HANDLER
     window.closeYgProfile = closeModal;
 
-    // Load Profile Data
+    // ========================================
+    // 📥 LOAD PROFILE (Uses ProfileManager)
+    // ========================================
     async function loadProfileData() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -1997,55 +2020,60 @@
         const emailInput = document.getElementById('settings-email');
         if (emailInput) emailInput.value = userEmail || '';
 
-        // Update profile header
+        // Update profile header refs
         const profileName = document.getElementById('ygProfileName');
         const profileRole = document.getElementById('ygProfileRole');
 
-        // Fetch profile from DB
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('username, bio, avatar_url')
-          .eq('id', currentUserId)
-          .maybeSingle();
+        // Wait for ProfileManager and load profile
+        const ready = await waitForProfileManager();
+        if (!ready) {
+          // Fallback: show email-based name
+          if (profileName) profileName.textContent = userEmail.split('@')[0];
+          if (profileRole) profileRole.textContent = 'Miembro de YavlGold';
+          return;
+        }
 
-        if (error) throw error;
+        // Use ProfileManager (handles create if not exists)
+        const result = await window.ProfileManager.getProfile(currentUserId);
+        const profile = result.profile;
 
         // Populate form
-        if (profile) {
-          usernameInput.value = profile.username || '';
-          bioInput.value = profile.bio || '';
-          if (profile.avatar_url) {
-            avatarImg.src = profile.avatar_url;
-          }
-          // Update header info
-          if (profileName) profileName.textContent = profile.username || userEmail.split('@')[0];
-        } else {
-          if (profileName) profileName.textContent = userEmail.split('@')[0];
+        usernameInput.value = profile?.username || '';
+        bioInput.value = profile?.bio || '';
+        if (profile?.avatar_url) {
+          avatarImg.src = profile.avatar_url;
         }
+
+        // Update header info
+        if (profileName) profileName.textContent = profile?.username || userEmail.split('@')[0];
         if (profileRole) profileRole.textContent = 'Miembro de YavlGold';
+
       } catch (err) {
         console.error('[Settings] Error cargando perfil:', err);
         showStatus('Error cargando perfil', 'error');
       }
     }
 
-    // Handle Avatar Preview
+    // ========================================
+    // 📸 AVATAR PREVIEW (Client-side only)
+    // ========================================
     avatarInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      // Validate
+      // Validate type
       const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         showStatus('Tipo de archivo no válido', 'error');
         return;
       }
+      // Validate size
       if (file.size > 2 * 1024 * 1024) {
         showStatus('Archivo muy grande (max 2MB)', 'error');
         return;
       }
 
-      // Preview
+      // Preview locally
       const reader = new FileReader();
       reader.onload = (e) => {
         avatarImg.src = e.target.result;
@@ -2056,7 +2084,9 @@
       showStatus('Foto lista para subir', 'success');
     });
 
-    // Save Changes
+    // ========================================
+    // 💾 SAVE CHANGES (Delegates to ProfileManager)
+    // ========================================
     saveBtn.addEventListener('click', async () => {
       if (!currentUserId) return;
 
@@ -2064,8 +2094,14 @@
       saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
       try {
+        // Ensure ProfileManager is ready
+        const ready = await waitForProfileManager();
+        if (!ready) {
+          throw new Error('Sistema de perfiles no disponible. Recarga la página.');
+        }
+
         // 1. Upload avatar if pending
-        if (pendingAvatarFile && window.ProfileManager) {
+        if (pendingAvatarFile) {
           const uploadResult = await window.ProfileManager.uploadAvatarFile(currentUserId, pendingAvatarFile);
           if (!uploadResult.success) {
             throw new Error(uploadResult.error);
@@ -2073,30 +2109,24 @@
           pendingAvatarFile = null;
         }
 
-        // 2. Update text fields
+        // 2. Update text fields (ProfileManager handles upsert)
         const updates = {};
-        if (usernameInput.value.trim()) updates.username = usernameInput.value.trim().toLowerCase();
-        if (bioInput.value.trim()) updates.bio = bioInput.value.trim();
+        const usernameVal = usernameInput.value.trim();
+        const bioVal = bioInput.value.trim();
+
+        if (usernameVal) updates.username = usernameVal.toLowerCase();
+        if (bioVal) updates.bio = bioVal;
 
         if (Object.keys(updates).length > 0) {
-          if (window.ProfileManager) {
-            const updateResult = await window.ProfileManager.updateProfile(currentUserId, updates);
-            if (!updateResult.success) {
-              throw new Error(updateResult.error);
-            }
-          } else {
-            // Fallback directo a Supabase
-            const { error } = await supabase
-              .from('profiles')
-              .update(updates)
-              .eq('id', currentUserId);
-            if (error) throw error;
+          const updateResult = await window.ProfileManager.updateProfile(currentUserId, updates);
+          if (!updateResult.success) {
+            throw new Error(updateResult.error);
           }
         }
 
         showStatus('¡Cambios guardados!', 'success');
 
-        // Update dashboard UI reactively (no reload needed!)
+        // Update dashboard UI reactively
         const nameDisplay = document.getElementById('user-name-display');
         const headerAvatar = document.getElementById('header-avatar');
 
@@ -2104,7 +2134,7 @@
           nameDisplay.textContent = updates.username;
         }
 
-        // Reactive avatar update with cache busting
+        // Avatar update with cache busting
         if (headerAvatar && avatarImg.src && avatarImg.src.startsWith('http')) {
           headerAvatar.src = avatarImg.src + '?' + Date.now();
         }
@@ -2121,7 +2151,9 @@
       }
     });
 
-    // Status Helper
+    // ========================================
+    // 🔧 UTILITIES
+    // ========================================
     function showStatus(message, type) {
       statusDiv.textContent = message;
       statusDiv.className = `settings-status ${type}`;

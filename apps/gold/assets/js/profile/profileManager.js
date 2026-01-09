@@ -201,16 +201,41 @@ const ProfileManager = {
       }
 
       // Agregar timestamp de actualización
-      sanitizedUpdates.updated_at = new Date().toISOString();
+    sanitizedUpdates.updated_at = new Date().toISOString();
 
-      const { data, error } = await this.supabase
+    // UPSERT STRATEGY: Check if profile exists first
+    const { data: existingProfile } = await this.supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    let data, error;
+
+    if (!existingProfile) {
+      // CREATE: Profile doesn't exist, insert with userId
+      logger.debug('[ProfileManager] Perfil no existe, creando con upsert...');
+      const insertData = { id: userId, ...sanitizedUpdates };
+      const result = await this.supabase
+        .from('profiles')
+        .insert(insertData)
+        .select(PROFILE_COLUMNS.own)
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      // UPDATE: Profile exists, update normally
+      const result = await this.supabase
         .from('profiles')
         .update(sanitizedUpdates)
         .eq('id', userId)
         .select(PROFILE_COLUMNS.own)
         .maybeSingle();
+      data = result.data;
+      error = result.error;
+    }
 
-      if (error) throw error;
+    if (error) throw error;
 
       logger.success('[ProfileManager] Perfil actualizado');
 
