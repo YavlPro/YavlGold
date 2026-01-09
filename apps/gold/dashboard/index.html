@@ -889,8 +889,23 @@
       visibility: visible;
     }
 
-    /* Panel Container */
+    /* ============================================
+           🛡️ ISOLATION PROTOCOL - HEADER CLEANUP
+        ============================================ */
+
+    /* Force-clean main header (prevent any gradient leakage) */
+    body>header,
+    .navbar,
+    .main-header,
+    .header,
+    #global-header {
+      background-image: none !important;
+    }
+
+    /* Panel Container (Master Anchor) */
     .yg-profile-panel {
+      position: relative;
+      /* CRITICAL: Children position absolute relative to THIS */
       display: flex;
       width: min(980px, 92vw);
       height: min(640px, 85vh);
@@ -898,6 +913,7 @@
       border-radius: 20px;
       border: 1px solid rgba(200, 167, 82, 0.25);
       overflow: hidden;
+      /* Cut anything that escapes */
       box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(200, 167, 82, 0.1);
       transform: translateY(20px) scale(0.98);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1519,9 +1535,10 @@
 
       <!-- Content -->
       <section class="yg-profile-content">
-        <header class="yg-profile-cover">
+        <!-- Cover (Changed from <header> to <div> to avoid global header conflicts) -->
+        <div class="yg-profile-cover">
           <button id="settings-close-btn" class="yg-profile-close" aria-label="Cerrar">✕</button>
-        </header>
+        </div>
 
         <div class="yg-profile-body">
           <div class="yg-profile-avatarRow">
