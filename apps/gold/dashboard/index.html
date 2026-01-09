@@ -993,14 +993,33 @@
       overflow: hidden;
     }
 
-    /* Cover Header */
-    .yg-profile-cover {
-      height: 120px;
-      background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%);
+    /* ============================================
+           🎨 PROFILE MODAL - Z-INDEX LAYERING FIX
+        ============================================ */
+
+    /* 1. Cover Header (Background Layer) */
+    .yg-profile-panel .yg-profile-cover {
       position: relative;
+      height: 120px;
+      width: 100%;
+      overflow: hidden;
+      border-top-right-radius: 20px;
+      border-top-left-radius: 0;
+      z-index: 1;
+      background: transparent;
       flex-shrink: 0;
     }
 
+    /* 2. Gradient via pseudo-element (behind close button) */
+    .yg-profile-panel .yg-profile-cover::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%);
+    }
+
+    /* 3. Close Button (above gradient) */
     .yg-profile-close {
       position: absolute;
       top: 16px;
@@ -1017,6 +1036,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 5;
     }
 
     .yg-profile-close:hover {
@@ -1030,15 +1050,18 @@
       outline-offset: 2px;
     }
 
-    /* Body (Scrollable) */
+    /* 4. Body (Above cover layer) */
     .yg-profile-body {
+      position: relative;
       flex: 1;
       overflow-y: auto;
       padding: 0 32px 32px;
+      z-index: 10;
     }
 
-    /* Avatar Row */
+    /* 5. Avatar Row (Floating hero) */
     .yg-profile-avatarRow {
+      position: relative;
       display: flex;
       align-items: flex-end;
       gap: 20px;
@@ -1051,6 +1074,10 @@
       width: 100px;
       height: 100px;
       flex-shrink: 0;
+      border-radius: 50%;
+      background: #0a0a0a;
+      padding: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
 
     .yg-profile-avatar {
@@ -1058,16 +1085,15 @@
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      border: 4px solid #0a0a0a;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 167, 82, 0.2);
+      display: block;
     }
 
     .yg-profile-avatarOverlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
       border-radius: 50%;
       background: rgba(0, 0, 0, 0.6);
       display: flex;
@@ -1303,7 +1329,7 @@
         display: none;
       }
 
-      .yg-profile-cover {
+      .yg-profile-panel .yg-profile-cover {
         height: 80px;
       }
 
