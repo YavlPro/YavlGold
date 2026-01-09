@@ -1010,10 +1010,10 @@
     }
 
     /* ============================================
-           🎨 PROFILE MODAL - Z-INDEX LAYERING FIX
+           ☢️ NUCLEAR Z-INDEX FIX (FORCED HIERARCHY)
         ============================================ */
 
-    /* 1. Cover Header (Background Layer) */
+    /* 1. Cover Header = FLOOR (z-0) */
     .yg-profile-panel .yg-profile-cover {
       position: relative;
       height: 120px;
@@ -1021,12 +1021,13 @@
       overflow: hidden;
       border-top-right-radius: 20px;
       border-top-left-radius: 0;
-      z-index: 1;
+      z-index: 0 !important;
+      /* FLOOR - Absolutely at bottom */
       background: transparent;
       flex-shrink: 0;
     }
 
-    /* 2. Gradient via pseudo-element (behind close button) */
+    /* 2. Gradient via pseudo-element */
     .yg-profile-panel .yg-profile-cover::before {
       content: "";
       position: absolute;
@@ -1035,7 +1036,7 @@
       background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%);
     }
 
-    /* 3. Close Button (above gradient) */
+    /* 3. Close Button = TOP (z-30) */
     .yg-profile-close {
       position: absolute;
       top: 16px;
@@ -1052,7 +1053,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 5;
+      z-index: 30 !important;
+      /* SKYSCRAPER - Always clickable */
     }
 
     .yg-profile-close:hover {
@@ -1066,23 +1068,26 @@
       outline-offset: 2px;
     }
 
-    /* 4. Body (Above cover layer) */
+    /* 4. Body = CEILING (z-10) */
     .yg-profile-body {
-      position: relative;
+      position: relative !important;
       flex: 1;
       overflow-y: auto;
       padding: 0 32px 32px;
-      z-index: 10;
+      z-index: 10 !important;
+      /* Above cover */
     }
 
-    /* 5. Avatar Row (Floating hero) */
+    /* 5. Avatar Row = SKYSCRAPER (z-20) */
     .yg-profile-avatarRow {
-      position: relative;
+      position: relative !important;
       display: flex;
       align-items: flex-end;
       gap: 20px;
       margin-top: -50px;
       margin-bottom: 32px;
+      z-index: 20 !important;
+      /* Above body, above cover */
     }
 
     .yg-profile-avatarWrap {
