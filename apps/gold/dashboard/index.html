@@ -1545,7 +1545,8 @@
       <section class="yg-profile-content">
         <!-- Cover (Changed from <header> to <div> to avoid global header conflicts) -->
         <div class="yg-profile-cover">
-          <button id="settings-close-btn" class="yg-profile-close" aria-label="Cerrar">✕</button>
+          <button id="settings-close-btn" class="yg-profile-close"
+            onclick="window.closeYgProfile && window.closeYgProfile()" aria-label="Cerrar">✕</button>
         </div>
 
         <div class="yg-profile-body">
@@ -1953,6 +1954,9 @@
       statusDiv.className = 'settings-status';
       statusDiv.textContent = '';
     }
+
+    // EXPOSE TO WINDOW FOR INLINE HANDLER
+    window.closeYgProfile = closeModal;
 
     // Load Profile Data
     async function loadProfileData() {
