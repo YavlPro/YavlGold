@@ -1002,41 +1002,36 @@
     }
 
     /* Content Area */
+    /* ============================================
+           👻 GHOST STRATEGY - ABSOLUTE POSITIONING
+        ============================================ */
+
+    /* 1. Content Container = ANCHOR */
     .yg-profile-content {
+      position: relative !important;
+      /* ANCHOR for absolute children */
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
-    /* ============================================
-           ☢️ NUCLEAR Z-INDEX FIX (FORCED HIERARCHY)
-        ============================================ */
-
-    /* 1. Cover Header = FLOOR (z-0) */
+    /* 2. Cover = GHOST BACKGROUND (absolute, out of flow) */
     .yg-profile-panel .yg-profile-cover {
-      position: relative;
-      height: 120px;
+      position: absolute !important;
+      /* GHOST - removed from document flow */
+      top: 0;
+      left: 0;
       width: 100%;
+      height: 120px;
+      z-index: 1 !important;
+      background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%) !important;
+      border-radius: 0 !important;
       overflow: hidden;
-      border-top-right-radius: 20px;
-      border-top-left-radius: 0;
-      z-index: 0 !important;
-      /* FLOOR - Absolutely at bottom */
-      background: transparent;
-      flex-shrink: 0;
     }
 
-    /* 2. Gradient via pseudo-element */
-    .yg-profile-panel .yg-profile-cover::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      background: linear-gradient(135deg, #B8860B 0%, #1a1a1a 50%, #000 100%);
-    }
-
-    /* 3. Close Button = TOP (z-30) */
+    /* 3. Close Button = ALWAYS ON TOP */
     .yg-profile-close {
       position: absolute;
       top: 16px;
@@ -1053,8 +1048,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 30 !important;
-      /* SKYSCRAPER - Always clickable */
+      z-index: 50 !important;
+      /* Above everything */
     }
 
     .yg-profile-close:hover {
@@ -1068,28 +1063,32 @@
       outline-offset: 2px;
     }
 
-    /* 4. Body = CEILING (z-10) */
+    /* 4. Body = REAL CONTENT (pushed down with padding) */
     .yg-profile-body {
       position: relative !important;
+      z-index: 10 !important;
+      width: 100%;
+      padding-top: 70px;
+      /* Push content below cover, avatar overlaps */
+      padding-left: 32px;
+      padding-right: 32px;
+      padding-bottom: 32px;
       flex: 1;
       overflow-y: auto;
-      padding: 0 32px 32px;
-      z-index: 10 !important;
-      /* Above cover */
     }
 
-    /* 5. Avatar Row = SKYSCRAPER (z-20) */
+    /* 5. Avatar Row = FLOATING HERO (no negative margin needed) */
     .yg-profile-avatarRow {
       position: relative !important;
+      z-index: 20 !important;
       display: flex;
       align-items: flex-end;
       gap: 20px;
-      margin-top: -50px;
-      margin-bottom: 32px;
-      z-index: 20 !important;
-      /* Above body, above cover */
+      margin-bottom: 24px;
+      /* NO margin-top negative - padding-top handles positioning */
     }
 
+    /* 6. Avatar Wrap */
     .yg-profile-avatarWrap {
       position: relative;
       width: 100px;
@@ -1098,7 +1097,8 @@
       border-radius: 50%;
       background: #0a0a0a;
       padding: 4px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(200, 167, 82, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
 
     .yg-profile-avatar {
