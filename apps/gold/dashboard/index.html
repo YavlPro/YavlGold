@@ -1308,21 +1308,29 @@
     }
 
     /* ============================================
-           📱 RESPONSIVE - MOBILE
+           📱 RESPONSIVE - MOBILE (Transformación Móvil)
         ============================================ */
     @media (max-width: 768px) {
+
+      /* 1. CONTENEDOR PRINCIPAL: Ocupa toda la pantalla */
       .yg-profile-panel {
-        flex-direction: column;
-        width: 95vw;
-        height: 90vh;
-        max-height: 90vh;
+        flex-direction: column !important;
+        width: 100% !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        max-height: none !important;
       }
 
+      /* 2. SIDEBAR → BARRA DE NAVEGACIÓN SUPERIOR */
       .yg-profile-sidebar {
-        width: 100%;
-        padding: 12px 16px;
-        border-right: none;
-        border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+        width: 100% !important;
+        height: auto !important;
+        flex-basis: auto !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 0.5rem;
+        background: #000;
+        z-index: 50;
       }
 
       .yg-profile-sidebar__title {
@@ -1330,15 +1338,18 @@
       }
 
       .yg-profile-nav {
-        flex-direction: row;
-        gap: 8px;
+        display: flex !important;
+        flex-direction: row !important;
         overflow-x: auto;
-        padding-bottom: 4px;
+        gap: 10px;
         margin-top: 0;
+        padding-bottom: 4px;
       }
 
       .yg-profile-nav__item {
-        padding: 10px 16px;
+        flex: 1;
+        justify-content: center;
+        padding: 8px 12px;
         white-space: nowrap;
         border-radius: 8px;
         font-size: 0.85rem;
@@ -1351,6 +1362,13 @@
 
       .yg-badge {
         display: none;
+      }
+
+      /* 3. ÁREA DE CONTENIDO */
+      .yg-profile-content {
+        width: 100% !important;
+        height: 100% !important;
+        overflow-y: auto;
       }
 
       .yg-profile-panel .yg-profile-cover {
@@ -1375,8 +1393,16 @@
         font-size: 1.1rem;
       }
 
+      /* 4. AJUSTE DEL FORMULARIO (1 Columna) */
       .yg-profile-grid {
-        gap: 16px;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 1rem;
+      }
+
+      .yg-field {
+        width: 100% !important;
+        max-width: 100% !important;
       }
 
       .yg-col-6 {
@@ -2123,6 +2149,35 @@
         settingsBtn.style.display = 'inline-flex';
       }
     })();
+  </script>
+
+  <!-- 🔒 SISTEMA DE CIERRE GLOBAL (DELEGACIÓN DE EVENTOS) -->
+  <script>
+    document.addEventListener('click', function (e) {
+      // Detectar clic en el botón cerrar o sus hijos (icono)
+      const closeBtn = e.target.closest('.yg-profile-close');
+
+      // Si se hizo clic en la X
+      if (closeBtn) {
+        e.preventDefault(); // Evita comportamientos raros
+        const modal = document.querySelector('.yg-profile-modal') || document.getElementById('settings-modal');
+        if (modal) {
+          // Animación de salida
+          modal.style.opacity = '0';
+          modal.style.visibility = 'hidden';
+          // Remover clase si usas clases para mostrar
+          modal.classList.remove('active');
+        }
+        console.log("[YG] Cierre ejecutado vía Delegación Global.");
+      }
+
+      // Cerrar al hacer clic fuera del panel (Overlay click)
+      if (e.target.classList.contains('yg-profile-modal')) {
+        e.target.style.opacity = '0';
+        e.target.style.visibility = 'hidden';
+        e.target.classList.remove('active');
+      }
+    });
   </script>
 
   <!-- 🔴 ZONA SAGRADA: Mobile FAB Logic - NO MODIFICAR -->
