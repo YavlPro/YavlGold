@@ -58,6 +58,7 @@ function renderCropCard(crop, index) {
     const delay = 4 + index; // Para animaciones escalonadas
     return `
         <div class="card crop-card animate-in delay-${delay}" data-crop-id="${crop.id}">
+            <button class="btn-delete-crop" onclick="window.deleteCrop('${crop.id}')" title="Eliminar Cultivo">×</button>
             <div class="crop-card-header">
                 <div class="crop-info">
                     <div class="crop-icon">${crop.icon || '🌱'}</div>
@@ -512,3 +513,80 @@ document.addEventListener('click', (e) => {
         closeCropModal();
     }
 });
+
+// ============================================================
+// ELIMINAR CULTIVO
+// ============================================================
+
+/**
+ * Elimina un cultivo de Supabase con confirmación
+ */
+async function deleteCrop(id) {
+    if (!confirm('⚠️ ¿Estás seguro de que quieres eliminar este cultivo?\n\nEsta acción no se puede deshacer.')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('agro_crops')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('[Agro] Error eliminando cultivo:', error);
+            alert(`Error al eliminar: ${error.message}`);
+            return;
+        }
+
+        console.log('[Agro] 🗑️ Cultivo eliminado:', id);
+
+        // Recargar lista de cultivos
+        await loadCrops();
+
+    } catch (err) {
+        console.error('[Agro] Error inesperado:', err);
+        alert('Error inesperado al eliminar el cultivo');
+    }
+}
+
+// Exponer deleteCrop al scope global
+window.deleteCrop = deleteCrop;
+
+// Inyectar CSS para botón de eliminar
+(function injectDeleteButtonStyles() {
+    if (document.getElementById('agro-delete-styles')) return;
+
+    const styles = document.createElement('style');
+    styles.id = 'agro-delete-styles';
+    styles.textContent = `
+        .btn-delete-crop {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 28px;
+            height: 28px;
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            border-radius: 50%;
+            color: #f87171;
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .crop-card {
+            position: relative;
+        }
+        .crop-card:hover .btn-delete-crop {
+            opacity: 1;
+        }
+        .btn-delete-crop:hover {
+            background: #f87171;
+            color: #0a0a0a;
+            transform: scale(1.1);
+        }
+    `;
+    document.head.appendChild(styles);
+})();
