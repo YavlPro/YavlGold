@@ -1077,8 +1077,8 @@
         </section> <!-- Active Crops Section -->
         <section class="crops-section">
             <div class="section-header animate-in delay-3">
-                <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button
-                    class="btn btn-outline">+ Nuevo Cultivo</button>
+                <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button class="btn btn-outline"
+                    id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
             </div>
             <div class="crops-grid"> <!-- Cultivos cargados dinámicamente desde Supabase --> </div>
             <div class="card crop-card animate-in delay-4">
@@ -1209,6 +1209,61 @@
                 class="footer-link">Soporte</a> <a href="#" class="footer-link">GitHub</a> </div>
     </footer>
     </div>
+
+    <!-- Modal: Nuevo Cultivo -->
+    <div id="modal-new-crop" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">🌱 Nuevo Cultivo</h3>
+                <button class="modal-close" onclick="window.closeCropModal()">&times;</button>
+            </div>
+            <form id="form-new-crop" class="modal-body">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label class="input-label" for="crop-name">Nombre del Cultivo *</label>
+                        <input type="text" id="crop-name" class="styled-input" placeholder="Ej: Papa, Zanahoria"
+                            required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-variety">Variedad</label>
+                        <input type="text" id="crop-variety" class="styled-input" placeholder="Ej: Granola, Criolla">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label class="input-label" for="crop-icon">Emoji</label>
+                        <input type="text" id="crop-icon" class="styled-input" placeholder="🥔" maxlength="4"
+                            style="text-align: center;">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-area">Área (Ha) *</label>
+                        <input type="number" id="crop-area" class="styled-input" placeholder="2.5" min="0" step="0.1"
+                            required>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label class="input-label" for="crop-investment">Inversión ($) *</label>
+                        <input type="number" id="crop-investment" class="styled-input" placeholder="5000" min="0"
+                            step="0.01" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-start-date">Fecha Siembra *</label>
+                        <input type="date" id="crop-start-date" class="styled-input" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label" for="crop-harvest-date">Cosecha Estimada</label>
+                    <input type="date" id="crop-harvest-date" class="styled-input">
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" onclick="window.closeCropModal()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="window.saveCrop()">🌾 Guardar Siembra</button>
+            </div>
+        </div>
+    </div>
+
     <script> // ============================================ // ROI CALCULATOR // ============================================ function calculateROI() { const investment = parseFloat(document.getElementById('investment').value) || 0; const revenue = parseFloat(document.getElementById('revenue').value) || 0; const quantity = parseFloat(document.getElementById('quantity').value) || 0; const profit = revenue - investment; const roi = investment > 0 ? ((profit / investment) * 100) : 0; const pricePerKg = quantity > 0 ? (revenue / quantity) : 0; // Update DOM document.getElementById('resultInvestment').textContent = formatCurrency(investment); document.getElementById('resultRevenue').textContent = formatCurrency(revenue); const profitEl = document.getElementById('resultProfit'); profitEl.textContent = formatCurrency(profit); profitEl.className = `roi-value ${profit >= 0 ? 'profit' : 'loss'}`; const roiEl = document.getElementById('resultROI'); roiEl.textContent = `${roi.toFixed(1)}%`; roiEl.className = `roi-value ${roi >= 0 ? 'profit' : 'loss'}`; // Show results with animation const resultDiv = document.getElementById('roiResult'); resultDiv.classList.remove('visible'); // Force reflow void resultDiv.offsetWidth; resultDiv.classList.add('visible'); } function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); } // Allow Enter key to calculate document.querySelectorAll('.styled-input').forEach(input => { input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { calculateROI(); } }); }); // ============================================ // SIMULATED REAL-TIME DATA // ============================================ function updateMarketData() { const basePrice = 98000; const variance = (Math.random() - 0.5) * 2000; const newPrice = basePrice + variance; const priceEl = document.getElementById('btcPrice'); if (priceEl) { priceEl.textContent = `$${newPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`; // Add flash effect priceEl.style.transition = 'color 0.3s ease'; priceEl.style.color = variance > 0 ? '#4ade80' : '#f87171'; setTimeout(() => { priceEl.style.color = '#C8A752'; }, 1000); } } // Update every 8 seconds setInterval(updateMarketData, 8000); // ============================================ // PROGRESS BAR ANIMATIONS ON LOAD // ============================================ document.addEventListener('DOMContentLoaded', () => { // Animate progress bars setTimeout(() => { document.querySelectorAll('.progress-fill').forEach(bar => { const width = bar.style.width; bar.style.width = '0%'; setTimeout(() => { bar.style.width = width; }, 100); }); }, 800); }); // ============================================ // PARTICLES RANDOM POSITIONING // ============================================ document.querySelectorAll('.particle').forEach((particle, index) => { particle.style.top = `${Math.random() * 100}%`; particle.style.left = `${Math.random() * 100}%`; particle.style.animationDelay = `${-Math.random() * 20}s`; particle.style.animationDuration = `${15 + Math.random() * 15}s`; }); console.log('%c🌾 YavlGold V9.4 - Módulo Agro Loaded', 'background: linear-gradient(135deg, #C8A752, #9a7f3c); color: #0a0a0a; padding: 10px 20px; border-radius: 5px; font-weight: bold;'); </script>
     <script type="module" src="agro.js"></script>
 </body>
