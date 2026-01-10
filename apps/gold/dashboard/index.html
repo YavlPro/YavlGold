@@ -1591,11 +1591,12 @@
 
       <!-- Content -->
       <section class="yg-profile-content">
-        <!-- Cover (Changed from <header> to <div> to avoid global header conflicts) -->
-        <div class="yg-profile-cover">
-          <button id="settings-close-btn" class="yg-profile-close"
-            onclick="window.closeYgProfile && window.closeYgProfile()" aria-label="Cerrar">✕</button>
-        </div>
+        <!-- Close Button (OUTSIDE cover for proper z-index) -->
+        <button id="settings-close-btn" class="yg-profile-close"
+          onclick="window.closeYgProfile && window.closeYgProfile()" aria-label="Cerrar">✕</button>
+
+        <!-- Cover Background -->
+        <div class="yg-profile-cover"></div>
 
         <div class="yg-profile-body">
           <div class="yg-profile-avatarRow">
