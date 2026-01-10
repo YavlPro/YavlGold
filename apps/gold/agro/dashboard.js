@@ -4,19 +4,57 @@
  */
 
 // ============================================
-// 1. MÓDULO CLIMA (La Grita, Táchira)
+// 1. MÓDULO CLIMA (Geolocalización Dinámica)
 // ============================================
-const WEATHER_API = 'https://api.open-meteo.com/v1/forecast?latitude=8.1333&longitude=-71.9833&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto';
+const WEATHER_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
+const DEFAULT_COORDS = { lat: 8.1333, lon: -71.9833 }; // Fallback: La Grita, Venezuela
 
+// Estado del clima
+let userCoords = null;
+let weatherInterval = null;
+
+/**
+ * Inicializa el módulo de clima con geolocalización
+ */
+function initWeather() {
+    if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userCoords = {
+                    lat: position.coords.latitude,
+                    lon: position.coords.longitude
+                };
+                console.log('[Agro] 📍 Ubicación obtenida:', userCoords);
+                fetchWeather();
+            },
+            (error) => {
+                console.warn('[Agro] ⚠️ Geolocalización denegada:', error.message);
+                userCoords = DEFAULT_COORDS;
+                fetchWeather();
+            },
+            { timeout: 10000, maximumAge: 300000 }
+        );
+    } else {
+        console.warn('[Agro] ⚠️ Geolocalización no soportada');
+        userCoords = DEFAULT_COORDS;
+        fetchWeather();
+    }
+}
+
+/**
+ * Obtiene el clima de la ubicación actual
+ */
 async function fetchWeather() {
     const tempEl = document.getElementById('weather-temp');
     const descEl = document.getElementById('weather-desc');
     const humEl = document.getElementById('weather-humidity');
 
-    if (!tempEl) return;
+    if (!tempEl || !userCoords) return;
+
+    const url = `${WEATHER_BASE_URL}?latitude=${userCoords.lat}&longitude=${userCoords.lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`;
 
     try {
-        const res = await fetch(WEATHER_API);
+        const res = await fetch(url);
         const data = await res.json();
         const current = data.current;
 
@@ -38,7 +76,16 @@ async function fetchWeather() {
         else if (code >= 95 && code <= 99) { desc = 'Tormenta'; icon = '⛈️'; }
 
         descEl.textContent = `${icon} ${desc}`;
-        console.log('[Agro] 🌦️ Clima actualizado:', desc);
+
+        // Mostrar zona horaria como ubicación
+        const timezone = data.timezone || 'Tu Ubicación';
+        const locationName = timezone.split('/').pop().replace(/_/g, ' ');
+        const labelEl = document.querySelector('.kpi-card:first-child .kpi-value');
+        if (labelEl) {
+            labelEl.innerHTML = `${locationName}: <span class="highlight" id="weather-temp">${Math.round(current.temperature_2m)}°C</span>`;
+        }
+
+        console.log(`[Agro] 🌦️ Clima actualizado: ${desc} (${timezone})`);
 
     } catch (err) {
         console.error('[Agro] Error clima:', err);
@@ -170,7 +217,7 @@ function initParticles() {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Inicializar Widgets
-    fetchWeather();
+    initWeather(); // Solicita geolocalización y luego carga clima
     fetchBTC();
     calculateMoonPhase();
     initParticles();
@@ -178,6 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Loop de Mercado (Cada 15s)
     setInterval(fetchBTC, 15000);
 
-    // 3. Loop de Clima (Cada 10min)
-    setInterval(fetchWeather, 600000);
+    // 3. Loop de Clima (Cada 10min) - solo si ya tenemos coords
+    setInterval(() => {
+        if (userCoords) fetchWeather();
+    }, 600000);
 });
