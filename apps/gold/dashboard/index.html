@@ -1308,29 +1308,38 @@
     }
 
     /* ============================================
-           📱 RESPONSIVE - MOBILE (Transformación Móvil)
+           📱 MÓVIL COMPACTO Y CENTRADO (<768px)
         ============================================ */
     @media (max-width: 768px) {
 
-      /* 1. CONTENEDOR PRINCIPAL: Ocupa toda la pantalla */
+      /* 1. CONTENEDOR DEL MODAL (Centrado) */
+      .yg-modal {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px !important;
+      }
+
+      /* 2. TARJETA DEL PANEL (Compacta) */
       .yg-profile-panel {
         flex-direction: column !important;
         width: 100% !important;
-        height: 100vh !important;
-        border-radius: 0 !important;
-        max-height: none !important;
+        max-width: 400px !important;
+        height: auto !important;
+        max-height: 90vh !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+        overflow: hidden !important;
+        background: #0a0a0a;
       }
 
-      /* 2. SIDEBAR → BARRA DE NAVEGACIÓN SUPERIOR */
+      /* 3. NAVEGACIÓN (Pestañas Superiores) */
       .yg-profile-sidebar {
         width: 100% !important;
         height: auto !important;
-        flex-basis: auto !important;
         border-right: none !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 0.5rem;
-        background: #000;
-        z-index: 50;
+        padding: 0 !important;
+        background: #111;
       }
 
       .yg-profile-sidebar__title {
@@ -1340,69 +1349,81 @@
       .yg-profile-nav {
         display: flex !important;
         flex-direction: row !important;
-        overflow-x: auto;
-        gap: 10px;
+        justify-content: space-between;
         margin-top: 0;
-        padding-bottom: 4px;
       }
 
       .yg-profile-nav__item {
         flex: 1;
         justify-content: center;
-        padding: 8px 12px;
-        white-space: nowrap;
-        border-radius: 8px;
-        font-size: 0.85rem;
+        padding: 12px;
+        border-radius: 0 !important;
+        border-bottom: 3px solid transparent;
+        background: transparent !important;
+        color: #888;
+        font-size: 0.9rem;
       }
 
       .yg-profile-nav__item.is-active {
-        border-left: none;
-        background: rgba(200, 167, 82, 0.2);
+        color: #C8A752 !important;
+        border-bottom-color: #C8A752 !important;
+        background: rgba(200, 167, 82, 0.05) !important;
+      }
+
+      .yg-profile-nav__item span:not(.yg-ico) {
+        display: none;
       }
 
       .yg-badge {
         display: none;
       }
 
-      /* 3. ÁREA DE CONTENIDO */
+      /* 4. CABECERA COMPACTA (Cover + Avatar) */
       .yg-profile-content {
-        width: 100% !important;
-        height: 100% !important;
+        height: auto !important;
         overflow-y: auto;
       }
 
       .yg-profile-panel .yg-profile-cover {
-        height: 80px;
+        height: 80px !important;
       }
 
       .yg-profile-body {
-        padding: 0 16px 24px;
+        padding: 0 20px 20px 20px !important;
       }
 
       .yg-profile-avatarRow {
-        margin-top: -35px;
-        gap: 16px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: -40px !important;
+        margin-bottom: 15px;
+        gap: 10px;
       }
 
       .yg-profile-avatarWrap {
-        width: 70px;
-        height: 70px;
+        width: 80px !important;
+        height: 80px !important;
+        border-width: 3px !important;
       }
 
       .yg-profile-name {
-        font-size: 1.1rem;
+        font-size: 1.3rem !important;
       }
 
-      /* 4. AJUSTE DEL FORMULARIO (1 Columna) */
+      .yg-profile-sub {
+        font-size: 0.9rem !important;
+      }
+
+      /* 5. FORMULARIO COMPACTO */
       .yg-profile-grid {
         display: flex !important;
         flex-direction: column !important;
-        gap: 1rem;
+        gap: 12px !important;
       }
 
       .yg-field {
         width: 100% !important;
-        max-width: 100% !important;
       }
 
       .yg-col-6 {
@@ -1412,6 +1433,7 @@
       .yg-profile-actions {
         flex-direction: column;
         gap: 10px;
+        padding-top: 10px;
       }
 
       .yg-btn {
