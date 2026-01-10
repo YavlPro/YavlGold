@@ -2206,34 +2206,6 @@
     })();
   </script>
 
-  <!-- 🔒 SISTEMA DE CIERRE GLOBAL (DELEGACIÓN DE EVENTOS) -->
-  <script>
-    document.addEventListener('click', function (e) {
-      // Detectar clic en el botón cerrar o sus hijos (icono)
-      const closeBtn = e.target.closest('.yg-profile-close');
-
-      // Si se hizo clic en la X
-      if (closeBtn) {
-        e.preventDefault(); // Evita comportamientos raros
-        const modal = document.querySelector('.yg-profile-modal') || document.getElementById('settings-modal');
-        if (modal) {
-          // Animación de salida
-          modal.style.opacity = '0';
-          modal.style.visibility = 'hidden';
-          // Remover clase si usas clases para mostrar
-          modal.classList.remove('active');
-        }
-        console.log("[YG] Cierre ejecutado vía Delegación Global.");
-      }
-
-      // Cerrar al hacer clic fuera del panel (Overlay click)
-      if (e.target.classList.contains('yg-profile-modal')) {
-        e.target.style.opacity = '0';
-        e.target.style.visibility = 'hidden';
-        e.target.classList.remove('active');
-      }
-    });
-  </script>
 
   <!-- 🔴 ZONA SAGRADA: Mobile FAB Logic - NO MODIFICAR -->
   <script>
