@@ -1080,136 +1080,137 @@
                 <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button
                     class="btn btn-outline">+ Nuevo Cultivo</button>
             </div>
-            <div class="crops-grid"> <!-- Crop 1: Papa -->
-                <div class="card crop-card animate-in delay-4">
-                    <div class="crop-card-header">
-                        <div class="crop-info">
-                            <div class="crop-icon">🥔</div>
-                            <div class="crop-details-header"> <span class="crop-name">Papa</span> <span
-                                    class="crop-variety">Variedad Granola</span> </div>
-                        </div> <span class="crop-status status-growing">Creciendo</span>
+            <div class="crops-grid"> <!-- Cultivos cargados dinámicamente desde Supabase --> </div>
+            <div class="card crop-card animate-in delay-4">
+                <div class="crop-card-header">
+                    <div class="crop-info">
+                        <div class="crop-icon">🥔</div>
+                        <div class="crop-details-header"> <span class="crop-name">Papa</span> <span
+                                class="crop-variety">Variedad Granola</span> </div>
+                    </div> <span class="crop-status status-growing">Creciendo</span>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
+                            class="progress-value">65%</span> </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: 65%;"></div>
                     </div>
-                    <div class="progress-section">
-                        <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
-                                class="progress-value">65%</span> </div>
-                        <div class="progress-track">
-                            <div class="progress-fill" style="width: 65%;"></div>
-                        </div>
+                </div>
+                <div class="crop-meta-grid">
+                    <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">15
+                            Oct 2024</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span
+                            class="meta-value">28 Ene 2025</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">2.5
+                            Ha</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
+                            class="meta-value gold">$4,200</span> </div>
+                </div>
+            </div> <!-- Crop 2: Zanahoria -->
+            <div class="card crop-card animate-in delay-5">
+                <div class="crop-card-header">
+                    <div class="crop-info">
+                        <div class="crop-icon">🥕</div>
+                        <div class="crop-details-header"> <span class="crop-name">Zanahoria</span> <span
+                                class="crop-variety">Chantenay Royal</span> </div>
+                    </div> <span class="crop-status status-ready">¡Lista!</span>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
+                            class="progress-value">100%</span> </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: 100%;"></div>
                     </div>
-                    <div class="crop-meta-grid">
-                        <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">15
-                                Oct 2024</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span
-                                class="meta-value">28 Ene 2025</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">2.5
-                                Ha</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
-                                class="meta-value gold">$4,200</span> </div>
+                </div>
+                <div class="crop-meta-grid">
+                    <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">01
+                            Sep 2024</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Cosecha</span> <span
+                            class="meta-value text-success">¡Hoy!</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.8
+                            Ha</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
+                            class="meta-value gold">$2,800</span> </div>
+                </div>
+            </div> <!-- Crop 3: Cebolla -->
+            <div class="card crop-card animate-in delay-6">
+                <div class="crop-card-header">
+                    <div class="crop-info">
+                        <div class="crop-icon">🧅</div>
+                        <div class="crop-details-header"> <span class="crop-name">Cebolla</span> <span
+                                class="crop-variety">Roja Criolla</span> </div>
+                    </div> <span class="crop-status status-attention">Atención</span>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
+                            class="progress-value">35%</span> </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: 35%;"></div>
                     </div>
-                </div> <!-- Crop 2: Zanahoria -->
-                <div class="card crop-card animate-in delay-5">
-                    <div class="crop-card-header">
-                        <div class="crop-info">
-                            <div class="crop-icon">🥕</div>
-                            <div class="crop-details-header"> <span class="crop-name">Zanahoria</span> <span
-                                    class="crop-variety">Chantenay Royal</span> </div>
-                        </div> <span class="crop-status status-ready">¡Lista!</span>
+                </div>
+                <div class="crop-meta-grid">
+                    <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">20
+                            Nov 2024</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span
+                            class="meta-value">15 Mar 2025</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.2
+                            Ha</span> </div>
+                    <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
+                            class="meta-value gold">$1,950</span> </div>
+                </div>
+            </div>
+    </div>
+    </section> <!-- ROI Calculator Section -->
+    <section class="calculator-section">
+        <div class="section-header animate-in delay-4">
+            <h2 class="section-title"><span class="icon">🧮</span> Calculadora ROI Rápida</h2>
+        </div>
+        <div class="card animate-in delay-5">
+            <div class="calculator-form">
+                <div class="input-group"> <label class="input-label" for="investment">Costo de Inversión</label>
+                    <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number" id="investment"
+                            class="styled-input" placeholder="Ej: 5000" min="0" step="0.01"> </div>
+                </div>
+                <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label>
+                    <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number" id="revenue"
+                            class="styled-input" placeholder="Ej: 8500" min="0" step="0.01"> </div>
+                </div>
+                <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
+                    <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number" id="quantity"
+                            class="styled-input" placeholder="Ej: 5000" min="0" step="1"> </div>
+                </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
+            </div> <!-- Results -->
+            <div class="roi-result" id="roiResult">
+                <div class="roi-grid">
+                    <div class="roi-item">
+                        <div class="roi-label">Inversión</div>
+                        <div class="roi-value gold" id="resultInvestment">$0</div>
                     </div>
-                    <div class="progress-section">
-                        <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
-                                class="progress-value">100%</span> </div>
-                        <div class="progress-track">
-                            <div class="progress-fill" style="width: 100%;"></div>
-                        </div>
+                    <div class="roi-item">
+                        <div class="roi-label">Ingresos</div>
+                        <div class="roi-value gold" id="resultRevenue">$0</div>
                     </div>
-                    <div class="crop-meta-grid">
-                        <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">01
-                                Sep 2024</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Cosecha</span> <span
-                                class="meta-value text-success">¡Hoy!</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.8
-                                Ha</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
-                                class="meta-value gold">$2,800</span> </div>
+                    <div class="roi-item">
+                        <div class="roi-label">Ganancia Neta</div>
+                        <div class="roi-value" id="resultProfit">$0</div>
                     </div>
-                </div> <!-- Crop 3: Cebolla -->
-                <div class="card crop-card animate-in delay-6">
-                    <div class="crop-card-header">
-                        <div class="crop-info">
-                            <div class="crop-icon">🧅</div>
-                            <div class="crop-details-header"> <span class="crop-name">Cebolla</span> <span
-                                    class="crop-variety">Roja Criolla</span> </div>
-                        </div> <span class="crop-status status-attention">Atención</span>
-                    </div>
-                    <div class="progress-section">
-                        <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
-                                class="progress-value">35%</span> </div>
-                        <div class="progress-track">
-                            <div class="progress-fill" style="width: 35%;"></div>
-                        </div>
-                    </div>
-                    <div class="crop-meta-grid">
-                        <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">20
-                                Nov 2024</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span
-                                class="meta-value">15 Mar 2025</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.2
-                                Ha</span> </div>
-                        <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
-                                class="meta-value gold">$1,950</span> </div>
+                    <div class="roi-item">
+                        <div class="roi-label">ROI</div>
+                        <div class="roi-value" id="resultROI">0%</div>
                     </div>
                 </div>
             </div>
-        </section> <!-- ROI Calculator Section -->
-        <section class="calculator-section">
-            <div class="section-header animate-in delay-4">
-                <h2 class="section-title"><span class="icon">🧮</span> Calculadora ROI Rápida</h2>
-            </div>
-            <div class="card animate-in delay-5">
-                <div class="calculator-form">
-                    <div class="input-group"> <label class="input-label" for="investment">Costo de Inversión</label>
-                        <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
-                                id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01"> </div>
-                    </div>
-                    <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label>
-                        <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
-                                id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01"> </div>
-                    </div>
-                    <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
-                        <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number"
-                                id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1"> </div>
-                    </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
-                </div> <!-- Results -->
-                <div class="roi-result" id="roiResult">
-                    <div class="roi-grid">
-                        <div class="roi-item">
-                            <div class="roi-label">Inversión</div>
-                            <div class="roi-value gold" id="resultInvestment">$0</div>
-                        </div>
-                        <div class="roi-item">
-                            <div class="roi-label">Ingresos</div>
-                            <div class="roi-value gold" id="resultRevenue">$0</div>
-                        </div>
-                        <div class="roi-item">
-                            <div class="roi-label">Ganancia Neta</div>
-                            <div class="roi-value" id="resultProfit">$0</div>
-                        </div>
-                        <div class="roi-item">
-                            <div class="roi-label">ROI</div>
-                            <div class="roi-value" id="resultROI">0%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section> <!-- Footer -->
-        <footer class="footer animate-in delay-6">
-            <p class="footer-text"> <span class="highlight">YavlGold</span> V9.4 • Módulo Agro • Desarrollado con 🌾
-                para agricultores </p>
-            <div class="footer-links"> <a href="#" class="footer-link">Documentación</a> <a href="#"
-                    class="footer-link">Soporte</a> <a href="#" class="footer-link">GitHub</a> </div>
-        </footer>
+        </div>
+    </section> <!-- Footer -->
+    <footer class="footer animate-in delay-6">
+        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.4 • Módulo Agro • Desarrollado con 🌾
+            para agricultores </p>
+        <div class="footer-links"> <a href="#" class="footer-link">Documentación</a> <a href="#"
+                class="footer-link">Soporte</a> <a href="#" class="footer-link">GitHub</a> </div>
+    </footer>
     </div>
     <script> // ============================================ // ROI CALCULATOR // ============================================ function calculateROI() { const investment = parseFloat(document.getElementById('investment').value) || 0; const revenue = parseFloat(document.getElementById('revenue').value) || 0; const quantity = parseFloat(document.getElementById('quantity').value) || 0; const profit = revenue - investment; const roi = investment > 0 ? ((profit / investment) * 100) : 0; const pricePerKg = quantity > 0 ? (revenue / quantity) : 0; // Update DOM document.getElementById('resultInvestment').textContent = formatCurrency(investment); document.getElementById('resultRevenue').textContent = formatCurrency(revenue); const profitEl = document.getElementById('resultProfit'); profitEl.textContent = formatCurrency(profit); profitEl.className = `roi-value ${profit >= 0 ? 'profit' : 'loss'}`; const roiEl = document.getElementById('resultROI'); roiEl.textContent = `${roi.toFixed(1)}%`; roiEl.className = `roi-value ${roi >= 0 ? 'profit' : 'loss'}`; // Show results with animation const resultDiv = document.getElementById('roiResult'); resultDiv.classList.remove('visible'); // Force reflow void resultDiv.offsetWidth; resultDiv.classList.add('visible'); } function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); } // Allow Enter key to calculate document.querySelectorAll('.styled-input').forEach(input => { input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { calculateROI(); } }); }); // ============================================ // SIMULATED REAL-TIME DATA // ============================================ function updateMarketData() { const basePrice = 98000; const variance = (Math.random() - 0.5) * 2000; const newPrice = basePrice + variance; const priceEl = document.getElementById('btcPrice'); if (priceEl) { priceEl.textContent = `$${newPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`; // Add flash effect priceEl.style.transition = 'color 0.3s ease'; priceEl.style.color = variance > 0 ? '#4ade80' : '#f87171'; setTimeout(() => { priceEl.style.color = '#C8A752'; }, 1000); } } // Update every 8 seconds setInterval(updateMarketData, 8000); // ============================================ // PROGRESS BAR ANIMATIONS ON LOAD // ============================================ document.addEventListener('DOMContentLoaded', () => { // Animate progress bars setTimeout(() => { document.querySelectorAll('.progress-fill').forEach(bar => { const width = bar.style.width; bar.style.width = '0%'; setTimeout(() => { bar.style.width = width; }, 100); }); }, 800); }); // ============================================ // PARTICLES RANDOM POSITIONING // ============================================ document.querySelectorAll('.particle').forEach((particle, index) => { particle.style.top = `${Math.random() * 100}%`; particle.style.left = `${Math.random() * 100}%`; particle.style.animationDelay = `${-Math.random() * 20}s`; particle.style.animationDuration = `${15 + Math.random() * 15}s`; }); console.log('%c🌾 YavlGold V9.4 - Módulo Agro Loaded', 'background: linear-gradient(135deg, #C8A752, #9a7f3c); color: #0a0a0a; padding: 10px 20px; border-radius: 5px; font-weight: bold;'); </script>
+    <script type="module" src="agro.js"></script>
 </body>
 
 </html>
