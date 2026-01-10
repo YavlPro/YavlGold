@@ -1,23 +1,27 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>¿Qué es Bitcoin? - YavlGold Academia</title>
-  <meta name="description" content="Aprende los fundamentos de Bitcoin: historia, tecnología y por qué es revolucionario">
-  
+  <meta name="description"
+    content="Aprende los fundamentos de Bitcoin: historia, tecnología y por qué es revolucionario">
+
   <!-- Favicon -->
   <link rel="icon" href="/assets/images/logo.png" type="image/png">
   <meta name="theme-color" content="#0B0C0F">
-  
+
   <!-- Estilos y fuentes -->
   <link rel="stylesheet" href="/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet">
+
   <!-- Supabase Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <style>
     body {
       background: var(--bg-darker);
@@ -25,13 +29,13 @@
       line-height: 1.8;
       padding-top: 80px;
     }
-    
+
     .lesson-container {
       max-width: 900px;
       margin: 0 auto;
       padding: 40px 20px;
     }
-    
+
     /* Breadcrumb Navigation */
     .breadcrumb {
       display: flex;
@@ -41,17 +45,17 @@
       font-size: 0.9rem;
       color: var(--text-muted);
     }
-    
+
     .breadcrumb a {
       color: var(--color-secondary);
       text-decoration: none;
       transition: var(--transition);
     }
-    
+
     .breadcrumb a:hover {
       opacity: 0.8;
     }
-    
+
     /* Lesson Header */
     .lesson-header {
       background: linear-gradient(135deg, rgba(200, 167, 82, 0.1), transparent);
@@ -60,14 +64,14 @@
       padding: 40px;
       margin-bottom: 40px;
     }
-    
+
     .lesson-meta {
       display: flex;
       gap: 25px;
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-    
+
     .meta-item {
       display: flex;
       align-items: center;
@@ -75,28 +79,29 @@
       color: var(--text-muted);
       font-size: 0.95rem;
     }
-    
+
     .meta-item i {
       color: var(--color-secondary);
     }
-    
+
     .lesson-title {
       font-size: 2.5rem;
       margin: 20px 0 15px;
       color: var(--color-secondary);
       font-family: var(--font-heading);
     }
-    
+
     .lesson-description {
       font-size: 1.1rem;
       color: var(--text-muted);
       line-height: 1.6;
     }
-    
+
     /* Video Container */
     .video-container {
       position: relative;
-      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      padding-bottom: 56.25%;
+      /* 16:9 aspect ratio */
       height: 0;
       overflow: hidden;
       border-radius: 12px;
@@ -104,7 +109,7 @@
       background: var(--card-bg);
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
+
     .video-container iframe {
       position: absolute;
       top: 0;
@@ -113,7 +118,7 @@
       height: 100%;
       border: none;
     }
-    
+
     /* Content Section */
     .content-section {
       background: var(--card-bg);
@@ -122,34 +127,34 @@
       padding: 40px;
       margin-bottom: 40px;
     }
-    
+
     .content-section h2 {
       color: var(--color-secondary);
       font-size: 1.8rem;
       margin-bottom: 20px;
       font-family: var(--font-heading);
     }
-    
+
     .content-section h3 {
       color: var(--text-light);
       font-size: 1.4rem;
       margin: 30px 0 15px;
     }
-    
+
     .content-section p {
       margin-bottom: 20px;
       line-height: 1.8;
     }
-    
+
     .content-section ul {
       margin: 20px 0;
       padding-left: 25px;
     }
-    
+
     .content-section li {
       margin-bottom: 10px;
     }
-    
+
     .highlight-box {
       background: rgba(200, 167, 82, 0.1);
       border-left: 4px solid var(--color-secondary);
@@ -157,11 +162,11 @@
       margin: 25px 0;
       border-radius: 8px;
     }
-    
+
     .highlight-box strong {
       color: var(--color-secondary);
     }
-    
+
     /* Quiz Section */
     .quiz-section {
       background: linear-gradient(135deg, rgba(200, 167, 82, 0.05), var(--card-bg));
@@ -170,22 +175,22 @@
       padding: 40px;
       margin-bottom: 40px;
     }
-    
+
     .quiz-header {
       text-align: center;
       margin-bottom: 30px;
     }
-    
+
     .quiz-header h2 {
       color: var(--color-secondary);
       font-size: 2rem;
       margin-bottom: 10px;
     }
-    
+
     .quiz-header p {
       color: var(--text-muted);
     }
-    
+
     .question-card {
       background: var(--card-bg);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -193,25 +198,25 @@
       padding: 25px;
       margin-bottom: 25px;
     }
-    
+
     .question-number {
       color: var(--color-secondary);
       font-weight: 600;
       margin-bottom: 10px;
     }
-    
+
     .question-text {
       font-size: 1.1rem;
       margin-bottom: 20px;
       line-height: 1.6;
     }
-    
+
     .options {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    
+
     .option {
       background: rgba(255, 255, 255, 0.05);
       border: 2px solid rgba(255, 255, 255, 0.1);
@@ -223,26 +228,26 @@
       align-items: center;
       gap: 12px;
     }
-    
+
     .option:hover {
       border-color: var(--color-secondary);
       background: rgba(200, 167, 82, 0.1);
     }
-    
+
     .option input[type="radio"] {
       cursor: pointer;
     }
-    
+
     .option.correct {
       border-color: #4CAF50;
       background: rgba(76, 175, 80, 0.1);
     }
-    
+
     .option.incorrect {
       border-color: #ff6b6b;
       background: rgba(255, 107, 107, 0.1);
     }
-    
+
     /* Action Buttons */
     .action-buttons {
       display: flex;
@@ -250,7 +255,7 @@
       margin-top: 40px;
       flex-wrap: wrap;
     }
-    
+
     .btn-primary {
       background: var(--gradient-gold);
       color: var(--bg-darker);
@@ -265,12 +270,12 @@
       gap: 10px;
       font-size: 1.05rem;
     }
-    
+
     .btn-primary:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 24px rgba(200, 167, 82, 0.4);
     }
-    
+
     .btn-secondary {
       background: transparent;
       color: var(--color-secondary);
@@ -286,17 +291,17 @@
       font-size: 1.05rem;
       text-decoration: none;
     }
-    
+
     .btn-secondary:hover {
       background: rgba(200, 167, 82, 0.1);
       transform: translateY(-3px);
     }
-    
+
     .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    
+
     /* Quiz Results */
     .quiz-results {
       display: none;
@@ -306,28 +311,28 @@
       border-radius: 12px;
       margin-top: 30px;
     }
-    
+
     .quiz-results.show {
       display: block;
     }
-    
+
     .result-icon {
       font-size: 5rem;
       margin-bottom: 20px;
     }
-    
+
     .result-score {
       font-size: 3rem;
       font-weight: 700;
       color: var(--color-secondary);
       margin-bottom: 15px;
     }
-    
+
     .result-message {
       font-size: 1.2rem;
       margin-bottom: 10px;
     }
-    
+
     .xp-earned {
       display: inline-block;
       background: var(--gradient-gold);
@@ -337,7 +342,7 @@
       font-weight: 600;
       margin-top: 15px;
     }
-    
+
     /* Progress Indicator */
     .lesson-progress {
       position: fixed;
@@ -350,13 +355,13 @@
       width: 250px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
-    
+
     .progress-title {
       font-weight: 600;
       margin-bottom: 15px;
       color: var(--color-secondary);
     }
-    
+
     .progress-item {
       display: flex;
       align-items: center;
@@ -364,48 +369,50 @@
       margin-bottom: 12px;
       font-size: 0.9rem;
     }
-    
+
     .progress-item i {
       color: var(--text-muted);
       width: 20px;
     }
-    
+
     .progress-item.completed i {
       color: #4CAF50;
     }
-    
+
     @media (max-width: 768px) {
       .lesson-title {
         font-size: 2rem;
       }
-      
+
       .lesson-header {
         padding: 25px;
       }
-      
+
       .content-section {
         padding: 25px;
       }
-      
+
       .quiz-section {
         padding: 25px;
       }
-      
+
       .action-buttons {
         flex-direction: column;
       }
-      
-      .btn-primary, .btn-secondary {
+
+      .btn-primary,
+      .btn-secondary {
         width: 100%;
         justify-content: center;
       }
-      
+
       .lesson-progress {
         display: none;
       }
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <header class="gg-header">
@@ -459,20 +466,18 @@
           <span>+10 XP</span>
         </div>
       </div>
-      
+
       <h1 class="lesson-title">¿Qué es Bitcoin?</h1>
       <p class="lesson-description">
-        Descubre el origen de Bitcoin, cómo funciona y por qué está cambiando el mundo financiero. 
+        Descubre el origen de Bitcoin, cómo funciona y por qué está cambiando el mundo financiero.
         Aprenderás los conceptos básicos que necesitas para entender las criptomonedas.
       </p>
     </div>
 
     <!-- Video -->
     <div class="video-container">
-      <iframe 
-        src="https://www.youtube.com/embed/Gc2en3nHxA4" 
-        title="¿Qué es Bitcoin?"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      <iframe src="https://www.youtube.com/embed/Gc2en3nHxA4" title="¿Qué es Bitcoin?"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen>
       </iframe>
     </div>
@@ -480,23 +485,23 @@
     <!-- Content -->
     <div class="content-section">
       <h2>📖 Contenido de la Lección</h2>
-      
+
       <h3>¿Qué es Bitcoin?</h3>
       <p>
-        Bitcoin es la primera <strong>criptomoneda descentralizada</strong> del mundo, creada en 2009 por 
-        una persona (o grupo) bajo el seudónimo de <strong>Satoshi Nakamoto</strong>. A diferencia del dinero 
+        Bitcoin es la primera <strong>criptomoneda descentralizada</strong> del mundo, creada en 2009 por
+        una persona (o grupo) bajo el seudónimo de <strong>Satoshi Nakamoto</strong>. A diferencia del dinero
         tradicional controlado por gobiernos y bancos, Bitcoin funciona en una red peer-to-peer sin autoridad central.
       </p>
 
       <div class="highlight-box">
-        <strong>💡 Punto Clave:</strong> Bitcoin permite transferir valor de persona a persona sin 
+        <strong>💡 Punto Clave:</strong> Bitcoin permite transferir valor de persona a persona sin
         intermediarios, de forma rápida, segura y global.
       </div>
 
       <h3>Historia de Bitcoin</h3>
       <p>
-        El 31 de octubre de 2008, Satoshi Nakamoto publicó el <em>whitepaper</em> de Bitcoin: 
-        "Bitcoin: A Peer-to-Peer Electronic Cash System". El 3 de enero de 2009, se minó el primer bloque 
+        El 31 de octubre de 2008, Satoshi Nakamoto publicó el <em>whitepaper</em> de Bitcoin:
+        "Bitcoin: A Peer-to-Peer Electronic Cash System". El 3 de enero de 2009, se minó el primer bloque
         (bloque génesis), marcando el nacimiento de la red Bitcoin.
       </p>
 
@@ -521,20 +526,20 @@
       </ul>
 
       <div class="highlight-box">
-        <strong>🔒 Seguridad:</strong> En más de 15 años, la red Bitcoin nunca ha sido hackeada. 
+        <strong>🔒 Seguridad:</strong> En más de 15 años, la red Bitcoin nunca ha sido hackeada.
         Es uno de los sistemas más seguros jamás creados.
       </div>
 
       <h3>¿Cómo Funciona (Simplificado)?</h3>
       <p>
-        Bitcoin utiliza una tecnología llamada <strong>blockchain</strong> (cadena de bloques) que 
-        actúa como un libro contable público y permanente. Cada transacción se registra en un "bloque" 
+        Bitcoin utiliza una tecnología llamada <strong>blockchain</strong> (cadena de bloques) que
+        actúa como un libro contable público y permanente. Cada transacción se registra en un "bloque"
         que se añade a la cadena, verificado por miles de computadoras (nodos) en todo el mundo.
       </p>
 
       <p>
-        Los <strong>mineros</strong> son quienes validan las transacciones usando poder computacional, 
-        y como recompensa reciben nuevos bitcoins. Este proceso se llama "minería" y es lo que 
+        Los <strong>mineros</strong> son quienes validan las transacciones usando poder computacional,
+        y como recompensa reciben nuevos bitcoins. Este proceso se llama "minería" y es lo que
         mantiene la red segura y descentralizada.
       </p>
 
@@ -701,7 +706,8 @@
       <a href="/academia/#modulo-1" class="btn-secondary">
         <i class="fas fa-arrow-left"></i> Volver al Módulo
       </a>
-      <a href="/academia/lecciones/modulo-1/02-blockchain-explicado.html" class="btn-secondary" style="display: none;" id="next-lesson-btn">
+      <a href="/academia/lecciones/modulo-1/02-blockchain-explicado.html" class="btn-secondary" style="display: none;"
+        id="next-lesson-btn">
         Siguiente Lección <i class="fas fa-arrow-right"></i>
       </a>
     </div>
@@ -739,9 +745,9 @@
   </footer>
 
   <!-- Scripts -->
-  <script type="module" src="../gold/assets/js/auth.js"></script>
+  <script type="module" src="../../../assets/js/auth.js"></script>
   <script src="/assets/js/academia.js"></script>
-  
+
   <script>
     // Quiz correct answers
     const correctAnswers = {
@@ -753,17 +759,17 @@
     };
 
     // Quiz form submission
-    document.getElementById('quiz-form').addEventListener('submit', async function(e) {
+    document.getElementById('quiz-form').addEventListener('submit', async function (e) {
       e.preventDefault();
-      
+
       // Calculate score
       let correct = 0;
       const total = 5;
-      
+
       for (let i = 1; i <= total; i++) {
         const selected = document.querySelector(`input[name="q${i}"]:checked`);
         const questionCard = selected?.closest('.question-card');
-        
+
         if (selected && selected.value === correctAnswers[`q${i}`]) {
           correct++;
           // Mark as correct
@@ -776,31 +782,31 @@
           correctOption.closest('.option').classList.add('correct');
         }
       }
-      
+
       // Calculate percentage
       const percentage = Math.round((correct / total) * 100);
       const passed = percentage >= 80;
-      
+
       // Show results
       const resultsDiv = document.getElementById('quiz-results');
       const resultIcon = document.getElementById('result-icon');
       const resultScore = document.getElementById('result-score');
       const resultMessage = document.getElementById('result-message');
       const xpEarned = document.getElementById('xp-earned');
-      
+
       resultScore.textContent = `${correct}/${total}`;
-      
+
       if (passed) {
         resultIcon.textContent = correct === total ? '🏆' : '🎉';
-        resultMessage.innerHTML = correct === total 
-          ? '<strong>¡Perfecto!</strong> Dominaste esta lección' 
+        resultMessage.innerHTML = correct === total
+          ? '<strong>¡Perfecto!</strong> Dominaste esta lección'
           : '<strong>¡Aprobaste!</strong> Has completado la lección';
         xpEarned.style.display = 'inline-block';
-        
+
         // Show complete lesson button
         document.getElementById('complete-lesson-btn').style.display = 'inline-flex';
         document.getElementById('next-lesson-btn').style.display = 'inline-flex';
-        
+
         // Award XP if user is logged in
         if (window.academiaProgress) {
           try {
@@ -817,10 +823,10 @@
         resultMessage.innerHTML = `<strong>Casi!</strong> Necesitas 80% para aprobar (${correct}/5). <a href="#quiz-section" onclick="location.reload()" style="color: var(--color-secondary)">Intentar de nuevo</a>`;
         xpEarned.style.display = 'none';
       }
-      
+
       resultsDiv.classList.add('show');
       resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      
+
       // Disable form
       const submitBtn = e.target.querySelector('button[type="submit"]');
       submitBtn.disabled = true;
@@ -828,26 +834,26 @@
     });
 
     // Complete lesson button
-    document.getElementById('complete-lesson-btn')?.addEventListener('click', async function() {
+    document.getElementById('complete-lesson-btn')?.addEventListener('click', async function () {
       if (!window.academiaProgress) {
         alert('Debes iniciar sesión para guardar tu progreso');
         window.location.href = '/dashboard/';
         return;
       }
-      
+
       try {
         // Mark lesson as complete with real UUID
         this.disabled = true;
         this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-        
+
         await window.academiaProgress.markLessonComplete('6a0a26c4-d542-4ac1-bf26-ee357042c04d');
-        
+
         this.innerHTML = '<i class="fas fa-check-double"></i> ¡Lección Completada!';
         alert('¡Felicitaciones! Lección completada. +10 XP ganados');
-        
+
         // Show next lesson button
         document.getElementById('next-lesson-btn').style.display = 'inline-flex';
-        
+
       } catch (error) {
         console.error('Error completing lesson:', error);
         alert('Error al completar la lección. Intenta de nuevo.');
@@ -857,4 +863,5 @@
     });
   </script>
 </body>
+
 </html>

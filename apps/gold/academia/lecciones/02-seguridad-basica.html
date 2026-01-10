@@ -1,14 +1,17 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Módulo 2: Seguridad Básica - Academia YavlGold</title>
   <link rel="stylesheet" href="/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <style>
     :root {
       --color-primary: #111111;
@@ -26,14 +29,14 @@
       --border-radius: 15px;
       --transition: all 0.3s ease;
     }
-    
+
     body {
       font-family: var(--font-body);
       background: var(--bg-darker);
       color: var(--text-light);
       line-height: 1.7;
     }
-    
+
     body::before {
       content: '';
       position: fixed;
@@ -41,12 +44,12 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
+      background:
         radial-gradient(circle at 30% 70%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 70% 30%, rgba(200, 167, 82, 0.05) 0%, transparent 50%);
       z-index: -1;
     }
-    
+
     .lesson-hero {
       text-align: center;
       padding: 140px 20px 80px;
@@ -54,7 +57,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .lesson-hero::before {
       content: '🔒';
       position: absolute;
@@ -65,7 +68,7 @@
       opacity: 0.03;
       z-index: 0;
     }
-    
+
     .lesson-hero h1 {
       font-family: var(--font-heading);
       font-size: 3.5rem;
@@ -79,13 +82,21 @@
       position: relative;
       z-index: 2;
     }
-    
+
     @keyframes securityShimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
     }
-    
+
     .security-alert {
       background: rgba(239, 68, 68, 0.1);
       border: 2px solid var(--error-color);
@@ -95,13 +106,13 @@
       max-width: 800px;
       text-align: center;
     }
-    
+
     .security-alert h3 {
       color: var(--error-color);
       margin-bottom: 15px;
       font-size: 1.3rem;
     }
-    
+
     .breadcrumb {
       max-width: 1200px;
       margin: 0 auto;
@@ -109,18 +120,18 @@
       font-size: 0.9rem;
       color: var(--text-muted);
     }
-    
+
     .breadcrumb a {
       color: var(--color-secondary);
       text-decoration: none;
     }
-    
+
     .lesson-content {
       max-width: 900px;
       margin: 0 auto;
       padding: 40px 20px;
     }
-    
+
     .lesson-card {
       background: var(--card-bg);
       border-radius: var(--border-radius);
@@ -130,17 +141,17 @@
       backdrop-filter: blur(10px);
       position: relative;
     }
-    
+
     .security-card {
       border-color: rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.05);
     }
-    
+
     .lesson-list {
       display: grid;
       gap: 20px;
     }
-    
+
     .lesson-item {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 12px;
@@ -151,7 +162,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .lesson-item::before {
       content: '';
       position: absolute;
@@ -162,27 +173,27 @@
       background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
       transition: left 0.6s ease;
     }
-    
+
     .lesson-item:hover::before {
       left: 100%;
     }
-    
+
     .lesson-item:hover {
       border-color: var(--error-color);
       transform: translateY(-5px);
       box-shadow: 0 10px 25px rgba(239, 68, 68, 0.2);
     }
-    
+
     .lesson-item.completed {
       border-color: var(--success-color);
       background: rgba(16, 185, 129, 0.1);
     }
-    
+
     .lesson-item.critical {
       border-color: var(--error-color);
       background: rgba(239, 68, 68, 0.08);
     }
-    
+
     .lesson-header {
       display: flex;
       align-items: center;
@@ -191,7 +202,7 @@
       position: relative;
       z-index: 2;
     }
-    
+
     .lesson-title {
       font-size: 1.3rem;
       font-weight: 600;
@@ -201,46 +212,53 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .critical-icon {
       color: var(--error-color);
       animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
     }
-    
+
     .lesson-status {
       padding: 5px 12px;
       border-radius: 15px;
       font-size: 0.8rem;
       font-weight: 600;
     }
-    
+
     .status-completed {
       background: rgba(16, 185, 129, 0.2);
       color: var(--success-color);
     }
-    
+
     .status-critical {
       background: rgba(239, 68, 68, 0.2);
       color: var(--error-color);
     }
-    
+
     .status-pending {
       background: rgba(245, 158, 11, 0.2);
       color: var(--warning-color);
     }
-    
+
     .lesson-description {
       color: var(--text-muted);
       margin-bottom: 20px;
       position: relative;
       z-index: 2;
     }
-    
+
     .lesson-meta {
       display: flex;
       gap: 20px;
@@ -249,7 +267,7 @@
       position: relative;
       z-index: 2;
     }
-    
+
     .security-tips {
       background: rgba(16, 185, 129, 0.1);
       border: 1px solid var(--success-color);
@@ -257,7 +275,7 @@
       padding: 25px;
       margin: 30px 0;
     }
-    
+
     .security-tips h4 {
       color: var(--success-color);
       margin-bottom: 15px;
@@ -265,32 +283,32 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .security-tips ul {
       list-style: none;
       padding: 0;
     }
-    
+
     .security-tips li {
       padding: 8px 0;
       display: flex;
       align-items: flex-start;
       gap: 10px;
     }
-    
+
     .security-tips li::before {
       content: '✅';
       font-size: 0.9rem;
       margin-top: 2px;
     }
-    
+
     .navigation-buttons {
       display: flex;
       justify-content: space-between;
       margin-top: 40px;
       padding: 0 20px;
     }
-    
+
     .btn-nav {
       padding: 12px 25px;
       border-radius: var(--border-radius);
@@ -301,30 +319,30 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .btn-back {
       background: transparent;
       border: 2px solid var(--text-muted);
       color: var(--text-muted);
     }
-    
+
     .btn-back:hover {
       border-color: var(--color-secondary);
       color: var(--color-secondary);
     }
-    
+
     .btn-next {
       background: var(--color-secondary);
       color: var(--bg-darker);
       border: 2px solid var(--color-secondary);
     }
-    
+
     .btn-next:hover {
       background: var(--color-accent);
       border-color: var(--color-accent);
       transform: translateY(-2px);
     }
-    
+
     .btn-next:disabled {
       background: var(--text-muted);
       border-color: var(--text-muted);
@@ -332,31 +350,49 @@
       cursor: not-allowed;
       transform: none;
     }
-    
+
     @media (max-width: 768px) {
-      .lesson-hero h1 { font-size: 2.5rem; }
-      .lesson-card { padding: 25px; }
-      .navigation-buttons { flex-direction: column; gap: 15px; }
-      .lesson-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-      .lesson-meta { flex-wrap: wrap; }
+      .lesson-hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .lesson-card {
+        padding: 25px;
+      }
+
+      .navigation-buttons {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .lesson-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .lesson-meta {
+        flex-wrap: wrap;
+      }
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <header class="gg-header">
     <a class="brand" href="/">
-  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
-  <span>YavlGold</span>
+      <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
+      <span>YavlGold</span>
     </a>
-    
+
     <nav class="main-nav">
       <a href="/herramientas/" data-protected="true">Herramientas</a>
       <a href="/academia/" class="active">Academia</a>
       <a href="/go/telegram.html">Comunidad</a>
       <a href="/dashboard/" data-protected="true">Dashboard</a>
     </nav>
-    
+
     <div class="auth-buttons" id="auth-buttons">
       <!-- Se llenará dinámicamente -->
     </div>
@@ -370,13 +406,15 @@
   <!-- Hero -->
   <section class="lesson-hero">
     <h1>🔒 Módulo 2: Seguridad Básica</h1>
-    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
+    <p
+      style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
       Protege tus criptomonedas como un experto
     </p>
-    
+
     <div class="security-alert">
       <h3>⚠ MÓDULO CRÍTICO</h3>
-      <p>Este módulo puede <strong>salvar tu dinero</strong>. Una sola falla de seguridad puede costarte todo tu portafolio. Presta máxima atención.</p>
+      <p>Este módulo puede <strong>salvar tu dinero</strong>. Una sola falla de seguridad puede costarte todo tu
+        portafolio. Presta máxima atención.</p>
     </div>
   </section>
 
@@ -386,7 +424,7 @@
       <h2 style="color: var(--error-color); margin-bottom: 30px;">
         <i class="fas fa-shield-alt"></i> Lecciones de Seguridad
       </h2>
-      
+
       <div class="lesson-list">
         <!-- Lección 1 -->
         <div class="lesson-item critical" onclick="openLesson('02-01')">
@@ -406,7 +444,7 @@
             <span><i class="fas fa-fire"></i> Crítico</span>
           </div>
         </div>
-        
+
         <!-- Lección 2 -->
         <div class="lesson-item critical" onclick="openLesson('02-02')">
           <div class="lesson-header">
@@ -425,7 +463,7 @@
             <span><i class="fas fa-fire"></i> Crítico</span>
           </div>
         </div>
-        
+
         <!-- Lección 3 -->
         <div class="lesson-item critical" onclick="openLesson('02-03')">
           <div class="lesson-header">
@@ -444,7 +482,7 @@
             <span><i class="fas fa-fire"></i> Crítico</span>
           </div>
         </div>
-        
+
         <!-- Lección 4 -->
         <div class="lesson-item" onclick="openLesson('02-04')">
           <div class="lesson-header">
@@ -465,7 +503,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Consejos de Seguridad -->
     <div class="security-tips">
       <h4>
@@ -482,35 +520,37 @@
         <li>Verifica SIEMPRE las direcciones antes de enviar</li>
       </ul>
     </div>
-    
+
     <!-- Progreso del Módulo -->
     <div class="lesson-card">
       <h3 style="color: var(--color-secondary); margin-bottom: 20px;">
         <i class="fas fa-chart-line"></i> Tu Progreso en Seguridad
       </h3>
-      
+
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
         <span>Progreso Actual</span>
         <span style="color: var(--error-color); font-weight: 600;">0%</span>
       </div>
-      
+
       <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
-        <div style="width: 0%; height: 100%; background: linear-gradient(45deg, #ef4444, #C8A752); border-radius: 4px;"></div>
+        <div style="width: 0%; height: 100%; background: linear-gradient(45deg, #ef4444, #C8A752); border-radius: 4px;">
+        </div>
       </div>
-      
+
       <p style="margin-top: 15px; color: var(--text-muted);">
         <strong style="color: var(--error-color);">⚠ Este módulo es OBLIGATORIO</strong><br>
         No puedes continuar sin completar las lecciones críticas de seguridad.
       </p>
     </div>
-    
+
     <!-- Estadísticas de Hackeos -->
     <div class="lesson-card" style="border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.05);">
       <h3 style="color: var(--error-color); margin-bottom: 20px;">
         <i class="fas fa-exclamation-triangle"></i> ¿Por Qué es Tan Importante?
       </h3>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; text-align: center;">
+
+      <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; text-align: center;">
         <div>
           <div style="font-size: 2.5rem; color: var(--error-color); font-weight: 700;">$3.8B</div>
           <div style="color: var(--text-muted);">Robados en 2022</div>
@@ -524,7 +564,7 @@
           <div style="color: var(--text-muted);">Evitables con buena seguridad</div>
         </div>
       </div>
-      
+
       <p style="margin-top: 20px; text-align: center; color: var(--text-light);">
         <strong>No seas parte de estas estadísticas.</strong> La seguridad no es opcional.
       </p>
@@ -540,7 +580,7 @@
       Módulo Siguiente <i class="fas fa-lock"></i>
     </button>
   </div>
-  
+
   <p style="text-align: center; color: var(--text-muted); margin-top: 20px; font-size: 0.9rem;">
     <i class="fas fa-info-circle"></i> Debes completar todas las lecciones críticas para desbloquear el siguiente módulo
   </p>
@@ -553,11 +593,11 @@
     </div>
     <p>Academia de Criptomonedas y Trading</p>
     <div class="copyright">
-  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+      <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
 
-  <script type="module" src="../gold/assets/js/auth.js"></script>
+  <script type="module" src="../../assets/js/auth.js"></script>
   <script>
     function openLesson(lessonId) {
       // Mostrar contenido específico según la lección
@@ -590,21 +630,21 @@
               <li><strong>Trust Wallet</strong> - Mobile, múltiples chains</li>
               <li><strong>Phantom</strong> - Para Solana</li>
             </ul>
-            
+
             <h4>❄ COLD WALLETS (Sin Internet)</h4>
             <ul>
               <li><strong>Ledger Nano</strong> - El más popular</li>
               <li><strong>Trezor</strong> - Código abierto</li>
               <li><strong>Paper Wallet</strong> - Para almacenamiento a largo plazo</li>
             </ul>
-            
+
             <h4>📋 REGLA 80/20</h4>
             <p><strong>80% en Cold Wallet</strong> (largo plazo)<br>
             <strong>20% en Hot Wallet</strong> (trading diario)</p>
           `
         }
       };
-      
+
       const lesson = lessons[lessonId];
       if (lesson) {
         showLessonModal(lesson.title, lesson.content);
@@ -612,46 +652,47 @@
         showNotification(`Lección ${lessonId} - ¡Próximamente disponible!`, 'info');
       }
     }
-    
+
     function showLessonModal(title, content) {
       // Crear modal para mostrar contenido de la lección
       const modal = document.createElement('div');
       modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.9); display: flex; align-items: center; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); display: flex; align-items: center;
         justify-content: center; z-index: 10000; padding: 20px;
       `;
-      
+
       modal.innerHTML = `
         <div style="
-          background: var(--card-bg); border-radius: var(--border-radius); 
+          background: var(--card-bg); border-radius: var(--border-radius);
           padding: 40px; max-width: 800px; max-height: 80vh; overflow-y: auto;
           border: 1px solid var(--color-secondary); position: relative;
         ">
           <button onclick="this.closest('div').parentNode.remove()" style="
-            position: absolute; top: 15px; right: 20px; background: none; 
+            position: absolute; top: 15px; right: 20px; background: none;
             border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer;
           ">×</button>
-          
+
           <h2 style="color: var(--color-secondary); margin-bottom: 30px;">${title}</h2>
           <div style="color: var(--text-light); line-height: 1.7;">${content}</div>
-          
+
           <div style="text-align: center; margin-top: 30px;">
             <button onclick="this.closest('div').parentNode.remove()" style="
-              background: var(--color-secondary); color: var(--bg-darker); 
+              background: var(--color-secondary); color: var(--bg-darker);
               border: none; padding: 12px 25px; border-radius: var(--border-radius);
               font-weight: 600; cursor: pointer;
             ">Entendido ✅</button>
           </div>
         </div>
       `;
-      
+
       document.body.appendChild(modal);
     }
-    
-    document.addEventListener('DOMContentLoaded', function() {
+
+    document.addEventListener('DOMContentLoaded', function () {
       checkAuth();
     });
   </script>
 </body>
+
 </html>

@@ -1,14 +1,17 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Módulo 4: Análisis Técnico - Academia YavlGold</title>
   <link rel="stylesheet" href="/assets/css/unificacion.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+
   <style>
     :root {
       --color-primary: #111111;
@@ -28,14 +31,14 @@
       --border-radius: 15px;
       --transition: all 0.3s ease;
     }
-    
+
     body {
       font-family: var(--font-body);
       background: var(--bg-darker);
       color: var(--text-light);
       line-height: 1.7;
     }
-    
+
     body::before {
       content: '';
       position: fixed;
@@ -43,12 +46,12 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: 
+      background:
         radial-gradient(circle at 30% 70%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
         radial-gradient(circle at 70% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
       z-index: -1;
     }
-    
+
     .lesson-hero {
       text-align: center;
       padding: 140px 20px 80px;
@@ -56,7 +59,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .lesson-hero::before {
       content: '📊';
       position: absolute;
@@ -67,7 +70,7 @@
       opacity: 0.03;
       z-index: 0;
     }
-    
+
     .lesson-hero h1 {
       font-family: var(--font-heading);
       font-size: 3.5rem;
@@ -81,13 +84,21 @@
       position: relative;
       z-index: 2;
     }
-    
+
     @keyframes chartShimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
     }
-    
+
     .chart-alert {
       background: rgba(59, 130, 246, 0.1);
       border: 2px solid var(--blue-color);
@@ -97,13 +108,13 @@
       max-width: 800px;
       text-align: center;
     }
-    
+
     .chart-alert h3 {
       color: var(--blue-color);
       margin-bottom: 15px;
       font-size: 1.3rem;
     }
-    
+
     .breadcrumb {
       max-width: 1200px;
       margin: 0 auto;
@@ -111,18 +122,18 @@
       font-size: 0.9rem;
       color: var(--text-muted);
     }
-    
+
     .breadcrumb a {
       color: var(--color-secondary);
       text-decoration: none;
     }
-    
+
     .lesson-content {
       max-width: 900px;
       margin: 0 auto;
       padding: 40px 20px;
     }
-    
+
     .lesson-card {
       background: var(--card-bg);
       border-radius: var(--border-radius);
@@ -132,17 +143,17 @@
       backdrop-filter: blur(10px);
       position: relative;
     }
-    
+
     .chart-card {
       border-color: rgba(59, 130, 246, 0.3);
       background: rgba(59, 130, 246, 0.05);
     }
-    
+
     .lesson-list {
       display: grid;
       gap: 20px;
     }
-    
+
     .lesson-item {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 12px;
@@ -153,7 +164,7 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .lesson-item::before {
       content: '';
       position: absolute;
@@ -164,22 +175,22 @@
       background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
       transition: left 0.6s ease;
     }
-    
+
     .lesson-item:hover::before {
       left: 100%;
     }
-    
+
     .lesson-item:hover {
       border-color: var(--blue-color);
       transform: translateY(-5px);
       box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
     }
-    
+
     .lesson-item.advanced {
       border-color: rgba(139, 92, 246, 0.3);
       background: rgba(139, 92, 246, 0.05);
     }
-    
+
     .lesson-header {
       display: flex;
       align-items: center;
@@ -188,7 +199,7 @@
       position: relative;
       z-index: 2;
     }
-    
+
     .lesson-title {
       font-size: 1.3rem;
       font-weight: 600;
@@ -198,31 +209,31 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .lesson-status {
       padding: 5px 12px;
       border-radius: 15px;
       font-size: 0.8rem;
       font-weight: 600;
     }
-    
+
     .status-pending {
       background: rgba(245, 158, 11, 0.2);
       color: var(--warning-color);
     }
-    
+
     .status-advanced {
       background: rgba(139, 92, 246, 0.2);
       color: #8b5cf6;
     }
-    
+
     .lesson-description {
       color: var(--text-muted);
       margin-bottom: 20px;
       position: relative;
       z-index: 2;
     }
-    
+
     .lesson-meta {
       display: flex;
       gap: 20px;
@@ -231,14 +242,14 @@
       position: relative;
       z-index: 2;
     }
-    
+
     .pattern-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 15px;
       margin-top: 20px;
     }
-    
+
     .pattern-card {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(59, 130, 246, 0.3);
@@ -248,24 +259,24 @@
       transition: var(--transition);
       cursor: pointer;
     }
-    
+
     .pattern-card:hover {
       background: rgba(59, 130, 246, 0.1);
       border-color: var(--blue-color);
       transform: translateY(-5px);
     }
-    
+
     .pattern-icon {
       font-size: 3rem;
       margin-bottom: 10px;
     }
-    
+
     .pattern-name {
       font-weight: 600;
       color: var(--blue-color);
       margin-bottom: 5px;
     }
-    
+
     .indicator-box {
       background: rgba(139, 92, 246, 0.1);
       border: 1px solid #8b5cf6;
@@ -273,7 +284,7 @@
       padding: 25px;
       margin: 30px 0;
     }
-    
+
     .indicator-box h4 {
       color: #8b5cf6;
       margin-bottom: 15px;
@@ -281,14 +292,14 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .navigation-buttons {
       display: flex;
       justify-content: space-between;
       margin-top: 40px;
       padding: 0 20px;
     }
-    
+
     .btn-nav {
       padding: 12px 25px;
       border-radius: var(--border-radius);
@@ -299,55 +310,76 @@
       align-items: center;
       gap: 10px;
     }
-    
+
     .btn-back {
       background: transparent;
       border: 2px solid var(--text-muted);
       color: var(--text-muted);
     }
-    
+
     .btn-back:hover {
       border-color: var(--color-secondary);
       color: var(--color-secondary);
     }
-    
+
     .btn-next {
       background: var(--color-secondary);
       color: var(--bg-darker);
       border: 2px solid var(--color-secondary);
     }
-    
+
     .btn-next:hover {
       background: var(--color-accent);
       border-color: var(--color-accent);
       transform: translateY(-2px);
     }
-    
+
     @media (max-width: 768px) {
-      .lesson-hero h1 { font-size: 2.5rem; }
-      .lesson-card { padding: 25px; }
-      .navigation-buttons { flex-direction: column; gap: 15px; }
-      .lesson-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-      .lesson-meta { flex-wrap: wrap; }
-      .pattern-grid { grid-template-columns: 1fr; }
+      .lesson-hero h1 {
+        font-size: 2.5rem;
+      }
+
+      .lesson-card {
+        padding: 25px;
+      }
+
+      .navigation-buttons {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .lesson-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .lesson-meta {
+        flex-wrap: wrap;
+      }
+
+      .pattern-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
   <!-- Header -->
   <header class="gg-header">
     <a class="brand" href="/">
-  <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
-  <span>YavlGold</span>
+      <img src="/assets/images/logo.png" alt="YavlGold" class="logo" />
+      <span>YavlGold</span>
     </a>
-    
+
     <nav class="main-nav">
       <a href="/herramientas/" data-protected="true">Herramientas</a>
       <a href="/academia/" class="active">Academia</a>
       <a href="/go/telegram.html">Comunidad</a>
       <a href="/dashboard/" data-protected="true">Dashboard</a>
     </nav>
-    
+
     <div class="auth-buttons" id="auth-buttons"></div>
   </header>
 
@@ -359,10 +391,11 @@
   <!-- Hero -->
   <section class="lesson-hero">
     <h1>📊 Módulo 4: Análisis Técnico</h1>
-    <p style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
+    <p
+      style="color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
       Lee los gráficos como un profesional y predice movimientos del mercado
     </p>
-    
+
     <div class="chart-alert">
       <h3>📈 ¡APRENDE A LEER EL MERCADO!</h3>
       <p>El análisis técnico es el lenguaje universal de los traders. Domínalo y el mercado te hablará.</p>
@@ -375,7 +408,7 @@
       <h2 style="color: var(--blue-color); margin-bottom: 30px;">
         <i class="fas fa-chart-area"></i> Lecciones de Análisis Técnico
       </h2>
-      
+
       <div class="lesson-list">
         <!-- Lección 1 -->
         <div class="lesson-item" onclick="openLesson('04-01')">
@@ -395,7 +428,7 @@
             <span><i class="fas fa-star"></i> Fundamental</span>
           </div>
         </div>
-        
+
         <!-- Lección 2 -->
         <div class="lesson-item" onclick="openLesson('04-02')">
           <div class="lesson-header">
@@ -414,7 +447,7 @@
             <span><i class="fas fa-fire"></i> Crítico</span>
           </div>
         </div>
-        
+
         <!-- Lección 3 -->
         <div class="lesson-item" onclick="openLesson('04-03')">
           <div class="lesson-header">
@@ -433,7 +466,7 @@
             <span><i class="fas fa-star"></i> Importante</span>
           </div>
         </div>
-        
+
         <!-- Lección 4 -->
         <div class="lesson-item advanced" onclick="openLesson('04-04')">
           <div class="lesson-header">
@@ -452,7 +485,7 @@
             <span><i class="fas fa-star"></i> Avanzado</span>
           </div>
         </div>
-        
+
         <!-- Lección 5 -->
         <div class="lesson-item advanced" onclick="openLesson('04-05')">
           <div class="lesson-header">
@@ -471,7 +504,7 @@
             <span><i class="fas fa-star"></i> Avanzado</span>
           </div>
         </div>
-        
+
         <!-- Lección 6 -->
         <div class="lesson-item advanced" onclick="openLesson('04-06')">
           <div class="lesson-header">
@@ -490,7 +523,7 @@
             <span><i class="fas fa-star"></i> Avanzado</span>
           </div>
         </div>
-        
+
         <!-- Lección 7 -->
         <div class="lesson-item" onclick="openLesson('04-07')">
           <div class="lesson-header">
@@ -509,7 +542,7 @@
             <span><i class="fas fa-star"></i> Importante</span>
           </div>
         </div>
-        
+
         <!-- Lección 8 -->
         <div class="lesson-item" onclick="openLesson('04-08')">
           <div class="lesson-header">
@@ -530,32 +563,32 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Patrones Principales -->
     <div class="lesson-card">
       <h3 style="color: var(--blue-color); margin-bottom: 20px;">
         <i class="fas fa-shapes"></i> Patrones Más Importantes
       </h3>
-      
+
       <div class="pattern-grid">
         <div class="pattern-card" onclick="showPattern('hombros')">
           <div class="pattern-icon">📐</div>
           <div class="pattern-name">Hombro-Cabeza-Hombro</div>
           <div style="font-size: 0.85rem; color: var(--text-muted);">Reversión bajista</div>
         </div>
-        
+
         <div class="pattern-card" onclick="showPattern('doble')">
           <div class="pattern-icon">⚖</div>
           <div class="pattern-name">Doble Techo/Suelo</div>
           <div style="font-size: 0.85rem; color: var(--text-muted);">Reversión</div>
         </div>
-        
+
         <div class="pattern-card" onclick="showPattern('triangulo')">
           <div class="pattern-icon">🔺</div>
           <div class="pattern-name">Triángulos</div>
           <div style="font-size: 0.85rem; color: var(--text-muted);">Continuación</div>
         </div>
-        
+
         <div class="pattern-card" onclick="showPattern('bandera')">
           <div class="pattern-icon">🚩</div>
           <div class="pattern-name">Bandera/Gallardete</div>
@@ -563,78 +596,79 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Indicadores Principales -->
     <div class="indicator-box">
       <h4>
         <i class="fas fa-wave-square"></i>
         Top 5 Indicadores para Principiantes
       </h4>
-      
+
       <div style="display: grid; gap: 15px;">
         <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
           <strong style="color: #8b5cf6;">1. Media Móvil (MA)</strong><br>
           <span style="color: var(--text-muted);">Identifica la tendencia general del precio.</span>
         </div>
-        
+
         <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
           <strong style="color: #8b5cf6;">2. RSI (Relative Strength Index)</strong><br>
-          <span style="color: var(--text-muted);">Detecta sobrecompra (>70) o sobreventa (<30).</span>
+          <span style="color: var(--text-muted);">Detecta sobrecompra (>70) o sobreventa (<30).< /span>
         </div>
-        
+
         <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
           <strong style="color: #8b5cf6;">3. MACD</strong><br>
           <span style="color: var(--text-muted);">Cruces de líneas indican cambios de momentum.</span>
         </div>
-        
+
         <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
           <strong style="color: #8b5cf6;">4. Bandas de Bollinger</strong><br>
           <span style="color: var(--text-muted);">Miden volatilidad y posibles reversiones.</span>
         </div>
-        
+
         <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
           <strong style="color: #8b5cf6;">5. Volumen</strong><br>
           <span style="color: var(--text-muted);">Confirma la fuerza de los movimientos.</span>
         </div>
       </div>
     </div>
-    
+
     <!-- Progreso del Módulo -->
     <div class="lesson-card">
       <h3 style="color: var(--color-secondary); margin-bottom: 20px;">
         <i class="fas fa-chart-line"></i> Tu Progreso en Análisis Técnico
       </h3>
-      
+
       <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
         <span>Progreso Actual</span>
         <span style="color: var(--blue-color); font-weight: 600;">0%</span>
       </div>
-      
+
       <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
         <div style="width: 0%; height: 100%; background: var(--gradient-chart); border-radius: 4px;"></div>
       </div>
-      
+
       <p style="margin-top: 15px; color: var(--text-muted);">
         Has completado <strong>0 de 8 lecciones</strong>. Este es el módulo más técnico.
       </p>
     </div>
-    
+
     <!-- Consejo Pro -->
     <div class="lesson-card" style="border-color: rgba(200, 167, 82, 0.5); background: rgba(200, 167, 82, 0.05);">
       <h3 style="color: var(--color-secondary); margin-bottom: 20px;">
         <i class="fas fa-lightbulb"></i> Consejo de Experto
       </h3>
-      
+
       <p style="font-size: 1.1rem; line-height: 1.8;">
         <strong>"El análisis técnico no predice el futuro, identifica probabilidades."</strong>
       </p>
-      
+
       <p style="color: var(--text-muted); margin-top: 15px;">
-        Ningún indicador es 100% preciso. Usa múltiples herramientas para confirmar tus decisiones. 
+        Ningún indicador es 100% preciso. Usa múltiples herramientas para confirmar tus decisiones.
         La clave está en combinar análisis técnico con gestión de riesgo sólida.
       </p>
-      
-      <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 4px solid var(--success-color);">
+
+      <div
+        style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 4px solid var(--success-color);">
         <strong style="color: var(--success-color);">✅ RECUERDA:</strong><br>
         Practica en gráficos reales sin operar. TradingView te permite marcar todo sin arriesgar dinero.
       </div>
@@ -659,11 +693,11 @@
     </div>
     <p>Academia de Criptomonedas y Trading</p>
     <div class="copyright">
-  <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
+      <p>YavlGold &copy; 2025 - Creado por Yerikson Varela (YAVL Pro)</p>
     </div>
   </footer>
 
-  <script type="module" src="../gold/assets/js/auth.js"></script>
+  <script type="module" src="../../assets/js/auth.js"></script>
   <script>
     function openLesson(lessonId) {
       const lessons = {
@@ -671,19 +705,19 @@
           title: 'Velas Japonesas',
           content: `
             <h3>🕯 ANATOMÍA DE UNA VELA</h3>
-            
+
             <div style="text-align: center; margin: 30px 0;">
               <div style="display: inline-block; background: rgba(16,185,129,0.1); padding: 30px; border-radius: 15px;">
                 <div style="font-size: 6rem;">🕯</div>
                 <p style="color: var(--text-muted); margin-top: 10px;">Verde = Alcista (Cierre > Apertura)</p>
               </div>
-              
+
               <div style="display: inline-block; background: rgba(239,68,68,0.1); padding: 30px; border-radius: 15px; margin-left: 20px;">
                 <div style="font-size: 6rem;">🕯</div>
                 <p style="color: var(--text-muted); margin-top: 10px;">Roja = Bajista (Cierre < Apertura)</p>
               </div>
             </div>
-            
+
             <h4>📊 COMPONENTES</h4>
             <ul>
               <li><strong>Cuerpo:</strong> Diferencia entre apertura y cierre</li>
@@ -701,7 +735,7 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       checkAuth();
     });
   </script>
