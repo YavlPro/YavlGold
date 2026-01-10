@@ -1,1 +1,1215 @@
-<!DOCTYPE html> <html lang="es"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>YavlGold V9.4 - Módulo Agro</title> <!-- Google Fonts --> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet"> <style> /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */ *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; } :root { /* Colores Base */ --bg-base: #0a0a0a; --bg-card: #1a1a1a; --border-subtle: #2a2a2a; /* Dorado YavlGold */ --gold-primary: #C8A752; --gold-light: #e8d090; --gold-dark: #9a7f3c; --gold-glow: rgba(200, 167, 82, 0.6); /* Texto */ --text-primary: #ffffff; --text-secondary: rgba(255, 255, 255, 0.65); --text-muted: rgba(255, 255, 255, 0.4); /* Estados */ --success: #4ade80; --warning: #fbbf24; --danger: #f87171; /* Espaciado */ --spacing-xs: 0.5rem; --spacing-sm: 0.75rem; --spacing-md: 1rem; --spacing-lg: 1.5rem; --spacing-xl: 2rem; --spacing-2xl: 3rem; /* Bordes */ --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-pill: 50px; } /* ============================================ BASE STYLES ============================================ */ html { scroll-behavior: smooth; } body { font-family: 'Rajdhani', sans-serif; font-weight: 400; background-color: var(--bg-base); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; line-height: 1.5; } /* ============================================ ANIMACIÓN FONDO PULSE DORADO ============================================ */ .bg-animated { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; } .bg-pulse-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200vmax; height: 200vmax; background: radial-gradient( circle at center, rgba(200, 167, 82, 0.08) 0%, rgba(200, 167, 82, 0.04) 25%, rgba(200, 167, 82, 0.01) 45%, transparent 60% ); animation: pulseGlow 8s ease-in-out infinite; } @keyframes pulseGlow { 0%, 100% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.6; } 50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; } } /* Partículas decorativas */ .particle { position: absolute; width: 4px; height: 4px; background: var(--gold-primary); border-radius: 50%; opacity: 0.3; animation: float 20s infinite ease-in-out; } .particle:nth-child(2) { top: 20%; left: 80%; animation-delay: -5s; animation-duration: 25s; } .particle:nth-child(3) { top: 60%; left: 10%; animation-delay: -10s; animation-duration: 22s; } .particle:nth-child(4) { top: 80%; left: 70%; animation-delay: -15s; animation-duration: 28s; } .particle:nth-child(5) { top: 40%; left: 90%; animation-delay: -8s; animation-duration: 18s; } @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; } 25% { transform: translate(30px, -50px) scale(1.5); opacity: 0.5; } 50% { transform: translate(-20px, 30px) scale(1); opacity: 0.3; } 75% { transform: translate(50px, 20px) scale(1.3); opacity: 0.4; } } /* ============================================ LAYOUT CONTAINER ============================================ */ .app-container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: var(--spacing-md); } @media (min-width: 768px) { .app-container { padding: var(--spacing-lg) var(--spacing-xl); } } /* ============================================ HEADER ============================================ */ .header { display: flex; flex-direction: column; gap: var(--spacing-md); padding: var(--spacing-lg) 0; border-bottom: 1px solid var(--border-subtle); margin-bottom: var(--spacing-xl); } @media (min-width: 640px) { .header { flex-direction: row; justify-content: space-between; align-items: center; } } .logo-container { display: flex; align-items: center; gap: var(--spacing-sm); } .logo-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3); } .logo-text { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.75rem; background: linear-gradient(135deg, var(--gold-light), var(--gold-primary), var(--gold-dark)); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: textGlow 4s ease-in-out infinite, shimmerText 3s linear infinite; } @keyframes textGlow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(200, 167, 82, 0.4)); } 50% { filter: drop-shadow(0 0 25px rgba(200, 167, 82, 0.9)) drop-shadow(0 0 50px rgba(200, 167, 82, 0.4)); } } @keyframes shimmerText { 0% { background-position: 0% center; } 100% { background-position: 200% center; } } .version-badge { font-family: 'Orbitron', sans-serif; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; background: rgba(200, 167, 82, 0.15); border: 1px solid var(--gold-primary); border-radius: var(--radius-pill); color: var(--gold-primary); margin-left: var(--spacing-xs); } .user-profile { display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-sm) var(--spacing-md); background: rgba(26, 26, 26, 0.6); backdrop-filter: blur(10px); border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); transition: all 0.3s ease; } .user-profile:hover { border-color: rgba(200, 167, 82, 0.3); box-shadow: 0 4px 20px rgba(200, 167, 82, 0.1); } .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 2px solid var(--gold-primary); box-shadow: 0 0 15px rgba(200, 167, 82, 0.3); } .user-info { display: flex; flex-direction: column; } .user-greeting { font-size: 0.75rem; color: var(--text-muted); } .user-name { font-weight: 600; font-size: 0.95rem; color: var(--gold-primary); } /* ============================================ SECTION TITLES ============================================ */ .section-header { display: flex; flex-direction: column; gap: var(--spacing-sm); margin-bottom: var(--spacing-lg); } @media (min-width: 640px) { .section-header { flex-direction: row; justify-content: space-between; align-items: center; } } .section-title { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--text-primary); display: flex; align-items: center; gap: var(--spacing-sm); animation: textGlow 4s ease-in-out infinite; } .section-title::before { content: ''; width: 4px; height: 24px; background: linear-gradient(180deg, var(--gold-light), var(--gold-primary), var(--gold-dark)); border-radius: 2px; box-shadow: 0 0 10px rgba(200, 167, 82, 0.5); } .section-title .icon { font-size: 1.2rem; } /* ============================================ CARDS - GLASSMORPHISM ============================================ */ .card { background: rgba(26, 26, 26, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--spacing-lg); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; } .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.3), transparent); opacity: 0; transition: opacity 0.4s ease; } .card:hover { border-color: rgba(200, 167, 82, 0.25); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(200, 167, 82, 0.08), inset 0 1px 0 rgba(200, 167, 82, 0.1); transform: translateY(-4px); } .card:hover::before { opacity: 1; } /* ============================================ KPI SECTION ============================================ */ .kpi-grid { display: grid; grid-template-columns: 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-2xl); } @media (min-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } } @media (min-width: 1024px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } } .kpi-card { display: flex; gap: var(--spacing-md); align-items: flex-start; } .kpi-icon-wrapper { flex-shrink: 0; width: 56px; height: 56px; border-radius: var(--radius-md); background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(200, 167, 82, 0.05)); border: 1px solid rgba(200, 167, 82, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; animation: breathe 5s ease-in-out infinite; box-shadow: 0 4px 15px rgba(200, 167, 82, 0.1); } @keyframes breathe { 0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(200, 167, 82, 0.1); } 50% { transform: scale(1.08); box-shadow: 0 6px 25px rgba(200, 167, 82, 0.25); } } .kpi-content { flex: 1; min-width: 0; } .kpi-label { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: var(--spacing-xs); } .kpi-value { font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; } .kpi-value .highlight { color: var(--gold-primary); font-weight: 700; } .kpi-secondary { font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: var(--spacing-sm); } .kpi-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(200, 167, 82, 0.1); border-radius: var(--radius-pill); font-size: 0.75rem; color: var(--gold-primary); } /* ============================================ CROPS SECTION ============================================ */ .crops-grid { display: grid; grid-template-columns: 1fr; gap: var(--spacing-md); margin-bottom: var(--spacing-2xl); } @media (min-width: 640px) { .crops-grid { grid-template-columns: repeat(2, 1fr); } } @media (min-width: 1024px) { .crops-grid { grid-template-columns: repeat(3, 1fr); } } .crop-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-md); } .crop-info { display: flex; gap: var(--spacing-sm); align-items: center; } .crop-icon { width: 52px; height: 52px; border-radius: var(--radius-md); background: linear-gradient(135deg, rgba(200, 167, 82, 0.12), rgba(200, 167, 82, 0.04)); border: 1px solid rgba(200, 167, 82, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; animation: breathe 5s ease-in-out infinite; } .crop-icon:nth-child(1) { animation-delay: 0s; } .crop-card:nth-child(2) .crop-icon { animation-delay: -1.5s; } .crop-card:nth-child(3) .crop-icon { animation-delay: -3s; } .crop-details-header { display: flex; flex-direction: column; } .crop-name { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1rem; color: var(--text-primary); } .crop-variety { font-size: 0.85rem; color: var(--text-secondary); } .crop-status { padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; } .status-growing { background: rgba(74, 222, 128, 0.15); color: var(--success); border: 1px solid rgba(74, 222, 128, 0.3); } .status-ready { background: rgba(200, 167, 82, 0.15); color: var(--gold-primary); border: 1px solid rgba(200, 167, 82, 0.3); animation: pulseStatus 2s ease-in-out infinite; } @keyframes pulseStatus { 0%, 100% { box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.4); } 50% { box-shadow: 0 0 0 6px rgba(200, 167, 82, 0); } } .status-attention { background: rgba(251, 191, 36, 0.15); color: var(--warning); border: 1px solid rgba(251, 191, 36, 0.3); } /* Progress Bar */ .progress-section { margin-bottom: var(--spacing-md); } .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs); } .progress-label { font-size: 0.8rem; color: var(--text-secondary); } .progress-value { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--gold-primary); } .progress-track { height: 8px; background: rgba(42, 42, 42, 0.8); border-radius: 4px; overflow: hidden; position: relative; } .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary), var(--gold-light)); border-radius: 4px; position: relative; transition: width 1s ease-out; } .progress-fill::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient( 90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100% ); animation: shimmer 2.5s infinite; } @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } } /* Crop Details Grid */ .crop-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-sm); padding-top: var(--spacing-md); border-top: 1px solid var(--border-subtle); } .crop-meta-item { display: flex; flex-direction: column; gap: 2px; } .meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); } .meta-value { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); } .meta-value.gold { color: var(--gold-primary); } /* ============================================ CALCULATOR SECTION ============================================ */ .calculator-section { margin-bottom: var(--spacing-2xl); } .calculator-form { display: grid; grid-template-columns: 1fr; gap: var(--spacing-md); } @media (min-width: 768px) { .calculator-form { grid-template-columns: 1fr 1fr 1fr auto; align-items: end; } } .input-group { display: flex; flex-direction: column; gap: var(--spacing-xs); } .input-label { font-family: 'Orbitron', sans-serif; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-secondary); } .input-wrapper { position: relative; display: flex; align-items: center; } .input-prefix { position: absolute; left: var(--spacing-md); font-weight: 600; color: var(--gold-primary); font-size: 1.1rem; } .styled-input { width: 100%; padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 2.5rem; background: rgba(26, 26, 26, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); font-family: 'Rajdhani', sans-serif; font-size: 1.1rem; font-weight: 600; transition: all 0.3s ease; } .styled-input:focus { outline: none; border-color: var(--gold-primary); box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1), 0 0 20px rgba(200, 167, 82, 0.15); background: rgba(26, 26, 26, 0.9); } .styled-input::placeholder { color: var(--text-muted); } /* Buttons */ .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-xs); font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; border: none; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; } .btn-primary { padding: var(--spacing-md) var(--spacing-xl); background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); color: var(--bg-base); border-radius: var(--radius-pill); box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3); } .btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 30px rgba(200, 167, 82, 0.4), 0 0 40px rgba(200, 167, 82, 0.2); } .btn-primary:active { transform: translateY(0) scale(0.98); } .btn-outline { padding: var(--spacing-sm) var(--spacing-md); background: transparent; color: var(--gold-primary); border: 2px solid var(--gold-primary); border-radius: var(--radius-pill); } .btn-outline:hover { background: var(--gold-primary); color: var(--bg-base); box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3); } /* ROI Result */ .roi-result { margin-top: var(--spacing-lg); padding: var(--spacing-lg); background: linear-gradient(135deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02)); border: 1px solid rgba(200, 167, 82, 0.2); border-radius: var(--radius-lg); display: none; } .roi-result.visible { display: block; animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1); } @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } } .roi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-md); } @media (min-width: 768px) { .roi-grid { grid-template-columns: repeat(4, 1fr); } } .roi-item { text-align: center; padding: var(--spacing-md); background: rgba(26, 26, 26, 0.5); border-radius: var(--radius-md); border: 1px solid var(--border-subtle); } .roi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: var(--spacing-xs); } .roi-value { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 1.4rem; animation: textGlow 4s ease-in-out infinite; } .roi-value.gold { color: var(--gold-primary); } .roi-value.profit { color: var(--success); } .roi-value.loss { color: var(--danger); } /* ============================================ FOOTER ============================================ */ .footer { text-align: center; padding: var(--spacing-xl) 0; border-top: 1px solid var(--border-subtle); margin-top: var(--spacing-xl); } .footer-text { font-size: 0.85rem; color: var(--text-secondary); } .footer-text .highlight { color: var(--gold-primary); font-weight: 600; } .footer-links { display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: var(--spacing-md); } .footer-link { font-size: 0.8rem; color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; } .footer-link:hover { color: var(--gold-primary); } /* ============================================ ENTRANCE ANIMATIONS ============================================ */ .animate-in { opacity: 0; transform: translateY(30px); animation: animateIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; } @keyframes animateIn { to { opacity: 1; transform: translateY(0); } } .delay-1 { animation-delay: 0.1s; } .delay-2 { animation-delay: 0.2s; } .delay-3 { animation-delay: 0.3s; } .delay-4 { animation-delay: 0.4s; } .delay-5 { animation-delay: 0.5s; } .delay-6 { animation-delay: 0.6s; } /* ============================================ SCROLLBAR STYLING ============================================ */ ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg-base); } ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); } /* ============================================ UTILITIES ============================================ */ .text-gold { color: var(--gold-primary); } .text-success { color: var(--success); } .text-warning { color: var(--warning); } </style> </head> <body> <!-- Animated Background --> <div class="bg-animated"> <div class="bg-pulse-glow"></div> <div class="particle" style="top: 10%; left: 20%;"></div> <div class="particle"></div> <div class="particle"></div> <div class="particle"></div> <div class="particle"></div> </div> <div class="app-container"> <!-- Header --> <header class="header animate-in"> <div class="logo-container"> <div class="logo-icon">🌾</div> <span class="logo-text">YavlGold</span> <span class="version-badge">V9.4</span> </div> <div class="user-profile"> <div class="user-avatar">👨‍🌾</div> <div class="user-info"> <span class="user-greeting">Bienvenido,</span> <span class="user-name">Agricultor</span> </div> </div> </header> <!-- KPIs Section --> <section class="kpi-section"> <div class="section-header animate-in delay-1"> <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2> </div> <div class="kpi-grid"> <!-- Clima --> <div class="card kpi-card animate-in delay-2"> <div class="kpi-icon-wrapper">🌤️</div> <div class="kpi-content"> <div class="kpi-label">Clima Local</div> <div class="kpi-value">La Grita: <span class="highlight">18°C</span></div> <div class="kpi-secondary"> <span class="kpi-tag">☁️ Nublado</span> <span class="kpi-tag">💧 72%</span> </div> </div> </div> <!-- Mercados --> <div class="card kpi-card animate-in delay-3"> <div class="kpi-icon-wrapper" style="animation-delay: -2s;">📈</div> <div class="kpi-content"> <div class="kpi-label">Mercados</div> <div class="kpi-value">BTC/USDT: <span class="highlight" id="btcPrice">$98,547</span></div> <div class="kpi-secondary"> <span class="kpi-tag">🥔 $0.8/kg</span> <span class="kpi-tag">🥕 $1.2/kg</span> </div> </div> </div> <!-- Alerta Lunar --> <div class="card kpi-card animate-in delay-4"> <div class="kpi-icon-wrapper" style="animation-delay: -4s;">🌙</div> <div class="kpi-content"> <div class="kpi-label">Fase Lunar</div> <div class="kpi-value">Cuarto <span class="highlight">Menguante</span></div> <div class="kpi-secondary"> <span class="kpi-tag">✂️ Ideal poda</span> <span class="kpi-tag">🌱 Trasplante</span> </div> </div> </div> </div> </section> <!-- Active Crops Section --> <section class="crops-section"> <div class="section-header animate-in delay-3"> <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button class="btn btn-outline">+ Nuevo Cultivo</button> </div> <div class="crops-grid"> <!-- Crop 1: Papa --> <div class="card crop-card animate-in delay-4"> <div class="crop-card-header"> <div class="crop-info"> <div class="crop-icon">🥔</div> <div class="crop-details-header"> <span class="crop-name">Papa</span> <span class="crop-variety">Variedad Granola</span> </div> </div> <span class="crop-status status-growing">Creciendo</span> </div> <div class="progress-section"> <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span class="progress-value">65%</span> </div> <div class="progress-track"> <div class="progress-fill" style="width: 65%;"></div> </div> </div> <div class="crop-meta-grid"> <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">15 Oct 2024</span> </div> <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span class="meta-value">28 Ene 2025</span> </div> <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">2.5 Ha</span> </div> <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span class="meta-value gold">$4,200</span> </div> </div> </div> <!-- Crop 2: Zanahoria --> <div class="card crop-card animate-in delay-5"> <div class="crop-card-header"> <div class="crop-info"> <div class="crop-icon">🥕</div> <div class="crop-details-header"> <span class="crop-name">Zanahoria</span> <span class="crop-variety">Chantenay Royal</span> </div> </div> <span class="crop-status status-ready">¡Lista!</span> </div> <div class="progress-section"> <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span class="progress-value">100%</span> </div> <div class="progress-track"> <div class="progress-fill" style="width: 100%;"></div> </div> </div> <div class="crop-meta-grid"> <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">01 Sep 2024</span> </div> <div class="crop-meta-item"> <span class="meta-label">Cosecha</span> <span class="meta-value text-success">¡Hoy!</span> </div> <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.8 Ha</span> </div> <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span class="meta-value gold">$2,800</span> </div> </div> </div> <!-- Crop 3: Cebolla --> <div class="card crop-card animate-in delay-6"> <div class="crop-card-header"> <div class="crop-info"> <div class="crop-icon">🧅</div> <div class="crop-details-header"> <span class="crop-name">Cebolla</span> <span class="crop-variety">Roja Criolla</span> </div> </div> <span class="crop-status status-attention">Atención</span> </div> <div class="progress-section"> <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span class="progress-value">35%</span> </div> <div class="progress-track"> <div class="progress-fill" style="width: 35%;"></div> </div> </div> <div class="crop-meta-grid"> <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">20 Nov 2024</span> </div> <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span class="meta-value">15 Mar 2025</span> </div> <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.2 Ha</span> </div> <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span class="meta-value gold">$1,950</span> </div> </div> </div> </div> </section> <!-- ROI Calculator Section --> <section class="calculator-section"> <div class="section-header animate-in delay-4"> <h2 class="section-title"><span class="icon">🧮</span> Calculadora ROI Rápida</h2> </div> <div class="card animate-in delay-5"> <div class="calculator-form"> <div class="input-group"> <label class="input-label" for="investment">Costo de Inversión</label> <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number" id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01" > </div> </div> <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label> <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number" id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01" > </div> </div> <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label> <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number" id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1" > </div> </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button> </div> <!-- Results --> <div class="roi-result" id="roiResult"> <div class="roi-grid"> <div class="roi-item"> <div class="roi-label">Inversión</div> <div class="roi-value gold" id="resultInvestment">$0</div> </div> <div class="roi-item"> <div class="roi-label">Ingresos</div> <div class="roi-value gold" id="resultRevenue">$0</div> </div> <div class="roi-item"> <div class="roi-label">Ganancia Neta</div> <div class="roi-value" id="resultProfit">$0</div> </div> <div class="roi-item"> <div class="roi-label">ROI</div> <div class="roi-value" id="resultROI">0%</div> </div> </div> </div> </div> </section> <!-- Footer --> <footer class="footer animate-in delay-6"> <p class="footer-text"> <span class="highlight">YavlGold</span> V9.4 • Módulo Agro • Desarrollado con 🌾 para agricultores </p> <div class="footer-links"> <a href="#" class="footer-link">Documentación</a> <a href="#" class="footer-link">Soporte</a> <a href="#" class="footer-link">GitHub</a> </div> </footer> </div> <script> // ============================================ // ROI CALCULATOR // ============================================ function calculateROI() { const investment = parseFloat(document.getElementById('investment').value) || 0; const revenue = parseFloat(document.getElementById('revenue').value) || 0; const quantity = parseFloat(document.getElementById('quantity').value) || 0; const profit = revenue - investment; const roi = investment > 0 ? ((profit / investment) * 100) : 0; const pricePerKg = quantity > 0 ? (revenue / quantity) : 0; // Update DOM document.getElementById('resultInvestment').textContent = formatCurrency(investment); document.getElementById('resultRevenue').textContent = formatCurrency(revenue); const profitEl = document.getElementById('resultProfit'); profitEl.textContent = formatCurrency(profit); profitEl.className = `roi-value ${profit >= 0 ? 'profit' : 'loss'}`; const roiEl = document.getElementById('resultROI'); roiEl.textContent = `${roi.toFixed(1)}%`; roiEl.className = `roi-value ${roi >= 0 ? 'profit' : 'loss'}`; // Show results with animation const resultDiv = document.getElementById('roiResult'); resultDiv.classList.remove('visible'); // Force reflow void resultDiv.offsetWidth; resultDiv.classList.add('visible'); } function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); } // Allow Enter key to calculate document.querySelectorAll('.styled-input').forEach(input => { input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { calculateROI(); } }); }); // ============================================ // SIMULATED REAL-TIME DATA // ============================================ function updateMarketData() { const basePrice = 98000; const variance = (Math.random() - 0.5) * 2000; const newPrice = basePrice + variance; const priceEl = document.getElementById('btcPrice'); if (priceEl) { priceEl.textContent = `$${newPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`; // Add flash effect priceEl.style.transition = 'color 0.3s ease'; priceEl.style.color = variance > 0 ? '#4ade80' : '#f87171'; setTimeout(() => { priceEl.style.color = '#C8A752'; }, 1000); } } // Update every 8 seconds setInterval(updateMarketData, 8000); // ============================================ // PROGRESS BAR ANIMATIONS ON LOAD // ============================================ document.addEventListener('DOMContentLoaded', () => { // Animate progress bars setTimeout(() => { document.querySelectorAll('.progress-fill').forEach(bar => { const width = bar.style.width; bar.style.width = '0%'; setTimeout(() => { bar.style.width = width; }, 100); }); }, 800); }); // ============================================ // PARTICLES RANDOM POSITIONING // ============================================ document.querySelectorAll('.particle').forEach((particle, index) => { particle.style.top = `${Math.random() * 100}%`; particle.style.left = `${Math.random() * 100}%`; particle.style.animationDelay = `${-Math.random() * 20}s`; particle.style.animationDuration = `${15 + Math.random() * 15}s`; }); console.log('%c🌾 YavlGold V9.4 - Módulo Agro Loaded', 'background: linear-gradient(135deg, #C8A752, #9a7f3c); color: #0a0a0a; padding: 10px 20px; border-radius: 5px; font-weight: bold;'); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YavlGold V9.4 - Módulo Agro</title>
+    <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
+    <link rel="apple-touch-icon" href="../assets/images/logo.webp"> <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Colores Base */
+            --bg-base: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --border-subtle: #2a2a2a;
+            /* Dorado YavlGold */
+            --gold-primary: #C8A752;
+            --gold-light: #e8d090;
+            --gold-dark: #9a7f3c;
+            --gold-glow: rgba(200, 167, 82, 0.6);
+            /* Texto */
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.65);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            /* Estados */
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            /* Espaciado */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 0.75rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            /* Bordes */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --radius-pill: 50px;
+        }
+
+        /* ============================================ BASE STYLES ============================================ */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 400;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* ============================================ ANIMACIÓN FONDO PULSE DORADO ============================================ */
+        .bg-animated {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-pulse-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200vmax;
+            height: 200vmax;
+            background: radial-gradient(circle at center, rgba(200, 167, 82, 0.08) 0%, rgba(200, 167, 82, 0.04) 25%, rgba(200, 167, 82, 0.01) 45%, transparent 60%);
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(0.85);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.15);
+                opacity: 1;
+            }
+        }
+
+        /* Partículas decorativas */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--gold-primary);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .particle:nth-child(2) {
+            top: 20%;
+            left: 80%;
+            animation-delay: -5s;
+            animation-duration: 25s;
+        }
+
+        .particle:nth-child(3) {
+            top: 60%;
+            left: 10%;
+            animation-delay: -10s;
+            animation-duration: 22s;
+        }
+
+        .particle:nth-child(4) {
+            top: 80%;
+            left: 70%;
+            animation-delay: -15s;
+            animation-duration: 28s;
+        }
+
+        .particle:nth-child(5) {
+            top: 40%;
+            left: 90%;
+            animation-delay: -8s;
+            animation-duration: 18s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.2;
+            }
+
+            25% {
+                transform: translate(30px, -50px) scale(1.5);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: translate(-20px, 30px) scale(1);
+                opacity: 0.3;
+            }
+
+            75% {
+                transform: translate(50px, 20px) scale(1.3);
+                opacity: 0.4;
+            }
+        }
+
+        /* ============================================ LAYOUT CONTAINER ============================================ */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-md);
+        }
+
+        @media (min-width: 768px) {
+            .app-container {
+                padding: var(--spacing-lg) var(--spacing-xl);
+            }
+        }
+
+        /* ============================================ HEADER ============================================ */
+        .header {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg) 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        @media (min-width: 640px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3);
+        }
+
+        .logo-img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(200, 167, 82, 0.5));
+            animation: logoBreathe 4s ease-in-out infinite;
+            border-radius: var(--radius-md);
+        }
+
+        @keyframes logoBreathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 5px rgba(200, 167, 82, 0.5));
+            }
+
+            50% {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 12px rgba(200, 167, 82, 0.8));
+            }
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--gold-light), var(--gold-primary), var(--gold-dark));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textGlow 4s ease-in-out infinite, shimmerText 3s linear infinite;
+        }
+
+        @keyframes textGlow {
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 8px rgba(200, 167, 82, 0.4));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 25px rgba(200, 167, 82, 0.9)) drop-shadow(0 0 50px rgba(200, 167, 82, 0.4));
+            }
+        }
+
+        @keyframes shimmerText {
+            0% {
+                background-position: 0% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        .version-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            background: rgba(200, 167, 82, 0.15);
+            border: 1px solid var(--gold-primary);
+            border-radius: var(--radius-pill);
+            color: var(--gold-primary);
+            margin-left: var(--spacing-xs);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(26, 26, 26, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-pill);
+            transition: all 0.3s ease;
+        }
+
+        .user-profile:hover {
+            border-color: rgba(200, 167, 82, 0.3);
+            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.1);
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 2px solid var(--gold-primary);
+            box-shadow: 0 0 15px rgba(200, 167, 82, 0.3);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-greeting {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--gold-primary);
+        }
+
+        /* ============================================ SECTION TITLES ============================================ */
+        .section-header {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        @media (min-width: 640px) {
+            .section-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            animation: textGlow 4s ease-in-out infinite;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--gold-light), var(--gold-primary), var(--gold-dark));
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(200, 167, 82, 0.5);
+        }
+
+        .section-title .icon {
+            font-size: 1.2rem;
+        }
+
+        /* ============================================ CARDS - GLASSMORPHISM ============================================ */
+        .card {
+            background: rgba(26, 26, 26, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(200, 167, 82, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(200, 167, 82, 0.08), inset 0 1px 0 rgba(200, 167, 82, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* ============================================ KPI SECTION ============================================ */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        @media (min-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .kpi-card {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: flex-start;
+        }
+
+        .kpi-icon-wrapper {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(200, 167, 82, 0.05));
+            border: 1px solid rgba(200, 167, 82, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            animation: breathe 5s ease-in-out infinite;
+            box-shadow: 0 4px 15px rgba(200, 167, 82, 0.1);
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 15px rgba(200, 167, 82, 0.1);
+            }
+
+            50% {
+                transform: scale(1.08);
+                box-shadow: 0 6px 25px rgba(200, 167, 82, 0.25);
+            }
+        }
+
+        .kpi-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .kpi-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .kpi-value {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .kpi-value .highlight {
+            color: var(--gold-primary);
+            font-weight: 700;
+        }
+
+        .kpi-secondary {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+
+        .kpi-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: rgba(200, 167, 82, 0.1);
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            color: var(--gold-primary);
+        }
+
+        /* ============================================ CROPS SECTION ============================================ */
+        .crops-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        @media (min-width: 640px) {
+            .crops-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .crops-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .crop-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .crop-info {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .crop-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(200, 167, 82, 0.12), rgba(200, 167, 82, 0.04));
+            border: 1px solid rgba(200, 167, 82, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            animation: breathe 5s ease-in-out infinite;
+        }
+
+        .crop-icon:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .crop-card:nth-child(2) .crop-icon {
+            animation-delay: -1.5s;
+        }
+
+        .crop-card:nth-child(3) .crop-icon {
+            animation-delay: -3s;
+        }
+
+        .crop-details-header {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .crop-name {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .crop-variety {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .crop-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-pill);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .status-growing {
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .status-ready {
+            background: rgba(200, 167, 82, 0.15);
+            color: var(--gold-primary);
+            border: 1px solid rgba(200, 167, 82, 0.3);
+            animation: pulseStatus 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseStatus {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(200, 167, 82, 0);
+            }
+        }
+
+        .status-attention {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .progress-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--gold-primary);
+        }
+
+        .progress-track {
+            height: 8px;
+            background: rgba(42, 42, 42, 0.8);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold-dark), var(--gold-primary), var(--gold-light));
+            border-radius: 4px;
+            position: relative;
+            transition: width 1s ease-out;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 50%, transparent 100%);
+            animation: shimmer 2.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* Crop Details Grid */
+        .crop-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-sm);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .crop-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .meta-value.gold {
+            color: var(--gold-primary);
+        }
+
+        /* ============================================ CALCULATOR SECTION ============================================ */
+        .calculator-section {
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .calculator-form {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        @media (min-width: 768px) {
+            .calculator-form {
+                grid-template-columns: 1fr 1fr 1fr auto;
+                align-items: end;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .input-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-prefix {
+            position: absolute;
+            left: var(--spacing-md);
+            font-weight: 600;
+            color: var(--gold-primary);
+            font-size: 1.1rem;
+        }
+
+        .styled-input {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 2.5rem;
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .styled-input:focus {
+            outline: none;
+            border-color: var(--gold-primary);
+            box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1), 0 0 20px rgba(200, 167, 82, 0.15);
+            background: rgba(26, 26, 26, 0.9);
+        }
+
+        .styled-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            padding: var(--spacing-md) var(--spacing-xl);
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            color: var(--bg-base);
+            border-radius: var(--radius-pill);
+            box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(200, 167, 82, 0.4), 0 0 40px rgba(200, 167, 82, 0.2);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-outline {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: transparent;
+            color: var(--gold-primary);
+            border: 2px solid var(--gold-primary);
+            border-radius: var(--radius-pill);
+        }
+
+        .btn-outline:hover {
+            background: var(--gold-primary);
+            color: var(--bg-base);
+            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3);
+        }
+
+        /* ROI Result */
+        .roi-result {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02));
+            border: 1px solid rgba(200, 167, 82, 0.2);
+            border-radius: var(--radius-lg);
+            display: none;
+        }
+
+        .roi-result.visible {
+            display: block;
+            animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .roi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        @media (min-width: 768px) {
+            .roi-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .roi-item {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: rgba(26, 26, 26, 0.5);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .roi-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .roi-value {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.4rem;
+            animation: textGlow 4s ease-in-out infinite;
+        }
+
+        .roi-value.gold {
+            color: var(--gold-primary);
+        }
+
+        .roi-value.profit {
+            color: var(--success);
+        }
+
+        .roi-value.loss {
+            color: var(--danger);
+        }
+
+        /* ============================================ FOOTER ============================================ */
+        .footer {
+            text-align: center;
+            padding: var(--spacing-xl) 0;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: var(--spacing-xl);
+        }
+
+        .footer-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-text .highlight {
+            color: var(--gold-primary);
+            font-weight: 600;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+        }
+
+        .footer-link {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--gold-primary);
+        }
+
+        /* ============================================ ENTRANCE ANIMATIONS ============================================ */
+        .animate-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: animateIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes animateIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-5 {
+            animation-delay: 0.5s;
+        }
+
+        .delay-6 {
+            animation-delay: 0.6s;
+        }
+
+        /* ============================================ SCROLLBAR STYLING ============================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-subtle);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gold-dark);
+        }
+
+        /* ============================================ UTILITIES ============================================ */
+        .text-gold {
+            color: var(--gold-primary);
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .text-warning {
+            color: var(--warning);
+        }
+    </style>
+</head>
+
+<body> <!-- Animated Background -->
+    <div class="bg-animated">
+        <div class="bg-pulse-glow"></div>
+        <div class="particle" style="top: 10%; left: 20%;"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    <div class="app-container"> <!-- Header -->
+        <header class="header animate-in">
+            <div class="logo-container"> <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
+                    class="logo-text">YavlGold</span> <span class="version-badge">V9.4</span>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar">👨‍🌾</div>
+                <div class="user-info"> <span class="user-greeting">Bienvenido,</span> <span
+                        class="user-name">Agricultor</span> </div>
+            </div>
+        </header> <!-- KPIs Section -->
+        <section class="kpi-section">
+            <div class="section-header animate-in delay-1">
+                <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2>
+            </div>
+            <div class="kpi-grid"> <!-- Clima -->
+                <div class="card kpi-card animate-in delay-2">
+                    <div class="kpi-icon-wrapper">🌤️</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Clima Local</div>
+                        <div class="kpi-value">La Grita: <span class="highlight">18°C</span></div>
+                        <div class="kpi-secondary"> <span class="kpi-tag">☁️ Nublado</span> <span class="kpi-tag">💧
+                                72%</span> </div>
+                    </div>
+                </div> <!-- Mercados -->
+                <div class="card kpi-card animate-in delay-3">
+                    <div class="kpi-icon-wrapper" style="animation-delay: -2s;">📈</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Mercados</div>
+                        <div class="kpi-value">BTC/USDT: <span class="highlight" id="btcPrice">$98,547</span></div>
+                        <div class="kpi-secondary"> <span class="kpi-tag">🥔 $0.8/kg</span> <span class="kpi-tag">🥕
+                                $1.2/kg</span> </div>
+                    </div>
+                </div> <!-- Alerta Lunar -->
+                <div class="card kpi-card animate-in delay-4">
+                    <div class="kpi-icon-wrapper" style="animation-delay: -4s;">🌙</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Fase Lunar</div>
+                        <div class="kpi-value">Cuarto <span class="highlight">Menguante</span></div>
+                        <div class="kpi-secondary"> <span class="kpi-tag">✂️ Ideal poda</span> <span class="kpi-tag">🌱
+                                Trasplante</span> </div>
+                    </div>
+                </div>
+            </div>
+        </section> <!-- Active Crops Section -->
+        <section class="crops-section">
+            <div class="section-header animate-in delay-3">
+                <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button
+                    class="btn btn-outline">+ Nuevo Cultivo</button>
+            </div>
+            <div class="crops-grid"> <!-- Crop 1: Papa -->
+                <div class="card crop-card animate-in delay-4">
+                    <div class="crop-card-header">
+                        <div class="crop-info">
+                            <div class="crop-icon">🥔</div>
+                            <div class="crop-details-header"> <span class="crop-name">Papa</span> <span
+                                    class="crop-variety">Variedad Granola</span> </div>
+                        </div> <span class="crop-status status-growing">Creciendo</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
+                                class="progress-value">65%</span> </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                    <div class="crop-meta-grid">
+                        <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">15
+                                Oct 2024</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span
+                                class="meta-value">28 Ene 2025</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">2.5
+                                Ha</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
+                                class="meta-value gold">$4,200</span> </div>
+                    </div>
+                </div> <!-- Crop 2: Zanahoria -->
+                <div class="card crop-card animate-in delay-5">
+                    <div class="crop-card-header">
+                        <div class="crop-info">
+                            <div class="crop-icon">🥕</div>
+                            <div class="crop-details-header"> <span class="crop-name">Zanahoria</span> <span
+                                    class="crop-variety">Chantenay Royal</span> </div>
+                        </div> <span class="crop-status status-ready">¡Lista!</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
+                                class="progress-value">100%</span> </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="crop-meta-grid">
+                        <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">01
+                                Sep 2024</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Cosecha</span> <span
+                                class="meta-value text-success">¡Hoy!</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.8
+                                Ha</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
+                                class="meta-value gold">$2,800</span> </div>
+                    </div>
+                </div> <!-- Crop 3: Cebolla -->
+                <div class="card crop-card animate-in delay-6">
+                    <div class="crop-card-header">
+                        <div class="crop-info">
+                            <div class="crop-icon">🧅</div>
+                            <div class="crop-details-header"> <span class="crop-name">Cebolla</span> <span
+                                    class="crop-variety">Roja Criolla</span> </div>
+                        </div> <span class="crop-status status-attention">Atención</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-header"> <span class="progress-label">Ciclo de Cosecha</span> <span
+                                class="progress-value">35%</span> </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: 35%;"></div>
+                        </div>
+                    </div>
+                    <div class="crop-meta-grid">
+                        <div class="crop-meta-item"> <span class="meta-label">Siembra</span> <span class="meta-value">20
+                                Nov 2024</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Cosecha Est.</span> <span
+                                class="meta-value">15 Mar 2025</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Área</span> <span class="meta-value">1.2
+                                Ha</span> </div>
+                        <div class="crop-meta-item"> <span class="meta-label">Inversión</span> <span
+                                class="meta-value gold">$1,950</span> </div>
+                    </div>
+                </div>
+            </div>
+        </section> <!-- ROI Calculator Section -->
+        <section class="calculator-section">
+            <div class="section-header animate-in delay-4">
+                <h2 class="section-title"><span class="icon">🧮</span> Calculadora ROI Rápida</h2>
+            </div>
+            <div class="card animate-in delay-5">
+                <div class="calculator-form">
+                    <div class="input-group"> <label class="input-label" for="investment">Costo de Inversión</label>
+                        <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
+                                id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01"> </div>
+                    </div>
+                    <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label>
+                        <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
+                                id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01"> </div>
+                    </div>
+                    <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
+                        <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number"
+                                id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1"> </div>
+                    </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
+                </div> <!-- Results -->
+                <div class="roi-result" id="roiResult">
+                    <div class="roi-grid">
+                        <div class="roi-item">
+                            <div class="roi-label">Inversión</div>
+                            <div class="roi-value gold" id="resultInvestment">$0</div>
+                        </div>
+                        <div class="roi-item">
+                            <div class="roi-label">Ingresos</div>
+                            <div class="roi-value gold" id="resultRevenue">$0</div>
+                        </div>
+                        <div class="roi-item">
+                            <div class="roi-label">Ganancia Neta</div>
+                            <div class="roi-value" id="resultProfit">$0</div>
+                        </div>
+                        <div class="roi-item">
+                            <div class="roi-label">ROI</div>
+                            <div class="roi-value" id="resultROI">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section> <!-- Footer -->
+        <footer class="footer animate-in delay-6">
+            <p class="footer-text"> <span class="highlight">YavlGold</span> V9.4 • Módulo Agro • Desarrollado con 🌾
+                para agricultores </p>
+            <div class="footer-links"> <a href="#" class="footer-link">Documentación</a> <a href="#"
+                    class="footer-link">Soporte</a> <a href="#" class="footer-link">GitHub</a> </div>
+        </footer>
+    </div>
+    <script> // ============================================ // ROI CALCULATOR // ============================================ function calculateROI() { const investment = parseFloat(document.getElementById('investment').value) || 0; const revenue = parseFloat(document.getElementById('revenue').value) || 0; const quantity = parseFloat(document.getElementById('quantity').value) || 0; const profit = revenue - investment; const roi = investment > 0 ? ((profit / investment) * 100) : 0; const pricePerKg = quantity > 0 ? (revenue / quantity) : 0; // Update DOM document.getElementById('resultInvestment').textContent = formatCurrency(investment); document.getElementById('resultRevenue').textContent = formatCurrency(revenue); const profitEl = document.getElementById('resultProfit'); profitEl.textContent = formatCurrency(profit); profitEl.className = `roi-value ${profit >= 0 ? 'profit' : 'loss'}`; const roiEl = document.getElementById('resultROI'); roiEl.textContent = `${roi.toFixed(1)}%`; roiEl.className = `roi-value ${roi >= 0 ? 'profit' : 'loss'}`; // Show results with animation const resultDiv = document.getElementById('roiResult'); resultDiv.classList.remove('visible'); // Force reflow void resultDiv.offsetWidth; resultDiv.classList.add('visible'); } function formatCurrency(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value); } // Allow Enter key to calculate document.querySelectorAll('.styled-input').forEach(input => { input.addEventListener('keypress', (e) => { if (e.key === 'Enter') { calculateROI(); } }); }); // ============================================ // SIMULATED REAL-TIME DATA // ============================================ function updateMarketData() { const basePrice = 98000; const variance = (Math.random() - 0.5) * 2000; const newPrice = basePrice + variance; const priceEl = document.getElementById('btcPrice'); if (priceEl) { priceEl.textContent = `$${newPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`; // Add flash effect priceEl.style.transition = 'color 0.3s ease'; priceEl.style.color = variance > 0 ? '#4ade80' : '#f87171'; setTimeout(() => { priceEl.style.color = '#C8A752'; }, 1000); } } // Update every 8 seconds setInterval(updateMarketData, 8000); // ============================================ // PROGRESS BAR ANIMATIONS ON LOAD // ============================================ document.addEventListener('DOMContentLoaded', () => { // Animate progress bars setTimeout(() => { document.querySelectorAll('.progress-fill').forEach(bar => { const width = bar.style.width; bar.style.width = '0%'; setTimeout(() => { bar.style.width = width; }, 100); }); }, 800); }); // ============================================ // PARTICLES RANDOM POSITIONING // ============================================ document.querySelectorAll('.particle').forEach((particle, index) => { particle.style.top = `${Math.random() * 100}%`; particle.style.left = `${Math.random() * 100}%`; particle.style.animationDelay = `${-Math.random() * 20}s`; particle.style.animationDuration = `${15 + Math.random() * 15}s`; }); console.log('%c🌾 YavlGold V9.4 - Módulo Agro Loaded', 'background: linear-gradient(135deg, #C8A752, #9a7f3c); color: #0a0a0a; padding: 10px 20px; border-radius: 5px; font-weight: bold;'); </script>
+</body>
+
+</html>
