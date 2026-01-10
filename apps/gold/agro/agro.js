@@ -5,6 +5,12 @@
 import supabase from '../assets/js/config/supabase-config.js';
 
 // ============================================================
+// ESTADO DEL MÓDULO
+// ============================================================
+let currentEditId = null; // ID del cultivo en edición (null = nuevo)
+let cropsCache = [];      // Cache local de cultivos para edición
+
+// ============================================================
 // UTILIDADES
 // ============================================================
 
@@ -58,7 +64,10 @@ function renderCropCard(crop, index) {
     const delay = 4 + index; // Para animaciones escalonadas
     return `
         <div class="card crop-card animate-in delay-${delay}" data-crop-id="${crop.id}">
-            <button class="btn-delete-crop" onclick="window.deleteCrop('${crop.id}')" title="Eliminar Cultivo">×</button>
+            <div class="crop-card-actions">
+                <button class="btn-edit-crop" onclick="window.openEditModal('${crop.id}')" title="Editar Cultivo">✏️</button>
+                <button class="btn-delete-crop" onclick="window.deleteCrop('${crop.id}')" title="Eliminar Cultivo">×</button>
+            </div>
             <div class="crop-card-header">
                 <div class="crop-info">
                     <div class="crop-icon">${crop.icon || '🌱'}</div>
@@ -137,6 +146,7 @@ export async function loadCrops() {
         }
 
         if (!crops || crops.length === 0) {
+            cropsCache = [];
             cropsGrid.innerHTML = `
                 <div class="card animate-in" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
                     <div class="kpi-icon-wrapper" style="margin: 0 auto 1rem;">🌱</div>
@@ -148,6 +158,9 @@ export async function loadCrops() {
             `;
             return;
         }
+
+        // Guardar en cache para edición
+        cropsCache = crops;
 
         // Renderizar cultivos
         cropsGrid.innerHTML = crops.map((crop, i) => renderCropCard(crop, i)).join('');
@@ -381,25 +394,87 @@ function injectModalStyles() {
 }
 
 /**
- * Abre el modal de nuevo cultivo
+ * Abre el modal para NUEVO cultivo (limpia todo)
  */
 export function openCropModal() {
     injectModalStyles();
+
+    // Reset estado de edición
+    currentEditId = null;
+
+    // Limpiar formulario
+    document.getElementById('form-new-crop')?.reset();
+
+    // Actualizar UI del modal para modo "Nuevo"
+    const modalTitle = document.querySelector('.modal-title');
+    if (modalTitle) modalTitle.textContent = '🌱 Nuevo Cultivo';
+
+    const saveBtn = document.querySelector('.modal-footer .btn-primary');
+    if (saveBtn) saveBtn.textContent = '🌾 Guardar Siembra';
+
     const modal = document.getElementById('modal-new-crop');
     if (modal) {
         modal.classList.add('active');
         // Set default date to today
         const today = new Date().toISOString().split('T')[0];
         const startDateInput = document.getElementById('crop-start-date');
-        if (startDateInput && !startDateInput.value) {
-            startDateInput.value = today;
-        }
+        if (startDateInput) startDateInput.value = today;
+
         // Focus first input
         setTimeout(() => {
             document.getElementById('crop-name')?.focus();
         }, 100);
     }
 }
+
+/**
+ * Abre el modal en modo EDICIÓN con datos del cultivo
+ */
+export function openEditModal(id) {
+    injectModalStyles();
+
+    // Buscar cultivo en cache
+    const crop = cropsCache.find(c => c.id === id);
+    if (!crop) {
+        console.error('[Agro] Cultivo no encontrado:', id);
+        alert('Error: No se encontró el cultivo');
+        return;
+    }
+
+    // Guardar ID para edición
+    currentEditId = id;
+
+    // Llenar formulario con datos existentes
+    document.getElementById('crop-name').value = crop.name || '';
+    document.getElementById('crop-variety').value = crop.variety || '';
+    document.getElementById('crop-icon').value = crop.icon || '';
+    document.getElementById('crop-area').value = crop.area_size || '';
+    document.getElementById('crop-investment').value = crop.investment || '';
+    document.getElementById('crop-start-date').value = crop.start_date || '';
+    document.getElementById('crop-harvest-date').value = crop.expected_harvest_date || '';
+
+    // Actualizar UI del modal para modo "Editar"
+    const modalTitle = document.querySelector('.modal-title');
+    if (modalTitle) modalTitle.textContent = '✏️ Editar Cultivo';
+
+    const saveBtn = document.querySelector('.modal-footer .btn-primary');
+    if (saveBtn) saveBtn.textContent = '💾 Actualizar';
+
+    // Mostrar modal
+    const modal = document.getElementById('modal-new-crop');
+    if (modal) {
+        modal.classList.add('active');
+        setTimeout(() => {
+            document.getElementById('crop-name')?.focus();
+        }, 100);
+    }
+
+    console.log('[Agro] ✏️ Editando cultivo:', crop.name);
+}
+
+// Exponer openEditModal a window
+window.openEditModal = openEditModal;
+
 
 /**
  * Cierra el modal de nuevo cultivo
@@ -451,33 +526,52 @@ export async function saveCrop() {
             return;
         }
 
-        // Insertar en Supabase
-        const { data, error } = await supabase
-            .from('agro_crops')
-            .insert([{
-                user_id: userData.user.id,
-                name: name,
-                variety: variety,
-                icon: icon,
-                status: 'growing',
-                progress: 0,
-                area_size: area,
-                investment: investment,
-                start_date: startDate,
-                expected_harvest_date: harvestDate
-            }])
-            .select();
+        // Datos del cultivo
+        const cropData = {
+            name: name,
+            variety: variety,
+            icon: icon,
+            area_size: area,
+            investment: investment,
+            start_date: startDate,
+            expected_harvest_date: harvestDate
+        };
 
-        if (error) {
-            console.error('[Agro] Error guardando cultivo:', error);
-            alert(`Error al guardar: ${error.message}`);
+        let result;
+
+        if (currentEditId) {
+            // MODO EDICIÓN: UPDATE
+            result = await supabase
+                .from('agro_crops')
+                .update(cropData)
+                .eq('id', currentEditId)
+                .select();
+
+            console.log('[Agro] ✅ Cultivo actualizado:', result.data);
+        } else {
+            // MODO NUEVO: INSERT
+            result = await supabase
+                .from('agro_crops')
+                .insert([{
+                    ...cropData,
+                    user_id: userData.user.id,
+                    status: 'growing',
+                    progress: 0
+                }])
+                .select();
+
+            console.log('[Agro] ✅ Cultivo creado:', result.data);
+        }
+
+        if (result.error) {
+            console.error('[Agro] Error guardando cultivo:', result.error);
+            alert(`Error al guardar: ${result.error.message}`);
             return;
         }
 
-        console.log('[Agro] ✅ Cultivo guardado:', data);
-
-        // Limpiar formulario
+        // Limpiar formulario y estado
         document.getElementById('form-new-crop')?.reset();
+        currentEditId = null;
 
         // Cerrar modal
         closeCropModal();
@@ -486,7 +580,7 @@ export async function saveCrop() {
         await loadCrops();
 
         // Feedback visual
-        console.log('[Agro] 🌱 Cultivo agregado exitosamente');
+        console.log('[Agro] 🌱 Operación completada exitosamente');
 
     } catch (err) {
         console.error('[Agro] Error inesperado:', err);
@@ -585,6 +679,37 @@ window.deleteCrop = deleteCrop;
         .btn-delete-crop:hover {
             background: #f87171;
             color: #0a0a0a;
+            transform: scale(1.1);
+        }
+        .crop-card-actions {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        .crop-card:hover .crop-card-actions {
+            opacity: 1;
+        }
+        .btn-edit-crop {
+            width: 28px;
+            height: 28px;
+            background: rgba(200, 167, 82, 0.1);
+            border: 1px solid rgba(200, 167, 82, 0.3);
+            border-radius: 50%;
+            font-size: 0.9rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-edit-crop:hover {
+            background: #C8A752;
             transform: scale(1.1);
         }
     `;
