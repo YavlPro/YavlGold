@@ -113,5 +113,29 @@ docs/ADN_VISUAL_OFICIAL.md
 
 nul
 
-# Legacy/Recovered folders (DO NOT TRACK)
-**/YavlGold_RECUPERADO/
+# ═══════════════════════════════════════════════════════════════
+# 🚫 BLOQUEO ANTI-ZOMBIES (V9.4) - NO TOCAR
+# ═══════════════════════════════════════════════════════════════
+
+# Patterns for backup/recovery folders
+*RECUPERADO*
+*recuperado*
+*backup*
+*Backup*
+*BACKUP*
+*copia*
+*Copia*
+*_old
+*_OLD
+*.old
+*.bak
+
+# Legacy module paths (migrated to apps/gold/)
+apps/agro/
+apps/academia/
+apps/herramientas/
+apps/social/
+apps/suite/
+
+# Supabase extension artifacts
+**/supabase/snippets/
