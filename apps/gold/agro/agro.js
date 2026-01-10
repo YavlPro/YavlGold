@@ -255,6 +255,9 @@ export async function calculateROI() {
 export function initAgro() {
     console.log('[Agro] 🌾 Inicializando módulo...');
 
+    // Inyectar CSS del modal inmediatamente para ocultarlo
+    injectModalStyles();
+
     // Cargar cultivos
     loadCrops();
 
