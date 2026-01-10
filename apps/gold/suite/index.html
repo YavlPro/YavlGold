@@ -1,4 +1,4 @@
-<!--
+﻿<!--
 Copyright 2025 Yerikson Varela - Apache License 2.0
 -->
 <!DOCTYPE html>
@@ -267,12 +267,12 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     <select id="genre-filter" class="input-dark w-auto">
                         <option>Todos los Generos</option>
                     </select>
-                    <button id="show-favorites-btn" class="btn-outline px-3">★</button>
+                    <button id="show-favorites-btn" class="btn-outline px-3">â˜…</button>
                     <div class="flex gap-1">
-                        <button id="export-btn" class="btn-outline px-2 text-sm">↓</button>
-                        <button id="import-btn" class="btn-outline px-2 text-sm">↑</button>
+                        <button id="export-btn" class="btn-outline px-2 text-sm">â†“</button>
+                        <button id="import-btn" class="btn-outline px-2 text-sm">â†‘</button>
                         <button id="reset-btn"
-                            class="btn-outline px-2 text-sm text-red-400 hover:text-red-500">✕</button>
+                            class="btn-outline px-2 text-sm text-red-400 hover:text-red-500">âœ•</button>
                     </div>
                 </div>
                 <div id="playlist-container" class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
@@ -300,7 +300,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
         <div id="info-modal" class="hidden absolute inset-0 z-40 bg-black/90 flex items-center justify-center p-4">
             <div class="glass-panel max-w-lg w-full p-6 relative">
                 <button id="close-modal-btn"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">✕</button>
+                    class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">âœ•</button>
                 <h3 class="text-xl font-bold text-[var(--gold-text)] mb-4">Sobre YavlMusic</h3>
                 <div class="space-y-4 text-sm text-gray-300">
                     <p>Reproductor del ecosistema YavlGold. Musica almacenada localmente.</p>
@@ -435,7 +435,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 songKeysRequest.onsuccess = () => {
                     playlist = songKeysRequest.result.map(name => ({ name }));
 
-                    // Cargar metadatos después de cargar las canciones
+                    // Cargar metadatos despuÃ©s de cargar las canciones
                     const metadataStore = transaction.objectStore(STORES.METADATA);
                     const genresRequest = metadataStore.get('genres');
                     const favoritesRequest = metadataStore.get('favorites');
@@ -488,7 +488,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     const bufferLength = analyser.frequencyBinCount;
                     dataArray = new Uint8Array(bufferLength);
                 } catch (e) {
-                    console.error("Web Audio API no es soportada o falló al iniciar:", e);
+                    console.error("Web Audio API no es soportada o fallÃ³ al iniciar:", e);
                 }
             }
 
@@ -508,7 +508,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * height * 0.9;
                     const gradient = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
-                    // ✨ PREMIUM METALLIC GRADIENT: Dark gold base → Bright gold tip
+                    // âœ¨ PREMIUM METALLIC GRADIENT: Dark gold base â†’ Bright gold tip
                     gradient.addColorStop(0, '#996515');   // Gold Dark (base)
                     gradient.addColorStop(0.4, '#D4AF37'); // Gold Base (middle)
                     gradient.addColorStop(0.7, '#FDB931'); // Gold Bright
@@ -541,7 +541,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     artModeBtn.textContent = "Visualizador";
                 } else if (mode === 2) {
                     customArtImg.classList.remove('hidden');
-                    artModeBtn.textContent = "Carátula";
+                    artModeBtn.textContent = "CarÃ¡tula";
                 }
             }
 
@@ -587,7 +587,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                         if (!playlist.some(p => p.name === file.name)) {
                             store.put(file, file.name);
                             const item = { name: file.name };
-                            // Intentar leer ID3 para título/artista usando jsmediatags
+                            // Intentar leer ID3 para tÃ­tulo/artista usando jsmediatags
                             if (window.jsmediatags) {
                                 try {
                                     jsmediatags.read(file, {
@@ -608,7 +608,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                                                         const tx2 = db.transaction([STORES.IMAGES], 'readwrite');
                                                         tx2.objectStore(STORES.IMAGES).put(dataURL, file.name);
                                                         tx2.oncomplete = () => {
-                                                            // Si es la canción actual y estamos en modo carátula, actualizarla
+                                                            // Si es la canciÃ³n actual y estamos en modo carÃ¡tula, actualizarla
                                                             if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
                                                                 customArtImg.src = dataURL;
                                                                 if (artMode === 2) setArtDisplay(2);
@@ -618,10 +618,10 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                                                     reader.readAsDataURL(blob);
                                                 } catch { }
                                             }
-                                            // Si es la canción actual, actualizar UI
+                                            // Si es la canciÃ³n actual, actualizar UI
                                             if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
                                                 songTitle.textContent = item.title || item.name.replace('.mp3', '');
-                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin Género";
+                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin GÃ©nero";
                                             }
                                         },
                                         onError: () => { }
@@ -673,7 +673,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     const songData = playlist[trackIndex];
                     const file = await getSongFromDB(songData.name);
                     if (!file) {
-                        console.error("No se pudo cargar la canción de la base de datos.");
+                        console.error("No se pudo cargar la canciÃ³n de la base de datos.");
                         return;
                     }
 
@@ -687,7 +687,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     audioPlayer.src = URL.createObjectURL(file);
                     const item = playlist[trackIndex] || { name: file.name };
                     songTitle.textContent = (item.title && item.title.trim()) ? item.title : file.name.replace('.mp3', '');
-                    songArtist.textContent = songGenres[file.name] || item.artist || "Sin Género";
+                    songArtist.textContent = songGenres[file.name] || item.artist || "Sin GÃ©nero";
 
                     const imageData = await getImageFromDB(file.name);
                     if (imageData) {
@@ -716,7 +716,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 playIcon.classList.add('hidden');
                 pauseIcon.classList.remove('hidden');
 
-                audioPlayer.play().catch(e => console.warn("Error de reproducción:", e.name));
+                audioPlayer.play().catch(e => console.warn("Error de reproducciÃ³n:", e.name));
 
                 if (artMode === 1) drawVisualizer();
             }
@@ -744,7 +744,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     if (indexToDelete === currentTrackIndex) {
                         pauseTrack();
                         audioPlayer.src = "";
-                        songTitle.textContent = "Selecciona una canción";
+                        songTitle.textContent = "Selecciona una canciÃ³n";
                         songArtist.textContent = "YavlMusic";
                         progressBar.value = 0;
                         currentTimeEl.textContent = "0:00";
@@ -787,11 +787,11 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 let filteredList = sourceList
                     .filter(item => item && item.file)
                     .filter(item => item.file.name.toLowerCase().includes(searchTerm))
-                    .filter(item => selectedGenre === 'Todos los Géneros' || songGenres[item.file.name] === selectedGenre);
+                    .filter(item => selectedGenre === 'Todos los GÃ©neros' || songGenres[item.file.name] === selectedGenre);
 
                 if (filteredList.length === 0) {
                     const message = playlist.length === 0
-                        ? 'Tu biblioteca está vacía. Añade archivos para empezar.'
+                        ? 'Tu biblioteca estÃ¡ vacÃ­a. AÃ±ade archivos para empezar.'
                         : 'No se encontraron resultados.';
                     playlistElement.innerHTML = `<li class="p-3 text-gray-500 text-center">${message}</li>`;
                     return;
@@ -815,7 +815,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     genreSelect.addEventListener('change', (e) => {
                         e.stopPropagation();
                         if (e.target.value === 'add_new') {
-                            const newGenre = prompt('Introduce el nuevo nombre del género:');
+                            const newGenre = prompt('Introduce el nuevo nombre del gÃ©nero:');
                             if (newGenre && newGenre.trim()) {
                                 songGenres[file.name] = newGenre.trim();
                                 saveDataToDB();
@@ -829,7 +829,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                             else songGenres[file.name] = e.target.value;
                             saveDataToDB();
                             updateMainGenreFilter();
-                            if (currentTrackIndex === originalIndex) songArtist.textContent = songGenres[file.name] || "Sin Género";
+                            if (currentTrackIndex === originalIndex) songArtist.textContent = songGenres[file.name] || "Sin GÃ©nero";
                         }
                     });
 
@@ -860,8 +860,8 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             // =================================================================
             const getHeartSVG = (f) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`;
             function toggleFavorite(idx) { const i = favorites.indexOf(idx); if (i > -1) favorites.splice(i, 1); else favorites.push(idx); saveDataToDB(); renderPlaylist(); updateCurrentFavoriteButton(); }
-            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los Géneros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
-            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin Género</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">Añadir nuevo...</option>`; s.value = g || 'none'; }
+            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los GÃ©neros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
+            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin GÃ©nero</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">AÃ±adir nuevo...</option>`; s.value = g || 'none'; }
             function highlightCurrentTrack() { document.querySelectorAll('#playlist li').forEach(i => { i.style.backgroundColor = ''; i.style.color = ''; if (parseInt(i.dataset.index) === currentTrackIndex) { i.style.backgroundColor = 'rgba(0,255,255,0.7)'; i.style.color = 'black'; i.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) } }); }
             function updateCurrentFavoriteButton() { if (currentTrackIndex < 0 || !playlist.length) { favoriteCurrentBtn.innerHTML = getHeartSVG(false); favoriteCurrentBtn.classList.remove('text-pink-500'); favoriteCurrentBtn.classList.add('text-gray-400'); return; } const f = favorites.includes(currentTrackIndex); favoriteCurrentBtn.innerHTML = getHeartSVG(f); favoriteCurrentBtn.classList.toggle('text-pink-500', f); favoriteCurrentBtn.classList.toggle('text-gray-400', !f); }
             const playPauseHandler = () => isPlaying ? pauseTrack() : playTrack();
@@ -936,7 +936,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 repeatMode = (repeatMode + 1) % 3;
                 // Visual feedback
                 repeatBtn.classList.toggle('active', repeatMode > 0);
-                const titles = ['Repetición: desactivado', 'Repetición: lista', 'Repetición: pista'];
+                const titles = ['RepeticiÃ³n: desactivado', 'RepeticiÃ³n: lista', 'RepeticiÃ³n: pista'];
                 repeatBtn.setAttribute('aria-label', titles[repeatMode]);
                 repeatBtn.setAttribute('title', titles[repeatMode]);
                 settings.repeat = repeatMode; saveDataToDB();
@@ -1054,7 +1054,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             // Reset biblioteca
             resetBtn.addEventListener('click', () => {
                 if (!db) return;
-                if (!confirm('¿Seguro que quieres borrar toda tu biblioteca local?')) return;
+                if (!confirm('Â¿Seguro que quieres borrar toda tu biblioteca local?')) return;
                 const tx = db.transaction([STORES.SONGS, STORES.IMAGES, STORES.METADATA], 'readwrite');
                 tx.objectStore(STORES.SONGS).clear();
                 tx.objectStore(STORES.IMAGES).clear();
@@ -1063,7 +1063,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     pauseTrack(); audioPlayer.src = '';
                     playlist = []; favorites = []; songGenres = {};
                     settings = { volume: 0.5, shuffle: false, repeat: 0, artMode: 1 };
-                    songTitle.textContent = 'Selecciona una canción'; songArtist.textContent = 'YavlMusic';
+                    songTitle.textContent = 'Selecciona una canciÃ³n'; songArtist.textContent = 'YavlMusic';
                     progressBar.value = 0; currentTimeEl.textContent = '0:00'; totalDurationEl.textContent = '0:00'; currentTrackIndex = -1;
                     renderPlaylist(); updateMainGenreFilter(); saveDataToDB();
                 };
@@ -1072,14 +1072,14 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             // Redimensionar visualizador en resize
             window.addEventListener('resize', () => { if (typeof resizeVisualizerCanvas === 'function' && artMode === 1) resizeVisualizerCanvas(); });
 
-            // Drag & Drop para añadir archivos
+            // Drag & Drop para aÃ±adir archivos
             function suppressDefaults(e) { e.preventDefault(); e.stopPropagation(); }
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 document.addEventListener(eventName, suppressDefaults, false);
             });
             document.addEventListener('dragenter', () => dropOverlay.classList.remove('hidden'));
             document.addEventListener('dragleave', (e) => {
-                // Sólo ocultar cuando salimos del documento
+                // SÃ³lo ocultar cuando salimos del documento
                 if (e.target === document || e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
                     dropOverlay.classList.add('hidden');
                 }
@@ -1091,7 +1091,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 dropOverlay.classList.add('hidden');
             });
 
-            // Atajos de teclado básicos
+            // Atajos de teclado bÃ¡sicos
             document.addEventListener('keydown', (e) => {
                 const tag = (e.target && (e.target.tagName || '')).toLowerCase();
                 if (tag === 'input' || tag === 'textarea' || e.ctrlKey || e.metaKey || e.altKey) return;
