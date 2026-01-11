@@ -41,6 +41,7 @@ build/
 .output/
 .vercel/
 .netlify/
+.turbo/
 build_log.txt
 build_error.log
 build_output.log

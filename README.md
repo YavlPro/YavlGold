@@ -131,7 +131,7 @@ gold/
 
 ## 📜 Licencia
 
-Proyecto privado © 2026 YavlGold Team. Todos los derechos reservados.
+Open Source © 2026 YavlGold Team - Released under [MIT License](LICENSE).
 
 ---
 
