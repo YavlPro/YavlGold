@@ -1,664 +1,347 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlAgro - Roadmap Estratégico</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
+    <title>Roadmap Estratégico | Módulo Agro</title>
+    <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
-      /*  TIPOGRAFÍAS OFICIALES */
-      --font-heading: 'Orbitron', sans-serif;
-      --font-body: 'Rajdhani', sans-serif;
-            --yavl-gold: #C8A752;
-            --yavl-dark: #0B0C0F;
-            --bg-dark: #101114;
-            --earth-green: #2d5016;
-            --earth-brown: #6b4423;
-            --fresh-green: #7cb342;
-            --text-light: #f0f0f0;
-            --border-gold: rgba(200,167,82, 0.3);
-            --glow-gold: 0 0 10px rgba(200,167,82, 0.4);
+            --gold: #C8A752;
+            --gold-dim: #9D8040;
+            --gold-glow: #D4AF37;
+            --black: #0a0a0a;
+            --card-bg: #1a1a1a;
+            --text-main: #f0f0f0;
+            --text-muted: #888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
+            background-color: var(--black);
+            color: var(--text-main);
             font-family: 'Rajdhani', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            background-image:
-                linear-gradient(var(--border-gold) 1px, transparent 1px),
-                linear-gradient(to right, var(--border-gold) 1px, var(--bg-dark) 1px);
-            background-size: 40px 40px;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1a1500 0%, var(--black) 70%);
         }
 
-        .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .gold-glow {
-            color: var(--yavl-gold);
-            text-shadow: 0 0 5px var(--yavl-gold), 0 0 10px var(--yavl-gold);
-        }
-
-        .phase-card {
-            background: linear-gradient(135deg, rgba(11, 12, 15, 0.95), rgba(45, 80, 22, 0.1));
-            border: 1px solid var(--border-gold);
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
-            box-shadow: var(--glow-gold);
-        }
-        
-        .phase-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 0 20px rgba(200,167,82, 0.5);
-        }
-
-        .feature-item {
-            border-left: 3px solid var(--fresh-green);
-            background: linear-gradient(to right, rgba(124, 179, 66, 0.1), transparent);
-            transition: all 0.3s ease;
-        }
-        
-        .feature-item:hover {
-            background: linear-gradient(to right, rgba(124, 179, 66, 0.2), transparent);
-        }
-
-        .stat-card {
-            background: rgba(200,167,82, 0.05);
-            border: 1px solid var(--border-gold);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            background: rgba(200,167,82, 0.1);
-            box-shadow: var(--glow-gold);
-        }
-
-        .timeline-connector {
-            width: 2px;
-            height: 40px;
-            background: linear-gradient(to bottom, var(--yavl-gold), transparent);
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb {
-            background-color: var(--yavl-gold);
-            border-radius: 20px;
+        h1,
+        h2,
+        h3 {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
         }
 
-        .icon-earth {
-            color: var(--fresh-green);
-            filter: drop-shadow(0 0 8px var(--fresh-green));
+        .text-gold {
+            color: var(--gold);
         }
 
-        .back-button {
+        .text-glow {
+            text-shadow: 0 0 10px rgba(200, 167, 82, 0.4);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            margin-top: 40px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--gold), transparent);
+            transform: translateX(-50%);
+        }
+
+        .phase-card {
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid #333;
+            border-left: 4px solid var(--gold);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            z-index: 1;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(200, 167, 82, 0.1);
+            border-color: var(--gold-dim);
+        }
+
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .phase-title {
+            font-size: 1.5rem;
+            color: var(--gold);
+        }
+
+        .phase-date {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-family: 'Orbitron';
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature-item h4 {
+            color: #fff;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .feature-item ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            color: #ccc;
+            font-size: 0.95rem;
+        }
+
+        .feature-item li {
+            margin-bottom: 6px;
+        }
+
+        .feature-item li::before {
+            content: '▹';
+            color: var(--gold);
+            margin-right: 8px;
+        }
+
+        .back-btn {
             position: fixed;
             top: 20px;
             left: 20px;
-            z-index: 100;
-            background: rgba(200,167,82, 0.1);
-            border: 1px solid var(--border-gold);
-            color: var(--yavl-gold);
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--gold);
+            color: var(--gold);
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 50px;
             text-decoration: none;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
+            font-weight: bold;
+            transition: all 0.3s;
+            z-index: 100;
         }
 
-        .back-button:hover {
-            background: rgba(200,167,82, 0.2);
-            box-shadow: var(--glow-gold);
+        .back-btn:hover {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 15px var(--gold);
+        }
+
+        footer {
+            text-align: center;
+            color: #666;
+            margin-top: 50px;
+            font-size: 0.8rem;
+            padding-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 20px;
+            }
+
+            .phase-card {
+                margin-left: 40px;
+                width: auto;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .back-btn {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
         }
     </style>
 </head>
-<body class="p-4 sm:p-8">
-    <a href="YavlAgro.html" class="back-button">
-        <i class="fa-solid fa-arrow-left mr-2"></i>
-        Volver al sitio
-    </a>
 
-    <div class="max-w-7xl mx-auto">
-        
-        <!-- Header -->
-        <header class="text-center mb-12">
-            <div class="flex items-center justify-center gap-4 mb-4">
-                <i class="fa-solid fa-seedling fa-3x icon-earth"></i>
-                <h1 class="text-5xl sm:text-7xl font-orbitron font-black uppercase gold-glow">YavlAgro</h1>
-                <i class="fa-solid fa-wheat-awn fa-3x icon-earth"></i>
-            </div>
-            <p class="text-xl sm:text-2xl text-gray-400 mb-2">De la Grita Agricultora al Futuro Sostenible</p>
-            <p class="text-sm text-gray-500 italic">Donde la tierra se encuentra con la blockchain</p>
+<body>
+
+    <a href="index.html" class="back-btn">← Volver al Dashboard</a>
+
+    <div class="container">
+        <header>
+            <i class="fa-solid fa-seedling fa-3x text-gold"
+                style="filter: drop-shadow(0 0 10px var(--gold)); margin-bottom: 20px;"></i>
+            <h1 class="text-glow">Roadmap <span class="text-gold">Agro</span></h1>
+            <p>Estrategia de Tokenización Agrícola 2026</p>
         </header>
 
-        <!-- Análisis Actual -->
-        <section class="phase-card rounded-lg p-8 mb-12">
-            <h2 class="text-3xl font-orbitron gold-glow mb-6 flex items-center gap-3">
-                <i class="fa-solid fa-chart-line"></i>
-                Análisis de Situación Actual
-            </h2>
-            
-            <div class="grid md:grid-cols-3 gap-6 mb-8">
-                <div class="stat-card p-6 rounded-lg text-center">
-                    <i class="fa-solid fa-store fa-3x mb-3 icon-earth"></i>
-                    <h3 class="font-orbitron text-xl mb-2 text-white">Estado Actual</h3>
-                    <p class="text-gray-300 text-sm">Proyecto físico establecido como "La Grita Agricultora" necesitando rebrand completo</p>
+        <div class="timeline">
+
+            <div class="phase-card">
+                <div class="phase-header">
+                    <div>
+                        <h2 class="phase-title">Fase 1: Fundación Digital</h2>
+                        <span class="phase-date">Q1 2026 (Enero - Marzo)</span>
+                    </div>
+                    <i class="fa-solid fa-cube fa-2x text-gold"></i>
                 </div>
-                <div class="stat-card p-6 rounded-lg text-center">
-                    <i class="fa-solid fa-gem fa-3x mb-3" style="color: var(--yavl-gold);"></i>
-                    <h3 class="font-orbitron text-xl mb-2 text-white">Potencial Único</h3>
-                    <p class="text-gray-300 text-sm">Conexión física-digital que ningún proyecto cripto puede replicar fácilmente</p>
-                </div>
-                <div class="stat-card p-6 rounded-lg text-center">
-                    <i class="fa-solid fa-rocket fa-3x mb-3" style="color: #ff8c00;"></i>
-                    <h3 class="font-orbitron text-xl mb-2 text-white">Oportunidad</h3>
-                    <p class="text-gray-300 text-sm">Pionero en tokenización agrícola, trazabilidad y comercio justo con crypto</p>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <h4>Identidad Visual</h4>
+                        <ul>
+                            <li>Rebrand completo a estética Gold/Dark</li>
+                            <li>Manual de marca Agro</li>
+                            <li>Packaging físico premium</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <h4>Presencia Web</h4>
+                        <ul>
+                            <li>Dashboard Agro V9.4 (Completado)</li>
+                            <li>Catálogo de productos</li>
+                            <li>Blog educativo inicial</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-black/30 p-6 rounded-lg border border-yellow-900/30">
-                <h3 class="font-orbitron text-lg mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-lightbulb" style="color: var(--yavl-gold);"></i>
-                    Por qué YavlAgro es revolucionario:
-                </h3>
-                <ul class="space-y-2 text-gray-300">
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-check text-green-400 mt-1"></i>
-                        <span><strong>Autenticidad:</strong> Productos reales respaldados por blockchain, no promesas vacías</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-check text-green-400 mt-1"></i>
-                        <span><strong>Narrativa poderosa:</strong> "De la semilla a tu wallet" - historia única en el espacio cripto</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-check text-green-400 mt-1"></i>
-                        <span><strong>Impacto social:</strong> Empodera agricultores locales con tecnología de punta</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i class="fa-solid fa-check text-green-400 mt-1"></i>
-                        <span><strong>Casos de uso reales:</strong> NFTs de cosechas, pagos en crypto, trazabilidad transparente</span>
-                    </li>
-                </ul>
+            <div class="phase-card">
+                <div class="phase-header">
+                    <div>
+                        <h2 class="phase-title">Fase 2: E-commerce & Crypto</h2>
+                        <span class="phase-date">Q2 2026 (Abril - Junio)</span>
+                    </div>
+                    <i class="fa-solid fa-cart-shopping fa-2x text-gold"></i>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <h4>Tienda Online</h4>
+                        <ul>
+                            <li>Carrito de compras integrado</li>
+                            <li>Checkout híbrido (Fiat/Crypto)</li>
+                            <li>Descuento 5% pagando con BTC/USDT</li>
+                        </ul>
+                    </div>
+                    <div class="feature-item">
+                        <h4>Operaciones</h4>
+                        <ul>
+                            <li>Logística de entregas</li>
+                            <li>Sistema de puntos (Loyalty)</li>
+                            <li>Suscripciones mensuales</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-        </section>
 
-        <!-- Roadmap por Fases -->
-        <div class="space-y-8">
-
-            <!-- FASE 1: Rebrand y Fundación -->
-            <section class="phase-card rounded-lg p-6">
-                <div class="flex items-center justify-between mb-6 pb-4 border-b border-yellow-900/30">
+            <div class="phase-card">
+                <div class="phase-header">
                     <div>
-                        <h2 class="text-3xl font-orbitron gold-glow">Fase 1: Rebrand & Fundación Digital</h2>
-                        <p class="text-gray-400 mt-1">Q1 2026 (Enero - Marzo)</p>
+                        <h2 class="phase-title">Fase 3: Blockchain & Trazabilidad</h2>
+                        <span class="phase-date">Q3 2026 (Julio - Diciembre)</span>
                     </div>
-                    <i class="fa-solid fa-palette fa-3x text-yellow-600/50"></i>
+                    <i class="fa-solid fa-link fa-2x text-gold"></i>
                 </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-pencil-ruler fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Identidad Visual Completa</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Logo YavlAgro con paleta oro/verde/tierra</li>
-                                    <li>• Manual de marca consistente con Yavl</li>
-                                    <li>• Packaging para productos físicos</li>
-                                    <li>• Plantillas para redes sociales</li>
-                                </ul>
-                            </div>
-                        </div>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <h4>Transparencia</h4>
+                        <ul>
+                            <li>QR Codes en productos físicos</li>
+                            <li>Registro inmutable en blockchain</li>
+                            <li>Certificados de origen digitales</li>
+                        </ul>
                     </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-globe fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Presencia Web Básica</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Landing page yavlagro.com</li>
-                                    <li>• Catálogo de productos con fotos profesionales</li>
-                                    <li>• Formulario de pedidos</li>
-                                    <li>• Blog educativo sobre agricultura sostenible</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-camera fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Contenido Audiovisual</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Video de presentación "Qué es YavlAgro"</li>
-                                    <li>• Serie "Del campo a tu mesa" (YouTube)</li>
-                                    <li>• Fotos profesionales de productos y procesos</li>
-                                    <li>• Stories semanales mostrando el día a día</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-handshake fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Alianzas Locales</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Mapear agricultores/productores asociados</li>
-                                    <li>• Certificaciones orgánicas (si aplica)</li>
-                                    <li>• Acuerdos con puntos de venta locales</li>
-                                    <li>• Documentar cadena de suministro</li>
-                                </ul>
-                            </div>
-                        </div>
+                    <div class="feature-item">
+                        <h4>Tokenización</h4>
+                        <ul>
+                            <li>NFTs coleccionables por cosecha</li>
+                            <li>Token de utilidad del ecosistema</li>
+                            <li>Gobernanza comunitaria básica</li>
+                        </ul>
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-6 p-4 bg-yellow-900/10 rounded-lg border border-yellow-700/30">
-                    <p class="text-sm text-gray-300">
-                        <i class="fa-solid fa-bullseye text-yellow-500 mr-2"></i>
-                        <strong>Objetivo clave:</strong> Transformar "La Grita Agricultora" en YavlAgro con identidad profesional alineada al ecosistema Yavl.
-                    </p>
-                </div>
-            </section>
-
-            <div class="timeline-connector"></div>
-
-            <!-- FASE 2: E-commerce y Operaciones -->
-            <section class="phase-card rounded-lg p-6">
-                <div class="flex items-center justify-between mb-6 pb-4 border-b border-yellow-900/30">
+            <div class="phase-card">
+                <div class="phase-header">
                     <div>
-                        <h2 class="text-3xl font-orbitron gold-glow">Fase 2: E-commerce & Operaciones</h2>
-                        <p class="text-gray-400 mt-1">Q2 2026 (Abril - Junio)</p>
+                        <h2 class="phase-title">Fase 4: Expansión Global</h2>
+                        <span class="phase-date">2027+</span>
                     </div>
-                    <i class="fa-solid fa-cart-shopping fa-3x text-yellow-600/50"></i>
+                    <i class="fa-solid fa-globe fa-2x text-gold"></i>
                 </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-store fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Tienda Online Funcional</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Carrito de compras integrado</li>
-                                    <li>• Sistema de inventario en tiempo real</li>
-                                    <li>• Checkout seguro</li>
-                                    <li>• Panel de administración para gestión</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-credit-card fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Métodos de Pago Híbridos</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Pagos tradicionales (transferencia, Zelle)</li>
-                                    <li>• <strong>Pagos en crypto (BTC, USDT, ETH)</strong></li>
-                                    <li>• Gateway de pago integrado</li>
-                                    <li>• Descuentos del 5% pagando con crypto</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-truck fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Logística y Entregas</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Sistema de zonas de entrega</li>
-                                    <li>• Tracking de pedidos en tiempo real</li>
-                                    <li>• Alianzas con servicios de delivery</li>
-                                    <li>• Pickup points en ubicaciones estratégicas</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-users fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Programa de Clientes</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Sistema de puntos por compra</li>
-                                    <li>• Suscripciones mensuales (cajas sorpresa)</li>
-                                    <li>• Referidos con descuentos</li>
-                                    <li>• Club VIP para compradores frecuentes</li>
-                                </ul>
-                            </div>
-                        </div>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <h4>Ecosistema</h4>
+                        <ul>
+                            <li>Red de productores certificados</li>
+                            <li>Marketplace descentralizado</li>
+                            <li>Crowdfunding de cultivos</li>
+                        </ul>
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-6 p-4 bg-yellow-900/10 rounded-lg border border-yellow-700/30">
-                    <p class="text-sm text-gray-300">
-                        <i class="fa-solid fa-bullseye text-yellow-500 mr-2"></i>
-                        <strong>Objetivo clave:</strong> Establecer operación de e-commerce rentable con pagos en crypto como diferenciador.
-                    </p>
-                </div>
-            </section>
-
-            <div class="timeline-connector"></div>
-
-            <!-- FASE 3: Integración Blockchain -->
-            <section class="phase-card rounded-lg p-6">
-                <div class="flex items-center justify-between mb-6 pb-4 border-b border-yellow-900/30">
-                    <div>
-                        <h2 class="text-3xl font-orbitron gold-glow">Fase 3: Blockchain & Trazabilidad</h2>
-                        <p class="text-gray-400 mt-1">Q3-Q4 2026 (Julio - Diciembre)</p>
-                    </div>
-                    <i class="fa-solid fa-link fa-3x text-yellow-600/50"></i>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-barcode fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Trazabilidad Transparente</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• QR codes en productos</li>
-                                    <li>• Registro en blockchain de cada lote</li>
-                                    <li>• Historial completo: siembra → cosecha → venta</li>
-                                    <li>• Certificados digitales de autenticidad</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-image fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">NFTs de Cosechas</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• NFT por cada cosecha importante</li>
-                                    <li>• Artwork generativo basado en datos reales</li>
-                                    <li>• Holders reciben descuentos exclusivos</li>
-                                    <li>• Coleccionables con utilidad real</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-coins fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Token $AGRO (Experimental)</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Token de utilidad para el ecosistema</li>
-                                    <li>• Staking para descuentos en productos</li>
-                                    <li>• Recompensas para compradores frecuentes</li>
-                                    <li>• Gobernanza: vota qué cultivar próxima temporada</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-diagram-project fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Integración con YavlGold</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Módulo educativo "Agricultura + Blockchain"</li>
-                                    <li>• Estudiantes de YavlGold reciben descuentos</li>
-                                    <li>• Casos de estudio reales para la academia</li>
-                                    <li>• Login unificado entre plataformas</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 p-4 bg-yellow-900/10 rounded-lg border border-yellow-700/30">
-                    <p class="text-sm text-gray-300">
-                        <i class="fa-solid fa-bullseye text-yellow-500 mr-2"></i>
-                        <strong>Objetivo clave:</strong> Convertir YavlAgro en el primer proyecto agro-blockchain funcional de la región.
-                    </p>
-                </div>
-            </section>
-
-            <div class="timeline-connector"></div>
-
-            <!-- FASE 4: Expansión y Ecosistema -->
-            <section class="phase-card rounded-lg p-6">
-                <div class="flex items-center justify-between mb-6 pb-4 border-b border-yellow-900/30">
-                    <div>
-                        <h2 class="text-3xl font-orbitron gold-glow">Fase 4: Expansión & Ecosistema Completo</h2>
-                        <p class="text-gray-400 mt-1">2027+</p>
-                    </div>
-                    <i class="fa-solid fa-globe-americas fa-3x text-yellow-600/50"></i>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-network-wired fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Red de Productores</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Marketplace multi-vendedor</li>
-                                    <li>• Onboarding de agricultores a blockchain</li>
-                                    <li>• Certificación YavlAgro para productores</li>
-                                    <li>• Cooperativa digital descentralizada</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-graduation-cap fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Academia Agro-Tech</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Cursos sobre agricultura sostenible</li>
-                                    <li>• Formación en blockchain para agricultores</li>
-                                    <li>• Talleres presenciales en La Grita</li>
-                                    <li>• Certificaciones con NFTs</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-handshake-angle fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Crowdfunding de Cosechas</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Financia cosechas pre-venta con crypto</li>
-                                    <li>• Inversores reciben % de la cosecha</li>
-                                    <li>• Contratos inteligentes automáticos</li>
-                                    <li>• Reportes transparentes de rendimiento</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="feature-item p-5 rounded-md">
-                        <div class="flex items-start gap-4">
-                            <i class="fa-solid fa-earth-americas fa-2x icon-earth flex-shrink-0"></i>
-                            <div>
-                                <h3 class="font-bold text-lg text-white mb-2">Impacto Social Medible</h3>
-                                <ul class="text-gray-300 text-sm space-y-1">
-                                    <li>• Dashboard de impacto ambiental</li>
-                                    <li>• Certificados de carbono tokenizados</li>
-                                    <li>• Reportes de sostenibilidad públicos</li>
-                                    <li>• Proyectos comunitarios financiados con %</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 p-4 bg-yellow-900/10 rounded-lg border border-yellow-700/30">
-                    <p class="text-sm text-gray-300">
-                        <i class="fa-solid fa-bullseye text-yellow-500 mr-2"></i>
-                        <strong>Objetivo clave:</strong> Escalar el modelo a nivel nacional como referente en agro-blockchain latinoamericano.
-                    </p>
-                </div>
-            </section>
         </div>
 
-        <!-- Casos de Uso Innovadores -->
-        <section class="mt-16 phase-card rounded-lg p-8">
-            <h2 class="text-3xl font-orbitron gold-glow mb-6 text-center">
-                <i class="fa-solid fa-lightbulb mr-3"></i>
-                Casos de Uso Innovadores
-            </h2>
-
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-black/30 p-6 rounded-lg border border-green-700/30">
-                    <div class="text-center mb-4">
-                        <i class="fa-solid fa-qrcode fa-3x icon-earth"></i>
-                    </div>
-                    <h3 class="font-orbitron text-lg mb-3 text-center text-white">Escanea & Verifica</h3>
-                    <p class="text-sm text-gray-300 text-center">
-                        El cliente escanea un QR en el tomate y ve: fecha de siembra, agricultor responsable, certificaciones, y trayecto completo. Todo inmutable en blockchain.
-                    </p>
-                </div>
-
-                <div class="bg-black/30 p-6 rounded-lg border border-green-700/30">
-                    <div class="text-center mb-4">
-                        <i class="fa-solid fa-bitcoin-sign fa-3x" style="color: var(--yavl-gold);"></i>
-                    </div>
-                    <h3 class="font-orbitron text-lg mb-3 text-center text-white">Paga con Bitcoin</h3>
-                    <p class="text-sm text-gray-300 text-center">
-                        Acepta BTC, ETH, USDT directamente. Perfecto para la comunidad cripto de YavlGold que quiere usar sus holdings en compras reales.
-                    </p>
-                </div>
-
-                <div class="bg-black/30 p-6 rounded-lg border border-green-700/30">
-                    <div class="text-center mb-4">
-                        <i class="fa-solid fa-trophy fa-3x" style="color: #ff8c00;"></i>
-                    </div>
-                    <h3 class="font-orbitron text-lg mb-3 text-center text-white">NFT de Cosecha de Oro</h3>
-                    <p class="text-sm text-gray-300 text-center">
-                        Cada temporada se acuña 1 NFT único de la "Cosecha de Oro". El holder recibe productos gratis durante 6 meses y acceso exclusivo a eventos.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- KPIs -->
-        <section class="mt-16 phase-card rounded-lg p-8">
-            <h2 class="text-3xl font-orbitron gold-glow mb-6">
-                <i class="fa-solid fa-chart-line mr-3"></i>
-                Métricas de Éxito
-            </h2>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="text-center p-6 bg-black/30 rounded-lg border border-green-700/30">
-                    <div class="text-4xl font-orbitron gold-glow mb-2">500+</div>
-                    <p class="text-sm text-gray-400">Clientes activos para fin de Fase 2</p>
-                </div>
-                <div class="text-center p-6 bg-black/30 rounded-lg border border-green-700/30">
-                    <div class="text-4xl font-orbitron gold-glow mb-2">30%</div>
-                    <p class="text-sm text-gray-400">Pagos realizados en crypto para Fase 3</p>
-                </div>
-                <div class="text-center p-6 bg-black/30 rounded-lg border border-green-700/30">
-                    <div class="text-4xl font-orbitron gold-glow mb-2">100%</div>
-                    <p class="text-sm text-gray-400">Productos con trazabilidad blockchain</p>
-                </div>
-                <div class="text-center p-6 bg-black/30 rounded-lg border border-green-700/30">
-                    <div class="text-4xl font-orbitron gold-glow mb-2">10+</div>
-                    <p class="text-sm text-gray-400">Agricultores asociados para Fase 4</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Sinergias con Ecosistema Yavl -->
-        <section class="mt-16 phase-card rounded-lg p-8">
-            <h2 class="text-3xl font-orbitron gold-glow mb-6 text-center">
-                <i class="fa-solid fa-puzzle-piece mr-3"></i>
-                Sinergias con el Ecosistema Yavl
-            </h2>
-
-            <div class="space-y-4">
-                <div class="flex items-start gap-4 p-4 bg-black/30 rounded-lg border-l-4 border-blue-500">
-                    <i class="fa-solid fa-graduation-cap fa-2x text-blue-400 flex-shrink-0 mt-1"></i>
-                    <div>
-                        <h3 class="font-bold text-white mb-1">YavlGold 🔗 YavlAgro</h3>
-                        <p class="text-sm text-gray-300">
-                            Estudiantes aprenden sobre tokenización de activos físicos usando YavlAgro como caso de estudio real. 
-                            Descuentos del 10% en productos para miembros verificados.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-4 p-4 bg-black/30 rounded-lg border-l-4 border-purple-500">
-                    <i class="fa-solid fa-users fa-2x text-purple-400 flex-shrink-0 mt-1"></i>
-                    <div>
-                        <h3 class="font-bold text-white mb-1">YavlSocial 🔗 YavlAgro</h3>
-                        <p class="text-sm text-gray-300">
-                            Foro dedicado a agricultura sostenible. Los agricultores comparten conocimientos. 
-                            Badges especiales para "Compradores Sostenibles" que apoyan YavlAgro.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-4 p-4 bg-black/30 rounded-lg border-l-4 border-orange-500">
-                    <i class="fa-solid fa-tools fa-2x text-orange-400 flex-shrink-0 mt-1"></i>
-                    <div>
-                        <h3 class="font-bold text-white mb-1">YavlSuite 🔗 YavlAgro</h3>
-                        <p class="text-sm text-gray-300">
-                            Calculadora de impacto: "¿Cuánto CO₂ ahorraste comprando local?". 
-                            Herramienta de tracking de pedidos integrada. Dashboard para agricultores asociados.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Mensaje Final -->
-        <section class="mt-16 text-center">
-            <div class="phase-card rounded-lg p-8">
-                <i class="fa-solid fa-quote-left text-2xl gold-glow mb-4 block"></i>
-                <blockquote class="text-2xl font-orbitron gold-glow mb-4">
-                    "De la tierra a la blockchain, YavlAgro es la prueba de que el futuro descentralizado tiene raíces reales."
-                </blockquote>
-                <i class="fa-solid fa-quote-right text-2xl gold-glow mb-6 block"></i>
-                
-                <div class="flex items-center justify-center gap-4 text-gray-400 text-sm">
-                    <i class="fa-solid fa-seedling icon-earth"></i>
-                    <span>Siembra hoy</span>
-                    <i class="fa-solid fa-arrow-right" style="color: var(--yavl-gold);"></i>
-                    <span>Cosecha en blockchain</span>
-                    <i class="fa-solid fa-arrow-right" style="color: var(--yavl-gold);"></i>
-                    <span>Impacto permanente</span>
-                    <i class="fa-solid fa-earth-americas icon-earth"></i>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="text-center mt-16 pb-4 text-gray-500">
-            <p class="mb-2">YavlAgro - Donde la innovación florece</p>
-            <p class="text-xs">Un proyecto del Ecosistema Yavl © 2025-2026</p>
+        <footer>
+            <p>Ecosistema Gold | V9.4 © 2026</p>
         </footer>
-
     </div>
 </body>
+
 </html>

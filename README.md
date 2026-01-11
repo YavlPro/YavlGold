@@ -1,102 +1,144 @@
-# YavlGold V9.4 — Ecosistema Educativo Descentralizado
+# 🛰️ YavlGold Ecosystem
 
-![Version](https://img.shields.io/badge/version-9.4.0-C8A752?style=flat-square)
-![Status](https://img.shields.io/badge/status-Beta-orange?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-
-Bienvenido al repositorio oficial de **YavlGold**, un ecosistema educativo multi-módulo enfocado en Blockchain, Trading, Agricultura y Herramientas Digitales.
+> **V9.4 (Gold Edition)** • Estado: ✅ En Producción
 
 ---
 
-## 🏗️ Arquitectura
+## 📋 Descripción
 
-Este proyecto es un **Monorepo** basado en **Vite** (Vanilla JS + ES Modules) optimizado para despliegue en **Vercel**.
-Funciona como una **Multi-Page Application (MPA)** donde cada módulo es independiente pero conectado visualmente.
-
-### Stack Tecnológico
-
-| Capa | Tecnología |
-|------|------------|
-| Frontend | Vite + Vanilla JS + CSS Tokens |
-| Backend | Supabase (Auth + PostgreSQL + Realtime) |
-| Auth | Smart AuthGuard V9.4 + hCaptcha Invisible |
-| Deploy | Vercel (Git-based CI/CD) |
-
-### Estructura del Proyecto
-
-```
-gold/
-├── apps/gold/                 # Dashboard Principal & Auth
-│   ├── academia/              # Módulo: Cursos Educativos
-│   ├── agro/                  # Módulo: Agricultura & Clima
-│   ├── herramientas/          # Módulo: Calculadoras Cripto
-│   ├── social/                # Módulo: Red Social
-│   ├── suite/                 # Módulo: Suite Multimedia
-│   └── dashboard/             # Panel de Control
-├── package.json               # Monorepo Root
-└── vite.config.js             # Multi-Page Configuration
-```
+**YavlGold** es una plataforma educativa y operativa que fusiona **Agricultura**, **Tecnología** y **Trading** en un único ecosistema. Diseñada con filosofía "Mobile-First" y estética **Dark/Gold Premium**.
 
 ---
 
-## 🚀 Setup Rápido
+## ⚡ Stack Tecnológico
 
-### Requisitos
-- Node.js 18+
-- pnpm 8+
+| Tecnología | Uso |
+|------------|-----|
+| **Vanilla JS** | Frontend optimizado, sin frameworks pesados |
+| **Vite** | Build tool ultrarrápido con HMR |
+| **Supabase** | Backend, Auth, Base de datos PostgreSQL |
+| **Turborepo** | Orquestación de monorepo |
+| **CSS Custom** | ADN Visual Dark/Gold (sin Tailwind) |
 
-### Instalación
+---
+
+## 🧩 Módulos del Ecosistema
+
+### 🌱 Módulo Agro **[COMPLETADO]**
+
+El corazón agrícola del ecosistema, ahora 100% operativo:
+
+- ✅ **Dashboard Operativo** — Gestión visual de cultivos
+- ✅ **CRUD Completo** — Crear, leer, actualizar y eliminar cultivos en tiempo real
+- ✅ **Integración Supabase** — Tabla `agro_crops` con RLS activado
+- ✅ **Widgets Inteligentes:**
+  - 🌤️ Clima Geolocalizado (Open-Meteo API + Browser Geolocation)
+  - 📈 Mercados en Vivo (Binance WebSocket - BTC/USDT)
+  - 🌙 Fase Lunar Astronómica (algoritmo nativo, sin API)
+- ✅ **Calculadora ROI** — Análisis de rentabilidad por cultivo
+- ✅ **Roadmap Estratégico** — Visión 2026-2027 integrada
+- ✅ **Navegación Fluida** — Logo → Home, botón Dashboard Principal
+- ✅ **Diseño Responsivo** — Mobile-First, animaciones premium
+
+### 🎓 Módulo Academia `[En Desarrollo]`
+
+- Lecciones estructuradas por módulos
+- Sistema de evaluación con quizzes
+- Tracking de progreso del estudiante
+
+### 🛠️ Módulo Herramientas `[En Desarrollo]`
+
+- Calculadoras financieras
+- Conversor de criptomonedas
+- Utilidades para traders
+
+### 👥 Módulo Social `[Planificado]`
+
+- Perfiles de usuario
+- Sistema de logros
+- Comunidad y networking
+
+---
+
+## 🎨 ADN Visual
+
+El proyecto sigue la filosofía **"Visual DNA: Dark/Gold Premium"**:
+
+```css
+--gold-principal: #C8A752;
+--gold-vibrante: #D4AF37;
+--bg-primary: #0a0a0a;
+--bg-secondary: #1a1a1a;
+```
+
+- **Tipografía:** Orbitron (headings) + Rajdhani (body)
+- **Efectos:** Glassmorphism, partículas animadas, breathing effects
+- **Tema:** Dark mode por defecto, light mode disponible
+
+---
+
+## 🔗 Enlaces Rápidos
+
+| Recurso | URL |
+|---------|-----|
+| 🌐 **Demo en Vivo** | [yavlgold.com](https://yavlgold.com) |
+| 📂 **Repositorio** | [github.com/YavlPro/YavlGold](https://github.com/YavlPro/YavlGold) |
+| 💬 **Comunidad** | [t.me/YavlEcosystem](https://t.me/YavlEcosystem) |
+| 📞 **Soporte** | [t.me/YavlPro](https://t.me/YavlPro) |
+
+---
+
+## 🚀 Inicio Rápido
+
 ```bash
-# Clonar
+# Clonar repositorio
 git clone https://github.com/YavlPro/YavlGold.git
-cd gold
+cd YavlGold
 
 # Instalar dependencias
 pnpm install
 
+# Variables de entorno
+cp .env.example .env
+# Configurar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
+
 # Desarrollo local
 pnpm dev
-```
 
-### Build Producción
-```bash
-pnpm build:v9
-pnpm preview:v9
+# Build de producción
+pnpm build
 ```
 
 ---
 
-## 🔐 Variables de Entorno
+## 📁 Estructura del Proyecto
 
-Crea un archivo `.env` en la raíz con:
-
-```env
-VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
-VITE_SUPABASE_ANON_KEY=tu-anon-key
+```
+gold/
+├── apps/
+│   └── gold/           # Aplicación principal
+│       ├── agro/       # 🌱 Módulo Agro (ACTIVO)
+│       ├── academia/   # 🎓 Módulo Academia
+│       ├── dashboard/  # 📊 Dashboard Principal
+│       ├── herramientas/ # 🛠️ Herramientas
+│       └── assets/     # Recursos compartidos
+├── packages/           # Paquetes compartidos
+├── turbo.json          # Configuración Turborepo
+└── package.json        # Scripts del monorepo
 ```
 
 ---
 
-## 📋 Changelog Reciente
+## 📜 Licencia
 
-### V9.4.0 (Enero 2026)
-- ✅ **Módulos Dinámicos:** Cards renderizados desde Supabase `modules` table.
-- ✅ **hCaptcha Invisible:** Protección anti-bot sin fricción.
-- ✅ **Security Patch:** Eliminación de localStorage inseguro.
-- ✅ **Smart AuthGuard V9.4:** Anti-loop redirects en móviles.
-- ✅ **Single Source of Truth:** Versión inyectada desde `package.json` via Vite.
-
-### V9.3.0 (Diciembre 2025)
-- Avatar dinámico en dashboard.
-- Settings modal con perfil editable.
-- Glassmorphism UI overhaul.
+Proyecto privado © 2026 YavlGold Team. Todos los derechos reservados.
 
 ---
 
-## 📄 Licencia
+<div align="center">
 
-MIT © 2026 [YavlPro](https://github.com/YavlPro)
+**Construido con 🌾 para agricultores e inversores del futuro**
 
----
+*YavlGold V9.4 — Gold Edition*
 
-*Desarrollado con 🦅 por el equipo de YavlGold.*
+</div>
