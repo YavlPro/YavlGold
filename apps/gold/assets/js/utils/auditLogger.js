@@ -1,5 +1,5 @@
 /**
- * Sistema de Auditoría YavlGold V9.2
+ * Sistema de Auditoría YavlGold V9.4
  * Envía eventos a través del wrapper público 'log_event' (schema public).
  *
  * Arquitectura:

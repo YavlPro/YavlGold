@@ -41,6 +41,9 @@ build/
 .output/
 .vercel/
 .netlify/
+build_log.txt
+build_error.log
+build_output.log
 
 # Legacy/archived files (deprecated)
 netlify.toml
