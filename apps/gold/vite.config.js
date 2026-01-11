@@ -29,6 +29,7 @@ export default defineConfig({
         // Module apps
         academia: 'academia/index.html',
         agro: 'agro/index.html',
+        agroRoadmap: 'agro/roadmap.html',
         herramientas: 'herramientas/index.html',
         suite: 'suite/index.html',
         social: 'social/index.html'
