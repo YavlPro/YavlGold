@@ -177,59 +177,72 @@ function generateSmartAdvice(data, isToday) {
     let tags = [];
     let type = 'neutral'; // neutral, warning, danger, success
 
-    // ========== REGLAS CLIMÁTICAS BASE ==========
+    // ========== REGLAS CLIMÁTICAS BASE (FORMATO RICO) ==========
 
     // 1. Lluvia Extrema (>15mm)
     if (data.rain > 15) {
-        text = 'Precipitación intensa detectada. Riesgo de erosión y lavado de nutrientes. Suspender fertirriego.';
-        tags.push('Drenaje', 'Erosión');
+        text = `🌧️ <strong class="text-red-400">PRECIPITACIÓN INTENSA:</strong> Se esperan <strong>${data.rain.toFixed(1)}mm</strong> de lluvia. <span style="color: #fbbf24;">Suspender fertirriego</span> y preparar drenaje. Riesgo de <strong>erosión</strong> y lavado de nutrientes.`;
+        tags.push('🚿 Drenaje', '⚠️ Erosión');
         type = 'danger';
     }
     // 2. Calor Extremo (>32°C)
     else if (data.tempMax > 32) {
-        text = 'Estrés térmico inminente. Aumentar riego de soporte y evitar aplicaciones químicas al mediodía.';
-        tags.push('Hidratación', 'Sombra');
+        text = `🌡️ <strong class="text-orange-400">ESTRÉS TÉRMICO:</strong> Temperatura máxima de <strong>${Math.round(data.tempMax)}°C</strong>. <span style="color: #4ade80;">Aumentar riego</span> en horas frescas (6-8 AM). <strong>Evitar</strong> aplicaciones químicas al mediodía.`;
+        tags.push('💧 Hidratación', '🏕️ Sombra');
         type = 'warning';
     }
     // 3. Viento Fuerte (>25km/h)
     else if (data.wind > 25) {
-        text = 'Ráfagas de viento fuertes. Asegurar estructuras, tutores e invernaderos.';
-        tags.push('Infraestructura');
+        text = `💨 <strong class="text-orange-400">RÁFAGAS FUERTES:</strong> Vientos de hasta <strong>${Math.round(data.wind)} km/h</strong>. <span style="color: #fbbf24;">Asegurar tutores</span>, revisar invernaderos y proteger cultivos altos.`;
+        tags.push('🔧 Infraestructura');
         type = 'warning';
     }
     // 4. Frío Peligroso (<10°C)
     else if (data.tempMin < 10) {
-        text = `Temperatura mínima de ${Math.round(data.tempMin)}°C. Riesgo de heladas. Protege cultivos sensibles.`;
-        tags.push('Proteger', 'Riego AM');
+        text = `❄️ <strong class="text-blue-400">RIESGO DE HELADAS:</strong> Mínima de <strong>${Math.round(data.tempMin)}°C</strong>. <span style="color: #fbbf24;">Protege cultivos sensibles</span> con cobertores. Regar en la mañana para atenuar el frío.`;
+        tags.push('🛡️ Proteger', '🌅 Riego AM');
         type = 'warning';
     }
-    // 5. Condiciones Ideales
+    // 5. Lluvia Moderada (5-15mm)
+    else if (data.rain > 5) {
+        text = `🌦️ <strong class="text-blue-400">LLUVIA MODERADA:</strong> Se esperan <strong>${data.rain.toFixed(1)}mm</strong>. <span style="color: #4ade80;">Reducir riego artificial</span>. Buen momento para aplicaciones foliares post-lluvia.`;
+        tags.push('💦 Ajustar Riego');
+        type = 'warning';
+    }
+    // 6. Condiciones Ideales
     else {
-        text = 'Ventana climática favorable para labores de campo, poda y fertilización.';
-        tags.push('Operativo');
+        text = `✨ <strong class="text-green-400">CONDICIONES ÓPTIMAS:</strong> Ventana climática <span style="color: #4ade80;">favorable</span> para labores de campo. Ideal para <strong>poda</strong>, <strong>fertilización</strong> y trasplantes.`;
+        tags.push('✅ Operativo');
         type = 'success';
     }
 
-    // ========== SINCRONIZACIÓN CON CULTIVOS (La Magia) ==========
+    // ========== SINCRONIZACIÓN CON CULTIVOS (ALERTAS PERSONALIZADAS) ==========
 
     // Regla: Tomate/Papa + Lluvia = HONGOS (Tizón)
     if (data.rain > 5 && userCrops.some(c => c.includes('tomate') || c.includes('papa'))) {
-        text = '⚠️ ALERTA FUNGOSA: La lluvia crea condiciones ideales para Tizón en tus Solanáceas (Tomate/Papa). Aplica fungicida preventivo.';
-        tags = ['Fungicida', 'Tomate/Papa'];
+        text = `🍅 <strong class="text-red-400">ALERTA FUNGOSA:</strong> La humedad (${data.rain.toFixed(1)}mm) crea condiciones para <strong>Tizón</strong> en tus <span style="color: #C8A752;">Tomates/Papas</span>. <strong style="color: #ef4444;">Aplicar fungicida preventivo AHORA.</strong>`;
+        tags = ['💊 Fungicida', '🍅 Solanáceas'];
         type = 'danger';
     }
 
     // Regla: Maíz/Plátano + Viento = CAÍDA (Acame)
     if (data.wind > 20 && userCrops.some(c => c.includes('maiz') || c.includes('maíz') || c.includes('platano') || c.includes('plátano') || c.includes('cambur'))) {
-        text = '⚠️ ALERTA DE VIENTO: Riesgo de acame en cultivos altos (Maíz/Plátano). Revisar tutores y barreras.';
-        tags = ['Viento', 'Acame'];
+        text = `🌽 <strong class="text-orange-400">ALERTA DE VIENTO:</strong> Ráfagas de <strong>${Math.round(data.wind)} km/h</strong>. Riesgo de <strong>acame</strong> en tus <span style="color: #C8A752;">Maíz/Plátano</span>. Revisar tutores y barreras.`;
+        tags = ['💨 Viento', '⚠️ Acame'];
         type = 'warning';
     }
 
     // Regla: Hortalizas + Calor = Estrés Hídrico
     if (data.tempMax > 30 && userCrops.some(c => c.includes('lechuga') || c.includes('cilantro') || c.includes('espinaca'))) {
-        text = '🥬 ALERTA HORTALIZA: Tus hortalizas de hoja son sensibles al calor. Aumenta frecuencia de riego y usa malla sombra.';
-        tags = ['Riego Extra', 'Sombra'];
+        text = `🥬 <strong class="text-orange-400">ALERTA HORTALIZA:</strong> <strong>${Math.round(data.tempMax)}°C</strong> es crítico para <span style="color: #C8A752;">Lechuga/Cilantro</span>. <span style="color: #4ade80;">Aumentar riego 2x</span> y activar malla sombra.`;
+        tags = ['💧 Riego Extra', '🏕️ Sombra'];
+        type = 'warning';
+    }
+
+    // Regla: Café + Helada
+    if (data.tempMin < 12 && userCrops.some(c => c.includes('cafe') || c.includes('café'))) {
+        text = `☕ <strong class="text-blue-400">ALERTA CAFÉ:</strong> Temperatura de <strong>${Math.round(data.tempMin)}°C</strong>. Los cafetales son sensibles al frío. <span style="color: #fbbf24;">Regar temprano</span> para proteger raíces.`;
+        tags = ['☕ Café', '🌅 Riego AM'];
         type = 'warning';
     }
 
@@ -252,7 +265,7 @@ function updateAdviceUI(title, text, tags, type) {
 
     titleEl.className = `font-bold text-sm mb-1 capitalize ${colorClass} transition-colors duration-300`;
     titleEl.textContent = title;
-    textEl.textContent = text;
+    textEl.innerHTML = text; // Rich HTML formatting
 
     if (tagsEl) {
         tagsEl.innerHTML = tags.map(t =>
