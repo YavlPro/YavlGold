@@ -14,6 +14,16 @@ const LUNAR_CYCLE = 29.53058867; // Días del ciclo lunar
 export function initInteractions() {
     window.openLunarCalendar = openLunarCalendar;
     window.showFiatTable = showFiatTable;
+
+    // Función global para cerrar modales correctamente
+    window.closeModal = (id) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add('hidden');
+            el.style.display = 'none'; // Limpiar display inline
+        }
+    };
+
     console.log('[AgroInteractions] ✅ Módulo de interacciones inicializado');
 }
 
@@ -30,7 +40,9 @@ function openLunarCalendar() {
         return;
     }
 
+    // Abrir correctamente: quitar hidden y poner display flex
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 
     // Solo renderizar si está vacío
     if (grid.children.length > 0) return;
@@ -127,7 +139,9 @@ async function showFiatTable() {
         return;
     }
 
+    // Abrir correctamente: quitar hidden y poner display flex
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
     tbody.innerHTML = '<tr><td colspan="2" class="loading-cell">📡 Cargando tasas...</td></tr>';
 
     try {

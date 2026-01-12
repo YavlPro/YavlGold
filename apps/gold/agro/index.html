@@ -1244,15 +1244,15 @@
     </div>
 
     <!-- Modal: Calendario Lunar 2026 -->
-    <div id="modal-lunar" class="hidden"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div id="modal-lunar" class="modal-overlay hidden"
+        style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
         <div
             style="background: #111; border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; width: 100%; max-width: 1000px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(168, 85, 247, 0.15);">
             <div
                 style="padding: 16px 20px; border-bottom: 1px solid rgba(168, 85, 247, 0.2); display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-family: 'Orbitron', sans-serif; color: #c084fc; font-size: 1.1rem; margin: 0;"><i
                         class="fa-solid fa-moon"></i> Ciclo Lunar 2026</h3>
-                <button onclick="document.getElementById('modal-lunar').classList.add('hidden')"
+                <button onclick="window.closeModal('modal-lunar')"
                     style="background: transparent; border: none; color: #888; cursor: pointer; font-size: 1.5rem; padding: 4px 8px;"
                     onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'"><i
                         class="fa-solid fa-xmark"></i></button>
@@ -1265,15 +1265,15 @@
     </div>
 
     <!-- Modal: Tasas de Cambio Fiat -->
-    <div id="modal-fiat" class="hidden"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div id="modal-fiat" class="modal-overlay hidden"
+        style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;">
         <div
             style="background: #111; border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; width: 100%; max-width: 420px; box-shadow: 0 0 30px rgba(34, 197, 94, 0.1);">
             <div
                 style="padding: 16px 20px; border-bottom: 1px solid rgba(34, 197, 94, 0.2); display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="font-family: 'Orbitron', sans-serif; color: #4ade80; font-size: 1rem; margin: 0;"><i
                         class="fa-solid fa-money-bill-transfer"></i> Tasas de Cambio (USD)</h3>
-                <button onclick="document.getElementById('modal-fiat').classList.add('hidden')"
+                <button onclick="window.closeModal('modal-fiat')"
                     style="background: transparent; border: none; color: #888; cursor: pointer; font-size: 1.2rem; padding: 4px 8px;"
                     onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'"><i
                         class="fa-solid fa-xmark"></i></button>
