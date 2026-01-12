@@ -93,42 +93,14 @@ async function fetchWeather() {
         descEl.textContent = 'Error API';
     }
 }
-
 // ============================================
-// 2. MÓDULO MERCADO (BTC/USDT)
+// 2. MÓDULO MERCADO - LEGACY (Moved to agro-market.js)
 // ============================================
-const MARKET_API = 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT';
-let lastPrice = 0;
-
-async function fetchBTC() {
-    const priceEl = document.getElementById('btcPrice');
-    if (!priceEl) return;
-
-    try {
-        const res = await fetch(MARKET_API);
-        const data = await res.json();
-        const price = parseFloat(data.price);
-
-        // Flash Effect
-        if (lastPrice > 0) {
-            priceEl.style.transition = 'color 0.3s ease';
-            priceEl.style.color = price >= lastPrice ? 'var(--success)' : 'var(--danger)';
-            setTimeout(() => { priceEl.style.color = 'var(--gold-primary)'; }, 1000);
-        }
-
-        priceEl.textContent = new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0
-        }).format(price);
-
-        lastPrice = price;
-        // console.log('[Agro] 📈 BTC:', price);
-
-    } catch (err) {
-        console.error('[Agro] Error mercado:', err);
-    }
-}
+// La lógica de mercado ahora está en agro-market.js con:
+// - Multi-asset ticker (BTC, ETH, SOL, USDT)
+// - Tasas de cambio Fiat (VES, COP, MXN, etc.)
+// - Detección automática de zona horaria
+// ============================================
 
 // ============================================
 // 3. MÓDULO ASTRONÓMICO (Fase Lunar)
@@ -216,16 +188,12 @@ function initParticles() {
 // INICIALIZACIÓN
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Inicializar Widgets
-    initWeather(); // Solicita geolocalización y luego carga clima
-    fetchBTC();
+    // 1. Inicializar Widgets (Mercado ahora en agro-market.js)
+    initWeather();
     calculateMoonPhase();
     initParticles();
 
-    // 2. Loop de Mercado (Cada 15s)
-    setInterval(fetchBTC, 15000);
-
-    // 3. Loop de Clima (Cada 10min) - solo si ya tenemos coords
+    // 2. Loop de Clima (Cada 10min) - solo si ya tenemos coords
     setInterval(() => {
         if (userCoords) fetchWeather();
     }, 600000);

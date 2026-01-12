@@ -1063,25 +1063,42 @@
                         <div class="kpi-secondary"> <span class="kpi-tag" id="weather-desc">📍 Buscando
                                 ubicación...</span> <span class="kpi-tag" id="weather-humidity">💧 --%</span> </div>
                     </div>
-                </div> <!-- Mercados -->
-                <div class="card kpi-card animate-in delay-3">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -2s;">📈</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Mercados</div>
-                        <div class="kpi-value">BTC/USDT: <span class="highlight" id="btcPrice">$98,547</span></div>
-                        <div class="kpi-secondary"> <span class="kpi-tag">🥔 $0.8/kg</span> <span class="kpi-tag">🥕
-                                $1.2/kg</span> </div>
-                    </div>
-                </div> <!-- Alerta Lunar -->
-                <div class="card kpi-card animate-in delay-4">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -4s;" id="moon-icon">🌙</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Fase Lunar</div>
-                        <div class="kpi-value">Fase <span class="highlight" id="moon-phase">--</span></div>
-                        <div class="kpi-secondary"> <span class="kpi-tag" id="moon-advice">Calculando...</span> </div>
+                    <div class="card kpi-card animate-in delay-3" style="overflow: hidden;">
+                        <div class="kpi-icon-wrapper" style="animation-delay: -2s;">📈</div>
+                        <div class="kpi-content" style="width: 100%;">
+                            <div class="kpi-label"
+                                style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <span>Mercados en Vivo</span>
+                                <span id="market-location"
+                                    style="font-size: 0.7rem; color: var(--text-muted);">Detectando región...</span>
+                            </div>
+                            <div
+                                style="position: relative; width: 100%; height: 40px; overflow: hidden; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-top: 8px;">
+                                <div id="market-ticker-track" class="animate-marquee"
+                                    style="display: flex; gap: 0; white-space: nowrap; padding-left: 8px; height: 100%; align-items: center;">
+                                    <span
+                                        style="color: var(--text-muted); font-size: 0.85rem; animation: pulse 1.5s infinite;">📡
+                                        Conectando satélites financieros...</span>
+                                </div>
+                            </div>
+                            <div class="kpi-secondary" style="margin-top: 6px;">
+                                <span class="kpi-tag"><i class="fa-brands fa-bitcoin" style="color: #eab308;"></i>
+                                    Crypto Live</span>
+                                <span class="kpi-tag"><i class="fa-solid fa-money-bill-wave"
+                                        style="color: #4ade80;"></i> Fiat Rates</span>
+                            </div>
+                        </div>
+                    </div> <!-- Alerta Lunar -->
+                    <div class="card kpi-card animate-in delay-4">
+                        <div class="kpi-icon-wrapper" style="animation-delay: -4s;" id="moon-icon">🌙</div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Fase Lunar</div>
+                            <div class="kpi-value">Fase <span class="highlight" id="moon-phase">--</span></div>
+                            <div class="kpi-secondary"> <span class="kpi-tag" id="moon-advice">Calculando...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
         </section> <!-- Active Crops Section -->
         <section class="crops-section">
             <div class="section-header animate-in delay-3">
@@ -1142,6 +1159,13 @@
 
     <script type="module" src="agro.js"></script>
     <script type="module" src="dashboard.js"></script>
+    <script type="module">
+        import { initMarketIntelligence, startTickerAutoRefresh } from './agro-market.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            initMarketIntelligence();
+            startTickerAutoRefresh();
+        });
+    </script>
 </body>
 
 </html>
