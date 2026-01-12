@@ -1244,97 +1244,107 @@
         </footer>
     </div>
 
-    <!-- Modal: Agenda Lunar 2026 -->
+    <!-- Modal: Agenda Lunar 2026 (Split View) -->
     <div id="modal-lunar" class="modal-overlay hidden"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
+        style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
         onclick="if(event.target === this) window.closeModal('modal-lunar')">
         <div
-            style="background: #050505; border: 1px solid rgba(200, 167, 82, 0.25); border-radius: 16px; width: 100%; max-width: 1000px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(200, 167, 82, 0.12);">
-            <!-- Header -->
+            style="background: #050505; border: 1px solid rgba(200, 167, 82, 0.25); border-radius: 16px; width: 100%; max-width: 1100px; height: 85vh; display: flex; box-shadow: 0 0 60px rgba(200, 167, 82, 0.12); overflow: hidden;">
+
+            <!-- Left: Calendar -->
             <div
-                style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
-                <div>
+                style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid rgba(200, 167, 82, 0.1);">
+                <div
+                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.1); background: rgba(255,255,255,0.02);">
                     <h3
-                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.4rem; margin: 0; letter-spacing: 1px;">
+                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; margin: 0; letter-spacing: 1px;">
                         Agenda Lunar 2026</h3>
                     <p
-                        style="font-size: 11px; color: var(--gold-primary, #C8A752); margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 1.5px;">
-                        Sincronizado con Ciclos Naturales</p>
+                        style="font-size: 10px; color: var(--gold-primary, #C8A752); margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 1.5px;">
+                        Selecciona un día para planificar</p>
                 </div>
-                <button onclick="window.closeModal('modal-lunar')"
-                    style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #aaa; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                    onmouseover="this.style.background='rgba(248,113,113,0.15)';this.style.borderColor='rgba(248,113,113,0.3)';this.style.color='#f87171'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#aaa'">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <div id="lunar-calendar-grid"
+                    style="padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; background: #0a0a0a; flex: 1;">
+                    <!-- Contenido generado por JS -->
+                </div>
             </div>
-            <!-- Calendar Grid -->
-            <div id="lunar-calendar-grid"
-                style="padding: 24px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; background: #0a0a0a;">
-                <!-- Contenido generado por JS -->
+
+            <!-- Right: Agenda Panel -->
+            <div style="width: 320px; background: #0a0a0a; display: flex; flex-direction: column;">
+                <div
+                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+                    <h4
+                        style="font-family: 'Orbitron', sans-serif; color: var(--gold-primary, #C8A752); font-size: 1rem; margin: 0;">
+                        Detalles del Día</h4>
+                    <button onclick="window.closeModal('modal-lunar')"
+                        style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                        onmouseover="this.style.background='#f87171';this.style.borderColor='#f87171'"
+                        onmouseout="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(255,255,255,0.15)'">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="agenda-panel"
+                    style="padding: 24px; flex: 1; display: flex; flex-direction: column; overflow-y: auto;">
+                    <div
+                        style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555;">
+                        <i class="fa-regular fa-calendar-check"
+                            style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p style="font-size: 12px; text-align: center; line-height: 1.6;">Selecciona una fecha<br>para
+                            ver detalles</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Centro Financiero (Market Hub) -->
+    <!-- Modal: Centro Financiero (Market Hub v2) -->
     <div id="modal-market" class="modal-overlay hidden"
-        style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
+        style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
         onclick="if(event.target === this) window.closeModal('modal-market')">
         <div
-            style="background: #050505; border: 1px solid rgba(200, 167, 82, 0.25); border-radius: 16px; width: 100%; max-width: 600px; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(200, 167, 82, 0.12);">
-            <!-- Header with Tabs -->
-            <div style="border-bottom: 1px solid rgba(200, 167, 82, 0.15); background: rgba(255,255,255,0.02);">
-                <div
-                    style="padding: 20px 24px 16px 24px; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <i class="fa-solid fa-sack-dollar"
-                            style="color: var(--gold-primary, #C8A752); font-size: 1.3rem;"></i>
-                        <h3 style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.2rem; margin: 0;">
-                            Centro Financiero</h3>
-                    </div>
-                    <button onclick="window.closeModal('modal-market')"
-                        style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #888; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                        onmouseover="this.style.background='rgba(248,113,113,0.15)';this.style.color='#f87171'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='#888'">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+            style="background: #050505; border: 1px solid rgba(200, 167, 82, 0.25); border-radius: 16px; width: 100%; max-width: 560px; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(200, 167, 82, 0.12); overflow: hidden;">
+            <!-- Header -->
+            <div
+                style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fa-solid fa-sack-dollar"
+                        style="color: var(--gold-primary, #C8A752); font-size: 1.4rem;"></i>
+                    <h3
+                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.2rem; margin: 0; letter-spacing: 1px;">
+                        Centro Financiero</h3>
                 </div>
-                <!-- Tabs -->
-                <div style="display: flex; gap: 0; padding: 0 24px;">
-                    <button id="tab-btn-crypto" onclick="window.switchMarketTab('crypto')"
-                        style="padding: 12px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;">
-                        <i class="fa-brands fa-bitcoin" style="margin-right: 6px;"></i>CRIPTOMONEDAS
-                    </button>
-                    <button id="tab-btn-fiat" onclick="window.switchMarketTab('fiat')"
-                        style="padding: 12px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;">
-                        <i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i>DIVISAS FIAT
-                    </button>
-                </div>
+                <button onclick="window.closeModal('modal-market')"
+                    style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                    onmouseover="this.style.background='#f87171';this.style.borderColor='#f87171'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(255,255,255,0.15)'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <!-- Content Area -->
-            <div style="padding: 24px; min-height: 350px; background: #0a0a0a;">
+            <!-- Tabs -->
+            <div style="display: flex; border-bottom: 1px solid rgba(200, 167, 82, 0.1); background: #0a0a0a;">
+                <button id="tab-btn-crypto" onclick="window.switchMarketTab('crypto')"
+                    style="flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(255,255,255,0.03); border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;">
+                    <i class="fa-brands fa-bitcoin" style="margin-right: 6px;"></i>CRIPTOMONEDAS
+                </button>
+                <button id="tab-btn-fiat" onclick="window.switchMarketTab('fiat')"
+                    style="flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;">
+                    <i class="fa-solid fa-money-bill-wave" style="margin-right: 6px;"></i>DIVISAS FIAT
+                </button>
+            </div>
+            <!-- Content with Scroll -->
+            <div style="padding: 20px; height: 400px; overflow-y: auto; background: #050505;">
                 <!-- Crypto View -->
-                <div id="view-crypto" style="display: block;">
-                    <div id="crypto-list-container" style="display: flex; flex-direction: column; gap: 12px;">
-                        <div style="text-align: center; color: #666; padding: 40px 0;">📡 Cargando mercado crypto...
+                <div id="view-crypto" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div id="crypto-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="text-align: center; color: #666; padding: 60px 0;">📡 Cargando mercado crypto...
                         </div>
                     </div>
                 </div>
-                <!-- Fiat View -->
-                <div id="view-fiat" style="display: none;">
-                    <table style="width: 100%; font-size: 0.9rem; text-align: left; color: #ccc;">
-                        <thead
-                            style="font-size: 10px; color: var(--gold-primary, #C8A752); text-transform: uppercase; background: rgba(200, 167, 82, 0.08); letter-spacing: 1px;">
-                            <tr>
-                                <th style="padding: 14px 16px; border-radius: 8px 0 0 8px;">Moneda</th>
-                                <th style="padding: 14px 16px; text-align: right; border-radius: 0 8px 8px 0;">Tasa
-                                    (USD)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fiat-table-body" style="border-top: 1px solid rgba(255,255,255,0.05);">
-                            <!-- Contenido generado por JS -->
-                        </tbody>
-                    </table>
+                <!-- Fiat View (Cards - same as Crypto) -->
+                <div id="view-fiat" style="display: none; flex-direction: column; gap: 10px;">
+                    <div id="fiat-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="text-align: center; color: #666; padding: 60px 0;">📡 Cargando divisas...</div>
+                    </div>
                 </div>
             </div>
         </div>

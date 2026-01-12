@@ -29,6 +29,47 @@ export function initInteractions() {
         }
     };
 
+    // Selección de fecha en la agenda lunar
+    window.selectDate = (dateStr) => {
+        const panel = document.getElementById('agenda-panel');
+        if (!panel) return;
+
+        const dateObj = new Date(dateStr + 'T12:00:00');
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const humanDate = dateObj.toLocaleDateString('es-ES', options);
+        const phase = getMoonPhase(dateObj);
+        const phaseInfo = getPhaseIcon(phase);
+
+        panel.innerHTML = `
+            <div style="animation: fadeIn 0.3s ease;">
+                <div style="font-size: 10px; color: var(--gold-primary, #C8A752); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">PROGRAMACIÓN</div>
+                <h2 style="font-size: 1.3rem; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0 0 6px 0; text-transform: capitalize; line-height: 1.3;">${humanDate}</h2>
+                <div style="font-size: 12px; color: #888; margin-bottom: 20px;">${phaseInfo.icon} ${phaseInfo.name}</div>
+
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+                    <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></div>
+                        <span style="color: #ccc; font-size: 13px;">Riego Programado (6:00 AM)</span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e;"></div>
+                        <span style="color: #ccc; font-size: 13px;">Monitoreo de Plagas</span>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                    <label style="font-size: 11px; color: #666; display: block; margin-bottom: 8px;">Agregar Nota</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" placeholder="Ej: Comprar fertilizante..." style="flex: 1; background: #000; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
+                        <button style="background: var(--gold-primary, #C8A752); color: #000; border: none; padding: 0 14px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: background 0.2s;" onmouseover="this.style.background='#d4b866'" onmouseout="this.style.background='var(--gold-primary)'">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
     console.log('[AgroInteractions] ✅ Módulo de interacciones inicializado');
 }
 
@@ -127,10 +168,10 @@ async function loadDetailedCrypto() {
 }
 
 async function loadFiatRates() {
-    const tbody = document.getElementById('fiat-table-body');
-    if (!tbody) return;
+    const container = document.getElementById('fiat-list-container');
+    if (!container) return;
 
-    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 24px; color: #666;">📡 Cargando tasas...</td></tr>';
+    container.innerHTML = '<div style="text-align: center; color: #666; padding: 60px 0;">📡 Cargando divisas...</div>';
 
     try {
         const res = await fetch('https://open.er-api.com/v6/latest/USD');
@@ -143,6 +184,8 @@ async function loadFiatRates() {
             { code: 'MXN', name: 'Peso Mexicano', flag: '🇲🇽' },
             { code: 'ARS', name: 'Peso Argentino', flag: '🇦🇷' },
             { code: 'BRL', name: 'Real Brasileño', flag: '🇧🇷' },
+            { code: 'CLP', name: 'Peso Chileno', flag: '🇨🇱' },
+            { code: 'PEN', name: 'Sol Peruano', flag: '🇵🇪' },
             { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
         ];
 
@@ -150,30 +193,30 @@ async function loadFiatRates() {
         currencies.forEach(({ code, name, flag }) => {
             if (rates[code]) {
                 const formatted = rates[code].toLocaleString('es-ES', { maximumFractionDigits: 2 });
+                // Card design matching crypto
                 html += `
-                    <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                        <td style="padding: 14px 16px;">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span style="font-size: 1.4rem;">${flag}</span>
-                                <div>
-                                    <div style="font-weight: 700; color: #eee;">${code}</div>
-                                    <div style="font-size: 10px; color: #666;">${name}</div>
-                                </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(200,167,82,0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <span style="font-size: 1.6rem;">${flag}</span>
+                            <div>
+                                <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${code}</div>
+                                <div style="font-size: 10px; color: #666;">${name}</div>
                             </div>
-                        </td>
-                        <td style="padding: 14px 16px; text-align: right; font-family: 'Orbitron', monospace; color: var(--gold-primary, #C8A752);">
-                            ${formatted}
-                        </td>
-                    </tr>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-family: 'Orbitron', monospace; color: var(--gold-primary, #C8A752); font-size: 1rem; font-weight: 600;">${formatted}</div>
+                            <div style="font-size: 10px; color: #4ade80;">Tasa Oficial</div>
+                        </div>
+                    </div>
                 `;
             }
         });
 
-        tbody.innerHTML = html;
+        container.innerHTML = html;
 
     } catch (e) {
         console.error('[AgroInteractions] Error fiat:', e);
-        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 24px; color: #f87171;">❌ Error cargando tasas</td></tr>';
+        container.innerHTML = '<div style="text-align: center; color: #f87171; padding: 60px 0;">❌ Error cargando divisas</div>';
     }
 }
 
@@ -232,12 +275,13 @@ function openLunarCalendar() {
             const date = new Date(2026, m, d);
             const phase = getMoonPhase(date);
             const phaseInfo = getPhaseIcon(phase);
+            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
             const isToday = date.toDateString() === today.toDateString();
             const todayClass = isToday ? 'today' : '';
 
             html += `
-                <div class="day-cell ${todayClass}" title="${phaseInfo.name}">
+                <div class="day-cell ${todayClass}" title="${phaseInfo.name}" onclick="window.selectDate('${dateStr}')" style="cursor: pointer;">
                     <span class="day-num">${d}</span>
                     <span class="phase-icon">${phaseInfo.icon}</span>
                 </div>
