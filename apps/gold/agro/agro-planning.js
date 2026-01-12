@@ -1,11 +1,14 @@
 /**
  * YavlGold V9.4 - Agro Planning Module
- * "El Oráculo del Agricultor"
- * Pronóstico extendido 7 días + Consejos Agronómicos
+ * "El Oráculo del Agricultor" - Inteligencia Reactiva
+ * Pronóstico extendido 7 días + Consejos Agronómicos Sincronizados con Cultivos
  */
 
 const FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
 const DEFAULT_COORDS = { lat: 8.13, lon: -71.98 }; // La Grita, Táchira
+
+// Almacenamos datos del pronóstico para acceso global
+let currentForecastData = null;
 
 /**
  * Inicializa el módulo de planificación
@@ -23,21 +26,24 @@ export async function initPlanning() {
         const pos = await getPosition();
         console.log(`[AgroPlanning] 📍 Ubicación: ${pos.lat}, ${pos.lon}`);
 
-        // 2. Llamar Open-Meteo para 7 días
-        const url = `${FORECAST_API}?latitude=${pos.lat}&longitude=${pos.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+        // 2. Llamar Open-Meteo para 7 días (incluyendo viento)
+        const url = `${FORECAST_API}?latitude=${pos.lat}&longitude=${pos.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=auto`;
 
         const res = await fetch(url);
         const data = await res.json();
 
         if (!data.daily) throw new Error('Sin datos diarios');
 
-        // 3. Renderizar visualización
+        // 3. Guardar referencia global
+        currentForecastData = data.daily;
+
+        // 4. Renderizar visualización interactiva
         renderForecast(data.daily);
 
-        // 4. Generar consejos agronómicos
-        generateAdvice(data.daily);
+        // 5. Auto-seleccionar HOY (índice 0)
+        window.selectForecastDay(0);
 
-        console.log('[AgroPlanning] ✅ Oráculo inicializado');
+        console.log('[AgroPlanning] ✅ Oráculo Inteligente inicializado');
 
     } catch (e) {
         console.error('[AgroPlanning] Error:', e);
@@ -63,9 +69,24 @@ function getPosition() {
     });
 }
 
-/**
- * Renderiza el gráfico de barras del pronóstico semanal
- */
+// ============================================
+// LECTURA DE CULTIVOS REALES (localStorage)
+// ============================================
+
+function getUserCrops() {
+    try {
+        const crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+        return crops.map(c => c.name ? c.name.toLowerCase() : '');
+    } catch (e) {
+        console.warn('[AgroPlanning] Error leyendo cultivos:', e);
+        return [];
+    }
+}
+
+// ============================================
+// RENDERIZADOR INTERACTIVO
+// ============================================
+
 function renderForecast(daily) {
     const container = document.getElementById('forecast-container');
     if (!container) return;
@@ -74,7 +95,7 @@ function renderForecast(daily) {
     let html = '';
 
     for (let i = 0; i < 7; i++) {
-        // Fix: Parse manually to avoid UTC timezone adjustment shifting the day back
+        // Fix: Parse manually to avoid UTC timezone adjustment
         const [y, m, d] = daily.time[i].split('-').map(Number);
         const date = new Date(y, m - 1, d);
 
@@ -92,7 +113,7 @@ function renderForecast(daily) {
         const icon = isRainy ? '💧' : (tempMax > 28 ? '☀️' : '⛅');
 
         html += `
-            <div class="forecast-day ${isToday ? 'today' : ''}">
+            <div class="forecast-day ${isToday ? 'today' : ''}" id="day-card-${i}" onclick="window.selectForecastDay(${i})">
                 <span class="day-name">${isToday ? 'HOY' : dayName}</span>
                 <span class="day-icon">${icon}</span>
                 <div class="bar-container">
@@ -108,68 +129,149 @@ function renderForecast(daily) {
     injectForecastStyles();
 }
 
-/**
- * Genera consejos agronómicos basados en el pronóstico
- */
-function generateAdvice(daily) {
+// ============================================
+// CEREBRO DE LA IA - Selección Interactiva
+// ============================================
+
+window.selectForecastDay = function (index) {
+    if (!currentForecastData || !currentForecastData.time) return;
+
+    // 1. Highlight Visual - Reset all, activate selected
+    for (let i = 0; i < 7; i++) {
+        const el = document.getElementById(`day-card-${i}`);
+        if (el) {
+            el.classList.remove('selected');
+            if (i === index) {
+                el.classList.add('selected');
+            }
+        }
+    }
+
+    // 2. Extraer datos del día seleccionado
+    const dayData = {
+        date: currentForecastData.time[index],
+        rain: currentForecastData.precipitation_sum[index] || 0,
+        tempMax: currentForecastData.temperature_2m_max[index],
+        tempMin: currentForecastData.temperature_2m_min[index],
+        wind: currentForecastData.wind_speed_10m_max ? currentForecastData.wind_speed_10m_max[index] : 0
+    };
+
+    // 3. Generar consejo inteligente
+    generateSmartAdvice(dayData, index === 0);
+};
+
+// ============================================
+// MOTOR DE REGLAS - Sincronizado con Cultivos
+// ============================================
+
+function generateSmartAdvice(data, isToday) {
+    const userCrops = getUserCrops();
+
+    // Parse fecha correctamente (sin UTC shift)
+    const [y, m, d] = data.date.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const dateStr = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+
+    let title = isToday ? '📡 Análisis en Tiempo Real' : `📅 Previsión: ${dateStr}`;
+    let text = '';
+    let tags = [];
+    let type = 'neutral'; // neutral, warning, danger, success
+
+    // ========== REGLAS CLIMÁTICAS BASE ==========
+
+    // 1. Lluvia Extrema (>15mm)
+    if (data.rain > 15) {
+        text = 'Precipitación intensa detectada. Riesgo de erosión y lavado de nutrientes. Suspender fertirriego.';
+        tags.push('Drenaje', 'Erosión');
+        type = 'danger';
+    }
+    // 2. Calor Extremo (>32°C)
+    else if (data.tempMax > 32) {
+        text = 'Estrés térmico inminente. Aumentar riego de soporte y evitar aplicaciones químicas al mediodía.';
+        tags.push('Hidratación', 'Sombra');
+        type = 'warning';
+    }
+    // 3. Viento Fuerte (>25km/h)
+    else if (data.wind > 25) {
+        text = 'Ráfagas de viento fuertes. Asegurar estructuras, tutores e invernaderos.';
+        tags.push('Infraestructura');
+        type = 'warning';
+    }
+    // 4. Frío Peligroso (<10°C)
+    else if (data.tempMin < 10) {
+        text = `Temperatura mínima de ${Math.round(data.tempMin)}°C. Riesgo de heladas. Protege cultivos sensibles.`;
+        tags.push('Proteger', 'Riego AM');
+        type = 'warning';
+    }
+    // 5. Condiciones Ideales
+    else {
+        text = 'Ventana climática favorable para labores de campo, poda y fertilización.';
+        tags.push('Operativo');
+        type = 'success';
+    }
+
+    // ========== SINCRONIZACIÓN CON CULTIVOS (La Magia) ==========
+
+    // Regla: Tomate/Papa + Lluvia = HONGOS (Tizón)
+    if (data.rain > 5 && userCrops.some(c => c.includes('tomate') || c.includes('papa'))) {
+        text = '⚠️ ALERTA FUNGOSA: La lluvia crea condiciones ideales para Tizón en tus Solanáceas (Tomate/Papa). Aplica fungicida preventivo.';
+        tags = ['Fungicida', 'Tomate/Papa'];
+        type = 'danger';
+    }
+
+    // Regla: Maíz/Plátano + Viento = CAÍDA (Acame)
+    if (data.wind > 20 && userCrops.some(c => c.includes('maiz') || c.includes('maíz') || c.includes('platano') || c.includes('plátano') || c.includes('cambur'))) {
+        text = '⚠️ ALERTA DE VIENTO: Riesgo de acame en cultivos altos (Maíz/Plátano). Revisar tutores y barreras.';
+        tags = ['Viento', 'Acame'];
+        type = 'warning';
+    }
+
+    // Regla: Hortalizas + Calor = Estrés Hídrico
+    if (data.tempMax > 30 && userCrops.some(c => c.includes('lechuga') || c.includes('cilantro') || c.includes('espinaca'))) {
+        text = '🥬 ALERTA HORTALIZA: Tus hortalizas de hoja son sensibles al calor. Aumenta frecuencia de riego y usa malla sombra.';
+        tags = ['Riego Extra', 'Sombra'];
+        type = 'warning';
+    }
+
+    // Actualizar UI
+    updateAdviceUI(title, text, tags, type);
+}
+
+function updateAdviceUI(title, text, tags, type) {
     const titleEl = document.getElementById('advice-title');
     const textEl = document.getElementById('advice-text');
     const tagsEl = document.getElementById('advice-tags');
 
     if (!titleEl || !textEl) return;
 
-    // Análisis de datos
-    const totalRain = daily.precipitation_sum.reduce((a, b) => a + (b || 0), 0);
-    const maxTemp = Math.max(...daily.temperature_2m_max);
-    const minTemp = Math.min(...daily.temperature_2m_min);
-    const rainyDays = daily.precipitation_sum.filter(r => r > 2).length;
+    // Colores según severidad
+    let colorClass = 'text-gold';
+    if (type === 'danger') colorClass = 'text-red-500';
+    if (type === 'warning') colorClass = 'text-orange-400';
+    if (type === 'success') colorClass = 'text-green-400';
 
-    // Lógica de decisiones agronómicas
-    let title = 'Condiciones Óptimas';
-    let text = 'Semana estable para siembra y mantenimiento general. Mantén el monitoreo regular de tus cultivos.';
-    let colorClass = 'text-green-400';
-    let tags = ['Siembra OK', 'Monitoreo'];
-
-    if (totalRain > 30) {
-        title = '⚠️ Alerta: Exceso de Humedad';
-        text = `Se esperan ${totalRain.toFixed(0)}mm de lluvia esta semana. Suspende el riego, revisa drenajes y aplica fungicida preventivo.`;
-        colorClass = 'text-blue-400';
-        tags = ['Drenaje', 'Fungicida', 'No Regar'];
-    } else if (rainyDays >= 4) {
-        title = '🌧️ Semana Lluviosa';
-        text = `Lluvia esperada ${rainyDays} de 7 días. Aprovecha para fertilizar antes de las lluvias y evita podas.`;
-        colorClass = 'text-cyan-400';
-        tags = ['Fertilizar Hoy', 'No Podar'];
-    } else if (maxTemp > 32) {
-        title = '🔥 Estrés Térmico';
-        text = `Temperaturas críticas (hasta ${maxTemp}°C). Aumenta frecuencia de riego, aplica mulch y considera malla sombra.`;
-        colorClass = 'text-orange-400';
-        tags = ['Riego x2', 'Mulch', 'Sombra'];
-    } else if (minTemp < 10) {
-        title = '❄️ Riesgo de Helada';
-        text = `Temperatura mínima de ${minTemp}°C detectada. Protege cultivos sensibles y evita riego nocturno.`;
-        colorClass = 'text-purple-400';
-        tags = ['Proteger', 'Riego AM'];
-    } else if (totalRain < 5 && maxTemp > 25) {
-        title = '☀️ Semana Seca';
-        text = 'Poca lluvia esperada. Programa riego profundo cada 2-3 días y monitorea signos de estrés hídrico.';
-        colorClass = 'text-amber-400';
-        tags = ['Riego Profundo', 'Mulch'];
-    }
-
-    // Actualizar UI
+    titleEl.className = `font-bold text-sm mb-1 capitalize ${colorClass} transition-colors duration-300`;
     titleEl.textContent = title;
-    titleEl.className = `font-bold text-sm mb-1 ${colorClass}`;
     textEl.textContent = text;
 
-    tagsEl.innerHTML = tags.map(t =>
-        `<span class="advice-tag">${t}</span>`
-    ).join('');
+    if (tagsEl) {
+        tagsEl.innerHTML = tags.map(t =>
+            `<span class="advice-tag">${t}</span>`
+        ).join('');
+    }
+
+    // Animación visual de "pensando" en el icono del bot
+    const iconEl = document.querySelector('#advice-panel .fa-robot, #advice-panel .fa-brain');
+    if (iconEl) {
+        iconEl.classList.add('animate-pulse');
+        setTimeout(() => iconEl.classList.remove('animate-pulse'), 1000);
+    }
 }
 
-/**
- * Inyecta estilos CSS para el forecast
- */
+// ============================================
+// ESTILOS CSS INYECTADOS
+// ============================================
+
 function injectForecastStyles() {
     if (document.getElementById('forecast-styles')) return;
 
@@ -182,7 +284,8 @@ function injectForecastStyles() {
             align-items: flex-end;
             gap: 4px;
             height: 140px;
-            padding: 8px 0;
+            padding: 12px 0;
+            margin-top: 16px; /* Fix: Espaciado extra para evitar solapamiento */
         }
 
         .forecast-day {
@@ -191,19 +294,28 @@ function injectForecastStyles() {
             align-items: center;
             gap: 4px;
             flex: 1;
-            padding: 4px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
+            padding: 6px 4px;
+            border-radius: 8px;
+            transition: all 0.25s ease;
             cursor: pointer;
+            border: 1px solid transparent;
         }
 
         .forecast-day:hover {
             background: rgba(255, 255, 255, 0.05);
+            transform: scale(1.03);
         }
 
         .forecast-day.today {
             background: rgba(200, 167, 82, 0.1);
             border: 1px solid rgba(200, 167, 82, 0.2);
+        }
+
+        .forecast-day.selected {
+            background: rgba(200, 167, 82, 0.15);
+            border: 1px solid rgba(200, 167, 82, 0.5);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(200, 167, 82, 0.2);
         }
 
         .day-name {
@@ -213,7 +325,8 @@ function injectForecastStyles() {
             text-transform: uppercase;
         }
 
-        .forecast-day.today .day-name {
+        .forecast-day.today .day-name,
+        .forecast-day.selected .day-name {
             color: var(--gold-primary, #C8A752);
         }
 
@@ -260,6 +373,20 @@ function injectForecastStyles() {
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 4px;
             color: #aaa;
+        }
+
+        .text-gold { color: var(--gold-primary, #C8A752); }
+        .text-red-500 { color: #ef4444; }
+        .text-orange-400 { color: #fb923c; }
+        .text-green-400 { color: #4ade80; }
+
+        .animate-pulse {
+            animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     `;
     document.head.appendChild(style);
