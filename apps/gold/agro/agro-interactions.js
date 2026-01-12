@@ -12,19 +12,169 @@ const LUNAR_CYCLE = 29.53058867; // Días del ciclo lunar
  * Inicializa las interacciones y expone funciones globales
  */
 export function initInteractions() {
+    // Modales
     window.openLunarCalendar = openLunarCalendar;
     window.showFiatTable = showFiatTable;
+
+    // Market Hub
+    window.openMarketHub = openMarketHub;
+    window.switchMarketTab = switchMarketTab;
 
     // Función global para cerrar modales correctamente
     window.closeModal = (id) => {
         const el = document.getElementById(id);
         if (el) {
             el.classList.add('hidden');
-            el.style.display = 'none'; // Limpiar display inline
+            el.style.display = 'none';
         }
     };
 
     console.log('[AgroInteractions] ✅ Módulo de interacciones inicializado');
+}
+
+// ============================================
+// MARKET HUB (Centro Financiero Unificado)
+// ============================================
+
+function openMarketHub(defaultTab = 'crypto') {
+    const modal = document.getElementById('modal-market');
+    if (!modal) {
+        console.error('[AgroInteractions] Modal market no encontrado');
+        return;
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+
+    switchMarketTab(defaultTab);
+    loadDetailedCrypto();
+    loadFiatRates();
+}
+
+function switchMarketTab(tab) {
+    const btnCrypto = document.getElementById('tab-btn-crypto');
+    const btnFiat = document.getElementById('tab-btn-fiat');
+    const viewCrypto = document.getElementById('view-crypto');
+    const viewFiat = document.getElementById('view-fiat');
+
+    if (!btnCrypto || !btnFiat || !viewCrypto || !viewFiat) return;
+
+    const activeStyle = 'padding: 12px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;';
+    const inactiveStyle = 'padding: 12px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;';
+
+    if (tab === 'crypto') {
+        btnCrypto.style.cssText = activeStyle;
+        btnFiat.style.cssText = inactiveStyle;
+        viewCrypto.style.display = 'block';
+        viewFiat.style.display = 'none';
+    } else {
+        btnCrypto.style.cssText = inactiveStyle;
+        btnFiat.style.cssText = activeStyle;
+        viewCrypto.style.display = 'none';
+        viewFiat.style.display = 'block';
+    }
+}
+
+async function loadDetailedCrypto() {
+    const container = document.getElementById('crypto-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px 0;">📡 Conectando con mercados...</div>';
+
+    try {
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT'];
+        const results = await Promise.all(
+            symbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`).then(r => r.json()))
+        );
+
+        const cryptoData = [
+            { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
+            { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
+            { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' },
+            { symbol: 'BNB', name: 'BNB Chain', icon: 'fa-solid fa-coins', iconColor: '#f3ba2f' },
+        ];
+
+        let html = '';
+        results.forEach((data, i) => {
+            const price = parseFloat(data.lastPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+            const change = parseFloat(data.priceChangePercent);
+            const changeColor = change >= 0 ? '#4ade80' : '#f87171';
+            const changeSign = change >= 0 ? '+' : '';
+
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(200,167,82,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <i class="${cryptoData[i].icon}" style="font-size: 1.8rem; color: ${cryptoData[i].iconColor};"></i>
+                        <div>
+                            <div style="font-weight: 700; color: #fff; font-size: 1rem;">${cryptoData[i].name}</div>
+                            <div style="font-size: 11px; color: #666;">${cryptoData[i].symbol}/USDT</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-family: 'Orbitron', monospace; color: #fff; font-size: 1rem;">${price}</div>
+                        <div style="font-size: 11px; color: ${changeColor}; font-weight: 600;">${changeSign}${change.toFixed(2)}%</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+
+    } catch (e) {
+        console.error('[AgroInteractions] Error crypto:', e);
+        container.innerHTML = '<div style="text-align: center; color: #f87171; padding: 40px 0;">❌ Error cargando mercado</div>';
+    }
+}
+
+async function loadFiatRates() {
+    const tbody = document.getElementById('fiat-table-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 24px; color: #666;">📡 Cargando tasas...</td></tr>';
+
+    try {
+        const res = await fetch('https://open.er-api.com/v6/latest/USD');
+        const data = await res.json();
+        const rates = data.rates;
+
+        const currencies = [
+            { code: 'VES', name: 'Bolívar Digital', flag: '🇻🇪' },
+            { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
+            { code: 'MXN', name: 'Peso Mexicano', flag: '🇲🇽' },
+            { code: 'ARS', name: 'Peso Argentino', flag: '🇦🇷' },
+            { code: 'BRL', name: 'Real Brasileño', flag: '🇧🇷' },
+            { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+        ];
+
+        let html = '';
+        currencies.forEach(({ code, name, flag }) => {
+            if (rates[code]) {
+                const formatted = rates[code].toLocaleString('es-ES', { maximumFractionDigits: 2 });
+                html += `
+                    <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 14px 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 1.4rem;">${flag}</span>
+                                <div>
+                                    <div style="font-weight: 700; color: #eee;">${code}</div>
+                                    <div style="font-size: 10px; color: #666;">${name}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 14px 16px; text-align: right; font-family: 'Orbitron', monospace; color: var(--gold-primary, #C8A752);">
+                            ${formatted}
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+
+        tbody.innerHTML = html;
+
+    } catch (e) {
+        console.error('[AgroInteractions] Error fiat:', e);
+        tbody.innerHTML = '<tr><td colspan="2" style="text-align: center; padding: 24px; color: #f87171;">❌ Error cargando tasas</td></tr>';
+    }
 }
 
 // ============================================
