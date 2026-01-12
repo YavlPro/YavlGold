@@ -3,6 +3,7 @@
  * Conecta la UI con las tablas agro_crops y agro_roi_calculations
  */
 import supabase from '../assets/js/config/supabase-config.js';
+import { updateStats } from './agro-stats.js';
 
 // ============================================================
 // ESTADO DEL MÓDULO
@@ -112,12 +113,12 @@ function renderCropCard(crop, index) {
 /**
  * Carga cultivos del usuario desde Supabase y los renderiza
  */
+/**
+ * Carga cultivos del usuario (Supabase + LocalStorage fallback)
+ */
 export async function loadCrops() {
     const cropsGrid = document.querySelector('.crops-grid');
-    if (!cropsGrid) {
-        console.warn('[Agro] No se encontró .crops-grid en el DOM');
-        return;
-    }
+    if (!cropsGrid) return;
 
     // Mostrar loading
     cropsGrid.innerHTML = `
@@ -127,58 +128,66 @@ export async function loadCrops() {
         </div>
     `;
 
+    let crops = [];
+    let error = null;
+
     try {
-        const { data: crops, error } = await supabase
-            .from('agro_crops')
-            .select('*')
-            .order('created_at', { ascending: false });
+        // 1. Intentar cargar desde Supabase
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.id) {
+            const { data, error: sbError } = await supabase
+                .from('agro_crops')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        if (error) {
-            console.error('[Agro] Error cargando cultivos:', error);
-            cropsGrid.innerHTML = `
-                <div class="card animate-in" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                    <div class="kpi-icon-wrapper" style="margin: 0 auto 1rem;">⚠️</div>
-                    <p style="color: var(--danger);">Error al cargar cultivos</p>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">${error.message}</p>
-                </div>
-            `;
-            return;
+            if (sbError) throw sbError;
+            crops = data || [];
+        } else {
+            // 2. Fallback: LocalStorage
+            console.log('[Agro] Usuario no autenticado, usando LocalStorage');
+            crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
         }
-
-        if (!crops || crops.length === 0) {
-            cropsCache = [];
-            cropsGrid.innerHTML = `
-                <div class="card animate-in" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                    <div class="kpi-icon-wrapper" style="margin: 0 auto 1rem;">🌱</div>
-                    <p style="color: var(--gold-primary); font-weight: 600;">No tienes cultivos activos aún</p>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
-                        Haz clic en "+ Nuevo Cultivo" para agregar tu primer cultivo
-                    </p>
-                </div>
-            `;
-            return;
-        }
-
-        // Guardar en cache para edición
-        cropsCache = crops;
-
-        // Renderizar cultivos
-        cropsGrid.innerHTML = crops.map((crop, i) => renderCropCard(crop, i)).join('');
-
-        // Animar progress bars
-        setTimeout(() => {
-            document.querySelectorAll('.crops-grid .progress-fill').forEach(bar => {
-                const width = bar.style.width;
-                bar.style.width = '0%';
-                setTimeout(() => { bar.style.width = width; }, 100);
-            });
-        }, 300);
-
-        console.log(`[Agro] ✅ ${crops.length} cultivos cargados`);
 
     } catch (err) {
-        console.error('[Agro] Error inesperado:', err);
+        console.warn('[Agro] Error Supabase, intentando LocalStorage:', err);
+        // Fallback en caso de error de conexión
+        crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+        error = err;
     }
+
+    // Actualizar Estadísticas siempre (aunque esté vacío)
+    updateStats(crops);
+
+    if (crops.length === 0) {
+        cropsCache = [];
+        cropsGrid.innerHTML = `
+            <div class="card animate-in" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                <div class="kpi-icon-wrapper" style="margin: 0 auto 1rem;">🌱</div>
+                <p style="color: var(--gold-primary); font-weight: 600;">No tienes cultivos activos aún</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                    Haz clic en "+ Nuevo Cultivo" para agregar tu primer cultivo
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    // Guardar en cache para edición
+    cropsCache = crops;
+
+    // Renderizar cultivos
+    cropsGrid.innerHTML = crops.map((crop, i) => renderCropCard(crop, i)).join('');
+
+    // Animar progress bars
+    setTimeout(() => {
+        document.querySelectorAll('.crops-grid .progress-fill').forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => { bar.style.width = width; }, 100);
+        });
+    }, 300);
+
+    console.log(`[Agro] ✅ ${crops.length} cultivos cargados`);
 }
 
 // ============================================================
@@ -519,75 +528,79 @@ export async function saveCrop() {
         return;
     }
 
-    // Obtener usuario
+    // Datos del cultivo
+    const cropData = {
+        name: name,
+        variety: variety,
+        icon: icon,
+        area_size: area,
+        investment: investment,
+        start_date: startDate,
+        expected_harvest_date: harvestDate
+    };
+
     try {
-        const { data: userData, error: authError } = await supabase.auth.getUser();
+        const { data: userData } = await supabase.auth.getUser();
 
-        if (authError || !userData?.user?.id) {
-            alert('Debes iniciar sesión para guardar cultivos');
-            console.error('[Agro] Error de autenticación:', authError);
-            return;
-        }
+        if (userData?.user?.id) {
+            // --- MODO SUPABASE ---
+            let result;
+            if (currentEditId) {
+                // UPDATE
+                result = await supabase
+                    .from('agro_crops')
+                    .update(cropData)
+                    .eq('id', currentEditId)
+                    .select();
+            } else {
+                // INSERT
+                result = await supabase
+                    .from('agro_crops')
+                    .insert([{
+                        ...cropData,
+                        user_id: userData.user.id,
+                        status: 'growing',
+                        progress: 0
+                    }])
+                    .select();
+            }
+            if (result.error) throw result.error;
 
-        // Datos del cultivo
-        const cropData = {
-            name: name,
-            variety: variety,
-            icon: icon,
-            area_size: area,
-            investment: investment,
-            start_date: startDate,
-            expected_harvest_date: harvestDate
-        };
-
-        let result;
-
-        if (currentEditId) {
-            // MODO EDICIÓN: UPDATE
-            result = await supabase
-                .from('agro_crops')
-                .update(cropData)
-                .eq('id', currentEditId)
-                .select();
-
-            console.log('[Agro] ✅ Cultivo actualizado:', result.data);
         } else {
-            // MODO NUEVO: INSERT
-            result = await supabase
-                .from('agro_crops')
-                .insert([{
+            // --- MODO LOCALSTORAGE ---
+            console.log('[Agro] Guardando en LocalStorage...');
+            let localCrops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+
+            if (currentEditId) {
+                // UPDATE
+                const index = localCrops.findIndex(c => c.id === currentEditId);
+                if (index !== -1) {
+                    localCrops[index] = { ...localCrops[index], ...cropData };
+                }
+            } else {
+                // INSERT
+                const newCrop = {
+                    id: crypto.randomUUID(),
                     ...cropData,
-                    user_id: userData.user.id,
                     status: 'growing',
-                    progress: 0
-                }])
-                .select();
-
-            console.log('[Agro] ✅ Cultivo creado:', result.data);
+                    progress: 0,
+                    created_at: new Date().toISOString()
+                };
+                localCrops.push(newCrop);
+            }
+            localStorage.setItem('yavlgold_agro_crops', JSON.stringify(localCrops));
         }
 
-        if (result.error) {
-            console.error('[Agro] Error guardando cultivo:', result.error);
-            alert(`Error al guardar: ${result.error.message}`);
-            return;
-        }
-
-        // Limpiar formulario y estado
+        // Éxito
         document.getElementById('form-new-crop')?.reset();
         currentEditId = null;
-
-        // Cerrar modal
         closeCropModal();
-
-        // Recargar lista de cultivos
-        await loadCrops();
-
-        // Feedback visual
+        await loadCrops(); // Esto actualizará también las estadísticas
         console.log('[Agro] 🌱 Operación completada exitosamente');
 
     } catch (err) {
-        console.error('[Agro] Error inesperado:', err);
-        alert('Error inesperado al guardar el cultivo');
+        console.error('[Agro] Error guardando cultivo:', err);
+        alert('Error al guardar el cultivo: ' + (err.message || 'Error desconocido'));
     }
 }
 
@@ -624,25 +637,25 @@ async function deleteCrop(id) {
     }
 
     try {
-        const { error } = await supabase
-            .from('agro_crops')
-            .delete()
-            .eq('id', id);
+        const { data: userData } = await supabase.auth.getUser();
 
-        if (error) {
-            console.error('[Agro] Error eliminando cultivo:', error);
-            alert(`Error al eliminar: ${error.message}`);
-            return;
+        if (userData?.user?.id) {
+            // Eliminar de Supabase
+            const { error } = await supabase.from('agro_crops').delete().eq('id', id);
+            if (error) throw error;
+        } else {
+            // Eliminar de LocalStorage
+            let localCrops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+            localCrops = localCrops.filter(c => c.id !== id);
+            localStorage.setItem('yavlgold_agro_crops', JSON.stringify(localCrops));
         }
 
         console.log('[Agro] 🗑️ Cultivo eliminado:', id);
-
-        // Recargar lista de cultivos
-        await loadCrops();
+        await loadCrops(); // Actualiza UI y gráficas
 
     } catch (err) {
-        console.error('[Agro] Error inesperado:', err);
-        alert('Error inesperado al eliminar el cultivo');
+        console.error('[Agro] Error eliminando cultivo:', err);
+        alert('Error al eliminar: ' + (err.message || 'Error desconocido'));
     }
 }
 

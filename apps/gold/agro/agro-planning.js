@@ -74,7 +74,10 @@ function renderForecast(daily) {
     let html = '';
 
     for (let i = 0; i < 7; i++) {
-        const date = new Date(daily.time[i]);
+        // Fix: Parse manually to avoid UTC timezone adjustment shifting the day back
+        const [y, m, d] = daily.time[i].split('-').map(Number);
+        const date = new Date(y, m - 1, d);
+
         const dayName = days[date.getDay()];
         const isToday = i === 0;
         const tempMax = Math.round(daily.temperature_2m_max[i]);

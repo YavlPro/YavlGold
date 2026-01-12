@@ -1,12 +1,25 @@
 /**
  * YavlGold V9.4 - Agro Interactions Module
- * "Profundidad & Interacción"
- * Calendario Lunar 2026 + Modal Fiat Rates
+ * "Profundidad & Interacción Revitalizada"
+ * Calendario Lunar 2026 + Centro Financiero Unificado + Agenda Real (localStorage)
+ * ----------------------------------------------------------------------------------
+ * DNA Visual V9.4 Compliance:
+ *   - Gradiente sutiles en modales (no negro plano)
+ *   - Bordes con brillo dorado
+ *   - Botón X elegante con hover rojo
+ *   - Consistencia visual Crypto = Fiat
+ *   - localStorage para notas reales
  */
 
 // Base de conocimiento lunar (Luna Nueva: 19 Enero 2026)
 const BASE_NEW_MOON = new Date('2026-01-19T00:00:00');
 const LUNAR_CYCLE = 29.53058867; // Días del ciclo lunar
+
+// Clave localStorage para tareas
+const TASKS_STORAGE_KEY = 'yavlgold_agro_tasks';
+
+// Fecha actualmente seleccionada
+let selectedDateStr = null;
 
 /**
  * Inicializa las interacciones y expone funciones globales
@@ -29,48 +42,222 @@ export function initInteractions() {
         }
     };
 
-    // Selección de fecha en la agenda lunar
-    window.selectDate = (dateStr) => {
-        const panel = document.getElementById('agenda-panel');
-        if (!panel) return;
+    // Agenda Lunar Real
+    window.selectDate = selectDate;
+    window.saveTask = saveTask;
+    window.deleteTask = deleteTask;
 
-        const dateObj = new Date(dateStr + 'T12:00:00');
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const humanDate = dateObj.toLocaleDateString('es-ES', options);
-        const phase = getMoonPhase(dateObj);
-        const phaseInfo = getPhaseIcon(phase);
+    console.log('[AgroInteractions] ✅ Módulo de interacciones inicializado con Agenda Real');
+}
 
-        panel.innerHTML = `
-            <div style="animation: fadeIn 0.3s ease;">
-                <div style="font-size: 10px; color: var(--gold-primary, #C8A752); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">PROGRAMACIÓN</div>
-                <h2 style="font-size: 1.3rem; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0 0 6px 0; text-transform: capitalize; line-height: 1.3;">${humanDate}</h2>
-                <div style="font-size: 12px; color: #888; margin-bottom: 20px;">${phaseInfo.icon} ${phaseInfo.name}</div>
+// ============================================
+// AGENDA LUNAR REAL (localStorage)
+// ============================================
 
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
-                    <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></div>
-                        <span style="color: #ccc; font-size: 13px;">Riego Programado (6:00 AM)</span>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e;"></div>
-                        <span style="color: #ccc; font-size: 13px;">Monitoreo de Plagas</span>
-                    </div>
-                </div>
+/**
+ * Carga todas las tareas desde localStorage
+ * @returns {Object} { "YYYY-MM-DD": ["tarea1", "tarea2"], ... }
+ */
+function loadAllTasks() {
+    try {
+        const stored = localStorage.getItem(TASKS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        console.error('[AgroInteractions] Error loading tasks:', e);
+        return {};
+    }
+}
 
-                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
-                    <label style="font-size: 11px; color: #666; display: block; margin-bottom: 8px;">Agregar Nota</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" placeholder="Ej: Comprar fertilizante..." style="flex: 1; background: #000; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fff; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--gold-primary)'" onblur="this.style.borderColor='rgba(255,255,255,0.15)'">
-                        <button style="background: var(--gold-primary, #C8A752); color: #000; border: none; padding: 0 14px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: background 0.2s;" onmouseover="this.style.background='#d4b866'" onmouseout="this.style.background='var(--gold-primary)'">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
+/**
+ * Guarda todas las tareas en localStorage
+ */
+function saveAllTasks(tasks) {
+    try {
+        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+    } catch (e) {
+        console.error('[AgroInteractions] Error saving tasks:', e);
+    }
+}
+
+/**
+ * Carga las tareas de una fecha específica
+ * @param {string} dateStr - Fecha en formato YYYY-MM-DD
+ * @returns {Array} Lista de tareas
+ */
+function loadTasks(dateStr) {
+    const allTasks = loadAllTasks();
+    return allTasks[dateStr] || [];
+}
+
+/**
+ * Guarda una nueva tarea para la fecha seleccionada
+ */
+function saveTask() {
+    if (!selectedDateStr) {
+        console.warn('[AgroInteractions] No hay fecha seleccionada');
+        return;
+    }
+
+    const input = document.getElementById('agenda-note-input');
+    if (!input) return;
+
+    const note = input.value.trim();
+    if (!note) {
+        input.style.borderColor = '#f87171';
+        setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.15)'; }, 1000);
+        return;
+    }
+
+    // Cargar, agregar, guardar
+    const allTasks = loadAllTasks();
+    if (!allTasks[selectedDateStr]) {
+        allTasks[selectedDateStr] = [];
+    }
+    allTasks[selectedDateStr].push(note);
+    saveAllTasks(allTasks);
+
+    // Limpiar input y re-renderizar
+    input.value = '';
+    renderAgendaPanel(selectedDateStr);
+
+    // Animación de confirmación
+    const btn = document.getElementById('agenda-add-btn');
+    if (btn) {
+        btn.style.background = '#4ade80';
+        setTimeout(() => { btn.style.background = 'var(--gold-primary, #C8A752)'; }, 300);
+    }
+}
+
+/**
+ * Elimina una tarea específica
+ * @param {string} dateStr - Fecha
+ * @param {number} index - Índice de la tarea
+ */
+function deleteTask(dateStr, index) {
+    const allTasks = loadAllTasks();
+    if (allTasks[dateStr] && allTasks[dateStr][index] !== undefined) {
+        allTasks[dateStr].splice(index, 1);
+        // Limpiar fechas vacías
+        if (allTasks[dateStr].length === 0) {
+            delete allTasks[dateStr];
+        }
+        saveAllTasks(allTasks);
+        renderAgendaPanel(dateStr);
+    }
+}
+
+/**
+ * Selecciona una fecha y renderiza el panel de agenda
+ */
+function selectDate(dateStr) {
+    selectedDateStr = dateStr;
+
+    // Actualizar estilos del día seleccionado en el calendario
+    updateSelectedDayStyles(dateStr);
+
+    // Renderizar panel de agenda
+    renderAgendaPanel(dateStr);
+}
+
+/**
+ * Actualiza los estilos visuales del día seleccionado
+ */
+function updateSelectedDayStyles(dateStr) {
+    // Quitar selección anterior
+    document.querySelectorAll('.day-cell.selected').forEach(cell => {
+        cell.classList.remove('selected');
+    });
+
+    // Agregar selección al nuevo día
+    const cells = document.querySelectorAll('.day-cell[data-date]');
+    cells.forEach(cell => {
+        if (cell.dataset.date === dateStr) {
+            cell.classList.add('selected');
+        }
+    });
+}
+
+/**
+ * Renderiza el panel de agenda con tareas reales
+ */
+function renderAgendaPanel(dateStr) {
+    const panel = document.getElementById('agenda-panel');
+    if (!panel) return;
+
+    const dateObj = new Date(dateStr + 'T12:00:00');
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const humanDate = dateObj.toLocaleDateString('es-ES', options);
+    const phase = getMoonPhase(dateObj);
+    const phaseInfo = getPhaseIcon(phase);
+
+    const tasks = loadTasks(dateStr);
+
+    // Generar HTML de tareas
+    let tasksHtml = '';
+    if (tasks.length === 0) {
+        tasksHtml = `
+            <div style="padding: 24px; text-align: center; color: #555; font-size: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
+                <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.4; display: block;"></i>
+                Sin tareas planificadas.<br>Añade una nota.
             </div>
         `;
-    };
+    } else {
+        tasks.forEach((task, index) => {
+            tasksHtml += `
+                <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(200,167,82,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--gold-primary, #C8A752); flex-shrink: 0;"></div>
+                        <span style="color: #ccc; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(task)}</span>
+                    </div>
+                    <button onclick="window.deleteTask('${dateStr}', ${index})"
+                        style="width: 28px; height: 28px; border-radius: 6px; background: rgba(248, 113, 113, 0.1); border: 1px solid rgba(248, 113, 113, 0.2); color: #f87171; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0;"
+                        onmouseover="this.style.background='#f87171';this.style.color='#000'"
+                        onmouseout="this.style.background='rgba(248, 113, 113, 0.1)';this.style.color='#f87171'"
+                        title="Eliminar tarea">
+                        <i class="fa-solid fa-trash-can" style="font-size: 11px;"></i>
+                    </button>
+                </div>
+            `;
+        });
+    }
 
-    console.log('[AgroInteractions] ✅ Módulo de interacciones inicializado');
+    panel.innerHTML = `
+        <div style="animation: fadeIn 0.3s ease;">
+            <div style="font-size: 10px; color: var(--gold-primary, #C8A752); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">PROGRAMACIÓN</div>
+            <h2 style="font-size: 1.2rem; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0 0 6px 0; text-transform: capitalize; line-height: 1.3;">${humanDate}</h2>
+            <div style="font-size: 12px; color: #888; margin-bottom: 20px;">${phaseInfo.icon} ${phaseInfo.name}</div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; max-height: 220px; overflow-y: auto;">
+                ${tasksHtml}
+            </div>
+
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                <label style="font-size: 11px; color: #666; display: block; margin-bottom: 8px;">Agregar Nota</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="agenda-note-input" placeholder="Ej: Comprar fertilizante..."
+                        style="flex: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fff; outline: none; transition: border-color 0.2s; font-family: 'Rajdhani', sans-serif;"
+                        onfocus="this.style.borderColor='var(--gold-primary, #C8A752)'"
+                        onblur="this.style.borderColor='rgba(255,255,255,0.15)'"
+                        onkeypress="if(event.key === 'Enter') window.saveTask()">
+                    <button id="agenda-add-btn" onclick="window.saveTask()"
+                        style="background: var(--gold-primary, #C8A752); color: #000; border: none; padding: 0 14px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                        onmouseover="this.style.background='#d4b866'"
+                        onmouseout="this.style.background='var(--gold-primary, #C8A752)'">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Escapa HTML para prevenir XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ============================================
@@ -100,20 +287,62 @@ function switchMarketTab(tab) {
 
     if (!btnCrypto || !btnFiat || !viewCrypto || !viewFiat) return;
 
-    const activeStyle = 'padding: 12px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;';
-    const inactiveStyle = 'padding: 12px 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;';
+    const activeStyle = 'flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(255,255,255,0.03); border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;';
+    const inactiveStyle = 'flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;';
 
     if (tab === 'crypto') {
         btnCrypto.style.cssText = activeStyle;
         btnFiat.style.cssText = inactiveStyle;
-        viewCrypto.style.display = 'block';
+        viewCrypto.style.display = 'flex';
         viewFiat.style.display = 'none';
     } else {
         btnCrypto.style.cssText = inactiveStyle;
         btnFiat.style.cssText = activeStyle;
         viewCrypto.style.display = 'none';
-        viewFiat.style.display = 'block';
+        viewFiat.style.display = 'flex';
     }
+}
+
+/**
+ * Renderizador Unificado para Crypto y Fiat
+ * DNA Visual V9.4: Consistencia absoluta
+ * - Nombre: Blanco + Negrita
+ * - Símbolo: Gris pequeño
+ * - Precio: GOLD #C8A752 + font-mono
+ */
+function renderUnifiedList(items, container) {
+    if (!container) return;
+
+    let html = '';
+    items.forEach(item => {
+        const changeHtml = item.change !== undefined ? `
+            <div style="font-size: 11px; color: ${item.change >= 0 ? '#4ade80' : '#f87171'}; font-weight: 600;">
+                ${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%
+            </div>
+        ` : `
+            <div style="font-size: 10px; color: #4ade80;">Tasa Oficial</div>
+        `;
+
+        html += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(200,167,82,0.1); transition: all 0.2s; box-shadow: 0 0 10px rgba(200,167,82,0.02);"
+                onmouseover="this.style.borderColor='rgba(200,167,82,0.3)';this.style.boxShadow='0 0 20px rgba(200,167,82,0.08)'"
+                onmouseout="this.style.borderColor='rgba(200,167,82,0.1)';this.style.boxShadow='0 0 10px rgba(200,167,82,0.02)'">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    ${item.iconHtml}
+                    <div>
+                        <div style="font-weight: 700; color: #fff; font-size: 1rem;">${item.name}</div>
+                        <div style="font-size: 11px; color: #666;">${item.symbol}</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-family: 'Courier New', monospace; color: #C8A752; font-size: 1rem; font-weight: 700;">${item.price}</div>
+                    ${changeHtml}
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
 async function loadDetailedCrypto() {
@@ -128,38 +357,22 @@ async function loadDetailedCrypto() {
             symbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`).then(r => r.json()))
         );
 
-        const cryptoData = [
+        const cryptoMeta = [
             { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
             { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
             { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' },
             { symbol: 'BNB', name: 'BNB Chain', icon: 'fa-solid fa-coins', iconColor: '#f3ba2f' },
         ];
 
-        let html = '';
-        results.forEach((data, i) => {
-            const price = parseFloat(data.lastPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-            const change = parseFloat(data.priceChangePercent);
-            const changeColor = change >= 0 ? '#4ade80' : '#f87171';
-            const changeSign = change >= 0 ? '+' : '';
+        const items = results.map((data, i) => ({
+            name: cryptoMeta[i].name,
+            symbol: `${cryptoMeta[i].symbol}/USDT`,
+            price: parseFloat(data.lastPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+            change: parseFloat(data.priceChangePercent),
+            iconHtml: `<i class="${cryptoMeta[i].icon}" style="font-size: 1.8rem; color: ${cryptoMeta[i].iconColor};"></i>`
+        }));
 
-            html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(200,167,82,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <i class="${cryptoData[i].icon}" style="font-size: 1.8rem; color: ${cryptoData[i].iconColor};"></i>
-                        <div>
-                            <div style="font-weight: 700; color: #fff; font-size: 1rem;">${cryptoData[i].name}</div>
-                            <div style="font-size: 11px; color: #666;">${cryptoData[i].symbol}/USDT</div>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-family: 'Orbitron', monospace; color: #fff; font-size: 1rem;">${price}</div>
-                        <div style="font-size: 11px; color: ${changeColor}; font-weight: 600;">${changeSign}${change.toFixed(2)}%</div>
-                    </div>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
+        renderUnifiedList(items, container);
 
     } catch (e) {
         console.error('[AgroInteractions] Error crypto:', e);
@@ -189,30 +402,19 @@ async function loadFiatRates() {
             { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
         ];
 
-        let html = '';
+        const items = [];
         currencies.forEach(({ code, name, flag }) => {
             if (rates[code]) {
-                const formatted = rates[code].toLocaleString('es-ES', { maximumFractionDigits: 2 });
-                // Card design matching crypto
-                html += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(200,167,82,0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                            <span style="font-size: 1.6rem;">${flag}</span>
-                            <div>
-                                <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${code}</div>
-                                <div style="font-size: 10px; color: #666;">${name}</div>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-family: 'Orbitron', monospace; color: var(--gold-primary, #C8A752); font-size: 1rem; font-weight: 600;">${formatted}</div>
-                            <div style="font-size: 10px; color: #4ade80;">Tasa Oficial</div>
-                        </div>
-                    </div>
-                `;
+                items.push({
+                    name: `USD/${code}`,
+                    symbol: name,
+                    price: rates[code].toLocaleString('es-ES', { maximumFractionDigits: 2 }),
+                    iconHtml: `<span style="font-size: 1.6rem;">${flag}</span>`
+                });
             }
         });
 
-        container.innerHTML = html;
+        renderUnifiedList(items, container);
 
     } catch (e) {
         console.error('[AgroInteractions] Error fiat:', e);
@@ -270,6 +472,7 @@ function openLunarCalendar() {
 
         const daysInMonth = new Date(2026, m + 1, 0).getDate();
         const today = new Date();
+        const allTasks = loadAllTasks();
 
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(2026, m, d);
@@ -278,12 +481,19 @@ function openLunarCalendar() {
             const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
 
             const isToday = date.toDateString() === today.toDateString();
-            const todayClass = isToday ? 'today' : '';
+            const isSelected = dateStr === selectedDateStr;
+            const hasTasks = allTasks[dateStr] && allTasks[dateStr].length > 0;
+
+            let classes = 'day-cell';
+            if (isToday) classes += ' today';
+            if (isSelected) classes += ' selected';
+            if (hasTasks) classes += ' has-tasks';
 
             html += `
-                <div class="day-cell ${todayClass}" title="${phaseInfo.name}" onclick="window.selectDate('${dateStr}')" style="cursor: pointer;">
+                <div class="${classes}" title="${phaseInfo.name}" data-date="${dateStr}" onclick="window.selectDate('${dateStr}')">
                     <span class="day-num">${d}</span>
                     <span class="phase-icon">${phaseInfo.icon}</span>
+                    ${hasTasks ? '<span class="task-indicator"></span>' : ''}
                 </div>
             `;
         }
@@ -321,7 +531,7 @@ function getPhaseIcon(phase) {
 }
 
 // ============================================
-// TABLA DE TASAS FIAT
+// TABLA DE TASAS FIAT (Legacy - para compatibilidad)
 // ============================================
 
 async function showFiatTable() {
@@ -329,11 +539,11 @@ async function showFiatTable() {
     const tbody = document.getElementById('fiat-table-body');
 
     if (!modal || !tbody) {
-        console.error('[AgroInteractions] Modal fiat no encontrado');
+        // Fallback: abrir Market Hub en pestaña Fiat
+        openMarketHub('fiat');
         return;
     }
 
-    // Abrir correctamente: quitar hidden y poner display flex
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
     tbody.innerHTML = '<tr><td colspan="2" class="loading-cell">📡 Cargando tasas...</td></tr>';
@@ -343,7 +553,6 @@ async function showFiatTable() {
         const data = await res.json();
         const rates = data.rates;
 
-        // Monedas de interés para agricultores latinos
         const currencies = [
             { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
             { code: 'VES', name: 'Bolívar Digital', flag: '🇻🇪' },
@@ -398,7 +607,7 @@ function formatCurrency(value, code) {
 }
 
 // ============================================
-// ESTILOS CSS
+// ESTILOS CSS (DNA Visual V9.4 Compliant)
 // ============================================
 
 function injectLunarStyles() {
@@ -407,16 +616,25 @@ function injectLunarStyles() {
     const style = document.createElement('style');
     style.id = 'lunar-modal-styles';
     style.textContent = `
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Calendarios Lunares */
         .lunar-month {
-            background: rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(10, 10, 10, 0.95));
             border-radius: 12px;
             padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: border-color 0.3s;
+            border: 1px solid rgba(200, 167, 82, 0.15);
+            box-shadow: 0 0 20px rgba(200, 167, 82, 0.03);
+            transition: all 0.3s;
         }
 
         .lunar-month:hover {
-            border-color: rgba(200, 167, 82, 0.2);
+            border-color: rgba(200, 167, 82, 0.3);
+            box-shadow: 0 0 30px rgba(200, 167, 82, 0.08);
         }
 
         .month-title {
@@ -439,7 +657,7 @@ function injectLunarStyles() {
 
         .day-header {
             font-size: 9px;
-            color: #555;
+            color: #666;
             text-align: center;
             padding: 4px 0;
         }
@@ -449,38 +667,66 @@ function injectLunarStyles() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 32px;
-            font-size: 10px;
-            color: #666;
-            border-radius: 4px;
-            cursor: default;
+            height: 36px;
+            font-size: 11px;
+            color: #888;
+            border-radius: 6px;
+            cursor: pointer;
             transition: all 0.2s;
+            position: relative;
+            border: 1px solid transparent;
         }
 
         .day-cell:hover:not(.empty) {
-            background: rgba(200, 167, 82, 0.1);
+            background: rgba(200, 167, 82, 0.15);
             color: #fff;
+            border-color: rgba(200, 167, 82, 0.3);
+        }
+
+        /* Día seleccionado - DNA Visual V9.4 */
+        .day-cell.selected {
+            background: rgba(200, 167, 82, 0.2);
+            border: 2px solid #C8A752 !important;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 0 15px rgba(200, 167, 82, 0.4), inset 0 0 10px rgba(200, 167, 82, 0.1);
         }
 
         .day-cell.today {
             background: var(--gold-primary, #C8A752);
             color: #000;
             font-weight: 700;
-            box-shadow: 0 0 12px rgba(200, 167, 82, 0.4);
+            box-shadow: 0 0 12px rgba(200, 167, 82, 0.5);
+        }
+
+        .day-cell.today.selected {
+            box-shadow: 0 0 20px rgba(200, 167, 82, 0.7), 0 0 30px rgba(200, 167, 82, 0.4);
+        }
+
+        .day-cell.has-tasks::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #4ade80;
         }
 
         .day-cell.empty {
             background: transparent;
+            cursor: default;
         }
 
         .day-num {
             line-height: 1;
+            font-weight: 600;
         }
 
         .phase-icon {
             font-size: 8px;
             line-height: 1;
-            margin-top: 1px;
+            margin-top: 2px;
         }
 
         /* Fiat Table Styles */
@@ -521,9 +767,10 @@ function injectLunarStyles() {
         .fiat-rate {
             text-align: right;
             padding: 12px 16px;
-            font-family: 'Orbitron', monospace;
+            font-family: 'Courier New', monospace;
             color: var(--gold-primary, #C8A752);
             font-size: 0.9rem;
+            font-weight: 700;
         }
 
         .loading-cell, .error-cell {

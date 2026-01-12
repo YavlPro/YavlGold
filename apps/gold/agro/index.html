@@ -12,6 +12,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
         rel="stylesheet">
+    <!-- Chart.js for Statistics Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */
         *,
@@ -1183,10 +1185,132 @@
                             </div>
                         </div>
                     </div>
+
+        </section>
+
+        <!-- Statistics Section: Monitor de Rentabilidad -->
+        <section class="stats-section animate-in delay-5" style="margin-top: 1.5rem; margin-bottom: 2rem;">
+            <div class="section-header" style="margin-bottom: 1rem;">
+                <h2 class="section-title"><span class="icon">📊</span> Monitor de Rentabilidad</h2>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+
+                <!-- ROI Chart (Large) -->
+                <div class="card"
+                    style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <h3
+                                style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 1rem; letter-spacing: 0.5px; margin: 0;">
+                                Rentabilidad del Ciclo</h3>
+                            <p style="font-size: 0.7rem; color: #666; margin: 4px 0 0 0;">Inversión vs. Retorno Esperado
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span id="roi-badge"
+                                style="font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; font-family: 'Courier New', monospace; font-weight: 600;">ROI:
+                                0%</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 12px; height: 3px; background: #C8A752; border-radius: 2px;"></div>
+                            <span style="font-size: 10px; color: #888;">Retorno</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <div style="width: 12px; height: 0; border-top: 2px dashed #ef4444;"></div>
+                            <span style="font-size: 10px; color: #888;">Inversión</span>
+                        </div>
+                    </div>
+                    <div style="height: 220px; width: 100%;">
+                        <canvas id="roiChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Expenses Chart Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+
+                    <!-- Expenses Doughnut -->
+                    <div class="card"
+                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
+                        <h3
+                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
+                            Estructura de Costos</h3>
+                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Desglose operativo</p>
+                        <div
+                            style="height: 160px; width: 100%; display: flex; align-items: center; justify-content: center; position: relative;">
+                            <canvas id="expensesChart"></canvas>
+                            <div
+                                style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+                                <span style="font-size: 10px; color: #666;">Total</span>
+                                <span id="expenses-total"
+                                    style="font-size: 1.2rem; font-weight: 700; color: #fff; font-family: 'Courier New', monospace;">$0k</span>
+                            </div>
+                        </div>
+                        <div
+                            style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 10px; color: #888;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #C8A752;"></div>
+                                Insumos
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></div>
+                                Riego/Luz
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #a855f7;"></div>
+                                Mano de Obra
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #4b5563;"></div>
+                                Otros
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats Summary -->
+                    <div class="card"
+                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
+                        <h3
+                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
+                            Resumen Financiero</h3>
+                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Ciclo actual</p>
+                        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 8px;">
+                                <span style="font-size: 11px; color: #888;">Ingresos Proyectados</span>
+                                <span id="summary-revenue"
+                                    style="font-size: 1rem; color: #4ade80; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px;">
+                                <span style="font-size: 11px; color: #888;">Costo Total</span>
+                                <span id="summary-cost"
+                                    style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 8px;">
+                                <span style="font-size: 11px; color: #888;">Ganancia Neta</span>
+                                <span id="summary-profit"
+                                    style="font-size: 1rem; color: #C8A752; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                            </div>
+                            <div
+                                style="margin-top: auto; text-align: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+                                <span
+                                    style="font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px;">Margen
+                                    de Utilidad</span>
+                                <div id="summary-margin"
+                                    style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #C8A752; font-weight: 700; margin-top: 4px;">
+                                    0%</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </section>
 
-        </section> <!-- Active Crops Section -->
+        <!-- Active Crops Section -->
         <section class="crops-section">
             <div class="section-header animate-in delay-3">
                 <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button class="btn btn-outline"
@@ -1244,43 +1368,44 @@
         </footer>
     </div>
 
-    <!-- Modal: Agenda Lunar 2026 (Split View) -->
+    <!-- Modal: Agenda Lunar 2026 (Split View) - DNA Visual V9.4 -->
     <div id="modal-lunar" class="modal-overlay hidden"
         style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
         onclick="if(event.target === this) window.closeModal('modal-lunar')">
         <div
-            style="background: #050505; border: 1px solid rgba(200, 167, 82, 0.25); border-radius: 16px; width: 100%; max-width: 1100px; height: 85vh; display: flex; box-shadow: 0 0 60px rgba(200, 167, 82, 0.12); overflow: hidden;">
+            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000000 100%); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 16px; width: 100%; max-width: 1100px; height: 85vh; display: flex; box-shadow: 0 0 60px rgba(200, 167, 82, 0.15), 0 0 100px rgba(200, 167, 82, 0.05), inset 0 1px 0 rgba(200, 167, 82, 0.1); overflow: hidden;">
 
             <!-- Left: Calendar -->
             <div
-                style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid rgba(200, 167, 82, 0.1);">
+                style="flex: 1; display: flex; flex-direction: column; border-right: 1px solid rgba(200, 167, 82, 0.15);">
                 <div
-                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.1); background: rgba(255,255,255,0.02);">
+                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);">
                     <h3
-                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; margin: 0; letter-spacing: 1px;">
+                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.3rem; margin: 0; letter-spacing: 1px; text-shadow: 0 0 20px rgba(200, 167, 82, 0.3);">
                         Agenda Lunar 2026</h3>
                     <p
                         style="font-size: 10px; color: var(--gold-primary, #C8A752); margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 1.5px;">
                         Selecciona un día para planificar</p>
                 </div>
                 <div id="lunar-calendar-grid"
-                    style="padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; background: #0a0a0a; flex: 1;">
+                    style="padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%); flex: 1;">
                     <!-- Contenido generado por JS -->
                 </div>
             </div>
 
             <!-- Right: Agenda Panel -->
-            <div style="width: 320px; background: #0a0a0a; display: flex; flex-direction: column;">
+            <div
+                style="width: 320px; background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%); display: flex; flex-direction: column;">
                 <div
-                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+                    style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);">
                     <h4
                         style="font-family: 'Orbitron', sans-serif; color: var(--gold-primary, #C8A752); font-size: 1rem; margin: 0;">
                         Detalles del Día</h4>
                     <button onclick="window.closeModal('modal-lunar')"
-                        style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                        onmouseover="this.style.background='#f87171';this.style.borderColor='#f87171'"
-                        onmouseout="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(255,255,255,0.15)'">
-                        <i class="fa-solid fa-xmark"></i>
+                        style="width: 36px; height: 36px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"
+                        onmouseover="this.style.background='rgba(200, 167, 82, 0.25)';this.style.borderColor='#C8A752';this.style.boxShadow='0 0 15px rgba(200, 167, 82, 0.3)';this.style.transform='scale(1.05)'"
+                        onmouseout="this.style.background='rgba(200, 167, 82, 0.1)';this.style.borderColor='rgba(200, 167, 82, 0.3)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';this.style.transform='scale(1)'">
+                        <i class="fa-solid fa-xmark" style="color: #C8A752;"></i>
                     </button>
                 </div>
                 <div id="agenda-panel"
@@ -1290,40 +1415,41 @@
                         <i class="fa-regular fa-calendar-check"
                             style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i>
                         <p style="font-size: 12px; text-align: center; line-height: 1.6;">Selecciona una fecha<br>para
-                            ver detalles</p>
+                            ver detalles y notas</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Centro Financiero (Market Hub v2) -->
+    <!-- Modal: Centro Financiero (Market Hub v2) - DNA Visual V9.4 -->
     <div id="modal-market" class="modal-overlay hidden"
         style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
         onclick="if(event.target === this) window.closeModal('modal-market')">
         <div
-            style="background: #050505; border: 1px solid rgba(200, 167, 82, 0.25); border-radius: 16px; width: 100%; max-width: 560px; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(200, 167, 82, 0.12); overflow: hidden;">
+            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000000 100%); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 16px; width: 100%; max-width: 560px; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(200, 167, 82, 0.15), 0 0 100px rgba(200, 167, 82, 0.05), inset 0 1px 0 rgba(200, 167, 82, 0.1); overflow: hidden;">
             <!-- Header -->
             <div
-                style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+                style="padding: 20px 24px; border-bottom: 1px solid rgba(200, 167, 82, 0.15); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, transparent 100%);">
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <i class="fa-solid fa-sack-dollar"
-                        style="color: var(--gold-primary, #C8A752); font-size: 1.4rem;"></i>
+                        style="color: var(--gold-primary, #C8A752); font-size: 1.4rem; filter: drop-shadow(0 0 8px rgba(200, 167, 82, 0.4));"></i>
                     <h3
-                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.2rem; margin: 0; letter-spacing: 1px;">
+                        style="font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.2rem; margin: 0; letter-spacing: 1px; text-shadow: 0 0 20px rgba(200, 167, 82, 0.3);">
                         Centro Financiero</h3>
                 </div>
                 <button onclick="window.closeModal('modal-market')"
-                    style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
-                    onmouseover="this.style.background='#f87171';this.style.borderColor='#f87171'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.1)';this.style.borderColor='rgba(255,255,255,0.15)'">
-                    <i class="fa-solid fa-xmark"></i>
+                    style="width: 36px; height: 36px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"
+                    onmouseover="this.style.background='rgba(200, 167, 82, 0.25)';this.style.borderColor='#C8A752';this.style.boxShadow='0 0 15px rgba(200, 167, 82, 0.3)';this.style.transform='scale(1.05)'"
+                    onmouseout="this.style.background='rgba(200, 167, 82, 0.1)';this.style.borderColor='rgba(200, 167, 82, 0.3)';this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)';this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-xmark" style="color: #C8A752;"></i>
                 </button>
             </div>
             <!-- Tabs -->
-            <div style="display: flex; border-bottom: 1px solid rgba(200, 167, 82, 0.1); background: #0a0a0a;">
+            <div
+                style="display: flex; border-bottom: 1px solid rgba(200, 167, 82, 0.15); background: linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);">
                 <button id="tab-btn-crypto" onclick="window.switchMarketTab('crypto')"
-                    style="flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(255,255,255,0.03); border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;">
+                    style="flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(200, 167, 82, 0.05); border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;">
                     <i class="fa-brands fa-bitcoin" style="margin-right: 6px;"></i>CRIPTOMONEDAS
                 </button>
                 <button id="tab-btn-fiat" onclick="window.switchMarketTab('fiat')"
@@ -1332,7 +1458,8 @@
                 </button>
             </div>
             <!-- Content with Scroll -->
-            <div style="padding: 20px; height: 400px; overflow-y: auto; background: #050505;">
+            <div
+                style="padding: 20px; height: 400px; overflow-y: auto; background: linear-gradient(180deg, #0d0d0d 0%, #080808 100%);">
                 <!-- Crypto View -->
                 <div id="view-crypto" style="display: flex; flex-direction: column; gap: 10px;">
                     <div id="crypto-list-container" style="display: flex; flex-direction: column; gap: 10px;">
@@ -1350,17 +1477,79 @@
         </div>
     </div>
 
+    <!-- Modal: Nuevo Cultivo - DNA Visual V9.4 -->
+    <div id="modal-new-crop" class="modal-overlay">
+        <div class="modal-container"
+            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 60px rgba(200, 167, 82, 0.1);">
+            <div class="modal-header">
+                <h3 class="modal-title">🌱 Nuevo Cultivo</h3>
+                <button class="modal-close" onclick="window.closeCropModal()" style="color: #C8A752;">&times;</button>
+            </div>
+            <form id="form-new-crop" class="modal-body" onsubmit="event.preventDefault(); window.saveCrop();">
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label class="input-label" for="crop-name">Nombre del Cultivo *</label>
+                    <input type="text" id="crop-name" class="styled-input" placeholder="Ej: Tomate Cherry" required
+                        style="padding-left: 1rem;">
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label class="input-label" for="crop-variety">Variedad</label>
+                        <input type="text" id="crop-variety" class="styled-input" placeholder="Ej: Roma"
+                            style="padding-left: 1rem;">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-icon">Icono</label>
+                        <input type="text" id="crop-icon" class="styled-input" placeholder="🍅" maxlength="4" value="🌱"
+                            style="padding-left: 1rem; text-align: center; font-size: 1.5rem;">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label class="input-label" for="crop-area">Área (hectáreas) *</label>
+                        <input type="number" id="crop-area" class="styled-input" placeholder="Ej: 2.5" step="0.1"
+                            min="0.01" required style="padding-left: 1rem;">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-investment">Inversión ($)</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="crop-investment" class="styled-input" placeholder="Ej: 5000"
+                                step="0.01" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label class="input-label" for="crop-start-date">Fecha de Siembra *</label>
+                        <input type="date" id="crop-start-date" class="styled-input" required
+                            style="padding-left: 1rem;">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-harvest-date">Cosecha Esperada</label>
+                        <input type="date" id="crop-harvest-date" class="styled-input" style="padding-left: 1rem;">
+                    </div>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="window.closeCropModal()">Cancelar</button>
+                <button type="submit" class="btn btn-primary" onclick="window.saveCrop()">🌾 Guardar Siembra</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="agro.js"></script>
     <script type="module" src="dashboard.js"></script>
     <script type="module">
         import { initMarketIntelligence, startTickerAutoRefresh } from './agro-market.js';
         import { initPlanning } from './agro-planning.js';
         import { initInteractions } from './agro-interactions.js';
+        import { initStats } from './agro-stats.js';
         document.addEventListener('DOMContentLoaded', () => {
             initMarketIntelligence();
             startTickerAutoRefresh();
             initPlanning();
             initInteractions();
+            initStats();
         });
     </script>
 </body>
