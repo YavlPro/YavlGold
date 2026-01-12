@@ -217,17 +217,24 @@ function injectLunarStyles() {
             background: rgba(0, 0, 0, 0.4);
             border-radius: 12px;
             padding: 12px;
-            border: 1px solid rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: border-color 0.3s;
+        }
+
+        .lunar-month:hover {
+            border-color: rgba(200, 167, 82, 0.2);
         }
 
         .month-title {
             text-align: center;
-            color: #c084fc;
+            color: var(--gold-primary, #C8A752);
             font-weight: 700;
             font-size: 0.9rem;
             margin-bottom: 8px;
             padding-bottom: 8px;
-            border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+            border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .month-grid {
@@ -238,7 +245,7 @@ function injectLunarStyles() {
 
         .day-header {
             font-size: 9px;
-            color: #666;
+            color: #555;
             text-align: center;
             padding: 4px 0;
         }
@@ -250,20 +257,22 @@ function injectLunarStyles() {
             justify-content: center;
             height: 32px;
             font-size: 10px;
-            color: #888;
+            color: #666;
             border-radius: 4px;
             cursor: default;
             transition: all 0.2s;
         }
 
         .day-cell:hover:not(.empty) {
-            background: rgba(168, 85, 247, 0.1);
+            background: rgba(200, 167, 82, 0.1);
+            color: #fff;
         }
 
         .day-cell.today {
-            background: rgba(168, 85, 247, 0.4);
-            color: white;
+            background: var(--gold-primary, #C8A752);
+            color: #000;
             font-weight: 700;
+            box-shadow: 0 0 12px rgba(200, 167, 82, 0.4);
         }
 
         .day-cell.empty {
