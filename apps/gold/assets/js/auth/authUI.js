@@ -132,7 +132,7 @@ const AuthUI = {
       if (isLoginPage) {
         setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
       }
-      // Si estamos en /academia, /suite, /herramientas, /dashboard - NO hacer nada
+      // Si estamos en /academia, /crypto, /herramientas, /dashboard - NO hacer nada
     });
 
     window.addEventListener('auth:initial_session', () => {

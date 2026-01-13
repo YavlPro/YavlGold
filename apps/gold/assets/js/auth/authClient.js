@@ -131,7 +131,7 @@ const authClient = {
     },
 
     // --- SMART AUTH GUARD V9.4 (ANTI-LOOP ENHANCED) ---
-    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/suite", "/herramientas"],
+    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/crypto", "/herramientas"],
 
     _authGuardInitialized: false,
     _isRedirecting: false,  // Lock para evitar múltiples redirects
