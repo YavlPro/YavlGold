@@ -2247,13 +2247,76 @@
     });
   </script>
 
-  <!-- Floating Music Button -->
-  <a href="/music/"
-    class="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center text-black z-[100] group border-2 border-transparent hover:border-white transition-all duration-300 hover:scale-110"
-    style="background: linear-gradient(135deg, #C8A752 0%, #D4AF37 100%); box-shadow: 0 0 20px rgba(200,167,82,0.6);"
-    title="Abrir Reproductor de Música">
-    <i class="fa-solid fa-music text-xl"></i>
+  <!-- Floating Music Button (Big) -->
+  <a href="/dashboard/music.html"
+    class="fixed bottom-8 right-8 z-[9999] w-20 h-20 rounded-full flex items-center justify-center text-black hover:scale-110 transition-all duration-300 border-4 border-[#0a0a0a] group hover:border-white"
+    style="background: linear-gradient(135deg, #C8A752 0%, #9D8040 100%); box-shadow: 0 0 30px rgba(200,167,82,0.8);"
+    title="Abrir Reproductor Musical">
+    <i class="fa-solid fa-music text-3xl group-hover:animate-bounce"></i>
+    <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 rounded-full animate-ping opacity-75"></span>
+    <span class="absolute top-0 right-0 w-5 h-5 bg-red-500 rounded-full border-2 border-black"></span>
   </a>
+
+  <!-- Override Script: Force SUITE → CRYPTO -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Función que busca y destruye "Suite"
+      const patchDashboard = () => {
+        // Buscamos cualquier elemento que contenga el texto "SUITE"
+        const allElements = document.querySelectorAll('h3, h4, span, p, a, button');
+
+        allElements.forEach(el => {
+          const text = el.innerText?.trim()?.toUpperCase();
+
+          if (text === 'SUITE') {
+            el.innerText = 'CRYPTO';
+            // Si es un título, buscamos su contenedor para cambiar la descripción
+            const card = el.closest('div');
+            if (card) {
+              const desc = card.querySelector('p');
+              if (desc && desc.innerText.toLowerCase().includes('entretenimiento')) {
+                desc.innerText = 'Inteligencia de Mercados, Trading y Análisis On-Chain.';
+              }
+
+              const btn = card.querySelector('a[href*="suite"]') || card.querySelector('button');
+              if (btn) {
+                btn.innerText = 'EXPLORAR CRYPTO';
+                btn.href = '/crypto/';
+              }
+
+              // Forzar cambio de icono si existe
+              const icon = card.querySelector('.fa-box, .fa-music');
+              if (icon && icon.classList.contains('fa-box')) {
+                icon.classList.remove('fa-box');
+                icon.classList.add('fa-bitcoin-sign');
+              }
+            }
+          }
+
+          // También arreglar botones que digan "EXPLORAR SUITE"
+          if (el.innerText?.includes('EXPLORAR SUITE')) {
+            el.innerText = 'EXPLORAR CRYPTO';
+            if (el.href) el.href = '/crypto/';
+            if (el.closest('a')) el.closest('a').href = '/crypto/';
+          }
+
+          // Arreglar enlaces directos a /suite/
+          if (el.href && el.href.includes('/suite/')) {
+            el.href = el.href.replace('/suite/', '/crypto/');
+          }
+        });
+      };
+
+      // Ejecutar inmediatamente
+      patchDashboard();
+
+      // Y ejecutar cada vez que el DOM cambie (para cuando Supabase inyecte las cards)
+      const observer = new MutationObserver(patchDashboard);
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      console.log('[Dashboard] 🔧 Override Script activo: SUITE → CRYPTO');
+    });
+  </script>
 
 </body>
 
