@@ -1161,6 +1161,54 @@
                         </button>
                     </div>
                 </div>
+            </div> <!-- End of first row (Weather/Market/Moon) -->
+
+            <!-- Row 2: Financial KPIs (Supabase Realtime) -->
+            <div class="kpi-grid"
+                style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 1.5rem;">
+
+                <!-- KPI: Gasto Facturero -->
+                <div class="card kpi-card animate-in delay-5">
+                    <div class="kpi-icon-wrapper" style="animation-delay: -1s;">🧾</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Gasto Facturero</div>
+                        <div class="kpi-value" style="color: #f87171;">
+                            <span class="highlight" id="kpi-expenses-total">$0.00</span>
+                        </div>
+                        <div class="kpi-secondary">
+                            <span class="kpi-tag">Gastos Operativos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI: Inversión Cosecha -->
+                <div class="card kpi-card animate-in delay-6">
+                    <div class="kpi-icon-wrapper" style="animation-delay: -2s;">🌱</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label">Inversión Cosecha</div>
+                        <div class="kpi-value" style="color: #4ade80;">
+                            <span class="highlight" id="kpi-crops-investment">$0.00</span>
+                        </div>
+                        <div class="kpi-secondary">
+                            <span class="kpi-tag">Capital Sembrado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI: Total Global -->
+                <div class="card kpi-card animate-in delay-7"
+                    style="border-color: var(--gold-primary); background: rgba(200, 167, 82, 0.05);">
+                    <div class="kpi-icon-wrapper" style="animation-delay: -3s;">💰</div>
+                    <div class="kpi-content">
+                        <div class="kpi-label" style="color: var(--gold-primary);">Gasto Total</div>
+                        <div class="kpi-value" style="color: var(--gold-primary);">
+                            <span class="highlight" id="kpi-global-total">$0.00</span>
+                        </div>
+                        <div class="kpi-secondary">
+                            <span class="kpi-tag" style="color: rgba(255,255,255,0.7);">Salida de Dinero Real</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Panel de Planificación: El Oráculo del Agricultor -->
@@ -1705,6 +1753,65 @@
     <script type="module">
         import { supabase } from '../assets/js/config/supabase-config.js';
 
+        // --- GLOBAL HANDLERS (Supabase Crops) ---
+        window.openCropModal = function () {
+            const modal = document.getElementById('modal-new-crop');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+            }
+        };
+
+        window.closeCropModal = function () {
+            const modal = document.getElementById('modal-new-crop');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
+        };
+
+        window.saveCrop = async function () {
+            const btn = document.querySelector('#form-new-crop button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+            btn.disabled = true;
+
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error("Debes iniciar sesión.");
+
+                const name = document.getElementById('crop-name').value;
+                const variety = document.getElementById('crop-variety').value;
+                const icon = document.getElementById('crop-icon').value || '🌱';
+                const area = document.getElementById('crop-area').value;
+                const investment = document.getElementById('crop-investment').value || 0;
+                const sowDate = document.getElementById('crop-start-date').value;
+                const harvestDate = document.getElementById('crop-harvest-date').value;
+
+                if (!name || !area || !sowDate) throw new Error("Completa Nombre, Área y Fecha.");
+
+                const fullName = `${icon} ${name}`;
+                const { error } = await supabase.from('agro_crops').insert({
+                    user_id: user.id,
+                    name: fullName,
+                    variety,
+                    area,
+                    investment,
+                    sowing_date: sowDate,
+                    harvest_date_est: harvestDate || null,
+                    status: 'active'
+                });
+
+                if (error) throw error;
+                alert('✅ Siembra registrada');
+                window.closeCropModal();
+                document.getElementById('form-new-crop').reset();
+                document.dispatchEvent(new CustomEvent('data-refresh'));
+
+            } catch (e) { alert(e.message); }
+            finally { btn.innerHTML = originalText; btn.disabled = false; }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             // Referencias DOM
             const expenseForm = document.getElementById('expense-form');
@@ -1715,6 +1822,67 @@
             const dateInput = document.getElementById('expense-date');
             const expensesContainer = document.getElementById('recent-transactions-container');
             const expensesList = document.getElementById('expenses-list');
+            const cropsGrid = document.querySelector('.crops-grid');
+            window.closeCropModal();
+
+            // --- DATA LOADING & LOGIC ---
+            async function updateStats() {
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return;
+                    const { data } = await supabase.from('agro_stats').select('*').maybeSingle();
+                    if (data) {
+                        const exp = parseFloat(data.total_expenses) || 0;
+                        const inv = parseFloat(data.active_investment) || 0;
+                        const kpiExp = document.getElementById('kpi-expenses-total');
+                        const kpiInv = document.getElementById('kpi-crops-investment');
+                        const kpiTot = document.getElementById('kpi-global-total');
+
+                        if (kpiExp) kpiExp.innerText = '$' + exp.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                        if (kpiInv) kpiInv.innerText = '$' + inv.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                        if (kpiTot) kpiTot.innerText = '$' + (exp + inv).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            async function loadCrops() {
+                try {
+                    const { data } = await supabase.from('agro_crops').select('*').eq('status', 'active').order('created_at', { ascending: false });
+                    if (cropsGrid && data) {
+                        cropsGrid.innerHTML = '';
+                        cropsGrid.style.display = 'grid';
+                        cropsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
+                        cropsGrid.style.gap = '1.5rem';
+
+                        data.forEach(c => {
+                            const card = document.createElement('div');
+                            card.className = 'card crop-card animate-in';
+                            card.style.background = 'linear-gradient(135deg, rgba(26,26,26,0.95), rgba(0,0,0,0.98))';
+                            card.style.border = '1px solid rgba(200, 167, 82, 0.15)';
+                            card.style.borderRadius = '12px';
+                            card.style.padding = '1.5rem';
+                            card.innerHTML = `
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+                                    <h4 style="color:#fff; margin:0; font-family:'Orbitron',sans-serif;">${c.name}</h4>
+                                    <span style="background:rgba(74,222,128,0.1); color:#4ade80; padding:4px 8px; border-radius:12px; font-size:0.75rem; border:1px solid rgba(74,222,128,0.3);">Activo</span>
+                                </div>
+                                <div style="font-size:0.85rem; color:#aaa;">
+                                    <p style="margin:4px 0;">Área: <span style="color:#fff">${c.area} ha</span></p>
+                                    <p style="margin:4px 0;">Inv: <span style="color:#C8A752; font-weight:600;">$${parseFloat(c.investment).toLocaleString()}</span></p>
+                                    <p style="margin:4px 0; font-size:0.75rem;"><i class="fa-regular fa-calendar"></i> ${new Date(c.sowing_date).toLocaleDateString()}</p>
+                                </div>
+                             `;
+                            cropsGrid.appendChild(card);
+                        });
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            document.addEventListener('data-refresh', () => {
+                updateStats();
+                loadExpenses(); // loadExpenses is hoisted
+                loadCrops();
+            });
 
             // Exponer handler globalmente para el input onchange del HTML
             window.handleReceiptUpload = function (input) {
@@ -1793,7 +1961,8 @@
             }
 
             // Cargar al inicio
-            loadExpenses();
+            // Refresh all data (Stats + Expenses + Crops)
+            document.dispatchEvent(new CustomEvent('data-refresh'));
 
             // --- A) FUNCIÓN LIMPIAR ---
             if (btnClean) {
@@ -1899,14 +2068,9 @@
                             if (insertError) throw insertError;
 
                             // 5. SUCCESS
-                            alert('✅ Gasto guardado exitosamente en la nube');
-
-                            // 6. UPDATE UI
-                            // Render immediately (simulated for speed)
-                            renderExpenseItem(concept, amount, category, file, evidenceUrl, dateVal);
-
-                            // Reset
+                            alert('✅ Gasto Guardado');
                             if (btnClean) btnClean.click();
+                            document.dispatchEvent(new CustomEvent('data-refresh'));
 
                         } catch (err) {
                             console.error(err);
