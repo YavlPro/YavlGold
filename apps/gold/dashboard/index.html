@@ -427,21 +427,24 @@
 
     #moduleSearch {
       width: 100%;
-      padding: 12px 16px 12px 44px;
+      padding: 10px 16px 10px 44px;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(200, 167, 82, 0.2);
-      border-radius: 12px;
+      /* bg-white/5 */
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      /* border-white/10 */
+      border-radius: 9999px;
+      /* Rounded full like buttons */
       color: #fff;
       font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      transition: all 0.2s ease;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
     }
 
     #moduleSearch:focus {
       outline: none;
       border-color: var(--dorado-yavl, #C8A752);
-      background: rgba(200, 167, 82, 0.08);
-      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
+      background: rgba(10, 10, 10, 0.8);
+      box-shadow: 0 0 15px rgba(200, 167, 82, 0.2);
     }
 
     #moduleSearch::placeholder {
@@ -1489,7 +1492,7 @@
 
       <!-- 🎵 Music / Zen Mode Button -->
       <a href="/dashboard/music.html"
-        class="w-10 h-10 rounded-full bg-white/5 hover:bg-gold/20 flex items-center justify-center text-gray-400 hover:text-gold transition-all duration-300 border border-transparent hover:border-gold/30 group relative"
+        class="w-10 h-10 rounded-full bg-white/5 hover:bg-gold/20 flex items-center justify-center text-[#C8A752] hover:text-[#D4AF37] transition-all duration-300 border border-transparent hover:border-[#C8A752]/30 group relative"
         title="Modo Zen / Música">
         <i class="fa-solid fa-music text-sm group-hover:scale-110 transition-transform"></i>
       </a>
@@ -2288,6 +2291,13 @@
               if (icon && icon.classList.contains('fa-box')) {
                 icon.classList.remove('fa-box');
                 icon.classList.add('fa-bitcoin-sign');
+              }
+
+              // 📸 CAMBIO DE THUMBNAIL (Guitarras -> Bitcoin)
+              const img = card.querySelector('img');
+              if (img) {
+                img.src = 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?q=80&w=800&auto=format&fit=crop';
+                img.style.objectFit = 'cover';
               }
             }
           }
