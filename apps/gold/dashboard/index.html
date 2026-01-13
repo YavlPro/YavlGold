@@ -427,28 +427,42 @@
 
     #moduleSearch {
       width: 100%;
-      padding: 10px 16px 10px 44px;
-      background: rgba(255, 255, 255, 0.05);
-      /* bg-white/5 */
+      padding: 12px 16px 12px 44px;
+      background: var(--negro-tarjeta, #1a1a1a);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      /* border-white/10 */
       border-radius: 9999px;
-      /* Rounded full like buttons */
       color: #fff;
       font-family: 'Rajdhani', sans-serif;
       font-size: 0.95rem;
+      font-weight: 500;
       transition: all 0.3s ease;
+    }
+
+    #moduleSearch:hover {
+      border-color: rgba(200, 167, 82, 0.4);
+      background: rgba(10, 10, 10, 0.9);
     }
 
     #moduleSearch:focus {
       outline: none;
       border-color: var(--dorado-yavl, #C8A752);
-      background: rgba(10, 10, 10, 0.8);
-      box-shadow: 0 0 15px rgba(200, 167, 82, 0.2);
+      background: rgba(10, 10, 10, 0.95);
+      box-shadow: 0 0 20px rgba(200, 167, 82, 0.25), inset 0 0 10px rgba(200, 167, 82, 0.05);
     }
 
     #moduleSearch::placeholder {
       color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* ============================================
+           🎵 MUSIC ICON GOLD OVERRIDE
+        ============================================ */
+    .header .fa-music,
+    .navbar .fa-music,
+    .logo-section .fa-music,
+    .nav-actions .fa-music,
+    i.fa-music {
+      color: var(--dorado-yavl, #C8A752) !important;
     }
 
     .filter-pills {
@@ -1491,16 +1505,22 @@
       </button>
 
       <!-- 🎵 Music / Zen Mode Button -->
-      <a href="/dashboard/music.html"
-        class="w-10 h-10 rounded-full bg-white/5 hover:bg-gold/20 flex items-center justify-center text-[#C8A752] hover:text-[#D4AF37] transition-all duration-300 border border-transparent hover:border-[#C8A752]/30 group relative"
-        title="Modo Zen / Música">
-        <i class="fa-solid fa-music text-sm group-hover:scale-110 transition-transform"></i>
+      <a href="/dashboard/music.html" class="btn-settings" title="Modo Zen / Música"
+        style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem;">
+        <i class="fa-solid fa-music" style="color: #C8A752;"></i>
+        <span>Música</span>
       </a>
 
       <!-- ⚙️ Botón Ajustes -->
       <button id="settings-btn" class="btn-settings" title="Ajustes de Perfil" style="display: none;">
         <i class="fas fa-cog"></i>
         <span>Ajustes</span>
+      </button>
+
+      <!-- 👤 Botón Sobre el Creador -->
+      <button id="about-creator-btn" class="btn-settings" title="Sobre el Creador">
+        <i class="fas fa-user-astronaut" style="color: #C8A752;"></i>
+        <span>Creador</span>
       </button>
 
       <!-- 🔴 ZONA SAGRADA: Botón Cerrar Sesión -->
@@ -1664,6 +1684,224 @@
   <button id="mobile-logout-fab" class="mobile-logout-btn" style="display: none;">
     <i class="fas fa-sign-out-alt"></i>
   </button>
+
+  <!-- 👤 ABOUT CREATOR MODAL -->
+  <div id="about-creator-modal" class="yg-modal" role="dialog" aria-modal="true">
+    <div class="yg-about-creator-panel">
+      <button class="yg-about-close" onclick="document.getElementById('about-creator-modal').classList.remove('active')"
+        aria-label="Cerrar">✕</button>
+
+      <!-- Header with Avatar -->
+      <div class="yg-about-header">
+        <!-- Profile Photo with fallback to initials -->
+        <div class="yg-about-avatar">
+          <img src="../assets/images/me.webp" alt="Yerikson Varela"
+            style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center 30%;"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <span class="yg-about-initials" style="display: none;">YV</span>
+        </div>
+        <h2 class="yg-about-name">Yerikson Varela</h2>
+        <p class="yg-about-title">Founder & Lead Developer</p>
+      </div>
+
+      <!-- Bio Section -->
+      <div class="yg-about-bio">
+        <p>Desarrollador Full Stack y Agricultor de La Grita, Táchira. Fusionando la tradición del campo con la potencia
+          de la Blockchain y la IA. Mi misión con YavlGold es empoderar la economía real mediante tecnología
+          descentralizada y datos precisos.</p>
+      </div>
+
+      <!-- Social Links -->
+      <div class="yg-about-social">
+        <a href="https://github.com/YavlPro" target="_blank" class="yg-social-btn" title="GitHub">
+          <i class="fab fa-github"></i>
+          <span>GitHub</span>
+        </a>
+        <a href="https://linkedin.com/in/yerikson-varela" target="_blank" class="yg-social-btn" title="LinkedIn">
+          <i class="fab fa-linkedin"></i>
+          <span>LinkedIn</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* About Creator Modal Styles */
+    .yg-about-creator-panel {
+      position: relative;
+      width: min(450px, 90vw);
+      background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%);
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      border-radius: 24px;
+      padding: 3rem 2rem 2rem;
+      text-align: center;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(200, 167, 82, 0.1);
+      transform: translateY(20px) scale(0.98);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .yg-modal.active .yg-about-creator-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    .yg-about-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .yg-about-close:hover {
+      background: var(--dorado-yavl, #C8A752);
+      color: #000;
+      transform: rotate(90deg);
+    }
+
+    .yg-about-header {
+      margin-bottom: 1.5rem;
+    }
+
+    /* YV Initials Avatar with breathe animation */
+    .yg-about-avatar {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      background: #0a0a0a;
+      border: 3px solid var(--dorado-yavl, #C8A752);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(200, 167, 82, 0.3), inset 0 0 20px rgba(200, 167, 82, 0.1);
+      animation: aboutBreathe 4s ease-in-out infinite;
+    }
+
+    @keyframes aboutBreathe {
+
+      0%,
+      100% {
+        box-shadow: 0 0 30px rgba(200, 167, 82, 0.3), inset 0 0 20px rgba(200, 167, 82, 0.1);
+        transform: scale(1);
+      }
+
+      50% {
+        box-shadow: 0 0 50px rgba(200, 167, 82, 0.5), inset 0 0 30px rgba(200, 167, 82, 0.2);
+        transform: scale(1.03);
+      }
+    }
+
+    .yg-about-initials {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--dorado-yavl, #C8A752);
+      letter-spacing: 2px;
+    }
+
+    .yg-about-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .yg-about-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: var(--dorado-yavl, #C8A752);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .yg-about-bio {
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 1.5rem;
+    }
+
+    .yg-about-bio p {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .yg-about-social {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .yg-social-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: 1px solid rgba(200, 167, 82, 0.3);
+      border-radius: 50px;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .yg-social-btn:hover {
+      background: rgba(200, 167, 82, 0.15);
+      border-color: var(--dorado-yavl, #C8A752);
+      color: var(--dorado-yavl, #C8A752);
+      transform: translateY(-2px);
+    }
+
+    .yg-social-btn i {
+      font-size: 1.1rem;
+    }
+  </style>
+
+  <script>
+    // About Creator Modal Logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const aboutBtn = document.getElementById('about-creator-btn');
+      const aboutModal = document.getElementById('about-creator-modal');
+
+      if (aboutBtn && aboutModal) {
+        aboutBtn.addEventListener('click', () => {
+          aboutModal.classList.add('active');
+        });
+
+        // Close on overlay click
+        aboutModal.addEventListener('click', (e) => {
+          if (e.target === aboutModal) {
+            aboutModal.classList.remove('active');
+          }
+        });
+
+        // Close on ESC
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && aboutModal.classList.contains('active')) {
+            aboutModal.classList.remove('active');
+          }
+        });
+      }
+    });
+  </script>
 
   <!-- Scripts -->
   <!-- Auth Guard & Main Logic -->
@@ -2293,11 +2531,24 @@
                 icon.classList.add('fa-bitcoin-sign');
               }
 
-              // 📸 CAMBIO DE THUMBNAIL (Guitarras -> Bitcoin)
+              // 📸 CAMBIO DE THUMBNAIL (CSS Placeholder con icono Bitcoin)
               const img = card.querySelector('img');
               if (img) {
-                img.src = 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?q=80&w=800&auto=format&fit=crop';
-                img.style.objectFit = 'cover';
+                // Crear placeholder CSS en lugar de imagen externa
+                const placeholder = document.createElement('div');
+                placeholder.style.cssText = `
+                  width: 100%;
+                  height: 100%;
+                  min-height: 120px;
+                  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+                  border-radius: 12px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border: 1px solid rgba(200, 167, 82, 0.2);
+                `;
+                placeholder.innerHTML = '<i class="fa-brands fa-bitcoin" style="font-size: 3rem; color: #C8A752; opacity: 0.8;"></i>';
+                img.parentNode.replaceChild(placeholder, img);
               }
             }
           }

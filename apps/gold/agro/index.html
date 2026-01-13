@@ -1574,6 +1574,190 @@
         </div>
     </div>
 
+    <!-- ============================================
+         💰 SECCIÓN FINANZAS - Control de Gastos
+         ============================================ -->
+    <section class="finances-section" style="margin-top: 2rem; margin-bottom: 2rem;">
+        <div class="section-header animate-in">
+            <h2 class="section-title"><span class="icon">💰</span> Finanzas Agro</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Control de gastos y registro
+                de inversiones agrícolas</p>
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem; padding: 2rem;">
+            <form id="expense-form" class="expense-form" onsubmit="event.preventDefault();">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+
+                    <!-- Concepto -->
+                    <div class="input-group">
+                        <label class="input-label" for="expense-concept">Concepto *</label>
+                        <input type="text" id="expense-concept" class="styled-input"
+                            placeholder="Ej: Compra de fertilizante" required style="padding-left: 1rem;">
+                    </div>
+
+                    <!-- Monto -->
+                    <div class="input-group">
+                        <label class="input-label" for="expense-amount">Monto *</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="expense-amount" class="styled-input" placeholder="0.00" step="0.01"
+                                min="0" required>
+                        </div>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="input-group">
+                        <label class="input-label" for="expense-date">Fecha *</label>
+                        <input type="date" id="expense-date" class="styled-input" required style="padding-left: 1rem;">
+                    </div>
+
+                    <!-- Categoría -->
+                    <div class="input-group">
+                        <label class="input-label" for="expense-category">Categoría *</label>
+                        <select id="expense-category" class="styled-input" required
+                            style="padding-left: 1rem; cursor: pointer;">
+                            <option value="">Seleccionar...</option>
+                            <option value="mano-de-obra">👷 Mano de Obra</option>
+                            <option value="insumos">🧪 Insumos</option>
+                            <option value="mantenimiento">🔧 Mantenimiento</option>
+                            <option value="transporte">🚚 Transporte</option>
+                            <option value="otros">📦 Otros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Notas adicionales -->
+                <div class="input-group" style="margin-top: 1.5rem;">
+                    <label class="input-label" for="expense-notes">Notas (opcional)</label>
+                    <textarea id="expense-notes" class="styled-input" placeholder="Detalles adicionales del gasto..."
+                        rows="2" style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
+                </div>
+
+                <!-- Área de Evidencia / Upload -->
+                <div class="input-group" style="margin-top: 1.5rem;">
+                    <label class="input-label">Evidencia (Recibo/Foto)</label>
+                    <div id="upload-dropzone" class="upload-dropzone"
+                        style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
+                        onclick="document.getElementById('expense-receipt').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"
+                            style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
+                            Arrastra tu recibo aquí o <span
+                                style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
+                                subir</span>
+                        </p>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                            JPG, PNG o PDF (Máx. 5MB)
+                        </p>
+                        <div id="upload-preview" style="display: none; margin-top: 1rem;">
+                            <div
+                                style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 0.75rem 1rem; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 8px;">
+                                <i class="fa-solid fa-check-circle" style="color: var(--success, #4ade80);"></i>
+                                <span id="upload-filename"
+                                    style="color: var(--success, #4ade80); font-size: 0.85rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="file" id="expense-receipt" accept="image/jpeg,image/png,application/pdf"
+                        style="display: none;" onchange="handleReceiptUpload(this)">
+                </div>
+
+                <!-- Botón Guardar -->
+                <div
+                    style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
+                    <button type="reset" class="btn"
+                        style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
+                        onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
+                        onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
+                        Limpiar
+                    </button>
+                    <button type="submit" class="btn btn-primary"
+                        style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
+                        onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
+                        onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
+                        💾 Registrar Gasto
+                    </button>
+                </div>
+            </form>
+
+            <!-- Nota técnica para futuro -->
+            <div
+                style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
+                <p
+                    style="color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>La integración con Supabase para almacenamiento permanente está en desarrollo.</span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Handle receipt file upload preview
+        function handleReceiptUpload(input) {
+            const file = input.files[0];
+            const preview = document.getElementById('upload-preview');
+            const filename = document.getElementById('upload-filename');
+            const dropzone = document.getElementById('upload-dropzone');
+
+            if (file) {
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('El archivo es muy grande. Máximo 5MB.');
+                    input.value = '';
+                    return;
+                }
+
+                // Show preview
+                filename.textContent = file.name;
+                preview.style.display = 'block';
+                dropzone.style.borderColor = 'rgba(74, 222, 128, 0.5)';
+                dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+            } else {
+                preview.style.display = 'none';
+                dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+            }
+        }
+
+        // Set today's date as default
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('expense-date');
+            if (dateInput) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            // Dropzone hover effects
+            const dropzone = document.getElementById('upload-dropzone');
+            if (dropzone) {
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.style.borderColor = 'var(--gold-primary)';
+                    dropzone.style.background = 'rgba(200, 167, 82, 0.08)';
+                });
+
+                dropzone.addEventListener('dragleave', () => {
+                    dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                    dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+                });
+
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const input = document.getElementById('expense-receipt');
+                    input.files = e.dataTransfer.files;
+                    handleReceiptUpload(input);
+                });
+            }
+
+            // Form submission placeholder
+            document.getElementById('expense-form')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                console.log('[Finanzas] Gasto registrado (pendiente integración Supabase)');
+                alert('✅ Gasto registrado localmente. La sincronización con la nube estará disponible próximamente.');
+            });
+        });
+    </script>
+
     <script type="module" src="agro.js"></script>
     <script type="module" src="dashboard.js"></script>
     <script type="module">
