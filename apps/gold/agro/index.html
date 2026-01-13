@@ -1665,13 +1665,13 @@
                 <!-- Botón Guardar -->
                 <div
                     style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
-                    <button type="reset" class="btn"
+                    <button type="button" id="btn-clean" class="btn"
                         style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
                         onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
                         onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
                         Limpiar
                     </button>
-                    <button type="submit" class="btn btn-primary"
+                    <button type="submit" id="btn-save" class="btn btn-primary"
                         style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
                         onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
                         onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
@@ -1689,72 +1689,204 @@
                     <span>La integración con Supabase para almacenamiento permanente está en desarrollo.</span>
                 </p>
             </div>
+
+            <!-- Lista Dinámica de Últimos Movimientos -->
+            <div id="recent-transactions-container" style="margin-top: 2rem; display: none;">
+                <h3
+                    style="color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;">
+                    Últimos Movimientos (Sesión Actual)</h3>
+                <div id="expenses-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <!-- Los gastos se inyectarán aquí -->
+                </div>
+            </div>
         </div>
     </section>
 
     <script>
-        // Handle receipt file upload preview
-        function handleReceiptUpload(input) {
-            const file = input.files[0];
-            const preview = document.getElementById('upload-preview');
-            const filename = document.getElementById('upload-filename');
-            const dropzone = document.getElementById('upload-dropzone');
-
-            if (file) {
-                // Validate file size (5MB max)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('El archivo es muy grande. Máximo 5MB.');
-                    input.value = '';
-                    return;
-                }
-
-                // Show preview
-                filename.textContent = file.name;
-                preview.style.display = 'block';
-                dropzone.style.borderColor = 'rgba(74, 222, 128, 0.5)';
-                dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
-            } else {
-                preview.style.display = 'none';
-                dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
-            }
-        }
-
-        // Set today's date as default
         document.addEventListener('DOMContentLoaded', () => {
+            // Referencias DOM
+            const expenseForm = document.getElementById('expense-form');
+            const btnClean = document.getElementById('btn-clean');
+            const btnSave = document.getElementById('btn-save');
+            const dropzone = document.getElementById('upload-dropzone');
+            const fileInput = document.getElementById('expense-receipt');
             const dateInput = document.getElementById('expense-date');
+            const expensesContainer = document.getElementById('recent-transactions-container');
+            const expensesList = document.getElementById('expenses-list');
+
+            // Estado original de la dropzone (aunque lo reconstruimos dinamicamente)
+
+            // Inicializar Fecha
             if (dateInput) {
                 dateInput.value = new Date().toISOString().split('T')[0];
             }
 
-            // Dropzone hover effects
-            const dropzone = document.getElementById('upload-dropzone');
-            if (dropzone) {
-                dropzone.addEventListener('dragover', (e) => {
+            // --- A) FUNCIÓN LIMPIAR ---
+            if (btnClean) {
+                btnClean.addEventListener('click', (e) => {
                     e.preventDefault();
-                    dropzone.style.borderColor = 'var(--gold-primary)';
-                    dropzone.style.background = 'rgba(200, 167, 82, 0.08)';
-                });
 
-                dropzone.addEventListener('dragleave', () => {
-                    dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                    dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
-                });
+                    // 1. Vaciar inputs
+                    document.getElementById('expense-concept').value = '';
+                    document.getElementById('expense-amount').value = '';
+                    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+                    document.getElementById('expense-category').selectedIndex = 0;
+                    document.getElementById('expense-notes').value = '';
 
-                dropzone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const input = document.getElementById('expense-receipt');
-                    input.files = e.dataTransfer.files;
-                    handleReceiptUpload(input);
+                    // 2. Resetear archivo
+                    if (fileInput) fileInput.value = '';
+
+                    // 3. Restaurar dropzone (visual)
+                    if (dropzone) {
+                        dropzone.innerHTML = `
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
+                            <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
+                                Arrastra tu recibo aquí o <span style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para subir</span>
+                            </p>
+                            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                                JPG, PNG o PDF (Máx. 5MB)
+                            </p>
+                            <div id="upload-preview" style="display: none; margin-top: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 0.75rem 1rem; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 8px;">
+                                    <i class="fa-solid fa-check-circle" style="color: var(--success, #4ade80);"></i>
+                                    <span id="upload-filename" style="color: var(--success, #4ade80); font-size: 0.85rem;"></span>
+                                </div>
+                            </div>
+                        `;
+                        dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                        dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+                    }
                 });
             }
 
-            // Form submission placeholder
-            document.getElementById('expense-form')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                console.log('[Finanzas] Gasto registrado (pendiente integración Supabase)');
-                alert('✅ Gasto registrado localmente. La sincronización con la nube estará disponible próximamente.');
-            });
+            // --- B) FUNCIÓN REGISTRAR ---
+            if (expenseForm) {
+                expenseForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    const concept = document.getElementById('expense-concept').value.trim();
+                    const amount = document.getElementById('expense-amount').value.trim();
+                    const category = document.getElementById('expense-category').value;
+                    const file = fileInput ? fileInput.files[0] : null;
+
+                    // 1. VALIDAR
+                    if (!concept || !amount || !category) {
+                        alert('⚠️ Por favor completa los campos obligatorios: Concepto, Monto y Categoría.');
+                        return;
+                    }
+
+                    // 2. FEEDBACK DE CARGA
+                    if (btnSave) {
+                        const originalBtnText = btnSave.innerHTML;
+                        btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+                        btnSave.disabled = true;
+                        btnSave.style.opacity = '0.7';
+
+                        // 3. SIMULAR OPERACIÓN
+                        setTimeout(() => {
+                            // 4. ÉXITO
+                            alert('✅ Gasto registrado correctamente (Modo Local)');
+                            renderExpenseItem(concept, amount, category, file ? file.name : null);
+                            if (btnClean) btnClean.click();
+                            btnSave.innerHTML = originalBtnText;
+                            btnSave.disabled = false;
+                            btnSave.style.opacity = '1';
+                        }, 1000);
+                    }
+                });
+            }
+
+            // Helper para renderizar item en la lista
+            function renderExpenseItem(concept, amount, category, filename) {
+                if (expensesContainer && expensesList) {
+                    expensesContainer.style.display = 'block';
+
+                    const item = document.createElement('div');
+                    item.className = 'expense-item animate-in';
+                    item.style.background = 'rgba(255,255,255,0.03)';
+                    item.style.border = '1px solid rgba(255,255,255,0.05)';
+                    item.style.borderRadius = '8px';
+                    item.style.padding = '1rem';
+                    item.style.display = 'flex';
+                    item.style.justifyContent = 'space-between';
+                    item.style.alignItems = 'center';
+                    item.style.marginBottom = '0.5rem';
+
+                    const dateStr = new Date().toLocaleDateString();
+
+                    item.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); display: flex; align-items: center; justify-content: center; color: var(--gold-primary);">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                            </div>
+                            <div>
+                                <div style="color: #fff; font-weight: 600; font-size: 0.95rem;">${concept}</div>
+                                <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">
+                                    ${category.toUpperCase()} • ${dateStr} ${filename ? `• 📎 ${filename}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="color: #ef4444; font-weight: 700; font-size: 1rem;">
+                            -$${parseFloat(amount).toFixed(2)}
+                        </div>
+                    `;
+                    expensesList.insertBefore(item, expensesList.firstChild);
+                }
+            }
+
+            // --- VISUAL FILE UPLOAD ---
+            window.handleReceiptUpload = function (input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('El archivo es muy grande. Máximo 5MB.');
+                    input.value = '';
+                    if (btnClean) btnClean.click();
+                    return;
+                }
+
+                if (dropzone) {
+                    dropzone.innerHTML = `
+                        <div style="pointer-events: none;">
+                            <i class="fa-solid fa-file-invoice" style="font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;"></i>
+                            <h4 style="color: #fff; margin: 0.5rem 0;">Archivo Seleccionado</h4>
+                            <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: #4ade80; font-weight: 600; font-size: 0.9rem;">${file.name}</span>
+                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;">Clic para cambiar archivo</p>
+                        </div>
+                    `;
+                    dropzone.style.borderColor = '#4ade80';
+                    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+                }
+            };
+
+            // Drag & Drop
+            if (dropzone) {
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (fileInput && !fileInput.value) {
+                        dropzone.style.borderColor = 'var(--gold-primary)';
+                        dropzone.style.background = 'rgba(200, 167, 82, 0.08)';
+                    }
+                });
+                dropzone.addEventListener('dragleave', () => {
+                    if (fileInput && !fileInput.value) {
+                        dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                        dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+                    }
+                });
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (fileInput) {
+                        const input = document.getElementById('expense-receipt');
+                        input.files = e.dataTransfer.files;
+                        handleReceiptUpload(input);
+                    }
+                });
+            }
         });
     </script>
 
