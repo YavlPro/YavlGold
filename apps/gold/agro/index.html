@@ -1682,11 +1682,11 @@
 
             <!-- Nota técnica para futuro -->
             <div
-                style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
+                style="margin-top: 1.5rem; padding: 1rem; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: var(--radius-sm);">
                 <p
-                    style="color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fa-solid fa-info-circle"></i>
-                    <span>La integración con Supabase para almacenamiento permanente está en desarrollo.</span>
+                    style="color: #4ade80; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>🟢 Modo Local Activo: Los archivos y datos son visibles durante esta sesión.</span>
                 </p>
             </div>
 
@@ -1786,7 +1786,7 @@
                         setTimeout(() => {
                             // 4. ÉXITO
                             alert('✅ Gasto registrado correctamente (Modo Local)');
-                            renderExpenseItem(concept, amount, category, file ? file.name : null);
+                            renderExpenseItem(concept, amount, category, file);
                             if (btnClean) btnClean.click();
                             btnSave.innerHTML = originalBtnText;
                             btnSave.disabled = false;
@@ -1797,7 +1797,7 @@
             }
 
             // Helper para renderizar item en la lista
-            function renderExpenseItem(concept, amount, category, filename) {
+            function renderExpenseItem(concept, amount, category, file) {
                 if (expensesContainer && expensesList) {
                     expensesContainer.style.display = 'block';
 
@@ -1814,6 +1814,18 @@
 
                     const dateStr = new Date().toLocaleDateString();
 
+                    // Generar Blob URL si hay archivo
+                    let fileLinkHtml = '';
+                    if (file) {
+                        try {
+                            const fileUrl = URL.createObjectURL(file);
+                            fileLinkHtml = `• <a href="${fileUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" title="Ver Evidencia (Blob URL)"><i class="fa-solid fa-paperclip"></i> ${file.name}</a>`;
+                        } catch (e) {
+                            console.error("Error creating object URL", e);
+                            fileLinkHtml = `• 📎 ${file.name}`;
+                        }
+                    }
+
                     item.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); display: flex; align-items: center; justify-content: center; color: var(--gold-primary);">
@@ -1822,7 +1834,7 @@
                             <div>
                                 <div style="color: #fff; font-weight: 600; font-size: 0.95rem;">${concept}</div>
                                 <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">
-                                    ${category.toUpperCase()} • ${dateStr} ${filename ? `• 📎 ${filename}` : ''}
+                                    ${category.toUpperCase()} • ${dateStr} ${fileLinkHtml}
                                 </div>
                             </div>
                         </div>
