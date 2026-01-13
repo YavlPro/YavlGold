@@ -1682,11 +1682,11 @@
 
             <!-- Nota técnica para futuro -->
             <div
-                style="margin-top: 1.5rem; padding: 1rem; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: var(--radius-sm);">
+                style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
                 <p
-                    style="color: #4ade80; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span>🟢 Modo Local Activo: Los archivos y datos son visibles durante esta sesión.</span>
+                    style="color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-cloud-check"></i>
+                    <span>☁️ Conectado a YavlGold Cloud: Tus gastos se sincronizan en tiempo real.</span>
                 </p>
             </div>
 
@@ -1702,7 +1702,9 @@
         </div>
     </section>
 
-    <script>
+    <script type="module">
+        import { supabase } from '../assets/js/config/supabase-config.js';
+
         document.addEventListener('DOMContentLoaded', () => {
             // Referencias DOM
             const expenseForm = document.getElementById('expense-form');
@@ -1714,12 +1716,84 @@
             const expensesContainer = document.getElementById('recent-transactions-container');
             const expensesList = document.getElementById('expenses-list');
 
-            // Estado original de la dropzone (aunque lo reconstruimos dinamicamente)
+            // Exponer handler globalmente para el input onchange del HTML
+            window.handleReceiptUpload = function (input) {
+                const file = input.files[0];
+                if (!file) return;
+
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('El archivo es muy grande. Máximo 5MB.');
+                    input.value = '';
+                    if (btnClean) btnClean.click();
+                    return;
+                }
+
+                if (dropzone) {
+                    dropzone.innerHTML = `
+                        <div style="pointer-events: none;">
+                            <i class="fa-solid fa-file-invoice" style="font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;"></i>
+                            <h4 style="color: #fff; margin: 0.5rem 0;">Archivo Seleccionado</h4>
+                            <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: #4ade80; font-weight: 600; font-size: 0.9rem;">${file.name}</span>
+                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
+                            </div>
+                            <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;">Clic para cambiar archivo</p>
+                        </div>
+                    `;
+                    dropzone.style.borderColor = '#4ade80';
+                    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+                }
+            };
 
             // Inicializar Fecha
             if (dateInput) {
                 dateInput.value = new Date().toISOString().split('T')[0];
             }
+
+            // --- CARGAR GASTOS DESDE SUPABASE ---
+            async function loadExpenses() {
+                try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) return; // Silent return if not logged in
+
+                    const { data, error } = await supabase
+                        .from('agro_expenses')
+                        .select('*')
+                        .order('date', { ascending: false }); // Newest first
+
+                    if (error) throw error;
+
+                    if (expensesList && data) {
+                        expensesList.innerHTML = ''; // Clear list
+                        // Iterate in REVERSE (Oldest first) so prepending Newest puts it at top
+                        // Or simply append if we want the list in order?
+                        // renderExpenseItem uses 'insertBefore(firstChild)' which Prepends.
+                        // data is [Newest, Older, Oldest].
+                        // Loop Newest: Prepend Newest. List: [Newest]
+                        // Loop Older: Prepend Older. List: [Older, Newest] -> WRONG ORDER (Oldest at top)
+                        // So we must iterate in Reverse Order (Oldest...Newest)
+                        // Loop Oldest: Prepend. List: [Oldest]
+                        // Loop ...
+                        // Loop Newest: Prepend. List: [Newest, ..., Oldest] -> CORRECT
+
+                        [...data].reverse().forEach(expense => {
+                            renderExpenseItem(
+                                expense.concept,
+                                expense.amount,
+                                expense.category,
+                                null, // No local file object
+                                expense.evidence_url,
+                                expense.date
+                            );
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error cargando gastos:", e);
+                }
+            }
+
+            // Cargar al inicio
+            loadExpenses();
 
             // --- A) FUNCIÓN LIMPIAR ---
             if (btnClean) {
@@ -1759,14 +1833,15 @@
                 });
             }
 
-            // --- B) FUNCIÓN REGISTRAR ---
+            // --- B) FUNCIÓN REGISTRAR (SUPABASE) ---
             if (expenseForm) {
-                expenseForm.addEventListener('submit', (e) => {
+                expenseForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
 
                     const concept = document.getElementById('expense-concept').value.trim();
                     const amount = document.getElementById('expense-amount').value.trim();
                     const category = document.getElementById('expense-category').value;
+                    const dateVal = dateInput ? dateInput.value : new Date().toISOString();
                     const file = fileInput ? fileInput.files[0] : null;
 
                     // 1. VALIDAR
@@ -1775,29 +1850,78 @@
                         return;
                     }
 
-                    // 2. FEEDBACK DE CARGA
+                    // 2. UI LOADING
                     if (btnSave) {
                         const originalBtnText = btnSave.innerHTML;
-                        btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+                        btnSave.innerHTML = `<i class="fa-solid fa-cloud-upload animate-bounce"></i> Guardando...`;
                         btnSave.disabled = true;
                         btnSave.style.opacity = '0.7';
 
-                        // 3. SIMULAR OPERACIÓN
-                        setTimeout(() => {
-                            // 4. ÉXITO
-                            alert('✅ Gasto registrado correctamente (Modo Local)');
-                            renderExpenseItem(concept, amount, category, file);
+                        try {
+                            // Auth Check
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (!user) throw new Error("Debes iniciar sesión para guardar gastos.");
+
+                            let evidenceUrl = null;
+
+                            // 3. STORAGE UPLOAD
+                            if (file) {
+                                const fileExt = file.name.split('.').pop();
+                                // Clean filename
+                                const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '_');
+                                const storagePath = `${user.id}/${Date.now()}_${cleanName}.${fileExt}`;
+
+                                const { error: uploadError } = await supabase.storage
+                                    .from('agro-evidence')
+                                    .upload(storagePath, file);
+
+                                if (uploadError) throw uploadError;
+
+                                const { data: publicData } = supabase.storage
+                                    .from('agro-evidence')
+                                    .getPublicUrl(storagePath);
+
+                                evidenceUrl = publicData.publicUrl;
+                            }
+
+                            // 4. DB INSERT
+                            const { error: insertError } = await supabase
+                                .from('agro_expenses')
+                                .insert({
+                                    user_id: user.id,
+                                    concept: concept,
+                                    amount: parseFloat(amount),
+                                    category: category,
+                                    date: dateVal,
+                                    evidence_url: evidenceUrl
+                                });
+
+                            if (insertError) throw insertError;
+
+                            // 5. SUCCESS
+                            alert('✅ Gasto guardado exitosamente en la nube');
+
+                            // 6. UPDATE UI
+                            // Render immediately (simulated for speed)
+                            renderExpenseItem(concept, amount, category, file, evidenceUrl, dateVal);
+
+                            // Reset
                             if (btnClean) btnClean.click();
+
+                        } catch (err) {
+                            console.error(err);
+                            alert('❌ Error al guardar: ' + err.message);
+                        } finally {
                             btnSave.innerHTML = originalBtnText;
                             btnSave.disabled = false;
                             btnSave.style.opacity = '1';
-                        }, 1000);
+                        }
                     }
                 });
             }
 
             // Helper para renderizar item en la lista
-            function renderExpenseItem(concept, amount, category, file) {
+            function renderExpenseItem(concept, amount, category, file, remoteUrl, dateVal) {
                 if (expensesContainer && expensesList) {
                     expensesContainer.style.display = 'block';
 
@@ -1812,18 +1936,20 @@
                     item.style.alignItems = 'center';
                     item.style.marginBottom = '0.5rem';
 
-                    const dateStr = new Date().toLocaleDateString();
+                    const dateStr = dateVal ? new Date(dateVal).toLocaleDateString() : new Date().toLocaleDateString();
 
-                    // Generar Blob URL si hay archivo
+                    // Generar Link de Evidencia (Local Blob o Remote URL)
                     let fileLinkHtml = '';
                     if (file) {
                         try {
                             const fileUrl = URL.createObjectURL(file);
-                            fileLinkHtml = `• <a href="${fileUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'" title="Ver Evidencia (Blob URL)"><i class="fa-solid fa-paperclip"></i> ${file.name}</a>`;
+                            fileLinkHtml = `• <a href="${fileUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver Evidencia (Local Blob)"><i class="fa-solid fa-paperclip"></i> ${file.name}</a>`;
                         } catch (e) {
-                            console.error("Error creating object URL", e);
                             fileLinkHtml = `• 📎 ${file.name}`;
                         }
+                    } else if (remoteUrl) {
+                        // Extract simplistic name or just show 'Ver Evidencia'
+                        fileLinkHtml = `• <a href="${remoteUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver Evidencia (Nube)"><i class="fa-solid fa-cloud"></i> Ver Recibo</a>`;
                     }
 
                     item.innerHTML = `
@@ -1846,36 +1972,7 @@
                 }
             }
 
-            // --- VISUAL FILE UPLOAD ---
-            window.handleReceiptUpload = function (input) {
-                const file = input.files[0];
-                if (!file) return;
-
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('El archivo es muy grande. Máximo 5MB.');
-                    input.value = '';
-                    if (btnClean) btnClean.click();
-                    return;
-                }
-
-                if (dropzone) {
-                    dropzone.innerHTML = `
-                        <div style="pointer-events: none;">
-                            <i class="fa-solid fa-file-invoice" style="font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;"></i>
-                            <h4 style="color: #fff; margin: 0.5rem 0;">Archivo Seleccionado</h4>
-                            <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;">
-                                <span style="color: #4ade80; font-weight: 600; font-size: 0.9rem;">${file.name}</span>
-                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
-                            </div>
-                            <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;">Clic para cambiar archivo</p>
-                        </div>
-                    `;
-                    dropzone.style.borderColor = '#4ade80';
-                    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
-                }
-            };
-
-            // Drag & Drop
+            // Drag & Drop Handlers
             if (dropzone) {
                 dropzone.addEventListener('dragover', (e) => {
                     e.preventDefault();
