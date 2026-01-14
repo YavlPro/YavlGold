@@ -325,6 +325,258 @@ export async function calculateROI() {
     }
 }
 
+function resetRoiResults() {
+    const resultDiv = document.getElementById('roiResult');
+    if (resultDiv) resultDiv.classList.remove('visible');
+
+    const defaults = [
+        ['resultInvestment', '$0'],
+        ['resultRevenue', '$0'],
+        ['resultProfit', '$0'],
+        ['resultROI', '0%']
+    ];
+
+    defaults.forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    });
+}
+
+function clearRoiInputs() {
+    const investment = document.getElementById('investment');
+    const revenue = document.getElementById('revenue');
+    const quantity = document.getElementById('quantity');
+
+    if (investment) investment.value = '';
+    if (revenue) revenue.value = '';
+    if (quantity) quantity.value = '';
+
+    resetRoiResults();
+}
+
+function injectRoiClearButton(calcBtn) {
+    if (!calcBtn || document.getElementById('roi-clear-btn')) return;
+
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'roi-clear-btn';
+    clearBtn.type = 'button';
+    clearBtn.className = 'btn';
+    clearBtn.textContent = 'LIMPIAR';
+    clearBtn.style.cssText = "margin-left: 0.75rem; background: transparent; border: 1px solid rgba(200, 167, 82, 0.4); color: #C8A752; padding: 0.75rem 1.5rem; border-radius: 50px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;";
+
+    clearBtn.addEventListener('mouseenter', () => {
+        clearBtn.style.background = 'rgba(200, 167, 82, 0.12)';
+        clearBtn.style.borderColor = '#C8A752';
+    });
+    clearBtn.addEventListener('mouseleave', () => {
+        clearBtn.style.background = 'transparent';
+        clearBtn.style.borderColor = 'rgba(200, 167, 82, 0.4)';
+    });
+    clearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearRoiInputs();
+    });
+
+    calcBtn.insertAdjacentElement('afterend', clearBtn);
+}
+
+let expenseSyncTimer = null;
+let expenseSyncInFlight = false;
+
+function scheduleExpenseSync() {
+    if (expenseSyncTimer) clearTimeout(expenseSyncTimer);
+    expenseSyncTimer = setTimeout(() => {
+        syncExpenseDeleteButtons().catch((err) => console.warn('[Agro] Expense sync error:', err));
+    }, 120);
+}
+
+async function syncExpenseDeleteButtons() {
+    if (expenseSyncInFlight) return;
+    expenseSyncInFlight = true;
+
+    try {
+        const expensesList = document.getElementById('expenses-list');
+        if (!expensesList) return;
+
+        const items = Array.from(expensesList.querySelectorAll('.expense-item'));
+        if (items.length === 0) return;
+
+        const { data, error } = await supabase
+            .from('agro_expenses')
+            .select('id')
+            .order('date', { ascending: false });
+
+        if (error || !data) return;
+
+        items.forEach((item, index) => {
+            const expense = data[index];
+            if (expense && !item.dataset.expenseId) {
+                item.dataset.expenseId = String(expense.id);
+            }
+            attachExpenseDeleteButton(item);
+        });
+    } finally {
+        expenseSyncInFlight = false;
+    }
+}
+
+function attachExpenseDeleteButton(item) {
+    if (!item || item.querySelector('.expense-delete-btn')) return;
+
+    let amountEl = item.lastElementChild;
+    if (!amountEl) return;
+
+    let actions = amountEl.parentElement;
+    if (!actions || !actions.classList.contains('expense-actions')) {
+        actions = document.createElement('div');
+        actions.className = 'expense-actions';
+        actions.style.cssText = 'display: flex; align-items: center; gap: 0.6rem;';
+        amountEl.replaceWith(actions);
+        actions.appendChild(amountEl);
+    }
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'expense-delete-btn';
+    deleteBtn.title = 'Eliminar';
+    deleteBtn.style.cssText = 'background: transparent; border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-trash';
+    icon.style.fontSize = '0.85rem';
+    deleteBtn.appendChild(icon);
+
+    deleteBtn.addEventListener('mouseenter', () => {
+        deleteBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+        deleteBtn.style.borderColor = '#ef4444';
+    });
+    deleteBtn.addEventListener('mouseleave', () => {
+        deleteBtn.style.background = 'transparent';
+        deleteBtn.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+    });
+    deleteBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!window.confirm('\u00bfEliminar?')) return;
+        const expenseId = item.dataset.expenseId;
+        if (!expenseId) {
+            alert('No se pudo identificar el gasto.');
+            return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Debes iniciar sesion para eliminar gastos.');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('agro_expenses')
+            .delete()
+            .eq('id', expenseId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            alert(`Error al eliminar: ${error.message}`);
+            return;
+        }
+
+        document.dispatchEvent(new CustomEvent('data-refresh'));
+    });
+
+    actions.appendChild(deleteBtn);
+}
+
+function setupExpenseDeleteButtons() {
+    const expensesList = document.getElementById('expenses-list');
+    if (!expensesList) return;
+
+    const observer = new MutationObserver(() => scheduleExpenseSync());
+    observer.observe(expensesList, { childList: true });
+
+    document.addEventListener('data-refresh', scheduleExpenseSync);
+    scheduleExpenseSync();
+}
+
+function waitForAuthClient(attempt = 0) {
+    if (window.AuthClient?.getSession) return Promise.resolve(window.AuthClient);
+    if (attempt >= 20) return Promise.resolve(null);
+    return new Promise((resolve) => {
+        setTimeout(() => resolve(waitForAuthClient(attempt + 1)), 200);
+    });
+}
+
+async function resolveAuthUser(authClient) {
+    if (!authClient) return null;
+
+    let session = null;
+    if (typeof authClient.getSession === 'function') {
+        const sessionValue = authClient.getSession();
+        session = sessionValue && typeof sessionValue.then === 'function'
+            ? await sessionValue
+            : sessionValue;
+    } else {
+        session = authClient.currentSession;
+    }
+
+    const sessionUser = session?.user;
+    if (sessionUser?.user_metadata) return sessionUser;
+
+    if (authClient.supabase?.auth?.getUser) {
+        try {
+            const { data } = await authClient.supabase.auth.getUser();
+            if (data?.user) return data.user;
+        } catch (err) {
+            console.warn('[Agro] Auth user lookup failed:', err);
+        }
+    }
+
+    return sessionUser || null;
+}
+
+async function applyHeaderIdentity() {
+    const nameEl = document.querySelector('.user-profile .user-name');
+    const avatarEl = document.querySelector('.user-profile .user-avatar');
+    if (!nameEl && !avatarEl) return;
+
+    const authClient = await waitForAuthClient();
+    if (!authClient) return;
+
+    const user = await resolveAuthUser(authClient);
+    if (!user) return;
+
+    const fullName = user.user_metadata?.full_name;
+    if (fullName && nameEl) {
+        nameEl.textContent = fullName;
+    }
+
+    const avatarUrl = user.user_metadata?.avatar_url;
+    if (avatarUrl && avatarEl) {
+        let img = avatarEl.querySelector('img');
+        if (!img) {
+            avatarEl.textContent = '';
+            img = document.createElement('img');
+            img.alt = fullName || user.email || 'Usuario';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+            avatarEl.style.overflow = 'hidden';
+            avatarEl.appendChild(img);
+        }
+        img.src = avatarUrl;
+    }
+}
+
+function setupHeaderIdentity() {
+    applyHeaderIdentity();
+    window.addEventListener('auth:signed_in', applyHeaderIdentity);
+    window.addEventListener('auth:initial_session', applyHeaderIdentity);
+    window.addEventListener('auth:ui:updated', applyHeaderIdentity);
+}
+
 // ============================================================
 // INICIALIZACIÓN
 // ============================================================
@@ -347,6 +599,9 @@ export function initAgro() {
         calcBtn.removeAttribute('onclick');
         calcBtn.addEventListener('click', calculateROI);
     }
+    injectRoiClearButton(calcBtn);
+    setupExpenseDeleteButtons();
+    setupHeaderIdentity();
 
     // Habilitar Enter en inputs para calcular
     document.querySelectorAll('.styled-input').forEach(input => {
