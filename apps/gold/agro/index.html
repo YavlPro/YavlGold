@@ -1897,17 +1897,39 @@
                 }
 
                 if (dropzone) {
-                    dropzone.innerHTML = `
-                        <div style="pointer-events: none;">
-                            <i class="fa-solid fa-file-invoice" style="font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;"></i>
-                            <h4 style="color: #fff; margin: 0.5rem 0;">Archivo Seleccionado</h4>
-                            <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;">
-                                <span style="color: #4ade80; font-weight: 600; font-size: 0.9rem;">${file.name}</span>
-                                <i class="fa-solid fa-check-circle" style="color: #4ade80;"></i>
-                            </div>
-                            <p style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;">Clic para cambiar archivo</p>
-                        </div>
-                    `;
+                    dropzone.textContent = '';
+
+                    const container = document.createElement('div');
+                    container.style.pointerEvents = 'none';
+
+                    const icon = document.createElement('i');
+                    icon.className = 'fa-solid fa-file-invoice';
+                    icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
+
+                    const title = document.createElement('h4');
+                    title.style.cssText = 'color: #fff; margin: 0.5rem 0;';
+                    title.textContent = 'Archivo Seleccionado';
+
+                    const pill = document.createElement('div');
+                    pill.style.cssText = 'background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;';
+
+                    const fileName = document.createElement('span');
+                    fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
+                    fileName.textContent = file.name;
+
+                    const check = document.createElement('i');
+                    check.className = 'fa-solid fa-check-circle';
+                    check.style.cssText = 'color: #4ade80;';
+
+                    pill.append(fileName, check);
+
+                    const hint = document.createElement('p');
+                    hint.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;';
+                    hint.textContent = 'Clic para cambiar archivo';
+
+                    container.append(icon, title, pill, hint);
+                    dropzone.appendChild(container);
+
                     dropzone.style.borderColor = '#4ade80';
                     dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
                 }

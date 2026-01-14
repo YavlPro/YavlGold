@@ -337,35 +337,54 @@ function formatRelativeTime(date) {
 // UI RENDERING
 // ============================================
 
+function createSectionHeader(text, styleCss) {
+    const item = document.createElement('li');
+    item.style.cssText = styleCss;
+    item.textContent = text;
+    return item;
+}
+
+function createEmptyStateItem() {
+    const item = document.createElement('li');
+    item.style.cssText = 'padding: 2rem; text-align: center; color: #555;';
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-regular fa-bell-slash';
+    icon.style.cssText = 'font-size: 1.5rem; margin-bottom: 0.5rem; display: block; opacity: 0.3;';
+
+    const text = document.createElement('span');
+    text.style.cssText = 'font-size: 11px;';
+    text.textContent = 'Sin notificaciones';
+
+    item.append(icon, text);
+    return item;
+}
+
 function renderNotifications() {
     const list = document.getElementById('notif-list');
     if (!list) return;
 
-    let html = '';
+    list.textContent = '';
 
-    // Active notifications section
     if (notifications.length > 0) {
-        html += `<li style="padding: 6px 12px; font-size: 9px; color: #C8A752; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid rgba(200,167,82,0.2);">📬 Nuevas (${notifications.length})</li>`;
-        html += notifications.map(renderNotificationItem).join('');
+        list.appendChild(createSectionHeader(
+            `Nuevas (${notifications.length})`,
+            'padding: 6px 12px; font-size: 9px; color: #C8A752; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid rgba(200,167,82,0.2);'
+        ));
+        notifications.forEach((n) => list.appendChild(renderNotificationItem(n)));
     }
 
-    // Read history section
     if (readNotifications.length > 0) {
-        html += `<li style="padding: 6px 12px; margin-top: 8px; font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.05);">📖 Historial</li>`;
-        html += readNotifications.slice(0, 10).map(n => renderNotificationItem(n, true)).join('');
+        list.appendChild(createSectionHeader(
+            'Historial',
+            'padding: 6px 12px; margin-top: 8px; font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.05);'
+        ));
+        readNotifications.slice(0, 10).forEach((n) => list.appendChild(renderNotificationItem(n, true)));
     }
 
-    // Empty state
-    if (notifications.length === 0 && readNotifications.length === 0) {
-        html = `
-            <li style="padding: 2rem; text-align: center; color: #555;">
-                <i class="fa-regular fa-bell-slash" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block; opacity: 0.3;"></i>
-                <span style="font-size: 11px;">Sin notificaciones</span>
-            </li>
-        `;
+    if (notifications.length == 0 && readNotifications.length == 0) {
+        list.appendChild(createEmptyStateItem());
     }
-
-    list.innerHTML = html;
 }
 
 function renderNotificationItem(n, isRead = false) {
@@ -379,25 +398,51 @@ function renderNotificationItem(n, isRead = false) {
     const colors = typeColors[n.type] || typeColors.info;
     const opacity = isRead ? '0.6' : '1';
     const timeStr = formatRelativeTime(n.timestamp);
+    const iconClass = n.icon ? String(n.icon) : 'fa-info-circle';
+    const titleText = n.title ? String(n.title) : '';
+    const messageText = n.message ? String(n.message) : '';
 
-    return `
-        <li style="margin: 4px; padding: 10px; background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: 8px; opacity: ${opacity}; transition: all 0.2s;"
-            onmouseover="this.style.transform='translateX(4px)';"
-            onmouseout="this.style.transform='translateX(0)';">
-            <div style="display: flex; gap: 10px; align-items: flex-start;">
-                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${colors.bg}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <i class="fa-solid ${n.icon}" style="color: ${colors.icon}; font-size: 11px;"></i>
-                </div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                        <div style="font-size: 10px; font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${n.title}</div>
-                        <span style="font-size: 8px; color: #666; white-space: nowrap;">${timeStr}</span>
-                    </div>
-                    <div style="font-size: 9px; color: #888; line-height: 1.3; margin-top: 2px;">${n.message}</div>
-                </div>
-            </div>
-        </li>
-    `;
+    const item = document.createElement('li');
+    item.style.cssText = `margin: 4px; padding: 10px; background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: 8px; opacity: ${opacity}; transition: all 0.2s;`;
+    item.addEventListener('mouseenter', () => { item.style.transform = 'translateX(4px)'; });
+    item.addEventListener('mouseleave', () => { item.style.transform = 'translateX(0)'; });
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display: flex; gap: 10px; align-items: flex-start;';
+
+    const iconBox = document.createElement('div');
+    iconBox.style.cssText = `width: 26px; height: 26px; border-radius: 6px; background: ${colors.bg}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;`;
+
+    const icon = document.createElement('i');
+    icon.className = `fa-solid ${iconClass}`;
+    icon.style.cssText = `color: ${colors.icon}; font-size: 11px;`;
+
+    iconBox.appendChild(icon);
+
+    const content = document.createElement('div');
+    content.style.cssText = 'flex: 1; min-width: 0;';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: 8px;';
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size: 10px; font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;';
+    title.textContent = titleText;
+
+    const time = document.createElement('span');
+    time.style.cssText = 'font-size: 8px; color: #666; white-space: nowrap;';
+    time.textContent = timeStr;
+
+    header.append(title, time);
+
+    const message = document.createElement('div');
+    message.style.cssText = 'font-size: 9px; color: #888; line-height: 1.3; margin-top: 2px;';
+    message.textContent = messageText;
+
+    content.append(header, message);
+    wrapper.append(iconBox, content);
+    item.appendChild(wrapper);
+    return item;
 }
 
 function updateBadge() {

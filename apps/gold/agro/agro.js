@@ -16,17 +16,20 @@ let cropsCache = [];      // Cache local de cultivos para edición
 // ============================================================
 
 /**
- * Renderiza el estado del cultivo como badge HTML
+ * Renderiza el estado del cultivo como badge
  */
-function getStatusBadge(status) {
+function createStatusBadge(status) {
     const statusMap = {
         'growing': { class: 'status-growing', text: 'Creciendo' },
-        'ready': { class: 'status-ready', text: '¡Lista!' },
-        'attention': { class: 'status-attention', text: 'Atención' },
+        'ready': { class: 'status-ready', text: 'Lista!' },
+        'attention': { class: 'status-attention', text: 'Atencion' },
         'harvested': { class: 'status-harvested', text: 'Cosechado' }
     };
     const s = statusMap[status] || statusMap['growing'];
-    return `<span class="crop-status ${s.class}">${s.text}</span>`;
+    const badge = document.createElement('span');
+    badge.className = `crop-status ${s.class}`;
+    badge.textContent = s.text;
+    return badge;
 }
 
 /**
@@ -59,60 +62,123 @@ function formatCurrency(value) {
 // ============================================================
 
 /**
- * Genera HTML de una tarjeta de cultivo
+ * Genera tarjeta de cultivo segura
  */
-function renderCropCard(crop, index) {
-    const delay = 4 + index; // Para animaciones escalonadas
-    return `
-        <div class="card crop-card animate-in delay-${delay}" data-crop-id="${crop.id}">
-            <div class="crop-card-actions">
-                <button class="btn-edit-crop" onclick="window.openEditModal('${crop.id}')" title="Editar Cultivo">✏️</button>
-                <button class="btn-delete-crop" onclick="window.deleteCrop('${crop.id}')" title="Eliminar Cultivo">×</button>
-            </div>
-            <div class="crop-card-header">
-                <div class="crop-info">
-                    <div class="crop-icon">${crop.icon || '🌱'}</div>
-                    <div class="crop-details-header">
-                        <span class="crop-name">${crop.name}</span>
-                        <span class="crop-variety">${crop.variety || 'Sin variedad'}</span>
-                    </div>
-                </div>
-                ${getStatusBadge(crop.status)}
-            </div>
-            <div class="progress-section">
-                <div class="progress-header">
-                    <span class="progress-label">Ciclo de Cosecha</span>
-                    <span class="progress-value">${crop.progress}%</span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill" style="width: ${crop.progress}%;"></div>
-                </div>
-            </div>
-            <div class="crop-meta-grid">
-                <div class="crop-meta-item">
-                    <span class="meta-label">Siembra</span>
-                    <span class="meta-value">${formatDate(crop.start_date)}</span>
-                </div>
-                <div class="crop-meta-item">
-                    <span class="meta-label">Cosecha Est.</span>
-                    <span class="meta-value">${formatDate(crop.expected_harvest_date)}</span>
-                </div>
-                <div class="crop-meta-item">
-                    <span class="meta-label">Área</span>
-                    <span class="meta-value">${crop.area_size} Ha</span>
-                </div>
-                <div class="crop-meta-item">
-                    <span class="meta-label">Inversión</span>
-                    <span class="meta-value gold">${formatCurrency(crop.investment)}</span>
-                </div>
-            </div>
-        </div>
-    `;
+function createMetaItem(labelText, valueText, valueClass = '') {
+    const item = document.createElement('div');
+    item.className = 'crop-meta-item';
+
+    const label = document.createElement('span');
+    label.className = 'meta-label';
+    label.textContent = labelText;
+
+    const value = document.createElement('span');
+    value.className = valueClass ? `meta-value ${valueClass}` : 'meta-value';
+    value.textContent = valueText;
+
+    item.append(label, value);
+    return item;
 }
 
-/**
- * Carga cultivos del usuario desde Supabase y los renderiza
- */
+function normalizeProgress(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 0;
+    return Math.max(0, Math.min(100, parsed));
+}
+
+function createCropCardElement(crop, index) {
+    const delay = 4 + index; // Para animaciones escalonadas
+    const card = document.createElement('div');
+    card.className = `card crop-card animate-in delay-${delay}`;
+    if (crop?.id !== undefined && crop?.id !== null) {
+        card.dataset.cropId = String(crop.id);
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'crop-card-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-edit-crop';
+    editBtn.type = 'button';
+    editBtn.title = 'Editar Cultivo';
+    editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    editBtn.addEventListener('click', () => window.openEditModal?.(String(crop.id)));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-delete-crop';
+    deleteBtn.type = 'button';
+    deleteBtn.title = 'Eliminar Cultivo';
+    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    deleteBtn.addEventListener('click', () => window.deleteCrop?.(String(crop.id)));
+
+    actions.append(editBtn, deleteBtn);
+
+    const header = document.createElement('div');
+    header.className = 'crop-card-header';
+
+    const cropInfo = document.createElement('div');
+    cropInfo.className = 'crop-info';
+
+    const cropIcon = document.createElement('div');
+    cropIcon.className = 'crop-icon';
+    cropIcon.textContent = crop.icon || 'Seed';
+
+    const details = document.createElement('div');
+    details.className = 'crop-details-header';
+
+    const name = document.createElement('span');
+    name.className = 'crop-name';
+    name.textContent = crop.name || '';
+
+    const variety = document.createElement('span');
+    variety.className = 'crop-variety';
+    variety.textContent = crop.variety || 'Sin variedad';
+
+    details.append(name, variety);
+    cropInfo.append(cropIcon, details);
+
+    header.append(cropInfo, createStatusBadge(crop.status));
+
+    const progressSection = document.createElement('div');
+    progressSection.className = 'progress-section';
+
+    const progressHeader = document.createElement('div');
+    progressHeader.className = 'progress-header';
+
+    const progressLabel = document.createElement('span');
+    progressLabel.className = 'progress-label';
+    progressLabel.textContent = 'Ciclo de Cosecha';
+
+    const progressValue = document.createElement('span');
+    progressValue.className = 'progress-value';
+    const progress = normalizeProgress(crop.progress);
+    progressValue.textContent = `${progress}%`;
+
+    progressHeader.append(progressLabel, progressValue);
+
+    const progressTrack = document.createElement('div');
+    progressTrack.className = 'progress-track';
+
+    const progressFill = document.createElement('div');
+    progressFill.className = 'progress-fill';
+    progressFill.style.width = `${progress}%`;
+
+    progressTrack.appendChild(progressFill);
+    progressSection.append(progressHeader, progressTrack);
+
+    const metaGrid = document.createElement('div');
+    metaGrid.className = 'crop-meta-grid';
+    metaGrid.append(
+        createMetaItem('Siembra', formatDate(crop.start_date)),
+        createMetaItem('Cosecha Est.', formatDate(crop.expected_harvest_date)),
+        createMetaItem('Area', `${crop.area_size} Ha`),
+        createMetaItem('Inversion', formatCurrency(crop.investment), 'gold')
+    );
+
+    card.append(actions, header, progressSection, metaGrid);
+    return card;
+}
+
 /**
  * Carga cultivos del usuario (Supabase + LocalStorage fallback)
  */
@@ -176,7 +242,12 @@ export async function loadCrops() {
     cropsCache = crops;
 
     // Renderizar cultivos
-    cropsGrid.innerHTML = crops.map((crop, i) => renderCropCard(crop, i)).join('');
+    cropsGrid.textContent = '';
+    const fragment = document.createDocumentFragment();
+    crops.forEach((crop, i) => {
+        fragment.appendChild(createCropCardElement(crop, i));
+    });
+    cropsGrid.appendChild(fragment);
 
     // Animar progress bars
     setTimeout(() => {
