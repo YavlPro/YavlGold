@@ -4,19 +4,32 @@
  */
 const AnnouncementsManager = {
   supabase: null,
+  _initialized: false,
   cache: {
     announcements: [],
     lastFetch: 0,
     cacheDuration: 5 * 60 * 1000 // 5 minutos
   },
 
-  init() {
-    if (!AuthClient.supabase) {
-      console.error('[AnnouncementsManager] ❌ AuthClient no inicializado');
+  init(attempt = 0) {
+    if (this._initialized) return true;
+
+    const client = typeof window !== 'undefined' ? window.AuthClient : null;
+    if (!client?.supabase) {
+      const maxAttempts = 20;
+      const retryDelayMs = 200;
+
+      if (attempt < maxAttempts) {
+        setTimeout(() => this.init(attempt + 1), retryDelayMs);
+        return false;
+      }
+
+      console.error('[AnnouncementsManager] ? AuthClient no inicializado');
       return false;
     }
-    this.supabase = AuthClient.supabase;
-    console.log('[AnnouncementsManager] ✅ Inicializado');
+    this.supabase = client.supabase;
+    this._initialized = true;
+    console.log('[AnnouncementsManager] ? Inicializado');
     return true;
   },
 

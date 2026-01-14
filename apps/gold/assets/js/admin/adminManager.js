@@ -475,8 +475,8 @@ export const AdminManager = {
                         <span class="feedback-type">${this._getFeedbackTypeIcon(f.type)}</span>
                         <span class="feedback-date">${this._formatDate(f.created_at)}</span>
                     </div>
-                    <div class="feedback-message">${f.message || 'Sin mensaje'}</div>
-                    ${f.email ? `<div class="feedback-email">${f.email}</div>` : ''}
+                    <div class="feedback-message">${this._escapeHtml(f.message || 'Sin mensaje')}</div>
+                    ${f.email ? `<div class="feedback-email">${this._escapeHtml(f.email)}</div>` : ''}
                     <button class="btn-feedback-delete" onclick="AdminManager.deleteFeedback('${f.id}')">
                         🗑️ Eliminar
                     </button>
@@ -505,6 +505,16 @@ export const AdminManager = {
     _formatDate(dateStr) {
         const date = new Date(dateStr);
         return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    },
+
+    _escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     },
 
     /**

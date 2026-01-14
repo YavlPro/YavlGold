@@ -252,12 +252,14 @@ export const NotificationsManager = {
      * @private
      */
     _renderNotificationItem(n) {
+        const safeTitle = this._escapeHtml(n.title || '');
+        const safeMessage = this._escapeHtml(n.message || '');
         return `
             <div class="notification-item ${n.is_read ? 'read' : 'unread'}" data-id="${n.id}">
                 <div class="notification-icon">${this._getIcon(n.type)}</div>
                 <div class="notification-content">
-                    <strong>${n.title}</strong>
-                    <p>${n.message || ''}</p>
+                    <strong>${safeTitle}</strong>
+                    <p>${safeMessage}</p>
                     <small>${this._formatDate(n.created_at)}</small>
                 </div>
                 ${!n.is_read ? '<div class="notification-new-dot"></div>' : ''}
@@ -336,6 +338,16 @@ export const NotificationsManager = {
         if (diffHours < 24) return `Hace ${diffHours}h`;
         if (diffDays < 7) return `Hace ${diffDays}d`;
         return date.toLocaleDateString('es-ES');
+    },
+
+    _escapeHtml(value) {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     },
 
     /**

@@ -435,6 +435,7 @@ const authClient = {
     },
     isAuthenticated: function () { return !!this.currentSession; },
     getCurrentUser: function () { return this.currentSession?.user; },
+    getSession: function () { return this.currentSession; },
 
     emitAuthChange(event) {
         window.dispatchEvent(new CustomEvent(`auth:${event.toLowerCase()}`, { detail: { user: this.currentSession?.user } }));
