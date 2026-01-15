@@ -577,6 +577,15 @@ function setupHeaderIdentity() {
     window.addEventListener('auth:ui:updated', applyHeaderIdentity);
 }
 
+function moveFooterToEnd() {
+    const footer = document.querySelector('footer, .footer, #footer');
+    if (!footer) return;
+
+    const container = document.querySelector('.app-container') || document.body;
+    container.appendChild(footer);
+    footer.style.marginTop = 'auto';
+}
+
 // ============================================================
 // INICIALIZACIÓN
 // ============================================================
@@ -602,6 +611,7 @@ export function initAgro() {
     injectRoiClearButton(calcBtn);
     setupExpenseDeleteButtons();
     setupHeaderIdentity();
+    moveFooterToEnd();
 
     // Habilitar Enter en inputs para calcular
     document.querySelectorAll('.styled-input').forEach(input => {
@@ -1057,3 +1067,4 @@ window.deleteCrop = deleteCrop;
     `;
     document.head.appendChild(styles);
 })();
+
