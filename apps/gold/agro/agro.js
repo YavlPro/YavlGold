@@ -581,7 +581,7 @@ function moveFooterToEnd() {
     const footer = document.querySelector('footer, .footer, #footer');
     if (!footer) return;
 
-    const container = document.querySelector('.app-container') || document.body;
+    const container = document.querySelector('#app') || document.body;
     container.appendChild(footer);
     footer.style.marginTop = 'auto';
 }
@@ -611,7 +611,9 @@ export function initAgro() {
     injectRoiClearButton(calcBtn);
     setupExpenseDeleteButtons();
     setupHeaderIdentity();
-    moveFooterToEnd();
+    setTimeout(() => {
+        moveFooterToEnd();
+    }, 100);
 
     // Habilitar Enter en inputs para calcular
     document.querySelectorAll('.styled-input').forEach(input => {
