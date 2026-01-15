@@ -382,6 +382,44 @@ function injectRoiClearButton(calcBtn) {
 
 let expenseSyncTimer = null;
 let expenseSyncInFlight = false;
+let expenseCache = [];
+
+function setExpenseCache(data) {
+    expenseCache = Array.isArray(data) ? data.slice() : [];
+    scheduleExpenseSync();
+}
+
+function patchExpenseSelect() {
+    if (supabase.__agroExpenseSelectPatched) return;
+    supabase.__agroExpenseSelectPatched = true;
+
+    const originalFrom = supabase.from.bind(supabase);
+    supabase.from = (table) => {
+        const builder = originalFrom(table);
+        if (table !== 'agro_expenses' || !builder || typeof builder.select !== 'function') {
+            return builder;
+        }
+
+        const originalSelect = builder.select.bind(builder);
+        builder.select = (...args) => {
+            const query = originalSelect(...args);
+            if (query && typeof query.then === 'function') {
+                const originalThen = query.then.bind(query);
+                query.then = (onFulfilled, onRejected) => originalThen(
+                    (res) => {
+                        if (res?.data && Array.isArray(res.data)) {
+                            setExpenseCache(res.data);
+                        }
+                        return onFulfilled ? onFulfilled(res) : res;
+                    },
+                    onRejected
+                );
+            }
+            return query;
+        };
+        return builder;
+    };
+}
 
 function scheduleExpenseSync() {
     if (expenseSyncTimer) clearTimeout(expenseSyncTimer);
@@ -401,27 +439,31 @@ async function syncExpenseDeleteButtons() {
         const items = Array.from(expensesList.querySelectorAll('.expense-item'));
         if (items.length === 0) return;
 
-        const { data, error } = await supabase
-            .from('agro_expenses')
-            .select('id')
-            .order('date', { ascending: false });
-
-        if (error || !data) return;
-
         items.forEach((item, index) => {
-            const expense = data[index];
-            if (expense && !item.dataset.expenseId) {
-                item.dataset.expenseId = String(expense.id);
+            const expense = expenseCache[index];
+            const expenseId = expense?.id;
+            if (expenseId) {
+                item.dataset.expenseId = String(expenseId);
             }
-            attachExpenseDeleteButton(item);
+            attachExpenseDeleteButton(item, expenseId);
         });
     } finally {
         expenseSyncInFlight = false;
     }
 }
 
-function attachExpenseDeleteButton(item) {
-    if (!item || item.querySelector('.expense-delete-btn')) return;
+function attachExpenseDeleteButton(item, expenseId) {
+    if (!item) return;
+
+    const existingBtn = item.querySelector('.expense-delete-btn');
+    if (existingBtn) {
+        if (expenseId && !existingBtn.dataset.id) {
+            existingBtn.dataset.id = String(expenseId);
+        }
+        return;
+    }
+
+    if (!expenseId) return;
 
     let amountEl = item.lastElementChild;
     if (!amountEl) return;
@@ -439,6 +481,7 @@ function attachExpenseDeleteButton(item) {
     deleteBtn.type = 'button';
     deleteBtn.className = 'expense-delete-btn';
     deleteBtn.title = 'Eliminar';
+    deleteBtn.dataset.id = String(expenseId);
     deleteBtn.style.cssText = 'background: transparent; border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
 
     const icon = document.createElement('i');
@@ -459,8 +502,8 @@ function attachExpenseDeleteButton(item) {
         e.stopPropagation();
 
         if (!window.confirm('\u00bfEliminar?')) return;
-        const expenseId = item.dataset.expenseId;
-        if (!expenseId) {
+        const targetId = deleteBtn.dataset.id || item.dataset.expenseId;
+        if (!targetId) {
             alert('No se pudo identificar el gasto.');
             return;
         }
@@ -474,7 +517,7 @@ function attachExpenseDeleteButton(item) {
         const { error } = await supabase
             .from('agro_expenses')
             .delete()
-            .eq('id', expenseId)
+            .eq('id', targetId)
             .eq('user_id', user.id);
 
         if (error) {
@@ -492,11 +535,23 @@ function setupExpenseDeleteButtons() {
     const expensesList = document.getElementById('expenses-list');
     if (!expensesList) return;
 
+    patchExpenseSelect();
+
     const observer = new MutationObserver(() => scheduleExpenseSync());
     observer.observe(expensesList, { childList: true });
 
     document.addEventListener('data-refresh', scheduleExpenseSync);
     scheduleExpenseSync();
+}
+
+const AUTH_CACHE_TTL = 30000;
+let cachedAuthUser = null;
+let cachedAuthUserAt = 0;
+
+function cacheAuthUser(user) {
+    if (!user) return;
+    cachedAuthUser = user;
+    cachedAuthUserAt = Date.now();
 }
 
 function waitForAuthClient(attempt = 0) {
@@ -510,6 +565,11 @@ function waitForAuthClient(attempt = 0) {
 async function resolveAuthUser(authClient) {
     if (!authClient) return null;
 
+    const now = Date.now();
+    if (cachedAuthUser && (now - cachedAuthUserAt) < AUTH_CACHE_TTL) {
+        return cachedAuthUser;
+    }
+
     let session = null;
     if (typeof authClient.getSession === 'function') {
         const sessionValue = authClient.getSession();
@@ -521,12 +581,18 @@ async function resolveAuthUser(authClient) {
     }
 
     const sessionUser = session?.user;
-    if (sessionUser?.user_metadata) return sessionUser;
+    if (sessionUser) {
+        cacheAuthUser(sessionUser);
+        if (sessionUser.user_metadata) return sessionUser;
+    }
 
     if (authClient.supabase?.auth?.getUser) {
         try {
             const { data } = await authClient.supabase.auth.getUser();
-            if (data?.user) return data.user;
+            if (data?.user) {
+                cacheAuthUser(data.user);
+                return data.user;
+            }
         } catch (err) {
             console.warn('[Agro] Auth user lookup failed:', err);
         }
