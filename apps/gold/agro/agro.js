@@ -544,6 +544,903 @@ function setupExpenseDeleteButtons() {
     scheduleExpenseSync();
 }
 
+const INCOME_BUCKET = 'agro-evidence';
+const INCOME_SECTION_ID = 'agro-income-section';
+const INCOME_DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt'];
+const INCOME_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+const INCOME_MAX_FILE_SIZE = 5 * 1024 * 1024;
+let incomeCache = [];
+let incomeModuleInitialized = false;
+let incomeDeletedAtSupported = null;
+let incomeEditId = null;
+let incomeEditSupportPath = null;
+
+function formatShortCurrency(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '$0';
+    if (Math.abs(number) >= 1000) {
+        return `$${(number / 1000).toFixed(1)}k`;
+    }
+    return `$${number.toFixed(0)}`;
+}
+
+function getFileExtension(fileName) {
+    if (!fileName) return '';
+    const clean = String(fileName).split('?')[0].split('#')[0];
+    const parts = clean.split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase() : '';
+}
+
+function isIncomeDocExtension(ext) {
+    return INCOME_DOC_EXTENSIONS.includes(ext);
+}
+
+function isIncomeImageExtension(ext) {
+    return INCOME_IMAGE_EXTENSIONS.includes(ext);
+}
+
+function ensureIncomeSection(financesSection) {
+    const existing = document.getElementById(INCOME_SECTION_ID);
+    if (existing) return existing;
+    if (!financesSection) return null;
+
+    const wrapper = document.createElement('div');
+    wrapper.id = INCOME_SECTION_ID;
+    wrapper.style.marginTop = '2rem';
+
+    const header = document.createElement('div');
+    header.className = 'section-header animate-in';
+
+    const title = document.createElement('h3');
+    title.className = 'section-title';
+    title.style.fontSize = '1.2rem';
+    title.style.marginBottom = '0.35rem';
+
+    const icon = document.createElement('span');
+    icon.className = 'icon';
+    icon.textContent = '$';
+
+    const titleText = document.createElement('span');
+    titleText.textContent = ' Ingresos Agro';
+
+    title.append(icon, titleText);
+
+    const subtitle = document.createElement('p');
+    subtitle.style.color = 'var(--text-secondary)';
+    subtitle.style.fontSize = '0.9rem';
+    subtitle.style.marginTop = '0.35rem';
+    subtitle.textContent = 'Registro de ventas y otros ingresos';
+
+    header.append(title, subtitle);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.marginTop = '1.5rem';
+    card.style.padding = '2rem';
+
+    const form = document.createElement('form');
+    form.id = 'income-form';
+    form.className = 'income-form';
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;';
+
+    const conceptGroup = document.createElement('div');
+    conceptGroup.className = 'input-group';
+    const conceptLabel = document.createElement('label');
+    conceptLabel.className = 'input-label';
+    conceptLabel.setAttribute('for', 'income-concept');
+    conceptLabel.textContent = 'Concepto *';
+    const conceptInput = document.createElement('input');
+    conceptInput.type = 'text';
+    conceptInput.id = 'income-concept';
+    conceptInput.className = 'styled-input';
+    conceptInput.required = true;
+    conceptInput.placeholder = 'Ej: Venta de tomate';
+    conceptInput.style.paddingLeft = '1rem';
+    conceptGroup.append(conceptLabel, conceptInput);
+
+    const amountGroup = document.createElement('div');
+    amountGroup.className = 'input-group';
+    const amountLabel = document.createElement('label');
+    amountLabel.className = 'input-label';
+    amountLabel.setAttribute('for', 'income-amount');
+    amountLabel.textContent = 'Monto *';
+    const amountWrapper = document.createElement('div');
+    amountWrapper.className = 'input-wrapper';
+    const amountPrefix = document.createElement('span');
+    amountPrefix.className = 'input-prefix';
+    amountPrefix.textContent = '$';
+    const amountInput = document.createElement('input');
+    amountInput.type = 'number';
+    amountInput.id = 'income-amount';
+    amountInput.className = 'styled-input';
+    amountInput.required = true;
+    amountInput.placeholder = '0.00';
+    amountInput.step = '0.01';
+    amountInput.min = '0';
+    amountWrapper.append(amountPrefix, amountInput);
+    amountGroup.append(amountLabel, amountWrapper);
+
+    const dateGroup = document.createElement('div');
+    dateGroup.className = 'input-group';
+    const dateLabel = document.createElement('label');
+    dateLabel.className = 'input-label';
+    dateLabel.setAttribute('for', 'income-date');
+    dateLabel.textContent = 'Fecha *';
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.id = 'income-date';
+    dateInput.className = 'styled-input';
+    dateInput.required = true;
+    dateInput.style.paddingLeft = '1rem';
+    dateGroup.append(dateLabel, dateInput);
+
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'input-group';
+    const categoryLabel = document.createElement('label');
+    categoryLabel.className = 'input-label';
+    categoryLabel.setAttribute('for', 'income-category');
+    categoryLabel.textContent = 'Categoria *';
+    const categorySelect = document.createElement('select');
+    categorySelect.id = 'income-category';
+    categorySelect.className = 'styled-input';
+    categorySelect.required = true;
+    categorySelect.style.paddingLeft = '1rem';
+    categorySelect.style.cursor = 'pointer';
+    const categoryOptions = [
+        { value: '', label: 'Seleccionar...' },
+        { value: 'ventas', label: 'Ventas' },
+        { value: 'servicios', label: 'Servicios' },
+        { value: 'subsidios', label: 'Subsidios' },
+        { value: 'otros', label: 'Otros' }
+    ];
+    categoryOptions.forEach((opt) => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        categorySelect.appendChild(option);
+    });
+    categoryGroup.append(categoryLabel, categorySelect);
+
+    grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup);
+
+    const fileGroup = document.createElement('div');
+    fileGroup.className = 'input-group';
+    fileGroup.style.marginTop = '1.5rem';
+    const fileLabel = document.createElement('label');
+    fileLabel.className = 'input-label';
+    fileLabel.textContent = 'Soporte (Documento/Imagen)';
+
+    const dropzone = document.createElement('div');
+    dropzone.id = 'income-dropzone';
+    dropzone.className = 'upload-dropzone';
+    dropzone.style.cssText = 'border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);';
+
+    const dropIcon = document.createElement('i');
+    dropIcon.className = 'fa-solid fa-cloud-arrow-up';
+    dropIcon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
+    const dropText = document.createElement('p');
+    dropText.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
+    const dropSpan = document.createElement('span');
+    dropSpan.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
+    dropSpan.textContent = 'haz clic para subir';
+    dropText.append('Arrastra tu soporte aqui o ', dropSpan);
+
+    const dropHint = document.createElement('p');
+    dropHint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
+    dropHint.textContent = 'JPG, PNG, PDF, DOC, DOCX o TXT (Max. 5MB)';
+
+    dropzone.append(dropIcon, dropText, dropHint);
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'income-receipt';
+    fileInput.accept = 'image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+    fileInput.style.display = 'none';
+
+    fileGroup.append(fileLabel, dropzone, fileInput);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);';
+
+    const btnClean = document.createElement('button');
+    btnClean.type = 'button';
+    btnClean.id = 'income-clean-btn';
+    btnClean.className = 'btn';
+    btnClean.textContent = 'Limpiar';
+    btnClean.style.cssText = 'background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;';
+    btnClean.addEventListener('mouseenter', () => {
+        btnClean.style.borderColor = 'rgba(255,255,255,0.4)';
+        btnClean.style.color = '#fff';
+    });
+    btnClean.addEventListener('mouseleave', () => {
+        btnClean.style.borderColor = 'rgba(255,255,255,0.2)';
+        btnClean.style.color = 'rgba(255,255,255,0.7)';
+    });
+
+    const btnSave = document.createElement('button');
+    btnSave.type = 'submit';
+    btnSave.id = 'income-save-btn';
+    btnSave.className = 'btn btn-primary';
+    btnSave.textContent = 'Registrar Ingreso';
+    btnSave.style.cssText = 'background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;';
+    btnSave.addEventListener('mouseenter', () => {
+        btnSave.style.boxShadow = '0 0 25px rgba(200, 167, 82, 0.5)';
+        btnSave.style.transform = 'translateY(-2px)';
+    });
+    btnSave.addEventListener('mouseleave', () => {
+        btnSave.style.boxShadow = 'none';
+        btnSave.style.transform = 'translateY(0)';
+    });
+
+    actions.append(btnClean, btnSave);
+
+    const note = document.createElement('div');
+    note.style.cssText = 'margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);';
+    const noteText = document.createElement('p');
+    noteText.style.cssText = 'color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;';
+    const noteIcon = document.createElement('i');
+    noteIcon.className = 'fa-solid fa-cloud-check';
+    const noteSpan = document.createElement('span');
+    noteSpan.textContent = 'Ingresos sincronizados en YavlGold Cloud en tiempo real.';
+    noteText.append(noteIcon, noteSpan);
+    note.appendChild(noteText);
+
+    const listContainer = document.createElement('div');
+    listContainer.id = 'income-recent-container';
+    listContainer.style.cssText = 'margin-top: 2rem; display: none;';
+    const listTitle = document.createElement('h3');
+    listTitle.style.cssText = 'color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;';
+    listTitle.textContent = 'Ultimos Ingresos (Sesion Actual)';
+    const list = document.createElement('div');
+    list.id = 'income-list';
+    list.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem;';
+    listContainer.append(listTitle, list);
+
+    form.append(grid, fileGroup, actions);
+    card.append(form, note, listContainer);
+    wrapper.append(header, card);
+
+    financesSection.appendChild(wrapper);
+
+    return wrapper;
+}
+
+function resetIncomeDropzone(dropzone) {
+    if (!dropzone) return;
+    dropzone.textContent = '';
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-cloud-arrow-up';
+    icon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
+
+    const text = document.createElement('p');
+    text.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
+    const highlight = document.createElement('span');
+    highlight.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
+    highlight.textContent = 'haz clic para subir';
+    text.append('Arrastra tu soporte aqui o ', highlight);
+
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
+    hint.textContent = 'JPG, PNG, PDF, DOC, DOCX o TXT (Max. 5MB)';
+
+    dropzone.append(icon, text, hint);
+    dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+    dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+}
+
+function handleIncomeFileUpload(input, dropzone) {
+    if (!input || !dropzone) return;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (file.size > INCOME_MAX_FILE_SIZE) {
+        alert('El archivo es muy grande. Maximo 5MB.');
+        input.value = '';
+        resetIncomeDropzone(dropzone);
+        return;
+    }
+
+    const ext = getFileExtension(file.name);
+    const isDoc = isIncomeDocExtension(ext);
+    const isImage = isIncomeImageExtension(ext) || file.type.startsWith('image/');
+
+    if (!isDoc && !isImage) {
+        alert('Tipo de archivo no permitido.');
+        input.value = '';
+        resetIncomeDropzone(dropzone);
+        return;
+    }
+
+    dropzone.textContent = '';
+    const container = document.createElement('div');
+    container.style.pointerEvents = 'none';
+
+    const icon = document.createElement('i');
+    icon.className = isDoc ? 'fa-solid fa-file-lines' : 'fa-solid fa-image';
+    icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
+
+    const title = document.createElement('h4');
+    title.style.cssText = 'color: #fff; margin: 0.5rem 0;';
+    title.textContent = 'Archivo Seleccionado';
+
+    const pill = document.createElement('div');
+    pill.style.cssText = 'background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;';
+
+    const fileName = document.createElement('span');
+    fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
+    fileName.textContent = file.name;
+
+    const check = document.createElement('i');
+    check.className = 'fa-solid fa-check-circle';
+    check.style.cssText = 'color: #4ade80;';
+
+    pill.append(fileName, check);
+
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;';
+    hint.textContent = 'Clic para cambiar archivo';
+
+    container.append(icon, title, pill, hint);
+    dropzone.appendChild(container);
+    dropzone.style.borderColor = '#4ade80';
+    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+}
+
+function clearIncomeForm() {
+    const conceptInput = document.getElementById('income-concept');
+    const amountInput = document.getElementById('income-amount');
+    const dateInput = document.getElementById('income-date');
+    const categoryInput = document.getElementById('income-category');
+    const fileInput = document.getElementById('income-receipt');
+    const dropzone = document.getElementById('income-dropzone');
+    const btnSave = document.getElementById('income-save-btn');
+
+    if (conceptInput) conceptInput.value = '';
+    if (amountInput) amountInput.value = '';
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+    if (categoryInput) categoryInput.selectedIndex = 0;
+    if (fileInput) fileInput.value = '';
+    resetIncomeDropzone(dropzone);
+
+    incomeEditId = null;
+    incomeEditSupportPath = null;
+    if (btnSave) btnSave.textContent = 'Registrar Ingreso';
+}
+
+function enterIncomeEditMode(income) {
+    if (!income) return;
+    const conceptInput = document.getElementById('income-concept');
+    const amountInput = document.getElementById('income-amount');
+    const dateInput = document.getElementById('income-date');
+    const categoryInput = document.getElementById('income-category');
+    const btnSave = document.getElementById('income-save-btn');
+
+    incomeEditId = income.id || null;
+    incomeEditSupportPath = income.soporte_url || null;
+
+    if (conceptInput) conceptInput.value = income.concepto || '';
+    if (amountInput) amountInput.value = income.monto ?? '';
+    if (dateInput) dateInput.value = income.fecha || new Date().toISOString().split('T')[0];
+    if (categoryInput) categoryInput.value = income.categoria || '';
+    if (btnSave) btnSave.textContent = 'Actualizar Ingreso';
+}
+
+async function resolveIncomeSupportUrl(path) {
+    if (!path) return null;
+    if (/^https?:\/\//i.test(path)) return path;
+    const { data, error } = await supabase.storage
+        .from(INCOME_BUCKET)
+        .createSignedUrl(path, 3600);
+    if (error) {
+        console.warn('[Agro] Income signed URL error:', error.message);
+        return null;
+    }
+    return data?.signedUrl || null;
+}
+
+async function buildIncomeSignedUrlMap(incomes) {
+    const map = new Map();
+    const rows = Array.isArray(incomes) ? incomes : [];
+    await Promise.all(rows.map(async (row) => {
+        if (!row?.soporte_url) return;
+        const url = await resolveIncomeSupportUrl(row.soporte_url);
+        if (url) map.set(row.id, url);
+    }));
+    return map;
+}
+
+function renderIncomeItem(listEl, income, signedUrl) {
+    if (!listEl || !income) return;
+
+    const item = document.createElement('div');
+    item.className = 'income-item animate-in';
+    item.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;';
+    item.dataset.incomeId = income.id ? String(income.id) : '';
+
+    const left = document.createElement('div');
+    left.style.cssText = 'display: flex; align-items: center; gap: 1rem;';
+
+    const iconWrap = document.createElement('div');
+    iconWrap.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; background: rgba(74, 222, 128, 0.12); display: flex; align-items: center; justify-content: center; color: #4ade80;';
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-circle-dollar-to-slot';
+    iconWrap.appendChild(icon);
+
+    const details = document.createElement('div');
+
+    const concept = document.createElement('div');
+    concept.style.cssText = 'color: #fff; font-weight: 600; font-size: 0.95rem;';
+    concept.textContent = income.concepto || 'Ingreso';
+
+    const meta = document.createElement('div');
+    meta.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem;';
+    const category = document.createElement('span');
+    category.textContent = String(income.categoria || 'otros').replace(/-/g, ' ').toUpperCase();
+    const dateStr = document.createElement('span');
+    dateStr.textContent = formatDate(income.fecha);
+    meta.append(category, dateStr);
+
+    if (signedUrl) {
+        const supportWrap = document.createElement('span');
+        supportWrap.style.display = 'inline-flex';
+        supportWrap.style.alignItems = 'center';
+        supportWrap.style.gap = '4px';
+
+        const ext = getFileExtension(income.soporte_url || '');
+        const isDoc = isIncomeDocExtension(ext);
+        const supportIcon = document.createElement('i');
+        supportIcon.className = isDoc ? 'fa-solid fa-file-lines' : 'fa-solid fa-paperclip';
+        supportIcon.style.color = isDoc ? '#60a5fa' : '#C8A752';
+
+        const link = document.createElement('a');
+        link.href = signedUrl;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.cssText = 'color: var(--gold-primary, #C8A752); text-decoration: none; font-weight: 600;';
+        link.textContent = isDoc ? 'Descargar soporte' : 'Ver soporte';
+
+        supportWrap.append(supportIcon, link);
+
+        if (!isDoc && isIncomeImageExtension(ext)) {
+            const img = document.createElement('img');
+            img.src = signedUrl;
+            img.alt = 'Soporte';
+            img.style.cssText = 'width: 36px; height: 36px; border-radius: 6px; object-fit: cover; margin-left: 6px; border: 1px solid rgba(255,255,255,0.1);';
+            supportWrap.appendChild(img);
+        }
+
+        meta.appendChild(supportWrap);
+    }
+
+    details.append(concept, meta);
+    left.append(iconWrap, details);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display: flex; align-items: center; gap: 0.6rem;';
+
+    const amount = document.createElement('div');
+    amount.style.cssText = 'color: #4ade80; font-weight: 700; font-size: 1rem;';
+    amount.textContent = formatCurrency(income.monto);
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'income-edit-btn';
+    editBtn.title = 'Editar';
+    editBtn.style.cssText = 'background: transparent; border: 1px solid rgba(96, 165, 250, 0.35); color: #60a5fa; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+
+    const editIcon = document.createElement('i');
+    editIcon.className = 'fa-solid fa-pen';
+    editIcon.style.fontSize = '0.8rem';
+    editBtn.appendChild(editIcon);
+
+    editBtn.addEventListener('mouseenter', () => {
+        editBtn.style.background = 'rgba(96, 165, 250, 0.15)';
+        editBtn.style.borderColor = '#60a5fa';
+    });
+    editBtn.addEventListener('mouseleave', () => {
+        editBtn.style.background = 'transparent';
+        editBtn.style.borderColor = 'rgba(96, 165, 250, 0.35)';
+    });
+    editBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        enterIncomeEditMode(income);
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'income-delete-btn';
+    deleteBtn.title = 'Eliminar';
+    deleteBtn.dataset.id = income.id ? String(income.id) : '';
+    deleteBtn.style.cssText = 'background: transparent; border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+
+    const deleteIcon = document.createElement('i');
+    deleteIcon.className = 'fa-solid fa-trash';
+    deleteIcon.style.fontSize = '0.85rem';
+    deleteBtn.appendChild(deleteIcon);
+
+    deleteBtn.addEventListener('mouseenter', () => {
+        deleteBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+        deleteBtn.style.borderColor = '#ef4444';
+    });
+    deleteBtn.addEventListener('mouseleave', () => {
+        deleteBtn.style.background = 'transparent';
+        deleteBtn.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+    });
+    deleteBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!window.confirm('\u00bfEliminar ingreso?')) return;
+        const targetId = deleteBtn.dataset.id;
+        if (!targetId) {
+            alert('No se pudo identificar el ingreso.');
+            return;
+        }
+
+        if (incomeDeletedAtSupported === false) {
+            alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
+            return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Debes iniciar sesion para eliminar ingresos.');
+            return;
+        }
+
+        const { error } = await supabase
+            .from('agro_income')
+            .update({ deleted_at: new Date().toISOString() })
+            .eq('id', targetId)
+            .eq('user_id', user.id);
+
+        if (error) {
+            if (error.message && error.message.toLowerCase().includes('deleted_at')) {
+                incomeDeletedAtSupported = false;
+                alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
+                return;
+            }
+            alert(`Error al eliminar: ${error.message}`);
+            return;
+        }
+
+        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+    });
+
+    actions.append(amount, editBtn, deleteBtn);
+    item.append(left, actions);
+    listEl.appendChild(item);
+}
+
+async function loadIncomes() {
+    const listEl = document.getElementById('income-list');
+    const container = document.getElementById('income-recent-container');
+    if (!listEl || !container) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        let query = supabase
+            .from('agro_income')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('fecha', { ascending: false });
+
+        if (incomeDeletedAtSupported !== false) {
+            query = query.is('deleted_at', null);
+        }
+
+        let { data, error } = await query;
+        if (error && error.message && error.message.toLowerCase().includes('deleted_at')) {
+            incomeDeletedAtSupported = false;
+            const fallback = await supabase
+                .from('agro_income')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('fecha', { ascending: false });
+            data = fallback.data;
+            error = fallback.error;
+        } else if (!error) {
+            incomeDeletedAtSupported = true;
+        }
+
+        if (error) throw error;
+
+        incomeCache = Array.isArray(data) ? data : [];
+
+        listEl.textContent = '';
+        container.style.display = incomeCache.length ? 'block' : 'none';
+
+        const signedUrlMap = await buildIncomeSignedUrlMap(incomeCache);
+        incomeCache.forEach((income) => {
+            const signedUrl = signedUrlMap.get(income.id);
+            renderIncomeItem(listEl, income, signedUrl);
+        });
+    } catch (err) {
+        console.error('[Agro] Error cargando ingresos:', err);
+    }
+}
+
+async function saveIncome() {
+    const conceptInput = document.getElementById('income-concept');
+    const amountInput = document.getElementById('income-amount');
+    const dateInput = document.getElementById('income-date');
+    const categoryInput = document.getElementById('income-category');
+    const fileInput = document.getElementById('income-receipt');
+    const btnSave = document.getElementById('income-save-btn');
+
+    const concept = conceptInput?.value?.trim() || '';
+    const amount = amountInput?.value?.trim() || '';
+    const category = categoryInput?.value || '';
+    const dateVal = dateInput?.value || new Date().toISOString().split('T')[0];
+    const file = fileInput?.files?.[0] || null;
+
+    if (!concept || !amount || !category) {
+        alert('Por favor completa Concepto, Monto y Categoria.');
+        return;
+    }
+
+    const originalText = btnSave?.textContent || '';
+    if (btnSave) {
+        btnSave.textContent = 'Guardando...';
+        btnSave.disabled = true;
+        btnSave.style.opacity = '0.7';
+    }
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Debes iniciar sesion para guardar ingresos.');
+
+        const isEditing = !!incomeEditId;
+        const incomeId = isEditing
+            ? incomeEditId
+            : (crypto?.randomUUID ? crypto.randomUUID() : `inc_${Date.now()}_${Math.random().toString(16).slice(2)}`);
+        let soportePath = null;
+
+        if (file) {
+            const ext = getFileExtension(file.name);
+            const isDoc = isIncomeDocExtension(ext);
+            const isImage = isIncomeImageExtension(ext) || file.type.startsWith('image/');
+            if (!isDoc && !isImage) {
+                throw new Error('Tipo de archivo no permitido.');
+            }
+
+            const cleanName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+            soportePath = `${user.id}/agro/income/${incomeId}/${Date.now()}_${cleanName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from(INCOME_BUCKET)
+                .upload(soportePath, file);
+
+            if (uploadError) throw uploadError;
+        }
+
+        if (isEditing) {
+            const payload = {
+                concepto: concept,
+                monto: parseFloat(amount),
+                fecha: dateVal,
+                categoria: category
+            };
+            if (soportePath) {
+                payload.soporte_url = soportePath;
+            }
+
+            const { error: updateError } = await supabase
+                .from('agro_income')
+                .update(payload)
+                .eq('id', incomeId)
+                .eq('user_id', user.id);
+
+            if (updateError) throw updateError;
+            alert('Ingreso actualizado.');
+        } else {
+            const { error: insertError } = await supabase
+                .from('agro_income')
+                .insert({
+                    id: incomeId,
+                    user_id: user.id,
+                    concepto: concept,
+                    monto: parseFloat(amount),
+                    fecha: dateVal,
+                    categoria: category,
+                    soporte_url: soportePath
+                });
+
+            if (insertError) throw insertError;
+            alert('Ingreso guardado.');
+        }
+
+        clearIncomeForm();
+        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+    } catch (err) {
+        console.error('[Agro] Error guardando ingreso:', err);
+        alert(`Error al guardar: ${err.message || err}`);
+    } finally {
+        if (btnSave) {
+            btnSave.textContent = originalText || 'Registrar Ingreso';
+            btnSave.disabled = false;
+            btnSave.style.opacity = '1';
+        }
+    }
+}
+
+function initIncomeModule() {
+    if (incomeModuleInitialized) return;
+    incomeModuleInitialized = true;
+
+    const financesSection = document.querySelector('.finances-section');
+    if (!financesSection) return;
+
+    ensureIncomeSection(financesSection);
+
+    const form = document.getElementById('income-form');
+    const dateInput = document.getElementById('income-date');
+    const fileInput = document.getElementById('income-receipt');
+    const dropzone = document.getElementById('income-dropzone');
+    const btnClean = document.getElementById('income-clean-btn');
+
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => handleIncomeFileUpload(fileInput, dropzone));
+        resetIncomeDropzone(dropzone);
+    }
+
+    if (btnClean) {
+        btnClean.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearIncomeForm();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveIncome();
+        });
+    }
+
+    document.addEventListener('data-refresh', () => {
+        loadIncomes();
+        updateBalanceAndTopCategory();
+    });
+    document.addEventListener('agro:income:changed', () => {
+        loadIncomes();
+        updateBalanceAndTopCategory();
+    });
+
+    loadIncomes();
+}
+
+let topIncomeCategoryCache = null;
+
+function sumAmounts(rows, field) {
+    if (!Array.isArray(rows)) return 0;
+    return rows.reduce((total, row) => {
+        const value = Number(row?.[field]);
+        return total + (Number.isFinite(value) ? value : 0);
+    }, 0);
+}
+
+function updateBalanceSummary(expenseTotal, incomeTotal) {
+    const revenueEl = document.getElementById('summary-revenue');
+    const costEl = document.getElementById('summary-cost');
+    const profitEl = document.getElementById('summary-profit');
+    const marginEl = document.getElementById('summary-margin');
+
+    if (revenueEl) revenueEl.textContent = formatShortCurrency(incomeTotal);
+    if (costEl) costEl.textContent = formatShortCurrency(expenseTotal);
+
+    const profit = incomeTotal - expenseTotal;
+    if (profitEl) {
+        profitEl.textContent = formatShortCurrency(profit);
+        profitEl.style.color = profit >= 0 ? '#C8A752' : '#f87171';
+    }
+
+    const margin = incomeTotal > 0 ? (profit / incomeTotal) * 100 : 0;
+    if (marginEl) {
+        marginEl.textContent = `${margin.toFixed(1)}%`;
+        marginEl.style.color = margin >= 0 ? '#C8A752' : '#f87171';
+    }
+}
+
+function getTopIncomeCategoryFromCache(days = 365) {
+    if (!Array.isArray(incomeCache) || incomeCache.length === 0) return null;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const totals = {};
+    incomeCache.forEach((row) => {
+        if (row?.deleted_at) return;
+        const date = new Date(row?.fecha);
+        if (Number.isNaN(date.getTime()) || date < cutoff) return;
+        const category = String(row?.categoria || 'otros');
+        const amount = Number(row?.monto);
+        if (!Number.isFinite(amount)) return;
+        totals[category] = (totals[category] || 0) + amount;
+    });
+
+    let topCategory = null;
+    let topTotal = 0;
+    Object.entries(totals).forEach(([category, total]) => {
+        if (total > topTotal) {
+            topTotal = total;
+            topCategory = category;
+        }
+    });
+
+    if (!topCategory) return null;
+    return { category: topCategory, total: topTotal };
+}
+
+async function fetchTopIncomeCategory(days = 365) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffDate = cutoff.toISOString().split('T')[0];
+
+        let query = supabase
+            .from('agro_income')
+            .select('categoria, monto, fecha, deleted_at')
+            .eq('user_id', user.id)
+            .gte('fecha', cutoffDate);
+
+        if (incomeDeletedAtSupported !== false) {
+            query = query.is('deleted_at', null);
+        }
+
+        let { data, error } = await query;
+        if (error && error.message && error.message.toLowerCase().includes('deleted_at')) {
+            incomeDeletedAtSupported = false;
+            const fallback = await supabase
+                .from('agro_income')
+                .select('categoria, monto, fecha')
+                .eq('user_id', user.id)
+                .gte('fecha', cutoffDate);
+            data = fallback.data;
+            error = fallback.error;
+        }
+
+        if (error) throw error;
+
+        incomeCache = Array.isArray(data) ? data : incomeCache;
+        return getTopIncomeCategoryFromCache(days);
+    } catch (err) {
+        console.warn('[Agro] Top income category error:', err);
+        return null;
+    }
+}
+
+async function updateBalanceAndTopCategory() {
+    const expenseTotal = sumAmounts(expenseCache, 'amount');
+    const incomeTotal = sumAmounts(incomeCache, 'monto');
+
+    updateBalanceSummary(expenseTotal, incomeTotal);
+
+    let topCategory = getTopIncomeCategoryFromCache(365);
+    if (!topCategory) {
+        topCategory = await fetchTopIncomeCategory(365);
+    }
+
+    if (topCategory) {
+        topIncomeCategoryCache = topCategory;
+        document.dispatchEvent(new CustomEvent('agro:income:top-category', { detail: topCategory }));
+    }
+}
+
 const AUTH_CACHE_TTL = 30000;
 let cachedAuthUser = null;
 let cachedAuthUserAt = 0;
@@ -612,9 +1509,9 @@ async function applyHeaderIdentity() {
     const user = await resolveAuthUser(authClient);
     if (!user) return;
 
-    const fullName = user.user_metadata?.full_name;
-    if (fullName && nameEl) {
-        nameEl.textContent = fullName;
+    const displayName = user.user_metadata?.full_name || user.email || 'Agricultor';
+    if (nameEl) {
+        nameEl.textContent = displayName;
     }
 
     const avatarUrl = user.user_metadata?.avatar_url;
@@ -623,7 +1520,7 @@ async function applyHeaderIdentity() {
         if (!img) {
             avatarEl.textContent = '';
             img = document.createElement('img');
-            img.alt = fullName || user.email || 'Usuario';
+            img.alt = displayName || 'Usuario';
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.borderRadius = '50%';
@@ -652,6 +1549,44 @@ function moveFooterToEnd() {
     footer.style.marginTop = 'auto';
 }
 
+function injectAgroMobilePatches() {
+    if (document.getElementById('agro-mobile-patches')) return;
+
+    const style = document.createElement('style');
+    style.id = 'agro-mobile-patches';
+    style.textContent = `
+        @media (max-width: 768px) {
+            .finances-section input[type="date"],
+            #expense-date,
+            #income-date,
+            #crop-start-date,
+            #crop-harvest-date {
+                font-size: 0.85rem;
+                padding: 0.6rem 0.75rem;
+                height: 42px;
+                color: #fff;
+                background: rgba(10, 10, 10, 0.85);
+                border-color: rgba(200, 167, 82, 0.5);
+            }
+
+            .finances-section input[type="date"]::-webkit-calendar-picker-indicator,
+            #expense-date::-webkit-calendar-picker-indicator,
+            #income-date::-webkit-calendar-picker-indicator,
+            #crop-start-date::-webkit-calendar-picker-indicator,
+            #crop-harvest-date::-webkit-calendar-picker-indicator {
+                filter: invert(1) brightness(1.2);
+                opacity: 0.85;
+            }
+
+            #market-ticker-track.animate-marquee {
+                animation-duration: 40s !important;
+            }
+        }
+    `;
+
+    document.head.appendChild(style);
+}
+
 // ============================================================
 // INICIALIZACIÓN
 // ============================================================
@@ -677,6 +1612,9 @@ export function initAgro() {
     injectRoiClearButton(calcBtn);
     setupExpenseDeleteButtons();
     setupHeaderIdentity();
+    initIncomeModule();
+    injectAgroMobilePatches();
+    updateBalanceAndTopCategory();
     setTimeout(() => {
         moveFooterToEnd();
     }, 100);
