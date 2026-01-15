@@ -3,6 +3,20 @@
   "outputDirectory": "apps/gold/dist",
   "framework": null,
   "installCommand": "pnpm install",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "yavlgold.gold" }],
+      "destination": "https://yavlgold.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.yavlgold.gold" }],
+      "destination": "https://yavlgold.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/academia", "destination": "/academia/index.html" },
     { "source": "/academia/:path*", "destination": "/academia/:path*" },

@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /assets/
 Disallow: /dashboard/
 Sitemap: https://yavlgold.com/sitemap.xml
