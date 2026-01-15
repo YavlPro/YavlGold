@@ -383,9 +383,14 @@ function injectRoiClearButton(calcBtn) {
 let expenseSyncTimer = null;
 let expenseSyncInFlight = false;
 let expenseCache = [];
+let expenseDeletedAtSupported = null;
+let expenseDeletedAtRefreshDone = false;
+const expenseSignedUrlCache = new Map();
+let agroStoragePatched = false;
 
 function setExpenseCache(data) {
-    expenseCache = Array.isArray(data) ? data.slice() : [];
+    const rows = Array.isArray(data) ? data : [];
+    expenseCache = rows.filter((row) => !row?.deleted_at);
     scheduleExpenseSync();
 }
 
@@ -403,6 +408,9 @@ function patchExpenseSelect() {
         const originalSelect = builder.select.bind(builder);
         builder.select = (...args) => {
             const query = originalSelect(...args);
+            if (expenseDeletedAtSupported === true && typeof query?.is === 'function') {
+                query.is('deleted_at', null);
+            }
             if (query && typeof query.then === 'function') {
                 const originalThen = query.then.bind(query);
                 query.then = (onFulfilled, onRejected) => originalThen(
@@ -419,6 +427,144 @@ function patchExpenseSelect() {
         };
         return builder;
     };
+}
+
+function normalizeAgroEvidencePath(path) {
+    if (typeof path !== 'string' || !path) return path;
+    const legacyExpenseRoot = `${AGRO_EXPENSE_STORAGE_ROOT}s`;
+    if (path.includes(`/${AGRO_INCOME_STORAGE_ROOT}/`)
+        || path.includes(`/${AGRO_EXPENSE_STORAGE_ROOT}/`)
+        || path.includes(`/${legacyExpenseRoot}/`)) {
+        return path;
+    }
+    const parts = path.split('/');
+    if (parts.length < 2) return path;
+    const userId = parts.shift();
+    const rest = parts.join('/');
+    return `${userId}/${AGRO_EXPENSE_STORAGE_ROOT}/${rest}`;
+}
+
+function extractStoragePathFromUrl(rawUrl) {
+    if (!rawUrl) return null;
+    const value = String(rawUrl).trim();
+    if (!value || value.startsWith('blob:') || value.startsWith('data:')) return null;
+
+    const publicPrefix = `/storage/v1/object/public/${AGRO_STORAGE_BUCKET_ID}/`;
+    const signedPrefix = `/storage/v1/object/sign/${AGRO_STORAGE_BUCKET_ID}/`;
+
+    const publicIndex = value.indexOf(publicPrefix);
+    if (publicIndex >= 0) {
+        return decodeURIComponent(value.slice(publicIndex + publicPrefix.length).split('?')[0]);
+    }
+
+    const signedIndex = value.indexOf(signedPrefix);
+    if (signedIndex >= 0) {
+        return decodeURIComponent(value.slice(signedIndex + signedPrefix.length).split('?')[0]);
+    }
+
+    if (value.startsWith('http')) return null;
+    return value.split('?')[0];
+}
+
+function patchAgroEvidenceStorage() {
+    if (agroStoragePatched) return;
+    agroStoragePatched = true;
+
+    const originalFrom = supabase.storage.from.bind(supabase.storage);
+    supabase.storage.from = (bucketId) => {
+        const bucket = originalFrom(bucketId);
+        if (bucketId !== AGRO_STORAGE_BUCKET_ID || !bucket) return bucket;
+        if (bucket.__agroEvidencePatched) return bucket;
+        bucket.__agroEvidencePatched = true;
+
+        const originalUpload = bucket.upload?.bind(bucket);
+        if (typeof originalUpload === 'function') {
+            bucket.upload = (path, file, options) => {
+                const normalizedPath = normalizeAgroEvidencePath(path);
+                return originalUpload(normalizedPath, file, options);
+            };
+        }
+
+        const originalGetPublicUrl = bucket.getPublicUrl?.bind(bucket);
+        if (typeof originalGetPublicUrl === 'function') {
+            bucket.getPublicUrl = (path) => {
+                const normalizedPath = normalizeAgroEvidencePath(path);
+                return { data: { publicUrl: normalizedPath } };
+            };
+        }
+
+        return bucket;
+    };
+}
+
+async function detectExpenseDeletedAtSupport() {
+    if (expenseDeletedAtSupported !== null) return expenseDeletedAtSupported;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return false;
+        const { error } = await supabase
+            .from('agro_expenses')
+            .select('deleted_at')
+            .limit(1);
+        if (error && error.message && error.message.toLowerCase().includes('deleted_at')) {
+            expenseDeletedAtSupported = false;
+        } else if (!error) {
+            expenseDeletedAtSupported = true;
+        } else {
+            expenseDeletedAtSupported = false;
+        }
+    } catch (err) {
+        expenseDeletedAtSupported = false;
+    }
+
+    if (expenseDeletedAtSupported && !expenseDeletedAtRefreshDone) {
+        expenseDeletedAtRefreshDone = true;
+        document.dispatchEvent(new CustomEvent('data-refresh'));
+    }
+
+    return expenseDeletedAtSupported;
+}
+
+async function getExpenseSignedUrl(path) {
+    if (!path) return null;
+    if (expenseSignedUrlCache.has(path)) return expenseSignedUrlCache.get(path);
+
+    const { data, error } = await supabase.storage
+        .from(AGRO_STORAGE_BUCKET_ID)
+        .createSignedUrl(path, 3600);
+
+    if (error) {
+        console.warn('[Agro] Expense signed URL error:', error.message);
+        return null;
+    }
+
+    const signedUrl = data?.signedUrl || null;
+    if (signedUrl) expenseSignedUrlCache.set(path, signedUrl);
+    return signedUrl;
+}
+
+async function updateExpenseEvidenceLinks(item) {
+    if (!item) return;
+    const link = item.querySelector('a[href]');
+    if (!link || link.dataset.signed === 'true') return;
+
+    const rawHref = link.getAttribute('href');
+    const storagePath = extractStoragePathFromUrl(rawHref);
+    if (!storagePath) return;
+
+    const normalizedPath = normalizeAgroEvidencePath(storagePath);
+    let signedUrl = await getExpenseSignedUrl(normalizedPath);
+    let resolvedPath = normalizedPath;
+    if (!signedUrl && normalizedPath !== storagePath) {
+        signedUrl = await getExpenseSignedUrl(storagePath);
+        resolvedPath = storagePath;
+    }
+    if (!signedUrl) return;
+
+    link.href = signedUrl;
+    link.rel = 'noopener noreferrer';
+    link.dataset.signed = 'true';
+    link.dataset.storagePath = resolvedPath;
 }
 
 function scheduleExpenseSync() {
@@ -446,6 +592,7 @@ async function syncExpenseDeleteButtons() {
                 item.dataset.expenseId = String(expenseId);
             }
             attachExpenseDeleteButton(item, expenseId);
+            void updateExpenseEvidenceLinks(item);
         });
     } finally {
         expenseSyncInFlight = false;
@@ -514,13 +661,23 @@ function attachExpenseDeleteButton(item, expenseId) {
             return;
         }
 
+        if (expenseDeletedAtSupported === false) {
+            alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
+            return;
+        }
+
         const { error } = await supabase
             .from('agro_expenses')
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq('id', targetId)
             .eq('user_id', user.id);
 
         if (error) {
+            if (error.message && error.message.toLowerCase().includes('deleted_at')) {
+                expenseDeletedAtSupported = false;
+                alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
+                return;
+            }
             alert(`Error al eliminar: ${error.message}`);
             return;
         }
@@ -535,7 +692,9 @@ function setupExpenseDeleteButtons() {
     const expensesList = document.getElementById('expenses-list');
     if (!expensesList) return;
 
+    patchAgroEvidenceStorage();
     patchExpenseSelect();
+    void detectExpenseDeletedAtSupport();
 
     const observer = new MutationObserver(() => scheduleExpenseSync());
     observer.observe(expensesList, { childList: true });
@@ -544,7 +703,10 @@ function setupExpenseDeleteButtons() {
     scheduleExpenseSync();
 }
 
-const INCOME_BUCKET = 'agro-evidence';
+const AGRO_STORAGE_BUCKET_ID = 'agro-evidence';
+const AGRO_INCOME_STORAGE_ROOT = 'agro/income';
+const AGRO_EXPENSE_STORAGE_ROOT = 'agro/expense';
+const AGRO_GAINS_STORAGE_ROOT = null;
 const INCOME_SECTION_ID = 'agro-income-section';
 const INCOME_DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt'];
 const INCOME_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
@@ -555,6 +717,11 @@ let incomeDeletedAtSupported = null;
 let incomeEditId = null;
 let incomeEditSupportPath = null;
 
+// Patch early to catch initial expense load and storage paths.
+patchAgroEvidenceStorage();
+patchExpenseSelect();
+void detectExpenseDeletedAtSupport();
+
 function formatShortCurrency(value) {
     const number = Number(value);
     if (!Number.isFinite(number)) return '$0';
@@ -562,6 +729,24 @@ function formatShortCurrency(value) {
         return `$${(number / 1000).toFixed(1)}k`;
     }
     return `$${number.toFixed(0)}`;
+}
+
+function buildIncomeStoragePrefix(userId, incomeId) {
+    return `${userId}/${AGRO_INCOME_STORAGE_ROOT}/${incomeId}/`;
+}
+
+function buildIncomeStoragePath(userId, incomeId, fileName) {
+    const cleanName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return `${buildIncomeStoragePrefix(userId, incomeId)}${Date.now()}_${cleanName}`;
+}
+
+function buildExpenseStoragePrefix(userId) {
+    return `${userId}/${AGRO_EXPENSE_STORAGE_ROOT}/`;
+}
+
+function buildExpenseStoragePath(userId, fileName) {
+    const cleanName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return `${buildExpenseStoragePrefix(userId)}${Date.now()}_${cleanName}`;
 }
 
 function getFileExtension(fileName) {
@@ -932,7 +1117,7 @@ async function resolveIncomeSupportUrl(path) {
     if (!path) return null;
     if (/^https?:\/\//i.test(path)) return path;
     const { data, error } = await supabase.storage
-        .from(INCOME_BUCKET)
+        .from(AGRO_STORAGE_BUCKET_ID)
         .createSignedUrl(path, 3600);
     if (error) {
         console.warn('[Agro] Income signed URL error:', error.message);
@@ -1210,11 +1395,10 @@ async function saveIncome() {
                 throw new Error('Tipo de archivo no permitido.');
             }
 
-            const cleanName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
-            soportePath = `${user.id}/agro/income/${incomeId}/${Date.now()}_${cleanName}`;
+            soportePath = buildIncomeStoragePath(user.id, incomeId, file.name);
 
             const { error: uploadError } = await supabase.storage
-                .from(INCOME_BUCKET)
+                .from(AGRO_STORAGE_BUCKET_ID)
                 .upload(soportePath, file);
 
             if (uploadError) throw uploadError;
@@ -1272,12 +1456,14 @@ async function saveIncome() {
 
 function initIncomeModule() {
     if (incomeModuleInitialized) return;
-    incomeModuleInitialized = true;
 
     const financesSection = document.querySelector('.finances-section');
     if (!financesSection) return;
 
-    ensureIncomeSection(financesSection);
+    const section = ensureIncomeSection(financesSection);
+    if (!section) return;
+
+    incomeModuleInitialized = true;
 
     const form = document.getElementById('income-form');
     const dateInput = document.getElementById('income-date');
@@ -1326,6 +1512,7 @@ let topIncomeCategoryCache = null;
 function sumAmounts(rows, field) {
     if (!Array.isArray(rows)) return 0;
     return rows.reduce((total, row) => {
+        if (row?.deleted_at) return total;
         const value = Number(row?.[field]);
         return total + (Number.isFinite(value) ? value : 0);
     }, 0);
