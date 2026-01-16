@@ -32,6 +32,36 @@
     const IP_CACHE_KEY = 'yavlgold_ip_cache';
     const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
     const PREF_KEY = 'yavlgold_location_pref'; // 'gps' or 'ip'
+    const DEBUG_ENABLED = typeof global !== 'undefined'
+        && global.location
+        && new URLSearchParams(global.location.search).get('debug') === '1';
+
+    const debugState = {
+        enabled: DEBUG_ENABLED,
+        preference: null,
+        manual: null,
+        cache: { gps: null, ip: null },
+        lastDecision: null,
+        updatedAt: null
+    };
+
+    function setDebugState(partial) {
+        if (!DEBUG_ENABLED) return;
+        Object.assign(debugState, partial);
+        debugState.updatedAt = Date.now();
+    }
+
+    function setDebugCache(mode, info) {
+        if (!DEBUG_ENABLED) return;
+        debugState.cache[mode] = info;
+        debugState.updatedAt = Date.now();
+    }
+
+    function debugLog() {
+        if (!DEBUG_ENABLED) return;
+        // eslint-disable-next-line no-console
+        console.log('[GeoDebug]', ...arguments);
+    }
 
     // ============================================
     // MANUAL LOCATION (Highest Priority)
@@ -44,11 +74,14 @@
             const data = JSON.parse(stored);
             // Validate required fields
             if (data && data.lat && data.lon && data.label) {
+                setDebugState({ manual: { ...data } });
                 return data;
             }
+            setDebugState({ manual: null });
             return null;
         } catch (e) {
             console.warn('[Geo] Manual location read error:', e);
+            setDebugState({ manual: null });
             return null;
         }
     }
@@ -67,6 +100,7 @@
             };
             localStorage.setItem(MANUAL_LOCATION_KEY, JSON.stringify(data));
             console.log('[Geo] 📌 Manual location set:', data.label);
+            setDebugState({ manual: { ...data } });
             return data;
         } catch (e) {
             console.warn('[Geo] Manual location save error:', e);
@@ -78,6 +112,7 @@
         try {
             localStorage.removeItem(MANUAL_LOCATION_KEY);
             console.log('[Geo] Manual location cleared');
+            setDebugState({ manual: null });
         } catch (e) {
             // Ignore
         }
@@ -144,19 +179,26 @@
         const cacheKey = mode === 'ip' ? IP_CACHE_KEY : GPS_CACHE_KEY;
         try {
             const cached = localStorage.getItem(cacheKey);
-            if (!cached) return null;
-
-            const data = JSON.parse(cached);
-            const now = Date.now();
-
-            if (now - data.timestamp > CACHE_TTL_MS) {
-                localStorage.removeItem(cacheKey);
+            if (!cached) {
+                setDebugCache(mode, { hit: false, valid: false, ageMs: null, timestamp: null });
                 return null;
             }
 
+            const data = JSON.parse(cached);
+            const now = Date.now();
+            const ageMs = now - data.timestamp;
+
+            if (ageMs > CACHE_TTL_MS) {
+                localStorage.removeItem(cacheKey);
+                setDebugCache(mode, { hit: false, valid: false, ageMs: ageMs, timestamp: data.timestamp });
+                return null;
+            }
+
+            setDebugCache(mode, { hit: true, valid: true, ageMs: ageMs, timestamp: data.timestamp });
             return data;
         } catch (e) {
             console.warn('[Geo] Cache read error:', e);
+            setDebugCache(mode, { hit: false, valid: false, ageMs: null, timestamp: null });
             return null;
         }
     }
@@ -169,6 +211,7 @@
                 timestamp: Date.now()
             };
             localStorage.setItem(cacheKey, JSON.stringify(data));
+            setDebugCache(mode, { hit: true, valid: true, ageMs: 0, timestamp: data.timestamp });
         } catch (e) {
             console.warn('[Geo] Cache write error:', e);
         }
@@ -178,6 +221,8 @@
         try {
             localStorage.removeItem(GPS_CACHE_KEY);
             localStorage.removeItem(IP_CACHE_KEY);
+            setDebugCache('gps', { hit: false, valid: false, ageMs: null, timestamp: null });
+            setDebugCache('ip', { hit: false, valid: false, ageMs: null, timestamp: null });
         } catch (e) {
             // Ignore
         }
@@ -189,8 +234,11 @@
 
     function getLocationPreference() {
         try {
-            return localStorage.getItem(PREF_KEY) || 'gps';
+            const pref = localStorage.getItem(PREF_KEY) || 'gps';
+            setDebugState({ preference: pref });
+            return pref;
         } catch (e) {
+            setDebugState({ preference: 'gps' });
             return 'gps';
         }
     }
@@ -198,6 +246,7 @@
     function setLocationPreference(pref) {
         try {
             localStorage.setItem(PREF_KEY, pref);
+            setDebugState({ preference: pref });
         } catch (e) {
             console.warn('[Geo] Pref save error:', e);
         }
@@ -314,12 +363,22 @@
         const forceRefresh = options.forceRefresh || false;
         const ignoreManual = options.ignoreManual || false;
         const mode = preferIp ? 'ip' : 'gps';
+        let usedCache = false;
 
         // 1. Check manual location FIRST (highest priority)
         if (!ignoreManual) {
             const manual = getManualLocation();
             if (manual) {
                 console.log('[Geo] Using MANUAL location:', manual.label);
+                setDebugState({
+                    lastDecision: {
+                        source: 'manual',
+                        label: manual.label,
+                        lat: manual.lat,
+                        lon: manual.lon,
+                        usedCache: false
+                    }
+                });
                 return manual;
             }
         }
@@ -329,6 +388,16 @@
             const cached = getCachedCoords(mode);
             if (cached) {
                 console.log('[Geo] Using cached ' + mode.toUpperCase() + ' location');
+                usedCache = true;
+                setDebugState({
+                    lastDecision: {
+                        source: cached.source || mode,
+                        label: cached.label || 'cached',
+                        lat: cached.lat,
+                        lon: cached.lon,
+                        usedCache: true
+                    }
+                });
                 return cached;
             }
         }
@@ -362,7 +431,26 @@
         // Cache the result for THIS mode only
         setCachedCoords(result, mode);
 
+        setDebugState({
+            lastDecision: {
+                source: result.source,
+                label: result.label,
+                lat: result.lat,
+                lon: result.lon,
+                usedCache: usedCache
+            }
+        });
+
         return result;
+    }
+
+    function getDebugState() {
+        if (!DEBUG_ENABLED) return { enabled: false };
+        try {
+            return JSON.parse(JSON.stringify(debugState));
+        } catch (e) {
+            return { enabled: true };
+        }
     }
 
     // ============================================
@@ -385,7 +473,9 @@
         // Location methods
         getBrowserCoords: getBrowserCoords,
         getIpCoords: getIpCoords,
-        getCoordsSmart: getCoordsSmart
+        getCoordsSmart: getCoordsSmart,
+        // Debug (optional)
+        getDebugState: getDebugState
     };
 
 })(typeof window !== 'undefined' ? window : this);

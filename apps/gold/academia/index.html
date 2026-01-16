@@ -894,6 +894,10 @@
       loadProgress();
     });
   </script>
+  <script type="module" src="../assets/js/utils/activityTracker.js"></script>
+  <script type="module">
+    window.YGActivity?.attachModuleTracking('academia', { title: 'Academia', path: '/academia/' });
+  </script>
 </body>
 
 </html>

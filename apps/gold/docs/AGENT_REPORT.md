@@ -39,3 +39,19 @@ Fecha: 2026-01-16
 
 ## Proximo paso
 - Si hay fallas del gate, corregir contenido del reporte.
+
+## Diagnostico (tarea actual)
+1) Se requiere reforzar Dashboard con continuar/resumen/recomendado.
+2) No hay tracker de actividad persistente; se pide fallback local (YG_ACTIVITY_V1).
+3) Se solicita debug de geolocalizacion solo con ?debug=1, sin cambiar comportamiento.
+4) Crypto debe operar como vista MPA con market data publica y UI DNA 9.4.
+5) Gates activos: agent-guard y agent-report-check; no deben romperse.
+
+## Plan (tarea actual)
+1) Crear `apps/gold/assets/js/utils/activityTracker.js` para tracking local (YG_ACTIVITY_V1).
+2) Tocar `apps/gold/dashboard/index.html` para UI y logica de Continuar/Resumen/Recomendado.
+3) Integrar tracker con 1-3 lineas en: `apps/gold/academia/index.html`, `apps/gold/agro/index.html`,
+   `apps/gold/crypto/index.html`, `apps/gold/herramientas/index.html`, `apps/gold/social/index.html`.
+4) Actualizar `apps/gold/assets/js/geolocation.js` y `apps/gold/agro/dashboard.js` con debug condicional.
+5) Convertir Crypto V1 en MPA real: actualizar `apps/gold/crypto/index.html` y agregar `apps/gold/crypto/crypto.js`.
+6) Al final ejecutar `pnpm build:gold` y reportar resultado.

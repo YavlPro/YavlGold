@@ -1458,6 +1458,89 @@
         text-align: center;
       }
     }
+    /* ============================================
+           ?? INSIGHTS (Continuar / Resumen / Recomendado)
+        ============================================ */
+    .insights-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .insight-card {
+      background: var(--negro-tarjeta-alpha);
+      border: var(--borde-dorado);
+      border-radius: 16px;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .insight-title {
+      font-family: var(--font-titulo);
+      font-size: 1.1rem;
+      color: var(--dorado-yavl);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.75rem;
+    }
+
+    .insight-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .insight-meta {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 0.9rem;
+    }
+
+    .insight-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid rgba(200, 167, 82, 0.4);
+      color: var(--dorado-yavl);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s ease;
+    }
+
+    .insight-action:hover {
+      background: rgba(200, 167, 82, 0.12);
+    }
+
+    .insight-action.disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    .summary-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .summary-value {
+      color: var(--dorado-yavl);
+      font-weight: 700;
+    }
   </style>
 
   <!-- Supabase -->
@@ -1566,6 +1649,30 @@
     </section>
 
     <!-- 🔍 MODULE TOOLBAR (Search Only) -->
+    <section class="insights-section" aria-label="Continuar, resumen y recomendado">
+      <div class="insight-card" id="continue-card">
+        <div class="insight-title">Continuar</div>
+        <div class="insight-name" id="continue-title">Sin datos</div>
+        <div class="insight-meta" id="continue-meta">Sin actividad reciente</div>
+        <a id="continue-link" class="insight-action disabled" href="#">Ir al modulo</a>
+      </div>
+      <div class="insight-card" id="recommend-card">
+        <div class="insight-title">Recomendado</div>
+        <div class="insight-name" id="recommend-title">Sin datos</div>
+        <div class="insight-meta" id="recommend-meta">Sin sugerencias</div>
+        <a id="recommend-link" class="insight-action disabled" href="#">Explorar</a>
+      </div>
+      <div class="insight-card" id="summary-card">
+        <div class="insight-title">Resumen</div>
+        <ul class="summary-list">
+          <li class="summary-item"><span>Modulos visitados</span><span id="summary-visited" class="summary-value">0</span></li>
+          <li class="summary-item"><span>Ultimo modulo</span><span id="summary-last" class="summary-value">-</span></li>
+          <li class="summary-item"><span>Favoritos</span><span id="summary-favorites" class="summary-value">0</span></li>
+          <li class="summary-item"><span>No leidas</span><span id="summary-unread" class="summary-value">0</span></li>
+        </ul>
+      </div>
+    </section>
+
     <div class="module-toolbar">
       <div class="search-container">
         <span class="search-icon">🔍</span>
@@ -1918,6 +2025,7 @@
     import { FeedbackManager } from '../assets/js/components/feedbackManager.js';
     import { AnnouncementManager } from '../assets/js/components/announcementManager.js';
     import { AdminManager } from '../assets/js/admin/adminManager.js';
+    import { ActivityTracker } from '../assets/js/utils/activityTracker.js';
     // ⭐ Import FavoritesManager for star toggle functionality
     import { FavoritesManager, StatsManager } from '../assets/js/modules/moduleManager.js';
 
@@ -1985,7 +2093,8 @@
       });
 
       // 5. Load Modules from Database
-      await loadModules();
+      const modules = await loadModules();
+      await updateDashboardInsights(modules, user);
 
       // 6. Initialize Notifications, Feedback, Announcements & Admin Systems
       NotificationsManager.init();
@@ -2012,7 +2121,7 @@
         if (error) {
           console.error('[Dashboard] Error loading modules:', error.message);
           if (loading) loading.innerHTML = '<p style="color: var(--gold-vibrante);">Error al cargar módulos</p>';
-          return;
+          return [];
         }
 
         console.log(`[Dashboard] Loaded ${modules?.length || 0} modules`);
@@ -2041,9 +2150,167 @@
         if (window.StatsManager) {
           window.StatsManager.updateAllStats();
         }
+        return modules || [];
       } catch (err) {
         console.error('[Dashboard] Unexpected error:', err);
         if (loading) loading.innerHTML = '<p style="color: #ff6b6b;">Error inesperado</p>';
+        return [];
+      }
+    }
+
+    function formatRelativeTime(timestamp) {
+      if (!timestamp) return 'sin actividad';
+      const diffMs = Date.now() - timestamp;
+      const mins = Math.max(1, Math.floor(diffMs / 60000));
+      if (mins < 60) return `hace ${mins}m`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `hace ${hours}h`;
+      const days = Math.floor(hours / 24);
+      return `hace ${days}d`;
+    }
+
+    function getModuleId(mod) {
+      return mod?.slug || mod?.module_key || mod?.id || mod?.title || mod?.name || null;
+    }
+
+    function getModuleTitle(mod) {
+      return mod?.title || mod?.name || 'Modulo';
+    }
+
+    function getModuleRoute(mod) {
+      const slug = mod?.slug || mod?.module_key;
+      return mod?.route || mod?.path || (slug ? `/${slug}/` : '#');
+    }
+
+    function resolveContinueModule(lastModule, modules) {
+      if (!lastModule?.id) return null;
+      const match = (modules || []).find(mod => getModuleId(mod) === lastModule.id);
+      if (match) {
+        return {
+          id: getModuleId(match),
+          title: getModuleTitle(match),
+          path: getModuleRoute(match),
+          timestamp: lastModule.timestamp || null
+        };
+      }
+      if (lastModule.path) {
+        return {
+          id: lastModule.id,
+          title: lastModule.title || lastModule.id,
+          path: lastModule.path,
+          timestamp: lastModule.timestamp || null
+        };
+      }
+      return null;
+    }
+
+    function resolveRecommendedModule(modules, visits, excludeId) {
+      const list = (modules || []).filter(mod => getModuleId(mod));
+      const eligible = list.filter(mod => getModuleId(mod) !== excludeId);
+      if (eligible.length === 0) return null;
+
+      const unvisited = eligible.filter(mod => !visits[getModuleId(mod)]);
+      if (unvisited.length > 0) {
+        const mod = unvisited[0];
+        return {
+          id: getModuleId(mod),
+          title: getModuleTitle(mod),
+          path: getModuleRoute(mod),
+          reason: 'primer modulo sin visitar'
+        };
+      }
+
+      const sorted = eligible.slice().sort((a, b) => {
+        const aCount = visits[getModuleId(a)]?.count || 0;
+        const bCount = visits[getModuleId(b)]?.count || 0;
+        return aCount - bCount;
+      });
+
+      const mod = sorted[0];
+      return {
+        id: getModuleId(mod),
+        title: getModuleTitle(mod),
+        path: getModuleRoute(mod),
+        reason: 'menor actividad reciente'
+      };
+    }
+
+    function updateInsightCard(prefix, data, fallbackTitle, fallbackMeta) {
+      const titleEl = document.getElementById(`${prefix}-title`);
+      const metaEl = document.getElementById(`${prefix}-meta`);
+      const linkEl = document.getElementById(`${prefix}-link`);
+
+      if (!titleEl || !metaEl || !linkEl) return;
+
+      if (!data || !data.path || data.path === '#') {
+        titleEl.textContent = fallbackTitle;
+        metaEl.textContent = fallbackMeta;
+        linkEl.classList.add('disabled');
+        linkEl.setAttribute('href', '#');
+        return;
+      }
+
+      titleEl.textContent = data.title || fallbackTitle;
+      metaEl.textContent = data.meta || fallbackMeta;
+      linkEl.classList.remove('disabled');
+      linkEl.setAttribute('href', data.path);
+    }
+
+    async function updateDashboardInsights(modules, user) {
+      const summary = ActivityTracker?.getActivitySummary
+        ? ActivityTracker.getActivitySummary()
+        : { lastModule: null, visits: {}, visitedCount: 0 };
+
+      const visits = summary.visits || {};
+      const continueData = resolveContinueModule(summary.lastModule, modules);
+      const continueMeta = continueData?.timestamp
+        ? `ultimo acceso ${formatRelativeTime(continueData.timestamp)}`
+        : 'sin actividad reciente';
+
+      updateInsightCard('continue', continueData ? {
+        title: continueData.title,
+        path: continueData.path,
+        meta: continueMeta
+      } : null, 'Sin datos', 'Sin actividad reciente');
+
+      const recommended = resolveRecommendedModule(modules, visits, continueData?.id);
+      updateInsightCard('recommend', recommended ? {
+        title: recommended.title,
+        path: recommended.path,
+        meta: recommended.reason
+      } : null, 'Sin datos', 'Sin sugerencias');
+
+      const visitedEl = document.getElementById('summary-visited');
+      const lastEl = document.getElementById('summary-last');
+      if (visitedEl) visitedEl.textContent = String(summary.visitedCount || 0);
+      if (lastEl) lastEl.textContent = continueData?.title || '-';
+
+      const favoritesEl = document.getElementById('summary-favorites');
+      const unreadEl = document.getElementById('summary-unread');
+
+      if (!user?.id) return;
+
+      try {
+        const [favoritesRes, unreadRes] = await Promise.all([
+          supabase
+            .from('user_favorites')
+            .select('module_key', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('is_read', false)
+        ]);
+
+        if (favoritesEl && !favoritesRes.error) {
+          favoritesEl.textContent = String(favoritesRes.count || 0);
+        }
+        if (unreadEl && !unreadRes.error) {
+          unreadEl.textContent = String(unreadRes.count || 0);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Insight counts error:', err.message);
       }
     }
 
@@ -2582,3 +2849,4 @@
 </body>
 
 </html>
+

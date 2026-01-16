@@ -397,6 +397,10 @@
   </footer>
 
   <!-- Removed broken auth.js reference - no native script for this module -->
+  <script type="module" src="../assets/js/utils/activityTracker.js"></script>
+  <script type="module">
+    window.YGActivity?.attachModuleTracking('herramientas', { title: 'Herramientas', path: '/herramientas/' });
+  </script>
 </body>
 
 </html>

@@ -14,8 +14,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --bg-primary: #050505;
-            --bg-secondary: #0a0a0a;
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #0f0f0f;
             --gold-primary: #C8A752;
             --gold-vibrant: #D4AF37;
             --text-primary: #e5e5e5;
@@ -34,9 +34,10 @@
             color: var(--text-primary);
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            overflow: hidden;
+            padding: 40px 16px;
+            overflow-y: auto;
         }
 
         /* Animated Background */
@@ -233,6 +234,91 @@
             box-shadow: 0 6px 30px rgba(200, 167, 82, 0.5);
         }
 
+        /* Market */
+        .market {
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px solid rgba(200, 167, 82, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            text-align: left;
+        }
+
+        .market-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .market-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+        }
+
+        .market-updated {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .market-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(200, 167, 82, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .market-pair {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .market-name {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .market-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gold-primary);
+        }
+
+        .market-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .market-change.up {
+            color: #4ade80;
+        }
+
+        .market-change.down {
+            color: #f87171;
+        }
+
+        .market-error {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #f87171;
+            min-height: 1.2rem;
+        }
+
         /* Footer */
         .footer {
             position: fixed;
@@ -254,36 +340,24 @@
         <img src="/brand/logo.webp" alt="YavlGold" class="logo">
 
         <h1 class="title">YAVLGOLD CRYPTO</h1>
-        <p class="subtitle">Advanced Trading Interface</p>
+        <p class="subtitle">Market Data V1</p>
 
         <div class="status-badge">
             <span class="status-dot"></span>
-            <span class="status-text">PRÓXIMAMENTE</span>
+            <span class="status-text" id="market-status-text">CONECTANDO</span>
         </div>
 
         <p class="description">
-            En fase de <strong>diseño y arquitectura</strong>. Estamos construyendo una interfaz
-            de trading avanzada con análisis técnico, portafolio en tiempo real y herramientas
-            profesionales para el ecosistema crypto.
+            Datos publicos de Binance para spot market. Actualizacion automatica cada 20s.
         </p>
 
-        <div class="features">
-            <div class="feature">
-                <div class="feature-icon">📊</div>
-                <span class="feature-name">Charts</span>
+        <div class="market">
+            <div class="market-header">
+                <h2 class="market-title">Spot Market</h2>
+                <span class="market-updated" id="market-updated">--</span>
             </div>
-            <div class="feature">
-                <div class="feature-icon">💰</div>
-                <span class="feature-name">Portfolio</span>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">🔔</div>
-                <span class="feature-name">Alerts</span>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">📈</div>
-                <span class="feature-name">Analysis</span>
-            </div>
+            <div class="market-grid" id="market-grid"></div>
+            <div class="market-error" id="market-error" aria-live="polite"></div>
         </div>
 
         <a href="/dashboard/" class="btn-back">
@@ -293,8 +367,14 @@
     </div>
 
     <div class="footer">
-        YavlGold V9.4 · Crypto Module (Coming Soon)
+        YavlGold V9.4 - Crypto Market V1
     </div>
+    <script type="module" src="../assets/js/utils/activityTracker.js"></script>
+    <script type="module" src="./crypto.js"></script>
+    <script type="module">
+        window.YGActivity?.attachModuleTracking('crypto', { title: 'Crypto', path: '/crypto/' });
+    </script>
 </body>
 
 </html>
+

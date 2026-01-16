@@ -13,6 +13,9 @@ const WEATHER_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 // Estado del clima
 let currentLocation = null;
+const GEO_DEBUG_ENABLED = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('debug') === '1';
+let geoDebugPanel = null;
 
 /**
  * Generate cache key based on lat/lon (rounded to 2 decimals)
@@ -57,6 +60,63 @@ function setCachedWeather(data, lat, lon) {
     }
 }
 
+function initGeoDebugPanel() {
+    if (!GEO_DEBUG_ENABLED || geoDebugPanel) return;
+
+    geoDebugPanel = document.createElement('div');
+    geoDebugPanel.id = 'geo-debug-panel';
+    geoDebugPanel.style.cssText = [
+        'position: fixed',
+        'bottom: 16px',
+        'right: 16px',
+        'z-index: 9999',
+        'background: rgba(10, 10, 10, 0.9)',
+        'border: 1px solid rgba(200, 167, 82, 0.4)',
+        'border-radius: 10px',
+        'padding: 12px',
+        'font-family: Rajdhani, sans-serif',
+        'font-size: 11px',
+        'color: #e5e5e5',
+        'min-width: 220px',
+        'box-shadow: 0 8px 24px rgba(0,0,0,0.4)'
+    ].join('; ');
+
+    document.body.appendChild(geoDebugPanel);
+}
+
+function formatAge(ms) {
+    if (ms === null || ms === undefined) return '-';
+    const sec = Math.round(ms / 1000);
+    if (sec < 60) return `${sec}s`;
+    const min = Math.round(sec / 60);
+    return `${min}m`;
+}
+
+function updateGeoDebugPanel() {
+    if (!GEO_DEBUG_ENABLED || !geoDebugPanel) return;
+    const debug = window.YGGeolocation?.getDebugState?.();
+    if (!debug || !debug.enabled) return;
+
+    const last = debug.lastDecision || {};
+    const gps = debug.cache?.gps || {};
+    const ip = debug.cache?.ip || {};
+    const label = currentLocation?.label || last.label || '-';
+    const source = (currentLocation?.source || last.source || '-').toUpperCase();
+    const coords = currentLocation
+        ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`
+        : (last.lat && last.lon ? `${Number(last.lat).toFixed(4)}, ${Number(last.lon).toFixed(4)}` : '-');
+
+    geoDebugPanel.innerHTML = `
+        <div style="color:#C8A752; font-weight:700; margin-bottom:6px;">Geo Debug</div>
+        <div><strong>source:</strong> ${source}</div>
+        <div><strong>label:</strong> ${label}</div>
+        <div><strong>coords:</strong> ${coords}</div>
+        <div><strong>pref:</strong> ${(debug.preference || '-').toUpperCase()}</div>
+        <div style="margin-top:6px;"><strong>gps cache:</strong> ${gps.hit ? 'hit' : 'miss'} | age ${formatAge(gps.ageMs)}</div>
+        <div><strong>ip cache:</strong> ${ip.hit ? 'hit' : 'miss'} | age ${formatAge(ip.ageMs)}</div>
+    `;
+}
+
 /**
  * Inicializa el módulo de clima con geolocalización robusta
  */
@@ -71,11 +131,14 @@ async function initWeather() {
     const Geo = window.YGGeolocation;
     const preference = Geo.getLocationPreference();
     const preferIp = preference === 'ip';
+    initGeoDebugPanel();
 
     try {
         currentLocation = await Geo.getCoordsSmart({ preferIp: preferIp });
         console.log('[Agro] Location:', currentLocation.source, '-', currentLocation.label);
         await fetchWeather();
+        updateGeoDebugPanel();
+        updateGeoDebugPanel();
     } catch (err) {
         console.error('[Agro] Location error:', err);
         // Try to show any cached weather
@@ -267,6 +330,7 @@ async function switchLocationMode(mode) {
     try {
         currentLocation = await Geo.getCoordsSmart({ preferIp: mode === 'ip', forceRefresh: true });
         await fetchWeather();
+        updateGeoDebugPanel();
         console.log('[Agro] Switched to', mode, ':', currentLocation.label);
     } catch (err) {
         console.error('[Agro] Mode switch error:', err);
@@ -464,6 +528,7 @@ async function selectManualLocation(location) {
     };
 
     await fetchWeather();
+    updateGeoDebugPanel();
     console.log('[Agro] Manual location set:', location.label);
 }
 
@@ -482,6 +547,7 @@ async function fetchWeather() {
     if (cached) {
         cached.location = currentLocation;
         displayWeather(cached);
+        updateGeoDebugPanel();
         return;
     }
 
@@ -510,6 +576,7 @@ async function fetchWeather() {
 
         setCachedWeather(weatherData, currentLocation.lat, currentLocation.lon);
         displayWeather(weatherData);
+        updateGeoDebugPanel();
 
     } catch (err) {
         clearTimeout(timeoutId);

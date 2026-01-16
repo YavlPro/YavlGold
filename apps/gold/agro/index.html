@@ -2188,6 +2188,7 @@
     <script type="module" src="agro.js"></script>
     <script src="../assets/js/geolocation.js" type="module"></script>
     <script type="module" src="dashboard.js"></script>
+    <script type="module" src="../assets/js/utils/activityTracker.js"></script>
     <script type="module">
         import { initMarketIntelligence, startTickerAutoRefresh } from './agro-market.js';
         import { initPlanning } from './agro-planning.js';
@@ -2195,6 +2196,7 @@
         import { initStats } from './agro-stats.js';
         import { initNotifications } from './agro-notifications.js';
         document.addEventListener('DOMContentLoaded', () => {
+            window.YGActivity?.attachModuleTracking('agro', { title: 'Agro', path: '/agro/' });
             initMarketIntelligence();
             startTickerAutoRefresh();
             initPlanning();
