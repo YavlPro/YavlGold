@@ -1,3 +1,5 @@
+AI coding agents: read AGENTS.md first and follow it strictly.
+
 # YavlGold V9.4 (Agro-Stable)
 
 > V9.4 Stable - Produccion en Vercel
