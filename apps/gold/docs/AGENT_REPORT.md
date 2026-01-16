@@ -55,3 +55,13 @@ Fecha: 2026-01-16
 4) Actualizar `apps/gold/assets/js/geolocation.js` y `apps/gold/agro/dashboard.js` con debug condicional.
 5) Convertir Crypto V1 en MPA real: actualizar `apps/gold/crypto/index.html` y agregar `apps/gold/crypto/crypto.js`.
 6) Al final ejecutar `pnpm build:gold` y reportar resultado.
+
+## Diagnostico (tarea actual - crypto CORS/451)
+1) En produccion, los fetch a Binance desde el browser fallan por CORS o 451.
+2) La base actual usa api.binance.com, que no es confiable en frontend.
+3) Se requiere mover a data-api.binance.vision y manejar fallback con backoff.
+
+## Plan (tarea actual - crypto CORS/451)
+1) Editar `apps/gold/crypto/crypto.js` para cambiar base REST y agregar manejo 451/CORS + backoff.
+2) Ajustar `apps/gold/crypto/index.html` solo si se requiere un estado extra en UI.
+3) Ejecutar `pnpm build:gold` al final y reportar resultado.
