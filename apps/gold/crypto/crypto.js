@@ -1,6 +1,9 @@
 const API_BASE = 'https://data-api.binance.vision/api/v3/ticker/24hr?symbol=';
 const BACKOFF_STEPS_MS = [20000, 40000, 60000];
 const REQUEST_TIMEOUT_MS = 6000;
+const FNG_URL = 'https://api.alternative.me/fng/?limit=1';
+const FNG_STORAGE_KEY = 'YG_FNG_V1';
+const FNG_CACHE_TTL_MS = 15 * 60 * 1000;
 const PAIRS = [
   { symbol: 'BTCUSDT', name: 'Bitcoin' },
   { symbol: 'ETHUSDT', name: 'Ethereum' },
@@ -12,9 +15,16 @@ const grid = document.getElementById('market-grid');
 const statusText = document.getElementById('market-status-text');
 const updatedEl = document.getElementById('market-updated');
 const errorEl = document.getElementById('market-error');
+const fngCard = document.getElementById('fng-card');
+const fngValueEl = document.getElementById('fng-value');
+const fngLabelEl = document.getElementById('fng-label');
+const fngUpdatedEl = document.getElementById('fng-updated');
+const fngErrorEl = document.getElementById('fng-error');
+const fngMarkerEl = document.getElementById('fng-marker');
 let backoffIndex = 0;
 let refreshTimer = null;
 let isLoading = false;
+let fngTimer = null;
 
 class FetchError extends Error {
   constructor(message, status, code) {
@@ -30,6 +40,59 @@ function setStatus(text) {
 
 function setError(message) {
   if (errorEl) errorEl.textContent = message || '';
+}
+
+function setFngError(message) {
+  if (fngErrorEl) fngErrorEl.textContent = message || '';
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function getFngState(value) {
+  if (value <= 24) return { label: 'Miedo Extremo', state: 'extreme-fear' };
+  if (value <= 49) return { label: 'Miedo', state: 'fear' };
+  if (value <= 54) return { label: 'Neutral', state: 'neutral' };
+  if (value <= 74) return { label: 'Codicia', state: 'greed' };
+  return { label: 'Codicia Extrema', state: 'extreme-greed' };
+}
+
+function readFngCache() {
+  try {
+    const raw = localStorage.getItem(FNG_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.value !== 'number' || typeof parsed.timestamp !== 'number') return null;
+    return parsed;
+  } catch (err) {
+    return null;
+  }
+}
+
+function writeFngCache(payload) {
+  try {
+    localStorage.setItem(FNG_STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    // Ignore storage failures.
+  }
+}
+
+function renderFng(payload) {
+  if (!fngValueEl || !fngLabelEl || !fngMarkerEl) return;
+  const numericValue = clampNumber(Math.round(payload.value), 0, 100);
+  const meta = getFngState(numericValue);
+  fngValueEl.textContent = String(numericValue);
+  fngLabelEl.textContent = meta.label;
+  if (fngCard) fngCard.dataset.state = meta.state;
+  fngMarkerEl.style.left = `${numericValue}%`;
+
+  if (fngUpdatedEl && payload.timestamp) {
+    const updatedAt = new Date(payload.timestamp);
+    if (!Number.isNaN(updatedAt.getTime())) {
+      fngUpdatedEl.textContent = `Actualizado ${updatedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+  }
 }
 
 function formatPrice(value) {
@@ -58,6 +121,63 @@ function renderCards(rows) {
       </div>
     `;
   }).join('');
+}
+
+function scheduleFngRefresh(delay) {
+  if (fngTimer) clearTimeout(fngTimer);
+  fngTimer = setTimeout(loadFearGreed, delay);
+}
+
+function setFngLoading() {
+  if (fngLabelEl) fngLabelEl.textContent = 'Cargando';
+  if (fngValueEl) fngValueEl.textContent = '--';
+}
+
+async function loadFearGreed() {
+  if (!fngValueEl || !fngLabelEl) return;
+
+  const cached = readFngCache();
+  if (cached) {
+    const age = Date.now() - cached.timestamp;
+    if (age >= 0 && age < FNG_CACHE_TTL_MS) {
+      renderFng(cached);
+      setFngError('');
+      scheduleFngRefresh(Math.max(FNG_CACHE_TTL_MS - age, 60000));
+      return;
+    }
+  }
+
+  setFngLoading();
+  setFngError('');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(FNG_URL, { signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const payload = await res.json();
+    const entry = payload && payload.data && payload.data[0];
+    const value = Number(entry && entry.value);
+    if (!Number.isFinite(value)) throw new Error('invalid');
+    const timestampSeconds = Number(entry && entry.timestamp);
+    const timestamp = Number.isFinite(timestampSeconds) ? timestampSeconds * 1000 : Date.now();
+    const data = { value, timestamp };
+    writeFngCache(data);
+    renderFng(data);
+    setFngError('');
+  } catch (err) {
+    if (cached) {
+      renderFng(cached);
+      setFngError('Dato no disponible. Mostrando ultimo valor.');
+    } else {
+      setFngError('Dato no disponible.');
+      if (fngLabelEl) fngLabelEl.textContent = 'Sin datos';
+    }
+  } finally {
+    clearTimeout(timeoutId);
+    scheduleFngRefresh(FNG_CACHE_TTL_MS);
+  }
 }
 
 async function fetchTicker(symbol) {
@@ -151,4 +271,5 @@ async function loadMarketData() {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadMarketData();
+  loadFearGreed();
 });

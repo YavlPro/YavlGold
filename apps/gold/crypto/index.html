@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlGold Crypto - Próximamente</title>
+    <title>YavlGold Crypto - Market Data</title>
+    <meta name="description" content="YavlGold Crypto market data V1.">
+    <meta property="og:title" content="YavlGold Crypto - Market Data">
     <link rel="icon" type="image/webp" href="/brand/logo.webp">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -234,6 +236,106 @@
             box-shadow: 0 6px 30px rgba(200, 167, 82, 0.5);
         }
 
+        /* Fear & Greed */
+        .fng-card {
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px solid rgba(200, 167, 82, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .fng-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .fng-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+        }
+
+        .fng-updated {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .fng-bar {
+            position: relative;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #4ade80 100%);
+            margin-bottom: 0.5rem;
+        }
+
+        .fng-marker {
+            position: absolute;
+            top: 50%;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--gold-primary);
+            background: var(--bg-primary);
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 12px rgba(200, 167, 82, 0.5);
+        }
+
+        .fng-scale {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .fng-value {
+            display: flex;
+            align-items: baseline;
+            gap: 0.6rem;
+            margin-top: 1rem;
+        }
+
+        .fng-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--gold-primary);
+        }
+
+        .fng-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .fng-error {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #f87171;
+            min-height: 1.2rem;
+        }
+
+        .fng-card[data-state="extreme-fear"] .fng-number,
+        .fng-card[data-state="fear"] .fng-number {
+            color: #f87171;
+        }
+
+        .fng-card[data-state="neutral"] .fng-number {
+            color: var(--gold-primary);
+        }
+
+        .fng-card[data-state="greed"] .fng-number,
+        .fng-card[data-state="extreme-greed"] .fng-number {
+            color: #4ade80;
+        }
+
         /* Market */
         .market {
             background: rgba(10, 10, 10, 0.6);
@@ -350,6 +452,28 @@
         <p class="description">
             Datos publicos de Binance para spot market. Actualizacion automatica cada 20s.
         </p>
+
+        <div class="fng-card" id="fng-card" data-state="neutral">
+            <div class="fng-header">
+                <h2 class="fng-title">Fear & Greed Index</h2>
+                <span class="fng-updated" id="fng-updated">--</span>
+            </div>
+            <div class="fng-bar">
+                <span class="fng-marker" id="fng-marker" aria-hidden="true"></span>
+            </div>
+            <div class="fng-scale">
+                <span>0</span>
+                <span>25</span>
+                <span>50</span>
+                <span>75</span>
+                <span>100</span>
+            </div>
+            <div class="fng-value">
+                <span class="fng-number" id="fng-value">--</span>
+                <span class="fng-label" id="fng-label">Cargando</span>
+            </div>
+            <div class="fng-error" id="fng-error" aria-live="polite"></div>
+        </div>
 
         <div class="market">
             <div class="market-header">

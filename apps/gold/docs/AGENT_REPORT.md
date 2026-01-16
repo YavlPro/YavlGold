@@ -65,3 +65,13 @@ Fecha: 2026-01-16
 1) Editar `apps/gold/crypto/crypto.js` para cambiar base REST y agregar manejo 451/CORS + backoff.
 2) Ajustar `apps/gold/crypto/index.html` solo si se requiere un estado extra en UI.
 3) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## Diagnostico (tarea actual - FNG + metadata)
+1) En /crypto falta un bloque Fear & Greed Index con datos publicos de alternative.me.
+2) El titulo/favicon/metadata todavia muestra "Proximamente".
+3) Se requiere cache local por 15 min y degradacion si falla la API.
+
+## Plan (tarea actual - FNG + metadata)
+1) Editar `apps/gold/crypto/crypto.js` para fetch FNG, cache YG_FNG_V1 y render con fallback.
+2) Editar `apps/gold/crypto/index.html` para el bloque FNG y corregir title/metadata.
+3) Ejecutar `pnpm build:gold` al final y reportar resultado.
