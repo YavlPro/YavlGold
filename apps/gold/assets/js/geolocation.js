@@ -2,6 +2,9 @@
  * YavlGold V9.4 - Geolocation Utility Module (IIFE Pattern)
  * Robust location detection: GPS → IP → Fallback
  * No external dependencies, globally accessible
+ *
+ * FIX: Cache now respects mode (GPS cache ≠ IP cache)
+ * FIX: GPS uses high accuracy with longer timeout
  */
 
 (function (global) {
@@ -18,24 +21,28 @@
     };
 
     const IPAPI_URL = 'https://ipapi.co/json/';
-    const CACHE_KEY = 'yavlgold_location_cache';
-    const CACHE_TTL_MS = 20 * 60 * 1000; // 20 minutes
+
+    // Separate cache keys for GPS and IP
+    const GPS_CACHE_KEY = 'yavlgold_gps_cache';
+    const IP_CACHE_KEY = 'yavlgold_ip_cache';
+    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
     const PREF_KEY = 'yavlgold_location_pref'; // 'gps' or 'ip'
 
     // ============================================
-    // CACHE UTILITIES
+    // CACHE UTILITIES (Separate GPS/IP caches)
     // ============================================
 
-    function getCachedCoords() {
+    function getCachedCoords(mode) {
+        const cacheKey = mode === 'ip' ? IP_CACHE_KEY : GPS_CACHE_KEY;
         try {
-            const cached = localStorage.getItem(CACHE_KEY);
+            const cached = localStorage.getItem(cacheKey);
             if (!cached) return null;
 
             const data = JSON.parse(cached);
             const now = Date.now();
 
             if (now - data.timestamp > CACHE_TTL_MS) {
-                localStorage.removeItem(CACHE_KEY);
+                localStorage.removeItem(cacheKey);
                 return null;
             }
 
@@ -46,13 +53,14 @@
         }
     }
 
-    function setCachedCoords(coords) {
+    function setCachedCoords(coords, mode) {
+        const cacheKey = mode === 'ip' ? IP_CACHE_KEY : GPS_CACHE_KEY;
         try {
             const data = {
                 ...coords,
                 timestamp: Date.now()
             };
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(cacheKey, JSON.stringify(data));
         } catch (e) {
             console.warn('[Geo] Cache write error:', e);
         }
@@ -60,7 +68,8 @@
 
     function clearLocationCache() {
         try {
-            localStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(GPS_CACHE_KEY);
+            localStorage.removeItem(IP_CACHE_KEY);
         } catch (e) {
             // Ignore
         }
@@ -81,14 +90,14 @@
     function setLocationPreference(pref) {
         try {
             localStorage.setItem(PREF_KEY, pref);
-            clearLocationCache();
+            // Don't clear cache on pref change - each mode has its own cache
         } catch (e) {
             console.warn('[Geo] Pref save error:', e);
         }
     }
 
     // ============================================
-    // GPS LOCATION
+    // GPS LOCATION (High Accuracy)
     // ============================================
 
     function getBrowserCoords() {
@@ -101,23 +110,25 @@
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
+                    const accuracy = position.coords.accuracy;
                     const result = {
                         lat: position.coords.latitude,
                         lon: position.coords.longitude,
                         source: 'gps',
-                        label: 'Ubicación actual'
+                        label: 'Ubicación actual' + (accuracy ? ' (±' + Math.round(accuracy) + 'm)' : ''),
+                        accuracy: accuracy || null
                     };
-                    console.log('[Geo] 📍 GPS obtained:', result.lat.toFixed(4), result.lon.toFixed(4));
+                    console.log('[Geo] 📍 GPS obtained:', result.lat.toFixed(4), result.lon.toFixed(4), '±' + Math.round(accuracy) + 'm');
                     resolve(result);
                 },
                 (error) => {
-                    console.warn('[Geo] GPS error:', error.message);
+                    console.warn('[Geo] GPS error:', error.code, error.message);
                     resolve(null);
                 },
                 {
-                    enableHighAccuracy: false,
-                    timeout: 8000,
-                    maximumAge: 300000
+                    enableHighAccuracy: true,  // FIX: Use high accuracy
+                    timeout: 15000,            // FIX: 15 second timeout
+                    maximumAge: 60000          // FIX: 1 minute cache (was 5 min)
                 }
             );
         });
@@ -127,9 +138,9 @@
     // IP-BASED LOCATION
     // ============================================
 
-    async function getIpCoords() {
+    async function getIpCoords(isGpsFallback) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
         try {
             const response = await fetch(IPAPI_URL, {
@@ -138,7 +149,7 @@
             clearTimeout(timeoutId);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                throw new Error('HTTP ' + response.status);
             }
 
             const data = await response.json();
@@ -156,14 +167,20 @@
                 ? labelParts.slice(0, 2).join(', ')
                 : 'ubicación aproximada';
 
+            // FIX: Explicit label when GPS failed and fell back to IP
+            const labelPrefix = isGpsFallback
+                ? 'GPS no disponible → IP: '
+                : 'Ubicación por IP: ';
+
             const result = {
                 lat: data.latitude,
                 lon: data.longitude,
                 source: 'ip',
-                label: `Ubicación por IP: ${locationInfo}`,
+                label: labelPrefix + locationInfo,
                 city: data.city || null,
                 region: data.region || null,
-                country: data.country_name || null
+                country: data.country_name || null,
+                isGpsFallback: !!isGpsFallback
             };
 
             console.log('[Geo] 🌐 IP location:', result.label);
@@ -182,18 +199,20 @@
 
     // ============================================
     // SMART LOCATION (ORCHESTRATOR)
+    // FIX: Cache respects mode - GPS mode uses GPS cache, IP mode uses IP cache
     // ============================================
 
     async function getCoordsSmart(options) {
         options = options || {};
         const preferIp = options.preferIp || false;
         const forceRefresh = options.forceRefresh || false;
+        const mode = preferIp ? 'ip' : 'gps';
 
-        // Check cache first
+        // Check mode-specific cache first (GPS cache for GPS mode, IP cache for IP mode)
         if (!forceRefresh) {
-            const cached = getCachedCoords();
+            const cached = getCachedCoords(mode);
             if (cached) {
-                console.log('[Geo] Using cached location:', cached.source);
+                console.log('[Geo] Using cached ' + mode.toUpperCase() + ' location');
                 return cached;
             }
         }
@@ -201,18 +220,20 @@
         let result = null;
 
         if (preferIp) {
+            // VPN/IP mode: IP → GPS → Fallback
             console.log('[Geo] Mode: IP (VPN) first');
-            result = await getIpCoords();
+            result = await getIpCoords(false);
             if (!result) {
                 console.log('[Geo] IP failed, trying GPS...');
                 result = await getBrowserCoords();
             }
         } else {
-            console.log('[Geo] Mode: GPS first');
+            // GPS mode: GPS → IP → Fallback
+            console.log('[Geo] Mode: GPS first (high accuracy)');
             result = await getBrowserCoords();
             if (!result) {
-                console.log('[Geo] GPS failed, trying IP...');
-                result = await getIpCoords();
+                console.log('[Geo] GPS failed/denied, falling back to IP...');
+                result = await getIpCoords(true); // true = GPS fallback
             }
         }
 
@@ -222,8 +243,8 @@
             result = Object.assign({}, FALLBACK_COORDS);
         }
 
-        // Cache the result
-        setCachedCoords(result);
+        // Cache the result for THIS mode only
+        setCachedCoords(result, mode);
 
         return result;
     }
