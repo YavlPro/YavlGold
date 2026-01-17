@@ -37,6 +37,7 @@ export default defineConfig({
                 academia: resolve(__dirname, "apps/gold/academia/index.html"),
                 agro: resolve(__dirname, "apps/gold/agro/index.html"),
                 herramientas: resolve(__dirname, "apps/gold/herramientas/index.html"),
+                tecnologia: resolve(__dirname, "apps/gold/tecnologia/index.html"),
                 crypto: resolve(__dirname, "apps/gold/crypto/index.html"),
                 social: resolve(__dirname, "apps/gold/social/index.html"),
                 music: resolve(__dirname, "apps/gold/dashboard/music.html"),

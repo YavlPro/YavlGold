@@ -5,6 +5,11 @@
     { "source": "/herramientas", "destination": "/tecnologia", "permanent": true },
     { "source": "/herramientas/:path*", "destination": "/tecnologia/:path*", "permanent": true }
   ],
+  "rewrites": [
+    { "source": "/tecnologia", "destination": "/tecnologia/index.html" },
+    { "source": "/tecnologia/", "destination": "/tecnologia/index.html" },
+    { "source": "/tecnologia/:path*", "destination": "/tecnologia/:path*" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -48,8 +53,6 @@
     { "src": "^/crypto/(.*)$", "dest": "/apps/crypto/$1" },
     { "src": "^/tecnologia/?$", "dest": "/apps/tecnologia/index.html" },
     { "src": "^/tecnologia/(.*)$", "dest": "/apps/tecnologia/index.html" },
-    { "src": "^/herramientas/?$", "dest": "/apps/herramientas/index.html" },
-    { "src": "^/herramientas/(.*)$", "dest": "/apps/herramientas/$1" },
     { "src": "^/music/?$", "dest": "/dashboard/music.html" }
   ]
 }

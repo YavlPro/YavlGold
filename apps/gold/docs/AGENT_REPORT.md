@@ -123,3 +123,20 @@ Fecha: 2026-01-16
 - [ ] /tecnologia resuelve sin 404 via vercel.json raiz.
 - [ ] /herramientas redirige a /tecnologia.
 - [ ] `pnpm build:gold` OK.
+
+## Diagnostico (tarea actual - vercel app gold tecnologia)
+1) El vercel.json de `apps/gold` no tenia rewrites explicitos para /tecnologia.
+2) /herramientas necesita redirect permanente a /tecnologia para evitar landing legacy.
+3) Build solicitado: `pnpm build:v9` debe generar `dist/tecnologia/index.html`.
+
+## Plan (tarea actual - vercel app gold tecnologia)
+1) Ajustar `apps/gold/tecnologia/index.html` para "Tecnologia (Proximamente)" con CTAs a /dashboard o /.
+2) Editar `apps/gold/vercel.json` para agregar rewrites /tecnologia y redirects /herramientas.
+3) Agregar entrada `tecnologia` en `vite.config.js` (raiz) para que build:v9 genere dist/tecnologia/index.html.
+4) Verificar authClient/authGuard cubren /tecnologia y mantienen /herramientas.
+5) Ejecutar `pnpm build:v9` y reportar resultado.
+
+## DoD (tarea actual - vercel app gold tecnologia)
+- [ ] `apps/gold/tecnologia/index.html` existe con copy "Tecnologia (Proximamente)".
+- [ ] `apps/gold/vercel.json` incluye rewrites /tecnologia y redirects /herramientas.
+- [ ] `pnpm build:v9` OK y `apps/gold/dist/tecnologia/index.html` existe.
