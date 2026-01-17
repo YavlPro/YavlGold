@@ -157,3 +157,19 @@ Fecha: 2026-01-16
 - [ ] Redirect /herramientas/:path* apunta a /tecnologia (sin path).
 - [ ] Rewrite /tecnologia/ agregado.
 - [ ] `pnpm build:gold` OK.
+
+## Diagnostico (tarea actual - ActivityTracker dashboard)
+1) El Dashboard usa Insights (Continuar/Resumen/Recomendado), pero requiere leer actividad local.
+2) ActivityTracker expone window.YGActivity, pero falta el enganche explicito en el flujo post-render.
+3) Se necesita fallback cuando no hay historial para evitar errores o UI vacia.
+
+## Plan (tarea actual - ActivityTracker dashboard)
+1) Ajustar `apps/gold/dashboard/index.html` para leer `window.YGActivity?.getActivitySummary?.()` tras renderizar modulos.
+2) Agregar helpers `updateContinueCard`, `updateSummaryCard`, `updateRecommendCard` con fallback seguro.
+3) Mantener comportamiento si YGActivity no existe (sin throws).
+4) Ejecutar `pnpm build:v9` al final y reportar resultado.
+
+## DoD (tarea actual - ActivityTracker dashboard)
+- [ ] Insights toman datos de ActivityTracker sin romper si no existe.
+- [ ] Continuar/Resumen/Recomendado muestran fallback si no hay actividad.
+- [ ] `pnpm build:v9` OK.

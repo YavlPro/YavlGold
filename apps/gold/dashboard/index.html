@@ -2316,13 +2316,18 @@
       linkEl.setAttribute('href', data.path);
     }
 
-    async function updateDashboardInsights(modules, user) {
-      const summary = ActivityTracker?.getActivitySummary
-        ? ActivityTracker.getActivitySummary()
-        : { lastModule: null, visits: {}, visitedCount: 0 };
+    function setInsightsEmptyState() {
+      updateInsightCard('continue', null, 'Aún no hay actividad', 'Explora un módulo para empezar');
+      updateInsightCard('recommend', null, 'Sin datos', 'Sin sugerencias');
 
-      const visits = summary.visits || {};
-      const continueData = resolveContinueModule(summary.lastModule, modules);
+      const visitedEl = document.getElementById('summary-visited');
+      const lastEl = document.getElementById('summary-last');
+      if (visitedEl) visitedEl.textContent = '0';
+      if (lastEl) lastEl.textContent = '-';
+    }
+
+    function updateContinueCard(lastModule, modules) {
+      const continueData = resolveContinueModule(lastModule, modules);
       const continueMeta = continueData?.timestamp
         ? `ultimo acceso ${formatRelativeTime(continueData.timestamp)}`
         : 'sin actividad reciente';
@@ -2331,19 +2336,44 @@
         title: continueData.title,
         path: continueData.path,
         meta: continueMeta
-      } : null, 'Sin datos', 'Sin actividad reciente');
+      } : null, 'Aún no hay actividad', 'Explora un módulo para empezar');
+    }
 
+    function updateSummaryCard(summary, modules) {
+      const visitedEl = document.getElementById('summary-visited');
+      const lastEl = document.getElementById('summary-last');
+      const lastData = resolveContinueModule(summary?.lastModule, modules);
+
+      if (visitedEl) visitedEl.textContent = String(summary?.visitedCount || 0);
+      if (lastEl) lastEl.textContent = lastData?.title || summary?.lastModule?.title || '-';
+    }
+
+    function updateRecommendCard(summary, modules) {
+      const visits = summary?.visits || {};
+      const continueData = resolveContinueModule(summary?.lastModule, modules);
       const recommended = resolveRecommendedModule(modules, visits, continueData?.id);
+
       updateInsightCard('recommend', recommended ? {
         title: recommended.title,
         path: recommended.path,
         meta: recommended.reason
       } : null, 'Sin datos', 'Sin sugerencias');
+    }
 
-      const visitedEl = document.getElementById('summary-visited');
-      const lastEl = document.getElementById('summary-last');
-      if (visitedEl) visitedEl.textContent = String(summary.visitedCount || 0);
-      if (lastEl) lastEl.textContent = continueData?.title || '-';
+    async function updateDashboardInsights(modules, user) {
+      const summary = window.YGActivity?.getActivitySummary?.()
+        || ActivityTracker?.getActivitySummary?.();
+
+      if (!summary) {
+        setInsightsEmptyState();
+      } else if (!summary.visitedCount) {
+        setInsightsEmptyState();
+        updateSummaryCard(summary, modules);
+      } else {
+        updateContinueCard(summary.lastModule, modules);
+        updateSummaryCard(summary, modules);
+        updateRecommendCard(summary, modules);
+      }
 
       const favoritesEl = document.getElementById('summary-favorites');
       const unreadEl = document.getElementById('summary-unread');
