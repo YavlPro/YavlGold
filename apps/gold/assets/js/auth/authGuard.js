@@ -2,7 +2,7 @@
  * YAVLGOLD - AUTH GUARD v2.0.1
  */
 const AuthGuard = {
-  protectedPaths: ['/herramientas/', '/dashboard/', '/profile/', '/settings/'],
+  protectedPaths: ['/tecnologia/', '/herramientas/', '/dashboard/', '/profile/', '/settings/'],
   publicPaths: ['/', '/index.html', '/comunidad/', '/academia/'],
 
   isProtectedRoute(path = window.location.pathname) {

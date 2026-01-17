@@ -1,6 +1,10 @@
 {
   "cleanUrls": true,
   "trailingSlash": true,
+  "redirects": [
+    { "source": "/herramientas", "destination": "/tecnologia", "permanent": true },
+    { "source": "/herramientas/:path*", "destination": "/tecnologia/:path*", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -42,6 +46,8 @@
     { "src": "^/academia/(.*)$", "dest": "/apps/academia/$1" },
     { "src": "^/crypto/?$", "dest": "/apps/crypto/index.html" },
     { "src": "^/crypto/(.*)$", "dest": "/apps/crypto/$1" },
+    { "src": "^/tecnologia/?$", "dest": "/apps/herramientas/index.html" },
+    { "src": "^/tecnologia/(.*)$", "dest": "/apps/herramientas/$1" },
     { "src": "^/herramientas/?$", "dest": "/apps/herramientas/index.html" },
     { "src": "^/herramientas/(.*)$", "dest": "/apps/herramientas/$1" },
     { "src": "^/music/?$", "dest": "/dashboard/music.html" }

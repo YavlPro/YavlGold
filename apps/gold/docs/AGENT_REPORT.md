@@ -75,3 +75,15 @@ Fecha: 2026-01-16
 1) Editar `apps/gold/crypto/crypto.js` para fetch FNG, cache YG_FNG_V1 y render con fallback.
 2) Editar `apps/gold/crypto/index.html` para el bloque FNG y corregir title/metadata.
 3) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## Diagnostico (tarea actual - Tecnologia + favicon PNG)
+1) El modulo "Herramientas" pasa a pilar "Tecnologia"; el label debe actualizarse sin romper rutas.
+2) El favicon actual (SVG/WebP/ICO) no es tomado por Google en algunos casos.
+3) Se requiere un PNG 192x192 servido desde raiz y referenciado en el <head>.
+
+## Plan (tarea actual - Tecnologia + favicon PNG)
+1) Actualizar labels y links visibles de "Herramientas" a "Tecnologia" en UI.
+2) Ajustar rutas con compatibilidad: /tecnologia como canonica y /herramientas como redirect/alias.
+3) Agregar favicon PNG 192x192 en public y referenciarlo en el <head> principal.
+4) Hacer rg -n "Herramientas|herramientas|/herramientas|/tools" apps/gold -g "*.html" y no cerrar hasta que solo quede 0 o quede unicamente en el redirect.
+5) Ejecutar `pnpm build:gold` al final y reportar resultado.
