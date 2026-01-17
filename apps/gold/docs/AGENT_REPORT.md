@@ -106,3 +106,20 @@ Fecha: 2026-01-16
 - [ ] /herramientas/ resuelve a /tecnologia/ sin 404.
 - [ ] Auth cubre /tecnologia y /herramientas.
 - [ ] `pnpm build:gold` OK.
+
+## Diagnostico (tarea actual - tecnologia 404 root vercel)
+1) El vercel.json raiz no tiene rewrite para /tecnologia y termina en 404.
+2) /herramientas sigue resolviendo al HTML legacy; se requiere redireccion 301 a /tecnologia.
+3) La landing de /tecnologia debe ser placeholder "Proximamente" con SEO basico.
+
+## Plan (tarea actual - tecnologia 404 root vercel)
+1) Crear/ajustar `apps/gold/tecnologia/index.html` con copy "Tecnologia (Proximamente)" y favicons.
+2) Actualizar `vercel.json` (raiz) con redirects /herramientas -> /tecnologia y rewrites /tecnologia.
+3) Agregar redirect HTML (meta + JS) en legacy `apps/gold/herramientas/*.html` para evitar ver el diseño viejo.
+4) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## DoD (tarea actual - tecnologia 404 root vercel)
+- [ ] `apps/gold/tecnologia/index.html` existe y muestra "Tecnologia (Proximamente)".
+- [ ] /tecnologia resuelve sin 404 via vercel.json raiz.
+- [ ] /herramientas redirige a /tecnologia.
+- [ ] `pnpm build:gold` OK.

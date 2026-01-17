@@ -15,6 +15,16 @@
       "has": [{ "type": "host", "value": "www.yavlgold.gold" }],
       "destination": "https://yavlgold.com/:path*",
       "permanent": true
+    },
+    {
+      "source": "/herramientas",
+      "destination": "/tecnologia",
+      "permanent": true
+    },
+    {
+      "source": "/herramientas/:path*",
+      "destination": "/tecnologia/:path*",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -22,6 +32,8 @@
     { "source": "/academia/:path*", "destination": "/academia/:path*" },
     { "source": "/agro", "destination": "/agro/index.html" },
     { "source": "/agro/:path*", "destination": "/agro/:path*" },
+    { "source": "/tecnologia", "destination": "/tecnologia/index.html" },
+    { "source": "/tecnologia/:path*", "destination": "/tecnologia/:path*" },
     { "source": "/herramientas", "destination": "/herramientas/index.html" },
     { "source": "/herramientas/:path*", "destination": "/herramientas/:path*" },
     { "source": "/suite", "destination": "/suite/index.html" },
