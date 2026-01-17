@@ -87,3 +87,22 @@ Fecha: 2026-01-16
 3) Agregar favicon PNG 192x192 en public y referenciarlo en el <head> principal.
 4) Hacer rg -n "Herramientas|herramientas|/herramientas|/tools" apps/gold -g "*.html" y no cerrar hasta que solo quede 0 o quede unicamente en el redirect.
 5) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## Diagnostico (tarea actual - dashboard tecnologia + landing)
+1) El Dashboard renderiza modulos desde Supabase y sigue mostrando "Herramientas".
+2) /tecnologia carga la landing legacy (Herramientas) pero el pilar no esta construido.
+3) Se requiere normalizar UI sin tocar DB y exponer un placeholder "Proximamente".
+
+## Plan (tarea actual - dashboard tecnologia + landing)
+1) Normalizar el modulo de herramientas en `apps/gold/dashboard/index.html` (nombre/route/tracking) sin tocar thumbnail.
+2) Crear landing simple en `apps/gold/tecnologia/index.html` con SEO y favicons.
+3) Ajustar `apps/gold/vite.config.js` y `apps/gold/vercel.json` para servir /tecnologia/ y mantener /herramientas -> /tecnologia.
+4) Verificar auth guards para /tecnologia y /herramientas.
+5) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## DoD (tarea actual - dashboard tecnologia + landing)
+- [ ] Dashboard muestra "Tecnologia" y navega a /tecnologia/ manteniendo thumbnail.
+- [ ] /tecnologia/ muestra landing "Proximamente" (sin legacy).
+- [ ] /herramientas/ resuelve a /tecnologia/ sin 404.
+- [ ] Auth cubre /tecnologia y /herramientas.
+- [ ] `pnpm build:gold` OK.

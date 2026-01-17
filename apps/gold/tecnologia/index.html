@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tecnología | YavlGold</title>
+  <meta name="description" content="Tecnología en construcción. Próximamente en YavlGold.">
+  <meta property="og:title" content="Tecnología | YavlGold">
+  <meta property="og:description" content="Tecnología en construcción. Próximamente en YavlGold.">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-google.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/favicon-google.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #0f0f0f;
+      --gold-primary: #C8A752;
+      --gold-vibrant: #D4AF37;
+      --text-primary: #e5e5e5;
+      --text-muted: #888;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+      text-align: center;
+    }
+
+    .bg-atmosphere {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(200, 167, 82, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(200, 167, 82, 0.06) 0%, transparent 45%),
+        var(--bg-primary);
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 640px;
+      padding: 24px;
+    }
+
+    .logo {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 24px;
+      display: block;
+    }
+
+    .title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-vibrant) 50%, var(--gold-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(200, 167, 82, 0.25);
+      margin-bottom: 10px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(200, 167, 82, 0.35);
+      background: rgba(200, 167, 82, 0.08);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold-primary);
+      margin-bottom: 18px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--gold-primary);
+      box-shadow: 0 0 10px rgba(200, 167, 82, 0.6);
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn-primary {
+      color: #000;
+      background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-vibrant) 100%);
+      box-shadow: 0 4px 18px rgba(200, 167, 82, 0.35);
+    }
+
+    .btn-secondary {
+      color: var(--gold-primary);
+      border: 1px solid rgba(200, 167, 82, 0.5);
+      background: transparent;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 520px) {
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg-atmosphere"></div>
+  <div class="container">
+    <img src="/brand/logo.webp" alt="YavlGold" class="logo">
+    <h1 class="title">Tecnología</h1>
+    <div class="status">
+      <span class="status-dot"></span>
+      Próximamente
+    </div>
+    <p class="subtitle">Este pilar está en construcción. Muy pronto tendrás acceso a nuevas herramientas y recursos.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="/dashboard/">Volver al Dashboard</a>
+      <a class="btn btn-secondary" href="/academia/">Ir a Academia</a>
+    </div>
+  </div>
+
+  <script type="module" src="../assets/js/utils/activityTracker.js"></script>
+  <script type="module">
+    window.YGActivity?.attachModuleTracking('tecnologia', { title: 'Tecnología', path: '/tecnologia/' });
+  </script>
+</body>
+
+</html>

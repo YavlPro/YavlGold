@@ -46,8 +46,8 @@
     { "src": "^/academia/(.*)$", "dest": "/apps/academia/$1" },
     { "src": "^/crypto/?$", "dest": "/apps/crypto/index.html" },
     { "src": "^/crypto/(.*)$", "dest": "/apps/crypto/$1" },
-    { "src": "^/tecnologia/?$", "dest": "/apps/herramientas/index.html" },
-    { "src": "^/tecnologia/(.*)$", "dest": "/apps/herramientas/$1" },
+    { "src": "^/tecnologia/?$", "dest": "/apps/tecnologia/index.html" },
+    { "src": "^/tecnologia/(.*)$", "dest": "/apps/tecnologia/index.html" },
     { "src": "^/herramientas/?$", "dest": "/apps/herramientas/index.html" },
     { "src": "^/herramientas/(.*)$", "dest": "/apps/herramientas/$1" },
     { "src": "^/music/?$", "dest": "/dashboard/music.html" }

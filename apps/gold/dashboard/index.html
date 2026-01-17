@@ -2106,6 +2106,47 @@
     /**
      * Load modules from Supabase and render them dynamically
      */
+    function isLegacyToolsModule(mod) {
+      const candidates = [
+        mod?.slug,
+        mod?.module_key,
+        mod?.route,
+        mod?.path,
+        mod?.href,
+        mod?.name,
+        mod?.title
+      ];
+
+      return candidates.some((value) => {
+        if (typeof value !== 'string') return false;
+        const lower = value.toLowerCase();
+        return lower.includes('herramientas') || lower.includes('tools');
+      });
+    }
+
+    function normalizeModules(modules) {
+      return (modules || []).map((mod) => {
+        if (!isLegacyToolsModule(mod)) return mod;
+
+        const legacyKeys = [];
+        if (typeof mod.slug === 'string') legacyKeys.push(mod.slug);
+        if (typeof mod.module_key === 'string' && mod.module_key !== mod.slug) {
+          legacyKeys.push(mod.module_key);
+        }
+
+        return {
+          ...mod,
+          title: 'Tecnología',
+          name: 'Tecnología',
+          slug: 'tecnologia',
+          module_key: 'tecnologia',
+          route: '/tecnologia/',
+          path: '/tecnologia/',
+          legacy_keys: Array.from(new Set(legacyKeys))
+        };
+      });
+    }
+
     async function loadModules() {
       const grid = document.getElementById('modules-grid');
       const loading = document.getElementById('modules-loading');
@@ -2125,12 +2166,13 @@
         }
 
         console.log(`[Dashboard] Loaded ${modules?.length || 0} modules`);
+        const normalizedModules = normalizeModules(modules);
 
         // Hide loading
         if (loading) loading.style.display = 'none';
 
         // Render modules
-        if (modules && modules.length > 0) {
+        if (normalizedModules && normalizedModules.length > 0) {
           // Get user favorites before rendering
           let userFavorites = new Set();
           if (window.FavoritesManager) {
@@ -2138,10 +2180,10 @@
           }
 
           // Store globally for filter/search system
-          allModules = modules;
+          allModules = normalizedModules;
           allUserFavorites = userFavorites;
 
-          renderModules(modules, grid, userFavorites);
+          renderModules(normalizedModules, grid, userFavorites);
         } else {
           grid.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay módulos disponibles</p>';
         }
@@ -2150,7 +2192,7 @@
         if (window.StatsManager) {
           window.StatsManager.updateAllStats();
         }
-        return modules || [];
+        return normalizedModules || [];
       } catch (err) {
         console.error('[Dashboard] Unexpected error:', err);
         if (loading) loading.innerHTML = '<p style="color: #ff6b6b;">Error inesperado</p>';
@@ -2182,9 +2224,27 @@
       return mod?.route || mod?.path || (slug ? `/${slug}/` : '#');
     }
 
+    function getLegacyKeys(mod) {
+      return Array.isArray(mod?.legacy_keys) ? mod.legacy_keys : [];
+    }
+
+    function getModuleVisitData(mod, visits) {
+      const id = getModuleId(mod);
+      if (visits[id]) return visits[id];
+      const legacyKeys = getLegacyKeys(mod);
+      for (const key of legacyKeys) {
+        if (visits[key]) return visits[key];
+      }
+      return null;
+    }
+
     function resolveContinueModule(lastModule, modules) {
       if (!lastModule?.id) return null;
-      const match = (modules || []).find(mod => getModuleId(mod) === lastModule.id);
+      const match = (modules || []).find(mod => {
+        const id = getModuleId(mod);
+        if (id === lastModule.id) return true;
+        return getLegacyKeys(mod).includes(lastModule.id);
+      });
       if (match) {
         return {
           id: getModuleId(match),
@@ -2209,7 +2269,7 @@
       const eligible = list.filter(mod => getModuleId(mod) !== excludeId);
       if (eligible.length === 0) return null;
 
-      const unvisited = eligible.filter(mod => !visits[getModuleId(mod)]);
+      const unvisited = eligible.filter(mod => !getModuleVisitData(mod, visits));
       if (unvisited.length > 0) {
         const mod = unvisited[0];
         return {
@@ -2221,8 +2281,8 @@
       }
 
       const sorted = eligible.slice().sort((a, b) => {
-        const aCount = visits[getModuleId(a)]?.count || 0;
-        const bCount = visits[getModuleId(b)]?.count || 0;
+        const aCount = getModuleVisitData(a, visits)?.count || 0;
+        const bCount = getModuleVisitData(b, visits)?.count || 0;
         return aCount - bCount;
       });
 
@@ -2333,12 +2393,17 @@
         // FIX: Use mod.title (not mod.name)
         const title = (mod.title || mod.name || 'MÓDULO').toUpperCase();
         const description = mod.description || 'Descripción no disponible';
-        const slug = mod.slug || '#';
+        const slug = mod.slug || mod.module_key || '#';
+        const moduleKey = mod.module_key || mod.slug || '#';
         // FIX: Use mod.route (the actual DB column), fallback to path then slug
         const url = mod.route || mod.path || `/${slug}/`;
 
         // ⭐ Star favorite state
-        const isFavorite = userFavorites.has(slug);
+        const legacyKeys = Array.isArray(mod.legacy_keys) ? mod.legacy_keys : [];
+        const favoriteKey = userFavorites.has(moduleKey)
+          ? moduleKey
+          : (legacyKeys.find(key => userFavorites.has(key)) || moduleKey);
+        const isFavorite = userFavorites.has(favoriteKey);
         const starClass = isFavorite ? 'fa-solid' : 'fa-regular';
         const starColor = isFavorite ? 'color: #C8A752;' : '';
 
@@ -2374,8 +2439,8 @@
         }
 
         return `
-          <div class="module-card" data-module="${slug}">
-            <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${slug}', this.querySelector('i'))" title="Agregar a favoritos">
+          <div class="module-card" data-module="${moduleKey}">
+            <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${favoriteKey}', this.querySelector('i'))" title="Agregar a favoritos">
               <i class="${starClass} fa-star" style="${starColor}"></i>
             </button>
             ${thumbnailHtml}
