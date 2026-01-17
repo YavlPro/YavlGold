@@ -173,3 +173,17 @@ Fecha: 2026-01-16
 - [ ] Insights toman datos de ActivityTracker sin romper si no existe.
 - [ ] Continuar/Resumen/Recomendado muestran fallback si no hay actividad.
 - [ ] `pnpm build:v9` OK.
+
+## Diagnostico (tarea actual - Social DNA)
+1) El modulo Social esta en "Proximamente", pero usa colores y tipografias fuera del DNA.
+2) Se requiere alinear con #0a0a0a y #C8A752, Orbitron/Rajdhani.
+
+## Plan (tarea actual - Social DNA)
+1) Ajustar `apps/gold/social/index.html` para usar paleta y fuentes oficiales.
+2) Mantener el layout actual y el estado "Proximamente".
+3) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## DoD (tarea actual - Social DNA)
+- [ ] Social usa paleta #0a0a0a + #C8A752 y Orbitron/Rajdhani.
+- [ ] "Proximamente" se mantiene visible.
+- [ ] `pnpm build:gold` OK.

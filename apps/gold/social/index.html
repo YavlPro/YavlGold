@@ -8,12 +8,21 @@
     <link rel="icon" type="image/webp" href="/brand/logo.webp">
     <script src="https://cdn.tailwindcss.com"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
         rel="stylesheet">
     <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --gold-primary: #C8A752;
+            --text-primary: #e5e5e5;
+            --text-muted: #888;
+            --font-heading: 'Orbitron', sans-serif;
+            --font-body: 'Rajdhani', sans-serif;
+        }
+
         body {
-            background-color: #050505;
-            color: #e5e5e5;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             font-family: var(--font-body);
             height: 100vh;
             display: flex;
@@ -24,14 +33,14 @@
 
         h1 {
             font-family: var(--font-heading);
-            background: linear-gradient(135deg, #D4AF37, #FDB931, #D4AF37);
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-primary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .gold-btn {
-            border: 1px solid #D4AF37;
-            color: #D4AF37;
+            border: 1px solid var(--gold-primary);
+            color: var(--gold-primary);
             padding: 10px 30px;
             text-transform: uppercase;
             letter-spacing: 2px;
@@ -39,16 +48,20 @@
         }
 
         .gold-btn:hover {
-            background: #D4AF37;
+            background: var(--gold-primary);
             color: #000;
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .subtitle {
+            color: var(--text-muted) !important;
         }
     </style>
 </head>
 
 <body class="flex flex-col text-center">
     <h1 class="text-6xl md:text-8xl font-bold mb-4 tracking-tighter">Social</h1>
-    <p class="text-xl text-gray-400 mb-8 tracking-widest uppercase">Comunidad & Networking</p>
+    <p class="subtitle text-xl mb-8 tracking-widest uppercase">Comunidad & Networking</p>
     <button class="gold-btn">Próximamente</button>
     <script type="module" src="../assets/js/utils/activityTracker.js"></script>
     <script type="module">
