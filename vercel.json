@@ -23,7 +23,7 @@
     },
     {
       "source": "/herramientas/:path*",
-      "destination": "/tecnologia/:path*",
+      "destination": "/tecnologia",
       "permanent": true
     }
   ],
@@ -33,9 +33,8 @@
     { "source": "/agro", "destination": "/agro/index.html" },
     { "source": "/agro/:path*", "destination": "/agro/:path*" },
     { "source": "/tecnologia", "destination": "/tecnologia/index.html" },
+    { "source": "/tecnologia/", "destination": "/tecnologia/index.html" },
     { "source": "/tecnologia/:path*", "destination": "/tecnologia/:path*" },
-    { "source": "/herramientas", "destination": "/herramientas/index.html" },
-    { "source": "/herramientas/:path*", "destination": "/herramientas/:path*" },
     { "source": "/suite", "destination": "/suite/index.html" },
     { "source": "/suite/:path*", "destination": "/suite/:path*" },
     { "source": "/social", "destination": "/social/index.html" },

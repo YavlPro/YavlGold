@@ -140,3 +140,20 @@ Fecha: 2026-01-16
 - [ ] `apps/gold/tecnologia/index.html` existe con copy "Tecnologia (Proximamente)".
 - [ ] `apps/gold/vercel.json` incluye rewrites /tecnologia y redirects /herramientas.
 - [ ] `pnpm build:v9` OK y `apps/gold/dist/tecnologia/index.html` existe.
+
+## Diagnostico (tarea actual - vercel root limpieza herramientas)
+1) El vercel.json raiz mantiene rewrites de /herramientas que contradicen el redirect.
+2) El redirect /herramientas/:path* arrastra subrutas legacy hacia /tecnologia/:path* y puede causar 404.
+3) Falta rewrite explicito para /tecnologia/ con trailing slash en el vercel.json raiz.
+
+## Plan (tarea actual - vercel root limpieza herramientas)
+1) Editar `vercel.json` (raiz) para quitar rewrites de /herramientas.
+2) Ajustar redirect /herramientas/:path* para apuntar a /tecnologia sin path.
+3) Agregar rewrite para /tecnologia/ -> /tecnologia/index.html.
+4) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## DoD (tarea actual - vercel root limpieza herramientas)
+- [ ] Rewrites /herramientas removidos del vercel.json raiz.
+- [ ] Redirect /herramientas/:path* apunta a /tecnologia (sin path).
+- [ ] Rewrite /tecnologia/ agregado.
+- [ ] `pnpm build:gold` OK.
