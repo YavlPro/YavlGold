@@ -187,3 +187,18 @@ Fecha: 2026-01-16
 - [ ] Social usa paleta #0a0a0a + #C8A752 y Orbitron/Rajdhani.
 - [ ] "Proximamente" se mantiene visible.
 - [ ] `pnpm build:gold` OK.
+
+## Diagnostico (tarea actual - thumbnails dashboard movil)
+1) Las miniaturas usan `loading="lazy"` y en movil quedan con `opacity: 0` por regla global.
+2) El script que agrega la clase `.loaded` no corre en el dashboard, asi que no se vuelve visible.
+3) Se necesita un override local sin tocar `mobile-optimizations.css`.
+
+## Plan (tarea actual - thumbnails dashboard movil)
+1) Agregar un bloque al final de `apps/gold/assets/css/dashboard.css` con un override especifico para `.module-thumbnail` en movil.
+2) Forzar `opacity: 1 !important` y `transform: none !important` en `@media (max-width: 768px)`.
+3) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## DoD (tarea actual - thumbnails dashboard movil)
+- [ ] `.module-thumbnail` visible en movil (override activo).
+- [ ] No se edita `mobile-optimizations.css`.
+- [ ] `pnpm build:gold` OK.

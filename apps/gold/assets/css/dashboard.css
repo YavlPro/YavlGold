@@ -680,3 +680,11 @@
   color: rgba(200, 167, 82, 0.8);
   font-size: 1rem;
 }
+
+/* Mobile Visibility Fix */
+@media (max-width: 768px) {
+  .module-thumbnail {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
