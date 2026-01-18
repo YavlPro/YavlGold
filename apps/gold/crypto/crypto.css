@@ -154,6 +154,17 @@ button {
   border: 1px solid rgba(10, 10, 10, 0.8);
 }
 
+.notifications-dropdown .notification-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gg-gold-primary, #C8A752);
+}
+
+.notifications-dropdown .notification-icon i {
+  color: inherit;
+}
+
 .nav-back:hover,
 .nav-icon:hover {
   border-color: rgba(200, 167, 82, 0.45);
@@ -383,6 +394,22 @@ button {
   min-height: calc(var(--crypto-sparkline-height) + 20px);
 }
 
+.market-card--interactive {
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.market-card--interactive:hover {
+  border-color: rgba(200, 167, 82, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.market-card--interactive:focus-visible {
+  outline: 2px solid var(--gg-gold-primary, #C8A752);
+  outline-offset: 2px;
+}
+
 .market-card > :not(.sparkline-placeholder) {
   grid-column: 1;
 }
@@ -442,6 +469,118 @@ button {
   color: #f87171;
 }
 
+body.crypto-modal-open {
+  overflow: hidden;
+}
+
+.crypto-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  z-index: 11000;
+}
+
+.crypto-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.crypto-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+}
+
+.crypto-modal-content {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 92vw);
+  max-height: calc(100vh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--gg-shadow-lg, 0 8px 24px rgba(0, 0, 0, 0.3));
+}
+
+.crypto-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crypto-modal-title {
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gg-gold-primary, #C8A752);
+}
+
+.crypto-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 167, 82, 0.35);
+  background: rgba(200, 167, 82, 0.12);
+  color: var(--gg-text-title, #fff);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.crypto-modal-close:hover {
+  background: rgba(200, 167, 82, 0.22);
+  transform: translateY(-1px);
+}
+
+.crypto-modal-close:focus-visible {
+  outline: 2px solid var(--gg-gold-primary, #C8A752);
+  outline-offset: 2px;
+}
+
+.crypto-chart {
+  flex: 1;
+  min-height: 240px;
+  height: 360px;
+  background: #0a0a0a;
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.crypto-chart canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .crypto-modal-content {
+    padding: 12px;
+  }
+
+  .crypto-modal-title {
+    letter-spacing: 0.2em;
+  }
+
+  .crypto-chart {
+    height: 260px;
+  }
+}
+
 .crypto-footer {
   position: fixed;
   bottom: 0;
@@ -477,7 +616,14 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .nav-back,
-  .nav-icon {
+  .nav-icon,
+  .market-card--interactive,
+  .crypto-modal-close {
     transition: none;
+  }
+
+  .market-card--interactive:hover,
+  .crypto-modal-close:hover {
+    transform: none;
   }
 }

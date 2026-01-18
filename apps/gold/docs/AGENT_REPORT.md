@@ -255,3 +255,15 @@ Fecha: 2026-01-16
 2) `apps/gold/crypto/crypto.css`: ajustar badge y focus si hace falta, y asegurar z-index compatible con dropdown.
 3) `apps/gold/docs/AGENT_REPORT.md`: registrar diagnostico/plan (este bloque).
 4) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## Diagnostico (tarea actual - notificaciones crypto + chart modal)
+1) El dropdown se construye en runtime por `apps/gold/assets/js/components/notifications.js` usando datos reales de `notifications`, por eso el contenido puede ser ajeno al contexto crypto.
+2) En crypto no hay override de contenido; el panel muestra lo que llega desde el manager sin tema financiero.
+3) No existe modal de detalle ni grafico; las `.market-card` se re-renderizan con `innerHTML` en `apps/gold/crypto/crypto.js`.
+4) Restriccion activa: sin dependencias nuevas; el grafico debe resolverse con JS/CSS nativo.
+
+## Plan (tarea actual - notificaciones crypto + chart modal)
+1) `apps/gold/crypto/index.html`: sobreescribir metodos de `NotificationsManager` para usar 3 alertas financieras simuladas y mantener el mismo dropdown.
+2) `apps/gold/crypto/index.html`: agregar modal de detalle y handlers de apertura/cierre con delegacion en `#market-grid`.
+3) `apps/gold/crypto/crypto.css`: estilos para modal glass, boton de cierre y contenedor de grafico responsive.
+4) Ejecutar `pnpm build:gold` y reportar resultado.

@@ -96,12 +96,113 @@
             <a class="footer-link" href="/">Inicio</a></p>
     </footer>
 
+    <div class="crypto-modal" id="crypto-detail-modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="crypto-modal-backdrop" data-modal-close></div>
+        <div class="crypto-modal-content" role="document">
+            <div class="crypto-modal-header">
+                <div class="crypto-modal-title" id="crypto-modal-title">BTC/USDT</div>
+                <button class="crypto-modal-close" type="button" data-modal-close aria-label="Cerrar">
+                    <i class="fas fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="crypto-chart" id="crypto-chart-container">
+                <canvas id="crypto-chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="../assets/js/utils/activityTracker.js"></script>
     <script type="module" src="./crypto.js"></script>
     <script type="module">
         import { NotificationsManager } from '../assets/js/components/notifications.js';
 
         window.YGActivity?.attachModuleTracking('crypto', { title: 'Crypto', path: '/crypto/' });
+
+        const CRYPTO_ALERTS = [
+            {
+                id: 'crypto-alert-btc',
+                title: 'Bitcoin ha superado los $95k',
+                message: 'Ruptura confirmada en BTC/USDT.',
+                type: 'crypto-bull',
+                is_read: false,
+                created_at: new Date(Date.now() - 12 * 60000).toISOString()
+            },
+            {
+                id: 'crypto-alert-fng',
+                title: 'Fear & Greed Index entro en zona NEUTRAL',
+                message: 'Sentimiento estable en el mercado.',
+                type: 'crypto-neutral',
+                is_read: false,
+                created_at: new Date(Date.now() - 45 * 60000).toISOString()
+            },
+            {
+                id: 'crypto-alert-gas',
+                title: 'Ethereum gas fees estan bajos',
+                message: 'Actividad baja en la red.',
+                type: 'crypto-gas',
+                is_read: false,
+                created_at: new Date(Date.now() - 2 * 3600000).toISOString()
+            }
+        ];
+
+        const cloneCryptoAlerts = () => CRYPTO_ALERTS.map((alert) => ({ ...alert }));
+
+        function initCryptoNotifications() {
+            if (!NotificationsManager) return;
+
+            const ensureData = () => {
+                if (!NotificationsManager._notifications || NotificationsManager._notifications.length === 0) {
+                    NotificationsManager._notifications = cloneCryptoAlerts();
+                }
+            };
+
+            NotificationsManager._getIcon = function (type) {
+                switch (type) {
+                    case 'crypto-bull':
+                        return '<i class="fas fa-arrow-trend-up"></i>';
+                    case 'crypto-neutral':
+                        return '<i class="fas fa-circle-info"></i>';
+                    case 'crypto-gas':
+                        return '<i class="fas fa-fire"></i>';
+                    default:
+                        return '<i class="fas fa-bell"></i>';
+                }
+            };
+
+            NotificationsManager.checkUnread = async function () {
+                ensureData();
+                this._unreadCount = this._notifications.filter((n) => !n.is_read).length;
+                this._updateBadge();
+            };
+
+            NotificationsManager.showNotifications = async function () {
+                ensureData();
+                this._renderDropdown();
+            };
+
+            NotificationsManager._markAsRead = async function (notificationId) {
+                ensureData();
+                const notification = this._notifications.find((n) => n.id === notificationId);
+                if (notification) {
+                    notification.is_read = true;
+                }
+                this._unreadCount = this._notifications.filter((n) => !n.is_read).length;
+                this._updateBadge();
+                this._renderDropdown();
+            };
+
+            NotificationsManager.markAllRead = async function () {
+                ensureData();
+                this._notifications = this._notifications.map((n) => ({ ...n, is_read: true }));
+                this._unreadCount = 0;
+                this._updateBadge();
+                const dropdown = document.getElementById('notifications-dropdown');
+                if (dropdown) dropdown.remove();
+                this._showToast('Alertas marcadas como leidas', 'success');
+            };
+        }
+
+        initCryptoNotifications();
         NotificationsManager.init();
 
         const SPARKLINE_POINTS = 12;
@@ -140,10 +241,16 @@
             return text.startsWith('-') ? 'down' : 'up';
         }
 
-        function getSymbolKey(card, index) {
+        function getSymbolLabel(card, index) {
             const pairEl = card.querySelector('.market-pair');
             const raw = (pairEl?.textContent || '').trim();
-            if (raw) return raw.replace('/', '');
+            if (raw) return raw;
+            return `Market ${index + 1}`;
+        }
+
+        function getSymbolKey(card, index) {
+            const label = getSymbolLabel(card, index);
+            if (label) return label.replace('/', '');
             return `card-${index}`;
         }
 
@@ -204,9 +311,19 @@
             return placeholder;
         }
 
+        function decorateMarketCard(card, symbolLabel) {
+            if (!card) return;
+            card.classList.add('market-card--interactive');
+            card.setAttribute('role', 'button');
+            card.tabIndex = 0;
+            card.dataset.symbol = symbolLabel;
+            card.setAttribute('aria-label', `Ver grafico ${symbolLabel}`);
+        }
+
         function renderSparklines() {
             const cards = document.querySelectorAll('.market-card');
             cards.forEach((card, index) => {
+                const symbolLabel = getSymbolLabel(card, index);
                 const placeholder = ensurePlaceholder(card);
                 const changeEl = card.querySelector('.market-change');
                 const direction = getChangeDirection(changeEl);
@@ -215,6 +332,7 @@
                 const color = SPARKLINE_COLORS[direction];
                 const points = buildSparklinePoints(seed, direction);
 
+                decorateMarketCard(card, symbolLabel);
                 placeholder.textContent = '';
                 placeholder.appendChild(createSparklineSvg(points, color));
             });
@@ -230,6 +348,125 @@
             });
         }
 
+        const chartModal = document.getElementById('crypto-detail-modal');
+        const chartTitle = document.getElementById('crypto-modal-title');
+        const chartContainer = document.getElementById('crypto-chart-container');
+        const chartCanvas = document.getElementById('crypto-chart-canvas');
+        const CHART_POINTS = 24;
+        const CHART_COLORS = {
+            up: '#00ff88',
+            down: '#ff0055'
+        };
+        let activeSymbol = null;
+
+        function getBasePrice(symbol) {
+            const upper = (symbol || '').toUpperCase();
+            if (upper.includes('BTC')) return 95000;
+            if (upper.includes('ETH')) return 3200;
+            if (upper.includes('SOL')) return 150;
+            if (upper.includes('BNB')) return 600;
+            return 120;
+        }
+
+        function generateCandles(symbol, count = CHART_POINTS) {
+            const seed = hashString(symbol || 'market');
+            const rand = mulberry32(seed);
+            const base = getBasePrice(symbol);
+            const volatility = base * 0.006;
+            let lastClose = base;
+            const candles = [];
+
+            for (let i = 0; i < count; i += 1) {
+                const open = lastClose;
+                const move = (rand() - 0.5) * volatility;
+                const close = clamp(open + move, base * 0.7, base * 1.3);
+                const high = Math.max(open, close) + rand() * volatility * 0.4;
+                const low = Math.min(open, close) - rand() * volatility * 0.4;
+                candles.push({ open, high, low, close });
+                lastClose = close;
+            }
+
+            return candles;
+        }
+
+        function drawCandles(candles) {
+            if (!chartCanvas || !chartContainer) return;
+            const rect = chartCanvas.getBoundingClientRect();
+            const width = Math.max(320, Math.floor(rect.width));
+            const height = Math.max(220, Math.floor(rect.height));
+            const ratio = window.devicePixelRatio || 1;
+            chartCanvas.width = width * ratio;
+            chartCanvas.height = height * ratio;
+            chartCanvas.style.width = `${width}px`;
+            chartCanvas.style.height = `${height}px`;
+
+            const ctx = chartCanvas.getContext('2d');
+            if (!ctx) return;
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, width, height);
+
+            const paddingX = 16;
+            const paddingY = 12;
+            const chartWidth = width - paddingX * 2;
+            const chartHeight = height - paddingY * 2;
+            const lows = candles.map((candle) => candle.low);
+            const highs = candles.map((candle) => candle.high);
+            const min = Math.min(...lows);
+            const max = Math.max(...highs);
+            const range = max - min || 1;
+            const step = chartWidth / candles.length;
+            const candleWidth = Math.max(4, step * 0.6);
+
+            candles.forEach((candle, index) => {
+                const x = paddingX + index * step + (step - candleWidth) / 2;
+                const highY = paddingY + (1 - (candle.high - min) / range) * chartHeight;
+                const lowY = paddingY + (1 - (candle.low - min) / range) * chartHeight;
+                const openY = paddingY + (1 - (candle.open - min) / range) * chartHeight;
+                const closeY = paddingY + (1 - (candle.close - min) / range) * chartHeight;
+                const isUp = candle.close >= candle.open;
+                const color = isUp ? CHART_COLORS.up : CHART_COLORS.down;
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.4;
+                ctx.beginPath();
+                ctx.moveTo(x + candleWidth / 2, highY);
+                ctx.lineTo(x + candleWidth / 2, lowY);
+                ctx.stroke();
+
+                ctx.fillStyle = color;
+                const bodyY = Math.min(openY, closeY);
+                const bodyHeight = Math.max(2, Math.abs(closeY - openY));
+                ctx.fillRect(x, bodyY, candleWidth, bodyHeight);
+            });
+        }
+
+        function renderChart(symbol) {
+            const candles = generateCandles(symbol, CHART_POINTS);
+            drawCandles(candles);
+        }
+
+        function openChartModal(symbol) {
+            if (!chartModal || !chartContainer) return;
+            const dropdown = document.getElementById('notifications-dropdown');
+            if (dropdown) dropdown.remove();
+            activeSymbol = symbol || 'Market';
+            if (chartTitle) chartTitle.textContent = activeSymbol;
+            chartModal.classList.add('is-open');
+            chartModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('crypto-modal-open');
+            requestAnimationFrame(() => renderChart(activeSymbol));
+        }
+
+        function closeChartModal() {
+            if (!chartModal) return;
+            chartModal.classList.remove('is-open');
+            chartModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('crypto-modal-open');
+            activeSymbol = null;
+        }
+
         const marketGrid = document.getElementById('market-grid');
         if (marketGrid && !window.__cryptoSparklineObserver) {
             scheduleSparklines();
@@ -237,6 +474,49 @@
             observer.observe(marketGrid, { childList: true });
             window.__cryptoSparklineObserver = observer;
         }
+
+        if (marketGrid && !window.__cryptoChartBound) {
+            window.__cryptoChartBound = true;
+            marketGrid.addEventListener('click', (event) => {
+                const card = event.target.closest('.market-card');
+                if (!card) return;
+                const symbol = card.dataset.symbol
+                    || card.querySelector('.market-pair')?.textContent?.trim()
+                    || 'Market';
+                openChartModal(symbol);
+            });
+
+            marketGrid.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                const card = event.target.closest('.market-card');
+                if (!card) return;
+                event.preventDefault();
+                const symbol = card.dataset.symbol
+                    || card.querySelector('.market-pair')?.textContent?.trim()
+                    || 'Market';
+                openChartModal(symbol);
+            });
+        }
+
+        if (chartModal) {
+            chartModal.addEventListener('click', (event) => {
+                if (event.target.closest('[data-modal-close]')) {
+                    closeChartModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && chartModal?.classList.contains('is-open')) {
+                closeChartModal();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (chartModal?.classList.contains('is-open') && activeSymbol) {
+                renderChart(activeSymbol);
+            }
+        });
     </script>
 </body>
 
