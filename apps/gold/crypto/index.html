@@ -14,491 +14,230 @@
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        :root {
-            --bg-primary: #0a0a0a;
-            --bg-secondary: #0f0f0f;
-            --gold-primary: #C8A752;
-            --gold-vibrant: #D4AF37;
-            --text-primary: #e5e5e5;
-            --text-muted: #888;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 40px 16px;
-            overflow-y: auto;
-        }
-
-        /* Animated Background */
-        .bg-atmosphere {
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse at 30% 20%, rgba(200, 167, 82, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(200, 167, 82, 0.05) 0%, transparent 40%),
-                var(--bg-primary);
-            z-index: -1;
-        }
-
-        .grid-overlay {
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(200, 167, 82, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(200, 167, 82, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: gridMove 20s linear infinite;
-            z-index: -1;
-        }
-
-        @keyframes gridMove {
-            0% {
-                transform: perspective(500px) rotateX(60deg) translateY(0);
-            }
-
-            100% {
-                transform: perspective(500px) rotateX(60deg) translateY(50px);
-            }
-        }
-
-        /* Container */
-        .container {
-            text-align: center;
-            padding: 2rem;
-            max-width: 600px;
-        }
-
-        /* Logo */
-        .logo {
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 2rem;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        /* Title */
-        .title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2rem, 6vw, 3.5rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-vibrant) 50%, var(--gold-primary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 40px rgba(200, 167, 82, 0.3);
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-bottom: 3rem;
-        }
-
-        /* Status Badge */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 24px;
-            background: rgba(200, 167, 82, 0.1);
-            border: 1px solid rgba(200, 167, 82, 0.3);
-            border-radius: 50px;
-            margin-bottom: 2rem;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            background: var(--gold-primary);
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.4);
-            }
-
-            50% {
-                opacity: 0.8;
-                box-shadow: 0 0 0 10px rgba(200, 167, 82, 0);
-            }
-        }
-
-        .status-text {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--gold-primary);
-            letter-spacing: 2px;
-        }
-
-        /* Description */
-        .description {
-            font-size: 1rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 3rem;
-        }
-
-        .description strong {
-            color: var(--gold-primary);
-        }
-
-        /* Features Preview */
-        .features {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 3rem;
-            flex-wrap: wrap;
-        }
-
-        .feature {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .feature-icon {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(200, 167, 82, 0.1);
-            border: 1px solid rgba(200, 167, 82, 0.2);
-            border-radius: 12px;
-            font-size: 1.3rem;
-        }
-
-        .feature-name {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Back Button */
-        .btn-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-vibrant) 100%);
-            color: #000;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 700;
-            text-decoration: none;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(200, 167, 82, 0.3);
-        }
-
-        .btn-back:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(200, 167, 82, 0.5);
-        }
-
-        /* Fear & Greed */
-        .fng-card {
-            background: rgba(10, 10, 10, 0.6);
-            border: 1px solid rgba(200, 167, 82, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            text-align: left;
-        }
-
-        .fng-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .fng-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.95rem;
-            letter-spacing: 2px;
-            color: var(--gold-primary);
-            text-transform: uppercase;
-        }
-
-        .fng-updated {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .fng-bar {
-            position: relative;
-            height: 10px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #f87171 0%, #fbbf24 50%, #4ade80 100%);
-            margin-bottom: 0.5rem;
-        }
-
-        .fng-marker {
-            position: absolute;
-            top: 50%;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 2px solid var(--gold-primary);
-            background: var(--bg-primary);
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 12px rgba(200, 167, 82, 0.5);
-        }
-
-        .fng-scale {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-
-        .fng-value {
-            display: flex;
-            align-items: baseline;
-            gap: 0.6rem;
-            margin-top: 1rem;
-        }
-
-        .fng-number {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--gold-primary);
-        }
-
-        .fng-label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-        }
-
-        .fng-error {
-            margin-top: 0.75rem;
-            font-size: 0.85rem;
-            color: #f87171;
-            min-height: 1.2rem;
-        }
-
-        .fng-card[data-state="extreme-fear"] .fng-number,
-        .fng-card[data-state="fear"] .fng-number {
-            color: #f87171;
-        }
-
-        .fng-card[data-state="neutral"] .fng-number {
-            color: var(--gold-primary);
-        }
-
-        .fng-card[data-state="greed"] .fng-number,
-        .fng-card[data-state="extreme-greed"] .fng-number {
-            color: #4ade80;
-        }
-
-        /* Market */
-        .market {
-            background: rgba(10, 10, 10, 0.6);
-            border: 1px solid rgba(200, 167, 82, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2.5rem;
-            text-align: left;
-        }
-
-        .market-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .market-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            letter-spacing: 2px;
-            color: var(--gold-primary);
-            text-transform: uppercase;
-        }
-
-        .market-updated {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .market-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .market-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(200, 167, 82, 0.2);
-            border-radius: 12px;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .market-pair {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 0.95rem;
-            color: #fff;
-            letter-spacing: 1px;
-        }
-
-        .market-name {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-
-        .market-price {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--gold-primary);
-        }
-
-        .market-change {
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .market-change.up {
-            color: #4ade80;
-        }
-
-        .market-change.down {
-            color: #f87171;
-        }
-
-        .market-error {
-            margin-top: 1rem;
-            font-size: 0.85rem;
-            color: #f87171;
-            min-height: 1.2rem;
-        }
-
-        /* Footer */
-        .footer {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            opacity: 0.5;
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/css/tokens.css">
+    <link rel="stylesheet" href="./crypto.css">
 </head>
 
-<body>
-    <div class="bg-atmosphere"></div>
-    <div class="grid-overlay"></div>
+<body class="crypto-page">
+    <header class="crypto-header">
+        <nav class="crypto-nav" aria-label="Navegacion principal">
+            <a class="nav-back" href="/dashboard/" aria-label="Volver al dashboard">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                <span>Atras</span>
+            </a>
+            <div class="nav-title">MERCADO</div>
+            <button id="notification-bell" class="nav-icon btn-notification notification-bell" type="button"
+                aria-label="Notificaciones" title="Notificaciones">
+                <i class="fas fa-bell" aria-hidden="true"></i>
+                <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
+            </button>
+        </nav>
+    </header>
 
-    <div class="container">
-        <img src="/brand/logo.webp" alt="YavlGold" class="logo">
+    <main class="crypto-main">
+        <div class="crypto-container">
+            <section class="crypto-hero">
+                <div class="crypto-brand">
+                    <img src="/brand/logo.webp" alt="YavlGold" class="logo">
+                    <div class="crypto-heading">
+                        <h1 class="title">YAVLGOLD CRYPTO</h1>
+                        <p class="subtitle">Market Data V1</p>
+                    </div>
+                </div>
 
-        <h1 class="title">YAVLGOLD CRYPTO</h1>
-        <p class="subtitle">Market Data V1</p>
+                <div class="status-badge">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span class="status-text" id="market-status-text">CONECTANDO</span>
+                </div>
 
-        <div class="status-badge">
-            <span class="status-dot"></span>
-            <span class="status-text" id="market-status-text">CONECTANDO</span>
+                <p class="description">
+                    Datos publicos de Binance para spot market. Actualizacion automatica cada 20s.
+                </p>
+            </section>
+
+            <section class="crypto-panels">
+                <div class="fng-card" id="fng-card" data-state="neutral">
+                    <div class="fng-header">
+                        <h2 class="fng-title">Fear & Greed Index</h2>
+                        <span class="fng-updated" id="fng-updated">--</span>
+                    </div>
+                    <div class="fng-bar">
+                        <span class="fng-marker" id="fng-marker" aria-hidden="true"></span>
+                    </div>
+                    <div class="fng-scale">
+                        <span>0</span>
+                        <span>25</span>
+                        <span>50</span>
+                        <span>75</span>
+                        <span>100</span>
+                    </div>
+                    <div class="fng-value">
+                        <span class="fng-number" id="fng-value">--</span>
+                        <span class="fng-label" id="fng-label">Cargando</span>
+                    </div>
+                    <div class="fng-error" id="fng-error" aria-live="polite"></div>
+                </div>
+
+                <div class="market">
+                    <div class="market-header">
+                        <h2 class="market-title">Spot Market</h2>
+                        <span class="market-updated" id="market-updated">--</span>
+                    </div>
+                    <div class="market-grid" id="market-grid"></div>
+                    <div class="market-error" id="market-error" aria-live="polite"></div>
+                </div>
+            </section>
         </div>
+    </main>
 
-        <p class="description">
-            Datos publicos de Binance para spot market. Actualizacion automatica cada 20s.
-        </p>
+    <footer class="crypto-footer" id="app-footer">
+        <p>(c) <span id="footer-year">2026</span> YavlGold - Open Source (MIT License)</p>
+        <p class="footer-meta">Version <span id="footer-version">9.4.0</span> - Pulso Vital -
+            <a class="footer-link" href="/">Inicio</a></p>
+    </footer>
 
-        <div class="fng-card" id="fng-card" data-state="neutral">
-            <div class="fng-header">
-                <h2 class="fng-title">Fear & Greed Index</h2>
-                <span class="fng-updated" id="fng-updated">--</span>
-            </div>
-            <div class="fng-bar">
-                <span class="fng-marker" id="fng-marker" aria-hidden="true"></span>
-            </div>
-            <div class="fng-scale">
-                <span>0</span>
-                <span>25</span>
-                <span>50</span>
-                <span>75</span>
-                <span>100</span>
-            </div>
-            <div class="fng-value">
-                <span class="fng-number" id="fng-value">--</span>
-                <span class="fng-label" id="fng-label">Cargando</span>
-            </div>
-            <div class="fng-error" id="fng-error" aria-live="polite"></div>
-        </div>
-
-        <div class="market">
-            <div class="market-header">
-                <h2 class="market-title">Spot Market</h2>
-                <span class="market-updated" id="market-updated">--</span>
-            </div>
-            <div class="market-grid" id="market-grid"></div>
-            <div class="market-error" id="market-error" aria-live="polite"></div>
-        </div>
-
-        <a href="/dashboard/" class="btn-back">
-            <i class="fas fa-arrow-left"></i>
-            Regresar al Dashboard
-        </a>
-    </div>
-
-    <div class="footer">
-        YavlGold V9.4 - Crypto Market V1
-    </div>
     <script type="module" src="../assets/js/utils/activityTracker.js"></script>
     <script type="module" src="./crypto.js"></script>
     <script type="module">
+        import { NotificationsManager } from '../assets/js/components/notifications.js';
+
         window.YGActivity?.attachModuleTracking('crypto', { title: 'Crypto', path: '/crypto/' });
+        NotificationsManager.init();
+
+        const SPARKLINE_POINTS = 12;
+        const SPARKLINE_WIDTH = 100;
+        const SPARKLINE_HEIGHT = 40;
+        const SPARKLINE_COLORS = {
+            up: '#00ff88',
+            down: '#ff0055'
+        };
+
+        const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+        function hashString(value) {
+            let hash = 0;
+            for (let i = 0; i < value.length; i += 1) {
+                hash = ((hash << 5) - hash) + value.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        function mulberry32(seed) {
+            return function () {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        function getChangeDirection(changeEl) {
+            if (!changeEl) return 'up';
+            if (changeEl.classList.contains('down')) return 'down';
+            if (changeEl.classList.contains('up')) return 'up';
+            const text = (changeEl.textContent || '').trim();
+            return text.startsWith('-') ? 'down' : 'up';
+        }
+
+        function getSymbolKey(card, index) {
+            const pairEl = card.querySelector('.market-pair');
+            const raw = (pairEl?.textContent || '').trim();
+            if (raw) return raw.replace('/', '');
+            return `card-${index}`;
+        }
+
+        function buildSparklinePoints(seed, direction) {
+            const rand = mulberry32(seed);
+            const drift = direction === 'down' ? -0.03 : 0.03;
+            let value = direction === 'down' ? 0.7 : 0.3;
+            const points = [];
+
+            for (let i = 0; i < SPARKLINE_POINTS; i += 1) {
+                const noise = (rand() - 0.5) * 0.18;
+                value = clamp(value + drift + noise, 0.1, 0.9);
+                const x = (i / (SPARKLINE_POINTS - 1)) * SPARKLINE_WIDTH;
+                const y = (1 - value) * SPARKLINE_HEIGHT;
+                points.push({ x, y });
+            }
+
+            return points;
+        }
+
+        function createSparklineSvg(points, color) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', `0 0 ${SPARKLINE_WIDTH} ${SPARKLINE_HEIGHT}`);
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('aria-hidden', 'true');
+            svg.setAttribute('focusable', 'false');
+
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            const pointsAttr = points.map((point) => `${point.x},${point.y}`).join(' ');
+            polyline.setAttribute('points', pointsAttr);
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke', color);
+            polyline.setAttribute('stroke-width', '2');
+            polyline.setAttribute('stroke-linecap', 'round');
+            polyline.setAttribute('stroke-linejoin', 'round');
+
+            const last = points[points.length - 1];
+            const marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            marker.setAttribute('cx', last.x);
+            marker.setAttribute('cy', last.y);
+            marker.setAttribute('r', '3');
+            marker.setAttribute('fill', color);
+
+            svg.appendChild(polyline);
+            svg.appendChild(marker);
+            return svg;
+        }
+
+        function ensurePlaceholder(card) {
+            let placeholder = card.querySelector('.sparkline-placeholder');
+            if (!placeholder) {
+                placeholder = document.createElement('div');
+                placeholder.className = 'sparkline-placeholder';
+                placeholder.setAttribute('aria-hidden', 'true');
+                card.appendChild(placeholder);
+            }
+            return placeholder;
+        }
+
+        function renderSparklines() {
+            const cards = document.querySelectorAll('.market-card');
+            cards.forEach((card, index) => {
+                const placeholder = ensurePlaceholder(card);
+                const changeEl = card.querySelector('.market-change');
+                const direction = getChangeDirection(changeEl);
+                const symbolKey = getSymbolKey(card, index);
+                const seed = hashString(symbolKey);
+                const color = SPARKLINE_COLORS[direction];
+                const points = buildSparklinePoints(seed, direction);
+
+                placeholder.textContent = '';
+                placeholder.appendChild(createSparklineSvg(points, color));
+            });
+        }
+
+        let renderScheduled = false;
+        function scheduleSparklines() {
+            if (renderScheduled) return;
+            renderScheduled = true;
+            requestAnimationFrame(() => {
+                renderScheduled = false;
+                renderSparklines();
+            });
+        }
+
+        const marketGrid = document.getElementById('market-grid');
+        if (marketGrid && !window.__cryptoSparklineObserver) {
+            scheduleSparklines();
+            const observer = new MutationObserver(() => scheduleSparklines());
+            observer.observe(marketGrid, { childList: true });
+            window.__cryptoSparklineObserver = observer;
+        }
     </script>
 </body>
 
 </html>
-

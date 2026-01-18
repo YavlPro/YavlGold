@@ -202,3 +202,56 @@ Fecha: 2026-01-16
 - [ ] `.module-thumbnail` visible en movil (override activo).
 - [ ] No se edita `mobile-optimizations.css`.
 - [ ] `pnpm build:gold` OK.
+
+## Diagnostico (tarea actual - crypto app shell y fondo)
+1) La pagina /crypto se ve como lista plana sin App Shell, lo que reduce coherencia visual con el ecosistema.
+2) El fondo actual incluye una imagen/overlay tipo watermark que aparece al hacer scroll, afectando legibilidad y percepcion premium.
+3) Al agregar barras fijas (navbar/footer) existe riesgo de que el contenido quede tapado si no se ajusta el layout.
+4) Se requiere reservar espacio para futuros sparklines sin tocar la logica de fetch ni el render actual.
+
+## Plan (tarea actual - crypto app shell y fondo)
+1) Editar `apps/gold/crypto/index.html` para agregar estructura App Shell (header/nav/main/footer) y placeholders de sparklines sin cambiar logica.
+2) Crear/actualizar `apps/gold/crypto/crypto.css` para fondo limpio, navbar glass sticky, layout seguro y placeholders.
+3) Mantener el footer estandar del ecosistema y ajustar padding-top/bottom para evitar solapamientos.
+4) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## Diagnostico (base AGENTS - mapa MPA/supabase/agro/crypto)
+1) MPA: `apps/gold/vite.config.js` define entradas HTML para main, cookies, faq, soporte, dashboard, perfil, configuracion, creacion, academia, agro, crypto, herramientas, tecnologia y social.
+2) Routing: `apps/gold/vercel.json` activa cleanUrls/trailingSlash; redirects /herramientas -> /tecnologia; rewrites /tecnologia; routes explicitas para /academia, /crypto, /tecnologia y /music.
+3) Navegacion: `apps/gold/index.html` usa navbar con anclas (#inicio, #modulos, #testimonios) y cards de modulos; `apps/gold/dashboard/index.html` es el panel principal post-login.
+4) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` crea cliente con VITE_*. `apps/gold/assets/js/auth/authClient.js` importa supabase-config, gestiona sesiones y guard (protected prefixes). `apps/gold/assets/js/auth/authUI.js` controla UI de login/registro y eventos auth. `apps/gold/dashboard/auth-guard.js` valida sesion via window.supabase/AuthClient antes de entrar.
+5) Dashboard datos: usa `profiles` (avatar/username), `modules` (lista), `user_favorites` via moduleManager, `notifications` via NotificationsManager. Tablas de progreso (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) no estan integradas en el dashboard.
+6) Agro/Clima: `apps/gold/assets/js/geolocation.js` prioriza Manual > GPS > IP, con cache por modo y keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`; `apps/gold/agro/dashboard.js` usa `getCoordsSmart`, `initWeather`, `displayWeather` y cache `yavlgold_weather_*`.
+7) Crypto: `apps/gold/crypto/` contiene index MPA y assets relacionados; no depende de servidor python; la UI se monta en `apps/gold/crypto/index.html` con datos de `apps/gold/crypto/crypto.js`.
+
+## Diagnostico (tarea actual - campana crypto)
+1) En `apps/gold/crypto/index.html` la campana es solo un boton visual (`.nav-icon`) sin `id`/clases esperadas ni badge, por eso no hay handler.
+2) En dashboard, la campana usa `#notification-bell` + `.notification-bell` y `#notification-badge`, y el click se registra desde `apps/gold/assets/js/components/notifications.js`.
+3) Crypto no importa ni inicializa `NotificationsManager`, asi que no se registra el click ni se inyecta el dropdown.
+
+## Plan (tarea actual - campana crypto)
+1) Editar `apps/gold/crypto/index.html` para usar `id="notification-bell"` + clases y agregar `#notification-badge`, y cargar `NotificationsManager` con init.
+2) Ajustar `apps/gold/crypto/crypto.css` para badge y estado focus sin romper el layout.
+3) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## Diagnostico (tarea actual - sparklines crypto)
+1) `apps/gold/crypto/crypto.js` renderiza `.market-card` con `.market-change.up/down`, pero no agrega un contenedor real para sparkline.
+2) La lista se re-renderiza con `innerHTML` en cada update, por lo que cualquier SVG insertado debe recrearse.
+3) Riesgos: parpadeo o duplicados si no es idempotente; impacto en performance si se recalcula demasiado.
+
+## Plan (tarea actual - sparklines crypto)
+1) Editar `apps/gold/crypto/crypto.css` para definir `.sparkline-placeholder` con tamanio fijo y SVG acotado.
+2) Editar `apps/gold/crypto/index.html` para JS inline: detectar `.market-change` (clase/texto), crear SVG deterministico por simbolo y re-render via MutationObserver.
+3) Ejecutar `pnpm build:gold` al final y reportar resultado.
+
+## Diagnostico (tarea actual - campana crypto wiring)
+1) Selector en dashboard: boton `#notification-bell.notification-bell` y badge `#notification-badge` dentro del mismo boton.
+2) Panel: no hay HTML estatico; `apps/gold/assets/js/components/notifications.js` crea `#notifications-dropdown` y `#notifications-styles` en runtime.
+3) JS responsable: `NotificationsManager.init()` (dashboard lo llama desde script inline con imports ESM).
+4) En crypto falla si no se importan esos JS o si el boton no coincide con selectors esperados.
+
+## Plan (tarea actual - campana crypto wiring)
+1) `apps/gold/crypto/index.html`: asegurar `#notification-bell` + `.notification-bell` + `#notification-badge` y ejecutar `NotificationsManager.init()` al final del body.
+2) `apps/gold/crypto/crypto.css`: ajustar badge y focus si hace falta, y asegurar z-index compatible con dropdown.
+3) `apps/gold/docs/AGENT_REPORT.md`: registrar diagnostico/plan (este bloque).
+4) Ejecutar `pnpm build:gold` y reportar resultado.
