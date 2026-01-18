@@ -1,0 +1,40 @@
+@media (max-width: 600px) {
+  #modal-lunar #lunar-calendar-grid {
+    padding: 12px;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  #modal-lunar .lunar-month {
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  #modal-lunar .month-title {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+  }
+
+  #modal-lunar .day-header {
+    font-size: 8px;
+    padding: 3px 0;
+    line-height: 1;
+  }
+
+  #modal-lunar .day-cell {
+    height: 26px;
+    font-size: 9px;
+    line-height: 1.1;
+    border-radius: 5px;
+  }
+
+  #modal-lunar .day-num {
+    font-size: 9px;
+  }
+
+  #modal-lunar .phase-icon {
+    font-size: 7px;
+    margin-top: 1px;
+  }
+}

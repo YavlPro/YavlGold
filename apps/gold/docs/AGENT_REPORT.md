@@ -267,3 +267,31 @@ Fecha: 2026-01-16
 2) `apps/gold/crypto/index.html`: agregar modal de detalle y handlers de apertura/cierre con delegacion en `#market-grid`.
 3) `apps/gold/crypto/crypto.css`: estilos para modal glass, boton de cierre y contenedor de grafico responsive.
 4) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## Diagnostico (tarea actual - hardening tabs finanzas + calendario mobile)
+1) Riesgo de duplicados: verificar en runtime con `document.querySelectorAll('#income-form').length` y `document.querySelectorAll('#expense-form').length`; hoy gastos viven en `apps/gold/agro/index.html` y ingresos se inyectan desde `apps/gold/agro/agro.js`.
+2) ARIA actual: tabs/panels tienen atributos base, pero se requiere reforzar roles/tabindex/aria-labelledby y mantener sincronizado `aria-selected`/`aria-hidden` via JS.
+3) Overrides calendario: el bloque mobile esta en el `<style>` de `apps/gold/agro/index.html` (reglas `@media (max-width: 600px)` para `#modal-lunar`).
+
+## Plan (tarea actual - hardening tabs finanzas + calendario mobile)
+1) Anti-duplicados: agregar verificacion defensiva y asegurar estrategia move-not-clone (appendChild de nodo existente a `#tab-panel-ingresos`).
+2) Tabs accesibles: completar roles/aria-controls/aria-labelledby y `tabIndex` desde JS (sin reescrituras de DOM).
+3) Persistencia: guardar/restaurar tab activo en `localStorage` con key `YG_AGRO_FIN_TAB_V1`.
+4) Focus management: al cambiar tab, enfocar primer input visible (o heading con `tabindex=-1`) y evitar scroll agresivo.
+5) CSS calendario: mover overrides mobile a CSS del modulo agro con scoping estricto.
+
+## Diagnostico (tarea actual - agro finanzas tabs + agenda lunar)
+1) MPA: `apps/gold/vite.config.js` lista entradas MPA (incluye `agro/index.html`); `apps/gold/vercel.json` mantiene cleanUrls/trailingSlash y rewrites; `apps/gold/index.html` navega a `/agro/`; `apps/gold/dashboard/index.html` es el panel post-login.
+2) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` instancia el cliente; `apps/gold/assets/js/auth/authClient.js` y `authUI.js` manejan sesion/UI; `apps/gold/dashboard/auth-guard.js` valida acceso.
+3) Dashboard datos: consultas activas a `profiles`, `modules`, `user_favorites`, `notifications`; progreso academico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) no esta integrado.
+4) Agro/Clima: `apps/gold/assets/js/geolocation.js` aplica prioridad Manual > GPS > IP y usa keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`; `apps/gold/agro/dashboard.js` usa `getCoordsSmart`, `initWeather`, `displayWeather` y cache `yavlgold_weather_*`.
+5) Crypto: `apps/gold/crypto/` contiene MPA (index/JS/CSS) y backups; no usa servidor python.
+6) Finanzas (Gastos): `apps/gold/agro/index.html` en `.finances-section` contiene `<form id="expense-form">` con IDs: `expense-concept`, `expense-amount`, `expense-date`, `expense-category`, `expense-notes`, `upload-dropzone`, `expense-receipt`, `btn-clean`, `btn-save`, `recent-transactions-container`, `expenses-list`, `upload-preview`, `upload-filename`.
+7) Finanzas (Ingresos): `apps/gold/agro/agro.js` crea `#agro-income-section` dentro de `.finances-section` con IDs: `income-form`, `income-concept`, `income-amount`, `income-date`, `income-category`, `income-dropzone`, `income-receipt`, `income-clean-btn`, `income-save-btn`, `income-recent-container`, `income-list`.
+8) Agenda Lunar: modal en `apps/gold/agro/index.html` (`#modal-lunar` y `#lunar-calendar-grid`); el alto/densidad se define en `apps/gold/agro/agro-interactions.js` via `injectLunarStyles` (.day-cell height 36px, .day-header font-size 9px, .month-title 0.9rem, .lunar-month padding 12px) y estilos inline del grid (padding 20px, gap 14px, contenedor 85vh).
+
+## Plan (tarea actual - agro finanzas tabs + agenda lunar)
+1) Editar `apps/gold/agro/index.html`: envolver gastos/ingresos en una sola tarjeta con tabs; crear paneles para Gastos/Ingresos/Pendientes/Perdidas/Transferencias; agregar formularios nuevos con IDs propios; agregar CSS de tabs y override responsive del calendario.
+2) Editar `apps/gold/agro/agro.js`: inyectar ingresos dentro de `#tab-panel-ingresos`, implementar `switchTab` con `display:none`/`.is-hidden` sin remover nodos y ajustar aria; agregar listeners placeholder para nuevos formularios.
+3) Estrategia DOM: wrap + hide/show para preservar IDs actuales (gastos/ingresos) y evitar recrear nodos/listeners.
+4) Estrategia calendario responsive: `@media (max-width: 600px)` con overrides de `#modal-lunar .day-cell`, `.day-header`, `.month-title`, `.lunar-month`, `#lunar-calendar-grid` usando mayor especificidad para ganar al CSS inyectado.

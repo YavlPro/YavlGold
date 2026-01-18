@@ -4,6 +4,7 @@
  */
 import supabase from '../assets/js/config/supabase-config.js';
 import { updateStats } from './agro-stats.js';
+import './agro.css';
 
 // ============================================================
 // ESTADO DEL MÓDULO
@@ -708,6 +709,8 @@ const AGRO_INCOME_STORAGE_ROOT = 'agro/income';
 const AGRO_EXPENSE_STORAGE_ROOT = 'agro/expense';
 const AGRO_GAINS_STORAGE_ROOT = null;
 const INCOME_SECTION_ID = 'agro-income-section';
+const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
+const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias']);
 const INCOME_DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt'];
 const INCOME_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
 const INCOME_MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -764,230 +767,220 @@ function isIncomeImageExtension(ext) {
     return INCOME_IMAGE_EXTENSIONS.includes(ext);
 }
 
-function ensureIncomeSection(financesSection) {
+function ensureIncomeSection(targetContainer) {
     const existing = document.getElementById(INCOME_SECTION_ID);
-    if (existing) return existing;
-    if (!financesSection) return null;
+    if (existing) {
+        if (targetContainer && existing.parentElement !== targetContainer) {
+            targetContainer.appendChild(existing);
+        }
+        return existing;
+    }
+    if (!targetContainer) return null;
 
     const wrapper = document.createElement('div');
     wrapper.id = INCOME_SECTION_ID;
-    wrapper.style.marginTop = '2rem';
+    const existingForm = document.getElementById('income-form');
+    const existingNote = document.querySelector('[data-income-note="true"]');
+    const existingListContainer = document.getElementById('income-recent-container');
 
-    const header = document.createElement('div');
-    header.className = 'section-header animate-in';
+    let form = existingForm;
+    let note = existingNote;
+    let listContainer = existingListContainer;
 
-    const title = document.createElement('h3');
-    title.className = 'section-title';
-    title.style.fontSize = '1.2rem';
-    title.style.marginBottom = '0.35rem';
+    if (!form) {
+        form = document.createElement('form');
+        form.id = 'income-form';
+        form.className = 'income-form';
 
-    const icon = document.createElement('span');
-    icon.className = 'icon';
-    icon.textContent = '$';
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;';
 
-    const titleText = document.createElement('span');
-    titleText.textContent = ' Ingresos Agro';
+        const conceptGroup = document.createElement('div');
+        conceptGroup.className = 'input-group';
+        const conceptLabel = document.createElement('label');
+        conceptLabel.className = 'input-label';
+        conceptLabel.setAttribute('for', 'income-concept');
+        conceptLabel.textContent = 'Concepto *';
+        const conceptInput = document.createElement('input');
+        conceptInput.type = 'text';
+        conceptInput.id = 'income-concept';
+        conceptInput.className = 'styled-input';
+        conceptInput.required = true;
+        conceptInput.placeholder = 'Ej: Venta de tomate';
+        conceptInput.style.paddingLeft = '1rem';
+        conceptGroup.append(conceptLabel, conceptInput);
 
-    title.append(icon, titleText);
+        const amountGroup = document.createElement('div');
+        amountGroup.className = 'input-group';
+        const amountLabel = document.createElement('label');
+        amountLabel.className = 'input-label';
+        amountLabel.setAttribute('for', 'income-amount');
+        amountLabel.textContent = 'Monto *';
+        const amountWrapper = document.createElement('div');
+        amountWrapper.className = 'input-wrapper';
+        const amountPrefix = document.createElement('span');
+        amountPrefix.className = 'input-prefix';
+        amountPrefix.textContent = '$';
+        const amountInput = document.createElement('input');
+        amountInput.type = 'number';
+        amountInput.id = 'income-amount';
+        amountInput.className = 'styled-input';
+        amountInput.required = true;
+        amountInput.placeholder = '0.00';
+        amountInput.step = '0.01';
+        amountInput.min = '0';
+        amountWrapper.append(amountPrefix, amountInput);
+        amountGroup.append(amountLabel, amountWrapper);
 
-    const subtitle = document.createElement('p');
-    subtitle.style.color = 'var(--text-secondary)';
-    subtitle.style.fontSize = '0.9rem';
-    subtitle.style.marginTop = '0.35rem';
-    subtitle.textContent = 'Registro de ventas y otros ingresos';
+        const dateGroup = document.createElement('div');
+        dateGroup.className = 'input-group';
+        const dateLabel = document.createElement('label');
+        dateLabel.className = 'input-label';
+        dateLabel.setAttribute('for', 'income-date');
+        dateLabel.textContent = 'Fecha *';
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.id = 'income-date';
+        dateInput.className = 'styled-input';
+        dateInput.required = true;
+        dateInput.style.paddingLeft = '1rem';
+        dateGroup.append(dateLabel, dateInput);
 
-    header.append(title, subtitle);
+        const categoryGroup = document.createElement('div');
+        categoryGroup.className = 'input-group';
+        const categoryLabel = document.createElement('label');
+        categoryLabel.className = 'input-label';
+        categoryLabel.setAttribute('for', 'income-category');
+        categoryLabel.textContent = 'Categoria *';
+        const categorySelect = document.createElement('select');
+        categorySelect.id = 'income-category';
+        categorySelect.className = 'styled-input';
+        categorySelect.required = true;
+        categorySelect.style.paddingLeft = '1rem';
+        categorySelect.style.cursor = 'pointer';
+        const categoryOptions = [
+            { value: '', label: 'Seleccionar...' },
+            { value: 'ventas', label: 'Ventas' },
+            { value: 'servicios', label: 'Servicios' },
+            { value: 'subsidios', label: 'Subsidios' },
+            { value: 'otros', label: 'Otros' }
+        ];
+        categoryOptions.forEach((opt) => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            categorySelect.appendChild(option);
+        });
+        categoryGroup.append(categoryLabel, categorySelect);
 
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.marginTop = '1.5rem';
-    card.style.padding = '2rem';
+        grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup);
 
-    const form = document.createElement('form');
-    form.id = 'income-form';
-    form.className = 'income-form';
+        const fileGroup = document.createElement('div');
+        fileGroup.className = 'input-group';
+        fileGroup.style.marginTop = '1.5rem';
+        const fileLabel = document.createElement('label');
+        fileLabel.className = 'input-label';
+        fileLabel.textContent = 'Soporte (Documento/Imagen)';
 
-    const grid = document.createElement('div');
-    grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;';
+        const dropzone = document.createElement('div');
+        dropzone.id = 'income-dropzone';
+        dropzone.className = 'upload-dropzone';
+        dropzone.style.cssText = 'border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);';
 
-    const conceptGroup = document.createElement('div');
-    conceptGroup.className = 'input-group';
-    const conceptLabel = document.createElement('label');
-    conceptLabel.className = 'input-label';
-    conceptLabel.setAttribute('for', 'income-concept');
-    conceptLabel.textContent = 'Concepto *';
-    const conceptInput = document.createElement('input');
-    conceptInput.type = 'text';
-    conceptInput.id = 'income-concept';
-    conceptInput.className = 'styled-input';
-    conceptInput.required = true;
-    conceptInput.placeholder = 'Ej: Venta de tomate';
-    conceptInput.style.paddingLeft = '1rem';
-    conceptGroup.append(conceptLabel, conceptInput);
+        const dropIcon = document.createElement('i');
+        dropIcon.className = 'fa-solid fa-cloud-arrow-up';
+        dropIcon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
+        const dropText = document.createElement('p');
+        dropText.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
+        const dropSpan = document.createElement('span');
+        dropSpan.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
+        dropSpan.textContent = 'haz clic para subir';
+        dropText.append('Arrastra tu soporte aqui o ', dropSpan);
 
-    const amountGroup = document.createElement('div');
-    amountGroup.className = 'input-group';
-    const amountLabel = document.createElement('label');
-    amountLabel.className = 'input-label';
-    amountLabel.setAttribute('for', 'income-amount');
-    amountLabel.textContent = 'Monto *';
-    const amountWrapper = document.createElement('div');
-    amountWrapper.className = 'input-wrapper';
-    const amountPrefix = document.createElement('span');
-    amountPrefix.className = 'input-prefix';
-    amountPrefix.textContent = '$';
-    const amountInput = document.createElement('input');
-    amountInput.type = 'number';
-    amountInput.id = 'income-amount';
-    amountInput.className = 'styled-input';
-    amountInput.required = true;
-    amountInput.placeholder = '0.00';
-    amountInput.step = '0.01';
-    amountInput.min = '0';
-    amountWrapper.append(amountPrefix, amountInput);
-    amountGroup.append(amountLabel, amountWrapper);
+        const dropHint = document.createElement('p');
+        dropHint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
+        dropHint.textContent = 'JPG, PNG, PDF, DOC, DOCX o TXT (Max. 5MB)';
 
-    const dateGroup = document.createElement('div');
-    dateGroup.className = 'input-group';
-    const dateLabel = document.createElement('label');
-    dateLabel.className = 'input-label';
-    dateLabel.setAttribute('for', 'income-date');
-    dateLabel.textContent = 'Fecha *';
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.id = 'income-date';
-    dateInput.className = 'styled-input';
-    dateInput.required = true;
-    dateInput.style.paddingLeft = '1rem';
-    dateGroup.append(dateLabel, dateInput);
+        dropzone.append(dropIcon, dropText, dropHint);
 
-    const categoryGroup = document.createElement('div');
-    categoryGroup.className = 'input-group';
-    const categoryLabel = document.createElement('label');
-    categoryLabel.className = 'input-label';
-    categoryLabel.setAttribute('for', 'income-category');
-    categoryLabel.textContent = 'Categoria *';
-    const categorySelect = document.createElement('select');
-    categorySelect.id = 'income-category';
-    categorySelect.className = 'styled-input';
-    categorySelect.required = true;
-    categorySelect.style.paddingLeft = '1rem';
-    categorySelect.style.cursor = 'pointer';
-    const categoryOptions = [
-        { value: '', label: 'Seleccionar...' },
-        { value: 'ventas', label: 'Ventas' },
-        { value: 'servicios', label: 'Servicios' },
-        { value: 'subsidios', label: 'Subsidios' },
-        { value: 'otros', label: 'Otros' }
-    ];
-    categoryOptions.forEach((opt) => {
-        const option = document.createElement('option');
-        option.value = opt.value;
-        option.textContent = opt.label;
-        categorySelect.appendChild(option);
-    });
-    categoryGroup.append(categoryLabel, categorySelect);
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'income-receipt';
+        fileInput.accept = 'image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+        fileInput.style.display = 'none';
 
-    grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup);
+        fileGroup.append(fileLabel, dropzone, fileInput);
 
-    const fileGroup = document.createElement('div');
-    fileGroup.className = 'input-group';
-    fileGroup.style.marginTop = '1.5rem';
-    const fileLabel = document.createElement('label');
-    fileLabel.className = 'input-label';
-    fileLabel.textContent = 'Soporte (Documento/Imagen)';
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);';
 
-    const dropzone = document.createElement('div');
-    dropzone.id = 'income-dropzone';
-    dropzone.className = 'upload-dropzone';
-    dropzone.style.cssText = 'border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);';
+        const btnClean = document.createElement('button');
+        btnClean.type = 'button';
+        btnClean.id = 'income-clean-btn';
+        btnClean.className = 'btn';
+        btnClean.textContent = 'Limpiar';
+        btnClean.style.cssText = 'background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;';
+        btnClean.addEventListener('mouseenter', () => {
+            btnClean.style.borderColor = 'rgba(255,255,255,0.4)';
+            btnClean.style.color = '#fff';
+        });
+        btnClean.addEventListener('mouseleave', () => {
+            btnClean.style.borderColor = 'rgba(255,255,255,0.2)';
+            btnClean.style.color = 'rgba(255,255,255,0.7)';
+        });
 
-    const dropIcon = document.createElement('i');
-    dropIcon.className = 'fa-solid fa-cloud-arrow-up';
-    dropIcon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
-    const dropText = document.createElement('p');
-    dropText.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
-    const dropSpan = document.createElement('span');
-    dropSpan.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
-    dropSpan.textContent = 'haz clic para subir';
-    dropText.append('Arrastra tu soporte aqui o ', dropSpan);
+        const btnSave = document.createElement('button');
+        btnSave.type = 'submit';
+        btnSave.id = 'income-save-btn';
+        btnSave.className = 'btn btn-primary';
+        btnSave.textContent = 'Registrar Ingreso';
+        btnSave.style.cssText = 'background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;';
+        btnSave.addEventListener('mouseenter', () => {
+            btnSave.style.boxShadow = '0 0 25px rgba(200, 167, 82, 0.5)';
+            btnSave.style.transform = 'translateY(-2px)';
+        });
+        btnSave.addEventListener('mouseleave', () => {
+            btnSave.style.boxShadow = 'none';
+            btnSave.style.transform = 'translateY(0)';
+        });
 
-    const dropHint = document.createElement('p');
-    dropHint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-    dropHint.textContent = 'JPG, PNG, PDF, DOC, DOCX o TXT (Max. 5MB)';
+        actions.append(btnClean, btnSave);
 
-    dropzone.append(dropIcon, dropText, dropHint);
+        form.append(grid, fileGroup, actions);
+    }
 
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.id = 'income-receipt';
-    fileInput.accept = 'image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
-    fileInput.style.display = 'none';
+    if (!note) {
+        note = document.createElement('div');
+        note.style.cssText = 'margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);';
+        note.dataset.incomeNote = 'true';
+        const noteText = document.createElement('p');
+        noteText.style.cssText = 'color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;';
+        const noteIcon = document.createElement('i');
+        noteIcon.className = 'fa-solid fa-cloud-check';
+        const noteSpan = document.createElement('span');
+        noteSpan.textContent = 'Ingresos sincronizados en YavlGold Cloud en tiempo real.';
+        noteText.append(noteIcon, noteSpan);
+        note.appendChild(noteText);
+    }
 
-    fileGroup.append(fileLabel, dropzone, fileInput);
+    if (!listContainer) {
+        listContainer = document.createElement('div');
+        listContainer.id = 'income-recent-container';
+        listContainer.style.cssText = 'margin-top: 2rem; display: none;';
+        const listTitle = document.createElement('h3');
+        listTitle.style.cssText = 'color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;';
+        listTitle.textContent = 'Ultimos Ingresos (Sesion Actual)';
+        const list = document.createElement('div');
+        list.id = 'income-list';
+        list.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem;';
+        listContainer.append(listTitle, list);
+    }
 
-    const actions = document.createElement('div');
-    actions.style.cssText = 'display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);';
+    if (form) wrapper.appendChild(form);
+    if (note) wrapper.appendChild(note);
+    if (listContainer) wrapper.appendChild(listContainer);
 
-    const btnClean = document.createElement('button');
-    btnClean.type = 'button';
-    btnClean.id = 'income-clean-btn';
-    btnClean.className = 'btn';
-    btnClean.textContent = 'Limpiar';
-    btnClean.style.cssText = 'background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;';
-    btnClean.addEventListener('mouseenter', () => {
-        btnClean.style.borderColor = 'rgba(255,255,255,0.4)';
-        btnClean.style.color = '#fff';
-    });
-    btnClean.addEventListener('mouseleave', () => {
-        btnClean.style.borderColor = 'rgba(255,255,255,0.2)';
-        btnClean.style.color = 'rgba(255,255,255,0.7)';
-    });
-
-    const btnSave = document.createElement('button');
-    btnSave.type = 'submit';
-    btnSave.id = 'income-save-btn';
-    btnSave.className = 'btn btn-primary';
-    btnSave.textContent = 'Registrar Ingreso';
-    btnSave.style.cssText = 'background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;';
-    btnSave.addEventListener('mouseenter', () => {
-        btnSave.style.boxShadow = '0 0 25px rgba(200, 167, 82, 0.5)';
-        btnSave.style.transform = 'translateY(-2px)';
-    });
-    btnSave.addEventListener('mouseleave', () => {
-        btnSave.style.boxShadow = 'none';
-        btnSave.style.transform = 'translateY(0)';
-    });
-
-    actions.append(btnClean, btnSave);
-
-    const note = document.createElement('div');
-    note.style.cssText = 'margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);';
-    const noteText = document.createElement('p');
-    noteText.style.cssText = 'color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;';
-    const noteIcon = document.createElement('i');
-    noteIcon.className = 'fa-solid fa-cloud-check';
-    const noteSpan = document.createElement('span');
-    noteSpan.textContent = 'Ingresos sincronizados en YavlGold Cloud en tiempo real.';
-    noteText.append(noteIcon, noteSpan);
-    note.appendChild(noteText);
-
-    const listContainer = document.createElement('div');
-    listContainer.id = 'income-recent-container';
-    listContainer.style.cssText = 'margin-top: 2rem; display: none;';
-    const listTitle = document.createElement('h3');
-    listTitle.style.cssText = 'color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;';
-    listTitle.textContent = 'Ultimos Ingresos (Sesion Actual)';
-    const list = document.createElement('div');
-    list.id = 'income-list';
-    list.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem;';
-    listContainer.append(listTitle, list);
-
-    form.append(grid, fileGroup, actions);
-    card.append(form, note, listContainer);
-    wrapper.append(header, card);
-
-    financesSection.appendChild(wrapper);
+    targetContainer.appendChild(wrapper);
 
     return wrapper;
 }
@@ -1460,7 +1453,8 @@ function initIncomeModule() {
     const financesSection = document.querySelector('.finances-section');
     if (!financesSection) return;
 
-    const section = ensureIncomeSection(financesSection);
+    const incomePanel = document.getElementById('tab-panel-ingresos') || financesSection;
+    const section = ensureIncomeSection(incomePanel);
     if (!section) return;
 
     incomeModuleInitialized = true;
@@ -1505,6 +1499,159 @@ function initIncomeModule() {
     });
 
     loadIncomes();
+}
+
+function readStoredTab() {
+    try {
+        const value = localStorage.getItem(FIN_TAB_STORAGE_KEY);
+        return FIN_TAB_NAMES.has(value) ? value : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeStoredTab(tabName) {
+    try {
+        localStorage.setItem(FIN_TAB_STORAGE_KEY, tabName);
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function isElementInView(el) {
+    if (!el) return true;
+    const rect = el.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+}
+
+function focusPanel(panel) {
+    if (!panel) return;
+    const focusable = panel.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])');
+    const target = focusable || panel;
+
+    if (target === panel && !panel.hasAttribute('tabindex')) {
+        panel.setAttribute('tabindex', '-1');
+    }
+
+    try {
+        target.focus({ preventScroll: true });
+    } catch (e) {
+        target.focus();
+    }
+
+    if (!isElementInView(target)) {
+        target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+}
+
+function checkCriticalFormUniqueness() {
+    const checks = ['expense-form', 'income-form'];
+    checks.forEach((id) => {
+        const count = document.querySelectorAll(`#${id}`).length;
+        if (count !== 1) {
+            console.warn(`[Agro] Duplicated form check: #${id} count=${count}`);
+        }
+    });
+}
+
+function syncFinanceAria(tabButtons, panels) {
+    const tabList = document.querySelector('.financial-tabs');
+    if (tabList) tabList.setAttribute('role', 'tablist');
+
+    tabButtons.forEach((btn) => {
+        const tabName = btn.dataset.tab;
+        if (!tabName) return;
+        const panelId = `tab-panel-${tabName}`;
+        const panel = panels.find((item) => item.dataset.tab === tabName) || document.getElementById(panelId);
+
+        if (!btn.id) {
+            btn.id = `tab-${tabName}`;
+        }
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-controls', panel?.id || panelId);
+
+        if (panel) {
+            if (!panel.id) panel.id = panelId;
+            panel.setAttribute('role', 'tabpanel');
+            panel.setAttribute('aria-labelledby', btn.id);
+        }
+    });
+}
+
+function switchTab(tabName, options = {}) {
+    const tabButtons = Array.from(document.querySelectorAll('.financial-tab-btn'));
+    const panels = Array.from(document.querySelectorAll('.finances-section .tab-panel'));
+    if (!tabName || tabButtons.length === 0 || panels.length === 0) return;
+
+    if (!FIN_TAB_NAMES.has(tabName)) return;
+    const hasPanel = panels.some((panel) => panel.dataset.tab === tabName);
+    if (!hasPanel) return;
+
+    const shouldFocus = options.focus !== false;
+
+    tabButtons.forEach((btn) => {
+        const isActive = btn.dataset.tab === tabName;
+        btn.classList.toggle('is-active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        btn.tabIndex = isActive ? 0 : -1;
+    });
+
+    panels.forEach((panel) => {
+        const isActive = panel.dataset.tab === tabName;
+        panel.classList.toggle('is-hidden', !isActive);
+        panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        if (isActive && shouldFocus) focusPanel(panel);
+    });
+
+    writeStoredTab(tabName);
+}
+
+function initFinanceTabs() {
+    const tabButtons = Array.from(document.querySelectorAll('.financial-tab-btn'));
+    const panels = Array.from(document.querySelectorAll('.finances-section .tab-panel'));
+    if (tabButtons.length === 0 || panels.length === 0) return;
+
+    syncFinanceAria(tabButtons, panels);
+
+    tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            if (tabName) switchTab(tabName);
+        });
+    });
+
+    const storedTab = readStoredTab();
+    const initialTab = storedTab
+        || tabButtons.find((btn) => btn.classList.contains('is-active'))?.dataset.tab
+        || tabButtons[0].dataset.tab;
+    if (initialTab) switchTab(initialTab, { focus: false });
+}
+
+function initFinancePlaceholders() {
+    const placeholders = [
+        { id: 'pending-form', label: 'Pendientes' },
+        { id: 'loss-form', label: 'Perdidas' },
+        { id: 'transfer-form', label: 'Transferencias' }
+    ];
+    const today = new Date().toISOString().split('T')[0];
+
+    placeholders.forEach((item) => {
+        const form = document.getElementById(item.id);
+        if (!form || form.dataset.bound === 'true') return;
+        form.dataset.bound = 'true';
+
+        const dateInput = form.querySelector('input[type=\"date\"]');
+        if (dateInput && !dateInput.value) dateInput.value = today;
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            console.info(`[Agro] ${item.label} pendiente de integracion.`);
+        });
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.switchTab = switchTab;
 }
 
 let topIncomeCategoryCache = null;
@@ -1800,6 +1947,9 @@ export function initAgro() {
     setupExpenseDeleteButtons();
     setupHeaderIdentity();
     initIncomeModule();
+    initFinanceTabs();
+    initFinancePlaceholders();
+    setTimeout(checkCriticalFormUniqueness, 0);
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
     setTimeout(() => {
