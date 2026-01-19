@@ -444,3 +444,8 @@ export function stopTickerAutoRefresh() {
         console.debug('[AGRO_MARKET] Auto-refresh detenido');
     }
 }
+
+if (typeof window !== 'undefined') {
+    window.startTickerAutoRefresh = startTickerAutoRefresh;
+    window.stopTickerAutoRefresh = stopTickerAutoRefresh;
+}
