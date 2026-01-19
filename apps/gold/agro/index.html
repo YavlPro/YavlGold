@@ -2223,43 +2223,14 @@
                 } catch (e) { console.error(e); }
             }
 
-            async function loadCrops() {
-                try {
-                    const { data } = await supabase.from('agro_crops').select('*').eq('status', 'active').order('created_at', { ascending: false });
-                    if (cropsGrid && data) {
-                        cropsGrid.innerHTML = '';
-                        cropsGrid.style.display = 'grid';
-                        cropsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(250px, 1fr))';
-                        cropsGrid.style.gap = '1.5rem';
 
-                        data.forEach(c => {
-                            const card = document.createElement('div');
-                            card.className = 'card crop-card animate-in';
-                            card.style.background = 'linear-gradient(135deg, rgba(26,26,26,0.95), rgba(0,0,0,0.98))';
-                            card.style.border = '1px solid rgba(200, 167, 82, 0.15)';
-                            card.style.borderRadius = '12px';
-                            card.style.padding = '1.5rem';
-                            card.innerHTML = `
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
-                                    <h4 style="color:#fff; margin:0; font-family:'Orbitron',sans-serif;">${c.name}</h4>
-                                    <span style="background:rgba(74,222,128,0.1); color:#4ade80; padding:4px 8px; border-radius:12px; font-size:0.75rem; border:1px solid rgba(74,222,128,0.3);">Activo</span>
-                                </div>
-                                <div style="font-size:0.85rem; color:#aaa;">
-                                    <p style="margin:4px 0;">Área: <span style="color:#fff">${c.area} ha</span></p>
-                                    <p style="margin:4px 0;">Inv: <span style="color:#C8A752; font-weight:600;">$${parseFloat(c.investment).toLocaleString()}</span></p>
-                                    <p style="margin:4px 0; font-size:0.75rem;"><i class="fa-regular fa-calendar"></i> ${new Date(c.sowing_date).toLocaleDateString()}</p>
-                                </div>
-                             `;
-                            cropsGrid.appendChild(card);
-                        });
-                    }
-                } catch (e) { console.error(e); }
-            }
+            // loadCrops is now provided by agro.js via window.loadCrops
+            // DO NOT define a duplicate here - it causes crops to disappear on data-refresh
 
             document.addEventListener('data-refresh', () => {
                 updateStats();
                 loadExpenses(); // loadExpenses is hoisted
-                loadCrops();
+                if (typeof window.loadCrops === 'function') window.loadCrops();
             });
 
             // Exponer handler globalmente para el input onchange del HTML

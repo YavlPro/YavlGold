@@ -45,7 +45,7 @@ export function updateStats(crops) {
 
     crops.forEach(crop => {
         const inv = parseFloat(crop.investment) || 0;
-        const rev = parseFloat(crop.revenue_projected) || (inv * 1.5); // Fallback projection if not set
+        const rev = parseFloat(crop.revenue_projected) || 0; // NO INVENTAR - show 0 if no real data
 
         totalInvestment += inv;
         totalRevenue += rev;

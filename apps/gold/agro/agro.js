@@ -262,6 +262,9 @@ export async function loadCrops() {
     console.log(`[Agro] ✅ ${crops.length} cultivos cargados`);
 }
 
+// Expose loadCrops globally for data-refresh event in index.html
+window.loadCrops = loadCrops;
+
 // ============================================================
 // CALCULADORA ROI CON GUARDADO EN SUPABASE
 // ============================================================
