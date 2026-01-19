@@ -18,6 +18,24 @@ const LUNAR_CYCLE = 29.53058867; // Días del ciclo lunar
 // Clave localStorage para tareas
 const TASKS_STORAGE_KEY = 'yavlgold_agro_tasks';
 
+// Market Hub config (Centro Financiero)
+const MARKET_HUB_CONFIG = {
+    binanceAPI: 'https://data-api.binance.vision/api/v3/ticker/24hr',
+    refreshInterval: 60000,
+    cacheTTL: 10 * 60 * 1000,
+    cacheMaxAge: 60 * 60 * 1000,
+    cacheKey: 'YG_AGRO_MARKET_V1',
+    timeout: 8000
+};
+
+window.__YG_MARKET_HUB__ = window.__YG_MARKET_HUB__ || {
+    intervalId: null,
+    inFlight: false,
+    lastState: null
+};
+
+const marketHubState = window.__YG_MARKET_HUB__;
+
 // Fecha actualmente seleccionada
 let selectedDateStr = null;
 
@@ -39,6 +57,12 @@ export function initInteractions() {
         if (el) {
             el.classList.add('hidden');
             el.style.display = 'none';
+        }
+        if (id === 'modal-market') {
+            stopMarketHubPolling();
+            if (typeof window.stopTickerAutoRefresh === 'function') {
+                window.stopTickerAutoRefresh();
+            }
         }
     };
 
@@ -277,6 +301,10 @@ function openMarketHub(defaultTab = 'crypto') {
     switchMarketTab(defaultTab);
     loadDetailedCrypto();
     loadFiatRates();
+    startMarketHubPolling();
+    if (typeof window.startTickerAutoRefresh === 'function') {
+        window.startTickerAutoRefresh();
+    }
 }
 
 function switchMarketTab(tab) {
@@ -303,6 +331,122 @@ function switchMarketTab(tab) {
     }
 }
 
+function startMarketHubPolling() {
+    if (marketHubState.intervalId) return;
+    marketHubState.intervalId = setInterval(loadDetailedCrypto, MARKET_HUB_CONFIG.refreshInterval);
+}
+
+function stopMarketHubPolling() {
+    if (marketHubState.intervalId) {
+        clearInterval(marketHubState.intervalId);
+        marketHubState.intervalId = null;
+    }
+}
+
+function fetchWithTimeout(url, timeoutMs = MARKET_HUB_CONFIG.timeout) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { signal: controller.signal })
+        .then((res) => {
+            clearTimeout(timeoutId);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .catch((err) => {
+            clearTimeout(timeoutId);
+            throw err;
+        });
+}
+
+function getMarketHubCache() {
+    try {
+        const raw = localStorage.getItem(MARKET_HUB_CONFIG.cacheKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        const age = Date.now() - (parsed.ts || 0);
+        if (age > MARKET_HUB_CONFIG.cacheMaxAge) return null;
+        return {
+            crypto: parsed.crypto || null,
+            cryptoDetail: parsed.cryptoDetail || null,
+            ts: parsed.ts,
+            ageMinutes: Math.round(age / 60000),
+            stale: age > MARKET_HUB_CONFIG.cacheTTL
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+function setMarketHubCache(cryptoDetail) {
+    try {
+        const raw = localStorage.getItem(MARKET_HUB_CONFIG.cacheKey);
+        const parsed = raw ? JSON.parse(raw) : {};
+        const crypto = {};
+
+        cryptoDetail.forEach((item) => {
+            const key = item?.cacheSymbol || item?.symbol;
+            if (key) {
+                crypto[key] = item.priceValue;
+            }
+        });
+
+        localStorage.setItem(MARKET_HUB_CONFIG.cacheKey, JSON.stringify({
+            ...parsed,
+            crypto,
+            cryptoDetail,
+            ts: Date.now(),
+            source: 'binance-vision'
+        }));
+    } catch (e) {
+        // Ignore cache errors
+    }
+}
+
+function setMarketHubState(state, message) {
+    if (marketHubState.lastState === state) return;
+    marketHubState.lastState = state;
+    if (message) {
+        console.log(`[AgroMarketHub] ${message}`);
+    }
+}
+
+function renderMarketNotice(container, message) {
+    if (!container) return;
+    container.innerHTML = `<div style="text-align: center; color: var(--text-muted, #888); padding: 40px 0;">${message}</div>`;
+}
+
+function renderCacheBadge(container, ageMinutes) {
+    if (!container) return;
+    const ageText = ageMinutes <= 0 ? 'ahora' : `hace ${ageMinutes} min`;
+    const badge = `
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 12px; border-radius: 999px; border: 1px solid rgba(200,167,82,0.35); color: var(--gold-primary, #C8A752); font-size: 0.75rem; background: rgba(200,167,82,0.08);">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Ultimo dato (${ageText})</span>
+        </div>
+    `;
+    container.insertAdjacentHTML('afterbegin', badge);
+}
+
+function buildCryptoItemsFromCache(cache) {
+    const meta = [
+        { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
+        { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
+        { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' }
+    ];
+    const crypto = cache?.crypto || {};
+
+    return meta
+        .filter((item) => typeof crypto[item.symbol] === 'number')
+        .map((item) => ({
+            name: item.name,
+            symbol: `${item.symbol}/USDT`,
+            price: crypto[item.symbol].toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+            priceValue: crypto[item.symbol],
+            meta: 'Dato guardado',
+            iconHtml: `<i class="${item.icon}" style="font-size: 1.8rem; color: ${item.iconColor};"></i>`
+        }));
+}
+
 /**
  * Renderizador Unificado para Crypto y Fiat
  * DNA Visual V9.4: Consistencia absoluta
@@ -315,13 +459,15 @@ function renderUnifiedList(items, container) {
 
     let html = '';
     items.forEach(item => {
-        const changeHtml = item.change !== undefined ? `
+        const changeHtml = item.meta ? `
+            <div style="font-size: 10px; color: var(--text-muted, #888);">${item.meta}</div>
+        ` : (item.change !== undefined && item.change !== null ? `
             <div style="font-size: 11px; color: ${item.change >= 0 ? '#4ade80' : '#f87171'}; font-weight: 600;">
                 ${item.change >= 0 ? '+' : ''}${item.change.toFixed(2)}%
             </div>
         ` : `
             <div style="font-size: 10px; color: #4ade80;">Tasa Oficial</div>
-        `;
+        `);
 
         html += `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 1px solid rgba(200,167,82,0.1); transition: all 0.2s; box-shadow: 0 0 10px rgba(200,167,82,0.02);"
@@ -349,34 +495,57 @@ async function loadDetailedCrypto() {
     const container = document.getElementById('crypto-list-container');
     if (!container) return;
 
-    container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px 0;">📡 Conectando con mercados...</div>';
+    if (marketHubState.inFlight) return;
+    marketHubState.inFlight = true;
+
+    renderMarketNotice(container, 'Cargando mercado...');
 
     try {
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT'];
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
         const results = await Promise.all(
-            symbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`).then(r => r.json()))
+            symbols.map(s => fetchWithTimeout(`${MARKET_HUB_CONFIG.binanceAPI}?symbol=${s}`))
         );
 
         const cryptoMeta = [
             { symbol: 'BTC', name: 'Bitcoin', icon: 'fa-brands fa-bitcoin', iconColor: '#f7931a' },
             { symbol: 'ETH', name: 'Ethereum', icon: 'fa-brands fa-ethereum', iconColor: '#627eea' },
-            { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' },
-            { symbol: 'BNB', name: 'BNB Chain', icon: 'fa-solid fa-coins', iconColor: '#f3ba2f' },
+            { symbol: 'SOL', name: 'Solana', icon: 'fa-solid fa-sun', iconColor: '#00ffa3' }
         ];
 
         const items = results.map((data, i) => ({
             name: cryptoMeta[i].name,
             symbol: `${cryptoMeta[i].symbol}/USDT`,
+            cacheSymbol: cryptoMeta[i].symbol,
             price: parseFloat(data.lastPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+            priceValue: parseFloat(data.lastPrice),
             change: parseFloat(data.priceChangePercent),
             iconHtml: `<i class="${cryptoMeta[i].icon}" style="font-size: 1.8rem; color: ${cryptoMeta[i].iconColor};"></i>`
         }));
 
         renderUnifiedList(items, container);
-
+        setMarketHubCache(items);
+        setMarketHubState('OK', 'Ticker actualizado');
     } catch (e) {
-        console.error('[AgroInteractions] Error crypto:', e);
-        container.innerHTML = '<div style="text-align: center; color: #f87171; padding: 40px 0;">❌ Error cargando mercado</div>';
+        const cache = getMarketHubCache();
+        if (cache) {
+            const items = Array.isArray(cache.cryptoDetail) && cache.cryptoDetail.length > 0
+                ? cache.cryptoDetail
+                : buildCryptoItemsFromCache(cache);
+
+            if (items.length > 0) {
+                renderUnifiedList(items, container);
+                renderCacheBadge(container, cache.ageMinutes);
+                setMarketHubState('DEGRADED', 'Usando cache');
+            } else {
+                renderMarketNotice(container, 'Mercado no disponible (red/restriccion)');
+                setMarketHubState('ERROR', 'Sin datos ni cache');
+            }
+        } else {
+            renderMarketNotice(container, 'Mercado no disponible (red/restriccion)');
+            setMarketHubState('ERROR', 'Sin datos ni cache');
+        }
+    } finally {
+        marketHubState.inFlight = false;
     }
 }
 

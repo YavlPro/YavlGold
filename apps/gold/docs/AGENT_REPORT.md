@@ -387,3 +387,35 @@ Fecha: 2026-01-16
 - **Resiliencia:** anti-spam singleton activo, 0 requests a `api.binance.com`.
 - **Encoding:** Tabs y formularios limpios (sin `??`).
 - **Supabase:** Integracion confirmada y segura (RLS ok).
+
+## Diagnostico (Auditoria Modal Singleton - 2026-01-18)
+1) Archivo: `apps/gold/agro/agro-interactions.js`
+2) Endpoint: `MARKET_HUB_CONFIG.binanceAPI` = `https://data-api.binance.vision/api/v3/ticker/24hr` ✅
+3) NO hay requests a `api.binance.com` ✅
+4) Singleton modal polling: `marketHubState.intervalId` guard en `startMarketHubPolling()` ✅
+5) Anti-spam: `marketHubState.inFlight` flag en `loadDetailedCrypto()` ✅
+6) Cleanup on close: `closeModal()` llama `stopMarketHubPolling()` + `window.stopTickerAutoRefresh()` ✅
+7) UI degradada: "Mercado no disponible (red/restriccion)" sin iconos rojos ✅
+8) Issue menor: `loadFiatRates()` linea 590 tiene "❌ Error cargando divisas" (visual DNA violation)
+
+## Plan (Auditoria Modal Singleton)
+- NO se requieren cambios en `agro-interactions.js` (ya cumple requirements)
+- Opcional: suavizar mensaje de error en `loadFiatRates()` para Visual DNA compliance
+- Ejecutar verificacion en produccion para confirmar comportamiento
+
+## Resultado Verificacion Produccion (2026-01-18)
+- **Ticker Dashboard**: PASS ✅ (data-api.binance.vision, BTC $92,326)
+- **Modal Centro Financiero**: FAIL ❌ (produccion usa api.binance.com, CORS blocked)
+- **Causa raiz**: `agro-interactions.js` tiene cambios locales NO COMMITEADOS
+- **Requests api.binance.com**: 20 (FAIL - codigo viejo en prod)
+- **Requests data-api.binance.vision**: 9 (dashboard ticker OK)
+- **Singleton state**: `window.__YG_MARKET_HUB__` undefined en prod (codigo no pusheado)
+- **Build local**: PASS ✅ (pnpm build:gold exit 0)
+- **Accion requerida**: PUSH de cambios locales para resolver
+
+## Git Commands Sugeridos (sin ejecutar)
+```bash
+git add apps/gold/agro/agro-interactions.js apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(agro): modal market uses data-api.binance.vision + singleton pattern"
+git push
+```
