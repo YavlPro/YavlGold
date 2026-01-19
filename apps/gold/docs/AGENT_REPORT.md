@@ -335,3 +335,38 @@ Fecha: 2026-01-16
 | 2000 | `?? Registrar P?rdida` | `Registrar P&eacute;rdida` |
 | 2053 | `?? Registrar Transferencia` | `Registrar Transferencia` |
 
+## Diagnostico (tarea actual - hotfix AGRO market resiliencia)
+1) Archivo origen del error: `apps/gold/agro/agro-market.js`
+2) Endpoint actual (linea 8): `https://api.binance.com/api/v3/ticker/price`
+3) Causa del fallo: api.binance.com tiene bloqueo CORS en browser y error 451 regional en algunas zonas (Venezuela, etc).
+4) Sintoma en UI: Centro Financiero muestra "Sin señal de mercado" (linea 34).
+5) Problemas adicionales detectados:
+   a) No hay timeout/AbortController - puede colgar indefinidamente.
+   b) No hay backoff/retry - falla silenciosa.
+   c) No hay cache - cada recarga refetch sin fallback.
+   d) No hay anti-spam - multiples fetch simultaneos posibles.
+
+## Plan (tarea actual - hotfix AGRO market resiliencia)
+1) Cambiar endpoint primario a `data-api.binance.vision` (apto para browser, sin CORS).
+2) Agregar AbortController con timeout de 8s.
+3) Implementar retry con backoff exponencial + jitter (max 3 intentos).
+4) Agregar cache localStorage con TTL 10 min para ultimo payload valido.
+5) Estado degradado: mostrar cache con label "Ultimo dato" o mensaje claro si no hay datos.
+6) Anti-spam: bandera inFlight para evitar fetches duplicados.
+7) NO tocar HTML; cambios solo en `apps/gold/agro/agro-market.js`.
+8) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## Diagnostico (refinamiento V2 - cache-only fallback)
+1) El fallback a `api.binance.com` (linea 16 anterior) reintroduce el problema CORS/451 que intentamos resolver.
+2) En regiones como Venezuela, api.binance.com retorna HTTP 451 bloqueando la UI completamente.
+3) La estrategia correcta: si `data-api.binance.vision` falla, usar CACHE como unico fallback (no otro endpoint).
+4) Riesgo de doble polling: si Dashboard o modal re-inicializan el ticker, se crean intervalos duplicados.
+
+## Plan (refinamiento V2 - singleton + cache-only)
+1) Eliminar completamente el fallback a `api.binance.com`.
+2) Implementar singleton global (`window.__YG_MARKET_TICKER__`) para evitar doble polling.
+3) Fallback unico: cache localStorage. Si falla fetch Y no hay cache, mostrar mensaje neutral.
+4) UI degradada: mostrar "Ultimo dato" con edad ("Actualizado hace X min"), sin iconos rojos.
+5) Telemetria: logs solo en cambios de estado (OK→DEGRADED), prefijo [AGRO_MARKET].
+6) Mantener intervalo 60s estable, max 3 reintentos con backoff por ciclo.
+
