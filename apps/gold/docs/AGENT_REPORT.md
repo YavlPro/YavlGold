@@ -280,6 +280,17 @@ Fecha: 2026-01-16
 4) Focus management: al cambiar tab, enfocar primer input visible (o heading con `tabindex=-1`) y evitar scroll agresivo.
 5) CSS calendario: mover overrides mobile a CSS del modulo agro con scoping estricto.
 
+## Diagnostico (tarea actual - agro market hotfix)
+1) El texto "Error cargando mercado" y el icono ❌ se renderizan desde `apps/gold/agro/agro-interactions.js` en `loadDetailedCrypto()` (catch).
+2) `loadDetailedCrypto()` usa `https://api.binance.com/api/v3/ticker/24hr` (bloqueado por CORS/451) y pisa el contenedor `#crypto-list-container` del modal `#modal-market` en `apps/gold/agro/index.html`.
+3) El ticker V2 de `apps/gold/agro/agro-market.js` ya usa `data-api.binance.vision` con cache `YG_AGRO_MARKET_V1`, pero no controla el DOM del modal.
+
+## Plan (tarea actual - agro market hotfix)
+1) Editar `apps/gold/agro/agro-interactions.js` para reemplazar el fetch legacy (api.binance.com) por data-api.binance.vision y aplicar fallback cache-only con mensaje neutral.
+2) Asegurar UI degradada sin rojo: mensajes "Cargando mercado..." / "Ultimo dato (hace X min)" / "Mercado no disponible (red/restriccion)".
+3) Implementar guard inFlight + singleton para evitar duplicados y controlar polling del modal; detenerlo al cerrar `#modal-market`.
+4) Exponer start/stop de ticker V2 en `apps/gold/agro/agro-market.js` solo si es necesario para lifecycle.
+
 ## Diagnostico (tarea actual - agro finanzas tabs + agenda lunar)
 1) MPA: `apps/gold/vite.config.js` lista entradas MPA (incluye `agro/index.html`); `apps/gold/vercel.json` mantiene cleanUrls/trailingSlash y rewrites; `apps/gold/index.html` navega a `/agro/`; `apps/gold/dashboard/index.html` es el panel post-login.
 2) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` instancia el cliente; `apps/gold/assets/js/auth/authClient.js` y `authUI.js` manejan sesion/UI; `apps/gold/dashboard/auth-guard.js` valida acceso.
@@ -370,3 +381,9 @@ Fecha: 2026-01-16
 5) Telemetria: logs solo en cambios de estado (OK→DEGRADED), prefijo [AGRO_MARKET].
 6) Mantener intervalo 60s estable, max 3 reintentos con backoff por ciclo.
 
+## Resultado (Verificado en Produccion)
+- **Status:** PASS ✅
+- **Ticker:** Funcionando (BTC/ETH/SOL/USDT) en `yavlgold.com/agro`.
+- **Resiliencia:** anti-spam singleton activo, 0 requests a `api.binance.com`.
+- **Encoding:** Tabs y formularios limpios (sin `??`).
+- **Supabase:** Integracion confirmada y segura (RLS ok).
