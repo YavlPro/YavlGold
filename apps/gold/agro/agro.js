@@ -1090,6 +1090,12 @@ if (document.readyState === 'loading') {
     initNewTabDropzones();
 }
 
+// Expose validation functions globally for use by inline handlers (e.g. Gastos)
+window.validateEvidenceFile = validateEvidenceFile;
+window.showEvidenceToast = showEvidenceToast;
+window.getFileExtension = getFileExtension;
+window.resetGenericDropzone = resetGenericDropzone;
+
 function formatShortCurrency(value) {
     const number = Number(value);
     if (!Number.isFinite(number)) return '$0';

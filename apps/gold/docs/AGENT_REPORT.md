@@ -492,3 +492,15 @@ El enforcement real de tipos de archivo es **multinivel**:
 2. **Frontend (accept attr)**: Primera barrera, pero puede ser saltada.
 3. **Frontend (validateEvidenceFile)**: Valida extension, MIME reportado por browser, Y **magic bytes** para detectar archivos renombrados (anti-spoof).
 4. **Conclusión**: La defensa real contra .exe renombrado a .png es `checkMagicBytes()` en frontend. Storage policies son defensa de path + extension únicamente.
+
+## Diagnostico (Gastos Evidence Bypass - 2026-01-19)
+1) **handleReceiptUpload** (index.html:2265): Solo valida tamaño, NO valida extension/MIME/magic bytes.
+2) **accept attr** (l.1855): Falta `image/webp`, pero es permisivo porque browser puede ignorar.
+3) **Storage policies** (`Agro expense objects *`): NO tienen regex de extension; cualquier archivo pasa si path es correcto.
+4) **Drag/drop handler** (l.2552): También solo valida tamaño, no tipo.
+
+## Plan (Gastos Hardening)
+1) **HTML**: Agregar `image/webp` a accept, actualizar hint a "JPG, PNG, WebP o PDF (Opcional)".
+2) **JS**: Refactorizar `handleReceiptUpload` para usar `validateEvidenceFile()` async con magic bytes.
+3) **Storage**: DROP + CREATE policies expense con extension regex `~* '\.(jpg|jpeg|png|webp|pdf)$'`.
+4) **No romper IDs**: expense-receipt, upload-dropzone, upload-preview, upload-filename se mantienen.

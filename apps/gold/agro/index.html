@@ -1841,7 +1841,7 @@
                                         subir</span>
                                 </p>
                                 <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
-                                    JPG, PNG o PDF (M&aacute;x. 5MB)
+                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB) - Opcional
                                 </p>
                                 <div id="upload-preview" style="display: none; margin-top: 1rem;">
                                     <div
@@ -1852,8 +1852,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <input type="file" id="expense-receipt" accept="image/jpeg,image/png,application/pdf"
-                                style="display: none;" onchange="handleReceiptUpload(this)">
+                            <input type="file" id="expense-receipt"
+                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;"
+                                onchange="handleReceiptUpload(this)">
                         </div>
 
                         <!-- Bot&oacute;n Guardar -->
@@ -2262,17 +2263,49 @@
             });
 
             // Exponer handler globalmente para el input onchange del HTML
-            window.handleReceiptUpload = function (input) {
+            window.handleReceiptUpload = async function (input) {
                 const file = input.files[0];
                 if (!file) return;
 
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('El archivo es muy grande. Máximo 5MB.');
-                    input.value = '';
-                    if (btnClean) btnClean.click();
-                    return;
+                // Use hardened validation with magic bytes (from agro.js)
+                if (typeof window.validateEvidenceFile === 'function') {
+                    const validation = await window.validateEvidenceFile(file);
+                    if (!validation.valid) {
+                        if (typeof window.showEvidenceToast === 'function') {
+                            window.showEvidenceToast(validation.error, 'warning');
+                        } else {
+                            alert(validation.error);
+                        }
+                        input.value = '';
+                        // Reset dropzone to default
+                        if (dropzone) {
+                            dropzone.innerHTML = '';
+                            const icon = document.createElement('i');
+                            icon.className = 'fa-solid fa-cloud-arrow-up';
+                            icon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
+                            const text = document.createElement('p');
+                            text.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
+                            text.innerHTML = 'Arrastra tu recibo aquí o <span style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para subir</span>';
+                            const hint = document.createElement('p');
+                            hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
+                            hint.textContent = 'JPG, PNG, WebP o PDF (Máx. 5MB) - Opcional';
+                            dropzone.append(icon, text, hint);
+                            dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                            dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+                        }
+                        return;
+                    }
+                } else {
+                    // Fallback: basic size check if validators not loaded yet
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('El archivo es muy grande. Máximo 5MB.');
+                        input.value = '';
+                        if (btnClean) btnClean.click();
+                        return;
+                    }
                 }
 
+                // Show file selected UI
                 if (dropzone) {
                     dropzone.textContent = '';
 
@@ -2280,7 +2313,8 @@
                     container.style.pointerEvents = 'none';
 
                     const icon = document.createElement('i');
-                    icon.className = 'fa-solid fa-file-invoice';
+                    const ext = typeof window.getFileExtension === 'function' ? window.getFileExtension(file.name) : '';
+                    icon.className = ext === 'pdf' ? 'fa-solid fa-file-pdf' : 'fa-solid fa-image';
                     icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
 
                     const title = document.createElement('h4');
@@ -2292,7 +2326,8 @@
 
                     const fileName = document.createElement('span');
                     fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
-                    fileName.textContent = file.name;
+                    // Sanitize filename display
+                    fileName.textContent = file.name.length > 30 ? file.name.slice(0, 27) + '...' : file.name;
 
                     const check = document.createElement('i');
                     check.className = 'fa-solid fa-check-circle';
