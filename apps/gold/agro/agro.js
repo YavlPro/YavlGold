@@ -707,13 +707,24 @@ function setupExpenseDeleteButtons() {
 const AGRO_STORAGE_BUCKET_ID = 'agro-evidence';
 const AGRO_INCOME_STORAGE_ROOT = 'agro/income';
 const AGRO_EXPENSE_STORAGE_ROOT = 'agro/expense';
+const AGRO_PENDING_STORAGE_ROOT = 'agro/pending';
+const AGRO_LOSS_STORAGE_ROOT = 'agro/loss';
+const AGRO_TRANSFER_STORAGE_ROOT = 'agro/transfer';
 const AGRO_GAINS_STORAGE_ROOT = null;
 const INCOME_SECTION_ID = 'agro-income-section';
 const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
 const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias']);
-const INCOME_DOC_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt'];
+
+// SECURITY: Strict allowlist - NO doc/docx/txt
+const ALLOWED_EVIDENCE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+const ALLOWED_EVIDENCE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+const EVIDENCE_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+// Legacy aliases (kept for backward compatibility in existing code)
+const INCOME_DOC_EXTENSIONS = ['pdf']; // REMOVED: doc, docx, txt
 const INCOME_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
-const INCOME_MAX_FILE_SIZE = 5 * 1024 * 1024;
+const INCOME_MAX_FILE_SIZE = EVIDENCE_MAX_FILE_SIZE;
+
 let incomeCache = [];
 let incomeModuleInitialized = false;
 let incomeDeletedAtSupported = null;
@@ -724,6 +735,360 @@ let incomeEditSupportPath = null;
 patchAgroEvidenceStorage();
 patchExpenseSelect();
 void detectExpenseDeletedAtSupport();
+
+/**
+ * SECURITY: Validate evidence file with magic bytes anti-spoof check
+ * @param {File} file - File to validate
+ * @returns {Promise<{valid: boolean, error?: string, file?: File}>}
+ */
+async function validateEvidenceFile(file) {
+    if (!file) return { valid: true, file: null };
+
+    // 1. Size check
+    if (file.size > EVIDENCE_MAX_FILE_SIZE) {
+        return { valid: false, error: 'Archivo muy grande. Maximo 5MB.' };
+    }
+
+    // 2. Extension check
+    const ext = getFileExtension(file.name);
+    if (!ALLOWED_EVIDENCE_EXTENSIONS.includes(ext)) {
+        return { valid: false, error: 'Tipo no permitido. Solo JPG, PNG, WebP o PDF.' };
+    }
+
+    // 3. MIME check (browser-reported, can be spoofed)
+    if (!ALLOWED_EVIDENCE_MIMES.includes(file.type)) {
+        return { valid: false, error: 'Tipo no permitido. Solo JPG, PNG, WebP o PDF.' };
+    }
+
+    // 4. Magic bytes check (anti-spoof)
+    try {
+        const magicValid = await checkMagicBytes(file);
+        if (!magicValid) {
+            console.warn('[Agro] Magic bytes mismatch for:', file.name);
+            return { valid: false, error: 'Archivo no valido. Contenido no coincide con extension.' };
+        }
+    } catch (err) {
+        console.warn('[Agro] Magic bytes check failed:', err.message);
+        // Fail closed: if we can't verify, reject
+        return { valid: false, error: 'No se pudo verificar el archivo.' };
+    }
+
+    return { valid: true, file };
+}
+
+/**
+ * SECURITY: Check file magic bytes to prevent spoofed extensions
+ * @param {File} file - File to check
+ * @returns {Promise<boolean>} - true if magic bytes match expected type
+ */
+async function checkMagicBytes(file) {
+    const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const ext = getFileExtension(file.name);
+
+    // PDF: starts with %PDF (25 50 44 46)
+    if (ext === 'pdf') {
+        return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46;
+    }
+
+    // PNG: 89 50 4E 47 0D 0A 1A 0A
+    if (ext === 'png') {
+        return bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
+            bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A;
+    }
+
+    // JPEG: FF D8 FF
+    if (ext === 'jpg' || ext === 'jpeg') {
+        return bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
+    }
+
+    // WebP: RIFF (52 49 46 46) + WEBP at pos 8-11 (57 45 42 50)
+    if (ext === 'webp') {
+        return bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+            bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+    }
+
+    return false;
+}
+
+/**
+ * Build storage path for new movement types
+ */
+function buildPendingStoragePath(userId, fileName) {
+    const cleanName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return `${userId}/${AGRO_PENDING_STORAGE_ROOT}/${Date.now()}_${cleanName}`;
+}
+
+function buildLossStoragePath(userId, fileName) {
+    const cleanName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return `${userId}/${AGRO_LOSS_STORAGE_ROOT}/${Date.now()}_${cleanName}`;
+}
+
+function buildTransferStoragePath(userId, fileName) {
+    const cleanName = fileName.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return `${userId}/${AGRO_TRANSFER_STORAGE_ROOT}/${Date.now()}_${cleanName}`;
+}
+
+/**
+ * Delete evidence file from Storage (cascade delete helper)
+ */
+async function deleteEvidenceFile(path) {
+    if (!path) return;
+    try {
+        const { error } = await supabase.storage
+            .from(AGRO_STORAGE_BUCKET_ID)
+            .remove([path]);
+        if (error) {
+            console.warn('[Agro] Failed to delete evidence:', error.message);
+        } else {
+            console.log('[Agro] Evidence deleted:', path);
+        }
+    } catch (err) {
+        console.warn('[Agro] Evidence delete error:', err.message);
+    }
+}
+
+/**
+ * Upload evidence file with proper contentType
+ * @param {File} file - Validated file to upload
+ * @param {string} storagePath - Full path in bucket (uid/agro/type/filename)
+ * @returns {Promise<{success: boolean, path?: string, error?: string}>}
+ */
+async function uploadEvidence(file, storagePath) {
+    if (!file || !storagePath) {
+        return { success: false, error: 'Archivo o ruta no validos' };
+    }
+
+    try {
+        const { error } = await supabase.storage
+            .from(AGRO_STORAGE_BUCKET_ID)
+            .upload(storagePath, file, {
+                contentType: file.type, // Set correct MIME for preview/download
+                upsert: false
+            });
+
+        if (error) {
+            console.warn('[Agro] Upload error:', error.message);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, path: storagePath };
+    } catch (err) {
+        console.warn('[Agro] Upload exception:', err.message);
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Get signed URL for private evidence viewing (1 hour validity)
+ * @param {string} path - Storage path
+ * @returns {Promise<string|null>} Signed URL or null
+ */
+async function getSignedEvidenceUrl(path) {
+    if (!path) return null;
+
+    try {
+        const { data, error } = await supabase.storage
+            .from(AGRO_STORAGE_BUCKET_ID)
+            .createSignedUrl(path, 3600); // 1 hour
+
+        if (error) {
+            console.warn('[Agro] Signed URL error:', error.message);
+            return null;
+        }
+
+        return data?.signedUrl || null;
+    } catch (err) {
+        console.warn('[Agro] Signed URL exception:', err.message);
+        return null;
+    }
+}
+
+/**
+ * Show toast notification (Visual DNA compliant - no red for errors)
+ * @param {string} message - Message to display
+ * @param {string} type - 'success', 'warning', 'info'
+ */
+function showEvidenceToast(message, type = 'info') {
+    // Try to use existing toast system if available
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, type);
+        return;
+    }
+
+    // Fallback: create simple toast
+    const toast = document.createElement('div');
+    toast.className = 'agro-evidence-toast';
+    toast.textContent = message;
+
+    const colors = {
+        success: { bg: 'rgba(74, 222, 128, 0.15)', border: 'rgba(74, 222, 128, 0.4)', color: '#4ade80' },
+        warning: { bg: 'rgba(200, 167, 82, 0.15)', border: 'rgba(200, 167, 82, 0.4)', color: '#C8A752' },
+        info: { bg: 'rgba(255, 255, 255, 0.1)', border: 'rgba(255, 255, 255, 0.2)', color: '#fff' }
+    };
+    const c = colors[type] || colors.info;
+
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        background: ${c.bg};
+        border: 1px solid ${c.border};
+        color: ${c.color};
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        backdrop-filter: blur(10px);
+    `;
+
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+/**
+ * Generic dropzone file handler for new tabs
+ */
+async function handleGenericFileUpload(inputId, dropzoneId) {
+    const input = document.getElementById(inputId);
+    const dropzone = document.getElementById(dropzoneId);
+    if (!input || !dropzone) return;
+
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const validation = await validateEvidenceFile(file);
+    if (!validation.valid) {
+        showEvidenceToast(validation.error, 'warning');
+        input.value = '';
+        resetGenericDropzone(dropzoneId);
+        return;
+    }
+
+    // Show file selected state
+    dropzone.innerHTML = '';
+    const container = document.createElement('div');
+    container.style.pointerEvents = 'none';
+
+    const icon = document.createElement('i');
+    const ext = getFileExtension(file.name);
+    icon.className = ext === 'pdf' ? 'fa-solid fa-file-pdf' : 'fa-solid fa-image';
+    icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
+
+    const title = document.createElement('h4');
+    title.style.cssText = 'color: #fff; margin: 0.5rem 0;';
+    title.textContent = 'Archivo Seleccionado';
+
+    const pill = document.createElement('div');
+    pill.style.cssText = 'background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;';
+
+    const fileName = document.createElement('span');
+    fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
+    // Sanitize filename display (no raw HTML injection)
+    fileName.textContent = file.name.length > 30 ? file.name.slice(0, 27) + '...' : file.name;
+
+    const check = document.createElement('i');
+    check.className = 'fa-solid fa-check-circle';
+    check.style.color = '#4ade80';
+
+    pill.append(fileName, check);
+
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;';
+    hint.textContent = 'Clic para cambiar archivo';
+
+    container.append(icon, title, pill, hint);
+    dropzone.appendChild(container);
+    dropzone.style.borderColor = '#4ade80';
+    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+}
+
+/**
+ * Reset a generic dropzone to default state
+ */
+function resetGenericDropzone(dropzoneId) {
+    const dropzone = document.getElementById(dropzoneId);
+    if (!dropzone) return;
+
+    dropzone.innerHTML = '';
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-cloud-arrow-up';
+    icon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
+
+    const text = document.createElement('p');
+    text.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
+    const highlight = document.createElement('span');
+    highlight.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
+    highlight.textContent = 'haz clic para subir';
+    text.append('Arrastra tu comprobante aqui o ', highlight);
+
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
+    hint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
+
+    dropzone.append(icon, text, hint);
+    dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+    dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+}
+
+/**
+ * Initialize dropzone handlers for new tabs (Pendientes/Perdidas/Transferencias)
+ */
+function initNewTabDropzones() {
+    const tabs = [
+        { input: 'pending-receipt', dropzone: 'pending-dropzone' },
+        { input: 'loss-receipt', dropzone: 'loss-dropzone' },
+        { input: 'transfer-receipt', dropzone: 'transfer-dropzone' }
+    ];
+
+    tabs.forEach(({ input, dropzone }) => {
+        const inputEl = document.getElementById(input);
+        const dropzoneEl = document.getElementById(dropzone);
+
+        if (inputEl && dropzoneEl) {
+            inputEl.addEventListener('change', () => handleGenericFileUpload(input, dropzone));
+
+            // Drag and drop support
+            dropzoneEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzoneEl.style.borderColor = '#C8A752';
+                dropzoneEl.style.background = 'rgba(200, 167, 82, 0.1)';
+            });
+            dropzoneEl.addEventListener('dragleave', () => {
+                dropzoneEl.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                dropzoneEl.style.background = 'rgba(200, 167, 82, 0.03)';
+            });
+            dropzoneEl.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropzoneEl.style.borderColor = 'rgba(200, 167, 82, 0.3)';
+                dropzoneEl.style.background = 'rgba(200, 167, 82, 0.03)';
+
+                const file = e.dataTransfer?.files?.[0];
+                if (file) {
+                    // Create DataTransfer to set files properly
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    inputEl.files = dt.files;
+                    await handleGenericFileUpload(input, dropzone);
+                }
+            });
+        }
+    });
+}
+
+// Initialize new tab dropzones when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNewTabDropzones);
+} else {
+    initNewTabDropzones();
+}
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -880,7 +1245,7 @@ function ensureIncomeSection(targetContainer) {
         fileGroup.style.marginTop = '1.5rem';
         const fileLabel = document.createElement('label');
         fileLabel.className = 'input-label';
-        fileLabel.textContent = 'Soporte (Documento/Imagen)';
+        fileLabel.textContent = 'Evidencia (opcional)';
 
         const dropzone = document.createElement('div');
         dropzone.id = 'income-dropzone';
@@ -899,14 +1264,14 @@ function ensureIncomeSection(targetContainer) {
 
         const dropHint = document.createElement('p');
         dropHint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-        dropHint.textContent = 'JPG, PNG, PDF, DOC, DOCX o TXT (Max. 5MB)';
+        dropHint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
 
         dropzone.append(dropIcon, dropText, dropHint);
 
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.id = 'income-receipt';
-        fileInput.accept = 'image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
+        fileInput.accept = 'image/jpeg,image/png,image/webp,application/pdf';
         fileInput.style.display = 'none';
 
         fileGroup.append(fileLabel, dropzone, fileInput);
@@ -998,24 +1363,27 @@ function resetIncomeDropzone(dropzone) {
     const highlight = document.createElement('span');
     highlight.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
     highlight.textContent = 'haz clic para subir';
-    text.append('Arrastra tu soporte aqui o ', highlight);
+    text.append('Arrastra tu evidencia aqui o ', highlight);
 
     const hint = document.createElement('p');
     hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-    hint.textContent = 'JPG, PNG, PDF, DOC, DOCX o TXT (Max. 5MB)';
+    hint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
 
     dropzone.append(icon, text, hint);
     dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
     dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
 }
 
-function handleIncomeFileUpload(input, dropzone) {
+async function handleIncomeFileUpload(input, dropzone) {
     if (!input || !dropzone) return;
     const file = input.files?.[0];
     if (!file) return;
 
-    if (file.size > INCOME_MAX_FILE_SIZE) {
-        alert('El archivo es muy grande. Maximo 5MB.');
+    // Use hardened validation with magic bytes
+    const validation = await validateEvidenceFile(file);
+    if (!validation.valid) {
+        // Show neutral message (no red per Visual DNA)
+        showEvidenceToast(validation.error, 'warning');
         input.value = '';
         resetIncomeDropzone(dropzone);
         return;

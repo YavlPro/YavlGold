@@ -1933,6 +1933,28 @@
                                 placeholder="Condiciones de pago, cuotas, etc." rows="2"
                                 style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
                         </div>
+
+                        <!-- Evidencia (opcional) -->
+                        <div class="input-group" style="margin-top: 1.5rem;">
+                            <label class="input-label">Evidencia (opcional)</label>
+                            <div id="pending-dropzone" class="upload-dropzone"
+                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
+                                onclick="document.getElementById('pending-receipt').click()">
+                                <i class="fa-solid fa-cloud-arrow-up"
+                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
+                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
+                                    Arrastra tu comprobante aqu&iacute; o <span
+                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
+                                        subir</span>
+                                </p>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB)
+                                </p>
+                            </div>
+                            <input type="file" id="pending-receipt"
+                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
+                        </div>
+
                         <div
                             style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
                             <button type="reset" id="btn-limpiar-pendiente" class="btn"
@@ -1986,6 +2008,28 @@
                                 placeholder="Detalles de la p&eacute;rdida" rows="2"
                                 style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
                         </div>
+
+                        <!-- Evidencia (opcional) -->
+                        <div class="input-group" style="margin-top: 1.5rem;">
+                            <label class="input-label">Evidencia (opcional)</label>
+                            <div id="loss-dropzone" class="upload-dropzone"
+                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
+                                onclick="document.getElementById('loss-receipt').click()">
+                                <i class="fa-solid fa-cloud-arrow-up"
+                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
+                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
+                                    Arrastra tu comprobante aqu&iacute; o <span
+                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
+                                        subir</span>
+                                </p>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB)
+                                </p>
+                            </div>
+                            <input type="file" id="loss-receipt"
+                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
+                        </div>
+
                         <div
                             style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
                             <button type="reset" id="btn-limpiar-perdida" class="btn"
@@ -2039,6 +2083,28 @@
                                 placeholder="Detalles de la transferencia" rows="2"
                                 style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
                         </div>
+
+                        <!-- Evidencia (opcional) -->
+                        <div class="input-group" style="margin-top: 1.5rem;">
+                            <label class="input-label">Evidencia (opcional)</label>
+                            <div id="transfer-dropzone" class="upload-dropzone"
+                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
+                                onclick="document.getElementById('transfer-receipt').click()">
+                                <i class="fa-solid fa-cloud-arrow-up"
+                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
+                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
+                                    Arrastra tu comprobante aqu&iacute; o <span
+                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
+                                        subir</span>
+                                </p>
+                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
+                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB)
+                                </p>
+                            </div>
+                            <input type="file" id="transfer-receipt"
+                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
+                        </div>
+
                         <div
                             style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
                             <button type="reset" id="btn-limpiar-transferencia" class="btn"

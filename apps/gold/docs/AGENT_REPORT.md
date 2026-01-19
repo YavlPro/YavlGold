@@ -450,3 +450,45 @@ git add apps/gold/agro/agro-planning.js apps/gold/docs/AGENT_REPORT.md
 git commit -m "fix(agro): contain HOY highlight within forecast container"
 git push
 ```
+
+## Diagnostico (Agro Evidence Security Hardening - 2026-01-19)
+1) **Bucket `agro-evidence`**: Privado, pero SIN restriccion de MIME types ni file_size_limit a nivel Supabase.
+2) **Policies actuales**: Cubren paths `/agro/income/` y `/agro/expense/` con RLS por `auth.uid()`. NO hay policies para `/agro/pending/`, `/agro/loss/`, `/agro/transfer/`.
+3) **Formulario Income** (`agro.js` linea 909): Permite `doc, docx, txt` ademas de imagenes/PDF - **violacion de seguridad**.
+4) **Tabs nuevos** (Pendientes/Perdidas/Transferencias): Existen en HTML (lineas 1901-2058) pero NO tienen dropzone de evidencia.
+5) **Columnas existentes**: `agro_expenses.evidence_url`, `agro_income.soporte_url`. Las tablas `agro_pending`, `agro_losses`, `agro_transfers` NO existen.
+6) **Validacion frontend**: Gastos usa `accept="image/jpeg,image/png,application/pdf"` (OK). Income permite tipos prohibidos.
+7) **Borrado de evidencia**: No hay logica actual para borrar archivo de Storage al eliminar movimiento.
+
+## Plan (Agro Evidence Security Hardening)
+1) **UI Consistente**: Inyectar bloque "Evidencia (opcional)" en `#tab-panel-pendientes`, `#tab-panel-perdidas`, `#tab-panel-transferencias` via JS en `agro.js`. Mantener Visual DNA (Black/Gold + glass).
+2) **Fix Income MIME**: Cambiar `accept` a `image/jpeg,image/png,image/webp,application/pdf` y actualizar validacion JS.
+3) **Helper reutilizable**: Crear `validateEvidenceFile(file)` con allowlist estricto: jpg/jpeg/png/webp/pdf, max 5MB, validacion extension + MIME.
+4) **Storage policies nuevas**: Agregar policies para paths `/agro/pending/`, `/agro/loss/`, `/agro/transfer/` con misma estructura RLS.
+5) **Schema opcional**: Documentar que tablas nuevas no existen; no crear tablas sin requerimiento explicito.
+6) **Borrado cascada**: En delete de movimientos, si `evidence_url`/`soporte_url` existe, llamar `supabase.storage.from('agro-evidence').remove([path])`.
+7) **NO regresiones**: No tocar IDs de Gastos (`expense-*`, `upload-dropzone`, etc). Solo agregar nuevos elementos.
+8) **Build**: Ejecutar `pnpm build:gold` al final.
+
+## Archivos a tocar
+- `apps/gold/docs/AGENT_REPORT.md` (este diagnostico)
+- `apps/gold/agro/index.html` (agregar dropzones en tabs nuevos)
+- `apps/gold/agro/agro.js` (helper + wiring + fix Income accept)
+- `apps/gold/agro/agro.css` (estilos consistentes si es necesario)
+- SQL/policies via MCP Supabase (nuevos paths)
+
+## DoD
+- [ ] Pendientes/Perdidas/Transferencias muestran "Evidencia (opcional)" consistente con Gastos
+- [ ] Movimientos se pueden registrar SIN archivo
+- [ ] Solo jpg/jpeg/png/webp/pdf permitidos (frontend valida)
+- [ ] Storage policies cubren nuevos paths con RLS
+- [ ] Income ya no acepta doc/docx/txt
+- [ ] Borrado de movimiento borra archivo asociado
+- [ ] `pnpm build:gold` OK
+
+## Nota Tecnica: Enforcement de MIME Types
+El enforcement real de tipos de archivo es **multinivel**:
+1. **Storage Policies (RLS)**: Validan por extension del nombre del archivo (`name ~* '\.(jpg|jpeg|png|webp|pdf)$'`). NO validan MIME type real porque Supabase Storage no inspecciona contenido.
+2. **Frontend (accept attr)**: Primera barrera, pero puede ser saltada.
+3. **Frontend (validateEvidenceFile)**: Valida extension, MIME reportado por browser, Y **magic bytes** para detectar archivos renombrados (anti-spoof).
+4. **Conclusión**: La defensa real contra .exe renombrado a .png es `checkMagicBytes()` en frontend. Storage policies son defensa de path + extension únicamente.
