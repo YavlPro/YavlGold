@@ -578,3 +578,49 @@ git add apps/gold/agro/agro-stats.js apps/gold/agro/agro.js apps/gold/agro/index
 git commit -m "fix(agro): resolve crop disappearance on invoice creation + remove fictitious revenue"
 git push
 ```
+
+## Diagnostico (Auth Modal Logo Center Fix - 2026-01-20)
+1) **Sintoma**: Logo del modal de auth desalineado (corrido a la izquierda).
+2) **Ubicacion**: `apps/gold/index.html` linea 1728-1731 (`.auth-logo-box`)
+3) **Causa raiz**:
+   - El `.auth-logo-box` usa `text-align: center` inline (OK para centrar contenido)
+   - En mobile hay media query con `display: flex; justify-content: center` pero NO en desktop
+   - El `<img>` es `inline` por defecto, necesita ser `block` con `margin: 0 auto` o el contenedor necesita flex
+4) **Solucion**: Agregar CSS para `.auth-logo-box` en desktop que centre con flex, igual que mobile.
+5) **Botón X**: Ya es `position: absolute; top: 20px; right: 20px;` (OK, no afecta al logo)
+
+## Plan (Auth Modal Logo Center Fix)
+1) Agregar CSS base para `.auth-logo-box` con `display: flex; justify-content: center; width: 100%;`
+2) Mantener el `text-align: center` como fallback
+3) No tocar estructura HTML ni IDs
+4) Build: `pnpm build:gold`
+
+## Resultado (Auth Modal Logo Center Fix - 2026-01-20)
+- **Archivo**: `apps/gold/index.html:1873`
+- **CSS insertado**:
+  ```css
+  .auth-logo-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  .auth-logo-box img {
+    display: block;
+    margin: 0 auto;
+  }
+  ```
+- **Build**: PASS (`pnpm build:gold`)
+- **DoD**:
+  - [x] Logo centrado horizontalmente en desktop
+  - [x] Logo centrado horizontalmente en mobile
+  - [x] Boton X sigue en top-right, clickeable
+  - [x] No cambios a tabs/forms
+  - [x] Build OK
+
+## Git Commands Sugeridos (Auth Logo Fix)
+```bash
+git add apps/gold/index.html apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(auth): center logo in auth modal on all screen sizes"
+git push
+```
