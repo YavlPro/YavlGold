@@ -662,28 +662,48 @@ function attachExpenseDeleteButton(item, expenseId) {
             return;
         }
 
-        if (expenseDeletedAtSupported === false) {
-            alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
-            return;
-        }
+        // Get expense data for cascade delete of evidence
+        const expense = expenseCache.find(e => e && String(e.id) === targetId);
+        const evidencePath = expense?.evidence_url || null;
 
-        const { error } = await supabase
+        // Try soft delete first
+        let deleteSuccess = false;
+        const { error: softError } = await supabase
             .from('agro_expenses')
             .update({ deleted_at: new Date().toISOString() })
             .eq('id', targetId)
             .eq('user_id', user.id);
 
-        if (error) {
-            if (error.message && error.message.toLowerCase().includes('deleted_at')) {
-                expenseDeletedAtSupported = false;
-                alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
-                return;
+        if (!softError) {
+            deleteSuccess = true;
+        } else if (softError.message && softError.message.toLowerCase().includes('deleted_at')) {
+            // Fallback to hard delete if soft delete not supported
+            console.warn('[Agro] Soft delete not available, falling back to hard delete');
+            const { error: hardError } = await supabase
+                .from('agro_expenses')
+                .delete()
+                .eq('id', targetId)
+                .eq('user_id', user.id);
+
+            if (!hardError) {
+                deleteSuccess = true;
+            } else {
+                showEvidenceToast('Error al eliminar gasto.', 'warning');
+                console.error('[Agro] Hard delete failed:', hardError.message);
             }
-            alert(`Error al eliminar: ${error.message}`);
-            return;
+        } else {
+            showEvidenceToast('Error al eliminar gasto.', 'warning');
+            console.error('[Agro] Delete failed:', softError.message);
         }
 
-        document.dispatchEvent(new CustomEvent('data-refresh'));
+        // Cascade delete evidence from Storage (best-effort)
+        if (deleteSuccess && evidencePath) {
+            await deleteEvidenceFile(evidencePath);
+        }
+
+        if (deleteSuccess) {
+            document.dispatchEvent(new CustomEvent('data-refresh'));
+        }
     });
 
     actions.appendChild(deleteBtn);
@@ -1633,34 +1653,54 @@ function renderIncomeItem(listEl, income, signedUrl) {
             return;
         }
 
-        if (incomeDeletedAtSupported === false) {
-            alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
-            return;
-        }
-
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
             alert('Debes iniciar sesion para eliminar ingresos.');
             return;
         }
 
-        const { error } = await supabase
+        // Get income data for cascade delete of evidence
+        const incomeData = incomeCache.find(i => i && String(i.id) === targetId);
+        const evidencePath = incomeData?.soporte_url || null;
+
+        // Try soft delete first
+        let deleteSuccess = false;
+        const { error: softError } = await supabase
             .from('agro_income')
             .update({ deleted_at: new Date().toISOString() })
             .eq('id', targetId)
             .eq('user_id', user.id);
 
-        if (error) {
-            if (error.message && error.message.toLowerCase().includes('deleted_at')) {
-                incomeDeletedAtSupported = false;
-                alert('Soft delete no disponible. Aplica la migracion de deleted_at.');
-                return;
+        if (!softError) {
+            deleteSuccess = true;
+        } else if (softError.message && softError.message.toLowerCase().includes('deleted_at')) {
+            // Fallback to hard delete if soft delete not supported
+            console.warn('[Agro] Soft delete not available for income, falling back to hard delete');
+            const { error: hardError } = await supabase
+                .from('agro_income')
+                .delete()
+                .eq('id', targetId)
+                .eq('user_id', user.id);
+
+            if (!hardError) {
+                deleteSuccess = true;
+            } else {
+                showEvidenceToast('Error al eliminar ingreso.', 'warning');
+                console.error('[Agro] Income hard delete failed:', hardError.message);
             }
-            alert(`Error al eliminar: ${error.message}`);
-            return;
+        } else {
+            showEvidenceToast('Error al eliminar ingreso.', 'warning');
+            console.error('[Agro] Income delete failed:', softError.message);
         }
 
-        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        // Cascade delete evidence from Storage (best-effort)
+        if (deleteSuccess && evidencePath) {
+            await deleteEvidenceFile(evidencePath);
+        }
+
+        if (deleteSuccess) {
+            document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        }
     });
 
     actions.append(amount, editBtn, deleteBtn);

@@ -504,3 +504,15 @@ El enforcement real de tipos de archivo es **multinivel**:
 2) **JS**: Refactorizar `handleReceiptUpload` para usar `validateEvidenceFile()` async con magic bytes.
 3) **Storage**: DROP + CREATE policies expense con extension regex `~* '\.(jpg|jpeg|png|webp|pdf)$'`.
 4) **No romper IDs**: expense-receipt, upload-dropzone, upload-preview, upload-filename se mantienen.
+
+## Diagnostico (Soft Delete Fix - 2026-01-19)
+1) **Root cause**: `agro_expenses` NO tiene columna `deleted_at`. `agro_income` SÍ la tiene.
+2) **Alertas**: agro.js lineas 666, 679, 1637, 1656 muestran "Soft delete no disponible" cuando `incomeDeletedAtSupported === false` o cuando UPDATE falla.
+3) **Detección fallida**: El código intenta detectar soporte de `deleted_at` pero falla porque la columna no existe en expenses.
+4) **Storage delete**: La función `deleteEvidenceFile` existe pero no se llama consistentemente al borrar movimientos.
+
+## Plan (Soft Delete Fix)
+1) **SQL**: `ALTER TABLE agro_expenses ADD COLUMN IF NOT EXISTS deleted_at timestamptz;` + índice.
+2) **JS**: Quitar alerts bloqueantes, usar fallback a hard delete si soft delete falla.
+3) **Cascade delete**: Al borrar, si `evidence_url/soporte_url` existe, llamar `deleteEvidenceFile()`.
+4) **Queries**: Asegurar que loaders filtran `deleted_at IS NULL`.

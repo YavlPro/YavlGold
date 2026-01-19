@@ -2361,6 +2361,7 @@
                     const { data, error } = await supabase
                         .from('agro_expenses')
                         .select('*')
+                        .is('deleted_at', null)
                         .order('date', { ascending: false }); // Newest first
 
                     if (error) throw error;
