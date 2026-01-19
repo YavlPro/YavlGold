@@ -295,3 +295,43 @@ Fecha: 2026-01-16
 2) Editar `apps/gold/agro/agro.js`: inyectar ingresos dentro de `#tab-panel-ingresos`, implementar `switchTab` con `display:none`/`.is-hidden` sin remover nodos y ajustar aria; agregar listeners placeholder para nuevos formularios.
 3) Estrategia DOM: wrap + hide/show para preservar IDs actuales (gastos/ingresos) y evitar recrear nodos/listeners.
 4) Estrategia calendario responsive: `@media (max-width: 600px)` con overrides de `#modal-lunar .day-cell`, `.day-header`, `.month-title`, `.lunar-month`, `#lunar-calendar-grid` usando mayor especificidad para ganar al CSS inyectado.
+
+## Diagnostico (tarea actual - hotfix encoding finanzas)
+1) QA Produccion 2026-01-18: tabs finanzas muestran `?? Gastos`, `?? Ingresos`, `? Pendientes`, `?? P?rdidas`, `?? Transferencias`.
+2) Labels/placeholders afectados: `Categor?a`, `cr?dito`, `da?ada`, `p?rdida`, `aqu?`, `M?x`, `?ltimos`, `Sesi?n`, `t?cnica`, etc.
+3) Botones afectados: `?? Registrar Gasto`, `? Registrar Pendiente`, `?? Registrar P?rdida`, `?? Registrar Transferencia`.
+4) Causa raiz: el archivo fuente `apps/gold/agro/index.html` ya contiene caracteres corruptos (emojis reemplazados por `??`/`?`, tildes reemplazadas por `?`).
+5) Hipotesis: el archivo fue editado/guardado con encoding incorrecto o el bundle de produccion interpreto mal UTF-8.
+6) Lineas afectadas: 1762-2060 (seccion Finanzas Agro).
+
+## Plan (tarea actual - hotfix encoding finanzas)
+1) Editar `apps/gold/agro/index.html` para reemplazar caracteres corruptos con texto ASCII-safe:
+   - Tabs: eliminar emojis corruptos (`??`/`?`), usar solo texto plano.
+   - Tildes: reemplazar con HTML entities (`&aacute;`, `&eacute;`, `&iacute;`, `&oacute;`, `&uacute;`, `&ntilde;`).
+   - Aria-label: corregir `Pesta?as` -> `Pesta&ntilde;as`.
+2) Verificar que no se toca logica de negocio (solo strings literales).
+3) Ejecutar `pnpm build:gold` y reportar resultado.
+4) Pruebas locales: abrir /agro, confirmar tabs legibles, sin `?`/`??`, funcionalidad intacta.
+
+## Strings a corregir (mapa)
+| Linea | Corrupto | Corregido |
+|-------|----------|-----------|
+| 1762 | `Pesta?as` | `Pesta&ntilde;as` |
+| 1764 | `?? Gastos` | `Gastos` |
+| 1766 | `?? Ingresos` | `Ingresos` |
+| 1768 | `? Pendientes` | `Pendientes` |
+| 1770 | `?? P?rdidas` | `P&eacute;rdidas` |
+| 1772 | `?? Transferencias` | `Transferencias` |
+| 1806-1808 | `Categor?a` | `Categor&iacute;a` |
+| 1812-1816 | `??` (options) | (eliminar emojis) |
+| 1838 | `aqu?` | `aqu&iacute;` |
+| 1843 | `M?x` | `M&aacute;x` |
+| 1871 | `?? Registrar Gasto` | `Registrar Gasto` |
+| 1876-1892 | `t?cnica`, `?ltimos`, `Sesi?n` | entities |
+| 1908 | `cr?dito` | `cr&eacute;dito` |
+| 1947 | `? Registrar Pendiente` | `Registrar Pendiente` |
+| 1961 | `da?ada` | `da&ntilde;ada` |
+| 1985 | `p?rdida` | `p&eacute;rdida` |
+| 2000 | `?? Registrar P?rdida` | `Registrar P&eacute;rdida` |
+| 2053 | `?? Registrar Transferencia` | `Registrar Transferencia` |
+
