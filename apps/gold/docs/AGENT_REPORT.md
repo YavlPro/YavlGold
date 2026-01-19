@@ -419,3 +419,34 @@ git add apps/gold/agro/agro-interactions.js apps/gold/docs/AGENT_REPORT.md
 git commit -m "fix(agro): modal market uses data-api.binance.vision + singleton pattern"
 git push
 ```
+
+## Diagnostico (HOY Highlight Overflow - 2026-01-18)
+1) Elemento afectado: `#forecast-container` contiene tarjetas `.forecast-day`
+2) Problema: container tiene `height: 140px` pero tarjetas miden `161px`
+3) Con `align-items: flex-end`, tarjetas se desbordan 21px hacia ARRIBA
+4) El `.selected` (HOY) aplica `transform: scale(1.05)` que agrega ~4px adicionales
+5) Total desborde: 25px hacia arriba, superando el margen de 24px del header
+6) Resultado: el borde dorado del HOY invade el header "Riego y Planificación"
+
+## Plan (HOY Highlight Overflow)
+1) Aumentar altura de `#forecast-container` de 140px a 170px
+2) Agregar `padding-top: 10px` para espacio de seguridad con el scale
+3) Agregar `overflow: hidden` para contener cualquier desborde residual
+4) NO tocar transform del .selected (mantener efecto visual)
+
+## Resultado (HOY Highlight Overflow)
+- **Build**: PASS ✅ (pnpm build:gold exit 0)
+- **Archivo modificado**: `apps/gold/agro/agro-planning.js` lineas 294-305
+- **Cambios CSS aplicados**:
+  - `height` 140px → `min-height: 170px` (más robusto, crece si es necesario)
+  - `padding`: 12px 0 → 10px 0 12px 0 (padding-top agregado)
+  - `overflow: hidden` (contener desbordes)
+  - `isolation: isolate` (contexto de apilamiento)
+  - `position: relative` (ancla para z-index)
+
+## Git Commands Sugeridos (sin ejecutar)
+```bash
+git add apps/gold/agro/agro-planning.js apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(agro): contain HOY highlight within forecast container"
+git push
+```

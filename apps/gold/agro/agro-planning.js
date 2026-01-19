@@ -296,9 +296,12 @@ function injectForecastStyles() {
             justify-content: space-between;
             align-items: flex-end;
             gap: 4px;
-            height: 140px;
-            padding: 12px 0;
-            margin-top: 16px; /* Fix: Espaciado extra para evitar solapamiento */
+            min-height: 170px; /* Fix: min-height para flexibilidad + contención scale */
+            padding: 10px 0 12px 0; /* Fix: padding-top para espacio de scale */
+            margin-top: 16px;
+            overflow: hidden; /* Fix: contener cualquier desborde */
+            isolation: isolate; /* Fix: contexto de apilamiento */
+            position: relative; /* Fix: ancla para z-index */
         }
 
         .forecast-day {
