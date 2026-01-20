@@ -1062,3 +1062,262 @@ if (!btn) {
 ### Result
 - Build: OK (exit code 0)
 - Requiere segundo deploy a Vercel
+
+---
+
+## V9.4 CERRADA ✅ (2026-01-20 14:45 UTC-4)
+
+### QA Final (Post 3er Deploy)
+
+| Test | Estado |
+|------|--------|
+| CREATE CROP HOY | ✅ PASS |
+| CREATE CROP AYER | ✅ PASS |
+| ¿Aparece en grid? | ✅ SÍ (status "CRECIENDO") |
+| Consola | ✅ limpia |
+| Pendientes | ✅ PASS |
+
+### Commits V9.4
+
+| # | Commit | Descripción |
+|---|--------|-------------|
+| 1 | `01a0e81` | SQL + stats monto + finance handlers |
+| 2 | `0aeb185` | ID fijo `btn-save-crop` para selector robusto |
+| 3 | `576d076` | Status `'growing'` (CHECK constraint) |
+
+---
+
+## Diagnóstico V9.5 - Finanzas Agro Realistas (2026-01-20)
+
+### 🔴 Próximo Problema: Datos Ficticios en Stats
+
+Los gráficos y stats usan **proyecciones inventadas** en lugar de datos reales:
+
+| # | Problema | Ubicación | Causa |
+|---|----------|-----------|-------|
+| 1 | ROI usa `revenue_projected` | `agro-stats.js:211,225-230,313,393` | Fallback a proyección cuando no hay ingresos |
+| 2 | Gastos ficticios | `agro-stats.js:429-447` | Estiman 45%/15%/30%/10% de inversión |
+| 3 | Gráfico timeline proyectado | `agro-stats.js:566-598` | Simula curva inventada |
+| 4 | Historial no refresca | `agro.js` handlers | Falta `await refreshHistory()` post-insert |
+| 5 | Sin enlace cultivo-facturero | `agro_expenses`, `agro_income` | No tienen `crop_id` |
+
+### Estado Actual de crop_id
+
+| Tabla | ¿Tiene crop_id? |
+|-------|-----------------|
+| `agro_expenses` | ❌ NO |
+| `agro_income` | ❌ NO |
+| `agro_pending` | ✅ SÍ |
+| `agro_losses` | ✅ SÍ |
+| `agro_transfers` | ✅ SÍ |
+
+### SQL Propuesto (Requiere Aprobación)
+
+```sql
+ALTER TABLE agro_expenses
+  ADD COLUMN IF NOT EXISTS crop_id uuid REFERENCES agro_crops(id) ON DELETE SET NULL;
+
+ALTER TABLE agro_income
+  ADD COLUMN IF NOT EXISTS crop_id uuid REFERENCES agro_crops(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_agro_expenses_crop_id ON agro_expenses(crop_id);
+CREATE INDEX IF NOT EXISTS idx_agro_income_crop_id ON agro_income(crop_id);
+```
+
+### Plan V9.5 Propuesto
+
+1. **Eliminar `revenue_projected`** de cálculos ROI
+2. **Eliminar gastos ficticios** (45%/15%/30%/10%)
+3. **ROI = "N/A"** si no hay ingresos reales
+4. **Dropdown "Asociar a cultivo"** en formularios facturero
+5. **Refresh historial** después de cada insert
+6. **Labels claros**: "Rentabilidad REAL (según ingresos registrados)"
+
+### Archivos a Tocar
+
+- `agro-stats.js` → Eliminar proyecciones, usar solo datos reales
+- `agro.js` → Enviar `crop_id`, refresh historial
+- `index.html` → Dropdown cultivo en formularios
+
+---
+
+## V9.5 Diagnóstico Detallado (2026-01-20)
+
+### 🔴 Problema Principal
+Los gráficos y KPIs muestran **números ficticios** basados en proyecciones en lugar de datos financieros reales. Esto es inaceptable para un sistema agrícola que debe reflejar la realidad.
+
+### 📋 Puntos de Falla Identificados
+
+| # | Problema | Archivo | Líneas | Descripción |
+|---|----------|---------|--------|-------------|
+| 1 | ROI usa `revenue_projected` | `agro-stats.js` | 211, 225-230, 313, 393 | Fallback a proyección cuando no hay ingresos reales |
+| 2 | Gastos ficticios | `agro-stats.js` | 429-447 | Estima 45%/15%/30%/10% de inversión como breakdown |
+| 3 | Timeline inventado | `agro-stats.js` | 566-598 | Simula curva de retorno sin datos reales |
+| 4 | Historial fantasma | `agro.js` | handlers | Insert "exitoso" pero no aparece en lista |
+| 5 | Sin enlace cultivo-facturero | `agro_expenses`, `agro_income` | DB | No tienen `crop_id` para asociar |
+
+### 📊 Definiciones de Cálculo (Fórmulas Correctas)
+
+```javascript
+// FUENTE ÚNICA DE VERDAD
+incomeTotal = SUM(agro_income.monto)           // Solo ingresos REALES
+expensesTotal = SUM(agro_expenses.amount)      // Solo gastos REALES
+lossesTotal = SUM(agro_losses.monto)           // Si la tabla existe
+investment = SUM(agro_crops.investment)        // Cultivos activos
+
+costTotal = investment + expensesTotal + lossesTotal
+netProfit = incomeTotal - costTotal
+margin = (incomeTotal > 0) ? (netProfit / incomeTotal) : "N/A"
+ROI = (costTotal > 0 && incomeTotal > 0) ? (netProfit / costTotal) : "N/A"
+
+// NO ENTRAN EN PROFIT:
+// - Pendientes (agro_pending.monto) → son cuentas por cobrar, no ingreso
+// - Transferencias (agro_transfers.monto) → son movimientos, no ingreso/gasto
+```
+
+### ⚠️ User Review Required (Schema)
+
+> [!IMPORTANT]
+> Se requiere confirmación para agregar `crop_id` a 2 tablas existentes.
+
+**SQL Propuesto:**
+```sql
+ALTER TABLE agro_expenses
+  ADD COLUMN IF NOT EXISTS crop_id uuid REFERENCES agro_crops(id) ON DELETE SET NULL;
+
+ALTER TABLE agro_income
+  ADD COLUMN IF NOT EXISTS crop_id uuid REFERENCES agro_crops(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_agro_expenses_crop_id ON agro_expenses(crop_id);
+CREATE INDEX IF NOT EXISTS idx_agro_income_crop_id ON agro_income(crop_id);
+```
+
+**Impacto:**
+- Campo opcional (NULL permitido)
+- No rompe datos existentes
+- Permite asociar movimientos a cultivos específicos
+- RLS existente (`USING auth.uid() = user_id`) sigue funcionando
+
+### 🔧 Plan de Implementación
+
+#### Fase 1: SQL (requiere aprobación)
+- Aplicar migración `add_crop_id_to_expenses_income`
+- Verificar RLS policies
+
+#### Fase 2: Eliminar proyecciones (`agro-stats.js`)
+- Quitar `revenue_projected` de todos los cálculos
+- Quitar estimación 45/15/30/10
+- Si `incomeTotal === 0`: ROI/Margen = "N/A"
+- Timeline: "Sin datos suficientes" o solo costos acumulados
+
+#### Fase 3: UI dropdown cultivo (`index.html`)
+- Agregar `<select>` en formularios facturero:
+  - Default: "General (sin asociar)"
+  - Opciones: cultivos activos
+- Labels claros: "Rentabilidad REAL", "Estructura de costos (gastos registrados)"
+
+#### Fase 4: Handlers + Refresh (`agro.js`)
+- Enviar `crop_id` en INSERTs
+- `refreshFactureroHistory(tabName)` después de cada insert
+- Disparar `data-refresh`
+
+### 🚨 Riesgos y Mitigaciones
+
+| Riesgo | Mitigación |
+|--------|------------|
+| SQL falla por permisos | Verificar con SELECT primero |
+| Dropdown vacío si no hay cultivos | Mostrar solo "General" |
+| Historial no refresca | Implementar función dedicada con SELECT ordenado |
+| Gráficos vacíos sin datos | Mensaje claro "Sin datos suficientes" |
+
+### ✅ Definition of Done (Checklist)
+
+- [ ] Eliminar TODO fallback a `revenue_projected`
+- [ ] ROI/Margen = "N/A" si `incomeTotal === 0`
+- [ ] Gráfico timeline: "Sin datos suficientes" o solo costos reales
+- [ ] Estructura de costos: solo `agro_expenses` reales por categoría
+- [ ] Dropdown "Asociar a cultivo" en todos los formularios
+- [ ] Historial se refresca después de cada insert
+- [ ] `pnpm build:gold` OK
+- [ ] Consola limpia
+
+### 🧪 Plan QA
+
+| # | Test | Expected |
+|---|------|----------|
+| 1 | Gasto SIN cultivo | Aparece en historial, afecta global |
+| 2 | Gasto CON cultivo | Aparece en historial, asociado a cultivo |
+| 3 | Sin ingresos | ROI/Margen = "N/A" + mensaje |
+| 4 | Con ingresos | ROI/Margen calculados correctamente |
+| 5 | Estructura costos | Solo gastos reales por categoría |
+| 6 | Pendientes/Pérdidas/Transfers | Historial se refresca, sin "éxito fantasma" |
+
+---
+
+## Cambios Implementados V9.5 (2026-01-20 15:40 UTC-4)
+
+### SQL Aplicado
+```sql
+ALTER TABLE agro_expenses ADD COLUMN IF NOT EXISTS crop_id uuid REFERENCES agro_crops(id) ON DELETE SET NULL;
+ALTER TABLE agro_income ADD COLUMN IF NOT EXISTS crop_id uuid REFERENCES agro_crops(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_agro_expenses_crop_id ON agro_expenses(crop_id);
+CREATE INDEX IF NOT EXISTS idx_agro_income_crop_id ON agro_income(crop_id);
+```
+
+### Frontend - agro-stats.js
+
+| Líneas | Cambio |
+|--------|--------|
+| 199-216 | Eliminado `revenueProjectedTotal`, solo se usa `cropsInvestmentTotal` |
+| 218-230 | `costTotal` = inversión + gastos + pérdidas. ROI = N/A si `incomeTotal === 0` |
+| 232-245 | Eliminado `revenueProjectedTotal` del summary |
+| 308-313 | Solo `incomeTotal` sin fallback a proyección |
+| 386-411 | ROI chart: muestra "Sin ingresos registrados" si no hay datos |
+| 427-458 | `updateStats()`: eliminados gastos ficticios (45/15/30/10) |
+
+### Frontend - index.html
+
+| Líneas | Cambio |
+|--------|--------|
+| 1832-1841 | Dropdown `expense-crop-id` en formulario Gastos |
+| 1952-1960 | Dropdown `pending-crop-id` en formulario Pendientes |
+| 2036-2044 | Dropdown `loss-crop-id` en formulario Pérdidas |
+| 2120-2128 | Dropdown `transfer-crop-id` en formulario Transferencias |
+| 2554-2566 | `crop_id` agregado al INSERT de `agro_expenses` |
+
+### Frontend - agro.js
+
+| Líneas | Cambio |
+|--------|--------|
+| 15-140 | Nuevas funciones `populateCropDropdowns()` y `refreshFactureroHistory()` |
+| 1269-1286 | Dropdown `income-crop-id` en formulario Ingresos |
+| 1989-2004 | `crop_id` agregado al INSERT de `agro_income` |
+| 2070, 2085, 2099 | `cropSelectId` agregado a configs de handlers |
+| 2295-2308 | `crop_id` leído del dropdown en handlers |
+| 2313-2326 | `refreshFactureroHistory()` llamado después de insert |
+| 2629 | `populateCropDropdowns()` llamado al inicializar |
+
+### Build
+```
+pnpm build:gold
+✅ UTF-8 verification passed!
+Exit code: 0
+```
+
+### Git Commands Sugeridos
+```bash
+git add apps/gold/agro/agro-stats.js apps/gold/agro/agro.js apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
+git commit -m "feat(agro): V9.5 realistic finances - no projections, crop_id linking
+
+- Remove all revenue_projected fallbacks
+- Remove fictitious expense breakdown (45/15/30/10)
+- ROI/Margin = N/A when no real income
+- Add crop_id to agro_expenses and agro_income (SQL migration)
+- Add 'Associate to Crop' dropdown in all facturero forms
+- Implement refreshFactureroHistory() for real-time history updates
+- Send crop_id in all INSERT operations
+- Update ROI chart to show 'No income registered' message"
+git push
+```
+
+

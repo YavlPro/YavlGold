@@ -13,6 +13,140 @@ let currentEditId = null; // ID del cultivo en edición (null = nuevo)
 let cropsCache = [];      // Cache local de cultivos para edición
 
 // ============================================================
+// V9.5: CROP DROPDOWN POPULATION + HISTORY REFRESH
+// ============================================================
+
+/**
+ * Populates all crop selector dropdowns with active crops
+ * IDs: expense-crop-id, income-crop-id, pending-crop-id, loss-crop-id, transfer-crop-id
+ */
+async function populateCropDropdowns() {
+    try {
+        const { data: crops, error } = await supabase
+            .from('agro_crops')
+            .select('id, name, variety')
+            .is('deleted_at', null)
+            .order('name');
+
+        if (error) {
+            console.warn('[AGRO] Error fetching crops for dropdowns:', error.message);
+            return;
+        }
+
+        const selectIds = [
+            'expense-crop-id',
+            'income-crop-id',
+            'pending-crop-id',
+            'loss-crop-id',
+            'transfer-crop-id'
+        ];
+
+        selectIds.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            // Preserve current selection
+            const currentValue = select.value;
+
+            // Clear existing options except first (General)
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+
+            // Add crop options
+            (crops || []).forEach(crop => {
+                const option = document.createElement('option');
+                option.value = crop.id;
+                option.textContent = crop.variety
+                    ? `${crop.name} (${crop.variety})`
+                    : crop.name;
+                select.appendChild(option);
+            });
+
+            // Restore selection if still valid
+            if (currentValue && [...select.options].some(o => o.value === currentValue)) {
+                select.value = currentValue;
+            }
+        });
+
+        console.log('[AGRO] V9.5: Crop dropdowns populated with', crops?.length || 0, 'crops');
+    } catch (err) {
+        console.warn('[AGRO] Error populating crop dropdowns:', err.message);
+    }
+}
+
+/**
+ * Refreshes facturero history for a specific tab
+ * @param {string} tabName - 'pendientes', 'perdidas', 'transferencias'
+ */
+async function refreshFactureroHistory(tabName) {
+    const tables = {
+        'pendientes': { table: 'agro_pending', containerId: 'pending-history-list' },
+        'perdidas': { table: 'agro_losses', containerId: 'loss-history-list' },
+        'transferencias': { table: 'agro_transfers', containerId: 'transfer-history-list' }
+    };
+
+    const config = tables[tabName];
+    if (!config) {
+        console.log('[AGRO] V9.5: No history config for tab:', tabName);
+        return;
+    }
+
+    try {
+        const { data: items, error } = await supabase
+            .from(config.table)
+            .select('*')
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) {
+            console.warn(`[AGRO] Error fetching ${tabName} history:`, error.message);
+            return;
+        }
+
+        // Find or create history container
+        let container = document.getElementById(config.containerId);
+        if (!container) {
+            // Create container if doesn't exist
+            const tabPanel = document.getElementById(`tab-panel-${tabName}`);
+            if (tabPanel) {
+                container = document.createElement('div');
+                container.id = config.containerId;
+                container.style.cssText = 'margin-top: 1.5rem; max-height: 300px; overflow-y: auto;';
+                tabPanel.appendChild(container);
+            }
+        }
+
+        if (!container) return;
+
+        // Render items
+        if (!items || items.length === 0) {
+            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Sin registros recientes.</p>`;
+            return;
+        }
+
+        container.innerHTML = items.map(item => `
+            <div class="facturero-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="color: #fff; font-weight: 500;">${item.concepto || 'Sin concepto'}</div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">${formatDate(item.fecha)}</div>
+                </div>
+                <div style="color: var(--gold-primary, #C8A752); font-weight: 700;">$${(item.monto || 0).toFixed(2)}</div>
+            </div>
+        `).join('');
+
+        console.log(`[AGRO] V9.5: Refreshed ${tabName} history with ${items.length} items`);
+    } catch (err) {
+        console.warn(`[AGRO] Error refreshing ${tabName} history:`, err.message);
+    }
+}
+
+// Expose globally for use by inline scripts and data-refresh handler
+window.populateCropDropdowns = populateCropDropdowns;
+window.refreshFactureroHistory = refreshFactureroHistory;
+
+// ============================================================
 // UTILIDADES
 // ============================================================
 
@@ -1267,7 +1401,25 @@ function ensureIncomeSection(targetContainer) {
         });
         categoryGroup.append(categoryLabel, categorySelect);
 
-        grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup);
+        // V9.5: Asociar a Cultivo (opcional)
+        const cropGroup = document.createElement('div');
+        cropGroup.className = 'input-group';
+        const cropLabel = document.createElement('label');
+        cropLabel.className = 'input-label';
+        cropLabel.setAttribute('for', 'income-crop-id');
+        cropLabel.textContent = 'Asociar a Cultivo (opcional)';
+        const cropSelect = document.createElement('select');
+        cropSelect.id = 'income-crop-id';
+        cropSelect.className = 'styled-input crop-selector';
+        cropSelect.style.paddingLeft = '1rem';
+        cropSelect.style.cursor = 'pointer';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'General (sin asociar)';
+        cropSelect.appendChild(defaultOpt);
+        cropGroup.append(cropLabel, cropSelect);
+
+        grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup, cropGroup);
 
         const fileGroup = document.createElement('div');
         fileGroup.className = 'input-group';
@@ -1834,6 +1986,10 @@ async function saveIncome() {
             if (updateError) throw updateError;
             alert('Ingreso actualizado.');
         } else {
+            // V9.5: Get crop_id from dropdown
+            const incomeCropSelect = document.getElementById('income-crop-id');
+            const incomeCropId = incomeCropSelect?.value || null;
+
             const { error: insertError } = await supabase
                 .from('agro_income')
                 .insert({
@@ -1843,7 +1999,8 @@ async function saveIncome() {
                     monto: parseFloat(amount),
                     fecha: dateVal,
                     categoria: category,
-                    soporte_url: soportePath
+                    soporte_url: soportePath,
+                    crop_id: incomeCropId || null // V9.5
                 });
 
             if (insertError) throw insertError;
@@ -2052,6 +2209,7 @@ function initFinanceFormHandlers() {
             label: 'Pendiente',
             fileInputId: 'pending-receipt',
             storagePath: 'pending',
+            cropSelectId: 'pending-crop-id', // V9.5
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-pendiente')?.value?.trim(),
                 monto: parseFloat(form.querySelector('#input-monto-pendiente')?.value) || 0,
@@ -2066,6 +2224,7 @@ function initFinanceFormHandlers() {
             label: 'Pérdida',
             fileInputId: 'loss-receipt',
             storagePath: 'loss',
+            cropSelectId: 'loss-crop-id', // V9.5
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-perdida')?.value?.trim(),
                 monto: parseFloat(form.querySelector('#input-monto-perdida')?.value) || 0,
@@ -2080,6 +2239,7 @@ function initFinanceFormHandlers() {
             label: 'Transferencia',
             fileInputId: 'transfer-receipt',
             storagePath: 'transfer',
+            cropSelectId: 'transfer-crop-id', // V9.5
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-transferencia')?.value?.trim(),
                 monto: parseFloat(form.querySelector('#input-monto-transferencia')?.value) || 0,
@@ -2137,11 +2297,16 @@ function initFinanceFormHandlers() {
                     evidenceUrl = uploadResult.path;
                 }
 
+                // V9.5: Get crop_id from dropdown
+                const cropSelect = document.getElementById(config.cropSelectId);
+                const cropId = cropSelect?.value || null;
+
                 // Insert into DB
                 const insertData = {
                     user_id: user.id,
                     ...formData,
-                    evidence_url: evidenceUrl
+                    evidence_url: evidenceUrl,
+                    crop_id: cropId || null // V9.5: Associate with crop
                 };
 
                 const { error } = await supabase.from(config.table).insert(insertData);
@@ -2151,6 +2316,19 @@ function initFinanceFormHandlers() {
                 form.reset();
                 if (dateInput) dateInput.value = today; // Reset date to today
                 if (fileInput) fileInput.value = '';
+
+                // V9.5: Refresh history for this specific tab
+                const tabName = config.id.replace('-form', 's').replace('loss', 'perdida').replace('pending', 'pendiente').replace('transfer', 'transferencia');
+                const tabMapping = {
+                    'pendientes': 'pendientes',
+                    'losss': 'perdidas',
+                    'transfers': 'transferencias'
+                };
+                const mappedTab = tabMapping[config.id.replace('-form', 's')] || tabName;
+                if (typeof window.refreshFactureroHistory === 'function') {
+                    await window.refreshFactureroHistory(mappedTab);
+                }
+
                 // Refresh UI
                 document.dispatchEvent(new CustomEvent('data-refresh'));
 
@@ -2462,6 +2640,7 @@ export function initAgro() {
     initIncomeModule();
     initFinanceTabs();
     initFinanceFormHandlers();
+    populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setTimeout(checkCriticalFormUniqueness, 0);
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();

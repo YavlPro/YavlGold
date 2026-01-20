@@ -196,11 +196,11 @@ export async function computeAgroFinanceSummaryV1() {
             console.warn('[AGRO_STATS] Error fetching losses:', err);
         }
 
-        // 4) Crops visibles (mismo criterio que loadCrops)
+        // 4) Crops visibles (solo inversión - NO usar revenue_projected)
         let cropsInvestmentTotal = 0;
-        let revenueProjectedTotal = 0;
+        // V9.5: revenue_projected ELIMINADO - solo usamos ingresos reales
         try {
-            const result = await selectAgroTable('agro_crops', 'investment, revenue_projected, status', true);
+            const result = await selectAgroTable('agro_crops', 'investment, status', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching crops:', result.error);
             }
@@ -208,24 +208,21 @@ export async function computeAgroFinanceSummaryV1() {
             if (crops) {
                 crops.forEach(c => {
                     cropsInvestmentTotal += parseFloat(c.investment) || 0;
-                    revenueProjectedTotal += parseFloat(c.revenue_projected) || 0;
                 });
             }
         } catch (err) {
             console.warn('[AGRO_STATS] Error fetching crops:', err);
         }
 
-        // Cálculos derivados
-        const costTotal = expenseTotal + lossesTotal; // Costo Total = Gastos + Pérdidas (NO inversión)
+        // Cálculos derivados - V9.5: SOLO datos reales, NO proyecciones
+        const costTotal = cropsInvestmentTotal + expenseTotal + lossesTotal; // Costo Total = Inversión + Gastos + Pérdidas
         const profitNet = incomeTotal - costTotal;    // Ganancia Neta = Ingresos - Costos
 
-        // ROI: N/A si no hay ingresos reales ni proyección
+        // ROI: N/A si no hay ingresos reales (V9.5: NO usar revenue_projected)
         let roiDisplay = 'N/A';
         let roiValue = null;
-        if (incomeTotal > 0 || revenueProjectedTotal > 0) {
-            const baseForROI = Math.max(costTotal, 1); // Evitar división por cero
-            const incomeBase = incomeTotal > 0 ? incomeTotal : revenueProjectedTotal;
-            roiValue = ((incomeBase - costTotal) / baseForROI) * 100;
+        if (incomeTotal > 0 && costTotal > 0) {
+            roiValue = ((incomeTotal - costTotal) / costTotal) * 100;
             roiDisplay = roiValue.toFixed(1) + '%';
         }
 
@@ -235,7 +232,7 @@ export async function computeAgroFinanceSummaryV1() {
             lossesTotal,
             costTotal,
             cropsInvestmentTotal,
-            revenueProjectedTotal,
+            // V9.5: revenueProjectedTotal ELIMINADO
             profitNet,
             roiDisplay,
             roiValue,
@@ -308,9 +305,9 @@ export function updateUIFromSummary(summary) {
         }
     }
 
-    // 3. Resumen Financiero Panel
+    // 3. Resumen Financiero Panel - V9.5: Solo ingresos REALES
     const summaryRevenue = document.getElementById('summary-revenue');
-    if (summaryRevenue) summaryRevenue.textContent = formatK(summary.incomeTotal || summary.revenueProjectedTotal);
+    if (summaryRevenue) summaryRevenue.textContent = formatK(summary.incomeTotal);
 
     const summaryCost = document.getElementById('summary-cost');
     if (summaryCost) summaryCost.textContent = formatK(summary.costTotal);
@@ -384,16 +381,29 @@ function updateExpensesChartFromSummary(costByCategory, costTotal) {
 }
 
 /**
- * Updates ROI bar chart with real data
+ * Updates ROI bar chart with real data - V9.5: NO usar revenueProjectedTotal
  */
 function updateROIChartFromSummary(summary) {
     if (!roiChartInstance) return;
 
     const invK = summary.cropsInvestmentTotal / 1000;
-    const revK = (summary.incomeTotal > 0 ? summary.incomeTotal : summary.revenueProjectedTotal) / 1000;
+    // V9.5: Solo ingresos reales, sin fallback a proyección
+    const revK = summary.incomeTotal / 1000;
     const profitK = summary.profitNet / 1000;
 
-    roiChartInstance.data.datasets[0].data = [invK, revK, profitK];
+    // Si no hay ingresos reales, mostrar mensaje en gráfico
+    if (summary.incomeTotal === 0) {
+        roiChartInstance.data.datasets[0].data = [invK, 0, 0];
+        roiChartInstance.options.plugins.title = {
+            display: true,
+            text: 'Sin ingresos registrados',
+            color: '#9ca3af',
+            font: { size: 12 }
+        };
+    } else {
+        roiChartInstance.data.datasets[0].data = [invK, revK, profitK];
+        roiChartInstance.options.plugins.title = { display: false };
+    }
     roiChartInstance.update();
 }
 
@@ -416,47 +426,34 @@ export function initStats() {
 
 /**
  * Update charts and summary with real crop data
+ * V9.5: NO más gastos ficticios. Solo datos reales.
  * @param {Array} crops List of crop objects
  */
 export function updateStats(crops) {
     if (!crops) crops = [];
 
-    // Calculate Totals
+    // Calculate Totals - V9.5: Solo inversión real de cultivos
     let totalInvestment = 0;
-    let totalRevenue = 0;
     let totalArea = 0;
 
-    // Expenses breakdown (Estimation based on investment)
-    // Assuming investment is split: 45% Inputs, 15% Utilities, 30% Labor, 10% Other
-    let expenseInputs = 0;
-    let expenseUtilities = 0;
-    let expenseLabor = 0;
-    let expenseOther = 0;
+    // V9.5: ELIMINADO - No más estimación ficticia de gastos
+    // Los gastos reales vienen de agro_expenses via computeAgroFinanceSummaryV1()
 
     crops.forEach(crop => {
         const inv = parseFloat(crop.investment) || 0;
-        const rev = parseFloat(crop.revenue_projected) || 0; // NO INVENTAR - show 0 if no real data
-
         totalInvestment += inv;
-        totalRevenue += rev;
         totalArea += parseFloat(crop.area_size) || 0;
-
-        expenseInputs += inv * 0.45;
-        expenseUtilities += inv * 0.15;
-        expenseLabor += inv * 0.30;
-        expenseOther += inv * 0.10;
     });
 
-    const netProfit = totalRevenue - totalInvestment;
-    const roi = totalInvestment > 0 ? ((netProfit / totalInvestment) * 100).toFixed(1) : 0;
-    const margin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0;
+    // V9.5: profit/roi/margin ahora se calculan en computeAgroFinanceSummaryV1()
+    // Esta función solo sincroniza los datos de cultivos
 
-    // Update UI Summary Panel
-    updateSummaryPanel(totalRevenue, totalInvestment, netProfit, margin, roi);
+    // Update UI Summary Panel con inversión
+    updateSummaryPanel(0, totalInvestment, 0, 'N/A', 'N/A');
 
-    // Update Charts
-    updateROIChart(crops, totalInvestment, totalRevenue);
-    updateExpensesChart(expenseInputs, expenseUtilities, expenseLabor, expenseOther);
+    // V9.5: Los gráficos ahora se actualizan via updateUIFromSummary()
+    // No llamar updateExpensesChart con datos ficticios
+    updateROIChart(crops, totalInvestment, 0);
 }
 
 function updateSummaryPanel(revenue, investment, profit, margin, roi) {

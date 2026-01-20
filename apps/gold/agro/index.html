@@ -1829,6 +1829,16 @@
                                     <option value="otros">Otros</option>
                                 </select>
                             </div>
+
+                            <!-- V9.5: Asociar a Cultivo (opcional) -->
+                            <div class="input-group">
+                                <label class="input-label" for="expense-crop-id">Asociar a Cultivo (opcional)</label>
+                                <select id="expense-crop-id" class="styled-input crop-selector"
+                                    style="padding-left: 1rem; cursor: pointer;">
+                                    <option value="">General (sin asociar)</option>
+                                    <!-- Populated dynamically by JS -->
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Notas adicionales -->
@@ -1939,6 +1949,15 @@
                                 <input type="text" id="input-cliente-pendiente" class="styled-input"
                                     placeholder="Ej: Distribuidor local" style="padding-left: 1rem;">
                             </div>
+
+                            <!-- V9.5: Asociar a Cultivo (opcional) -->
+                            <div class="input-group">
+                                <label class="input-label" for="pending-crop-id">Asociar a Cultivo (opcional)</label>
+                                <select id="pending-crop-id" class="styled-input crop-selector"
+                                    style="padding-left: 1rem; cursor: pointer;">
+                                    <option value="">General (sin asociar)</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="input-group" style="margin-top: 1.5rem;">
                             <label class="input-label" for="input-notas-pendiente">Notas (opcional)</label>
@@ -2014,6 +2033,15 @@
                                 <input type="text" id="input-causa-perdida" class="styled-input"
                                     placeholder="Ej: Plaga, robo" style="padding-left: 1rem;">
                             </div>
+
+                            <!-- V9.5: Asociar a Cultivo (opcional) -->
+                            <div class="input-group">
+                                <label class="input-label" for="loss-crop-id">Asociar a Cultivo (opcional)</label>
+                                <select id="loss-crop-id" class="styled-input crop-selector"
+                                    style="padding-left: 1rem; cursor: pointer;">
+                                    <option value="">General (sin asociar)</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="input-group" style="margin-top: 1.5rem;">
                             <label class="input-label" for="input-notas-perdida">Notas (opcional)</label>
@@ -2088,6 +2116,15 @@
                                 <label class="input-label" for="input-destino-transferencia">Destino</label>
                                 <input type="text" id="input-destino-transferencia" class="styled-input"
                                     placeholder="Ej: Cooperativa, familia" style="padding-left: 1rem;">
+                            </div>
+
+                            <!-- V9.5: Asociar a Cultivo (opcional) -->
+                            <div class="input-group">
+                                <label class="input-label" for="transfer-crop-id">Asociar a Cultivo (opcional)</label>
+                                <select id="transfer-crop-id" class="styled-input crop-selector"
+                                    style="padding-left: 1rem; cursor: pointer;">
+                                    <option value="">General (sin asociar)</option>
+                                </select>
                             </div>
                         </div>
                         <div class="input-group" style="margin-top: 1.5rem;">
@@ -2515,6 +2552,10 @@
                             }
 
                             // 4. DB INSERT
+                            // V9.5: Get crop_id from dropdown
+                            const expenseCropSelect = document.getElementById('expense-crop-id');
+                            const expenseCropId = expenseCropSelect?.value || null;
+
                             const { error: insertError } = await supabase
                                 .from('agro_expenses')
                                 .insert({
@@ -2523,7 +2564,8 @@
                                     amount: parseFloat(amount),
                                     category: category,
                                     date: dateVal,
-                                    evidence_url: evidenceUrl
+                                    evidence_url: evidenceUrl,
+                                    crop_id: expenseCropId || null // V9.5
                                 });
 
                             if (insertError) throw insertError;
