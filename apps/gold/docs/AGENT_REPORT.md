@@ -834,3 +834,35 @@ git commit -m "fix(agro): closeout QA - anti-race guard + deleted_at filters + t
 git push
 ```
 
+---
+
+## Fix ROI -100% Bug (2026-01-20)
+
+### Diagnóstico
+**Síntoma**: ROI mostraba -100% cuando no había ingresos.
+
+**Causa raíz**: DOS funciones actualizaban el ROI badge:
+1. `updateUIFromSummary()` (NUEVA) - Tenía lógica correcta de N/A ✅
+2. `updateSummaryPanel()` (VIEJA) - Sobrescribía con -100% después ❌
+
+La función vieja era llamada por `updateStats(crops)` desde `loadCrops()`.
+
+### Solución
+1. **Eliminado** ROI badge update de `updateSummaryPanel()` (líneas 380-388)
+2. **Añadido** mensaje "Sin ventas registradas" cuando ROI = N/A
+3. **Añadido** soporte para elemento `#roi-subtitle`
+
+### Verificación
+| Test | Expected | Status |
+|------|----------|--------|
+| 0 ingresos, 0 proyección | ROI: N/A (gris) + "Sin ventas registradas" | ✅ |
+| Gasto $100, Inversión $1000 | Gasto Facturero: $100, Inversión: $1000 | ✅ |
+| Costo Total ≠ Inversión | Solo gastos + pérdidas | ✅ |
+| `pnpm build:gold` | PASS | ✅ |
+
+### Git Commands (ROI Fix)
+```bash
+git add apps/gold/agro/agro-stats.js apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(agro): prevent -100% ROI display when no income - show N/A instead"
+git push
+```

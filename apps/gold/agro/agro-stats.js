@@ -203,7 +203,7 @@ export function updateUIFromSummary(summary) {
     const kpiGlobal = document.getElementById('kpi-global-total');
     if (kpiGlobal) kpiGlobal.textContent = formatCurrency(summary.expenseTotal + summary.cropsInvestmentTotal);
 
-    // 2. ROI Badge (neutral when N/A)
+    // 2. ROI Badge (neutral when N/A) + "Sin ventas registradas" message
     const roiBadge = document.getElementById('roi-badge');
     if (roiBadge) {
         if (summary.roiDisplay === 'N/A') {
@@ -217,6 +217,18 @@ export function updateUIFromSummary(summary) {
             roiBadge.style.color = isPositive ? '#C8A752' : '#f87171';
             roiBadge.style.borderColor = isPositive ? 'rgba(200, 167, 82, 0.3)' : 'rgba(248, 113, 113, 0.3)';
             roiBadge.style.background = isPositive ? 'rgba(200, 167, 82, 0.1)' : 'rgba(248, 113, 113, 0.1)';
+        }
+    }
+
+    // ROI subtitle message
+    const roiSubtitle = document.getElementById('roi-subtitle');
+    if (roiSubtitle) {
+        if (summary.roiDisplay === 'N/A') {
+            roiSubtitle.textContent = 'Sin ventas registradas';
+            roiSubtitle.style.display = 'block';
+            roiSubtitle.style.cssText = 'font-size: 0.75rem; color: #6b7280; font-style: italic; margin-top: 4px;';
+        } else {
+            roiSubtitle.style.display = 'none';
         }
     }
 
@@ -377,16 +389,10 @@ function updateSummaryPanel(revenue, investment, profit, margin, roi) {
         return '$' + (num / 1000).toFixed(1) + 'k';
     };
 
-    // 1. ROI Badge
-    const roiBadge = document.getElementById('roi-badge');
-    if (roiBadge) {
-        roiBadge.textContent = `ROI: ${roi > 0 ? '+' : ''}${roi}%`;
-        roiBadge.style.color = roi >= 0 ? '#C8A752' : '#f87171';
-        roiBadge.style.borderColor = roi >= 0 ? 'rgba(200, 167, 82, 0.3)' : 'rgba(248, 113, 113, 0.3)';
-        roiBadge.style.background = roi >= 0 ? 'rgba(200, 167, 82, 0.1)' : 'rgba(248, 113, 113, 0.1)';
-    }
+    // NOTE: ROI Badge is now handled by updateUIFromSummary() with proper N/A logic
+    // Do NOT update roi-badge here to prevent overriding unified stats
 
-    // 2. Expenses Total
+    // 2. Expenses Total - DEPRECATED: handled by updateUIFromSummary
     const expensesTotal = document.getElementById('expenses-total');
     if (expensesTotal) {
         expensesTotal.textContent = formatK(investment);
