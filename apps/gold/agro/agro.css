@@ -40,18 +40,27 @@
 }
 
 /* V9.5.1: Fix crop card action buttons overlap */
-.crop-card-actions {
+.crop-card-actions,
+.crop-card .card-actions,
+.crop-card .crop-actions,
+.crop-card .crop-action-buttons {
   display: flex;
   gap: 0.5rem;
   flex-wrap: nowrap;
   align-items: center;
+}
+
+.crop-card-actions {
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
   z-index: 10;
 }
 
-.crop-card-actions button {
+.crop-card-actions button,
+.crop-card .card-actions button,
+.crop-card .crop-actions button,
+.crop-card .crop-action-buttons button {
   flex-shrink: 0;
   min-width: 32px;
   min-height: 32px;

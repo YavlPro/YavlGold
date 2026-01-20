@@ -156,10 +156,10 @@ function renderHistoryRow(tabName, item, config) {
             </div>
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
                 <span style="color: ${tabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">$${amount.toFixed(2)}</span>
-                <button class="btn-edit-facturero" data-tab="${tabName}" data-id="${item.id}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                <button type="button" class="btn-edit-facturero" data-tab="${tabName}" data-id="${item.id}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-pen"></i>
                 </button>
-                <button class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                <button type="button" class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-trash"></i>
                 </button>
             </div>
@@ -514,35 +514,90 @@ async function duplicateFactureroItem(tabName, itemId) {
     }
 }
 
+function setupCropActionListeners() {
+    if (document.__agroCropActionsBound) return;
+    document.__agroCropActionsBound = true;
+
+    document.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('.btn-delete-crop');
+        if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cropId = deleteBtn.dataset.id || deleteBtn.closest('.crop-card')?.dataset.cropId;
+            console.info('[AGRO] Crop delete click', { cropId });
+            if (cropId) {
+                window.deleteCrop?.(cropId);
+            } else {
+                console.warn('[AGRO] Crop delete missing id');
+            }
+            return;
+        }
+
+        const editBtn = e.target.closest('.btn-edit-crop');
+        if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cropId = editBtn.dataset.id || editBtn.closest('.crop-card')?.dataset.cropId;
+            console.info('[AGRO] Crop edit click', { cropId });
+            if (cropId) {
+                window.openEditModal?.(cropId);
+            } else {
+                console.warn('[AGRO] Crop edit missing id');
+            }
+        }
+    });
+
+    console.info('[AGRO] Crop action listeners initialized');
+}
+
 // V9.5.1: Event delegation for dynamic CRUD buttons
 function setupFactureroCrudListeners() {
+    if (document.__agroFactureroCrudBound) return;
+    document.__agroFactureroCrudBound = true;
+
     document.addEventListener('click', async (e) => {
         const editBtn = e.target.closest('.btn-edit-facturero');
-        const deleteBtn = e.target.closest('.btn-delete-facturero');
-        const duplicateBtn = e.target.closest('.btn-duplicate-facturero');
-
         if (editBtn) {
             e.preventDefault();
             e.stopPropagation();
             const tabName = editBtn.dataset.tab;
             const itemId = editBtn.dataset.id;
-            if (tabName && itemId) await editFactureroItem(tabName, itemId);
+            console.info('[AGRO] Facturero edit click', { tabName, itemId });
+            if (tabName && itemId) {
+                await editFactureroItem(tabName, itemId);
+            } else {
+                console.warn('[AGRO] Facturero edit missing data', { tabName, itemId });
+            }
+            return;
         }
 
+        const deleteBtn = e.target.closest('.btn-delete-facturero');
         if (deleteBtn) {
             e.preventDefault();
             e.stopPropagation();
             const tabName = deleteBtn.dataset.tab;
             const itemId = deleteBtn.dataset.id;
-            if (tabName && itemId) await deleteFactureroItem(tabName, itemId);
+            console.info('[AGRO] Facturero delete click', { tabName, itemId });
+            if (tabName && itemId) {
+                await deleteFactureroItem(tabName, itemId);
+            } else {
+                console.warn('[AGRO] Facturero delete missing data', { tabName, itemId });
+            }
+            return;
         }
 
+        const duplicateBtn = e.target.closest('.btn-duplicate-facturero');
         if (duplicateBtn) {
             e.preventDefault();
             e.stopPropagation();
             const tabName = duplicateBtn.dataset.tab;
             const itemId = duplicateBtn.dataset.id;
-            if (tabName && itemId) await duplicateFactureroItem(tabName, itemId);
+            console.info('[AGRO] Facturero duplicate click', { tabName, itemId });
+            if (tabName && itemId) {
+                await duplicateFactureroItem(tabName, itemId);
+            } else {
+                console.warn('[AGRO] Facturero duplicate missing data', { tabName, itemId });
+            }
         }
     });
 
@@ -655,14 +710,18 @@ function createCropCardElement(crop, index) {
     editBtn.type = 'button';
     editBtn.title = 'Editar Cultivo';
     editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
-    editBtn.addEventListener('click', () => window.openEditModal?.(String(crop.id)));
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-delete-crop';
     deleteBtn.type = 'button';
     deleteBtn.title = 'Eliminar Cultivo';
     deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-    deleteBtn.addEventListener('click', () => window.deleteCrop?.(String(crop.id)));
+
+    if (crop?.id !== undefined && crop?.id !== null) {
+        const cropId = String(crop.id);
+        editBtn.dataset.id = cropId;
+        deleteBtn.dataset.id = cropId;
+    }
 
     actions.append(editBtn, deleteBtn);
 
@@ -1157,6 +1216,7 @@ async function syncExpenseDeleteButtons() {
 
 function attachExpenseDeleteButton(item, expenseId) {
     if (!item) return;
+    if (item.querySelector('.btn-delete-facturero')) return;
 
     const existingBtn = item.querySelector('.expense-delete-btn');
     if (existingBtn) {
@@ -2191,7 +2251,9 @@ function renderIncomeItem(listEl, income, signedUrl) {
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
-    editBtn.className = 'income-edit-btn';
+    editBtn.className = 'btn-edit-facturero income-edit-btn';
+    editBtn.dataset.tab = 'ingresos';
+    editBtn.dataset.id = income.id ? String(income.id) : '';
     editBtn.title = 'Editar';
     editBtn.style.cssText = 'background: transparent; border: 1px solid rgba(96, 165, 250, 0.35); color: #60a5fa; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
 
@@ -2208,12 +2270,6 @@ function renderIncomeItem(listEl, income, signedUrl) {
         editBtn.style.background = 'transparent';
         editBtn.style.borderColor = 'rgba(96, 165, 250, 0.35)';
     });
-    editBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        enterIncomeEditMode(income);
-    });
-
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'income-delete-btn';
@@ -3064,6 +3120,7 @@ export function initAgro() {
 
     // Cargar cultivos
     loadCrops();
+    setupCropActionListeners();
 
     // Vincular botón de cálculo ROI
     const calcBtn = document.querySelector('.btn-primary[onclick*="calculateROI"]');
@@ -3481,16 +3538,13 @@ window.deleteCrop = deleteCrop;
     styles.id = 'agro-delete-styles';
     styles.textContent = `
         .btn-delete-crop {
-            position: absolute;
-            top: 0.75rem;
-            right: 0.75rem;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             background: rgba(248, 113, 113, 0.1);
             border: 1px solid rgba(248, 113, 113, 0.3);
             border-radius: 50%;
             color: #f87171;
-            font-size: 1.25rem;
+            font-size: 1rem;
             line-height: 1;
             cursor: pointer;
             opacity: 0;
@@ -3542,4 +3596,3 @@ window.deleteCrop = deleteCrop;
     `;
     document.head.appendChild(styles);
 })();
-

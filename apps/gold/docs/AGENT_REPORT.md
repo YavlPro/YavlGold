@@ -420,6 +420,26 @@ git commit -m "fix(agro): modal market uses data-api.binance.vision + singleton 
 git push
 ```
 
+## Diagnostico (tarea actual - Hotfix V9.5.1.1 agro facturero/cultivos)
+1) MPA entrypoints: `apps/gold/vite.config.js` incluye main, cookies, faq, soporte, dashboard, creacion, perfil, configuracion, academia, agro, crypto, herramientas, tecnologia, social. `apps/gold/vercel.json` define cleanUrls y redirect /herramientas -> /tecnologia, rewrites /tecnologia, routes /academia, /crypto, /tecnologia, /music. `apps/gold/index.html` contiene navbar/cards del home y carga auth. `apps/gold/dashboard/index.html` es el dashboard MPA.
+2) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` crea cliente con VITE_SUPABASE_URL/ANON_KEY. `apps/gold/assets/js/auth/authClient.js` inicializa auth + guard. `apps/gold/assets/js/auth/authUI.js` maneja modales. `apps/gold/dashboard/auth-guard.js` usa supabase global.
+3) Dashboard datos: consultas activas a `profiles` (username/avatar), `modules` (grid), `user_favorites` (conteos), `notifications` (unread). Usa `FavoritesManager`/`StatsManager` en `apps/gold/assets/js/modules/moduleManager.js`. Insights usan ActivityTracker local `YG_ACTIVITY_V1` (`apps/gold/assets/js/utils/activityTracker.js`). Progreso academico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) no esta integrado.
+4) Geo/Agro: `apps/gold/assets/js/geolocation.js` prioriza Manual > GPS > IP via `getCoordsSmart`. Keys: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`. `apps/gold/agro/dashboard.js` usa `initWeather`/`displayWeather` y cache `yavlgold_weather_*`.
+5) Crypto: existe `apps/gold/crypto/` con `index.html`, `crypto.js`, `crypto.css` y entrada MPA en Vite; `apps/gold/crypto/package.json` es solo preview manual (python http.server).
+6) Hotfix: facturero delete falla al clickear icono, gastos no renderiza edit, ingresos edit usa modo viejo (`enterIncomeEditMode`), cultivos overlap por estilos (btn-delete-crop absolute) y faltan `type="button"` en acciones renderizadas.
+
+## Plan (tarea actual - Hotfix V9.5.1.1 agro facturero/cultivos)
+1) `apps/gold/agro/agro.js`: ajustar listeners con `e.target.closest(...)` (facturero/cultivos), agregar logs, mover edit de ingresos al modal generico y evitar handlers duplicados.
+2) `apps/gold/agro/index.html`: actualizar render de gastos para incluir botones edit/delete con data-tab/id y `type="button"` usando clases facturero.
+3) `apps/gold/agro/agro.css`: asegurar gap/align para contenedor real de acciones (soportar multiples classnames) y evitar solapado.
+4) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## QA (tarea actual - Hotfix V9.5.1.1 agro facturero/cultivos)
+1) En Agro > Facturero: en gastos/ingresos/pendientes/perdidas/transferencias, click en iconos de editar/eliminar funciona.
+2) Ingresos: editar abre modal generico (editFactureroItem) y guarda cambios.
+3) Cultivos: botones edit/delete no se solapan y eliminar funciona al tocar el icono (mobile).
+4) Build: `pnpm build:gold` OK.
+
 ## Diagnostico (HOY Highlight Overflow - 2026-01-18)
 1) Elemento afectado: `#forecast-container` contiene tarjetas `.forecast-day`
 2) Problema: container tiene `height: 140px` pero tarjetas miden `161px`
@@ -1442,7 +1462,6 @@ git commit -m "feat(agro): V9.5.1 full CRUD facturero + UI fixes
 - Initialize all facturero histories on page load"
 git push
 ```
-
 
 
 

@@ -2449,7 +2449,8 @@
                                 expense.category,
                                 null, // No local file object
                                 expense.evidence_url,
-                                expense.date
+                                expense.date,
+                                expense.id
                             );
                         });
                     }
@@ -2588,7 +2589,7 @@
             }
 
             // Helper para renderizar item en la lista
-            function renderExpenseItem(concept, amount, category, file, remoteUrl, dateVal) {
+            function renderExpenseItem(concept, amount, category, file, remoteUrl, dateVal, expenseId) {
                 if (expensesContainer && expensesList) {
                     expensesContainer.style.display = 'block';
 
@@ -2602,6 +2603,9 @@
                     item.style.justifyContent = 'space-between';
                     item.style.alignItems = 'center';
                     item.style.marginBottom = '0.5rem';
+                    if (expenseId) {
+                        item.dataset.expenseId = String(expenseId);
+                    }
 
                     const dateStr = dateVal ? new Date(dateVal).toLocaleDateString() : new Date().toLocaleDateString();
 
@@ -2619,6 +2623,16 @@
                         fileLinkHtml = `• <a href="${remoteUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver Evidencia (Nube)"><i class="fa-solid fa-cloud"></i> Ver Recibo</a>`;
                     }
 
+                    const safeExpenseId = expenseId ? String(expenseId) : '';
+                    const actionButtons = expenseId ? `
+                        <button type="button" class="btn-edit-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                            <i class="fa fa-pen"></i>
+                        </button>
+                        <button type="button" class="btn-delete-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    ` : '';
+
                     item.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); display: flex; align-items: center; justify-content: center; color: var(--gold-primary);">
@@ -2631,8 +2645,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="color: #ef4444; font-weight: 700; font-size: 1rem;">
-                            -$${parseFloat(amount).toFixed(2)}
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <div style="color: #ef4444; font-weight: 700; font-size: 1rem;">
+                                -$${parseFloat(amount).toFixed(2)}
+                            </div>
+                            ${actionButtons}
                         </div>
                     `;
                     expensesList.insertBefore(item, expensesList.firstChild);
