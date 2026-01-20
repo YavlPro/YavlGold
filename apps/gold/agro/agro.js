@@ -75,76 +75,494 @@ async function populateCropDropdowns() {
     }
 }
 
-/**
- * Refreshes facturero history for a specific tab
- * @param {string} tabName - 'pendientes', 'perdidas', 'transferencias'
- */
-async function refreshFactureroHistory(tabName) {
-    const tables = {
-        'pendientes': { table: 'agro_pending', containerId: 'pending-history-list' },
-        'perdidas': { table: 'agro_losses', containerId: 'loss-history-list' },
-        'transferencias': { table: 'agro_transfers', containerId: 'transfer-history-list' }
-    };
+// ============================================================
+// V9.5.1: FACTURERO CRUD - CONFIG & HELPERS
+// ============================================================
 
-    const config = tables[tabName];
+const FACTURERO_CONFIG = {
+    'gastos': {
+        table: 'agro_expenses',
+        containerId: 'recent-transactions-container',
+        listId: 'expenses-list',
+        conceptField: 'concept',
+        amountField: 'amount',
+        dateField: 'date',
+        extraFields: ['category'],
+        supportsDeletedAt: true
+    },
+    'ingresos': {
+        table: 'agro_income',
+        containerId: 'income-recent-container',
+        listId: 'income-list',
+        conceptField: 'concepto',
+        amountField: 'monto',
+        dateField: 'fecha',
+        extraFields: ['categoria'],
+        supportsDeletedAt: true
+    },
+    'pendientes': {
+        table: 'agro_pending',
+        containerId: 'tab-panel-pendientes',
+        listId: 'pending-history-list',
+        conceptField: 'concepto',
+        amountField: 'monto',
+        dateField: 'fecha',
+        extraFields: ['cliente'],
+        supportsDeletedAt: true
+    },
+    'perdidas': {
+        table: 'agro_losses',
+        containerId: 'tab-panel-perdidas',
+        listId: 'loss-history-list',
+        conceptField: 'concepto',
+        amountField: 'monto',
+        dateField: 'fecha',
+        extraFields: ['causa'],
+        supportsDeletedAt: true
+    },
+    'transferencias': {
+        table: 'agro_transfers',
+        containerId: 'tab-panel-transferencias',
+        listId: 'transfer-history-list',
+        conceptField: 'concepto',
+        amountField: 'monto',
+        dateField: 'fecha',
+        extraFields: ['destino'],
+        supportsDeletedAt: true
+    }
+};
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+}
+
+function renderHistoryRow(tabName, item, config) {
+    const concept = item[config.conceptField] || 'Sin concepto';
+    const amount = Number(item[config.amountField] || 0);
+    const date = item[config.dateField];
+    const cropName = item.crop_name || '';
+
+    return `
+        <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+            <div style="flex: 1; min-width: 0;">
+                <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(concept)}</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <span>${formatDate(date)}</span>
+                    ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
+                <span style="color: ${tabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">$${amount.toFixed(2)}</span>
+                <button class="btn-edit-facturero" data-tab="${tabName}" data-id="${item.id}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-pen"></i>
+                </button>
+                <button class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * V9.5.1: Refreshes facturero history for a specific tab with CRUD buttons
+ * @param {string} tabName - 'gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'
+ * @param {object} options - { showActions: true }
+ */
+async function refreshFactureroHistory(tabName, options = {}) {
+    const config = FACTURERO_CONFIG[tabName];
     if (!config) {
-        console.log('[AGRO] V9.5: No history config for tab:', tabName);
+        console.log('[AGRO] V9.5.1: No config for tab:', tabName);
+        return;
+    }
+
+    const { showActions = true } = options;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Build query
+        let query = supabase
+            .from(config.table)
+            .select('*, agro_crops(name)')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        // Filter deleted_at if supported
+        if (config.supportsDeletedAt) {
+            query = query.is('deleted_at', null);
+        }
+
+        const { data: items, error } = await query;
+
+        if (error) {
+            // If deleted_at column doesn't exist, retry without filter
+            if (error.message && error.message.toLowerCase().includes('deleted_at')) {
+                config.supportsDeletedAt = false;
+                console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
+                const fallback = await supabase
+                    .from(config.table)
+                    .select('*, agro_crops(name)')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+                if (fallback.error) {
+                    console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
+                    return;
+                }
+                renderHistoryList(tabName, config, fallback.data || [], showActions);
+                return;
+            }
+            console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
+            return;
+        }
+
+        renderHistoryList(tabName, config, items || [], showActions);
+
+    } catch (err) {
+        console.error(`[AGRO] V9.5.1: Exception in refreshFactureroHistory(${tabName}):`, err.message);
+    }
+}
+
+function renderHistoryList(tabName, config, items, showActions) {
+    // Find or create list container
+    let container = document.getElementById(config.listId);
+
+    if (!container) {
+        // Try to find parent container
+        const parent = document.getElementById(config.containerId);
+        if (parent) {
+            container = document.createElement('div');
+            container.id = config.listId;
+            container.className = 'facturero-history-list';
+            container.style.cssText = 'margin-top: 1rem; max-height: 350px; overflow-y: auto;';
+            parent.appendChild(container);
+        }
+    }
+
+    if (!container) {
+        console.warn(`[AGRO] V9.5.1: Container not found for ${tabName}`);
+        return;
+    }
+
+    // Map crop names for display
+    const itemsWithCropNames = items.map(item => ({
+        ...item,
+        crop_name: item.agro_crops?.name || ''
+    }));
+
+    if (itemsWithCropNames.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
+    } else {
+        container.innerHTML = itemsWithCropNames.map(item =>
+            renderHistoryRow(tabName, item, config)
+        ).join('');
+    }
+
+    console.info(`[AGRO] V9.5.1: Refreshed ${tabName} with ${itemsWithCropNames.length} items`);
+}
+
+// ============================================================
+// V9.5.1: FACTURERO CRUD HANDLERS
+// ============================================================
+
+async function deleteFactureroItem(tabName, itemId) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config) return;
+
+    if (!confirm('¿Eliminar este registro?')) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Sesión expirada. Recarga la página.');
+            return;
+        }
+
+        let success = false;
+
+        if (config.supportsDeletedAt) {
+            // Soft delete
+            const { error } = await supabase
+                .from(config.table)
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', itemId)
+                .eq('user_id', user.id);
+
+            if (error) {
+                if (error.message.toLowerCase().includes('deleted_at')) {
+                    config.supportsDeletedAt = false;
+                } else {
+                    throw error;
+                }
+            } else {
+                success = true;
+            }
+        }
+
+        if (!success && !config.supportsDeletedAt) {
+            // Hard delete fallback
+            const { error } = await supabase
+                .from(config.table)
+                .delete()
+                .eq('id', itemId)
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+            success = true;
+        }
+
+        if (success) {
+            console.info(`[AGRO] V9.5.1: Deleted ${tabName} item ${itemId}`);
+            await refreshFactureroHistory(tabName);
+            document.dispatchEvent(new CustomEvent('data-refresh'));
+        }
+
+    } catch (err) {
+        console.error(`[AGRO] V9.5.1: Delete error:`, err.message);
+        alert(`Error al eliminar: ${err.message}`);
+    }
+}
+
+async function editFactureroItem(tabName, itemId) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch item
+        const { data: item, error } = await supabase
+            .from(config.table)
+            .select('*')
+            .eq('id', itemId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (error || !item) {
+            alert('No se encontró el registro.');
+            return;
+        }
+
+        // Open edit modal
+        openFactureroEditModal(tabName, item, config);
+
+    } catch (err) {
+        console.error(`[AGRO] V9.5.1: Edit fetch error:`, err.message);
+        alert(`Error: ${err.message}`);
+    }
+}
+
+function openFactureroEditModal(tabName, item, config) {
+    const modal = document.getElementById('modal-edit-facturero');
+    if (!modal) {
+        console.warn('[AGRO] V9.5.1: Edit modal not found');
+        alert('Modal de edición no disponible.');
+        return;
+    }
+
+    // Populate fields
+    document.getElementById('edit-item-id').value = item.id;
+    document.getElementById('edit-tab-name').value = tabName;
+    document.getElementById('edit-concepto').value = item[config.conceptField] || '';
+    document.getElementById('edit-monto').value = item[config.amountField] || '';
+    document.getElementById('edit-fecha').value = item[config.dateField] || '';
+
+    // Populate crop selector
+    const cropSelect = document.getElementById('edit-crop-id');
+    if (cropSelect && typeof populateCropDropdowns === 'function') {
+        populateCropDropdowns().then(() => {
+            cropSelect.value = item.crop_id || '';
+        });
+    }
+
+    // Handle extra fields
+    const extraContainer = document.getElementById('edit-extra-fields');
+    if (extraContainer) {
+        extraContainer.innerHTML = '';
+        config.extraFields.forEach(field => {
+            const value = item[field] || '';
+            const label = field.charAt(0).toUpperCase() + field.slice(1);
+            extraContainer.innerHTML += `
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label class="input-label">${label}</label>
+                    <input type="text" id="edit-${field}" class="styled-input" value="${escapeHtml(value)}">
+                </div>
+            `;
+        });
+    }
+
+    // Update title
+    const titles = {
+        'gastos': 'Editar Gasto',
+        'ingresos': 'Editar Ingreso',
+        'pendientes': 'Editar Pendiente',
+        'perdidas': 'Editar Pérdida',
+        'transferencias': 'Editar Transferencia'
+    };
+    const titleEl = document.getElementById('edit-modal-title');
+    if (titleEl) titleEl.textContent = titles[tabName] || 'Editar Registro';
+
+    modal.style.display = 'flex';
+}
+
+async function saveEditModal() {
+    const itemId = document.getElementById('edit-item-id')?.value;
+    const tabName = document.getElementById('edit-tab-name')?.value;
+    const config = FACTURERO_CONFIG[tabName];
+
+    if (!itemId || !config) {
+        alert('Error: datos incompletos.');
         return;
     }
 
     try {
-        const { data: items, error } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Sesión expirada.');
+            return;
+        }
+
+        const updateData = {
+            [config.conceptField]: document.getElementById('edit-concepto')?.value?.trim(),
+            [config.amountField]: parseFloat(document.getElementById('edit-monto')?.value) || 0,
+            [config.dateField]: document.getElementById('edit-fecha')?.value,
+            crop_id: document.getElementById('edit-crop-id')?.value || null
+        };
+
+        // Add extra fields
+        config.extraFields.forEach(field => {
+            const el = document.getElementById(`edit-${field}`);
+            if (el) updateData[field] = el.value?.trim() || null;
+        });
+
+        const { error } = await supabase
             .from(config.table)
-            .select('*')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(10);
+            .update(updateData)
+            .eq('id', itemId)
+            .eq('user_id', user.id);
 
-        if (error) {
-            console.warn(`[AGRO] Error fetching ${tabName} history:`, error.message);
-            return;
-        }
+        if (error) throw error;
 
-        // Find or create history container
-        let container = document.getElementById(config.containerId);
-        if (!container) {
-            // Create container if doesn't exist
-            const tabPanel = document.getElementById(`tab-panel-${tabName}`);
-            if (tabPanel) {
-                container = document.createElement('div');
-                container.id = config.containerId;
-                container.style.cssText = 'margin-top: 1.5rem; max-height: 300px; overflow-y: auto;';
-                tabPanel.appendChild(container);
-            }
-        }
+        console.info(`[AGRO] V9.5.1: Updated ${tabName} item ${itemId}`);
+        closeEditModal();
+        await refreshFactureroHistory(tabName);
+        document.dispatchEvent(new CustomEvent('data-refresh'));
 
-        if (!container) return;
-
-        // Render items
-        if (!items || items.length === 0) {
-            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">Sin registros recientes.</p>`;
-            return;
-        }
-
-        container.innerHTML = items.map(item => `
-            <div class="facturero-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="color: #fff; font-weight: 500;">${item.concepto || 'Sin concepto'}</div>
-                    <div style="color: var(--text-muted); font-size: 0.8rem;">${formatDate(item.fecha)}</div>
-                </div>
-                <div style="color: var(--gold-primary, #C8A752); font-weight: 700;">$${(item.monto || 0).toFixed(2)}</div>
-            </div>
-        `).join('');
-
-        console.log(`[AGRO] V9.5: Refreshed ${tabName} history with ${items.length} items`);
     } catch (err) {
-        console.warn(`[AGRO] Error refreshing ${tabName} history:`, err.message);
+        console.error(`[AGRO] V9.5.1: Save error:`, err.message);
+        alert(`Error al guardar: ${err.message}`);
     }
 }
 
-// Expose globally for use by inline scripts and data-refresh handler
+function closeEditModal() {
+    const modal = document.getElementById('modal-edit-facturero');
+    if (modal) modal.style.display = 'none';
+}
+
+async function duplicateFactureroItem(tabName, itemId) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config) return;
+
+    const newCropId = prompt('ID del cultivo destino (dejar vacío para general):');
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch original
+        const { data: original, error: fetchError } = await supabase
+            .from(config.table)
+            .select('*')
+            .eq('id', itemId)
+            .eq('user_id', user.id)
+            .single();
+
+        if (fetchError || !original) {
+            alert('No se encontró el registro original.');
+            return;
+        }
+
+        // Create copy without id and timestamps
+        const copy = { ...original };
+        delete copy.id;
+        delete copy.created_at;
+        delete copy.updated_at;
+        delete copy.deleted_at;
+        copy.crop_id = newCropId?.trim() || null;
+
+        const { error: insertError } = await supabase
+            .from(config.table)
+            .insert(copy);
+
+        if (insertError) throw insertError;
+
+        console.info(`[AGRO] V9.5.1: Duplicated ${tabName} item ${itemId}`);
+        await refreshFactureroHistory(tabName);
+        document.dispatchEvent(new CustomEvent('data-refresh'));
+        alert('✅ Registro duplicado');
+
+    } catch (err) {
+        console.error(`[AGRO] V9.5.1: Duplicate error:`, err.message);
+        alert(`Error al duplicar: ${err.message}`);
+    }
+}
+
+// V9.5.1: Event delegation for dynamic CRUD buttons
+function setupFactureroCrudListeners() {
+    document.addEventListener('click', async (e) => {
+        const editBtn = e.target.closest('.btn-edit-facturero');
+        const deleteBtn = e.target.closest('.btn-delete-facturero');
+        const duplicateBtn = e.target.closest('.btn-duplicate-facturero');
+
+        if (editBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const tabName = editBtn.dataset.tab;
+            const itemId = editBtn.dataset.id;
+            if (tabName && itemId) await editFactureroItem(tabName, itemId);
+        }
+
+        if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const tabName = deleteBtn.dataset.tab;
+            const itemId = deleteBtn.dataset.id;
+            if (tabName && itemId) await deleteFactureroItem(tabName, itemId);
+        }
+
+        if (duplicateBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const tabName = duplicateBtn.dataset.tab;
+            const itemId = duplicateBtn.dataset.id;
+            if (tabName && itemId) await duplicateFactureroItem(tabName, itemId);
+        }
+    });
+
+    console.info('[AGRO] V9.5.1: CRUD event listeners initialized');
+}
+
+// V9.5.1: Refresh all facturero histories on init
+async function initFactureroHistories() {
+    const tabs = ['pendientes', 'perdidas', 'transferencias'];
+    for (const tab of tabs) {
+        await refreshFactureroHistory(tab);
+    }
+    console.info('[AGRO] V9.5.1: All facturero histories initialized');
+}
+
+// Expose globally
 window.populateCropDropdowns = populateCropDropdowns;
 window.refreshFactureroHistory = refreshFactureroHistory;
+window.closeEditModal = closeEditModal;
+window.saveEditModal = saveEditModal;
 
 // ============================================================
 // UTILIDADES
@@ -1643,7 +2061,9 @@ function enterIncomeEditMode(income) {
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
+    const cropInput = document.getElementById('income-crop-id');
     const btnSave = document.getElementById('income-save-btn');
+    const form = document.getElementById('income-form');
 
     incomeEditId = income.id || null;
     incomeEditSupportPath = income.soporte_url || null;
@@ -1652,7 +2072,24 @@ function enterIncomeEditMode(income) {
     if (amountInput) amountInput.value = income.monto ?? '';
     if (dateInput) dateInput.value = income.fecha || new Date().toISOString().split('T')[0];
     if (categoryInput) categoryInput.value = income.categoria || '';
+    if (cropInput) cropInput.value = income.crop_id || '';
     if (btnSave) btnSave.textContent = 'Actualizar Ingreso';
+
+    // V9.5.1: Scroll to form + visual feedback
+    if (form) {
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        form.style.boxShadow = '0 0 0 3px var(--gold-primary, #C8A752)';
+        form.style.transition = 'box-shadow 0.3s ease';
+        setTimeout(() => {
+            form.style.boxShadow = '';
+        }, 2500);
+        // Focus on concept input
+        if (conceptInput) {
+            setTimeout(() => conceptInput.focus(), 400);
+        }
+    }
+
+    console.info('[AGRO] V9.5.1: Entered income edit mode for', income.id);
 }
 
 async function resolveIncomeSupportUrl(path) {
@@ -2641,6 +3078,8 @@ export function initAgro() {
     initFinanceTabs();
     initFinanceFormHandlers();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
+    setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
+    initFactureroHistories(); // V9.5.1: Cargar historiales al init
     setTimeout(checkCriticalFormUniqueness, 0);
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
@@ -2655,7 +3094,7 @@ export function initAgro() {
         });
     });
 
-    console.log('[Agro] ✅ Módulo inicializado');
+    console.log('[Agro] ✅ Módulo V9.5.1 inicializado');
 }
 
 // Auto-inicializar si el DOM ya está listo
