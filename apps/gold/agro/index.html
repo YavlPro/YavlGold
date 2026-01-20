@@ -2165,6 +2165,21 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             btn.disabled = true;
 
+            // Helper: get YYYY-MM-DD for local date comparison
+            const getTodayKey = () => {
+                const d = new Date();
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            };
+
+            // Helper: show validation error (reutiliza toast si existe, sino alert)
+            const showValidationError = (msg) => {
+                if (typeof window.showEvidenceToast === 'function') {
+                    window.showEvidenceToast(msg, 'error');
+                } else {
+                    alert('⚠️ ' + msg);
+                }
+            };
+
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (!user) throw new Error("Debes iniciar sesión.");
@@ -2178,6 +2193,32 @@
                 const harvestDate = document.getElementById('crop-harvest-date').value;
 
                 if (!name || !area || !sowDate) throw new Error("Completa Nombre, Área y Fecha.");
+
+                // =====================================
+                // DATE VALIDATION (No Past / No Inverted)
+                // =====================================
+                const todayKey = getTodayKey();
+
+                // 1) Siembra no puede estar en el pasado
+                if (sowDate < todayKey) {
+                    showValidationError('La fecha de siembra no puede estar en el pasado.');
+                    return;
+                }
+
+                // 2) Cosecha (si existe) validaciones
+                if (harvestDate) {
+                    // Cosecha no puede ser anterior a siembra
+                    if (harvestDate < sowDate) {
+                        showValidationError('La cosecha estimada no puede ser anterior a la siembra.');
+                        return;
+                    }
+                    // Cosecha no puede estar en el pasado
+                    if (harvestDate < todayKey) {
+                        showValidationError('La cosecha estimada no puede estar en el pasado.');
+                        return;
+                    }
+                }
+                // =====================================
 
                 const fullName = `${icon} ${name}`;
                 const { error } = await supabase.from('agro_crops').insert({

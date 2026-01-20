@@ -869,6 +869,54 @@ git push
 
 ---
 
+## Crop Date Validation (2026-01-20)
+
+### Diagnóstico
+**Bug**: El formulario "Nuevo Cultivo" permitía crear cultivos con:
+- Fechas de siembra en el pasado (ej: ayer)
+- Fechas de cosecha invertidas (cosecha < siembra)
+
+**Causa raíz**: `window.saveCrop()` en `index.html:2162` NO validaba fechas antes de insertar a Supabase.
+
+### Solución Implementada
+1. **Helper `getTodayKey()`**: Obtiene fecha local en formato YYYY-MM-DD
+2. **Validaciones pre-insert**:
+   - Siembra < hoy → bloquea
+   - Cosecha < siembra → bloquea
+   - Cosecha < hoy → bloquea
+3. **UX**: Mensaje de error claro via `alert('⚠️ ...')` (fallback si no hay toast)
+
+### Código Añadido
+```javascript
+// DATE VALIDATION (No Past / No Inverted)
+const todayKey = getTodayKey();
+
+if (sowDate < todayKey) {
+    showValidationError('La fecha de siembra no puede estar en el pasado.');
+    return;
+}
+
+if (harvestDate && harvestDate < sowDate) {
+    showValidationError('La cosecha estimada no puede ser anterior a la siembra.');
+    return;
+}
+```
+
+### Archivos Modificados
+| Archivo | Cambios |
+|---------|---------|
+| `index.html` | +`getTodayKey()`, +`showValidationError()`, +validación en `saveCrop()` |
+| `AGENT_REPORT.md` | Documentación |
+
+### Verificación
+- [ ] Siembra = ayer → bloqueado con mensaje
+- [ ] Siembra = hoy, cosecha = ayer → bloqueado
+- [ ] Siembra = hoy, cosecha = futuro → permite guardar
+- [ ] `pnpm build:gold` → PASS
+
+
+---
+
 ## Diagnostico (tarea actual - agro ROI subtitle + stats noise + inversion 0 - 2026-01-20)
 1) "Sin ventas registradas" no aparece porque `updateUIFromSummary()` busca `#roi-subtitle`, pero en `apps/gold/agro/index.html` no existe ese nodo dentro del bloque del ROI badge.
 2) El spam 400/404 proviene de `computeAgroFinanceSummaryV1()` en `apps/gold/agro/agro-stats.js`: consulta tablas/columnas que no existen (p.ej. `agro_losses` o `deleted_at`) y reintenta en cada refresh sin cache de capacidades.
