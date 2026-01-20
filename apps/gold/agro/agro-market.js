@@ -235,7 +235,8 @@ function renderTicker(tickerTrack, crypto, fiat, localCurrency, cacheInfo = null
         </span>`;
     }
 
-    // Duplicar para scroll infinito
+    // Clear before render (idempotent) + Duplicar para scroll infinito
+    tickerTrack.innerHTML = '';
     tickerTrack.innerHTML = items + items;
     injectTickerStyles();
 }

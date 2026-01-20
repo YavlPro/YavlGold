@@ -2204,23 +2204,15 @@
             window.closeCropModal();
 
             // --- DATA LOADING & LOGIC ---
+            // UNIFIED STATS: Use window.refreshAgroStats() from agro-stats.js
+            // This replaces the old updateStats() that read from agro_stats table
             async function updateStats() {
-                try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return;
-                    const { data } = await supabase.from('agro_stats').select('*').maybeSingle();
-                    if (data) {
-                        const exp = parseFloat(data.total_expenses) || 0;
-                        const inv = parseFloat(data.active_investment) || 0;
-                        const kpiExp = document.getElementById('kpi-expenses-total');
-                        const kpiInv = document.getElementById('kpi-crops-investment');
-                        const kpiTot = document.getElementById('kpi-global-total');
-
-                        if (kpiExp) kpiExp.innerText = '$' + exp.toLocaleString('en-US', { minimumFractionDigits: 2 });
-                        if (kpiInv) kpiInv.innerText = '$' + inv.toLocaleString('en-US', { minimumFractionDigits: 2 });
-                        if (kpiTot) kpiTot.innerText = '$' + (exp + inv).toLocaleString('en-US', { minimumFractionDigits: 2 });
-                    }
-                } catch (e) { console.error(e); }
+                if (typeof window.refreshAgroStats === 'function') {
+                    await window.refreshAgroStats();
+                } else {
+                    console.warn('[AGRO] refreshAgroStats not yet available, retrying...');
+                    setTimeout(updateStats, 500);
+                }
             }
 
 
@@ -2577,8 +2569,15 @@
         import { initMarketIntelligence, startTickerAutoRefresh } from './agro-market.js';
         import { initPlanning } from './agro-planning.js';
         import { initInteractions } from './agro-interactions.js';
-        import { initStats } from './agro-stats.js';
+        import { initStats, computeAgroFinanceSummaryV1, updateUIFromSummary } from './agro-stats.js';
         import { initNotifications } from './agro-notifications.js';
+
+        // Expose unified stats globally for inline scripts
+        window.refreshAgroStats = async function () {
+            const summary = await computeAgroFinanceSummaryV1();
+            if (summary) updateUIFromSummary(summary);
+            return summary;
+        };
         document.addEventListener('DOMContentLoaded', () => {
             window.YGActivity?.attachModuleTracking('agro', { title: 'Agro', path: '/agro/' });
             initMarketIntelligence();
