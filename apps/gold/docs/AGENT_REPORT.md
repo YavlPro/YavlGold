@@ -940,3 +940,102 @@ if (harvestDate && harvestDate < sowDate) {
 1) `apps/gold/agro/agro-stats.js`: ajustar `isMissingTableError`/`isMissingColumnError` para cachear solo cuando el mensaje/codigo confirme "does not exist".
 2) `apps/gold/agro/agro-stats.js`: asegurar que el sumatorio de inversion use el mismo set visible que `loadCrops()` (sin sumar cultivos fuera de la UI).
 3) Build final: `pnpm build:gold` y reportar resultado.
+
+---
+
+## Diagnóstico CRÍTICO (Bugs Agro - 2026-01-20)
+
+### 🔴 Síntomas Reportados (Producción)
+
+| # | Bug | Estado | Causa Raíz |
+|---|-----|--------|------------|
+| A | No me deja Crear Cultivos | FALLA SILENCIOSA | `saveCrop` usa columnas inexistentes: `sowing_date`, `harvest_date_est`, `area` |
+| B | Ingresos no aparecen en stats | FALLA 400 | `agro-stats.js` busca `agro_income.amount` pero la columna real es `monto` |
+| C | Pendientes no registra | FALLA NOOP | Solo `console.info()`, tabla `agro_pending` NO existe |
+| D | Pérdidas no registra | FALLA NOOP | Solo `console.info()`, tabla `agro_losses` NO existe |
+| E | Transferencias no registra | FALLA NOOP | Solo `console.info()`, tabla `agro_transfers` NO existe |
+| F | Evidencia obligatoria | OK | Evidencia es opcional, validación funciona |
+
+### 🔬 Verificación de Esquema Supabase
+
+**Tabla `agro_crops`** (columnas reales):
+- `id`, `user_id`, `name`, `variety`, `icon`, `status`, `progress`, `area_size`, `investment`
+- `start_date` (NO `sowing_date`)
+- `expected_harvest_date` (NO `harvest_date_est`)
+- **FALTANTES**: `revenue_projected`, `deleted_at`
+
+**Tabla `agro_income`** (columnas reales):
+- `monto` (NO `amount`)
+- `concepto`, `fecha`, `categoria`, `soporte_url`, `deleted_at`
+
+**Tablas INEXISTENTES**:
+- `agro_pending`
+- `agro_losses`
+- `agro_transfers`
+
+### QA Producción (2026-01-20)
+
+Errores de consola capturados:
+```
+[AGRO_STATS] Error fetching income: column agro_income.amount does not exist
+Hint: Perhaps you meant to reference the column "agro_income.monto"
+column agro_crops.revenue_projected does not exist (Status 400)
+column agro_crops.deleted_at does not exist (Status 400)
+[Agro] Pendientes pendiente de integracion.
+```
+
+## Plan de Corrección
+
+### Fase 1: Schema SQL (Supabase)
+1. ALTER `agro_crops`: +`revenue_projected`, +`deleted_at`
+2. CREATE TABLE `agro_pending` (RLS, crop_id nullable)
+3. CREATE TABLE `agro_losses` (RLS, crop_id nullable)
+4. CREATE TABLE `agro_transfers` (RLS, crop_id nullable)
+
+### Fase 2: Fix saveCrop (index.html:2224-2232)
+- `area` → `area_size`
+- `sowing_date` → `start_date`
+- `harvest_date_est` → `expected_harvest_date`
+- Tolerar fecha "hoy/ayer" para evitar bloqueos por timezone
+
+### Fase 3: Fix Stats (agro-stats.js:165)
+- `agro_income.amount` → `agro_income.monto`
+
+### Fase 4: Implementar Handlers Facturero (agro.js)
+- `savePending()` → INSERT `agro_pending`
+- `saveLoss()` → INSERT `agro_losses`
+- `saveTransfer()` → INSERT `agro_transfers`
+
+### Fase 5: Build & QA
+- `pnpm build:gold`
+- Verificación manual en producción
+
+---
+
+## Cambios Implementados (2026-01-20 13:50 UTC-4)
+
+### SQL (Supabase MCP apply_migration)
+```sql
+-- agro_crops: +expected_harvest_date, +revenue_projected, +deleted_at
+-- Nueva tabla: agro_pending (RLS, índices)
+-- Nueva tabla: agro_losses (RLS, índices)
+-- Nueva tabla: agro_transfers (RLS, índices)
+```
+
+### Frontend
+
+| Archivo | Cambio |
+|---------|--------|
+| `index.html:2202-2210` | Validación fecha: tolerar hoy/ayer (TZ), bloquear >1 día pasado |
+| `index.html:2227-2231` | Columnas INSERT: `area`→`area_size`, `sowing_date`→`start_date`, `harvest_date_est`→`expected_harvest_date` |
+| `agro-stats.js:165,172` | `agro_income`: `amount`→`monto` |
+| `agro-stats.js:182,189` | `agro_losses`: `amount`→`monto`, `category`→`causa` |
+| `agro.js:2047-2164` | `initFinanceFormHandlers()`: handlers reales INSERT + evidencia opcional |
+| `agro.js:2464` | Referencia función renombrada |
+
+### Build
+```
+pnpm build:gold
+✅ UTF-8 verification passed!
+Exit code: 0
+```

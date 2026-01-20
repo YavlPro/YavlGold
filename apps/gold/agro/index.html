@@ -2199,9 +2199,12 @@
                 // =====================================
                 const todayKey = getTodayKey();
 
-                // 1) Siembra no puede estar en el pasado
-                if (sowDate < todayKey) {
-                    showValidationError('La fecha de siembra no puede estar en el pasado.');
+                // 1) Siembra: permitir hoy o ayer (tolerancia TZ), bloquear >1 día pasado
+                const yesterdayLocal = new Date();
+                yesterdayLocal.setDate(yesterdayLocal.getDate() - 1);
+                const yesterdayKey = yesterdayLocal.toISOString().slice(0, 10);
+                if (sowDate < yesterdayKey) {
+                    showValidationError('La fecha de siembra no puede ser anterior a ayer.');
                     return;
                 }
 
@@ -2225,10 +2228,10 @@
                     user_id: user.id,
                     name: fullName,
                     variety,
-                    area,
+                    area_size: area,
                     investment,
-                    sowing_date: sowDate,
-                    harvest_date_est: harvestDate || null,
+                    start_date: sowDate,
+                    expected_harvest_date: harvestDate || null,
                     status: 'active'
                 });
 

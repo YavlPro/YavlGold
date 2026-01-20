@@ -2044,25 +2044,121 @@ function initFinanceTabs() {
     if (initialTab) switchTab(initialTab, { focus: false });
 }
 
-function initFinancePlaceholders() {
-    const placeholders = [
-        { id: 'pending-form', label: 'Pendientes' },
-        { id: 'loss-form', label: 'Perdidas' },
-        { id: 'transfer-form', label: 'Transferencias' }
+function initFinanceFormHandlers() {
+    const formConfigs = [
+        {
+            id: 'pending-form',
+            table: 'agro_pending',
+            label: 'Pendiente',
+            fileInputId: 'pending-receipt',
+            storagePath: 'pending',
+            getFormData: (form) => ({
+                concepto: form.querySelector('#input-concepto-pendiente')?.value?.trim(),
+                monto: parseFloat(form.querySelector('#input-monto-pendiente')?.value) || 0,
+                fecha: form.querySelector('#input-fecha-pendiente')?.value,
+                cliente: form.querySelector('#input-cliente-pendiente')?.value?.trim() || null,
+                notas: form.querySelector('#input-notas-pendiente')?.value?.trim() || null
+            })
+        },
+        {
+            id: 'loss-form',
+            table: 'agro_losses',
+            label: 'Pérdida',
+            fileInputId: 'loss-receipt',
+            storagePath: 'loss',
+            getFormData: (form) => ({
+                concepto: form.querySelector('#input-concepto-perdida')?.value?.trim(),
+                monto: parseFloat(form.querySelector('#input-monto-perdida')?.value) || 0,
+                fecha: form.querySelector('#input-fecha-perdida')?.value,
+                causa: form.querySelector('#input-causa-perdida')?.value?.trim() || null,
+                notas: form.querySelector('#input-notas-perdida')?.value?.trim() || null
+            })
+        },
+        {
+            id: 'transfer-form',
+            table: 'agro_transfers',
+            label: 'Transferencia',
+            fileInputId: 'transfer-receipt',
+            storagePath: 'transfer',
+            getFormData: (form) => ({
+                concepto: form.querySelector('#input-concepto-transferencia')?.value?.trim(),
+                monto: parseFloat(form.querySelector('#input-monto-transferencia')?.value) || 0,
+                fecha: form.querySelector('#input-fecha-transferencia')?.value,
+                destino: form.querySelector('#input-destino-transferencia')?.value?.trim() || null,
+                notas: form.querySelector('#input-notas-transferencia')?.value?.trim() || null
+            })
+        }
     ];
+
     const today = new Date().toISOString().split('T')[0];
 
-    placeholders.forEach((item) => {
-        const form = document.getElementById(item.id);
+    formConfigs.forEach((config) => {
+        const form = document.getElementById(config.id);
         if (!form || form.dataset.bound === 'true') return;
         form.dataset.bound = 'true';
 
-        const dateInput = form.querySelector('input[type=\"date\"]');
+        // Set default date
+        const dateInput = form.querySelector('input[type="date"]');
         if (dateInput && !dateInput.value) dateInput.value = today;
 
-        form.addEventListener('submit', (event) => {
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
-            console.info(`[Agro] ${item.label} pendiente de integracion.`);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn?.innerHTML;
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = 'Guardando...'; }
+
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) throw new Error('Sesión expirada. Recarga la página.');
+
+                const formData = config.getFormData(form);
+                if (!formData.concepto || formData.monto <= 0 || !formData.fecha) {
+                    throw new Error('Completa Concepto, Monto y Fecha.');
+                }
+
+                // Evidence (optional)
+                let evidenceUrl = null;
+                const fileInput = document.getElementById(config.fileInputId);
+                const file = fileInput?.files?.[0];
+                if (file) {
+                    // Reuse existing validation (magic bytes + MIME + extension)
+                    if (typeof window.validateEvidenceFile === 'function') {
+                        const validation = await window.validateEvidenceFile(file);
+                        if (!validation.valid) {
+                            throw new Error(validation.reason || 'Archivo no válido.');
+                        }
+                    }
+                    // Upload to Storage
+                    const storagePath = `${user.id}/agro/${config.storagePath}/${Date.now()}_${file.name}`;
+                    const uploadResult = await uploadEvidence(file, storagePath);
+                    if (!uploadResult.success) {
+                        throw new Error(uploadResult.error || 'Error subiendo evidencia.');
+                    }
+                    evidenceUrl = uploadResult.path;
+                }
+
+                // Insert into DB
+                const insertData = {
+                    user_id: user.id,
+                    ...formData,
+                    evidence_url: evidenceUrl
+                };
+
+                const { error } = await supabase.from(config.table).insert(insertData);
+                if (error) throw error;
+
+                alert(`✅ ${config.label} registrado`);
+                form.reset();
+                if (dateInput) dateInput.value = today; // Reset date to today
+                if (fileInput) fileInput.value = '';
+                // Refresh UI
+                document.dispatchEvent(new CustomEvent('data-refresh'));
+
+            } catch (e) {
+                alert(`⚠️ ${e.message}`);
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalText; }
+            }
         });
     });
 }
@@ -2365,7 +2461,7 @@ export function initAgro() {
     setupHeaderIdentity();
     initIncomeModule();
     initFinanceTabs();
-    initFinancePlaceholders();
+    initFinanceFormHandlers();
     setTimeout(checkCriticalFormUniqueness, 0);
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();

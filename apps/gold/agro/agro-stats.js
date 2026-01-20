@@ -162,14 +162,14 @@ export async function computeAgroFinanceSummaryV1() {
         // 2) Income REALES (filter deleted_at if column exists)
         let incomeTotal = 0;
         try {
-            const result = await selectAgroTable('agro_income', 'amount', true);
+            const result = await selectAgroTable('agro_income', 'monto', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching income:', result.error);
             }
             const income = result?.data;
             if (income) {
                 income.forEach(i => {
-                    incomeTotal += parseFloat(i.amount) || 0;
+                    incomeTotal += parseFloat(i.monto) || 0;
                 });
             }
         } catch (err) {
@@ -179,14 +179,14 @@ export async function computeAgroFinanceSummaryV1() {
         // 3) Losses (si la tabla existe - graceful fallback)
         let lossesTotal = 0;
         try {
-            const result = await selectAgroTable('agro_losses', 'amount, category', true);
+            const result = await selectAgroTable('agro_losses', 'monto, causa', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
             }
             const losses = result?.data;
             if (losses) {
                 losses.forEach(l => {
-                    const amt = parseFloat(l.amount) || 0;
+                    const amt = parseFloat(l.monto) || 0;
                     lossesTotal += amt;
                     const cat = l.category || 'Pérdidas';
                     costByCategory[cat] = (costByCategory[cat] || 0) + amt;
