@@ -1017,6 +1017,14 @@
             color: var(--danger);
         }
 
+        .roi-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-style: italic;
+            margin-top: 4px;
+            display: none;
+        }
+
         /* ============================================ FOOTER ============================================ */
         .footer {
             text-align: center;
@@ -1412,9 +1420,12 @@
                             </p>
                         </div>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <span id="roi-badge"
-                                style="font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; font-family: 'Courier New', monospace; font-weight: 600;">ROI:
-                                0%</span>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                <span id="roi-badge"
+                                    style="font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; font-family: 'Courier New', monospace; font-weight: 600;">ROI:
+                                    0%</span>
+                                <div id="roi-subtitle" class="roi-subtitle"></div>
+                            </div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 12px; margin-bottom: 12px;">

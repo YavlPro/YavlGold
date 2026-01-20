@@ -14,6 +14,103 @@ let expensesChartInstance = null;
 // Anti-race guard for refresh
 window.__YG_AGRO_STATS_REFRESH_INFLIGHT__ = false;
 
+// Schema capability cache (avoid repeated 400/404)
+const schemaCaps = (() => {
+    if (typeof window === 'undefined') {
+        return { tables: {}, columns: {} };
+    }
+    if (!window.__YG_AGRO_SCHEMA_CAPS__) {
+        window.__YG_AGRO_SCHEMA_CAPS__ = { tables: {}, columns: {} };
+    } else {
+        window.__YG_AGRO_SCHEMA_CAPS__.tables = window.__YG_AGRO_SCHEMA_CAPS__.tables || {};
+        window.__YG_AGRO_SCHEMA_CAPS__.columns = window.__YG_AGRO_SCHEMA_CAPS__.columns || {};
+    }
+    return window.__YG_AGRO_SCHEMA_CAPS__;
+})();
+
+function getColumnCaps(table) {
+    if (!schemaCaps.columns[table]) schemaCaps.columns[table] = {};
+    return schemaCaps.columns[table];
+}
+
+function markTableMissing(table) {
+    if (schemaCaps.tables[table] === false) return false;
+    schemaCaps.tables[table] = false;
+    console.debug('[AGRO_STATS] Missing table cached:', table);
+    return true;
+}
+
+function markColumnMissing(table, column) {
+    const cols = getColumnCaps(table);
+    if (cols[column] === false) return false;
+    cols[column] = false;
+    console.debug('[AGRO_STATS] Missing column cached:', `${table}.${column}`);
+    return true;
+}
+
+function isMissingTableError(error, table) {
+    if (!error) return false;
+    const code = (error.code || '').toString();
+    const msg = (error.message || '').toLowerCase();
+    const details = (error.details || '').toLowerCase();
+    const text = `${msg} ${details}`;
+    const tableRef = (table || '').toLowerCase();
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('could not find') || text.includes('not found');
+    if (code === '42P01') return true;
+    if (code === 'PGRST116' && hasMissingPhrase) return true;
+    if (!hasMissingPhrase) return false;
+    const mentionsTable = !tableRef || text.includes(tableRef);
+    return (text.includes('relation') || text.includes('table')) && mentionsTable;
+}
+
+function isMissingColumnError(error, column) {
+    if (!error) return false;
+    const code = (error.code || '').toString();
+    const col = column.toLowerCase();
+    const msg = (error.message || '').toLowerCase();
+    const details = (error.details || '').toLowerCase();
+    const text = `${msg} ${details}`;
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('could not find') || text.includes('not found');
+    if (code === '42703') return true;
+    if (code === 'PGRST204' && hasMissingPhrase) return true;
+    if (!hasMissingPhrase) return false;
+    return text.includes('column') && text.includes(col);
+}
+
+async function selectAgroTable(table, columns, useDeletedAt) {
+    if (schemaCaps.tables[table] === false) {
+        return { data: null, error: null, skipped: true };
+    }
+
+    const columnCaps = getColumnCaps(table);
+    const shouldUseDeletedAt = useDeletedAt && columnCaps.deleted_at !== false;
+
+    let query = supabase.from(table).select(columns);
+    if (shouldUseDeletedAt) query = query.is('deleted_at', null);
+
+    let { data, error } = await query;
+
+    if (error) {
+        if (isMissingTableError(error, table)) {
+            markTableMissing(table);
+            return { data: null, error: null, skipped: true };
+        }
+
+        if (shouldUseDeletedAt && isMissingColumnError(error, 'deleted_at')) {
+            markColumnMissing(table, 'deleted_at');
+            const retry = await supabase.from(table).select(columns);
+            data = retry.data;
+            error = retry.error;
+            if (error && isMissingTableError(error, table)) {
+                markTableMissing(table);
+                return { data: null, error: null, skipped: true };
+            }
+        }
+    }
+
+    return { data, error, skipped: false };
+}
+
 // ============================================================
 // FUENTE ÚNICA DE VERDAD - Unified Finance Summary V1
 // ============================================================
@@ -45,12 +142,12 @@ export async function computeAgroFinanceSummaryV1() {
         let expenseTotal = 0;
         const costByCategory = {};
         try {
-            const { data: expenses, error } = await supabase
-                .from('agro_expenses')
-                .select('amount, category')
-                .is('deleted_at', null);
-
-            if (!error && expenses) {
+            const result = await selectAgroTable('agro_expenses', 'amount, category', true);
+            if (result?.error) {
+                console.warn('[AGRO_STATS] Error fetching expenses:', result.error);
+            }
+            const expenses = result?.data;
+            if (expenses) {
                 expenses.forEach(e => {
                     const amt = parseFloat(e.amount) || 0;
                     expenseTotal += amt;
@@ -65,20 +162,12 @@ export async function computeAgroFinanceSummaryV1() {
         // 2) Income REALES (filter deleted_at if column exists)
         let incomeTotal = 0;
         try {
-            // Try with deleted_at filter first
-            let { data: income, error } = await supabase
-                .from('agro_income')
-                .select('amount')
-                .is('deleted_at', null);
-
-            // If column doesn't exist, retry without filter
-            if (error && error.message?.includes('deleted_at')) {
-                const result = await supabase.from('agro_income').select('amount');
-                income = result.data;
-                error = result.error;
+            const result = await selectAgroTable('agro_income', 'amount', true);
+            if (result?.error) {
+                console.warn('[AGRO_STATS] Error fetching income:', result.error);
             }
-
-            if (!error && income) {
+            const income = result?.data;
+            if (income) {
                 income.forEach(i => {
                     incomeTotal += parseFloat(i.amount) || 0;
                 });
@@ -90,12 +179,12 @@ export async function computeAgroFinanceSummaryV1() {
         // 3) Losses (si la tabla existe - graceful fallback)
         let lossesTotal = 0;
         try {
-            const { data: losses, error } = await supabase
-                .from('agro_losses')
-                .select('amount, category')
-                .is('deleted_at', null);
-
-            if (!error && losses) {
+            const result = await selectAgroTable('agro_losses', 'amount, category', true);
+            if (result?.error) {
+                console.warn('[AGRO_STATS] Error fetching losses:', result.error);
+            }
+            const losses = result?.data;
+            if (losses) {
                 losses.forEach(l => {
                     const amt = parseFloat(l.amount) || 0;
                     lossesTotal += amt;
@@ -104,33 +193,20 @@ export async function computeAgroFinanceSummaryV1() {
                 });
             }
         } catch (err) {
-            // Table might not exist - that's OK
-            console.debug('[AGRO_STATS] agro_losses table not found (OK)');
+            console.warn('[AGRO_STATS] Error fetching losses:', err);
         }
 
-        // 4) Crops activos (para inversión y revenue_projected)
+        // 4) Crops visibles (mismo criterio que loadCrops)
         let cropsInvestmentTotal = 0;
         let revenueProjectedTotal = 0;
         try {
-            // Try with deleted_at filter first
-            let { data: crops, error } = await supabase
-                .from('agro_crops')
-                .select('investment, revenue_projected, status')
-                .is('deleted_at', null);
-
-            // If column doesn't exist, retry without filter
-            if (error && error.message?.includes('deleted_at')) {
-                const result = await supabase.from('agro_crops').select('investment, revenue_projected, status');
-                crops = result.data;
-                error = result.error;
+            const result = await selectAgroTable('agro_crops', 'investment, revenue_projected, status', true);
+            if (result?.error) {
+                console.warn('[AGRO_STATS] Error fetching crops:', result.error);
             }
-
-            if (!error && crops) {
-                // Filtrar solo cultivos activos
-                const activeStatuses = ['active', 'activo', 'planning', 'planificando', 'harvesting', 'cosechando'];
-                const activeCrops = crops.filter(c => activeStatuses.includes((c.status || '').toLowerCase()));
-
-                activeCrops.forEach(c => {
+            const crops = result?.data;
+            if (crops) {
+                crops.forEach(c => {
                     cropsInvestmentTotal += parseFloat(c.investment) || 0;
                     revenueProjectedTotal += parseFloat(c.revenue_projected) || 0;
                 });
@@ -226,8 +302,8 @@ export function updateUIFromSummary(summary) {
         if (summary.roiDisplay === 'N/A') {
             roiSubtitle.textContent = 'Sin ventas registradas';
             roiSubtitle.style.display = 'block';
-            roiSubtitle.style.cssText = 'font-size: 0.75rem; color: #6b7280; font-style: italic; margin-top: 4px;';
         } else {
+            roiSubtitle.textContent = '';
             roiSubtitle.style.display = 'none';
         }
     }

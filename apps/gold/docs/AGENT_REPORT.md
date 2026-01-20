@@ -866,3 +866,29 @@ git add apps/gold/agro/agro-stats.js apps/gold/docs/AGENT_REPORT.md
 git commit -m "fix(agro): prevent -100% ROI display when no income - show N/A instead"
 git push
 ```
+
+---
+
+## Diagnostico (tarea actual - agro ROI subtitle + stats noise + inversion 0 - 2026-01-20)
+1) "Sin ventas registradas" no aparece porque `updateUIFromSummary()` busca `#roi-subtitle`, pero en `apps/gold/agro/index.html` no existe ese nodo dentro del bloque del ROI badge.
+2) El spam 400/404 proviene de `computeAgroFinanceSummaryV1()` en `apps/gold/agro/agro-stats.js`: consulta tablas/columnas que no existen (p.ej. `agro_losses` o `deleted_at`) y reintenta en cada refresh sin cache de capacidades.
+3) "Inversion Cosecha" puede quedar en $0 porque el filtro de status en `computeAgroFinanceSummaryV1()` no coincide con los valores reales usados por `loadCrops()` (p.ej. `growing`/`ready`/`attention`/`harvested`) o status vacio.
+4) Contexto requerido verificado sin cambios: MPA entries en `apps/gold/vite.config.js`, routing en `apps/gold/vercel.json`, navbar/cards en `apps/gold/index.html`, dashboard en `apps/gold/dashboard/index.html`, Supabase/auth en `apps/gold/assets/js/config/supabase-config.js` + `apps/gold/assets/js/auth/*`, guard en `apps/gold/dashboard/auth-guard.js`, Geo/Clima en `apps/gold/assets/js/geolocation.js` + `apps/gold/agro/dashboard.js`, y carpeta `apps/gold/crypto/` presente.
+
+## Plan (tarea actual - agro ROI subtitle + stats noise + inversion 0)
+1) `apps/gold/agro/index.html`: agregar `<div id="roi-subtitle" class="roi-subtitle"></div>` bajo el ROI badge y estilo neutral usando variables existentes.
+2) `apps/gold/agro/agro-stats.js`: implementar cache `window.__YG_AGRO_SCHEMA_CAPS__ = { tables: {}, columns: {} }`, evitar reintentos a tablas inexistentes, y reintentar sin `deleted_at` cuando la columna no exista.
+3) `apps/gold/agro/agro-stats.js`: alinear el sumatorio de inversion con el mismo criterio de `loadCrops()` (sin filtro erroneo por status) para reflejar los cultivos visibles.
+4) Build final: `pnpm build:gold` y reportar resultado.
+
+---
+
+## Diagnostico (tarea actual - schema cache estricta + inversion alineada - 2026-01-20)
+1) El cache de capacidades debe activarse solo cuando el error indique explicitamente "relation does not exist" o "column does not exist"; hoy la deteccion puede ser demasiado permisiva y cachear en casos de permisos/autenticacion.
+2) "Inversion Cosecha" debe usar exactamente el mismo set de cultivos visibles en la UI "Active Crops" para evitar inflar o desinflar el total.
+3) Si se agrega debug adicional, debe ser opt-in (localStorage `YG_DEBUG_*` o solo localhost).
+
+## Plan (tarea actual - schema cache estricta + inversion alineada)
+1) `apps/gold/agro/agro-stats.js`: ajustar `isMissingTableError`/`isMissingColumnError` para cachear solo cuando el mensaje/codigo confirme "does not exist".
+2) `apps/gold/agro/agro-stats.js`: asegurar que el sumatorio de inversion use el mismo set visible que `loadCrops()` (sin sumar cultivos fuera de la UI).
+3) Build final: `pnpm build:gold` y reportar resultado.
