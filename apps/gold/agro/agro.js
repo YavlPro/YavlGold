@@ -2703,7 +2703,8 @@ export async function saveCrop() {
 // Exponer funciones al scope global para onclick handlers
 window.openCropModal = openCropModal;
 window.closeCropModal = closeCropModal;
-window.saveCrop = saveCrop;
+// NOTE: saveCrop is now defined in index.html with DATE VALIDATION
+// window.saveCrop = saveCrop; // DISABLED - use index.html version with date validation
 
 // Cerrar modal con Escape
 document.addEventListener('keydown', (e) => {
