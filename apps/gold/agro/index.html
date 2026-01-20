@@ -1747,7 +1747,8 @@
             </form>
             <div class="modal-footer">
                 <button type="button" class="btn-cancel" onclick="window.closeCropModal()">Cancelar</button>
-                <button type="submit" class="btn btn-primary" onclick="window.saveCrop()">🌾 Guardar Siembra</button>
+                <button type="submit" id="btn-save-crop" class="btn btn-primary" onclick="window.saveCrop()">🌾 Guardar
+                    Siembra</button>
             </div>
         </div>
     </div>
@@ -2160,7 +2161,14 @@
         };
 
         window.saveCrop = async function () {
-            const btn = document.querySelector('#form-new-crop button[type="submit"]');
+            // Selector robusto con ID fijo (candado definitivo)
+            const btn = document.getElementById('btn-save-crop')
+                || document.querySelector('#modal-new-crop .modal-footer button.btn-primary')
+                || document.querySelector('#form-new-crop button[type="submit"]');
+            if (!btn) {
+                alert('⚠️ No se encontró el botón de Guardar. Refresca la página.');
+                return;
+            }
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
             btn.disabled = true;

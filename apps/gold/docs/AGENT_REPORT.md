@@ -1039,3 +1039,26 @@ pnpm build:gold
 ✅ UTF-8 verification passed!
 Exit code: 0
 ```
+
+---
+
+## Hotfix Regresión (2026-01-20 14:10 UTC-4)
+
+### Bug Detectado en QA Post-Deploy
+El botón "Guardar Siembra" está en `.modal-footer` **fuera** del `<form id="form-new-crop">`, causando que el selector `#form-new-crop button[type="submit"]` retorne `null`.
+
+### Fix Aplicado (`index.html:2162-2172`)
+```javascript
+// Selector robusto: buscar botón en modal-footer o dentro del form
+const btn = document.querySelector('#modal-new-crop .modal-footer button.btn-primary')
+    || document.querySelector('#form-new-crop button[type="submit"]')
+    || document.querySelector('#modal-new-crop button.btn-primary');
+if (!btn) {
+    alert('⚠️ Error: No se encontró el botón de guardar.');
+    return;
+}
+```
+
+### Result
+- Build: OK (exit code 0)
+- Requiere segundo deploy a Vercel
