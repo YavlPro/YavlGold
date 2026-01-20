@@ -2,10 +2,312 @@
  * YavlGold V9.4 - Agro Statistics Module
  * "Monitor de Rentabilidad"
  * Chart.js Visualization with Real Data
+ *
+ * UNIFIED SOURCE OF TRUTH: computeAgroFinanceSummaryV1()
  */
+
+import supabase from '../assets/js/config/supabase-config.js';
 
 let roiChartInstance = null;
 let expensesChartInstance = null;
+
+// Anti-race guard for refresh
+window.__YG_AGRO_STATS_REFRESH_INFLIGHT__ = false;
+
+// ============================================================
+// FUENTE ÚNICA DE VERDAD - Unified Finance Summary V1
+// ============================================================
+
+/**
+ * Computes unified financial summary from all Agro data sources.
+ * This is THE SINGLE SOURCE OF TRUTH for all KPIs and charts.
+ *
+ * @returns {Promise<Object|null>} Unified summary object or null if not authenticated
+ */
+export async function computeAgroFinanceSummaryV1() {
+    // Anti-race: skip if already in flight
+    if (window.__YG_AGRO_STATS_REFRESH_INFLIGHT__) {
+        console.debug('[AGRO_STATS] Refresh already in flight, skipping');
+        return null;
+    }
+    window.__YG_AGRO_STATS_REFRESH_INFLIGHT__ = true;
+
+    try {
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData?.user) {
+            console.warn('[AGRO_STATS] Usuario no autenticado');
+            return null;
+        }
+
+        const userId = userData.user.id;
+
+        // 1) Expenses REALES (filtrar deleted_at IS NULL)
+        let expenseTotal = 0;
+        const costByCategory = {};
+        try {
+            const { data: expenses, error } = await supabase
+                .from('agro_expenses')
+                .select('amount, category')
+                .is('deleted_at', null);
+
+            if (!error && expenses) {
+                expenses.forEach(e => {
+                    const amt = parseFloat(e.amount) || 0;
+                    expenseTotal += amt;
+                    const cat = e.category || 'Otros';
+                    costByCategory[cat] = (costByCategory[cat] || 0) + amt;
+                });
+            }
+        } catch (err) {
+            console.warn('[AGRO_STATS] Error fetching expenses:', err);
+        }
+
+        // 2) Income REALES (filter deleted_at if column exists)
+        let incomeTotal = 0;
+        try {
+            // Try with deleted_at filter first
+            let { data: income, error } = await supabase
+                .from('agro_income')
+                .select('amount')
+                .is('deleted_at', null);
+
+            // If column doesn't exist, retry without filter
+            if (error && error.message?.includes('deleted_at')) {
+                const result = await supabase.from('agro_income').select('amount');
+                income = result.data;
+                error = result.error;
+            }
+
+            if (!error && income) {
+                income.forEach(i => {
+                    incomeTotal += parseFloat(i.amount) || 0;
+                });
+            }
+        } catch (err) {
+            console.warn('[AGRO_STATS] Error fetching income:', err);
+        }
+
+        // 3) Losses (si la tabla existe - graceful fallback)
+        let lossesTotal = 0;
+        try {
+            const { data: losses, error } = await supabase
+                .from('agro_losses')
+                .select('amount, category')
+                .is('deleted_at', null);
+
+            if (!error && losses) {
+                losses.forEach(l => {
+                    const amt = parseFloat(l.amount) || 0;
+                    lossesTotal += amt;
+                    const cat = l.category || 'Pérdidas';
+                    costByCategory[cat] = (costByCategory[cat] || 0) + amt;
+                });
+            }
+        } catch (err) {
+            // Table might not exist - that's OK
+            console.debug('[AGRO_STATS] agro_losses table not found (OK)');
+        }
+
+        // 4) Crops activos (para inversión y revenue_projected)
+        let cropsInvestmentTotal = 0;
+        let revenueProjectedTotal = 0;
+        try {
+            // Try with deleted_at filter first
+            let { data: crops, error } = await supabase
+                .from('agro_crops')
+                .select('investment, revenue_projected, status')
+                .is('deleted_at', null);
+
+            // If column doesn't exist, retry without filter
+            if (error && error.message?.includes('deleted_at')) {
+                const result = await supabase.from('agro_crops').select('investment, revenue_projected, status');
+                crops = result.data;
+                error = result.error;
+            }
+
+            if (!error && crops) {
+                // Filtrar solo cultivos activos
+                const activeStatuses = ['active', 'activo', 'planning', 'planificando', 'harvesting', 'cosechando'];
+                const activeCrops = crops.filter(c => activeStatuses.includes((c.status || '').toLowerCase()));
+
+                activeCrops.forEach(c => {
+                    cropsInvestmentTotal += parseFloat(c.investment) || 0;
+                    revenueProjectedTotal += parseFloat(c.revenue_projected) || 0;
+                });
+            }
+        } catch (err) {
+            console.warn('[AGRO_STATS] Error fetching crops:', err);
+        }
+
+        // Cálculos derivados
+        const costTotal = expenseTotal + lossesTotal; // Costo Total = Gastos + Pérdidas (NO inversión)
+        const profitNet = incomeTotal - costTotal;    // Ganancia Neta = Ingresos - Costos
+
+        // ROI: N/A si no hay ingresos reales ni proyección
+        let roiDisplay = 'N/A';
+        let roiValue = null;
+        if (incomeTotal > 0 || revenueProjectedTotal > 0) {
+            const baseForROI = Math.max(costTotal, 1); // Evitar división por cero
+            const incomeBase = incomeTotal > 0 ? incomeTotal : revenueProjectedTotal;
+            roiValue = ((incomeBase - costTotal) / baseForROI) * 100;
+            roiDisplay = roiValue.toFixed(1) + '%';
+        }
+
+        const summary = {
+            expenseTotal,
+            incomeTotal,
+            lossesTotal,
+            costTotal,
+            cropsInvestmentTotal,
+            revenueProjectedTotal,
+            profitNet,
+            roiDisplay,
+            roiValue,
+            costByCategory,
+            hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0,
+            updatedAtISO: new Date().toISOString()
+        };
+
+        console.log('[AGRO_STATS] Summary computed:', summary);
+        return summary;
+
+    } finally {
+        window.__YG_AGRO_STATS_REFRESH_INFLIGHT__ = false;
+    }
+}
+
+// ============================================================
+// UI UPDATE FUNCTIONS - Consume unified summary
+// ============================================================
+
+/**
+ * Updates ALL KPIs and charts from unified summary object.
+ * @param {Object} summary - Output from computeAgroFinanceSummaryV1()
+ */
+export function updateUIFromSummary(summary) {
+    if (!summary) return;
+
+    const formatCurrency = (num) => '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatK = (num) => {
+        if (num === 0) return '$0k';
+        return '$' + (num / 1000).toFixed(1) + 'k';
+    };
+
+    // 1. Facturero KPIs
+    const kpiExpenses = document.getElementById('kpi-expenses-total');
+    if (kpiExpenses) kpiExpenses.textContent = formatCurrency(summary.expenseTotal);
+
+    const kpiInvestment = document.getElementById('kpi-crops-investment');
+    if (kpiInvestment) kpiInvestment.textContent = formatCurrency(summary.cropsInvestmentTotal);
+
+    const kpiGlobal = document.getElementById('kpi-global-total');
+    if (kpiGlobal) kpiGlobal.textContent = formatCurrency(summary.expenseTotal + summary.cropsInvestmentTotal);
+
+    // 2. ROI Badge (neutral when N/A)
+    const roiBadge = document.getElementById('roi-badge');
+    if (roiBadge) {
+        if (summary.roiDisplay === 'N/A') {
+            roiBadge.textContent = 'ROI: N/A';
+            roiBadge.style.color = '#9ca3af'; // Neutral gray
+            roiBadge.style.borderColor = 'rgba(156, 163, 175, 0.3)';
+            roiBadge.style.background = 'rgba(156, 163, 175, 0.1)';
+        } else {
+            const isPositive = summary.roiValue >= 0;
+            roiBadge.textContent = `ROI: ${isPositive ? '+' : ''}${summary.roiDisplay}`;
+            roiBadge.style.color = isPositive ? '#C8A752' : '#f87171';
+            roiBadge.style.borderColor = isPositive ? 'rgba(200, 167, 82, 0.3)' : 'rgba(248, 113, 113, 0.3)';
+            roiBadge.style.background = isPositive ? 'rgba(200, 167, 82, 0.1)' : 'rgba(248, 113, 113, 0.1)';
+        }
+    }
+
+    // 3. Resumen Financiero Panel
+    const summaryRevenue = document.getElementById('summary-revenue');
+    if (summaryRevenue) summaryRevenue.textContent = formatK(summary.incomeTotal || summary.revenueProjectedTotal);
+
+    const summaryCost = document.getElementById('summary-cost');
+    if (summaryCost) summaryCost.textContent = formatK(summary.costTotal);
+
+    const summaryProfit = document.getElementById('summary-profit');
+    if (summaryProfit) {
+        summaryProfit.textContent = formatK(summary.profitNet);
+        summaryProfit.style.color = summary.profitNet >= 0 ? '#C8A752' : '#f87171';
+    }
+
+    const summaryMargin = document.getElementById('summary-margin');
+    if (summaryMargin) {
+        if (summary.roiDisplay === 'N/A') {
+            summaryMargin.textContent = 'N/A';
+            summaryMargin.style.color = '#9ca3af';
+        } else {
+            const marginPct = summary.incomeTotal > 0
+                ? ((summary.profitNet / summary.incomeTotal) * 100).toFixed(1)
+                : '0';
+            summaryMargin.textContent = marginPct + '%';
+            summaryMargin.style.color = parseFloat(marginPct) >= 0 ? '#C8A752' : '#f87171';
+        }
+    }
+
+    // 4. Expenses Total (doughnut center)
+    const expensesTotal = document.getElementById('expenses-total');
+    if (expensesTotal) {
+        expensesTotal.textContent = formatK(summary.costTotal);
+        expensesTotal.style.color = summary.costTotal > 0 ? '#fff' : '#666';
+    }
+
+    // 5. Timestamp display "Actualizado hace X min"
+    const statsTimestamp = document.getElementById('stats-updated-timestamp');
+    if (statsTimestamp && summary.updatedAtISO) {
+        const updatedAt = new Date(summary.updatedAtISO);
+        const now = new Date();
+        const diffMs = now - updatedAt;
+        const diffMin = Math.floor(diffMs / 60000);
+        const timeText = diffMin < 1 ? 'ahora' : `hace ${diffMin} min`;
+        statsTimestamp.textContent = `Actualizado ${timeText}`;
+        statsTimestamp.style.cssText = 'font-size: 0.75rem; color: #6b7280; font-style: italic;';
+    }
+
+    // 6. Update Charts with REAL data
+    updateExpensesChartFromSummary(summary.costByCategory, summary.costTotal);
+    updateROIChartFromSummary(summary);
+}
+
+/**
+ * Updates expenses doughnut chart with REAL category data
+ */
+function updateExpensesChartFromSummary(costByCategory, costTotal) {
+    if (!expensesChartInstance) return;
+
+    const categories = Object.keys(costByCategory);
+    const values = Object.values(costByCategory).map(v => v / 1000);
+
+    if (categories.length === 0 || values.every(v => v === 0)) {
+        expensesChartInstance.data.labels = ['Sin datos'];
+        expensesChartInstance.data.datasets[0].data = [0.1];
+        expensesChartInstance.data.datasets[0].backgroundColor = ['#333'];
+    } else {
+        // Color palette for categories
+        const colors = ['#C8A752', '#3b82f6', '#a855f7', '#4b5563', '#10b981', '#f59e0b', '#ef4444'];
+        expensesChartInstance.data.labels = categories;
+        expensesChartInstance.data.datasets[0].data = values;
+        expensesChartInstance.data.datasets[0].backgroundColor = categories.map((_, i) => colors[i % colors.length]);
+    }
+
+    expensesChartInstance.update();
+}
+
+/**
+ * Updates ROI bar chart with real data
+ */
+function updateROIChartFromSummary(summary) {
+    if (!roiChartInstance) return;
+
+    const invK = summary.cropsInvestmentTotal / 1000;
+    const revK = (summary.incomeTotal > 0 ? summary.incomeTotal : summary.revenueProjectedTotal) / 1000;
+    const profitK = summary.profitNet / 1000;
+
+    roiChartInstance.data.datasets[0].data = [invK, revK, profitK];
+    roiChartInstance.update();
+}
 
 export function initStats() {
     if (typeof Chart === 'undefined') {
