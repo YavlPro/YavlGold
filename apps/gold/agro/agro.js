@@ -38,7 +38,8 @@ async function populateCropDropdowns() {
             'income-crop-id',
             'pending-crop-id',
             'loss-crop-id',
-            'transfer-crop-id'
+            'transfer-crop-id',
+            'edit-crop-id'
         ];
 
         selectIds.forEach(selectId => {
@@ -132,6 +133,17 @@ const FACTURERO_CONFIG = {
     }
 };
 
+const FACTURERO_EVIDENCE_FIELDS = {
+    gastos: ['evidence_url'],
+    ingresos: ['soporte_url', 'evidence_url'],
+    pendientes: ['evidence_url'],
+    perdidas: ['evidence_url'],
+    transferencias: ['evidence_url']
+};
+
+const EVIDENCE_LINK_STYLE = 'color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;';
+const EVIDENCE_LINK_LABEL = 'Ver recibo';
+
 function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, m => ({
@@ -139,11 +151,57 @@ function escapeHtml(str) {
     }[m]));
 }
 
+function getFactureroEvidenceValue(tabName, item) {
+    const fields = FACTURERO_EVIDENCE_FIELDS[tabName] || ['evidence_url'];
+    for (const field of fields) {
+        if (item && item[field]) return item[field];
+    }
+    return null;
+}
+
+function isHttpUrl(value) {
+    return typeof value === 'string' && /^https?:\/\//i.test(value);
+}
+
+async function resolveEvidenceUrl(rawValue) {
+    if (!rawValue) return null;
+    if (isHttpUrl(rawValue)) return rawValue;
+    return await getSignedEvidenceUrl(rawValue);
+}
+
+function buildEvidenceLinkHtml(url) {
+    if (!url) return '';
+    const safeUrl = escapeHtml(url);
+    const label = EVIDENCE_LINK_LABEL;
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="${EVIDENCE_LINK_STYLE}" title="${label}"><i class="fa-solid fa-cloud"></i> ${label}</a>`;
+}
+
+function createEvidenceLinkElement(url) {
+    if (!url) return null;
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.cssText = EVIDENCE_LINK_STYLE;
+    link.title = EVIDENCE_LINK_LABEL;
+
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-cloud';
+
+    const text = document.createElement('span');
+    text.textContent = EVIDENCE_LINK_LABEL;
+
+    link.append(icon, text);
+    return link;
+}
+
 function renderHistoryRow(tabName, item, config) {
     const concept = item[config.conceptField] || 'Sin concepto';
     const amount = Number(item[config.amountField] || 0);
     const date = item[config.dateField];
     const cropName = item.crop_name || '';
+    const evidenceUrl = item.evidence_url_resolved || '';
+    const evidenceHtml = evidenceUrl ? `<span>${buildEvidenceLinkHtml(evidenceUrl)}</span>` : '';
 
     return `
         <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
@@ -152,6 +210,7 @@ function renderHistoryRow(tabName, item, config) {
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
                     ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
+                    ${evidenceHtml}
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
@@ -159,12 +218,34 @@ function renderHistoryRow(tabName, item, config) {
                 <button type="button" class="btn-edit-facturero" data-tab="${tabName}" data-id="${item.id}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-pen"></i>
                 </button>
+                <button type="button" class="btn-duplicate-facturero" data-tab="${tabName}" data-id="${item.id}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-copy"></i>
+                </button>
                 <button type="button" class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-trash"></i>
                 </button>
             </div>
         </div>
     `;
+}
+
+async function enrichFactureroItems(tabName, items) {
+    const rows = Array.isArray(items) ? items : [];
+    const mapped = rows.map(item => ({
+        ...item,
+        crop_name: item.agro_crops?.name || ''
+    }));
+
+    const enriched = await Promise.all(mapped.map(async (item) => {
+        const evidenceValue = getFactureroEvidenceValue(tabName, item);
+        const resolvedUrl = await resolveEvidenceUrl(evidenceValue);
+        return {
+            ...item,
+            evidence_url_resolved: resolvedUrl
+        };
+    }));
+
+    return enriched;
 }
 
 /**
@@ -215,14 +296,16 @@ async function refreshFactureroHistory(tabName, options = {}) {
                     console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
                     return;
                 }
-                renderHistoryList(tabName, config, fallback.data || [], showActions);
+                const enrichedFallback = await enrichFactureroItems(tabName, fallback.data || []);
+                renderHistoryList(tabName, config, enrichedFallback, showActions);
                 return;
             }
             console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
             return;
         }
 
-        renderHistoryList(tabName, config, items || [], showActions);
+        const enrichedItems = await enrichFactureroItems(tabName, items || []);
+        renderHistoryList(tabName, config, enrichedItems, showActions);
 
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Exception in refreshFactureroHistory(${tabName}):`, err.message);
@@ -265,6 +348,17 @@ function renderHistoryList(tabName, config, items, showActions) {
     }
 
     console.info(`[AGRO] V9.5.1: Refreshed ${tabName} with ${itemsWithCropNames.length} items`);
+}
+
+async function refreshFactureroAfterChange(tabName) {
+    if (tabName === 'ingresos') {
+        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        return;
+    }
+    if (tabName === 'gastos') {
+        return;
+    }
+    await refreshFactureroHistory(tabName);
 }
 
 // ============================================================
@@ -319,7 +413,7 @@ async function deleteFactureroItem(tabName, itemId) {
 
         if (success) {
             console.info(`[AGRO] V9.5.1: Deleted ${tabName} item ${itemId}`);
-            await refreshFactureroHistory(tabName);
+            await refreshFactureroAfterChange(tabName);
             document.dispatchEvent(new CustomEvent('data-refresh'));
         }
 
@@ -452,7 +546,7 @@ async function saveEditModal() {
 
         console.info(`[AGRO] V9.5.1: Updated ${tabName} item ${itemId}`);
         closeEditModal();
-        await refreshFactureroHistory(tabName);
+        await refreshFactureroAfterChange(tabName);
         document.dispatchEvent(new CustomEvent('data-refresh'));
 
     } catch (err) {
@@ -470,7 +564,11 @@ async function duplicateFactureroItem(tabName, itemId) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) return;
 
-    const newCropId = prompt('ID del cultivo destino (dejar vacío para general):');
+    const cropHint = Array.isArray(cropsCache) && cropsCache.length
+        ? `\nCultivos disponibles:\n${cropsCache.map(crop => `${crop.id}: ${crop.name}`).join('\n')}`
+        : '';
+    const newCropId = prompt(`ID del cultivo destino (dejar vacio para general):${cropHint}`);
+    if (newCropId === null) return;
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -497,6 +595,17 @@ async function duplicateFactureroItem(tabName, itemId) {
         delete copy.deleted_at;
         copy.crop_id = newCropId?.trim() || null;
 
+        const originalAmount = original[config.amountField];
+        const amountInput = prompt('Monto para la copia (opcional). Deja vacio para mantener.', originalAmount ?? '');
+        if (amountInput !== null && String(amountInput).trim() !== '') {
+            const parsedAmount = Number(String(amountInput).replace(',', '.'));
+            if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+                alert('Monto invalido. Operacion cancelada.');
+                return;
+            }
+            copy[config.amountField] = parsedAmount;
+        }
+
         const { error: insertError } = await supabase
             .from(config.table)
             .insert(copy);
@@ -504,7 +613,7 @@ async function duplicateFactureroItem(tabName, itemId) {
         if (insertError) throw insertError;
 
         console.info(`[AGRO] V9.5.1: Duplicated ${tabName} item ${itemId}`);
-        await refreshFactureroHistory(tabName);
+        await refreshFactureroAfterChange(tabName);
         document.dispatchEvent(new CustomEvent('data-refresh'));
         alert('✅ Registro duplicado');
 
@@ -2126,7 +2235,7 @@ function enterIncomeEditMode(income) {
     const form = document.getElementById('income-form');
 
     incomeEditId = income.id || null;
-    incomeEditSupportPath = income.soporte_url || null;
+    incomeEditSupportPath = income.soporte_url || income.evidence_url || null;
 
     if (conceptInput) conceptInput.value = income.concepto || '';
     if (amountInput) amountInput.value = income.monto ?? '';
@@ -2153,24 +2262,16 @@ function enterIncomeEditMode(income) {
 }
 
 async function resolveIncomeSupportUrl(path) {
-    if (!path) return null;
-    if (/^https?:\/\//i.test(path)) return path;
-    const { data, error } = await supabase.storage
-        .from(AGRO_STORAGE_BUCKET_ID)
-        .createSignedUrl(path, 3600);
-    if (error) {
-        console.warn('[Agro] Income signed URL error:', error.message);
-        return null;
-    }
-    return data?.signedUrl || null;
+    return await resolveEvidenceUrl(path);
 }
 
 async function buildIncomeSignedUrlMap(incomes) {
     const map = new Map();
     const rows = Array.isArray(incomes) ? incomes : [];
     await Promise.all(rows.map(async (row) => {
-        if (!row?.soporte_url) return;
-        const url = await resolveIncomeSupportUrl(row.soporte_url);
+        const evidenceValue = getFactureroEvidenceValue('ingresos', row);
+        if (!evidenceValue) return;
+        const url = await resolveIncomeSupportUrl(evidenceValue);
         if (url) map.set(row.id, url);
     }));
     return map;
@@ -2208,35 +2309,14 @@ function renderIncomeItem(listEl, income, signedUrl) {
     meta.append(category, dateStr);
 
     if (signedUrl) {
-        const supportWrap = document.createElement('span');
-        supportWrap.style.display = 'inline-flex';
-        supportWrap.style.alignItems = 'center';
-        supportWrap.style.gap = '4px';
-
-        const ext = getFileExtension(income.soporte_url || '');
-        const isDoc = isIncomeDocExtension(ext);
-        const supportIcon = document.createElement('i');
-        supportIcon.className = isDoc ? 'fa-solid fa-file-lines' : 'fa-solid fa-paperclip';
-        supportIcon.style.color = isDoc ? '#60a5fa' : '#C8A752';
-
-        const link = document.createElement('a');
-        link.href = signedUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.style.cssText = 'color: var(--gold-primary, #C8A752); text-decoration: none; font-weight: 600;';
-        link.textContent = isDoc ? 'Descargar soporte' : 'Ver soporte';
-
-        supportWrap.append(supportIcon, link);
-
-        if (!isDoc && isIncomeImageExtension(ext)) {
-            const img = document.createElement('img');
-            img.src = signedUrl;
-            img.alt = 'Soporte';
-            img.style.cssText = 'width: 36px; height: 36px; border-radius: 6px; object-fit: cover; margin-left: 6px; border: 1px solid rgba(255,255,255,0.1);';
-            supportWrap.appendChild(img);
+        const evidenceLink = createEvidenceLinkElement(signedUrl);
+        if (evidenceLink) {
+            const supportWrap = document.createElement('span');
+            supportWrap.style.display = 'inline-flex';
+            supportWrap.style.alignItems = 'center';
+            supportWrap.appendChild(evidenceLink);
+            meta.appendChild(supportWrap);
         }
-
-        meta.appendChild(supportWrap);
     }
 
     details.append(concept, meta);
@@ -2270,6 +2350,19 @@ function renderIncomeItem(listEl, income, signedUrl) {
         editBtn.style.background = 'transparent';
         editBtn.style.borderColor = 'rgba(96, 165, 250, 0.35)';
     });
+
+    const duplicateBtn = document.createElement('button');
+    duplicateBtn.type = 'button';
+    duplicateBtn.className = 'btn-duplicate-facturero income-duplicate-btn';
+    duplicateBtn.dataset.tab = 'ingresos';
+    duplicateBtn.dataset.id = income.id ? String(income.id) : '';
+    duplicateBtn.title = 'Duplicar a otro cultivo';
+    duplicateBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200, 167, 82, 0.35); color: #C8A752; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+
+    const duplicateIcon = document.createElement('i');
+    duplicateIcon.className = 'fa-solid fa-copy';
+    duplicateIcon.style.fontSize = '0.8rem';
+    duplicateBtn.appendChild(duplicateIcon);
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'income-delete-btn';
@@ -2309,7 +2402,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
 
         // Get income data for cascade delete of evidence
         const incomeData = incomeCache.find(i => i && String(i.id) === targetId);
-        const evidencePath = incomeData?.soporte_url || null;
+        const evidencePath = getFactureroEvidenceValue('ingresos', incomeData) || null;
 
         // Try soft delete first
         let deleteSuccess = false;
@@ -2351,7 +2444,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
         }
     });
 
-    actions.append(amount, editBtn, deleteBtn);
+    actions.append(amount, editBtn, duplicateBtn, deleteBtn);
     item.append(left, actions);
     listEl.appendChild(item);
 }

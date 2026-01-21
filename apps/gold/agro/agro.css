@@ -173,7 +173,8 @@
   }
 
   .btn-edit-facturero,
-  .btn-delete-facturero {
+  .btn-delete-facturero,
+  .btn-duplicate-facturero {
     min-width: 36px !important;
     min-height: 36px !important;
     width: 36px !important;

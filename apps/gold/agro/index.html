@@ -2614,19 +2614,22 @@
                     if (file) {
                         try {
                             const fileUrl = URL.createObjectURL(file);
-                            fileLinkHtml = `• <a href="${fileUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver Evidencia (Local Blob)"><i class="fa-solid fa-paperclip"></i> ${file.name}</a>`;
+                            fileLinkHtml = `• <a href="${fileUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver recibo"><i class="fa-solid fa-paperclip"></i> ${file.name}</a>`;
                         } catch (e) {
                             fileLinkHtml = `• 📎 ${file.name}`;
                         }
                     } else if (remoteUrl) {
-                        // Extract simplistic name or just show 'Ver Evidencia'
-                        fileLinkHtml = `• <a href="${remoteUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver Evidencia (Nube)"><i class="fa-solid fa-cloud"></i> Ver Recibo</a>`;
+                        // Extract simplistic name or just show 'Ver recibo'
+                        fileLinkHtml = `• <a href="${remoteUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver recibo"><i class="fa-solid fa-cloud"></i> Ver recibo</a>`;
                     }
 
                     const safeExpenseId = expenseId ? String(expenseId) : '';
                     const actionButtons = expenseId ? `
                         <button type="button" class="btn-edit-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                             <i class="fa fa-pen"></i>
+                        </button>
+                        <button type="button" class="btn-duplicate-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                            <i class="fa fa-copy"></i>
                         </button>
                         <button type="button" class="btn-delete-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                             <i class="fa fa-trash"></i>

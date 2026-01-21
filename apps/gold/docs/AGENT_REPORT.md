@@ -420,6 +420,33 @@ git commit -m "fix(agro): modal market uses data-api.binance.vision + singleton 
 git push
 ```
 
+## Diagnostico (tarea actual - V9.5.2 facturero evidencia + multi-cultivo)
+1) Evidencia solo se ve en Gastos; en Ingresos el link dice "Descargar soporte" y en Pendientes/Perdidas/Transferencias no hay link.
+2) El modal edit no permite cambiar cultivo porque `#edit-crop-id` no se pobló con opciones.
+3) Multi-cultivo requiere duplicar registros por cultivo (sin cambios de schema); no hay accion visible por fila.
+4) Campos de evidencia difieren por tab: ingresos usa `soporte_url` y otros `evidence_url`.
+
+## Plan (tarea actual - V9.5.2 facturero evidencia + multi-cultivo)
+1) `apps/gold/agro/agro.js`: unificar mapping de evidencia por tab, resolver URLs firmadas y renderizar "Ver recibo" en historiales; habilitar duplicado con crop destino (opcional split de monto).
+2) `apps/gold/agro/agro.js`: poblar `#edit-crop-id` al abrir modal y guardar `crop_id` en todas las tabs.
+3) `apps/gold/agro/index.html`: alinear label/markup "Ver recibo" en Gastos y agregar boton duplicar.
+4) `apps/gold/agro/agro.css`: asegurar touch targets/solapamiento si se agrega boton extra.
+5) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## QA (tarea actual - V9.5.2 facturero evidencia + multi-cultivo)
+1) En cada tab: subir PDF -> guardar -> aparece "Ver recibo" -> abre PDF -> F5 -> persiste.
+2) Editar registro: cambiar `crop_id` -> guardar -> persiste y se refleja.
+3) Duplicar: mismo registro duplicado a otro cultivo (con evidencia) -> ambos persisten tras F5.
+4) Consola sin errores.
+5) `pnpm build:gold` OK.
+
+## Checklist DoD (tarea actual - V9.5.2 facturero evidencia + multi-cultivo)
+- [ ] Evidencia visible en gastos/ingresos/pendientes/perdidas/transferencias.
+- [ ] Label unificado "Ver recibo" con mismo markup de gastos.
+- [ ] Edit modal permite cambiar cultivo en todas las tabs.
+- [ ] Duplicar a otro cultivo disponible y funcional (sin schema).
+- [ ] `pnpm build:gold` OK.
+
 ## Diagnostico (tarea actual - Hotfix V9.5.1.1 agro facturero/cultivos)
 1) MPA entrypoints: `apps/gold/vite.config.js` incluye main, cookies, faq, soporte, dashboard, creacion, perfil, configuracion, academia, agro, crypto, herramientas, tecnologia, social. `apps/gold/vercel.json` define cleanUrls y redirect /herramientas -> /tecnologia, rewrites /tecnologia, routes /academia, /crypto, /tecnologia, /music. `apps/gold/index.html` contiene navbar/cards del home y carga auth. `apps/gold/dashboard/index.html` es el dashboard MPA.
 2) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` crea cliente con VITE_SUPABASE_URL/ANON_KEY. `apps/gold/assets/js/auth/authClient.js` inicializa auth + guard. `apps/gold/assets/js/auth/authUI.js` maneja modales. `apps/gold/dashboard/auth-guard.js` usa supabase global.
@@ -1462,7 +1489,6 @@ git commit -m "feat(agro): V9.5.1 full CRUD facturero + UI fixes
 - Initialize all facturero histories on page load"
 git push
 ```
-
 
 
 
