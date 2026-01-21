@@ -447,6 +447,43 @@ git push
 - [ ] Duplicar a otro cultivo disponible y funcional (sin schema).
 - [ ] `pnpm build:gold` OK.
 
+## Diagnostico (tarea actual - V9.5.2.x evidencia + stats facturero)
+1) Pendientes/Perdidas/Transferencias suben evidencia pero no muestran link: la URL firmada falla porque el path guardado no coincide con el path real en Storage (normalizador solo contempla income/expense).
+2) Ingresos usa "Ver recibo" pero hay que garantizar consistencia en todos los tabs con el mismo markup/estilo de Gastos.
+3) ROI/Margen pueden mostrar valores absurdos cuando incomeTotal es 0 o casi 0 (display $0.0k): falta guardrail claro y algunos updates usan formatos en lugar de numeros base.
+4) Stats faltantes: no existen KPIs para total pendientes, perdidas y transferencias (solo gastos/inversion/global).
+
+## Plan (tarea actual - V9.5.2.x evidencia + stats facturero)
+1) `apps/gold/agro/agro.js`: ajustar normalizacion de paths para incluir pending/loss/transfer y agregar fallback legacy al resolver URLs firmadas; cache simple para signed URLs.
+2) `apps/gold/agro/agro.js`: asegurar renderer de historial use el mismo link "Ver recibo" para pending/loss/transfer.
+3) `apps/gold/agro/agro-stats.js`: sumar pending/loss/transfer, robustecer ROI/Margen cuando incomeTotal <= 0, y asegurar calculos con numeros.
+4) `apps/gold/agro/index.html`: agregar KPIs reales (pendientes/perdidas/transferencias) con IDs para render.
+5) `apps/gold/agro/agro.css`: solo si hace falta para estilo consistente.
+6) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## QA (tarea actual - V9.5.2.x evidencia + stats facturero)
+1) En cada tab: subir PDF -> guardar -> aparece "Ver recibo" -> abre PDF -> F5 -> persiste.
+2) Ingresos: link dice "Ver recibo" (no "Descargar soporte").
+3) Con ingresos = 0: ROI = N/A, Margen = N/A (sin % absurdos).
+4) Crear 1 pendiente, 1 perdida, 1 transferencia: KPIs reflejan suma real.
+5) Consola sin errores.
+6) `pnpm build:gold` OK.
+
+## Checklist DoD (tarea actual - V9.5.2.x evidencia + stats facturero)
+- [ ] Evidencia visible y abrible en gastos/ingresos/pendientes/perdidas/transferencias.
+- [ ] Link "Ver recibo" con mismo estilo en todas las tabs.
+- [ ] ROI/Margen robustos cuando incomeTotal <= 0.
+- [ ] KPIs reales de pendientes/perdidas/transferencias visibles.
+- [ ] Consola limpia.
+- [ ] `pnpm build:gold` OK.
+
+## Resultado (tarea actual - V9.5.2.x evidencia + stats facturero)
+- Evidencia: resolver signed URL con cache y fallback legacy; paths normalizados para pending/loss/transfer.
+- UI facturero: "Ver recibo" consistente en historial (pending/loss/transfer).
+- Stats: agregados KPIs reales de pendientes/perdidas/transferencias; ROI/Margen con guardrail cuando incomeTotal <= 0; formatK evita $0.0k en valores pequenos.
+- Build: `pnpm build:gold` OK (agent-guard OK, agent-report-check OK, UTF-8 OK).
+- QA: pendiente manual (no ejecutada en este log).
+
 ## Diagnostico (tarea actual - Hotfix V9.5.1.1 agro facturero/cultivos)
 1) MPA entrypoints: `apps/gold/vite.config.js` incluye main, cookies, faq, soporte, dashboard, creacion, perfil, configuracion, academia, agro, crypto, herramientas, tecnologia, social. `apps/gold/vercel.json` define cleanUrls y redirect /herramientas -> /tecnologia, rewrites /tecnologia, routes /academia, /crypto, /tecnologia, /music. `apps/gold/index.html` contiene navbar/cards del home y carga auth. `apps/gold/dashboard/index.html` es el dashboard MPA.
 2) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` crea cliente con VITE_SUPABASE_URL/ANON_KEY. `apps/gold/assets/js/auth/authClient.js` inicializa auth + guard. `apps/gold/assets/js/auth/authUI.js` maneja modales. `apps/gold/dashboard/auth-guard.js` usa supabase global.
@@ -1489,6 +1526,4 @@ git commit -m "feat(agro): V9.5.1 full CRUD facturero + UI fixes
 - Initialize all facturero histories on page load"
 git push
 ```
-
-
 

@@ -176,7 +176,24 @@ export async function computeAgroFinanceSummaryV1() {
             console.warn('[AGRO_STATS] Error fetching income:', err);
         }
 
-        // 3) Losses (si la tabla existe - graceful fallback)
+        // 3) Pending (si la tabla existe - graceful fallback)
+        let pendingTotal = 0;
+        try {
+            const result = await selectAgroTable('agro_pending', 'monto', true);
+            if (result?.error) {
+                console.warn('[AGRO_STATS] Error fetching pending:', result.error);
+            }
+            const pending = result?.data;
+            if (pending) {
+                pending.forEach(p => {
+                    pendingTotal += parseFloat(p.monto) || 0;
+                });
+            }
+        } catch (err) {
+            console.warn('[AGRO_STATS] Error fetching pending:', err);
+        }
+
+        // 4) Losses (si la tabla existe - graceful fallback)
         let lossesTotal = 0;
         try {
             const result = await selectAgroTable('agro_losses', 'monto, causa', true);
@@ -196,7 +213,24 @@ export async function computeAgroFinanceSummaryV1() {
             console.warn('[AGRO_STATS] Error fetching losses:', err);
         }
 
-        // 4) Crops visibles (solo inversión - NO usar revenue_projected)
+        // 5) Transfers (si la tabla existe - graceful fallback)
+        let transfersTotal = 0;
+        try {
+            const result = await selectAgroTable('agro_transfers', 'monto', true);
+            if (result?.error) {
+                console.warn('[AGRO_STATS] Error fetching transfers:', result.error);
+            }
+            const transfers = result?.data;
+            if (transfers) {
+                transfers.forEach(t => {
+                    transfersTotal += parseFloat(t.monto) || 0;
+                });
+            }
+        } catch (err) {
+            console.warn('[AGRO_STATS] Error fetching transfers:', err);
+        }
+
+        // 6) Crops visibles (solo inversion - NO usar revenue_projected)
         let cropsInvestmentTotal = 0;
         // V9.5: revenue_projected ELIMINADO - solo usamos ingresos reales
         try {
@@ -229,7 +263,9 @@ export async function computeAgroFinanceSummaryV1() {
         const summary = {
             expenseTotal,
             incomeTotal,
+            pendingTotal,
             lossesTotal,
+            transfersTotal,
             costTotal,
             cropsInvestmentTotal,
             // V9.5: revenueProjectedTotal ELIMINADO
@@ -237,7 +273,7 @@ export async function computeAgroFinanceSummaryV1() {
             roiDisplay,
             roiValue,
             costByCategory,
-            hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0,
+            hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0 || pendingTotal > 0 || lossesTotal > 0 || transfersTotal > 0,
             updatedAtISO: new Date().toISOString()
         };
 
@@ -260,10 +296,16 @@ export async function computeAgroFinanceSummaryV1() {
 export function updateUIFromSummary(summary) {
     if (!summary) return;
 
-    const formatCurrency = (num) => '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formatCurrency = (num) => {
+        const safe = Number(num);
+        if (!Number.isFinite(safe)) return '$0.00';
+        return '$' + safe.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
     const formatK = (num) => {
-        if (num === 0) return '$0k';
-        return '$' + (num / 1000).toFixed(1) + 'k';
+        const safe = Number(num);
+        if (!Number.isFinite(safe) || safe === 0) return '$0.00';
+        if (Math.abs(safe) < 1000) return formatCurrency(safe);
+        return '$' + (safe / 1000).toFixed(1) + 'k';
     };
 
     // 1. Facturero KPIs
@@ -275,6 +317,15 @@ export function updateUIFromSummary(summary) {
 
     const kpiGlobal = document.getElementById('kpi-global-total');
     if (kpiGlobal) kpiGlobal.textContent = formatCurrency(summary.expenseTotal + summary.cropsInvestmentTotal);
+
+    const kpiPending = document.getElementById('kpi-pending-total');
+    if (kpiPending) kpiPending.textContent = formatCurrency(summary.pendingTotal || 0);
+
+    const kpiLosses = document.getElementById('kpi-losses-total');
+    if (kpiLosses) kpiLosses.textContent = formatCurrency(summary.lossesTotal || 0);
+
+    const kpiTransfers = document.getElementById('kpi-transfers-total');
+    if (kpiTransfers) kpiTransfers.textContent = formatCurrency(summary.transfersTotal || 0);
 
     // 2. ROI Badge (neutral when N/A) + "Sin ventas registradas" message
     const roiBadge = document.getElementById('roi-badge');
@@ -320,13 +371,11 @@ export function updateUIFromSummary(summary) {
 
     const summaryMargin = document.getElementById('summary-margin');
     if (summaryMargin) {
-        if (summary.roiDisplay === 'N/A') {
+        if (summary.incomeTotal <= 0) {
             summaryMargin.textContent = 'N/A';
             summaryMargin.style.color = '#9ca3af';
         } else {
-            const marginPct = summary.incomeTotal > 0
-                ? ((summary.profitNet / summary.incomeTotal) * 100).toFixed(1)
-                : '0';
+            const marginPct = ((summary.profitNet / summary.incomeTotal) * 100).toFixed(1);
             summaryMargin.textContent = marginPct + '%';
             summaryMargin.style.color = parseFloat(marginPct) >= 0 ? '#C8A752' : '#f87171';
         }

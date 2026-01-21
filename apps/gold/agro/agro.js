@@ -136,13 +136,14 @@ const FACTURERO_CONFIG = {
 const FACTURERO_EVIDENCE_FIELDS = {
     gastos: ['evidence_url'],
     ingresos: ['soporte_url', 'evidence_url'],
-    pendientes: ['evidence_url'],
-    perdidas: ['evidence_url'],
-    transferencias: ['evidence_url']
+    pendientes: ['evidence_url', 'soporte_url'],
+    perdidas: ['evidence_url', 'soporte_url'],
+    transferencias: ['evidence_url', 'soporte_url']
 };
 
 const EVIDENCE_LINK_STYLE = 'color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;';
 const EVIDENCE_LINK_LABEL = 'Ver recibo';
+const evidenceSignedUrlCache = new Map();
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -166,7 +167,33 @@ function isHttpUrl(value) {
 async function resolveEvidenceUrl(rawValue) {
     if (!rawValue) return null;
     if (isHttpUrl(rawValue)) return rawValue;
-    return await getSignedEvidenceUrl(rawValue);
+
+    if (evidenceSignedUrlCache.has(rawValue)) {
+        return evidenceSignedUrlCache.get(rawValue);
+    }
+
+    const signedUrl = await getSignedEvidenceUrl(rawValue, { quiet: true });
+    if (signedUrl) {
+        evidenceSignedUrlCache.set(rawValue, signedUrl);
+        return signedUrl;
+    }
+
+    const legacyPath = getLegacyAgroEvidencePath(rawValue);
+    if (legacyPath && legacyPath !== rawValue) {
+        if (evidenceSignedUrlCache.has(legacyPath)) {
+            const cachedUrl = evidenceSignedUrlCache.get(legacyPath);
+            evidenceSignedUrlCache.set(rawValue, cachedUrl);
+            return cachedUrl;
+        }
+        const legacySignedUrl = await getSignedEvidenceUrl(legacyPath, { quiet: true });
+        if (legacySignedUrl) {
+            evidenceSignedUrlCache.set(legacyPath, legacySignedUrl);
+            evidenceSignedUrlCache.set(rawValue, legacySignedUrl);
+            return legacySignedUrl;
+        }
+    }
+
+    return null;
 }
 
 function buildEvidenceLinkHtml(url) {
@@ -1153,7 +1180,7 @@ function patchExpenseSelect() {
     };
 }
 
-function normalizeAgroEvidencePath(path) {
+function getLegacyAgroEvidencePath(path) {
     if (typeof path !== 'string' || !path) return path;
     const legacyExpenseRoot = `${AGRO_EXPENSE_STORAGE_ROOT}s`;
     if (path.includes(`/${AGRO_INCOME_STORAGE_ROOT}/`)
@@ -1161,6 +1188,29 @@ function normalizeAgroEvidencePath(path) {
         || path.includes(`/${legacyExpenseRoot}/`)) {
         return path;
     }
+    const parts = path.split('/');
+    if (parts.length < 2) return path;
+    const userId = parts.shift();
+    const rest = parts.join('/');
+    return `${userId}/${AGRO_EXPENSE_STORAGE_ROOT}/${rest}`;
+}
+
+function normalizeAgroEvidencePath(path) {
+    if (typeof path !== 'string' || !path) return path;
+    const legacyExpenseRoot = `${AGRO_EXPENSE_STORAGE_ROOT}s`;
+    const allowedRoots = [
+        AGRO_INCOME_STORAGE_ROOT,
+        AGRO_EXPENSE_STORAGE_ROOT,
+        AGRO_PENDING_STORAGE_ROOT,
+        AGRO_LOSS_STORAGE_ROOT,
+        AGRO_TRANSFER_STORAGE_ROOT,
+        legacyExpenseRoot
+    ].filter(Boolean);
+
+    if (allowedRoots.some(root => path.includes(`/${root}/`))) {
+        return path;
+    }
+
     const parts = path.split('/');
     if (parts.length < 2) return path;
     const userId = parts.shift();
@@ -1627,8 +1677,9 @@ async function uploadEvidence(file, storagePath) {
  * @param {string} path - Storage path
  * @returns {Promise<string|null>} Signed URL or null
  */
-async function getSignedEvidenceUrl(path) {
+async function getSignedEvidenceUrl(path, options = {}) {
     if (!path) return null;
+    const quiet = options?.quiet === true;
 
     try {
         const { data, error } = await supabase.storage
@@ -1636,13 +1687,17 @@ async function getSignedEvidenceUrl(path) {
             .createSignedUrl(path, 3600); // 1 hour
 
         if (error) {
-            console.warn('[Agro] Signed URL error:', error.message);
+            if (!quiet) {
+                console.warn('[Agro] Signed URL error:', error.message);
+            }
             return null;
         }
 
         return data?.signedUrl || null;
     } catch (err) {
-        console.warn('[Agro] Signed URL exception:', err.message);
+        if (!quiet) {
+            console.warn('[Agro] Signed URL exception:', err.message);
+        }
         return null;
     }
 }
@@ -2795,6 +2850,7 @@ function initFinanceFormHandlers() {
             label: 'Pendiente',
             fileInputId: 'pending-receipt',
             storagePath: 'pending',
+            buildStoragePath: buildPendingStoragePath,
             cropSelectId: 'pending-crop-id', // V9.5
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-pendiente')?.value?.trim(),
@@ -2810,6 +2866,7 @@ function initFinanceFormHandlers() {
             label: 'Pérdida',
             fileInputId: 'loss-receipt',
             storagePath: 'loss',
+            buildStoragePath: buildLossStoragePath,
             cropSelectId: 'loss-crop-id', // V9.5
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-perdida')?.value?.trim(),
@@ -2825,6 +2882,7 @@ function initFinanceFormHandlers() {
             label: 'Transferencia',
             fileInputId: 'transfer-receipt',
             storagePath: 'transfer',
+            buildStoragePath: buildTransferStoragePath,
             cropSelectId: 'transfer-crop-id', // V9.5
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-transferencia')?.value?.trim(),
@@ -2875,7 +2933,9 @@ function initFinanceFormHandlers() {
                         }
                     }
                     // Upload to Storage
-                    const storagePath = `${user.id}/agro/${config.storagePath}/${Date.now()}_${file.name}`;
+                    const storagePath = typeof config.buildStoragePath === 'function'
+                        ? config.buildStoragePath(user.id, file.name)
+                        : `${user.id}/agro/${config.storagePath}/${Date.now()}_${file.name}`;
                     const uploadResult = await uploadEvidence(file, storagePath);
                     if (!uploadResult.success) {
                         throw new Error(uploadResult.error || 'Error subiendo evidencia.');
@@ -2957,10 +3017,15 @@ function updateBalanceSummary(expenseTotal, incomeTotal) {
         profitEl.style.color = profit >= 0 ? '#C8A752' : '#f87171';
     }
 
-    const margin = incomeTotal > 0 ? (profit / incomeTotal) * 100 : 0;
     if (marginEl) {
-        marginEl.textContent = `${margin.toFixed(1)}%`;
-        marginEl.style.color = margin >= 0 ? '#C8A752' : '#f87171';
+        if (incomeTotal <= 0) {
+            marginEl.textContent = 'N/A';
+            marginEl.style.color = '#9ca3af';
+        } else {
+            const margin = (profit / incomeTotal) * 100;
+            marginEl.textContent = `${margin.toFixed(1)}%`;
+            marginEl.style.color = margin >= 0 ? '#C8A752' : '#f87171';
+        }
     }
 }
 
