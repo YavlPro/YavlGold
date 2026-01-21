@@ -477,6 +477,42 @@ git push
 - [ ] Consola limpia.
 - [ ] `pnpm build:gold` OK.
 
+## Diagnostico (tarea actual - V9.5.3 centro estadistico)
+1) KPIs principales estan repartidos entre header (pendientes/perdidas/transferencias) y dashboard (gasto/inversion/total), lo que confunde en movil.
+2) No existe un punto unico de acceso para ver todas las cifras; falta un modal mobile-first.
+3) KPIs dependen de IDs existentes en agro-stats.js, por lo que moverlos requiere mantener IDs o ajustar selectors.
+
+## Plan (tarea actual - V9.5.3 centro estadistico)
+1) `apps/gold/agro/index.html`: agregar boton "Centro Estadistico" junto al header "Dashboard Agro" y crear modal con las 6 KPIs (mantener IDs).
+2) `apps/gold/agro/index.html`: remover KPIs duplicadas de header y del grid financiero.
+3) `apps/gold/agro/agro.css`: estilos para modal sheet (mobile-first), header sticky y grid responsive.
+4) `apps/gold/agro/agro.js`: implementar open/close modal con refresco stats, click fuera y ESC.
+5) `apps/gold/agro/agro-stats.js`: solo si hace falta ajustar selectors (ideal sin cambios).
+6) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## QA (tarea actual - V9.5.3 centro estadistico)
+1) Movil: abrir "Centro Estadistico" -> ver 6 KPIs -> cerrar con X y tap fuera.
+2) Desktop: abrir/cerrar con ESC y click fuera.
+3) Verificar que no quedan KPIs duplicadas fuera del modal.
+4) Cifras actualizadas al abrir modal (usa refreshAgroStats).
+5) Consola sin errores.
+6) `pnpm build:gold` OK.
+
+## Checklist DoD (tarea actual - V9.5.3 centro estadistico)
+- [ ] Modal "Centro Estadistico" mobile-first creado y funcional.
+- [ ] KPIs principales solo dentro del modal (sin duplicados).
+- [ ] Boton visible "Centro Estadistico" cerca de "Dashboard Agro".
+- [ ] Open/close por X, click fuera, ESC.
+- [ ] Consola limpia.
+- [ ] `pnpm build:gold` OK.
+
+## Resultado (tarea actual - V9.5.3 centro estadistico)
+- KPIs centrales movidos a modal full-screen (mobile-first) y removidos del header/grid.
+- Boton de entrada "Centro Estadistico" agregado en el header de Dashboard Agro.
+- Modal con header sticky, cierre por X/tap fuera/ESC y refresh de stats al abrir.
+- Build: `pnpm build:gold` OK (agent-guard OK, agent-report-check OK, UTF-8 OK).
+- QA: pendiente manual (movil + desktop).
+
 ## Resultado (tarea actual - V9.5.2.x evidencia + stats facturero)
 - Evidencia: resolver signed URL con cache y fallback legacy; paths normalizados para pending/loss/transfer.
 - UI facturero: "Ver recibo" consistente en historial (pending/loss/transfer).
@@ -1526,4 +1562,3 @@ git commit -m "feat(agro): V9.5.1 full CRUD facturero + UI fixes
 - Initialize all facturero histories on page load"
 git push
 ```
-

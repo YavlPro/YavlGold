@@ -166,6 +166,150 @@
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
+/* V9.5.3: Centro Estadistico modal (mobile-first) */
+body.stats-center-open {
+  overflow: hidden;
+}
+
+#modal-stats-center {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10010;
+  padding: 1rem;
+}
+
+#modal-stats-center .stats-center {
+  background: var(--card-bg, #121212);
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  border-radius: 20px;
+  width: min(960px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+#modal-stats-center .stats-center-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(10,10,10,0.95), rgba(5,5,5,0.98));
+  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+  z-index: 1;
+}
+
+#modal-stats-center .stats-center-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--gold-primary, #C8A752);
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+#modal-stats-center .stats-center-header .btn-close {
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#modal-stats-center .stats-center-header .btn-close:hover {
+  border-color: rgba(200, 167, 82, 0.4);
+  color: var(--gold-primary, #C8A752);
+  box-shadow: 0 0 16px rgba(200, 167, 82, 0.2);
+}
+
+#modal-stats-center .stats-center-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+}
+
+#modal-stats-center .stats-center-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.stats-center-trigger {
+  border: 1px solid rgba(200, 167, 82, 0.35);
+  background: rgba(200, 167, 82, 0.12);
+  color: var(--gold-primary, #C8A752);
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stats-center-trigger:hover {
+  background: rgba(200, 167, 82, 0.2);
+  border-color: rgba(200, 167, 82, 0.6);
+  box-shadow: 0 0 16px rgba(200, 167, 82, 0.2);
+}
+
+.stats-center-trigger:focus-visible {
+  outline: 2px solid rgba(200, 167, 82, 0.6);
+  outline-offset: 2px;
+}
+
+@media (min-width: 640px) {
+  #modal-stats-center .stats-center-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  #modal-stats-center .stats-center-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  #modal-stats-center {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  #modal-stats-center .stats-center {
+    width: 100%;
+    height: 94vh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  #modal-stats-center .stats-center-body {
+    padding: 1rem;
+  }
+
+  #modal-stats-center .stats-center-header .btn-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* V9.5.1: Facturero history items mobile touch targets */
 @media (max-width: 600px) {
   .facturero-item {

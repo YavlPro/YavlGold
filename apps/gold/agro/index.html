@@ -1209,53 +1209,7 @@
                     </ul>
                 </div>
 
-                <!-- KPI: Pendientes -->
-                <div class="card kpi-card animate-in delay-6">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -4s;">
-                        <i class="fa-solid fa-hourglass-half" style="color: var(--gold-primary);"></i>
-                    </div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Pendientes</div>
-                        <div class="kpi-value" style="color: var(--gold-primary);">
-                            <span class="highlight" id="kpi-pending-total">$0.00</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag">Cobros en espera</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI: Perdidas -->
-                <div class="card kpi-card animate-in delay-6">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -5s;">
-                        <i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i>
-                    </div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Perdidas</div>
-                        <div class="kpi-value" style="color: #f87171;">
-                            <span class="highlight" id="kpi-losses-total">$0.00</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag">Merma real</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI: Transferencias -->
-                <div class="card kpi-card animate-in delay-6">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -6s;">
-                        <i class="fa-solid fa-right-left" style="color: var(--gold-primary);"></i>
-                    </div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Transferencias</div>
-                        <div class="kpi-value" style="color: var(--gold-primary);">
-                            <span class="highlight" id="kpi-transfers-total">$0.00</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag">Movimientos internos</span>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
 
             <div class="user-profile">
@@ -1267,6 +1221,9 @@
         <section class="kpi-section">
             <div class="section-header animate-in delay-1">
                 <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2>
+                <button type="button" class="stats-center-trigger" id="btn-open-stats-center">
+                    &#128202; Centro Estad&iacute;stico
+                </button>
             </div>
             <div class="kpi-grid">
                 <!-- Clima Widget -->
@@ -1338,54 +1295,7 @@
                 </div>
             </div> <!-- End of first row (Weather/Market/Moon) -->
 
-            <!-- Row 2: Financial KPIs (Supabase Realtime) -->
-            <div class="kpi-grid"
-                style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 1.5rem;">
-
-                <!-- KPI: Gasto Facturero -->
-                <div class="card kpi-card animate-in delay-5">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -1s;">🧾</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Gasto Facturero</div>
-                        <div class="kpi-value" style="color: #f87171;">
-                            <span class="highlight" id="kpi-expenses-total">$0.00</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag">Gastos Operativos</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI: Inversión Cosecha -->
-                <div class="card kpi-card animate-in delay-6">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -2s;">🌱</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Inversión Cosecha</div>
-                        <div class="kpi-value" style="color: #4ade80;">
-                            <span class="highlight" id="kpi-crops-investment">$0.00</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag">Capital Sembrado</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI: Total Global -->
-                <div class="card kpi-card animate-in delay-7"
-                    style="border-color: var(--gold-primary); background: rgba(200, 167, 82, 0.05);">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -3s;">💰</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label" style="color: var(--gold-primary);">Gasto Total</div>
-                        <div class="kpi-value" style="color: var(--gold-primary);">
-                            <span class="highlight" id="kpi-global-total">$0.00</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag" style="color: rgba(255,255,255,0.7);">Salida de Dinero Real</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            
             <!-- Panel de Planificación: El Oráculo del Agricultor -->
             <div class="card planning-panel animate-in delay-5" style="margin-top: 1.5rem; padding: 1.5rem;">
                 <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
@@ -2761,6 +2671,113 @@
             initNotifications();
         });
     </script>
+
+    <!-- V9.5.3: Centro Estadistico -->
+    <div id="modal-stats-center" class="modal" style="display: none;" aria-hidden="true">
+        <div class="modal-content stats-center" role="dialog" aria-modal="true" aria-labelledby="stats-center-title"
+            tabindex="-1">
+            <div class="stats-center-header">
+                <h3 id="stats-center-title">Centro Estad&iacute;stico</h3>
+                <button type="button" class="btn-close" id="btn-close-stats" aria-label="Cerrar estadisticas">
+                    &times;
+                </button>
+            </div>
+            <div class="stats-center-body">
+                <div class="stats-center-grid">
+                    <!-- KPI: Gasto Facturero -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon-wrapper">🧾</div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Gasto Facturero</div>
+                            <div class="kpi-value" style="color: #f87171;">
+                                <span class="highlight" id="kpi-expenses-total">$0.00</span>
+                            </div>
+                            <div class="kpi-secondary">
+                                <span class="kpi-tag">Gastos Operativos</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Inversion Cosecha -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon-wrapper">🌱</div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Inversi&oacute;n Cosecha</div>
+                            <div class="kpi-value" style="color: #4ade80;">
+                                <span class="highlight" id="kpi-crops-investment">$0.00</span>
+                            </div>
+                            <div class="kpi-secondary">
+                                <span class="kpi-tag">Capital Sembrado</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Gasto Total -->
+                    <div class="card kpi-card"
+                        style="border-color: var(--gold-primary); background: rgba(200, 167, 82, 0.05);">
+                        <div class="kpi-icon-wrapper">💰</div>
+                        <div class="kpi-content">
+                            <div class="kpi-label" style="color: var(--gold-primary);">Gasto Total</div>
+                            <div class="kpi-value" style="color: var(--gold-primary);">
+                                <span class="highlight" id="kpi-global-total">$0.00</span>
+                            </div>
+                            <div class="kpi-secondary">
+                                <span class="kpi-tag" style="color: rgba(255,255,255,0.7);">Salida de Dinero Real</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Pendientes -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon-wrapper">
+                            <i class="fa-solid fa-hourglass-half" style="color: var(--gold-primary);"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Pendientes</div>
+                            <div class="kpi-value" style="color: var(--gold-primary);">
+                                <span class="highlight" id="kpi-pending-total">$0.00</span>
+                            </div>
+                            <div class="kpi-secondary">
+                                <span class="kpi-tag">Cobros en espera</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Perdidas -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon-wrapper">
+                            <i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Perdidas</div>
+                            <div class="kpi-value" style="color: #f87171;">
+                                <span class="highlight" id="kpi-losses-total">$0.00</span>
+                            </div>
+                            <div class="kpi-secondary">
+                                <span class="kpi-tag">Merma real</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI: Transferencias -->
+                    <div class="card kpi-card">
+                        <div class="kpi-icon-wrapper">
+                            <i class="fa-solid fa-right-left" style="color: var(--gold-primary);"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Transferencias</div>
+                            <div class="kpi-value" style="color: var(--gold-primary);">
+                                <span class="highlight" id="kpi-transfers-total">$0.00</span>
+                            </div>
+                            <div class="kpi-secondary">
+                                <span class="kpi-tag">Movimientos internos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- V9.5.1: Modal Edit Facturero -->
     <div id="modal-edit-facturero" class="modal" style="display: none;">

@@ -3029,6 +3029,72 @@ function updateBalanceSummary(expenseTotal, incomeTotal) {
     }
 }
 
+// ============================================================
+// V9.5.3: Centro Estadistico (modal)
+// ============================================================
+
+function openStatsCenter() {
+    const modal = document.getElementById('modal-stats-center');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('stats-center-open');
+
+    if (typeof window.refreshAgroStats === 'function') {
+        Promise.resolve(window.refreshAgroStats()).catch((err) => {
+            console.warn('[AGRO] Stats refresh failed:', err?.message || err);
+        });
+    }
+
+    const content = modal.querySelector('.stats-center');
+    if (content) {
+        content.scrollTop = 0;
+        content.focus({ preventScroll: true });
+    }
+}
+
+function closeStatsCenter() {
+    const modal = document.getElementById('modal-stats-center');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('stats-center-open');
+}
+
+function initStatsCenterModal() {
+    if (document.__agroStatsCenterBound) return;
+    document.__agroStatsCenterBound = true;
+
+    const modal = document.getElementById('modal-stats-center');
+    const openBtn = document.getElementById('btn-open-stats-center');
+    const closeBtn = document.getElementById('btn-close-stats');
+
+    if (!modal) return;
+
+    if (openBtn) {
+        openBtn.addEventListener('click', openStatsCenter);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeStatsCenter);
+    }
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeStatsCenter();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            closeStatsCenter();
+        }
+    });
+
+    window.openStatsCenter = openStatsCenter;
+    window.closeStatsCenter = closeStatsCenter;
+}
+
 function getTopIncomeCategoryFromCache(days = 365) {
     if (!Array.isArray(incomeCache) || incomeCache.length === 0) return null;
 
@@ -3295,6 +3361,7 @@ export function initAgro() {
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
+    initStatsCenterModal(); // V9.5.3: Centro Estadistico
     setTimeout(checkCriticalFormUniqueness, 0);
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
