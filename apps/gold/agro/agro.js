@@ -3033,12 +3033,49 @@ function updateBalanceSummary(expenseTotal, incomeTotal) {
 // V9.5.3: Centro Estadistico (modal)
 // ============================================================
 
+let statsCenterActiveTab = 'kpis';
+
+function setStatsCenterTab(tabName) {
+    const modal = document.getElementById('modal-stats-center');
+    if (!modal) return;
+
+    const targetTab = tabName || 'kpis';
+    statsCenterActiveTab = targetTab;
+
+    const tabs = modal.querySelectorAll('.stats-tab');
+    const panels = modal.querySelectorAll('.stats-panel');
+
+    tabs.forEach((btn) => {
+        const active = btn.dataset.tab === targetTab;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    panels.forEach((panel) => {
+        const active = panel.dataset.tab === targetTab;
+        panel.classList.toggle('is-active', active);
+        panel.setAttribute('aria-hidden', active ? 'false' : 'true');
+    });
+
+    if (targetTab === 'rentabilidad') {
+        if (typeof window.refreshAgroStats === 'function') {
+            Promise.resolve(window.refreshAgroStats()).catch((err) => {
+                console.warn('[AGRO] Stats refresh failed:', err?.message || err);
+            });
+        }
+        requestAnimationFrame(() => {
+            window.dispatchEvent(new Event('resize'));
+        });
+    }
+}
+
 function openStatsCenter() {
     const modal = document.getElementById('modal-stats-center');
     if (!modal) return;
     modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('stats-center-open');
+    setStatsCenterTab('kpis');
 
     if (typeof window.refreshAgroStats === 'function') {
         Promise.resolve(window.refreshAgroStats()).catch((err) => {
@@ -3047,8 +3084,11 @@ function openStatsCenter() {
     }
 
     const content = modal.querySelector('.stats-center');
+    const scrollBody = modal.querySelector('.stats-center-body');
+    if (scrollBody) {
+        scrollBody.scrollTop = 0;
+    }
     if (content) {
-        content.scrollTop = 0;
         content.focus({ preventScroll: true });
     }
 }
@@ -3068,6 +3108,7 @@ function initStatsCenterModal() {
     const modal = document.getElementById('modal-stats-center');
     const openBtn = document.getElementById('btn-open-stats-center');
     const closeBtn = document.getElementById('btn-close-stats');
+    const tabs = modal?.querySelectorAll('.stats-tab') || [];
 
     if (!modal) return;
 
@@ -3078,6 +3119,12 @@ function initStatsCenterModal() {
     if (closeBtn) {
         closeBtn.addEventListener('click', closeStatsCenter);
     }
+
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            setStatsCenterTab(tab.dataset.tab);
+        });
+    });
 
     modal.addEventListener('click', (event) => {
         if (event.target === modal) {
@@ -3093,6 +3140,7 @@ function initStatsCenterModal() {
 
     window.openStatsCenter = openStatsCenter;
     window.closeStatsCenter = closeStatsCenter;
+    window.setStatsCenterTab = setStatsCenterTab;
 }
 
 function getTopIncomeCategoryFromCache(days = 365) {

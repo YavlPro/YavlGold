@@ -506,6 +506,42 @@ git push
 - [ ] Consola limpia.
 - [ ] `pnpm build:gold` OK.
 
+## Diagnostico (tarea actual - V9.5.4 centro estadistico completo)
+1) Aun quedan bloques de rentabilidad/ROI/estructura de costos en la pagina principal, generando stats regadas.
+2) El modal solo contiene KPIs; falta centralizar charts y resumen financiero.
+3) Los graficos dependen de IDs existentes; moverlos requiere preservar IDs o ajustar el render.
+
+## Plan (tarea actual - V9.5.4 centro estadistico completo)
+1) `apps/gold/agro/index.html`: agregar tabs dentro del modal (KPIs y Rentabilidad) y mover bloques existentes del "Monitor de Rentabilidad" al modal.
+2) `apps/gold/agro/index.html`: eliminar/ocultar esas secciones del main y dejar solo el acceso al modal.
+3) `apps/gold/agro/agro.css`: estilos de tabs mobile-first y contencion de charts en modal.
+4) `apps/gold/agro/agro.js`: al abrir modal, refrescar stats/charts y mantener tab inicial en KPIs.
+5) `apps/gold/agro/agro-stats.js`: solo si hace falta re-enlazar IDs o re-render.
+6) Ejecutar `pnpm build:gold` y reportar resultado.
+
+## QA (tarea actual - V9.5.4 centro estadistico completo)
+1) Movil: abrir modal -> cambiar tabs -> ver KPIs + rentabilidad + charts sin overflow.
+2) Desktop: cerrar con ESC y click fuera.
+3) No duplicados: los bloques de rentabilidad no aparecen fuera del modal.
+4) ROI/Margen con ingresos=0 muestran N/A.
+5) Consola sin errores.
+6) `pnpm build:gold` OK.
+
+## Checklist DoD (tarea actual - V9.5.4 centro estadistico completo)
+- [ ] Modal incluye KPIs + rentabilidad + charts + resumen financiero.
+- [ ] Main page sin duplicados (solo boton de acceso).
+- [ ] Tabs funcionales (KPIs / Rentabilidad).
+- [ ] Refresco de stats/charts al abrir modal.
+- [ ] Consola limpia.
+- [ ] `pnpm build:gold` OK.
+
+## Resultado (tarea actual - V9.5.4 centro estadistico completo)
+- Monitor de rentabilidad, charts y resumen financiero movidos al modal con tabs (KPIs / Rentabilidad).
+- Main page limpia sin bloques de stats duplicados.
+- Tabs con refresco de stats y resize al abrir Rentabilidad.
+- Build: `pnpm build:gold` OK (agent-guard OK, agent-report-check OK, UTF-8 OK).
+- QA: pendiente manual (movil + desktop).
+
 ## Resultado (tarea actual - V9.5.3 centro estadistico)
 - KPIs centrales movidos a modal full-screen (mobile-first) y removidos del header/grid.
 - Boton de entrada "Centro Estadistico" agregado en el header de Dashboard Agro.
