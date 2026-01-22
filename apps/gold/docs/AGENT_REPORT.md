@@ -1598,3 +1598,36 @@ git commit -m "feat(agro): V9.5.1 full CRUD facturero + UI fixes
 - Initialize all facturero histories on page load"
 git push
 ```
+
+---
+
+## V9.5.5 - Compact Facturero (2026-01-22)
+
+### Diagnostico
+1) Formulario del Facturero ocupa demasiado espacio por notas y evidencia siempre visibles.
+2) Dropzones grandes generan scroll innecesario en desktop y movil.
+3) Evidencia opcional necesita UI compacta sin romper el flujo actual.
+
+### Plan
+1) `apps/gold/agro/index.html`: envolver Notas + Evidencia en acordeon `<details>` cerrado por defecto; mantener IDs.
+2) `apps/gold/agro/agro.css`: grid compacto (2 filas desktop / 1 columna mobile), estilos de acordeon y evidencia compacta.
+3) `apps/gold/agro/agro.js`: ajustar handlers de evidencia (expense/generic/income) para UI compacta, abrir acordeon al seleccionar archivo, resetear al limpiar.
+4) QA manual: validar layout, evidencia, CRUD y consola limpia.
+
+### QA Checklist
+- [ ] Desktop: formulario compacto (2 filas) sin scroll extra.
+- [ ] Movil: 1 columna, acordeon tactil comodo.
+- [ ] Evidencia: adjuntar -> nombre/ver/cambiar; limpiar resetea.
+- [ ] Registrar sin abrir "Opciones avanzadas" funciona.
+- [ ] Registrar con evidencia funciona.
+- [ ] Consola limpia.
+- [x] pnpm build:gold OK.
+
+QA manual pendiente (no ejecutada en CLI).
+
+### Build
+```
+pnpm build:gold
+OK (vite build + UTF-8 verification passed)
+Exit code: 0
+```

@@ -1751,6 +1751,122 @@ function showEvidenceToast(message, type = 'info') {
     }, 3000);
 }
 
+function openAdvancedPanelFor(element) {
+    if (!element || typeof element.closest !== 'function') return;
+    const details = element.closest('details.advanced-panel');
+    if (details && !details.open) {
+        details.open = true;
+    }
+}
+
+function closeAdvancedPanelFor(element) {
+    if (!element || typeof element.closest !== 'function') return;
+    const details = element.closest('details.advanced-panel');
+    if (details && details.open) {
+        details.open = false;
+    }
+}
+
+function getEvidenceDisplayName(fileName) {
+    const clean = String(fileName || '');
+    if (!clean) return '';
+    return clean.length > 36 ? `${clean.slice(0, 33)}...` : clean;
+}
+
+function revokeDropzonePreview(dropzone) {
+    if (!dropzone || !dropzone.dataset) return;
+    const prevUrl = dropzone.dataset.previewUrl;
+    if (prevUrl) {
+        try {
+            URL.revokeObjectURL(prevUrl);
+        } catch (e) {
+            // Ignore revoke errors
+        }
+    }
+    delete dropzone.dataset.previewUrl;
+}
+
+function resetCompactEvidenceDropzone(dropzone) {
+    if (!dropzone) return;
+    revokeDropzonePreview(dropzone);
+    dropzone.classList.remove('has-file', 'is-dragover');
+
+    const trigger = dropzone.querySelector('.evidence-trigger');
+    const row = dropzone.querySelector('.evidence-row');
+    const nameEl = dropzone.querySelector('.evidence-name');
+    const hint = dropzone.querySelector('.evidence-hint');
+
+    if (nameEl) nameEl.textContent = '';
+    if (row) row.classList.add('is-hidden');
+    if (trigger) trigger.classList.remove('is-hidden');
+    if (hint) hint.classList.remove('is-hidden');
+}
+
+function setCompactEvidenceDropzone(dropzone, file) {
+    if (!dropzone) return;
+    if (!file) {
+        resetCompactEvidenceDropzone(dropzone);
+        return;
+    }
+
+    const trigger = dropzone.querySelector('.evidence-trigger');
+    const row = dropzone.querySelector('.evidence-row');
+    const nameEl = dropzone.querySelector('.evidence-name');
+    const hint = dropzone.querySelector('.evidence-hint');
+
+    if (nameEl) nameEl.textContent = getEvidenceDisplayName(file.name);
+    if (row) row.classList.remove('is-hidden');
+    if (trigger) trigger.classList.add('is-hidden');
+    if (hint) hint.classList.add('is-hidden');
+
+    dropzone.classList.add('has-file');
+    revokeDropzonePreview(dropzone);
+    try {
+        dropzone.dataset.previewUrl = URL.createObjectURL(file);
+    } catch (e) {
+        // Ignore preview errors
+    }
+}
+
+function bindCompactEvidenceControls(dropzone, input) {
+    if (!dropzone || !input) return;
+    if (dropzone.dataset?.evidenceBound === 'true') return;
+    dropzone.dataset.evidenceBound = 'true';
+
+    const trigger = dropzone.querySelector('.evidence-trigger');
+    const changeBtn = dropzone.querySelector('.evidence-change');
+    const viewBtn = dropzone.querySelector('.evidence-view');
+
+    const openPicker = (event) => {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        input.click();
+    };
+
+    if (trigger) trigger.addEventListener('click', openPicker);
+    if (changeBtn) changeBtn.addEventListener('click', openPicker);
+    if (viewBtn) {
+        viewBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const url = dropzone.dataset?.previewUrl;
+            if (url) window.open(url, '_blank');
+        });
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.agroEvidenceUI = {
+        openAdvancedPanelFor,
+        closeAdvancedPanelFor,
+        resetCompactEvidenceDropzone,
+        setCompactEvidenceDropzone,
+        bindCompactEvidenceControls
+    };
+}
+
 /**
  * Generic dropzone file handler for new tabs
  */
@@ -1770,42 +1886,8 @@ async function handleGenericFileUpload(inputId, dropzoneId) {
         return;
     }
 
-    // Show file selected state
-    dropzone.innerHTML = '';
-    const container = document.createElement('div');
-    container.style.pointerEvents = 'none';
-
-    const icon = document.createElement('i');
-    const ext = getFileExtension(file.name);
-    icon.className = ext === 'pdf' ? 'fa-solid fa-file-pdf' : 'fa-solid fa-image';
-    icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
-
-    const title = document.createElement('h4');
-    title.style.cssText = 'color: #fff; margin: 0.5rem 0;';
-    title.textContent = 'Archivo Seleccionado';
-
-    const pill = document.createElement('div');
-    pill.style.cssText = 'background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;';
-
-    const fileName = document.createElement('span');
-    fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
-    // Sanitize filename display (no raw HTML injection)
-    fileName.textContent = file.name.length > 30 ? file.name.slice(0, 27) + '...' : file.name;
-
-    const check = document.createElement('i');
-    check.className = 'fa-solid fa-check-circle';
-    check.style.color = '#4ade80';
-
-    pill.append(fileName, check);
-
-    const hint = document.createElement('p');
-    hint.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;';
-    hint.textContent = 'Clic para cambiar archivo';
-
-    container.append(icon, title, pill, hint);
-    dropzone.appendChild(container);
-    dropzone.style.borderColor = '#4ade80';
-    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+    openAdvancedPanelFor(dropzone);
+    setCompactEvidenceDropzone(dropzone, file);
 }
 
 /**
@@ -1814,27 +1896,7 @@ async function handleGenericFileUpload(inputId, dropzoneId) {
 function resetGenericDropzone(dropzoneId) {
     const dropzone = document.getElementById(dropzoneId);
     if (!dropzone) return;
-
-    dropzone.innerHTML = '';
-
-    const icon = document.createElement('i');
-    icon.className = 'fa-solid fa-cloud-arrow-up';
-    icon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
-
-    const text = document.createElement('p');
-    text.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
-    const highlight = document.createElement('span');
-    highlight.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
-    highlight.textContent = 'haz clic para subir';
-    text.append('Arrastra tu comprobante aqui o ', highlight);
-
-    const hint = document.createElement('p');
-    hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-    hint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
-
-    dropzone.append(icon, text, hint);
-    dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-    dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+    resetCompactEvidenceDropzone(dropzone);
 }
 
 /**
@@ -1852,22 +1914,21 @@ function initNewTabDropzones() {
         const dropzoneEl = document.getElementById(dropzone);
 
         if (inputEl && dropzoneEl) {
+            bindCompactEvidenceControls(dropzoneEl, inputEl);
             inputEl.addEventListener('change', () => handleGenericFileUpload(input, dropzone));
+            resetCompactEvidenceDropzone(dropzoneEl);
 
             // Drag and drop support
             dropzoneEl.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                dropzoneEl.style.borderColor = '#C8A752';
-                dropzoneEl.style.background = 'rgba(200, 167, 82, 0.1)';
+                dropzoneEl.classList.add('is-dragover');
             });
             dropzoneEl.addEventListener('dragleave', () => {
-                dropzoneEl.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                dropzoneEl.style.background = 'rgba(200, 167, 82, 0.03)';
+                dropzoneEl.classList.remove('is-dragover');
             });
             dropzoneEl.addEventListener('drop', async (e) => {
                 e.preventDefault();
-                dropzoneEl.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                dropzoneEl.style.background = 'rgba(200, 167, 82, 0.03)';
+                dropzoneEl.classList.remove('is-dragover');
 
                 const file = e.dataTransfer?.files?.[0];
                 if (file) {
@@ -1875,6 +1936,7 @@ function initNewTabDropzones() {
                     const dt = new DataTransfer();
                     dt.items.add(file);
                     inputEl.files = dt.files;
+                    openAdvancedPanelFor(dropzoneEl);
                     await handleGenericFileUpload(input, dropzone);
                 }
             });
@@ -1963,10 +2025,10 @@ function ensureIncomeSection(targetContainer) {
         form.className = 'income-form';
 
         const grid = document.createElement('div');
-        grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;';
+        grid.className = 'facturero-grid';
 
         const conceptGroup = document.createElement('div');
-        conceptGroup.className = 'input-group';
+        conceptGroup.className = 'input-group field-concept';
         const conceptLabel = document.createElement('label');
         conceptLabel.className = 'input-label';
         conceptLabel.setAttribute('for', 'income-concept');
@@ -1981,7 +2043,7 @@ function ensureIncomeSection(targetContainer) {
         conceptGroup.append(conceptLabel, conceptInput);
 
         const amountGroup = document.createElement('div');
-        amountGroup.className = 'input-group';
+        amountGroup.className = 'input-group field-amount';
         const amountLabel = document.createElement('label');
         amountLabel.className = 'input-label';
         amountLabel.setAttribute('for', 'income-amount');
@@ -2003,7 +2065,7 @@ function ensureIncomeSection(targetContainer) {
         amountGroup.append(amountLabel, amountWrapper);
 
         const dateGroup = document.createElement('div');
-        dateGroup.className = 'input-group';
+        dateGroup.className = 'input-group field-date';
         const dateLabel = document.createElement('label');
         dateLabel.className = 'input-label';
         dateLabel.setAttribute('for', 'income-date');
@@ -2017,7 +2079,7 @@ function ensureIncomeSection(targetContainer) {
         dateGroup.append(dateLabel, dateInput);
 
         const categoryGroup = document.createElement('div');
-        categoryGroup.className = 'input-group';
+        categoryGroup.className = 'input-group field-dynamic';
         const categoryLabel = document.createElement('label');
         categoryLabel.className = 'input-label';
         categoryLabel.setAttribute('for', 'income-category');
@@ -2045,7 +2107,7 @@ function ensureIncomeSection(targetContainer) {
 
         // V9.5: Asociar a Cultivo (opcional)
         const cropGroup = document.createElement('div');
-        cropGroup.className = 'input-group';
+        cropGroup.className = 'input-group field-crop';
         const cropLabel = document.createElement('label');
         cropLabel.className = 'input-label';
         cropLabel.setAttribute('for', 'income-crop-id');
@@ -2061,46 +2123,8 @@ function ensureIncomeSection(targetContainer) {
         cropSelect.appendChild(defaultOpt);
         cropGroup.append(cropLabel, cropSelect);
 
-        grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup, cropGroup);
-
-        const fileGroup = document.createElement('div');
-        fileGroup.className = 'input-group';
-        fileGroup.style.marginTop = '1.5rem';
-        const fileLabel = document.createElement('label');
-        fileLabel.className = 'input-label';
-        fileLabel.textContent = 'Evidencia (opcional)';
-
-        const dropzone = document.createElement('div');
-        dropzone.id = 'income-dropzone';
-        dropzone.className = 'upload-dropzone';
-        dropzone.style.cssText = 'border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);';
-
-        const dropIcon = document.createElement('i');
-        dropIcon.className = 'fa-solid fa-cloud-arrow-up';
-        dropIcon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
-        const dropText = document.createElement('p');
-        dropText.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
-        const dropSpan = document.createElement('span');
-        dropSpan.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
-        dropSpan.textContent = 'haz clic para subir';
-        dropText.append('Arrastra tu soporte aqui o ', dropSpan);
-
-        const dropHint = document.createElement('p');
-        dropHint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-        dropHint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
-
-        dropzone.append(dropIcon, dropText, dropHint);
-
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'income-receipt';
-        fileInput.accept = 'image/jpeg,image/png,image/webp,application/pdf';
-        fileInput.style.display = 'none';
-
-        fileGroup.append(fileLabel, dropzone, fileInput);
-
         const actions = document.createElement('div');
-        actions.style.cssText = 'display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);';
+        actions.className = 'facturero-actions';
 
         const btnClean = document.createElement('button');
         btnClean.type = 'button';
@@ -2134,7 +2158,75 @@ function ensureIncomeSection(targetContainer) {
 
         actions.append(btnClean, btnSave);
 
-        form.append(grid, fileGroup, actions);
+        grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup, cropGroup, actions);
+
+        const advancedPanel = document.createElement('details');
+        advancedPanel.className = 'advanced-panel';
+        advancedPanel.id = 'income-advanced';
+
+        const advancedSummary = document.createElement('summary');
+        advancedSummary.className = 'advanced-summary';
+        const summaryText = document.createElement('span');
+        summaryText.textContent = 'Opciones avanzadas';
+        const summaryChev = document.createElement('span');
+        summaryChev.className = 'chev';
+        summaryChev.innerHTML = '&#9662;';
+        advancedSummary.append(summaryText, summaryChev);
+
+        const advancedContent = document.createElement('div');
+        advancedContent.className = 'advanced-content';
+
+        const fileGroup = document.createElement('div');
+        fileGroup.className = 'input-group';
+        const fileLabel = document.createElement('label');
+        fileLabel.className = 'input-label';
+        fileLabel.textContent = 'Evidencia (opcional)';
+
+        const dropzone = document.createElement('div');
+        dropzone.id = 'income-dropzone';
+        dropzone.className = 'upload-dropzone compact-dropzone';
+
+        const triggerBtn = document.createElement('button');
+        triggerBtn.type = 'button';
+        triggerBtn.className = 'evidence-trigger';
+        const triggerIcon = document.createElement('span');
+        triggerIcon.className = 'evidence-icon';
+        triggerIcon.innerHTML = '&#128206;';
+        const triggerText = document.createElement('span');
+        triggerText.textContent = 'Adjuntar evidencia';
+        triggerBtn.append(triggerIcon, triggerText);
+
+        const row = document.createElement('div');
+        row.className = 'evidence-row is-hidden';
+        const name = document.createElement('span');
+        name.className = 'evidence-name';
+        const viewBtn = document.createElement('button');
+        viewBtn.type = 'button';
+        viewBtn.className = 'evidence-view';
+        viewBtn.textContent = 'Ver';
+        const changeBtn = document.createElement('button');
+        changeBtn.type = 'button';
+        changeBtn.className = 'evidence-change';
+        changeBtn.textContent = 'Cambiar';
+        row.append(name, viewBtn, changeBtn);
+
+        const hint = document.createElement('p');
+        hint.className = 'evidence-hint';
+        hint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
+
+        dropzone.append(triggerBtn, row, hint);
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'income-receipt';
+        fileInput.accept = 'image/jpeg,image/png,image/webp,application/pdf';
+        fileInput.style.display = 'none';
+
+        fileGroup.append(fileLabel, dropzone, fileInput);
+        advancedContent.appendChild(fileGroup);
+        advancedPanel.append(advancedSummary, advancedContent);
+
+        form.append(grid, advancedPanel);
     }
 
     if (!note) {
@@ -2175,26 +2267,7 @@ function ensureIncomeSection(targetContainer) {
 
 function resetIncomeDropzone(dropzone) {
     if (!dropzone) return;
-    dropzone.textContent = '';
-
-    const icon = document.createElement('i');
-    icon.className = 'fa-solid fa-cloud-arrow-up';
-    icon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
-
-    const text = document.createElement('p');
-    text.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
-    const highlight = document.createElement('span');
-    highlight.style.cssText = 'color: var(--gold-primary, #C8A752); font-weight: 600;';
-    highlight.textContent = 'haz clic para subir';
-    text.append('Arrastra tu evidencia aqui o ', highlight);
-
-    const hint = document.createElement('p');
-    hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-    hint.textContent = 'JPG, PNG, WebP o PDF (Max. 5MB)';
-
-    dropzone.append(icon, text, hint);
-    dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-    dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+    resetCompactEvidenceDropzone(dropzone);
 }
 
 async function handleIncomeFileUpload(input, dropzone) {
@@ -2223,39 +2296,8 @@ async function handleIncomeFileUpload(input, dropzone) {
         return;
     }
 
-    dropzone.textContent = '';
-    const container = document.createElement('div');
-    container.style.pointerEvents = 'none';
-
-    const icon = document.createElement('i');
-    icon.className = isDoc ? 'fa-solid fa-file-lines' : 'fa-solid fa-image';
-    icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
-
-    const title = document.createElement('h4');
-    title.style.cssText = 'color: #fff; margin: 0.5rem 0;';
-    title.textContent = 'Archivo Seleccionado';
-
-    const pill = document.createElement('div');
-    pill.style.cssText = 'background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;';
-
-    const fileName = document.createElement('span');
-    fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
-    fileName.textContent = file.name;
-
-    const check = document.createElement('i');
-    check.className = 'fa-solid fa-check-circle';
-    check.style.cssText = 'color: #4ade80;';
-
-    pill.append(fileName, check);
-
-    const hint = document.createElement('p');
-    hint.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;';
-    hint.textContent = 'Clic para cambiar archivo';
-
-    container.append(icon, title, pill, hint);
-    dropzone.appendChild(container);
-    dropzone.style.borderColor = '#4ade80';
-    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+    openAdvancedPanelFor(dropzone);
+    setCompactEvidenceDropzone(dropzone, file);
 }
 
 function clearIncomeForm() {
@@ -2273,6 +2315,7 @@ function clearIncomeForm() {
     if (categoryInput) categoryInput.selectedIndex = 0;
     if (fileInput) fileInput.value = '';
     resetIncomeDropzone(dropzone);
+    closeAdvancedPanelFor(dropzone);
 
     incomeEditId = null;
     incomeEditSupportPath = null;
@@ -2685,9 +2728,28 @@ function initIncomeModule() {
     }
 
     if (dropzone && fileInput) {
-        dropzone.addEventListener('click', () => fileInput.click());
+        bindCompactEvidenceControls(dropzone, fileInput);
         fileInput.addEventListener('change', () => handleIncomeFileUpload(fileInput, dropzone));
         resetIncomeDropzone(dropzone);
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('is-dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('is-dragover');
+        });
+        dropzone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('is-dragover');
+            const file = e.dataTransfer?.files?.[0];
+            if (!file) return;
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            openAdvancedPanelFor(dropzone);
+            await handleIncomeFileUpload(fileInput, dropzone);
+        });
     }
 
     if (btnClean) {
@@ -2849,6 +2911,7 @@ function initFinanceFormHandlers() {
             table: 'agro_pending',
             label: 'Pendiente',
             fileInputId: 'pending-receipt',
+            dropzoneId: 'pending-dropzone',
             storagePath: 'pending',
             buildStoragePath: buildPendingStoragePath,
             cropSelectId: 'pending-crop-id', // V9.5
@@ -2865,6 +2928,7 @@ function initFinanceFormHandlers() {
             table: 'agro_losses',
             label: 'Pérdida',
             fileInputId: 'loss-receipt',
+            dropzoneId: 'loss-dropzone',
             storagePath: 'loss',
             buildStoragePath: buildLossStoragePath,
             cropSelectId: 'loss-crop-id', // V9.5
@@ -2881,6 +2945,7 @@ function initFinanceFormHandlers() {
             table: 'agro_transfers',
             label: 'Transferencia',
             fileInputId: 'transfer-receipt',
+            dropzoneId: 'transfer-dropzone',
             storagePath: 'transfer',
             buildStoragePath: buildTransferStoragePath,
             cropSelectId: 'transfer-crop-id', // V9.5
@@ -2962,6 +3027,11 @@ function initFinanceFormHandlers() {
                 form.reset();
                 if (dateInput) dateInput.value = today; // Reset date to today
                 if (fileInput) fileInput.value = '';
+                if (config.dropzoneId) {
+                    resetGenericDropzone(config.dropzoneId);
+                    const dz = document.getElementById(config.dropzoneId);
+                    closeAdvancedPanelFor(dz);
+                }
 
                 // V9.5: Refresh history for this specific tab
                 const tabName = config.id.replace('-form', 's').replace('loss', 'perdida').replace('pending', 'pendiente').replace('transfer', 'transferencia');
@@ -2983,6 +3053,16 @@ function initFinanceFormHandlers() {
             } finally {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalText; }
             }
+        });
+
+        form.addEventListener('reset', () => {
+            if (config.dropzoneId) {
+                resetGenericDropzone(config.dropzoneId);
+                const dz = document.getElementById(config.dropzoneId);
+                closeAdvancedPanelFor(dz);
+            }
+            const resetFileInput = document.getElementById(config.fileInputId);
+            if (resetFileInput) resetFileInput.value = '';
         });
     });
 }

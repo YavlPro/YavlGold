@@ -1624,18 +1624,17 @@
                 <div class="tab-panel" id="tab-panel-gastos" role="tabpanel" aria-labelledby="tab-btn-gastos"
                     data-tab="gastos">
                     <form id="expense-form" class="expense-form" onsubmit="event.preventDefault();">
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                        <div class="facturero-grid">
 
                             <!-- Concepto -->
-                            <div class="input-group">
+                            <div class="input-group field-concept">
                                 <label class="input-label" for="expense-concept">Concepto *</label>
                                 <input type="text" id="expense-concept" class="styled-input"
                                     placeholder="Ej: Compra de fertilizante" required style="padding-left: 1rem;">
                             </div>
 
                             <!-- Monto -->
-                            <div class="input-group">
+                            <div class="input-group field-amount">
                                 <label class="input-label" for="expense-amount">Monto *</label>
                                 <div class="input-wrapper">
                                     <span class="input-prefix">$</span>
@@ -1645,14 +1644,14 @@
                             </div>
 
                             <!-- Fecha -->
-                            <div class="input-group">
+                            <div class="input-group field-date">
                                 <label class="input-label" for="expense-date">Fecha *</label>
                                 <input type="date" id="expense-date" class="styled-input" required
                                     style="padding-left: 1rem;">
                             </div>
 
                             <!-- Categor&iacute;a -->
-                            <div class="input-group">
+                            <div class="input-group field-dynamic">
                                 <label class="input-label" for="expense-category">Categor&iacute;a *</label>
                                 <select id="expense-category" class="styled-input" required
                                     style="padding-left: 1rem; cursor: pointer;">
@@ -1666,7 +1665,7 @@
                             </div>
 
                             <!-- V9.5: Asociar a Cultivo (opcional) -->
-                            <div class="input-group">
+                            <div class="input-group field-crop">
                                 <label class="input-label" for="expense-crop-id">Asociar a Cultivo (opcional)</label>
                                 <select id="expense-crop-id" class="styled-input crop-selector"
                                     style="padding-left: 1rem; cursor: pointer;">
@@ -1674,62 +1673,56 @@
                                     <!-- Populated dynamically by JS -->
                                 </select>
                             </div>
+
+                            <div class="facturero-actions">
+                                <button type="button" id="btn-clean" class="btn"
+                                    style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
+                                    onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
+                                    onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
+                                    Limpiar
+                                </button>
+                                <button type="submit" id="btn-save" class="btn btn-primary"
+                                    style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
+                                    onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
+                                    Registrar Gasto
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Notas adicionales -->
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label" for="expense-notes">Notas (opcional)</label>
-                            <textarea id="expense-notes" class="styled-input"
-                                placeholder="Detalles adicionales del gasto..." rows="2"
-                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                        </div>
+                        <details class="advanced-panel" id="expense-advanced">
+                            <summary class="advanced-summary">
+                                <span>Opciones avanzadas</span>
+                                <span class="chev">&#9662;</span>
+                            </summary>
+                            <div class="advanced-content">
+                                <div class="input-group">
+                                    <label class="input-label" for="expense-notes">Notas (opcional)</label>
+                                    <textarea id="expense-notes" class="styled-input"
+                                        placeholder="Detalles adicionales del gasto..." rows="2"
+                                        style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
+                                </div>
 
-                        <!-- &Aacute;rea de Evidencia / Upload -->
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label">Evidencia (Recibo/Foto)</label>
-                            <div id="upload-dropzone" class="upload-dropzone"
-                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
-                                onclick="document.getElementById('expense-receipt').click()">
-                                <i class="fa-solid fa-cloud-arrow-up"
-                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
-                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
-                                    Arrastra tu recibo aqu&iacute; o <span
-                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
-                                        subir</span>
-                                </p>
-                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
-                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB) - Opcional
-                                </p>
-                                <div id="upload-preview" style="display: none; margin-top: 1rem;">
-                                    <div
-                                        style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 0.75rem 1rem; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 8px;">
-                                        <i class="fa-solid fa-check-circle" style="color: var(--success, #4ade80);"></i>
-                                        <span id="upload-filename"
-                                            style="color: var(--success, #4ade80); font-size: 0.85rem;"></span>
+                                <div class="input-group">
+                                    <label class="input-label">Evidencia (Recibo/Foto)</label>
+                                    <div id="upload-dropzone" class="upload-dropzone compact-dropzone">
+                                        <button type="button" class="evidence-trigger">
+                                            <span class="evidence-icon">&#128206;</span>
+                                            <span>Adjuntar evidencia</span>
+                                        </button>
+                                        <div class="evidence-row is-hidden">
+                                            <span class="evidence-name"></span>
+                                            <button type="button" class="evidence-view">Ver</button>
+                                            <button type="button" class="evidence-change">Cambiar</button>
+                                        </div>
+                                        <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB) - Opcional</p>
                                     </div>
+                                    <input type="file" id="expense-receipt"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;"
+                                        onchange="handleReceiptUpload(this)">
                                 </div>
                             </div>
-                            <input type="file" id="expense-receipt"
-                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;"
-                                onchange="handleReceiptUpload(this)">
-                        </div>
-
-                        <!-- Bot&oacute;n Guardar -->
-                        <div
-                            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
-                            <button type="button" id="btn-clean" class="btn"
-                                style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                Limpiar
-                            </button>
-                            <button type="submit" id="btn-save" class="btn btn-primary"
-                                style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                Registrar Gasto
-                            </button>
-                        </div>
+                        </details>
                     </form>
 
                     <!-- Nota t&eacute;cnica para futuro -->
@@ -1759,14 +1752,13 @@
                 <div class="tab-panel is-hidden" id="tab-panel-pendientes" role="tabpanel"
                     aria-labelledby="tab-btn-pendientes" aria-hidden="true" data-tab="pendientes">
                     <form id="pending-form" class="pending-form" onsubmit="event.preventDefault();">
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                            <div class="input-group">
+                        <div class="facturero-grid">
+                            <div class="input-group field-concept">
                                 <label class="input-label" for="input-concepto-pendiente">Concepto *</label>
                                 <input type="text" id="input-concepto-pendiente" class="styled-input"
                                     placeholder="Ej: Venta a cr&eacute;dito" required style="padding-left: 1rem;">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-amount">
                                 <label class="input-label" for="input-monto-pendiente">Monto *</label>
                                 <div class="input-wrapper">
                                     <span class="input-prefix">$</span>
@@ -1774,83 +1766,86 @@
                                         placeholder="0.00" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-date">
                                 <label class="input-label" for="input-fecha-pendiente">Fecha *</label>
                                 <input type="date" id="input-fecha-pendiente" class="styled-input" required
                                     style="padding-left: 1rem;">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-dynamic">
                                 <label class="input-label" for="input-cliente-pendiente">Cliente</label>
                                 <input type="text" id="input-cliente-pendiente" class="styled-input"
                                     placeholder="Ej: Distribuidor local" style="padding-left: 1rem;">
                             </div>
 
                             <!-- V9.5: Asociar a Cultivo (opcional) -->
-                            <div class="input-group">
+                            <div class="input-group field-crop">
                                 <label class="input-label" for="pending-crop-id">Asociar a Cultivo (opcional)</label>
                                 <select id="pending-crop-id" class="styled-input crop-selector"
                                     style="padding-left: 1rem; cursor: pointer;">
                                     <option value="">General (sin asociar)</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label" for="input-notas-pendiente">Notas (opcional)</label>
-                            <textarea id="input-notas-pendiente" class="styled-input"
-                                placeholder="Condiciones de pago, cuotas, etc." rows="2"
-                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                        </div>
 
-                        <!-- Evidencia (opcional) -->
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label">Evidencia (opcional)</label>
-                            <div id="pending-dropzone" class="upload-dropzone"
-                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
-                                onclick="document.getElementById('pending-receipt').click()">
-                                <i class="fa-solid fa-cloud-arrow-up"
-                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
-                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
-                                    Arrastra tu comprobante aqu&iacute; o <span
-                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
-                                        subir</span>
-                                </p>
-                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
-                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB)
-                                </p>
+                            <div class="facturero-actions">
+                                <button type="reset" id="btn-limpiar-pendiente" class="btn"
+                                    style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
+                                    onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
+                                    onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
+                                    Limpiar
+                                </button>
+                                <button type="submit" id="btn-registrar-pendiente" class="btn btn-primary"
+                                    style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
+                                    onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
+                                    Registrar Pendiente
+                                </button>
                             </div>
-                            <input type="file" id="pending-receipt"
-                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
                         </div>
+                        <details class="advanced-panel" id="pending-advanced">
+                            <summary class="advanced-summary">
+                                <span>Opciones avanzadas</span>
+                                <span class="chev">&#9662;</span>
+                            </summary>
+                            <div class="advanced-content">
+                                <div class="input-group">
+                                    <label class="input-label" for="input-notas-pendiente">Notas (opcional)</label>
+                                    <textarea id="input-notas-pendiente" class="styled-input"
+                                        placeholder="Condiciones de pago, cuotas, etc." rows="2"
+                                        style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
+                                </div>
 
-                        <div
-                            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
-                            <button type="reset" id="btn-limpiar-pendiente" class="btn"
-                                style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                Limpiar
-                            </button>
-                            <button type="submit" id="btn-registrar-pendiente" class="btn btn-primary"
-                                style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                Registrar Pendiente
-                            </button>
-                        </div>
+                                <div class="input-group">
+                                    <label class="input-label">Evidencia (opcional)</label>
+                                    <div id="pending-dropzone" class="upload-dropzone compact-dropzone">
+                                        <button type="button" class="evidence-trigger">
+                                            <span class="evidence-icon">&#128206;</span>
+                                            <span>Adjuntar evidencia</span>
+                                        </button>
+                                        <div class="evidence-row is-hidden">
+                                            <span class="evidence-name"></span>
+                                            <button type="button" class="evidence-view">Ver</button>
+                                            <button type="button" class="evidence-change">Cambiar</button>
+                                        </div>
+                                        <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB)</p>
+                                    </div>
+                                    <input type="file" id="pending-receipt"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
+                                </div>
+                            </div>
+                        </details>
                     </form>
                 </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-perdidas" role="tabpanel"
                     aria-labelledby="tab-btn-perdidas" aria-hidden="true" data-tab="perdidas">
                     <form id="loss-form" class="loss-form" onsubmit="event.preventDefault();">
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                            <div class="input-group">
+                        <div class="facturero-grid">
+                            <div class="input-group field-concept">
                                 <label class="input-label" for="input-concepto-perdida">Concepto *</label>
                                 <input type="text" id="input-concepto-perdida" class="styled-input"
                                     placeholder="Ej: Cosecha da&ntilde;ada" required style="padding-left: 1rem;">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-amount">
                                 <label class="input-label" for="input-monto-perdida">Monto *</label>
                                 <div class="input-wrapper">
                                     <span class="input-prefix">$</span>
@@ -1858,83 +1853,85 @@
                                         placeholder="0.00" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-date">
                                 <label class="input-label" for="input-fecha-perdida">Fecha *</label>
                                 <input type="date" id="input-fecha-perdida" class="styled-input" required
                                     style="padding-left: 1rem;">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-dynamic">
                                 <label class="input-label" for="input-causa-perdida">Causa</label>
                                 <input type="text" id="input-causa-perdida" class="styled-input"
                                     placeholder="Ej: Plaga, robo" style="padding-left: 1rem;">
                             </div>
 
                             <!-- V9.5: Asociar a Cultivo (opcional) -->
-                            <div class="input-group">
+                            <div class="input-group field-crop">
                                 <label class="input-label" for="loss-crop-id">Asociar a Cultivo (opcional)</label>
                                 <select id="loss-crop-id" class="styled-input crop-selector"
                                     style="padding-left: 1rem; cursor: pointer;">
                                     <option value="">General (sin asociar)</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label" for="input-notas-perdida">Notas (opcional)</label>
-                            <textarea id="input-notas-perdida" class="styled-input"
-                                placeholder="Detalles de la p&eacute;rdida" rows="2"
-                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                        </div>
-
-                        <!-- Evidencia (opcional) -->
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label">Evidencia (opcional)</label>
-                            <div id="loss-dropzone" class="upload-dropzone"
-                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
-                                onclick="document.getElementById('loss-receipt').click()">
-                                <i class="fa-solid fa-cloud-arrow-up"
-                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
-                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
-                                    Arrastra tu comprobante aqu&iacute; o <span
-                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
-                                        subir</span>
-                                </p>
-                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
-                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB)
-                                </p>
+                            <div class="facturero-actions">
+                                <button type="reset" id="btn-limpiar-perdida" class="btn"
+                                    style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
+                                    onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
+                                    onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
+                                    Limpiar
+                                </button>
+                                <button type="submit" id="btn-registrar-perdida" class="btn btn-primary"
+                                    style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
+                                    onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
+                                    Registrar P&eacute;rdida
+                                </button>
                             </div>
-                            <input type="file" id="loss-receipt"
-                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
                         </div>
+                        <details class="advanced-panel" id="loss-advanced">
+                            <summary class="advanced-summary">
+                                <span>Opciones avanzadas</span>
+                                <span class="chev">&#9662;</span>
+                            </summary>
+                            <div class="advanced-content">
+                                <div class="input-group">
+                                    <label class="input-label" for="input-notas-perdida">Notas (opcional)</label>
+                                    <textarea id="input-notas-perdida" class="styled-input"
+                                        placeholder="Detalles de la p&eacute;rdida" rows="2"
+                                        style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
+                                </div>
 
-                        <div
-                            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
-                            <button type="reset" id="btn-limpiar-perdida" class="btn"
-                                style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                Limpiar
-                            </button>
-                            <button type="submit" id="btn-registrar-perdida" class="btn btn-primary"
-                                style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                Registrar P&eacute;rdida
-                            </button>
-                        </div>
+                                <div class="input-group">
+                                    <label class="input-label">Evidencia (opcional)</label>
+                                    <div id="loss-dropzone" class="upload-dropzone compact-dropzone">
+                                        <button type="button" class="evidence-trigger">
+                                            <span class="evidence-icon">&#128206;</span>
+                                            <span>Adjuntar evidencia</span>
+                                        </button>
+                                        <div class="evidence-row is-hidden">
+                                            <span class="evidence-name"></span>
+                                            <button type="button" class="evidence-view">Ver</button>
+                                            <button type="button" class="evidence-change">Cambiar</button>
+                                        </div>
+                                        <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB)</p>
+                                    </div>
+                                    <input type="file" id="loss-receipt"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
+                                </div>
+                            </div>
+                        </details>
                     </form>
                 </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-transferencias" role="tabpanel"
                     aria-labelledby="tab-btn-transferencias" aria-hidden="true" data-tab="transferencias">
                     <form id="transfer-form" class="transfer-form" onsubmit="event.preventDefault();">
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-                            <div class="input-group">
+                        <div class="facturero-grid">
+                            <div class="input-group field-concept">
                                 <label class="input-label" for="input-concepto-transferencia">Concepto *</label>
                                 <input type="text" id="input-concepto-transferencia" class="styled-input"
                                     placeholder="Ej: Apoyo comunitario" required style="padding-left: 1rem;">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-amount">
                                 <label class="input-label" for="input-monto-transferencia">Monto *</label>
                                 <div class="input-wrapper">
                                     <span class="input-prefix">$</span>
@@ -1942,69 +1939,72 @@
                                         placeholder="0.00" step="0.01" min="0" required>
                                 </div>
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-date">
                                 <label class="input-label" for="input-fecha-transferencia">Fecha *</label>
                                 <input type="date" id="input-fecha-transferencia" class="styled-input" required
                                     style="padding-left: 1rem;">
                             </div>
-                            <div class="input-group">
+                            <div class="input-group field-dynamic">
                                 <label class="input-label" for="input-destino-transferencia">Destino</label>
                                 <input type="text" id="input-destino-transferencia" class="styled-input"
                                     placeholder="Ej: Cooperativa, familia" style="padding-left: 1rem;">
                             </div>
 
                             <!-- V9.5: Asociar a Cultivo (opcional) -->
-                            <div class="input-group">
+                            <div class="input-group field-crop">
                                 <label class="input-label" for="transfer-crop-id">Asociar a Cultivo (opcional)</label>
                                 <select id="transfer-crop-id" class="styled-input crop-selector"
                                     style="padding-left: 1rem; cursor: pointer;">
                                     <option value="">General (sin asociar)</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label" for="input-notas-transferencia">Notas (opcional)</label>
-                            <textarea id="input-notas-transferencia" class="styled-input"
-                                placeholder="Detalles de la transferencia" rows="2"
-                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                        </div>
-
-                        <!-- Evidencia (opcional) -->
-                        <div class="input-group" style="margin-top: 1.5rem;">
-                            <label class="input-label">Evidencia (opcional)</label>
-                            <div id="transfer-dropzone" class="upload-dropzone"
-                                style="border: 2px dashed rgba(200, 167, 82, 0.3); border-radius: var(--radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: rgba(200, 167, 82, 0.03);"
-                                onclick="document.getElementById('transfer-receipt').click()">
-                                <i class="fa-solid fa-cloud-arrow-up"
-                                    style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
-                                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
-                                    Arrastra tu comprobante aqu&iacute; o <span
-                                        style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para
-                                        subir</span>
-                                </p>
-                                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
-                                    JPG, PNG, WebP o PDF (M&aacute;x. 5MB)
-                                </p>
+                            <div class="facturero-actions">
+                                <button type="reset" id="btn-limpiar-transferencia" class="btn"
+                                    style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
+                                    onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
+                                    onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
+                                    Limpiar
+                                </button>
+                                <button type="submit" id="btn-registrar-transferencia" class="btn btn-primary"
+                                    style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
+                                    onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
+                                    onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
+                                    Registrar Transferencia
+                                </button>
                             </div>
-                            <input type="file" id="transfer-receipt"
-                                accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
                         </div>
+                        <details class="advanced-panel" id="transfer-advanced">
+                            <summary class="advanced-summary">
+                                <span>Opciones avanzadas</span>
+                                <span class="chev">&#9662;</span>
+                            </summary>
+                            <div class="advanced-content">
+                                <div class="input-group">
+                                    <label class="input-label" for="input-notas-transferencia">Notas (opcional)</label>
+                                    <textarea id="input-notas-transferencia" class="styled-input"
+                                        placeholder="Detalles de la transferencia" rows="2"
+                                        style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
+                                </div>
 
-                        <div
-                            style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
-                            <button type="reset" id="btn-limpiar-transferencia" class="btn"
-                                style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                Limpiar
-                            </button>
-                            <button type="submit" id="btn-registrar-transferencia" class="btn btn-primary"
-                                style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                Registrar Transferencia
-                            </button>
-                        </div>
+                                <div class="input-group">
+                                    <label class="input-label">Evidencia (opcional)</label>
+                                    <div id="transfer-dropzone" class="upload-dropzone compact-dropzone">
+                                        <button type="button" class="evidence-trigger">
+                                            <span class="evidence-icon">&#128206;</span>
+                                            <span>Adjuntar evidencia</span>
+                                        </button>
+                                        <div class="evidence-row is-hidden">
+                                            <span class="evidence-name"></span>
+                                            <button type="button" class="evidence-view">Ver</button>
+                                            <button type="button" class="evidence-change">Cambiar</button>
+                                        </div>
+                                        <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB)</p>
+                                    </div>
+                                    <input type="file" id="transfer-receipt"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf" style="display: none;">
+                                </div>
+                            </div>
+                        </details>
                     </form>
                 </div>
             </div>
@@ -2137,6 +2137,18 @@
             const expensesList = document.getElementById('expenses-list');
             const cropsGrid = document.querySelector('.crops-grid');
             window.closeCropModal();
+            const evidenceUi = window.agroEvidenceUI;
+
+            if (dropzone && fileInput) {
+                if (evidenceUi?.bindCompactEvidenceControls) {
+                    evidenceUi.bindCompactEvidenceControls(dropzone, fileInput);
+                } else {
+                    dropzone.addEventListener('click', () => fileInput.click());
+                }
+                if (evidenceUi?.resetCompactEvidenceDropzone) {
+                    evidenceUi.resetCompactEvidenceDropzone(dropzone);
+                }
+            }
 
             // --- DATA LOADING & LOGIC ---
             // UNIFIED STATS: Use window.refreshAgroStats() from agro-stats.js
@@ -2175,21 +2187,8 @@
                             alert(validation.error);
                         }
                         input.value = '';
-                        // Reset dropzone to default
-                        if (dropzone) {
-                            dropzone.innerHTML = '';
-                            const icon = document.createElement('i');
-                            icon.className = 'fa-solid fa-cloud-arrow-up';
-                            icon.style.cssText = 'font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;';
-                            const text = document.createElement('p');
-                            text.style.cssText = 'color: var(--text-secondary); font-size: 0.95rem; margin: 0;';
-                            text.innerHTML = 'Arrastra tu recibo aquí o <span style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para subir</span>';
-                            const hint = document.createElement('p');
-                            hint.style.cssText = 'color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;';
-                            hint.textContent = 'JPG, PNG, WebP o PDF (Máx. 5MB) - Opcional';
-                            dropzone.append(icon, text, hint);
-                            dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                            dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+                        if (dropzone && evidenceUi?.resetCompactEvidenceDropzone) {
+                            evidenceUi.resetCompactEvidenceDropzone(dropzone);
                         }
                         return;
                     }
@@ -2203,45 +2202,13 @@
                     }
                 }
 
-                // Show file selected UI
                 if (dropzone) {
-                    dropzone.textContent = '';
-
-                    const container = document.createElement('div');
-                    container.style.pointerEvents = 'none';
-
-                    const icon = document.createElement('i');
-                    const ext = typeof window.getFileExtension === 'function' ? window.getFileExtension(file.name) : '';
-                    icon.className = ext === 'pdf' ? 'fa-solid fa-file-pdf' : 'fa-solid fa-image';
-                    icon.style.cssText = 'font-size: 2.5rem; color: #4ade80; margin-bottom: 0.5rem;';
-
-                    const title = document.createElement('h4');
-                    title.style.cssText = 'color: #fff; margin: 0.5rem 0;';
-                    title.textContent = 'Archivo Seleccionado';
-
-                    const pill = document.createElement('div');
-                    pill.style.cssText = 'background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); padding: 0.5rem 1rem; border-radius: 50px; display: inline-flex; align-items: center; gap: 0.5rem;';
-
-                    const fileName = document.createElement('span');
-                    fileName.style.cssText = 'color: #4ade80; font-weight: 600; font-size: 0.9rem;';
-                    // Sanitize filename display
-                    fileName.textContent = file.name.length > 30 ? file.name.slice(0, 27) + '...' : file.name;
-
-                    const check = document.createElement('i');
-                    check.className = 'fa-solid fa-check-circle';
-                    check.style.cssText = 'color: #4ade80;';
-
-                    pill.append(fileName, check);
-
-                    const hint = document.createElement('p');
-                    hint.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-top: 0.5rem;';
-                    hint.textContent = 'Clic para cambiar archivo';
-
-                    container.append(icon, title, pill, hint);
-                    dropzone.appendChild(container);
-
-                    dropzone.style.borderColor = '#4ade80';
-                    dropzone.style.background = 'rgba(74, 222, 128, 0.05)';
+                    if (evidenceUi?.openAdvancedPanelFor) {
+                        evidenceUi.openAdvancedPanelFor(dropzone);
+                    }
+                    if (evidenceUi?.setCompactEvidenceDropzone) {
+                        evidenceUi.setCompactEvidenceDropzone(dropzone, file);
+                    }
                 }
             };
 
@@ -2313,25 +2280,11 @@
                     // 2. Resetear archivo
                     if (fileInput) fileInput.value = '';
 
-                    // 3. Restaurar dropzone (visual)
-                    if (dropzone) {
-                        dropzone.innerHTML = `
-                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: var(--gold-primary, #C8A752); margin-bottom: 1rem; opacity: 0.7;"></i>
-                            <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">
-                                Arrastra tu recibo aquí o <span style="color: var(--gold-primary, #C8A752); font-weight: 600;">haz clic para subir</span>
-                            </p>
-                            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.5rem;">
-                                JPG, PNG o PDF (Máx. 5MB)
-                            </p>
-                            <div id="upload-preview" style="display: none; margin-top: 1rem;">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; padding: 0.75rem 1rem; background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 8px;">
-                                    <i class="fa-solid fa-check-circle" style="color: var(--success, #4ade80);"></i>
-                                    <span id="upload-filename" style="color: var(--success, #4ade80); font-size: 0.85rem;"></span>
-                                </div>
-                            </div>
-                        `;
-                        dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                        dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
+                    if (dropzone && evidenceUi?.resetCompactEvidenceDropzone) {
+                        evidenceUi.resetCompactEvidenceDropzone(dropzone);
+                    }
+                    if (dropzone && evidenceUi?.closeAdvancedPanelFor) {
+                        evidenceUi.closeAdvancedPanelFor(dropzone);
                     }
                 });
             }
@@ -2499,22 +2452,22 @@
                 dropzone.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     if (fileInput && !fileInput.value) {
-                        dropzone.style.borderColor = 'var(--gold-primary)';
-                        dropzone.style.background = 'rgba(200, 167, 82, 0.08)';
+                        dropzone.classList.add('is-dragover');
                     }
                 });
                 dropzone.addEventListener('dragleave', () => {
-                    if (fileInput && !fileInput.value) {
-                        dropzone.style.borderColor = 'rgba(200, 167, 82, 0.3)';
-                        dropzone.style.background = 'rgba(200, 167, 82, 0.03)';
-                    }
+                    dropzone.classList.remove('is-dragover');
                 });
                 dropzone.addEventListener('drop', (e) => {
                     e.preventDefault();
+                    dropzone.classList.remove('is-dragover');
                     if (fileInput) {
                         const input = document.getElementById('expense-receipt');
                         input.files = e.dataTransfer.files;
                         handleReceiptUpload(input);
+                        if (evidenceUi?.openAdvancedPanelFor) {
+                            evidenceUi.openAdvancedPanelFor(dropzone);
+                        }
                     }
                 });
             }
