@@ -1224,6 +1224,9 @@
                 <button type="button" class="stats-center-trigger" id="btn-open-stats-center">
                     &#128202; Centro Estad&iacute;stico
                 </button>
+                <button type="button" class="assistant-trigger" id="btn-open-agro-assistant">
+                    &#129302; Asistente Agro
+                </button>
             </div>
             <div class="kpi-grid">
                 <!-- Clima Widget -->
@@ -2749,6 +2752,45 @@
                     </div>
                 </div>
             </div>
+
+    <!-- V9.5.6: Asistente Agro (IA real) -->
+    <div id="modal-agro-assistant" class="modal" style="display: none;" aria-hidden="true">
+        <div class="modal-content agro-assistant" role="dialog" aria-modal="true"
+            aria-labelledby="agro-assistant-title" tabindex="-1">
+            <div class="assistant-header">
+                <h3 id="agro-assistant-title">Asistente Agro (IA real)</h3>
+                <button type="button" class="btn-close" id="btn-close-agro-assistant" aria-label="Cerrar asistente">
+                    &times;
+                </button>
+            </div>
+            <div class="assistant-body">
+                <p class="assistant-subtitle">Plan gratuito tiene limites: usa modo eficiente</p>
+                <div class="assistant-guide">
+                    <div class="assistant-guide-title">Guia de uso importante</div>
+                    <ul>
+                        <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
+                        <li>Espera unos segundos entre mensajes (evita spamear).</li>
+                        <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
+                        <li>No recargues 10 veces: no aumenta cupo.</li>
+                        <li>Para mas capacidad: activar facturacion en Google AI Studio.</li>
+                    </ul>
+                </div>
+
+                <div class="assistant-controls">
+                    <textarea id="agro-assistant-input" class="styled-input" rows="4"
+                        placeholder="Escribe tu consulta (max 5-8 lineas)..."></textarea>
+                    <div class="assistant-actions">
+                        <button type="button" class="btn" id="btn-assistant-template">Copiar plantilla</button>
+                        <button type="button" class="btn btn-primary" id="btn-assistant-send">Enviar</button>
+                    </div>
+                    <div class="assistant-cooldown" id="assistant-cooldown"></div>
+                </div>
+
+                <div class="assistant-history" id="assistant-history"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- V9.5.1: Modal Edit Facturero -->
     <div id="modal-edit-facturero" class="modal" style="display: none;">
         <div class="modal-content">

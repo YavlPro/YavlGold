@@ -3321,6 +3321,285 @@ function initStatsCenterModal() {
     window.setStatsCenterTab = setStatsCenterTab;
 }
 
+// ============================================================
+// V9.5.6: Asistente Agro (IA real)
+// ============================================================
+
+const AGRO_ASSISTANT_HISTORY_KEY = 'YG_AGRO_ASSISTANT_HISTORY_V1';
+const AGRO_ASSISTANT_COOLDOWN_KEY = 'YG_AGRO_ASSISTANT_COOLDOWN_V1';
+const AGRO_ASSISTANT_MIN_INTERVAL_MS = 15000;
+const AGRO_ASSISTANT_RATE_LIMIT_MS = 60000;
+const AGRO_ASSISTANT_MAX_HISTORY = 20;
+
+let assistantCooldownTimer = null;
+
+function loadAssistantHistory() {
+    try {
+        const raw = localStorage.getItem(AGRO_ASSISTANT_HISTORY_KEY);
+        const data = raw ? JSON.parse(raw) : [];
+        return Array.isArray(data) ? data : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveAssistantHistory(history) {
+    try {
+        localStorage.setItem(AGRO_ASSISTANT_HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function renderAssistantHistory(history) {
+    const container = document.getElementById('assistant-history');
+    if (!container) return;
+    container.innerHTML = '';
+    history.forEach((item) => {
+        const message = document.createElement('div');
+        const role = item?.role === 'user' ? 'user' : 'ai';
+        message.className = `assistant-message ${role}`;
+        message.textContent = item?.text || '';
+        container.appendChild(message);
+    });
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendAssistantMessage(role, text) {
+    if (!text) return;
+    const history = loadAssistantHistory();
+    history.push({
+        role,
+        text,
+        ts: Date.now()
+    });
+    const trimmed = history.slice(-AGRO_ASSISTANT_MAX_HISTORY);
+    saveAssistantHistory(trimmed);
+    renderAssistantHistory(trimmed);
+}
+
+function readAssistantCooldown() {
+    try {
+        const raw = localStorage.getItem(AGRO_ASSISTANT_COOLDOWN_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function writeAssistantCooldown(state) {
+    try {
+        localStorage.setItem(AGRO_ASSISTANT_COOLDOWN_KEY, JSON.stringify(state));
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function getCooldownRemainingMs() {
+    const state = readAssistantCooldown();
+    const now = Date.now();
+    const lockUntil = Number(state?.lockUntil || 0);
+    if (lockUntil > now) {
+        return { remaining: lockUntil - now, mode: 'lock' };
+    }
+    const lastSentAt = Number(state?.lastSentAt || 0);
+    if (lastSentAt) {
+        const wait = AGRO_ASSISTANT_MIN_INTERVAL_MS - (now - lastSentAt);
+        if (wait > 0) return { remaining: wait, mode: 'cooldown' };
+    }
+    return { remaining: 0, mode: 'none' };
+}
+
+function updateAssistantCooldownUI() {
+    const sendBtn = document.getElementById('btn-assistant-send');
+    const cooldownEl = document.getElementById('assistant-cooldown');
+    if (!sendBtn || !cooldownEl) return 0;
+
+    const { remaining, mode } = getCooldownRemainingMs();
+    if (remaining > 0) {
+        const seconds = Math.ceil(remaining / 1000);
+        const label = mode === 'lock'
+            ? `Limite alcanzado. Espera ${seconds}s para reintentar.`
+            : `Espera ${seconds}s para enviar y evitar bloqueo.`;
+        cooldownEl.textContent = label;
+        sendBtn.disabled = true;
+    } else {
+        cooldownEl.textContent = '';
+        sendBtn.disabled = false;
+    }
+    return remaining;
+}
+
+function startAssistantCooldownTimer() {
+    if (assistantCooldownTimer) {
+        clearInterval(assistantCooldownTimer);
+    }
+    assistantCooldownTimer = setInterval(() => {
+        const remaining = updateAssistantCooldownUI();
+        if (remaining <= 0) {
+            clearInterval(assistantCooldownTimer);
+            assistantCooldownTimer = null;
+        }
+    }, 1000);
+}
+
+function getAssistantContext() {
+    const context = {
+        date: new Date().toISOString(),
+        app: 'YavlGold Agro',
+        version: 'V9.5.6'
+    };
+    const activeTab = readStoredTab?.() || document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab;
+    if (activeTab) {
+        context.tab = activeTab;
+        const cropSelectMap = {
+            gastos: 'expense-crop-id',
+            ingresos: 'income-crop-id',
+            pendientes: 'pending-crop-id',
+            perdidas: 'loss-crop-id',
+            transferencias: 'transfer-crop-id'
+        };
+        const cropSelectId = cropSelectMap[activeTab];
+        const cropSelect = cropSelectId ? document.getElementById(cropSelectId) : null;
+        const cropId = cropSelect?.value || null;
+        if (cropId) context.crop_id = cropId;
+    }
+    return context;
+}
+
+function openAgroAssistant() {
+    const modal = document.getElementById('modal-agro-assistant');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('assistant-open');
+    renderAssistantHistory(loadAssistantHistory());
+    updateAssistantCooldownUI();
+    startAssistantCooldownTimer();
+    const input = document.getElementById('agro-assistant-input');
+    input?.focus({ preventScroll: true });
+}
+
+function closeAgroAssistant() {
+    const modal = document.getElementById('modal-agro-assistant');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('assistant-open');
+}
+
+async function sendAgroAssistantMessage() {
+    const input = document.getElementById('agro-assistant-input');
+    const sendBtn = document.getElementById('btn-assistant-send');
+    const prompt = input?.value?.trim() || '';
+    if (!prompt) return;
+
+    const cooldown = getCooldownRemainingMs();
+    if (cooldown.remaining > 0) {
+        updateAssistantCooldownUI();
+        startAssistantCooldownTimer();
+        return;
+    }
+
+    sendBtn?.setAttribute('disabled', 'true');
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        appendAssistantMessage('assistant', 'Debes iniciar sesion para usar el asistente.');
+        sendBtn?.removeAttribute('disabled');
+        return;
+    }
+
+    appendAssistantMessage('user', prompt);
+    input.value = '';
+
+    const cooldownState = readAssistantCooldown();
+    cooldownState.lastSentAt = Date.now();
+    writeAssistantCooldown(cooldownState);
+    updateAssistantCooldownUI();
+    startAssistantCooldownTimer();
+
+    try {
+        const { data, error } = await supabase.functions.invoke('agro-assistant', {
+            body: { prompt, context: getAssistantContext() }
+        });
+
+        if (error) {
+            const status = error?.status || error?.statusCode;
+            console.warn('[AGRO][AI] invoke error', status);
+            if (status === 401) {
+                appendAssistantMessage('assistant', 'Debes iniciar sesion para usar el asistente.');
+            } else if (status === 429) {
+                const state = readAssistantCooldown();
+                state.lockUntil = Date.now() + AGRO_ASSISTANT_RATE_LIMIT_MS;
+                writeAssistantCooldown(state);
+                updateAssistantCooldownUI();
+                startAssistantCooldownTimer();
+                appendAssistantMessage('assistant', 'Limite alcanzado. Espera unos segundos y vuelve a intentar.');
+            } else {
+                appendAssistantMessage('assistant', 'No se pudo consultar IA. Intenta luego.');
+            }
+            return;
+        }
+
+        const reply = data?.reply;
+        if (typeof reply !== 'string' || !reply.trim()) {
+            appendAssistantMessage('assistant', 'No se pudo consultar IA. Intenta luego.');
+            return;
+        }
+
+        appendAssistantMessage('assistant', reply.trim());
+    } catch (err) {
+        console.warn('[AGRO][AI] request failed', err?.message || err);
+        appendAssistantMessage('assistant', 'No se pudo consultar IA. Intenta luego.');
+    } finally {
+        sendBtn?.removeAttribute('disabled');
+    }
+}
+
+function initAgroAssistantModal() {
+    if (document.__agroAssistantBound) return;
+    document.__agroAssistantBound = true;
+
+    const modal = document.getElementById('modal-agro-assistant');
+    const openBtn = document.getElementById('btn-open-agro-assistant');
+    const closeBtn = document.getElementById('btn-close-agro-assistant');
+    const sendBtn = document.getElementById('btn-assistant-send');
+    const templateBtn = document.getElementById('btn-assistant-template');
+    const input = document.getElementById('agro-assistant-input');
+
+    if (!modal) return;
+
+    openBtn?.addEventListener('click', openAgroAssistant);
+    closeBtn?.addEventListener('click', closeAgroAssistant);
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeAgroAssistant();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'flex') {
+            closeAgroAssistant();
+        }
+    });
+
+    sendBtn?.addEventListener('click', sendAgroAssistantMessage);
+
+    templateBtn?.addEventListener('click', () => {
+        const template = 'Cultivo: ... | Etapa: ... | Sintoma: ... | Ubicacion/clima: ... | Que intente: ... | Que necesito: ...';
+        if (input) {
+            input.value = template;
+            input.focus();
+        }
+    });
+
+    input?.addEventListener('input', () => {
+        if (!assistantCooldownTimer) updateAssistantCooldownUI();
+    });
+}
+
 function getTopIncomeCategoryFromCache(days = 365) {
     if (!Array.isArray(incomeCache) || incomeCache.length === 0) return null;
 
@@ -3585,6 +3864,7 @@ export function initAgro() {
     initFinanceTabs();
     initFinanceFormHandlers();
     initAdvancedPanels();
+    initAgroAssistantModal();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
     initFactureroHistories(); // V9.5.1: Cargar historiales al init

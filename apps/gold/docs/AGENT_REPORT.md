@@ -1662,3 +1662,40 @@ pnpm build:gold
 OK (vite build + UTF-8 verification passed)
 Exit code: 0
 ```
+
+---
+
+## V9.5.6 - Asistente Agro (IA real) (2026-01-23)
+
+### Diagnostico
+1) El asistente actual no consulta IA real y no respeta limites del plan gratuito.
+2) La API key de Gemini no puede ir al frontend; se requiere Edge Function con JWT.
+3) Falta throttle/cooldown y guia visible para evitar bloqueos por rate limit.
+
+### Plan
+1) `supabase/functions/agro-assistant/index.ts`: crear Edge Function con JWT obligatorio, CORS limitado y llamada a Gemini con fallback.
+2) `apps/gold/agro/index.html`: boton "Asistente Agro" + modal con guia, textarea, historial y cooldown.
+3) `apps/gold/agro/agro.js`: wiring de modal, invoke de Edge Function, throttle y manejo de errores.
+4) `apps/gold/agro/agro.css`: estilos del modal y guia (mobile-first, gold/dark).
+5) QA manual + build.
+
+### Notas / Deploy
+- Secret (no exponer): `supabase secrets set GEMINI_API_KEY=...`
+- Deploy function: `supabase functions deploy agro-assistant`
+
+### QA Checklist
+- [ ] Modal abre/cierra (X, outside, ESC).
+- [ ] Envio con login responde.
+- [ ] Throttle 15s bloquea y muestra countdown.
+- [ ] 401 muestra "Debes iniciar sesion".
+- [ ] 429 muestra limite + lock 60s.
+- [ ] Historial persiste (localStorage).
+- [ ] Consola limpia.
+- [x] pnpm build:gold OK.
+
+### Build
+```
+pnpm build:gold
+OK (vite build + UTF-8 verification passed)
+Exit code: 0
+```
