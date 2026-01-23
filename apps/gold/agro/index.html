@@ -1690,9 +1690,10 @@
                             </div>
                         </div>
 
-                        <details class="advanced-panel" id="expense-advanced">
+                        <details class="advanced-panel" id="expense-advanced" data-tab="gastos">
                             <summary class="advanced-summary">
                                 <span>Opciones avanzadas</span>
+                                <span class="advanced-meta" id="advanced-meta-gastos"></span>
                                 <span class="chev">&#9662;</span>
                             </summary>
                             <div class="advanced-content">
@@ -1801,9 +1802,10 @@
                                 </button>
                             </div>
                         </div>
-                        <details class="advanced-panel" id="pending-advanced">
+                        <details class="advanced-panel" id="pending-advanced" data-tab="pendientes">
                             <summary class="advanced-summary">
                                 <span>Opciones avanzadas</span>
+                                <span class="advanced-meta" id="advanced-meta-pendientes"></span>
                                 <span class="chev">&#9662;</span>
                             </summary>
                             <div class="advanced-content">
@@ -1887,9 +1889,10 @@
                                 </button>
                             </div>
                         </div>
-                        <details class="advanced-panel" id="loss-advanced">
+                        <details class="advanced-panel" id="loss-advanced" data-tab="perdidas">
                             <summary class="advanced-summary">
                                 <span>Opciones avanzadas</span>
+                                <span class="advanced-meta" id="advanced-meta-perdidas"></span>
                                 <span class="chev">&#9662;</span>
                             </summary>
                             <div class="advanced-content">
@@ -1973,9 +1976,10 @@
                                 </button>
                             </div>
                         </div>
-                        <details class="advanced-panel" id="transfer-advanced">
+                        <details class="advanced-panel" id="transfer-advanced" data-tab="transferencias">
                             <summary class="advanced-summary">
                                 <span>Opciones avanzadas</span>
+                                <span class="advanced-meta" id="advanced-meta-transferencias"></span>
                                 <span class="chev">&#9662;</span>
                             </summary>
                             <div class="advanced-content">
@@ -2283,8 +2287,9 @@
                     if (dropzone && evidenceUi?.resetCompactEvidenceDropzone) {
                         evidenceUi.resetCompactEvidenceDropzone(dropzone);
                     }
-                    if (dropzone && evidenceUi?.closeAdvancedPanelFor) {
-                        evidenceUi.closeAdvancedPanelFor(dropzone);
+                    if (evidenceUi?.updateAdvancedMetaForPanel) {
+                        const panel = document.getElementById('expense-advanced');
+                        evidenceUi.updateAdvancedMetaForPanel(panel);
                     }
                 });
             }

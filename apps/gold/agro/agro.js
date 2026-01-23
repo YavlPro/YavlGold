@@ -1800,6 +1800,8 @@ function resetCompactEvidenceDropzone(dropzone) {
     if (row) row.classList.add('is-hidden');
     if (trigger) trigger.classList.remove('is-hidden');
     if (hint) hint.classList.remove('is-hidden');
+
+    updateAdvancedMetaForPanel(dropzone.closest('details.advanced-panel'));
 }
 
 function setCompactEvidenceDropzone(dropzone, file) {
@@ -1826,6 +1828,8 @@ function setCompactEvidenceDropzone(dropzone, file) {
     } catch (e) {
         // Ignore preview errors
     }
+
+    updateAdvancedMetaForPanel(dropzone.closest('details.advanced-panel'));
 }
 
 function bindCompactEvidenceControls(dropzone, input) {
@@ -1857,13 +1861,104 @@ function bindCompactEvidenceControls(dropzone, input) {
     }
 }
 
+const ADVANCED_STATE_PREFIX = 'agro.facturero.advanced.';
+
+function getAdvancedStateKey(tabName) {
+    return `${ADVANCED_STATE_PREFIX}${tabName}.open`;
+}
+
+function readAdvancedState(tabName) {
+    if (!tabName) return null;
+    try {
+        const value = localStorage.getItem(getAdvancedStateKey(tabName));
+        if (value === '1') return true;
+        if (value === '0') return false;
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeAdvancedState(tabName, isOpen) {
+    if (!tabName) return;
+    try {
+        localStorage.setItem(getAdvancedStateKey(tabName), isOpen ? '1' : '0');
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function getAdvancedMetaText(panel) {
+    if (!panel) return '';
+    const fileInput = panel.querySelector('input[type="file"]');
+    const dropzone = panel.querySelector('.upload-dropzone');
+    const notes = panel.querySelector('textarea');
+    const hasEvidence = !!(fileInput?.files?.length) || !!dropzone?.classList.contains('has-file');
+    const hasNotes = !!notes?.value?.trim();
+    const evidenceLabel = hasEvidence ? 'adjunta' : 'no';
+    const notesLabel = hasNotes ? 'si' : 'no';
+    return `Evidencia: ${evidenceLabel} | Notas: ${notesLabel}`;
+}
+
+function updateAdvancedMetaForPanel(panel, log = false) {
+    if (!panel) return;
+    const tabName = panel.dataset?.tab || panel.id || 'unknown';
+    const meta = panel.querySelector('.advanced-meta') || document.getElementById(`advanced-meta-${tabName}`);
+    if (!meta) return;
+    meta.textContent = getAdvancedMetaText(panel);
+    if (log) {
+        console.log(`[AGRO] V9.5.6: meta updated ${tabName}`);
+    }
+}
+
+function bindAdvancedPanel(panel) {
+    if (!panel || panel.dataset?.advancedBound === 'true') return;
+    panel.dataset.advancedBound = 'true';
+
+    const tabName = panel.dataset?.tab || panel.id || 'unknown';
+    const savedState = readAdvancedState(tabName);
+    if (savedState !== null) {
+        panel.open = savedState;
+        console.log(`[AGRO] V9.5.6: advanced accordion state restored for ${tabName}`);
+    }
+
+    updateAdvancedMetaForPanel(panel);
+
+    panel.addEventListener('toggle', () => {
+        writeAdvancedState(tabName, panel.open);
+        updateAdvancedMetaForPanel(panel);
+    });
+
+    const notesInput = panel.querySelector('textarea');
+    if (notesInput) {
+        let notesTimer;
+        notesInput.addEventListener('input', () => {
+            clearTimeout(notesTimer);
+            notesTimer = setTimeout(() => updateAdvancedMetaForPanel(panel), 150);
+        });
+    }
+
+    const fileInput = panel.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.addEventListener('change', () => updateAdvancedMetaForPanel(panel));
+    }
+}
+
+function initAdvancedPanels() {
+    document.querySelectorAll('details.advanced-panel').forEach((panel) => {
+        bindAdvancedPanel(panel);
+    });
+}
+
 if (typeof window !== 'undefined') {
     window.agroEvidenceUI = {
         openAdvancedPanelFor,
         closeAdvancedPanelFor,
         resetCompactEvidenceDropzone,
         setCompactEvidenceDropzone,
-        bindCompactEvidenceControls
+        bindCompactEvidenceControls,
+        updateAdvancedMetaForPanel,
+        initAdvancedPanels
     };
 }
 
@@ -2163,15 +2258,19 @@ function ensureIncomeSection(targetContainer) {
         const advancedPanel = document.createElement('details');
         advancedPanel.className = 'advanced-panel';
         advancedPanel.id = 'income-advanced';
+        advancedPanel.dataset.tab = 'ingresos';
 
         const advancedSummary = document.createElement('summary');
         advancedSummary.className = 'advanced-summary';
         const summaryText = document.createElement('span');
         summaryText.textContent = 'Opciones avanzadas';
+        const summaryMeta = document.createElement('span');
+        summaryMeta.className = 'advanced-meta';
+        summaryMeta.id = 'advanced-meta-ingresos';
         const summaryChev = document.createElement('span');
         summaryChev.className = 'chev';
         summaryChev.innerHTML = '&#9662;';
-        advancedSummary.append(summaryText, summaryChev);
+        advancedSummary.append(summaryText, summaryMeta, summaryChev);
 
         const advancedContent = document.createElement('div');
         advancedContent.className = 'advanced-content';
@@ -2315,7 +2414,6 @@ function clearIncomeForm() {
     if (categoryInput) categoryInput.selectedIndex = 0;
     if (fileInput) fileInput.value = '';
     resetIncomeDropzone(dropzone);
-    closeAdvancedPanelFor(dropzone);
 
     incomeEditId = null;
     incomeEditSupportPath = null;
@@ -3030,7 +3128,7 @@ function initFinanceFormHandlers() {
                 if (config.dropzoneId) {
                     resetGenericDropzone(config.dropzoneId);
                     const dz = document.getElementById(config.dropzoneId);
-                    closeAdvancedPanelFor(dz);
+                    updateAdvancedMetaForPanel(dz?.closest('details.advanced-panel'));
                 }
 
                 // V9.5: Refresh history for this specific tab
@@ -3059,7 +3157,7 @@ function initFinanceFormHandlers() {
             if (config.dropzoneId) {
                 resetGenericDropzone(config.dropzoneId);
                 const dz = document.getElementById(config.dropzoneId);
-                closeAdvancedPanelFor(dz);
+                updateAdvancedMetaForPanel(dz?.closest('details.advanced-panel'));
             }
             const resetFileInput = document.getElementById(config.fileInputId);
             if (resetFileInput) resetFileInput.value = '';
@@ -3486,6 +3584,7 @@ export function initAgro() {
     initIncomeModule();
     initFinanceTabs();
     initFinanceFormHandlers();
+    initAdvancedPanels();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
     initFactureroHistories(); // V9.5.1: Cargar historiales al init

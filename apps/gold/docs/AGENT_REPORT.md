@@ -1631,3 +1631,34 @@ pnpm build:gold
 OK (vite build + UTF-8 verification passed)
 Exit code: 0
 ```
+
+---
+
+## V9.5.6 - Facturero Advanced State + Meta (2026-01-22)
+
+### Diagnostico
+1) El acordeon "Opciones avanzadas" no recuerda estado por pestaÃ±a.
+2) Falta un mini-resumen cuando el acordeon esta cerrado (evidencia + notas).
+3) Limpiar debe resetear resumen sin forzar cierre.
+
+### Plan
+1) `apps/gold/agro/index.html`: agregar `data-tab` y contenedor `.advanced-meta` en cada summary.
+2) `apps/gold/agro/agro.css`: estilos para `.advanced-meta` (inline, micro, responsive) y ocultar cuando abierto.
+3) `apps/gold/agro/agro.js`: persistencia por tab en localStorage, actualizar meta por evidencia/notas, hooks de input/reset.
+4) QA manual + build.
+
+### QA Checklist
+- [ ] Persistencia: abrir/cerrar acordeon por tab y mantener tras F5.
+- [ ] Meta visible solo cuando cerrado.
+- [ ] Adjuntar evidencia con acordeon cerrado lo abre automaticamente.
+- [ ] Notas actualiza meta con debounce.
+- [ ] Limpiar resetea evidencia + meta sin forzar cierre.
+- [ ] Consola limpia.
+- [x] pnpm build:gold OK.
+
+### Build
+```
+pnpm build:gold
+OK (vite build + UTF-8 verification passed)
+Exit code: 0
+```

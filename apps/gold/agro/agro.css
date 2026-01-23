@@ -443,7 +443,7 @@ body.stats-center-open {
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   font-family: 'Rajdhani', sans-serif;
@@ -458,7 +458,24 @@ body.stats-center-open {
 }
 
 .advanced-summary .chev {
+  margin-left: 0.35rem;
   transition: transform 0.2s ease;
+}
+
+.advanced-meta {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-transform: none;
+}
+
+.advanced-panel[open] .advanced-meta {
+  display: none;
 }
 
 .advanced-panel[open] .advanced-summary .chev {
@@ -579,6 +596,24 @@ body.stats-center-open {
 
   .upload-dropzone .evidence-name {
     max-width: 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  .advanced-summary {
+    flex-wrap: wrap;
+    row-gap: 0.4rem;
+  }
+
+  .advanced-meta {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .advanced-summary .chev {
+    order: 2;
+    margin-left: auto;
   }
 }
 
