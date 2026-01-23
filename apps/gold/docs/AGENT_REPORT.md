@@ -1699,3 +1699,33 @@ pnpm build:gold
 OK (vite build + UTF-8 verification passed)
 Exit code: 0
 ```
+
+---
+
+## V9.5.7 - Hotfix Asistente Agro modal freeze (2026-01-23)
+
+### Diagnostico
+1) El modal del asistente puede quedar invisible/recortado y el overlay bloquea clicks.
+2) La clase de bloqueo del body no se revierte si el modal no existe o falla un handler.
+3) Posible conflicto de z-index/overflow al estar el modal dentro de contenedores con overflow.
+
+### Plan
+1) `apps/gold/agro/index.html`: mover el modal del asistente al final del `<body>` y agregar backdrop con `data-close="true"`.
+2) `apps/gold/agro/agro.css`: fijar `position: fixed` + `z-index` alto para overlay y sheet, y usar `.modal-open` para bloqueo.
+3) `apps/gold/agro/agro.js`: robustecer `openAgroAssistant()`/`closeAgroAssistant()` con try/catch y rollback; handlers de click/ESC sin duplicados.
+4) QA manual + build.
+
+### QA Checklist
+- [ ] Abrir/cerrar 5 veces (X/outside/ESC) sin congelar UI.
+- [ ] En movil, modal visible y backdrop no bloquea fuera al cerrar.
+- [ ] Si falta el modal en DOM, no se aplica body lock.
+- [ ] Centro Estadistico sigue funcionando sin conflictos.
+- [ ] Consola limpia.
+- [ ] pnpm build:gold OK.
+
+### Build
+```
+pnpm build:gold
+OK (vite build + UTF-8 verification passed)
+Exit code: 0
+```

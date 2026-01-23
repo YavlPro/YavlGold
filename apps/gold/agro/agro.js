@@ -3469,23 +3469,32 @@ function getAssistantContext() {
 
 function openAgroAssistant() {
     const modal = document.getElementById('modal-agro-assistant');
-    if (!modal) return;
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('assistant-open');
-    renderAssistantHistory(loadAssistantHistory());
-    updateAssistantCooldownUI();
-    startAssistantCooldownTimer();
-    const input = document.getElementById('agro-assistant-input');
-    input?.focus({ preventScroll: true });
+    if (!modal) {
+        console.warn('[AGRO] V9.5.7: assistant modal not found');
+        return;
+    }
+    try {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        renderAssistantHistory(loadAssistantHistory());
+        updateAssistantCooldownUI();
+        startAssistantCooldownTimer();
+        const input = document.getElementById('agro-assistant-input');
+        requestAnimationFrame(() => input?.focus({ preventScroll: true }));
+    } catch (err) {
+        console.warn('[AGRO] V9.5.7: assistant open failed', err?.message || err);
+        closeAgroAssistant();
+    }
 }
 
 function closeAgroAssistant() {
     const modal = document.getElementById('modal-agro-assistant');
-    if (!modal) return;
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('assistant-open');
+    if (modal) {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+    document.body.classList.remove('modal-open');
 }
 
 async function sendAgroAssistantMessage() {
@@ -3574,13 +3583,13 @@ function initAgroAssistantModal() {
     closeBtn?.addEventListener('click', closeAgroAssistant);
 
     modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
+        if (event.target?.dataset?.close === 'true') {
             closeAgroAssistant();
         }
     });
 
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.style.display === 'flex') {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
             closeAgroAssistant();
         }
     });
@@ -3598,6 +3607,8 @@ function initAgroAssistantModal() {
     input?.addEventListener('input', () => {
         if (!assistantCooldownTimer) updateAssistantCooldownUI();
     });
+
+    console.info('[AGRO] V9.5.7: assistant modal open/close wired');
 }
 
 function getTopIncomeCategoryFromCache(days = 365) {

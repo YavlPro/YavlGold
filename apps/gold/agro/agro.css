@@ -410,15 +410,36 @@ body.stats-center-open {
   }
 }
 
-/* V9.5.6: Asistente Agro modal */
-body.assistant-open {
+/* V9.5.7: Asistente Agro modal */
+body.modal-open {
   overflow: hidden;
 }
 
 #modal-agro-assistant {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+}
+
+#modal-agro-assistant.is-open {
+  display: flex;
+}
+
+#modal-agro-assistant .assistant-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
+}
+
+#modal-agro-assistant .assistant-sheet {
+  position: relative;
+  z-index: 10060;
 }
 
 #modal-agro-assistant .agro-assistant {
