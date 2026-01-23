@@ -1209,7 +1209,7 @@
                     </ul>
                 </div>
 
-                
+
             </div>
 
             <div class="user-profile">
@@ -1298,7 +1298,7 @@
                 </div>
             </div> <!-- End of first row (Weather/Market/Moon) -->
 
-            
+
             <!-- Panel de Planificación: El Oráculo del Agricultor -->
             <div class="card planning-panel animate-in delay-5" style="margin-top: 1.5rem; padding: 1.5rem;">
                 <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
@@ -1326,42 +1326,10 @@
                         </div>
                     </div>
 
-                    <!-- Divisor vertical (solo desktop) -->
-                    <div style="width: 1px; background: rgba(255,255,255,0.1); display: none;" class="divider-vertical">
-                    </div>
-
-                    <!-- Consejero Agrónomo -->
-                    <div
-                        style="flex: 1; min-width: 250px; display: flex; flex-direction: column; justify-content: center;">
-                        <div
-                            style="background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1rem; border: 1px solid rgba(200,167,82,0.2); position: relative;">
-                            <div
-                                style="position: absolute; top: -10px; left: 12px; background: var(--gold-primary, #C8A752); color: #000; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                Consejo IA
-                            </div>
-                            <div style="display: flex; gap: 12px; align-items: flex-start; margin-top: 8px;">
-                                <i class="fa-solid fa-robot"
-                                    style="font-size: 1.8rem; color: rgba(200,167,82,0.7);"></i>
-                                <div>
-                                    <h4 id="advice-title"
-                                        style="color: #4ade80; font-weight: 700; font-size: 0.9rem; margin: 0 0 4px 0;">
-                                        Analizando...</h4>
-                                    <p id="advice-text"
-                                        style="font-size: 0.75rem; color: #aaa; line-height: 1.5; margin: 0;">
-                                        Cruzando datos lunares y climáticos para generar recomendación táctica...
-                                    </p>
-                                </div>
-                            </div>
-                            <div id="advice-tags" style="display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap;">
-                                <span
-                                    style="font-size: 9px; padding: 4px 8px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #666;">Espera...</span>
-                            </div>
-                        </div>
-                    </div>
-
         </section>
 
-        
+
+
 
         <!-- Active Crops Section -->
         <section class="crops-section">
@@ -2520,7 +2488,7 @@
                     &times;
                 </button>
             </div>
-                        <div class="stats-center-body">
+            <div class="stats-center-body">
                 <div class="stats-center-tabs" role="tablist" aria-label="Secciones de estadisticas">
                     <button type="button" class="stats-tab is-active" data-tab="kpis" role="tab" aria-selected="true">
                         KPIs
@@ -2531,227 +2499,245 @@
                 </div>
                 <div class="stats-center-panels">
                     <div class="stats-panel is-active" data-tab="kpis" role="tabpanel" aria-hidden="false">
-                <div class="stats-center-grid">
-                    <!-- KPI: Gasto Facturero -->
-                    <div class="card kpi-card">
-                        <div class="kpi-icon-wrapper">&#129534;</div>
-                        <div class="kpi-content">
-                            <div class="kpi-label">Gasto Facturero</div>
-                            <div class="kpi-value" style="color: #f87171;">
-                                <span class="highlight" id="kpi-expenses-total">$0.00</span>
+                        <div class="stats-center-grid">
+                            <!-- KPI: Gasto Facturero -->
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">&#129534;</div>
+                                <div class="kpi-content">
+                                    <div class="kpi-label">Gasto Facturero</div>
+                                    <div class="kpi-value" style="color: #f87171;">
+                                        <span class="highlight" id="kpi-expenses-total">$0.00</span>
+                                    </div>
+                                    <div class="kpi-secondary">
+                                        <span class="kpi-tag">Gastos Operativos</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="kpi-secondary">
-                                <span class="kpi-tag">Gastos Operativos</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- KPI: Inversion Cosecha -->
-                    <div class="card kpi-card">
-                        <div class="kpi-icon-wrapper">&#127793;</div>
-                        <div class="kpi-content">
-                            <div class="kpi-label">Inversi&oacute;n Cosecha</div>
-                            <div class="kpi-value" style="color: #4ade80;">
-                                <span class="highlight" id="kpi-crops-investment">$0.00</span>
+                            <!-- KPI: Inversion Cosecha -->
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">&#127793;</div>
+                                <div class="kpi-content">
+                                    <div class="kpi-label">Inversi&oacute;n Cosecha</div>
+                                    <div class="kpi-value" style="color: #4ade80;">
+                                        <span class="highlight" id="kpi-crops-investment">$0.00</span>
+                                    </div>
+                                    <div class="kpi-secondary">
+                                        <span class="kpi-tag">Capital Sembrado</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="kpi-secondary">
-                                <span class="kpi-tag">Capital Sembrado</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- KPI: Gasto Total -->
-                    <div class="card kpi-card"
-                        style="border-color: var(--gold-primary); background: rgba(200, 167, 82, 0.05);">
-                        <div class="kpi-icon-wrapper">&#128176;</div>
-                        <div class="kpi-content">
-                            <div class="kpi-label" style="color: var(--gold-primary);">Gasto Total</div>
-                            <div class="kpi-value" style="color: var(--gold-primary);">
-                                <span class="highlight" id="kpi-global-total">$0.00</span>
+                            <!-- KPI: Gasto Total -->
+                            <div class="card kpi-card"
+                                style="border-color: var(--gold-primary); background: rgba(200, 167, 82, 0.05);">
+                                <div class="kpi-icon-wrapper">&#128176;</div>
+                                <div class="kpi-content">
+                                    <div class="kpi-label" style="color: var(--gold-primary);">Gasto Total</div>
+                                    <div class="kpi-value" style="color: var(--gold-primary);">
+                                        <span class="highlight" id="kpi-global-total">$0.00</span>
+                                    </div>
+                                    <div class="kpi-secondary">
+                                        <span class="kpi-tag" style="color: rgba(255,255,255,0.7);">Salida de Dinero
+                                            Real</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="kpi-secondary">
-                                <span class="kpi-tag" style="color: rgba(255,255,255,0.7);">Salida de Dinero Real</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- KPI: Pendientes -->
-                    <div class="card kpi-card">
-                        <div class="kpi-icon-wrapper">
-                            <i class="fa-solid fa-hourglass-half" style="color: var(--gold-primary);"></i>
-                        </div>
-                        <div class="kpi-content">
-                            <div class="kpi-label">Pendientes</div>
-                            <div class="kpi-value" style="color: var(--gold-primary);">
-                                <span class="highlight" id="kpi-pending-total">$0.00</span>
+                            <!-- KPI: Pendientes -->
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <i class="fa-solid fa-hourglass-half" style="color: var(--gold-primary);"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-label">Pendientes</div>
+                                    <div class="kpi-value" style="color: var(--gold-primary);">
+                                        <span class="highlight" id="kpi-pending-total">$0.00</span>
+                                    </div>
+                                    <div class="kpi-secondary">
+                                        <span class="kpi-tag">Cobros en espera</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="kpi-secondary">
-                                <span class="kpi-tag">Cobros en espera</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- KPI: Perdidas -->
-                    <div class="card kpi-card">
-                        <div class="kpi-icon-wrapper">
-                            <i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i>
-                        </div>
-                        <div class="kpi-content">
-                            <div class="kpi-label">Perdidas</div>
-                            <div class="kpi-value" style="color: #f87171;">
-                                <span class="highlight" id="kpi-losses-total">$0.00</span>
+                            <!-- KPI: Perdidas -->
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-label">Perdidas</div>
+                                    <div class="kpi-value" style="color: #f87171;">
+                                        <span class="highlight" id="kpi-losses-total">$0.00</span>
+                                    </div>
+                                    <div class="kpi-secondary">
+                                        <span class="kpi-tag">Merma real</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="kpi-secondary">
-                                <span class="kpi-tag">Merma real</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- KPI: Transferencias -->
-                    <div class="card kpi-card">
-                        <div class="kpi-icon-wrapper">
-                            <i class="fa-solid fa-right-left" style="color: var(--gold-primary);"></i>
-                        </div>
-                        <div class="kpi-content">
-                            <div class="kpi-label">Transferencias</div>
-                            <div class="kpi-value" style="color: var(--gold-primary);">
-                                <span class="highlight" id="kpi-transfers-total">$0.00</span>
+                            <!-- KPI: Transferencias -->
+                            <div class="card kpi-card">
+                                <div class="kpi-icon-wrapper">
+                                    <i class="fa-solid fa-right-left" style="color: var(--gold-primary);"></i>
+                                </div>
+                                <div class="kpi-content">
+                                    <div class="kpi-label">Transferencias</div>
+                                    <div class="kpi-value" style="color: var(--gold-primary);">
+                                        <span class="highlight" id="kpi-transfers-total">$0.00</span>
+                                    </div>
+                                    <div class="kpi-secondary">
+                                        <span class="kpi-tag">Movimientos internos</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="kpi-secondary">
-                                <span class="kpi-tag">Movimientos internos</span>
-                            </div>
                         </div>
-                    </div>
-                </div>
                     </div>
                     <div class="stats-panel" data-tab="rentabilidad" role="tabpanel" aria-hidden="true">
-<!-- Statistics Section: Monitor de Rentabilidad -->
-        <section class="stats-section animate-in delay-5" style="margin: 0;">
-            <div class="section-header" style="margin-bottom: 1rem;">
-                <h2 class="section-title"><span class="icon">📊</span> Monitor de Rentabilidad</h2>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-
-                <!-- ROI Chart (Large) -->
-                <div class="card"
-                    style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08);">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <div>
-                            <h3
-                                style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 1rem; letter-spacing: 0.5px; margin: 0;">
-                                Rentabilidad del Ciclo</h3>
-                            <p style="font-size: 0.7rem; color: #666; margin: 4px 0 0 0;">Inversión vs. Retorno Esperado
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                                <span id="roi-badge"
-                                    style="font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; font-family: 'Courier New', monospace; font-weight: 600;">ROI:
-                                    0%</span>
-                                <div id="roi-subtitle" class="roi-subtitle"></div>
+                        <!-- Statistics Section: Monitor de Rentabilidad -->
+                        <section class="stats-section animate-in delay-5" style="margin: 0;">
+                            <div class="section-header" style="margin-bottom: 1rem;">
+                                <h2 class="section-title"><span class="icon">📊</span> Monitor de Rentabilidad</h2>
                             </div>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div style="width: 12px; height: 3px; background: #C8A752; border-radius: 2px;"></div>
-                            <span style="font-size: 10px; color: #888;">Retorno</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <div style="width: 12px; height: 0; border-top: 2px dashed #ef4444;"></div>
-                            <span style="font-size: 10px; color: #888;">Inversión</span>
-                        </div>
-                    </div>
-                    <div style="height: 220px; width: 100%;">
-                        <canvas id="roiChart"></canvas>
+                            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+
+                                <!-- ROI Chart (Large) -->
+                                <div class="card"
+                                    style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08);">
+                                    <div
+                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <div>
+                                            <h3
+                                                style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 1rem; letter-spacing: 0.5px; margin: 0;">
+                                                Rentabilidad del Ciclo</h3>
+                                            <p style="font-size: 0.7rem; color: #666; margin: 4px 0 0 0;">Inversión vs.
+                                                Retorno Esperado
+                                            </p>
+                                        </div>
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                                <span id="roi-badge"
+                                                    style="font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; font-family: 'Courier New', monospace; font-weight: 600;">ROI:
+                                                    0%</span>
+                                                <div id="roi-subtitle" class="roi-subtitle"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <div
+                                                style="width: 12px; height: 3px; background: #C8A752; border-radius: 2px;">
+                                            </div>
+                                            <span style="font-size: 10px; color: #888;">Retorno</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <div style="width: 12px; height: 0; border-top: 2px dashed #ef4444;"></div>
+                                            <span style="font-size: 10px; color: #888;">Inversión</span>
+                                        </div>
+                                    </div>
+                                    <div style="height: 220px; width: 100%;">
+                                        <canvas id="roiChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Expenses Chart Row -->
+                                <div class="stats-center-charts-row"
+                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+
+                                    <!-- Expenses Doughnut -->
+                                    <div class="card"
+                                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
+                                        <h3
+                                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
+                                            Estructura de Costos</h3>
+                                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Desglose
+                                            operativo</p>
+                                        <div
+                                            style="height: 160px; width: 100%; display: flex; align-items: center; justify-content: center; position: relative;">
+                                            <canvas id="expensesChart"></canvas>
+                                            <div
+                                                style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
+                                                <span style="font-size: 10px; color: #666;">Total</span>
+                                                <span id="expenses-total"
+                                                    style="font-size: 1.2rem; font-weight: 700; color: #fff; font-family: 'Courier New', monospace;">$0k</span>
+                                            </div>
+                                        </div>
+                                        <div
+                                            style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 10px; color: #888;">
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <div
+                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #C8A752;">
+                                                </div>
+                                                Insumos
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <div
+                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;">
+                                                </div>
+                                                Riego/Luz
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <div
+                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #a855f7;">
+                                                </div>
+                                                Mano de Obra
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 6px;">
+                                                <div
+                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #4b5563;">
+                                                </div>
+                                                Otros
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Stats Summary -->
+                                    <div class="card"
+                                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
+                                        <h3
+                                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
+                                            Resumen Financiero</h3>
+                                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Ciclo actual
+                                        </p>
+                                        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 8px;">
+                                                <span style="font-size: 11px; color: #888;">Ingresos Reales</span>
+                                                <span id="summary-revenue"
+                                                    style="font-size: 1rem; color: #4ade80; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                                            </div>
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px;">
+                                                <span style="font-size: 11px; color: #888;">Costo Total</span>
+                                                <span id="summary-cost"
+                                                    style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                                            </div>
+                                            <div
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 8px;">
+                                                <span style="font-size: 11px; color: #888;">Ganancia Neta</span>
+                                                <span id="summary-profit"
+                                                    style="font-size: 1rem; color: #C8A752; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                                            </div>
+                                            <div
+                                                style="margin-top: auto; text-align: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
+                                                <span
+                                                    style="font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px;">Margen
+                                                    de Utilidad</span>
+                                                <div id="summary-margin"
+                                                    style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #C8A752; font-weight: 700; margin-top: 4px;">
+                                                    0%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
-
-                <!-- Expenses Chart Row -->
-                <div class="stats-center-charts-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-
-                    <!-- Expenses Doughnut -->
-                    <div class="card"
-                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
-                        <h3
-                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
-                            Estructura de Costos</h3>
-                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Desglose operativo</p>
-                        <div
-                            style="height: 160px; width: 100%; display: flex; align-items: center; justify-content: center; position: relative;">
-                            <canvas id="expensesChart"></canvas>
-                            <div
-                                style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-                                <span style="font-size: 10px; color: #666;">Total</span>
-                                <span id="expenses-total"
-                                    style="font-size: 1.2rem; font-weight: 700; color: #fff; font-family: 'Courier New', monospace;">$0k</span>
-                            </div>
-                        </div>
-                        <div
-                            style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 10px; color: #888;">
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #C8A752;"></div>
-                                Insumos
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></div>
-                                Riego/Luz
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #a855f7;"></div>
-                                Mano de Obra
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: #4b5563;"></div>
-                                Otros
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Stats Summary -->
-                    <div class="card"
-                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
-                        <h3
-                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
-                            Resumen Financiero</h3>
-                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Ciclo actual</p>
-                        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 8px;">
-                                <span style="font-size: 11px; color: #888;">Ingresos Reales</span>
-                                <span id="summary-revenue"
-                                    style="font-size: 1rem; color: #4ade80; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                            </div>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px;">
-                                <span style="font-size: 11px; color: #888;">Costo Total</span>
-                                <span id="summary-cost"
-                                    style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                            </div>
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 8px;">
-                                <span style="font-size: 11px; color: #888;">Ganancia Neta</span>
-                                <span id="summary-profit"
-                                    style="font-size: 1rem; color: #C8A752; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                            </div>
-                            <div
-                                style="margin-top: auto; text-align: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
-                                <span
-                                    style="font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px;">Margen
-                                    de Utilidad</span>
-                                <div id="summary-margin"
-                                    style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #C8A752; font-weight: 700; margin-top: 4px;">
-                                    0%</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </section>
-                    </div>
-                </div>
-            </div>
+
+        </div> <!-- /.modal-content.stats-center -->
+    </div> <!-- /#modal-stats-center -->
 
     <!-- V9.5.1: Modal Edit Facturero -->
     <div id="modal-edit-facturero" class="modal" style="display: none;">
@@ -2787,8 +2773,10 @@
                 <div id="edit-extra-fields"></div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn" onclick="window.closeEditModal()" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill, 50px); cursor: pointer;">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 24px; border: none; border-radius: var(--radius-pill, 50px); cursor: pointer; font-weight: 700;">Guardar</button>
+                    <button type="button" class="btn" onclick="window.closeEditModal()"
+                        style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill, 50px); cursor: pointer;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"
+                        style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 24px; border: none; border-radius: var(--radius-pill, 50px); cursor: pointer; font-weight: 700;">Guardar</button>
                 </div>
             </form>
         </div>

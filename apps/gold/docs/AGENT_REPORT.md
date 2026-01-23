@@ -1702,30 +1702,67 @@ Exit code: 0
 
 ---
 
-## V9.5.7 - Hotfix Asistente Agro modal freeze (2026-01-23)
+## V9.5.7 - Hotfix Asistente Agro modal freeze (2026-01-22)
 
-### Diagnostico
-1) El modal del asistente puede quedar invisible/recortado y el overlay bloquea clicks.
-2) La clase de bloqueo del body no se revierte si el modal no existe o falla un handler.
-3) Posible conflicto de z-index/overflow al estar el modal dentro de contenedores con overflow.
+### Diagnostico (Causa Raiz Confirmada)
+1) **DOM Nesting Bug**: `#modal-agro-assistant` estaba incorrectamente anidado dentro de `#modal-stats-center` (que tiene `display:none` cuando esta cerrado).
+2) **Causa tecnica**: Faltaban dos `</div>` de cierre para `.modal-content.stats-center` y `#modal-stats-center` en `index.html` linea 2754.
+3) **Resultado**: `openAgroAssistant()` agregaba `is-open` al modal y `modal-open` al body (overflow hidden), pero el padre oculto impedia render → "freeze" con scroll bloqueado y modal invisible.
+4) **Confirmacion browser**: `document.getElementById('modal-agro-assistant')?.closest('#modal-stats-center')` retornaba el elemento stats-center (deberia ser null).
 
-### Plan
-1) `apps/gold/agro/index.html`: mover el modal del asistente al final del `<body>` y agregar backdrop con `data-close="true"`.
-2) `apps/gold/agro/agro.css`: fijar `position: fixed` + `z-index` alto para overlay y sheet, y usar `.modal-open` para bloqueo.
-3) `apps/gold/agro/agro.js`: robustecer `openAgroAssistant()`/`closeAgroAssistant()` con try/catch y rollback; handlers de click/ESC sin duplicados.
-4) QA manual + build.
+### Plan Ejecutado
+1) `apps/gold/agro/index.html`: Agregar dos `</div>` de cierre faltantes para `#modal-stats-center` (lineas 2755-2756).
+2) Verificar que `#modal-agro-assistant` queda como hijo directo de `<body>`.
+3) Build + QA manual.
+
+### Cambios
+- **`apps/gold/agro/index.html`** linea 2755-2756: Agregados `</div>  <!-- /.modal-content.stats-center -->` y `</div>  <!-- /#modal-stats-center -->` antes del modal Edit Facturero.
 
 ### QA Checklist
-- [ ] Abrir/cerrar 5 veces (X/outside/ESC) sin congelar UI.
-- [ ] En movil, modal visible y backdrop no bloquea fuera al cerrar.
-- [ ] Si falta el modal en DOM, no se aplica body lock.
-- [ ] Centro Estadistico sigue funcionando sin conflictos.
-- [ ] Consola limpia.
-- [ ] pnpm build:gold OK.
+- [x] Modal abre visible y usable.
+- [ ] Cierre con X funciona.
+- [ ] Cierre con click fuera funciona.
+- [ ] Cierre con ESC funciona.
+- [ ] Abrir/cerrar 5 veces sin errores en consola.
+- [ ] Scroll vuelve al cerrar (sin `body.modal-open`).
+- [ ] Centro Estadistico sigue funcionando.
+- [x] `pnpm build:gold` OK (exit code 0).
 
 ### Build
 ```
 pnpm build:gold
-OK (vite build + UTF-8 verification passed)
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
+```
+
+### Git Commands (sin ejecutar)
+```bash
+git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(agro): close modal-stats-center tags to fix assistant modal nesting"
+git push
+```
+
+---
+
+## V9.5.7.1 - Remover panel Consejo IA obsoleto (2026-01-22)
+
+### Diagnostico
+1) El panel "Consejo IA" en Proyección Semanal mostraba "Analizando..." permanentemente.
+2) Era redundante con el nuevo modal "Asistente Agro" (IA real vía Edge Function).
+3) Ubicación: líneas 1329-1361 de `index.html`.
+
+### Cambio
+- **`apps/gold/agro/index.html`**: Removido el bloque "Consejero Agrónomo" (32 líneas de HTML).
+
+### Build
+```
+pnpm build:gold
+Exit code: 0 (agent-guard OK, UTF-8 OK)
+```
+
+### Git Commands (sin ejecutar)
+```bash
+git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
+git commit -m "refactor(agro): remove obsolete Consejo IA panel from Proyección Semanal"
+git push
 ```
