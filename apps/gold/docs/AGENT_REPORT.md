@@ -779,6 +779,87 @@ git push
 
 ---
 
+## Diagnóstico (Auditoría Forense Octubre 2025 - Chronicle)
+
+### Expectativas del Mes
+1. **Rebrand GlobalGold → YavlGold**: Confirmación del cambio de identidad definitivo
+2. **Integración Supabase**: Posible aparición de configuración real de auth
+3. **Leaks/Rotación**: Búsqueda de exposición de llaves en commits
+4. **Transición Cloud→Local**: Evidencia de cambio de entorno de desarrollo
+
+### Plan de Auditoría
+1. **Inventario**: Listar commits Oct 1-31 via GitHub MCP (páginas 5-7)
+2. **Agrupación**: Organizar por semanas del mes
+3. **Secret Scan**: Buscar patrones eyJ, SUPABASE, anon, service_role, API_KEY
+4. **Diff Review**: Examinar commits clave con get_commit para archivos tocados
+
+### Gates
+- ✅ NO tocar producción/código salvo docs
+- ✅ NO ejecutar git
+- ✅ Solo lectura y redacción
+
+### Commits Clave Identificados (Octubre 2025)
+| Hash | Fecha | Evento |
+|------|-------|--------|
+| `4378e3b` | Oct 13 01:02 | Update CNAME (posible cambio de dominio) |
+| `74f87d8` | Oct 13 02:45 | docs: actualizar README a YavlGold definitivo |
+| `d9aed32` | Oct 12 01:14 | Feat: Sistema de Tokens CSS + Limpieza completa |
+| `52621764` | Oct 18 19:48 | Proteger todos los enlaces a dashboard/herramientas |
+| `8616737d` | Oct 18 20:26 | Extender protección de enlaces Academia/Herramientas |
+| `f2745089` | Oct 20 23:08 | Feat: Sistema de contraste limpio (WCAG AA) |
+| `17c2119b` | Oct 20 23:09 | Docs: Checklist accesibilidad WCAG AA |
+| `c1dd51ee` | Oct 20 23:15 | Feat: Sistema de chips y botones alto contraste |
+
+### Resultado Secret Scan
+- **Patrón `eyJh` (JWT)**: 0 resultados ✅
+- **Patrón `VITE_SUPABASE`**: 8 archivos (configuración correcta via env vars) ✅
+- **Patrón hardcoded keys**: 0 resultados ✅
+
+### Conclusión Preliminar
+- No se detectó exposición de secretos en octubre
+- Supabase usa variables de entorno correctamente
+- Rebrand a YavlGold confirmado el Oct 13
+
+---
+
+## Diagnóstico (Auditoría Forense Noviembre 2025 - Chronicle)
+
+### Expectativas del Mes
+1. **Supabase Auth Integration**: Posible implementación real de login/register/sessions
+2. **Leaks/Rotación de llaves**: Buscar exposición accidental y remediación
+3. **Migración Cloud→Local**: Señales de transición de Codespaces/Glitch a desarrollo local
+4. **Hardening de seguridad**: Continuación de AuthGuard, RLS, protección de rutas
+5. **Rebrand residual**: Verificar consolidación total de "YavlGold"
+
+### Plan de Auditoría
+1. **Inventario**: Listar commits Nov 1-30 via GitHub MCP (paginación completa)
+2. **Cobertura**: Identificar primer y último hash del mes
+3. **Secret Scan**: Patrones eyJ, SUPABASE, anon, service_role, API_KEY, sb_
+4. **Supabase Tracker**: Buscar /supabase, auth, client, sesiones, callbacks
+5. **Identity Tracker**: README, CNAME, title, manifest, logos
+6. **Environment Tracker**: Committers, branches codespace-*, configs locales
+
+### Patrones de Búsqueda
+```
+eyJh          → JWT tokens
+SUPABASE      → Config general
+anon          → Anon key
+service_role  → Service role key
+sb_           → Supabase key prefix
+API_KEY       → API keys genéricas
+SECRET        → Secrets
+.env          → Archivos de entorno
+```
+
+### Gates
+- ✅ NO tocar producción/código salvo docs
+- ✅ NO ejecutar git
+- ✅ Solo lectura y redacción
+
+
+
+---
+
 ## Diagnóstico: Agro Stats Truth Sync (2026-01-20)
 
 ### 🔴 SÍNTOMAS REPORTADOS (Producción)
@@ -1765,4 +1846,36 @@ Exit code: 0 (agent-guard OK, UTF-8 OK)
 git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
 git commit -m "refactor(agro): remove obsolete Consejo IA panel from Proyección Semanal"
 git push
+```
+
+---
+
+## 📜 Crónicas YavlGold 2025 (Completado 2026-01-23)
+
+### Resumen
+Auditoría forense completa del proyecto YavlGold desde su génesis (24 Sept 2025) hasta producción estable (31 Dic 2025).
+
+### Archivos Creados
+| Archivo | Contenido |
+|---------|-----------|
+| `CRONICA-YAVLGOLD.md` | Crónica definitiva unificada (4 actos narrativos) |
+| `2025-09.md` | Septiembre: Génesis, Global Invest, credenciales hardcodeadas |
+| `2025-10.md` | Octubre: 307 commits, rebrand GlobalGold→YavlGold, Academia |
+| `2025-11.md` | Noviembre: Incidente Supabase, Renacimiento V9.1, migración cloud→local |
+| `2025-12.md` | Diciembre: V9.2, ADN Visual consolidado, producción en yavlgold.com |
+
+### Métricas Consolidadas
+- **500+ commits** auditados
+- **4 meses** documentados
+- **3 incidentes de seguridad** registrados y remediados
+- **Evolución naming**: Global Invest → GlobalGold → YavlGold
+
+### Ubicación
+`apps/gold/docs/chronicles/`
+
+### Git
+```bash
+# Commit: 3c4024e
+git commit -m "📜 docs: add CRONICA-YAVLGOLD - Definitive 2025 Chronicle (Sept-Dec)"
+git push origin main  # ✅ Completado
 ```
