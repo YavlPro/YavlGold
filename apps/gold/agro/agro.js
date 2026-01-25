@@ -4876,8 +4876,48 @@ window.deleteCrop = deleteCrop;
         });
     }
 
+    // Build marker (for production verification)
+    function getAgroBuildHash() {
+        const script = document.querySelector('script[type="module"][src*="agro-"]');
+        const src = script?.getAttribute('src') || '';
+        const match = src.match(/agro-([A-Za-z0-9_-]+)\.js/);
+        return match ? match[1] : 'dev';
+    }
+
+    function getAgroBuildVersion(marker) {
+        const dataVersion = marker?.dataset?.buildVersion;
+        if (dataVersion) return dataVersion;
+        if (typeof __APP_VERSION__ !== 'undefined' && __APP_VERSION__) {
+            return `V${__APP_VERSION__}`;
+        }
+        return 'V9.6.2';
+    }
+
+    function getAgroBuildDate(marker) {
+        const dataDate = marker?.dataset?.buildDate;
+        if (dataDate) return dataDate;
+        if (typeof __BUILD_DATE__ !== 'undefined' && __BUILD_DATE__) {
+            return __BUILD_DATE__;
+        }
+        return new Date().toISOString().split('T')[0];
+    }
+
+    function initBuildMarker() {
+        const marker = document.getElementById('agro-build-marker');
+        if (!marker) return;
+
+        const version = getAgroBuildVersion(marker);
+        const hash = getAgroBuildHash();
+        const date = getAgroBuildDate(marker);
+
+        marker.textContent = `Agro Build: ${version} • ${hash} • ${date}`;
+        marker.setAttribute('data-build-hash', hash);
+        console.info(`[AGRO] Build marker: ${version} ${hash} ${date}`);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         initAccordions();
         initFactureroLabelFix();
+        initBuildMarker();
     });
 })();

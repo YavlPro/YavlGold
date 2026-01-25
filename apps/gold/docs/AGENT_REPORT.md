@@ -2004,3 +2004,44 @@ git commit -m "fix(agro): V9.6.2 supabase alerts + mobile accordions + pending l
 git push
 ```
 
+---
+
+## V9.6.3 - Agro build marker + prod deploy diagnosis (2026-01-25)
+
+### Diagnostico
+1) El repo SI contiene los cambios esperados en Agro (V9.6.2):
+   - `apps/gold/agro/index.html` incluye `<details class="yg-accordion">` para Proyeccion Semanal y ROI.
+   - `apps/gold/agro/agro-notifications.js` tiene logs `[AGRO] V9.6.2` y query a Supabase con fallback.
+2) El build actualizado existe en `apps/gold/dist` (timestamp 2026-01-25 19:01), con assets nuevos:
+   - `apps/gold/dist/agro/index.html` referencia `../assets/agro-DOhYxRyD.js` y `agro-C1ewRXTi.css`.
+3) Existe otro build viejo en `dist` (timestamp 2025-12-30). Si Vercel sirve `dist` o `.` por override, quedara en bundle viejo.
+4) No hay Service Worker registrado en el repo; el problema es deploy/config/cache HTML, no SW.
+
+### Evidencia
+- `apps/gold/dist` vs `dist` tienen fechas distintas (2026-01-25 vs 2025-12-30).
+- `apps/gold/dist/agro/index.html` contiene hashes nuevos de assets.
+- `vercel.json` (root) apunta a `apps/gold/dist`, pero `apps/gold/vercel.json` no declara rutas de /agro.
+
+### Plan
+1) Agregar build marker visible + log de consola en /agro para verificar bundle activo.
+2) Documentar fix de deploy: en Vercel asegurar outputDirectory = `apps/gold/dist` y buildCommand = `pnpm build:v9` (o `pnpm build:gold`), sin overrides a `dist` o `.`; revisar rootDirectory.
+3) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### Archivos a tocar
+- `apps/gold/agro/index.html` (badge build marker)
+- `apps/gold/agro/agro.js` (console marker + hash detect)
+- `apps/gold/docs/AGENT_REPORT.md` (este reporte)
+
+### QA Checklist
+- [ ] /agro muestra badge "Agro Build: V9.6.2 • <hash> • 2026-01-25"
+- [ ] Consola muestra: `[AGRO] Build marker: V9.6.2 <hash> 2026-01-25`
+- [ ] Hard refresh (Ctrl+Shift+R) mantiene badge y hash
+- [ ] Features V9.6.2 visibles (accordions Proyeccion/ROI, alertas)
+- [ ] Sin errores en consola
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
