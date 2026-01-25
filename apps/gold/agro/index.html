@@ -1299,24 +1299,15 @@
             </div> <!-- End of first row (Weather/Market/Moon) -->
 
 
-            <!-- Panel de Planificación: El Oráculo del Agricultor -->
-            <div class="card planning-panel animate-in delay-5" style="margin-top: 1.5rem; padding: 1.5rem;">
-                <div style="display: flex; flex-wrap: wrap; gap: 2rem;">
-
-                    <!-- Pronóstico Semanal -->
-                    <div style="flex: 2; min-width: 280px;">
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
-                            <div style="padding: 8px; background: rgba(59, 130, 246, 0.15); border-radius: 8px;">
-                                <i class="fa-solid fa-calendar-week" style="color: #60a5fa; font-size: 1.2rem;"></i>
-                            </div>
-                            <div>
-                                <h3
-                                    style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; margin: 0;">
-                                    Proyección Semanal</h3>
-                                <p style="font-size: 0.7rem; color: #888; margin: 0;">Riego y Planificación</p>
-                            </div>
-                        </div>
-
+            <!-- V9.6.2: Proyección Semanal Collapsible -->
+            <details class="yg-accordion" id="yg-acc-weekly" open>
+                <summary class="yg-accordion-summary">
+                    <span class="yg-accordion-icon"><i class="fa-solid fa-calendar-week"></i></span>
+                    <span class="yg-accordion-title">Proyección Semanal</span>
+                    <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="yg-accordion-content">
+                    <div class="card planning-panel animate-in delay-5" style="margin-top: 0; padding: 1.5rem;">
                         <div id="forecast-container"
                             style="display: flex; justify-content: space-between; align-items: flex-end; height: 140px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px;">
                             <div
@@ -1325,7 +1316,8 @@
                             </div>
                         </div>
                     </div>
-
+                </div>
+            </details>
         </section>
 
 
@@ -1338,47 +1330,59 @@
                     id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
             </div>
             <div class="crops-grid"> <!-- Cultivos cargados dinámicamente desde Supabase --> </div>
-        </section> <!-- ROI Calculator Section -->
+        </section>
+
+        <!-- V9.6.2: ROI Calculator Collapsible -->
         <section class="calculator-section">
-            <div class="section-header animate-in delay-4">
-                <h2 class="section-title"><span class="icon">🧮</span> Calculadora ROI Rápida</h2>
-            </div>
-            <div class="card animate-in delay-5">
-                <div class="calculator-form">
-                    <div class="input-group"> <label class="input-label" for="investment">Costo de Inversión</label>
-                        <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
-                                id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01"> </div>
-                    </div>
-                    <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label>
-                        <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
-                                id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01"> </div>
-                    </div>
-                    <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
-                        <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number"
-                                id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1"> </div>
-                    </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
-                </div> <!-- Results -->
-                <div class="roi-result" id="roiResult">
-                    <div class="roi-grid">
-                        <div class="roi-item">
-                            <div class="roi-label">Inversión</div>
-                            <div class="roi-value gold" id="resultInvestment">$0</div>
+            <details class="yg-accordion" id="yg-acc-roi" open>
+                <summary class="yg-accordion-summary">
+                    <span class="yg-accordion-icon">🧮</span>
+                    <span class="yg-accordion-title">Calculadora ROI Rápida</span>
+                    <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                </summary>
+                <div class="yg-accordion-content">
+                    <div class="card animate-in delay-5">
+                        <div class="calculator-form">
+                            <div class="input-group"> <label class="input-label" for="investment">Costo de
+                                    Inversión</label>
+                                <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
+                                        id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label>
+                                <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
+                                        id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
+                                <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number"
+                                        id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1">
+                                </div>
+                            </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
                         </div>
-                        <div class="roi-item">
-                            <div class="roi-label">Ingresos</div>
-                            <div class="roi-value gold" id="resultRevenue">$0</div>
-                        </div>
-                        <div class="roi-item">
-                            <div class="roi-label">Ganancia Neta</div>
-                            <div class="roi-value" id="resultProfit">$0</div>
-                        </div>
-                        <div class="roi-item">
-                            <div class="roi-label">ROI</div>
-                            <div class="roi-value" id="resultROI">0%</div>
+                        <div class="roi-result" id="roiResult">
+                            <div class="roi-grid">
+                                <div class="roi-item">
+                                    <div class="roi-label">Inversión</div>
+                                    <div class="roi-value gold" id="resultInvestment">$0</div>
+                                </div>
+                                <div class="roi-item">
+                                    <div class="roi-label">Ingresos</div>
+                                    <div class="roi-value gold" id="resultRevenue">$0</div>
+                                </div>
+                                <div class="roi-item">
+                                    <div class="roi-label">Ganancia Neta</div>
+                                    <div class="roi-value" id="resultProfit">$0</div>
+                                </div>
+                                <div class="roi-item">
+                                    <div class="roi-label">ROI</div>
+                                    <div class="roi-value" id="resultROI">0%</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </details>
         </section> <!-- Footer -->
         <footer class="footer animate-in delay-6">
             <p class="footer-text"> <span class="highlight">YavlGold</span> V9.5 • Módulo Agro • Desarrollado con 🌾

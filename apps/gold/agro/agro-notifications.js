@@ -1,7 +1,8 @@
 /**
- * YavlGold V9.4 - Agro Notifications Module
+ * YavlGold V9.6.2 - Agro Notifications Module
  * "Centro de Alertas Inteligente"
  * Con historial persistente, timestamps y sincronización IA en tiempo real
+ * V9.6.2: Consulta Supabase para cultivos si hay sesión
  */
 
 // ============================================
@@ -21,8 +22,8 @@ const MAX_READ_HISTORY = 20; // Máximo de notificaciones leídas a conservar
 // INITIALIZATION
 // ============================================
 
-export function initNotifications() {
-    console.log('[AgroNotif] 🔔 Inicializando Centro de Alertas...');
+export async function initNotifications() {
+    console.log('[AGRO] V9.6.2: 🔔 Inicializando Centro de Alertas...');
 
     // Load from localStorage
     loadNotificationsFromStorage();
@@ -32,7 +33,7 @@ export function initNotifications() {
 
     // Generate initial system notifications (only if empty)
     if (notifications.length === 0) {
-        generateSystemNotifications();
+        await generateSystemNotifications();
     } else {
         renderNotifications();
         updateBadge();
@@ -41,7 +42,7 @@ export function initNotifications() {
     // Start observing AI Advisor changes (MutationObserver)
     setupAdviceObserver();
 
-    console.log('[AgroNotif] ✅ Sistema de notificaciones activo con historial');
+    console.log('[AGRO] V9.6.2: ✅ Sistema de notificaciones activo con historial');
 }
 
 function loadNotificationsFromStorage() {
@@ -202,8 +203,8 @@ function closeDropdown() {
 // NOTIFICATION GENERATION
 // ============================================
 
-function generateSystemNotifications() {
-    const crops = getCrops();
+async function generateSystemNotifications() {
+    const crops = await getCropsAsync();
 
     if (crops.length === 0) {
         addNotification('info', '🌱 Sin cultivos', 'Agrega tu primer cultivo para alertas personalizadas.', 'fa-seedling');
@@ -219,7 +220,57 @@ function generateSystemNotifications() {
     saveNotificationsToStorage();
 }
 
-function getCrops() {
+/**
+ * V9.6.2: Get crops from Supabase if session available, else fallback to localStorage
+ */
+async function getCropsAsync() {
+    try {
+        // Check if supabase is available
+        const sb = window.supabase;
+        if (!sb?.auth) {
+            console.info('[AGRO] V9.6.2: alerts crops source=local (no supabase client)');
+            return getLocalCrops();
+        }
+
+        // Get session
+        const { data: { session }, error: sessionError } = await sb.auth.getSession();
+        if (sessionError || !session?.user) {
+            console.info('[AGRO] V9.6.2: alerts crops source=local (no session)');
+            return getLocalCrops();
+        }
+
+        // Query Supabase for crops
+        let query = sb.from('agro_crops')
+            .select('id,name,start_date,expected_harvest_date,harvest_date,status')
+            .eq('user_id', session.user.id);
+
+        // Try with deleted_at filter first
+        let { data, error } = await query.is('deleted_at', null);
+
+        // If column doesn't exist, retry without it
+        if (error?.message?.includes('deleted_at')) {
+            console.warn('[AGRO] V9.6.2: deleted_at column not found, retrying without filter');
+            const retry = await sb.from('agro_crops')
+                .select('id,name,start_date,expected_harvest_date,harvest_date,status')
+                .eq('user_id', session.user.id);
+            data = retry.data;
+            error = retry.error;
+        }
+
+        if (error) {
+            console.warn('[AGRO] V9.6.2: Supabase query error, fallback to local:', error.message);
+            return getLocalCrops();
+        }
+
+        console.info('[AGRO] V9.6.2: alerts crops source=supabase count=' + (data?.length || 0));
+        return data || [];
+    } catch (e) {
+        console.warn('[AGRO] V9.6.2: getCropsAsync exception, fallback to local:', e);
+        return getLocalCrops();
+    }
+}
+
+function getLocalCrops() {
     try {
         return JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
     } catch (e) { return []; }
@@ -461,8 +512,8 @@ window.triggerAgroNotification = (type, title, message, icon) => {
     addNotificationToTop(type, title, message, icon);
 };
 
-window.refreshAgroNotifications = () => {
-    generateSystemNotifications();
+window.refreshAgroNotifications = async () => {
+    await generateSystemNotifications();
 };
 
 window.clearAgroNotificationHistory = () => {

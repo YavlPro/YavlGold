@@ -4843,4 +4843,41 @@ window.deleteCrop = deleteCrop;
         }
     `;
     document.head.appendChild(styles);
+
+
+    // V9.6.2: Mobile Accordions
+    function initAccordions() {
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            document.querySelectorAll('.yg-accordion').forEach(el => el.removeAttribute('open'));
+        }
+    }
+
+    // V9.6.2: Fix Facturero Edit Label (Pendientes -> Cliente)
+    function initFactureroLabelFix() {
+        document.body.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-edit-facturero');
+            if (btn) {
+                const tab = btn.dataset.tab;
+                if (tab === 'pendientes') {
+                    // Esperar a que el modal se abra y pueble
+                    setTimeout(() => {
+                        const modal = document.querySelector('#modal-edit-facturero');
+                        if (!modal) return;
+
+                        // Buscar el label que suele decir "Comprador" (o el segundo label dynamic)
+                        const dynamicLabel = modal.querySelector('.input-group.field-dynamic .input-label');
+                        if (dynamicLabel) {
+                            dynamicLabel.textContent = 'Cliente';
+                            console.log('[AGRO] V9.6.2: Label corregido a Cliente');
+                        }
+                    }, 50);
+                }
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initAccordions();
+        initFactureroLabelFix();
+    });
 })();
