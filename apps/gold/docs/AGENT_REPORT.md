@@ -1915,3 +1915,46 @@ pnpm build:gold
 OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
 ```
+
+---
+
+## V9.6.1 - FIX: Date Validation Bug (Historical Planting Dates) - 2026-01-25
+
+### Diagnóstico
+1) **Bug reportado**: Al guardar cultivo, aparece toast "La fecha de siembra no puede ser anterior a ayer" y bloquea siembras históricas.
+2) **Ubicación**: `apps/gold/agro/index.html` líneas 2094-2101.
+3) **Causa raíz**: La validación compara `sowDate < yesterdayKey` lo cual bloquea cualquier fecha anterior a ayer.
+4) **Necesidad real**: Permitir siembras del pasado (meses/años atrás). Solo debe bloquear fechas **futuras**.
+5) **Progreso**: La función `computeCropProgress` en `agro.js` ya usa `clampNumber` correctamente (líneas 256-293).
+
+### Plan
+1) Reemplazar validación "no anterior a ayer" por "no futura" en `index.html`.
+2) Cambiar mensaje de error a: "La fecha de siembra no puede ser futura."
+3) Verificar que `computeCropProgress` clamp funciona correctamente (ya OK).
+4) Ejecutar `pnpm build:gold` y QA manual.
+
+### Archivos a tocar
+- `apps/gold/agro/index.html` — Líneas 2094-2101 (validación de fecha)
+- `apps/gold/docs/AGENT_REPORT.md` — Este diagnóstico
+
+### QA Checklist
+- [ ] Crear cultivo con siembra hace meses → PASS
+- [ ] Crear cultivo hoy → PASS
+- [ ] Crear cultivo futuro → bloquea con mensaje correcto
+- [ ] Ver card: muestra "Día X de Y" y % coherente
+- [ ] Consola limpia
+- [x] `pnpm build:gold` OK
+
+### Resultado
+- **Build**: PASS ✅ (pnpm build:gold exit 0, UTF-8 verification passed)
+- **Archivo modificado**: `apps/gold/agro/index.html` líneas 2094-2098
+- **Cambio aplicado**: Validación de fecha cambiada de `sowDate < yesterdayKey` a `sowDate > todayKey`
+- **QA manual**: Pendiente
+
+### Git Commands (sin ejecutar)
+```bash
+git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(agro): allow historical planting dates, block only future dates"
+git push
+```
+

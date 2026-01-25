@@ -2091,12 +2091,9 @@
                     }
                 }
 
-                // 1) Siembra: permitir hoy o ayer (tolerancia TZ), bloquear >1 día pasado
-                const yesterdayLocal = new Date();
-                yesterdayLocal.setDate(yesterdayLocal.getDate() - 1);
-                const yesterdayKey = yesterdayLocal.toISOString().slice(0, 10);
-                if (sowDate < yesterdayKey) {
-                    showValidationError('La fecha de siembra no puede ser anterior a ayer.');
+                // 1) Siembra: permitir cualquier fecha pasada o actual, solo bloquear FUTURAS
+                if (sowDate > todayKey) {
+                    showValidationError('La fecha de siembra no puede ser futura.');
                     return;
                 }
 
