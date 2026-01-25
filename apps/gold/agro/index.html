@@ -1526,6 +1526,19 @@
                 </div>
                 <div class="input-row">
                     <div class="input-group">
+                        <label class="input-label" for="crop-template">Cultivo base (Tachira)</label>
+                        <select id="crop-template" class="styled-input" style="padding-left: 1rem; cursor: pointer;">
+                            <option value="">Manual (sin plantilla)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="crop-template-cycle">Ciclo estimado</label>
+                        <input type="text" id="crop-template-cycle" class="styled-input" value="--" readonly
+                            style="padding-left: 1rem;">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
                         <label class="input-label" for="crop-area">Área (hectáreas) *</label>
                         <input type="number" id="crop-area" class="styled-input" placeholder="Ej: 2.5" step="0.1"
                             min="0.01" required style="padding-left: 1rem;">
@@ -2025,6 +2038,17 @@
                 const d = new Date();
                 return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
             };
+            const formatDateKey = (dateObj) => {
+                return dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+            };
+            const addDaysToKey = (dateStr, days) => {
+                if (!dateStr || !Number.isFinite(days)) return '';
+                const parts = dateStr.split('-').map(Number);
+                if (parts.length !== 3) return '';
+                const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                dateObj.setDate(dateObj.getDate() + days);
+                return formatDateKey(dateObj);
+            };
 
             // Helper: show validation error (reutiliza toast si existe, sino alert)
             const showValidationError = (msg) => {
@@ -2045,7 +2069,12 @@
                 const area = document.getElementById('crop-area').value;
                 const investment = document.getElementById('crop-investment').value || 0;
                 const sowDate = document.getElementById('crop-start-date').value;
-                const harvestDate = document.getElementById('crop-harvest-date').value;
+                let harvestDate = document.getElementById('crop-harvest-date').value;
+                const templateSelect = document.getElementById('crop-template');
+                const templateOption = templateSelect?.selectedOptions?.[0];
+                const templateDuration = templateOption?.dataset?.duration
+                    ? Number(templateOption.dataset.duration)
+                    : null;
 
                 if (!name || !area || !sowDate) throw new Error("Completa Nombre, Área y Fecha.");
 
@@ -2053,6 +2082,14 @@
                 // DATE VALIDATION (No Past / No Inverted)
                 // =====================================
                 const todayKey = getTodayKey();
+
+                if (!harvestDate && sowDate && Number.isFinite(templateDuration) && templateDuration > 0) {
+                    harvestDate = addDaysToKey(sowDate, templateDuration);
+                    const harvestInput = document.getElementById('crop-harvest-date');
+                    if (harvestInput && harvestDate) {
+                        harvestInput.value = harvestDate;
+                    }
+                }
 
                 // 1) Siembra: permitir hoy o ayer (tolerancia TZ), bloquear >1 día pasado
                 const yesterdayLocal = new Date();
@@ -2079,18 +2116,26 @@
                 // =====================================
 
                 const fullName = `${icon} ${name}`;
-                const { error } = await supabase.from('agro_crops').insert({
-                    user_id: user.id,
-                    name: fullName,
-                    variety,
-                    area_size: area,
-                    investment,
-                    start_date: sowDate,
-                    expected_harvest_date: harvestDate || null,
-                    status: 'growing'
-                });
+                const { data: insertRows, error } = await supabase
+                    .from('agro_crops')
+                    .insert({
+                        user_id: user.id,
+                        name: fullName,
+                        variety,
+                        area_size: area,
+                        investment,
+                        start_date: sowDate,
+                        expected_harvest_date: harvestDate || null,
+                        status: 'growing'
+                    })
+                    .select('id');
 
                 if (error) throw error;
+
+                const insertedId = Array.isArray(insertRows) ? insertRows[0]?.id : insertRows?.id;
+                if (insertedId && Number.isFinite(templateDuration) && templateDuration > 0) {
+                    window.YGAgroTemplates?.storeCropTemplateMapping(insertedId, templateDuration);
+                }
                 alert('✅ Siembra registrada');
                 window.closeCropModal();
                 document.getElementById('form-new-crop').reset();
@@ -2750,6 +2795,11 @@
                 <div class="input-group">
                     <label class="input-label" for="edit-concepto">Concepto</label>
                     <input type="text" id="edit-concepto" class="styled-input" required>
+                </div>
+
+                <div class="input-group" id="edit-who-group" style="display: none;">
+                    <label class="input-label" id="edit-who-label" for="edit-who-input">Detalle</label>
+                    <input type="text" id="edit-who-input" class="styled-input">
                 </div>
 
                 <div class="input-group">

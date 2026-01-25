@@ -1879,3 +1879,39 @@ Auditoría forense completa del proyecto YavlGold desde su génesis (24 Sept 202
 git commit -m "📜 docs: add CRONICA-YAVLGOLD - Definitive 2025 Chronicle (Sept-Dec)"
 git push origin main  # ✅ Completado
 ```
+
+---
+
+## V9.6 - Agro progreso automatico + plantillas Tachira + "a quien" (2026-01-25)
+
+### Diagnostico
+1) El progreso de cultivos depende de un campo manual (`progress`) y no se recalcula por fechas.
+2) No existe catalogo local de cultivos (Tachira) para seleccionar ciclos base.
+3) En historiales del facturero no se visualiza claramente el "a quien" (comprador/cliente/destino/causa).
+
+### Plan
+1) Crear `apps/gold/public/agro/crops_data.json` con cultivos base y duracion (sin finanzas).
+2) Agregar dropdown de plantilla en el modal "Nuevo Cultivo" y mostrar "Ciclo estimado".
+3) Auto-calcular `expected_harvest_date` si falta y hay plantilla.
+4) Implementar progreso automatico por fecha en cards: "Dia X de Y" + barra %.
+5) Mejorar facturero para mostrar y editar "a quien" por tab, con fallback a concepto si falta columna.
+6) Agregar logs `[AGRO] V9.6` para trazabilidad.
+7) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### QA Checklist (manual)
+- [ ] Crear cultivo con plantilla -> autocalculo de cosecha y "Dia 1 de Y".
+- [ ] Crear cultivo sin plantilla y sin cosecha -> progreso N/A.
+- [ ] Ajustar fecha de siembra antigua -> progreso % acorde.
+- [ ] Ingreso muestra comprador en historial y se puede editar.
+- [ ] Pendiente muestra cliente en historial.
+- [ ] Transferencia muestra destino en historial.
+- [ ] Perdida muestra causa en historial.
+- [ ] Consola sin errores + logs [AGRO] V9.6.
+QA manual pendiente (no ejecutada en CLI).
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```

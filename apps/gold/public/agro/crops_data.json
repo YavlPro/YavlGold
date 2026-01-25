@@ -1,0 +1,16 @@
+[
+  {
+    "key": "papa_granola",
+    "name": "Papa Granola",
+    "region": "Tachira",
+    "duration_days": 90,
+    "notes": "Referencia local. Sin proyecciones."
+  },
+  {
+    "key": "cebollin_la_grita",
+    "name": "Cebollin La Grita",
+    "region": "Tachira",
+    "duration_days": 60,
+    "notes": "Referencia local. Sin proyecciones."
+  }
+]

@@ -13,6 +13,286 @@ let currentEditId = null; // ID del cultivo en edición (null = nuevo)
 let cropsCache = [];      // Cache local de cultivos para edición
 
 // ============================================================
+// V9.6: PLANTILLAS LOCALES (TACHIRA)
+// ============================================================
+const CROP_TEMPLATES_ENDPOINTS = ['/agro/crops_data.json', './crops_data.json'];
+let cropTemplates = [];
+let cropTemplatesByKey = {};
+let cropTemplatesPromise = null;
+const CROP_TEMPLATE_MAP_KEY = 'YG_AGRO_CROP_TEMPLATES_V1';
+
+function normalizeCropTemplates(list) {
+    const rows = Array.isArray(list) ? list : [];
+    return rows
+        .filter(item => item && typeof item.key === 'string' && typeof item.name === 'string')
+        .map(item => ({
+            key: item.key.trim(),
+            name: item.name.trim(),
+            region: item.region || '',
+            duration_days: Number(item.duration_days),
+            notes: item.notes || ''
+        }))
+        .filter(item => item.key && item.name && Number.isFinite(item.duration_days) && item.duration_days > 0);
+}
+
+async function loadCropTemplates() {
+    if (cropTemplatesPromise) return cropTemplatesPromise;
+
+    cropTemplatesPromise = (async () => {
+        let templates = [];
+        for (const url of CROP_TEMPLATES_ENDPOINTS) {
+            try {
+                const res = await fetch(url, { cache: 'no-store' });
+                if (!res.ok) continue;
+                const payload = await res.json();
+                templates = normalizeCropTemplates(payload);
+                if (templates.length) break;
+            } catch (err) {
+                // Silent fallback to next endpoint
+            }
+        }
+
+        cropTemplates = templates;
+        cropTemplatesByKey = {};
+        cropTemplates.forEach(item => {
+            cropTemplatesByKey[item.key] = item;
+        });
+
+        console.info(`[AGRO] V9.6: templates loaded (${cropTemplates.length})`);
+        return cropTemplates;
+    })();
+
+    return cropTemplatesPromise;
+}
+
+function readCropTemplateMap() {
+    try {
+        const raw = localStorage.getItem(CROP_TEMPLATE_MAP_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function writeCropTemplateMap(map) {
+    try {
+        localStorage.setItem(CROP_TEMPLATE_MAP_KEY, JSON.stringify(map));
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function storeCropTemplateMapping(cropId, durationDays) {
+    if (!cropId || !Number.isFinite(durationDays)) return;
+    const map = readCropTemplateMap();
+    map[String(cropId)] = Math.round(durationDays);
+    writeCropTemplateMap(map);
+}
+
+function getStoredTemplateDuration(cropId) {
+    if (!cropId) return null;
+    const map = readCropTemplateMap();
+    const duration = Number(map[String(cropId)]);
+    return Number.isFinite(duration) ? duration : null;
+}
+
+function getTemplateDurationByKey(key) {
+    if (!key) return null;
+    const template = cropTemplatesByKey[key];
+    if (!template) return null;
+    const days = Number(template.duration_days);
+    return Number.isFinite(days) ? days : null;
+}
+
+function populateCropTemplateSelect() {
+    const select = document.getElementById('crop-template');
+    if (!select) return 0;
+
+    // Preserve current value
+    const currentValue = select.value;
+
+    // Keep first option (manual) and clear the rest
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+
+    cropTemplates.forEach((template) => {
+        const option = document.createElement('option');
+        option.value = template.key;
+        option.textContent = template.region
+            ? `${template.name} (${template.region})`
+            : template.name;
+        option.dataset.duration = String(template.duration_days);
+        select.appendChild(option);
+    });
+
+    if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+        select.value = currentValue;
+    }
+
+    return cropTemplates.length;
+}
+
+function formatDateKey(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(dateStr) {
+    if (!dateStr) return null;
+    const parts = String(dateStr).split('-').map(Number);
+    if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+    return { year: parts[0], month: parts[1], day: parts[2] };
+}
+
+function addDaysToDateKey(dateStr, days) {
+    const parsed = parseDateKey(dateStr);
+    if (!parsed || !Number.isFinite(days)) return '';
+    const dateObj = new Date(parsed.year, parsed.month - 1, parsed.day);
+    dateObj.setDate(dateObj.getDate() + Math.round(days));
+    return formatDateKey(dateObj);
+}
+
+function toUtcDate(dateStr) {
+    const parsed = parseDateKey(dateStr);
+    if (!parsed) return null;
+    return Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+}
+
+function diffDays(endStr, startStr) {
+    const endUtc = toUtcDate(endStr);
+    const startUtc = toUtcDate(startStr);
+    if (endUtc === null || startUtc === null) return null;
+    return Math.floor((endUtc - startUtc) / 86400000);
+}
+
+function clampNumber(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
+function getTodayKey() {
+    return formatDateKey(new Date());
+}
+
+function getSelectedTemplateDuration() {
+    const select = document.getElementById('crop-template');
+    const option = select?.selectedOptions?.[0];
+    if (!option?.dataset?.duration) return null;
+    const duration = Number(option.dataset.duration);
+    return Number.isFinite(duration) ? duration : null;
+}
+
+function updateTemplateCycleDisplay(durationDays) {
+    const cycleInput = document.getElementById('crop-template-cycle');
+    if (!cycleInput) return;
+    if (Number.isFinite(durationDays) && durationDays > 0) {
+        cycleInput.value = `${Math.round(durationDays)} dias`;
+    } else {
+        cycleInput.value = '--';
+    }
+}
+
+function maybeAutoFillHarvestDate() {
+    const startInput = document.getElementById('crop-start-date');
+    const harvestInput = document.getElementById('crop-harvest-date');
+    if (!startInput || !harvestInput) return;
+    if (harvestInput.value) return;
+
+    const durationDays = getSelectedTemplateDuration();
+    if (!Number.isFinite(durationDays) || durationDays <= 0) return;
+
+    const computed = addDaysToDateKey(startInput.value, durationDays);
+    if (computed) {
+        harvestInput.value = computed;
+    }
+}
+
+function initCropTemplateControls() {
+    if (document.__agroTemplateControlsBound) return;
+    document.__agroTemplateControlsBound = true;
+
+    const select = document.getElementById('crop-template');
+    const startInput = document.getElementById('crop-start-date');
+    const form = document.getElementById('form-new-crop');
+
+    if (select) {
+        select.addEventListener('change', () => {
+            updateTemplateCycleDisplay(getSelectedTemplateDuration());
+            maybeAutoFillHarvestDate();
+        });
+    }
+
+    if (startInput) {
+        startInput.addEventListener('change', () => {
+            maybeAutoFillHarvestDate();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('reset', () => {
+            updateTemplateCycleDisplay(null);
+        });
+    }
+}
+
+function getTemplateDurationForCrop(crop) {
+    if (crop?.id) {
+        const stored = getStoredTemplateDuration(crop.id);
+        if (Number.isFinite(stored)) return stored;
+    }
+    if (crop?.template_key) {
+        const duration = getTemplateDurationByKey(crop.template_key);
+        if (Number.isFinite(duration)) return duration;
+    }
+    if (Number.isFinite(crop?.template_duration_days)) {
+        return crop.template_duration_days;
+    }
+    return null;
+}
+
+function computeCropProgress(crop, templateDurationDays) {
+    const startDate = crop?.start_date;
+    if (!startDate) {
+        return { ok: false, label: 'N/A', percent: null, dayIndex: 0, totalDays: 0 };
+    }
+
+    let totalDays = null;
+    let endDate = null;
+    const templateDays = Number.isFinite(templateDurationDays) ? Math.round(templateDurationDays) : null;
+
+    if (templateDays && templateDays > 0) {
+        totalDays = Math.max(1, templateDays);
+        endDate = addDaysToDateKey(startDate, totalDays);
+    } else if (crop?.expected_harvest_date) {
+        const diff = diffDays(crop.expected_harvest_date, startDate);
+        if (diff !== null) {
+            totalDays = Math.max(1, diff);
+            endDate = crop.expected_harvest_date;
+        }
+    }
+
+    if (!totalDays || !endDate) {
+        return { ok: false, label: 'N/A', percent: null, dayIndex: 0, totalDays: 0 };
+    }
+
+    const todayKey = getTodayKey();
+    const dayDiff = diffDays(todayKey, startDate);
+    const dayIndex = clampNumber((dayDiff === null ? 0 : dayDiff) + 1, 0, totalDays);
+    const percent = clampNumber((dayIndex / totalDays) * 100, 0, 100);
+
+    return {
+        ok: true,
+        label: `Dia ${dayIndex} de ${totalDays}`,
+        percent,
+        dayIndex,
+        totalDays
+    };
+}
+
+// ============================================================
 // V9.5: CROP DROPDOWN POPULATION + HISTORY REFRESH
 // ============================================================
 
@@ -222,18 +502,121 @@ function createEvidenceLinkElement(url) {
     return link;
 }
 
+// ============================================================
+// V9.6: FACTURERO "A QUIEN" (DISPLAY + PARSE + FALLBACK)
+// ============================================================
+const WHO_FIELD_META = {
+    ingresos: { label: 'Comprador', icon: '👤', field: null },
+    pendientes: { label: 'Cliente', icon: '👤', field: 'cliente' },
+    transferencias: { label: 'Destino', icon: '📌', field: 'destino' },
+    perdidas: { label: 'Causa/Responsable', icon: '⚠️', field: 'causa' }
+};
+
+function parseWhoFromConcept(tabName, concept) {
+    const text = String(concept || '').trim();
+    if (!text) return { concept: '', who: '' };
+
+    if (tabName === 'ingresos') {
+        const match = text.match(/^Venta a\s+(.+?)\s+-\s+(.+)$/i);
+        if (match) {
+            return { who: match[1].trim(), concept: match[2].trim() };
+        }
+    }
+
+    if (tabName === 'pendientes') {
+        const match = text.match(/^(.*?)\s+-\s+Cliente:\s*(.+)$/i);
+        if (match) {
+            return { who: match[2].trim(), concept: match[1].trim() };
+        }
+    }
+
+    if (tabName === 'transferencias') {
+        const match = text.match(/^(.*?)\s+-\s+Destino:\s*(.+)$/i);
+        if (match) {
+            return { who: match[2].trim(), concept: match[1].trim() };
+        }
+    }
+
+    if (tabName === 'perdidas') {
+        const match = text.match(/^(.*?)\s+-\s+Causa(?:\/Responsable)?:\s*(.+)$/i);
+        if (match) {
+            return { who: match[2].trim(), concept: match[1].trim() };
+        }
+    }
+
+    return { concept: text, who: '' };
+}
+
+function buildConceptWithWho(tabName, concept, whoValue) {
+    const safeConcept = String(concept || '').trim();
+    const who = String(whoValue || '').trim();
+    if (!who) return safeConcept;
+
+    if (tabName === 'ingresos') {
+        return `Venta a ${who} - ${safeConcept}`;
+    }
+    if (tabName === 'pendientes') {
+        return `${safeConcept} - Cliente: ${who}`;
+    }
+    if (tabName === 'transferencias') {
+        return `${safeConcept} - Destino: ${who}`;
+    }
+    if (tabName === 'perdidas') {
+        return `${safeConcept} - Causa: ${who}`;
+    }
+    return safeConcept;
+}
+
+function getWhoData(tabName, item, concept) {
+    const meta = WHO_FIELD_META[tabName] || null;
+    const parsed = parseWhoFromConcept(tabName, concept);
+    const fieldValue = meta?.field && item ? item[meta.field] : '';
+    const who = fieldValue || parsed.who || '';
+    return {
+        who: String(who || '').trim(),
+        concept: parsed.concept || concept || ''
+    };
+}
+
+function formatWhoDisplay(tabName, whoValue) {
+    const meta = WHO_FIELD_META[tabName];
+    if (!meta || !whoValue) return '';
+    const label = meta.label || 'Detalle';
+    const icon = meta.icon || '•';
+    return `${icon} ${label}: ${escapeHtml(whoValue)}`;
+}
+
+function isMissingColumnError(error, column) {
+    if (!error || !column) return false;
+    const code = (error.code || '').toString();
+    const msg = (error.message || '').toLowerCase();
+    const details = (error.details || '').toLowerCase();
+    const text = `${msg} ${details}`;
+    const col = column.toLowerCase();
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('could not find') || text.includes('not found');
+    if (code === '42703') return true;
+    if (!hasMissingPhrase) return false;
+    return text.includes('column') && text.includes(col);
+}
+
 function renderHistoryRow(tabName, item, config) {
-    const concept = item[config.conceptField] || 'Sin concepto';
+    const rawConcept = item[config.conceptField] || 'Sin concepto';
     const amount = Number(item[config.amountField] || 0);
     const date = item[config.dateField];
     const cropName = item.crop_name || '';
     const evidenceUrl = item.evidence_url_resolved || '';
     const evidenceHtml = evidenceUrl ? `<span>${buildEvidenceLinkHtml(evidenceUrl)}</span>` : '';
+    const whoData = getWhoData(tabName, item, rawConcept);
+    const whoLine = whoData.who
+        ? `<div style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;">• ${formatWhoDisplay(tabName, whoData.who)}</div>`
+        : '';
+    const displayConcept = whoData.concept || rawConcept;
 
     return `
         <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
             <div style="flex: 1; min-width: 0;">
-                <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(concept)}</div>
+                <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(displayConcept)}</div>
+                ${whoLine}
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
                     ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
@@ -491,9 +874,24 @@ function openFactureroEditModal(tabName, item, config) {
     // Populate fields
     document.getElementById('edit-item-id').value = item.id;
     document.getElementById('edit-tab-name').value = tabName;
-    document.getElementById('edit-concepto').value = item[config.conceptField] || '';
+    const rawConcept = item[config.conceptField] || '';
+    const whoData = getWhoData(tabName, item, rawConcept);
+    document.getElementById('edit-concepto').value = whoData.concept || rawConcept;
     document.getElementById('edit-monto').value = item[config.amountField] || '';
     document.getElementById('edit-fecha').value = item[config.dateField] || '';
+
+    const whoGroup = document.getElementById('edit-who-group');
+    const whoLabel = document.getElementById('edit-who-label');
+    const whoInput = document.getElementById('edit-who-input');
+    const whoMeta = WHO_FIELD_META[tabName];
+    if (whoGroup && whoLabel && whoInput && whoMeta) {
+        whoGroup.style.display = 'block';
+        whoLabel.textContent = whoMeta.label;
+        whoInput.value = whoData.who || '';
+    } else if (whoGroup && whoInput) {
+        whoGroup.style.display = 'none';
+        whoInput.value = '';
+    }
 
     // Populate crop selector
     const cropSelect = document.getElementById('edit-crop-id');
@@ -507,7 +905,8 @@ function openFactureroEditModal(tabName, item, config) {
     const extraContainer = document.getElementById('edit-extra-fields');
     if (extraContainer) {
         extraContainer.innerHTML = '';
-        config.extraFields.forEach(field => {
+        const extraFields = (config.extraFields || []).filter(field => field !== whoMeta?.field);
+        extraFields.forEach(field => {
             const value = item[field] || '';
             const label = field.charAt(0).toUpperCase() + field.slice(1);
             extraContainer.innerHTML += `
@@ -550,24 +949,51 @@ async function saveEditModal() {
             return;
         }
 
+        const conceptValue = document.getElementById('edit-concepto')?.value?.trim() || '';
+        const whoValue = document.getElementById('edit-who-input')?.value?.trim() || '';
+        const whoMeta = WHO_FIELD_META[tabName];
+
+        let conceptForSave = conceptValue;
+        if (tabName === 'ingresos') {
+            conceptForSave = buildConceptWithWho(tabName, conceptValue, whoValue);
+        }
+
         const updateData = {
-            [config.conceptField]: document.getElementById('edit-concepto')?.value?.trim(),
+            [config.conceptField]: conceptForSave,
             [config.amountField]: parseFloat(document.getElementById('edit-monto')?.value) || 0,
             [config.dateField]: document.getElementById('edit-fecha')?.value,
             crop_id: document.getElementById('edit-crop-id')?.value || null
         };
 
-        // Add extra fields
-        config.extraFields.forEach(field => {
-            const el = document.getElementById(`edit-${field}`);
-            if (el) updateData[field] = el.value?.trim() || null;
-        });
+        if (whoMeta?.field) {
+            updateData[whoMeta.field] = whoValue || null;
+        }
 
-        const { error } = await supabase
+        // Add extra fields
+        (config.extraFields || [])
+            .filter(field => field !== whoMeta?.field)
+            .forEach(field => {
+                const el = document.getElementById(`edit-${field}`);
+                if (el) updateData[field] = el.value?.trim() || null;
+            });
+
+        let { error } = await supabase
             .from(config.table)
             .update(updateData)
             .eq('id', itemId)
             .eq('user_id', user.id);
+
+        if (error && whoMeta?.field && isMissingColumnError(error, whoMeta.field)) {
+            const fallbackData = { ...updateData };
+            delete fallbackData[whoMeta.field];
+            fallbackData[config.conceptField] = buildConceptWithWho(tabName, conceptValue, whoValue);
+            const retry = await supabase
+                .from(config.table)
+                .update(fallbackData)
+                .eq('id', itemId)
+                .eq('user_id', user.id);
+            error = retry.error;
+        }
 
         if (error) throw error;
 
@@ -754,6 +1180,13 @@ window.populateCropDropdowns = populateCropDropdowns;
 window.refreshFactureroHistory = refreshFactureroHistory;
 window.closeEditModal = closeEditModal;
 window.saveEditModal = saveEditModal;
+if (typeof window !== 'undefined') {
+    window.YGAgroTemplates = Object.assign(window.YGAgroTemplates || {}, {
+        storeCropTemplateMapping,
+        getStoredTemplateDuration,
+        addDaysToDateKey
+    });
+}
 
 // ============================================================
 // UTILIDADES
@@ -895,12 +1328,13 @@ function createCropCardElement(crop, index) {
 
     const progressLabel = document.createElement('span');
     progressLabel.className = 'progress-label';
-    progressLabel.textContent = 'Ciclo de Cosecha';
+    progressLabel.textContent = 'Progreso';
 
     const progressValue = document.createElement('span');
     progressValue.className = 'progress-value';
-    const progress = normalizeProgress(crop.progress);
-    progressValue.textContent = `${progress}%`;
+    const templateDuration = getTemplateDurationForCrop(crop);
+    const progress = computeCropProgress(crop, templateDuration);
+    progressValue.textContent = progress.ok ? progress.label : 'Progreso: N/A';
 
     progressHeader.append(progressLabel, progressValue);
 
@@ -909,7 +1343,10 @@ function createCropCardElement(crop, index) {
 
     const progressFill = document.createElement('div');
     progressFill.className = 'progress-fill';
-    progressFill.style.width = `${progress}%`;
+    progressFill.style.width = progress.ok ? `${progress.percent}%` : '0%';
+    if (!progress.ok) {
+        progressFill.style.opacity = '0.35';
+    }
 
     progressTrack.appendChild(progressFill);
     progressSection.append(progressHeader, progressTrack);
@@ -933,6 +1370,12 @@ function createCropCardElement(crop, index) {
 export async function loadCrops() {
     const cropsGrid = document.querySelector('.crops-grid');
     if (!cropsGrid) return;
+
+    try {
+        await loadCropTemplates();
+    } catch (e) {
+        // Template load failures should not block crops rendering
+    }
 
     // Mostrar loading
     cropsGrid.innerHTML = `
@@ -996,6 +1439,8 @@ export async function loadCrops() {
         fragment.appendChild(createCropCardElement(crop, i));
     });
     cropsGrid.appendChild(fragment);
+
+    console.info(`[AGRO] V9.6: progress computed for crops (${crops.length})`);
 
     // Animar progress bars
     setTimeout(() => {
@@ -2137,6 +2582,20 @@ function ensureIncomeSection(targetContainer) {
         conceptInput.style.paddingLeft = '1rem';
         conceptGroup.append(conceptLabel, conceptInput);
 
+        const buyerGroup = document.createElement('div');
+        buyerGroup.className = 'input-group field-dynamic';
+        const buyerLabel = document.createElement('label');
+        buyerLabel.className = 'input-label';
+        buyerLabel.setAttribute('for', 'income-buyer');
+        buyerLabel.textContent = 'Comprador';
+        const buyerInput = document.createElement('input');
+        buyerInput.type = 'text';
+        buyerInput.id = 'income-buyer';
+        buyerInput.className = 'styled-input';
+        buyerInput.placeholder = 'Ej: Perez';
+        buyerInput.style.paddingLeft = '1rem';
+        buyerGroup.append(buyerLabel, buyerInput);
+
         const amountGroup = document.createElement('div');
         amountGroup.className = 'input-group field-amount';
         const amountLabel = document.createElement('label');
@@ -2253,7 +2712,7 @@ function ensureIncomeSection(targetContainer) {
 
         actions.append(btnClean, btnSave);
 
-        grid.append(conceptGroup, amountGroup, dateGroup, categoryGroup, cropGroup, actions);
+        grid.append(conceptGroup, buyerGroup, amountGroup, dateGroup, categoryGroup, cropGroup, actions);
 
         const advancedPanel = document.createElement('details');
         advancedPanel.className = 'advanced-panel';
@@ -2401,6 +2860,7 @@ async function handleIncomeFileUpload(input, dropzone) {
 
 function clearIncomeForm() {
     const conceptInput = document.getElementById('income-concept');
+    const buyerInput = document.getElementById('income-buyer');
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
@@ -2409,6 +2869,7 @@ function clearIncomeForm() {
     const btnSave = document.getElementById('income-save-btn');
 
     if (conceptInput) conceptInput.value = '';
+    if (buyerInput) buyerInput.value = '';
     if (amountInput) amountInput.value = '';
     if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
     if (categoryInput) categoryInput.selectedIndex = 0;
@@ -2423,6 +2884,7 @@ function clearIncomeForm() {
 function enterIncomeEditMode(income) {
     if (!income) return;
     const conceptInput = document.getElementById('income-concept');
+    const buyerInput = document.getElementById('income-buyer');
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
@@ -2433,7 +2895,9 @@ function enterIncomeEditMode(income) {
     incomeEditId = income.id || null;
     incomeEditSupportPath = income.soporte_url || income.evidence_url || null;
 
-    if (conceptInput) conceptInput.value = income.concepto || '';
+    const whoData = getWhoData('ingresos', income, income.concepto || '');
+    if (conceptInput) conceptInput.value = whoData.concept || income.concepto || '';
+    if (buyerInput) buyerInput.value = whoData.who || '';
     if (amountInput) amountInput.value = income.monto ?? '';
     if (dateInput) dateInput.value = income.fecha || new Date().toISOString().split('T')[0];
     if (categoryInput) categoryInput.value = income.categoria || '';
@@ -2492,9 +2956,20 @@ function renderIncomeItem(listEl, income, signedUrl) {
 
     const details = document.createElement('div');
 
+    const whoData = getWhoData('ingresos', income, income.concepto || '');
     const concept = document.createElement('div');
     concept.style.cssText = 'color: #fff; font-weight: 600; font-size: 0.95rem;';
-    concept.textContent = income.concepto || 'Ingreso';
+    concept.textContent = whoData.concept || income.concepto || 'Ingreso';
+
+    let whoLine = null;
+    if (whoData.who) {
+        whoLine = document.createElement('div');
+        whoLine.style.cssText = 'color: rgba(255,255,255,0.65); font-size: 0.75rem; margin-top: 2px;';
+        const whoMeta = WHO_FIELD_META.ingresos;
+        const whoLabel = whoMeta?.label || 'Comprador';
+        const whoIcon = whoMeta?.icon || '👤';
+        whoLine.textContent = `• ${whoIcon} ${whoLabel}: ${whoData.who}`;
+    }
 
     const meta = document.createElement('div');
     meta.style.cssText = 'color: rgba(255,255,255,0.5); font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.5rem;';
@@ -2515,7 +2990,11 @@ function renderIncomeItem(listEl, income, signedUrl) {
         }
     }
 
-    details.append(concept, meta);
+    if (whoLine) {
+        details.append(concept, whoLine, meta);
+    } else {
+        details.append(concept, meta);
+    }
     left.append(iconWrap, details);
 
     const actions = document.createElement('div');
@@ -2697,6 +3176,7 @@ async function loadIncomes() {
 
 async function saveIncome() {
     const conceptInput = document.getElementById('income-concept');
+    const buyerInput = document.getElementById('income-buyer');
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
@@ -2704,10 +3184,12 @@ async function saveIncome() {
     const btnSave = document.getElementById('income-save-btn');
 
     const concept = conceptInput?.value?.trim() || '';
+    const buyer = buyerInput?.value?.trim() || '';
     const amount = amountInput?.value?.trim() || '';
     const category = categoryInput?.value || '';
     const dateVal = dateInput?.value || new Date().toISOString().split('T')[0];
     const file = fileInput?.files?.[0] || null;
+    const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
 
     if (!concept || !amount || !category) {
         alert('Por favor completa Concepto, Monto y Categoria.');
@@ -2750,7 +3232,7 @@ async function saveIncome() {
 
         if (isEditing) {
             const payload = {
-                concepto: concept,
+                concepto: conceptFinal,
                 monto: parseFloat(amount),
                 fecha: dateVal,
                 categoria: category
@@ -2777,7 +3259,7 @@ async function saveIncome() {
                 .insert({
                     id: incomeId,
                     user_id: user.id,
-                    concepto: concept,
+                    concepto: conceptFinal,
                     monto: parseFloat(amount),
                     fecha: dateVal,
                     categoria: category,
@@ -3008,6 +3490,7 @@ function initFinanceFormHandlers() {
             id: 'pending-form',
             table: 'agro_pending',
             label: 'Pendiente',
+            tabName: 'pendientes',
             fileInputId: 'pending-receipt',
             dropzoneId: 'pending-dropzone',
             storagePath: 'pending',
@@ -3025,6 +3508,7 @@ function initFinanceFormHandlers() {
             id: 'loss-form',
             table: 'agro_losses',
             label: 'Pérdida',
+            tabName: 'perdidas',
             fileInputId: 'loss-receipt',
             dropzoneId: 'loss-dropzone',
             storagePath: 'loss',
@@ -3042,6 +3526,7 @@ function initFinanceFormHandlers() {
             id: 'transfer-form',
             table: 'agro_transfers',
             label: 'Transferencia',
+            tabName: 'transferencias',
             fileInputId: 'transfer-receipt',
             dropzoneId: 'transfer-dropzone',
             storagePath: 'transfer',
@@ -3118,7 +3603,19 @@ function initFinanceFormHandlers() {
                     crop_id: cropId || null // V9.5: Associate with crop
                 };
 
-                const { error } = await supabase.from(config.table).insert(insertData);
+                const tabName = config.tabName;
+                const whoMeta = WHO_FIELD_META[tabName];
+                const whoFieldKey = whoMeta?.field || null;
+                const whoValue = whoFieldKey ? formData?.[whoFieldKey] : '';
+
+                let { error } = await supabase.from(config.table).insert(insertData);
+                if (error && whoFieldKey && isMissingColumnError(error, whoFieldKey)) {
+                    const fallbackData = { ...insertData };
+                    delete fallbackData[whoFieldKey];
+                    fallbackData.concepto = buildConceptWithWho(tabName, formData.concepto, whoValue);
+                    const retry = await supabase.from(config.table).insert(fallbackData);
+                    error = retry.error;
+                }
                 if (error) throw error;
 
                 alert(`✅ ${config.label} registrado`);
@@ -3132,15 +3629,8 @@ function initFinanceFormHandlers() {
                 }
 
                 // V9.5: Refresh history for this specific tab
-                const tabName = config.id.replace('-form', 's').replace('loss', 'perdida').replace('pending', 'pendiente').replace('transfer', 'transferencia');
-                const tabMapping = {
-                    'pendientes': 'pendientes',
-                    'losss': 'perdidas',
-                    'transfers': 'transferencias'
-                };
-                const mappedTab = tabMapping[config.id.replace('-form', 's')] || tabName;
                 if (typeof window.refreshFactureroHistory === 'function') {
-                    await window.refreshFactureroHistory(mappedTab);
+                    await window.refreshFactureroHistory(config.tabName);
                 }
 
                 // Refresh UI
@@ -3858,6 +4348,15 @@ export function initAgro() {
     // Inyectar CSS del modal inmediatamente para ocultarlo
     injectModalStyles();
 
+    // Plantillas locales (Tachira) + controles de modal
+    loadCropTemplates().then(() => {
+        populateCropTemplateSelect();
+        updateTemplateCycleDisplay(getSelectedTemplateDuration());
+    }).catch(() => {
+        updateTemplateCycleDisplay(null);
+    });
+    initCropTemplateControls();
+
     // Cargar cultivos
     loadCrops();
     setupCropActionListeners();
@@ -3878,6 +4377,7 @@ export function initAgro() {
     initAgroAssistantModal();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
+    console.info('[AGRO] V9.6: facturero who-field enabled');
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
     initStatsCenterModal(); // V9.5.3: Centro Estadistico
     setTimeout(checkCriticalFormUniqueness, 0);
@@ -4074,6 +4574,11 @@ export function openEditModal(id) {
     document.getElementById('crop-investment').value = crop.investment || '';
     document.getElementById('crop-start-date').value = crop.start_date || '';
     document.getElementById('crop-harvest-date').value = crop.expected_harvest_date || '';
+    const templateSelect = document.getElementById('crop-template');
+    if (templateSelect) {
+        templateSelect.value = '';
+        updateTemplateCycleDisplay(null);
+    }
 
     // Actualizar UI del modal para modo "Editar"
     const modalTitle = document.querySelector('.modal-title');
