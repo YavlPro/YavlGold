@@ -597,7 +597,7 @@ function readUnitFields(form, prefix) {
         unit_qty: unitQtyValue,
         quantity_kg: kgValue
     };
-    console.log(`[AGRO] V9.6.5 readUnitFields(${prefix}):`, result, { typeEl: !!typeEl, qtyEl: !!qtyEl, kgEl: !!kgEl });
+    // console.log(`[AGRO] V9.6.5 readUnitFields(${prefix}):`, result, { typeEl: !!typeEl, qtyEl: !!qtyEl, kgEl: !!kgEl });
     return result;
 }
 
@@ -1132,7 +1132,7 @@ async function saveEditModal() {
             .filter(field => field !== whoMeta?.field)
             .forEach(field => {
                 const el = document.getElementById(`edit-${field}`);
-                console.log(`[AGRO] V9.6.5 extraField: ${field}, el:`, el, 'value:', el?.value);
+                // console.log(`[AGRO] V9.6.5 extraField: ${field}, el:`, el, 'value:', el?.value);
                 if (!el) return;
                 if (field === 'unit_type') {
                     updateData[field] = el.value || null;
@@ -1146,7 +1146,7 @@ async function saveEditModal() {
                 updateData[field] = el.value?.trim() || null;
             });
 
-        console.log('[AGRO] V9.6.5 updateData:', { table: config.table, itemId, updateData });
+        // console.log('[AGRO] V9.6.5 updateData:', { table: config.table, itemId, updateData });
 
         let { error } = await supabase
             .from(config.table)
@@ -3959,7 +3959,7 @@ function initFinanceFormHandlers() {
         if (config.unitPrefix) {
             const unitSelect = form.querySelector(`#${config.unitPrefix}-unit-type`);
             populateUnitSelect(unitSelect);
-            console.log(`[AGRO] V9.6.5 Unit select populated: #${config.unitPrefix}-unit-type, options:`, unitSelect?.options?.length);
+            // console.log(`[AGRO] V9.6.5 Unit select populated: #${config.unitPrefix}-unit-type, options:`, unitSelect?.options?.length);
         }
 
         form.addEventListener('submit', async (event) => {
@@ -4011,7 +4011,7 @@ function initFinanceFormHandlers() {
                     evidence_url: evidenceUrl,
                     crop_id: cropId || null // V9.5: Associate with crop
                 };
-                console.log('[AGRO] V9.6.5 insertData:', { table: config.table, insertData });
+                // console.log('[AGRO] V9.6.5 insertData:', { table: config.table, insertData });
 
                 const tabName = config.tabName;
                 const whoMeta = WHO_FIELD_META[tabName];
