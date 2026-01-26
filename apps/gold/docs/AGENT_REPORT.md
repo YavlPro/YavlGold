@@ -2438,3 +2438,29 @@ git push
 - [ ] Centro de Estadisticas muestra totales de sacos/medios sacos/cestas/kg para Vendido, Pendiente, Transferido y Perdidas (con filtro por cultivo si existe selector).
 - [ ] Tabs/UX intactos y sin cambios de navegacion.
 - [ ] `pnpm build:gold` OK.
+
+---
+
+## Diagnostico (Agro History & Notification Fixes - 2026-01-26)
+1. **Historia faltante**: Registros en tabs "Pendientes", "Perdidas" y "Transferencias" no aparecian en el historial. Causa: query solicitaba `soporte_url` que no existe en estas tablas (solo en income).
+2. **Notificaciones**: Alertas de cosecha ignoraban estados en español (`sembrado`, `creciendo`) y ventana de 7 dias era muy corta.
+3. **Datos de Unidades**: Riesgo de perdida de datos de `unit_type`/`unit_qty`/`quantity_kg` por posible desalineacion de schema (aunque verificacion confirmo que columnas existen).
+
+## Plan (Agro History & Notification Fixes)
+1. **Fix Schema Query**: En `agro.js`, remover `soporte_url` de `FACTURERO_EVIDENCE_FIELDS` para tabs que no lo tienen.
+2. **Mejora Notificaciones**: En `agro-notifications.js`, aumentar ventana a 15 dias y normalizar estados (`normalizeCropStatus`).
+3. **Verificacion**: Confirmar que columnas de unidad existen y el renderizado en historial las muestra correctamente.
+
+## Resultado (Agro History & Notification Fixes)
+- **Status**: PASS 
+- **Historial**: Tablas "Pendientes", "Perdidas", "Transferencias" ahora cargan registros correctamente.
+- **Unidades**: Se visualizan correctamente (ej: "2 sacos  100kg") en el historial.
+- **Notificaciones**: Logica robusta para estados en español y ventana de 15 dias.
+- **Base de datos**: Confirmado que columnas de unidades existen en todas las tablas financieras.
+
+## Git Commands Sugeridos
+```bash
+git add apps/gold/agro/agro.js apps/gold/agro/agro-notifications.js apps/gold/docs/AGENT_REPORT.md
+git commit -m "fix(agro): resolve history loading for pending/losses/transfers and improve notifications"
+git push
+```

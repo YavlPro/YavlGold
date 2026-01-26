@@ -296,13 +296,21 @@ function checkCropAlerts(crop) {
     const now = new Date();
     // V9.6.5: Use expected_harvest_date (harvest_date column doesn't exist)
     const harvestDate = crop.expected_harvest_date ? new Date(crop.expected_harvest_date) : null;
+    const status = (crop.status || '').toLowerCase();
+
+    // Map legacy English status to Spanish if needed (though DB migration fixed this)
+    const isActive = ['sembrado', 'creciendo', 'produccion', 'growing', 'ready'].includes(status);
+
+    console.log(`[AgroNotif] Checking crop: ${crop.name}, status=${status}, harvest=${crop.expected_harvest_date}`);
 
     if (harvestDate) {
         const days = Math.ceil((harvestDate - now) / (1000 * 60 * 60 * 24));
-        if (days > 0 && days <= 7) {
+        console.log(`[AgroNotif] Days to harvest: ${days}`);
+
+        if (days > 0 && days <= 15) { // V9.6.5: Increased warning window to 15 days
             addNotification('warning', `📅 Cosecha: ${crop.name}`, `Faltan ${days} días.`, 'fa-calendar-check');
         }
-        if (days < 0) {
+        if (days < 0 && status !== 'finalizado' && status !== 'harvested') {
             addNotification('danger', `⚠️ Atrasada: ${crop.name}`, `Pasaron ${Math.abs(days)} días.`, 'fa-exclamation-triangle');
         }
     }

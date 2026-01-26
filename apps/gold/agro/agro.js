@@ -416,9 +416,9 @@ const FACTURERO_CONFIG = {
 const FACTURERO_EVIDENCE_FIELDS = {
     gastos: ['evidence_url'],
     ingresos: ['soporte_url', 'evidence_url'],
-    pendientes: ['evidence_url', 'soporte_url'],
-    perdidas: ['evidence_url', 'soporte_url'],
-    transferencias: ['evidence_url', 'soporte_url']
+    pendientes: ['evidence_url'], // soporte_url not in DB
+    perdidas: ['evidence_url'],   // soporte_url not in DB
+    transferencias: ['evidence_url'] // soporte_url not in DB
 };
 
 const EVIDENCE_LINK_STYLE = 'color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;';
@@ -511,11 +511,12 @@ const WHO_FIELD_META = {
     transferencias: { label: 'Destino', icon: '📌', field: 'destino' },
     perdidas: { label: 'Causa/Responsable', icon: '⚠️', field: 'causa' }
 };
+
 const INCOME_UNIT_OPTIONS = [
     { value: '', label: 'Seleccionar...' },
     { value: 'saco', label: 'Saco', singular: 'saco', plural: 'sacos' },
     { value: 'medio_saco', label: 'Medio saco', singular: 'medio saco', plural: 'medios sacos' },
-    { value: 'cesta', label: 'Cestas', singular: 'cesta', plural: 'cestas' }
+    { value: 'cesta', label: 'Cesta', singular: 'cesta', plural: 'cestas' }
 ];
 
 const FACTURERO_EXTRA_FIELD_META = {
