@@ -2441,6 +2441,49 @@ git push
 
 ---
 
+## V9.6.9 - Stats reales de unidades + cultivos top/bottom (2026-01-26)
+
+### Diagnostico
+1) Centro de Estadísticas en /agro ya muestra totales monetarios, pero no muestra conteos reales por tipo de movimiento ni totales de unidades/kg por tipo.
+2) Se requieren consultas reales por usuario a: `agro_income`, `agro_pending`, `agro_transfers`, `agro_losses` y `agro_crops`.
+3) Columnas mínimas necesarias: `unit_type`, `unit_qty`, `quantity_kg`, `crop_id` (movimientos) y `name`, `variety` (cultivos).
+4) Para evitar inflar datos: filtrar por `user_id` y excluir `deleted_at` si la columna existe; si no existe, no usar el filtro.
+
+### Plan
+1) `apps/gold/agro/agro-stats.js`: implementar agregador real de unidades por tipo y conteos de movimientos; usar queries por `user_id` y manejar columnas faltantes sin romper (si falta `deleted_at`, reintentar sin filtro).
+2) `apps/gold/agro/agro-stats.js`: consultar `agro_crops` del usuario y calcular “más cultivado/menos cultivado” por frecuencia de `name + variety` con manejo de empates.
+3) `apps/gold/agro/index.html`: agregar contenedores para “Movimientos” y “Cultivos” en el Centro de Estadísticas.
+4) `apps/gold/agro/agro.css`: estilos mínimos para los nuevos rows del Centro de Estadísticas (sin alterar layout general).
+5) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### DoD
+- [ ] Centro de Estadísticas muestra conteos reales por tipo: Vendido, Pendiente, Transferido, Perdido.
+- [ ] Para cada tipo muestra totales reales por unidad (sacos, medios_sacos, cestas, kg), mostrando 0 si no hay datos.
+- [ ] “Cultivo más cultivado” y “Cultivo menos cultivado” basados en `agro_crops` del usuario con empates soportados.
+- [ ] Datos solo del usuario actual (sin inflar, sin mocks) y `deleted_at` respetado si existe.
+- [ ] `pnpm build:gold` OK.
+
+---
+
+## V9.6.10 - Cultivo más vendido (stats reales) (2026-01-26)
+
+### Diagnostico
+1) Se requiere agregar “Cultivo más vendido” basado en `agro_income` usando `crop_id` y sumas reales de `unit_qty` y `quantity_kg`.
+2) La fuente debe ser Supabase del usuario actual y sin valores inflados; si no hay ventas con `crop_id`, mostrar “Sin datos (0)”.
+3) Columnas mínimas: `crop_id`, `unit_type`, `unit_qty`, `quantity_kg` (agro_income) y `id/name/variety` (agro_crops).
+
+### Plan
+1) `apps/gold/agro/agro-stats.js`: calcular top vendedor por `crop_id` con sumas reales de `unit_qty` y `quantity_kg`, resolver label con `agro_crops` y manejar empates.
+2) `apps/gold/agro/index.html`: agregar row “Más vendido” en el bloque de Cultivos del Centro de Estadísticas.
+3) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### DoD
+- [ ] “Más vendido” refleja el cultivo con mayor volumen vendido (Kg y/o unidades).
+- [ ] Empates muestran múltiples cultivos; si no hay datos, “Sin datos (0)”.
+- [ ] Datos solo del usuario actual (sin mocks).
+- [ ] `pnpm build:gold` OK.
+---
+
 ## Diagnostico (Agro History & Notification Fixes - 2026-01-26)
 1. **Historia faltante**: Registros en tabs "Pendientes", "Perdidas" y "Transferencias" no aparecian en el historial. Causa: query solicitaba `soporte_url` que no existe en estas tablas (solo en income).
 2. **Notificaciones**: Alertas de cosecha ignoraban estados en español (`sembrado`, `creciendo`) y ventana de 7 dias era muy corta.

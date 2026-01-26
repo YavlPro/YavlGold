@@ -77,38 +77,71 @@ function isMissingColumnError(error, column) {
     return text.includes('column') && text.includes(col);
 }
 
-async function selectAgroTable(table, columns, useDeletedAt) {
+async function selectAgroTable(table, columns, useDeletedAt, userId) {
     if (schemaCaps.tables[table] === false) {
         return { data: null, error: null, skipped: true };
     }
 
     const columnCaps = getColumnCaps(table);
-    const shouldUseDeletedAt = useDeletedAt && columnCaps.deleted_at !== false;
+    let cols = Array.isArray(columns)
+        ? columns.map(col => String(col || '').trim()).filter(Boolean)
+        : String(columns || '').split(',').map(col => col.trim()).filter(Boolean);
+    cols = cols.filter(col => columnCaps[col] !== false);
 
-    let query = supabase.from(table).select(columns);
-    if (shouldUseDeletedAt) query = query.is('deleted_at', null);
+    let shouldUseDeletedAt = useDeletedAt && columnCaps.deleted_at !== false;
 
-    let { data, error } = await query;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+        if (cols.length === 0) {
+            return { data: [], error: null, skipped: true };
+        }
 
-    if (error) {
+        let query = supabase.from(table).select(cols.join(', '));
+        if (userId) {
+            query = query.eq('user_id', userId);
+        }
+        if (shouldUseDeletedAt) {
+            query = query.is('deleted_at', null);
+        }
+
+        let { data, error } = await query;
+
+        if (!error) {
+            return { data, error: null, skipped: false };
+        }
+
         if (isMissingTableError(error, table)) {
             markTableMissing(table);
             return { data: null, error: null, skipped: true };
         }
 
+        if (userId && isMissingColumnError(error, 'user_id')) {
+            markColumnMissing(table, 'user_id');
+            return { data: [], error: null, skipped: true };
+        }
+
         if (shouldUseDeletedAt && isMissingColumnError(error, 'deleted_at')) {
             markColumnMissing(table, 'deleted_at');
-            const retry = await supabase.from(table).select(columns);
-            data = retry.data;
-            error = retry.error;
-            if (error && isMissingTableError(error, table)) {
-                markTableMissing(table);
-                return { data: null, error: null, skipped: true };
-            }
+            shouldUseDeletedAt = false;
+            continue;
         }
+
+        let removed = false;
+        cols.forEach((col) => {
+            if (isMissingColumnError(error, col)) {
+                markColumnMissing(table, col);
+                removed = true;
+            }
+        });
+
+        if (removed) {
+            cols = cols.filter(col => columnCaps[col] !== false);
+            continue;
+        }
+
+        return { data, error, skipped: false };
     }
 
-    return { data, error, skipped: false };
+    return { data: [], error: null, skipped: true };
 }
 
 const UNIT_LABELS = {
@@ -124,6 +157,12 @@ function normalizeUnitType(value) {
 function formatUnitNumber(value) {
     const num = Number(value);
     if (!Number.isFinite(num) || num <= 0) return '';
+    return num % 1 === 0 ? String(num) : String(parseFloat(num.toFixed(2)));
+}
+
+function formatUnitNumberWithZero(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num < 0) return '0';
     return num % 1 === 0 ? String(num) : String(parseFloat(num.toFixed(2)));
 }
 
@@ -158,27 +197,132 @@ function computeUnitTotals(rows, cropId) {
 }
 
 function formatUnitTotals(totals) {
-    if (!totals) return '-';
-    const parts = [];
+    const safe = totals || { saco: 0, medio_saco: 0, cesta: 0, kg: 0 };
+    const sacoText = formatUnitNumberWithZero(safe.saco);
+    const medioText = formatUnitNumberWithZero(safe.medio_saco);
+    const cestaText = formatUnitNumberWithZero(safe.cesta);
+    const kgText = formatUnitNumberWithZero(safe.kg);
 
-    const pushUnit = (value, labels) => {
-        const qtyText = formatUnitNumber(value);
-        if (!qtyText) return;
-        const qtyNum = Number(qtyText);
-        const label = qtyNum === 1 ? labels.singular : labels.plural;
-        parts.push(`${qtyText} ${label}`);
-    };
+    return `Sacos ${sacoText} | Medios sacos ${medioText} | Cestas ${cestaText} | Kg ${kgText}`;
+}
 
-    pushUnit(totals.saco, UNIT_LABELS.saco);
-    pushUnit(totals.medio_saco, UNIT_LABELS.medio_saco);
-    pushUnit(totals.cesta, UNIT_LABELS.cesta);
+function computeCropExtremes(rows) {
+    const crops = Array.isArray(rows) ? rows : [];
+    const map = new Map();
 
-    const kgText = formatUnitNumber(totals.kg);
-    if (kgText) {
-        parts.push(`${kgText} kg`);
+    crops.forEach((crop) => {
+        const name = String(crop?.name || '').trim();
+        if (!name) return;
+        const variety = String(crop?.variety || '').trim();
+        const key = `${name.toLowerCase()}::${variety.toLowerCase()}`;
+        if (!map.has(key)) {
+            map.set(key, {
+                key,
+                name,
+                variety,
+                label: variety ? `${name} (${variety})` : name,
+                count: 0
+            });
+        }
+        map.get(key).count += 1;
+    });
+
+    const entries = Array.from(map.values());
+    if (entries.length === 0) {
+        return { most: [], least: [], max: 0, min: 0 };
     }
 
-    return parts.length ? parts.join(' • ') : '-';
+    const counts = entries.map(entry => entry.count);
+    const max = Math.max(...counts);
+    const min = Math.min(...counts);
+
+    return {
+        most: entries.filter(entry => entry.count === max),
+        least: entries.filter(entry => entry.count === min),
+        max,
+        min
+    };
+}
+
+function formatCropExtreme(entries, count) {
+    if (!entries || entries.length === 0) return 'Sin datos (0)';
+    if (entries.length === 1) {
+        return `${entries[0].label} (${entries[0].count || count || 0})`;
+    }
+    const labels = entries.slice(0, 3).map(entry => entry.label);
+    const extra = entries.length > 3 ? ` +${entries.length - 3}` : '';
+    return `${labels.join(' • ')}${extra} (${count}) (empate)`;
+}
+
+function computeTopSellingCrop(incomeRows, cropsRows) {
+    const rows = Array.isArray(incomeRows) ? incomeRows : [];
+    const cropMap = new Map();
+    (Array.isArray(cropsRows) ? cropsRows : []).forEach((crop) => {
+        const id = crop?.id;
+        if (!id) return;
+        const name = String(crop?.name || '').trim();
+        if (!name) return;
+        const variety = String(crop?.variety || '').trim();
+        const label = variety ? `${name} (${variety})` : name;
+        cropMap.set(String(id), label);
+    });
+
+    const totals = new Map();
+    let totalKg = 0;
+    let totalUnits = 0;
+
+    rows.forEach((row) => {
+        const cropId = row?.crop_id;
+        if (!cropId) return;
+        const key = String(cropId);
+        if (!totals.has(key)) {
+            totals.set(key, { cropId: key, unitQty: 0, kg: 0, label: cropMap.get(key) || `ID ${key}` });
+        }
+        const entry = totals.get(key);
+        const unitQty = Number(row?.unit_qty);
+        if (Number.isFinite(unitQty) && unitQty > 0) {
+            entry.unitQty += unitQty;
+            totalUnits += unitQty;
+        }
+        const kg = Number(row?.quantity_kg);
+        if (Number.isFinite(kg) && kg > 0) {
+            entry.kg += kg;
+            totalKg += kg;
+        }
+    });
+
+    const entries = Array.from(totals.values());
+    if (entries.length === 0) {
+        return { entries: [], metric: 'unit', max: 0 };
+    }
+
+    const useKg = totalKg > 0;
+    const metric = useKg ? 'kg' : 'unit';
+    const values = entries.map(entry => (useKg ? entry.kg : entry.unitQty));
+    const max = values.length ? Math.max(...values) : 0;
+    const top = entries.filter(entry => (useKg ? entry.kg : entry.unitQty) === max);
+
+    return { entries: top, metric, max };
+}
+
+function formatTopSellingCrop(result) {
+    if (!result || !Array.isArray(result.entries) || result.entries.length === 0) {
+        return 'Sin datos (0)';
+    }
+
+    const renderEntry = (entry) => {
+        const kgText = formatUnitNumberWithZero(entry.kg);
+        const unitText = formatUnitNumberWithZero(entry.unitQty);
+        return `${entry.label} (Kg ${kgText} | Unid ${unitText})`;
+    };
+
+    if (result.entries.length === 1) {
+        return renderEntry(result.entries[0]);
+    }
+
+    const labels = result.entries.slice(0, 3).map(renderEntry);
+    const extra = result.entries.length > 3 ? ` +${result.entries.length - 3}` : '';
+    return `${labels.join(' • ')}${extra} (empate)`;
 }
 
 // ============================================================
@@ -213,7 +357,8 @@ export async function computeAgroFinanceSummaryV1() {
         let expenseTotal = 0;
         const costByCategory = {};
         try {
-            const result = await selectAgroTable('agro_expenses', 'amount, category', true);
+            const expenseColumns = ['id', 'user_id', 'amount', 'category', 'created_at'];
+            const result = await selectAgroTable('agro_expenses', expenseColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching expenses:', result.error);
             }
@@ -234,7 +379,8 @@ export async function computeAgroFinanceSummaryV1() {
         let incomeTotal = 0;
         let incomeRows = null;
         try {
-            const result = await selectAgroTable('agro_income', 'monto, unit_type, unit_qty, quantity_kg, crop_id', true);
+            const incomeColumns = ['id', 'user_id', 'monto', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const result = await selectAgroTable('agro_income', incomeColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching income:', result.error);
             }
@@ -252,7 +398,8 @@ export async function computeAgroFinanceSummaryV1() {
         let pendingTotal = 0;
         let pendingRows = null;
         try {
-            const result = await selectAgroTable('agro_pending', 'monto, unit_type, unit_qty, quantity_kg, crop_id', true);
+            const pendingColumns = ['id', 'user_id', 'monto', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const result = await selectAgroTable('agro_pending', pendingColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching pending:', result.error);
             }
@@ -270,7 +417,8 @@ export async function computeAgroFinanceSummaryV1() {
         let lossesTotal = 0;
         let lossesRows = null;
         try {
-            const result = await selectAgroTable('agro_losses', 'monto, causa, unit_type, unit_qty, quantity_kg, crop_id', true);
+            const lossesColumns = ['id', 'user_id', 'monto', 'causa', 'category', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const result = await selectAgroTable('agro_losses', lossesColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
             }
@@ -291,7 +439,8 @@ export async function computeAgroFinanceSummaryV1() {
         let transfersTotal = 0;
         let transfersRows = null;
         try {
-            const result = await selectAgroTable('agro_transfers', 'monto, unit_type, unit_qty, quantity_kg, crop_id', true);
+            const transferColumns = ['id', 'user_id', 'monto', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const result = await selectAgroTable('agro_transfers', transferColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching transfers:', result.error);
             }
@@ -307,15 +456,17 @@ export async function computeAgroFinanceSummaryV1() {
 
         // 6) Crops visibles (solo inversion - NO usar revenue_projected)
         let cropsInvestmentTotal = 0;
+        let cropsRows = null;
         // V9.5: revenue_projected ELIMINADO - solo usamos ingresos reales
         try {
-            const result = await selectAgroTable('agro_crops', 'investment, status', true);
+            const cropColumns = ['id', 'user_id', 'name', 'variety', 'investment', 'status', 'created_at'];
+            const result = await selectAgroTable('agro_crops', cropColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching crops:', result.error);
             }
-            const crops = result?.data;
-            if (crops) {
-                crops.forEach(c => {
+            cropsRows = result?.data;
+            if (cropsRows) {
+                cropsRows.forEach(c => {
                     cropsInvestmentTotal += parseFloat(c.investment) || 0;
                 });
             }
@@ -342,6 +493,16 @@ export async function computeAgroFinanceSummaryV1() {
             transfers: computeUnitTotals(transfersRows, statsCropId)
         };
 
+        const movementCounts = {
+            income: Array.isArray(incomeRows) ? incomeRows.length : 0,
+            pending: Array.isArray(pendingRows) ? pendingRows.length : 0,
+            losses: Array.isArray(lossesRows) ? lossesRows.length : 0,
+            transfers: Array.isArray(transfersRows) ? transfersRows.length : 0
+        };
+
+        const cropExtremes = computeCropExtremes(cropsRows);
+        const topSellingCrop = computeTopSellingCrop(incomeRows, cropsRows);
+
         const summary = {
             expenseTotal,
             incomeTotal,
@@ -357,6 +518,9 @@ export async function computeAgroFinanceSummaryV1() {
             costByCategory,
             unitTotals,
             unitTotalsCropId: statsCropId || null,
+            movementCounts,
+            cropExtremes,
+            topSellingCrop,
             hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0 || pendingTotal > 0 || lossesTotal > 0 || transfersTotal > 0,
             updatedAtISO: new Date().toISOString()
         };
@@ -421,6 +585,26 @@ export function updateUIFromSummary(summary) {
     if (unitsTransfersEl) unitsTransfersEl.textContent = formatUnitTotals(unitTotals.transfers);
     const unitsLossesEl = document.getElementById('stats-units-losses');
     if (unitsLossesEl) unitsLossesEl.textContent = formatUnitTotals(unitTotals.losses);
+
+    // 1.2 Conteos reales por tipo de movimiento
+    const movementCounts = summary.movementCounts || {};
+    const countIncomeEl = document.getElementById('stats-count-income');
+    if (countIncomeEl) countIncomeEl.textContent = String(movementCounts.income || 0);
+    const countPendingEl = document.getElementById('stats-count-pending');
+    if (countPendingEl) countPendingEl.textContent = String(movementCounts.pending || 0);
+    const countTransfersEl = document.getElementById('stats-count-transfers');
+    if (countTransfersEl) countTransfersEl.textContent = String(movementCounts.transfers || 0);
+    const countLossesEl = document.getElementById('stats-count-losses');
+    if (countLossesEl) countLossesEl.textContent = String(movementCounts.losses || 0);
+
+    // 1.3 Cultivo más/menos cultivado
+    const cropExtremes = summary.cropExtremes || { most: [], least: [], max: 0, min: 0 };
+    const cropMostEl = document.getElementById('stats-crop-most');
+    if (cropMostEl) cropMostEl.textContent = formatCropExtreme(cropExtremes.most, cropExtremes.max);
+    const cropLeastEl = document.getElementById('stats-crop-least');
+    if (cropLeastEl) cropLeastEl.textContent = formatCropExtreme(cropExtremes.least, cropExtremes.min);
+    const cropBestSoldEl = document.getElementById('stats-crop-best-sold');
+    if (cropBestSoldEl) cropBestSoldEl.textContent = formatTopSellingCrop(summary.topSellingCrop);
 
     // 2. ROI Badge (neutral when N/A) + "Sin ventas registradas" message
     const roiBadge = document.getElementById('roi-badge');
