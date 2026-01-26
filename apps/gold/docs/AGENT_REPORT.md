@@ -1874,6 +1874,33 @@ OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
 ```
 
+---
+
+## V9.6.6 - Landing copy sobrio (2026-01-26)
+
+### Diagnostico
+1) El copy de la landing usa lenguaje hiperbÃ³lico ("Ãšnico en el Mundo", "Premium", "RevoluciÃ³n") que reduce credibilidad.
+2) Hay promesas absolutas y adjetivos grandilocuentes en badges, descripciones y CTA.
+3) Existen errores de encoding visibles (ej: "Tecnolog?a") que afectan calidad percibida.
+
+### Plan
+1) Reemplazar frases hype por copy sobrio y factual manteniendo intenciÃ³n original.
+2) Corregir acentos visibles en textos de la landing (sin tocar CSS/JS/estructura).
+3) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### QA Checklist
+- [ ] Landing carga sin cambios visuales (solo texto).
+- [ ] Botones conservan funciÃ³n y jerarquÃ­a.
+- [ ] Copy suena sobrio, sin promesas absolutas.
+- [ ] Sin errores de encoding evidentes.
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
+
 ### Git Commands (sin ejecutar)
 ```bash
 git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
