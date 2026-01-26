@@ -4,6 +4,7 @@
  * Con historial persistente, timestamps y sincronización IA en tiempo real
  * V9.6.2: Consulta Supabase para cultivos si hay sesión
  */
+import supabase from '../assets/js/config/supabase-config.js';
 
 // ============================================
 // STATE
@@ -13,17 +14,25 @@ let readNotifications = [];
 let isDropdownOpen = false;
 let adviceObserver = null;
 let lastAdviceText = '';
+let authListenerAttached = false;
+let refreshInFlight = false;
+let refreshQueued = false;
 
 const STORAGE_KEY = 'yavlgold_agro_notifications';
 const READ_STORAGE_KEY = 'yavlgold_agro_notifications_read';
 const MAX_READ_HISTORY = 20; // Máximo de notificaciones leídas a conservar
+const EMPTY_CROPS_TITLE = '🌱 Sin cultivos';
+
+const ALERTS_SESSION_MAX_ATTEMPTS = 8;
+const ALERTS_SESSION_BASE_DELAY = 200;
+const ALERTS_SESSION_MAX_DELAY = 800;
 
 // ============================================
 // INITIALIZATION
 // ============================================
 
 export async function initNotifications() {
-    console.log('[AGRO] V9.6.2: 🔔 Inicializando Centro de Alertas...');
+    console.log('[AGRO] V9.6.4: 🔔 Inicializando Centro de Alertas...');
 
     // Load from localStorage
     loadNotificationsFromStorage();
@@ -31,18 +40,20 @@ export async function initNotifications() {
     // Setup event listeners
     setupEventListeners();
 
-    // Generate initial system notifications (only if empty)
-    if (notifications.length === 0) {
-        await generateSystemNotifications();
-    } else {
-        renderNotifications();
-        updateBadge();
-    }
+    // Render existing immediately for fast UI
+    renderNotifications();
+    updateBadge();
+
+    // Setup auth listener for late sessions
+    setupAuthRefresh();
+
+    // Refresh system notifications in background
+    refreshSystemNotifications('init');
 
     // Start observing AI Advisor changes (MutationObserver)
     setupAdviceObserver();
 
-    console.log('[AGRO] V9.6.2: ✅ Sistema de notificaciones activo con historial');
+    console.log('[AGRO] V9.6.4: ✅ Sistema de notificaciones activo con historial');
 }
 
 function loadNotificationsFromStorage() {
@@ -207,8 +218,9 @@ async function generateSystemNotifications() {
     const crops = await getCropsAsync();
 
     if (crops.length === 0) {
-        addNotification('info', '🌱 Sin cultivos', 'Agrega tu primer cultivo para alertas personalizadas.', 'fa-seedling');
+        addNotification('info', EMPTY_CROPS_TITLE, 'Agrega tu primer cultivo para alertas personalizadas.', 'fa-seedling');
     } else {
+        removeNotificationByTitle(EMPTY_CROPS_TITLE);
         crops.forEach(checkCropAlerts);
     }
 
@@ -225,18 +237,18 @@ async function generateSystemNotifications() {
  */
 async function getCropsAsync() {
     try {
-        // Check if supabase is available
-        const sb = window.supabase;
+        const sb = getSupabaseClient();
         if (!sb?.auth) {
-            console.info('[AGRO] V9.6.2: alerts crops source=local (no supabase client)');
-            return getLocalCrops();
+            const localCrops = getLocalCrops();
+            logAlertsStatus(false, 'local', localCrops.length, 0);
+            return localCrops;
         }
 
-        // Get session
-        const { data: { session }, error: sessionError } = await sb.auth.getSession();
-        if (sessionError || !session?.user) {
-            console.info('[AGRO] V9.6.2: alerts crops source=local (no session)');
-            return getLocalCrops();
+        const { session, attempts } = await waitForSession(sb);
+        if (!session?.user) {
+            const localCrops = getLocalCrops();
+            logAlertsStatus(false, 'local', localCrops.length, attempts);
+            return localCrops;
         }
 
         // Query Supabase for crops
@@ -259,14 +271,18 @@ async function getCropsAsync() {
 
         if (error) {
             console.warn('[AGRO] V9.6.2: Supabase query error, fallback to local:', error.message);
-            return getLocalCrops();
+            const localCrops = getLocalCrops();
+            logAlertsStatus(true, 'local', localCrops.length, attempts);
+            return localCrops;
         }
 
-        console.info('[AGRO] V9.6.2: alerts crops source=supabase count=' + (data?.length || 0));
+        logAlertsStatus(true, 'supabase', data?.length || 0, attempts);
         return data || [];
     } catch (e) {
         console.warn('[AGRO] V9.6.2: getCropsAsync exception, fallback to local:', e);
-        return getLocalCrops();
+        const localCrops = getLocalCrops();
+        logAlertsStatus(false, 'local', localCrops.length, ALERTS_SESSION_MAX_ATTEMPTS);
+        return localCrops;
     }
 }
 
@@ -339,6 +355,12 @@ function addNotificationToTop(type, title, message, icon) {
     flashBadge();
 }
 
+function removeNotificationByTitle(title) {
+    if (!title) return;
+    notifications = notifications.filter(n => n?.title !== title);
+    readNotifications = readNotifications.filter(n => n?.title !== title);
+}
+
 function flashBadge() {
     const badge = document.getElementById('notif-badge');
     if (badge) {
@@ -362,6 +384,72 @@ function markAllAsRead() {
     renderNotifications();
     updateBadge();
     saveNotificationsToStorage();
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function logAlertsStatus(hasSession, source, crops, attempts) {
+    const sessionLabel = hasSession ? 'yes' : 'no';
+    const cropCount = Number.isFinite(crops) ? crops : 0;
+    const attemptCount = Number.isFinite(attempts) ? attempts : 0;
+    console.info(`[AGRO] Alerts: session=${sessionLabel} source=${source} crops=${cropCount} attempts=${attemptCount}`);
+}
+
+function getSupabaseClient() {
+    if (supabase?.auth) return supabase;
+    if (typeof window !== 'undefined' && window.supabase?.auth) return window.supabase;
+    if (typeof window !== 'undefined' && window.AuthClient?.supabase?.auth) return window.AuthClient.supabase;
+    return null;
+}
+
+async function waitForSession(sb) {
+    let attempt = 0;
+    while (attempt < ALERTS_SESSION_MAX_ATTEMPTS) {
+        attempt += 1;
+        try {
+            const { data, error } = await sb.auth.getSession();
+            if (!error && data?.session?.user) {
+                return { session: data.session, attempts: attempt };
+            }
+        } catch (e) {
+            // Ignore and retry
+        }
+        const delay = Math.min(ALERTS_SESSION_MAX_DELAY, ALERTS_SESSION_BASE_DELAY * Math.pow(2, attempt - 1));
+        await sleep(delay);
+    }
+    return { session: null, attempts: ALERTS_SESSION_MAX_ATTEMPTS };
+}
+
+function setupAuthRefresh() {
+    const sb = getSupabaseClient();
+    if (!sb?.auth?.onAuthStateChange || authListenerAttached) return;
+    authListenerAttached = true;
+
+    sb.auth.onAuthStateChange((event, session) => {
+        if (!session?.user) return;
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+            refreshSystemNotifications(`auth:${event.toLowerCase()}`);
+        }
+    });
+}
+
+function refreshSystemNotifications(reason = 'manual') {
+    if (refreshInFlight) {
+        refreshQueued = true;
+        return;
+    }
+    refreshInFlight = true;
+    Promise.resolve()
+        .then(() => generateSystemNotifications(reason))
+        .finally(() => {
+            refreshInFlight = false;
+            if (refreshQueued) {
+                refreshQueued = false;
+                refreshSystemNotifications('queued');
+            }
+        });
 }
 
 // ============================================
@@ -513,7 +601,7 @@ window.triggerAgroNotification = (type, title, message, icon) => {
 };
 
 window.refreshAgroNotifications = async () => {
-    await generateSystemNotifications();
+    refreshSystemNotifications('manual');
 };
 
 window.clearAgroNotificationHistory = () => {

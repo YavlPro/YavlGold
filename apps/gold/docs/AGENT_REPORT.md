@@ -1816,6 +1816,35 @@ OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
 ```
 
+---
+
+## V9.6.4 - Agro alerts race fix + UI compact (2026-01-25)
+
+### Diagnostico
+1) La campana usa `getCropsAsync()` que consulta `window.supabase`. En Agro no se setea `window.supabase`, por lo que cae a localStorage y muestra "Sin cultivos" aunque existan datos en Supabase.
+2) La sesion puede llegar tarde; no hay reintentos ni refresh al aparecer `SIGNED_IN`, por lo que el estado queda en fallback local.
+3) Proyeccion Semanal y Calculadora ROI usan padding y alturas grandes (inline y CSS base), generando secciones visualmente altas.
+
+### Plan
+1) `agro-notifications.js`: usar cliente Supabase real (import), esperar sesion con reintentos/backoff y refresh en `onAuthStateChange`.
+2) Logs minimos: `[AGRO] Alerts: session=<yes/no> source=<supabase/local> crops=<n> attempts=<n>`.
+3) UI compacta: reducir padding/altura de Proyeccion Semanal y ROI via overrides en `agro.css` (y clase puntual en HTML si aplica).
+4) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### QA Checklist
+- [ ] Desktop: login -> /agro/ con cultivos reales -> hard refresh -> campana NO dice "Sin cultivos".
+- [ ] Desktop: consola muestra `[AGRO] Alerts: session=yes source=supabase crops>0 attempts=<n>`.
+- [ ] Desktop: Proyeccion Semanal y ROI mas compactas (menos altura/padding).
+- [ ] Mobile (<768px): Proyeccion/ROI colapsables, al abrir no ocupan media pantalla innecesaria.
+- [ ] Sin errores en consola.
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
+
 ### Git Commands (sin ejecutar)
 ```bash
 git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md

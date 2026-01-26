@@ -208,6 +208,89 @@ body.stats-center-open {
   z-index: 1;
 }
 
+/* V9.6.4: Compact Projection + ROI */
+#yg-acc-weekly .planning-panel {
+  padding: 1rem !important;
+}
+
+#forecast-container {
+  height: 110px !important;
+  padding: 8px !important;
+}
+
+#forecast-container > div {
+  font-size: 0.72rem;
+}
+
+#yg-acc-roi .card {
+  padding: 1rem;
+}
+
+#yg-acc-roi .calculator-form {
+  gap: 0.75rem;
+}
+
+#yg-acc-roi .input-label {
+  font-size: 0.65rem;
+  letter-spacing: 1.2px;
+}
+
+#yg-acc-roi .input-prefix {
+  font-size: 0.95rem;
+}
+
+#yg-acc-roi .styled-input {
+  padding: 0.6rem 0.9rem 0.6rem 2.2rem;
+  font-size: 1rem;
+}
+
+#yg-acc-roi .btn-primary {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.8px;
+}
+
+#yg-acc-roi .roi-result {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+}
+
+#yg-acc-roi .roi-grid {
+  gap: 0.5rem;
+}
+
+#yg-acc-roi .roi-value {
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  #forecast-container {
+    height: 96px !important;
+    padding: 6px !important;
+  }
+
+  #yg-acc-weekly .planning-panel {
+    padding: 0.85rem !important;
+  }
+
+  #yg-acc-roi .card {
+    padding: 0.9rem;
+  }
+
+  #yg-acc-roi .calculator-form {
+    gap: 0.6rem;
+  }
+
+  #yg-acc-roi .styled-input {
+    padding: 0.55rem 0.8rem 0.55rem 2.1rem;
+    font-size: 0.95rem;
+  }
+
+  #yg-acc-roi .btn-primary {
+    padding: 0.55rem 1rem;
+  }
+}
+
 #modal-stats-center .stats-center-header h3 {
   margin: 0;
   font-size: 1.1rem;
