@@ -2482,6 +2482,31 @@ git push
 - [ ] Empates muestran múltiples cultivos; si no hay datos, “Sin datos (0)”.
 - [ ] Datos solo del usuario actual (sin mocks).
 - [ ] `pnpm build:gold` OK.
+
+---
+
+## V9.4 - Fix modo claro landing (fondos/overlays) (2026-01-26)
+
+### Diagnostico
+1) En `apps/gold/index.html` las secciones principales usan fondos directos (hero, features, testimonials, cta-final, footer) con `background: var(--bg-primary/secondary)`, pero faltan variables específicas para light y algunos overlays/gradientes quedan oscuros.
+2) Selectores con fondo y/o overlays que deben respetar el tema claro: `.hero`, `.hero::before`, `.features`, `.testimonials`, `.cta-final`, `.cta-final::before`, `.footer`, `.loading-screen`, `body.landing-page .mobile-overlay`, `body.landing-page .auth-modal-overlay`.
+3) No hay variables dedicadas para “hero/divider/overlay” en light; se requiere usar tokens y crear variables temáticas mínimas para evitar parches oscuros.
+
+### Plan
+1) Definir variables de tema para landing (ej: `--landing-hero-bg`, `--landing-section-bg`, `--landing-section-alt-bg`, `--landing-overlay-soft`) en el bloque de variables del `index.html`, con valores distintos en `body.light-mode`.
+2) Reemplazar fondos/overlays hardcodeados o demasiado oscuros en los selectores listados por esas variables.
+3) Mantener look oscuro actual en dark mode; validar modo claro en móvil/desktop.
+4) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### Variables usadas/creadas
+- `--landing-page-bg`, `--landing-hero-bg`, `--landing-section-bg`, `--landing-section-alt-bg`
+- `--landing-overlay-bg`, `--landing-hero-glow`, `--landing-cta-glow`
+
+### DoD
+- [ ] En modo claro no hay secciones con fondo negro/oscuro no intencional.
+- [ ] Hero, franja/divider, sección de video (si aplica) y footer coherentes con tema claro.
+- [ ] Modo oscuro intacto (sin regresiones).
+- [ ] `pnpm build:gold` OK.
 ---
 
 ## Diagnostico (Agro History & Notification Fixes - 2026-01-26)

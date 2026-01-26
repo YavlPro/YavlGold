@@ -94,6 +94,14 @@
       --text-primary: #ffffff;
       --text-secondary: #cccccc;
       --border-color: #2a2a2a;
+      /* Landing surfaces */
+      --landing-page-bg: var(--bg-primary);
+      --landing-hero-bg: var(--bg-primary);
+      --landing-section-bg: var(--bg-primary);
+      --landing-section-alt-bg: var(--bg-secondary);
+      --landing-overlay-bg: var(--bg-primary);
+      --landing-hero-glow: radial-gradient(circle, rgba(200, 167, 82, 0.15) 0%, transparent 70%);
+      --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.2) 0%, transparent 70%);
     }
 
     body.light-mode {
@@ -110,6 +118,13 @@
       --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.25);
       --shadow-gold-lg: 0 10px 40px rgba(200, 167, 82, 0.35);
       --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.45);
+      --landing-page-bg: var(--bg-primary);
+      --landing-hero-bg: var(--bg-primary);
+      --landing-section-bg: var(--bg-primary);
+      --landing-section-alt-bg: var(--bg-secondary);
+      --landing-overlay-bg: var(--bg-secondary);
+      --landing-hero-glow: radial-gradient(circle, rgba(200, 167, 82, 0.12) 0%, transparent 70%);
+      --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.18) 0%, transparent 70%);
     }
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -123,11 +138,13 @@
 
     html {
       scroll-behavior: smooth;
+      background: var(--landing-page-bg);
+      color: var(--text-primary);
     }
 
     body {
       font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg-primary);
+      background: var(--landing-page-bg);
       color: var(--text-primary);
       overflow-x: hidden;
       transition: background-color 0.5s ease, color 0.5s ease;
@@ -535,7 +552,7 @@
       left: 0;
       width: 100%;
       height: 100vh;
-      background: var(--bg-primary);
+      background: var(--landing-overlay-bg);
       backdrop-filter: blur(5px);
       z-index: 1000;
       opacity: 0;
@@ -550,7 +567,7 @@
 
     /* Theme coverage patch (landing only) */
     body.landing-page.light-mode .mobile-overlay {
-      background: var(--bg-secondary);
+      background: var(--landing-overlay-bg);
     }
 
     body.landing-page.light-mode .mobile-overlay.active {
@@ -567,7 +584,7 @@
       justify-content: center;
       text-align: center;
       padding: 8rem 2rem 2rem 2rem;
-      background: var(--bg-primary);
+      background: var(--landing-hero-bg);
       position: relative;
       overflow: hidden;
     }
@@ -580,7 +597,7 @@
       transform: translate(-50%, -50%);
       width: 1000px;
       height: 1000px;
-      background: radial-gradient(circle, rgba(200, 167, 82, 0.15) 0%, transparent 70%);
+      background: var(--landing-hero-glow);
       animation: pulse 6s ease-in-out infinite;
       pointer-events: none;
     }
@@ -695,7 +712,7 @@
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .features {
       padding: 6rem 2rem;
-      background: var(--bg-secondary);
+      background: var(--landing-section-alt-bg);
       position: relative;
     }
 
@@ -853,7 +870,7 @@
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .testimonials {
       padding: 6rem 2rem;
-      background: var(--bg-primary);
+      background: var(--landing-section-bg);
       position: relative;
     }
 
@@ -946,7 +963,7 @@
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .cta-final {
       padding: 6rem 2rem;
-      background: var(--bg-secondary);
+      background: var(--landing-section-alt-bg);
       position: relative;
       overflow: hidden;
     }
@@ -959,7 +976,7 @@
       transform: translate(-50%, -50%);
       width: 800px;
       height: 800px;
-      background: radial-gradient(circle, rgba(200, 167, 82, 0.2) 0%, transparent 70%);
+      background: var(--landing-cta-glow);
       animation: pulse 6s ease-in-out infinite;
       pointer-events: none;
     }
@@ -999,7 +1016,7 @@
     /* 📊 FOOTER */
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
     .footer {
-      background: var(--bg-primary);
+      background: var(--landing-section-bg);
       padding: 4rem 2rem;
       text-align: center;
       border-top: 1px solid var(--border-color);
@@ -1208,7 +1225,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      background: linear-gradient(135deg, var(--landing-page-bg) 0%, var(--landing-section-alt-bg) 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1857,13 +1874,13 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: var(--bg-primary);
+      background: var(--landing-overlay-bg);
       opacity: 0.85;
       backdrop-filter: blur(10px);
     }
 
     body.landing-page.light-mode .auth-modal-overlay {
-      background: var(--bg-secondary);
+      background: var(--landing-overlay-bg);
     }
 
     .auth-modal-container {
