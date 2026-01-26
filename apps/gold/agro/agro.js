@@ -1100,6 +1100,7 @@ async function saveEditModal() {
             .filter(field => field !== whoMeta?.field)
             .forEach(field => {
                 const el = document.getElementById(`edit-${field}`);
+                console.log(`[AGRO] V9.6.5 extraField: ${field}, el:`, el, 'value:', el?.value);
                 if (!el) return;
                 if (field === 'unit_type') {
                     updateData[field] = el.value || null;
@@ -1112,6 +1113,8 @@ async function saveEditModal() {
                 }
                 updateData[field] = el.value?.trim() || null;
             });
+
+        console.log('[AGRO] V9.6.5 updateData:', { table: config.table, itemId, updateData });
 
         let { error } = await supabase
             .from(config.table)
