@@ -251,9 +251,9 @@ async function getCropsAsync() {
             return localCrops;
         }
 
-        // Query Supabase for crops
+        // Query Supabase for crops (V9.6.5: removed harvest_date, column doesn't exist)
         let query = sb.from('agro_crops')
-            .select('id,name,start_date,expected_harvest_date,harvest_date,status')
+            .select('id,name,start_date,expected_harvest_date,status')
             .eq('user_id', session.user.id);
 
         // Try with deleted_at filter first
@@ -263,7 +263,7 @@ async function getCropsAsync() {
         if (error?.message?.includes('deleted_at')) {
             console.warn('[AGRO] V9.6.2: deleted_at column not found, retrying without filter');
             const retry = await sb.from('agro_crops')
-                .select('id,name,start_date,expected_harvest_date,harvest_date,status')
+                .select('id,name,start_date,expected_harvest_date,status')
                 .eq('user_id', session.user.id);
             data = retry.data;
             error = retry.error;
@@ -294,7 +294,8 @@ function getLocalCrops() {
 
 function checkCropAlerts(crop) {
     const now = new Date();
-    const harvestDate = crop.harvest_date ? new Date(crop.harvest_date) : null;
+    // V9.6.5: Use expected_harvest_date (harvest_date column doesn't exist)
+    const harvestDate = crop.expected_harvest_date ? new Date(crop.expected_harvest_date) : null;
 
     if (harvestDate) {
         const days = Math.ceil((harvestDate - now) / (1000 * 60 * 60 * 24));

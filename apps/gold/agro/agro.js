@@ -3976,6 +3976,7 @@ function initFinanceFormHandlers() {
                     evidence_url: evidenceUrl,
                     crop_id: cropId || null // V9.5: Associate with crop
                 };
+                console.log('[AGRO] V9.6.5 insertData:', { table: config.table, insertData });
 
                 const tabName = config.tabName;
                 const whoMeta = WHO_FIELD_META[tabName];
