@@ -388,7 +388,7 @@ const FACTURERO_CONFIG = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        extraFields: ['cliente'],
+        extraFields: ['cliente', 'unit_type', 'unit_qty', 'quantity_kg'],
         supportsDeletedAt: true
     },
     'perdidas': {
@@ -398,7 +398,7 @@ const FACTURERO_CONFIG = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        extraFields: ['causa'],
+        extraFields: ['causa', 'unit_type', 'unit_qty', 'quantity_kg'],
         supportsDeletedAt: true
     },
     'transferencias': {
@@ -408,7 +408,7 @@ const FACTURERO_CONFIG = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        extraFields: ['destino'],
+        extraFields: ['destino', 'unit_type', 'unit_qty', 'quantity_kg'],
         supportsDeletedAt: true
     }
 };
@@ -564,6 +564,38 @@ function formatKgSummary(value) {
     if (!Number.isFinite(num) || num <= 0) return '';
     const text = num % 1 === 0 ? String(num) : num.toFixed(2);
     return `${text} kg`;
+}
+
+function populateUnitSelect(select) {
+    if (!select) return;
+    select.textContent = '';
+    INCOME_UNIT_OPTIONS.forEach((opt) => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        select.appendChild(option);
+    });
+}
+
+function readUnitFields(form, prefix) {
+    if (!form || !prefix) return { unit_type: null, unit_qty: null, quantity_kg: null };
+    const typeEl = form.querySelector(`#${prefix}-unit-type`);
+    const qtyEl = form.querySelector(`#${prefix}-unit-qty`);
+    const kgEl = form.querySelector(`#${prefix}-quantity-kg`);
+    const unitType = typeEl?.value || '';
+    const unitQtyRaw = qtyEl?.value;
+    const kgRaw = kgEl?.value;
+    const unitQtyValue = Number.isFinite(parseFloat(unitQtyRaw)) && parseFloat(unitQtyRaw) > 0
+        ? parseFloat(unitQtyRaw)
+        : null;
+    const kgValue = Number.isFinite(parseFloat(kgRaw)) && parseFloat(kgRaw) > 0
+        ? parseFloat(kgRaw)
+        : null;
+    return {
+        unit_type: unitType || null,
+        unit_qty: unitQtyValue,
+        quantity_kg: kgValue
+    };
 }
 
 function parseWhoFromConcept(tabName, concept) {
@@ -1101,6 +1133,11 @@ async function saveEditModal() {
                     delete fallbackData.unit_type;
                     delete fallbackData.unit_qty;
                     delete fallbackData.quantity_kg;
+                    if (typeof showEvidenceToast === 'function') {
+                        showEvidenceToast('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.', 'warning');
+                    } else {
+                        alert('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.');
+                    }
                 }
                 const retry = await supabase
                     .from(config.table)
@@ -2815,12 +2852,7 @@ function ensureIncomeSection(targetContainer) {
         unitTypeSelect.className = 'styled-input';
         unitTypeSelect.style.paddingLeft = '1rem';
         unitTypeSelect.style.cursor = 'pointer';
-        INCOME_UNIT_OPTIONS.forEach((opt) => {
-            const option = document.createElement('option');
-            option.value = opt.value;
-            option.textContent = opt.label;
-            unitTypeSelect.appendChild(option);
-        });
+        populateUnitSelect(unitTypeSelect);
         unitTypeGroup.append(unitTypeLabel, unitTypeSelect);
 
         const unitQtyGroup = document.createElement('div');
@@ -3824,12 +3856,14 @@ function initFinanceFormHandlers() {
             storagePath: 'pending',
             buildStoragePath: buildPendingStoragePath,
             cropSelectId: 'pending-crop-id', // V9.5
+            unitPrefix: 'pending',
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-pendiente')?.value?.trim(),
                 monto: parseFloat(form.querySelector('#input-monto-pendiente')?.value) || 0,
                 fecha: form.querySelector('#input-fecha-pendiente')?.value,
                 cliente: form.querySelector('#input-cliente-pendiente')?.value?.trim() || null,
-                notas: form.querySelector('#input-notas-pendiente')?.value?.trim() || null
+                notas: form.querySelector('#input-notas-pendiente')?.value?.trim() || null,
+                ...readUnitFields(form, 'pending')
             })
         },
         {
@@ -3842,12 +3876,14 @@ function initFinanceFormHandlers() {
             storagePath: 'loss',
             buildStoragePath: buildLossStoragePath,
             cropSelectId: 'loss-crop-id', // V9.5
+            unitPrefix: 'loss',
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-perdida')?.value?.trim(),
                 monto: parseFloat(form.querySelector('#input-monto-perdida')?.value) || 0,
                 fecha: form.querySelector('#input-fecha-perdida')?.value,
                 causa: form.querySelector('#input-causa-perdida')?.value?.trim() || null,
-                notas: form.querySelector('#input-notas-perdida')?.value?.trim() || null
+                notas: form.querySelector('#input-notas-perdida')?.value?.trim() || null,
+                ...readUnitFields(form, 'loss')
             })
         },
         {
@@ -3860,12 +3896,14 @@ function initFinanceFormHandlers() {
             storagePath: 'transfer',
             buildStoragePath: buildTransferStoragePath,
             cropSelectId: 'transfer-crop-id', // V9.5
+            unitPrefix: 'transfer',
             getFormData: (form) => ({
                 concepto: form.querySelector('#input-concepto-transferencia')?.value?.trim(),
                 monto: parseFloat(form.querySelector('#input-monto-transferencia')?.value) || 0,
                 fecha: form.querySelector('#input-fecha-transferencia')?.value,
                 destino: form.querySelector('#input-destino-transferencia')?.value?.trim() || null,
-                notas: form.querySelector('#input-notas-transferencia')?.value?.trim() || null
+                notas: form.querySelector('#input-notas-transferencia')?.value?.trim() || null,
+                ...readUnitFields(form, 'transfer')
             })
         }
     ];
@@ -3880,6 +3918,11 @@ function initFinanceFormHandlers() {
         // Set default date
         const dateInput = form.querySelector('input[type="date"]');
         if (dateInput && !dateInput.value) dateInput.value = today;
+
+        if (config.unitPrefix) {
+            const unitSelect = form.querySelector(`#${config.unitPrefix}-unit-type`);
+            populateUnitSelect(unitSelect);
+        }
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -3937,12 +3980,30 @@ function initFinanceFormHandlers() {
                 const whoValue = whoFieldKey ? formData?.[whoFieldKey] : '';
 
                 let { error } = await supabase.from(config.table).insert(insertData);
-                if (error && whoFieldKey && isMissingColumnError(error, whoFieldKey)) {
-                    const fallbackData = { ...insertData };
-                    delete fallbackData[whoFieldKey];
-                    fallbackData.concepto = buildConceptWithWho(tabName, formData.concepto, whoValue);
-                    const retry = await supabase.from(config.table).insert(fallbackData);
-                    error = retry.error;
+                if (error) {
+                    const dropWho = whoFieldKey && isMissingColumnError(error, whoFieldKey);
+                    const dropUnits = isMissingColumnError(error, 'unit_type')
+                        || isMissingColumnError(error, 'unit_qty')
+                        || isMissingColumnError(error, 'quantity_kg');
+                    if (dropWho || dropUnits) {
+                        const fallbackData = { ...insertData };
+                        if (dropWho) {
+                            delete fallbackData[whoFieldKey];
+                            fallbackData.concepto = buildConceptWithWho(tabName, formData.concepto, whoValue);
+                        }
+                        if (dropUnits) {
+                            delete fallbackData.unit_type;
+                            delete fallbackData.unit_qty;
+                            delete fallbackData.quantity_kg;
+                            if (typeof showEvidenceToast === 'function') {
+                                showEvidenceToast('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.', 'warning');
+                            } else {
+                                alert('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.');
+                            }
+                        }
+                        const retry = await supabase.from(config.table).insert(fallbackData);
+                        error = retry.error;
+                    }
                 }
                 if (error) throw error;
 

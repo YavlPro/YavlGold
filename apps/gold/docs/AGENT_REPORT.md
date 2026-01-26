@@ -1818,6 +1818,34 @@ Exit code: 0
 
 ---
 
+## V9.6.7 - Facturero unidades en pendientes/perdidas/transferencias (2026-01-26)
+
+### Diagnostico
+1) Formularios Pendientes/Perdidas/Transferencias viven en `apps/gold/agro/index.html` con IDs `pending-form`, `loss-form`, `transfer-form` y sus grids `.facturero-grid`.
+2) Historiales de esas tabs se renderizan via `renderHistoryRow()` y `refreshFactureroHistory()` en `apps/gold/agro/agro.js`, con contenedores `pending-history-container`, `loss-history-container`, `transfer-history-container` (inyectados en HTML).
+3) Guardado actual de pendientes/perdidas/transferencias se hace en `initFinanceFormHandlers()` (agro.js) con `getFormData()` que solo incluye concepto/monto/fecha + cliente/causa/destino + notas. No incluye unit_type/unit_qty/quantity_kg.
+4) El modal `#modal-edit-facturero` usa `openFactureroEditModal()` y `saveEditModal()`; actualmente solo extraFields base, no unidades para estas tabs.
+5) Helpers existentes para unidades ya viven en `apps/gold/agro/agro.js` (INCOME_UNIT_OPTIONS, formatUnitSummary/formatKgSummary/formatUnitQty).
+
+### Plan
+1) Reusar INCOME_UNIT_OPTIONS en todos los selects de unidades (ingresos + pendientes/perdidas/transferencias).
+2) Agregar inputs Presentacion/Cantidad/Kilogramos en HTML de cada tab (field-unit, field-unit-qty, field-kg).
+3) Extender `getFormData()` de cada tab para leer unit_type/unit_qty/quantity_kg y persistir en insert.
+4) En caso de columnas faltantes, mostrar aviso visible y reintentar sin unit_*.
+5) Agregar unit_* a `FACTURERO_CONFIG` extraFields de pendientes/perdidas/transferencias para editar en modal.
+6) Render historial: usar formatUnitSummary + formatKgSummary para mostrar "X sacos • Y kg" solo si >0.
+7) Ejecutar `pnpm build:gold`.
+
+### Checklist DoD
+- [ ] Pendientes: crear con presentacion/cantidad/kg -> persiste y muestra en historial.
+- [ ] Pendientes: editar historial -> actualiza unit_* y kg.
+- [ ] Perdidas: crear + editar -> persiste y muestra.
+- [ ] Transferencias: crear + editar -> persiste y muestra.
+- [ ] Render historial: solo muestra resumen si valores >0 (sin separadores dobles).
+- [ ] `pnpm build:gold` OK.
+
+---
+
 ## V9.6.6 - Agro estado manual + facturero unidades + acordeon facturero (2026-01-26)
 
 ### Diagnostico
@@ -2384,4 +2412,3 @@ git add apps/gold/docs/AGENT_REPORT.md
 git commit -m "feat(agro): V9.6.5 status constraint fix + unit columns for all facturero tables"
 git push
 ```
-
