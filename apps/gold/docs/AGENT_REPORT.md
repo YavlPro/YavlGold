@@ -2326,3 +2326,62 @@ git add apps/gold/agro/agro.js apps/gold/docs/AGENT_REPORT.md
 git commit -m "feat(agro): V9.6.4 income unit columns migration + decimal format fix"
 git push
 ```
+
+---
+
+## V9.6.5 - Status Constraint Fix + Facturero Unit Columns (2026-01-26)
+
+### Diagnóstico
+1) **Error de constraint**: Al guardar cultivo, falla con `violates check constraint "agro_crops_status_check"`.
+2) **Causa raíz**: DB tenía constraint con valores en inglés (`growing/ready/attention/harvested`) pero frontend usa español (`sembrado/creciendo/produccion/finalizado`).
+3) **Columnas faltantes**: `agro_pending`, `agro_losses`, `agro_transfers` no tenían `unit_type/unit_qty/quantity_kg` (solo `agro_income` los tenía).
+
+### Solución Aplicada
+
+#### Migración 1: Fix de constraint de status
+```sql
+ALTER TABLE public.agro_crops DROP CONSTRAINT IF EXISTS agro_crops_status_check;
+
+UPDATE public.agro_crops SET status = 'creciendo' WHERE status = 'growing';
+UPDATE public.agro_crops SET status = 'produccion' WHERE status = 'ready';
+UPDATE public.agro_crops SET status = 'sembrado' WHERE status = 'attention';
+UPDATE public.agro_crops SET status = 'finalizado' WHERE status = 'harvested';
+
+ALTER TABLE public.agro_crops
+  ADD CONSTRAINT agro_crops_status_check
+  CHECK (status IN ('sembrado', 'creciendo', 'produccion', 'finalizado'));
+```
+
+#### Migración 2: Columnas de unidad en tablas facturero
+```sql
+-- Aplicado a: agro_pending, agro_losses, agro_transfers
+ADD COLUMN IF NOT EXISTS unit_type text,
+ADD COLUMN IF NOT EXISTS unit_qty numeric,
+ADD COLUMN IF NOT EXISTS quantity_kg numeric;
+```
+
+### Verificación
+- **Constraint nuevo**: `CHECK ((status = ANY (ARRAY['sembrado', 'creciendo', 'produccion', 'finalizado'])))`
+- **Columnas nuevas**: 9 columnas añadidas (3 por tabla × 3 tablas)
+
+### QA Checklist
+- [x] Constraint acepta valores españoles
+- [x] `agro_pending` tiene `unit_type/unit_qty/quantity_kg`
+- [x] `agro_losses` tiene `unit_type/unit_qty/quantity_kg`
+- [x] `agro_transfers` tiene `unit_type/unit_qty/quantity_kg`
+- [ ] UI: Guardar cultivo con status funciona (QA manual)
+- [ ] UI: Pendientes/Pérdidas/Transferencias guardan unidades (requiere update de frontend)
+
+### Nota
+Las columnas de unidad están listas en DB. El frontend aún necesita modificaciones en `agro.js` para:
+1. Agregar inputs de presentación/cantidad/kg en los formularios de Pendientes/Pérdidas/Transferencias
+2. Incluir esos valores en el INSERT/UPDATE
+3. Mostrar el resumen en el historial
+
+### Git Commands
+```bash
+git add apps/gold/docs/AGENT_REPORT.md
+git commit -m "feat(agro): V9.6.5 status constraint fix + unit columns for all facturero tables"
+git push
+```
+
