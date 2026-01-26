@@ -591,11 +591,13 @@ function readUnitFields(form, prefix) {
     const kgValue = Number.isFinite(parseFloat(kgRaw)) && parseFloat(kgRaw) > 0
         ? parseFloat(kgRaw)
         : null;
-    return {
+    const result = {
         unit_type: unitType || null,
         unit_qty: unitQtyValue,
         quantity_kg: kgValue
     };
+    console.log(`[AGRO] V9.6.5 readUnitFields(${prefix}):`, result, { typeEl: !!typeEl, qtyEl: !!qtyEl, kgEl: !!kgEl });
+    return result;
 }
 
 function parseWhoFromConcept(tabName, concept) {
@@ -3922,6 +3924,7 @@ function initFinanceFormHandlers() {
         if (config.unitPrefix) {
             const unitSelect = form.querySelector(`#${config.unitPrefix}-unit-type`);
             populateUnitSelect(unitSelect);
+            console.log(`[AGRO] V9.6.5 Unit select populated: #${config.unitPrefix}-unit-type, options:`, unitSelect?.options?.length);
         }
 
         form.addEventListener('submit', async (event) => {
