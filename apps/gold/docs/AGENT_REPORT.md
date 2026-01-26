@@ -1818,6 +1818,73 @@ Exit code: 0
 
 ---
 
+## V9.6.8 - Landing light mode coverage patch (2026-01-26)
+
+### Diagnostico
+1) El tema light se aplica via `body.light-mode` y variables CSS; el toggle lee `localStorage.theme`.
+2) Hay overlays con fondo hardcodeado oscuro:
+   - `.mobile-overlay` usa `background: rgba(0, 0, 0, 0.8)` (menu movil).
+   - `.auth-modal-overlay` usa `background: rgba(0, 0, 0, 0.85)` (modal auth).
+3) En light mode esos overlays se quedan oscuros y generan "parches" visibles, especialmente en movil.
+
+### Plan
+1) Agregar overrides en `apps/gold/index.html` (solo landing) para light mode:
+   - `body.light-mode .mobile-overlay` -> `background: var(--bg-secondary)` + ajustar opacidad si aplica.
+   - `body.light-mode .auth-modal-overlay` -> `background: var(--bg-primary)` + opacidad suave.
+2) Mantener dark mode intacto y no introducir colores nuevos (solo tokens existentes).
+3) Ejecutar QA manual (desktop + movil) y `pnpm build:gold`.
+
+### QA Checklist
+- [ ] Desktop: alternar Dark/Light 5 veces, sin parches oscuros en secciones/cards/footer.
+- [ ] Desktop: abrir menu/overlay en light, coherente.
+- [ ] Desktop: dark mode sin regresiones.
+- [ ] Mobile (<768px): light mode cubre header + menu + overlay, sin bandas negras.
+- [ ] Mobile: scroll completo sin parches oscuros.
+- [ ] Consola sin errores.
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
+
+---
+
+## V9.6.9 - Landing light mode hardcode cleanup (2026-01-26)
+
+### Diagnostico
+1) El tema en la landing se aplica con `body.light-mode` y se inicializa desde `localStorage` key `theme` en `DOMContentLoaded`.
+2) Persisten hardcodes oscuros en overlays:
+   - `.mobile-overlay` (menu movil) usa `background: rgba(0,0,0,0.8)`.
+   - `.auth-modal-overlay` (modal auth) usa `background: rgba(0,0,0,0.85)`.
+3) En light mode esos overlays permanecen oscuros y generan parches visibles, sobre todo en movil.
+
+### Plan
+1) Agregar hook de scope `body.landing-page` en `apps/gold/index.html`.
+2) Reemplazar hardcodes de overlays por tokens existentes:
+   - `background: var(--bg-primary)` en base.
+   - `body.landing-page.light-mode` -> `background: var(--bg-secondary)`.
+3) Mantener opacidad solo via `opacity` (sin rgba nuevos) para preservar la sensacion de overlay.
+4) QA manual desktop + mobile y build.
+
+### QA Checklist
+- [ ] Desktop: alternar Dark/Light 5 veces, scroll completo sin parches oscuros.
+- [ ] Desktop: abrir menu/overlay y modal auth en light, cobertura correcta.
+- [ ] Desktop: dark mode sin regresiones.
+- [ ] Mobile (<768px): menu/overlay y auth overlay en light sin fondo oscuro residual.
+- [ ] Mobile: scroll completo sin bandas negras.
+- [ ] Consola sin errores.
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
+
+---
+
 ## V9.6.4 - Agro alerts race fix + UI compact (2026-01-25)
 
 ### Diagnostico

@@ -529,13 +529,13 @@
       text-align: center;
     }
 
-    .mobile-overlay {
+    body.landing-page .mobile-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
+      background: var(--bg-primary);
       backdrop-filter: blur(5px);
       z-index: 1000;
       opacity: 0;
@@ -543,9 +543,18 @@
       transition: all 0.4s ease;
     }
 
-    .mobile-overlay.active {
-      opacity: 1;
+    body.landing-page .mobile-overlay.active {
+      opacity: 0.8;
       visibility: visible;
+    }
+
+    /* Theme coverage patch (landing only) */
+    body.landing-page.light-mode .mobile-overlay {
+      background: var(--bg-secondary);
+    }
+
+    body.landing-page.light-mode .mobile-overlay.active {
+      opacity: 0.8;
     }
 
     /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -1267,7 +1276,7 @@
   </style>
 </head>
 
-<body>
+<body class="landing-page">
   <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
     <img src="./assets/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main breathing-effect" />
@@ -1842,14 +1851,19 @@
       display: block;
     }
 
-    .auth-modal-overlay {
+    body.landing-page .auth-modal-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.85);
+      background: var(--bg-primary);
+      opacity: 0.85;
       backdrop-filter: blur(10px);
+    }
+
+    body.landing-page.light-mode .auth-modal-overlay {
+      background: var(--bg-secondary);
     }
 
     .auth-modal-container {
