@@ -1901,6 +1901,47 @@ OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
 ```
 
+---
+
+## V9.6.7 - Landing copy sin repeticiÃ³n de estado (2026-01-26)
+
+### Diagnostico
+1) El copy repite "en desarrollo / en construcciÃ³n / en evoluciÃ³n" en badges, CTA y footer.
+2) Esa repeticiÃ³n reduce claridad y hace que el mensaje se perciba redundante.
+
+### Plan (reemplazos exactos)
+1) Badges hero:
+   - "En evoluciÃ³n" -> "En desarrollo"
+   - "Acceso temprano" se mantiene
+   - "Premium" / "Ãšnico en el Mundo" no aplica (ya removidos)
+   - Nuevo badge: "Actualizaciones frecuentes"
+2) CTA ConstrucciÃ³n:
+   - "Estamos en construcciÃ³n. Ãšnete a nuestra comunidad en Telegram para recibir avances del proyecto."
+     -> "Estamos desarrollando el ecosistema. Ãšnete a Telegram para recibir avances y participar en pruebas."
+3) MÃ³dulos (descripciones):
+   - Duelos en Vivo -> "Competencias en tiempo real. Certificaciones en preparaciÃ³n."
+   - TecnologÃ­a Educativa -> "Herramientas para anÃ¡lisis, investigaciÃ³n y automatizaciÃ³n. Contenidos en preparaciÃ³n."
+   - MÃ³dulo de Ajedrez -> "Sistema de aprendizaje de ajedrez en progreso. AnÃ¡lisis guiado y prÃ¡cticas progresivas."
+   - Agricultura TecnolÃ³gica -> "GestiÃ³n agrÃ­cola y planificaciÃ³n. Marketplace e integraciÃ³n IoT en preparaciÃ³n."
+   - YavlGold Crypto -> "Datos de mercado y herramientas de anÃ¡lisis. Trading y on-chain en preparaciÃ³n."
+   - Suite Multimedia -> "Reproductor y biblioteca multimedia. Funciones para creadores en preparaciÃ³n."
+4) Footer:
+   - "ðŸš§ En construcciÃ³n - Desarrollo en progreso ðŸš§" -> "ðŸš§ Desarrollo en progreso ðŸš§"
+   - "Ecosistema en desarrollo." -> "Ecosistema en progreso."
+
+### QA Checklist
+- [ ] Landing sin cambios de layout (solo texto).
+- [ ] La "Y" se mantiene visible.
+- [ ] Sin repeticiÃ³n fuerte de "en desarrollo/en construcciÃ³n".
+- [ ] CTAs y links funcionan igual.
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
+
 ### Git Commands (sin ejecutar)
 ```bash
 git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
