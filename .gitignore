@@ -69,6 +69,7 @@ verify_restore.sh
 # Logs
 logs/
 *.log
+.devserver.*
 
 # Temporary files
 tmp/
