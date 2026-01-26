@@ -1845,6 +1845,35 @@ OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
 ```
 
+---
+
+## V9.6.5 - Facturero compact UI (2026-01-26)
+
+### Diagnostico
+1) El Facturero (Centro de Operaciones) usa padding/gaps altos en contenedor, tabs, inputs, acciones y tarjetas de historial.
+2) Hay estilos inline en botones del Facturero con padding alto; se necesita override CSS para compactar sin tocar IDs ni lógica.
+3) En mobile, el grid y los bloques de evidencia/advanced ocupan demasiado alto, generando scroll excesivo.
+
+### Plan
+1) Agregar overrides en `apps/gold/agro/agro.css` para compactar: contenedor, tabs, inputs/selects, acciones, advanced panel, dropzone, historial.
+2) Mantener tamaños táctiles mínimos (>= 36px en mobile) y sin romper data-attrs ni delegación de eventos.
+3) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### QA Checklist
+- [ ] Desktop: Facturero más compacto (tabs, form, acciones, advanced, historial).
+- [ ] Mobile (<768px): menor altura/scroll; sigue usable y touch-friendly.
+- [ ] CRUD: registrar/editar/eliminar/duplicar OK en todas las tabs.
+- [ ] Evidencia: adjuntar/ver/cambiar/limpiar OK.
+- [ ] Opciones avanzadas: abrir/cerrar y meta summary OK.
+- [ ] Consola sin errores.
+
+### Build
+```
+pnpm build:gold
+OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
+Exit code: 0
+```
+
 ### Git Commands (sin ejecutar)
 ```bash
 git add apps/gold/agro/index.html apps/gold/docs/AGENT_REPORT.md
