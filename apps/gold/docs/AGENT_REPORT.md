@@ -1818,6 +1818,38 @@ Exit code: 0
 
 ---
 
+## V9.6.6 - Agro estado manual + facturero unidades + acordeon facturero (2026-01-26)
+
+### Diagnostico
+1) Ciclo cultivo: el modal `#modal-new-crop` en `apps/gold/agro/index.html` no expone campo Estado; el insert hardcodea `status: 'growing'`.
+2) UI estado: `createStatusBadge()` en `apps/gold/agro/agro.js` solo mapea `growing/ready/attention/harvested` y el CSS solo define clases para growing/ready/attention.
+3) Edicion cultivo: `openEditModal()` (agro.js) rellena el formulario, pero `window.saveCrop` (index.html) solo hace INSERT y no usa un id de edicion.
+4) Facturero: formularios gastos/pendientes/perdidas/transferencias viven en `apps/gold/agro/index.html`; ingresos se inyecta en `apps/gold/agro/agro.js` (ensureIncomeSection). No existen campos de unidad ni kg en facturero, ni persistencia en `agro_income`.
+5) Historial: `renderHistoryRow()` y `renderIncomeItem()` no muestran unidades; el modal `#modal-edit-facturero` solo maneja campos base + `extraFields`.
+6) UI facturero: usa tabs `.financial-tabs` y `initFinanceTabs()` (agro.js). Acordeones solo se usan en Proyeccion/ROI via `.yg-accordion`.
+
+### Plan
+1) Estado cultivo: agregar select "Estado" al modal de cultivo con catalogo fijo (sembrado/creciendo/produccion/finalizado).
+2) Persistencia: incluir `status` en INSERT/UPDATE (index.html) y default `sembrado`.
+3) Edicion: almacenar id de edicion en el formulario (dataset/hidden) desde `openEditModal()` y usarlo en `saveCrop` para UPDATE.
+4) Badge: actualizar `createStatusBadge()` para nuevos estados y compatibilidad legacy; agregar clase CSS faltante si aplica.
+5) Facturero unidades: agregar inputs Presentacion + Cantidad + Kilogramos en ingresos (ensureIncomeSection).
+6) Guardado: extender `saveIncome()` y edit modal para `unit_type`, `unit_qty`, `quantity_kg`.
+7) Historial: mostrar resumen unidades + kg en `renderIncomeItem()` (y fallback en generic si aplica).
+8) Acordeon facturero: envolver facturero en secciones tipo acordeon (Registrar/Historial/Resumen si existe) con `.yg-accordion`, aria-controls/expanded y JS de toggle; single-open en mobile para grupo facturero.
+9) SQL opcional: si faltan columnas, preparar `ALTER TABLE agro_income` para `unit_type`, `unit_qty`, `quantity_kg`.
+10) Build: `pnpm build:gold`.
+
+### Checklist DoD
+- [ ] Crear cultivo -> estado default Sembrado.
+- [ ] Editar cultivo -> cambiar Estado -> guardar -> refresh persiste.
+- [ ] Facturero ingreso: guardar con Presentacion + Cantidad + Kg -> historial muestra unidades + kg.
+- [ ] Editar historial ingreso -> cambiar unidad/cantidad/kg -> guardar -> persiste.
+- [ ] Facturero acordeon mobile-first: secciones colapsan/expanden con aria ok.
+- [ ] `pnpm build:gold` OK.
+
+---
+
 ## V9.6.8 - Landing light mode coverage patch (2026-01-26)
 
 ### Diagnostico
@@ -2237,4 +2269,60 @@ git push
 pnpm build:gold
 OK (agent-guard OK, agent-report-check OK, UTF-8 verification passed)
 Exit code: 0
+```
+
+---
+
+## V9.6.4 - Agro Income Schema Migration + Decimal Format Fix (2026-01-26)
+
+### Diagnostico
+1) **Schema mismatch detectado**: El código en `saveIncome()` intentaba insertar columnas `unit_type`, `unit_qty`, `quantity_kg` que NO existían en la tabla `agro_income` de Supabase.
+2) **Datos perdidos silenciosamente**: Gracias al patrón fallback implementado (líneas 3581-3595), los ingresos se guardaban pero los datos de Presentación/Cantidad/Kg se descartaban sin aviso al usuario.
+3) **Columnas reales pre-migración**: `id`, `user_id`, `concepto`, `monto`, `fecha`, `categoria`, `soporte_url`, `created_at`, `updated_at`, `deleted_at`, `crop_id` (11 columnas).
+4) **Formato decimal UX**: `formatUnitQty()` mostraba `2.50 sacos` en vez de `2.5 sacos`.
+
+### Solución Aplicada
+1) **Migración SQL ejecutada** via MCP Supabase:
+   ```sql
+   ALTER TABLE public.agro_income
+     ADD COLUMN IF NOT EXISTS unit_type text,
+     ADD COLUMN IF NOT EXISTS unit_qty numeric,
+     ADD COLUMN IF NOT EXISTS quantity_kg numeric;
+   ```
+2) **Columnas post-migración**: 14 columnas (3 nuevas añadidas).
+3) **Fix decimal UX** en `agro.js:548`:
+   ```javascript
+   // Antes: num.toFixed(2) → "2.50"
+   // Ahora: String(parseFloat(num.toFixed(2))) → "2.5"
+   ```
+
+### Archivos Modificados
+- `apps/gold/agro/agro.js` (línea 548 - formatUnitQty)
+- `apps/gold/docs/AGENT_REPORT.md` (este reporte)
+- Supabase: tabla `agro_income` (migración DDL)
+
+### QA Checklist
+- [x] Columnas `unit_type`, `unit_qty`, `quantity_kg` existen en `agro_income`
+- [x] Crear ingreso con Presentación + Cantidad + Kg → datos persisten
+- [x] Historial muestra: "2.5 sacos • 25 kg" (no "2.50 sacos")
+- [x] `unit_qty = 2` → "2 sacos" (sin decimales)
+- [x] `unit_qty = 0` → no muestra unidad
+- [x] Separador bullet solo aparece entre elementos presentes
+
+### Comportamiento Verificado
+| Input | Output |
+|-------|--------|
+| `unit_type=""` + cualquier qty | *(nada)* |
+| `unit_type="saco"` + `unit_qty=0` | *(nada)* |
+| `unit_type="saco"` + `unit_qty=1` | "1 saco" |
+| `unit_type="saco"` + `unit_qty=2.5` | "2.5 sacos" |
+| `unit_type="cesta"` + `unit_qty=1` | "1 cesta" |
+| `quantity_kg=0` | *(nada)* |
+| `quantity_kg=25` | "25 kg" |
+
+### Git Commands
+```bash
+git add apps/gold/agro/agro.js apps/gold/docs/AGENT_REPORT.md
+git commit -m "feat(agro): V9.6.4 income unit columns migration + decimal format fix"
+git push
 ```

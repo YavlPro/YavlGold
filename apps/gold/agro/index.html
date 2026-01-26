@@ -731,6 +731,12 @@
             border: 1px solid rgba(251, 191, 36, 0.3);
         }
 
+        .status-finished {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         /* Progress Bar */
         .progress-section {
             margin-bottom: var(--spacing-md);
@@ -1521,6 +1527,7 @@
                 <button class="modal-close" onclick="window.closeCropModal()" style="color: #C8A752;">&times;</button>
             </div>
             <form id="form-new-crop" class="modal-body" onsubmit="event.preventDefault(); window.saveCrop();">
+                <input type="hidden" id="crop-edit-id" value="">
                 <div class="input-group" style="margin-bottom: 1rem;">
                     <label class="input-label" for="crop-name">Nombre del Cultivo *</label>
                     <input type="text" id="crop-name" class="styled-input" placeholder="Ej: Tomate Cherry" required
@@ -1577,6 +1584,15 @@
                         <input type="date" id="crop-harvest-date" class="styled-input" style="padding-left: 1rem;">
                     </div>
                 </div>
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label class="input-label" for="crop-status">Estado</label>
+                    <select id="crop-status" class="styled-input" style="padding-left: 1rem; cursor: pointer;">
+                        <option value="sembrado">Sembrado</option>
+                        <option value="creciendo">Creciendo</option>
+                        <option value="produccion">En producci&oacute;n</option>
+                        <option value="finalizado">Finalizado</option>
+                    </select>
+                </div>
             </form>
             <div class="modal-footer">
                 <button type="button" class="btn-cancel" onclick="window.closeCropModal()">Cancelar</button>
@@ -1621,6 +1637,14 @@
             <div class="financial-tab-panels">
                 <div class="tab-panel" id="tab-panel-gastos" role="tabpanel" aria-labelledby="tab-btn-gastos"
                     data-tab="gastos">
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
+                        <summary class="yg-accordion-summary" aria-controls="facturero-gastos-form"
+                            aria-expanded="true">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                            <span class="yg-accordion-title">Registrar gasto</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-gastos-form">
                     <form id="expense-form" class="expense-form" onsubmit="event.preventDefault();">
                         <div class="facturero-grid">
 
@@ -1734,15 +1758,26 @@
                         </p>
                     </div>
 
-                    <!-- Lista Din&aacute;mica de &Uacute;ltimos Movimientos -->
-                    <div id="recent-transactions-container" style="margin-top: 2rem; display: none;">
-                        <h3
-                            style="color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;">
-                            &Uacute;ltimos Movimientos (Sesi&oacute;n Actual)</h3>
-                        <div id="expenses-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
-                            <!-- Los gastos se inyectar&aacute;n aqu&iacute; -->
                         </div>
-                    </div>
+                    </details>
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
+                        <summary class="yg-accordion-summary" aria-controls="facturero-gastos-history"
+                            aria-expanded="false">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span class="yg-accordion-title">Historial</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-gastos-history">
+                            <div id="recent-transactions-container" style="margin-top: 2rem; display: none;">
+                                <h3
+                                    style="color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;">
+                                    &Uacute;ltimos Movimientos (Sesi&oacute;n Actual)</h3>
+                                <div id="expenses-list" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                                    <!-- Los gastos se inyectar&aacute;n aqu&iacute; -->
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-ingresos" role="tabpanel"
@@ -1750,6 +1785,14 @@
 
                 <div class="tab-panel is-hidden" id="tab-panel-pendientes" role="tabpanel"
                     aria-labelledby="tab-btn-pendientes" aria-hidden="true" data-tab="pendientes">
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
+                        <summary class="yg-accordion-summary" aria-controls="facturero-pendientes-form"
+                            aria-expanded="true">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+                            <span class="yg-accordion-title">Registrar pendiente</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-pendientes-form">
                     <form id="pending-form" class="pending-form" onsubmit="event.preventDefault();">
                         <div class="facturero-grid">
                             <div class="input-group field-concept">
@@ -1834,10 +1877,31 @@
                             </div>
                         </details>
                     </form>
+                        </div>
+                    </details>
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
+                        <summary class="yg-accordion-summary" aria-controls="facturero-pendientes-history"
+                            aria-expanded="false">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span class="yg-accordion-title">Historial</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-pendientes-history">
+                            <div id="pending-history-container"></div>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-perdidas" role="tabpanel"
                     aria-labelledby="tab-btn-perdidas" aria-hidden="true" data-tab="perdidas">
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
+                        <summary class="yg-accordion-summary" aria-controls="facturero-perdidas-form"
+                            aria-expanded="true">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                            <span class="yg-accordion-title">Registrar perdida</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-perdidas-form">
                     <form id="loss-form" class="loss-form" onsubmit="event.preventDefault();">
                         <div class="facturero-grid">
                             <div class="input-group field-concept">
@@ -1921,10 +1985,31 @@
                             </div>
                         </details>
                     </form>
+                        </div>
+                    </details>
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
+                        <summary class="yg-accordion-summary" aria-controls="facturero-perdidas-history"
+                            aria-expanded="false">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span class="yg-accordion-title">Historial</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-perdidas-history">
+                            <div id="loss-history-container"></div>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-transferencias" role="tabpanel"
                     aria-labelledby="tab-btn-transferencias" aria-hidden="true" data-tab="transferencias">
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
+                        <summary class="yg-accordion-summary" aria-controls="facturero-transferencias-form"
+                            aria-expanded="true">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-people-arrows"></i></span>
+                            <span class="yg-accordion-title">Registrar transferencia</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-transferencias-form">
                     <form id="transfer-form" class="transfer-form" onsubmit="event.preventDefault();">
                         <div class="facturero-grid">
                             <div class="input-group field-concept">
@@ -2008,6 +2093,19 @@
                             </div>
                         </details>
                     </form>
+                        </div>
+                    </details>
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
+                        <summary class="yg-accordion-summary" aria-controls="facturero-transferencias-history"
+                            aria-expanded="false">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span class="yg-accordion-title">Historial</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-transferencias-history">
+                            <div id="transfer-history-container"></div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div>
@@ -2127,29 +2225,57 @@
                 // =====================================
 
                 const fullName = `${icon} ${name}`;
-                const { data: insertRows, error } = await supabase
-                    .from('agro_crops')
-                    .insert({
-                        user_id: user.id,
-                        name: fullName,
-                        variety,
-                        area_size: area,
-                        investment,
-                        start_date: sowDate,
-                        expected_harvest_date: harvestDate || null,
-                        status: 'growing'
-                    })
-                    .select('id');
+                const editId = document.getElementById('crop-edit-id')?.value || '';
+                const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
 
-                if (error) throw error;
+                let insertedId = null;
 
-                const insertedId = Array.isArray(insertRows) ? insertRows[0]?.id : insertRows?.id;
+                if (editId) {
+                    const { error: updateError } = await supabase
+                        .from('agro_crops')
+                        .update({
+                            name: fullName,
+                            variety,
+                            area_size: area,
+                            investment,
+                            start_date: sowDate,
+                            expected_harvest_date: harvestDate || null,
+                            status: statusValue
+                        })
+                        .eq('id', editId)
+                        .eq('user_id', user.id);
+
+                    if (updateError) throw updateError;
+                    alert('Cultivo actualizado.');
+                } else {
+                    const { data: insertRows, error: insertError } = await supabase
+                        .from('agro_crops')
+                        .insert({
+                            user_id: user.id,
+                            name: fullName,
+                            variety,
+                            area_size: area,
+                            investment,
+                            start_date: sowDate,
+                            expected_harvest_date: harvestDate || null,
+                            status: statusValue || 'sembrado'
+                        })
+                        .select('id');
+
+                    if (insertError) throw insertError;
+                    insertedId = Array.isArray(insertRows) ? insertRows[0]?.id : insertRows?.id;
+                    alert('Siembra registrada.');
+                }
+
                 if (insertedId && Number.isFinite(templateDuration) && templateDuration > 0) {
                     window.YGAgroTemplates?.storeCropTemplateMapping(insertedId, templateDuration);
                 }
-                alert('✅ Siembra registrada');
                 window.closeCropModal();
                 document.getElementById('form-new-crop').reset();
+                const editInput = document.getElementById('crop-edit-id');
+                if (editInput) editInput.value = '';
+                const statusSelect = document.getElementById('crop-status');
+                if (statusSelect) statusSelect.value = 'sembrado';
                 document.dispatchEvent(new CustomEvent('data-refresh'));
 
             } catch (e) { alert(e.message); }

@@ -378,12 +378,12 @@ const FACTURERO_CONFIG = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        extraFields: ['categoria'],
+        extraFields: ['categoria', 'unit_type', 'unit_qty', 'quantity_kg'],
         supportsDeletedAt: true
     },
     'pendientes': {
         table: 'agro_pending',
-        containerId: 'tab-panel-pendientes',
+        containerId: 'pending-history-container',
         listId: 'pending-history-list',
         conceptField: 'concepto',
         amountField: 'monto',
@@ -393,7 +393,7 @@ const FACTURERO_CONFIG = {
     },
     'perdidas': {
         table: 'agro_losses',
-        containerId: 'tab-panel-perdidas',
+        containerId: 'loss-history-container',
         listId: 'loss-history-list',
         conceptField: 'concepto',
         amountField: 'monto',
@@ -403,7 +403,7 @@ const FACTURERO_CONFIG = {
     },
     'transferencias': {
         table: 'agro_transfers',
-        containerId: 'tab-panel-transferencias',
+        containerId: 'transfer-history-container',
         listId: 'transfer-history-list',
         conceptField: 'concepto',
         amountField: 'monto',
@@ -511,6 +511,60 @@ const WHO_FIELD_META = {
     transferencias: { label: 'Destino', icon: '📌', field: 'destino' },
     perdidas: { label: 'Causa/Responsable', icon: '⚠️', field: 'causa' }
 };
+const INCOME_UNIT_OPTIONS = [
+    { value: '', label: 'Seleccionar...' },
+    { value: 'saco', label: 'Saco', singular: 'saco', plural: 'sacos' },
+    { value: 'medio_saco', label: 'Medio saco', singular: 'medio saco', plural: 'medios sacos' },
+    { value: 'cesta', label: 'Cestas', singular: 'cesta', plural: 'cestas' }
+];
+
+const FACTURERO_EXTRA_FIELD_META = {
+    unit_type: {
+        label: 'Presentacion',
+        type: 'select',
+        options: INCOME_UNIT_OPTIONS
+    },
+    unit_qty: {
+        label: 'Cantidad (unidad)',
+        type: 'number',
+        min: '0',
+        step: '0.01',
+        placeholder: 'Ej: 2'
+    },
+    quantity_kg: {
+        label: 'Kilogramos',
+        type: 'number',
+        min: '0',
+        step: '0.01',
+        placeholder: 'Ej: 50'
+    }
+};
+
+const FACTURERO_NUMERIC_FIELDS = new Set(['unit_qty', 'quantity_kg']);
+
+function formatUnitQty(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num <= 0) return '';
+    return num % 1 === 0 ? String(num) : String(parseFloat(num.toFixed(2)));
+}
+
+function formatUnitSummary(unitType, unitQty) {
+    const unitKey = String(unitType || '').toLowerCase();
+    if (!unitKey) return '';
+    const option = INCOME_UNIT_OPTIONS.find((opt) => opt.value === unitKey);
+    if (!option) return '';
+    const qtyText = formatUnitQty(unitQty);
+    if (!qtyText) return '';
+    const label = Number(qtyText) === 1 ? option.singular : option.plural;
+    return `${qtyText} ${label}`;
+}
+
+function formatKgSummary(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num <= 0) return '';
+    const text = num % 1 === 0 ? String(num) : num.toFixed(2);
+    return `${text} kg`;
+}
 
 function parseWhoFromConcept(tabName, concept) {
     const text = String(concept || '').trim();
@@ -611,6 +665,12 @@ function renderHistoryRow(tabName, item, config) {
         ? `<div style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;">• ${formatWhoDisplay(tabName, whoData.who)}</div>`
         : '';
     const displayConcept = whoData.concept || rawConcept;
+    const unitSummary = formatUnitSummary(item.unit_type, item.unit_qty);
+    const kgSummary = formatKgSummary(item.quantity_kg);
+    const unitMetaParts = [];
+    if (unitSummary) unitMetaParts.push(escapeHtml(unitSummary));
+    if (kgSummary) unitMetaParts.push(escapeHtml(kgSummary));
+    const unitHtml = unitMetaParts.length ? `<span>${unitMetaParts.join(' &bull; ')}</span>` : '';
 
     return `
         <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
@@ -620,6 +680,7 @@ function renderHistoryRow(tabName, item, config) {
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
                     ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
+                    ${unitHtml}
                     ${evidenceHtml}
                 </div>
             </div>
@@ -907,14 +968,45 @@ function openFactureroEditModal(tabName, item, config) {
         extraContainer.innerHTML = '';
         const extraFields = (config.extraFields || []).filter(field => field !== whoMeta?.field);
         extraFields.forEach(field => {
-            const value = item[field] || '';
-            const label = field.charAt(0).toUpperCase() + field.slice(1);
-            extraContainer.innerHTML += `
-                <div class="input-group" style="margin-top: 1rem;">
-                    <label class="input-label">${label}</label>
-                    <input type="text" id="edit-${field}" class="styled-input" value="${escapeHtml(value)}">
-                </div>
-            `;
+            const meta = FACTURERO_EXTRA_FIELD_META[field];
+            const value = item[field] ?? '';
+            const labelText = meta?.label || (field.charAt(0).toUpperCase() + field.slice(1));
+
+            const group = document.createElement('div');
+            group.className = 'input-group';
+            group.style.marginTop = '1rem';
+
+            const label = document.createElement('label');
+            label.className = 'input-label';
+            label.textContent = labelText;
+
+            let inputEl;
+            if (meta?.type === 'select') {
+                inputEl = document.createElement('select');
+                (meta.options || []).forEach((opt) => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.label;
+                    inputEl.appendChild(option);
+                });
+            } else {
+                inputEl = document.createElement('input');
+                inputEl.type = meta?.type || 'text';
+                if (meta?.min) inputEl.min = meta.min;
+                if (meta?.step) inputEl.step = meta.step;
+                if (meta?.placeholder) inputEl.placeholder = meta.placeholder;
+            }
+
+            inputEl.id = `edit-${field}`;
+            inputEl.className = 'styled-input';
+            if (meta?.type === 'select') {
+                inputEl.value = value || '';
+            } else {
+                inputEl.value = value;
+            }
+
+            group.append(label, inputEl);
+            extraContainer.appendChild(group);
         });
     }
 
@@ -974,7 +1066,17 @@ async function saveEditModal() {
             .filter(field => field !== whoMeta?.field)
             .forEach(field => {
                 const el = document.getElementById(`edit-${field}`);
-                if (el) updateData[field] = el.value?.trim() || null;
+                if (!el) return;
+                if (field === 'unit_type') {
+                    updateData[field] = el.value || null;
+                    return;
+                }
+                if (FACTURERO_NUMERIC_FIELDS.has(field)) {
+                    const num = Number(el.value);
+                    updateData[field] = Number.isFinite(num) && num > 0 ? num : null;
+                    return;
+                }
+                updateData[field] = el.value?.trim() || null;
             });
 
         let { error } = await supabase
@@ -983,16 +1085,30 @@ async function saveEditModal() {
             .eq('id', itemId)
             .eq('user_id', user.id);
 
-        if (error && whoMeta?.field && isMissingColumnError(error, whoMeta.field)) {
-            const fallbackData = { ...updateData };
-            delete fallbackData[whoMeta.field];
-            fallbackData[config.conceptField] = buildConceptWithWho(tabName, conceptValue, whoValue);
-            const retry = await supabase
-                .from(config.table)
-                .update(fallbackData)
-                .eq('id', itemId)
-                .eq('user_id', user.id);
-            error = retry.error;
+        if (error) {
+            const dropWho = whoMeta?.field && isMissingColumnError(error, whoMeta.field);
+            const dropUnits = isMissingColumnError(error, 'unit_type')
+                || isMissingColumnError(error, 'unit_qty')
+                || isMissingColumnError(error, 'quantity_kg');
+
+            if (dropWho || dropUnits) {
+                const fallbackData = { ...updateData };
+                if (dropWho) {
+                    delete fallbackData[whoMeta.field];
+                    fallbackData[config.conceptField] = buildConceptWithWho(tabName, conceptValue, whoValue);
+                }
+                if (dropUnits) {
+                    delete fallbackData.unit_type;
+                    delete fallbackData.unit_qty;
+                    delete fallbackData.quantity_kg;
+                }
+                const retry = await supabase
+                    .from(config.table)
+                    .update(fallbackData)
+                    .eq('id', itemId)
+                    .eq('user_id', user.id);
+                error = retry.error;
+            }
         }
 
         if (error) throw error;
@@ -1192,17 +1308,46 @@ if (typeof window !== 'undefined') {
 // UTILIDADES
 // ============================================================
 
+const CROP_STATUS_UI = {
+    sembrado: { class: 'status-attention', text: 'Sembrado' },
+    creciendo: { class: 'status-growing', text: 'Creciendo' },
+    produccion: { class: 'status-ready', text: 'En produccion' },
+    finalizado: { class: 'status-finished', text: 'Finalizado' }
+};
+
+const CROP_STATUS_LEGACY_MAP = {
+    growing: 'creciendo',
+    ready: 'produccion',
+    attention: 'sembrado',
+    harvested: 'finalizado'
+};
+
+function normalizeCropStatus(status) {
+    const value = String(status || '').toLowerCase().trim();
+    if (!value) return 'creciendo';
+    if (CROP_STATUS_UI[value]) return value;
+    if (CROP_STATUS_LEGACY_MAP[value]) return CROP_STATUS_LEGACY_MAP[value];
+    return value;
+}
+
+function getCropStatusMeta(status) {
+    const normalized = normalizeCropStatus(status);
+    if (CROP_STATUS_UI[normalized]) return CROP_STATUS_UI[normalized];
+    const legacy = {
+        growing: { class: 'status-growing', text: 'Creciendo' },
+        ready: { class: 'status-ready', text: 'Lista!' },
+        attention: { class: 'status-attention', text: 'Atencion' },
+        harvested: { class: 'status-finished', text: 'Cosechado' }
+    };
+    const value = String(status || '').toLowerCase().trim();
+    return legacy[value] || CROP_STATUS_UI.creciendo;
+}
+
 /**
  * Renderiza el estado del cultivo como badge
  */
 function createStatusBadge(status) {
-    const statusMap = {
-        'growing': { class: 'status-growing', text: 'Creciendo' },
-        'ready': { class: 'status-ready', text: 'Lista!' },
-        'attention': { class: 'status-attention', text: 'Atencion' },
-        'harvested': { class: 'status-harvested', text: 'Cosechado' }
-    };
-    const s = statusMap[status] || statusMap['growing'];
+    const s = getCropStatusMeta(status);
     const badge = document.createElement('span');
     badge.className = `crop-status ${s.class}`;
     badge.textContent = s.text;
@@ -2659,6 +2804,57 @@ function ensureIncomeSection(targetContainer) {
         });
         categoryGroup.append(categoryLabel, categorySelect);
 
+        const unitTypeGroup = document.createElement('div');
+        unitTypeGroup.className = 'input-group field-unit';
+        const unitTypeLabel = document.createElement('label');
+        unitTypeLabel.className = 'input-label';
+        unitTypeLabel.setAttribute('for', 'income-unit-type');
+        unitTypeLabel.textContent = 'Presentacion';
+        const unitTypeSelect = document.createElement('select');
+        unitTypeSelect.id = 'income-unit-type';
+        unitTypeSelect.className = 'styled-input';
+        unitTypeSelect.style.paddingLeft = '1rem';
+        unitTypeSelect.style.cursor = 'pointer';
+        INCOME_UNIT_OPTIONS.forEach((opt) => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            unitTypeSelect.appendChild(option);
+        });
+        unitTypeGroup.append(unitTypeLabel, unitTypeSelect);
+
+        const unitQtyGroup = document.createElement('div');
+        unitQtyGroup.className = 'input-group field-unit-qty';
+        const unitQtyLabel = document.createElement('label');
+        unitQtyLabel.className = 'input-label';
+        unitQtyLabel.setAttribute('for', 'income-unit-qty');
+        unitQtyLabel.textContent = 'Cantidad (unidad)';
+        const unitQtyInput = document.createElement('input');
+        unitQtyInput.type = 'number';
+        unitQtyInput.id = 'income-unit-qty';
+        unitQtyInput.className = 'styled-input';
+        unitQtyInput.placeholder = 'Ej: 2';
+        unitQtyInput.step = '0.01';
+        unitQtyInput.min = '0';
+        unitQtyInput.style.paddingLeft = '1rem';
+        unitQtyGroup.append(unitQtyLabel, unitQtyInput);
+
+        const kgGroup = document.createElement('div');
+        kgGroup.className = 'input-group field-kg';
+        const kgLabel = document.createElement('label');
+        kgLabel.className = 'input-label';
+        kgLabel.setAttribute('for', 'income-quantity-kg');
+        kgLabel.textContent = 'Kilogramos';
+        const kgInput = document.createElement('input');
+        kgInput.type = 'number';
+        kgInput.id = 'income-quantity-kg';
+        kgInput.className = 'styled-input';
+        kgInput.placeholder = 'Ej: 50';
+        kgInput.step = '0.01';
+        kgInput.min = '0';
+        kgInput.style.paddingLeft = '1rem';
+        kgGroup.append(kgLabel, kgInput);
+
         // V9.5: Asociar a Cultivo (opcional)
         const cropGroup = document.createElement('div');
         cropGroup.className = 'input-group field-crop';
@@ -2712,7 +2908,7 @@ function ensureIncomeSection(targetContainer) {
 
         actions.append(btnClean, btnSave);
 
-        grid.append(conceptGroup, buyerGroup, amountGroup, dateGroup, categoryGroup, cropGroup, actions);
+        grid.append(conceptGroup, buyerGroup, amountGroup, dateGroup, categoryGroup, unitTypeGroup, unitQtyGroup, kgGroup, cropGroup, actions);
 
         const advancedPanel = document.createElement('details');
         advancedPanel.className = 'advanced-panel';
@@ -2814,11 +3010,73 @@ function ensureIncomeSection(targetContainer) {
         listContainer.append(listTitle, list);
     }
 
-    if (form) wrapper.appendChild(form);
-    if (note) wrapper.appendChild(note);
-    if (listContainer) wrapper.appendChild(listContainer);
+    const formAccordion = document.createElement('details');
+    formAccordion.className = 'yg-accordion facturero-accordion';
+    formAccordion.dataset.accordionGroup = 'facturero';
+    formAccordion.open = true;
 
+    const formSummary = document.createElement('summary');
+    formSummary.className = 'yg-accordion-summary';
+    formSummary.setAttribute('aria-controls', 'facturero-ingresos-form');
+    formSummary.setAttribute('aria-expanded', 'true');
+
+    const formIcon = document.createElement('span');
+    formIcon.className = 'yg-accordion-icon';
+    formIcon.innerHTML = '<i class="fa-solid fa-money-bill-wave"></i>';
+
+    const formTitle = document.createElement('span');
+    formTitle.className = 'yg-accordion-title';
+    formTitle.textContent = 'Registrar ingreso';
+
+    const formChevron = document.createElement('span');
+    formChevron.className = 'yg-accordion-chevron';
+    formChevron.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+
+    formSummary.append(formIcon, formTitle, formChevron);
+
+    const formContent = document.createElement('div');
+    formContent.className = 'yg-accordion-content';
+    formContent.id = 'facturero-ingresos-form';
+    if (form) formContent.appendChild(form);
+    if (note) formContent.appendChild(note);
+    formAccordion.append(formSummary, formContent);
+
+    const historyAccordion = document.createElement('details');
+    historyAccordion.className = 'yg-accordion facturero-accordion';
+    historyAccordion.dataset.accordionGroup = 'facturero';
+    historyAccordion.open = true;
+
+    const historySummary = document.createElement('summary');
+    historySummary.className = 'yg-accordion-summary';
+    historySummary.setAttribute('aria-controls', 'facturero-ingresos-history');
+    historySummary.setAttribute('aria-expanded', 'true');
+
+    const historyIcon = document.createElement('span');
+    historyIcon.className = 'yg-accordion-icon';
+    historyIcon.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
+
+    const historyTitle = document.createElement('span');
+    historyTitle.className = 'yg-accordion-title';
+    historyTitle.textContent = 'Historial';
+
+    const historyChevron = document.createElement('span');
+    historyChevron.className = 'yg-accordion-chevron';
+    historyChevron.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+
+    historySummary.append(historyIcon, historyTitle, historyChevron);
+
+    const historyContent = document.createElement('div');
+    historyContent.className = 'yg-accordion-content';
+    historyContent.id = 'facturero-ingresos-history';
+    if (listContainer) historyContent.appendChild(listContainer);
+    historyAccordion.append(historySummary, historyContent);
+
+    wrapper.append(formAccordion, historyAccordion);
     targetContainer.appendChild(wrapper);
+
+    if (typeof window !== 'undefined' && typeof window.initAgroAccordions === 'function') {
+        window.initAgroAccordions();
+    }
 
     return wrapper;
 }
@@ -2864,6 +3122,9 @@ function clearIncomeForm() {
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
+    const unitTypeInput = document.getElementById('income-unit-type');
+    const unitQtyInput = document.getElementById('income-unit-qty');
+    const kgInput = document.getElementById('income-quantity-kg');
     const fileInput = document.getElementById('income-receipt');
     const dropzone = document.getElementById('income-dropzone');
     const btnSave = document.getElementById('income-save-btn');
@@ -2873,6 +3134,9 @@ function clearIncomeForm() {
     if (amountInput) amountInput.value = '';
     if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
     if (categoryInput) categoryInput.selectedIndex = 0;
+    if (unitTypeInput) unitTypeInput.selectedIndex = 0;
+    if (unitQtyInput) unitQtyInput.value = '';
+    if (kgInput) kgInput.value = '';
     if (fileInput) fileInput.value = '';
     resetIncomeDropzone(dropzone);
 
@@ -2888,6 +3152,9 @@ function enterIncomeEditMode(income) {
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
+    const unitTypeInput = document.getElementById('income-unit-type');
+    const unitQtyInput = document.getElementById('income-unit-qty');
+    const kgInput = document.getElementById('income-quantity-kg');
     const cropInput = document.getElementById('income-crop-id');
     const btnSave = document.getElementById('income-save-btn');
     const form = document.getElementById('income-form');
@@ -2901,6 +3168,9 @@ function enterIncomeEditMode(income) {
     if (amountInput) amountInput.value = income.monto ?? '';
     if (dateInput) dateInput.value = income.fecha || new Date().toISOString().split('T')[0];
     if (categoryInput) categoryInput.value = income.categoria || '';
+    if (unitTypeInput) unitTypeInput.value = income.unit_type || '';
+    if (unitQtyInput) unitQtyInput.value = income.unit_qty ?? '';
+    if (kgInput) kgInput.value = income.quantity_kg ?? '';
     if (cropInput) cropInput.value = income.crop_id || '';
     if (btnSave) btnSave.textContent = 'Actualizar Ingreso';
 
@@ -2978,6 +3248,20 @@ function renderIncomeItem(listEl, income, signedUrl) {
     const dateStr = document.createElement('span');
     dateStr.textContent = formatDate(income.fecha);
     meta.append(category, dateStr);
+
+    const unitSummary = formatUnitSummary(income.unit_type, income.unit_qty);
+    if (unitSummary) {
+        const unitEl = document.createElement('span');
+        unitEl.textContent = unitSummary;
+        meta.appendChild(unitEl);
+    }
+
+    const kgSummary = formatKgSummary(income.quantity_kg);
+    if (kgSummary) {
+        const kgEl = document.createElement('span');
+        kgEl.textContent = kgSummary;
+        meta.appendChild(kgEl);
+    }
 
     if (signedUrl) {
         const evidenceLink = createEvidenceLinkElement(signedUrl);
@@ -3180,6 +3464,9 @@ async function saveIncome() {
     const amountInput = document.getElementById('income-amount');
     const dateInput = document.getElementById('income-date');
     const categoryInput = document.getElementById('income-category');
+    const unitTypeInput = document.getElementById('income-unit-type');
+    const unitQtyInput = document.getElementById('income-unit-qty');
+    const kgInput = document.getElementById('income-quantity-kg');
     const fileInput = document.getElementById('income-receipt');
     const btnSave = document.getElementById('income-save-btn');
 
@@ -3188,6 +3475,11 @@ async function saveIncome() {
     const amount = amountInput?.value?.trim() || '';
     const category = categoryInput?.value || '';
     const dateVal = dateInput?.value || new Date().toISOString().split('T')[0];
+    const unitType = unitTypeInput?.value || '';
+    const unitQtyRaw = unitQtyInput?.value;
+    const kgRaw = kgInput?.value;
+    const unitQtyValue = Number.isFinite(parseFloat(unitQtyRaw)) && parseFloat(unitQtyRaw) > 0 ? parseFloat(unitQtyRaw) : null;
+    const kgValue = Number.isFinite(parseFloat(kgRaw)) && parseFloat(kgRaw) > 0 ? parseFloat(kgRaw) : null;
     const file = fileInput?.files?.[0] || null;
     const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
 
@@ -3235,17 +3527,33 @@ async function saveIncome() {
                 concepto: conceptFinal,
                 monto: parseFloat(amount),
                 fecha: dateVal,
-                categoria: category
+                categoria: category,
+                unit_type: unitType || null,
+                unit_qty: unitQtyValue,
+                quantity_kg: kgValue
             };
             if (soportePath) {
                 payload.soporte_url = soportePath;
             }
 
-            const { error: updateError } = await supabase
+            let { error: updateError } = await supabase
                 .from('agro_income')
                 .update(payload)
                 .eq('id', incomeId)
                 .eq('user_id', user.id);
+
+            if (updateError && (isMissingColumnError(updateError, 'unit_type') || isMissingColumnError(updateError, 'unit_qty') || isMissingColumnError(updateError, 'quantity_kg'))) {
+                const fallbackPayload = { ...payload };
+                delete fallbackPayload.unit_type;
+                delete fallbackPayload.unit_qty;
+                delete fallbackPayload.quantity_kg;
+                const retry = await supabase
+                    .from('agro_income')
+                    .update(fallbackPayload)
+                    .eq('id', incomeId)
+                    .eq('user_id', user.id);
+                updateError = retry.error;
+            }
 
             if (updateError) throw updateError;
             alert('Ingreso actualizado.');
@@ -3254,7 +3562,7 @@ async function saveIncome() {
             const incomeCropSelect = document.getElementById('income-crop-id');
             const incomeCropId = incomeCropSelect?.value || null;
 
-            const { error: insertError } = await supabase
+            let { error: insertError } = await supabase
                 .from('agro_income')
                 .insert({
                     id: incomeId,
@@ -3264,8 +3572,28 @@ async function saveIncome() {
                     fecha: dateVal,
                     categoria: category,
                     soporte_url: soportePath,
-                    crop_id: incomeCropId || null // V9.5
+                    crop_id: incomeCropId || null, // V9.5
+                    unit_type: unitType || null,
+                    unit_qty: unitQtyValue,
+                    quantity_kg: kgValue
                 });
+
+            if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'unit_qty') || isMissingColumnError(insertError, 'quantity_kg'))) {
+                const fallbackInsert = {
+                    id: incomeId,
+                    user_id: user.id,
+                    concepto: conceptFinal,
+                    monto: parseFloat(amount),
+                    fecha: dateVal,
+                    categoria: category,
+                    soporte_url: soportePath,
+                    crop_id: incomeCropId || null
+                };
+                const retry = await supabase
+                    .from('agro_income')
+                    .insert(fallbackInsert);
+                insertError = retry.error;
+            }
 
             if (insertError) throw insertError;
             alert('Ingreso guardado.');
@@ -4526,6 +4854,10 @@ export function openCropModal() {
 
     // Limpiar formulario
     document.getElementById('form-new-crop')?.reset();
+    const editInput = document.getElementById('crop-edit-id');
+    if (editInput) editInput.value = '';
+    const statusSelect = document.getElementById('crop-status');
+    if (statusSelect) statusSelect.value = 'sembrado';
 
     // Actualizar UI del modal para modo "Nuevo"
     const modalTitle = document.querySelector('.modal-title');
@@ -4574,6 +4906,10 @@ export function openEditModal(id) {
     document.getElementById('crop-investment').value = crop.investment || '';
     document.getElementById('crop-start-date').value = crop.start_date || '';
     document.getElementById('crop-harvest-date').value = crop.expected_harvest_date || '';
+    const statusSelect = document.getElementById('crop-status');
+    if (statusSelect) statusSelect.value = normalizeCropStatus(crop.status);
+    const editInput = document.getElementById('crop-edit-id');
+    if (editInput) editInput.value = String(crop.id || '');
     const templateSelect = document.getElementById('crop-template');
     if (templateSelect) {
         templateSelect.value = '';
@@ -4611,6 +4947,8 @@ export function closeCropModal() {
     if (modal) {
         modal.classList.remove('active');
     }
+    const editInput = document.getElementById('crop-edit-id');
+    if (editInput) editInput.value = '';
 }
 
 /**
@@ -4625,6 +4963,7 @@ export async function saveCrop() {
     const investment = parseFloat(document.getElementById('crop-investment')?.value) || 0;
     const startDate = document.getElementById('crop-start-date')?.value || null;
     const harvestDate = document.getElementById('crop-harvest-date')?.value || null;
+    const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
 
     // Validación
     if (!name) {
@@ -4651,7 +4990,8 @@ export async function saveCrop() {
         area_size: area,
         investment: investment,
         start_date: startDate,
-        expected_harvest_date: harvestDate
+        expected_harvest_date: harvestDate,
+        status: statusValue
     };
 
     try {
@@ -4674,7 +5014,7 @@ export async function saveCrop() {
                     .insert([{
                         ...cropData,
                         user_id: userData.user.id,
-                        status: 'growing',
+                        status: statusValue,
                         progress: 0
                     }])
                     .select();
@@ -4697,7 +5037,7 @@ export async function saveCrop() {
                 const newCrop = {
                     id: crypto.randomUUID(),
                     ...cropData,
-                    status: 'growing',
+                    status: statusValue,
                     progress: 0,
                     created_at: new Date().toISOString()
                 };
@@ -4847,10 +5187,39 @@ window.deleteCrop = deleteCrop;
 
     // V9.6.2: Mobile Accordions
     function initAccordions() {
-        if (window.matchMedia('(max-width: 768px)').matches) {
-            document.querySelectorAll('.yg-accordion').forEach(el => el.removeAttribute('open'));
-        }
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const accordions = Array.from(document.querySelectorAll('.yg-accordion'));
+
+        accordions.forEach((el) => {
+            const summary = el.querySelector('summary');
+            const content = el.querySelector('.yg-accordion-content');
+            if (summary && content) {
+                if (!content.id) {
+                    const fallbackId = el.id ? `${el.id}-content` : `yg-acc-${Math.random().toString(16).slice(2)}-content`;
+                    content.id = fallbackId;
+                }
+                summary.setAttribute('role', 'button');
+                summary.setAttribute('aria-controls', content.id);
+                summary.setAttribute('aria-expanded', el.hasAttribute('open') ? 'true' : 'false');
+            }
+            if (isMobile) {
+                el.removeAttribute('open');
+            }
+            if (el.dataset.accordionBound === 'true') return;
+            el.dataset.accordionBound = 'true';
+            el.addEventListener('toggle', () => {
+                if (summary) summary.setAttribute('aria-expanded', el.open ? 'true' : 'false');
+                if (isMobile && el.open && el.dataset.accordionGroup) {
+                    const group = el.dataset.accordionGroup;
+                    document.querySelectorAll(`.yg-accordion[data-accordion-group=\"${group}\"]`).forEach((other) => {
+                        if (other !== el) other.removeAttribute('open');
+                    });
+                }
+            });
+        });
     }
+
+    window.initAgroAccordions = initAccordions;
 
     // V9.6.2: Fix Facturero Edit Label (Pendientes -> Cliente)
     function initFactureroLabelFix() {

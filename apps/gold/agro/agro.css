@@ -697,6 +697,12 @@ body.modal-open {
   grid-column: span 4;
 }
 
+.facturero-grid .field-unit,
+.facturero-grid .field-unit-qty,
+.facturero-grid .field-kg {
+  grid-column: span 3;
+}
+
 .facturero-actions {
   grid-column: span 2;
   display: flex;
@@ -990,6 +996,9 @@ body.modal-open {
   .facturero-grid .field-date,
   .facturero-grid .field-dynamic,
   .facturero-grid .field-crop,
+  .facturero-grid .field-unit,
+  .facturero-grid .field-unit-qty,
+  .facturero-grid .field-kg,
   .facturero-actions {
     grid-column: 1 / -1;
   }
