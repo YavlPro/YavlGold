@@ -704,17 +704,17 @@ function renderHistoryRow(tabName, item, config) {
     const unitMetaParts = [];
     if (unitSummary) unitMetaParts.push(escapeHtml(unitSummary));
     if (kgSummary) unitMetaParts.push(escapeHtml(kgSummary));
-    const unitHtml = unitMetaParts.length ? `<span>${unitMetaParts.join(' &bull; ')}</span>` : '';
+    const unitHtml = unitMetaParts.length ? `<div class="facturero-meta">${unitMetaParts.join(' &bull; ')}</div>` : '';
 
     return `
         <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
             <div style="flex: 1; min-width: 0;">
                 <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(displayConcept)}</div>
                 ${whoLine}
+                ${unitHtml}
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
                     ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
-                    ${unitHtml}
                     ${evidenceHtml}
                 </div>
             </div>
@@ -732,6 +732,28 @@ function renderHistoryRow(tabName, item, config) {
             </div>
         </div>
     `;
+}
+
+function buildFactureroSelectFields(tabName, config) {
+    const fields = new Set();
+    const add = (value) => {
+        if (value) fields.add(value);
+    };
+    add('id');
+    add(config?.conceptField);
+    add(config?.amountField);
+    add(config?.dateField);
+    add('created_at');
+    add('crop_id');
+    (config?.extraFields || []).forEach(add);
+    (FACTURERO_EVIDENCE_FIELDS[tabName] || []).forEach(add);
+    return Array.from(fields);
+}
+
+function buildFactureroSelectClause(fields) {
+    const safeFields = Array.isArray(fields) ? fields.filter(Boolean) : [];
+    if (safeFields.length === 0) return '*, agro_crops(name)';
+    return `${safeFields.join(', ')}, agro_crops(name)`;
 }
 
 async function enrichFactureroItems(tabName, items) {
@@ -766,15 +788,20 @@ async function refreshFactureroHistory(tabName, options = {}) {
     }
 
     const { showActions = true } = options;
+    const debugEnabled = typeof window !== 'undefined'
+        && new URLSearchParams(window.location.search).get('debug') === '1';
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        const selectFields = buildFactureroSelectFields(tabName, config);
+        const selectClause = buildFactureroSelectClause(selectFields);
+
         // Build query
         let query = supabase
             .from(config.table)
-            .select('*, agro_crops(name)')
+            .select(selectClause)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -793,7 +820,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
                 console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
                 const fallback = await supabase
                     .from(config.table)
-                    .select('*, agro_crops(name)')
+                    .select(selectClause)
                     .eq('user_id', user.id)
                     .order('created_at', { ascending: false })
                     .limit(20);
@@ -807,6 +834,10 @@ async function refreshFactureroHistory(tabName, options = {}) {
             }
             console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
             return;
+        }
+
+        if (debugEnabled) {
+            console.log(`[AGRO] ${tabName} row sample`, items?.[0]);
         }
 
         const enrichedItems = await enrichFactureroItems(tabName, items || []);

@@ -111,6 +111,76 @@ async function selectAgroTable(table, columns, useDeletedAt) {
     return { data, error, skipped: false };
 }
 
+const UNIT_LABELS = {
+    saco: { singular: 'saco', plural: 'sacos' },
+    medio_saco: { singular: 'medio saco', plural: 'medios sacos' },
+    cesta: { singular: 'cesta', plural: 'cestas' }
+};
+
+function normalizeUnitType(value) {
+    return String(value || '').toLowerCase().trim();
+}
+
+function formatUnitNumber(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num <= 0) return '';
+    return num % 1 === 0 ? String(num) : String(parseFloat(num.toFixed(2)));
+}
+
+function getStatsCropFilter() {
+    if (typeof document === 'undefined') return null;
+    const el = document.getElementById('stats-crop-id') || document.querySelector('[data-stats-crop]');
+    const value = el?.value;
+    return value ? String(value) : null;
+}
+
+function computeUnitTotals(rows, cropId) {
+    const totals = { saco: 0, medio_saco: 0, cesta: 0, kg: 0 };
+    if (!Array.isArray(rows)) return totals;
+    const cropKey = cropId ? String(cropId) : null;
+
+    rows.forEach(row => {
+        if (cropKey && String(row?.crop_id || '') !== cropKey) return;
+
+        const unitType = normalizeUnitType(row?.unit_type);
+        const unitQty = Number(row?.unit_qty);
+        if (Number.isFinite(unitQty) && unitQty > 0 && totals[unitType] !== undefined) {
+            totals[unitType] += unitQty;
+        }
+
+        const kg = Number(row?.quantity_kg);
+        if (Number.isFinite(kg) && kg > 0) {
+            totals.kg += kg;
+        }
+    });
+
+    return totals;
+}
+
+function formatUnitTotals(totals) {
+    if (!totals) return '-';
+    const parts = [];
+
+    const pushUnit = (value, labels) => {
+        const qtyText = formatUnitNumber(value);
+        if (!qtyText) return;
+        const qtyNum = Number(qtyText);
+        const label = qtyNum === 1 ? labels.singular : labels.plural;
+        parts.push(`${qtyText} ${label}`);
+    };
+
+    pushUnit(totals.saco, UNIT_LABELS.saco);
+    pushUnit(totals.medio_saco, UNIT_LABELS.medio_saco);
+    pushUnit(totals.cesta, UNIT_LABELS.cesta);
+
+    const kgText = formatUnitNumber(totals.kg);
+    if (kgText) {
+        parts.push(`${kgText} kg`);
+    }
+
+    return parts.length ? parts.join(' • ') : '-';
+}
+
 // ============================================================
 // FUENTE ÚNICA DE VERDAD - Unified Finance Summary V1
 // ============================================================
@@ -137,6 +207,7 @@ export async function computeAgroFinanceSummaryV1() {
         }
 
         const userId = userData.user.id;
+        const statsCropId = getStatsCropFilter();
 
         // 1) Expenses REALES (filtrar deleted_at IS NULL)
         let expenseTotal = 0;
@@ -161,14 +232,15 @@ export async function computeAgroFinanceSummaryV1() {
 
         // 2) Income REALES (filter deleted_at if column exists)
         let incomeTotal = 0;
+        let incomeRows = null;
         try {
-            const result = await selectAgroTable('agro_income', 'monto', true);
+            const result = await selectAgroTable('agro_income', 'monto, unit_type, unit_qty, quantity_kg, crop_id', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching income:', result.error);
             }
-            const income = result?.data;
-            if (income) {
-                income.forEach(i => {
+            incomeRows = result?.data;
+            if (incomeRows) {
+                incomeRows.forEach(i => {
                     incomeTotal += parseFloat(i.monto) || 0;
                 });
             }
@@ -178,14 +250,15 @@ export async function computeAgroFinanceSummaryV1() {
 
         // 3) Pending (si la tabla existe - graceful fallback)
         let pendingTotal = 0;
+        let pendingRows = null;
         try {
-            const result = await selectAgroTable('agro_pending', 'monto', true);
+            const result = await selectAgroTable('agro_pending', 'monto, unit_type, unit_qty, quantity_kg, crop_id', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching pending:', result.error);
             }
-            const pending = result?.data;
-            if (pending) {
-                pending.forEach(p => {
+            pendingRows = result?.data;
+            if (pendingRows) {
+                pendingRows.forEach(p => {
                     pendingTotal += parseFloat(p.monto) || 0;
                 });
             }
@@ -195,14 +268,15 @@ export async function computeAgroFinanceSummaryV1() {
 
         // 4) Losses (si la tabla existe - graceful fallback)
         let lossesTotal = 0;
+        let lossesRows = null;
         try {
-            const result = await selectAgroTable('agro_losses', 'monto, causa', true);
+            const result = await selectAgroTable('agro_losses', 'monto, causa, unit_type, unit_qty, quantity_kg, crop_id', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
             }
-            const losses = result?.data;
-            if (losses) {
-                losses.forEach(l => {
+            lossesRows = result?.data;
+            if (lossesRows) {
+                lossesRows.forEach(l => {
                     const amt = parseFloat(l.monto) || 0;
                     lossesTotal += amt;
                     const cat = l.category || 'Pérdidas';
@@ -215,14 +289,15 @@ export async function computeAgroFinanceSummaryV1() {
 
         // 5) Transfers (si la tabla existe - graceful fallback)
         let transfersTotal = 0;
+        let transfersRows = null;
         try {
-            const result = await selectAgroTable('agro_transfers', 'monto', true);
+            const result = await selectAgroTable('agro_transfers', 'monto, unit_type, unit_qty, quantity_kg, crop_id', true);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching transfers:', result.error);
             }
-            const transfers = result?.data;
-            if (transfers) {
-                transfers.forEach(t => {
+            transfersRows = result?.data;
+            if (transfersRows) {
+                transfersRows.forEach(t => {
                     transfersTotal += parseFloat(t.monto) || 0;
                 });
             }
@@ -260,6 +335,13 @@ export async function computeAgroFinanceSummaryV1() {
             roiDisplay = roiValue.toFixed(1) + '%';
         }
 
+        const unitTotals = {
+            income: computeUnitTotals(incomeRows, statsCropId),
+            pending: computeUnitTotals(pendingRows, statsCropId),
+            losses: computeUnitTotals(lossesRows, statsCropId),
+            transfers: computeUnitTotals(transfersRows, statsCropId)
+        };
+
         const summary = {
             expenseTotal,
             incomeTotal,
@@ -273,6 +355,8 @@ export async function computeAgroFinanceSummaryV1() {
             roiDisplay,
             roiValue,
             costByCategory,
+            unitTotals,
+            unitTotalsCropId: statsCropId || null,
             hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0 || pendingTotal > 0 || lossesTotal > 0 || transfersTotal > 0,
             updatedAtISO: new Date().toISOString()
         };
@@ -326,6 +410,17 @@ export function updateUIFromSummary(summary) {
 
     const kpiTransfers = document.getElementById('kpi-transfers-total');
     if (kpiTransfers) kpiTransfers.textContent = formatCurrency(summary.transfersTotal || 0);
+
+    // 1.1 Unidades por tipo (facturero)
+    const unitTotals = summary.unitTotals || {};
+    const unitsIncomeEl = document.getElementById('stats-units-income');
+    if (unitsIncomeEl) unitsIncomeEl.textContent = formatUnitTotals(unitTotals.income);
+    const unitsPendingEl = document.getElementById('stats-units-pending');
+    if (unitsPendingEl) unitsPendingEl.textContent = formatUnitTotals(unitTotals.pending);
+    const unitsTransfersEl = document.getElementById('stats-units-transfers');
+    if (unitsTransfersEl) unitsTransfersEl.textContent = formatUnitTotals(unitTotals.transfers);
+    const unitsLossesEl = document.getElementById('stats-units-losses');
+    if (unitsLossesEl) unitsLossesEl.textContent = formatUnitTotals(unitTotals.losses);
 
     // 2. ROI Badge (neutral when N/A) + "Sin ventas registradas" message
     const roiBadge = document.getElementById('roi-badge');

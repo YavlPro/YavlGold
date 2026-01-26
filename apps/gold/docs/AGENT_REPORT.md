@@ -2412,3 +2412,29 @@ git add apps/gold/docs/AGENT_REPORT.md
 git commit -m "feat(agro): V9.6.5 status constraint fix + unit columns for all facturero tables"
 git push
 ```
+
+---
+
+## V9.6.8 - Facturero unidades en historial + stats de unidades (2026-01-26)
+
+### Diagnostico
+1) MPA: `apps/gold/vite.config.js` define entradas HTML (main, dashboard, agro, crypto, academia, tecnologia, social, etc) y `apps/gold/vercel.json` mantiene cleanUrls/trailingSlash con redirects/rewrites; `apps/gold/index.html` tiene navbar (#inicio/#modulos/#testimonios) y cards de modulos; `apps/gold/dashboard/index.html` es el panel principal.
+2) Supabase/auth: cliente en `apps/gold/assets/js/config/supabase-config.js`; sesiones/guard en `apps/gold/assets/js/auth/authClient.js`; UI auth en `apps/gold/assets/js/auth/authUI.js`; `apps/gold/dashboard/auth-guard.js` valida sesion con window.supabase/AuthClient.
+3) Dashboard datos: `dashboard/index.html` consulta `profiles` (avatar/username) y `modules`; usa `FavoritesManager` (user_favorites), `NotificationsManager` (notifications), `AnnouncementManager` (announcements) y `FeedbackManager` (feedback). El tracker local `apps/gold/assets/js/utils/activityTracker.js` usa `YG_ACTIVITY_V1`. Progreso academico existe en `apps/gold/assets/js/academia.js` (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) pero no se integra al dashboard.
+4) Agro/Clima: `apps/gold/assets/js/geolocation.js` prioriza Manual > GPS > IP con keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`; cache clima `yavlgold_weather_*`. `apps/gold/agro/dashboard.js` usa `initWeather`/`displayWeather` y debug via `?debug=1`.
+5) Crypto: `apps/gold/crypto/` existe y esta integrado como pagina MPA en Vite; no depende del servidor python del subfolder.
+6) Facturero: `refreshFactureroHistory` (agro.js) consulta historiales de `agro_pending/agro_losses/agro_transfers` y renderiza con `renderHistoryRow`, pero las columnas `unit_type/unit_qty/quantity_kg` no se ven en el historial.
+7) Stats: `apps/gold/agro/agro-stats.js` solo suma montos; no calcula ni renderiza totales de unidades/kg en el Centro de Estadisticas.
+
+### Plan
+1) `apps/gold/agro/agro.js`: asegurar que el fetch del historial incluye `unit_type/unit_qty/quantity_kg` (select explicito si aplica), log opcional con `?debug=1`, y renderizar meta de unidades/kg con `formatUnitSummary`/`formatKgSummary` en un bloque visible.
+2) `apps/gold/agro/agro.css`: agregar estilo minimo para `.facturero-meta` (texto pequeño y muted) o reusar clases existentes sin romper layout.
+3) `apps/gold/agro/agro-stats.js`: agregar agregador de unidades por tipo (saco/medio_saco/cesta/kg) para ingresos, pendientes, transferencias y perdidas; soportar filtro por `crop_id` si existe selector.
+4) `apps/gold/agro/index.html`: agregar contenedor UI en Centro de Estadisticas para mostrar el resumen de unidades por tipo.
+5) Ejecutar `pnpm build:gold` y reportar resultado.
+
+### DoD
+- [ ] Historial de Pendientes/Perdidas/Transferencias muestra "X sacos • Y kg" solo si > 0 (sin 0/null/NaN ni separadores dobles).
+- [ ] Centro de Estadisticas muestra totales de sacos/medios sacos/cestas/kg para Vendido, Pendiente, Transferido y Perdidas (con filtro por cultivo si existe selector).
+- [ ] Tabs/UX intactos y sin cambios de navegacion.
+- [ ] `pnpm build:gold` OK.

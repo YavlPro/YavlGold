@@ -331,6 +331,26 @@ body.stats-center-open {
   gap: 1rem;
 }
 
+#modal-stats-center .stats-units-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+#modal-stats-center .stats-units-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+  gap: 0.6rem;
+}
+
+#modal-stats-center .stats-units-value {
+  color: var(--text-primary, #ffffff);
+  font-weight: 600;
+  text-align: right;
+}
+
 #modal-stats-center .stats-center-tabs {
   position: sticky;
   top: 0;
@@ -830,6 +850,15 @@ body.modal-open {
   padding: 0.6rem !important;
   margin-bottom: 0.4rem !important;
   gap: 0.4rem !important;
+}
+
+.facturero-meta {
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 #recent-transactions-container {
