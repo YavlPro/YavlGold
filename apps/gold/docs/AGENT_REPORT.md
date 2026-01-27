@@ -2596,3 +2596,22 @@ git push
 - [ ] Modo claro sin parches negros (hero/dividers/gaps).
 - [ ] Modo oscuro intacto.
 - [x] `pnpm build:gold` OK.
+
+---
+
+## V9.4.3 - Landing light-mode: body background override (2026-01-26)
+
+### Diagnostico
+1) DevTools confirma que en light-mode el target de la franja negra es `BODY` y su `computed background` sigue en `rgb(11,12,15)` aunque `body` tiene `class="landing-page light-mode"`.
+2) No hay JS asignando `document.body.style.background` en `apps/gold/index.html` (solo `overflow`), por lo que el override debe hacerse por CSS para ganar a reglas/inline externos.
+3) El fondo oscuro del `body` se filtra en gaps entre secciones (mÃ¡rgenes/espacios/zonas transparentes), no es un divider real.
+
+### Plan
+1) Forzar `body.landing-page` a usar `background-color: var(--landing-page-bg)` (sin hardcode).
+2) En `body.landing-page.light-mode` aplicar override duro con `!important` y quitar cualquier `background-image`.
+3) Mantener `html/body` con `min-height: 100%` y variables por tema sin alterar dark-mode.
+
+### DoD
+- [ ] En light-mode, `BODY` ya no queda en `rgb(11,12,15)` y desaparece la franja negra.
+- [ ] Dark-mode intacto.
+- [x] `pnpm build:gold` OK.
