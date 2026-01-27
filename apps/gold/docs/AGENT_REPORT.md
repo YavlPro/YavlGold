@@ -2556,3 +2556,43 @@ git add apps/gold/agro/agro.js apps/gold/agro/agro-notifications.js apps/gold/do
 git commit -m "chore(agro): cleanup debug logs and finalize V9.6.8"
 git push
 ```
+
+---
+
+## V9.4.1 - Landing modo claro (fuente real + cobertura) (2026-01-26)
+
+### Diagnostico
+1) **Fuente real de landing**: `apps/gold/index.html` contiene los textos visibles “YavlGold V9.4” y “Ecosistema educativo modular (Beta)”, y Vite usa `main: 'index.html'` en `apps/gold/vite.config.js`, por lo que este archivo es la landing servida.
+2) **Hook real del tema**: el toggle en `apps/gold/index.html` aplica `body.classList.toggle('light-mode')` (no `data-theme`), por lo que los overrides deben vivir en `body.light-mode`.
+3) **Selectores candidatos a parches oscuros**: `html`, `body`, `.hero`, `.hero::before`, `.features`, `.testimonials`, `.cta-final`, `.cta-final::before`, `.footer`, `.loading-screen`, `body.landing-page .mobile-overlay`, `body.landing-page .auth-modal-overlay`.
+4) **Variables landing**: se usan `--landing-*` para superficies y overlays; deben cambiar con `body.light-mode` para evitar fondos negros en light.
+
+### Plan
+1) Forzar superficie base de landing en `html, body` con `background: var(--landing-page-bg)` y mantener el color de texto con `--text-primary`.
+2) Normalizar fondos de hero/secciones/dividers/overlays con `--landing-hero-bg`, `--landing-section-bg`, `--landing-section-alt-bg`, `--landing-overlay-bg` y glows por tema.
+3) Validar que el hook real (`body.light-mode`) cambia correctamente los `--landing-*` sin afectar el modo oscuro.
+
+### DoD
+- [ ] Modo claro sin parches oscuros (hero, franja/divider, overlays).
+- [ ] Modo oscuro intacto.
+- [x] Fuente real confirmada (`apps/gold/index.html` + `apps/gold/vite.config.js`).
+- [ ] `pnpm build:gold` OK.
+
+---
+
+## V9.4.2 - Landing light-mode: html sync + vars en html/body (2026-01-26)
+
+### Diagnostico
+1) **Root cause**: el tema se aplica solo en `body.light-mode`, pero `html` mantiene variables dark; cualquier gap/secciÃ³n transparente deja ver fondo oscuro (franja negra).
+2) **Hook real**: el toggle usa `body.classList.toggle('light-mode')` en `apps/gold/index.html` (no `data-theme`).
+3) **Superficies dependientes**: hero/secciones/overlays usan `--landing-*`, por lo que deben resolverse tambiÃ©n en `html.light-mode`.
+
+### Plan
+1) Sincronizar clase `light-mode` en `<html>` y `<body>` desde el toggle.
+2) Aplicar overrides de `--landing-*` a `html.light-mode, body.light-mode`.
+3) Asegurar cobertura de fondo con `background: var(--landing-page-bg)` y `min-height: 100%` en `html, body`.
+
+### DoD
+- [ ] Modo claro sin parches negros (hero/dividers/gaps).
+- [ ] Modo oscuro intacto.
+- [x] `pnpm build:gold` OK.

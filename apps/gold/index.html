@@ -104,6 +104,7 @@
       --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.2) 0%, transparent 70%);
     }
 
+    html.light-mode,
     body.light-mode {
       --bg-primary: #ffffff;
       --bg-secondary: #f8f9fa;
@@ -140,6 +141,7 @@
       scroll-behavior: smooth;
       background: var(--landing-page-bg);
       color: var(--text-primary);
+      min-height: 100%;
     }
 
     body {
@@ -147,6 +149,7 @@
       background: var(--landing-page-bg);
       color: var(--text-primary);
       overflow-x: hidden;
+      min-height: 100%;
       transition: background-color 0.5s ease, color 0.5s ease;
       opacity: 0;
       animation: fadeIn 0.5s ease forwards;
@@ -1592,13 +1595,16 @@
       // Función para establecer el tema inicial
       function setInitialTheme() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.body.classList.toggle('light-mode', savedTheme === 'light');
+        const isLightMode = savedTheme === 'light';
+        document.body.classList.toggle('light-mode', isLightMode);
+        document.documentElement.classList.toggle('light-mode', isLightMode);
         themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
       }
 
       // Función para cambiar el tema
       function toggleTheme() {
         const isLightMode = document.body.classList.toggle('light-mode');
+        document.documentElement.classList.toggle('light-mode', isLightMode);
         localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
         themeToggle.textContent = isLightMode ? '☀️' : '🌙';
         console.log(`🎨 Tema cambiado a: ${isLightMode ? 'light' : 'dark'}`);
