@@ -2641,3 +2641,38 @@ git push
 ### Gates
 - Manual: 390px y 1280px en light/dark (hero y gaps).
 - Build: `pnpm build:gold`.
+
+---
+
+## V9.7.0 - Agro Assistant CORS + errores UI (2026-01-27)
+
+### Diagnostico
+1) La Edge Function `supabase/functions/agro-assistant/index.ts` solo permite `https://yavlgold.com` y `http://localhost*`. No incluye `https://www.yavlgold.com`, por lo que el preflight desde PROD falla con CORS (`No 'Access-Control-Allow-Origin' header`).
+2) La funciÃ³n responde `OPTIONS` con 200/403 sin headers CORS si el origen no estÃ¡ permitido; el navegador bloquea antes del POST.
+3) En el frontend (`apps/gold/agro/agro.js`) el manejo de errores muestra mensajes genÃ©ricos y puede loguear `undefined` en casos de red/CORS (no hay mensaje humano consistente).
+
+### Plan
+1) Backend: ajustar allowlist CORS (agregar `https://www.yavlgold.com`, `http://127.0.0.1:5173`, `http://localhost:5173`) y devolver headers CORS + `Vary: Origin` en todas las respuestas (incluyendo OPTIONS/errores).
+2) Backend: responder preflight con `204` y los headers CORS correctos.
+3) Frontend: mejorar mensajes de error en el Asistente Agro; distinguir fallo de red/CORS y errores JSON para evitar `undefined`.
+
+### DoD
+- [ ] Asistente Agro funciona en PROD (yavlgold.com) sin error CORS.
+- [ ] Edge Function `agro-assistant` responde OPTIONS y POST con headers CORS correctos.
+- [ ] UI muestra error humano consistente (sin “undefined”) en mÃ³vil y desktop.
+- [ ] Sin regresiones en mÃ³dulos Agro.
+- [x] `pnpm build:gold` OK.
+
+### Archivos a tocar
+- `supabase/functions/agro-assistant/index.ts`
+- `apps/gold/agro/agro.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Pruebas / Gates
+- Manual: enviar mensaje en /agro; verificar OPTIONS 204 con `access-control-allow-origin` vÃ¡lido y POST sin CORS.
+- Manual: forzar error de red y validar mensaje humano.
+- Build: `pnpm build:gold`.
+
+### Resultados
+- Build: `pnpm build:gold` OK.
+- Manual: pendiente (requiere probar en PROD y validar CORS/UX).

@@ -4415,6 +4415,34 @@ function closeAgroAssistant() {
     document.body.classList.remove('modal-open');
 }
 
+function getAssistantErrorMessage(error) {
+    const status = error?.status || error?.statusCode;
+    const rawMessage = typeof error?.message === 'string' ? error.message : '';
+    const contextMessage = typeof error?.context?.error?.message === 'string' ? error.context.error.message : '';
+    const contextError = typeof error?.context?.error === 'string' ? error.context.error : '';
+    const detail = contextMessage || contextError || rawMessage;
+
+    if (status === 401) {
+        return 'Debes iniciar sesion para usar el asistente.';
+    }
+    if (status === 429) {
+        return 'Limite alcanzado. Espera unos segundos y vuelve a intentar.';
+    }
+    if (!status || status === 0) {
+        if (/failed to fetch|networkerror|cors/i.test(detail)) {
+            return 'No se pudo conectar con el servicio de IA. Intenta de nuevo o revisa tu conexion.';
+        }
+    }
+    if (/failed to fetch|networkerror|cors/i.test(detail)) {
+        return 'No se pudo conectar con el servicio de IA. Intenta de nuevo o revisa tu conexion.';
+    }
+    if (detail && !/functionshttperror/i.test(detail)) {
+        return detail;
+    }
+
+    return 'No se pudo consultar IA. Intenta luego.';
+}
+
 async function sendAgroAssistantMessage() {
     const input = document.getElementById('agro-assistant-input');
     const sendBtn = document.getElementById('btn-assistant-send');
@@ -4453,19 +4481,15 @@ async function sendAgroAssistantMessage() {
 
         if (error) {
             const status = error?.status || error?.statusCode;
-            console.warn('[AGRO][AI] invoke error', status);
-            if (status === 401) {
-                appendAssistantMessage('assistant', 'Debes iniciar sesion para usar el asistente.');
-            } else if (status === 429) {
+            console.warn('[AGRO][AI] invoke error', status || 'unknown');
+            if (status === 429) {
                 const state = readAssistantCooldown();
                 state.lockUntil = Date.now() + AGRO_ASSISTANT_RATE_LIMIT_MS;
                 writeAssistantCooldown(state);
                 updateAssistantCooldownUI();
                 startAssistantCooldownTimer();
-                appendAssistantMessage('assistant', 'Limite alcanzado. Espera unos segundos y vuelve a intentar.');
-            } else {
-                appendAssistantMessage('assistant', 'No se pudo consultar IA. Intenta luego.');
             }
+            appendAssistantMessage('assistant', getAssistantErrorMessage(error));
             return;
         }
 
@@ -4477,8 +4501,8 @@ async function sendAgroAssistantMessage() {
 
         appendAssistantMessage('assistant', reply.trim());
     } catch (err) {
-        console.warn('[AGRO][AI] request failed', err?.message || err);
-        appendAssistantMessage('assistant', 'No se pudo consultar IA. Intenta luego.');
+        console.warn('[AGRO][AI] request failed', err?.message || err || 'unknown');
+        appendAssistantMessage('assistant', getAssistantErrorMessage(err));
     } finally {
         sendBtn?.removeAttribute('disabled');
     }

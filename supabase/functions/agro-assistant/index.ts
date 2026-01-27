@@ -1,5 +1,8 @@
 const ALLOWED_ORIGINS = new Set([
-  'https://yavlgold.com'
+  'https://www.yavlgold.com',
+  'https://yavlgold.com',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
 ]);
 
 const MODELS = [
@@ -13,16 +16,15 @@ const JSON_HEADERS = {
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
-  if (ALLOWED_ORIGINS.has(origin)) return true;
-  if (origin.startsWith('http://localhost')) return true;
-  return false;
+  return ALLOWED_ORIGINS.has(origin);
 }
 
 function corsHeaders(origin: string) {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin'
   };
 }
 
@@ -64,7 +66,7 @@ Deno.serve(async (req) => {
     if (!allowed || !origin) {
       return new Response('Forbidden', { status: 403 });
     }
-    return new Response('ok', { status: 200, headers: corsHeaders(origin) });
+    return new Response(null, { status: 204, headers: corsHeaders(origin) });
   }
 
   if (!allowed || !origin) {
