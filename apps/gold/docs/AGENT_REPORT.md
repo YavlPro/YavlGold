@@ -2712,3 +2712,40 @@ git push
 ### Resultados
 - Build: `pnpm build:gold` OK.
 - Manual: pendiente (validar CORS en PROD y visibilidad de error en desktop/movil).
+
+---
+
+## V9.7.2 - Agro Assistant CORS + verify_jwt + version header (2026-01-27)
+
+### Diagnostico
+1) El preflight OPTIONS sigue siendo bloqueado en PROD porque el gateway puede rechazar antes de ejecutar la funci?n; la causa probable es `verify_jwt` activo (preflight no trae JWT).
+2) Es necesario garantizar CORS en TODAS las respuestas (incluyendo 403/errores) y confirmar despliegue con un header de versi?n visible en Network.
+3) El error debe ser visible y humano en UI sin ?unknown/undefined?.
+
+### Plan
+1) Crear `supabase/functions/agro-assistant/config.toml` con `verify_jwt = false` para permitir OPTIONS (y validar auth manual solo en POST).
+2) Ajustar `supabase/functions/agro-assistant/index.ts` para enviar headers CORS + `x-agro-assistant-version` en todas las respuestas y responder OPTIONS con 204.
+3) Mantener el manejo de errores del asistente con bubble visible y mensaje humano.
+
+### DoD
+- [ ] OPTIONS responde 204 con CORS headers (allow-origin/allow-headers/allow-methods/vary).
+- [ ] POST funciona desde https://www.yavlgold.com y https://yavlgold.com sin CORS.
+- [ ] CORS headers en todas las respuestas (success/error).
+- [ ] UI muestra mensaje humano visible (desktop/movil) sin ?unknown/undefined?.
+- [ ] `x-agro-assistant-version` visible en Network.
+- [x] `pnpm build:gold` OK.
+
+### Archivos a tocar
+- `supabase/functions/agro-assistant/config.toml`
+- `supabase/functions/agro-assistant/index.ts`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro.css`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Pruebas / Gates
+- Manual: Network (OPTIONS 204 + headers, POST sin CORS) y UX de error visible.
+- Build: `pnpm build:gold`.
+
+### Resultados
+- Build: `pnpm build:gold` OK.
+- Manual: pendiente (validar CORS en PROD y visibilidad de error en desktop/movil).
