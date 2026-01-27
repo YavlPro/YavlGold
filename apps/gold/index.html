@@ -97,10 +97,12 @@
       /* Landing surfaces */
       --landing-page-bg: var(--bg-primary);
       --landing-hero-bg: var(--bg-primary);
+      --landing-hero-overlay: none;
       --landing-section-bg: var(--bg-primary);
       --landing-section-alt-bg: var(--bg-secondary);
       --landing-overlay-bg: var(--bg-primary);
       --landing-hero-glow: radial-gradient(circle, rgba(200, 167, 82, 0.15) 0%, transparent 70%);
+      --landing-hero-glow-opacity: 1;
       --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.2) 0%, transparent 70%);
     }
 
@@ -121,10 +123,12 @@
       --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.45);
       --landing-page-bg: var(--bg-primary);
       --landing-hero-bg: var(--bg-primary);
+      --landing-hero-overlay: radial-gradient(circle at 50% 35%, rgba(200, 167, 82, 0.08) 0%, transparent 65%);
       --landing-section-bg: var(--bg-primary);
       --landing-section-alt-bg: var(--bg-secondary);
       --landing-overlay-bg: var(--bg-secondary);
       --landing-hero-glow: radial-gradient(circle, rgba(200, 167, 82, 0.12) 0%, transparent 70%);
+      --landing-hero-glow-opacity: 0.6;
       --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.18) 0%, transparent 70%);
     }
 
@@ -596,7 +600,11 @@
       justify-content: center;
       text-align: center;
       padding: 8rem 2rem 2rem 2rem;
-      background: var(--landing-hero-bg);
+      background-color: var(--landing-hero-bg);
+      background-image: var(--landing-hero-overlay);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
       position: relative;
       overflow: hidden;
     }
@@ -610,8 +618,18 @@
       width: 1000px;
       height: 1000px;
       background: var(--landing-hero-glow);
+      opacity: var(--landing-hero-glow-opacity);
       animation: pulse 6s ease-in-out infinite;
       pointer-events: none;
+    }
+
+    body.landing-page.light-mode .hero {
+      background-color: var(--landing-hero-bg) !important;
+      background-image: var(--landing-hero-overlay) !important;
+    }
+
+    body.landing-page.light-mode .hero::after {
+      opacity: 0.015;
     }
 
     .hero::after {

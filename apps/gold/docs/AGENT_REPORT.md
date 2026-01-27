@@ -2615,3 +2615,29 @@ git push
 - [ ] En light-mode, `BODY` ya no queda en `rgb(11,12,15)` y desaparece la franja negra.
 - [ ] Dark-mode intacto.
 - [x] `pnpm build:gold` OK.
+
+---
+
+## V9.4.4 - Landing light-mode: HERO consistente (2026-01-26)
+
+### Diagnostico
+1) En `apps/gold/index.html` el HERO usa `background: var(--landing-hero-bg)` y overlays por `::before` con `--landing-hero-glow`; no hay overrides especÃ­ficos de light para el HERO ni reducciÃ³n de overlay.
+2) No existen reglas `@media` que cambien el background del HERO en mÃ³vil; el problema es de variables/overlays en light y/o falta de override en `body.landing-page.light-mode`.
+3) El hero en desktop se ve “empastado” por la combinaciÃ³n del glow grande (`::before`) con el fondo claro sin ajuste; en mÃ³vil el HERO queda oscuro por falta de override duro sobre el fondo del HERO.
+
+### Plan
+1) Crear variables de hero dedicadas: `--landing-hero-bg`, `--landing-hero-overlay`, `--landing-hero-glow-opacity` y definir overrides en `html.light-mode, body.light-mode`.
+2) Aplicar `--landing-hero-overlay` como `background-image` del HERO y controlar la intensidad del glow con `--landing-hero-glow-opacity`.
+3) Asegurar override directo en `body.landing-page.light-mode .hero` para evitar fondos oscuros residuales.
+4) Mantener el fix del fondo de body/html y no alterar dark-mode.
+
+### DoD
+- [ ] Light-mode: HERO coherente en mÃ³vil y desktop (sin negro ni overlay gris fuerte).
+- [ ] Dark-mode intacto (sin regresiones).
+- [ ] Franja negra no reaparece.
+- [ ] Toggle de tema funciona igual (clases `light-mode` en html/body).
+- [x] `pnpm build:gold` OK.
+
+### Gates
+- Manual: 390px y 1280px en light/dark (hero y gaps).
+- Build: `pnpm build:gold`.
