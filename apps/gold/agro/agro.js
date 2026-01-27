@@ -4420,27 +4420,44 @@ function getAssistantErrorMessage(error) {
     const rawMessage = typeof error?.message === 'string' ? error.message : '';
     const contextMessage = typeof error?.context?.error?.message === 'string' ? error.context.error.message : '';
     const contextError = typeof error?.context?.error === 'string' ? error.context.error : '';
-    const detail = contextMessage || contextError || rawMessage;
+    const detail = (contextMessage || contextError || rawMessage).toLowerCase();
 
+    // Errores de Auth
     if (status === 401) {
-        return 'Debes iniciar sesion para usar el asistente.';
-    }
-    if (status === 429) {
-        return 'Limite alcanzado. Espera unos segundos y vuelve a intentar.';
-    }
-    if (!status || status === 0) {
-        if (/failed to fetch|networkerror|cors/i.test(detail)) {
-            return 'No se pudo conectar con el servicio de IA. Revisa tu conexion o intentalo en unos segundos.';
-        }
-    }
-    if (/failed to fetch|networkerror|cors/i.test(detail)) {
-        return 'No se pudo conectar con el servicio de IA. Revisa tu conexion o intentalo en unos segundos.';
-    }
-    if (detail && !/functionshttperror/i.test(detail)) {
-        return detail;
+        return 'Tu sesión ha expirado o no es válida. Recarga la página y vuelve a intentar.';
     }
 
-    return 'No se pudo consultar IA. Intenta luego.';
+    // Errores de Rate Limit
+    if (status === 429) {
+        return 'Límite de consultas alcanzado. Espera unos segundos.';
+    }
+
+    // Errores de Servidor (5xx)
+    if (status >= 500) {
+        return 'El asistente tiene problemas técnicos momentáneos. Intenta más tarde.';
+    }
+
+    // Errores de Red / CORS / Offline
+    if (!status || status === 0 ||
+        detail.includes('failed to fetch') ||
+        detail.includes('networkerror') ||
+        detail.includes('cors') ||
+        detail.includes('load failed')) {
+        return 'Error de conexión: No se pudo contactar al asistente. Verifica tu red.';
+    }
+
+    // Errores específicos reportados por backend
+    if (detail.includes('empty_prompt')) return 'Por favor escribe tu consulta.';
+    if (detail.includes('missing_gemini_key')) return 'Sistema en mantenimiento (API Key).';
+    if (detail.includes('ai_error')) return 'La IA no pudo procesar tu solicitud. Intenta reformularla.';
+
+    // Fallback genérico pero amigable
+    if (detail && !/functionshttperror/i.test(detail)) {
+        // Si hay un mensaje técnico legible, mostrarlo limpio si es corto, sino genérico
+        return detail.length < 100 ? detail : 'Error inesperado en el asistente.';
+    }
+
+    return 'No se pudo consultar el asistente. Intenta nuevamente.';
 }
 
 async function sendAgroAssistantMessage() {

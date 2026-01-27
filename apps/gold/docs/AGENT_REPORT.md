@@ -2749,3 +2749,29 @@ git push
 ### Resultados
 - Build: `pnpm build:gold` OK.
 - Manual: pendiente (validar CORS en PROD y visibilidad de error en desktop/movil).
+
+## Diagnostico (tarea actual - CORS Agro Assistant)
+1) **Sintoma**: Supabase Edge Function bloqueada por CORS en prod.
+2) **Causa probable**: Headers CORS incompletos o verify_jwt bloqueando preflight (aunque config parece ok).
+3) **Config**: supabase/config.toml tiene verify_jwt = false.
+4) **Plan**: Reforzar headers CORS en index.ts, asegurar 204 en OPTIONS, mejorar mensajes error en agro.js.
+
+## Plan (tarea actual - CORS Agro Assistant)
+1) Edge Function: Implementar helper robusto de CORS, allowlist estricta, headers max-age/vary, y 204 en OPTIONS.
+2) Frontend: Mejorar manejo errores en agro.js y visibilidad CSS.
+3) Build: pnpm build:gold.
+
+## DoD
+- [ ] OPTIONS 204 + Headers OK.
+- [ ] Errores humanos en UI.
+- [ ] Build OK.
+
+
+## Resultado Despliegue (Confirmado por Usuario)
+- **Deploy**: EXIT 0 (Manual por usuario).
+- **Config**: verify_jwt = false aplicada via supabase/config.toml global.
+- **Funcion**: v9.7.3-cors activa.
+
+## Accion Final
+- Verificar en https://www.yavlgold.com/agro que el asistente responda sin error CORS.
+

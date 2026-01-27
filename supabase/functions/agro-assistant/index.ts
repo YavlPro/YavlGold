@@ -1,4 +1,4 @@
-const ASSISTANT_VERSION = 'v9.7.2-cors';
+const ASSISTANT_VERSION = 'v9.7.3-cors';
 
 const ALLOWED_ORIGINS = new Set([
   'https://www.yavlgold.com',
