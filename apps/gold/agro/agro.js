@@ -151,9 +151,14 @@ function parseDateKey(dateStr) {
 function addDaysToDateKey(dateStr, days) {
     const parsed = parseDateKey(dateStr);
     if (!parsed || !Number.isFinite(days)) return '';
-    const dateObj = new Date(parsed.year, parsed.month - 1, parsed.day);
-    dateObj.setDate(dateObj.getDate() + Math.round(days));
-    return formatDateKey(dateObj);
+    // Use UTC to avoid timezone offset issues
+    const utcMs = Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+    const futureMs = utcMs + (Math.round(days) * 24 * 60 * 60 * 1000);
+    const futureDate = new Date(futureMs);
+    const y = futureDate.getUTCFullYear();
+    const m = String(futureDate.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(futureDate.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 function toUtcDate(dateStr) {
@@ -1431,14 +1436,40 @@ function createStatusBadge(status) {
 /**
  * Formatea fecha a texto legible
  */
+
+const MONTH_NAMES_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+function getCalendarDay(dateStr) {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-');
+    return parts.length === 3 ? parseInt(parts[2], 10) : '';
+}
+
+function getCalendarMonth(dateStr) {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-');
+    if (parts.length !== 3) return '';
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    return MONTH_NAMES_SHORT[monthIndex] || '';
+}
+
+function getCalendarYear(dateStr) {
+    if (!dateStr) return '';
+    const parts = String(dateStr).split('-');
+    return parts.length === 3 ? parseInt(parts[0], 10) : '';
+}
+
 function formatDate(dateStr) {
     if (!dateStr) return 'N/A';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-    });
+    try {
+        const day = getCalendarDay(dateStr);
+        const month = getCalendarMonth(dateStr);
+        const year = getCalendarYear(dateStr);
+        if (!day || !month || !year) return dateStr;
+        return `${day} ${month} ${year}`;
+    } catch (e) {
+        return dateStr;
+    }
 }
 
 /**
