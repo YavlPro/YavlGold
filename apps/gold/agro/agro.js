@@ -4275,7 +4275,7 @@ function renderAssistantHistory(history) {
     container.innerHTML = '';
     history.forEach((item) => {
         const message = document.createElement('div');
-        const role = item?.role === 'user' ? 'user' : 'ai';
+        const role = item?.role === 'user' ? 'user' : item?.role === 'error' ? 'error' : 'ai';
         message.className = `assistant-message ${role}`;
         message.textContent = item?.text || '';
         container.appendChild(message);
@@ -4430,11 +4430,11 @@ function getAssistantErrorMessage(error) {
     }
     if (!status || status === 0) {
         if (/failed to fetch|networkerror|cors/i.test(detail)) {
-            return 'No se pudo conectar con el servicio de IA. Intenta de nuevo o revisa tu conexion.';
+            return 'No se pudo conectar con el servicio de IA. Revisa tu conexion o intentalo en unos segundos.';
         }
     }
     if (/failed to fetch|networkerror|cors/i.test(detail)) {
-        return 'No se pudo conectar con el servicio de IA. Intenta de nuevo o revisa tu conexion.';
+        return 'No se pudo conectar con el servicio de IA. Revisa tu conexion o intentalo en unos segundos.';
     }
     if (detail && !/functionshttperror/i.test(detail)) {
         return detail;
@@ -4489,20 +4489,20 @@ async function sendAgroAssistantMessage() {
                 updateAssistantCooldownUI();
                 startAssistantCooldownTimer();
             }
-            appendAssistantMessage('assistant', getAssistantErrorMessage(error));
+            appendAssistantMessage('error', getAssistantErrorMessage(error));
             return;
         }
 
         const reply = data?.reply;
         if (typeof reply !== 'string' || !reply.trim()) {
-            appendAssistantMessage('assistant', 'No se pudo consultar IA. Intenta luego.');
+            appendAssistantMessage('error', 'No se pudo consultar IA. Intenta luego.');
             return;
         }
 
         appendAssistantMessage('assistant', reply.trim());
     } catch (err) {
         console.warn('[AGRO][AI] request failed', err?.message || err || 'unknown');
-        appendAssistantMessage('assistant', getAssistantErrorMessage(err));
+        appendAssistantMessage('error', getAssistantErrorMessage(err));
     } finally {
         sendBtn?.removeAttribute('disabled');
     }

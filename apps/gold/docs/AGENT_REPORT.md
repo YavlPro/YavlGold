@@ -2676,3 +2676,39 @@ git push
 ### Resultados
 - Build: `pnpm build:gold` OK.
 - Manual: pendiente (requiere probar en PROD y validar CORS/UX).
+
+---
+
+## V9.7.1 - Agro Assistant CORS robusto + header version + error visible (2026-01-27)
+
+### Diagnostico
+1) CORS en PROD falla por preflight sin `Access-Control-Allow-Origin` desde `https://www.yavlgold.com`. La Edge Function debe responder `OPTIONS` con headers correctos y mantener allowlist estricta.
+2) Se requiere un header de versiÃ³n para verificar despliegue (`x-agro-assistant-version`) desde Network.
+3) El mensaje de error en desktop no es visible/consistente; necesitamos un estilo de error con alto contraste y una ruta clara de mensaje humano.
+
+### Plan
+1) Edge Function (`supabase/functions/agro-assistant/index.ts`): helper CORS con allowlist exacta, `Access-Control-Max-Age`, `Vary: Origin` y `x-agro-assistant-version` en TODAS las respuestas (OPTIONS/POST/errores).
+2) Frontend (`apps/gold/agro/agro.js`): normalizar mensajes de error (red/CORS/funciÃ³n) y evitar `unknown/undefined`.
+3) Estilos (`apps/gold/agro/agro.css`): clase de mensaje error con color/contraste legible en desktop y mÃ³vil.
+
+### DoD
+- [ ] Preflight OPTIONS responde 204 con headers CORS vÃ¡lidos.
+- [ ] POST funciona desde https://www.yavlgold.com y https://yavlgold.com sin CORS.
+- [ ] CORS headers en todas las respuestas (success/error).
+- [ ] UI muestra mensaje humano visible en desktop y mÃ³vil (sin “unknown/undefined”).
+- [ ] Header `x-agro-assistant-version` visible en Network.
+- [x] `pnpm build:gold` OK.
+
+### Archivos a tocar
+- `supabase/functions/agro-assistant/index.ts`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro.css`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Pruebas / Gates
+- Manual: Network (OPTIONS 204 + headers, POST sin CORS) y UX de error visible.
+- Build: `pnpm build:gold`.
+
+### Resultados
+- Build: `pnpm build:gold` OK.
+- Manual: pendiente (validar CORS en PROD y visibilidad de error en desktop/movil).

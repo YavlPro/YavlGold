@@ -665,6 +665,12 @@ body.modal-open {
   background: rgba(74, 222, 128, 0.08);
 }
 
+#modal-agro-assistant .assistant-message.error {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.15);
+  color: #ffecec;
+}
+
 @media (max-width: 640px) {
   #modal-agro-assistant {
     align-items: flex-end;

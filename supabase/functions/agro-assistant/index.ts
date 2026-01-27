@@ -1,3 +1,5 @@
+const ASSISTANT_VERSION = 'v9.7.1-cors';
+
 const ALLOWED_ORIGINS = new Set([
   'https://www.yavlgold.com',
   'https://yavlgold.com',
@@ -19,12 +21,19 @@ function isAllowedOrigin(origin: string | null): boolean {
   return ALLOWED_ORIGINS.has(origin);
 }
 
-function corsHeaders(origin: string) {
-  return {
-    'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+function corsHeaders(origin: string | null) {
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Vary': 'Origin'
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
+    'x-agro-assistant-version': ASSISTANT_VERSION
+  };
+  if (origin && isAllowedOrigin(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+  return {
+    ...headers
   };
 }
 
@@ -61,42 +70,43 @@ function shouldFallback(errorStatus: number, errorMessage: string): boolean {
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
   const allowed = isAllowedOrigin(origin);
+  const cors = corsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
     if (!allowed || !origin) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Forbidden', { status: 403, headers: cors });
     }
-    return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    return new Response(null, { status: 204, headers: cors });
   }
 
   if (!allowed || !origin) {
-    return new Response('Forbidden', { status: 403 });
+    return new Response('Forbidden', { status: 403, headers: cors });
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405, corsHeaders(origin));
+    return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405, cors);
   }
 
   const user = await requireUser(req.headers.get('authorization'));
   if (!user) {
-    return jsonResponse({ error: 'UNAUTHORIZED' }, 401, corsHeaders(origin));
+    return jsonResponse({ error: 'UNAUTHORIZED' }, 401, cors);
   }
 
   let body: { prompt?: string; context?: Record<string, unknown> } = {};
   try {
     body = await req.json();
   } catch (_e) {
-    return jsonResponse({ error: 'INVALID_JSON' }, 400, corsHeaders(origin));
+    return jsonResponse({ error: 'INVALID_JSON' }, 400, cors);
   }
 
   const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
   if (!prompt) {
-    return jsonResponse({ error: 'EMPTY_PROMPT' }, 400, corsHeaders(origin));
+    return jsonResponse({ error: 'EMPTY_PROMPT' }, 400, cors);
   }
 
   const apiKey = Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) {
-    return jsonResponse({ error: 'MISSING_GEMINI_KEY' }, 500, corsHeaders(origin));
+    return jsonResponse({ error: 'MISSING_GEMINI_KEY' }, 500, cors);
   }
 
   const contextText = body.context ? `Contexto: ${JSON.stringify(body.context)}\n\n` : '';
@@ -127,7 +137,7 @@ Deno.serve(async (req) => {
       return jsonResponse(
         { error: 'RATE_LIMIT', retry_after_sec: 60 },
         429,
-        corsHeaders(origin)
+        cors
       );
     }
 
@@ -135,9 +145,9 @@ Deno.serve(async (req) => {
     if (response.ok) {
       const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (typeof reply !== 'string' || !reply.trim()) {
-        return jsonResponse({ error: 'EMPTY_REPLY' }, 500, corsHeaders(origin));
+      return jsonResponse({ error: 'EMPTY_REPLY' }, 500, cors);
       }
-      return jsonResponse({ reply: reply.trim(), model }, 200, corsHeaders(origin));
+      return jsonResponse({ reply: reply.trim(), model }, 200, cors);
     }
 
     const errorMessage = data?.error?.message || '';
@@ -146,8 +156,8 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    return jsonResponse({ error: 'AI_ERROR' }, 500, corsHeaders(origin));
+    return jsonResponse({ error: 'AI_ERROR' }, 500, cors);
   }
 
-  return jsonResponse({ error: 'AI_ERROR' }, 500, corsHeaders(origin));
+  return jsonResponse({ error: 'AI_ERROR' }, 500, cors);
 });
