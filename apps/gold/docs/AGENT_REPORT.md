@@ -2825,3 +2825,38 @@ Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fe
 ## Pruebas (tarea actual - Agro Assistant UI thread)
 - Manual: NO VERIFICADO (no ejecutado en UI).
 - Build: pnpm build:gold OK.
+
+## Diagnostico (tarea actual - Agro Assistant especializacion)
+1) El asistente no filtra preguntas fuera de Agro y responde de forma generica.
+2) El payload actual no incluye contexto real de cultivos, ubicacion ni clima en el invoke.
+3) El backend no aplica un domain guard determinista; todo pasa directo al modelo.
+
+## Plan (tarea actual - Agro Assistant especializacion)
+1) agro.js: construir contexto real (cultivo foco, etapa, dia X/Y, ubicacion y clima si existen) y enviar {message, context}.
+2) agro.js: filtro suave de preguntas NO agro con burbuja system.
+3) agro-assistant/index.ts: agregar domain guard y system prompt fijo de agronomo; normalizar reply.
+4) agro.css: solo si hace falta reforzar estilos de burbuja system/out_of_scope.
+
+## DoD (tarea actual - Agro Assistant especializacion)
+- [ ] Rechazo claro a preguntas fuera de Agro.
+- [ ] Respuesta como Ingeniero Agronomo profesional.
+- [ ] Contexto real incluido cuando exista (cultivo, etapa, dia, ubicacion, clima).
+- [ ] Si falta dato critico: "NO TENGO ese dato" + pedir 1-3 datos.
+- [ ] Sin unknown/undefined en UI.
+- [x] pnpm build:gold OK.
+
+## Riesgos / No tocar (tarea actual - Agro Assistant especializacion)
+- No agregar dependencias ni cambiar CORS.
+- No usar innerHTML para mensajes.
+- No inventar datos de usuario.
+
+## Pruebas (tarea actual - Agro Assistant especializacion)
+- Manual: NO VERIFICADO.
+- Build: pnpm build:gold OK.
+
+## Resultado (tarea actual - Agro Assistant especializacion)
+- Implementado: context payload (cultivo foco, ubicacion, clima si existe) y envio message+context.
+- Backend: domain guard y system prompt de Ingeniero Agronomo (sin inventar datos).
+- UI: bubble system para fuera de alcance.
+- Build: pnpm build:gold OK.
+- Manual: NO VERIFICADO.
