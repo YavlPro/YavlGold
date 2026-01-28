@@ -2613,7 +2613,15 @@
                         item.dataset.expenseId = String(expenseId);
                     }
 
-                    const dateStr = dateVal ? new Date(dateVal).toLocaleDateString() : new Date().toLocaleDateString();
+                    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                    let dateStr = '';
+                    if (dateVal) {
+                        const [year, month, day] = dateVal.split('-').map(Number);
+                        dateStr = `${day} ${months[month - 1]} ${year}`;
+                    } else {
+                        const now = new Date();
+                        dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+                    }
 
                     // Generar Link de Evidencia (Local Blob o Remote URL)
                     let fileLinkHtml = '';

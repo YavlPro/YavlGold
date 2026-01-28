@@ -208,10 +208,13 @@ function renderAgendaPanel(dateStr) {
     const panel = document.getElementById('agenda-panel');
     if (!panel) return;
 
-    const dateObj = new Date(dateStr + 'T12:00:00');
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const humanDate = dateObj.toLocaleDateString('es-ES', options);
-    const phase = getMoonPhase(dateObj);
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const utcDate = new Date(Date.UTC(year, month - 1, day));
+    const weekday = weekdays[utcDate.getUTCDay()];
+    const humanDate = `${weekday}, ${day} de ${months[month - 1]} de ${year}`;
+    const phase = getMoonPhase(utcDate);
     const phaseInfo = getPhaseIcon(phase);
 
     const tasks = loadTasks(dateStr);

@@ -2775,3 +2775,21 @@ git push
 ## Accion Final
 - Verificar en https://www.yavlgold.com/agro que el asistente responda sin error CORS.
 
+
+
+## Diagnostico (tarea actual - Bug Fechas Agro)
+El uso de new Date(fecha) en visualización causa desfase de -1 día en zonas horarias negativas. Solución: parsear string directamente y usar Date.UTC() solo para cálculos.
+
+## Plan de Ejecucion
+1. Añadir helpers getCalendarDay, getCalendarMonth, getCalendarYear.
+2. Reemplazar formatDate por versión manual sin toLocaleDateString.
+3. Refactorizar addDaysToDateKey usando Date.UTC().
+4. Validar persistencia tras recarga.
+
+## Diagnostico (tarea actual - Fechas Agro display)
+Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fechas 'YYYY-MM-DD', lo que provoca desfase de -1 dia en zonas horarias negativas. Solucion: parsing manual para display, Date.UTC() solo para calculos de dia de semana.
+
+## Plan (tarea actual - Fechas Agro display)
+1. Reemplazar .toLocaleDateString() en 4 archivos por parsing manual.
+2. Usar Date.UTC() solo donde se necesite dia de la semana.
+3. Validar consistencia en multiples zonas horarias.

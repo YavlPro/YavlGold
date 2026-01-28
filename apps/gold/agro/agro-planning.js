@@ -169,8 +169,10 @@ function generateSmartAdvice(data, isToday) {
 
     // Parse fecha correctamente (sin UTC shift)
     const [y, m, d] = data.date.split('-').map(Number);
-    const dateObj = new Date(y, m - 1, d);
-    const dateStr = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+    const weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+    const utcDate = new Date(Date.UTC(y, m - 1, d));
+    const weekday = weekdays[utcDate.getUTCDay()];
+    const dateStr = `${weekday}, ${d}`;
 
     let title = isToday ? '📡 Análisis en Tiempo Real' : `📅 Previsión: ${dateStr}`;
     let text = '';
