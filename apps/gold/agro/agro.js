@@ -4306,25 +4306,70 @@ function renderAssistantHistory(history) {
     container.innerHTML = '';
     history.forEach((item) => {
         const message = document.createElement('div');
-        const role = item?.role === 'user' ? 'user' : item?.role === 'error' ? 'error' : 'ai';
+        const role = item?.role === 'user'
+            ? 'user'
+            : item?.role === 'error'
+                ? 'error'
+                : item?.role === 'system'
+                    ? 'system'
+                    : 'ai';
         message.className = `assistant-message ${role}`;
         message.textContent = item?.text || '';
         container.appendChild(message);
     });
-    container.scrollTop = container.scrollHeight;
+    scrollAssistantToBottom();
 }
 
-function appendAssistantMessage(role, text) {
-    if (!text) return;
+function scrollAssistantToBottom() {
+    const container = document.getElementById('assistant-history');
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+    const body = container.closest('.assistant-body');
+    if (body) {
+        body.scrollTop = body.scrollHeight;
+    }
+}
+
+function addAssistantMessage({ role, text }) {
+    const safeText = String(text || '').trim();
+    if (!safeText) return;
     const history = loadAssistantHistory();
+    const normalizedRole = role === 'user' || role === 'assistant' || role === 'error' || role === 'system'
+        ? role
+        : 'assistant';
+    const last = history[history.length - 1];
+    if (last && last.role === normalizedRole && last.text === safeText) {
+        renderAssistantHistory(history);
+        return;
+    }
     history.push({
-        role,
-        text,
+        role: normalizedRole,
+        text: safeText,
         ts: Date.now()
     });
     const trimmed = history.slice(-AGRO_ASSISTANT_MAX_HISTORY);
     saveAssistantHistory(trimmed);
     renderAssistantHistory(trimmed);
+}
+
+function appendAssistantMessage(role, text) {
+    addAssistantMessage({ role, text });
+}
+
+function setAssistantLoading(isLoading) {
+    const container = document.getElementById('assistant-history');
+    if (!container) return;
+    const existing = container.querySelector('.assistant-message.loading');
+    if (isLoading) {
+        if (existing) return;
+        const message = document.createElement('div');
+        message.className = 'assistant-message loading';
+        message.textContent = 'Procesando...';
+        container.appendChild(message);
+        scrollAssistantToBottom();
+        return;
+    }
+    existing?.remove();
 }
 
 function readAssistantCooldown() {
@@ -4454,8 +4499,8 @@ function getAssistantErrorMessage(error) {
     const detail = (contextMessage || contextError || rawMessage).toLowerCase();
 
     // Errores de Auth
-    if (status === 401) {
-        return 'Tu sesión ha expirado o no es válida. Recarga la página y vuelve a intentar.';
+    if (status === 401 || status === 403) {
+        return 'Sesion expirada o sin permisos. Recarga la pagina y vuelve a intentar.';
     }
 
     // Errores de Rate Limit
@@ -4494,6 +4539,7 @@ function getAssistantErrorMessage(error) {
 async function sendAgroAssistantMessage() {
     const input = document.getElementById('agro-assistant-input');
     const sendBtn = document.getElementById('btn-assistant-send');
+    const cooldownEl = document.getElementById('assistant-cooldown');
     const prompt = input?.value?.trim() || '';
     if (!prompt) return;
 
@@ -4501,6 +4547,10 @@ async function sendAgroAssistantMessage() {
     if (cooldown.remaining > 0) {
         updateAssistantCooldownUI();
         startAssistantCooldownTimer();
+        const cooldownLabel = cooldownEl?.textContent?.trim();
+        if (cooldownLabel) {
+            addAssistantMessage({ role: 'system', text: cooldownLabel });
+        }
         return;
     }
 
@@ -4508,13 +4558,16 @@ async function sendAgroAssistantMessage() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-        appendAssistantMessage('assistant', 'Debes iniciar sesion para usar el asistente.');
+        addAssistantMessage({ role: 'error', text: 'Debes iniciar sesion para usar el asistente.' });
         sendBtn?.removeAttribute('disabled');
+        input?.focus();
         return;
     }
 
-    appendAssistantMessage('user', prompt);
+    addAssistantMessage({ role: 'user', text: prompt });
     input.value = '';
+    input?.focus();
+    setAssistantLoading(true);
 
     const cooldownState = readAssistantCooldown();
     cooldownState.lastSentAt = Date.now();
@@ -4537,22 +4590,27 @@ async function sendAgroAssistantMessage() {
                 updateAssistantCooldownUI();
                 startAssistantCooldownTimer();
             }
-            appendAssistantMessage('error', getAssistantErrorMessage(error));
+            setAssistantLoading(false);
+            addAssistantMessage({ role: 'error', text: getAssistantErrorMessage(error) });
             return;
         }
 
-        const reply = data?.reply;
+        const reply = [data?.reply, data?.message, data?.text].find((value) => typeof value === 'string' && value.trim());
         if (typeof reply !== 'string' || !reply.trim()) {
-            appendAssistantMessage('error', 'No se pudo consultar IA. Intenta luego.');
+            setAssistantLoading(false);
+            addAssistantMessage({ role: 'error', text: 'No se pudo consultar IA. Intenta luego.' });
             return;
         }
 
-        appendAssistantMessage('assistant', reply.trim());
+        setAssistantLoading(false);
+        addAssistantMessage({ role: 'assistant', text: reply.trim() });
     } catch (err) {
         console.warn('[AGRO][AI] request failed', err?.message || err || 'unknown');
-        appendAssistantMessage('error', getAssistantErrorMessage(err));
+        setAssistantLoading(false);
+        addAssistantMessage({ role: 'error', text: getAssistantErrorMessage(err) });
     } finally {
         sendBtn?.removeAttribute('disabled');
+        input?.focus();
     }
 }
 
@@ -4596,6 +4654,13 @@ function initAgroAssistantModal() {
 
     input?.addEventListener('input', () => {
         if (!assistantCooldownTimer) updateAssistantCooldownUI();
+    });
+
+    input?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendAgroAssistantMessage();
+        }
     });
 
     console.info('[AGRO] V9.5.7: assistant modal open/close wired');
