@@ -4632,7 +4632,7 @@ function getAssistantErrorMessage(error) {
 
     // Errores de Auth
     if (status === 401 || status === 403) {
-        return 'Sesion expirada o sin permiso. Inicia sesion e intenta de nuevo.';
+        return 'Sesion expirada o sin permiso. Inicia sesion y vuelve a intentar.';
     }
 
     // Errores de Rate Limit
@@ -4701,8 +4701,8 @@ async function sendAgroAssistantMessage() {
             role: 'system',
             text: 'Soy tu asistente de campo. Preguntame sobre cultivos, plagas, riego, clima o cosecha. Para otros temas usa Crypto u otro modulo.'
         });
+        return;
     }
-
     addAssistantMessage({ role: 'user', text: prompt });
     input.value = '';
     input?.focus();

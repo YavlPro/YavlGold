@@ -2825,6 +2825,7 @@ Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fe
 ## Pruebas (tarea actual - Agro Assistant UI thread)
 - Manual: NO VERIFICADO (no ejecutado en UI).
 - Build: pnpm build:gold OK.
+
 ## Diagnostico (tarea actual - Agro Assistant especializacion)
 1) El asistente no filtra preguntas fuera de Agro y responde de forma generica.
 2) El payload actual no incluye contexto real de cultivos, ubicacion ni clima en el invoke.
