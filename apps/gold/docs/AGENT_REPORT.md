@@ -2793,3 +2793,35 @@ Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fe
 1. Reemplazar .toLocaleDateString() en 4 archivos por parsing manual.
 2. Usar Date.UTC() solo donde se necesite dia de la semana.
 3. Validar consistencia en multiples zonas horarias.
+
+## Diagnostico (tarea actual - Agro Assistant UI thread)
+1) El hilo usa #assistant-history y renderAssistantHistory solo hace scroll del contenedor, no del body del modal.
+2) No existe estado loading/bubble; solo se agregan mensajes user/assistant/error tras la respuesta.
+3) Los mensajes usan textContent y no hay white-space: pre-wrap, por lo que se pierden saltos de linea.
+4) .assistant-history tiene max-height: 32vh y no min-height; el hilo puede quedar comprimido mientras el body del modal hace scroll.
+
+## Plan (tarea actual - Agro Assistant UI thread)
+1) Agregar funciones addAssistantMessage, setAssistantLoading y scrollAssistantToBottom en agro.js.
+2) Renderizar siempre bubble user + loading + respuesta o error con mensajes humanos normalizados.
+3) Ajustar CSS del hilo: min-height, overflow-y auto, contraste alto, pre-wrap y estados de error/loading.
+4) Mantener cooldown actual y mostrar bloqueo en UI.
+
+## DoD (tarea actual - Agro Assistant UI thread)
+- [ ] Bubble usuario visible inmediato al enviar.
+- [ ] Bubble loading visible mientras espera.
+- [ ] Bubble respuesta legible (pre-wrap) con alto contraste.
+- [ ] Bubble error humano visible ante fallos.
+- [ ] Hilo auto-scroll al ultimo mensaje.
+- [ ] Responsive 390px y 1280px.
+- [x] pnpm build:gold OK.
+
+## Resultado (tarea actual - Agro Assistant UI thread)
+- Implementado: addAssistantMessage/setAssistantLoading/scrollAssistantToBottom y normalizacion de respuesta/errores.
+- UI: bubble loading/system/error y auto-scroll al ultimo mensaje.
+- CSS: hilo con min-height, flex: 1, pre-wrap y contraste alto.
+- Build: pnpm build:gold OK.
+- Manual: NO VERIFICADO.
+
+## Pruebas (tarea actual - Agro Assistant UI thread)
+- Manual: NO VERIFICADO (no ejecutado en UI).
+- Build: pnpm build:gold OK.
