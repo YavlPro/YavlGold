@@ -478,7 +478,9 @@ function formatRelativeTime(date) {
     if (days === 1) return 'Ayer';
     if (days < 7) return `Hace ${days}d`;
 
-    return new Date(date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+    const [year, month, day] = date.split('-').map(Number);
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${day} ${months[month - 1]}`;
 }
 
 // ============================================

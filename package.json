@@ -9,6 +9,7 @@
     "test": "turbo run test",
     "test:v9": "vitest --environment jsdom --run",
     "build:gold": "pnpm -C apps/gold build",
+    "agent-report-check": "node apps/gold/scripts/agent-report-check.mjs",
     "clean:gold": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force apps/gold/dist -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force apps/gold/node_modules/.vite -ErrorAction SilentlyContinue\"",
     "scan:gold": "powershell -NoProfile -Command \"$pat='pass\\s*===\\s*[\\x22\\x27]123[\\x22\\x27]|admin.{0,20}123|superadmin'; Select-String -Path 'apps/gold/dist/assets/*.js' -Pattern $pat -ErrorAction SilentlyContinue\"",
     "lint": "turbo run lint",
