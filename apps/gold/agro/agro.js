@@ -4437,15 +4437,64 @@ function startAssistantCooldownTimer() {
     }, 1000);
 }
 
-function getAssistantContext() {
-    const context = {
-        date: new Date().toISOString(),
-        app: 'YavlGold Agro',
-        version: 'V9.5.6'
+function getAssistantLocationContext() {
+    const Geo = window.YGGeolocation;
+    if (!Geo) return null;
+    let location = null;
+    try {
+        location = Geo.getManualLocation?.() || null;
+        if (!location) {
+            const pref = Geo.getLocationPreference?.() || 'gps';
+            const mode = pref === 'ip' ? 'ip' : 'gps';
+            location = Geo.getCachedCoords?.(mode) || null;
+        }
+    } catch (_e) {
+        location = null;
+    }
+
+    const lat = Number(location?.lat);
+    const lon = Number(location?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+    return {
+        label: location?.label || null,
+        lat,
+        lon
     };
-    const activeTab = readStoredTab?.() || document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab;
+}
+
+function getAssistantWeatherContext() {
+    const descEl = document.getElementById('weather-desc');
+    const tempEl = document.getElementById('weather-temp');
+    const humEl = document.getElementById('weather-humidity');
+
+    const summary = descEl?.textContent?.trim() || null;
+    const temp = tempEl?.textContent ? Number(tempEl.textContent.replace(/[^\d.-]/g, '')) : null;
+    const humidity = humEl?.textContent ? Number(humEl.textContent.replace(/[^\d.-]/g, '')) : null;
+
+    if (!summary && !Number.isFinite(temp) && !Number.isFinite(humidity)) return null;
+
+    return {
+        summary,
+        temp_c: Number.isFinite(temp) ? temp : null,
+        humidity: Number.isFinite(humidity) ? humidity : null
+    };
+}
+
+function getAssistantCropFocus(activeTab) {
+    const crops = Array.isArray(cropsCache) && cropsCache.length
+        ? cropsCache
+        : (() => {
+            try {
+                const local = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+                return Array.isArray(local) ? local : [];
+            } catch (_e) {
+                return [];
+            }
+        })();
+
+    let selectedCrop = null;
     if (activeTab) {
-        context.tab = activeTab;
         const cropSelectMap = {
             gastos: 'expense-crop-id',
             ingresos: 'income-crop-id',
@@ -4456,9 +4505,92 @@ function getAssistantContext() {
         const cropSelectId = cropSelectMap[activeTab];
         const cropSelect = cropSelectId ? document.getElementById(cropSelectId) : null;
         const cropId = cropSelect?.value || null;
-        if (cropId) context.crop_id = cropId;
+        if (cropId) {
+            selectedCrop = crops.find((crop) => String(crop?.id) === String(cropId)) || null;
+        }
     }
+
+    if (!selectedCrop) {
+        selectedCrop = crops.find((crop) => normalizeCropStatus(crop?.status) !== 'finalizado') || crops[0] || null;
+    }
+
+    if (!selectedCrop) return null;
+
+    const templateDuration = getTemplateDurationForCrop(selectedCrop);
+    const progress = computeCropProgress(selectedCrop, templateDuration);
+
+    return {
+        id: selectedCrop?.id ?? null,
+        name: selectedCrop?.name ?? null,
+        variety: selectedCrop?.variety ?? null,
+        status: normalizeCropStatus(selectedCrop?.status),
+        day_x: progress.ok ? progress.dayIndex : null,
+        day_total: progress.ok ? progress.totalDays : null,
+        start_date: selectedCrop?.start_date ?? null,
+        expected_harvest_date: selectedCrop?.expected_harvest_date ?? null
+    };
+}
+
+function getAssistantContext() {
+    const context = {
+        date: new Date().toISOString(),
+        app: 'YavlGold Agro',
+        version: 'V9.5.6'
+    };
+    const activeTab = readStoredTab?.() || document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab;
+    if (activeTab) {
+        context.tab = activeTab;
+    }
+
+    const location = getAssistantLocationContext();
+    if (location) {
+        context.location_real = location;
+    }
+
+    const weather = getAssistantWeatherContext();
+    if (weather) {
+        context.weather_now = weather;
+    }
+
+    const cropFocus = getAssistantCropFocus(activeTab);
+    if (cropFocus) {
+        context.crop_focus = cropFocus;
+    }
+
+    const cropsCount = Array.isArray(cropsCache) ? cropsCache.length : null;
+    if (Number.isFinite(cropsCount)) {
+        context.stats = { crops_count: cropsCount };
+    }
+
     return context;
+}
+
+function isLikelyNonAgroQuestion(text) {
+    const normalized = String(text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const agroKeywords = [
+        'cultivo', 'siembra', 'cosecha', 'riego', 'plaga', 'fertiliz', 'suelo', 'hongo',
+        'fungic', 'insect', 'malez', 'semilla', 'germin', 'hoja', 'raiz', 'tallo',
+        'mancha', 'podred', 'clima', 'humedad', 'lluvia', 'temperatura', 'viento',
+        'invernadero', 'nutrient', 'ph', 'abono', 'agro', 'fitosanit', 'pulgon', 'acaro',
+        'roya', 'mildiu', 'oidio', 'botrytis', 'fusarium', 'bacteria', 'virus'
+    ];
+
+    const nonAgroKeywords = [
+        'bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'crypto', 'cripto', 'blockchain', 'trading',
+        'forex', 'acciones', 'bolsa', 'nft', 'defi', 'wallet', 'binance', 'metamask',
+        'capital de', 'poema', 'cuento', 'historia', 'codigo', 'programa', 'javascript', 'react',
+        'vue', 'svelte', 'python', 'java', 'sql', 'docker', 'linux', 'windows', 'mac',
+        'pelicula', 'serie', 'musica', 'futbol', 'nba', 'nfl', 'politica', 'presidente'
+    ];
+
+    const hasAgro = agroKeywords.some((kw) => normalized.includes(kw));
+    const hasNonAgro = nonAgroKeywords.some((kw) => normalized.includes(kw));
+
+    return hasNonAgro && !hasAgro;
 }
 
 function openAgroAssistant() {
@@ -4500,7 +4632,7 @@ function getAssistantErrorMessage(error) {
 
     // Errores de Auth
     if (status === 401 || status === 403) {
-        return 'Sesion expirada o sin permisos. Recarga la pagina y vuelve a intentar.';
+        return 'Sesion expirada o sin permiso. Inicia sesion e intenta de nuevo.';
     }
 
     // Errores de Rate Limit
@@ -4564,6 +4696,13 @@ async function sendAgroAssistantMessage() {
         return;
     }
 
+    if (isLikelyNonAgroQuestion(prompt)) {
+        addAssistantMessage({
+            role: 'system',
+            text: 'Soy tu asistente de campo. Preguntame sobre cultivos, plagas, riego, clima o cosecha. Para otros temas usa Crypto u otro modulo.'
+        });
+    }
+
     addAssistantMessage({ role: 'user', text: prompt });
     input.value = '';
     input?.focus();
@@ -4576,8 +4715,9 @@ async function sendAgroAssistantMessage() {
     startAssistantCooldownTimer();
 
     try {
+        const contextPayload = getAssistantContext();
         const { data, error } = await supabase.functions.invoke('agro-assistant', {
-            body: { prompt, context: getAssistantContext() }
+            body: { message: prompt, prompt, context: contextPayload }
         });
 
         if (error) {

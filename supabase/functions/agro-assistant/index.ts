@@ -1,4 +1,4 @@
-const ASSISTANT_VERSION = 'v9.7.3-cors';
+const ASSISTANT_VERSION = 'v9.8.0-agro';
 
 const ALLOWED_ORIGINS = new Set([
   'https://www.yavlgold.com',
@@ -15,6 +15,36 @@ const MODELS = [
 const JSON_HEADERS = {
   'Content-Type': 'application/json'
 };
+
+const OUT_OF_SCOPE_REPLY = 'Soy tu asistente de campo. Preguntame sobre cultivos, plagas, riego, clima o cosecha. Para otros temas usa el modulo correspondiente (Crypto u otros).';
+
+const AGRO_KEYWORDS = [
+  'cultivo', 'siembra', 'cosecha', 'riego', 'plaga', 'fertiliz', 'suelo', 'hongo',
+  'fungic', 'insect', 'malez', 'semilla', 'germin', 'hoja', 'raiz', 'tallo',
+  'mancha', 'podred', 'clima', 'humedad', 'lluvia', 'temperatura', 'viento',
+  'invernadero', 'nutrient', 'ph', 'abono', 'agro', 'fitosanit', 'pulgon', 'acaro',
+  'roya', 'mildiu', 'oidio', 'botrytis', 'fusarium', 'bacteria', 'virus'
+];
+
+const NON_AGRO_KEYWORDS = [
+  'bitcoin', 'btc', 'ethereum', 'eth', 'solana', 'crypto', 'cripto', 'blockchain', 'trading',
+  'forex', 'acciones', 'bolsa', 'nft', 'defi', 'wallet', 'binance', 'metamask',
+  'capital de', 'poema', 'cuento', 'historia', 'codigo', 'programa', 'javascript', 'react',
+  'vue', 'svelte', 'python', 'java', 'sql', 'docker', 'linux', 'windows', 'mac',
+  'pelicula', 'serie', 'musica', 'futbol', 'nba', 'nfl', 'politica', 'presidente'
+];
+
+const SYSTEM_PROMPT = [
+  'Eres un Ingeniero Agronomo profesional. Responde solo sobre agricultura y campo (Agro).',
+  'Idioma: español. Estilo: directo, practico, con pasos accionables.',
+  'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato" y pide 1-3 datos concretos.',
+  'Si mencionas agroquimicos, indica "revisar etiqueta y normativa local" y pide cultivo/etapa/sintomas antes de sugerir.',
+  'Formato de respuesta:',
+  '1) Diagnostico probable (confianza: baja/media/alta)',
+  '2) Acciones inmediatas (1-5 bullets)',
+  '3) Preguntas de seguimiento (max 3)',
+  '4) Advertencias (si aplica)'
+].join('\n');
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
@@ -67,6 +97,20 @@ function shouldFallback(errorStatus: number, errorMessage: string): boolean {
   return false;
 }
 
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isOutOfScopeQuery(prompt: string) {
+  const normalized = normalizeText(prompt);
+  const hasAgro = AGRO_KEYWORDS.some((kw) => normalized.includes(kw));
+  const hasNonAgro = NON_AGRO_KEYWORDS.some((kw) => normalized.includes(kw));
+  return hasNonAgro && !hasAgro;
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
   const allowed = isAllowedOrigin(origin);
@@ -92,14 +136,18 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'UNAUTHORIZED' }, 401, cors);
   }
 
-  let body: { prompt?: string; context?: Record<string, unknown> } = {};
+  let body: { prompt?: string; message?: string; context?: Record<string, unknown> } = {};
   try {
     body = await req.json();
   } catch (_e) {
     return jsonResponse({ error: 'INVALID_JSON' }, 400, cors);
   }
 
-  const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
+  const prompt = typeof body.message === 'string'
+    ? body.message.trim()
+    : typeof body.prompt === 'string'
+      ? body.prompt.trim()
+      : '';
   if (!prompt) {
     return jsonResponse({ error: 'EMPTY_PROMPT' }, 400, cors);
   }
@@ -109,12 +157,19 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'MISSING_GEMINI_KEY' }, 500, cors);
   }
 
-  const contextText = body.context ? `Contexto: ${JSON.stringify(body.context)}\n\n` : '';
+  if (isOutOfScopeQuery(prompt)) {
+    return jsonResponse({ reply: OUT_OF_SCOPE_REPLY, category: 'out_of_scope' }, 200, cors);
+  }
+
+  const contextText = body.context
+    ? `Contexto usuario (JSON): ${JSON.stringify(body.context)}\n\n`
+    : 'Contexto usuario: NO DISPONIBLE\n\n';
   const payload = {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents: [
       {
         role: 'user',
-        parts: [{ text: `${contextText}${prompt}` }]
+        parts: [{ text: `${contextText}Consulta del usuario: ${prompt}` }]
       }
     ],
     generationConfig: {
@@ -143,9 +198,12 @@ Deno.serve(async (req) => {
 
     const data = await response.json().catch(() => ({}));
     if (response.ok) {
-      const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const parts = data?.candidates?.[0]?.content?.parts;
+      const reply = Array.isArray(parts)
+        ? parts.map((part: { text?: string }) => part?.text || '').join('').trim()
+        : '';
       if (typeof reply !== 'string' || !reply.trim()) {
-      return jsonResponse({ error: 'EMPTY_REPLY' }, 500, cors);
+        return jsonResponse({ error: 'EMPTY_REPLY' }, 500, cors);
       }
       return jsonResponse({ reply: reply.trim(), model }, 200, cors);
     }
