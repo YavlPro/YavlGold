@@ -2923,3 +2923,39 @@ Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fe
 3) Sin sesión: campana oculta o "Inicia sesión".
 4) /agro/?debug=1: logs de snapshot/event/evaluacion en orden correcto.
 5) Build: `pnpm build:gold` OK (2026-01-29).
+## Diagnostico (tarea actual - Campana amnesica Agro v3)
+1) "Sin cultivos" se persiste como notificacion (activa o leida), contaminando el historial y re-apareciendo aunque luego haya cultivos.
+2) Al cargar historial se pueden recuperar entradas viejas de sistema ("Sin cultivos"/"Cargando"), causando estado amnesico aunque el runtime sea correcto.
+3) La UI mezcla estados de sistema (transitorios) con historial real, lo que rompe la semantica de "leidas".
+
+## Plan (tarea actual - Campana amnesica Agro v3)
+Fase A (Arquitectura):
+1) Introducir `isSystemNotif()` (id prefijo `sys-`) y IDs fijos: `sys-loading-crops`, `sys-no-crops`.
+2) Bloqueo nuclear en persistencia: nunca guardar notifs `sys-*`.
+
+Fase B (Migracion/self-heal):
+3) Al cargar historial, filtrar basura (id `sys-*`, title "Sin cultivos" o title contiene "Cargando") y re-guardar limpio.
+
+Fase C (Render por capas):
+4) Renderizar "Sistema" (runtime) separado de "Nuevas" y "Historial".
+
+Fase D (Debug):
+5) Logs solo con `?debug=1`.
+
+## DoD (tarea actual - Campana amnesica Agro v3)
+- [ ] "Sin cultivos" y "Cargando" son runtime-only (no persisten).
+- [ ] Notifs `sys-*` nunca se guardan en historial ni storage.
+- [ ] Migracion limpia historiales viejos (sys- / "Sin cultivos" / "Cargando").
+- [ ] Render por capas (Sistema + Historial real).
+- [ ] Usuario con cultivos: campana nunca muestra "Sin cultivos".
+- [ ] Usuario sin cultivos: muestra "Agrega tu primer cultivo" (runtime).
+- [ ] Sin sesion: no conclusiones falsas.
+- [ ] Logs solo con `?debug=1`.
+- [x] pnpm build:gold OK.
+
+## Riesgos / Verificacion (tarea actual - Campana amnesica Agro v3)
+- Riesgo: eliminar entradas legitimas si el filtro de sistema es muy agresivo. Verificar titles y ids antes/despues.
+- Verificar: localStorage de notificaciones no contiene ids `sys-*` ni titles "Sin cultivos"/"Cargando".
+## Pruebas (tarea actual - Campana amnesica Agro v3)
+- Manual: NO VERIFICADO.
+- Build: `pnpm build:gold` OK (2026-01-29).

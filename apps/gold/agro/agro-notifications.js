@@ -28,12 +28,18 @@ let lastEvaluatedAt = 0;
 let cropsReadyListenerAttached = false;
 let pendingRefreshReason = null;
 let alertsEvalSeq = 0;
+let sessionState = 'unknown';
 
 const STORAGE_KEY = 'yavlgold_agro_notifications';
 const READ_STORAGE_KEY = 'yavlgold_agro_notifications_read';
 const MAX_READ_HISTORY = 20; // Máximo de notificaciones leídas a conservar
-const EMPTY_CROPS_TITLE = '🌱 Sin cultivos';
 const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+const SYSTEM_ID_PREFIX = 'sys-';
+const SYSTEM_LOADING_ID = 'sys-loading-crops';
+const SYSTEM_NO_CROPS_ID = 'sys-no-crops';
+const SYSTEM_LOADING_TITLE = 'Cargando cultivos...';
+const SYSTEM_NO_CROPS_TITLE = 'Agrega tu primer cultivo';
+const SYSTEM_NO_CROPS_MESSAGE = 'Agrega tu primer cultivo para alertas personalizadas.';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 
@@ -44,6 +50,87 @@ const ALERTS_SESSION_MAX_DELAY = 800;
 function logAgroNotifDebug(label, detail = {}) {
     if (!AGRO_DEBUG) return;
     console.log(`[AgroNotif] ${label}`, detail);
+}
+
+function isSystemNotif(notif) {
+    return typeof notif?.id === 'string' && notif.id.startsWith(SYSTEM_ID_PREFIX);
+}
+
+function isLegacySystemTitle(notif) {
+    const rawTitle = notif?.title ? String(notif.title) : '';
+    const title = rawTitle.toLowerCase().trim();
+    if (!title) return false;
+    if (title.includes('sin cultivos')) return true;
+    if (title.includes('cargando')) return true;
+    return false;
+}
+
+function isTransientNotification(notif) {
+    return isSystemNotif(notif) || isLegacySystemTitle(notif);
+}
+
+function sanitizeNotifications(list) {
+    const items = Array.isArray(list) ? list : [];
+    return items.filter((notif) => !isTransientNotification(notif));
+}
+
+function shouldShowSystemLayer() {
+    return sessionState === 'yes';
+}
+
+function buildSystemNotifications(snapshot = null) {
+    if (!shouldShowSystemLayer()) return [];
+
+    const snap = snapshot || cropsSnapshot || getCropsSnapshot();
+    if (!snap) return [];
+
+    const status = snap.status || cropsStatus;
+    const count = Number.isFinite(snap.count) ? snap.count : null;
+    const system = [];
+
+    if (status === 'loading') {
+        system.push({
+            id: SYSTEM_LOADING_ID,
+            type: 'info',
+            title: SYSTEM_LOADING_TITLE,
+            message: 'Espera un momento.',
+            icon: 'fa-spinner',
+            timestamp: new Date()
+        });
+        return system;
+    }
+
+    if (status === 'ready' && count === 0) {
+        system.push({
+            id: SYSTEM_NO_CROPS_ID,
+            type: 'info',
+            title: SYSTEM_NO_CROPS_TITLE,
+            message: SYSTEM_NO_CROPS_MESSAGE,
+            icon: 'fa-seedling',
+            timestamp: new Date()
+        });
+    }
+
+    return system;
+}
+
+async function refreshSessionState(reason = 'manual') {
+    const sb = getSupabaseClient();
+    if (!sb?.auth?.getSession) return sessionState;
+    try {
+        const { data, error } = await sb.auth.getSession();
+        if (error) throw error;
+        const nextState = data?.session?.user ? 'yes' : 'no';
+        if (nextState !== sessionState) {
+            sessionState = nextState;
+            logAgroNotifDebug('session state', { reason, state: sessionState });
+            renderNotifications();
+        }
+    } catch (err) {
+        sessionState = 'unknown';
+        logAgroNotifDebug('session state error', { reason });
+    }
+    return sessionState;
 }
 
 function getCropsSnapshot() {
@@ -111,11 +198,13 @@ function markSnapshotEvaluated(snapshot) {
     }
 }
 
-function pruneEmptyCropsDuringLoading() {
-    const readyCount = getCropsReadyCount();
-    if (!isCropsReady() || (Number.isFinite(readyCount) && readyCount > 0)) {
-        removeNotificationByTitle(EMPTY_CROPS_TITLE);
-    }
+function purgeTransientNotifications() {
+    const beforeCounts = { active: notifications.length, read: readNotifications.length };
+    notifications = sanitizeNotifications(notifications);
+    readNotifications = sanitizeNotifications(readNotifications);
+    const removed = (beforeCounts.active !== notifications.length)
+        || (beforeCounts.read !== readNotifications.length);
+    if (removed) saveNotificationsToStorage();
 }
 
 function setupCropsReadyListener() {
@@ -145,9 +234,7 @@ function setupCropsReadyListener() {
             lastSeenSeq = Math.max(lastSeenSeq, snapshot.seq);
         }
 
-        if (Number.isFinite(snapshot.count) && snapshot.count > 0) {
-            removeNotificationByTitle(EMPTY_CROPS_TITLE);
-        }
+        purgeTransientNotifications();
 
         logAgroNotifDebug('event received', {
             ts: snapshot.ts,
@@ -166,12 +253,14 @@ function setupCropsReadyListener() {
 // ============================================
 
 export async function initNotifications() {
-    console.log('[AGRO] V9.6.4: 🔔 Inicializando Centro de Alertas...');
+    if (AGRO_DEBUG) {
+        console.log('[AGRO] V9.6.4: 🔔 Inicializando Centro de Alertas...');
+    }
 
     // Load from localStorage
     loadNotificationsFromStorage();
     const initialSnapshot = syncCropsSnapshot();
-    pruneEmptyCropsDuringLoading();
+    purgeTransientNotifications();
     setupCropsReadyListener();
     logAgroNotifDebug('init', {
         status: initialSnapshot?.status || cropsStatus,
@@ -189,6 +278,7 @@ export async function initNotifications() {
 
     // Setup auth listener for late sessions
     setupAuthRefresh();
+    void refreshSessionState('init');
 
     // Refresh system notifications in background
     refreshSystemNotifications('init');
@@ -196,7 +286,9 @@ export async function initNotifications() {
     // Start observing AI Advisor changes (MutationObserver)
     setupAdviceObserver();
 
-    console.log('[AGRO] V9.6.4: ✅ Sistema de notificaciones activo con historial');
+    if (AGRO_DEBUG) {
+        console.log('[AGRO] V9.6.4: ✅ Sistema de notificaciones activo con historial');
+    }
 }
 
 function loadNotificationsFromStorage() {
@@ -215,7 +307,16 @@ function loadNotificationsFromStorage() {
             readNotifications.forEach(n => n.timestamp = new Date(n.timestamp));
         }
 
-        console.log(`[AgroNotif] 📂 Cargadas ${notifications.length} activas, ${readNotifications.length} leídas`);
+        const beforeCounts = { active: notifications.length, read: readNotifications.length };
+        notifications = sanitizeNotifications(notifications);
+        readNotifications = sanitizeNotifications(readNotifications);
+        const removed = (beforeCounts.active !== notifications.length)
+            || (beforeCounts.read !== readNotifications.length);
+        if (removed) saveNotificationsToStorage();
+
+        if (AGRO_DEBUG) {
+            console.log(`[AgroNotif] 📂 Cargadas ${notifications.length} activas, ${readNotifications.length} leídas`);
+        }
     } catch (e) {
         console.warn('[AgroNotif] Error cargando historial:', e);
         notifications = [];
@@ -225,8 +326,10 @@ function loadNotificationsFromStorage() {
 
 function saveNotificationsToStorage() {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-        localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(readNotifications.slice(0, MAX_READ_HISTORY)));
+        const persistActive = sanitizeNotifications(notifications);
+        const persistRead = sanitizeNotifications(readNotifications).slice(0, MAX_READ_HISTORY);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistActive));
+        localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(persistRead));
     } catch (e) {
         console.warn('[AgroNotif] Error guardando:', e);
     }
@@ -274,7 +377,9 @@ function setupAdviceObserver() {
         return;
     }
 
-    console.log('[AgroNotif] 👁️ Observer conectado a advice-title');
+    if (AGRO_DEBUG) {
+        console.log('[AgroNotif] 👁️ Observer conectado a advice-title');
+    }
     lastAdviceText = adviceTitle.textContent || '';
 
     adviceObserver = new MutationObserver((mutations) => {
@@ -297,7 +402,9 @@ function handleAdviceChange(titleEl, textEl) {
     if (!newTitle || newTitle === lastAdviceText) return;
     if (newTitle.toLowerCase().includes('analizando') || newTitle.toLowerCase().includes('cargando')) return;
 
-    console.log('[AgroNotif] 🧠 IA actualizó consejo:', newTitle);
+    if (AGRO_DEBUG) {
+        console.log('[AgroNotif] 🧠 IA actualizó consejo:', newTitle);
+    }
     lastAdviceText = newTitle;
 
     const type = detectAdviceType(titleEl, newTitle, newText);
@@ -401,9 +508,8 @@ async function generateSystemNotifications(reason = 'manual', snapshotOverride =
         : (Array.isArray(snapshot?.crops) ? snapshot.crops : []);
 
     if (effectiveCount === 0) {
-        addNotification('info', EMPTY_CROPS_TITLE, 'Agrega tu primer cultivo para alertas personalizadas.', 'fa-seedling');
+        purgeTransientNotifications();
     } else {
-        removeNotificationByTitle(EMPTY_CROPS_TITLE);
         if (cropsForAlerts.length > 0) {
             cropsForAlerts.forEach(checkCropAlerts);
         }
@@ -576,13 +682,14 @@ function flashBadge() {
 function markAllAsRead() {
     // Move all to read history
     notifications.forEach(n => {
+        if (isTransientNotification(n)) return;
         n.read = true;
         n.readAt = new Date();
         readNotifications.unshift(n);
     });
 
     // Keep only MAX_READ_HISTORY
-    readNotifications = readNotifications.slice(0, MAX_READ_HISTORY);
+    readNotifications = sanitizeNotifications(readNotifications).slice(0, MAX_READ_HISTORY);
     notifications = [];
 
     renderNotifications();
@@ -633,6 +740,12 @@ function setupAuthRefresh() {
     authListenerAttached = true;
 
     sb.auth.onAuthStateChange((event, session) => {
+        const nextState = session?.user ? 'yes' : 'no';
+        if (nextState !== sessionState) {
+            sessionState = nextState;
+            logAgroNotifDebug('session event', { event, state: sessionState });
+            renderNotifications();
+        }
         if (!session?.user) return;
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
             refreshSystemNotifications(`auth:${event.toLowerCase()}`);
@@ -649,6 +762,7 @@ function refreshSystemNotifications(reason = 'manual') {
             reason,
             status: snapshot?.status || cropsStatus
         });
+        renderNotifications();
         return;
     }
     if (!shouldEvaluateSnapshot(snapshot)) {
@@ -731,23 +845,36 @@ function renderNotifications() {
 
     list.textContent = '';
 
-    if (notifications.length > 0) {
+    const snapshot = syncCropsSnapshot();
+    const systemNotifications = buildSystemNotifications(snapshot);
+    const activeNotifications = sanitizeNotifications(notifications);
+    const historyNotifications = sanitizeNotifications(readNotifications);
+
+    if (systemNotifications.length > 0) {
         list.appendChild(createSectionHeader(
-            `Nuevas (${notifications.length})`,
-            'padding: 6px 12px; font-size: 9px; color: #C8A752; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid rgba(200,167,82,0.2);'
+            'Sistema',
+            'padding: 6px 12px; font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.08);'
         ));
-        notifications.forEach((n) => list.appendChild(renderNotificationItem(n)));
+        systemNotifications.forEach((n) => list.appendChild(renderNotificationItem(n)));
     }
 
-    if (readNotifications.length > 0) {
+    if (activeNotifications.length > 0) {
+        list.appendChild(createSectionHeader(
+            `Nuevas (${activeNotifications.length})`,
+            'padding: 6px 12px; font-size: 9px; color: #C8A752; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid rgba(200,167,82,0.2);'
+        ));
+        activeNotifications.forEach((n) => list.appendChild(renderNotificationItem(n)));
+    }
+
+    if (historyNotifications.length > 0) {
         list.appendChild(createSectionHeader(
             'Historial',
             'padding: 6px 12px; margin-top: 8px; font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.05);'
         ));
-        readNotifications.slice(0, 10).forEach((n) => list.appendChild(renderNotificationItem(n, true)));
+        historyNotifications.slice(0, 10).forEach((n) => list.appendChild(renderNotificationItem(n, true)));
     }
 
-    if (notifications.length == 0 && readNotifications.length == 0) {
+    if (systemNotifications.length === 0 && activeNotifications.length === 0 && historyNotifications.length === 0) {
         list.appendChild(createEmptyStateItem());
     }
 }
@@ -814,7 +941,7 @@ function updateBadge() {
     const badge = document.getElementById('notif-badge');
     if (!badge) return;
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const unreadCount = notifications.filter(n => !n.read && !isTransientNotification(n)).length;
     badge.style.display = unreadCount > 0 ? 'block' : 'none';
 }
 
