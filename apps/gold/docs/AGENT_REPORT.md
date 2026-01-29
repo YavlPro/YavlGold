@@ -3014,3 +3014,71 @@ Implementar "smart retry" en frontend:
 - **Resolution**: Removed category from gro-stats.js fetch column list.
 - **Enhancement**: Implemented 'Fix B' (LocalStorage cache) in both gro.js and gro-stats.js for robust schema capability caching.
 - **Verification**: pnpm build:gold passed.
+
+## Diagnostico (tarea actual - Campana Agro Facturero)
+1) **Mapa de puntos de entrada MPA + navegacion**
+   - `apps/gold/vite.config.js`: MPA con entradas `main`, `cookies`, `faq`, `soporte`, `dashboard`, `creacion`, `perfil`, `configuracion` y modulos `academia`, `agro`, `crypto`, `herramientas`, `tecnologia`, `social`.
+   - `apps/gold/vercel.json`: `cleanUrls`/`trailingSlash`, redirect `herramientas -> tecnologia`, rewrites para `/tecnologia`, routes para `/academia`, `/crypto`, `/tecnologia`.
+   - `apps/gold/index.html`: navbar y tarjetas de acceso a modulos (Agro/Academia/Crypto/Tecnologia/Social).
+   - `apps/gold/dashboard/index.html`: dashboard principal con layout propio y scripts modulares.
+2) **Supabase (instanciacion/auth)**
+   - `apps/gold/assets/js/config/supabase-config.js`: `createClient` con `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`.
+   - `apps/gold/assets/js/auth/authClient.js`: inicializa Supabase via config, auth-guard y eventos globales.
+   - `apps/gold/assets/js/auth/authUI.js`: UI login/registro y recovery sobre `AuthClient`.
+   - `apps/gold/dashboard/auth-guard.js`: valida sesion usando `window.supabase`/`AuthClient`.
+3) **Dashboard: consultas actuales y faltantes**
+   - Modulos/favoritos: `apps/gold/assets/js/modules/moduleManager.js` consulta `modules` y `user_favorites` (cache local).
+   - Notificaciones/global: `apps/gold/assets/js/components/notifications.js` consulta `notifications`.
+   - Anuncios: `apps/gold/assets/js/announcements/announcementsManager.js` consulta `announcements` (join `profiles`).
+   - Perfil: `apps/gold/assets/js/profile/profileManager.js` consulta `profiles`.
+   - Falta integrar progreso academico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`, etc.) en dashboard.
+4) **Clima/Agro: prioridad y storage**
+   - `apps/gold/assets/js/geolocation.js`: `getCoordsSmart` prioriza Manual -> GPS -> IP -> fallback.
+   - Keys: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.
+   - `apps/gold/agro/dashboard.js`: `initWeather`/`displayWeather`, cache `yavlgold_weather_*`, debug con `?debug=1`.
+5) **Crypto: estado real**
+   - `apps/gold/crypto/` contiene `index.html`, `crypto.js`, `crypto.css` y `package.json` para preview local.
+   - Ya esta integrado como entrada MPA en `vite.config.js` (no es app aparte).
+6) **Campana Agro actual**
+   - `apps/gold/agro/agro-notifications.js` usa `yavlgold_agro_notifications` y `_read`, dedupe por titulo/tiempo, sin ids deterministas y sin marcar leida por item.
+   - Hay logica legacy/IA (observer) y sistema por cultivos/clima que genera alertas no basadas en facturero.
+   - `apps/gold/agro/agro.js` refresca `agro_pending`, `agro_losses`, `agro_transfers` con `user_id`, renderiza historial y loggea `Refreshed ...`; aun no alimenta la campana.
+
+## Plan (tarea actual - Campana Agro Facturero)
+1) `apps/gold/agro/agro-notifications.js`
+   - Implementar motor: `upsertAgroNotification(notif)`, `markAsRead(id)`, `computeUnreadCount()`.
+   - Dedupe por `id` (ej: `pending:<rowId>`, `loss:<rowId>`, `transfer:<rowId>`).
+   - Render con accion "Marcar leida" por item y badge por no leidas.
+   - Sincronizar solo alertas facturero (pendientes/perdidas/transferencias) y apagar legacy/IA.
+2) `apps/gold/agro/agro.js`
+   - Hook post-refresh de `pendientes`, `perdidas`, `transferencias` para generar notifs con datos reales.
+3) `apps/gold/docs/AGENT_REPORT.md`
+   - Completar checklist, pruebas manuales y build al cierre.
+
+## Checklist DoD (tarea actual - Campana Agro Facturero)
+- [ ] Campana muestra SOLO alertas importantes (pendientes/perdidas/transferencias).
+- [ ] Pendientes: conteo + notifs por item (cliente/monto) con "vencido" si aplica.
+- [ ] Perdidas: notif cuando se registra nueva perdida (hoy/semana).
+- [ ] Transferencias: notif cuando aparece nueva transferencia.
+- [ ] Badge refleja no leidas.
+- [ ] Marcar leida por item + opcion "Marcar todo".
+- [ ] Sin duplicados (ids deterministas) e idempotente.
+- [ ] No regresiones en clima/cultivos/centro financiero.
+- [ ] pnpm build:gold OK.
+
+## Archivos a tocar (tarea actual - Campana Agro Facturero)
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+## Pruebas (tarea actual - Campana Agro Facturero)
+- Manual: pendiente.
+- Build: pendiente (`pnpm build:gold`).
+
+## Actualizacion de resultados (tarea actual - Campana Agro Facturero)
+- Build: pnpm build:gold OK (2026-01-29).
+- Pruebas manuales: NO ejecutadas.
+
+## Actualizacion de resultados (tarea actual - Campana Agro Facturero, rebuild)
+- Build: pnpm build:gold OK (2026-01-29).
+- Pruebas manuales: NO ejecutadas.

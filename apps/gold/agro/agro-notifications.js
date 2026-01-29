@@ -11,6 +11,7 @@ import supabase from '../assets/js/config/supabase-config.js';
 // ============================================
 let notifications = [];
 let readNotifications = [];
+let notificationsReady = false;
 let isDropdownOpen = false;
 let adviceObserver = null;
 let lastAdviceText = '';
@@ -32,7 +33,7 @@ let sessionState = 'unknown';
 
 const STORAGE_KEY = 'yavlgold_agro_notifications';
 const READ_STORAGE_KEY = 'yavlgold_agro_notifications_read';
-const MAX_READ_HISTORY = 20; // Máximo de notificaciones leídas a conservar
+const MAX_READ_HISTORY = 200; // Máximo de notificaciones leídas a conservar
 const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const SYSTEM_ID_PREFIX = 'sys-';
 const SYSTEM_LOADING_ID = 'sys-loading-crops';
@@ -42,6 +43,9 @@ const SYSTEM_NO_CROPS_TITLE = 'Agrega tu primer cultivo';
 const SYSTEM_NO_CROPS_MESSAGE = 'Agrega tu primer cultivo para alertas personalizadas.';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
+const ALERTS_MODE = 'facturero';
+const FACTURERO_ONLY = ALERTS_MODE === 'facturero';
+const FACTURERO_TABS = new Set(['pendientes', 'perdidas', 'transferencias']);
 
 const ALERTS_SESSION_MAX_ATTEMPTS = 8;
 const ALERTS_SESSION_BASE_DELAY = 200;
@@ -88,7 +92,90 @@ function isTransientNotification(notif) {
 
 function sanitizeNotifications(list) {
     const items = Array.isArray(list) ? list : [];
-    return items.filter((notif) => !isTransientNotification(notif));
+    return items.filter((notif) => {
+        const id = notif?.id;
+        if (id === null || id === undefined || String(id).trim() === '') return false;
+        return !isTransientNotification(notif);
+    });
+}
+
+function normalizeNotificationId(id) {
+    if (id === null || id === undefined) return '';
+    return String(id).trim();
+}
+
+function coerceDate(value, fallback = null) {
+    if (!value) return fallback;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return fallback;
+    return date;
+}
+
+function normalizeNotification(raw, options = {}) {
+    if (!raw) return null;
+    const id = normalizeNotificationId(raw.id);
+    if (!id) return null;
+
+    const timestamp = coerceDate(raw.timestamp, new Date());
+    const readAt = coerceDate(raw.readAt, null);
+    const meta = raw.meta && typeof raw.meta === 'object' ? raw.meta : null;
+    const read = options.forceRead ? true : !!raw.read;
+
+    return {
+        id,
+        type: raw.type || 'warning',
+        title: raw.title ? String(raw.title) : '',
+        message: raw.message ? String(raw.message) : '',
+        icon: raw.icon ? String(raw.icon) : 'fa-info-circle',
+        timestamp,
+        read,
+        readAt: read ? (readAt || new Date()) : null,
+        meta
+    };
+}
+
+function normalizeNotificationList(list, options = {}) {
+    const items = sanitizeNotifications(list);
+    const deduped = [];
+    const seen = new Set();
+    items.forEach((raw) => {
+        const notif = normalizeNotification(raw, options);
+        if (!notif || seen.has(notif.id)) return;
+        seen.add(notif.id);
+        deduped.push(notif);
+    });
+    return deduped;
+}
+
+function serializeNotification(notif) {
+    if (!notif) return null;
+    return {
+        id: normalizeNotificationId(notif.id),
+        type: notif.type || 'warning',
+        title: notif.title ? String(notif.title) : '',
+        message: notif.message ? String(notif.message) : '',
+        icon: notif.icon ? String(notif.icon) : 'fa-info-circle',
+        timestamp: coerceDate(notif.timestamp, new Date()).toISOString(),
+        read: !!notif.read,
+        readAt: notif.read ? coerceDate(notif.readAt, new Date()).toISOString() : null,
+        meta: notif.meta && typeof notif.meta === 'object' ? notif.meta : null
+    };
+}
+
+function getNotificationIndexById(list, id) {
+    const notifId = normalizeNotificationId(id);
+    if (!notifId) return -1;
+    return (Array.isArray(list) ? list : []).findIndex((n) => normalizeNotificationId(n?.id) === notifId);
+}
+
+function getNotificationById(id) {
+    const notifId = normalizeNotificationId(id);
+    if (!notifId) return null;
+    const activeIndex = getNotificationIndexById(notifications, notifId);
+    if (activeIndex >= 0) return notifications[activeIndex];
+    const readIndex = getNotificationIndexById(readNotifications, notifId);
+    if (readIndex >= 0) return readNotifications[readIndex];
+    return null;
 }
 
 function migrateNotifStorage() {
@@ -109,14 +196,15 @@ function migrateNotifStorage() {
         const raw = localStorage.getItem(key);
         const { arr, valid } = parseArrayOrNull(raw);
         if (arr === null) return;
-
-        const filtered = sanitizeNotifications(arr);
+        const forceRead = key === READ_STORAGE_KEY;
+        const normalized = normalizeNotificationList(arr, { forceRead: forceRead });
+        const serialized = normalized.map(serializeNotification).filter(Boolean);
         const changed = !valid
-            || filtered.length !== arr.length
-            || JSON.stringify(filtered) !== JSON.stringify(arr);
+            || serialized.length !== arr.length
+            || JSON.stringify(serialized) !== JSON.stringify(arr);
 
         if (changed) {
-            localStorage.setItem(key, JSON.stringify(filtered));
+            localStorage.setItem(key, JSON.stringify(serialized));
             mutated = true;
         }
     });
@@ -311,15 +399,18 @@ export async function initNotifications() {
     // Load from localStorage
     migrateNotifStorage();
     loadNotificationsFromStorage();
-    const initialSnapshot = syncCropsSnapshot();
+    notificationsReady = true;
+    const initialSnapshot = FACTURERO_ONLY ? null : syncCropsSnapshot();
     purgeTransientNotifications();
-    setupCropsReadyListener();
-    logAgroNotifDebug('init', {
-        status: initialSnapshot?.status || cropsStatus,
-        seq: initialSnapshot?.seq,
-        ts: initialSnapshot?.ts,
-        count: Number.isFinite(initialSnapshot?.count) ? initialSnapshot.count : null
-    });
+    if (!FACTURERO_ONLY) {
+        setupCropsReadyListener();
+        logAgroNotifDebug('init', {
+            status: initialSnapshot?.status || cropsStatus,
+            seq: initialSnapshot?.seq,
+            ts: initialSnapshot?.ts,
+            count: Number.isFinite(initialSnapshot?.count) ? initialSnapshot.count : null
+        });
+    }
 
     // Setup event listeners
     setupEventListeners();
@@ -328,15 +419,17 @@ export async function initNotifications() {
     renderNotifications();
     updateBadge();
 
-    // Setup auth listener for late sessions
-    setupAuthRefresh();
-    void refreshSessionState('init');
+    if (!FACTURERO_ONLY) {
+        // Setup auth listener for late sessions
+        setupAuthRefresh();
+        void refreshSessionState('init');
 
-    // Refresh system notifications in background
-    refreshSystemNotifications('init');
+        // Refresh system notifications in background
+        refreshSystemNotifications('init');
 
-    // Start observing AI Advisor changes (MutationObserver)
-    setupAdviceObserver();
+        // Start observing AI Advisor changes (MutationObserver)
+        setupAdviceObserver();
+    }
 
     if (AGRO_DEBUG) {
         console.log('[AGRO] V9.6.4: ✅ Sistema de notificaciones activo con historial');
@@ -347,24 +440,36 @@ function loadNotificationsFromStorage() {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         const storedRead = localStorage.getItem(READ_STORAGE_KEY);
+        let shouldPersist = false;
 
         if (stored) {
-            notifications = JSON.parse(stored);
-            // Convert date strings back to Date objects
-            notifications.forEach(n => n.timestamp = new Date(n.timestamp));
+            const parsed = JSON.parse(stored);
+            notifications = normalizeNotificationList(parsed);
+            const serialized = notifications.map(serializeNotification).filter(Boolean);
+            if (JSON.stringify(serialized) !== JSON.stringify(parsed)) {
+                shouldPersist = true;
+            }
         }
 
         if (storedRead) {
-            readNotifications = JSON.parse(storedRead);
-            readNotifications.forEach(n => n.timestamp = new Date(n.timestamp));
+            const parsedRead = JSON.parse(storedRead);
+            readNotifications = normalizeNotificationList(parsedRead, { forceRead: true });
+            const serializedRead = readNotifications.map(serializeNotification).filter(Boolean);
+            if (JSON.stringify(serializedRead) !== JSON.stringify(parsedRead)) {
+                shouldPersist = true;
+            }
         }
 
-        const beforeCounts = { active: notifications.length, read: readNotifications.length };
-        notifications = sanitizeNotifications(notifications);
-        readNotifications = sanitizeNotifications(readNotifications);
-        const removed = (beforeCounts.active !== notifications.length)
-            || (beforeCounts.read !== readNotifications.length);
-        if (removed) saveNotificationsToStorage();
+        if (readNotifications.length && notifications.length) {
+            const readIds = new Set(readNotifications.map(n => normalizeNotificationId(n?.id)));
+            const filteredActive = notifications.filter(n => !readIds.has(normalizeNotificationId(n?.id)));
+            if (filteredActive.length !== notifications.length) {
+                notifications = filteredActive;
+                shouldPersist = true;
+            }
+        }
+
+        if (shouldPersist) saveNotificationsToStorage();
 
         if (AGRO_DEBUG) {
             console.log(`[AgroNotif] 📂 Cargadas ${notifications.length} activas, ${readNotifications.length} leídas`);
@@ -378,13 +483,22 @@ function loadNotificationsFromStorage() {
 
 function saveNotificationsToStorage() {
     try {
-        const persistActive = sanitizeNotifications(notifications);
-        const persistRead = sanitizeNotifications(readNotifications).slice(0, MAX_READ_HISTORY);
+        const persistActive = sanitizeNotifications(notifications).map(serializeNotification).filter(Boolean);
+        readNotifications = sanitizeNotifications(readNotifications).slice(0, MAX_READ_HISTORY);
+        const persistRead = readNotifications.map(serializeNotification).filter(Boolean);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(persistActive));
         localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(persistRead));
     } catch (e) {
         console.warn('[AgroNotif] Error guardando:', e);
     }
+}
+
+function ensureNotificationsReady() {
+    if (notificationsReady) return;
+    migrateNotifStorage();
+    loadNotificationsFromStorage();
+    purgeTransientNotifications();
+    notificationsReady = true;
 }
 
 function setupEventListeners() {
@@ -682,39 +796,142 @@ function checkWeatherAlerts() {
 // NOTIFICATION MANAGEMENT
 // ============================================
 
+export function upsertAgroNotification(input, options = {}) {
+    const notif = normalizeNotification(input);
+    if (!notif) return false;
+
+    const silent = !!options.silent;
+    const reopenIfRead = !!options.reopenIfRead;
+    const activeIndex = getNotificationIndexById(notifications, notif.id);
+    const readIndex = getNotificationIndexById(readNotifications, notif.id);
+    let changed = false;
+
+    if (activeIndex >= 0) {
+        const existing = notifications[activeIndex];
+        notifications[activeIndex] = {
+            ...existing,
+            ...notif,
+            read: false,
+            readAt: null
+        };
+        changed = true;
+    } else if (readIndex >= 0) {
+        if (reopenIfRead) {
+            const existing = readNotifications.splice(readIndex, 1)[0];
+            notifications.unshift({
+                ...existing,
+                ...notif,
+                read: false,
+                readAt: null
+            });
+            changed = true;
+        } else {
+            const existing = readNotifications[readIndex];
+            readNotifications[readIndex] = {
+                ...existing,
+                ...notif,
+                read: true,
+                readAt: existing.readAt || new Date()
+            };
+            changed = true;
+        }
+    } else {
+        notifications.unshift({
+            ...notif,
+            read: false,
+            readAt: null
+        });
+        changed = true;
+    }
+
+    if (changed && !silent) {
+        saveNotificationsToStorage();
+        renderNotifications();
+        updateBadge();
+    }
+    return changed;
+}
+
+export function markAsRead(id, options = {}) {
+    const silent = !!options.silent;
+    const index = getNotificationIndexById(notifications, id);
+    if (index < 0) return false;
+
+    const notif = notifications.splice(index, 1)[0];
+    notif.read = true;
+    notif.readAt = new Date();
+    readNotifications.unshift(notif);
+    readNotifications = sanitizeNotifications(readNotifications).slice(0, MAX_READ_HISTORY);
+
+    if (!silent) {
+        saveNotificationsToStorage();
+        renderNotifications();
+        updateBadge();
+    }
+    return true;
+}
+
+export function computeUnreadCount() {
+    return sanitizeNotifications(notifications).filter(n => !n.read).length;
+}
+
+function flushNotifications() {
+    saveNotificationsToStorage();
+    renderNotifications();
+    updateBadge();
+}
+
+function removeNotificationById(id, options = {}) {
+    const includeRead = !!options.includeRead;
+    let changed = false;
+    const notifId = normalizeNotificationId(id);
+    if (!notifId) return false;
+
+    const beforeActive = notifications.length;
+    notifications = notifications.filter(n => normalizeNotificationId(n?.id) !== notifId);
+    if (notifications.length !== beforeActive) changed = true;
+
+    if (includeRead) {
+        const beforeRead = readNotifications.length;
+        readNotifications = readNotifications.filter(n => normalizeNotificationId(n?.id) !== notifId);
+        if (readNotifications.length !== beforeRead) changed = true;
+    }
+
+    if (changed && !options.silent) flushNotifications();
+    return changed;
+}
+
+function removeNotificationsByPrefix(prefix, keepIds = new Set()) {
+    const before = notifications.length;
+    notifications = notifications.filter(n => {
+        const id = normalizeNotificationId(n?.id);
+        if (!id.startsWith(prefix)) return true;
+        if (keepIds && keepIds.has(id)) return true;
+        return false;
+    });
+    return notifications.length !== before;
+}
+
+function isKnownNotificationId(id) {
+    return getNotificationIndexById(notifications, id) >= 0
+        || getNotificationIndexById(readNotifications, id) >= 0;
+}
+
 function addNotification(type, title, message, icon) {
     if (isLegacySystemReady({ title, message })) return;
-    // Avoid duplicates (same title in last 5 min)
-    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-    const isDupe = notifications.some(n => n.title === title && new Date(n.timestamp).getTime() > fiveMinAgo);
-    if (isDupe) return;
-
-    notifications.push({
-        id: Date.now() + Math.random(),
-        type, title, message,
+    const id = `legacy:${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    upsertAgroNotification({
+        id,
+        type,
+        title,
+        message,
         icon: icon || 'fa-info-circle',
-        timestamp: new Date(),
-        read: false
+        timestamp: new Date()
     });
 }
 
 function addNotificationToTop(type, title, message, icon) {
-    if (isLegacySystemReady({ title, message })) return;
-    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-    const isDupe = notifications.some(n => n.title === title && new Date(n.timestamp).getTime() > fiveMinAgo);
-    if (isDupe) return;
-
-    notifications.unshift({
-        id: Date.now() + Math.random(),
-        type, title, message,
-        icon: icon || 'fa-robot',
-        timestamp: new Date(),
-        read: false
-    });
-
-    renderNotifications();
-    updateBadge();
-    saveNotificationsToStorage();
+    addNotification(type, title, message, icon || 'fa-robot');
     flashBadge();
 }
 
@@ -733,21 +950,12 @@ function flashBadge() {
 }
 
 function markAllAsRead() {
-    // Move all to read history
-    notifications.forEach(n => {
-        if (isTransientNotification(n)) return;
-        n.read = true;
-        n.readAt = new Date();
-        readNotifications.unshift(n);
+    const ids = notifications.map(n => n?.id).filter(Boolean);
+    ids.forEach(id => {
+        markAsRead(id, { silent: true });
     });
-
-    // Keep only MAX_READ_HISTORY
-    readNotifications = sanitizeNotifications(readNotifications).slice(0, MAX_READ_HISTORY);
     notifications = [];
-
-    renderNotifications();
-    updateBadge();
-    saveNotificationsToStorage();
+    flushNotifications();
 }
 
 function sleep(ms) {
@@ -844,12 +1052,192 @@ function refreshSystemNotifications(reason = 'manual') {
 }
 
 // ============================================
+// FACTURERO ALERTS (Campana Agro)
+// ============================================
+
+function formatCurrency(amount) {
+    const value = Number(amount || 0);
+    return `$${value.toFixed(2)}`;
+}
+
+function formatShortDate(date) {
+    const dateObj = coerceDate(date, null);
+    if (!dateObj) return '';
+    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    return `${dateObj.getDate()} ${months[dateObj.getMonth()]}`;
+}
+
+function isPastDue(date) {
+    const dateObj = coerceDate(date, null);
+    if (!dateObj) return false;
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return dateObj < startOfToday;
+}
+
+function isWithinDays(date, days) {
+    const dateObj = coerceDate(date, null);
+    if (!dateObj) return false;
+    const diffMs = Date.now() - dateObj.getTime();
+    if (diffMs < 0) return false;
+    return diffMs <= days * 24 * 60 * 60 * 1000;
+}
+
+function getPendingClient(item) {
+    return String(item?.cliente || '').trim() || 'Cliente';
+}
+
+function getLossConcept(item) {
+    return String(item?.concepto || item?.concept || 'Pérdida registrada').trim();
+}
+
+function getLossCause(item) {
+    return String(item?.causa || '').trim();
+}
+
+function getTransferDest(item) {
+    return String(item?.destino || '').trim() || 'Destino';
+}
+
+export function syncFactureroNotifications(tabName, items) {
+    if (!FACTURERO_TABS.has(tabName)) return;
+
+    ensureNotificationsReady();
+
+    const rows = Array.isArray(items) ? items : [];
+    let changed = false;
+
+    if (tabName === 'pendientes') {
+        const keepIds = new Set();
+        let overdueCount = 0;
+
+        rows.forEach((item) => {
+            const rowId = normalizeNotificationId(item?.id);
+            if (!rowId) return;
+
+            const notifId = `pending:${rowId}`;
+            keepIds.add(notifId);
+
+            const client = getPendingClient(item);
+            const amount = formatCurrency(item?.monto);
+            const dueDate = coerceDate(item?.fecha, null);
+            const overdue = isPastDue(dueDate);
+            if (overdue) overdueCount += 1;
+            const rowTimestamp = coerceDate(item?.created_at || item?.fecha, new Date());
+
+            const title = `Pendiente: ${client}`;
+            let message = `${amount}`;
+            if (overdue) {
+                message += ' • Vencido';
+            } else if (dueDate) {
+                message += ` • vence ${formatShortDate(dueDate)}`;
+            }
+
+            changed = upsertAgroNotification({
+                id: notifId,
+                type: overdue ? 'danger' : 'warning',
+                title,
+                message,
+                icon: 'fa-hourglass-half',
+                timestamp: rowTimestamp,
+                meta: { tab: 'pendientes', rowId }
+            }, { silent: true }) || changed;
+        });
+
+        const summaryId = 'pending:summary';
+        if (rows.length > 0) {
+            keepIds.add(summaryId);
+            const prev = getNotificationById(summaryId);
+            const countChanged = prev?.meta?.count !== rows.length
+                || prev?.meta?.overdue !== overdueCount;
+
+            const title = `Pendientes (${rows.length})`;
+            let message = `Tienes ${rows.length} pendientes`;
+            if (overdueCount > 0) message += ` • ${overdueCount} vencidos`;
+
+            changed = upsertAgroNotification({
+                id: summaryId,
+                type: overdueCount > 0 ? 'danger' : 'warning',
+                title,
+                message,
+                icon: 'fa-hourglass-half',
+                timestamp: new Date(),
+                meta: { count: rows.length, overdue: overdueCount }
+            }, { silent: true, reopenIfRead: countChanged }) || changed;
+        } else {
+            changed = removeNotificationById(summaryId, { silent: true }) || changed;
+        }
+
+        if (removeNotificationsByPrefix('pending:', keepIds)) changed = true;
+    }
+
+    if (tabName === 'perdidas') {
+        rows.forEach((item) => {
+            const rowId = normalizeNotificationId(item?.id);
+            if (!rowId) return;
+
+            const notifId = `loss:${rowId}`;
+            if (isKnownNotificationId(notifId)) return;
+
+            const rowDate = coerceDate(item?.fecha || item?.created_at, null);
+            if (rowDate && !isWithinDays(rowDate, 7)) return;
+
+            const concept = getLossConcept(item);
+            const cause = getLossCause(item);
+            const amount = formatCurrency(item?.monto);
+            const message = `${concept}${cause ? ` • ${cause}` : ''} • ${amount}`;
+
+            changed = upsertAgroNotification({
+                id: notifId,
+                type: 'danger',
+                title: 'Nueva pérdida',
+                message,
+                icon: 'fa-triangle-exclamation',
+                timestamp: rowDate || new Date(),
+                meta: { tab: 'perdidas', rowId }
+            }, { silent: true }) || changed;
+        });
+    }
+
+    if (tabName === 'transferencias') {
+        rows.forEach((item) => {
+            const rowId = normalizeNotificationId(item?.id);
+            if (!rowId) return;
+
+            const notifId = `transfer:${rowId}`;
+            if (isKnownNotificationId(notifId)) return;
+
+            const rowDate = coerceDate(item?.fecha || item?.created_at, null);
+            const dest = getTransferDest(item);
+            const amount = formatCurrency(item?.monto);
+            const message = `${dest} • ${amount}`;
+
+            changed = upsertAgroNotification({
+                id: notifId,
+                type: 'success',
+                title: 'Nueva transferencia',
+                message,
+                icon: 'fa-right-left',
+                timestamp: rowDate || new Date(),
+                meta: { tab: 'transferencias', rowId }
+            }, { silent: true }) || changed;
+        });
+    }
+
+    if (changed) {
+        flushNotifications();
+        flashBadge();
+    }
+}
+
+// ============================================
 // TIME FORMATTING
 // ============================================
 
 function formatRelativeTime(date) {
     const now = new Date();
-    const diff = now - new Date(date);
+    const dateObj = coerceDate(date, now);
+    const diff = now - dateObj;
     const mins = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
@@ -860,7 +1248,8 @@ function formatRelativeTime(date) {
     if (days === 1) return 'Ayer';
     if (days < 7) return `Hace ${days}d`;
 
-    const [year, month, day] = date.split('-').map(Number);
+    const day = dateObj.getDate();
+    const month = dateObj.getMonth() + 1;
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     return `${day} ${months[month - 1]}`;
 }
@@ -898,9 +1287,9 @@ function renderNotifications() {
 
     list.textContent = '';
 
-    const snapshot = syncCropsSnapshot();
-    const systemNotifications = buildSystemNotifications(snapshot);
-    const activeNotifications = sanitizeNotifications(notifications);
+    const snapshot = FACTURERO_ONLY ? null : syncCropsSnapshot();
+    const systemNotifications = FACTURERO_ONLY ? [] : buildSystemNotifications(snapshot);
+    const activeNotifications = sanitizeNotifications(notifications).filter(n => !n.read);
     const historyNotifications = sanitizeNotifications(readNotifications);
 
     if (systemNotifications.length > 0) {
@@ -978,7 +1367,37 @@ function renderNotificationItem(n, isRead = false) {
     time.style.cssText = 'font-size: 8px; color: #666; white-space: nowrap;';
     time.textContent = timeStr;
 
-    header.append(title, time);
+    const meta = document.createElement('div');
+    meta.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+    meta.appendChild(time);
+
+    if (!isRead) {
+        const markBtn = document.createElement('button');
+        markBtn.type = 'button';
+        markBtn.title = 'Marcar como leída';
+        markBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+        markBtn.style.cssText = [
+            'background: rgba(200,167,82,0.12)',
+            'border: 1px solid rgba(200,167,82,0.35)',
+            'color: #C8A752',
+            'width: 20px',
+            'height: 20px',
+            'border-radius: 6px',
+            'display: inline-flex',
+            'align-items: center',
+            'justify-content: center',
+            'cursor: pointer',
+            'font-size: 9px',
+            'padding: 0'
+        ].join('; ');
+        markBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            markAsRead(n.id);
+        });
+        meta.appendChild(markBtn);
+    }
+
+    header.append(title, meta);
 
     const message = document.createElement('div');
     message.style.cssText = 'font-size: 9px; color: #888; line-height: 1.3; margin-top: 2px;';
@@ -994,8 +1413,22 @@ function updateBadge() {
     const badge = document.getElementById('notif-badge');
     if (!badge) return;
 
-    const unreadCount = notifications.filter(n => !n.read && !isTransientNotification(n)).length;
-    badge.style.display = unreadCount > 0 ? 'block' : 'none';
+    const unreadCount = computeUnreadCount();
+    if (unreadCount > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
+        badge.style.width = unreadCount > 9 ? '22px' : '16px';
+        badge.style.height = '16px';
+        badge.style.alignItems = 'center';
+        badge.style.justifyContent = 'center';
+        badge.style.fontSize = '8px';
+        badge.style.fontWeight = '700';
+        badge.style.color = '#fff';
+        badge.style.lineHeight = '1';
+    } else {
+        badge.style.display = 'none';
+        badge.textContent = '';
+    }
 }
 
 // ============================================
@@ -1007,6 +1440,11 @@ window.triggerAgroNotification = (type, title, message, icon) => {
 };
 
 window.refreshAgroNotifications = async () => {
+    if (FACTURERO_ONLY) {
+        renderNotifications();
+        updateBadge();
+        return;
+    }
     refreshSystemNotifications('manual');
 };
 
@@ -1014,4 +1452,9 @@ window.clearAgroNotificationHistory = () => {
     readNotifications = [];
     saveNotificationsToStorage();
     renderNotifications();
+    updateBadge();
 };
+
+window.upsertAgroNotification = upsertAgroNotification;
+window.markAgroNotificationRead = (id) => markAsRead(id);
+window.computeAgroUnreadCount = () => computeUnreadCount();

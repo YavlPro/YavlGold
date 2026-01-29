@@ -4,6 +4,7 @@
  */
 import supabase from '../assets/js/config/supabase-config.js';
 import { updateStats } from './agro-stats.js';
+import { syncFactureroNotifications } from './agro-notifications.js';
 import './agro.css';
 
 // ============================================================
@@ -941,6 +942,9 @@ async function refreshFactureroHistory(tabName, options = {}) {
 
         const enrichedItems = await enrichFactureroItems(tabName, items || []);
         renderHistoryList(tabName, config, enrichedItems, showActions);
+        if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias') {
+            syncFactureroNotifications(tabName, enrichedItems);
+        }
 
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Exception in refreshFactureroHistory(${tabName}):`, err.message);
