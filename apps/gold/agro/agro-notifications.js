@@ -65,13 +65,64 @@ function isLegacySystemTitle(notif) {
     return false;
 }
 
+function getNotificationText(notif) {
+    const title = notif?.title ? String(notif.title) : '';
+    const message = notif?.message ? String(notif.message) : '';
+    const text = notif?.text ? String(notif.text) : '';
+    return `${title} ${message} ${text}`.toLowerCase();
+}
+
+function isLegacySystemReady(notif) {
+    const text = getNotificationText(notif);
+    if (!text) return false;
+    if (text.includes('sistema listo')) return true;
+    if (text.includes('oráculo está monitoreando')) return true;
+    if (text.includes('oraculo esta monitoreando')) return true;
+    if (text.includes('consejos ia')) return true;
+    return false;
+}
+
 function isTransientNotification(notif) {
-    return isSystemNotif(notif) || isLegacySystemTitle(notif);
+    return isSystemNotif(notif) || isLegacySystemTitle(notif) || isLegacySystemReady(notif);
 }
 
 function sanitizeNotifications(list) {
     const items = Array.isArray(list) ? list : [];
     return items.filter((notif) => !isTransientNotification(notif));
+}
+
+function migrateNotifStorage() {
+    const keys = [STORAGE_KEY, READ_STORAGE_KEY];
+    const parseArrayOrNull = (raw) => {
+        if (raw === null) return { arr: null, valid: true };
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return { arr: parsed, valid: true };
+            return { arr: [], valid: false };
+        } catch (err) {
+            return { arr: [], valid: false };
+        }
+    };
+
+    let mutated = false;
+    keys.forEach((key) => {
+        const raw = localStorage.getItem(key);
+        const { arr, valid } = parseArrayOrNull(raw);
+        if (arr === null) return;
+
+        const filtered = sanitizeNotifications(arr);
+        const changed = !valid
+            || filtered.length !== arr.length
+            || JSON.stringify(filtered) !== JSON.stringify(arr);
+
+        if (changed) {
+            localStorage.setItem(key, JSON.stringify(filtered));
+            mutated = true;
+        }
+    });
+    if (mutated) {
+        logAgroNotifDebug('migrate storage', { cleaned: true });
+    }
 }
 
 function shouldShowSystemLayer() {
@@ -258,6 +309,7 @@ export async function initNotifications() {
     }
 
     // Load from localStorage
+    migrateNotifStorage();
     loadNotificationsFromStorage();
     const initialSnapshot = syncCropsSnapshot();
     purgeTransientNotifications();
@@ -516,7 +568,6 @@ async function generateSystemNotifications(reason = 'manual', snapshotOverride =
     }
 
     checkWeatherAlerts();
-    addNotification('success', '✅ Sistema Listo', 'El Oráculo está monitoreando. Consejos IA aparecerán aquí.', 'fa-satellite-dish');
 
     renderNotifications();
     updateBadge();
@@ -632,6 +683,7 @@ function checkWeatherAlerts() {
 // ============================================
 
 function addNotification(type, title, message, icon) {
+    if (isLegacySystemReady({ title, message })) return;
     // Avoid duplicates (same title in last 5 min)
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     const isDupe = notifications.some(n => n.title === title && new Date(n.timestamp).getTime() > fiveMinAgo);
@@ -647,6 +699,7 @@ function addNotification(type, title, message, icon) {
 }
 
 function addNotificationToTop(type, title, message, icon) {
+    if (isLegacySystemReady({ title, message })) return;
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     const isDupe = notifications.some(n => n.title === title && new Date(n.timestamp).getTime() > fiveMinAgo);
     if (isDupe) return;

@@ -2959,3 +2959,24 @@ Fase D (Debug):
 ## Pruebas (tarea actual - Campana amnesica Agro v3)
 - Manual: NO VERIFICADO.
 - Build: `pnpm build:gold` OK (2026-01-29).
+## Diagnostico (tarea actual - Remover "Sistema Listo" legacy)
+1) La notificacion "? Sistema Listo" se inserta en cada carga desde `apps/gold/agro/agro-notifications.js` y queda persistida en localStorage.
+2) Aunque se limpie manualmente, vuelve porque la creacion vive en el flujo de generacion del centro de alertas.
+3) Se requiere migracion para borrar historiales legacy en `yavlgold_agro_notifications` y `yavlgold_agro_notifications_read`.
+
+## Plan (tarea actual - Remover "Sistema Listo" legacy)
+1) Eliminar la insercion de "? Sistema Listo" en el generador de notificaciones.
+2) Implementar `isLegacySystemReady()` y `migrateNotifStorage()` para filtrar legacy por title/message, ejecutandolo al inicio.
+3) Bloquear la creacion en `addNotification()` si coincide con legacy.
+4) Ejecutar `pnpm build:gold` y documentar resultado.
+## DoD (tarea actual - Remover "Sistema Listo" legacy)
+- [ ] "? Sistema Listo" no se crea ni se persiste.
+- [ ] Migracion limpia `yavlgold_agro_notifications` y `_read` de textos legacy.
+- [ ] Notificaciones reales (clima/cultivos) siguen operativas.
+- [ ] pnpm build:gold OK.
+
+## Pruebas (tarea actual - Remover "Sistema Listo" legacy)
+- Manual: NO VERIFICADO.
+- Build: `pnpm build:gold` OK (2026-01-29).
+## Cambio (tarea actual - Remover "Sistema Listo" legacy)
+- Ajuste: `migrateNotifStorage()` ahora normaliza storage corrupto/no-array a `[]` (sin crear keys si no existen), y solo escribe si hay cambios.
