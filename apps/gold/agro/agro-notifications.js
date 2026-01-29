@@ -20,6 +20,11 @@ let refreshQueued = false;
 let cropsStatus = 'idle';
 let cropsReadyCount = null;
 let cropsReadyAt = null;
+let cropsSnapshot = null;
+let lastSeenSeq = -1;
+let lastSeenAt = 0;
+let lastEvaluatedSeq = -1;
+let lastEvaluatedAt = 0;
 let cropsReadyListenerAttached = false;
 let pendingRefreshReason = null;
 let alertsEvalSeq = 0;
@@ -41,33 +46,69 @@ function logAgroNotifDebug(label, detail = {}) {
     console.log(`[AgroNotif] ${label}`, detail);
 }
 
-function getGlobalCropsStatus() {
+function getCropsSnapshot() {
     if (typeof window === 'undefined') return null;
-    return window.YG_AGRO_CROPS_STATUS || null;
+    return window.__AGRO_CROPS_STATE || null;
 }
 
-function getGlobalCropsCount() {
-    if (typeof window === 'undefined') return null;
-    const count = Number(window.YG_AGRO_CROPS_COUNT);
-    return Number.isFinite(count) ? count : null;
+function syncCropsSnapshot() {
+    const snapshot = getCropsSnapshot();
+    if (!snapshot) return null;
+
+    cropsSnapshot = snapshot;
+    if (snapshot.status) cropsStatus = snapshot.status;
+    if (Number.isFinite(snapshot.count)) cropsReadyCount = snapshot.count;
+    if (Number.isFinite(snapshot.ts)) {
+        cropsReadyAt = new Date(snapshot.ts);
+        lastSeenAt = Math.max(lastSeenAt, snapshot.ts);
+    }
+    if (Number.isFinite(snapshot.seq)) {
+        lastSeenSeq = Math.max(lastSeenSeq, snapshot.seq);
+    }
+
+    return snapshot;
 }
 
-function syncCropsStatusFromWindow() {
-    const status = getGlobalCropsStatus();
-    if (status) cropsStatus = status;
-    const count = getGlobalCropsCount();
-    if (Number.isFinite(count)) cropsReadyCount = count;
-}
-
-function getCropsReadyCount() {
-    const count = getGlobalCropsCount();
-    if (Number.isFinite(count)) return count;
+function getCropsReadyCount(snapshot = null) {
+    const snap = snapshot || cropsSnapshot || getCropsSnapshot();
+    if (Number.isFinite(snap?.count)) return snap.count;
     return Number.isFinite(cropsReadyCount) ? cropsReadyCount : null;
 }
 
-function isCropsReady() {
-    const status = getGlobalCropsStatus() || cropsStatus;
+function isCropsReady(snapshot = null) {
+    const snap = snapshot || cropsSnapshot || getCropsSnapshot();
+    const status = snap?.status || cropsStatus;
     return status === 'ready';
+}
+
+function isSnapshotNewer(snapshot) {
+    if (!snapshot) return false;
+    const seq = Number(snapshot.seq);
+    if (Number.isFinite(seq)) return seq > lastSeenSeq;
+    const ts = Number(snapshot.ts);
+    if (Number.isFinite(ts)) return ts > lastSeenAt;
+    return true;
+}
+
+function shouldEvaluateSnapshot(snapshot) {
+    if (!snapshot || snapshot.status !== 'ready') return false;
+    const seq = Number(snapshot.seq);
+    if (Number.isFinite(seq) && seq <= lastEvaluatedSeq) return false;
+    const ts = Number(snapshot.ts);
+    if (Number.isFinite(ts) && ts <= lastEvaluatedAt) return false;
+    return true;
+}
+
+function markSnapshotEvaluated(snapshot) {
+    if (!snapshot) return;
+    const seq = Number(snapshot.seq);
+    if (Number.isFinite(seq)) lastEvaluatedSeq = Math.max(lastEvaluatedSeq, seq);
+    const ts = Number(snapshot.ts);
+    if (Number.isFinite(ts)) {
+        lastEvaluatedAt = Math.max(lastEvaluatedAt, ts);
+    } else {
+        lastEvaluatedAt = Date.now();
+    }
 }
 
 function pruneEmptyCropsDuringLoading() {
@@ -82,18 +123,36 @@ function setupCropsReadyListener() {
     cropsReadyListenerAttached = true;
 
     window.addEventListener(AGRO_CROPS_READY_EVENT, (event) => {
-        const count = Number(event?.detail?.count);
-        cropsStatus = 'ready';
-        if (Number.isFinite(count)) cropsReadyCount = count;
-        cropsReadyAt = new Date();
+        const snapshot = event?.detail && typeof event.detail === 'object' ? event.detail : null;
+        if (!snapshot) return;
 
-        if (Number.isFinite(count) && count > 0) {
+        if (!isSnapshotNewer(snapshot)) {
+            logAgroNotifDebug('event ignored (stale)', {
+                seq: snapshot.seq,
+                ts: snapshot.ts
+            });
+            return;
+        }
+
+        cropsSnapshot = snapshot;
+        cropsStatus = snapshot.status || 'ready';
+        if (Number.isFinite(snapshot.count)) cropsReadyCount = snapshot.count;
+        if (Number.isFinite(snapshot.ts)) {
+            cropsReadyAt = new Date(snapshot.ts);
+            lastSeenAt = Math.max(lastSeenAt, snapshot.ts);
+        }
+        if (Number.isFinite(snapshot.seq)) {
+            lastSeenSeq = Math.max(lastSeenSeq, snapshot.seq);
+        }
+
+        if (Number.isFinite(snapshot.count) && snapshot.count > 0) {
             removeNotificationByTitle(EMPTY_CROPS_TITLE);
         }
 
-        logAgroNotifDebug('crops ready', {
-            ts: new Date().toISOString(),
-            count: Number.isFinite(count) ? count : null
+        logAgroNotifDebug('event received', {
+            ts: snapshot.ts,
+            seq: snapshot.seq,
+            count: Number.isFinite(snapshot.count) ? snapshot.count : null
         });
 
         const reason = pendingRefreshReason || 'crops-ready';
@@ -111,9 +170,15 @@ export async function initNotifications() {
 
     // Load from localStorage
     loadNotificationsFromStorage();
-    syncCropsStatusFromWindow();
+    const initialSnapshot = syncCropsSnapshot();
     pruneEmptyCropsDuringLoading();
     setupCropsReadyListener();
+    logAgroNotifDebug('init', {
+        status: initialSnapshot?.status || cropsStatus,
+        seq: initialSnapshot?.seq,
+        ts: initialSnapshot?.ts,
+        count: Number.isFinite(initialSnapshot?.count) ? initialSnapshot.count : null
+    });
 
     // Setup event listeners
     setupEventListeners();
@@ -292,23 +357,24 @@ function closeDropdown() {
 // NOTIFICATION GENERATION
 // ============================================
 
-async function generateSystemNotifications(reason = 'manual') {
-    syncCropsStatusFromWindow();
+async function generateSystemNotifications(reason = 'manual', snapshotOverride = null) {
+    const snapshot = snapshotOverride || syncCropsSnapshot();
     const evalSeq = ++alertsEvalSeq;
     const startTs = new Date().toISOString();
-    const readyCount = getCropsReadyCount();
-    const statusSnapshot = getGlobalCropsStatus() || cropsStatus;
+    const readyCount = getCropsReadyCount(snapshot);
+    const statusSnapshot = snapshot?.status || cropsStatus;
 
     logAgroNotifDebug('evaluate START', {
         ts: startTs,
         seq: evalSeq,
         reason,
         status: statusSnapshot,
-        readyCount
+        readyCount,
+        snapSeq: snapshot?.seq
     });
 
-    if (!isCropsReady()) {
-        logAgroNotifDebug('evaluate SKIP', {
+    if (!isCropsReady(snapshot)) {
+        logAgroNotifDebug('evaluate SKIP (not ready)', {
             ts: new Date().toISOString(),
             seq: evalSeq,
             reason,
@@ -317,15 +383,29 @@ async function generateSystemNotifications(reason = 'manual') {
         return;
     }
 
+    if (!shouldEvaluateSnapshot(snapshot)) {
+        logAgroNotifDebug('evaluate SKIP (stale)', {
+            ts: new Date().toISOString(),
+            seq: evalSeq,
+            reason,
+            snapSeq: snapshot?.seq,
+            lastEvaluatedSeq
+        });
+        return;
+    }
+
     const crops = await getCropsAsync();
     const effectiveCount = Number.isFinite(readyCount) ? readyCount : crops.length;
+    const cropsForAlerts = crops.length > 0
+        ? crops
+        : (Array.isArray(snapshot?.crops) ? snapshot.crops : []);
 
     if (effectiveCount === 0) {
         addNotification('info', EMPTY_CROPS_TITLE, 'Agrega tu primer cultivo para alertas personalizadas.', 'fa-seedling');
     } else {
         removeNotificationByTitle(EMPTY_CROPS_TITLE);
-        if (crops.length > 0) {
-            crops.forEach(checkCropAlerts);
+        if (cropsForAlerts.length > 0) {
+            cropsForAlerts.forEach(checkCropAlerts);
         }
     }
 
@@ -335,13 +415,15 @@ async function generateSystemNotifications(reason = 'manual') {
     renderNotifications();
     updateBadge();
     saveNotificationsToStorage();
+    markSnapshotEvaluated(snapshot);
 
     logAgroNotifDebug('evaluate END', {
         ts: new Date().toISOString(),
         seq: evalSeq,
         cropsCount: crops.length,
         readyCount: effectiveCount,
-        notifications: notifications.length
+        notifications: notifications.length,
+        snapSeq: snapshot?.seq
     });
 }
 
@@ -559,13 +641,22 @@ function setupAuthRefresh() {
 }
 
 function refreshSystemNotifications(reason = 'manual') {
-    syncCropsStatusFromWindow();
-    if (!isCropsReady()) {
+    const snapshot = syncCropsSnapshot();
+    if (!snapshot || !isCropsReady(snapshot)) {
         pendingRefreshReason = reason;
         logAgroNotifDebug('refresh deferred', {
             ts: new Date().toISOString(),
             reason,
-            status: getGlobalCropsStatus() || cropsStatus
+            status: snapshot?.status || cropsStatus
+        });
+        return;
+    }
+    if (!shouldEvaluateSnapshot(snapshot)) {
+        logAgroNotifDebug('refresh skipped (stale)', {
+            ts: new Date().toISOString(),
+            reason,
+            snapSeq: snapshot?.seq,
+            lastEvaluatedSeq
         });
         return;
     }
@@ -575,7 +666,7 @@ function refreshSystemNotifications(reason = 'manual') {
     }
     refreshInFlight = true;
     Promise.resolve()
-        .then(() => generateSystemNotifications(reason))
+        .then(() => generateSystemNotifications(reason, snapshot))
         .finally(() => {
             refreshInFlight = false;
             if (refreshQueued) {

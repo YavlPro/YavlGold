@@ -20,6 +20,7 @@ let cropsLastCount = 0;
 const CROPS_LOADING_ID = 'agro-crops-loading';
 const CROPS_EMPTY_ID = 'agro-crops-empty';
 const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+const AGRO_CROPS_STATE_KEY = '__AGRO_CROPS_STATE';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 
@@ -1631,18 +1632,42 @@ function logAgroDebug(...args) {
     }
 }
 
+function getCropsSnapshot() {
+    if (typeof window === 'undefined') return null;
+    return window[AGRO_CROPS_STATE_KEY] || null;
+}
+
 function setCropsStatus(nextStatus, meta = {}) {
     cropsStatus = nextStatus;
     if (Number.isFinite(meta.count)) {
         cropsLastCount = meta.count;
     }
 
+    const prevSnapshot = getCropsSnapshot();
+    const snapshotCount = Number.isFinite(meta.count)
+        ? meta.count
+        : (Number.isFinite(prevSnapshot?.count) ? prevSnapshot.count : cropsLastCount);
+    const snapshotCrops = Array.isArray(meta.crops)
+        ? meta.crops.slice()
+        : (Array.isArray(prevSnapshot?.crops) ? prevSnapshot.crops : []);
+    const snapshotSeq = Number.isFinite(meta.requestId)
+        ? meta.requestId
+        : (Number.isFinite(prevSnapshot?.seq) ? prevSnapshot.seq : 0);
+    const snapshot = {
+        status: cropsStatus,
+        count: Number.isFinite(snapshotCount) ? snapshotCount : 0,
+        crops: snapshotCrops,
+        ts: Date.now(),
+        seq: snapshotSeq
+    };
+
     if (typeof window !== 'undefined') {
+        window[AGRO_CROPS_STATE_KEY] = snapshot;
         window.YG_AGRO_CROPS_STATUS = cropsStatus;
-        if (Number.isFinite(cropsLastCount)) {
-            window.YG_AGRO_CROPS_COUNT = cropsLastCount;
+        if (Number.isFinite(snapshot.count)) {
+            window.YG_AGRO_CROPS_COUNT = snapshot.count;
         }
-        window.YG_AGRO_CROPS_UPDATED_AT = new Date().toISOString();
+        window.YG_AGRO_CROPS_UPDATED_AT = new Date(snapshot.ts).toISOString();
     }
 
     logAgroDebug('[AGRO] crops status', {
@@ -1650,12 +1675,22 @@ function setCropsStatus(nextStatus, meta = {}) {
         count: Number.isFinite(cropsLastCount) ? cropsLastCount : null,
         seq: meta.requestId || null
     });
+
+    return snapshot;
 }
 
-function dispatchCropsReady(count) {
+function dispatchCropsReady(snapshot) {
     if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
-    const safeCount = Number.isFinite(count) ? count : 0;
-    window.dispatchEvent(new CustomEvent(AGRO_CROPS_READY_EVENT, { detail: { count: safeCount } }));
+    const detail = snapshot && typeof snapshot === 'object'
+        ? snapshot
+        : {
+            status: 'ready',
+            count: Number.isFinite(snapshot) ? snapshot : 0,
+            crops: [],
+            ts: Date.now(),
+            seq: cropsLoadSeq
+        };
+    window.dispatchEvent(new CustomEvent(AGRO_CROPS_READY_EVENT, { detail }));
 }
 
 function buildCropsStatusCard({ id, icon, title, subtitle, titleColor, titleWeight }) {
@@ -1805,8 +1840,8 @@ export async function loadCrops() {
         logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
         renderEmptyCropsState(cropsGrid);
         logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
-        setCropsStatus('ready', { count: 0, requestId });
-        dispatchCropsReady(0);
+        const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [] });
+        dispatchCropsReady(snapshot);
         return;
     }
 
@@ -1822,8 +1857,8 @@ export async function loadCrops() {
     });
     cropsGrid.appendChild(fragment);
     logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
-    setCropsStatus('ready', { count: crops.length, requestId });
-    dispatchCropsReady(crops.length);
+    const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops });
+    dispatchCropsReady(snapshot);
 
     console.info(`[AGRO] V9.6: progress computed for crops (${crops.length})`);
 

@@ -2893,3 +2893,33 @@ Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fe
 3) Sin sesion: campana no muestra conclusiones falsas.
 4) Re-entrar a /agro: no parpadeo 1->0->1 en DOM (o campana no evalua en 0).
 5) Build: `pnpm build:gold` OK (2026-01-28).
+## Diagnostico (tarea actual - Campana amnesica Agro v2)
+1) `AGRO_CROPS_READY` puede dispararse antes de que `agro-notifications.js` registre el listener, provocando evento perdido.
+2) La campana depende del evento para evaluar y no usa snapshot persistente; si el evento se pierde, queda en estado viejo ("Sin cultivos").
+3) Falta un control de secuencia/ts para ignorar snapshots antiguos y evitar re-evaluaciones obsoletas.
+
+## Plan (tarea actual - Campana amnesica Agro v2)
+1) Agro: mantener snapshot global `window.__AGRO_CROPS_STATE = { status, count, crops, ts, seq }` y emitirlo como detail del evento.
+2) Campana: en init, leer snapshot y evaluar si `status=ready`; si no, esperar evento sin concluir "Sin cultivos".
+3) Campana: aplicar guardas `seq/ts` para ignorar eventos viejos y hacer evaluacion idempotente.
+4) Debug solo con `?debug=1` (init, snapshot detectado, evento recibido, evaluacion final).
+
+## DoD (tarea actual - Campana amnesica Agro v2)
+- [ ] La campana nunca se queda "amnésica" si hay cultivos reales.
+- [ ] La campana evalúa solo cuando `cropsStatus=ready` o existe snapshot ready.
+- [ ] Late subscriber safe: si el evento se disparó antes, igual evalúa desde snapshot.
+- [ ] Durante carga: campana muestra "Cargando..." o se oculta, pero no dice "Sin cultivos".
+- [ ] Logs solo con `?debug=1`.
+- [x] pnpm build:gold OK.
+
+## Archivos a tocar (tarea actual - Campana amnesica Agro v2)
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+## Pruebas (tarea actual - Campana amnesica Agro v2)
+1) Usuario con cultivos: hard refresh + Fast 3G -> campana nunca dice "Sin cultivos"; se corrige aunque el evento se dispare antes.
+2) Usuario sin cultivos: muestra "Agrega tu primer cultivo".
+3) Sin sesión: campana oculta o "Inicia sesión".
+4) /agro/?debug=1: logs de snapshot/event/evaluacion en orden correcto.
+5) Build: `pnpm build:gold` OK (2026-01-29).
