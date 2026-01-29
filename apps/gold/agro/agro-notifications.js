@@ -17,15 +17,90 @@ let lastAdviceText = '';
 let authListenerAttached = false;
 let refreshInFlight = false;
 let refreshQueued = false;
+let cropsStatus = 'idle';
+let cropsReadyCount = null;
+let cropsReadyAt = null;
+let cropsReadyListenerAttached = false;
+let pendingRefreshReason = null;
+let alertsEvalSeq = 0;
 
 const STORAGE_KEY = 'yavlgold_agro_notifications';
 const READ_STORAGE_KEY = 'yavlgold_agro_notifications_read';
 const MAX_READ_HISTORY = 20; // Máximo de notificaciones leídas a conservar
 const EMPTY_CROPS_TITLE = '🌱 Sin cultivos';
+const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+const AGRO_DEBUG = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('debug') === '1';
 
 const ALERTS_SESSION_MAX_ATTEMPTS = 8;
 const ALERTS_SESSION_BASE_DELAY = 200;
 const ALERTS_SESSION_MAX_DELAY = 800;
+
+function logAgroNotifDebug(label, detail = {}) {
+    if (!AGRO_DEBUG) return;
+    console.log(`[AgroNotif] ${label}`, detail);
+}
+
+function getGlobalCropsStatus() {
+    if (typeof window === 'undefined') return null;
+    return window.YG_AGRO_CROPS_STATUS || null;
+}
+
+function getGlobalCropsCount() {
+    if (typeof window === 'undefined') return null;
+    const count = Number(window.YG_AGRO_CROPS_COUNT);
+    return Number.isFinite(count) ? count : null;
+}
+
+function syncCropsStatusFromWindow() {
+    const status = getGlobalCropsStatus();
+    if (status) cropsStatus = status;
+    const count = getGlobalCropsCount();
+    if (Number.isFinite(count)) cropsReadyCount = count;
+}
+
+function getCropsReadyCount() {
+    const count = getGlobalCropsCount();
+    if (Number.isFinite(count)) return count;
+    return Number.isFinite(cropsReadyCount) ? cropsReadyCount : null;
+}
+
+function isCropsReady() {
+    const status = getGlobalCropsStatus() || cropsStatus;
+    return status === 'ready';
+}
+
+function pruneEmptyCropsDuringLoading() {
+    const readyCount = getCropsReadyCount();
+    if (!isCropsReady() || (Number.isFinite(readyCount) && readyCount > 0)) {
+        removeNotificationByTitle(EMPTY_CROPS_TITLE);
+    }
+}
+
+function setupCropsReadyListener() {
+    if (cropsReadyListenerAttached || typeof window === 'undefined') return;
+    cropsReadyListenerAttached = true;
+
+    window.addEventListener(AGRO_CROPS_READY_EVENT, (event) => {
+        const count = Number(event?.detail?.count);
+        cropsStatus = 'ready';
+        if (Number.isFinite(count)) cropsReadyCount = count;
+        cropsReadyAt = new Date();
+
+        if (Number.isFinite(count) && count > 0) {
+            removeNotificationByTitle(EMPTY_CROPS_TITLE);
+        }
+
+        logAgroNotifDebug('crops ready', {
+            ts: new Date().toISOString(),
+            count: Number.isFinite(count) ? count : null
+        });
+
+        const reason = pendingRefreshReason || 'crops-ready';
+        pendingRefreshReason = null;
+        refreshSystemNotifications(reason);
+    });
+}
 
 // ============================================
 // INITIALIZATION
@@ -36,6 +111,9 @@ export async function initNotifications() {
 
     // Load from localStorage
     loadNotificationsFromStorage();
+    syncCropsStatusFromWindow();
+    pruneEmptyCropsDuringLoading();
+    setupCropsReadyListener();
 
     // Setup event listeners
     setupEventListeners();
@@ -214,14 +292,41 @@ function closeDropdown() {
 // NOTIFICATION GENERATION
 // ============================================
 
-async function generateSystemNotifications() {
-    const crops = await getCropsAsync();
+async function generateSystemNotifications(reason = 'manual') {
+    syncCropsStatusFromWindow();
+    const evalSeq = ++alertsEvalSeq;
+    const startTs = new Date().toISOString();
+    const readyCount = getCropsReadyCount();
+    const statusSnapshot = getGlobalCropsStatus() || cropsStatus;
 
-    if (crops.length === 0) {
+    logAgroNotifDebug('evaluate START', {
+        ts: startTs,
+        seq: evalSeq,
+        reason,
+        status: statusSnapshot,
+        readyCount
+    });
+
+    if (!isCropsReady()) {
+        logAgroNotifDebug('evaluate SKIP', {
+            ts: new Date().toISOString(),
+            seq: evalSeq,
+            reason,
+            status: statusSnapshot
+        });
+        return;
+    }
+
+    const crops = await getCropsAsync();
+    const effectiveCount = Number.isFinite(readyCount) ? readyCount : crops.length;
+
+    if (effectiveCount === 0) {
         addNotification('info', EMPTY_CROPS_TITLE, 'Agrega tu primer cultivo para alertas personalizadas.', 'fa-seedling');
     } else {
         removeNotificationByTitle(EMPTY_CROPS_TITLE);
-        crops.forEach(checkCropAlerts);
+        if (crops.length > 0) {
+            crops.forEach(checkCropAlerts);
+        }
     }
 
     checkWeatherAlerts();
@@ -230,6 +335,14 @@ async function generateSystemNotifications() {
     renderNotifications();
     updateBadge();
     saveNotificationsToStorage();
+
+    logAgroNotifDebug('evaluate END', {
+        ts: new Date().toISOString(),
+        seq: evalSeq,
+        cropsCount: crops.length,
+        readyCount: effectiveCount,
+        notifications: notifications.length
+    });
 }
 
 /**
@@ -400,6 +513,7 @@ function sleep(ms) {
 }
 
 function logAlertsStatus(hasSession, source, crops, attempts) {
+    if (!AGRO_DEBUG) return;
     const sessionLabel = hasSession ? 'yes' : 'no';
     const cropCount = Number.isFinite(crops) ? crops : 0;
     const attemptCount = Number.isFinite(attempts) ? attempts : 0;
@@ -445,6 +559,16 @@ function setupAuthRefresh() {
 }
 
 function refreshSystemNotifications(reason = 'manual') {
+    syncCropsStatusFromWindow();
+    if (!isCropsReady()) {
+        pendingRefreshReason = reason;
+        logAgroNotifDebug('refresh deferred', {
+            ts: new Date().toISOString(),
+            reason,
+            status: getGlobalCropsStatus() || cropsStatus
+        });
+        return;
+    }
     if (refreshInFlight) {
         refreshQueued = true;
         return;

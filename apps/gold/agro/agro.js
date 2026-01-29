@@ -11,6 +11,17 @@ import './agro.css';
 // ============================================================
 let currentEditId = null; // ID del cultivo en edición (null = nuevo)
 let cropsCache = [];      // Cache local de cultivos para edición
+let cropsStatus = 'idle';
+let cropsLoadSeq = 0;
+let cropsLoadInFlight = false;
+let cropsLoadQueued = false;
+let cropsLastCount = 0;
+
+const CROPS_LOADING_ID = 'agro-crops-loading';
+const CROPS_EMPTY_ID = 'agro-crops-empty';
+const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
+const AGRO_DEBUG = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('debug') === '1';
 
 // ============================================================
 // V9.6: PLANTILLAS LOCALES (TACHIRA)
@@ -1614,6 +1625,109 @@ function createCropCardElement(crop, index) {
     return card;
 }
 
+function logAgroDebug(...args) {
+    if (AGRO_DEBUG) {
+        console.log(...args);
+    }
+}
+
+function setCropsStatus(nextStatus, meta = {}) {
+    cropsStatus = nextStatus;
+    if (Number.isFinite(meta.count)) {
+        cropsLastCount = meta.count;
+    }
+
+    if (typeof window !== 'undefined') {
+        window.YG_AGRO_CROPS_STATUS = cropsStatus;
+        if (Number.isFinite(cropsLastCount)) {
+            window.YG_AGRO_CROPS_COUNT = cropsLastCount;
+        }
+        window.YG_AGRO_CROPS_UPDATED_AT = new Date().toISOString();
+    }
+
+    logAgroDebug('[AGRO] crops status', {
+        status: cropsStatus,
+        count: Number.isFinite(cropsLastCount) ? cropsLastCount : null,
+        seq: meta.requestId || null
+    });
+}
+
+function dispatchCropsReady(count) {
+    if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+    const safeCount = Number.isFinite(count) ? count : 0;
+    window.dispatchEvent(new CustomEvent(AGRO_CROPS_READY_EVENT, { detail: { count: safeCount } }));
+}
+
+function buildCropsStatusCard({ id, icon, title, subtitle, titleColor, titleWeight }) {
+    const card = document.createElement('div');
+    if (id) card.id = id;
+    card.className = 'card animate-in';
+    card.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 3rem;';
+
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'kpi-icon-wrapper';
+    iconWrap.style.cssText = 'margin: 0 auto 1rem;';
+    iconWrap.textContent = icon || '';
+
+    const titleEl = document.createElement('p');
+    if (titleColor) titleEl.style.color = titleColor;
+    if (titleWeight) titleEl.style.fontWeight = titleWeight;
+    titleEl.textContent = title || '';
+
+    card.append(iconWrap, titleEl);
+
+    if (subtitle) {
+        const subtitleEl = document.createElement('p');
+        subtitleEl.style.color = 'var(--text-muted)';
+        subtitleEl.style.fontSize = '0.9rem';
+        subtitleEl.style.marginTop = '0.5rem';
+        subtitleEl.textContent = subtitle;
+        card.appendChild(subtitleEl);
+    }
+
+    return card;
+}
+
+function showCropsLoading(cropsGrid) {
+    if (!cropsGrid) return;
+    const hasCards = !!cropsGrid.querySelector('.crop-card');
+    if (hasCards) return;
+
+    const emptyCard = cropsGrid.querySelector(`#${CROPS_EMPTY_ID}`);
+    if (emptyCard) emptyCard.remove();
+
+    let loadingCard = cropsGrid.querySelector(`#${CROPS_LOADING_ID}`);
+    if (!loadingCard) {
+        loadingCard = buildCropsStatusCard({
+            id: CROPS_LOADING_ID,
+            icon: '🔄',
+            title: 'Cargando cultivos...',
+            titleColor: 'var(--text-muted)'
+        });
+        cropsGrid.appendChild(loadingCard);
+    }
+}
+
+function clearCropsLoading(cropsGrid) {
+    if (!cropsGrid) return;
+    const loadingCard = cropsGrid.querySelector(`#${CROPS_LOADING_ID}`);
+    if (loadingCard) loadingCard.remove();
+}
+
+function renderEmptyCropsState(cropsGrid) {
+    if (!cropsGrid) return;
+    cropsGrid.textContent = '';
+    const emptyCard = buildCropsStatusCard({
+        id: CROPS_EMPTY_ID,
+        icon: '🌱',
+        title: 'No tienes cultivos activos aún',
+        subtitle: 'Haz clic en "+ Nuevo Cultivo" para agregar tu primer cultivo',
+        titleColor: 'var(--gold-primary)',
+        titleWeight: '600'
+    });
+    cropsGrid.appendChild(emptyCard);
+}
+
 /**
  * Carga cultivos del usuario (Supabase + LocalStorage fallback)
  */
@@ -1621,22 +1735,28 @@ export async function loadCrops() {
     const cropsGrid = document.querySelector('.crops-grid');
     if (!cropsGrid) return;
 
+    const requestId = ++cropsLoadSeq;
+    if (cropsLoadInFlight) {
+        cropsLoadQueued = true;
+        logAgroDebug('[AGRO] loadCrops queued', { ts: new Date().toISOString(), seq: requestId });
+        return;
+    }
+
+    cropsLoadInFlight = true;
+    setCropsStatus('loading', { requestId });
+    showCropsLoading(cropsGrid);
+    logAgroDebug('[AGRO] loadCrops START', { ts: new Date().toISOString(), seq: requestId });
+
+    try {
     try {
         await loadCropTemplates();
     } catch (e) {
         // Template load failures should not block crops rendering
     }
 
-    // Mostrar loading
-    cropsGrid.innerHTML = `
-        <div class="card animate-in" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-            <div class="kpi-icon-wrapper" style="margin: 0 auto 1rem;">🔄</div>
-            <p style="color: var(--text-muted);">Cargando cultivos...</p>
-        </div>
-    `;
-
     let crops = [];
     let error = null;
+    let source = 'supabase';
 
     try {
         // 1. Intentar cargar desde Supabase
@@ -1651,6 +1771,7 @@ export async function loadCrops() {
             crops = data || [];
         } else {
             // 2. Fallback: LocalStorage
+            source = 'local';
             console.log('[Agro] Usuario no autenticado, usando LocalStorage');
             crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
         }
@@ -1658,24 +1779,34 @@ export async function loadCrops() {
     } catch (err) {
         console.warn('[Agro] Error Supabase, intentando LocalStorage:', err);
         // Fallback en caso de error de conexión
+        source = 'local';
         crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
         error = err;
     }
 
+    const isLatest = requestId === cropsLoadSeq;
+    logAgroDebug('[AGRO] loadCrops END', {
+        ts: new Date().toISOString(),
+        seq: requestId,
+        count: crops.length,
+        source,
+        stale: !isLatest,
+        error: !!error
+    });
+
+    if (!isLatest) return;
+
     // Actualizar Estadísticas siempre (aunque esté vacío)
     updateStats(crops);
+    clearCropsLoading(cropsGrid);
 
     if (crops.length === 0) {
         cropsCache = [];
-        cropsGrid.innerHTML = `
-            <div class="card animate-in" style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                <div class="kpi-icon-wrapper" style="margin: 0 auto 1rem;">🌱</div>
-                <p style="color: var(--gold-primary); font-weight: 600;">No tienes cultivos activos aún</p>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
-                    Haz clic en "+ Nuevo Cultivo" para agregar tu primer cultivo
-                </p>
-            </div>
-        `;
+        logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
+        renderEmptyCropsState(cropsGrid);
+        logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
+        setCropsStatus('ready', { count: 0, requestId });
+        dispatchCropsReady(0);
         return;
     }
 
@@ -1683,12 +1814,16 @@ export async function loadCrops() {
     cropsCache = crops;
 
     // Renderizar cultivos
+    logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
     cropsGrid.textContent = '';
     const fragment = document.createDocumentFragment();
     crops.forEach((crop, i) => {
         fragment.appendChild(createCropCardElement(crop, i));
     });
     cropsGrid.appendChild(fragment);
+    logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
+    setCropsStatus('ready', { count: crops.length, requestId });
+    dispatchCropsReady(crops.length);
 
     console.info(`[AGRO] V9.6: progress computed for crops (${crops.length})`);
 
@@ -1702,6 +1837,13 @@ export async function loadCrops() {
     }, 300);
 
     console.log(`[Agro] ✅ ${crops.length} cultivos cargados`);
+    } finally {
+        cropsLoadInFlight = false;
+        if (cropsLoadQueued) {
+            cropsLoadQueued = false;
+            loadCrops();
+        }
+    }
 }
 
 // Expose loadCrops globally for data-refresh event in index.html

@@ -2860,3 +2860,36 @@ Bug causado por uso de new Date() y .toLocaleDateString() en visualizacion de fe
 - UI: bubble system para fuera de alcance.
 - Build: pnpm build:gold OK.
 - Manual: NO VERIFICADO.
+
+## Diagnostico (tarea actual - Campana amnesica Agro)
+1) `loadCrops()` se dispara en `initAgro()` (apps/gold/agro/agro.js:5066) y tambien via `data-refresh` (apps/gold/agro/index.html:2386). Hay multiples `data-refresh` dispatch (index.html:2339/2483/2583 y agro.js:959/1198/1265/1991/2174/4096), lo que puede solapar cargas.
+2) `loadCrops()` limpia el grid con `innerHTML` (loading/empty) y luego `textContent = ''` (agro.js:1631/1670/1686). Si ya hay cards, esto provoca un vacio temporal visible.
+3) No hay token/lock para evitar respuestas tardias: una llamada lenta puede pisar el estado mas reciente.
+4) La campana evalua cultivos en `generateSystemNotifications()` sin esperar estado estable (`getCropsAsync()` + EMPTY_CROPS_TITLE) (agro-notifications.js:217-223), por lo que puede concluir "Sin cultivos" durante el vacio o antes de session lista.
+
+## Plan (tarea actual - Campana amnesica Agro)
+1) Agro: agregar `cropsStatus` ('idle'|'loading'|'ready'|'error'), lock + request seq en `loadCrops()`; solo el ultimo seq puede renderizar.
+2) Agro: evitar limpiar DOM si ya hay cards; mostrar loading no destructivo y retirarlo al finalizar.
+3) Agro: disparar `AGRO_CROPS_READY` con `{count}` cuando el render final este listo y exponer `window.YG_AGRO_CROPS_STATUS`.
+4) Campana: escuchar `AGRO_CROPS_READY` y bloquear evaluacion hasta `cropsStatus === 'ready'`; no agregar "Sin cultivos" durante loading.
+5) Logs de diagnostico solo con `?debug=1`.
+
+## DoD (tarea actual - Campana amnesica Agro)
+- [ ] Si el usuario tiene 1+ cultivos en Supabase, la campana nunca muestra "Sin cultivos".
+- [ ] Durante carga, campana muestra "Cargando..." o nada, pero jamas concluye 0.
+- [ ] El parpadeo se elimina o no provoca evaluacion incorrecta.
+- [ ] Sin regresiones: cultivos cargan, centro de alertas y dashboard agro OK.
+- [ ] Consola limpia; logs solo con `?debug=1`.
+- [x] pnpm build:gold OK.
+
+## Archivos a tocar (tarea actual - Campana amnesica Agro)
+- `apps/gold/agro/agro.js` (estado/lock/seq + render no destructivo + evento ready).
+- `apps/gold/agro/agro-notifications.js` (campana: esperar crops ready y evitar "Sin cultivos" durante loading).
+- `apps/gold/docs/AGENT_REPORT.md` (este bloque).
+
+## Pruebas (tarea actual - Campana amnesica Agro)
+1) Usuario con cultivos: hard refresh + throttling Fast 3G -> nunca ver "Sin cultivos", solo loading/nada y luego estado real.
+2) Usuario sin cultivos: debe mostrar "Agrega tu primer cultivo".
+3) Sin sesion: campana no muestra conclusiones falsas.
+4) Re-entrar a /agro: no parpadeo 1->0->1 en DOM (o campana no evalua en 0).
+5) Build: `pnpm build:gold` OK (2026-01-28).
