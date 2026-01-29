@@ -798,6 +798,67 @@ async function enrichFactureroItems(tabName, items) {
  * @param {string} tabName - 'gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'
  * @param {object} options - { showActions: true }
  */
+
+let AGRO_LOSSES_SUPPORTS_SOFT_DELETE = null; // null | true | false
+
+function _looksLikeMissingColumn(err) {
+    const msg = String(err?.message || '').toLowerCase();
+    const det = String(err?.details || '').toLowerCase();
+    const hint = String(err?.hint || '').toLowerCase();
+    const code = String(err?.code || '').toLowerCase();
+    const blob = `${msg} ${det} ${hint} ${code}`;
+    return (
+        blob.includes('deleted_at') ||
+        blob.includes('column') ||
+        blob.includes('pgrst') ||
+        blob.includes('unknown') ||
+        blob.includes('does not exist')
+    );
+}
+
+async function fetchAgroLosses(supabase, userId) {
+    const base = () =>
+        supabase
+            .from('agro_losses')
+            .select('*, agro_crops(name)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+    // si ya sabemos que NO hay soft-delete, no hacemos intento 1
+    if (AGRO_LOSSES_SUPPORTS_SOFT_DELETE === false) {
+        const res = await base();
+        if (res.error) {
+            console.warn('[AGRO][losses] fetch failed (no-soft-delete):', res.error);
+            return [];
+        }
+        return Array.isArray(res.data) ? res.data : [];
+    }
+
+    // intento 1 (soft-delete)
+    let res = await base().is('deleted_at', null);
+
+    if (!res.error) {
+        AGRO_LOSSES_SUPPORTS_SOFT_DELETE = true;
+        return Array.isArray(res.data) ? res.data : [];
+    }
+
+    // retry si parece columna/filtro inválido
+    if (_looksLikeMissingColumn(res.error)) {
+        AGRO_LOSSES_SUPPORTS_SOFT_DELETE = false;
+        res = await base();
+        if (res.error) {
+            console.warn('[AGRO][losses] fetch failed (retry no-soft-delete):', res.error);
+            return [];
+        }
+        return Array.isArray(res.data) ? res.data : [];
+    }
+
+    // error real no relacionado
+    console.warn('[AGRO][losses] fetch failed:', res.error);
+    return [];
+}
+
 async function refreshFactureroHistory(tabName, options = {}) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) {
@@ -813,45 +874,54 @@ async function refreshFactureroHistory(tabName, options = {}) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const selectFields = buildFactureroSelectFields(tabName, config);
-        const selectClause = buildFactureroSelectClause(selectFields);
+        let items = [];
 
-        // Build query
-        let query = supabase
-            .from(config.table)
-            .select(selectClause)
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(20);
+        // V9.6: Use smart retry for losses to avoid 400 on missing deleted_at
+        if (tabName === 'perdidas') {
+            items = await fetchAgroLosses(supabase, user.id);
+        } else {
+            // Standard fetch for other tabs
+            const selectFields = buildFactureroSelectFields(tabName, config);
+            const selectClause = buildFactureroSelectClause(selectFields);
 
-        // Filter deleted_at if supported
-        if (config.supportsDeletedAt) {
-            query = query.is('deleted_at', null);
-        }
+            // Build query
+            let query = supabase
+                .from(config.table)
+                .select(selectClause)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(20);
 
-        const { data: items, error } = await query;
+            // Filter deleted_at if supported
+            if (config.supportsDeletedAt) {
+                query = query.is('deleted_at', null);
+            }
 
-        if (error) {
-            // If deleted_at column doesn't exist, retry without filter
-            if (error.message && error.message.toLowerCase().includes('deleted_at')) {
-                config.supportsDeletedAt = false;
-                console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
-                const fallback = await supabase
-                    .from(config.table)
-                    .select(selectClause)
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false })
-                    .limit(20);
-                if (fallback.error) {
-                    console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
+            const { data, error } = await query;
+
+            if (error) {
+                // Legacy fallback logic for other tables
+                if (error.message && error.message.toLowerCase().includes('deleted_at')) {
+                    config.supportsDeletedAt = false;
+                    console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
+                    const fallback = await supabase
+                        .from(config.table)
+                        .select(selectClause)
+                        .eq('user_id', user.id)
+                        .order('created_at', { ascending: false })
+                        .limit(20);
+                    if (fallback.error) {
+                        console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
+                        return;
+                    }
+                    items = fallback.data || [];
+                } else {
+                    console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
                     return;
                 }
-                const enrichedFallback = await enrichFactureroItems(tabName, fallback.data || []);
-                renderHistoryList(tabName, config, enrichedFallback, showActions);
-                return;
+            } else {
+                items = data || [];
             }
-            console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
-            return;
         }
 
         if (debugEnabled) {
@@ -1783,95 +1853,95 @@ export async function loadCrops() {
     logAgroDebug('[AGRO] loadCrops START', { ts: new Date().toISOString(), seq: requestId });
 
     try {
-    try {
-        await loadCropTemplates();
-    } catch (e) {
-        // Template load failures should not block crops rendering
-    }
-
-    let crops = [];
-    let error = null;
-    let source = 'supabase';
-
-    try {
-        // 1. Intentar cargar desde Supabase
-        const { data: userData } = await supabase.auth.getUser();
-        if (userData?.user?.id) {
-            const { data, error: sbError } = await supabase
-                .from('agro_crops')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (sbError) throw sbError;
-            crops = data || [];
-        } else {
-            // 2. Fallback: LocalStorage
-            source = 'local';
-            console.log('[Agro] Usuario no autenticado, usando LocalStorage');
-            crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+        try {
+            await loadCropTemplates();
+        } catch (e) {
+            // Template load failures should not block crops rendering
         }
 
-    } catch (err) {
-        console.warn('[Agro] Error Supabase, intentando LocalStorage:', err);
-        // Fallback en caso de error de conexión
-        source = 'local';
-        crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-        error = err;
-    }
+        let crops = [];
+        let error = null;
+        let source = 'supabase';
 
-    const isLatest = requestId === cropsLoadSeq;
-    logAgroDebug('[AGRO] loadCrops END', {
-        ts: new Date().toISOString(),
-        seq: requestId,
-        count: crops.length,
-        source,
-        stale: !isLatest,
-        error: !!error
-    });
+        try {
+            // 1. Intentar cargar desde Supabase
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData?.user?.id) {
+                const { data, error: sbError } = await supabase
+                    .from('agro_crops')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-    if (!isLatest) return;
+                if (sbError) throw sbError;
+                crops = data || [];
+            } else {
+                // 2. Fallback: LocalStorage
+                source = 'local';
+                console.log('[Agro] Usuario no autenticado, usando LocalStorage');
+                crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+            }
 
-    // Actualizar Estadísticas siempre (aunque esté vacío)
-    updateStats(crops);
-    clearCropsLoading(cropsGrid);
+        } catch (err) {
+            console.warn('[Agro] Error Supabase, intentando LocalStorage:', err);
+            // Fallback en caso de error de conexión
+            source = 'local';
+            crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+            error = err;
+        }
 
-    if (crops.length === 0) {
-        cropsCache = [];
-        logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
-        renderEmptyCropsState(cropsGrid);
-        logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
-        const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [] });
-        dispatchCropsReady(snapshot);
-        return;
-    }
-
-    // Guardar en cache para edición
-    cropsCache = crops;
-
-    // Renderizar cultivos
-    logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
-    cropsGrid.textContent = '';
-    const fragment = document.createDocumentFragment();
-    crops.forEach((crop, i) => {
-        fragment.appendChild(createCropCardElement(crop, i));
-    });
-    cropsGrid.appendChild(fragment);
-    logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
-    const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops });
-    dispatchCropsReady(snapshot);
-
-    console.info(`[AGRO] V9.6: progress computed for crops (${crops.length})`);
-
-    // Animar progress bars
-    setTimeout(() => {
-        document.querySelectorAll('.crops-grid .progress-fill').forEach(bar => {
-            const width = bar.style.width;
-            bar.style.width = '0%';
-            setTimeout(() => { bar.style.width = width; }, 100);
+        const isLatest = requestId === cropsLoadSeq;
+        logAgroDebug('[AGRO] loadCrops END', {
+            ts: new Date().toISOString(),
+            seq: requestId,
+            count: crops.length,
+            source,
+            stale: !isLatest,
+            error: !!error
         });
-    }, 300);
 
-    console.log(`[Agro] ✅ ${crops.length} cultivos cargados`);
+        if (!isLatest) return;
+
+        // Actualizar Estadísticas siempre (aunque esté vacío)
+        updateStats(crops);
+        clearCropsLoading(cropsGrid);
+
+        if (crops.length === 0) {
+            cropsCache = [];
+            logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
+            renderEmptyCropsState(cropsGrid);
+            logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
+            const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [] });
+            dispatchCropsReady(snapshot);
+            return;
+        }
+
+        // Guardar en cache para edición
+        cropsCache = crops;
+
+        // Renderizar cultivos
+        logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
+        cropsGrid.textContent = '';
+        const fragment = document.createDocumentFragment();
+        crops.forEach((crop, i) => {
+            fragment.appendChild(createCropCardElement(crop, i));
+        });
+        cropsGrid.appendChild(fragment);
+        logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
+        const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops });
+        dispatchCropsReady(snapshot);
+
+        console.info(`[AGRO] V9.6: progress computed for crops (${crops.length})`);
+
+        // Animar progress bars
+        setTimeout(() => {
+            document.querySelectorAll('.crops-grid .progress-fill').forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => { bar.style.width = width; }, 100);
+            });
+        }, 300);
+
+        console.log(`[Agro] ✅ ${crops.length} cultivos cargados`);
     } finally {
         cropsLoadInFlight = false;
         if (cropsLoadQueued) {

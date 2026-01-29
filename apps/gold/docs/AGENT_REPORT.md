@@ -2980,3 +2980,31 @@ Fase D (Debug):
 - Build: `pnpm build:gold` OK (2026-01-29).
 ## Cambio (tarea actual - Remover "Sistema Listo" legacy)
 - Ajuste: `migrateNotifStorage()` ahora normaliza storage corrupto/no-array a `[]` (sin crear keys si no existen), y solo escribe si hay cambios.
+# DIAGNOSTICO: 400 Bad Request en agro_losses
+
+## Problema
+El request a `/rest/v1/agro_losses` falla con status 400.
+La URL incluye `deleted_at=is.null`.
+El error 400 en PostgREST generalmente indica que una columna referenciada no existe.
+Es altamente probable que la columna `deleted_at` no exista en la tabla `agro_losses` en el esquema de producción actual.
+
+## Plan de Solución
+Implementar "smart retry" en frontend:
+1. Intentar fetch con filtro `deleted_at=is.null`.
+2. Si falla con error relacionado a columna inexistente, reintentar sin el filtro.
+3. Cachear el soporte de `deleted_at` para evitar doble request futuro.
+4. Usar `select('*')` para evitar errores por proyección explícita de columnas faltantes.
+
+## Checklist DoD
+- [ ] Implementar helper `fetchAgroLosses` con lógica de retry.
+- [ ] Integrar helper en flujo principal.
+- [ ] Verificar que no haya 400 en carga inicial (o que se recupere transparentemente).
+- [ ] `pnpm build:gold` exitoso.
+
+## Resultado de Pruebas
+- Manual: Se espera que el retry funcione y elimine el error visible.
+- Build: Pendiente de ejecución.
+
+## Actualización de Resultados
+- **Build**: PASÓ exitosamente (`pnpm build:gold`).
+- **Pruebas Manuales**: El código implementa la lógica de reintento inteligente solicitada. Se espera que el error 400 desaparezca en producción al descartar automáticamente el filtro `deleted_at` cuando la base de datos lo rechace.
