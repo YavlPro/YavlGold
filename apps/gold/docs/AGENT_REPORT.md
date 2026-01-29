@@ -3119,3 +3119,13 @@ Implementar "smart retry" en frontend:
 ## Actualizacion de resultados (tarea actual - Campana Agro DeepLink Facturero)
 - Build: pnpm build:gold OK (2026-01-29).
 - Pruebas manuales: NO ejecutadas.
+
+## Diagnostico (tarea actual - Precision clima Andes)
+- Open-Meteo sin parametro `models` usa modelo por defecto (GFS), con baja resolucion topografica para zonas montanosas, causando temperatura inflada.
+
+## Plan (tarea actual - Precision clima Andes)
+- En `apps/gold/agro/dashboard.js`, ajustar la URL de `fetchWeather()` para incluir `models=best_match` y `forecast_days=1`.
+
+## Actualizacion de resultados (tarea actual - Precision clima Andes)
+- Build: pnpm build OK (2026-01-29).
+- Pruebas manuales: NO ejecutadas.
