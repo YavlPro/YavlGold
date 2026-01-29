@@ -1,15 +1,43 @@
 ﻿/**
  * YavlGold V9.4 - Agro Dashboard Widgets
- * Clima (Open-Meteo), Mercado (Binance), Fase Lunar (Algoritmo), FX (PartÃ­culas)
+ * Clima (Open-Meteo), Mercado (Binance), Fase Lunar (Algoritmo), FX (Particulas)
  * Updated: Universal location with GPS/IP/VPN + Manual selector support
  */
 
 // ============================================
-// 1. MÃ“DULO CLIMA (GeolocalizaciÃ³n Universal)
+// 1. MODULO CLIMA (Geolocalizacion Universal)
 // ============================================
 const WEATHER_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
 const WEATHER_CACHE_PREFIX = 'yavlgold_weather_';
 const WEATHER_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const ICONS = {
+    gps: '\u{1F4CD}',
+    ip: '\u{1F310}',
+    manual: '\u{1F4CC}',
+    refresh: '\u{1F504}',
+    humidity: '\u{1F4A7}',
+    search: '\u{1F50D}',
+    sun: '\u2600\uFE0F',
+    moon: '\u{1F319}',
+    fog: '\u{1F32B}\uFE0F',
+    drizzle: '\u{1F326}\uFE0F',
+    freezing: '\u{1F327}\uFE0F',
+    rain: '\u{1F327}\uFE0F',
+    showers: '\u{1F326}\uFE0F',
+    snow: '\u{1F328}\uFE0F',
+    storm: '\u26C8\uFE0F',
+    cloud: '\u2601\uFE0F',
+    snowflake: '\u2744\uFE0F',
+    warning: '\u26A0\uFE0F',
+    question: '\u2753',
+    moonNew: '\u{1F311}',
+    moonWax: '\u{1F313}',
+    moonFull: '\u{1F315}',
+    moonWane: '\u{1F317}',
+    seedling: '\u{1F331}',
+    pest: '\u{1F41B}',
+    roots: '\u{1F954}'
+};
 
 // Estado del clima
 let currentLocation = null;
@@ -118,7 +146,7 @@ function updateGeoDebugPanel() {
 }
 
 /**
- * Inicializa el mÃ³dulo de clima con geolocalizaciÃ³n robusta
+ * Inicializa el modulo de clima con geolocalizacion robusta
  */
 async function initWeather() {
     // Wait for geolocation module to be ready
@@ -172,25 +200,25 @@ function initLocationControls() {
     if (!manual) {
         toggleRow.innerHTML = `
             <button id="btn-gps-mode" class="loc-btn ${preference === 'gps' ? 'active' : ''}" title="Usar GPS">
-                ðŸ“ GPS
+                ${ICONS.gps} GPS
             </button>
             <button id="btn-ip-mode" class="loc-btn ${preference === 'ip' ? 'active' : ''}" title="Usar IP/VPN">
-                ðŸŒ VPN/IP
+                ${ICONS.ip} VPN/IP
             </button>
-            <button id="btn-manual-mode" class="loc-btn" title="Elegir ubicaciÃ³n manual">
-                âœï¸ Cambiar
+            <button id="btn-manual-mode" class="loc-btn" title="Elegir ubicacion manual">
+                ${ICONS.manual} Cambiar
             </button>
         `;
     } else {
         toggleRow.innerHTML = `
             <span style="font-size: 9px; color: #C8A752; padding: 4px 8px; background: rgba(200, 167, 82, 0.15); border-radius: 12px;">
-                ðŸ“Œ Manual
+                ${ICONS.manual} Manual
             </span>
-            <button id="btn-manual-mode" class="loc-btn" title="Cambiar ubicaciÃ³n">
-                âœï¸ Cambiar
+            <button id="btn-manual-mode" class="loc-btn" title="Cambiar ubicacion">
+                ${ICONS.manual} Cambiar
             </button>
-            <button id="btn-clear-manual" class="loc-btn" title="Usar ubicaciÃ³n del dispositivo">
-                ðŸ“ Usar dispositivo
+            <button id="btn-clear-manual" class="loc-btn" title="Usar ubicacion del dispositivo">
+                ${ICONS.gps} Usar dispositivo
             </button>
         `;
     }
@@ -325,7 +353,7 @@ async function switchLocationMode(mode) {
         btnIp.classList.toggle('active', mode === 'ip');
     }
 
-    if (descEl) descEl.textContent = 'ðŸ”„ Actualizando...';
+    if (descEl) descEl.textContent = `${ICONS.refresh} Actualizando...`;
 
     try {
         currentLocation = await Geo.getCoordsSmart({ preferIp: mode === 'ip', forceRefresh: true });
@@ -334,7 +362,7 @@ async function switchLocationMode(mode) {
         console.log('[Agro] Switched to', mode, ':', currentLocation.label);
     } catch (err) {
         console.error('[Agro] Mode switch error:', err);
-        if (descEl) descEl.textContent = 'âš ï¸ Error';
+    if (descEl) descEl.textContent = `${ICONS.warning} Error`;
     }
 }
 
@@ -347,7 +375,7 @@ async function clearManualAndRefresh() {
 
     Geo.clearManualLocation();
 
-    if (descEl) descEl.textContent = 'ðŸ”„ Detectando ubicaciÃ³n...';
+    if (descEl) descEl.textContent = `${ICONS.refresh} Detectando ubicacion...`;
 
     // Rebuild controls (will show GPS/IP toggles instead of Manual badge)
     const controls = document.getElementById('location-controls');
@@ -376,10 +404,10 @@ function openLocationSelector() {
         <div id="location-search-box">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 style="margin: 0; color: #C8A752; font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px;">
-                    SELECCIONAR UBICACIÃ“N
+                    SELECCIONAR UBICACION
                 </h3>
                 <button id="close-location-modal" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer; padding: 4px;">
-                    âœ•
+                    ×
                 </button>
             </div>
             <input type="text" id="location-search-input" placeholder="Buscar ciudad... (ej: La Grita, Madrid)" autocomplete="off">
@@ -421,7 +449,7 @@ function openLocationSelector() {
 
         document.getElementById('location-results').innerHTML = `
             <p style="color: #888; font-size: 12px; text-align: center; padding: 20px;">
-                ðŸ” Buscando...
+                ${ICONS.search} Buscando...
             </p>
         `;
 
@@ -493,7 +521,7 @@ async function searchLocations(query) {
         console.error('[Agro] Search error:', err);
         resultsContainer.innerHTML = `
             <p style="color: #f87171; font-size: 12px; text-align: center; padding: 20px;">
-                âš ï¸ Error al buscar. Verifica tu conexiÃ³n.
+                ${ICONS.warning} Error al buscar. Verifica tu conexi\u00F3n.
             </p>
         `;
     }
@@ -518,7 +546,7 @@ async function selectManualLocation(location) {
     initLocationControls();
 
     // Update weather
-    if (descEl) descEl.textContent = 'ðŸ”„ Cargando clima...';
+    if (descEl) descEl.textContent = `${ICONS.refresh} Cargando clima...`;
 
     currentLocation = {
         lat: location.lat,
@@ -588,8 +616,8 @@ async function fetchWeather() {
         }
 
         tempEl.textContent = '--';
-        descEl.textContent = 'âš ï¸ Clima no disponible';
-        if (humEl) humEl.textContent = 'ðŸ’§ --%';
+        descEl.textContent = `${ICONS.warning} Clima no disponible`;
+        if (humEl) humEl.textContent = `${ICONS.humidity} --%`;
     }
 }
 
@@ -604,46 +632,51 @@ function displayWeather(data) {
 
     if (!tempEl) return;
 
-    tempEl.textContent = data.temp + 'Â°C';
+    tempEl.textContent = `${data.temp}\u00B0C`;
 
-    if (humEl) humEl.textContent = 'ðŸ’§ ' + data.humidity + '%';
+    if (humEl) humEl.textContent = `${ICONS.humidity} ${data.humidity}%`;
 
     const code = data.code;
     let desc = 'Desconocido';
-    let icon = 'â“';
+    let icon = ICONS.question;
 
     if (code === 0 || code === 1) {
         desc = 'Despejado';
-        icon = data.isDay ? 'â˜€ï¸' : 'ðŸŒ™';
+        icon = data.isDay ? ICONS.sun : ICONS.moon;
     }
-    else if (code >= 2 && code <= 3) { desc = 'Nublado'; icon = 'â˜ï¸'; }
-    else if (code >= 45 && code <= 48) { desc = 'Niebla'; icon = 'ðŸŒ«ï¸'; }
-    else if (code >= 51 && code <= 55) { desc = 'Llovizna'; icon = 'ðŸŒ¦ï¸'; }
-    else if (code >= 56 && code <= 57) { desc = 'Llovizna helada'; icon = 'ðŸŒ§ï¸'; }
-    else if (code >= 61 && code <= 67) { desc = 'Lluvia'; icon = 'ðŸŒ§ï¸'; }
-    else if (code >= 71 && code <= 77) { desc = 'Nieve'; icon = 'â„ï¸'; }
-    else if (code >= 80 && code <= 82) { desc = 'Chubascos'; icon = 'ðŸŒ¦ï¸'; }
-    else if (code >= 85 && code <= 86) { desc = 'Nevada'; icon = 'ðŸŒ¨ï¸'; }
-    else if (code >= 95 && code <= 99) { desc = 'Tormenta'; icon = 'â›ˆï¸'; }
+    else if (code >= 2 && code <= 3) { desc = 'Nublado'; icon = ICONS.cloud; }
+    else if (code >= 45 && code <= 48) { desc = 'Niebla'; icon = ICONS.fog; }
+    else if (code >= 51 && code <= 55) { desc = 'Llovizna'; icon = ICONS.drizzle; }
+    else if (code >= 56 && code <= 57) { desc = 'Llovizna helada'; icon = ICONS.freezing; }
+    else if (code >= 61 && code <= 67) { desc = 'Lluvia'; icon = ICONS.rain; }
+    else if (code >= 71 && code <= 77) { desc = 'Nieve'; icon = ICONS.snowflake; }
+    else if (code >= 80 && code <= 82) { desc = 'Chubascos'; icon = ICONS.showers; }
+    else if (code >= 85 && code <= 86) { desc = 'Nevada'; icon = ICONS.snow; }
+    else if (code >= 95 && code <= 99) { desc = 'Tormenta'; icon = ICONS.storm; }
 
-    if (descEl) descEl.textContent = icon + ' ' + desc;
+    if (descEl) descEl.textContent = `${icon} ${desc}`;
 
     if (labelEl && data.location) {
-        const sourceIcon = data.location.source === 'manual' ? 'ðŸ“Œ' :
-            data.location.source === 'gps' ? 'ðŸ“' :
-                data.location.source === 'ip' ? 'ðŸŒ' : 'ðŸ“Œ';
-        labelEl.innerHTML = sourceIcon + ' ' + data.location.label + ': <span class="highlight" id="weather-temp">' + data.temp + 'Â°C</span>';
+        const sourceIcon = data.location.source === 'manual' ? ICONS.manual :
+            data.location.source === 'gps' ? ICONS.gps :
+                data.location.source === 'ip' ? ICONS.ip : ICONS.manual;
+        labelEl.textContent = `${sourceIcon} ${data.location.label}: `;
+        const tempSpan = document.createElement('span');
+        tempSpan.className = 'highlight';
+        tempSpan.id = 'weather-temp';
+        tempSpan.textContent = `${data.temp}\u00B0C`;
+        labelEl.appendChild(tempSpan);
     }
 
     console.log('[Agro] Weather:', desc, '|', (data.location ? data.location.label : 'Unknown'));
 }
 
 // ============================================
-// 2. MÃ“DULO MERCADO - LEGACY (Moved to agro-market.js)
+// 2. MODULO MERCADO - LEGACY (Moved to agro-market.js)
 // ============================================
 
 // ============================================
-// 3. MÃ“DULO ASTRONÃ“MICO (Fase Lunar)
+// 3. MODULO ASTRONOMICO (Fase Lunar)
 // ============================================
 function calculateMoonPhase() {
     const phaseEl = document.getElementById('moon-phase');
@@ -678,26 +711,26 @@ function calculateMoonPhase() {
         case 0:
         case 7:
             phaseName = 'Nueva';
-            advice = 'ðŸš« Evitar siembra';
-            icon = 'ðŸŒ‘';
+            advice = `${ICONS.seedling} Evitar siembra`;
+            icon = ICONS.moonNew;
             break;
         case 1:
         case 2:
             phaseName = 'Creciente';
-            advice = 'ðŸŒ¿ Siembra de hojas';
-            icon = 'ðŸŒ“';
+            advice = `${ICONS.seedling} Siembra de hojas`;
+            icon = ICONS.moonWax;
             break;
         case 3:
         case 4:
             phaseName = 'Llena';
-            advice = 'ðŸ› Control de plagas';
-            icon = 'ðŸŒ•';
+            advice = `${ICONS.pest} Control de plagas`;
+            icon = ICONS.moonFull;
             break;
         case 5:
         case 6:
             phaseName = 'Menguante';
-            advice = 'ðŸ¥” Siembra de raÃ­ces';
-            icon = 'ðŸŒ—';
+            advice = `${ICONS.roots} Siembra de raices`;
+            icon = ICONS.moonWane;
             break;
     }
 
@@ -710,7 +743,7 @@ function calculateMoonPhase() {
 }
 
 // ============================================
-// 4. EFECTOS VISUALES (PartÃ­culas)
+// 4. EFECTOS VISUALES (Particulas)
 // ============================================
 function initParticles() {
     document.querySelectorAll('.particle').forEach(function (particle) {
@@ -722,7 +755,7 @@ function initParticles() {
 }
 
 // ============================================
-// INICIALIZACIÃ“N
+// INICIALIZACION
 // ============================================
 document.addEventListener('DOMContentLoaded', function () {
     initWeather();

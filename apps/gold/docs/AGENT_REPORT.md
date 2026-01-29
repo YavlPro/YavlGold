@@ -3129,3 +3129,24 @@ Implementar "smart retry" en frontend:
 ## Actualizacion de resultados (tarea actual - Precision clima Andes)
 - Build: pnpm build OK (2026-01-29).
 - Pruebas manuales: NO ejecutadas.
+
+## Diagnostico (tarea actual - Mojibake clima/luna Agro)
+- Mojibake (UTF-8 interpretado como Latin1) en strings de iconos/emoji y simbolo de grados; probable doble encode/decode o persistencia corrupta en localStorage.
+- Pendiente localizar origen exacto en clima/luna (apps/gold/agro).
+
+## Plan (tarea actual - Mojibake clima/luna Agro)
+- [ ] Buscar conversiones encode/decode sospechosas y strings mojibake.
+- [ ] Corregir causa raiz (eliminar conversiones y asegurar textContent/Unicode normal).
+- [ ] Aplicar fallback de reparacion si hay datos ya corruptos.
+- [ ] Ajustar grados a \u00B0C si aplica.
+- [ ] Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Mojibake clima/luna Agro)
+- [ ] Clima/Luna sin "ðŸ" ni "Â".
+- [ ] Temperatura muestra "°C" correcto.
+- [ ] Sin cambios de estilo/layout.
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Mojibake clima/luna Agro)
+- Build: pnpm build:gold OK (2026-01-29).
+- Pruebas manuales: NO ejecutadas.
