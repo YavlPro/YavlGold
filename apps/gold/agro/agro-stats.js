@@ -19,6 +19,21 @@ const schemaCaps = (() => {
     if (typeof window === 'undefined') {
         return { tables: {}, columns: {} };
     }
+
+
+    // V9.6: Load from localStorage if available (Fix B)
+    try {
+        const cached = localStorage.getItem('YG_AGRO_SCHEMA_CAPS_V1');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && parsed.tables && parsed.columns) {
+                window.__YG_AGRO_SCHEMA_CAPS__ = parsed;
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+
     if (!window.__YG_AGRO_SCHEMA_CAPS__) {
         window.__YG_AGRO_SCHEMA_CAPS__ = { tables: {}, columns: {} };
     } else {
@@ -27,6 +42,14 @@ const schemaCaps = (() => {
     }
     return window.__YG_AGRO_SCHEMA_CAPS__;
 })();
+
+function saveSchemaCaps() {
+    try {
+        localStorage.setItem('YG_AGRO_SCHEMA_CAPS_V1', JSON.stringify(schemaCaps));
+    } catch (e) {
+        // ignore
+    }
+}
 
 function getColumnCaps(table) {
     if (!schemaCaps.columns[table]) schemaCaps.columns[table] = {};
@@ -37,6 +60,7 @@ function markTableMissing(table) {
     if (schemaCaps.tables[table] === false) return false;
     schemaCaps.tables[table] = false;
     console.debug('[AGRO_STATS] Missing table cached:', table);
+    saveSchemaCaps();
     return true;
 }
 
@@ -45,6 +69,7 @@ function markColumnMissing(table, column) {
     if (cols[column] === false) return false;
     cols[column] = false;
     console.debug('[AGRO_STATS] Missing column cached:', `${table}.${column}`);
+    saveSchemaCaps();
     return true;
 }
 
@@ -417,7 +442,8 @@ export async function computeAgroFinanceSummaryV1() {
         let lossesTotal = 0;
         let lossesRows = null;
         try {
-            const lossesColumns = ['id', 'user_id', 'monto', 'causa', 'category', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            // V9.6 Fix: Removed 'category' which does not exist in DB
+            const lossesColumns = ['id', 'user_id', 'monto', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
             const result = await selectAgroTable('agro_losses', lossesColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);

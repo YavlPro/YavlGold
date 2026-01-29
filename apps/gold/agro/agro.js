@@ -816,7 +816,16 @@ function _looksLikeMissingColumn(err) {
     );
 }
 
+const LS_LOSSES_SOFT_DELETE = 'YG_LOSSES_HAS_DELETED_AT_V1';
+
 async function fetchAgroLosses(supabase, userId) {
+    // Check localStorage cache first (Fix B)
+    if (AGRO_LOSSES_SUPPORTS_SOFT_DELETE === null) {
+        const cached = localStorage.getItem(LS_LOSSES_SOFT_DELETE);
+        if (cached === '1') AGRO_LOSSES_SUPPORTS_SOFT_DELETE = true;
+        if (cached === '0') AGRO_LOSSES_SUPPORTS_SOFT_DELETE = false;
+    }
+
     const base = () =>
         supabase
             .from('agro_losses')
@@ -840,12 +849,14 @@ async function fetchAgroLosses(supabase, userId) {
 
     if (!res.error) {
         AGRO_LOSSES_SUPPORTS_SOFT_DELETE = true;
+        localStorage.setItem(LS_LOSSES_SOFT_DELETE, '1');
         return Array.isArray(res.data) ? res.data : [];
     }
 
     // retry si parece columna/filtro inválido
     if (_looksLikeMissingColumn(res.error)) {
         AGRO_LOSSES_SUPPORTS_SOFT_DELETE = false;
+        localStorage.setItem(LS_LOSSES_SOFT_DELETE, '0');
         res = await base();
         if (res.error) {
             console.warn('[AGRO][losses] fetch failed (retry no-soft-delete):', res.error);

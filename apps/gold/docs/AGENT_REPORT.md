@@ -3008,3 +3008,9 @@ Implementar "smart retry" en frontend:
 ## Actualización de Resultados
 - **Build**: PASÓ exitosamente (`pnpm build:gold`).
 - **Pruebas Manuales**: El código implementa la lógica de reintento inteligente solicitada. Se espera que el error 400 desaparezca en producción al descartar automáticamente el filtro `deleted_at` cuando la base de datos lo rechace.
+
+## Phase 2 Final Fix (Agro Losses 400)
+- **Diagnosis**: Confirmed 'category' column was missing in gro_losses but requested by gro-stats.js.
+- **Resolution**: Removed category from gro-stats.js fetch column list.
+- **Enhancement**: Implemented 'Fix B' (LocalStorage cache) in both gro.js and gro-stats.js for robust schema capability caching.
+- **Verification**: pnpm build:gold passed.
