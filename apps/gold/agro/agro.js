@@ -942,7 +942,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
 
         const enrichedItems = await enrichFactureroItems(tabName, items || []);
         renderHistoryList(tabName, config, enrichedItems, showActions);
-        if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias') {
+        if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias' || tabName === 'gastos' || tabName === 'ingresos') {
             syncFactureroNotifications(tabName, enrichedItems);
         }
 
@@ -2100,6 +2100,11 @@ function setExpenseCache(data) {
     const rows = Array.isArray(data) ? data : [];
     expenseCache = rows.filter((row) => !row?.deleted_at);
     scheduleExpenseSync();
+    try {
+        syncFactureroNotifications('gastos', expenseCache);
+    } catch (e) {
+        // Silent: notifications are best-effort
+    }
 }
 
 function patchExpenseSelect() {
@@ -3806,6 +3811,11 @@ async function loadIncomes() {
         if (error) throw error;
 
         incomeCache = Array.isArray(data) ? data : [];
+        try {
+            syncFactureroNotifications('ingresos', incomeCache);
+        } catch (e) {
+            // Silent: notifications are best-effort
+        }
 
         listEl.textContent = '';
         container.style.display = incomeCache.length ? 'block' : 'none';
@@ -4172,6 +4182,102 @@ function initFinanceTabs() {
         || tabButtons.find((btn) => btn.classList.contains('is-active'))?.dataset.tab
         || tabButtons[0].dataset.tab;
     if (initialTab) switchTab(initialTab, { focus: false });
+}
+
+function ensureFactureroHighlightStyles() {
+    if (document.getElementById('yg-facturero-highlight-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'yg-facturero-highlight-styles';
+    style.textContent = `
+        .yg-facturero-highlight {
+            outline: 1px solid rgba(200, 167, 82, 0.7);
+            box-shadow: 0 0 20px rgba(200, 167, 82, 0.25);
+            background: rgba(200, 167, 82, 0.08);
+            transition: box-shadow 0.2s ease, background 0.2s ease, outline 0.2s ease;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function highlightFactureroItem(el) {
+    if (!el) return;
+    ensureFactureroHighlightStyles();
+    el.classList.add('yg-facturero-highlight');
+    setTimeout(() => {
+        el.classList.remove('yg-facturero-highlight');
+    }, 1500);
+}
+
+function resolveFactureroAccordion(tab, accordionKey) {
+    if (!tab) return null;
+    const rawKey = accordionKey ? String(accordionKey) : 'history';
+    const contentId = rawKey.startsWith('facturero-') ? rawKey : `facturero-${tab}-${rawKey}`;
+    const content = document.getElementById(contentId);
+    if (content) {
+        return content.closest('details') || content;
+    }
+    const summary = document.querySelector(`.yg-accordion-summary[aria-controls="${contentId}"]`);
+    return summary?.closest('details') || null;
+}
+
+function resolveFactureroItem(tab, itemId) {
+    if (!tab || !itemId) return null;
+    const safeId = String(itemId);
+    if (tab === 'gastos') {
+        return document.querySelector(`.expense-item[data-expense-id="${safeId}"]`);
+    }
+    if (tab === 'ingresos') {
+        return document.querySelector(`.income-item[data-income-id="${safeId}"]`);
+    }
+    return document.querySelector(`.facturero-item[data-tab="${tab}"][data-id="${safeId}"]`);
+}
+
+function openFactureroDeepLink(payload = {}) {
+    const targetTab = FIN_TAB_NAMES.has(payload.tab) ? payload.tab : 'pendientes';
+    const maxAttempts = 10;
+    let attempt = 0;
+
+    const run = () => {
+        attempt += 1;
+        const panel = document.querySelector(`.finances-section .tab-panel[data-tab="${targetTab}"]`)
+            || document.getElementById(`tab-panel-${targetTab}`);
+        if (!panel) {
+            if (attempt < maxAttempts) setTimeout(run, 120);
+            return;
+        }
+
+        switchTab(targetTab, { focus: false });
+        if (typeof window.initAgroAccordions === 'function') {
+            window.initAgroAccordions();
+        }
+
+        const accordion = resolveFactureroAccordion(targetTab, payload.accordionKey);
+        if (accordion && accordion.tagName === 'DETAILS') {
+            accordion.open = true;
+            const summary = accordion.querySelector('summary');
+            if (summary) summary.setAttribute('aria-expanded', 'true');
+        }
+
+        const itemEl = resolveFactureroItem(targetTab, payload.itemId);
+        const scrollTarget = itemEl || accordion || panel;
+        if (scrollTarget && typeof scrollTarget.scrollIntoView === 'function') {
+            scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        if (itemEl) {
+            highlightFactureroItem(itemEl);
+        } else if (attempt < maxAttempts) {
+            setTimeout(run, 160);
+        }
+    };
+
+    run();
+}
+
+if (typeof window !== 'undefined') {
+    window.YG_AGRO_NAV = Object.assign(window.YG_AGRO_NAV || {}, {
+        openFacturero: openFactureroDeepLink
+    });
 }
 
 function initFinanceFormHandlers() {

@@ -45,7 +45,17 @@ const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const ALERTS_MODE = 'facturero';
 const FACTURERO_ONLY = ALERTS_MODE === 'facturero';
-const FACTURERO_TABS = new Set(['pendientes', 'perdidas', 'transferencias']);
+const FACTURERO_TABS = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias']);
+const FACTURERO_SOURCE_LABEL = 'Facturero';
+const FACTURERO_LABELS = {
+    gastos: { singular: 'Gasto', plural: 'Gastos' },
+    ingresos: { singular: 'Ingreso', plural: 'Ingresos' },
+    pendientes: { singular: 'Pendiente', plural: 'Pendientes' },
+    perdidas: { singular: 'Pérdida', plural: 'Pérdidas' },
+    transferencias: { singular: 'Transferencia', plural: 'Transferencias' }
+};
+const FACTURERO_RECENT_DAYS = 2;
+const FACTURERO_LARGE_AMOUNT = 500;
 
 const ALERTS_SESSION_MAX_ATTEMPTS = 8;
 const ALERTS_SESSION_BASE_DELAY = 200;
@@ -120,6 +130,18 @@ function normalizeNotification(raw, options = {}) {
     const readAt = coerceDate(raw.readAt, null);
     const meta = raw.meta && typeof raw.meta === 'object' ? raw.meta : null;
     const read = options.forceRead ? true : !!raw.read;
+    let origin = raw.origin || meta?.origin || '';
+    let entity = raw.entity || meta?.entity || '';
+    if (!origin && id.startsWith('facturero:')) {
+        origin = 'facturero';
+        const parts = id.split(':');
+        if (parts.length > 1) entity = parts[1];
+    }
+    if (!entity && meta?.tab) entity = meta.tab;
+    const sourceLabel = raw.sourceLabel || meta?.sourceLabel || (origin === 'facturero' ? FACTURERO_SOURCE_LABEL : '');
+    const deepLink = raw.deepLink || meta?.deepLink || null;
+    const subtitle = raw.subtitle ? String(raw.subtitle) : '';
+    const metaLine = raw.metaLine ? String(raw.metaLine) : '';
 
     return {
         id,
@@ -130,6 +152,12 @@ function normalizeNotification(raw, options = {}) {
         timestamp,
         read,
         readAt: read ? (readAt || new Date()) : null,
+        origin,
+        entity,
+        sourceLabel,
+        deepLink,
+        subtitle,
+        metaLine,
         meta
     };
 }
@@ -158,6 +186,12 @@ function serializeNotification(notif) {
         timestamp: coerceDate(notif.timestamp, new Date()).toISOString(),
         read: !!notif.read,
         readAt: notif.read ? coerceDate(notif.readAt, new Date()).toISOString() : null,
+        origin: notif.origin || '',
+        entity: notif.entity || '',
+        sourceLabel: notif.sourceLabel || '',
+        deepLink: notif.deepLink || null,
+        subtitle: notif.subtitle ? String(notif.subtitle) : '',
+        metaLine: notif.metaLine ? String(notif.metaLine) : '',
         meta: notif.meta && typeof notif.meta === 'object' ? notif.meta : null
     };
 }
@@ -901,7 +935,9 @@ function removeNotificationById(id, options = {}) {
     return changed;
 }
 
-function removeNotificationsByPrefix(prefix, keepIds = new Set()) {
+function removeNotificationsByPrefix(prefix, keepIds = new Set(), options = {}) {
+    const includeRead = !!options.includeRead;
+    let changed = false;
     const before = notifications.length;
     notifications = notifications.filter(n => {
         const id = normalizeNotificationId(n?.id);
@@ -909,7 +945,20 @@ function removeNotificationsByPrefix(prefix, keepIds = new Set()) {
         if (keepIds && keepIds.has(id)) return true;
         return false;
     });
-    return notifications.length !== before;
+    if (notifications.length !== before) changed = true;
+
+    if (includeRead) {
+        const beforeRead = readNotifications.length;
+        readNotifications = readNotifications.filter(n => {
+            const id = normalizeNotificationId(n?.id);
+            if (!id.startsWith(prefix)) return true;
+            if (keepIds && keepIds.has(id)) return true;
+            return false;
+        });
+        if (readNotifications.length !== beforeRead) changed = true;
+    }
+
+    return changed;
 }
 
 function isKnownNotificationId(id) {
@@ -1055,6 +1104,19 @@ function refreshSystemNotifications(reason = 'manual') {
 // FACTURERO ALERTS (Campana Agro)
 // ============================================
 
+function getFactureroLabel(entity, plural = false) {
+    const key = entity || '';
+    const entry = FACTURERO_LABELS[key];
+    if (!entry) return '';
+    return plural ? entry.plural : entry.singular;
+}
+
+function buildFactureroChip(entity, plural = false) {
+    const label = getFactureroLabel(entity, plural);
+    if (!label) return FACTURERO_SOURCE_LABEL;
+    return `${FACTURERO_SOURCE_LABEL} • ${label}`;
+}
+
 function formatCurrency(amount) {
     const value = Number(amount || 0);
     return `$${value.toFixed(2)}`;
@@ -1083,8 +1145,40 @@ function isWithinDays(date, days) {
     return diffMs <= days * 24 * 60 * 60 * 1000;
 }
 
+function formatDayCount(days) {
+    const abs = Math.abs(days);
+    return `${abs} ${abs === 1 ? 'día' : 'días'}`;
+}
+
+function computeDueStatus(date) {
+    const dateObj = coerceDate(date, null);
+    if (!dateObj) return '';
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfDue = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    const diffDays = Math.round((startOfDue - startOfToday) / 86400000);
+
+    if (diffDays === 0) return 'Vence hoy';
+    if (diffDays < 0) return `Vencido hace ${formatDayCount(diffDays)}`;
+    return `Vence en ${formatDayCount(diffDays)}`;
+}
+
 function getPendingClient(item) {
     return String(item?.cliente || '').trim() || 'Cliente';
+}
+
+function getUnitSummary(item) {
+    const unitQty = Number(item?.unit_qty || item?.unitQty || 0);
+    const unitType = String(item?.unit_type || item?.unitType || '').trim();
+    const kgValue = Number(item?.quantity_kg || item?.quantityKg || 0);
+    const parts = [];
+    if (Number.isFinite(unitQty) && unitQty > 0 && unitType) {
+        parts.push(`${unitQty} ${unitType}`);
+    }
+    if (Number.isFinite(kgValue) && kgValue > 0) {
+        parts.push(`${kgValue} kg`);
+    }
+    return parts.join(' • ');
 }
 
 function getLossConcept(item) {
@@ -1099,6 +1193,28 @@ function getTransferDest(item) {
     return String(item?.destino || '').trim() || 'Destino';
 }
 
+function getExpenseConcept(item) {
+    return String(item?.concept || item?.concepto || 'Gasto registrado').trim();
+}
+
+function getIncomeConcept(item) {
+    return String(item?.concepto || item?.concept || 'Ingreso registrado').trim();
+}
+
+function getAmountField(item) {
+    if (item?.monto !== undefined && item?.monto !== null) return Number(item.monto);
+    if (item?.amount !== undefined && item?.amount !== null) return Number(item.amount);
+    return 0;
+}
+
+function buildDeepLink(tab, itemId) {
+    return {
+        tab,
+        accordionKey: 'history',
+        itemId: itemId || null
+    };
+}
+
 export function syncFactureroNotifications(tabName, items) {
     if (!FACTURERO_TABS.has(tabName)) return;
 
@@ -1106,6 +1222,17 @@ export function syncFactureroNotifications(tabName, items) {
 
     const rows = Array.isArray(items) ? items : [];
     let changed = false;
+
+    const legacyPrefixes = {
+        pendientes: ['pending:'],
+        perdidas: ['loss:'],
+        transferencias: ['transfer:'],
+        gastos: ['expense:'],
+        ingresos: ['income:']
+    };
+    (legacyPrefixes[tabName] || []).forEach((prefix) => {
+        if (removeNotificationsByPrefix(prefix, new Set(), { includeRead: true })) changed = true;
+    });
 
     if (tabName === 'pendientes') {
         const keepIds = new Set();
@@ -1115,60 +1242,69 @@ export function syncFactureroNotifications(tabName, items) {
             const rowId = normalizeNotificationId(item?.id);
             if (!rowId) return;
 
-            const notifId = `pending:${rowId}`;
+            const notifId = `facturero:pendientes:${rowId}`;
             keepIds.add(notifId);
 
             const client = getPendingClient(item);
-            const amount = formatCurrency(item?.monto);
+            const amountValue = getAmountField(item);
+            const amount = formatCurrency(amountValue);
+            const unit = getUnitSummary(item);
             const dueDate = coerceDate(item?.fecha, null);
             const overdue = isPastDue(dueDate);
+            const statusLabel = computeDueStatus(dueDate) || (overdue ? 'Vencido' : '');
             if (overdue) overdueCount += 1;
             const rowTimestamp = coerceDate(item?.created_at || item?.fecha, new Date());
 
-            const title = `Pendiente: ${client}`;
-            let message = `${amount}`;
-            if (overdue) {
-                message += ' • Vencido';
-            } else if (dueDate) {
-                message += ` • vence ${formatShortDate(dueDate)}`;
-            }
+            const title = `${buildFactureroChip('pendientes', false)}`;
+            const subtitle = `Cliente: ${client}`;
+            const metaLine = `${amount}${unit ? ` • ${unit}` : ''}${statusLabel ? ` — ${statusLabel}` : ''}`;
 
             changed = upsertAgroNotification({
                 id: notifId,
                 type: overdue ? 'danger' : 'warning',
                 title,
-                message,
+                subtitle,
+                message: subtitle,
+                metaLine,
                 icon: 'fa-hourglass-half',
                 timestamp: rowTimestamp,
+                origin: 'facturero',
+                entity: 'pendientes',
+                sourceLabel: FACTURERO_SOURCE_LABEL,
+                deepLink: buildDeepLink('pendientes', rowId),
                 meta: { tab: 'pendientes', rowId }
             }, { silent: true }) || changed;
         });
 
-        const summaryId = 'pending:summary';
+        const summaryId = 'facturero:pendientes:summary';
         if (rows.length > 0) {
             keepIds.add(summaryId);
             const prev = getNotificationById(summaryId);
             const countChanged = prev?.meta?.count !== rows.length
                 || prev?.meta?.overdue !== overdueCount;
 
-            const title = `Pendientes (${rows.length})`;
-            let message = `Tienes ${rows.length} pendientes`;
-            if (overdueCount > 0) message += ` • ${overdueCount} vencidos`;
+            const title = `${buildFactureroChip('pendientes', true)} (${rows.length})`;
+            const subtitle = overdueCount > 0 ? `${overdueCount} vencidos` : 'Sin vencidos';
 
             changed = upsertAgroNotification({
                 id: summaryId,
                 type: overdueCount > 0 ? 'danger' : 'warning',
                 title,
-                message,
+                subtitle,
+                message: subtitle,
                 icon: 'fa-hourglass-half',
                 timestamp: new Date(),
+                origin: 'facturero',
+                entity: 'pendientes',
+                sourceLabel: FACTURERO_SOURCE_LABEL,
+                deepLink: buildDeepLink('pendientes', null),
                 meta: { count: rows.length, overdue: overdueCount }
             }, { silent: true, reopenIfRead: countChanged }) || changed;
         } else {
             changed = removeNotificationById(summaryId, { silent: true }) || changed;
         }
 
-        if (removeNotificationsByPrefix('pending:', keepIds)) changed = true;
+        if (removeNotificationsByPrefix('facturero:pendientes:', keepIds)) changed = true;
     }
 
     if (tabName === 'perdidas') {
@@ -1176,24 +1312,34 @@ export function syncFactureroNotifications(tabName, items) {
             const rowId = normalizeNotificationId(item?.id);
             if (!rowId) return;
 
-            const notifId = `loss:${rowId}`;
+            const notifId = `facturero:perdidas:${rowId}`;
             if (isKnownNotificationId(notifId)) return;
 
             const rowDate = coerceDate(item?.fecha || item?.created_at, null);
             if (rowDate && !isWithinDays(rowDate, 7)) return;
 
-            const concept = getLossConcept(item);
             const cause = getLossCause(item);
-            const amount = formatCurrency(item?.monto);
-            const message = `${concept}${cause ? ` • ${cause}` : ''} • ${amount}`;
+            const concept = getLossConcept(item);
+            const amount = formatCurrency(getAmountField(item));
+            const unit = getUnitSummary(item);
+
+            const title = `${buildFactureroChip('perdidas', false)}`;
+            const subtitle = cause ? `Causa: ${cause}` : `Concepto: ${concept}`;
+            const metaLine = `${amount}${unit ? ` • ${unit}` : ''}`;
 
             changed = upsertAgroNotification({
                 id: notifId,
                 type: 'danger',
-                title: 'Nueva pérdida',
-                message,
+                title,
+                subtitle,
+                message: subtitle,
+                metaLine,
                 icon: 'fa-triangle-exclamation',
                 timestamp: rowDate || new Date(),
+                origin: 'facturero',
+                entity: 'perdidas',
+                sourceLabel: FACTURERO_SOURCE_LABEL,
+                deepLink: buildDeepLink('perdidas', rowId),
                 meta: { tab: 'perdidas', rowId }
             }, { silent: true }) || changed;
         });
@@ -1204,22 +1350,112 @@ export function syncFactureroNotifications(tabName, items) {
             const rowId = normalizeNotificationId(item?.id);
             if (!rowId) return;
 
-            const notifId = `transfer:${rowId}`;
+            const notifId = `facturero:transferencias:${rowId}`;
             if (isKnownNotificationId(notifId)) return;
 
             const rowDate = coerceDate(item?.fecha || item?.created_at, null);
             const dest = getTransferDest(item);
-            const amount = formatCurrency(item?.monto);
-            const message = `${dest} • ${amount}`;
+            const amount = formatCurrency(getAmountField(item));
+            const unit = getUnitSummary(item);
+
+            const title = `${buildFactureroChip('transferencias', false)}`;
+            const subtitle = `Destino: ${dest}`;
+            const metaLine = `${amount}${unit ? ` • ${unit}` : ''}`;
 
             changed = upsertAgroNotification({
                 id: notifId,
                 type: 'success',
-                title: 'Nueva transferencia',
-                message,
+                title,
+                subtitle,
+                message: subtitle,
+                metaLine,
                 icon: 'fa-right-left',
                 timestamp: rowDate || new Date(),
+                origin: 'facturero',
+                entity: 'transferencias',
+                sourceLabel: FACTURERO_SOURCE_LABEL,
+                deepLink: buildDeepLink('transferencias', rowId),
                 meta: { tab: 'transferencias', rowId }
+            }, { silent: true }) || changed;
+        });
+    }
+
+    if (tabName === 'gastos') {
+        rows.forEach((item) => {
+            const rowId = normalizeNotificationId(item?.id);
+            if (!rowId) return;
+
+            const notifId = `facturero:gastos:${rowId}`;
+            if (isKnownNotificationId(notifId)) return;
+
+            const rowDate = coerceDate(item?.date || item?.fecha || item?.created_at, null);
+            const amountValue = getAmountField(item);
+            const isRecent = rowDate ? isWithinDays(rowDate, FACTURERO_RECENT_DAYS) : false;
+            const isLarge = amountValue >= FACTURERO_LARGE_AMOUNT;
+            if (!isRecent && !isLarge) return;
+
+            const concept = getExpenseConcept(item);
+            const amount = formatCurrency(amountValue);
+            const unit = getUnitSummary(item);
+
+            const title = `${buildFactureroChip('gastos', false)}`;
+            const subtitle = `Concepto: ${concept}`;
+            const metaLine = `${amount}${unit ? ` • ${unit}` : ''}`;
+
+            changed = upsertAgroNotification({
+                id: notifId,
+                type: 'warning',
+                title,
+                subtitle,
+                message: subtitle,
+                metaLine,
+                icon: 'fa-receipt',
+                timestamp: rowDate || new Date(),
+                origin: 'facturero',
+                entity: 'gastos',
+                sourceLabel: FACTURERO_SOURCE_LABEL,
+                deepLink: buildDeepLink('gastos', rowId),
+                meta: { tab: 'gastos', rowId }
+            }, { silent: true }) || changed;
+        });
+    }
+
+    if (tabName === 'ingresos') {
+        rows.forEach((item) => {
+            const rowId = normalizeNotificationId(item?.id);
+            if (!rowId) return;
+
+            const notifId = `facturero:ingresos:${rowId}`;
+            if (isKnownNotificationId(notifId)) return;
+
+            const rowDate = coerceDate(item?.fecha || item?.date || item?.created_at, null);
+            const amountValue = getAmountField(item);
+            const isRecent = rowDate ? isWithinDays(rowDate, FACTURERO_RECENT_DAYS) : false;
+            const isLarge = amountValue >= FACTURERO_LARGE_AMOUNT;
+            if (!isRecent && !isLarge) return;
+
+            const concept = getIncomeConcept(item);
+            const amount = formatCurrency(amountValue);
+            const unit = getUnitSummary(item);
+
+            const title = `${buildFactureroChip('ingresos', false)}`;
+            const subtitle = `Concepto: ${concept}`;
+            const metaLine = `${amount}${unit ? ` • ${unit}` : ''}`;
+
+            changed = upsertAgroNotification({
+                id: notifId,
+                type: 'success',
+                title,
+                subtitle,
+                message: subtitle,
+                metaLine,
+                icon: 'fa-circle-up',
+                timestamp: rowDate || new Date(),
+                origin: 'facturero',
+                entity: 'ingresos',
+                sourceLabel: FACTURERO_SOURCE_LABEL,
+                deepLink: buildDeepLink('ingresos', rowId),
+                meta: { tab: 'ingresos', rowId }
             }, { silent: true }) || changed;
         });
     }
@@ -1335,6 +1571,11 @@ function renderNotificationItem(n, isRead = false) {
     const iconClass = n.icon ? String(n.icon) : 'fa-info-circle';
     const titleText = n.title ? String(n.title) : '';
     const messageText = n.message ? String(n.message) : '';
+    const subtitleText = n.subtitle ? String(n.subtitle) : '';
+    const metaLineText = n.metaLine ? String(n.metaLine) : '';
+    const entityLabel = n.entity ? getFactureroLabel(n.entity, false) : '';
+    const chipLabel = n.sourceLabel && entityLabel ? `${n.sourceLabel} • ${entityLabel}` : (n.sourceLabel || '');
+    const showChip = chipLabel && (!titleText || !titleText.toLowerCase().includes(chipLabel.toLowerCase()));
 
     const item = document.createElement('li');
     item.style.cssText = `margin: 4px; padding: 10px; background: ${colors.bg}; border: 1px solid ${colors.border}; border-radius: 8px; opacity: ${opacity}; transition: all 0.2s;`;
@@ -1356,12 +1597,19 @@ function renderNotificationItem(n, isRead = false) {
     const content = document.createElement('div');
     content.style.cssText = 'flex: 1; min-width: 0;';
 
+    if (showChip) {
+        const chip = document.createElement('div');
+        chip.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; font-size: 8px; font-weight: 700; color: #C8A752; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(200,167,82,0.12); border: 1px solid rgba(200,167,82,0.35); border-radius: 999px; padding: 2px 6px; margin-bottom: 6px;';
+        chip.textContent = chipLabel;
+        content.appendChild(chip);
+    }
+
     const header = document.createElement('div');
     header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: 8px;';
 
     const title = document.createElement('div');
     title.style.cssText = 'font-size: 10px; font-weight: 700; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;';
-    title.textContent = titleText;
+    title.textContent = titleText || chipLabel;
 
     const time = document.createElement('span');
     time.style.cssText = 'font-size: 8px; color: #666; white-space: nowrap;';
@@ -1399,11 +1647,44 @@ function renderNotificationItem(n, isRead = false) {
 
     header.append(title, meta);
 
-    const message = document.createElement('div');
-    message.style.cssText = 'font-size: 9px; color: #888; line-height: 1.3; margin-top: 2px;';
-    message.textContent = messageText;
+    const subtitle = document.createElement('div');
+    subtitle.style.cssText = 'font-size: 9px; color: #b7b7b7; line-height: 1.3; margin-top: 2px;';
+    subtitle.textContent = subtitleText || messageText;
 
-    content.append(header, message);
+    const metaLine = document.createElement('div');
+    metaLine.style.cssText = 'font-size: 9px; color: #888; line-height: 1.3; margin-top: 2px;';
+    metaLine.textContent = metaLineText;
+
+    const actionsRow = document.createElement('div');
+    actionsRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 6px;';
+
+    if (n.deepLink && n.deepLink.tab) {
+        const cta = document.createElement('button');
+        cta.type = 'button';
+        cta.textContent = 'Ver en Facturero';
+        cta.style.cssText = [
+            'font-size: 9px',
+            'font-weight: 600',
+            'padding: 4px 8px',
+            'border-radius: 8px',
+            'border: 1px solid rgba(200,167,82,0.35)',
+            'background: rgba(200,167,82,0.12)',
+            'color: #C8A752',
+            'cursor: pointer'
+        ].join('; ');
+        cta.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.YG_AGRO_NAV?.openFacturero) {
+                window.YG_AGRO_NAV.openFacturero(n.deepLink);
+            }
+            closeDropdown();
+        });
+        actionsRow.appendChild(cta);
+    }
+
+    content.append(header, subtitle);
+    if (metaLineText) content.appendChild(metaLine);
+    if (actionsRow.childNodes.length > 0) content.appendChild(actionsRow);
     wrapper.append(iconBox, content);
     item.appendChild(wrapper);
     return item;

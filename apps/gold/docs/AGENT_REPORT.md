@@ -3082,3 +3082,40 @@ Implementar "smart retry" en frontend:
 ## Actualizacion de resultados (tarea actual - Campana Agro Facturero, rebuild)
 - Build: pnpm build:gold OK (2026-01-29).
 - Pruebas manuales: NO ejecutadas.
+
+## Diagnostico (tarea actual - Campana Agro DeepLink Facturero)
+1) Campana actual en `apps/gold/agro/agro-notifications.js` ya genera notifs deterministas (pendientes/perdidas/transferencias) y badge, pero no incluye origen/CTA ni deeplink.
+2) Facturero vive en `apps/gold/agro/agro.js` con tabs `gastos/ingresos/pendientes/perdidas/transferencias`; se requiere API publica para navegar y resaltar item.
+3) UI de campana en `apps/gold/agro/index.html` ya tiene dropdown con lista y boton "Limpiar".
+4) Debe mantenerse bloqueo de legacy/IA ("Sistema listo", "Oraculo...") ya filtrado en agro-notifications.
+
+## Plan (tarea actual - Campana Agro DeepLink Facturero)
+1) Extender modelo de notificacion en `apps/gold/agro/agro-notifications.js` con meta: origin/entity/sourceLabel/deepLink.
+2) Render de campana: chip "Facturero • Categoria", CTA "Ver en Facturero" + mantener "Marcar leida".
+3) Implementar `window.YG_AGRO_NAV.openFacturero({ tab, accordionKey, itemId })` en `apps/gold/agro/agro.js` con retry y highlight.
+4) Generar notifs para gastos/ingresos (recientes o altos) sin romper si faltan campos.
+5) Actualizar DoD y ejecutar `pnpm build:gold`.
+
+## Checklist DoD (tarea actual - Campana Agro DeepLink Facturero)
+- [ ] Todas las notifs muestran chip "Facturero • {Categoria}".
+- [ ] CTA "Ver en Facturero" navega tab correcto, abre acordeon, scroll y highlight.
+- [ ] Pendientes muestran cliente/destino + monto/unidad + estado vencido.
+- [ ] Pérdidas muestran causa + monto.
+- [ ] Transferencias muestran destino + monto.
+- [ ] Gastos/Ingresos generan notifs sin romper si faltan datos.
+- [ ] Dedupe e IDs deterministas conservados.
+- [ ] Sin legacy/IA.
+- [ ] pnpm build:gold OK.
+
+## Archivos a tocar (tarea actual - Campana Agro DeepLink Facturero)
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/agro.js`
+- (si aplica) controlador UI de tabs/acordeones Facturero
+
+## Pruebas (tarea actual - Campana Agro DeepLink Facturero)
+- Manual: pendiente.
+- Build: pendiente (`pnpm build:gold`).
+
+## Actualizacion de resultados (tarea actual - Campana Agro DeepLink Facturero)
+- Build: pnpm build:gold OK (2026-01-29).
+- Pruebas manuales: NO ejecutadas.
