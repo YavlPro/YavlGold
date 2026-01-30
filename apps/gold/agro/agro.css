@@ -635,38 +635,91 @@ body.modal-open {
 #modal-agro-assistant .assistant-thread-list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
   overflow-y: auto;
   padding-right: 0.25rem;
   flex: 1;
+  min-height: 0;
 }
 
-#modal-agro-assistant .assistant-thread {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: #fff;
-  padding: 0.7rem 0.8rem;
+/* V9.7: Thread wrapper with delete button */
+#modal-agro-assistant .assistant-thread-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
   border-radius: 12px;
-  cursor: pointer;
-  display: grid;
-  gap: 0.35rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
   transition: all 0.2s ease;
 }
 
-#modal-agro-assistant .assistant-thread.is-active {
+#modal-agro-assistant .assistant-thread-wrapper:hover {
+  border-color: rgba(200, 167, 82, 0.35);
+  background: rgba(200, 167, 82, 0.06);
+}
+
+#modal-agro-assistant .assistant-thread-wrapper.is-active {
   border-color: rgba(200, 167, 82, 0.6);
-  background: rgba(200, 167, 82, 0.12);
+  background: linear-gradient(135deg, rgba(200, 167, 82, 0.15), rgba(200, 167, 82, 0.08));
+  box-shadow: 0 0 20px rgba(200, 167, 82, 0.12);
+}
+
+#modal-agro-assistant .assistant-thread {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #fff;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.3rem;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+#modal-agro-assistant .assistant-thread:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 #modal-agro-assistant .assistant-thread-title {
   font-size: 0.85rem;
   font-weight: 600;
   color: #f5f1e5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #modal-agro-assistant .assistant-thread-meta {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.2px;
+}
+
+/* V9.7: Thread delete button */
+#modal-agro-assistant .assistant-thread-delete {
+  width: 36px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+#modal-agro-assistant .assistant-thread-wrapper:hover .assistant-thread-delete {
+  opacity: 1;
+  color: rgba(255, 120, 120, 0.7);
+}
+
+#modal-agro-assistant .assistant-thread-delete:hover {
+  background: rgba(255, 80, 80, 0.2);
+  color: rgba(255, 100, 100, 1);
 }
 
 #modal-agro-assistant .assistant-main {
@@ -773,26 +826,38 @@ body.modal-open {
 }
 
 #modal-agro-assistant .assistant-guide {
-  border: 1px solid rgba(200, 167, 82, 0.25);
-  background: rgba(200, 167, 82, 0.08);
-  border-radius: 12px;
-  padding: 0.75rem 0.9rem;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.75rem;
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  background: linear-gradient(145deg, rgba(200, 167, 82, 0.1), rgba(200, 167, 82, 0.04));
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.74rem;
+  backdrop-filter: blur(4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 #modal-agro-assistant .assistant-guide-title {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--gold-primary, #C8A752);
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.5rem;
   font-size: 0.78rem;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+#modal-agro-assistant .assistant-guide-title::before {
+  content: '💡';
+  font-size: 0.9rem;
 }
 
 #modal-agro-assistant .assistant-guide ul {
   margin: 0;
   padding-left: 1.1rem;
   display: grid;
-  gap: 0.3rem;
+  gap: 0.35rem;
+  line-height: 1.5;
 }
 
 #modal-agro-assistant .assistant-history {

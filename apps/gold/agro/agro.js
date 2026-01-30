@@ -4895,9 +4895,12 @@ function renderThreadList() {
     }
 
     threads.forEach((thread) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = `assistant-thread-wrapper${thread.id === assistantState.activeThreadId ? ' is-active' : ''}`;
+
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = `assistant-thread${thread.id === assistantState.activeThreadId ? ' is-active' : ''}`;
+        button.className = 'assistant-thread';
         button.dataset.threadId = thread.id;
 
         const title = document.createElement('div');
@@ -4911,7 +4914,22 @@ function renderThreadList() {
 
         button.append(title, meta);
         button.addEventListener('click', () => setActiveThread(thread.id));
-        list.appendChild(button);
+
+        // V9.7: Delete button for each thread
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'assistant-thread-delete';
+        deleteBtn.innerHTML = '&#128465;'; // 🗑️
+        deleteBtn.title = 'Eliminar conversacion';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm('¿Eliminar esta conversacion?')) {
+                deleteThreadById(thread.id);
+            }
+        });
+
+        wrapper.append(button, deleteBtn);
+        list.appendChild(wrapper);
     });
 }
 
@@ -5464,6 +5482,41 @@ function deleteActiveThread() {
 
     renderThreadList();
     renderAssistantHistory();
+    showAssistantToast('Conversacion eliminada');
+    return true;
+}
+
+// V9.7: Delete thread by ID (for sidebar delete buttons)
+function deleteThreadById(threadId) {
+    if (!threadId) return false;
+
+    // Remove thread from list
+    assistantState.threads = assistantState.threads.filter(t => t.id !== threadId);
+
+    // Clear messages from storage
+    try {
+        localStorage.removeItem(getMessagesKey(threadId));
+    } catch (e) {
+        // Ignore
+    }
+
+    // Clear from memory
+    delete assistantState.messagesByThreadId[threadId];
+
+    // Save updated threads
+    saveThreadsToStorage(assistantState.threads);
+
+    // If deleted thread was active, switch to another
+    if (assistantState.activeThreadId === threadId) {
+        if (assistantState.threads.length > 0) {
+            setActiveThread(assistantState.threads[0].id);
+        } else {
+            createNewThreadAndActivate();
+        }
+        renderAssistantHistory();
+    }
+
+    renderThreadList();
     showAssistantToast('Conversacion eliminada');
     return true;
 }
