@@ -3157,3 +3157,27 @@ Implementar "smart retry" en frontend:
 ## Plan (tarea actual - Spec Agro Chat Redesign)
 - [ ] Crear archivo `AGRO_CHAT_REDESIGN_SPEC.md` en raiz con el contenido provisto.
 - [ ] Confirmar nombre de IA requerido: "Agro Assistant Agent".
+
+## Diagnostico (tarea actual - Rediseño chat Agro UI/historial)
+- El modal actual del chat no cambió (sigue "Asistente Agro IA real" con botones COPIAR PLANTILLA/ENVIAR), por lo que solo se aplicaron docs/spec sin refactor real en UI ni historial.
+
+## Plan (tarea actual - Rediseño chat Agro UI/historial)
+- [ ] Localizar archivos del modal y la lógica real de envío/stream.
+- [ ] Aplicar layout/estilos del SPEC sin tocar lógica Gemini Flash.
+- [ ] Implementar historial real con localStorage (threads + messages).
+- [ ] Evitar mojibake (textContent, escapes Unicode).
+- [ ] pnpm build:gold.
+
+## DoD (tarea actual - Rediseño chat Agro UI/historial)
+- [ ] UI con visual DNA del SPEC (sidebar + chat).
+- [ ] Historial real persistente.
+- [ ] Lógica Gemini Flash intacta.
+- [ ] Anti-mojibake.
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Redisenio chat Agro UI/historial)
+- UI del modal actualizada con sidebar de historial + drawer mobile.
+- Historial real implementado con threads + mensajes en localStorage (sin tocar Gemini Flash).
+- Render de mensajes seguro (textContent, code blocks con copy).
+- Build: pnpm build:gold OK (2026-01-30).
+- Pruebas manuales: NO VERIFICADO (acceso requiere autenticacion).

@@ -4643,36 +4643,358 @@ function initStatsCenterModal() {
 // ============================================================
 
 const AGRO_ASSISTANT_HISTORY_KEY = 'YG_AGRO_ASSISTANT_HISTORY_V1';
+const AGRO_ASSISTANT_THREADS_KEY = 'YG_AGRO_ASSISTANT_THREADS_V1';
+const AGRO_ASSISTANT_ACTIVE_THREAD_KEY = 'YG_AGRO_ASSISTANT_ACTIVE_THREAD_V1';
+const AGRO_ASSISTANT_MESSAGES_PREFIX = 'YG_AGRO_ASSISTANT_MESSAGES_V1_';
 const AGRO_ASSISTANT_COOLDOWN_KEY = 'YG_AGRO_ASSISTANT_COOLDOWN_V1';
 const AGRO_ASSISTANT_MIN_INTERVAL_MS = 15000;
 const AGRO_ASSISTANT_RATE_LIMIT_MS = 60000;
 const AGRO_ASSISTANT_MAX_HISTORY = 20;
+const AGRO_ASSISTANT_DEFAULT_TITLE = 'Nueva conversacion';
 
 let assistantCooldownTimer = null;
 
-function loadAssistantHistory() {
+const assistantState = {
+    threads: [],
+    activeThreadId: null,
+    messagesByThreadId: {}
+};
+
+function safeJsonParse(raw, fallback) {
     try {
-        const raw = localStorage.getItem(AGRO_ASSISTANT_HISTORY_KEY);
-        const data = raw ? JSON.parse(raw) : [];
-        return Array.isArray(data) ? data : [];
+        const parsed = raw ? JSON.parse(raw) : fallback;
+        return parsed ?? fallback;
     } catch (e) {
-        return [];
+        return fallback;
     }
 }
 
-function saveAssistantHistory(history) {
+function createThreadId() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+    }
+    return `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeThread(thread) {
+    if (!thread || !thread.id) return null;
+    const createdAt = Number(thread.createdAt) || Date.now();
+    const lastMessageAt = Number(thread.lastMessageAt) || null;
+    return {
+        id: String(thread.id),
+        title: String(thread.title || AGRO_ASSISTANT_DEFAULT_TITLE).trim() || AGRO_ASSISTANT_DEFAULT_TITLE,
+        createdAt,
+        updatedAt: Number(thread.updatedAt) || lastMessageAt || createdAt,
+        lastMessageAt
+    };
+}
+
+function readThreadsFromStorage() {
+    const raw = localStorage.getItem(AGRO_ASSISTANT_THREADS_KEY);
+    const data = safeJsonParse(raw, []);
+    const threads = Array.isArray(data) ? data.map(normalizeThread).filter(Boolean) : [];
+    return threads;
+}
+
+function saveThreadsToStorage(threads) {
     try {
-        localStorage.setItem(AGRO_ASSISTANT_HISTORY_KEY, JSON.stringify(history));
+        localStorage.setItem(AGRO_ASSISTANT_THREADS_KEY, JSON.stringify(threads));
     } catch (e) {
         // Ignore storage errors
     }
 }
 
-function renderAssistantHistory(history) {
+function getMessagesKey(threadId) {
+    return `${AGRO_ASSISTANT_MESSAGES_PREFIX}${threadId}`;
+}
+
+function readMessagesFromStorage(threadId) {
+    if (!threadId) return [];
+    const raw = localStorage.getItem(getMessagesKey(threadId));
+    const data = safeJsonParse(raw, []);
+    return Array.isArray(data) ? data : [];
+}
+
+function saveMessagesToStorage(threadId, messages) {
+    if (!threadId) return;
+    try {
+        localStorage.setItem(getMessagesKey(threadId), JSON.stringify(messages));
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function readActiveThreadId() {
+    try {
+        return localStorage.getItem(AGRO_ASSISTANT_ACTIVE_THREAD_KEY);
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeActiveThreadId(threadId) {
+    try {
+        if (threadId) {
+            localStorage.setItem(AGRO_ASSISTANT_ACTIVE_THREAD_KEY, threadId);
+        }
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function readLegacyHistory() {
+    const raw = localStorage.getItem(AGRO_ASSISTANT_HISTORY_KEY);
+    const data = safeJsonParse(raw, []);
+    return Array.isArray(data) ? data : [];
+}
+
+function clearLegacyHistory() {
+    try {
+        localStorage.removeItem(AGRO_ASSISTANT_HISTORY_KEY);
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function migrateLegacyHistoryIfNeeded() {
+    const existingThreads = readThreadsFromStorage();
+    if (existingThreads.length) return existingThreads;
+    const legacy = readLegacyHistory();
+    if (!legacy.length) return existingThreads;
+    const thread = createThread(AGRO_ASSISTANT_DEFAULT_TITLE);
+    saveThreadsToStorage([thread]);
+    const migrated = legacy.map((item) => ({
+        role: item?.role || 'assistant',
+        text: String(item?.text || ''),
+        ts: Number(item?.ts) || Date.now()
+    }));
+    saveMessagesToStorage(thread.id, migrated);
+    writeActiveThreadId(thread.id);
+    clearLegacyHistory();
+    return [thread];
+}
+
+function createThread(title) {
+    const now = Date.now();
+    return {
+        id: createThreadId(),
+        title: title || AGRO_ASSISTANT_DEFAULT_TITLE,
+        createdAt: now,
+        updatedAt: now,
+        lastMessageAt: null
+    };
+}
+
+function hydrateAssistantState() {
+    const threads = migrateLegacyHistoryIfNeeded();
+    assistantState.threads = threads.length ? threads : readThreadsFromStorage();
+    if (!assistantState.threads.length) {
+        const thread = createThread(AGRO_ASSISTANT_DEFAULT_TITLE);
+        assistantState.threads = [thread];
+        saveThreadsToStorage(assistantState.threads);
+        writeActiveThreadId(thread.id);
+    }
+    const activeId = readActiveThreadId();
+    const candidate = assistantState.threads.find((t) => t.id === activeId);
+    assistantState.activeThreadId = candidate ? candidate.id : assistantState.threads[0].id;
+    writeActiveThreadId(assistantState.activeThreadId);
+    preloadThreadMessages(assistantState.activeThreadId);
+}
+
+function preloadThreadMessages(threadId) {
+    if (!threadId) return [];
+    if (!assistantState.messagesByThreadId[threadId]) {
+        assistantState.messagesByThreadId[threadId] = readMessagesFromStorage(threadId);
+    }
+    return assistantState.messagesByThreadId[threadId];
+}
+
+function getActiveThread() {
+    return assistantState.threads.find((thread) => thread.id === assistantState.activeThreadId) || null;
+}
+
+function setActiveThread(threadId) {
+    const target = assistantState.threads.find((thread) => thread.id === threadId);
+    if (!target) return;
+    assistantState.activeThreadId = target.id;
+    writeActiveThreadId(target.id);
+    preloadThreadMessages(target.id);
+    renderThreadList();
+    renderAssistantHistory();
+    setAssistantDrawerOpen(false);
+}
+
+function createNewThreadAndActivate() {
+    const thread = createThread(AGRO_ASSISTANT_DEFAULT_TITLE);
+    assistantState.threads.unshift(thread);
+    saveThreadsToStorage(assistantState.threads);
+    setActiveThread(thread.id);
+}
+
+function updateThreadMetadata(threadId, data) {
+    const thread = assistantState.threads.find((t) => t.id === threadId);
+    if (!thread) return;
+    if (data.title) {
+        thread.title = data.title;
+    }
+    if (data.lastMessageAt) {
+        thread.lastMessageAt = data.lastMessageAt;
+        thread.updatedAt = data.lastMessageAt;
+    } else if (data.updatedAt) {
+        thread.updatedAt = data.updatedAt;
+    }
+    saveThreadsToStorage(assistantState.threads);
+}
+
+function formatThreadTitle(text) {
+    const trimmed = String(text || '').trim();
+    if (!trimmed) return AGRO_ASSISTANT_DEFAULT_TITLE;
+    if (trimmed.length <= 42) return trimmed;
+    return `${trimmed.slice(0, 39)}...`;
+}
+
+function formatThreadTime(ts) {
+    if (!Number.isFinite(ts)) return '';
+    try {
+        return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    } catch (e) {
+        return '';
+    }
+}
+
+function clearElement(el) {
+    if (!el) return;
+    while (el.firstChild) {
+        el.removeChild(el.firstChild);
+    }
+}
+
+function renderThreadList() {
+    const list = document.getElementById('assistant-thread-list');
+    if (!list) return;
+    clearElement(list);
+
+    const threads = [...assistantState.threads].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    if (!threads.length) {
+        const empty = document.createElement('div');
+        empty.className = 'assistant-thread assistant-empty';
+        empty.textContent = 'Aun no hay conversaciones.';
+        list.appendChild(empty);
+        return;
+    }
+
+    threads.forEach((thread) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `assistant-thread${thread.id === assistantState.activeThreadId ? ' is-active' : ''}`;
+        button.dataset.threadId = thread.id;
+
+        const title = document.createElement('div');
+        title.className = 'assistant-thread-title';
+        title.textContent = thread.title || AGRO_ASSISTANT_DEFAULT_TITLE;
+
+        const meta = document.createElement('div');
+        meta.className = 'assistant-thread-meta';
+        const time = formatThreadTime(thread.lastMessageAt || thread.updatedAt);
+        meta.textContent = time ? `Actualizado ${time}` : 'Sin mensajes';
+
+        button.append(title, meta);
+        button.addEventListener('click', () => setActiveThread(thread.id));
+        list.appendChild(button);
+    });
+}
+
+function splitMessageParts(text) {
+    const parts = [];
+    const input = String(text || '');
+    const regex = /```([a-zA-Z0-9_-]+)?\\n([\\s\\S]*?)```/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(input)) !== null) {
+        if (match.index > lastIndex) {
+            parts.push({ type: 'text', value: input.slice(lastIndex, match.index) });
+        }
+        parts.push({ type: 'code', lang: match[1] || 'codigo', value: match[2] || '' });
+        lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < input.length) {
+        parts.push({ type: 'text', value: input.slice(lastIndex) });
+    }
+    return parts;
+}
+
+function renderMessageContent(container, text) {
+    const body = document.createElement('div');
+    body.className = 'assistant-message-body';
+    const parts = splitMessageParts(text);
+    parts.forEach((part) => {
+        if (part.type === 'code') {
+            const block = document.createElement('div');
+            block.className = 'assistant-code';
+
+            const header = document.createElement('div');
+            header.className = 'assistant-code-header';
+            const label = document.createElement('span');
+            label.textContent = part.lang ? part.lang.toUpperCase() : 'CODIGO';
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'assistant-code-copy';
+            copyBtn.textContent = 'Copiar';
+            copyBtn.addEventListener('click', () => {
+                const copyPromise = navigator.clipboard?.writeText(part.value || '');
+                if (copyPromise && typeof copyPromise.then === 'function') {
+                    copyPromise.then(() => {
+                        showAssistantToast('Copiado');
+                    }).catch(() => {
+                        showAssistantToast('No se pudo copiar');
+                    });
+                } else {
+                    showAssistantToast('No se pudo copiar');
+                }
+            });
+            header.append(label, copyBtn);
+
+            const pre = document.createElement('pre');
+            const code = document.createElement('code');
+            code.textContent = part.value || '';
+            pre.appendChild(code);
+
+            block.append(header, pre);
+            body.appendChild(block);
+            return;
+        }
+
+        if (part.value) {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = part.value;
+            body.appendChild(paragraph);
+        }
+    });
+
+    if (!body.childNodes.length) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = text || '';
+        body.appendChild(paragraph);
+    }
+
+    container.appendChild(body);
+}
+
+function renderAssistantHistory() {
     const container = document.getElementById('assistant-history');
     if (!container) return;
-    container.innerHTML = '';
-    history.forEach((item) => {
+    const messages = preloadThreadMessages(assistantState.activeThreadId);
+    clearElement(container);
+
+    if (!messages.length) {
+        const empty = document.createElement('div');
+        empty.className = 'assistant-empty';
+        empty.textContent = 'Inicia una conversacion para ver respuestas reales.';
+        container.appendChild(empty);
+        return;
+    }
+
+    messages.forEach((item) => {
         const message = document.createElement('div');
         const role = item?.role === 'user'
             ? 'user'
@@ -4680,64 +5002,109 @@ function renderAssistantHistory(history) {
                 ? 'error'
                 : item?.role === 'system'
                     ? 'system'
-                    : 'ai';
+                    : 'assistant';
         message.className = `assistant-message ${role}`;
-        message.textContent = item?.text || '';
+        renderMessageContent(message, item?.text || '');
         container.appendChild(message);
     });
-    scrollAssistantToBottom();
+    scrollAssistantToBottom(true);
 }
 
-function scrollAssistantToBottom() {
+function isNearBottom(container) {
+    const threshold = 80;
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+}
+
+function scrollAssistantToBottom(force = false) {
     const container = document.getElementById('assistant-history');
     if (!container) return;
-    container.scrollTop = container.scrollHeight;
-    const body = container.closest('.assistant-body');
-    if (body) {
-        body.scrollTop = body.scrollHeight;
+    if (force || isNearBottom(container)) {
+        container.scrollTop = container.scrollHeight;
     }
+}
+
+function setAssistantStatus(label) {
+    const statusEl = document.getElementById('assistant-status');
+    if (statusEl) {
+        statusEl.textContent = label;
+    }
+}
+
+function setAssistantLoading(isLoading) {
+    const typingEl = document.getElementById('assistant-typing');
+    if (typingEl) {
+        typingEl.setAttribute('aria-hidden', isLoading ? 'false' : 'true');
+    }
+    setAssistantStatus(isLoading ? 'Pensando...' : 'En linea');
+    if (isLoading) {
+        scrollAssistantToBottom(true);
+    }
+}
+
+function setAssistantDrawerOpen(open) {
+    const shell = document.getElementById('assistant-shell');
+    const overlay = document.getElementById('assistant-drawer-overlay');
+    if (!shell || !overlay) return;
+    shell.classList.toggle('drawer-open', open);
+    overlay.classList.toggle('is-visible', open);
+}
+
+function showAssistantToast(text) {
+    const toast = document.getElementById('assistant-toast');
+    if (!toast) return;
+    toast.textContent = text;
+    toast.classList.add('is-visible');
+    setTimeout(() => {
+        toast.classList.remove('is-visible');
+    }, 1600);
 }
 
 function addAssistantMessage({ role, text }) {
     const safeText = String(text || '').trim();
     if (!safeText) return;
-    const history = loadAssistantHistory();
+
+    if (!assistantState.activeThreadId) {
+        createNewThreadAndActivate();
+    }
+
     const normalizedRole = role === 'user' || role === 'assistant' || role === 'error' || role === 'system'
         ? role
         : 'assistant';
-    const last = history[history.length - 1];
+    const threadId = assistantState.activeThreadId;
+    const messages = preloadThreadMessages(threadId);
+
+    const last = messages[messages.length - 1];
     if (last && last.role === normalizedRole && last.text === safeText) {
-        renderAssistantHistory(history);
+        renderAssistantHistory();
         return;
     }
-    history.push({
+
+    const message = {
         role: normalizedRole,
         text: safeText,
         ts: Date.now()
-    });
-    const trimmed = history.slice(-AGRO_ASSISTANT_MAX_HISTORY);
-    saveAssistantHistory(trimmed);
-    renderAssistantHistory(trimmed);
+    };
+    messages.push(message);
+
+    const trimmed = messages.slice(-AGRO_ASSISTANT_MAX_HISTORY);
+    assistantState.messagesByThreadId[threadId] = trimmed;
+    saveMessagesToStorage(threadId, trimmed);
+
+    if (normalizedRole === 'user') {
+        const activeThread = getActiveThread();
+        if (activeThread && activeThread.title === AGRO_ASSISTANT_DEFAULT_TITLE) {
+            updateThreadMetadata(threadId, { title: formatThreadTitle(safeText) });
+        }
+    }
+
+    updateThreadMetadata(threadId, { lastMessageAt: message.ts });
+    renderThreadList();
+    renderAssistantHistory();
+    scrollAssistantToBottom();
 }
 
 function appendAssistantMessage(role, text) {
     addAssistantMessage({ role, text });
-}
-
-function setAssistantLoading(isLoading) {
-    const container = document.getElementById('assistant-history');
-    if (!container) return;
-    const existing = container.querySelector('.assistant-message.loading');
-    if (isLoading) {
-        if (existing) return;
-        const message = document.createElement('div');
-        message.className = 'assistant-message loading';
-        message.textContent = 'Procesando...';
-        container.appendChild(message);
-        scrollAssistantToBottom();
-        return;
-    }
-    existing?.remove();
 }
 
 function readAssistantCooldown() {
@@ -4971,7 +5338,12 @@ function openAgroAssistant() {
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('modal-open');
-        renderAssistantHistory(loadAssistantHistory());
+        hydrateAssistantState();
+        renderThreadList();
+        renderAssistantHistory();
+        setAssistantStatus('En linea');
+        setAssistantLoading(false);
+        setAssistantDrawerOpen(false);
         updateAssistantCooldownUI();
         startAssistantCooldownTimer();
         const input = document.getElementById('agro-assistant-input');
@@ -4989,6 +5361,7 @@ function closeAgroAssistant() {
         modal.setAttribute('aria-hidden', 'true');
     }
     document.body.classList.remove('modal-open');
+    setAssistantDrawerOpen(false);
 }
 
 function getAssistantErrorMessage(error) {
@@ -5132,15 +5505,24 @@ function initAgroAssistantModal() {
     const sendBtn = document.getElementById('btn-assistant-send');
     const templateBtn = document.getElementById('btn-assistant-template');
     const input = document.getElementById('agro-assistant-input');
+    const newThreadBtn = document.getElementById('assistant-new-thread');
+    const drawerToggle = document.getElementById('assistant-drawer-toggle');
+    const drawerOverlay = document.getElementById('assistant-drawer-overlay');
 
     if (!modal) return;
 
     openBtn?.addEventListener('click', openAgroAssistant);
     closeBtn?.addEventListener('click', closeAgroAssistant);
+    newThreadBtn?.addEventListener('click', createNewThreadAndActivate);
+    drawerToggle?.addEventListener('click', () => setAssistantDrawerOpen(true));
+    drawerOverlay?.addEventListener('click', () => setAssistantDrawerOpen(false));
 
     modal.addEventListener('click', (event) => {
         if (event.target?.dataset?.close === 'true') {
             closeAgroAssistant();
+        }
+        if (event.target?.dataset?.drawerClose === 'true') {
+            setAssistantDrawerOpen(false);
         }
     });
 
