@@ -3140,10 +3140,16 @@
                             </div>
                             <p class="assistant-subtitle">Chat real con Gemini Flash (AI Studio)</p>
                         </div>
-                        <button type="button" class="btn-close" id="btn-close-agro-assistant"
-                            aria-label="Cerrar asistente">
-                            &times;
-                        </button>
+                        <div class="assistant-topbar-actions">
+                            <button type="button" class="btn-delete-thread" id="btn-assistant-delete-thread"
+                                aria-label="Eliminar conversacion" title="Eliminar conversacion">
+                                &#128465;
+                            </button>
+                            <button type="button" class="btn-close" id="btn-close-agro-assistant"
+                                aria-label="Cerrar asistente">
+                                &times;
+                            </button>
+                        </div>
                     </div>
 
                     <div class="assistant-content">
@@ -3167,6 +3173,13 @@
                         </div>
 
                         <div class="assistant-controls">
+                            <div class="assistant-mode-hint" id="assistant-mode-hint">
+                                Modo eficiente: 1 mensaje (5-8 lineas). Espera 8-12s entre envios. Si aparece
+                                "limite alcanzado", espera 60-120s.
+                            </div>
+                            <button type="button" class="assistant-new-messages" id="assistant-new-messages">
+                                Nuevos mensajes
+                            </button>
                             <textarea id="agro-assistant-input" class="styled-input" rows="3"
                                 placeholder="Escribe tu consulta (max 5-8 lineas)..."></textarea>
                             <div class="assistant-actions">

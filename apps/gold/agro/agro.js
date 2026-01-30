@@ -4647,12 +4647,23 @@ const AGRO_ASSISTANT_THREADS_KEY = 'YG_AGRO_ASSISTANT_THREADS_V1';
 const AGRO_ASSISTANT_ACTIVE_THREAD_KEY = 'YG_AGRO_ASSISTANT_ACTIVE_THREAD_V1';
 const AGRO_ASSISTANT_MESSAGES_PREFIX = 'YG_AGRO_ASSISTANT_MESSAGES_V1_';
 const AGRO_ASSISTANT_COOLDOWN_KEY = 'YG_AGRO_ASSISTANT_COOLDOWN_V1';
-const AGRO_ASSISTANT_MIN_INTERVAL_MS = 15000;
-const AGRO_ASSISTANT_RATE_LIMIT_MS = 60000;
+const AGRO_ASSISTANT_MIN_INTERVAL_MS = 10000;  // 10s default cooldown
+const AGRO_ASSISTANT_RATE_LIMIT_MS = 60000;    // 60s initial backoff on 429
+const AGRO_ASSISTANT_RATE_LIMIT_MAX_MS = 300000; // 5 min cap
 const AGRO_ASSISTANT_MAX_HISTORY = 20;
 const AGRO_ASSISTANT_DEFAULT_TITLE = 'Nueva conversacion';
 
 let assistantCooldownTimer = null;
+let assistantButtonTimer = null;
+
+// V9.7: Runtime state for queue-based anti-429 protection
+const assistantRuntime = {
+    inFlight: false,
+    queue: [],
+    cooldownUntil: 0,
+    backoffSeconds: 0,
+    last429At: 0
+};
 
 const assistantState = {
     threads: [],
@@ -5127,6 +5138,10 @@ function writeAssistantCooldown(state) {
 function getCooldownRemainingMs() {
     const state = readAssistantCooldown();
     const now = Date.now();
+    const until = Number(state?.until || 0);
+    if (until > now) {
+        return { remaining: until - now, mode: 'cooldown' };
+    }
     const lockUntil = Number(state?.lockUntil || 0);
     if (lockUntil > now) {
         return { remaining: lockUntil - now, mode: 'lock' };
@@ -5139,24 +5154,81 @@ function getCooldownRemainingMs() {
     return { remaining: 0, mode: 'none' };
 }
 
+function setCooldownUntil(ms) {
+    const state = readAssistantCooldown();
+    state.until = Date.now() + ms;
+    writeAssistantCooldown(state);
+}
+
+function isRateLimitError(error) {
+    const status = error?.status || error?.statusCode;
+    const detail = `${error?.message || ''} ${error?.context?.error?.message || ''} ${error?.context?.error || ''}`
+        .toLowerCase();
+    return status === 429 ||
+        detail.includes('resource_exhausted') ||
+        detail.includes('limit reached') ||
+        detail.includes('rate limit');
+}
+
+function applyRateLimitBackoff() {
+    const state = readAssistantCooldown();
+    const current = Number(state?.rateLimitBackoffMs || 0);
+    const next = current ? Math.min(current * 2, AGRO_ASSISTANT_RATE_LIMIT_MAX_MS) : AGRO_ASSISTANT_RATE_LIMIT_MS;
+    state.rateLimitBackoffMs = next;
+    state.lockUntil = Date.now() + next;
+    state.lastErrorAt = Date.now();
+    writeAssistantCooldown(state);
+    return next;
+}
+
 function updateAssistantCooldownUI() {
     const sendBtn = document.getElementById('btn-assistant-send');
     const cooldownEl = document.getElementById('assistant-cooldown');
     if (!sendBtn || !cooldownEl) return 0;
 
+    // V9.7: Enhanced UI states
+    const now = Date.now();
+    const queueLen = assistantRuntime.queue.length;
+
+    // Priority 1: In-flight
+    if (assistantRuntime.inFlight) {
+        sendBtn.textContent = 'Enviando...';
+        sendBtn.disabled = true;
+        cooldownEl.textContent = queueLen > 0 ? `En cola (${queueLen})` : '';
+        return 1;
+    }
+
+    // Priority 2: 429 Backoff (lockUntil from cooldown state)
     const { remaining, mode } = getCooldownRemainingMs();
     if (remaining > 0) {
         const seconds = Math.ceil(remaining / 1000);
-        const label = mode === 'lock'
-            ? `Limite alcanzado. Espera ${seconds}s para reintentar.`
-            : `Espera ${seconds}s para enviar y evitar bloqueo.`;
-        cooldownEl.textContent = label;
+        if (mode === 'lock') {
+            sendBtn.textContent = `Espera ${seconds}s`;
+            cooldownEl.textContent = `Limite AI Studio: espera ${seconds}s`;
+        } else {
+            sendBtn.textContent = `Espera ${seconds}s`;
+            cooldownEl.textContent = `Espera ${seconds}s (modo eficiente)`;
+        }
         sendBtn.disabled = true;
-    } else {
-        cooldownEl.textContent = '';
-        sendBtn.disabled = false;
+        if (queueLen > 0) {
+            cooldownEl.textContent += ` • En cola (${queueLen})`;
+        }
+        return remaining;
     }
-    return remaining;
+
+    // Priority 3: Queue pending but no cooldown
+    if (queueLen > 0) {
+        sendBtn.textContent = 'Enviar';
+        sendBtn.disabled = false;
+        cooldownEl.textContent = `En cola (${queueLen})`;
+        return 0;
+    }
+
+    // Default: Ready
+    sendBtn.textContent = 'Enviar';
+    sendBtn.disabled = false;
+    cooldownEl.textContent = '';
+    return 0;
 }
 
 function startAssistantCooldownTimer() {
@@ -5165,12 +5237,237 @@ function startAssistantCooldownTimer() {
     }
     assistantCooldownTimer = setInterval(() => {
         const remaining = updateAssistantCooldownUI();
-        if (remaining <= 0) {
+        if (remaining <= 0 && !assistantRuntime.inFlight && assistantRuntime.queue.length === 0) {
             clearInterval(assistantCooldownTimer);
             assistantCooldownTimer = null;
         }
+        // V9.7: Auto-process queue when cooldown expires
+        if (remaining <= 0 && !assistantRuntime.inFlight && assistantRuntime.queue.length > 0) {
+            processAssistantQueue();
+        }
     }, 1000);
 }
+
+function stopAssistantTimers() {
+    if (assistantCooldownTimer) {
+        clearInterval(assistantCooldownTimer);
+        assistantCooldownTimer = null;
+    }
+    if (assistantButtonTimer) {
+        clearInterval(assistantButtonTimer);
+        assistantButtonTimer = null;
+    }
+}
+
+// V9.7: Build crops preamble for anti-hallucination
+function buildCropsPreamble() {
+    let crops = [];
+    // Try cropsCache first, then localStorage
+    if (Array.isArray(cropsCache) && cropsCache.length > 0) {
+        crops = cropsCache;
+    } else {
+        try {
+            crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+        } catch (e) {
+            crops = [];
+        }
+    }
+
+    if (!Array.isArray(crops) || crops.length === 0) {
+        return {
+            hasCrops: false,
+            preamble: 'IMPORTANTE: El usuario NO tiene cultivos registrados en el sistema. ' +
+                'ANTES de dar cualquier recomendacion, PREGUNTA que cultivo tiene y en que etapa esta. ' +
+                'NO asumas ni inventes cultivos. Si el usuario pregunta por un cultivo especifico (ej: tomates), ' +
+                'responde: "No veo ese cultivo en tus registros. ¿Quieres que te ayude a agregarlo o me confirmas cual tienes?"'
+        };
+    }
+
+    const cropList = crops
+        .filter(c => c && c.name && !c.deleted_at)
+        .map(c => {
+            let desc = c.name;
+            if (c.variety) desc += ` (${c.variety})`;
+            desc += ` - ${normalizeCropStatus(c.status) || 'activo'}`;
+            return desc;
+        })
+        .slice(0, 10);
+
+    return {
+        hasCrops: true,
+        preamble: `Cultivos REALES del usuario: ${cropList.join(', ')}. ` +
+            'REGLA ESTRICTA: Solo menciona estos cultivos. NO inventes otros. ' +
+            'Si el usuario pregunta por un cultivo que NO esta en la lista, responde: ' +
+            '"No veo ese cultivo en tus registros. ¿Quieres que te ayude a agregarlo o me confirmas cual tienes?"'
+    };
+}
+
+// V9.7: Queue processor with peek/shift-on-success pattern
+async function processAssistantQueue() {
+    // Guard: Already processing
+    if (assistantRuntime.inFlight) {
+        return;
+    }
+
+    // Guard: Cooldown active
+    const { remaining } = getCooldownRemainingMs();
+    if (remaining > 0) {
+        updateAssistantCooldownUI();
+        startAssistantCooldownTimer();
+        return;
+    }
+
+    // Guard: Queue empty
+    if (assistantRuntime.queue.length === 0) {
+        updateAssistantCooldownUI();
+        return;
+    }
+
+    // PEEK: Get item without removing (will shift on success only)
+    const item = assistantRuntime.queue[0];
+    if (!item || !item.prompt) {
+        assistantRuntime.queue.shift(); // Remove invalid item
+        processAssistantQueue(); // Try next
+        return;
+    }
+
+    assistantRuntime.inFlight = true;
+    updateAssistantCooldownUI();
+    setAssistantLoading(true);
+
+    try {
+        // Build context with crops preamble
+        const contextPayload = getAssistantContext();
+        const cropsPreamble = buildCropsPreamble();
+
+        // V9.7: Prefix prompt with preamble (NOT saved to UI history)
+        const promptForModel = cropsPreamble.preamble + '\n\n---\nPregunta del usuario:\n' + item.prompt;
+
+        // THE INVOKE CALL REMAINS UNCHANGED (as required)
+        const { data, error } = await supabase.functions.invoke('agro-assistant', {
+            body: { message: promptForModel, prompt: promptForModel, context: contextPayload }
+        });
+
+        if (error) {
+            const status = error?.status || error?.statusCode;
+            console.warn('[AGRO][AI] invoke error', status || 'unknown');
+
+            if (isRateLimitError(error)) {
+                // 429: Exponential backoff, DO NOT shift (keep item for retry)
+                assistantRuntime.last429At = Date.now();
+                const backoffMs = applyRateLimitBackoff();
+                const backoffSec = Math.ceil(backoffMs / 1000);
+                assistantRuntime.backoffSeconds = backoffSec;
+
+                showAssistantToast(`Limite AI Studio. Espera ${backoffSec}s`);
+                addAssistantMessage({
+                    role: 'system',
+                    text: `Limite de consultas alcanzado. Tu mensaje esta en cola y se enviara automaticamente en ${backoffSec}s.`
+                });
+            } else {
+                // Other error: shift the item, apply short cooldown
+                assistantRuntime.queue.shift();
+                setCooldownUntil(AGRO_ASSISTANT_MIN_INTERVAL_MS);
+                addAssistantMessage({ role: 'error', text: getAssistantErrorMessage(error) });
+            }
+
+            assistantRuntime.inFlight = false;
+            setAssistantLoading(false);
+            updateAssistantCooldownUI();
+            startAssistantCooldownTimer();
+            return;
+        }
+
+        // SUCCESS: Now shift the item
+        assistantRuntime.queue.shift();
+
+        const reply = [data?.reply, data?.message, data?.text]
+            .find((value) => typeof value === 'string' && value.trim());
+
+        if (typeof reply !== 'string' || !reply.trim()) {
+            setAssistantLoading(false);
+            addAssistantMessage({ role: 'error', text: 'No se pudo consultar IA. Intenta luego.' });
+        } else {
+            setAssistantLoading(false);
+            addAssistantMessage({ role: 'assistant', text: reply.trim() });
+        }
+
+        // Reset backoff on success
+        assistantRuntime.backoffSeconds = 0;
+        const cooldownState = readAssistantCooldown();
+        cooldownState.rateLimitBackoffMs = 0;
+        cooldownState.lastSentAt = Date.now();
+        writeAssistantCooldown(cooldownState);
+
+        // Apply normal cooldown
+        setCooldownUntil(AGRO_ASSISTANT_MIN_INTERVAL_MS);
+
+    } catch (err) {
+        console.warn('[AGRO][AI] request failed', err?.message || err || 'unknown');
+        // Network error: keep item in queue for retry
+        if (String(err?.message || '').toLowerCase().includes('fetch') ||
+            String(err?.message || '').toLowerCase().includes('network')) {
+            // Network error - keep in queue
+            setCooldownUntil(AGRO_ASSISTANT_MIN_INTERVAL_MS * 2);
+            addAssistantMessage({
+                role: 'system',
+                text: 'Error de conexion. Tu mensaje esta en cola y se reintentara.'
+            });
+        } else {
+            // Other error - remove from queue
+            assistantRuntime.queue.shift();
+            addAssistantMessage({ role: 'error', text: getAssistantErrorMessage(err) });
+        }
+        setAssistantLoading(false);
+    } finally {
+        assistantRuntime.inFlight = false;
+        updateAssistantCooldownUI();
+        startAssistantCooldownTimer();
+
+        // Process next in queue if any (respecting cooldown)
+        if (assistantRuntime.queue.length > 0) {
+            const nextRemaining = getCooldownRemainingMs().remaining;
+            if (nextRemaining <= 0) {
+                setTimeout(processAssistantQueue, 100);
+            }
+        }
+    }
+}
+
+// V9.7: Delete active thread
+function deleteActiveThread() {
+    const threadId = assistantState.activeThreadId;
+    if (!threadId) return false;
+
+    // Remove thread from list
+    assistantState.threads = assistantState.threads.filter(t => t.id !== threadId);
+
+    // Clear messages from storage
+    try {
+        localStorage.removeItem(getMessagesKey(threadId));
+    } catch (e) {
+        // Ignore
+    }
+
+    // Clear from memory
+    delete assistantState.messagesByThreadId[threadId];
+
+    // Save updated threads
+    saveThreadsToStorage(assistantState.threads);
+
+    // Switch to another thread or create new
+    if (assistantState.threads.length > 0) {
+        setActiveThread(assistantState.threads[0].id);
+    } else {
+        createNewThreadAndActivate();
+    }
+
+    renderThreadList();
+    renderAssistantHistory();
+    showAssistantToast('Conversacion eliminada');
+    return true;
+}
+
 
 function getAssistantLocationContext() {
     const Geo = window.YGGeolocation;
@@ -5362,6 +5659,7 @@ function closeAgroAssistant() {
     }
     document.body.classList.remove('modal-open');
     setAssistantDrawerOpen(false);
+    stopAssistantTimers(); // V9.7: Clean up timers on close
 }
 
 function getAssistantErrorMessage(error) {
@@ -5409,34 +5707,21 @@ function getAssistantErrorMessage(error) {
     return 'No se pudo consultar el asistente. Intenta nuevamente.';
 }
 
+// V9.7: Refactored to use queue system - ALWAYS enqueues first
 async function sendAgroAssistantMessage() {
     const input = document.getElementById('agro-assistant-input');
-    const sendBtn = document.getElementById('btn-assistant-send');
-    const cooldownEl = document.getElementById('assistant-cooldown');
     const prompt = input?.value?.trim() || '';
     if (!prompt) return;
 
-    const cooldown = getCooldownRemainingMs();
-    if (cooldown.remaining > 0) {
-        updateAssistantCooldownUI();
-        startAssistantCooldownTimer();
-        const cooldownLabel = cooldownEl?.textContent?.trim();
-        if (cooldownLabel) {
-            addAssistantMessage({ role: 'system', text: cooldownLabel });
-        }
-        return;
-    }
-
-    sendBtn?.setAttribute('disabled', 'true');
-
+    // Auth check first (before queuing)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         addAssistantMessage({ role: 'error', text: 'Debes iniciar sesion para usar el asistente.' });
-        sendBtn?.removeAttribute('disabled');
         input?.focus();
         return;
     }
 
+    // Non-agro filter (before queuing)
     if (isLikelyNonAgroQuestion(prompt)) {
         addAssistantMessage({
             role: 'system',
@@ -5444,56 +5729,40 @@ async function sendAgroAssistantMessage() {
         });
         return;
     }
+
+    // ALWAYS add user message to UI history immediately
     addAssistantMessage({ role: 'user', text: prompt });
+
+    // Clear input immediately for UX
     input.value = '';
     input?.focus();
-    setAssistantLoading(true);
 
-    const cooldownState = readAssistantCooldown();
-    cooldownState.lastSentAt = Date.now();
-    writeAssistantCooldown(cooldownState);
+    // CRITICAL: ALWAYS enqueue BEFORE any return or check
+    assistantRuntime.queue.push({
+        prompt,
+        timestamp: Date.now()
+    });
+
+    // Update UI to show queue state
     updateAssistantCooldownUI();
-    startAssistantCooldownTimer();
 
-    try {
-        const contextPayload = getAssistantContext();
-        const { data, error } = await supabase.functions.invoke('agro-assistant', {
-            body: { message: prompt, prompt, context: contextPayload }
-        });
-
-        if (error) {
-            const status = error?.status || error?.statusCode;
-            console.warn('[AGRO][AI] invoke error', status || 'unknown');
-            if (status === 429) {
-                const state = readAssistantCooldown();
-                state.lockUntil = Date.now() + AGRO_ASSISTANT_RATE_LIMIT_MS;
-                writeAssistantCooldown(state);
-                updateAssistantCooldownUI();
-                startAssistantCooldownTimer();
-            }
-            setAssistantLoading(false);
-            addAssistantMessage({ role: 'error', text: getAssistantErrorMessage(error) });
-            return;
+    // Show toast if in cooldown/queue mode
+    const { remaining } = getCooldownRemainingMs();
+    if (remaining > 0 || assistantRuntime.inFlight) {
+        const seconds = Math.ceil(remaining / 1000);
+        if (assistantRuntime.inFlight) {
+            showAssistantToast('Mensaje en cola');
+        } else if (remaining > 0) {
+            showAssistantToast(`En cola. Se enviara en ${seconds}s`);
         }
-
-        const reply = [data?.reply, data?.message, data?.text].find((value) => typeof value === 'string' && value.trim());
-        if (typeof reply !== 'string' || !reply.trim()) {
-            setAssistantLoading(false);
-            addAssistantMessage({ role: 'error', text: 'No se pudo consultar IA. Intenta luego.' });
-            return;
-        }
-
-        setAssistantLoading(false);
-        addAssistantMessage({ role: 'assistant', text: reply.trim() });
-    } catch (err) {
-        console.warn('[AGRO][AI] request failed', err?.message || err || 'unknown');
-        setAssistantLoading(false);
-        addAssistantMessage({ role: 'error', text: getAssistantErrorMessage(err) });
-    } finally {
-        sendBtn?.removeAttribute('disabled');
-        input?.focus();
+        startAssistantCooldownTimer();
+        // DO NOT RETURN - the queue will be processed when timer fires
     }
+
+    // Try to process queue immediately if possible
+    processAssistantQueue();
 }
+
 
 function initAgroAssistantModal() {
     if (document.__agroAssistantBound) return;
@@ -5553,7 +5822,15 @@ function initAgroAssistantModal() {
         }
     });
 
-    console.info('[AGRO] V9.5.7: assistant modal open/close wired');
+    // V9.7: Delete thread button
+    const deleteThreadBtn = document.getElementById('btn-assistant-delete-thread');
+    deleteThreadBtn?.addEventListener('click', () => {
+        if (confirm('¿Eliminar esta conversacion?')) {
+            deleteActiveThread();
+        }
+    });
+
+    console.info('[AGRO] V9.7: assistant modal with queue/anti-429 wired');
 }
 
 function getTopIncomeCategoryFromCache(days = 365) {

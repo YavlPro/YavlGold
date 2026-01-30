@@ -735,6 +735,33 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* V9.7: Topbar actions container for delete + close buttons */
+#modal-agro-assistant .assistant-topbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#modal-agro-assistant .btn-delete-thread {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 80, 80, 0.15);
+  color: rgba(255, 120, 120, 0.9);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+#modal-agro-assistant .btn-delete-thread:hover {
+  background: rgba(255, 80, 80, 0.3);
+  color: rgba(255, 100, 100, 1);
+}
+
 #modal-agro-assistant .assistant-content {
   flex: 1;
   display: flex;
@@ -742,6 +769,7 @@ body.modal-open {
   gap: 1rem;
   padding: 1rem 1.25rem 1.25rem;
   overflow: hidden;
+  min-height: 0;
 }
 
 #modal-agro-assistant .assistant-guide {
@@ -772,7 +800,10 @@ body.modal-open {
   flex-direction: column;
   gap: 0.85rem;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
   padding-right: 0.5rem;
 }
 
@@ -917,6 +948,32 @@ body.modal-open {
   width: 100%;
   min-height: 84px;
   resize: vertical;
+}
+
+#modal-agro-assistant .assistant-mode-hint {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+}
+
+#modal-agro-assistant .assistant-new-messages {
+  align-self: center;
+  margin-top: 0.4rem;
+  border: 1px solid rgba(200, 167, 82, 0.4);
+  background: rgba(200, 167, 82, 0.15);
+  color: var(--gold-primary, #C8A752);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: none;
+}
+
+#modal-agro-assistant .assistant-new-messages.is-visible {
+  display: inline-flex;
 }
 
 #modal-agro-assistant .assistant-actions {
