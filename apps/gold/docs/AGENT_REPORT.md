@@ -3181,3 +3181,25 @@ Implementar "smart retry" en frontend:
 - Render de mensajes seguro (textContent, code blocks con copy).
 - Build: pnpm build:gold OK (2026-01-30).
 - Pruebas manuales: NO VERIFICADO (acceso requiere autenticacion).
+
+## Diagnostico (tarea actual - Chat Agro hardening scroll/cooldown/contexto)
+1) El panel de mensajes no tiene scroll robusto y corta respuestas largas.
+2) Falta UX anti-limites (cooldown claro + backoff para 429/RESOURCE_EXHAUSTED).
+3) El contexto de cultivos no se inyecta de forma estricta, lo que permite menciones inventadas.
+4) El header debe mostrar exactamente "Agro Assistant Agent".
+
+## Plan (tarea actual - Chat Agro hardening scroll/cooldown/contexto)
+- [ ] Ajustar CSS del panel de mensajes para scroll estable (flex + min-height:0 + overflow).
+- [ ] Implementar auto-scroll inteligente + chip "Nuevos mensajes".
+- [ ] Agregar microcopy "modo eficiente" y cooldown de 8s con contador.
+- [ ] Manejar 429/RESOURCE_EXHAUSTED con backoff y toast informativo.
+- [ ] Inyectar contexto real de cultivos (Supabase o localStorage) y bloquear si lista vacia.
+- [ ] Verificar titulo visible "Agro Assistant Agent".
+- [ ] Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Chat Agro hardening scroll/cooldown/contexto)
+- [ ] Scroll del panel correcto con auto-scroll inteligente.
+- [ ] Cooldown + guia "modo eficiente" visibles; 429 con backoff/aviso.
+- [ ] No inventa cultivos; si no hay, pide cultivo/etapa.
+- [ ] Titulo "Agro Assistant Agent" visible.
+- [ ] pnpm build:gold OK.
