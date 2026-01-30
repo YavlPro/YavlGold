@@ -585,6 +585,7 @@ body.modal-open {
   display: grid;
   grid-template-columns: 280px 1fr;
   height: 100%;
+  overflow: hidden;  /* V9.7: CLAVE para scroll */
   background: rgba(5, 5, 5, 0.95);
 }
 
@@ -597,6 +598,8 @@ body.modal-open {
   padding: 1.2rem 1rem;
   border-right: 1px solid rgba(200, 167, 82, 0.2);
   background: rgba(12, 12, 12, 0.95);
+  min-height: 0;     /* V9.7: para scroll thread-list */
+  overflow: hidden;  /* V9.7: para scroll thread-list */
 }
 
 #modal-agro-assistant .assistant-sidebar-header {
@@ -728,6 +731,8 @@ body.modal-open {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;     /* V9.7: CLAVE para scroll */
+  overflow: hidden;  /* V9.7: CLAVE para scroll */
 }
 
 #modal-agro-assistant .assistant-topbar {
