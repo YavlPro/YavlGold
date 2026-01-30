@@ -3150,3 +3150,10 @@ Implementar "smart retry" en frontend:
 ## Actualizacion de resultados (tarea actual - Mojibake clima/luna Agro)
 - Build: pnpm build:gold OK (2026-01-29).
 - Pruebas manuales: NO ejecutadas.
+
+## Diagnostico (tarea actual - Spec Agro Chat Redesign)
+- Se solicita crear especificacion en raiz para rediseo del chat Agro sin tocar logica Gemini Flash, agregando historial real y anti-mojibake.
+
+## Plan (tarea actual - Spec Agro Chat Redesign)
+- [ ] Crear archivo `AGRO_CHAT_REDESIGN_SPEC.md` en raiz con el contenido provisto.
+- [ ] Confirmar nombre de IA requerido: "Agro Assistant Agent".
