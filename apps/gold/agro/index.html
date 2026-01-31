@@ -3153,9 +3153,15 @@
                     </div>
 
                     <div class="assistant-content">
-                        <div class="assistant-guide">
-                            <div class="assistant-guide-title">Guia de uso importante</div>
-                            <ul>
+                        <div class="assistant-guide" id="assistant-guide">
+                            <div class="assistant-guide-header">
+                                <div class="assistant-guide-title">Guia de uso importante</div>
+                                <button type="button" class="assistant-guide-toggle" id="assistant-guide-toggle"
+                                    aria-expanded="true" aria-controls="assistant-guide-list">
+                                    Ver guia
+                                </button>
+                            </div>
+                            <ul id="assistant-guide-list">
                                 <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
                                 <li>Espera unos segundos entre mensajes (evita spamear).</li>
                                 <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>

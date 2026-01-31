@@ -3388,3 +3388,27 @@ Implementar "smart retry" en frontend:
 - No se toco JS ni la llamada `supabase.functions.invoke('agro-assistant')`.
 - Pruebas manuales: NO VERIFICADO (usuario no puede abrir local).
 - Build: `pnpm build:gold` OK (2026-01-31).
+## Diagnostico (tarea actual - Agro Assistant layout movil cobija)
+1) En movil, el header + guia + input ocupan gran parte del alto; el historial queda en una franja minima.
+2) El teclado en movil reduce viewport y hace que el area de mensajes quede tapada.
+3) Falta padding inferior en el contenedor de historial para evitar que el ultimo mensaje quede debajo del input.
+
+## Plan (tarea actual - Agro Assistant layout movil cobija)
+1) Hacer la guia colapsable en movil (toggle) para liberar espacio.
+2) Reducir altura/padding del input en movil.
+3) Agregar padding-bottom y scroll-padding-bottom al historial para que el ultimo mensaje no se tape.
+4) Ejecutar `pnpm build:gold` y documentar.
+
+## DoD (tarea actual - Agro Assistant layout movil cobija)
+- [ ] Guia colapsable en movil (por defecto cerrada) y visible en desktop.
+- [ ] Input mas compacto en movil.
+- [ ] Historial con padding/scroll-padding para que el ultimo mensaje no se esconda.
+- [ ] Sin cambios en logica IA.
+- [ ] `pnpm build:gold` OK.
+## Actualizacion de resultados (tarea actual - Agro Assistant layout movil cobija)
+- Guia ahora es colapsable en movil con toggle `assistant-guide-toggle` y clase `is-collapsed`.
+- Input mas compacto en movil (min-height y padding reducidos).
+- Historial con `padding-bottom` y `scroll-padding-bottom` para evitar solape con input.
+- No se cambio logica IA ni llamada `supabase.functions.invoke('agro-assistant')`.
+- Pruebas manuales: NO VERIFICADO (usuario sin acceso local).
+- Build: `pnpm build:gold` OK (2026-01-31).

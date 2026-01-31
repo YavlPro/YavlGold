@@ -5678,6 +5678,24 @@ function isLikelyNonAgroQuestion(text) {
     return hasNonAgro && !hasAgro;
 }
 
+function syncAssistantGuideLayout(forceCollapse = false) {
+    const guide = document.getElementById('assistant-guide');
+    const toggle = document.getElementById('assistant-guide-toggle');
+    if (!guide || !toggle) return;
+
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    if (forceCollapse && isMobile) {
+        guide.classList.add('is-collapsed');
+        toggle.setAttribute('aria-expanded', 'false');
+        return;
+    }
+
+    if (!isMobile) {
+        guide.classList.remove('is-collapsed');
+        toggle.setAttribute('aria-expanded', 'true');
+    }
+}
+
 function openAgroAssistant() {
     const modal = document.getElementById('modal-agro-assistant');
     if (!modal) {
@@ -5694,6 +5712,7 @@ function openAgroAssistant() {
         setAssistantStatus('En linea');
         setAssistantLoading(false);
         setAssistantDrawerOpen(false);
+        syncAssistantGuideLayout(true);
         updateAssistantCooldownUI();
         startAssistantCooldownTimer();
         const input = document.getElementById('agro-assistant-input');
@@ -5830,6 +5849,7 @@ function initAgroAssistantModal() {
     const newThreadBtn = document.getElementById('assistant-new-thread');
     const drawerToggle = document.getElementById('assistant-drawer-toggle');
     const drawerOverlay = document.getElementById('assistant-drawer-overlay');
+    const guideToggle = document.getElementById('assistant-guide-toggle');
 
     if (!modal) return;
 
@@ -5838,6 +5858,13 @@ function initAgroAssistantModal() {
     newThreadBtn?.addEventListener('click', createNewThreadAndActivate);
     drawerToggle?.addEventListener('click', () => setAssistantDrawerOpen(true));
     drawerOverlay?.addEventListener('click', () => setAssistantDrawerOpen(false));
+
+    guideToggle?.addEventListener('click', () => {
+        const guide = document.getElementById('assistant-guide');
+        if (!guide) return;
+        const collapsed = guide.classList.toggle('is-collapsed');
+        guideToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
 
     modal.addEventListener('click', (event) => {
         if (event.target?.dataset?.close === 'true') {

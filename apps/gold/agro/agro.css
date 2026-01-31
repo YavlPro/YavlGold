@@ -841,10 +841,32 @@ body.modal-open {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+#modal-agro-assistant .assistant-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+#modal-agro-assistant .assistant-guide-toggle {
+  border: 1px solid rgba(200, 167, 82, 0.45);
+  background: rgba(200, 167, 82, 0.12);
+  color: var(--gold-primary, #C8A752);
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: none;
+}
+
 #modal-agro-assistant .assistant-guide-title {
   font-weight: 700;
   color: var(--gold-primary, #C8A752);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
   font-size: 0.78rem;
   letter-spacing: 0.3px;
   display: flex;
@@ -865,6 +887,14 @@ body.modal-open {
   line-height: 1.5;
 }
 
+#modal-agro-assistant .assistant-guide.is-collapsed ul {
+  display: none;
+}
+
+#modal-agro-assistant .assistant-guide.is-collapsed .assistant-guide-header {
+  margin-bottom: 0;
+}
+
 #modal-agro-assistant .assistant-history {
   display: flex;
   flex-direction: column;
@@ -875,6 +905,8 @@ body.modal-open {
   overscroll-behavior: contain;
   scroll-behavior: smooth;
   padding-right: 0.5rem;
+  padding-bottom: 96px;
+  scroll-padding-bottom: 96px;
 }
 
 #modal-agro-assistant .assistant-empty {
@@ -1197,9 +1229,54 @@ body.modal-open {
     border-radius: 18px;
   }
 
+  #modal-agro-assistant .assistant-topbar {
+    padding: 0.75rem 0.9rem;
+  }
+
+  #modal-agro-assistant .assistant-content {
+    gap: 0.6rem;
+    padding: 0.75rem 0.9rem 0.9rem;
+  }
+
+  #modal-agro-assistant .assistant-guide {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.7rem;
+  }
+
+  #modal-agro-assistant .assistant-guide-toggle {
+    display: inline-flex;
+  }
+
+  #modal-agro-assistant .assistant-guide.is-collapsed {
+    max-height: 46px;
+    overflow: hidden;
+  }
+
+  #modal-agro-assistant .assistant-history {
+    padding-bottom: 140px;
+    scroll-padding-bottom: 140px;
+  }
+
+  #modal-agro-assistant .assistant-controls textarea {
+    min-height: 64px;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  #modal-agro-assistant .assistant-mode-hint {
+    font-size: 0.68rem;
+    padding: 0.45rem 0.6rem;
+  }
+
   #modal-agro-assistant .assistant-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  #modal-agro-assistant .assistant-actions .btn {
+    min-height: 40px;
+    font-size: 0.72rem;
   }
 }
 
