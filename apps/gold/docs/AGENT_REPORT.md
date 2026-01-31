@@ -3203,3 +3203,145 @@ Implementar "smart retry" en frontend:
 - [ ] No inventa cultivos; si no hay, pide cultivo/etapa.
 - [ ] Titulo "Agro Assistant Agent" visible.
 - [ ] pnpm build:gold OK.
+
+## Diagnostico (tarea actual - Backup critico landing index v9.4)
+- Landing fuente identificada como `apps/gold/index.html`.
+- Evidencia: `apps/gold/vite.config.js` define `input.main: 'index.html'` y el `vite.config.js` raiz usa `root: apps/gold` + `input` con `apps/gold/index.html`.
+- Existe build previo en `apps/gold/dist/index.html` con assets compilados; se usara como base para snapshot para evitar fallos por `type=module` en `file://`.
+- El index fuente incluye scripts de modulo y referencias a assets locales/absolutos que no funcionan bien como archivo unico sin inlining.
+- SHA256 (antes) `apps/gold/index.html`: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
+
+## Plan (tarea actual - Backup critico landing index v9.4)
+1) Usar `apps/gold/dist/index.html` como snapshot base (misma UI) y extraer los assets vinculados (CSS/JS/imagenes).
+2) Inlinear CSS de `apps/gold/dist/assets/*.css` dentro de `<style>` en el nuevo archivo.
+3) Generar un bundle JS unico (sin `type=module`) a partir de `apps/gold/dist/assets/*.js` para evitar imports con `file://`.
+4) Reemplazar referencias locales (`./assets/...`, `./favicon*`, `./site.webmanifest`, `./brand/...`) por `data:` embebido.
+5) Mantener fuentes remotas/CDN exactamente igual (Google Fonts, Font Awesome, hCaptcha, Supabase CDN).
+6) Insertar comentario "manifiesto forense" tras `<!doctype html>` con variables, fuentes, keyframes y secciones.
+7) Crear `index v9.4.html` en raiz.
+8) Recalcular SHA256 de `apps/gold/index.html` al final y confirmar igualdad.
+9) Pruebas manuales requeridas (desktop y viewport movil). Build `pnpm build:gold` solo si no viola la regla de no modificar archivos existentes; si no, marcar NO VERIFICADO con motivo.
+
+## Definition of Done (tarea actual - Backup critico landing index v9.4)
+- [ ] Archivo nuevo `index v9.4.html` creado en raiz.
+- [ ] Clon visual/funcional identico a landing principal (sin cambios esteticos).
+- [ ] Abre como archivo unico en movil (Chrome/Android) con layout responsive correcto.
+- [ ] Comentario "manifiesto forense" insertado sin afectar render.
+- [ ] SHA256 `apps/gold/index.html` antes/despues coincide.
+- [ ] Pruebas manuales desktop + viewport 360x800 y 412x915 realizadas.
+- [ ] Build `pnpm build:gold` ejecutado o marcado NO VERIFICADO con motivo.
+
+## Riesgos y mitigacion (tarea actual - Backup critico landing index v9.4)
+- Riesgo: referencias locales `/assets` o `./assets` rompen en `file://` -> Mitigacion: embebido `data:` para todos los assets locales.
+- Riesgo: `type=module` + imports fallan en `file://` -> Mitigacion: bundle JS unico inline sin imports.
+- Riesgo: fuentes/iconos remotos requieren red (Google Fonts/Font Awesome/hCaptcha/Supabase CDN) -> Mitigacion: mantener links intactos y documentar dependencia de red.
+- Riesgo: `site.webmanifest`/favicons no disponibles -> Mitigacion: embebido `data:`.
+- Riesgo: archivo unico grande en movil -> Mitigacion: usar assets existentes sin re-encode extra y validar carga en Chrome movil.
+
+## Actualizacion de resultados (tarea actual - Backup critico landing index v9.4)
+- Archivo creado: `index v9.4.html` (raiz del repo).
+- Estrategia usada: snapshot desde `apps/gold/dist/index.html` + CSS/JS inline; bundle JS unico (IIFE) con esbuild local; assets locales embebidos como `data:`.
+- Assets embebidos: `favicon.ico`, `favicon-48.png`, `favicon-google.png`, `site.webmanifest`, `assets/logo-DKV4iGCM.webp`, `brand/logo.webp`.
+- SHA256 `apps/gold/index.html` antes: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
+- SHA256 `apps/gold/index.html` despues: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
+- Pruebas manuales: NO VERIFICADO (no se abrio navegador).
+- Build `pnpm build:gold`: NO VERIFICADO (no ejecutado para evitar modificar `apps/gold/dist` bajo regla de no tocar archivos existentes).
+- Apertura movil:
+  - Opcion 1: enviar `index v9.4.html` al telefono y abrir con Chrome.
+  - Opcion 2: servir desde raiz con `python -m http.server` y abrir `http://<IP-LAN>:8000/index%20v9.4.html`.
+
+## Diagnostico (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
+1) Landing fuente real identificada: `apps/gold/index.html` (Vite MPA `apps/gold/vite.config.js` input `main: index.html`). SHA256 antes: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
+2) Backup localizado en raiz: `index v9.4.html` (glob `index v9.4*.html`). SHA256: E03164D2DA68358DBF8A4E99190E2CCBE406A0D64B83D82B4F0F1AF651EC5419. Se usara SOLO como fuente forense para Visual DNA.
+3) Mapa MPA (Vite + Vercel):
+   - `apps/gold/vite.config.js` inputs: main, cookies, faq, soporte, dashboard/index, creacion, dashboard/perfil, dashboard/configuracion, academia, agro, crypto, herramientas, tecnologia, social.
+   - `apps/gold/vercel.json`: cleanUrls + trailingSlash, redirects herramientas->tecnologia, rewrites tecnologia, routes para /academia, /crypto, /tecnologia y /music.
+   - `apps/gold/index.html`: navbar fija con links #inicio/#modulos/#testimonios, CTAs ENTRAR/REGISTRO, hero + cards de modulos.
+   - `apps/gold/dashboard/index.html`: dashboard con grid de modulos y stats.
+4) Supabase/auth: `apps/gold/assets/js/config/supabase-config.js` crea cliente con VITE_SUPABASE_URL/ANON_KEY; `authClient.js` importa config y gestiona sesiones + auth guard; `authUI.js` gestiona modales/login/registro; `dashboard/auth-guard.js` valida sesion con `window.supabase`/`AuthClient`.
+5) Dashboard (consultas actuales): `dashboard/index.html` usa `supabase.from('profiles').select('username, avatar_url')`, carga `modules` (select '*'), cuenta `user_favorites` y `notifications`; `ModuleManager/FavoritesManager/StatsManager` consultan `modules` + `user_favorites`. No integra progreso academico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`, etc.).
+6) Clima/Agro: `assets/js/geolocation.js` implementa prioridad Manual > GPS > IP, caches `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`; `agro/dashboard.js` usa `getCoordsSmart`, cache `yavlgold_weather_*`, funciones `initWeather`/`displayWeather`.
+7) Crypto: carpeta `apps/gold/crypto/` existe y esta registrada como pagina MPA.
+
+## Plan (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
+1) Extraer CSS del backup `index v9.4.html` y documentar paleta, variables, tipografia, motion, breakpoints, layout, componentes y estructura (sin inventar valores).
+2) Actualizar `apps/gold/docs/ADN-VISUAL-V9.4.md` con metadatos inmutables, fuente backup + SHA, y toda la extraccion.
+3) Eliminar el backup `index v9.4.html` de la raiz.
+4) Verificar SHA256 del index real antes/despues (sin cambios).
+5) Actualizar este AGENT_REPORT con resultados y pruebas.
+
+## DoD (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
+- [ ] Backup `index v9.4*.html` identificado y SHA documentado.
+- [ ] Visual DNA v9.4 documentado de forma completa (paleta/tokens/gradientes/sombras/typography/motion/layout/componentes/structure map) con metadatos inmutables.
+- [ ] Backup eliminado.
+- [ ] SHA256 del `apps/gold/index.html` antes = despues.
+- [ ] AGENT_REPORT actualizado con diagnostico/plan/resultados/pruebas.
+
+## Riesgos y mitigacion (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
+- Riesgo: fuentes remotas (Google Fonts/Font Awesome) no disponibles offline -> Mitigacion: documentar URLs exactas en Visual DNA.
+- Riesgo: variables heredadas/overrides (light-mode) -> Mitigacion: documentar :root y overrides por selector.
+- Riesgo: CSS extenso con colores repetidos -> Mitigacion: extraer valores exactos y marcar NO VERIFICADO si no se puede atribuir.
+- Riesgo: eliminar backup sin registrar hash -> Mitigacion: hash registrado antes de borrar.
+
+## Actualizacion de resultados (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
+- Visual DNA actualizado en `apps/gold/docs/ADN-VISUAL-V9.4.md` con extraccion forense desde backup.
+- Backup eliminado: `index v9.4.html` (raiz) ya no existe.
+- SHA256 index real antes: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
+- SHA256 index real despues: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
+- SHA256 backup documentado: E03164D2DA68358DBF8A4E99190E2CCBE406A0D64B83D82B4F0F1AF651EC5419.
+- Pruebas manuales: NO VERIFICADO (documentacion solamente).
+- Build `pnpm build:gold`: NO VERIFICADO (no ejecutado para evitar modificar `apps/gold/dist` en tarea de documentacion).
+
+## Diagnostico (tarea actual - Anexo Academia DNA v9.4)
+1) Documento Visual DNA v9.4 encontrado en `apps/gold/docs/ADN-VISUAL-V9.4.md` (hallazgo via busqueda de "VISUAL DNA" / "DNA" en docs). Contiene tokens/estilos de landing y no debe modificarse, solo append.
+2) Landing fuente real (no tocar): `apps/gold/index.html` (MPA input `main` en `apps/gold/vite.config.js`).
+3) Mapa MPA (Vite + Vercel):
+   - `apps/gold/vite.config.js` inputs: main, cookies, faq, soporte, dashboard/index, creacion, dashboard/perfil, dashboard/configuracion, academia, agro, crypto, herramientas, tecnologia, social.
+   - `apps/gold/vercel.json`: cleanUrls + trailingSlash, redirects herramientas->tecnologia, rewrites tecnologia, routes para /academia, /crypto, /tecnologia y /music.
+   - `apps/gold/index.html`: navbar fija + hero/feature cards.
+   - `apps/gold/dashboard/index.html`: dashboard con grid de modulos y stats.
+4) Supabase/Auth: `apps/gold/assets/js/config/supabase-config.js` crea cliente; `apps/gold/assets/js/auth/authClient.js` + `authUI.js` gestionan auth; `apps/gold/dashboard/auth-guard.js` valida sesion.
+5) Dashboard (estado actual): usa `profiles`, `modules`, `user_favorites`, `notifications` (ver `apps/gold/dashboard/index.html` + `apps/gold/assets/js/modules/moduleManager.js`), sin integrar progreso academico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`).
+6) Agro/Clima: `apps/gold/assets/js/geolocation.js` (prioridad Manual > GPS > IP; keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`); `apps/gold/agro/dashboard.js` usa `getCoordsSmart`, `initWeather`, `displayWeather` y cache `yavlgold_weather_*`.
+7) Crypto: carpeta `apps/gold/crypto/` existe y esta registrada como pagina MPA.
+8) Academia (fuentes a extraer):
+   - `apps/gold/academia/index.html` (identidad/mission + CSS inline + estructura de modulos).
+   - `apps/gold/academia/lecciones/*.html` y `apps/gold/academia/lecciones/modulo-1/*.html` (estilos/animaciones/estructura de lecciones).
+   - `apps/gold/assets/js/academia.js` (sistema progreso + colores de niveles).
+   - `apps/gold/assets/css/unificacion.css` y `apps/gold/assets/css/mobile-optimizations.css` (styles globales usados por academia; solo documentar lo diferencial si aplica).
+
+## Plan (tarea actual - Anexo Academia DNA v9.4)
+1) Extraer estilos/strings reales de Academia (HTML/inline CSS + JS) sin modificar archivos.
+2) Comparar tokens/estilos con DNA base y marcar "Global" vs "Solo Academia".
+3) Append al final de `apps/gold/docs/ADN-VISUAL-V9.4.md` un ANEXO INMUTABLE con metadatos, identidad/mision, componentes, motion, layout y conflictos.
+4) Actualizar AGENT_REPORT con fuentes y pruebas.
+
+## DoD (tarea actual - Anexo Academia DNA v9.4)
+- [ ] Visual DNA v9.4 identificado y no alterado (solo append).
+- [ ] Anexo Academia agregado con identidad/mision, UI diferencial, motion, layout, conflictos.
+- [ ] Fuentes de Academia listadas.
+- [ ] AGENT_REPORT actualizado con diagnostico/plan/pruebas.
+
+## Riesgos (tarea actual - Anexo Academia DNA v9.4)
+- Academia hereda estilos globales (`unificacion.css`), riesgo de duplicar tokens -> Mitigacion: marcar "Global" vs "Solo Academia" y listar solo lo diferencial.
+- Identidad/copy puede estar dispersa en varias lecciones -> Mitigacion: citar fragmentos cortos y documentar fuente exacta.
+- No modificar secciones previas del DNA -> Mitigacion: append-only al final.
+
+## Actualizacion de resultados (tarea actual - Anexo Academia DNA v9.4)
+- Se agrego ANEXO INMUTABLE al final de `apps/gold/docs/ADN-VISUAL-V9.4.md` con identidad/mision, tokens Academia, componentes, motion, layout y conflictos (append-only).
+- Fuentes usadas (lectura):
+  - `apps/gold/academia/index.html`
+  - `apps/gold/academia/lecciones/01-introduccion-cripto.html`
+  - `apps/gold/academia/lecciones/02-seguridad-basica.html`
+  - `apps/gold/academia/lecciones/03-trading-basico.html`
+  - `apps/gold/academia/lecciones/04-gestion-riesgo.html`
+  - `apps/gold/academia/lecciones/05-glosario.html`
+  - `apps/gold/academia/lecciones/modulo-1/01-que-es-bitcoin.html`
+  - `apps/gold/assets/js/academia.js`
+  - `apps/gold/assets/css/unificacion.css` (referencia global)
+  - `apps/gold/assets/css/mobile-optimizations.css` (referencia global)
+- Pruebas: NO VERIFICADO (documentacion solamente, sin ejecucion UI).
+- Build `pnpm build:gold`: NO VERIFICADO (tarea documental, evitar tocar `apps/gold/dist`).
+
+## Nota (tarea actual - Anexo Academia DNA v9.4)
+- Se agrego seccion 8 (Tipografia/Iconografia Academia) con imports y diferencia de Font Awesome.
