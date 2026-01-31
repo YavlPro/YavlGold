@@ -3412,3 +3412,11 @@ Implementar "smart retry" en frontend:
 - No se cambio logica IA ni llamada `supabase.functions.invoke('agro-assistant')`.
 - Pruebas manuales: NO VERIFICADO (usuario sin acceso local).
 - Build: `pnpm build:gold` OK (2026-01-31).
+## Actualizacion de resultados (tarea actual - Agro Assistant layout movil cobija)
+- Guia ahora colapsa automaticamente si hay mensajes (desktop y movil).
+- Guia queda dentro del scroll del chat (`assistant-scroll`) para que se vaya al scrollear.
+- Input mas compacto en movil; historial con padding/scroll-padding para evitar solape.
+- Boton `assistant-guide-toggle` permite expandir "Ver guia" cuando esta colapsada.
+- No se cambio logica IA ni llamada `supabase.functions.invoke('agro-assistant')`.
+- Pruebas manuales: NO VERIFICADO (usuario sin acceso local).
+- Build: `pnpm build:gold` OK (2026-01-31).

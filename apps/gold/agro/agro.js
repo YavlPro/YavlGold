@@ -5009,6 +5009,10 @@ function renderMessageContent(container, text) {
     container.appendChild(body);
 }
 
+function getAssistantScrollContainer() {
+    return document.getElementById('assistant-scroll') || document.getElementById('assistant-history');
+}
+
 function renderAssistantHistory() {
     const container = document.getElementById('assistant-history');
     if (!container) return;
@@ -5020,6 +5024,7 @@ function renderAssistantHistory() {
         empty.className = 'assistant-empty';
         empty.textContent = 'Inicia una conversacion para ver respuestas reales.';
         container.appendChild(empty);
+        syncAssistantGuideLayout({ messagesCount: 0 });
         return;
     }
 
@@ -5036,6 +5041,7 @@ function renderAssistantHistory() {
         renderMessageContent(message, item?.text || '');
         container.appendChild(message);
     });
+    syncAssistantGuideLayout({ messagesCount: messages.length });
     scrollAssistantToBottom(true);
 }
 
@@ -5045,7 +5051,7 @@ function isNearBottom(container) {
 }
 
 function scrollAssistantToBottom(force = false) {
-    const container = document.getElementById('assistant-history');
+    const container = getAssistantScrollContainer();
     if (!container) return;
     if (force || isNearBottom(container)) {
         container.scrollTop = container.scrollHeight;
@@ -5678,22 +5684,15 @@ function isLikelyNonAgroQuestion(text) {
     return hasNonAgro && !hasAgro;
 }
 
-function syncAssistantGuideLayout(forceCollapse = false) {
+function syncAssistantGuideLayout({ messagesCount = 0, forceCollapse = false } = {}) {
     const guide = document.getElementById('assistant-guide');
     const toggle = document.getElementById('assistant-guide-toggle');
     if (!guide || !toggle) return;
 
     const isMobile = window.matchMedia('(max-width: 640px)').matches;
-    if (forceCollapse && isMobile) {
-        guide.classList.add('is-collapsed');
-        toggle.setAttribute('aria-expanded', 'false');
-        return;
-    }
-
-    if (!isMobile) {
-        guide.classList.remove('is-collapsed');
-        toggle.setAttribute('aria-expanded', 'true');
-    }
+    const shouldCollapse = (messagesCount > 0) || (forceCollapse && isMobile);
+    guide.classList.toggle('is-collapsed', shouldCollapse);
+    toggle.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
 }
 
 function openAgroAssistant() {
@@ -5712,7 +5711,8 @@ function openAgroAssistant() {
         setAssistantStatus('En linea');
         setAssistantLoading(false);
         setAssistantDrawerOpen(false);
-        syncAssistantGuideLayout(true);
+        const initialMessages = preloadThreadMessages(assistantState.activeThreadId || '');
+        syncAssistantGuideLayout({ messagesCount: initialMessages.length, forceCollapse: true });
         updateAssistantCooldownUI();
         startAssistantCooldownTimer();
         const input = document.getElementById('agro-assistant-input');
