@@ -1020,6 +1020,32 @@ body.modal-open {
   resize: vertical;
 }
 
+#modal-agro-assistant .assistant-controls textarea {
+  color: var(--text-primary, #ffffff);
+  -webkit-text-fill-color: var(--text-primary, #ffffff);
+  caret-color: var(--gold-primary, #C8A752);
+  opacity: 1;
+}
+
+#modal-agro-assistant .assistant-controls textarea::placeholder {
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  opacity: 1;
+}
+
+#modal-agro-assistant .assistant-message,
+#modal-agro-assistant .assistant-message-body,
+#modal-agro-assistant .assistant-message-body p,
+#modal-agro-assistant .assistant-message-body li,
+#modal-agro-assistant .assistant-message-body span,
+#modal-agro-assistant .assistant-message-body code,
+#modal-agro-assistant .assistant-message-body pre,
+#modal-agro-assistant .assistant-message-body a {
+  opacity: 1;
+  mix-blend-mode: normal;
+  filter: none;
+  -webkit-text-fill-color: currentColor;
+}
+
 #modal-agro-assistant .assistant-mode-hint {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.65);

@@ -3345,3 +3345,26 @@ Implementar "smart retry" en frontend:
 
 ## Nota (tarea actual - Anexo Academia DNA v9.4)
 - Se agrego seccion 8 (Tipografia/Iconografia Academia) con imports y diferencia de Font Awesome.
+
+## Diagnostico (tarea actual - Agro Assistant texto invisible)
+1) En `apps/gold/agro/agro.css`, el textarea del asistente solo define tamanos (`#modal-agro-assistant .assistant-controls textarea`) y depende de `.styled-input` para color. Si algun estilo heredado (glass/filters/opacity) oscurece o anula el color, el texto puede quedar invisible.
+2) Los mensajes (`.assistant-message` y variantes) tienen color definido, pero no fuerzan `opacity`, `mix-blend-mode` ni `-webkit-text-fill-color`, por lo que un efecto heredado podria volverlos invisibles.
+3) No se uso DevTools aqui; el diagnostico se basa en lectura de CSS/HTML. Estado: NO VERIFICADO en runtime.
+
+## Plan (tarea actual - Agro Assistant texto invisible)
+1) En `apps/gold/agro/agro.css`, agregar overrides de visibilidad para el input/textarea del asistente: `color`, `caret-color`, `opacity: 1`, `-webkit-text-fill-color`, y placeholder visible.
+2) En `apps/gold/agro/agro.css`, reforzar visibilidad de mensajes: `opacity: 1`, `mix-blend-mode: normal`, `filter: none`, `-webkit-text-fill-color: currentColor` en `assistant-message` y contenido.
+3) No tocar JS ni la llamada `supabase.functions.invoke('agro-assistant')`.
+4) Ejecutar `pnpm build:gold` y documentar resultado.
+
+## DoD (tarea actual - Agro Assistant texto invisible)
+- [ ] Input/textarea visible (color/caret/opacity correctos).
+- [ ] Mensajes user/assistant visibles en historial.
+- [ ] Sin cambios en logica de IA.
+- [ ] Sin mojibake nuevo.
+- [ ] `pnpm build:gold` OK.
+## Actualizacion de resultados (tarea actual - Agro Assistant texto invisible)
+- CSS actualizado en `apps/gold/agro/agro.css` para forzar visibilidad de texto en input y mensajes (color/caret/opacity y neutralizacion de blend/filter).
+- No se cambio JS ni la llamada `supabase.functions.invoke('agro-assistant')`.
+- Pruebas manuales: NO VERIFICADO (no se abrio UI).
+- Build: `pnpm build:gold` OK (2026-01-31).
