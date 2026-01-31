@@ -3368,3 +3368,23 @@ Implementar "smart retry" en frontend:
 - No se cambio JS ni la llamada `supabase.functions.invoke('agro-assistant')`.
 - Pruebas manuales: NO VERIFICADO (no se abrio UI).
 - Build: `pnpm build:gold` OK (2026-01-31).
+## Diagnostico (tarea actual - Agro Assistant hotfix !important)
+1) En produccion el textarea muestra placeholder pero no el texto ingresado; indica conflicto de CSS (color/text-fill/caret/opacity o mix-blend/filter heredado) en el input real `#agro-assistant-input`.
+2) El historial ya existe (threads), pero el texto puede quedar invisible por estilos heredados; se requiere override ultra-especifico con !important.
+
+## Plan (tarea actual - Agro Assistant hotfix !important)
+1) En `apps/gold/agro/agro.css`, agregar un bloque al final con selectores ultra-especificos para `#agro-assistant-input` (color, text-fill, caret, opacity, filter, mix-blend-mode, background).
+2) Forzar placeholder visible con `::placeholder` y `-webkit-text-fill-color`.
+3) Forzar visibilidad de mensajes en `.assistant-history` y contenido textual (assistant-message/body) sin afectar botones.
+4) Ejecutar `pnpm build:gold` y registrar resultado.
+
+## DoD (tarea actual - Agro Assistant hotfix !important)
+- [ ] Texto y cursor visibles en input del asistente.
+- [ ] Mensajes del historial visibles (user/assistant).
+- [ ] Sin cambios de logica IA.
+- [ ] `pnpm build:gold` OK.
+## Actualizacion de resultados (tarea actual - Agro Assistant hotfix !important)
+- Se agrego override ultra-especifico con !important para `#agro-assistant-input` y mensajes en `apps/gold/agro/agro.css`.
+- No se toco JS ni la llamada `supabase.functions.invoke('agro-assistant')`.
+- Pruebas manuales: NO VERIFICADO (usuario no puede abrir local).
+- Build: `pnpm build:gold` OK (2026-01-31).

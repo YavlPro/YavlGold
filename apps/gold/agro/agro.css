@@ -1046,6 +1046,44 @@ body.modal-open {
   -webkit-text-fill-color: currentColor;
 }
 
+/* HOTFIX: Agro Assistant visibility (input + messages) */
+#modal-agro-assistant #agro-assistant-input,
+#modal-agro-assistant textarea#agro-assistant-input,
+#modal-agro-assistant input#agro-assistant-input {
+  color: var(--text-primary, #eaeaea) !important;
+  -webkit-text-fill-color: var(--text-primary, #eaeaea) !important;
+  caret-color: var(--gold-primary, #c8a752) !important;
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  text-shadow: none !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+}
+
+#modal-agro-assistant #agro-assistant-input::placeholder {
+  color: rgba(234, 234, 234, 0.45) !important;
+  -webkit-text-fill-color: rgba(234, 234, 234, 0.45) !important;
+}
+
+#modal-agro-assistant .assistant-history,
+#modal-agro-assistant .assistant-history * {
+  mix-blend-mode: normal !important;
+  filter: none !important;
+}
+
+#modal-agro-assistant .assistant-history .assistant-message,
+#modal-agro-assistant .assistant-history .assistant-message-body,
+#modal-agro-assistant .assistant-history .assistant-message-body p,
+#modal-agro-assistant .assistant-history .assistant-message-body li,
+#modal-agro-assistant .assistant-history .assistant-message-body pre,
+#modal-agro-assistant .assistant-history .assistant-message-body code,
+#modal-agro-assistant .assistant-history .assistant-message-body span,
+#modal-agro-assistant .assistant-history .assistant-message-body a {
+  color: var(--text-primary, #eaeaea) !important;
+  -webkit-text-fill-color: var(--text-primary, #eaeaea) !important;
+  opacity: 1 !important;
+}
+
 #modal-agro-assistant .assistant-mode-hint {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.65);
