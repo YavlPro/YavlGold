@@ -3420,3 +3420,41 @@ Implementar "smart retry" en frontend:
 - No se cambio logica IA ni llamada `supabase.functions.invoke('agro-assistant')`.
 - Pruebas manuales: NO VERIFICADO (usuario sin acceso local).
 - Build: `pnpm build:gold` OK (2026-01-31).
+## Diagnostico (tarea actual - Normalizar Academia a DNA v9.4)
+1) `apps/gold/academia/index.html` y lecciones contienen :root con overrides de tokens globales (`--color-primary`, `--bg-dark`, `--bg-darker`, `--card-bg`) que divergen del DNA base y de `unificacion.css`.
+2) El fondo del body en Academia usa `var(--bg-darker)` y en algunos casos gradientes con `--bg-dark`; el token correcto para pagina completa segun DNA es `--bg-body`.
+3) Se detectan hardcodes en Academia equivalentes a #0a0a0a / #111111 / rgba(17,17,17,.9) en :root y estilos inline.
+
+## Plan (tarea actual - Normalizar Academia a DNA v9.4)
+1) Remover/ajustar overrides en :root que redefinen tokens globales, dejando solo tokens especificos de Academia si son necesarios.
+2) Cambiar fondo de pagina (body/html wrapper) a `var(--bg-body)` en Academia y lecciones.
+3) Reemplazar hardcodes de superficies y cards por variables del DNA (`--bg-body`, `--bg-dark`, `--card-bg`, `--card-bg-solid`).
+4) Ejecutar `pnpm build:gold` y documentar resultado.
+
+## DoD (tarea actual - Normalizar Academia a DNA v9.4)
+- [ ] Fondo full-page en Academia usa `var(--bg-body)`.
+- [ ] Overrides locales que redefinen tokens globales eliminados/ajustados.
+- [ ] Hardcodes de #0a0a0a/#111111/rgba(17,17,17,0.9) reemplazados por tokens.
+- [ ] Sin cambios de JS/logica.
+- [ ] `pnpm build:gold` OK.
+## Actualizacion de resultados (tarea actual - Normalizar Academia a DNA v9.4)
+- Se removieron overrides locales de tokens globales en :root de Academia (color/bg/card/gradiente/transition) para usar `unificacion.css`.
+- Fondo full-page cambiado a `var(--bg-body)` en Academia (index + lecciones).
+- Hardcodes reemplazados en Academia:
+  - `#0a0a0a` -> `var(--bg-dark)` (eliminado por removers en :root)
+  - `#111111` -> `var(--card-bg-solid)` / tokens base (eliminado por removers en :root)
+  - `rgba(17, 17, 17, 0.9)` -> `var(--card-bg)` (gradientes en index)
+- Archivos ajustados:
+  - `apps/gold/academia/index.html`
+  - `apps/gold/academia/lecciones/01-introduccion-cripto.html`
+  - `apps/gold/academia/lecciones/02-seguridad-basica.html`
+  - `apps/gold/academia/lecciones/03-trading-basico.html`
+  - `apps/gold/academia/lecciones/04-gestion-riesgo.html`
+  - `apps/gold/academia/lecciones/05-glosario.html`
+  - `apps/gold/academia/lecciones/modulo-1/01-que-es-bitcoin.html`
+- Pruebas manuales: NO VERIFICADO.
+- Build: `pnpm build:gold` OK (2026-01-31).
+## Verificacion (tarea actual - Normalizar Academia a DNA v9.4)
+- Sweep hardcodes en `apps/gold/academia/**`: NO se encontraron `#0a0a0a`, `#111111`, `rgb(10,10,10)`, `rgb(17,17,17)`.
+- Sweep overrides globales: solo quedan `:root` con tokens especificos de Academia (success/warning/error/gradientes), sin redefinir bg/body/card.
+- Gradientes en index usan `var(--card-bg)`; no hay gradientes invalidos.
