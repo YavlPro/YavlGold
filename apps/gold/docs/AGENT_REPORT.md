@@ -3634,4 +3634,26 @@ Implementar "smart retry" en frontend:
 - Eliminados hardcodes de color en apps/gold/assets/css/dashboard.css; reemplazados por tokens DNA (bg-body, card-bg, color-secondary, gold-dark/light, text-light/muted, border-gold, gg-error).
 - Gradientes, sombras y estados hover/disabled ahora usan variables (color-mix con tokens) en lugar de hex/rgba.
 - Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Academia lecciones keyframes canonicos)
+1) En lecciones de Academia existen @keyframes con nombres canonicos (ej: shimmer/pulse) que pueden diferir del Motion Pack v9.4.
+2) Restriccion: no tocar index.html ni JS; solo ajustar archivos de lecciones si corresponde.
+3) Se requiere decidir caso por caso: eliminar duplicado identico, normalizar si no intencional, o documentar excepcion si es tematico.
+
+## Plan (tarea actual - Academia lecciones keyframes canonicos)
+1) Auditar lecciones para @keyframes con nombres canonicos (pulse/shimmer/float/breathe/textGlow).
+2) Comparar contenido contra Motion Pack v9.4.
+3) Clasificar: identico (eliminar), distinto no intencional (normalizar), distinto intencional (dejar y documentar).
+4) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Academia lecciones keyframes canonicos)
+- [ ] Lecciones auditadas; canonicos detectados.
+- [ ] Duplicados identicos eliminados si aplica.
+- [ ] Variantes intencionales documentadas como excepcion.
+- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Academia lecciones keyframes canonicos)
+- Lecciones con keyframes canonicos detectadas:
+  - apps/gold/academia/lecciones/01-introduccion-cripto.html: @keyframes shimmer (variante distinta a canon).
+  - apps/gold/academia/lecciones/02-seguridad-basica.html: @keyframes pulse (variante distinta a canon).
+- Decision: Se mantienen como excepciones intencionales (efectos didacticos/tematicos locales en lecciones) y se documentan; no se eliminan ni se reemplazan por .yg-*.
+- No se tocaron archivos de lecciones ni index.html.
+- Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
