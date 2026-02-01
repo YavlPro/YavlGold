@@ -26,6 +26,64 @@ const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 
 // ============================================================
+// DATE VALIDATION HELPERS (V9.6.6)
+// Block future dates and invalid dates like 2026-02-30
+// ============================================================
+
+/**
+ * Get today's date in YYYY-MM-DD format using LOCAL timezone (not UTC).
+ * Critical: toISOString() returns UTC date which can be wrong after 8pm local.
+ */
+function getTodayLocalISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Validate that a string is a valid YYYY-MM-DD date that actually exists.
+ * Detects invalid dates like 2026-02-30 or 2026-13-01.
+ */
+function isValidISODate(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return false;
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateStr)) return false;
+
+    const [yyyy, mm, dd] = dateStr.split('-').map(Number);
+    // Create date in local timezone
+    const dateObj = new Date(yyyy, mm - 1, dd);
+    // Round-trip check: if 2026-02-30 is passed, Date will auto-correct to 2026-03-02
+    return dateObj.getFullYear() === yyyy &&
+        dateObj.getMonth() === mm - 1 &&
+        dateObj.getDate() === dd;
+}
+
+/**
+ * Assert that a date is not in the future (local timezone).
+ * Returns { valid: boolean, error: string|null }
+ */
+function assertDateNotFuture(dateStr, fieldLabel = 'Fecha') {
+    if (!dateStr) {
+        return { valid: false, error: `${fieldLabel} es requerida.` };
+    }
+    if (!isValidISODate(dateStr)) {
+        return { valid: false, error: `${fieldLabel} inválida (ej: día no existe).` };
+    }
+    const todayLocal = getTodayLocalISO();
+    if (dateStr > todayLocal) {
+        return { valid: false, error: `No se permiten fechas futuras.` };
+    }
+    return { valid: true, error: null };
+}
+
+// Expose globally for index.html inline scripts
+window.getTodayLocalISO = getTodayLocalISO;
+window.isValidISODate = isValidISODate;
+window.assertDateNotFuture = assertDateNotFuture;
+
+// ============================================================
 // V9.6: PLANTILLAS LOCALES (TACHIRA)
 // ============================================================
 const CROP_TEMPLATES_ENDPOINTS = ['/agro/crops_data.json', './crops_data.json'];
@@ -1218,10 +1276,18 @@ async function saveEditModal() {
             conceptForSave = buildConceptWithWho(tabName, conceptValue, whoValue);
         }
 
+        // V9.6.6: Validate date before update
+        const editDateValue = document.getElementById('edit-fecha')?.value;
+        const dateCheck = assertDateNotFuture(editDateValue, 'Fecha');
+        if (!dateCheck.valid) {
+            alert(dateCheck.error);
+            return;
+        }
+
         const updateData = {
             [config.conceptField]: conceptForSave,
             [config.amountField]: parseFloat(document.getElementById('edit-monto')?.value) || 0,
-            [config.dateField]: document.getElementById('edit-fecha')?.value,
+            [config.dateField]: editDateValue,
             crop_id: document.getElementById('edit-crop-id')?.value || null
         };
 
@@ -3861,6 +3927,13 @@ async function saveIncome() {
         return;
     }
 
+    // V9.6.6: Block future dates and invalid dates
+    const dateCheck = assertDateNotFuture(dateVal, 'Fecha');
+    if (!dateCheck.valid) {
+        alert('⚠️ ' + dateCheck.error);
+        return;
+    }
+
     const originalText = btnSave?.textContent || '';
     if (btnSave) {
         btnSave.textContent = 'Guardando...';
@@ -4345,16 +4418,20 @@ function initFinanceFormHandlers() {
         }
     ];
 
-    const today = new Date().toISOString().split('T')[0];
+    // V9.6.6: Use local timezone to get today's date (not UTC)
+    const today = getTodayLocalISO();
 
     formConfigs.forEach((config) => {
         const form = document.getElementById(config.id);
         if (!form || form.dataset.bound === 'true') return;
         form.dataset.bound = 'true';
 
-        // Set default date
+        // Set default date and max
         const dateInput = form.querySelector('input[type="date"]');
-        if (dateInput && !dateInput.value) dateInput.value = today;
+        if (dateInput) {
+            if (!dateInput.value) dateInput.value = today;
+            dateInput.max = today; // V9.6.6: Block future dates
+        }
 
         if (config.unitPrefix) {
             const unitSelect = form.querySelector(`#${config.unitPrefix}-unit-type`);
@@ -4375,6 +4452,12 @@ function initFinanceFormHandlers() {
                 const formData = config.getFormData(form);
                 if (!formData.concepto || formData.monto <= 0 || !formData.fecha) {
                     throw new Error('Completa Concepto, Monto y Fecha.');
+                }
+
+                // V9.6.6: Block future dates and invalid dates
+                const dateCheck = assertDateNotFuture(formData.fecha, 'Fecha');
+                if (!dateCheck.valid) {
+                    throw new Error(dateCheck.error);
                 }
 
                 // Evidence (optional)

@@ -1,5 +1,37 @@
 ﻿---
 
+## 🔒 SESIÓN: Facturero Date Validation (2026-02-01)
+
+### Diagnóstico
+1. **Inputs tipo date** (6 total): expense-date, input-fecha-pendiente, input-fecha-perdida, input-fecha-transferencia, edit-fecha, income-date
+2. **Bug UTC**: línea 4348 usa `toISOString()` que retorna fecha UTC, no local
+3. **Handlers sin validación de fecha futura**: Expenses (index.html:2513), Pending/Loss/Transfer (agro.js:4376), Modal edit (agro.js:1224)
+4. **Cultivos YA validan** (index.html:2268)
+
+### Plan
+1. Helpers en agro.js: `getTodayLocalISO()`, `isValidISODate()`, `assertDateNotFuture()`
+2. Setear `max=todayLocal` en todos los inputs date
+3. Validar en cada handler antes de insert/update
+
+### DoD
+- [x] Bloquear fecha > HOY local
+- [x] Bloquear fechas inválidas (2026-02-30)
+- [x] Validar en modal de edición
+- [x] UX mensaje claro
+- [x] Build PASS
+
+### Archivos Modificados
+- `agro.js` — Helpers (getTodayLocalISO, isValidISODate, assertDateNotFuture), validación en pending/loss/transfer/income/edit-modal
+- `index.html` — Validación en expenses, max attr, UTC fixes
+
+### Resultado
+✅ Build PASS: `pnpm build:gold`
+✅ 5 handlers validados (pending, loss, transfer, expenses, income, edit-modal)
+✅ UTC bug corregido (usaba toISOString, ahora getTodayLocalISO)
+✅ max attr = hoy local en todos los inputs date
+
+---
+
 ## 🛠️ SESIÓN: Facturero Scroll/Style Consistency (2026-02-01)
 
 ### Diagnóstico
