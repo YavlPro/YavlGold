@@ -3611,4 +3611,27 @@ Implementar "smart retry" en frontend:
 - Las reglas animation existentes ahora usan las keyframes canonicas del Motion Pack v9.4.
 - prefers-reduced-motion intacto (sin cambios en el bloque).
 - Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Dashboard tokens DNA v9.4)
+1) dashboard.css contiene hardcodes (hex/rgba) en fondos, bordes, sombras y badges.
+2) Se requiere alinear dashboard a tokens del DNA (bg/body/surfaces/text/accent) sin tocar index.html ni JS.
+3) Objetivo: reemplazar hardcodes por variables del DNA manteniendo contraste y estados.
+
+## Plan (tarea actual - Dashboard tokens DNA v9.4)
+1) Auditar apps/gold/assets/css/dashboard.css para hardcodes de color.
+2) Reemplazar por tokens del DNA (bg-body, bg-dark, card-bg, color-secondary, gold-dark/light, text-primary/light/muted, border-gold, gg-error).
+3) Revisar hover/focus/disabled y asegurar contraste.
+4) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Dashboard tokens DNA v9.4)
+- [ ] Hardcodes eliminados en dashboard.css (hex/rgb/hsl/black/white).
+- [ ] Cards/botones/badges alineados a tokens v9.4.
+- [ ] Contraste/caret/placeholder OK.
+- [ ] Mobile OK.
+- [ ] pnpm build:gold OK.
+
+## Riesgos (tarea actual - Dashboard tokens DNA v9.4)
+- Cambios sutiles en intensidad de sombras/gradientes al usar tokens canonicos.## Actualizacion de resultados (tarea actual - Dashboard tokens DNA v9.4)
+- Eliminados hardcodes de color en apps/gold/assets/css/dashboard.css; reemplazados por tokens DNA (bg-body, card-bg, color-secondary, gold-dark/light, text-light/muted, border-gold, gg-error).
+- Gradientes, sombras y estados hover/disabled ahora usan variables (color-mix con tokens) en lugar de hex/rgba.
+- Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
