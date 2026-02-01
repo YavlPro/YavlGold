@@ -1,5 +1,37 @@
 ﻿---
 
+## 📅 SESIÓN: Agro Stats Cultivos (Single Crop) (2026-02-01)
+
+### Diagnóstico
+1. **MPA + navegación**: `apps/gold/vite.config.js` define entradas main/cookies/faq/soporte/dashboard/creacion/perfil/configuracion/academia/agro/crypto/herramientas/tecnologia/social. `apps/gold/vercel.json` tiene cleanUrls/trailingSlash, redirects `/herramientas -> /tecnologia`, rewrites `/tecnologia`, y routes para `/academia`, `/crypto`, `/tecnologia`, `/music`. `apps/gold/index.html` es landing con navbar/cards; `apps/gold/dashboard/index.html` es panel autenticado.
+2. **Supabase/auth**: `apps/gold/assets/js/config/supabase-config.js` crea el cliente. Auth en `assets/js/auth/authClient.js` + `authUI.js`. Guard de dashboard en `dashboard/auth-guard.js`.
+3. **Dashboard datos**: `dashboard/index.html` consulta `profiles` (username/avatar) y `modules`, y cuenta `user_favorites` + `notifications`. Managers en `assets/js/modules/moduleManager.js` y componentes de `announcements`/`feedback`. Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) está en `assets/js/academia.js`, no integrado al dashboard.
+4. **Agro/Clima**: prioridad Manual > GPS > IP en `assets/js/geolocation.js` (`getCoordsSmart`). Uso en `agro/dashboard.js` (`initWeather`, `displayWeather`). Keys: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+5. **Crypto**: `apps/gold/crypto/` tiene HTML/JS/CSS y backups; se integra como página MPA dentro de `apps/gold` (input ya en Vite).
+6. **Bug**: `apps/gold/agro/agro-stats.js` renderiza “Más/Menos cultivado” en `stats-crop-most`/`stats-crop-least` sin detectar el caso de un solo cultivo, causando duplicado visual.
+
+### Plan
+1. Ajustar **solo presentación** en `apps/gold/agro/agro-stats.js` para detectar `length === 1` y renderizar “🌾 Cultivo único”, ocultando “Menos cultivado”.
+2. Mantener comportamiento actual para 2+ cultivos y ajustar texto de 0 cultivos a “Sin cultivos registrados”.
+3. Actualizar este `apps/gold/docs/AGENT_REPORT.md` con diagnóstico/plan/resultado.
+4. Ejecutar `pnpm build:gold` y reportar.
+
+### DoD
+- [x] 0 cultivos: “Sin cultivos registrados”.
+- [x] 1 cultivo: solo “Cultivo único”.
+- [x] 2+ cultivos: más/menos intacto.
+- [x] Build PASS.
+
+### Archivos modificados
+- `apps/gold/agro/agro-stats.js` — lógica de presentación para caso 1 cultivo + texto de vacío.
+- `apps/gold/docs/AGENT_REPORT.md` — diagnóstico/plan/resultado de esta sesión.
+
+### Resultado
+✅ “Cultivo único” se muestra cuando hay un solo cultivo, ocultando “Menos cultivado”.
+✅ Estado vacío ahora indica “Sin cultivos registrados”.
+✅ 2+ cultivos conservan más/menos.
+✅ Build PASS: `pnpm build:gold`.
+
 ## 📅 SESIÓN: Facturero History Ordering & Day Grouping (2026-02-01)
 
 ### Diagnóstico
@@ -3952,4 +3984,3 @@ Implementar "smart retry" en frontend:
 - Search .search-container actualizado con overlay/shine/lift y focus-within usando tokens DNA.
 - Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
-

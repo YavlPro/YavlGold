@@ -270,7 +270,7 @@ function computeCropExtremes(rows) {
 }
 
 function formatCropExtreme(entries, count) {
-    if (!entries || entries.length === 0) return 'Sin datos (0)';
+    if (!entries || entries.length === 0) return 'Sin cultivos registrados';
     if (entries.length === 1) {
         return `${entries[0].label} (${entries[0].count || count || 0})`;
     }
@@ -626,10 +626,33 @@ export function updateUIFromSummary(summary) {
     // 1.3 Cultivo más/menos cultivado
     const cropExtremes = summary.cropExtremes || { most: [], least: [], max: 0, min: 0 };
     const cropMostEl = document.getElementById('stats-crop-most');
-    if (cropMostEl) cropMostEl.textContent = formatCropExtreme(cropExtremes.most, cropExtremes.max);
     const cropLeastEl = document.getElementById('stats-crop-least');
-    if (cropLeastEl) cropLeastEl.textContent = formatCropExtreme(cropExtremes.least, cropExtremes.min);
     const cropBestSoldEl = document.getElementById('stats-crop-best-sold');
+
+    const cropMostRow = cropMostEl?.closest('.stats-units-row');
+    const cropLeastRow = cropLeastEl?.closest('.stats-units-row');
+    const cropMostLabel = cropMostRow?.querySelector('.kpi-tag');
+    const cropLeastLabel = cropLeastRow?.querySelector('.kpi-tag');
+
+    const isSingleCrop = cropExtremes.most?.length === 1
+        && cropExtremes.least?.length === 1
+        && cropExtremes.most[0]?.key
+        && cropExtremes.most[0].key === cropExtremes.least[0]?.key;
+
+    if (isSingleCrop) {
+        const uniqueCrop = cropExtremes.most[0];
+        const count = Number(uniqueCrop?.count ?? cropExtremes.max ?? 0) || 0;
+        if (cropMostLabel) cropMostLabel.textContent = '🌾 Cultivo único';
+        if (cropMostEl) cropMostEl.textContent = `${uniqueCrop.label} (${count})`;
+        if (cropLeastRow) cropLeastRow.style.display = 'none';
+    } else {
+        if (cropLeastRow) cropLeastRow.style.display = '';
+        if (cropMostLabel) cropMostLabel.textContent = 'Más cultivado';
+        if (cropLeastLabel) cropLeastLabel.textContent = 'Menos cultivado';
+        if (cropMostEl) cropMostEl.textContent = formatCropExtreme(cropExtremes.most, cropExtremes.max);
+        if (cropLeastEl) cropLeastEl.textContent = formatCropExtreme(cropExtremes.least, cropExtremes.min);
+    }
+
     if (cropBestSoldEl) cropBestSoldEl.textContent = formatTopSellingCrop(summary.topSellingCrop);
 
     // 2. ROI Badge (neutral when N/A) + "Sin ventas registradas" message
