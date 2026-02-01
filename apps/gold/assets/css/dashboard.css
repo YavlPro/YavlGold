@@ -13,7 +13,17 @@
   overflow-x: hidden;
 }
 
-.yg-bg-emoji {
+.welcome-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-section > * {
+  position: relative;
+  z-index: 1;
+}
+
+.welcome-section .yg-bg-emoji {
   position: absolute;
   top: 20%;
   right: 10%;
@@ -386,9 +396,10 @@
 
 /* ━━━ RESPONSIVE ━━━ */
 @media (max-width: 768px) {
-  .yg-bg-emoji {
-    right: -6%;
-    top: 12%;
+  .welcome-section .yg-bg-emoji {
+    right: 6%;
+    top: 18%;
+    font-size: 150px;
   }
 
   .dashboard-main {
@@ -678,4 +689,82 @@
     opacity: 1 !important;
     transform: none !important;
   }
+}
+
+/* ??? DASHBOARD KPI + INSIGHTS CARDS (DNA v9.4) ??? */
+.stat-card,
+.insight-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-gold);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-gold-sm);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.stat-card::after,
+.insight-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-gold);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stat-card > *,
+.insight-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card:hover,
+.insight-card:hover {
+  transform: translateY(-12px);
+  box-shadow: var(--shadow-gold-xl);
+  border-color: var(--border-gold-hover);
+}
+
+.stat-card:hover::after,
+.insight-card:hover::after {
+  opacity: 0.1;
+}
+
+.stat-number,
+.insight-name {
+  color: var(--text-primary);
+}
+
+.stat-label,
+.insight-meta,
+.insight-title {
+  color: var(--text-muted);
+}
+
+.insight-action {
+  background: var(--gradient-gold);
+  color: var(--bg-darker);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.insight-action:hover {
+  box-shadow: var(--shadow-gold-md);
+}
+
+/* ✅ Premium keyboard focus */
+.insight-action:focus-visible {
+  outline: none;
+  border-color: var(--border-gold-hover);
+  box-shadow: var(--shadow-gold-xl);
+}
+
+.insight-action.disabled {
+  background: var(--card-bg);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+  box-shadow: none;
 }

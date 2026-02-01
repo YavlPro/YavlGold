@@ -3675,4 +3675,38 @@ Implementar "smart retry" en frontend:
 - Estilos añadidos en apps/gold/assets/css/dashboard.css para posicion, opacidad y z-index; contenido en dashboard-container queda encima.
 - Ajuste mobile aplicado para mover el emoji sin afectar desktop.
 - Pruebas manuales: NO VERIFICADO.
-- Build: pnpm build:gold OK (2026-02-01).
+- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Dashboard emoji + cards premium)
+1) El emoji ?? decorativo no esta anclado al hero y aparece mas abajo de lo esperado.
+2) Las tarjetas KPI y cards principales del dashboard tienen poco contraste vs el DNA v9.4.
+3) Se requiere alinear posicion del emoji y aplicar receta de Module Card del DNA (tokens canonicos, hover lift + glow).
+
+## Plan (tarea actual - Dashboard emoji + cards premium)
+1) Reubicar el emoji dentro de la seccion hero/bienvenida y usar anclaje relativo en esa seccion.
+2) Ajustar CSS de .yg-bg-emoji para top/right correctos y responsive mobile.
+3) Actualizar estilos de tarjetas KPI y cards principales con tokens del DNA (card-bg, border-gold, shadow-gold, gradient-gold) y hover premium.
+4) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Dashboard emoji + cards premium)
+- [ ] Emoji anclado al hero arriba derecha con yg-float.
+- [ ] Cards KPI y principales con contraste premium y hover lift + glow.
+- [ ] Mobile OK.
+- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Dashboard emoji + cards premium)
+- Emoji ?? reubicado dentro de la seccion de bienvenida (hero) en apps/gold/dashboard/index.html.
+- Seccion welcome anclada como contenedor relativo; emoji posicionado arriba derecha y responsive con tamano reducido en mobile.
+- KPI cards (.stat-card) y cards principales (.insight-card) normalizadas a receta DNA v9.4: background var(--card-bg), border var(--border-gold), hover lift + shadow-gold + overlay con var(--gradient-gold).
+- Tokens usados: --card-bg, --border-gold, --border-gold-hover, --shadow-gold-sm/md/xl, --gradient-gold, --text-primary, --text-muted, --bg-darker, --border-color.
+- Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Focus visible Dashboard CTA)
+1) Los estados hover de .insight-action ya estan definidos, pero no hay enfoque visible equivalente.
+2) Se requiere agregar :focus-visible con tokens del DNA sin tocar JS.
+
+## Plan (tarea actual - Focus visible Dashboard CTA)
+1) Agregar estilos :focus-visible para .insight-action usando border-gold-hover + shadow-gold-md/xl.
+2) Mantener compatibilidad con hover y sin cambios de layout.
+3) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Focus visible Dashboard CTA)
+- [ ] :focus-visible definido para .insight-action.
+- [ ] Tokens DNA usados.
+- [ ] pnpm build:gold OK.## Actualizacion (tarea actual - Focus visible Dashboard CTA)
+- Bloque .insight-action ajustado para reflejar snippet final (comentario premium focus + orden de propiedades).
