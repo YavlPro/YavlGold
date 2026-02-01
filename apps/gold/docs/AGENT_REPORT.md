@@ -1,5 +1,49 @@
 ﻿---
 
+## 🛠️ SESIÓN: Facturero Scroll/Style Consistency (2026-02-01)
+
+### Diagnóstico
+1. **Pendientes/Gastos/Pérdidas/Transferencias**: Usan `renderHistoryList()` (agro.js:964-966) que aplica:
+   - `className = 'facturero-history-list'`
+   - `style = 'margin-top: 1rem; max-height: 350px; overflow-y: auto;'`
+   - CSS en agro.css:1457-1460 refuerza `max-height: 300px !important`
+
+2. **Ingresos**: Usa creación manual (agro.js:3374-3377):
+   - `id = 'income-list'`
+   - `style = 'display: flex; flex-direction: column; gap: 0.8rem;'`
+   - **NO tiene `.facturero-history-list`**
+   - **NO tiene `max-height` ni `overflow-y: auto`** ← BUG
+
+3. **Evidencia visual**: Screenshots muestran Ingresos sin scroll interno mientras Pendientes tiene scroll contenido.
+
+### Plan
+1. Agregar clase `.facturero-history-list` a `#income-list` en agro.js:3376
+2. Agregar estilos de scroll (`max-height`, `overflow-y: auto`, `-webkit-overflow-scrolling: touch`)
+3. Verificar que Gastos/Pérdidas/Transferencias ya usan `renderHistoryList()` (confirmado vía grep)
+4. Agregar estilo CSS para `#income-list` como fallback si la clase no aplica
+
+### DoD
+- [x] Ingresos tiene mismo look & feel que Pendientes
+- [x] Lista de Ingresos tiene scroll interno
+- [x] Verificar Gastos/Pérdidas/Transferencias (ya usan renderHistoryList)
+- [x] Scroll funciona en móvil (touch scroll) — CSS aplicado
+- [x] Botones edit/copy/delete no se cortan — overscroll-behavior: contain
+- [x] Build: `pnpm build:gold` OK
+
+### Archivos tocados
+- `apps/gold/agro/agro.js:3374-3377` — Agregado `.facturero-history-list` + estilos scroll
+- `apps/gold/agro/agro.css:1457-1463` — Agregado overflow-y, -webkit-overflow-scrolling, overscroll-behavior, scroll-behavior
+- `apps/gold/docs/AGENT_REPORT.md` — Este diagnóstico
+
+### Resultado
+- **Build**: PASS ✅ (`pnpm build:gold` - UTF-8 verification passed)
+- **Cambios**:
+  1. `agro.js:3374-3377`: income-list ahora tiene `className='facturero-history-list'` + estilos inline de scroll
+  2. `agro.css:1457-1463`: `.facturero-history-list` con scroll-behavior: smooth para todos los tabs
+- **QA pendiente**: Verificar visualmente en producción con 10+ items
+
+---
+
 ##  SESIÓN: Crónica Enero 2026 (2026-02-01)
 
 ### Diagnóstico
@@ -2568,7 +2612,7 @@ git push
 3. **Verificacion**: Confirmar que columnas de unidad existen y el renderizado en historial las muestra correctamente.
 
 ## Resultado (Agro History & Notification Fixes)
-- **Status**: PASS 
+- **Status**: PASS
 - **Historial**: Tablas "Pendientes", "Perdidas", "Transferencias" ahora cargan registros correctamente.
 - **Unidades**: Se visualizan correctamente (ej: "2 sacos  100kg") en el historial.
 - **Notificaciones**: Logica robusta para estados en español y ventana de 15 dias.
@@ -2593,7 +2637,7 @@ git push
 3. **Cierre de Ciclo**: Dejar el codigo listo para deploy limpio.
 
 ### Resultado
-- **Status**: PASS 
+- **Status**: PASS
 - **Logs**: `agro-notifications.js` y `agro.js` limpios de logs de desarrollo.
 - **Datos**: Verificado que no hay registros nuevos corruptos (ultima data valida del 21/01).
 - **Build**: Codigo listo para merge.

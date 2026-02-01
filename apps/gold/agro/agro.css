@@ -1457,6 +1457,10 @@ body.modal-open {
 .facturero-history-list {
   margin-top: 0.6rem !important;
   max-height: 300px !important;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
 }
 
 .facturero-item {

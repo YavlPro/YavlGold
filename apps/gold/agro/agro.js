@@ -3373,7 +3373,8 @@ function ensureIncomeSection(targetContainer) {
         listTitle.textContent = 'Ultimos Ingresos (Sesion Actual)';
         const list = document.createElement('div');
         list.id = 'income-list';
-        list.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem;';
+        list.className = 'facturero-history-list';
+        list.style.cssText = 'display: flex; flex-direction: column; gap: 0.8rem; max-height: 350px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;';
         listContainer.append(listTitle, list);
     }
 
