@@ -650,10 +650,10 @@ El enforcement real de tipos de archivo es **multinivel**:
 4. **Conclusión**: La defensa real contra .exe renombrado a .png es `checkMagicBytes()` en frontend. Storage policies son defensa de path + extension únicamente.
 
 ## Diagnostico (Gastos Evidence Bypass - 2026-01-19)
-1) **handleReceiptUpload** (index.html:2265): Solo valida tamaño, NO valida extension/MIME/magic bytes.
+1) **handleReceiptUpload** (index.html:2265): Solo valida tamano, NO valida extension/MIME/magic bytes.
 2) **accept attr** (l.1855): Falta `image/webp`, pero es permisivo porque browser puede ignorar.
 3) **Storage policies** (`Agro expense objects *`): NO tienen regex de extension; cualquier archivo pasa si path es correcto.
-4) **Drag/drop handler** (l.2552): También solo valida tamaño, no tipo.
+4) **Drag/drop handler** (l.2552): También solo valida tamano, no tipo.
 
 ## Plan (Gastos Hardening)
 1) **HTML**: Agregar `image/webp` a accept, actualizar hint a "JPG, PNG, WebP o PDF (Opcional)".
@@ -1983,7 +1983,7 @@ Exit code: 0
 
 ### Plan
 1) Agregar overrides en `apps/gold/agro/agro.css` para compactar: contenedor, tabs, inputs/selects, acciones, advanced panel, dropzone, historial.
-2) Mantener tamaños táctiles mínimos (>= 36px en mobile) y sin romper data-attrs ni delegación de eventos.
+2) Mantener tamanos táctiles mínimos (>= 36px en mobile) y sin romper data-attrs ni delegación de eventos.
 3) Ejecutar `pnpm build:gold` y reportar resultado.
 
 ### QA Checklist
@@ -3665,7 +3665,7 @@ Implementar "smart retry" en frontend:
 - Build: pnpm build:gold OK (2026-02-01).
 
 ## Diagnostico (tarea actual - Dashboard emoji decorativo)
-1) Se requiere agregar un emoji decorativo de fondo en Dashboard (🏡) con animacion float canonica.
+1) Se requiere agregar un emoji decorativo de fondo en Dashboard (casa) con animacion float canonica.
 2) El cambio debe ser solo decorativo (aria-hidden, pointer-events:none) y sin tocar el index principal.
 3) Se necesitan estilos para posicion/z-index y asegurar contenido por encima.
 
@@ -3675,20 +3675,20 @@ Implementar "smart retry" en frontend:
 3) Ejecutar pnpm build:gold y documentar.
 
 ## DoD (tarea actual - Dashboard emoji decorativo)
-- [ ] Emoji 🏡 agregado en Dashboard con clase yg-float.
+- [ ] Emoji casa agregado en Dashboard con clase yg-float.
 - [ ] Estilos aplicados y contenido queda encima.
 - [ ] Mobile ajuste minimo.
 - [ ] pnpm build:gold OK.
 
 ## Actualizacion de resultados (tarea actual - Dashboard emoji decorativo)
-- Agregado div decorativo 🏡 en apps/gold/dashboard/index.html con clases yg-bg-emoji yg-float y aria-hidden="true".
+- Agregado div decorativo casa en apps/gold/dashboard/index.html con clases yg-bg-emoji yg-float y aria-hidden="true".
 - Estilos a�adidos en apps/gold/assets/css/dashboard.css para posicion, opacidad y z-index; contenido en dashboard-container queda encima.
 - Ajuste mobile aplicado para mover el emoji sin afectar desktop.
 - Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
 
 ## Diagnostico (tarea actual - Dashboard emoji + cards premium)
-1) El emoji 🏡 decorativo no esta anclado al hero y aparece mas abajo de lo esperado.
+1) El emoji casa decorativo no esta anclado al hero y aparece mas abajo de lo esperado.
 2) Las tarjetas KPI y cards principales del dashboard tienen poco contraste vs el DNA v9.4.
 3) Se requiere alinear posicion del emoji y aplicar receta de Module Card del DNA (tokens canonicos, hover lift + glow).
 
@@ -3705,7 +3705,7 @@ Implementar "smart retry" en frontend:
 - [ ] pnpm build:gold OK.
 
 ## Actualizacion de resultados (tarea actual - Dashboard emoji + cards premium)
-- Emoji 🏡 reubicado dentro de la seccion de bienvenida (hero) en apps/gold/dashboard/index.html.
+- Emoji casa reubicado dentro de la seccion de bienvenida (hero) en apps/gold/dashboard/index.html.
 - Seccion welcome anclada como contenedor relativo; emoji posicionado arriba derecha y responsive con tamano reducido en mobile.
 - KPI cards (.stat-card) y cards principales (.insight-card) normalizadas a receta DNA v9.4: background var(--card-bg), border var(--border-gold), hover lift + shadow-gold + overlay con var(--gradient-gold).
 - Tokens usados: --card-bg, --border-gold, --border-gold-hover, --shadow-gold-sm/md/xl, --gradient-gold, --text-primary, --text-muted, --bg-darker, --border-color.
@@ -3730,7 +3730,7 @@ Implementar "smart retry" en frontend:
 - Bloque .insight-action ajustado para reflejar snippet final (comentario premium focus + orden de propiedades).
 
 ## Diagnostico (tarea actual - Dashboard emoji + premium cards + reveal)
-1) El emoji 🏡 se corta en ciertas resoluciones (ej. 1366x768) por /posicion y overlap con la zona KPI.
+1) El emoji casa se corta en ciertas resoluciones (ej. 1366x768) por /posicion y overlap con la zona KPI.
 2) Las cards KPI/insights requieren receta premium tipo Academia (overlay + shine + hover lift moderado) con tokens DNA.
 3) Se solicita reveal on scroll accesible y respetando reduced-motion.
 
@@ -3747,28 +3747,53 @@ Implementar "smart retry" en frontend:
 - [ ] pnpm build:gold OK.
 
 ## Actualizacion de resultados (tarea actual - Dashboard emoji + premium cards + reveal)
-- Emoji 🏡 ajustado con top/right/font-size via clamp para evitar corte en 1366x768; mobile reubicado sin invadir contenido.
+- Emoji casa ajustado con top/right/font-size via clamp para evitar corte en 1366x768; mobile reubicado sin invadir contenido.
 - Cards KPI (.stat-card) y insights (.insight-card) con overlay dorado + shine sweep en hover/focus-within; lift moderado (-8px) y tokens DNA.
 - Reveal on scroll agregado via IntersectionObserver (fallback + reduced-motion) usando clases yg-reveal/is-visible.
 - focus-visible de .insight-action mantenido (no duplicado).
 - Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
 ## Diagnostico (tarea actual - Subir emoji dashboard)
-1) El emoji 🏡 se sigue cortando en desktop (1366x768) por tamaño/posicion y overlap con la zona KPI o borde derecho.
+1) El emoji casa se sigue cortando en desktop (1366x768) por tamano/posicion y overlap con la zona KPI o borde derecho.
 2) El contenedor con overflow puede recortar si la posicion/tamano excede el hero.
 
 ## Plan (tarea actual - Subir emoji dashboard)
-1) Reubicar/anclar la 🏡 en el header/hero (sin duplicar), con posicion mas alta y sin right negativo.
+1) Reubicar/anclar la casa en el header/hero (sin duplicar), con posicion mas alta y sin right negativo.
 2) Ajustar top/right/size con clamp + translateY para mantenerlo dentro del hero y fuera de KPIs.
 3) Ajuste responsive <=768px con size menor y top/right seguros.
 4) Ejecutar pnpm build:gold y documentar.
 
 ## DoD (tarea actual - Subir emoji dashboard)
-- [ ] Emoji 🏡 mas arriba, visible y sin solape con KPI.
+- [ ] Emoji casa mas arriba, visible y sin solape con KPI.
 - [ ] Decorativo: pointer-events none, aria-hidden, z-index debajo.
 - [ ] Responsive OK.
 - [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Subir emoji dashboard)
-- Emoji 🏡 reubicado dentro de .welcome-header y ajustado con top/right/transform + clamp para evitar corte en 1366x768.
+- Emoji casa reubicado dentro de .welcome-header y ajustado con top/right/transform + clamp para evitar corte en 1366x768.
 - Mobile ajustado con top/right/font-size y opacity moderada.
+- Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Subir emoji y premium search)
+1) El emoji casa se ve mas bajo y mas pequeño que en el index; en 1366x768 puede recortarse o solaparse.
+2) El bloque "Buscar modulo" no tiene el mismo efecto premium que KPI/insights.
+
+## Plan (tarea actual - Subir emoji y premium search)
+1) Igualar tamano del emoji con el valor exacto del index (font-size 200px) y subirlo con top/transform sin right negativo.
+2) Ajustar responsive para mantenerlo visible sin invadir KPI.
+3) Aplicar receta premium al wrapper .search-container con overlay, shine, lift y focus-within.
+4) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Subir emoji y premium search)
+- [ ] Emoji casa alineado con "Bienvenido" y sin recortes.
+- [ ] Tamano de emoji igual al index (200px).
+- [ ] Search "Buscar modulo" con overlay/shine/lift y focus-within.
+- [ ] Reduced motion respetado.
+- [ ] pnpm build:gold OK.
+
+## Riesgos (tarea actual - Subir emoji y premium search)
+- Overflow del contenedor puede recortar el emoji si el tamano excede el hero.
+- Z-index/stacking puede tapar el emoji si overlays suben de capa.
+
+## Actualizacion de resultados (tarea actual - Subir emoji y premium search)
+- Emoji casa movido a .welcome-header y ajustado a font-size 200px (igual al index), top/right/transform para alinear con "Bienvenido".
+- Search .search-container actualizado con overlay/shine/lift y focus-within usando tokens DNA.
 - Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).

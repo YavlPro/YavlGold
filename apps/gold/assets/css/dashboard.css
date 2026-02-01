@@ -30,11 +30,12 @@
 
 .welcome-header .yg-bg-emoji {
   position: absolute;
-  top: 34%;
+  top: 42%;
   right: 3%;
   transform: translateY(-60%);
-  font-size: clamp(110px, 9vw, 160px);
-  opacity: 0.06;
+  font-size: 200px;
+  line-height: 1;
+  opacity: 0.03;
   pointer-events: none;
   z-index: 0;
 }
@@ -406,8 +407,8 @@
     right: 5%;
     top: 40%;
     transform: translateY(-60%);
-    font-size: clamp(90px, 22vw, 140px);
-    opacity: 0.05;
+    font-size: 200px;
+    opacity: 0.04;
   }
 
   .dashboard-main {
@@ -814,6 +815,69 @@
   box-shadow: none;
 }
 
+/* ━━━ SEARCH BAR PREMIUM (Buscar módulo) ━━━ */
+.search-container {
+  position: relative;
+  overflow: hidden;
+  background: var(--card-bg);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-gold-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.search-container::before {
+  content: '';
+  position: absolute;
+  inset: -40% -60% auto auto;
+  width: 180%;
+  height: 120%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    color-mix(in srgb, var(--color-secondary) 20%, transparent),
+    transparent
+  );
+  opacity: 0;
+  transform: translateX(-30%);
+  transition: opacity 0.35s ease, transform 0.6s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.search-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-gold);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.search-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+.search-container:hover,
+.search-container:focus-within {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-gold-xl);
+  border-color: var(--border-gold-hover);
+}
+
+.search-container:hover::before,
+.search-container:focus-within::before {
+  opacity: 0.12;
+  transform: translateX(0);
+}
+
+.search-container:hover::after,
+.search-container:focus-within::after {
+  opacity: 0.1;
+}
+
 .yg-reveal {
   opacity: 0;
   transform: translateY(12px);
@@ -829,6 +893,7 @@
   .stat-card,
   .insight-card,
   .insight-action,
+  .search-container,
   .yg-reveal {
     transition: none !important;
   }
@@ -845,7 +910,9 @@
   }
 
   .stat-card::before,
-  .insight-card::before {
+  .insight-card::before,
+  .search-container::before,
+  .search-container::after {
     opacity: 0 !important;
     transform: none !important;
   }
