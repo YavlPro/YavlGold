@@ -3656,4 +3656,23 @@ Implementar "smart retry" en frontend:
 - Decision: Se mantienen como excepciones intencionales (efectos didacticos/tematicos locales en lecciones) y se documentan; no se eliminan ni se reemplazan por .yg-*.
 - No se tocaron archivos de lecciones ni index.html.
 - Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Dashboard emoji decorativo)
+1) Se requiere agregar un emoji decorativo de fondo en Dashboard (??) con animacion float canonica.
+2) El cambio debe ser solo decorativo (aria-hidden, pointer-events:none) y sin tocar el index principal.
+3) Se necesitan estilos para posicion/z-index y asegurar contenido por encima.
+
+## Plan (tarea actual - Dashboard emoji decorativo)
+1) Agregar el div decorativo en apps/gold/dashboard/index.html.
+2) Agregar estilos en apps/gold/assets/css/dashboard.css (posicion, opacidad, z-index, responsive).
+3) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Dashboard emoji decorativo)
+- [ ] Emoji ?? agregado en Dashboard con clase yg-float.
+- [ ] Estilos aplicados y contenido queda encima.
+- [ ] Mobile ajuste minimo.
+- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Dashboard emoji decorativo)
+- Agregado div decorativo ?? en apps/gold/dashboard/index.html con clases yg-bg-emoji yg-float y aria-hidden="true".
+- Estilos añadidos en apps/gold/assets/css/dashboard.css para posicion, opacidad y z-index; contenido en dashboard-container queda encima.
+- Ajuste mobile aplicado para mover el emoji sin afectar desktop.
+- Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).

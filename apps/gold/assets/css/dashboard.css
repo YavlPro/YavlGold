@@ -13,6 +13,21 @@
   overflow-x: hidden;
 }
 
+.yg-bg-emoji {
+  position: absolute;
+  top: 20%;
+  right: 10%;
+  font-size: 200px;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dashboard-container {
+  position: relative;
+  z-index: 1;
+}
+
 /* Gradient overlay disabled for consistency with Herramientas
 .dashboard-page::before {
   content: '';
@@ -371,6 +386,11 @@
 
 /* ━━━ RESPONSIVE ━━━ */
 @media (max-width: 768px) {
+  .yg-bg-emoji {
+    right: -6%;
+    top: 12%;
+  }
+
   .dashboard-main {
     padding-top: 80px;
   }
