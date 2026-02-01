@@ -1339,6 +1339,16 @@ body.modal-open {
   min-height: 44px;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .kpi-icon-wrapper {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .kpi-tag {
+    animation: breathe 4s ease-in-out infinite;
+  }
+}
+
 /* V9.6.5: Extra compact Facturero (Centro de Operaciones) */
 .financial-operations-card {
   padding: 1.25rem;

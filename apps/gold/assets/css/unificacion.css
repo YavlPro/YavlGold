@@ -1,3 +1,5 @@
+@import "/assets/css/motion-pack.css";
+
 /* Hoja unificada base para Operación Unificación Visual
    Objetivo: centralizar header, botones, secciones y tarjetas sin romper páginas.
    Nota: copia estilos ya usados en varias páginas para reutilización progresiva. */

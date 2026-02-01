@@ -3458,3 +3458,61 @@ Implementar "smart retry" en frontend:
 - Sweep hardcodes en `apps/gold/academia/**`: NO se encontraron `#0a0a0a`, `#111111`, `rgb(10,10,10)`, `rgb(17,17,17)`.
 - Sweep overrides globales: solo quedan `:root` con tokens especificos de Academia (success/warning/error/gradientes), sin redefinir bg/body/card.
 - Gradientes en index usan `var(--card-bg)`; no hay gradientes invalidos.
+## Diagnostico (tarea actual - Motion Pack v9.4)
+1) Animaciones v9.4 estan dispersas entre modulos (dashboard.css, agro/index.html, academia/index.html), sin un paquete canonico compartido.
+2) No existe un set de clases utilitarias .yg-* en CSS global para reutilizar motion de forma consistente.
+3) Se requiere normalizar animaciones a keyframes v9.4 y respetar prefers-reduced-motion.
+
+## Plan (tarea actual - Motion Pack v9.4)
+1) Localizar keyframes canonicas en el build v9.4 (dist) y/o CSS existentes y consolidarlas en `apps/gold/assets/css/unificacion.css` sin duplicar.
+2) Agregar clases utilitarias .yg-* (solo si no existen) y bloque prefers-reduced-motion.
+3) Aplicar clases por fases: Academia -> Dashboard -> Agro -> Crypto (sin tocar index principal).
+4) Ejecutar `pnpm build:gold` y documentar.
+
+## DoD (tarea actual - Motion Pack v9.4)
+- [ ] Motion Pack v9.4 (keyframes + clases) disponible en CSS global.
+- [ ] Animaciones aplicadas a Academia, Dashboard, Agro, Crypto y proximamente.
+- [ ] Prefers-reduced-motion desactiva animaciones.
+- [ ] Sin cambios de JS/logica ni index principal.
+- [ ] `pnpm build:gold` OK.
+## Actualizacion de resultados (tarea actual - Motion Pack v9.4)
+- Se creo `apps/gold/assets/css/motion-pack.css` con keyframes canonicas v9.4 y clases utilitarias .yg-* + prefers-reduced-motion.
+- `apps/gold/assets/css/unificacion.css` ahora importa el motion pack (sin duplicar keyframes).
+- Se incluyo `motion-pack.css` en:
+  - `apps/gold/agro/index.html`
+  - `apps/gold/crypto/index.html`
+- Aplicacion de motion por fase:
+  - Academia: clases `yg-float` en iconos (coming-soon + modulos), `yg-breathe` en feature icons, `yg-textglow` en H1 de lecciones.
+  - Dashboard: `yg-glowpulse` en notification badge, `yg-pulse` en stat numbers; CSS en `dashboard.css` para `module-icon` (float) y `badge` (pulse) con prefers-reduced-motion.
+  - Agro: `yg-glowpulse` en campana; CSS en `agro.css` para `kpi-icon-wrapper` (float) y `kpi-tag` (breathe) con prefers-reduced-motion.
+  - Crypto: `yg-glowpulse` en campana y `yg-pulse` en status dot.
+- Fuentes de keyframes:
+  - `apps/gold/dist/index.html`: fadeIn, breathe, textGlow, pulse, bounce, shimmer, float, loadingProgress, slideUp.
+  - `apps/gold/assets/css/dashboard.css`: cardGlow, fadeInUp, spin.
+  - `apps/gold/assets/css/mobile-optimizations.css`: pulse-glow.
+- Pruebas manuales: NO VERIFICADO.
+- Build: `pnpm build:gold` OK (2026-01-31).## Diagnostico (tarea actual - Single Source Motion Pack v9.4)
+1) Hay keyframes canonicos duplicados en CSS locales; algunos son identicos al Motion Pack v9.4 y se pueden borrar sin cambiar comportamiento.
+2) Existen variantes no canonicas en otros archivos (por ejemplo en HTML de modulos) que NO deben tocarse en esta fase.
+3) apps/gold/index.html (principal) no se puede editar; no se debe mover/eliminar animaciones alli.
+
+## Plan (tarea actual - Single Source Motion Pack v9.4)
+1) Inventariar keyframes y eliminar solo duplicados identicos al Motion Pack v9.4 en CSS locales permitidos.
+2) Mantener duplicados distintos y cualquier keyframe en el index principal.
+3) Ejecutar pnpm build:gold y documentar resultado.
+
+## DoD (tarea actual - Single Source Motion Pack v9.4)
+- [ ] Duplicados identicos eliminados sin romper estilos.
+- [ ] Duplicados distintos mantenidos.
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Single Source Motion Pack v9.4)
+- Se eliminaron keyframes duplicados identicos en apps/gold/assets/css/dashboard.css:
+  - @keyframes cardGlow
+  - @keyframes fadeInUp
+  - @keyframes spin
+- Se mantuvieron keyframes no canonicos (breathe, textGlow, float) en el mismo archivo.
+- apps/gold/assets/css/mobile-optimizations.css conserva @keyframes pulse-glow para evitar impacto en paginas que no cargan el motion pack (no se toca index principal).
+- Pruebas manuales: NO VERIFICADO.
+- Build: PENDIENTE.## Actualizacion de resultados (tarea actual - Single Source Motion Pack v9.4)
+- Build: pnpm build:gold OK (2026-01-31).

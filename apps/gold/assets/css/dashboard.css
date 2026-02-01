@@ -29,25 +29,6 @@
   50% { transform: translateY(-15px); }
 }
 
-@keyframes cardGlow {
-  0%, 100% {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(200, 167, 82, 0.1);
-  }
-  50% {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(200, 167, 82, 0.15);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 /* ━━━ BASE LAYOUT ━━━ */
 .dashboard-page {
@@ -556,10 +537,6 @@
   margin-bottom: 1rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* ━━━ MODULE THUMBNAIL ━━━ */
 .module-thumbnail {
   width: 100%;
@@ -575,6 +552,20 @@
   background: rgba(100, 100, 100, 0.3);
   color: #888;
   border: 1px solid rgba(100, 100, 100, 0.5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .module-icon {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .badge {
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  .loading-spinner {
+    animation: spin 1.2s linear infinite;
+  }
 }
 
 /* ━━━ STAR TOGGLE (FAVORITES) ━━━ */
