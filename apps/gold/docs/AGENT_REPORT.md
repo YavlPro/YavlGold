@@ -3753,3 +3753,22 @@ Implementar "smart retry" en frontend:
 - focus-visible de .insight-action mantenido (no duplicado).
 - Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
+## Diagnostico (tarea actual - Subir emoji dashboard)
+1) El emoji 🏡 se sigue cortando en desktop (1366x768) por tamaño/posicion y overlap con la zona KPI o borde derecho.
+2) El contenedor con overflow puede recortar si la posicion/tamano excede el hero.
+
+## Plan (tarea actual - Subir emoji dashboard)
+1) Reubicar/anclar la 🏡 en el header/hero (sin duplicar), con posicion mas alta y sin right negativo.
+2) Ajustar top/right/size con clamp + translateY para mantenerlo dentro del hero y fuera de KPIs.
+3) Ajuste responsive <=768px con size menor y top/right seguros.
+4) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Subir emoji dashboard)
+- [ ] Emoji 🏡 mas arriba, visible y sin solape con KPI.
+- [ ] Decorativo: pointer-events none, aria-hidden, z-index debajo.
+- [ ] Responsive OK.
+- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Subir emoji dashboard)
+- Emoji 🏡 reubicado dentro de .welcome-header y ajustado con top/right/transform + clamp para evitar corte en 1366x768.
+- Mobile ajustado con top/right/font-size y opacity moderada.
+- Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).

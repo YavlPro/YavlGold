@@ -18,17 +18,23 @@
   overflow: hidden;
 }
 
-.welcome-section > * {
+.welcome-header {
+  position: relative;
+  overflow: visible;
+}
+
+.welcome-header > * {
   position: relative;
   z-index: 1;
 }
 
-.welcome-section .yg-bg-emoji {
+.welcome-header .yg-bg-emoji {
   position: absolute;
-  top: clamp(6%, 10vh, 18%);
-  right: clamp(4%, 6vw, 12%);
-  font-size: clamp(120px, 18vw, 200px);
-  opacity: 0.03;
+  top: 34%;
+  right: 3%;
+  transform: translateY(-60%);
+  font-size: clamp(110px, 9vw, 160px);
+  opacity: 0.06;
   pointer-events: none;
   z-index: 0;
 }
@@ -396,10 +402,12 @@
 
 /* ━━━ RESPONSIVE ━━━ */
 @media (max-width: 768px) {
-  .welcome-section .yg-bg-emoji {
-    right: 4%;
-    top: 10%;
-    font-size: 130px;
+  .welcome-header .yg-bg-emoji {
+    right: 5%;
+    top: 40%;
+    transform: translateY(-60%);
+    font-size: clamp(90px, 22vw, 140px);
+    opacity: 0.05;
   }
 
   .dashboard-main {
