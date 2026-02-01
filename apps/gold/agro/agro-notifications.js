@@ -54,8 +54,10 @@ const FACTURERO_LABELS = {
     perdidas: { singular: 'Pérdida', plural: 'Pérdidas' },
     transferencias: { singular: 'Transferencia', plural: 'Transferencias' }
 };
-const FACTURERO_RECENT_DAYS = 2;
-const FACTURERO_LARGE_AMOUNT = 500;
+// Facturero → Notificaciones (anti-ruido pero visible)
+// V9.6.5: Relajado para mostrar entradas relevantes sin ser "humo"
+const FACTURERO_RECENT_DAYS = 7;      // Antes: 2 (muy estricto)
+const FACTURERO_LARGE_AMOUNT = 100;   // Antes: 500 (muy alto)
 
 const ALERTS_SESSION_MAX_ATTEMPTS = 8;
 const ALERTS_SESSION_BASE_DELAY = 200;
