@@ -84,6 +84,113 @@ window.isValidISODate = isValidISODate;
 window.assertDateNotFuture = assertDateNotFuture;
 
 // ============================================================
+// HISTORY ORDERING & DAY GROUPING HELPERS (V9.6.7)
+// Sort by timestamp DESC and group visually by day
+// ============================================================
+
+/**
+ * Get timestamp (ms) for sorting a facturero row.
+ * Priority: created_at > updated_at > fecha/date field (noon local).
+ */
+function getRowTimestamp(row, dateFieldName = 'fecha') {
+    // Priority 1: created_at (full ISO timestamp)
+    if (row.created_at) {
+        const ts = Date.parse(row.created_at);
+        if (!isNaN(ts)) return ts;
+    }
+    // Priority 2: updated_at
+    if (row.updated_at) {
+        const ts = Date.parse(row.updated_at);
+        if (!isNaN(ts)) return ts;
+    }
+    // Priority 3: date field (YYYY-MM-DD) -> use noon local to avoid timezone edge cases
+    const dateStr = row[dateFieldName] || row.fecha || row.date;
+    if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+        const datePart = dateStr.slice(0, 10);
+        const [yyyy, mm, dd] = datePart.split('-').map(Number);
+        const d = new Date(yyyy, mm - 1, dd, 12, 0, 0);
+        return d.getTime();
+    }
+    // Fallback: epoch 0 (will sort to end)
+    return 0;
+}
+
+/**
+ * Get day key (YYYY-MM-DD) from row for grouping.
+ */
+function getDayKey(row, dateFieldName = 'fecha') {
+    // Try created_at first (local day)
+    if (row.created_at) {
+        const d = new Date(row.created_at);
+        if (!isNaN(d.getTime())) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+    }
+    // Try date field
+    const dateStr = row[dateFieldName] || row.fecha || row.date;
+    if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+        return dateStr.slice(0, 10);
+    }
+    return 'unknown';
+}
+
+/**
+ * Group rows by day, sorted DESC (newest day first).
+ * Returns: [{ dayKey, label, rows: [...] }, ...]
+ */
+function groupRowsByDay(rows, dateFieldName = 'fecha') {
+    // Sort rows by timestamp DESC
+    const sorted = [...rows].sort((a, b) => getRowTimestamp(b, dateFieldName) - getRowTimestamp(a, dateFieldName));
+
+    // Group into Map
+    const groups = new Map();
+    for (const row of sorted) {
+        const dayKey = getDayKey(row, dateFieldName);
+        if (!groups.has(dayKey)) {
+            groups.set(dayKey, []);
+        }
+        groups.get(dayKey).push(row);
+    }
+
+    // Convert to array with formatted labels
+    const result = [];
+    const dayKeys = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a)); // DESC
+    for (const dayKey of dayKeys) {
+        result.push({
+            dayKey,
+            label: formatDayHeader(dayKey),
+            rows: groups.get(dayKey)
+        });
+    }
+    return result;
+}
+
+/**
+ * Format day key into human-readable Spanish label.
+ * Example: "2026-02-01" => "1 Feb 2026"
+ */
+function formatDayHeader(dayKey) {
+    if (dayKey === 'unknown') return 'Sin fecha';
+    const [yyyy, mm, dd] = dayKey.split('-').map(Number);
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const today = new Date();
+    const isToday = today.getFullYear() === yyyy && (today.getMonth() + 1) === mm && today.getDate() === dd;
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = yesterday.getFullYear() === yyyy && (yesterday.getMonth() + 1) === mm && yesterday.getDate() === dd;
+
+    if (isToday) return 'Hoy';
+    if (isYesterday) return 'Ayer';
+    return `${dd} ${monthNames[mm - 1]} ${yyyy}`;
+}
+
+// Expose globally
+window.getRowTimestamp = getRowTimestamp;
+window.getDayKey = getDayKey;
+window.groupRowsByDay = groupRowsByDay;
+window.formatDayHeader = formatDayHeader;
+
+// ============================================================
 // V9.6: PLANTILLAS LOCALES (TACHIRA)
 // ============================================================
 const CROP_TEMPLATES_ENDPOINTS = ['/agro/crops_data.json', './crops_data.json'];
@@ -1039,12 +1146,21 @@ function renderHistoryList(tabName, config, items, showActions) {
     if (itemsWithCropNames.length === 0) {
         container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
     } else {
-        container.innerHTML = itemsWithCropNames.map(item =>
-            renderHistoryRow(tabName, item, config)
-        ).join('');
+        // V9.6.7: Group by day and render with headers
+        const dateField = config.dateField || 'fecha';
+        const dayGroups = groupRowsByDay(itemsWithCropNames, dateField);
+
+        let html = '';
+        for (const group of dayGroups) {
+            // Day header
+            html += `<div class="facturero-day-header">${group.label}</div>`;
+            // Items for this day
+            html += group.rows.map(item => renderHistoryRow(tabName, item, config)).join('');
+        }
+        container.innerHTML = html;
     }
 
-    console.info(`[AGRO] V9.5.1: Refreshed ${tabName} with ${itemsWithCropNames.length} items`);
+    console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${itemsWithCropNames.length} items grouped by day`);
 }
 
 async function refreshFactureroAfterChange(tabName) {

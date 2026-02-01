@@ -1,5 +1,36 @@
 ﻿---
 
+## 📅 SESIÓN: Facturero History Ordering & Day Grouping (2026-02-01)
+
+### Diagnóstico
+1. **Queries YA ordenan**: pending/loss/transfer usa `.order('created_at', {ascending: false})` (agro.js:962), gastos usa `.order('date', {ascending: false})` (index.html:2468)
+2. **Problema**: `renderHistoryList()` (agro.js:1012-1048) renderiza items linealmente sin headers por día
+3. **Timestamp**: rows usan `fecha` (date only) o `created_at` (ISO timestamp), no hay campo `hora`
+
+### Plan
+1. Crear helpers: getRowTimestamp(), groupRowsByDay(), formatDayHeader()
+2. Modificar renderHistoryList() para agrupar por día con headers
+3. CSS para .facturero-day-header
+4. Aplicar a gastos en index.html
+
+### DoD
+- [x] Orden DESC por timestamp
+- [x] Headers por día ("1 Feb 2026", "Hoy", "Ayer")
+- [x] No romper editar/eliminar/scroll
+- [x] Build PASS
+
+### Archivos Modificados
+- `agro.js` — helpers getRowTimestamp, getDayKey, groupRowsByDay, formatDayHeader (líneas 87-195)
+- `agro.js` — renderHistoryList modificado para agrupar por día (líneas 1149-1165)
+- `agro.css` — estilo .facturero-day-header (líneas 1466-1481)
+- `index.html` — loadExpenses modificado para agrupar por día + renderExpenseItem (support for appendMode)
+
+### Resultado
+✅ Build PASS: `pnpm build:gold`
+✅ Pending/Loss/Transfer/Ingresos/Gastos agrupados por día con headers visuales
+✅ "Hoy" y "Ayer" como labels especiales
+✅ Items ordenados por timestamp DESC dentro de cada día
+
 ## 🔒 SESIÓN: Facturero Date Validation (2026-02-01)
 
 ### Diagnóstico

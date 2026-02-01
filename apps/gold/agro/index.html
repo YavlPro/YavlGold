@@ -2471,28 +2471,46 @@
 
                     if (expensesList && data) {
                         expensesList.innerHTML = ''; // Clear list
-                        // Iterate in REVERSE (Oldest first) so prepending Newest puts it at top
-                        // Or simply append if we want the list in order?
-                        // renderExpenseItem uses 'insertBefore(firstChild)' which Prepends.
-                        // data is [Newest, Older, Oldest].
-                        // Loop Newest: Prepend Newest. List: [Newest]
-                        // Loop Older: Prepend Older. List: [Older, Newest] -> WRONG ORDER (Oldest at top)
-                        // So we must iterate in Reverse Order (Oldest...Newest)
-                        // Loop Oldest: Prepend. List: [Oldest]
-                        // Loop ...
-                        // Loop Newest: Prepend. List: [Newest, ..., Oldest] -> CORRECT
 
-                        [...data].reverse().forEach(expense => {
-                            renderExpenseItem(
-                                expense.concept,
-                                expense.amount,
-                                expense.category,
-                                null, // No local file object
-                                expense.evidence_url,
-                                expense.date,
-                                expense.id
-                            );
-                        });
+                        // V9.6.7: Group by day using helpers from agro.js
+                        if (typeof window.groupRowsByDay === 'function' && typeof window.formatDayHeader === 'function') {
+                            const dayGroups = window.groupRowsByDay(data, 'date');
+
+                            for (const group of dayGroups) {
+                                // Insert day header
+                                const dayHeader = document.createElement('div');
+                                dayHeader.className = 'facturero-day-header';
+                                dayHeader.textContent = group.label;
+                                expensesList.appendChild(dayHeader);
+
+                                // Insert items for this day (already sorted DESC within group)
+                                for (const expense of group.rows) {
+                                    renderExpenseItem(
+                                        expense.concept,
+                                        expense.amount,
+                                        expense.category,
+                                        null, // No local file object
+                                        expense.evidence_url,
+                                        expense.date,
+                                        expense.id,
+                                        true // V9.6.7: append mode (not prepend)
+                                    );
+                                }
+                            }
+                        } else {
+                            // Fallback: old logic
+                            [...data].reverse().forEach(expense => {
+                                renderExpenseItem(
+                                    expense.concept,
+                                    expense.amount,
+                                    expense.category,
+                                    null,
+                                    expense.evidence_url,
+                                    expense.date,
+                                    expense.id
+                                );
+                            });
+                        }
                     }
                 } catch (e) {
                     console.error("Error cargando gastos:", e);
@@ -2631,7 +2649,7 @@
             }
 
             // Helper para renderizar item en la lista
-            function renderExpenseItem(concept, amount, category, file, remoteUrl, dateVal, expenseId) {
+            function renderExpenseItem(concept, amount, category, file, remoteUrl, dateVal, expenseId, appendMode = false) {
                 if (expensesContainer && expensesList) {
                     expensesContainer.style.display = 'block';
 
@@ -2705,7 +2723,12 @@
                             ${actionButtons}
                         </div>
                     `;
-                    expensesList.insertBefore(item, expensesList.firstChild);
+
+                    if (appendMode) {
+                        expensesList.appendChild(item);
+                    } else {
+                        expensesList.insertBefore(item, expensesList.firstChild);
+                    }
                 }
             }
 
