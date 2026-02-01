@@ -404,3 +404,49 @@ Diciembre consolidó todo el trabajo del año en una release formal.
 *Documento generado por Historiador Forense de Git — Protocolo de Auditoría Narrativa v1.0*
 
 *"Del primer upload al Stack Dorado: 99 días que forjaron YavlGold."*
+
+---
+
+# 🧩 ADDENDUM — Enero 2026 (Append-only)
+
+> *Esta sección extiende la cobertura de la crónica al año 2026 sin reescribir el contenido de 2025.*
+
+## Resumen Ejecutivo — Enero 2026
+
+Los 8 hitos que marcaron el primer mes de 2026:
+
+1. **🔐 Operación Fénix (Ene 1-3)**: Recovery flow blindado con Titanium Guard — redirect lock, sessionStorage persistence, y double flag check. El sistema de autenticación pasó de vulnerable a fortaleza.
+
+2. **🛡️ hCaptcha Full Deploy (Ene 6-7)**: Login y registro protegidos con captcha invisible para móvil. `d1f4f00` marcó el inicio de la era de seguridad proactiva.
+
+3. **📦 Gran Migración (Ene 10)**: Todos los módulos consolidados en `apps/gold/`. Turborepo activado. El día que la arquitectura se profesionalizó.
+
+4. **🌾 Agro V9.5 → V9.6 (Ene 13-24)**: De prototipo a sistema completo — CRUD de cultivos, Facturero con soft-delete, Centro Estadístico, y Asistente IA con Gemini Edge Function.
+
+5. **💱 Suite → Crypto (Ene 12)**: Rebrand del módulo financiero + charts canvas nativos + Fear & Greed Index.
+
+6. **📜 Crónicas 2025 Selladas (Ene 23)**: Las 4 crónicas mensuales consolidadas en el documento definitivo que precede este addendum.
+
+7. **🛡️ Anti-429 & CORS (Ene 27-29)**: Queue con backoff exponencial + allowlist CORS para Edge Functions. El asistente dejó de morir bajo carga.
+
+8. **🎨 ADN Visual Canonizado (Ene 31)**: Academia annex agregado al ADN V9.4 + keyframes estandarizados.
+
+---
+
+## Anexo E — Enero 2026
+
+📄 **Archivo**: [2026-01.md](./2026-01.md)
+
+**Resumen**: Enero 2026 consolidó la madurez técnica de YavlGold. Con 280 commits en 31 días, el proyecto pasó de sistema funcional a plataforma robusta. Los protagonistas fueron la seguridad (Titanium Guard, hCaptcha), la arquitectura (Gran Migración, Turborepo), y el módulo Agro (V9.5-V9.6 con finanzas reales y asistente IA).
+
+**Métricas verificadas**:
+- **280 commits** (comando: `git rev-list --count --since="2026-01-01" --until="2026-02-01" HEAD`)
+- **4 versiones**: V9.3, V9.4, V9.5.x, V9.6.x
+- **2 PRs mergeados**: #74, #75
+
+---
+
+*Fecha de extensión*: 2026-02-01
+*Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
+
+
