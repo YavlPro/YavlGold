@@ -25,9 +25,9 @@
 
 .welcome-section .yg-bg-emoji {
   position: absolute;
-  top: 20%;
-  right: 10%;
-  font-size: 200px;
+  top: clamp(6%, 10vh, 18%);
+  right: clamp(4%, 6vw, 12%);
+  font-size: clamp(120px, 18vw, 200px);
   opacity: 0.03;
   pointer-events: none;
   z-index: 0;
@@ -397,9 +397,9 @@
 /* ━━━ RESPONSIVE ━━━ */
 @media (max-width: 768px) {
   .welcome-section .yg-bg-emoji {
-    right: 6%;
-    top: 18%;
-    font-size: 150px;
+    right: 4%;
+    top: 10%;
+    font-size: 130px;
   }
 
   .dashboard-main {
@@ -703,6 +703,26 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
+.stat-card::before,
+.insight-card::before {
+  content: '';
+  position: absolute;
+  inset: -40% -60% auto auto;
+  width: 180%;
+  height: 120%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    color-mix(in srgb, var(--color-secondary) 20%, transparent),
+    transparent
+  );
+  opacity: 0;
+  transform: translateX(-30%);
+  transition: opacity 0.35s ease, transform 0.6s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .stat-card::after,
 .insight-card::after {
   content: '';
@@ -723,13 +743,30 @@
 
 .stat-card:hover,
 .insight-card:hover {
-  transform: translateY(-12px);
+  transform: translateY(-8px);
   box-shadow: var(--shadow-gold-xl);
   border-color: var(--border-gold-hover);
 }
 
+.stat-card:focus-within,
+.insight-card:focus-within {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-gold-xl);
+  border-color: var(--border-gold-hover);
+}
+
+.stat-card:hover::before,
+.insight-card:hover::before,
+.stat-card:focus-within::before,
+.insight-card:focus-within::before {
+  opacity: 0.12;
+  transform: translateX(0);
+}
+
 .stat-card:hover::after,
-.insight-card:hover::after {
+.insight-card:hover::after,
+.stat-card:focus-within::after,
+.insight-card:focus-within::after {
   opacity: 0.1;
 }
 
@@ -767,4 +804,41 @@
   color: var(--text-muted);
   border-color: var(--border-color);
   box-shadow: none;
+}
+
+.yg-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.yg-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-card,
+  .insight-card,
+  .insight-action,
+  .yg-reveal {
+    transition: none !important;
+  }
+
+  .stat-card,
+  .insight-card {
+    transform: none !important;
+  }
+
+  .yg-reveal,
+  .yg-reveal.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .stat-card::before,
+  .insight-card::before {
+    opacity: 0 !important;
+    transform: none !important;
+  }
 }

@@ -3611,7 +3611,9 @@ Implementar "smart retry" en frontend:
 - Las reglas animation existentes ahora usan las keyframes canonicas del Motion Pack v9.4.
 - prefers-reduced-motion intacto (sin cambios en el bloque).
 - Pruebas manuales: NO VERIFICADO.
-- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Dashboard tokens DNA v9.4)
+- Build: pnpm build:gold OK (2026-02-01).
+
+## Diagnostico (tarea actual - Dashboard tokens DNA v9.4)
 1) dashboard.css contiene hardcodes (hex/rgba) en fondos, bordes, sombras y badges.
 2) Se requiere alinear dashboard a tokens del DNA (bg/body/surfaces/text/accent) sin tocar index.html ni JS.
 3) Objetivo: reemplazar hardcodes por variables del DNA manteniendo contraste y estados.
@@ -3634,7 +3636,9 @@ Implementar "smart retry" en frontend:
 - Eliminados hardcodes de color en apps/gold/assets/css/dashboard.css; reemplazados por tokens DNA (bg-body, card-bg, color-secondary, gold-dark/light, text-light/muted, border-gold, gg-error).
 - Gradientes, sombras y estados hover/disabled ahora usan variables (color-mix con tokens) en lugar de hex/rgba.
 - Pruebas manuales: NO VERIFICADO.
-- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Academia lecciones keyframes canonicos)
+- Build: pnpm build:gold OK (2026-02-01).
+
+## Diagnostico (tarea actual - Academia lecciones keyframes canonicos)
 1) En lecciones de Academia existen @keyframes con nombres canonicos (ej: shimmer/pulse) que pueden diferir del Motion Pack v9.4.
 2) Restriccion: no tocar index.html ni JS; solo ajustar archivos de lecciones si corresponde.
 3) Se requiere decidir caso por caso: eliminar duplicado identico, normalizar si no intencional, o documentar excepcion si es tematico.
@@ -3649,15 +3653,19 @@ Implementar "smart retry" en frontend:
 - [ ] Lecciones auditadas; canonicos detectados.
 - [ ] Duplicados identicos eliminados si aplica.
 - [ ] Variantes intencionales documentadas como excepcion.
-- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Academia lecciones keyframes canonicos)
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Academia lecciones keyframes canonicos)
 - Lecciones con keyframes canonicos detectadas:
   - apps/gold/academia/lecciones/01-introduccion-cripto.html: @keyframes shimmer (variante distinta a canon).
   - apps/gold/academia/lecciones/02-seguridad-basica.html: @keyframes pulse (variante distinta a canon).
 - Decision: Se mantienen como excepciones intencionales (efectos didacticos/tematicos locales en lecciones) y se documentan; no se eliminan ni se reemplazan por .yg-*.
 - No se tocaron archivos de lecciones ni index.html.
 - Pruebas manuales: NO VERIFICADO.
-- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Dashboard emoji decorativo)
-1) Se requiere agregar un emoji decorativo de fondo en Dashboard (??) con animacion float canonica.
+- Build: pnpm build:gold OK (2026-02-01).
+
+## Diagnostico (tarea actual - Dashboard emoji decorativo)
+1) Se requiere agregar un emoji decorativo de fondo en Dashboard (🏡) con animacion float canonica.
 2) El cambio debe ser solo decorativo (aria-hidden, pointer-events:none) y sin tocar el index principal.
 3) Se necesitan estilos para posicion/z-index y asegurar contenido por encima.
 
@@ -3667,16 +3675,20 @@ Implementar "smart retry" en frontend:
 3) Ejecutar pnpm build:gold y documentar.
 
 ## DoD (tarea actual - Dashboard emoji decorativo)
-- [ ] Emoji ?? agregado en Dashboard con clase yg-float.
+- [ ] Emoji 🏡 agregado en Dashboard con clase yg-float.
 - [ ] Estilos aplicados y contenido queda encima.
 - [ ] Mobile ajuste minimo.
-- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Dashboard emoji decorativo)
-- Agregado div decorativo ?? en apps/gold/dashboard/index.html con clases yg-bg-emoji yg-float y aria-hidden="true".
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Dashboard emoji decorativo)
+- Agregado div decorativo 🏡 en apps/gold/dashboard/index.html con clases yg-bg-emoji yg-float y aria-hidden="true".
 - Estilos a�adidos en apps/gold/assets/css/dashboard.css para posicion, opacidad y z-index; contenido en dashboard-container queda encima.
 - Ajuste mobile aplicado para mover el emoji sin afectar desktop.
 - Pruebas manuales: NO VERIFICADO.
-- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Dashboard emoji + cards premium)
-1) El emoji ?? decorativo no esta anclado al hero y aparece mas abajo de lo esperado.
+- Build: pnpm build:gold OK (2026-02-01).
+
+## Diagnostico (tarea actual - Dashboard emoji + cards premium)
+1) El emoji 🏡 decorativo no esta anclado al hero y aparece mas abajo de lo esperado.
 2) Las tarjetas KPI y cards principales del dashboard tienen poco contraste vs el DNA v9.4.
 3) Se requiere alinear posicion del emoji y aplicar receta de Module Card del DNA (tokens canonicos, hover lift + glow).
 
@@ -3690,13 +3702,17 @@ Implementar "smart retry" en frontend:
 - [ ] Emoji anclado al hero arriba derecha con yg-float.
 - [ ] Cards KPI y principales con contraste premium y hover lift + glow.
 - [ ] Mobile OK.
-- [ ] pnpm build:gold OK.## Actualizacion de resultados (tarea actual - Dashboard emoji + cards premium)
-- Emoji ?? reubicado dentro de la seccion de bienvenida (hero) en apps/gold/dashboard/index.html.
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Dashboard emoji + cards premium)
+- Emoji 🏡 reubicado dentro de la seccion de bienvenida (hero) en apps/gold/dashboard/index.html.
 - Seccion welcome anclada como contenedor relativo; emoji posicionado arriba derecha y responsive con tamano reducido en mobile.
 - KPI cards (.stat-card) y cards principales (.insight-card) normalizadas a receta DNA v9.4: background var(--card-bg), border var(--border-gold), hover lift + shadow-gold + overlay con var(--gradient-gold).
 - Tokens usados: --card-bg, --border-gold, --border-gold-hover, --shadow-gold-sm/md/xl, --gradient-gold, --text-primary, --text-muted, --bg-darker, --border-color.
 - Pruebas manuales: NO VERIFICADO.
-- Build: pnpm build:gold OK (2026-02-01).## Diagnostico (tarea actual - Focus visible Dashboard CTA)
+- Build: pnpm build:gold OK (2026-02-01).
+
+## Diagnostico (tarea actual - Focus visible Dashboard CTA)
 1) Los estados hover de .insight-action ya estan definidos, pero no hay enfoque visible equivalente.
 2) Se requiere agregar :focus-visible con tokens del DNA sin tocar JS.
 
@@ -3708,5 +3724,32 @@ Implementar "smart retry" en frontend:
 ## DoD (tarea actual - Focus visible Dashboard CTA)
 - [ ] :focus-visible definido para .insight-action.
 - [ ] Tokens DNA usados.
-- [ ] pnpm build:gold OK.## Actualizacion (tarea actual - Focus visible Dashboard CTA)
+- [ ] pnpm build:gold OK.
+
+## Actualizacion (tarea actual - Focus visible Dashboard CTA)
 - Bloque .insight-action ajustado para reflejar snippet final (comentario premium focus + orden de propiedades).
+
+## Diagnostico (tarea actual - Dashboard emoji + premium cards + reveal)
+1) El emoji 🏡 se corta en ciertas resoluciones (ej. 1366x768) por /posicion y overlap con la zona KPI.
+2) Las cards KPI/insights requieren receta premium tipo Academia (overlay + shine + hover lift moderado) con tokens DNA.
+3) Se solicita reveal on scroll accesible y respetando reduced-motion.
+
+## Plan (tarea actual - Dashboard emoji + premium cards + reveal)
+1) Ajustar .welcome-section .yg-bg-emoji con top/right y font-size via clamp para mantenerlo dentro del hero; refinar media query mobile.
+2) Mejorar .stat-card y .insight-card con overlay ::after + shine ::before, hover/focus-within lift moderado y tokens DNA.
+3) Agregar estilos yg-reveal y JS con IntersectionObserver (fallback + reduced-motion).
+4) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Dashboard emoji + premium cards + reveal)
+- [ ] Emoji dentro del hero sin cortar ni invadir KPIs en desktop/movil.
+- [ ] Cards con overlay dorado, shine y hover/focus-within premium (tokens DNA).
+- [ ] Reveal on scroll con IntersectionObserver y reduced-motion respetado.
+- [ ] pnpm build:gold OK.
+
+## Actualizacion de resultados (tarea actual - Dashboard emoji + premium cards + reveal)
+- Emoji 🏡 ajustado con top/right/font-size via clamp para evitar corte en 1366x768; mobile reubicado sin invadir contenido.
+- Cards KPI (.stat-card) y insights (.insight-card) con overlay dorado + shine sweep en hover/focus-within; lift moderado (-8px) y tokens DNA.
+- Reveal on scroll agregado via IntersectionObserver (fallback + reduced-motion) usando clases yg-reveal/is-visible.
+- focus-visible de .insight-action mantenido (no duplicado).
+- Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).

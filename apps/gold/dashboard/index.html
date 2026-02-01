@@ -2942,6 +2942,35 @@
     });
   </script>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const cards = document.querySelectorAll('.stat-card, .insight-card');
+      if (!cards.length) return;
+
+      cards.forEach((card) => card.classList.add('yg-reveal'));
+
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced || !('IntersectionObserver' in window)) {
+        cards.forEach((card) => card.classList.add('is-visible'));
+        return;
+      }
+
+      const io = new IntersectionObserver(
+        (entries, observer) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { root: null, threshold: 0.2, rootMargin: '0px 0px -10% 0px' }
+      );
+
+      cards.forEach((card) => io.observe(card));
+    });
+  </script>
+
 </body>
 
 </html>
