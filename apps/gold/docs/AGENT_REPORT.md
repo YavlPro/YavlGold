@@ -3515,4 +3515,100 @@ Implementar "smart retry" en frontend:
 - apps/gold/assets/css/mobile-optimizations.css conserva @keyframes pulse-glow para evitar impacto en paginas que no cargan el motion pack (no se toca index principal).
 - Pruebas manuales: NO VERIFICADO.
 - Build: PENDIENTE.## Actualizacion de resultados (tarea actual - Single Source Motion Pack v9.4)
-- Build: pnpm build:gold OK (2026-01-31).
+- Build: pnpm build:gold OK (2026-01-31).## Diagnostico (tarea actual - Inventario motion por modulo)
+1) Se requiere inventario completo de @keyframes por modulo para detectar canonicas, duplicados identicos y variantes distintas.
+2) El Motion Pack v9.4 es la referencia canonica; no se deben tocar archivos ni JS en esta tarea.
+3) Es necesario documentar usos (selectors/animation) con evidencia por ruta.
+
+## Plan (tarea actual - Inventario motion por modulo)
+1) Listar archivos CSS/HTML relevantes por modulo (academia, dashboard, agro, crypto) y globales (motion-pack/unificacion/mobile-optimizations).
+2) Extraer @keyframes por archivo y detectar import de motion-pack.
+3) Comparar cada keyframe con el Motion Pack v9.4: identica / distinta.
+4) Mapear uso por animation/animation-name y registrar evidencia por ruta.
+5) Reportar resultados en secciones: Canon, Duplicados identicos, Variantes distintas, Local-only.
+
+## DoD (tarea actual - Inventario motion por modulo)
+- [ ] Inventario por modulo con @keyframes y usos.
+- [ ] Clasificacion canon/duplicado/variante/local-only.
+- [ ] Evidencia por ruta para variantes y duplicados.## Reporte (tarea actual - Inventario motion por modulo)
+
+### A) Canon (solo en Motion Pack v9.4)
+- Fuente canonica: apps/gold/assets/css/motion-pack.css
+- Keyframes canonicas: fadeIn, breathe, textGlow, pulse, bounce, shimmer, float, loadingProgress, slideUp, pulse-glow, cardGlow, fadeInUp, spin.
+- Import global: apps/gold/assets/css/unificacion.css importa motion-pack.css.
+- Links directos en HTML: apps/gold/agro/index.html y apps/gold/crypto/index.html enlazan motion-pack.css.
+
+### B) Duplicados identicos (candidatos futuros a remover)
+- apps/gold/assets/css/mobile-optimizations.css: @keyframes pulse-glow (identica a canon).
+- apps/gold/index.html: @keyframes fadeIn, breathe, textGlow, pulse, bounce, shimmer, float, loadingProgress, slideUp (identicas a canon). [NO TOCAR INDEX]
+- apps/gold/agro/index.html: @keyframes slideUp (identica a canon).
+- apps/gold/dashboard/index.html: @keyframes fadeInUp (identica a canon).
+
+### C) Variantes distintas (mismo nombre, contenido distinto)
+- apps/gold/assets/css/dashboard.css: breathe, textGlow, float (difieren de canon).
+  - Uso: animation: breathe 4s ease-in-out infinite; animation: textGlow 3s ease-in-out infinite; animation: float 6s ease-in-out infinite.
+- apps/gold/academia/index.html: float, bounce (difieren de canon).
+  - Uso: animation: float 6s ease-in-out infinite; animation: bounce 2s ease-in-out infinite.
+- apps/gold/agro/index.html: float, textGlow, breathe, shimmer (difieren de canon).
+  - Uso: animation: float 20s infinite ease-in-out; animation: textGlow 4s ease-in-out infinite; animation: breathe 5s ease-in-out infinite; animation: shimmer 2.5s infinite.
+- apps/gold/dashboard/index.html: pulse, float, shimmer (difieren de canon).
+  - Uso: animation: pulse 8s ease-in-out infinite; animation: float 6s ease-in-out infinite; animation: shimmer 3s ease-in-out infinite.
+- apps/gold/profile/index.html: spin (difiere de canon).
+  - Uso: animation: spin 1s linear infinite.
+- apps/gold/academia/lecciones/01-introduccion-cripto.html: shimmer (difiere de canon).
+  - Uso: animation: shimmer 3s infinite linear.
+- apps/gold/academia/lecciones/02-seguridad-basica.html: pulse (difiere de canon).
+  - Uso: animation: pulse 2s infinite.
+
+### D) Local-only (sin conflicto con canon)
+- Agro:
+  - apps/gold/agro/agro.css: assistantPulse, typingPulse, slideDown.
+  - apps/gold/agro/index.html: pulseGlow, logoBreathe, shimmerText, pulseStatus, animateIn.
+- Academia:
+  - apps/gold/academia/index.html: goldShimmer.
+  - apps/gold/academia/lecciones/02-seguridad-basica.html: securityShimmer.
+  - apps/gold/academia/lecciones/03-trading-basico.html: tradingShimmer.
+  - apps/gold/academia/lecciones/04-gestion-riesgo.html: chartShimmer.
+  - apps/gold/academia/lecciones/05-glosario.html: defiFlow.
+- Dashboard:
+  - apps/gold/dashboard/index.html: borderGlow, aboutBreathe.
+- Global UI:
+  - apps/gold/assets/packages/ui/base.css: dropdownSlide.
+- Crypto (legacy/old):
+  - apps/gold/crypto/index_old.html: pulse-shadow-gold.
+
+### Inventario por modulo (archivos con @keyframes)
+- Academia: apps/gold/academia/index.html; apps/gold/academia/lecciones/01-introduccion-cripto.html; 02-seguridad-basica.html; 03-trading-basico.html; 04-gestion-riesgo.html; 05-glosario.html.
+- Dashboard: apps/gold/dashboard/index.html.
+- Agro: apps/gold/agro/agro.css; apps/gold/agro/index.html.
+- Crypto: apps/gold/crypto/index_old.html.
+- Global: apps/gold/assets/css/motion-pack.css; apps/gold/assets/css/unificacion.css (import); apps/gold/assets/css/dashboard.css; apps/gold/assets/css/mobile-optimizations.css.
+
+### Evidencia de uso (extracto)
+- apps/gold/agro/agro.css: animation: assistantPulse 10s; typingPulse 1.2s; slideDown 0.3s; float 6s; breathe 4s.
+- apps/gold/dashboard/index.html: animation: pulse 8s; float 6s; shimmer 3s; fadeInUp 0.6s; borderGlow 4s; aboutBreathe 4s.
+- apps/gold/agro/index.html: animation: pulseGlow 8s; float 20s; logoBreathe 4s; textGlow 4s + shimmerText 3s; breathe 5s; pulseStatus 2s; shimmer 2.5s; slideUp 0.5s; animateIn 0.6s.
+- apps/gold/academia/index.html: animation: goldShimmer 4s; float 6s; bounce 2s.
+- apps/gold/academia/lecciones/02-seguridad-basica.html: animation: securityShimmer 4s; pulse 2s.## Diagnostico (tarea actual - Normalizar Dashboard a Motion Pack v9.4)
+1) dashboard.css define variantes locales de @keyframes breathe, textGlow y float con el mismo nombre que el Motion Pack canonico.
+2) Al existir keyframes locales, las animaciones del dashboard no usan la version canonica.
+3) Restriccion: no tocar index.html ni JS; solo CSS en dashboard.css.
+
+## Plan (tarea actual - Normalizar Dashboard a Motion Pack v9.4)
+1) Eliminar @keyframes breathe, textGlow y float de apps/gold/assets/css/dashboard.css.
+2) Mantener reglas animation existentes para que resuelvan a las keyframes canonicas del motion-pack.
+3) Ejecutar pnpm build:gold y documentar.
+
+## DoD (tarea actual - Normalizar Dashboard a Motion Pack v9.4)
+- [ ] Variantes locales breathe/textGlow/float eliminadas de dashboard.css.
+- [ ] Animations siguen usando nombres canonicos.
+- [ ] prefers-reduced-motion intacto.
+- [ ] pnpm build:gold OK.
+
+## Riesgos (tarea actual - Normalizar Dashboard a Motion Pack v9.4)
+- Cambios sutiles en intensidad/duracion del motion al pasar a la version canonica.## Actualizacion de resultados (tarea actual - Normalizar Dashboard a Motion Pack v9.4)
+- Eliminadas @keyframes locales en apps/gold/assets/css/dashboard.css: breathe, textGlow, float.
+- Las reglas animation existentes ahora usan las keyframes canonicas del Motion Pack v9.4.
+- prefers-reduced-motion intacto (sin cambios en el bloque).
+- Pruebas manuales: NO VERIFICADO.
+- Build: pnpm build:gold OK (2026-02-01).

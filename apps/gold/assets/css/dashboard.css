@@ -4,31 +4,6 @@
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* ━━━ ANIMATIONS ━━━ */
-@keyframes breathe {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4));
-  }
-  50% {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 40px rgba(200, 167, 82, 0.7));
-  }
-}
-
-@keyframes textGlow {
-  0%, 100% {
-    text-shadow: 0 0 10px rgba(200, 167, 82, 0.5), 0 0 20px rgba(200, 167, 82, 0.3);
-  }
-  50% {
-    text-shadow: 0 0 20px rgba(200, 167, 82, 0.8), 0 0 40px rgba(200, 167, 82, 0.5);
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
-}
-
 
 /* ━━━ BASE LAYOUT ━━━ */
 .dashboard-page {
