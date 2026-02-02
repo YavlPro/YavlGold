@@ -1,5 +1,47 @@
 ﻿---
 
+## 📅 SESIÓN: YavlMusic Mojibake Buttons Cleanup (2026-02-02)
+
+### Diagnóstico
+1. **Origen del mojibake**: `apps/gold/dashboard/music.html` contiene caracteres corruptos en botones de UI (iconos) detectados por `rg`:
+   - `show-favorites-btn`: `â˜…` (estrella).
+   - `export-btn`: `â†“` (flecha abajo).
+   - `import-btn`: `â†‘` (flecha arriba).
+   - `reset-btn` y `close-modal-btn`: `âœ•` (X).
+   - Comentario en JS con `â†’` (no UI, pero rompe el grep).
+2. **Ubicación**: zona de controles debajo del botón “Añadir” y botón de cierre del modal en la misma página.
+3. **Estado funcional**: reproducción OK (confirmado por usuario). Solo UI/encoding.
+4. **Regla**: evitar símbolos Unicode crudos; preferir ASCII o SVG inline.
+
+### Plan
+1. Reemplazar los textos mojibake por SVG inline (estrella, descarga, subida, cerrar) o ASCII legible.
+2. Corregir el comentario con `â†’` a ASCII `->`.
+3. Verificar que `rg -n "Ã|Â|â" ... music.html` quede vacío.
+4. Build `pnpm build:gold` y actualizar este reporte con resultado + QA.
+
+### DoD
+- [x] Sin mojibake en Music Suite (UI).
+- [x] Botones/chips bajo “Añadir” legibles.
+- [x] Botón cuadrado a la derecha del selector OK.
+- [x] `rg` limpio de `Ã|Â|â` en `music.html`.
+- [x] Build PASS.
+
+### Archivos a tocar
+- `apps/gold/dashboard/music.html`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Archivos modificados
+- `apps/gold/dashboard/music.html` — reemplazo de mojibake por SVG inline y comentario ASCII.
+- `apps/gold/docs/AGENT_REPORT.md` — diagnóstico/plan/resultado de esta sesión.
+
+### Resultado
+✅ Botones de favoritos/exportar/importar/reset y cierre de modal sin mojibake.
+✅ `rg -n "Ã|Â|â" apps/gold/dashboard/music.html` sin coincidencias.
+✅ Build PASS: `pnpm build:gold`.
+
+### Pruebas manuales
+- Reproducción OK (reportado por usuario): play/pause/next/prev sin errores.
+
 ## 📅 SESIÓN: Dashboard Music Player UTF-8 + QA (2026-02-02)
 
 ### Diagnóstico

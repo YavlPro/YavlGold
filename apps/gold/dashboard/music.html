@@ -267,12 +267,41 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     <select id="genre-filter" class="input-dark w-auto">
                         <option>Todos los Generos</option>
                     </select>
-                    <button id="show-favorites-btn" class="btn-outline px-3">â˜…</button>
+                    <button id="show-favorites-btn" class="btn-outline px-3" title="Favoritos"
+                        aria-label="Favoritos">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path
+                                d="M12 17.27l-5.18 3.05 1.4-5.98L3.5 9.24l6.06-.52L12 3l2.44 5.72 6.06.52-4.72 5.1 1.4 5.98z" />
+                        </svg>
+                    </button>
                     <div class="flex gap-1">
-                        <button id="export-btn" class="btn-outline px-2 text-sm">â†“</button>
-                        <button id="import-btn" class="btn-outline px-2 text-sm">â†‘</button>
+                        <button id="export-btn" class="btn-outline px-2 text-sm" title="Exportar biblioteca"
+                            aria-label="Exportar biblioteca">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 3v12" />
+                                <path d="M8 11l4 4 4-4" />
+                                <path d="M4 21h16" />
+                            </svg>
+                        </button>
+                        <button id="import-btn" class="btn-outline px-2 text-sm" title="Importar biblioteca"
+                            aria-label="Importar biblioteca">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 21V9" />
+                                <path d="M8 13l4-4 4 4" />
+                                <path d="M4 3h16" />
+                            </svg>
+                        </button>
                         <button id="reset-btn"
-                            class="btn-outline px-2 text-sm text-red-400 hover:text-red-500">âœ•</button>
+                            class="btn-outline px-2 text-sm text-red-400 hover:text-red-500" title="Reset"
+                            aria-label="Reset">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M6 6l12 12" />
+                                <path d="M18 6l-12 12" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
                 <div id="playlist-container" class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
@@ -300,7 +329,14 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
         <div id="info-modal" class="hidden absolute inset-0 z-40 bg-black/90 flex items-center justify-center p-4">
             <div class="glass-panel max-w-lg w-full p-6 relative">
                 <button id="close-modal-btn"
-                    class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">âœ•</button>
+                    class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl" title="Cerrar"
+                    aria-label="Cerrar">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M6 6l12 12" />
+                        <path d="M18 6l-12 12" />
+                    </svg>
+                </button>
                 <h3 class="text-xl font-bold text-[var(--gold-text)] mb-4">Sobre YavlMusic</h3>
                 <div class="space-y-4 text-sm text-gray-300">
                     <p>Reproductor del ecosistema YavlGold. Musica almacenada localmente.</p>
@@ -508,7 +544,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * height * 0.9;
                     const gradient = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
-                    // âœ¨ PREMIUM METALLIC GRADIENT: Dark gold base â†’ Bright gold tip
+                    // PREMIUM METALLIC GRADIENT: Dark gold base -> Bright gold tip
                     gradient.addColorStop(0, '#996515');   // Gold Dark (base)
                     gradient.addColorStop(0.4, '#D4AF37'); // Gold Base (middle)
                     gradient.addColorStop(0.7, '#FDB931'); // Gold Bright
