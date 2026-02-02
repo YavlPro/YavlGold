@@ -1,5 +1,46 @@
 ﻿---
 
+## 📅 SESIÓN: Dashboard Music Player UTF-8 + QA (2026-02-02)
+
+### Diagnóstico
+1. **MPA + navegación**: `apps/gold/vite.config.js` define entradas HTML (main/cookies/faq/soporte/dashboard/creacion/perfil/configuracion/academia/agro/crypto/herramientas/tecnologia/social). `apps/gold/vercel.json` usa cleanUrls/trailingSlash, redirects `/herramientas -> /tecnologia`, rewrites `/tecnologia`, y routes para `/academia`, `/crypto`, `/tecnologia`, `/music`. `apps/gold/index.html` es landing; `apps/gold/dashboard/index.html` es panel post-login.
+2. **Supabase/auth**: cliente en `apps/gold/assets/js/config/supabase-config.js`. Auth UI/guard en `assets/js/auth/authClient.js`, `authUI.js`, `dashboard/auth-guard.js`.
+3. **Dashboard datos**: `dashboard/index.html` consulta `profiles` (username/avatar), `modules`, y cuenta `user_favorites`/`notifications`. Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) no integrado.
+4. **Agro/Clima**: prioridad Manual > GPS > IP en `assets/js/geolocation.js` (`getCoordsSmart`), uso en `agro/dashboard.js`. Keys: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+5. **Crypto**: `apps/gold/crypto/` existe como página MPA dentro de `apps/gold` (inputs en Vite). Carpeta con HTML/JS/CSS y backups.
+6. **Reproductor**: UI del player está en `apps/gold/dashboard/music.html` (link desde `apps/gold/dashboard/index.html` → `/dashboard/music.html`).
+7. **Mojibake**: strings en `apps/gold/dashboard/music.html` contienen secuencias literales `MÃ`, `Ã±`, etc. (`rg` lo confirma). `<meta charset="UTF-8">` ya existe; la fuente parece ser el propio archivo (texto corrompido), no Supabase ni JSON externo.
+8. **Audio**: el player usa `<audio id="audio-player">`, `URL.createObjectURL` para MP3 locales y `jsmediatags` para ID3; no hay fetch remoto, por lo que CORS/404 no deberían aplicar. Requiere QA manual con archivo MP3.
+
+### Plan
+1. Corregir strings mojibake en `apps/gold/dashboard/music.html` y guardar en UTF-8.
+2. Verificar que no queden secuencias `MÃ` en el player (rg puntual).
+3. QA de audio: revisar wiring de `<audio>` + botones play/pause/next/prev; validar con prueba manual (archivo MP3 local).
+4. Actualizar `apps/gold/docs/AGENT_REPORT.md` con resultado + pruebas y correr `pnpm build:gold`.
+
+### DoD
+- [x] UI del player sin mojibake (acentos correctos).
+- [ ] Play/Pause + cambio de pista verificados sin errores (pendiente: requiere MP3 local en navegador).
+- [x] Build PASS.
+
+### Archivos a tocar
+- `apps/gold/dashboard/music.html`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Archivos modificados
+- `apps/gold/dashboard/music.html` — strings mojibake corregidas a UTF-8 (UI/labels/mensajes).
+- `apps/gold/docs/AGENT_REPORT.md` — diagnóstico + plan + resultado de esta sesión.
+
+### Resultado
+✅ Textos del reproductor con acentos correctos (sin `MÃ`/`Â`).
+✅ `<meta charset="UTF-8">` ya estaba presente, no se requirió cambio.
+✅ Build PASS: `pnpm build:gold`.
+
+### Pruebas manuales
+- [ ] Abrir `/dashboard/music.html`, cargar MP3 local y reproducir 5–10s (pendiente).
+- [ ] Play/Pause y Next/Prev sin errores de consola (pendiente).
+- [ ] Network: sin CORS/404 (no hay fetch remoto; usa `URL.createObjectURL` para MP3 locales).
+
 ## 📅 SESIÓN: Agro Stats Cultivos (Single Crop) (2026-02-01)
 
 ### Diagnóstico
