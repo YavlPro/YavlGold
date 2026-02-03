@@ -65,22 +65,34 @@ const TOOLS_DEF = [
     parameters: {
       type: "OBJECT",
       properties: {
-        crop_id: { type: "STRING", description: "UUID del cultivo" },
-        type: {
-          type: "STRING",
-          description: "Tipo de evento",
-          enum: ['riego','abono','fumigacion','cosecha','venta','observacion','nota','otro','status_change','amend']
-        },
+        crop_id: { type: "STRING", description: "UUID del cultivo (obligatorio)" },
+        type: { type: "STRING", description: "Tipo de evento", enum: ['riego','abono','fumigacion','cosecha','venta','observacion','nota','otro','status_change','amend'] },
         qty: { type: "NUMBER", description: "Cantidad (opcional)" },
-        unit: {
-          type: "STRING",
-          description: "Unidad de medida (requerida si hay qty)",
-          enum: ['kg','l','saco','medio_saco','cesta']
-        },
+        unit: { type: "STRING", description: "Unidad de medida (requerida si hay qty)", enum: ['kg','l','saco','medio_saco','cesta'] },
         note: { type: "STRING", description: "Nota o descripcion adicional" },
         occurred_at: { type: "STRING", description: "Fecha ISO (opcional, default now)" }
       },
       required: ["crop_id", "type"]
+    }
+  },
+  {
+    name: "get_finance_summary",
+    description: "Obtiene resumen financiero (gastos, ingresos, balance) filtrado por fechas.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        range: {
+          type: "OBJECT",
+          properties: {
+             preset: { type: "STRING", description: "today, 7d, 30d, month" },
+             from: { type: "STRING", description: "YYYY-MM-DD" },
+             to: { type: "STRING", description: "YYYY-MM-DD" }
+          },
+          description: "Rango de fechas (preset O from/to)"
+        },
+        crop_id: { type: "STRING", description: "Filtrar por cultivo (opcional)" }
+      },
+      required: ["range"]
     }
   }
 ];
@@ -173,6 +185,91 @@ async function requireUser(authHeader: string | null) {
 }
 
 // --- TOOL HANDLERS ---
+
+async function handleGetFinanceSummary(args: any, authHeader: string) {
+  try {
+    const { range, crop_id } = args || {};
+    let startStr, endStr;
+
+    // 1. Resolve Dates
+    const now = new Date();
+
+    if (range?.preset) {
+       if (range.preset === 'today') {
+         startStr = now.toISOString().split('T')[0];
+         endStr = startStr;
+       } else if (range.preset === '7d') {
+         const past = new Date(now); past.setDate(now.getDate() - 7);
+         startStr = past.toISOString().split('T')[0];
+         endStr = now.toISOString().split('T')[0];
+       } else if (range.preset === '30d') {
+         const past = new Date(now); past.setDate(now.getDate() - 30);
+         startStr = past.toISOString().split('T')[0];
+         endStr = now.toISOString().split('T')[0];
+       } else if (range.preset === 'month') {
+         const first = new Date(now.getFullYear(), now.getMonth(), 1);
+         startStr = first.toISOString().split('T')[0];
+         endStr = now.toISOString().split('T')[0];
+       }
+    } else if (range?.from) {
+       startStr = range.from;
+       endStr = range.to || now.toISOString().split('T')[0];
+    } else {
+       // Default to month if missing
+       const first = new Date(now.getFullYear(), now.getMonth(), 1);
+       startStr = first.toISOString().split('T')[0];
+       endStr = now.toISOString().split('T')[0];
+    }
+
+    // 2. Parallel Fetch (Expenses & Income)
+    const expUrl = `agro_expenses?select=amount,category&deleted_at=is.null&date=gte.${startStr}&date=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
+    const incUrl = `agro_income?select=amount&deleted_at=is.null&date=gte.${startStr}&date=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
+
+    const [expRes, incRes] = await Promise.all([
+       supabaseRequest('GET', expUrl, null, authHeader),
+       supabaseRequest('GET', incUrl, null, authHeader)
+    ]);
+
+    // 3. Aggregation
+    const expenses = Array.isArray(expRes) ? expRes : [];
+    const income = Array.isArray(incRes) ? incRes : [];
+
+    const totalExp = expenses.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+    const totalInc = income.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+
+    // Group Expense Categories
+    const catMap: Record<string, number> = {};
+    expenses.forEach((item: any) => {
+       const cat = item.category || 'Otros';
+       catMap[cat] = (catMap[cat] || 0) + (Number(item.amount) || 0);
+    });
+
+    const topExp = Object.entries(catMap)
+       .map(([cat, amount]) => ({ category: cat, total: amount }))
+       .sort((a, b) => b.total - a.total)
+       .slice(0, 5);
+
+    return {
+      ok: true,
+      data: {
+        range_resolved: { from: startStr, to: endStr, preset: range?.preset },
+        totals: {
+           expenses: totalExp,
+           income: totalInc,
+           net: totalInc - totalExp
+        },
+        counts: {
+           expenses: expenses.length,
+           income: income.length
+        },
+        top_expense_categories: topExp
+      }
+    };
+
+  } catch (e: any) {
+    return { ok: false, error: 'FINANCE_ERROR', message: e.message };
+  }
+}
 
 async function handleGetCropStatus(args: any, authHeader: string) {
   try {
@@ -409,6 +506,10 @@ Deno.serve(async (req) => {
           toolResult = await handleGetCropStatus(toolArgs, authHeader);
         } else if (toolName === 'log_event') {
           toolResult = await handleLogEvent(toolArgs, authHeader);
+        } else if (toolName === 'get_finance_summary') {
+          toolResult = await handleGetFinanceSummary(toolArgs, authHeader);
+        } else if (toolName === 'get_finance_summary') {
+          toolResult = await handleGetFinanceSummary(toolArgs, authHeader);
         }
 
         // --- SECURE LOGGING RESULT ---
