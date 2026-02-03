@@ -42,7 +42,8 @@ const SYSTEM_PROMPT = [
   'USA tus herramientas cuando el usuario pregunte por el estado de un cultivo o pida registrar algo.',
   'Cuando pregunten por estado/progreso: SIEMPRE usa get_crop_status con include_last_events=true.',
   'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato".',
-  'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.'
+  'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.',
+  '**Cuando el usuario diga solo “mi <cultivo>” o pregunte por estado/progreso (ej: “¿Cómo va mi batata?”), debes: (1) llamar `get_my_crops` para resolver el `crop_id` si no está explícito; (2) luego llamar `get_crop_status` con `include_last_events=true` y `events_limit=5`. En la respuesta, muestra 2–5 eventos recientes (fecha + tipo + nota). No prometas monitoreo automático ni avisos futuros; ofrece registrar eventos o recordatorios manuales.**'
 ].join('\n');
 
 const TOOLS_DEF = [
@@ -58,6 +59,11 @@ const TOOLS_DEF = [
       },
       required: ["crop_id"]
     }
+  },
+  {
+    name: "get_my_crops",
+    description: "Lista los cultivos del usuario para encontrar IDs por nombre.",
+    parameters: { type: "OBJECT", properties: {}, required: [] }
   },
   {
     name: "log_event",
@@ -185,6 +191,15 @@ async function requireUser(authHeader: string | null) {
 }
 
 // --- TOOL HANDLERS ---
+
+async function handleGetMyCrops(_args: any, authHeader: string) {
+  try {
+     const result = await supabaseRequest('GET', 'agro_crops?select=id,name,variety,status', null, authHeader);
+     return { ok: true, data: result };
+  } catch(e: any) {
+     return { ok: false, error: 'GET_CROPS_ERROR', message: e.message };
+  }
+}
 
 async function handleGetFinanceSummary(args: any, authHeader: string) {
   try {
@@ -470,37 +485,80 @@ Deno.serve(async (req) => {
 
       const payload: any = {
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: contents,
+        contents: [...contents], // Copy initial contents
         tools: [{ function_declarations: TOOLS_DEF }],
         generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
       };
 
-      // 1. First Call to Gemini
-      let response = await fetch(endpoint, {
-         method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload)
-      });
+      // Multi-turn Loop (Max Steps)
+      const MAX_TOOL_STEPS = 3;
+      let step = 0;
+      let keepGoing = true;
+      const executedCommands = new Set<string>(); // Anti-loop
 
-      if (response.status === 429) continue; // Rate limit retry next model
-      let data = await response.json();
+      while (keepGoing && step < MAX_TOOL_STEPS) {
 
-      // Check for Tool Call
-      const candidate = data?.candidates?.[0];
-      const part = candidate?.content?.parts?.[0];
+        let response = await fetch(endpoint, {
+           method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload)
+        });
 
-      if (part && part.functionCall) {
+        if (response.status === 429) {
+           throw new Error('RATE_LIMIT'); // Trigger next model
+        }
+
+        let data = await response.json();
+        const candidate = data?.candidates?.[0];
+        const part = candidate?.content?.parts?.[0];
+
+        // 1. If Text Response (Final Answer)
+        if (!part || !part.functionCall) {
+          const reply = part?.text || '';
+          if (reply) return jsonResponse({ reply, model }, 200, cors);
+          // If no text and no function call, logic error or safety filter
+          return jsonResponse({ error: 'AI_NO_RESPONSE' }, 500, cors);
+        }
+
+        // 2. If Tool Call
         const fn = part.functionCall;
         const toolName = fn.name;
         const toolArgs = fn.args || {};
 
+        // Anti-Loop Check
+        const cmdHash = `${toolName}:${JSON.stringify(toolArgs)}`;
+        if (executedCommands.has(cmdHash)) {
+           // Break loop, force generic response
+           keepGoing = false;
+           // Append a system message or just return what we have?
+           // Better to return a message saying we are stuck
+           // Or just continue to next iteration which will likely be text?
+           // Actually, we must inject the result to the model so it knows it failed?
+           // Let's just break and return a fallback message or let the model verify history.
+           // Simplest: Break loop, next iteration will not happen, but we need to return something.
+           // We will act as if the tool returned an error.
+
+           // Inject error
+           payload.contents.push({
+             role: 'model',
+             parts: [{ functionCall: fn }]
+           });
+           payload.contents.push({
+             role: 'function',
+             parts: [{ functionResponse: { name: toolName, response: { result: { ok: false, error: 'LOOP_DETECTED', message: 'Ya intentaste esta accion. Pide mas datos.' } } } }]
+           });
+           step++;
+           continue;
+        }
+        executedCommands.add(cmdHash);
+
         // --- SECURE LOGGING START ---
         const startTs = performance.now();
-        const userIdShort = user.id ? user.id.split('-').pop() : 'anon'; // Last part of UUID for correlation
+        const userIdShort = user.id ? user.id.split('-').pop() : 'anon';
         const cropIdShort = toolArgs.crop_id ? toolArgs.crop_id.split('-').pop() : 'N/A';
-        console.log(`[Tool:Start] ${toolName} User:${userIdShort} Crop:${cropIdShort}`);
+        console.log(`[Tool:Start] ${toolName} User:${userIdShort} Crop:${cropIdShort} Step:${step + 1}`);
         // --- SECURE LOGGING END ---
 
         // Execute Tool
-        let toolResult = { ok: false, error: 'UNKNOWN_TOOL', message: 'Tool not found' };
+        let toolResult: any = { ok: false, error: 'UNKNOWN_TOOL', message: 'Tool not found' };
 
         if (toolName === 'get_crop_status') {
           toolResult = await handleGetCropStatus(toolArgs, authHeader);
@@ -508,8 +566,8 @@ Deno.serve(async (req) => {
           toolResult = await handleLogEvent(toolArgs, authHeader);
         } else if (toolName === 'get_finance_summary') {
           toolResult = await handleGetFinanceSummary(toolArgs, authHeader);
-        } else if (toolName === 'get_finance_summary') {
-          toolResult = await handleGetFinanceSummary(toolArgs, authHeader);
+        } else if (toolName === 'get_my_crops') {
+          toolResult = await handleGetMyCrops(toolArgs, authHeader);
         }
 
         // --- SECURE LOGGING RESULT ---
@@ -519,22 +577,16 @@ Deno.serve(async (req) => {
 
         let logMsg = `[Tool:End] ${toolName} Status:${logStatus} Time:${duration}ms`;
         if (!toolResult.ok) logMsg += ` Err:${toolResult.error}`;
-        if (isDebug && toolArgs.note) {
-             const truncNote = toolArgs.note.length > 40 ? toolArgs.note.substring(0, 40) + '...' : toolArgs.note;
-             logMsg += ` Note:${truncNote}`;
-        }
         console.log(logMsg);
         // --- SECURE LOGGING RESULT END ---
 
-        // Add to history (Agent Loop)
-        // 1. Model's request (function call)
-        contents.push({
+        // Add to history
+        payload.contents.push({
           role: 'model',
           parts: [{ functionCall: fn }]
         });
 
-        // 2. Function response
-        contents.push({
+        payload.contents.push({
           role: 'function',
           parts: [{
             functionResponse: {
@@ -544,27 +596,15 @@ Deno.serve(async (req) => {
           }]
         });
 
-        // 3. Second Call to Gemini (Final Answer)
-        payload.contents = contents;
-        payload.tools = []; // Disable tools for final answer to avoid loops (optional)
+        step++;
+        // Loop continues to feed result back to Gemini
+      } // end while
 
-        response = await fetch(endpoint, {
-           method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload)
-        });
-        data = await response.json();
-      }
+      // If max steps reached without final answer
+      return jsonResponse({ reply: 'Lo siento, la consulta es muy compleja y alcance el limite de pasos. Se mas especifico.', model }, 200, cors);
 
-      // Extract Reply
-      const finalParts = data?.candidates?.[0]?.content?.parts;
-      const reply = Array.isArray(finalParts)
-        ? finalParts.map((p: any) => p.text || '').join('').trim()
-        : '';
-
-      if (reply) {
-        return jsonResponse({ reply, model }, 200, cors);
-      }
-
-    } catch (e) {
+    } catch (e: any) {
+      if (e.message === 'RATE_LIMIT') continue;
       if (model === MODELS[MODELS.length - 1]) throw e;
       continue;
     }
