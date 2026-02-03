@@ -597,11 +597,15 @@ const FACTURERO_CONFIG = {
 };
 
 const FACTURERO_OPTIONAL_FIELDS = {
-    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by']
+    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason'],
+    ingresos: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason'],
+    perdidas: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason']
 };
 
 const FACTURERO_OPTIONAL_FIELDS_SUPPORT = {
-    pendientes: null
+    pendientes: null,
+    ingresos: null,
+    perdidas: null
 };
 
 const PENDING_TRANSFER_FILTER_KEY = 'YG_PENDING_SHOW_TRANSFERRED_V1';
@@ -884,7 +888,28 @@ function isMissingColumnError(error, column) {
 
 function isPendingTransferred(item) {
     if (!item) return false;
+    // V9.7: Use transfer_state for accurate detection
+    if (item.transfer_state === 'transferred') return true;
+    // Legacy fallback for data without transfer_state
     return !!(item.transferred_at || item.transferred_income_id);
+}
+
+// V9.7: Check if a pending item was transferred but then reverted (back to active)
+function isPendingReverted(item) {
+    if (!item) return false;
+    return item.transfer_state === 'reverted';
+}
+
+// V9.7: Check if income/loss originated from a pending transfer
+function isFromPendingTransfer(item) {
+    if (!item) return false;
+    return item.origin_table === 'agro_pending' && !!item.origin_id;
+}
+
+// V9.7: Check if income/loss was reverted back to pending
+function isIncomeOrLossReverted(item) {
+    if (!item) return false;
+    return item.transfer_state === 'reverted';
 }
 
 function readPendingTransferFilter() {
@@ -904,16 +929,437 @@ function writePendingTransferFilter(value) {
 }
 
 function formatTransferMeta(item) {
-    if (!item?.transferred_at) return 'Transferido';
+    if (!item) return 'Transferido';
+
+    // V9.7: Show destination and status
+    const dest = item.transferred_to;
+    let destLabel = '';
+    if (dest === 'income') {
+        destLabel = 'Ingresos (Pagado)';
+    } else if (dest === 'losses') {
+        destLabel = 'Pérdidas (Cancelado)';
+    } else {
+        destLabel = 'Ingresos'; // Legacy fallback
+    }
+
+    // Check if reverted
+    if (item.transfer_state === 'reverted') {
+        const revertDate = item.reverted_at ? new Date(item.reverted_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '';
+        return `Revertido${revertDate ? ` (${revertDate})` : ''} — antes: → ${destLabel}`;
+    }
+
+    // Active transfer
+    if (!item.transferred_at) return `Transferido → ${destLabel}`;
     try {
         const date = new Date(item.transferred_at);
-        if (Number.isNaN(date.getTime())) return 'Transferido';
+        if (Number.isNaN(date.getTime())) return `Transferido → ${destLabel}`;
         const stamp = date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-        return `Transferido (${stamp})`;
+        return `Transferido → ${destLabel} (${stamp})`;
     } catch (e) {
-        return 'Transferido';
+        return `Transferido → ${destLabel}`;
     }
 }
+
+// V9.7: Format origin badge for income/losses from pending
+function formatOriginBadge(item, tabName) {
+    if (!isFromPendingTransfer(item)) return '';
+
+    const isReverted = isIncomeOrLossReverted(item);
+    if (isReverted) {
+        return '<span class="transfer-badge transfer-badge-reverted">Revertido</span>';
+    }
+
+    const statusLabel = tabName === 'perdidas' ? 'Cancelado' : 'Pagado';
+    return `<span class="transfer-badge transfer-badge-origin">Transferido desde Pendientes • ${statusLabel}</span>`;
+}
+
+// ============================================================
+// V9.7: TRANSFER FUNCTIONS (Pending <-> Income/Losses)
+// ============================================================
+
+/**
+ * Transfer a pending item to income (mark as paid)
+ * @param {string} pendingId - ID of the pending item
+ * @returns {Promise<{success: boolean, incomeId?: string, error?: string}>}
+ */
+async function transferPendingToIncome(pendingId) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) return { success: false, error: 'No autenticado' };
+    const userId = userData.user.id;
+
+    // 1. Fetch pending item
+    const { data: pending, error: fetchError } = await supabase
+        .from('agro_pending')
+        .select('*')
+        .eq('id', pendingId)
+        .eq('user_id', userId)
+        .single();
+
+    if (fetchError || !pending) {
+        return { success: false, error: fetchError?.message || 'Pendiente no encontrado' };
+    }
+
+    // 2. Check idempotency - already transferred and not reverted?
+    if (pending.transfer_state === 'transferred') {
+        console.info('[V9.7] Pending already transferred, idempotent return');
+        return { success: true, incomeId: pending.transferred_income_id, message: 'Ya transferido' };
+    }
+
+    // 3. Create income record
+    const incomeData = {
+        user_id: userId,
+        concepto: pending.concepto,
+        monto: pending.monto,
+        fecha: pending.fecha,
+        categoria: 'venta',
+        crop_id: pending.crop_id,
+        unit_type: pending.unit_type,
+        unit_qty: pending.unit_qty,
+        quantity_kg: pending.quantity_kg,
+        // V9.7: Transfer origin tracking
+        origin_table: 'agro_pending',
+        origin_id: pending.id,
+        transfer_state: 'active'
+    };
+
+    const { data: income, error: insertError } = await supabase
+        .from('agro_income')
+        .insert([incomeData])
+        .select('id')
+        .single();
+
+    if (insertError || !income) {
+        return { success: false, error: insertError?.message || 'Error creando ingreso' };
+    }
+
+    // 4. Update pending with transfer metadata
+    const { error: updateError } = await supabase
+        .from('agro_pending')
+        .update({
+            transferred_to: 'income',
+            transferred_to_id: income.id,
+            transfer_state: 'transferred',
+            transferred_at: new Date().toISOString(),
+            transferred_by: userId
+        })
+        .eq('id', pendingId)
+        .eq('user_id', userId);
+
+    if (updateError) {
+        console.error('[V9.7] Error updating pending after transfer:', updateError);
+    }
+
+    console.info('[V9.7] Transferred pending to income:', { pendingId, incomeId: income.id });
+    return { success: true, incomeId: income.id };
+}
+
+/**
+ * Transfer a pending item to losses (mark as cancelled/lost)
+ * @param {string} pendingId - ID of the pending item
+ * @returns {Promise<{success: boolean, lossId?: string, error?: string}>}
+ */
+async function transferPendingToLoss(pendingId) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) return { success: false, error: 'No autenticado' };
+    const userId = userData.user.id;
+
+    // 1. Fetch pending item
+    const { data: pending, error: fetchError } = await supabase
+        .from('agro_pending')
+        .select('*')
+        .eq('id', pendingId)
+        .eq('user_id', userId)
+        .single();
+
+    if (fetchError || !pending) {
+        return { success: false, error: fetchError?.message || 'Pendiente no encontrado' };
+    }
+
+    // 2. Check idempotency
+    if (pending.transfer_state === 'transferred' && pending.transferred_to === 'losses') {
+        console.info('[V9.7] Pending already transferred to losses, idempotent return');
+        return { success: true, lossId: pending.transferred_to_id, message: 'Ya transferido' };
+    }
+
+    // 3. Create loss record
+    const lossData = {
+        user_id: userId,
+        concepto: pending.concepto,
+        monto: pending.monto,
+        fecha: pending.fecha,
+        causa: 'Pendiente cancelado',
+        crop_id: pending.crop_id,
+        unit_type: pending.unit_type,
+        unit_qty: pending.unit_qty,
+        quantity_kg: pending.quantity_kg,
+        // V9.7: Transfer origin tracking
+        origin_table: 'agro_pending',
+        origin_id: pending.id,
+        transfer_state: 'active'
+    };
+
+    const { data: loss, error: insertError } = await supabase
+        .from('agro_losses')
+        .insert([lossData])
+        .select('id')
+        .single();
+
+    if (insertError || !loss) {
+        return { success: false, error: insertError?.message || 'Error creando pérdida' };
+    }
+
+    // 4. Update pending with transfer metadata
+    const { error: updateError } = await supabase
+        .from('agro_pending')
+        .update({
+            transferred_to: 'losses',
+            transferred_to_id: loss.id,
+            transfer_state: 'transferred',
+            transferred_at: new Date().toISOString(),
+            transferred_by: userId
+        })
+        .eq('id', pendingId)
+        .eq('user_id', userId);
+
+    if (updateError) {
+        console.error('[V9.7] Error updating pending after transfer to loss:', updateError);
+    }
+
+    console.info('[V9.7] Transferred pending to loss:', { pendingId, lossId: loss.id });
+    return { success: true, lossId: loss.id };
+}
+
+/**
+ * Revert an income back to pending (mark income as reverted, reactivate pending)
+ * @param {string} incomeId - ID of the income item
+ * @param {string} reason - Optional reason for reverting
+ * @returns {Promise<{success: boolean, pendingId?: string, error?: string}>}
+ */
+async function revertIncomeToPending(incomeId, reason = '') {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) return { success: false, error: 'No autenticado' };
+    const userId = userData.user.id;
+
+    // 1. Fetch income with origin info
+    const { data: income, error: fetchError } = await supabase
+        .from('agro_income')
+        .select('*')
+        .eq('id', incomeId)
+        .eq('user_id', userId)
+        .single();
+
+    if (fetchError || !income) {
+        return { success: false, error: fetchError?.message || 'Ingreso no encontrado' };
+    }
+
+    // 2. Validate origin
+    if (income.origin_table !== 'agro_pending' || !income.origin_id) {
+        return { success: false, error: 'Este ingreso no proviene de un pendiente' };
+    }
+
+    // 3. Check idempotency
+    if (income.transfer_state === 'reverted') {
+        console.info('[V9.7] Income already reverted, idempotent return');
+        return { success: true, pendingId: income.origin_id, message: 'Ya revertido' };
+    }
+
+    // 4. Mark income as reverted
+    const { error: incomeUpdateError } = await supabase
+        .from('agro_income')
+        .update({
+            transfer_state: 'reverted',
+            reverted_at: new Date().toISOString(),
+            reverted_reason: reason || 'Devuelto a pendientes'
+        })
+        .eq('id', incomeId)
+        .eq('user_id', userId);
+
+    if (incomeUpdateError) {
+        return { success: false, error: incomeUpdateError.message };
+    }
+
+    // 5. Reactivate pending
+    const { error: pendingUpdateError } = await supabase
+        .from('agro_pending')
+        .update({
+            transfer_state: 'reverted',
+            reverted_at: new Date().toISOString(),
+            reverted_reason: reason || 'Devuelto desde ingreso'
+        })
+        .eq('id', income.origin_id)
+        .eq('user_id', userId);
+
+    if (pendingUpdateError) {
+        console.error('[V9.7] Error reactivating pending:', pendingUpdateError);
+    }
+
+    console.info('[V9.7] Reverted income to pending:', { incomeId, pendingId: income.origin_id });
+    return { success: true, pendingId: income.origin_id };
+}
+
+/**
+ * Revert a loss back to pending (mark loss as reverted, reactivate pending)
+ * @param {string} lossId - ID of the loss item
+ * @param {string} reason - Optional reason for reverting
+ * @returns {Promise<{success: boolean, pendingId?: string, error?: string}>}
+ */
+async function revertLossToPending(lossId, reason = '') {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) return { success: false, error: 'No autenticado' };
+    const userId = userData.user.id;
+
+    // 1. Fetch loss with origin info
+    const { data: loss, error: fetchError } = await supabase
+        .from('agro_losses')
+        .select('*')
+        .eq('id', lossId)
+        .eq('user_id', userId)
+        .single();
+
+    if (fetchError || !loss) {
+        return { success: false, error: fetchError?.message || 'Pérdida no encontrada' };
+    }
+
+    // 2. Validate origin
+    if (loss.origin_table !== 'agro_pending' || !loss.origin_id) {
+        return { success: false, error: 'Esta pérdida no proviene de un pendiente' };
+    }
+
+    // 3. Check idempotency
+    if (loss.transfer_state === 'reverted') {
+        console.info('[V9.7] Loss already reverted, idempotent return');
+        return { success: true, pendingId: loss.origin_id, message: 'Ya revertido' };
+    }
+
+    // 4. Mark loss as reverted
+    const { error: lossUpdateError } = await supabase
+        .from('agro_losses')
+        .update({
+            transfer_state: 'reverted',
+            reverted_at: new Date().toISOString(),
+            reverted_reason: reason || 'Devuelto a pendientes'
+        })
+        .eq('id', lossId)
+        .eq('user_id', userId);
+
+    if (lossUpdateError) {
+        return { success: false, error: lossUpdateError.message };
+    }
+
+    // 5. Reactivate pending
+    const { error: pendingUpdateError } = await supabase
+        .from('agro_pending')
+        .update({
+            transfer_state: 'reverted',
+            reverted_at: new Date().toISOString(),
+            reverted_reason: reason || 'Devuelto desde pérdida'
+        })
+        .eq('id', loss.origin_id)
+        .eq('user_id', userId);
+
+    if (pendingUpdateError) {
+        console.error('[V9.7] Error reactivating pending from loss:', pendingUpdateError);
+    }
+
+    console.info('[V9.7] Reverted loss to pending:', { lossId, pendingId: loss.origin_id });
+    return { success: true, pendingId: loss.origin_id };
+}
+
+/**
+ * Handle revert from income to pending
+ * @param {string} incomeId - ID of the income item
+ */
+async function handleRevertIncome(incomeId) {
+    if (!confirm('¿Devolver este ingreso a Pendientes? El ingreso quedará marcado como revertido.')) {
+        return;
+    }
+
+    const result = await revertIncomeToPending(incomeId);
+
+    if (result.success) {
+        await refreshFactureroHistory('ingresos');
+        await refreshFactureroHistory('pendientes');
+        await updateStats();
+    } else {
+        alert('Error: ' + (result.error || 'No se pudo revertir'));
+    }
+}
+
+/**
+ * Handle revert from loss to pending
+ * @param {string} lossId - ID of the loss item
+ */
+async function handleRevertLoss(lossId) {
+    if (!confirm('¿Devolver esta pérdida a Pendientes? La pérdida quedará marcada como revertida.')) {
+        return;
+    }
+
+    const result = await revertLossToPending(lossId);
+
+    if (result.success) {
+        await refreshFactureroHistory('perdidas');
+        await refreshFactureroHistory('pendientes');
+        await updateStats();
+    } else {
+        alert('Error: ' + (result.error || 'No se pudo revertir'));
+    }
+}
+
+/**
+ * Show modal to choose transfer destination (income or losses)
+ * @returns {Promise<'income'|'losses'|null>}
+ */
+function showTransferChoiceModal() {
+    return new Promise((resolve) => {
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'transfer-modal-overlay';
+        overlay.innerHTML = `
+            <div class="transfer-modal">
+                <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1rem;">¿A dónde transferir?</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button type="button" class="transfer-choice-btn transfer-to-income" style="background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.5); color: #4ade80; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                        <i class="fa fa-arrow-right"></i> Ingresos (Pagado)
+                    </button>
+                    <button type="button" class="transfer-choice-btn transfer-to-losses" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.5); color: #ef4444; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                        <i class="fa fa-times"></i> Pérdidas (Cancelado)
+                    </button>
+                    <button type="button" class="transfer-cancel-btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        // Event handlers
+        overlay.querySelector('.transfer-to-income').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve('income');
+        });
+
+        overlay.querySelector('.transfer-to-losses').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve('losses');
+        });
+
+        overlay.querySelector('.transfer-cancel-btn').addEventListener('click', () => {
+            document.body.removeChild(overlay);
+            resolve(null);
+        });
+
+        // Click outside to cancel
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+                resolve(null);
+            }
+        });
+    });
+}
+
+// ============================================================
 
 function ensurePendingTransferFilterUI(parent, items) {
     if (!parent) return;
@@ -976,18 +1422,38 @@ function renderHistoryRow(tabName, item, config) {
     if (unitSummary) unitMetaParts.push(escapeHtml(unitSummary));
     if (kgSummary) unitMetaParts.push(escapeHtml(kgSummary));
     const unitHtml = unitMetaParts.length ? `<div class="facturero-meta">${unitMetaParts.join(' &bull; ')}</div>` : '';
+
     const isPending = tabName === 'pendientes';
+    const isIncome = tabName === 'ingresos';
+    const isLoss = tabName === 'perdidas';
+
+    // V9.7: Transfer state tracking
     const transferred = isPending && isPendingTransferred(item);
-    const transferHtml = transferred
-        ? `<div class="facturero-meta facturero-transfer-meta">${formatTransferMeta(item)}</div>`
-        : '';
-    const transferDisabled = transferred || FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
-    const transferTitle = transferred
-        ? 'Ya transferido'
-        : (FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false
-            ? 'Transferencia no disponible (faltan columnas)'
-            : 'Transferir a ingreso');
-    const transferBtn = isPending
+    const pendingReverted = isPending && isPendingReverted(item);
+    const fromPending = (isIncome || isLoss) && isFromPendingTransfer(item);
+    const incomeOrLossReverted = (isIncome || isLoss) && isIncomeOrLossReverted(item);
+
+    // Transfer meta for pending items
+    let transferHtml = '';
+    if (transferred) {
+        transferHtml = `<div class="facturero-meta facturero-transfer-meta">${formatTransferMeta(item)}</div>`;
+    } else if (pendingReverted) {
+        transferHtml = `<div class="facturero-meta facturero-transfer-meta facturero-reverted-meta">${formatTransferMeta(item)}</div>`;
+    }
+
+    // V9.7: Origin badge for income/losses from pending
+    let originBadgeHtml = '';
+    if (fromPending) {
+        originBadgeHtml = `<div class="facturero-origin-badge">${formatOriginBadge(item, tabName)}</div>`;
+    }
+
+    // Transfer button for pending items (not already transferred or reverted-back)
+    const showTransferBtn = isPending && !transferred;
+    const transferDisabled = FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
+    const transferTitle = transferDisabled
+        ? 'Transferencia no disponible (faltan columnas)'
+        : 'Transferir a ingresos o pérdidas';
+    const transferBtn = showTransferBtn
         ? `
                 <button type="button" class="btn-transfer-pending" data-tab="${tabName}" data-id="${item.id}" title="${transferTitle}" ${transferDisabled ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: ${transferDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.7rem; opacity: ${transferDisabled ? '0.4' : '1'};">
                     <i class="fa fa-arrow-right-long"></i>
@@ -995,13 +1461,29 @@ function renderHistoryRow(tabName, item, config) {
             `
         : '';
 
+    // V9.7: Revert button for income/losses from pending (only if not already reverted)
+    let revertBtn = '';
+    if (fromPending && !incomeOrLossReverted) {
+        const revertClass = isIncome ? 'btn-revert-income' : 'btn-revert-loss';
+        revertBtn = `
+            <button type="button" class="${revertClass}" data-tab="${tabName}" data-id="${item.id}" title="Devolver a Pendientes" style="background: transparent; border: 1px solid rgba(251,191,36,0.5); color: #fbbf24; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                <i class="fa fa-undo"></i>
+            </button>
+        `;
+    }
+
+    // V9.7: Row styling for reverted items
+    const revertedStyle = incomeOrLossReverted ? 'opacity: 0.5;' : '';
+    const itemStyle = `background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; ${revertedStyle}`;
+
     return `
-        <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+        <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="${itemStyle}">
             <div style="flex: 1; min-width: 0;">
                 <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(displayConcept)}</div>
                 ${whoLine}
                 ${unitHtml}
                 ${transferHtml}
+                ${originBadgeHtml}
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
                     ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
@@ -1017,6 +1499,7 @@ function renderHistoryRow(tabName, item, config) {
                     <i class="fa fa-copy"></i>
                 </button>
                 ${transferBtn}
+                ${revertBtn}
                 <button type="button" class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-trash"></i>
                 </button>
@@ -1207,7 +1690,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
                     }
                     items = retry.data || [];
                 } else if (error.message && error.message.toLowerCase().includes('deleted_at')) {
-                // Legacy fallback logic for other tables
+                    // Legacy fallback logic for other tables
                     config.supportsDeletedAt = false;
                     console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
                     const fallback = await buildQuery(selectClause);
@@ -1286,7 +1769,7 @@ function renderHistoryList(tabName, config, items, showActions) {
         if (isPendingTab && itemsWithCropNames.length > 0) {
             container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
         } else {
-        container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
+            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
         }
     } else {
         // V9.6.7: Group by day and render with headers
@@ -1865,6 +2348,11 @@ async function handlePendingTransfer(itemId) {
         return;
     }
 
+    // V9.7: First show choice modal (income vs losses)
+    const destination = await showTransferChoiceModal();
+    if (!destination) return; // User cancelled
+
+    // Then show existing modal for date/category
     const decision = await openPendingTransferModal(pending);
     if (!decision?.confirmed) return;
 
@@ -1872,61 +2360,142 @@ async function handlePendingTransfer(itemId) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Debes iniciar sesión para transferir.');
 
-        const incomeId = crypto?.randomUUID ? crypto.randomUUID() : `inc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-        const concept = pending.concepto || 'Ingreso';
-        const buyer = pending.cliente || '';
-        const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
+        if (destination === 'income') {
+            // Transfer to Income
+            const incomeId = crypto?.randomUUID ? crypto.randomUUID() : `inc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const concept = pending.concepto || 'Ingreso';
+            const buyer = pending.cliente || '';
+            const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
 
-        const incomePayload = {
-            id: incomeId,
-            user_id: user.id,
-            concepto: conceptFinal,
-            monto: Number(pending.monto || 0),
-            fecha: decision.date,
-            categoria: decision.category || 'ventas',
-            soporte_url: pending.evidence_url || null,
-            crop_id: pending.crop_id || null,
-            unit_type: pending.unit_type || null,
-            unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
-            quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null
-        };
+            const incomePayload = {
+                id: incomeId,
+                user_id: user.id,
+                concepto: conceptFinal,
+                monto: Number(pending.monto || 0),
+                fecha: decision.date,
+                categoria: decision.category || 'ventas',
+                soporte_url: pending.evidence_url || null,
+                crop_id: pending.crop_id || null,
+                unit_type: pending.unit_type || null,
+                unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
+                quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null,
+                // V9.7: Origin tracking
+                origin_table: 'agro_pending',
+                origin_id: pending.id,
+                transfer_state: 'active'
+            };
 
-        let { error: insertError } = await supabase.from('agro_income').insert(incomePayload);
-        if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'unit_qty') || isMissingColumnError(insertError, 'quantity_kg'))) {
-            const fallbackPayload = { ...incomePayload };
-            delete fallbackPayload.unit_type;
-            delete fallbackPayload.unit_qty;
-            delete fallbackPayload.quantity_kg;
-            const retry = await supabase.from('agro_income').insert(fallbackPayload);
-            insertError = retry.error;
+            let { error: insertError } = await supabase.from('agro_income').insert(incomePayload);
+            if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'unit_qty') || isMissingColumnError(insertError, 'quantity_kg') || isMissingColumnError(insertError, 'origin_table'))) {
+                const fallbackPayload = { ...incomePayload };
+                delete fallbackPayload.unit_type;
+                delete fallbackPayload.unit_qty;
+                delete fallbackPayload.quantity_kg;
+                delete fallbackPayload.origin_table;
+                delete fallbackPayload.origin_id;
+                delete fallbackPayload.transfer_state;
+                const retry = await supabase.from('agro_income').insert(fallbackPayload);
+                insertError = retry.error;
+            }
+            if (insertError) throw insertError;
+
+            const transferMeta = {
+                transferred_at: new Date().toISOString(),
+                transferred_income_id: incomeId,
+                transferred_by: user.id,
+                transferred_to: 'income',
+                transfer_state: 'transferred'
+            };
+
+            let { error: updateError } = await supabase
+                .from('agro_pending')
+                .update(transferMeta)
+                .eq('id', pending.id)
+                .eq('user_id', user.id);
+
+            if (updateError && (isMissingColumnError(updateError, 'transferred_at') || isMissingColumnError(updateError, 'transferred_to'))) {
+                FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes = false;
+                await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
+                notifyFacturero('Faltan columnas de transferencia. Ejecuta el patch SQL.', 'warning');
+                return;
+            } else if (updateError) {
+                await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
+                throw updateError;
+            }
+
+            notifyFacturero('✅ Pendiente transferido a Ingresos (Pagado).', 'success');
+            await refreshFactureroHistory('pendientes');
+            await refreshFactureroHistory('ingresos');
+            document.dispatchEvent(new CustomEvent('agro:income:changed'));
+
+        } else if (destination === 'losses') {
+            // Transfer to Losses
+            const lossId = crypto?.randomUUID ? crypto.randomUUID() : `loss_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const concept = pending.concepto || 'Pérdida';
+            const buyer = pending.cliente || '';
+            const conceptFinal = buyer ? `${concept} — ${buyer}` : concept;
+
+            const lossPayload = {
+                id: lossId,
+                user_id: user.id,
+                description: conceptFinal,
+                amount: Number(pending.monto || 0),
+                date: decision.date,
+                category: decision.category || 'cancelacion',
+                crop_id: pending.crop_id || null,
+                unit_type: pending.unit_type || null,
+                unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
+                quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null,
+                // V9.7: Origin tracking
+                origin_table: 'agro_pending',
+                origin_id: pending.id,
+                transfer_state: 'active'
+            };
+
+            let { error: insertError } = await supabase.from('agro_losses').insert(lossPayload);
+            if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'origin_table'))) {
+                const fallbackPayload = { ...lossPayload };
+                delete fallbackPayload.unit_type;
+                delete fallbackPayload.unit_qty;
+                delete fallbackPayload.quantity_kg;
+                delete fallbackPayload.origin_table;
+                delete fallbackPayload.origin_id;
+                delete fallbackPayload.transfer_state;
+                const retry = await supabase.from('agro_losses').insert(fallbackPayload);
+                insertError = retry.error;
+            }
+            if (insertError) throw insertError;
+
+            const transferMeta = {
+                transferred_at: new Date().toISOString(),
+                transferred_income_id: lossId, // reusing field for loss ID
+                transferred_by: user.id,
+                transferred_to: 'losses',
+                transfer_state: 'transferred'
+            };
+
+            let { error: updateError } = await supabase
+                .from('agro_pending')
+                .update(transferMeta)
+                .eq('id', pending.id)
+                .eq('user_id', user.id);
+
+            if (updateError && isMissingColumnError(updateError, 'transferred_to')) {
+                await supabase.from('agro_losses').delete().eq('id', lossId).eq('user_id', user.id);
+                notifyFacturero('Faltan columnas de transferencia. Ejecuta el patch SQL.', 'warning');
+                return;
+            } else if (updateError) {
+                await supabase.from('agro_losses').delete().eq('id', lossId).eq('user_id', user.id);
+                throw updateError;
+            }
+
+            notifyFacturero('✅ Pendiente transferido a Pérdidas (Cancelado).', 'success');
+            await refreshFactureroHistory('pendientes');
+            await refreshFactureroHistory('perdidas');
+            document.dispatchEvent(new CustomEvent('agro:losses:changed'));
         }
-        if (insertError) throw insertError;
 
-        const transferMeta = {
-            transferred_at: new Date().toISOString(),
-            transferred_income_id: incomeId,
-            transferred_by: user.id
-        };
-
-        let { error: updateError } = await supabase
-            .from('agro_pending')
-            .update(transferMeta)
-            .eq('id', pending.id)
-            .eq('user_id', user.id);
-
-        if (updateError && (isMissingColumnError(updateError, 'transferred_at') || isMissingColumnError(updateError, 'transferred_income_id') || isMissingColumnError(updateError, 'transferred_by'))) {
-            FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes = false;
-            await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
-            notifyFacturero('Faltan columnas de transferencia en agro_pending. Ejecuta el patch SQL antes de transferir.', 'warning');
-            return;
-        } else if (updateError) {
-            await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
-            throw updateError;
-        }
-
-        notifyFacturero('✅ Pendiente transferido a ingreso.', 'success');
-        await refreshFactureroHistory('pendientes');
-        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        await updateStats();
     } catch (err) {
         console.error('[AGRO] Pending transfer error:', err.message);
         notifyFacturero(`Error al transferir: ${err.message}`, 'warning');
@@ -2032,6 +2601,33 @@ function setupFactureroCrudListeners() {
             } else {
                 console.warn('[AGRO] Pending transfer missing data', { tabName, itemId });
             }
+            return;
+        }
+
+        // V9.7: Revert income to pending
+        const revertIncomeBtn = e.target.closest('.btn-revert-income');
+        if (revertIncomeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const itemId = revertIncomeBtn.dataset.id;
+            console.info('[AGRO] Revert income click', { itemId });
+            if (itemId) {
+                await handleRevertIncome(itemId);
+            }
+            return;
+        }
+
+        // V9.7: Revert loss to pending
+        const revertLossBtn = e.target.closest('.btn-revert-loss');
+        if (revertLossBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const itemId = revertLossBtn.dataset.id;
+            console.info('[AGRO] Revert loss click', { itemId });
+            if (itemId) {
+                await handleRevertLoss(itemId);
+            }
+            return;
         }
     });
 

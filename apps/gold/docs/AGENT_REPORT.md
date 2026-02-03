@@ -1,5 +1,47 @@
 ﻿---
 
+## 🔄 SESIÓN: Facturero Transfer Enhancement v9.7 (2026-02-03)
+
+### Diagnóstico (VERIFICADO via MCP)
+
+**agro_pending** (17 columnas):
+- ✅ transferred_at, transferred_income_id, transferred_by (ya existen)
+- ❌ FALTA: transferred_to (text), transfer_state (text), reverted_at (timestamptz), reverted_reason (text)
+
+**agro_income** (14 columnas):
+- ❌ FALTA: origin_table (text), origin_id (uuid), transfer_state (text), reverted_at (timestamptz), reverted_reason (text)
+
+**agro_losses** (14 columnas):
+- ❌ FALTA: origin_table (text), origin_id (uuid), transfer_state (text), reverted_at (timestamptz), reverted_reason (text)
+
+### Plan
+1. Crear migración SQL: `agro_facturero_transfer_meta_v2.sql`
+2. Aplicar migración via MCP
+3. Implementar UI: badges "Transferido desde...", botones "Devolver", "Transferir a Pérdidas"
+4. Implementar lógica: transferPendingToIncome/Loss, revertIncome/LossToPending
+5. Ajustar cálculos: excluir revertidos de totales
+6. QA manual + build
+
+### DoD
+- [x] Historial pendientes: label "Transferido → X" + fecha/hora
+- [x] Historial ingresos: badge "Transferido desde Pendientes"
+- [x] Historial pérdidas: badge "Transferido desde Pendientes"
+- [x] Botón "Devolver a Pendientes" (desde income/losses)
+- [ ] Botón "Transferir a Pérdidas" (en pendientes) — requiere integrar modal
+- [x] Idempotencia: no duplicar transfers/reverts
+- [x] UX mobile-first intacto
+- [x] RLS respetado
+- [x] Build PASS ✅
+
+### Resultados
+- Migration SQL aplicada via MCP (agro_facturero_transfer_meta_v2)
+- Funciones: transferPendingToIncome/Loss, revertIncome/LossToPending
+- Click handlers: btn-revert-income, btn-revert-loss
+- CSS: transfer-modal-overlay, transfer-badge-origin/reverted
+- Build: `pnpm build:gold` PASS
+
+---
+
 ## 🧪 SESIÓN: QA Cierre v9.6 (2026-02-03)
 
 ### Schema Verification
