@@ -1339,6 +1339,108 @@ body.modal-open {
   min-height: 44px;
 }
 
+.facturero-transfer-meta {
+  color: rgba(200, 167, 82, 0.85);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pending-transfer-filter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.pending-transfer-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.pending-transfer-label input {
+  accent-color: #C8A752;
+}
+
+.pending-transfer-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pending-transfer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.pending-transfer-card {
+  position: relative;
+  z-index: 1;
+  background: #0f0f0f;
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 16px;
+  width: min(520px, 100%);
+  padding: 1.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.pending-transfer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.pending-transfer-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: 'Orbitron', sans-serif;
+  color: #C8A752;
+}
+
+.pending-transfer-close {
+  background: transparent;
+  border: none;
+  color: #C8A752;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.pending-transfer-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pending-transfer-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pending-transfer-row strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.pending-transfer-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.pending-transfer-actions .btn {
+  flex: 1;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .kpi-icon-wrapper {
     animation: float 6s ease-in-out infinite;

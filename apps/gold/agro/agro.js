@@ -596,6 +596,16 @@ const FACTURERO_CONFIG = {
     }
 };
 
+const FACTURERO_OPTIONAL_FIELDS = {
+    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by']
+};
+
+const FACTURERO_OPTIONAL_FIELDS_SUPPORT = {
+    pendientes: null
+};
+
+const PENDING_TRANSFER_FILTER_KEY = 'YG_PENDING_SHOW_TRANSFERRED_V1';
+
 const FACTURERO_EVIDENCE_FIELDS = {
     gastos: ['evidence_url'],
     ingresos: ['soporte_url', 'evidence_url'],
@@ -607,6 +617,7 @@ const FACTURERO_EVIDENCE_FIELDS = {
 const EVIDENCE_LINK_STYLE = 'color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;';
 const EVIDENCE_LINK_LABEL = 'Ver recibo';
 const evidenceSignedUrlCache = new Map();
+let pendingCache = [];
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -871,6 +882,82 @@ function isMissingColumnError(error, column) {
     return text.includes('column') && text.includes(col);
 }
 
+function isPendingTransferred(item) {
+    if (!item) return false;
+    return !!(item.transferred_at || item.transferred_income_id);
+}
+
+function readPendingTransferFilter() {
+    try {
+        return localStorage.getItem(PENDING_TRANSFER_FILTER_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function writePendingTransferFilter(value) {
+    try {
+        localStorage.setItem(PENDING_TRANSFER_FILTER_KEY, value ? '1' : '0');
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function formatTransferMeta(item) {
+    if (!item?.transferred_at) return 'Transferido';
+    try {
+        const date = new Date(item.transferred_at);
+        if (Number.isNaN(date.getTime())) return 'Transferido';
+        const stamp = date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        return `Transferido (${stamp})`;
+    } catch (e) {
+        return 'Transferido';
+    }
+}
+
+function ensurePendingTransferFilterUI(parent, items) {
+    if (!parent) return;
+    let wrapper = parent.querySelector('#pending-transfer-filter');
+    if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.id = 'pending-transfer-filter';
+        wrapper.className = 'pending-transfer-filter';
+        const label = document.createElement('label');
+        label.className = 'pending-transfer-label';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'pending-transfer-toggle';
+        checkbox.checked = readPendingTransferFilter();
+        const text = document.createElement('span');
+        text.className = 'pending-transfer-text';
+        label.append(checkbox, text);
+        wrapper.appendChild(label);
+        parent.prepend(wrapper);
+
+        checkbox.addEventListener('change', () => {
+            writePendingTransferFilter(checkbox.checked);
+            refreshFactureroHistory('pendientes');
+        });
+    }
+
+    const transferredCount = Array.isArray(items)
+        ? items.filter((item) => isPendingTransferred(item)).length
+        : 0;
+    const text = wrapper.querySelector('.pending-transfer-text');
+    if (text) {
+        text.textContent = transferredCount > 0
+            ? `Ver transferidos (${transferredCount})`
+            : 'Ver transferidos';
+    }
+}
+
+function applyPendingTransferFilter(items) {
+    if (!Array.isArray(items)) return [];
+    const showTransferred = readPendingTransferFilter();
+    if (showTransferred) return items;
+    return items.filter((item) => !isPendingTransferred(item));
+}
+
 function renderHistoryRow(tabName, item, config) {
     const rawConcept = item[config.conceptField] || 'Sin concepto';
     const amount = Number(item[config.amountField] || 0);
@@ -889,6 +976,24 @@ function renderHistoryRow(tabName, item, config) {
     if (unitSummary) unitMetaParts.push(escapeHtml(unitSummary));
     if (kgSummary) unitMetaParts.push(escapeHtml(kgSummary));
     const unitHtml = unitMetaParts.length ? `<div class="facturero-meta">${unitMetaParts.join(' &bull; ')}</div>` : '';
+    const isPending = tabName === 'pendientes';
+    const transferred = isPending && isPendingTransferred(item);
+    const transferHtml = transferred
+        ? `<div class="facturero-meta facturero-transfer-meta">${formatTransferMeta(item)}</div>`
+        : '';
+    const transferDisabled = transferred || FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
+    const transferTitle = transferred
+        ? 'Ya transferido'
+        : (FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false
+            ? 'Transferencia no disponible (faltan columnas)'
+            : 'Transferir a ingreso');
+    const transferBtn = isPending
+        ? `
+                <button type="button" class="btn-transfer-pending" data-tab="${tabName}" data-id="${item.id}" title="${transferTitle}" ${transferDisabled ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: ${transferDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.7rem; opacity: ${transferDisabled ? '0.4' : '1'};">
+                    <i class="fa fa-arrow-right-long"></i>
+                </button>
+            `
+        : '';
 
     return `
         <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
@@ -896,6 +1001,7 @@ function renderHistoryRow(tabName, item, config) {
                 <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(displayConcept)}</div>
                 ${whoLine}
                 ${unitHtml}
+                ${transferHtml}
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
                     ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
@@ -910,6 +1016,7 @@ function renderHistoryRow(tabName, item, config) {
                 <button type="button" class="btn-duplicate-facturero" data-tab="${tabName}" data-id="${item.id}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-copy"></i>
                 </button>
+                ${transferBtn}
                 <button type="button" class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-trash"></i>
                 </button>
@@ -930,6 +1037,8 @@ function buildFactureroSelectFields(tabName, config) {
     add('created_at');
     add('crop_id');
     (config?.extraFields || []).forEach(add);
+    const optional = getFactureroOptionalFields(tabName);
+    (optional || []).forEach(add);
     (FACTURERO_EVIDENCE_FIELDS[tabName] || []).forEach(add);
     return Array.from(fields);
 }
@@ -938,6 +1047,14 @@ function buildFactureroSelectClause(fields) {
     const safeFields = Array.isArray(fields) ? fields.filter(Boolean) : [];
     if (safeFields.length === 0) return '*, agro_crops(name)';
     return `${safeFields.join(', ')}, agro_crops(name)`;
+}
+
+function getFactureroOptionalFields(tabName) {
+    if (!tabName) return [];
+    const optional = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
+    const support = FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName];
+    if (support === false) return [];
+    return optional;
 }
 
 async function enrichFactureroItems(tabName, items) {
@@ -1061,32 +1178,39 @@ async function refreshFactureroHistory(tabName, options = {}) {
             const selectFields = buildFactureroSelectFields(tabName, config);
             const selectClause = buildFactureroSelectClause(selectFields);
 
-            // Build query
-            let query = supabase
-                .from(config.table)
-                .select(selectClause)
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(20);
+            const buildQuery = (clause) => {
+                let q = supabase
+                    .from(config.table)
+                    .select(clause)
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+                if (config.supportsDeletedAt) {
+                    q = q.is('deleted_at', null);
+                }
+                return q;
+            };
 
-            // Filter deleted_at if supported
-            if (config.supportsDeletedAt) {
-                query = query.is('deleted_at', null);
-            }
-
-            const { data, error } = await query;
+            const { data, error } = await buildQuery(selectClause);
 
             if (error) {
+                const optionalFields = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
+                const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
+                if (hasMissingOptional) {
+                    FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = false;
+                    const retryFields = buildFactureroSelectFields(tabName, config);
+                    const retryClause = buildFactureroSelectClause(retryFields);
+                    const retry = await buildQuery(retryClause);
+                    if (retry.error) {
+                        console.error(`[AGRO] V9.5.1: Error fetching ${tabName} (retry):`, retry.error.message);
+                        return;
+                    }
+                    items = retry.data || [];
+                } else if (error.message && error.message.toLowerCase().includes('deleted_at')) {
                 // Legacy fallback logic for other tables
-                if (error.message && error.message.toLowerCase().includes('deleted_at')) {
                     config.supportsDeletedAt = false;
                     console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
-                    const fallback = await supabase
-                        .from(config.table)
-                        .select(selectClause)
-                        .eq('user_id', user.id)
-                        .order('created_at', { ascending: false })
-                        .limit(20);
+                    const fallback = await buildQuery(selectClause);
                     if (fallback.error) {
                         console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
                         return;
@@ -1098,6 +1222,9 @@ async function refreshFactureroHistory(tabName, options = {}) {
                 }
             } else {
                 items = data || [];
+                if (FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] === null) {
+                    FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = true;
+                }
             }
         }
 
@@ -1106,6 +1233,9 @@ async function refreshFactureroHistory(tabName, options = {}) {
         }
 
         const enrichedItems = await enrichFactureroItems(tabName, items || []);
+        if (tabName === 'pendientes') {
+            pendingCache = enrichedItems;
+        }
         renderHistoryList(tabName, config, enrichedItems, showActions);
         if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias' || tabName === 'gastos' || tabName === 'ingresos') {
             syncFactureroNotifications(tabName, enrichedItems);
@@ -1119,6 +1249,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
 function renderHistoryList(tabName, config, items, showActions) {
     // Find or create list container
     let container = document.getElementById(config.listId);
+    const parent = document.getElementById(config.containerId);
 
     if (!container) {
         // Try to find parent container
@@ -1142,13 +1273,25 @@ function renderHistoryList(tabName, config, items, showActions) {
         ...item,
         crop_name: item.agro_crops?.name || ''
     }));
+    const isPendingTab = tabName === 'pendientes';
+    if (isPendingTab && parent) {
+        ensurePendingTransferFilterUI(parent, itemsWithCropNames);
+    }
 
-    if (itemsWithCropNames.length === 0) {
+    const filteredItems = isPendingTab
+        ? applyPendingTransferFilter(itemsWithCropNames)
+        : itemsWithCropNames;
+
+    if (filteredItems.length === 0) {
+        if (isPendingTab && itemsWithCropNames.length > 0) {
+            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
+        } else {
         container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
+        }
     } else {
         // V9.6.7: Group by day and render with headers
         const dateField = config.dateField || 'fecha';
-        const dayGroups = groupRowsByDay(itemsWithCropNames, dateField);
+        const dayGroups = groupRowsByDay(filteredItems, dateField);
 
         let html = '';
         for (const group of dayGroups) {
@@ -1160,7 +1303,7 @@ function renderHistoryList(tabName, config, items, showActions) {
         container.innerHTML = html;
     }
 
-    console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${itemsWithCropNames.length} items grouped by day`);
+    console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${filteredItems.length} items grouped by day`);
 }
 
 async function refreshFactureroAfterChange(tabName) {
@@ -1550,6 +1693,246 @@ async function duplicateFactureroItem(tabName, itemId) {
     }
 }
 
+function notifyFacturero(message, type = 'info') {
+    if (typeof showEvidenceToast === 'function') {
+        showEvidenceToast(message, type);
+    } else {
+        alert(message);
+    }
+}
+
+function buildPendingTransferModal(pending) {
+    const existing = document.getElementById('pending-transfer-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'pending-transfer-modal';
+    modal.className = 'pending-transfer-modal';
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'pending-transfer-backdrop';
+    backdrop.dataset.close = 'true';
+
+    const card = document.createElement('div');
+    card.className = 'pending-transfer-card';
+
+    const header = document.createElement('div');
+    header.className = 'pending-transfer-header';
+    const title = document.createElement('h3');
+    title.textContent = 'Transferir Pendiente';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'pending-transfer-close';
+    closeBtn.dataset.close = 'true';
+    closeBtn.innerHTML = '&times;';
+    header.append(title, closeBtn);
+
+    const body = document.createElement('div');
+    body.className = 'pending-transfer-body';
+
+    const detailRows = [
+        { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
+        { label: 'Cliente', value: pending.cliente || 'N/A' },
+        { label: 'Monto', value: `$${Number(pending.monto || 0).toFixed(2)}` },
+        { label: 'Fecha pendiente', value: pending.fecha || 'N/A' }
+    ];
+
+    detailRows.forEach((row) => {
+        const line = document.createElement('div');
+        line.className = 'pending-transfer-row';
+        const label = document.createElement('span');
+        label.textContent = row.label;
+        const value = document.createElement('strong');
+        value.textContent = row.value;
+        line.append(label, value);
+        body.appendChild(line);
+    });
+
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'input-group';
+    const categoryLabel = document.createElement('label');
+    categoryLabel.className = 'input-label';
+    categoryLabel.textContent = 'Categoria ingreso';
+    categoryLabel.setAttribute('for', 'pending-transfer-category');
+    const categorySelect = document.createElement('select');
+    categorySelect.id = 'pending-transfer-category';
+    categorySelect.className = 'styled-input';
+    categorySelect.style.paddingLeft = '1rem';
+    const categories = [
+        { value: 'ventas', label: 'Ventas' },
+        { value: 'servicios', label: 'Servicios' },
+        { value: 'subsidios', label: 'Subsidios' },
+        { value: 'otros', label: 'Otros' }
+    ];
+    categories.forEach((opt) => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        categorySelect.appendChild(option);
+    });
+    categorySelect.value = 'ventas';
+    categoryGroup.append(categoryLabel, categorySelect);
+
+    const dateGroup = document.createElement('div');
+    dateGroup.className = 'input-group';
+    const dateLabel = document.createElement('label');
+    dateLabel.className = 'input-label';
+    dateLabel.textContent = 'Fecha de ingreso';
+    dateLabel.setAttribute('for', 'pending-transfer-date');
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.id = 'pending-transfer-date';
+    dateInput.className = 'styled-input';
+    dateInput.style.paddingLeft = '1rem';
+    const today = getTodayLocalISO();
+    dateInput.value = today;
+    dateInput.max = today;
+    dateGroup.append(dateLabel, dateInput);
+
+    body.append(categoryGroup, dateGroup);
+
+    const actions = document.createElement('div');
+    actions.className = 'pending-transfer-actions';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn-cancel';
+    cancelBtn.dataset.close = 'true';
+    cancelBtn.textContent = 'Cancelar';
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'btn btn-primary';
+    confirmBtn.id = 'pending-transfer-confirm';
+    confirmBtn.textContent = 'Transferir';
+    actions.append(cancelBtn, confirmBtn);
+
+    card.append(header, body, actions);
+    modal.append(backdrop, card);
+    document.body.appendChild(modal);
+
+    return modal;
+}
+
+function openPendingTransferModal(pending) {
+    return new Promise((resolve) => {
+        const modal = buildPendingTransferModal(pending);
+        if (!modal) {
+            resolve({ confirmed: false });
+            return;
+        }
+
+        const close = () => {
+            modal.remove();
+            resolve({ confirmed: false });
+        };
+
+        modal.querySelectorAll('[data-close]').forEach((el) => {
+            el.addEventListener('click', close);
+        });
+
+        const confirmBtn = modal.querySelector('#pending-transfer-confirm');
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                const category = modal.querySelector('#pending-transfer-category')?.value || 'ventas';
+                const date = modal.querySelector('#pending-transfer-date')?.value || getTodayLocalISO();
+                modal.remove();
+                resolve({ confirmed: true, category, date });
+            });
+        }
+
+        document.addEventListener('keydown', function onKey(e) {
+            if (e.key === 'Escape') {
+                document.removeEventListener('keydown', onKey);
+                close();
+            }
+        });
+    });
+}
+
+async function handlePendingTransfer(itemId) {
+    const pending = pendingCache.find((item) => String(item.id) === String(itemId));
+    if (!pending) {
+        notifyFacturero('No se encontró el pendiente seleccionado.', 'warning');
+        return;
+    }
+
+    if (isPendingTransferred(pending)) {
+        notifyFacturero('Este pendiente ya fue transferido.', 'warning');
+        return;
+    }
+
+    if (FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false) {
+        notifyFacturero('Transferencia no disponible. Ejecuta el patch SQL de columnas de transferencia.', 'warning');
+        return;
+    }
+
+    const decision = await openPendingTransferModal(pending);
+    if (!decision?.confirmed) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Debes iniciar sesión para transferir.');
+
+        const incomeId = crypto?.randomUUID ? crypto.randomUUID() : `inc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        const concept = pending.concepto || 'Ingreso';
+        const buyer = pending.cliente || '';
+        const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
+
+        const incomePayload = {
+            id: incomeId,
+            user_id: user.id,
+            concepto: conceptFinal,
+            monto: Number(pending.monto || 0),
+            fecha: decision.date,
+            categoria: decision.category || 'ventas',
+            soporte_url: pending.evidence_url || null,
+            crop_id: pending.crop_id || null,
+            unit_type: pending.unit_type || null,
+            unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
+            quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null
+        };
+
+        let { error: insertError } = await supabase.from('agro_income').insert(incomePayload);
+        if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'unit_qty') || isMissingColumnError(insertError, 'quantity_kg'))) {
+            const fallbackPayload = { ...incomePayload };
+            delete fallbackPayload.unit_type;
+            delete fallbackPayload.unit_qty;
+            delete fallbackPayload.quantity_kg;
+            const retry = await supabase.from('agro_income').insert(fallbackPayload);
+            insertError = retry.error;
+        }
+        if (insertError) throw insertError;
+
+        const transferMeta = {
+            transferred_at: new Date().toISOString(),
+            transferred_income_id: incomeId,
+            transferred_by: user.id
+        };
+
+        let { error: updateError } = await supabase
+            .from('agro_pending')
+            .update(transferMeta)
+            .eq('id', pending.id)
+            .eq('user_id', user.id);
+
+        if (updateError && (isMissingColumnError(updateError, 'transferred_at') || isMissingColumnError(updateError, 'transferred_income_id') || isMissingColumnError(updateError, 'transferred_by'))) {
+            FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes = false;
+            await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
+            notifyFacturero('Faltan columnas de transferencia en agro_pending. Ejecuta el patch SQL antes de transferir.', 'warning');
+            return;
+        } else if (updateError) {
+            await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
+            throw updateError;
+        }
+
+        notifyFacturero('✅ Pendiente transferido a ingreso.', 'success');
+        await refreshFactureroHistory('pendientes');
+        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+    } catch (err) {
+        console.error('[AGRO] Pending transfer error:', err.message);
+        notifyFacturero(`Error al transferir: ${err.message}`, 'warning');
+    }
+}
+
 function setupCropActionListeners() {
     if (document.__agroCropActionsBound) return;
     document.__agroCropActionsBound = true;
@@ -1634,6 +2017,21 @@ function setupFactureroCrudListeners() {
             } else {
                 console.warn('[AGRO] Facturero duplicate missing data', { tabName, itemId });
             }
+            return;
+        }
+
+        const transferBtn = e.target.closest('.btn-transfer-pending');
+        if (transferBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const tabName = transferBtn.dataset.tab;
+            const itemId = transferBtn.dataset.id;
+            console.info('[AGRO] Facturero transfer click', { tabName, itemId });
+            if (tabName === 'pendientes' && itemId) {
+                await handlePendingTransfer(itemId);
+            } else {
+                console.warn('[AGRO] Pending transfer missing data', { tabName, itemId });
+            }
         }
     });
 
@@ -1680,12 +2078,41 @@ const CROP_STATUS_LEGACY_MAP = {
     harvested: 'finalizado'
 };
 
+const CROP_STATUS_THRESHOLDS = {
+    sembrado: 0,
+    creciendo: 25,
+    produccion: 70,
+    finalizado: 100
+};
+
 function normalizeCropStatus(status) {
     const value = String(status || '').toLowerCase().trim();
     if (!value) return 'creciendo';
     if (CROP_STATUS_UI[value]) return value;
     if (CROP_STATUS_LEGACY_MAP[value]) return CROP_STATUS_LEGACY_MAP[value];
     return value;
+}
+
+function computeAutoCropStatus(crop, progress) {
+    if (crop?.actual_harvest_date) return 'finalizado';
+    if (!progress?.ok) {
+        const fallback = normalizeCropStatus(crop?.status);
+        return fallback || 'creciendo';
+    }
+    const percent = Number.isFinite(progress.percent) ? progress.percent : 0;
+    if (percent >= CROP_STATUS_THRESHOLDS.finalizado) return 'finalizado';
+    if (percent >= CROP_STATUS_THRESHOLDS.produccion) return 'produccion';
+    if (percent >= CROP_STATUS_THRESHOLDS.creciendo) return 'creciendo';
+    return 'sembrado';
+}
+
+function resolveCropStatus(crop, progress) {
+    const override = String(crop?.status_override || '').trim();
+    if (override) return normalizeCropStatus(override);
+    const mode = String(crop?.status_mode || '').toLowerCase().trim();
+    if (mode === 'auto') return computeAutoCropStatus(crop, progress);
+    if (crop?.status) return normalizeCropStatus(crop.status);
+    return computeAutoCropStatus(crop, progress);
 }
 
 function getCropStatusMeta(status) {
@@ -1847,7 +2274,10 @@ function createCropCardElement(crop, index) {
     details.append(name, variety);
     cropInfo.append(cropIcon, details);
 
-    header.append(cropInfo, createStatusBadge(crop.status));
+    const templateDuration = getTemplateDurationForCrop(crop);
+    const progress = computeCropProgress(crop, templateDuration);
+    const effectiveStatus = resolveCropStatus(crop, progress);
+    header.append(cropInfo, createStatusBadge(effectiveStatus));
 
     const progressSection = document.createElement('div');
     progressSection.className = 'progress-section';
@@ -1861,9 +2291,8 @@ function createCropCardElement(crop, index) {
 
     const progressValue = document.createElement('span');
     progressValue.className = 'progress-value';
-    const templateDuration = getTemplateDurationForCrop(crop);
-    const progress = computeCropProgress(crop, templateDuration);
-    progressValue.textContent = progress.ok ? progress.label : 'Progreso: N/A';
+    const progressLabelText = progress.ok ? progress.label : 'Progreso: N/A';
+    progressValue.textContent = progressLabelText;
 
     progressHeader.append(progressLabel, progressValue);
 
@@ -5512,7 +5941,10 @@ function buildCropsPreamble() {
         .map(c => {
             let desc = c.name;
             if (c.variety) desc += ` (${c.variety})`;
-            desc += ` - ${normalizeCropStatus(c.status) || 'activo'}`;
+            const templateDuration = getTemplateDurationForCrop(c);
+            const progress = computeCropProgress(c, templateDuration);
+            const effectiveStatus = resolveCropStatus(c, progress);
+            desc += ` - ${normalizeCropStatus(effectiveStatus) || 'activo'}`;
             return desc;
         })
         .slice(0, 10);
@@ -5802,19 +6234,25 @@ function getAssistantCropFocus(activeTab) {
     }
 
     if (!selectedCrop) {
-        selectedCrop = crops.find((crop) => normalizeCropStatus(crop?.status) !== 'finalizado') || crops[0] || null;
+        selectedCrop = crops.find((crop) => {
+            const templateDuration = getTemplateDurationForCrop(crop);
+            const progress = computeCropProgress(crop, templateDuration);
+            const status = resolveCropStatus(crop, progress);
+            return normalizeCropStatus(status) !== 'finalizado';
+        }) || crops[0] || null;
     }
 
     if (!selectedCrop) return null;
 
     const templateDuration = getTemplateDurationForCrop(selectedCrop);
     const progress = computeCropProgress(selectedCrop, templateDuration);
+    const resolvedStatus = resolveCropStatus(selectedCrop, progress);
 
     return {
         id: selectedCrop?.id ?? null,
         name: selectedCrop?.name ?? null,
         variety: selectedCrop?.variety ?? null,
-        status: normalizeCropStatus(selectedCrop?.status),
+        status: normalizeCropStatus(resolvedStatus),
         day_x: progress.ok ? progress.dayIndex : null,
         day_total: progress.ok ? progress.totalDays : null,
         start_date: selectedCrop?.start_date ?? null,
@@ -6591,7 +7029,14 @@ export function openEditModal(id) {
     document.getElementById('crop-start-date').value = crop.start_date || '';
     document.getElementById('crop-harvest-date').value = crop.expected_harvest_date || '';
     const statusSelect = document.getElementById('crop-status');
-    if (statusSelect) statusSelect.value = normalizeCropStatus(crop.status);
+    if (statusSelect) {
+        const mode = String(crop.status_mode || '').toLowerCase().trim();
+        if (mode === 'auto' && !crop.status_override) {
+            statusSelect.value = 'auto';
+        } else {
+            statusSelect.value = normalizeCropStatus(crop.status_override || crop.status);
+        }
+    }
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = String(crop.id || '');
     const templateSelect = document.getElementById('crop-template');
@@ -6648,6 +7093,24 @@ export async function saveCrop() {
     const startDate = document.getElementById('crop-start-date')?.value || null;
     const harvestDate = document.getElementById('crop-harvest-date')?.value || null;
     const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
+    const statusMode = statusValue === 'auto' ? 'auto' : 'manual';
+    const statusOverride = statusMode === 'manual' ? statusValue : null;
+    const existingCrop = currentEditId
+        ? cropsCache.find(c => String(c.id) === String(currentEditId))
+        : null;
+    const baseCropForStatus = {
+        ...(existingCrop || {}),
+        name,
+        variety,
+        start_date: startDate,
+        expected_harvest_date: harvestDate,
+        status: statusOverride || existingCrop?.status || 'creciendo'
+    };
+    const templateDuration = getTemplateDurationForCrop(baseCropForStatus);
+    const progress = computeCropProgress(baseCropForStatus, templateDuration);
+    const effectiveStatus = statusMode === 'auto'
+        ? computeAutoCropStatus(baseCropForStatus, progress)
+        : normalizeCropStatus(statusValue);
 
     // Validación
     if (!name) {
@@ -6675,7 +7138,9 @@ export async function saveCrop() {
         investment: investment,
         start_date: startDate,
         expected_harvest_date: harvestDate,
-        status: statusValue
+        status: effectiveStatus,
+        status_mode: statusMode,
+        status_override: statusOverride
     };
 
     try {
@@ -6698,7 +7163,7 @@ export async function saveCrop() {
                     .insert([{
                         ...cropData,
                         user_id: userData.user.id,
-                        status: statusValue,
+                        status: effectiveStatus,
                         progress: 0
                     }])
                     .select();
@@ -6721,7 +7186,7 @@ export async function saveCrop() {
                 const newCrop = {
                     id: crypto.randomUUID(),
                     ...cropData,
-                    status: statusValue,
+                    status: effectiveStatus,
                     progress: 0,
                     created_at: new Date().toISOString()
                 };

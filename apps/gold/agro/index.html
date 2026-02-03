@@ -1588,6 +1588,7 @@
                 <div class="input-group" style="margin-bottom: 1rem;">
                     <label class="input-label" for="crop-status">Estado</label>
                     <select id="crop-status" class="styled-input" style="padding-left: 1rem; cursor: pointer;">
+                        <option value="auto">Auto (por fechas)</option>
                         <option value="sembrado">Sembrado</option>
                         <option value="creciendo">Creciendo</option>
                         <option value="produccion">En producci&oacute;n</option>
@@ -2235,6 +2236,15 @@
                 dateObj.setDate(dateObj.getDate() + days);
                 return formatDateKey(dateObj);
             };
+            const isMissingColumnError = (error, column) => {
+                if (!error || !column) return false;
+                const code = String(error.code || '').toLowerCase();
+                const msg = String(error.message || '').toLowerCase();
+                const details = String(error.details || '').toLowerCase();
+                const text = `${msg} ${details}`;
+                if (code === '42703' || code === 'pgrst204') return true;
+                return text.includes('column') && text.includes(String(column).toLowerCase());
+            };
 
             // Helper: show validation error (reutiliza toast si existe, sino alert)
             const showValidationError = (msg) => {
@@ -2301,40 +2311,89 @@
                 const fullName = `${icon} ${name}`;
                 const editId = document.getElementById('crop-edit-id')?.value || '';
                 const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
+                const statusMode = statusValue === 'auto' ? 'auto' : 'manual';
+                const statusOverride = statusMode === 'manual' ? statusValue : null;
+                const computeAutoStatus = () => {
+                    if (!sowDate || !harvestDate) return 'creciendo';
+                    const start = new Date(sowDate);
+                    const end = new Date(harvestDate);
+                    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'creciendo';
+                    const totalMs = end.getTime() - start.getTime();
+                    if (totalMs <= 0) return 'creciendo';
+                    const now = new Date();
+                    const elapsedMs = Math.min(Math.max(now.getTime() - start.getTime(), 0), totalMs);
+                    const percent = Math.round((elapsedMs / totalMs) * 100);
+                    if (percent >= 100) return 'finalizado';
+                    if (percent >= 70) return 'produccion';
+                    if (percent >= 25) return 'creciendo';
+                    return 'sembrado';
+                };
+                const effectiveStatus = statusMode === 'auto' ? computeAutoStatus() : statusOverride;
 
                 let insertedId = null;
 
                 if (editId) {
-                    const { error: updateError } = await supabase
+                    let updatePayload = {
+                        name: fullName,
+                        variety,
+                        area_size: area,
+                        investment,
+                        start_date: sowDate,
+                        expected_harvest_date: harvestDate || null,
+                        status: effectiveStatus,
+                        status_mode: statusMode,
+                        status_override: statusOverride
+                    };
+                    let { error: updateError } = await supabase
                         .from('agro_crops')
-                        .update({
-                            name: fullName,
-                            variety,
-                            area_size: area,
-                            investment,
-                            start_date: sowDate,
-                            expected_harvest_date: harvestDate || null,
-                            status: statusValue
-                        })
+                        .update(updatePayload)
                         .eq('id', editId)
                         .eq('user_id', user.id);
+
+                    if (updateError && (isMissingColumnError(updateError, 'status_mode') || isMissingColumnError(updateError, 'status_override'))) {
+                        delete updatePayload.status_mode;
+                        delete updatePayload.status_override;
+                        updateError = (await supabase
+                            .from('agro_crops')
+                            .update(updatePayload)
+                            .eq('id', editId)
+                            .eq('user_id', user.id)).error;
+                        if (updateError) throw updateError;
+                        showValidationError('Faltan columnas de override en agro_crops. Ejecuta el patch SQL para guardar Auto/Manual.');
+                    }
 
                     if (updateError) throw updateError;
                     alert('Cultivo actualizado.');
                 } else {
-                    const { data: insertRows, error: insertError } = await supabase
+                    let insertPayload = {
+                        user_id: user.id,
+                        name: fullName,
+                        variety,
+                        area_size: area,
+                        investment,
+                        start_date: sowDate,
+                        expected_harvest_date: harvestDate || null,
+                        status: effectiveStatus,
+                        status_mode: statusMode,
+                        status_override: statusOverride
+                    };
+                    let { data: insertRows, error: insertError } = await supabase
                         .from('agro_crops')
-                        .insert({
-                            user_id: user.id,
-                            name: fullName,
-                            variety,
-                            area_size: area,
-                            investment,
-                            start_date: sowDate,
-                            expected_harvest_date: harvestDate || null,
-                            status: statusValue || 'sembrado'
-                        })
+                        .insert(insertPayload)
                         .select('id');
+
+                    if (insertError && (isMissingColumnError(insertError, 'status_mode') || isMissingColumnError(insertError, 'status_override'))) {
+                        delete insertPayload.status_mode;
+                        delete insertPayload.status_override;
+                        const retry = await supabase
+                            .from('agro_crops')
+                            .insert(insertPayload)
+                            .select('id');
+                        insertRows = retry.data;
+                        insertError = retry.error;
+                        if (insertError) throw insertError;
+                        showValidationError('Faltan columnas de override en agro_crops. Ejecuta el patch SQL para guardar Auto/Manual.');
+                    }
 
                     if (insertError) throw insertError;
                     insertedId = Array.isArray(insertRows) ? insertRows[0]?.id : insertRows?.id;

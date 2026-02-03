@@ -1,5 +1,23 @@
 ﻿---
 
+## 🧪 SESIÓN: QA Cierre v9.6 (2026-02-03)
+
+### Schema Verification
+1. **agro_pending**: Faltaban columnas de transferencia -> ✅ Aplicado `agro_pending_transfer_v1.sql`
+2. **Units columns**: ✅ OK (Ya existían)
+3. **agro_crops**: Faltaban columnas status override -> ✅ Aplicado `agro_crops_status_override_v1.sql`
+
+### Manual QA Checklist
+- [x] Test 1: Crear pendiente
+- [x] Test 2: Transferir -> Ingreso (NO destructivo)
+- [x] Test 3: Anti-duplicado
+- [x] Test 4: Persistencia
+- [x] Test 5: Unidades conservadas
+- [x] Test 6: Estado cultivo (Manual/Auto)
+
+### Resultado
+✅ Ready for release. Build PASS. Schema patched.
+
 ## 📅 SESIÓN: YavlMusic Mojibake Buttons Cleanup (2026-02-02)
 
 ### Diagnóstico
@@ -177,6 +195,82 @@
 ✅ max attr = hoy local en todos los inputs date
 
 ---
+
+## 📅 SESIÓN: Agro/Facturero Transferencias + Estados Cultivo + Unidades + Acordeón (2026-02-03)
+
+### Diagnóstico (Facturero + Cultivos + UX)
+1. **Facturero: tablas actuales** en `apps/gold/agro/agro.js`:
+   - `ingresos` → `agro_income`
+   - `pendientes` → `agro_pending`
+   - `perdidas` → `agro_losses`
+   - `transferencias` → `agro_transfers`
+   - `gastos` → `agro_expenses`
+2. **Historial Pendientes** se renderiza en `renderHistoryList()` → `renderHistoryRow()` con botones Editar/Duplicar/Eliminar, pero **no existe** acción “Transferir” ni estado “Transferido”.
+3. **Unidades**:
+   - UI ya tiene `Presentacion`, `Cantidad (unidad)` y `Kilogramos` en Pendientes/Pérdidas/Transferencias (`apps/gold/agro/index.html`).
+   - `INCOME_UNIT_OPTIONS` en `agro.js` incluye `saco`, `medio_saco`, `cesta`; **kg** se maneja por `quantity_kg`.
+   - SQL existente solo cubre `agro_income`: `supabase/sql/agro_income_units_v1.sql`. Para `agro_pending`, `agro_losses`, `agro_transfers` no hay patch explícito.
+4. **Ciclo/estado de cultivo**:
+   - UI ya usa estados `sembrado/creciendo/produccion/finalizado` (`crop-status`).
+   - Persistencia actual usa `agro_crops.status` (sin override separado).
+   - Progreso se calcula por fechas (`computeCropProgress`) pero **no hay** precedencia explícita entre “auto” y “manual”.
+5. **Acordeón Facturero**:
+   - `initAccordions()` colapsa otros detalles en móvil (grupo `facturero`).
+   - Edición de historial re-renderiza listas y puede perder foco/estado; no hay preservación explícita del accordion activo al refrescar.
+
+### Plan (quirúrgico)
+1. **Transferir Pendiente → Ingreso (no destructivo)**:
+   - Agregar botón “Transferir” en filas de Pendientes (`renderHistoryRow`).
+   - Crear flujo idempotente: si ya fue transferido, deshabilitar y mostrar “Transferido”.
+   - Insertar en `agro_income` un nuevo registro con vínculo al pendiente.
+   - Marcar pendiente con metadatos (`transferred_at`, `transferred_income_id`, `transferred_by`) sin borrar ni sobrescribir datos originales.
+2. **SQL mínimo (si faltan columnas)**:
+   - Nuevo patch SQL para `agro_pending` (metadata de transferencia).
+   - Patch SQL para unidades en `agro_pending`, `agro_losses`, `agro_transfers` (apoyado en `agro_income_units_v1.sql`).
+3. **Ciclo de cultivo: override manual**:
+   - Introducir `status_override` (o similar) en `agro_crops`.
+   - Precedencia: si hay override → UI usa override; si no → usa status automático (derivado de progreso/fechas).
+   - Mantener progreso automático intacto.
+4. **Unidades: UI + edit**:
+   - Mantener `kg` via `quantity_kg`, asegurar select de presentaciones con `saco/medio_saco/cesta`.
+   - Ajustar render y validación para mobile (inputs compactos).
+5. **Acordeón Facturero**:
+   - Preservar el acordeón activo al refrescar historial/editar.
+   - En móvil, colapsar otros acordeones al abrir uno (sin saltos).
+
+### Archivos a tocar (previstos)
+- `apps/gold/docs/AGENT_REPORT.md` (este reporte)
+- `apps/gold/agro/agro.js` (transferencias, estado cultivo override, unidades, acordeón)
+- `apps/gold/agro/index.html` (si se requiere markup mínimo de UI)
+- `apps/gold/agro/agro.css` (estilos de botón Transferir + estado Transferido + modal)
+- `supabase/sql/agro_income_units_v1.sql` (verificación/reuso)
+- `supabase/sql/agro_pending_transfer_v1.sql` (nuevo patch si hace falta)
+- `supabase/sql/agro_units_facturero_v1.sql` (nuevo patch si hace falta)
+
+### Pruebas manuales planeadas
+1. Login → Agro → Pendientes → crear pendiente.
+2. En historial Pendientes: click “Transferir” → confirmar.
+3. Verificar ingreso creado en Ingresos; pendiente queda marcado “Transferido”.
+4. Reload: persistencia correcta (ingreso + pendiente marcado).
+5. Editar ingreso y/o pendiente: unidades mantienen valor.
+6. Cultivos: set estado manual, recargar, verificar persistencia; volver a “Auto” si aplica.
+7. Móvil: acordeón estable y sin saltos al editar/transferir.
+8. Build: `pnpm build:gold`.
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — botón Transferir, modal y flujo idempotente; filtro “Ver transferidos”; metadata de transferencia; soporte de override de estado de cultivo; resolución de estado auto/manual en cards y contexto AI.
+- `apps/gold/agro/index.html` — opción “Auto (por fechas)” en estado; `saveCrop` con `status_mode/status_override`, fallback si faltan columnas.
+- `apps/gold/agro/agro.css` — estilos de meta “Transferido”, filtro y modal de transferencia.
+- `supabase/sql/agro_pending_transfer_v1.sql` — columnas de transferencia en `agro_pending`.
+- `supabase/sql/agro_units_facturero_v1.sql` — unidades en `agro_pending`, `agro_losses`, `agro_transfers`.
+- `supabase/sql/agro_crops_status_override_v1.sql` — columnas `status_mode/status_override` en `agro_crops`.
+
+### Resultado
+- Transferir Pendiente → Ingreso implementado sin borrar el pendiente; queda marcado “Transferido” y el ingreso se crea con vínculo.
+- Filtro “Ver transferidos” en Pendientes para ocultar por defecto.
+- Estados de cultivo con override manual y modo Auto (por fechas) en UI.
+- Unidades adicionales soportadas en create/edit/render (kg + saco + medio saco + cestas).
+- Build OK: `pnpm build:gold`.
 
 ## 🛠️ SESIÓN: Facturero Scroll/Style Consistency (2026-02-01)
 
