@@ -1,4 +1,4 @@
-const ASSISTANT_VERSION = 'v9.8.0-agro';
+const ASSISTANT_VERSION = 'v10.0.0-agro-agent';
 
 const ALLOWED_ORIGINS = new Set([
   'https://www.yavlgold.com',
@@ -23,7 +23,8 @@ const AGRO_KEYWORDS = [
   'fungic', 'insect', 'malez', 'semilla', 'germin', 'hoja', 'raiz', 'tallo',
   'mancha', 'podred', 'clima', 'humedad', 'lluvia', 'temperatura', 'viento',
   'invernadero', 'nutrient', 'ph', 'abono', 'agro', 'fitosanit', 'pulgon', 'acaro',
-  'roya', 'mildiu', 'oidio', 'botrytis', 'fusarium', 'bacteria', 'virus'
+  'roya', 'mildiu', 'oidio', 'botrytis', 'fusarium', 'bacteria', 'virus',
+  'bitacora', 'evento', 'anotar', 'registrar', 'batata', 'progreso', 'estado'
 ];
 
 const NON_AGRO_KEYWORDS = [
@@ -35,16 +36,55 @@ const NON_AGRO_KEYWORDS = [
 ];
 
 const SYSTEM_PROMPT = [
-  'Eres un Ingeniero Agronomo profesional. Responde solo sobre agricultura y campo (Agro).',
+  'Eres un Ingeniero Agronomo profesional y Asistente de Campo (Agro).',
   'Idioma: español. Estilo: directo, practico, con pasos accionables.',
-  'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato" y pide 1-3 datos concretos.',
-  'Si mencionas agroquimicos, indica "revisar etiqueta y normativa local" y pide cultivo/etapa/sintomas antes de sugerir.',
-  'Formato de respuesta:',
-  '1) Diagnostico probable (confianza: baja/media/alta)',
-  '2) Acciones inmediatas (1-5 bullets)',
-  '3) Preguntas de seguimiento (max 3)',
-  '4) Advertencias (si aplica)'
+  'Tienes acceso a herramientas para consultar el estado de cultivos y registrar eventos.',
+  'USA tus herramientas cuando el usuario pregunte por el estado de un cultivo o pida registrar algo.',
+  'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato".',
+  'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.'
 ].join('\n');
+
+const TOOLS_DEF = [
+  {
+    name: "get_crop_status",
+    description: "Obtiene el estado actual de un cultivo, su progreso y ultimos eventos registrados.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        crop_id: { type: "STRING", description: "UUID del cultivo" },
+        include_last_events: { type: "BOOLEAN", description: "Incluir ultimos eventos" },
+        events_limit: { type: "NUMBER", description: "Cantidad maxima de eventos a traer (default 10)" }
+      },
+      required: ["crop_id"]
+    }
+  },
+  {
+    name: "log_event",
+    description: "Registra un nuevo evento agricola (riego, cosecha, nota, etc) para un cultivo.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        crop_id: { type: "STRING", description: "UUID del cultivo" },
+        type: {
+          type: "STRING",
+          description: "Tipo de evento",
+          enum: ['riego','abono','fumigacion','cosecha','venta','observacion','nota','otro','status_change','amend']
+        },
+        qty: { type: "NUMBER", description: "Cantidad (opcional)" },
+        unit: {
+          type: "STRING",
+          description: "Unidad de medida (requerida si hay qty)",
+          enum: ['kg','l','saco','medio_saco','cesta']
+        },
+        note: { type: "STRING", description: "Nota o descripcion adicional" },
+        occurred_at: { type: "STRING", description: "Fecha ISO (opcional, default now)" }
+      },
+      required: ["crop_id", "type"]
+    }
+  }
+];
+
+// --- HELPERS ---
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
@@ -62,9 +102,7 @@ function corsHeaders(origin: string | null) {
   if (origin && isAllowedOrigin(origin)) {
     headers['Access-Control-Allow-Origin'] = origin;
   }
-  return {
-    ...headers
-  };
+  return { ...headers };
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200, headers: Record<string, string> = {}) {
@@ -74,34 +112,8 @@ function jsonResponse(body: Record<string, unknown>, status = 200, headers: Reco
   });
 }
 
-async function requireUser(authHeader: string | null) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  if (!supabaseUrl || !supabaseAnonKey) return null;
-
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: {
-      Authorization: authHeader,
-      apikey: supabaseAnonKey
-    }
-  });
-  if (!res.ok) return null;
-  return await res.json();
-}
-
-function shouldFallback(errorStatus: number, errorMessage: string): boolean {
-  if (errorStatus === 404) return true;
-  if (/model/i.test(errorMessage) && /not found|not available|invalid/i.test(errorMessage)) return true;
-  if (/model/i.test(errorMessage) && /not supported/i.test(errorMessage)) return true;
-  return false;
-}
-
 function normalizeText(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function isOutOfScopeQuery(prompt: string) {
@@ -111,110 +123,345 @@ function isOutOfScopeQuery(prompt: string) {
   return hasNonAgro && !hasAgro;
 }
 
+// --- DB HELPERS ---
+
+async function supabaseRequest(method: string, path: string, body: any, authHeader: string) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || !supabaseAnonKey) throw new Error('Missing Supabase Config');
+
+  const url = `${supabaseUrl}/rest/v1/${path}`;
+  const headers = {
+    'apikey': supabaseAnonKey,
+    'Authorization': authHeader,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation' // Para devolver la fila insertada
+  };
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    // Parse error JSON if possible
+    try {
+      const errJson = JSON.parse(text);
+      throw new Error(errJson.message || text);
+    } catch {
+      throw new Error(`Supabase error ${response.status}: ${text}`);
+    }
+  }
+
+  return await response.json();
+}
+
+async function requireUser(authHeader: string | null) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { Authorization: authHeader, apikey: supabaseAnonKey! }
+  });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+// --- TOOL HANDLERS ---
+
+async function handleGetCropStatus(args: any, authHeader: string) {
+  try {
+    const { crop_id, include_last_events, events_limit } = args;
+    if (!crop_id) throw new Error('crop_id is required');
+
+    // 1. Get Crop
+    const crops = await supabaseRequest('GET', `agro_crops?id=eq.${crop_id}&select=*`, null, authHeader);
+    if (!crops || crops.length === 0) {
+      return { ok: false, error: 'NOT_FOUND', message: 'Cultivo no encontrado o sin acceso.' };
+    }
+    const crop = crops[0];
+
+    // 2. Calculate Progress
+    let progress = null;
+    let total_days = null;
+    let elapsed_days = null;
+    let remaining_days = null;
+    let pct = null;
+
+    if (crop.start_date && crop.expected_harvest_date) {
+      const start = new Date(crop.start_date);
+      const end = new Date(crop.expected_harvest_date);
+      const now = new Date();
+
+      const msPerDay = 1000 * 60 * 60 * 24;
+      total_days = Math.round((end.getTime() - start.getTime()) / msPerDay);
+      elapsed_days = Math.round((now.getTime() - start.getTime()) / msPerDay);
+
+      // Fix negative elapsed if started in future (unlikely but safe)
+      if (elapsed_days < 0) elapsed_days = 0;
+
+      remaining_days = total_days - elapsed_days;
+
+      if (total_days > 0) {
+        pct = Math.min(100, Math.round((elapsed_days / total_days) * 100));
+      } else {
+        pct = 100;
+      }
+
+      progress = {
+        total_days,
+        elapsed_days,
+        remaining_days,
+        pct
+      };
+    } else if (crop.progress !== undefined) {
+      pct = crop.progress;
+      progress = { pct, note: "Calculado manualmente" };
+    }
+
+    // 3. Get Events if requested
+    let last_events = [];
+    if (include_last_events) {
+      const limit = events_limit || 10;
+      last_events = await supabaseRequest(
+        'GET',
+        `agro_events?crop_id=eq.${crop_id}&order=occurred_at.desc&limit=${limit}`,
+        null,
+        authHeader
+      );
+    }
+
+    return {
+      ok: true,
+      data: {
+        crop: {
+          id: crop.id,
+          name: crop.name,
+          variety: crop.variety,
+          status: crop.status,
+          start_date: crop.start_date,
+          expected_harvest_date: crop.expected_harvest_date
+        },
+        progress,
+        last_events
+      }
+    };
+
+  } catch (err: any) {
+    return { ok: false, error: 'INTERNAL_ERROR', message: err.message };
+  }
+}
+
+async function handleLogEvent(args: any, authHeader: string) {
+  try {
+    const { crop_id, type, qty, unit, note, occurred_at } = args;
+
+    // a) Validate Params
+    if (!crop_id || !type) return { ok: false, error: 'MISSING_PARAMS', message: 'crop_id y type son requeridos' };
+
+    const VALID_TYPES = ['riego','abono','fumigacion','cosecha','venta','observacion','nota','otro','status_change','amend'];
+    if (!VALID_TYPES.includes(type)) {
+      return { ok: false, error: 'INVALID_TYPE', message: `Tipo invalido. Permitidos: ${VALID_TYPES.join(', ')}` };
+    }
+
+    // b) Validate Qty/Unit
+    if (qty !== undefined && qty !== null) {
+      if (!unit) return { ok: false, error: 'MISSING_UNIT', message: 'Si indicas qty, debes indicar unit.' };
+      const VALID_UNITS = ['kg','l','saco','medio_saco','cesta'];
+      if (!VALID_UNITS.includes(unit)) {
+        return { ok: false, error: 'INVALID_UNIT', message: `Unidad invalida. Permitidas: ${VALID_UNITS.join(', ')}` };
+      }
+    }
+
+    // c) Occurred At
+    let finalOccurrence = new Date().toISOString();
+    if (occurred_at) {
+      // Validate date
+      const d = new Date(occurred_at);
+      if (isNaN(d.getTime())) return { ok: false, error: 'INVALID_DATE', message: 'occurred_at debe ser fecha ISO valida' };
+      finalOccurrence = d.toISOString();
+    }
+
+    // d) Insert (User ID is handled by RLS via authHeader, but we must pass it in body if tables expects it OR rely on default?
+    // Wait, the INSERT policy expects auth.uid() = user_id.
+    // If we send user_id in body, it must match.
+    // We can extract user_id from authHeader check (auth/v1/user) OR just send it.
+    // Ideally we fetch user first.
+    const userObj = await requireUser(authHeader);
+    if (!userObj || !userObj.id) return { ok: false, error: 'UNAUTHORIZED', message: 'No user found' };
+
+    const payload = {
+      user_id: userObj.id,
+      crop_id,
+      type,
+      qty: qty || null,
+      unit: unit || null,
+      note: note || null,
+      occurred_at: finalOccurrence
+    };
+
+    const result = await supabaseRequest('POST', 'agro_events', payload, authHeader);
+
+    return {
+      ok: true,
+      data: result && result.length > 0 ? result[0] : result,
+      message: 'Evento registrado correctamente'
+    };
+
+  } catch (err: any) {
+    return { ok: false, error: 'INSERT_ERROR', message: err.message };
+  }
+}
+
+// --- MAIN SERVE ---
+
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');
   const allowed = isAllowedOrigin(origin);
   const cors = corsHeaders(origin);
 
   if (req.method === 'OPTIONS') {
-    if (!allowed || !origin) {
-      return new Response('Forbidden', { status: 403, headers: cors });
-    }
     return new Response(null, { status: 204, headers: cors });
   }
-
   if (!allowed || !origin) {
     return new Response('Forbidden', { status: 403, headers: cors });
   }
-
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'METHOD_NOT_ALLOWED' }, 405, cors);
   }
 
-  const user = await requireUser(req.headers.get('authorization'));
+  const authHeader = req.headers.get('authorization') || '';
+  const user = await requireUser(authHeader);
   if (!user) {
     return jsonResponse({ error: 'UNAUTHORIZED' }, 401, cors);
   }
 
-  let body: { prompt?: string; message?: string; context?: Record<string, unknown> } = {};
-  try {
-    body = await req.json();
-  } catch (_e) {
-    return jsonResponse({ error: 'INVALID_JSON' }, 400, cors);
-  }
+  let body: any = {};
+  try { body = await req.json(); } catch { return jsonResponse({ error: 'INVALID_JSON' }, 400, cors); }
 
-  const prompt = typeof body.message === 'string'
-    ? body.message.trim()
-    : typeof body.prompt === 'string'
-      ? body.prompt.trim()
-      : '';
-  if (!prompt) {
-    return jsonResponse({ error: 'EMPTY_PROMPT' }, 400, cors);
-  }
-
-  const apiKey = Deno.env.get('GEMINI_API_KEY');
-  if (!apiKey) {
-    return jsonResponse({ error: 'MISSING_GEMINI_KEY' }, 500, cors);
-  }
+  const prompt = (body.message || body.prompt || '').trim();
+  if (!prompt) return jsonResponse({ error: 'EMPTY_PROMPT' }, 400, cors);
 
   if (isOutOfScopeQuery(prompt)) {
     return jsonResponse({ reply: OUT_OF_SCOPE_REPLY, category: 'out_of_scope' }, 200, cors);
   }
 
-  const contextText = body.context
-    ? `Contexto usuario (JSON): ${JSON.stringify(body.context)}\n\n`
-    : 'Contexto usuario: NO DISPONIBLE\n\n';
-  const payload = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: `${contextText}Consulta del usuario: ${prompt}` }]
+  const apiKey = Deno.env.get('GEMINI_API_KEY');
+  if (!apiKey) return jsonResponse({ error: 'MISSING_GEMINI_KEY' }, 500, cors);
+
+  const contextText = body.context ? `Contexto usuario (JSON): ${JSON.stringify(body.context)}\n\n` : '';
+  const fullPrompt = `${contextText}Consulta del usuario: ${prompt}`;
+
+  // Initial Content Payload
+  const contents = [
+    { role: 'user', parts: [{ text: fullPrompt }] }
+  ];
+
+  // Try Models Loop
+  for (const model of MODELS) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+      const payload: any = {
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: contents,
+        tools: [{ function_declarations: TOOLS_DEF }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+      };
+
+      // 1. First Call to Gemini
+      let response = await fetch(endpoint, {
+         method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload)
+      });
+
+      if (response.status === 429) continue; // Rate limit retry next model
+      let data = await response.json();
+
+      // Check for Tool Call
+      const candidate = data?.candidates?.[0];
+      const part = candidate?.content?.parts?.[0];
+
+      if (part && part.functionCall) {
+        const fn = part.functionCall;
+        const toolName = fn.name;
+        const toolArgs = fn.args || {};
+
+        // --- SECURE LOGGING START ---
+        const startTs = performance.now();
+        const userIdShort = user.id ? user.id.split('-').pop() : 'anon'; // Last part of UUID for correlation
+        const cropIdShort = toolArgs.crop_id ? toolArgs.crop_id.split('-').pop() : 'N/A';
+        console.log(`[Tool:Start] ${toolName} User:${userIdShort} Crop:${cropIdShort}`);
+        // --- SECURE LOGGING END ---
+
+        // Execute Tool
+        let toolResult = { ok: false, error: 'UNKNOWN_TOOL', message: 'Tool not found' };
+
+        if (toolName === 'get_crop_status') {
+          toolResult = await handleGetCropStatus(toolArgs, authHeader);
+        } else if (toolName === 'log_event') {
+          toolResult = await handleLogEvent(toolArgs, authHeader);
+        }
+
+        // --- SECURE LOGGING RESULT ---
+        const duration = Math.round(performance.now() - startTs);
+        const logStatus = toolResult.ok ? 'OK' : 'ERROR';
+        const isDebug = Deno.env.get('DEBUG') === 'true';
+
+        let logMsg = `[Tool:End] ${toolName} Status:${logStatus} Time:${duration}ms`;
+        if (!toolResult.ok) logMsg += ` Err:${toolResult.error}`;
+        if (isDebug && toolArgs.note) {
+             const truncNote = toolArgs.note.length > 40 ? toolArgs.note.substring(0, 40) + '...' : toolArgs.note;
+             logMsg += ` Note:${truncNote}`;
+        }
+        console.log(logMsg);
+        // --- SECURE LOGGING RESULT END ---
+
+        // Add to history (Agent Loop)
+        // 1. Model's request (function call)
+        contents.push({
+          role: 'model',
+          parts: [{ functionCall: fn }]
+        });
+
+        // 2. Function response
+        contents.push({
+          role: 'function',
+          parts: [{
+            functionResponse: {
+              name: toolName,
+              response: { result: toolResult }
+            }
+          }]
+        });
+
+        // 3. Second Call to Gemini (Final Answer)
+        payload.contents = contents;
+        payload.tools = []; // Disable tools for final answer to avoid loops (optional)
+
+        response = await fetch(endpoint, {
+           method: 'POST', headers: JSON_HEADERS, body: JSON.stringify(payload)
+        });
+        data = await response.json();
       }
-    ],
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 512
-    }
-  };
 
-  for (let i = 0; i < MODELS.length; i += 1) {
-    const model = MODELS[i];
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: JSON_HEADERS,
-      body: JSON.stringify(payload)
-    });
-
-    if (response.status === 429) {
-      return jsonResponse(
-        { error: 'RATE_LIMIT', retry_after_sec: 60 },
-        429,
-        cors
-      );
-    }
-
-    const data = await response.json().catch(() => ({}));
-    if (response.ok) {
-      const parts = data?.candidates?.[0]?.content?.parts;
-      const reply = Array.isArray(parts)
-        ? parts.map((part: { text?: string }) => part?.text || '').join('').trim()
+      // Extract Reply
+      const finalParts = data?.candidates?.[0]?.content?.parts;
+      const reply = Array.isArray(finalParts)
+        ? finalParts.map((p: any) => p.text || '').join('').trim()
         : '';
-      if (typeof reply !== 'string' || !reply.trim()) {
-        return jsonResponse({ error: 'EMPTY_REPLY' }, 500, cors);
-      }
-      return jsonResponse({ reply: reply.trim(), model }, 200, cors);
-    }
 
-    const errorMessage = data?.error?.message || '';
-    const errorStatus = data?.error?.code || response.status;
-    if (shouldFallback(errorStatus, String(errorMessage)) && i < MODELS.length - 1) {
+      if (reply) {
+        return jsonResponse({ reply, model }, 200, cors);
+      }
+
+    } catch (e) {
+      if (model === MODELS[MODELS.length - 1]) throw e;
       continue;
     }
-
-    return jsonResponse({ error: 'AI_ERROR' }, 500, cors);
   }
 
   return jsonResponse({ error: 'AI_ERROR' }, 500, cors);
