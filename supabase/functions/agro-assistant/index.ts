@@ -40,6 +40,7 @@ const SYSTEM_PROMPT = [
   'Idioma: español. Estilo: directo, practico, con pasos accionables.',
   'Tienes acceso a herramientas para consultar el estado de cultivos y registrar eventos.',
   'USA tus herramientas cuando el usuario pregunte por el estado de un cultivo o pida registrar algo.',
+  'Cuando pregunten por estado/progreso: SIEMPRE usa get_crop_status con include_last_events=true.',
   'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato".',
   'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.'
 ].join('\n');
@@ -52,8 +53,8 @@ const TOOLS_DEF = [
       type: "OBJECT",
       properties: {
         crop_id: { type: "STRING", description: "UUID del cultivo" },
-        include_last_events: { type: "BOOLEAN", description: "Incluir ultimos eventos" },
-        events_limit: { type: "NUMBER", description: "Cantidad maxima de eventos a traer (default 10)" }
+        include_last_events: { type: "BOOLEAN", description: "Incluir ultimos eventos (default true)" },
+        events_limit: { type: "NUMBER", description: "Cantidad maxima de eventos a traer (default 5)" }
       },
       required: ["crop_id"]
     }
@@ -175,7 +176,11 @@ async function requireUser(authHeader: string | null) {
 
 async function handleGetCropStatus(args: any, authHeader: string) {
   try {
-    const { crop_id, include_last_events, events_limit } = args;
+    const { crop_id } = args;
+    // Defaults: include_last_events=true unless explicitly false, limit=5
+    const include_last_events = args.include_last_events !== false;
+    const events_limit = args.events_limit || 5;
+
     if (!crop_id) throw new Error('crop_id is required');
 
     // 1. Get Crop
