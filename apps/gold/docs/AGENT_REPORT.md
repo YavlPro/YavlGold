@@ -154,6 +154,14 @@
 ### Estado Final
 ✅ **QA PASS**. La herramienta ahora detecta transferencias por estado, destino o timestamp.
 
+---
+
+## 🛡️ HOTFIX: Security Override (2026-02-03)
+- **Vulnerabilidad**: `@isaacs/brace-expansion` (DoS).
+- **Acción**: `pnpm.overrides` forzado a `5.0.1` en `package.json` root.
+- **Resultado**: Lockfile regenerado, Build PASS. Commit `81bae51`.
+
+
 
 ---
 
