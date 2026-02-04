@@ -4423,3 +4423,28 @@ Implementar "smart retry" en frontend:
 ## Actualizacion de resultados (tarea actual - .env example ignorados)
 - Se ajusto `.gitignore` para permitir `!.env.*.example` y `!apps/gold/.env.*.example` manteniendo el bloqueo de secretos.
 - `git check-ignore -v` ahora muestra regla de des-ignorado para ambos ejemplos (quedan listos para versionar).
+
+## Diagnostico (tarea actual - Supabase migrations duplicadas)
+1) `apps/gold/supabase/migrations` contiene 4 migraciones con el mismo prefijo/version `20260108`, lo que provoca error de clave duplicada en `schema_migrations_pkey`.
+2) Archivos detectados: `20260108_create_announcements.sql`, `20260108_create_app_admins.sql`, `20260108_create_notifications_feedback.sql`, `20260108_create_user_favorites.sql`.
+3) Se requiere que cada migracion tenga un prefijo unico (idealmente timestamp de 14 digitos) para que Supabase CLI las aplique en orden.
+
+## Plan (tarea actual - Supabase migrations duplicadas)
+1) Renombrar los 4 archivos con prefijos unicos `YYYYMMDDHHMMSS` manteniendo el orden logico.
+2) No cambiar contenido SQL, solo el nombre.
+3) Documentar que el reset local (`supabase db reset`) puede ser necesario si ya hubo intento fallido.
+
+## DoD (tarea actual - Supabase migrations duplicadas)
+- [ ] Todas las migraciones tienen prefijo/version unico.
+- [ ] Nombres ordenados y sin cambios de contenido.
+
+## Fuentes (tarea actual - Supabase migrations duplicadas)
+- `dir apps/gold/supabase/migrations` (listado local).
+## Actualizacion de resultados (tarea actual - Supabase migrations duplicadas)
+- Migraciones renombradas con prefijos unicos (14 digitos):
+  - `20260108100000_create_announcements.sql`
+  - `20260108100500_create_app_admins.sql`
+  - `20260108101000_create_notifications_feedback.sql`
+  - `20260108101500_create_user_favorites.sql`
+- Sin cambios en contenido SQL; solo nombres.
+- Nota: si el estado local quedo inconsistente, usar `supabase db reset` antes de `pnpm sb:up`.
