@@ -43,6 +43,7 @@ const SYSTEM_PROMPT = [
   'Cuando pregunten por estado/progreso: SIEMPRE usa get_crop_status con include_last_events=true.',
   'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato".',
   'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.',
+  '**Si preguntan por deudas, cuentas por cobrar, "quién me debe" o pagos pendientes: USA `get_pending_payments`. Por defecto excluye lo ya transferido/pagado.**',
   '**Cuando el usuario diga solo “mi <cultivo>” o pregunte por estado/progreso (ej: “¿Cómo va mi batata?”), debes: (1) llamar `get_my_crops` para resolver el `crop_id` si no está explícito; (2) luego llamar `get_crop_status` con `include_last_events=true` y `events_limit=5`. En la respuesta, muestra 2–5 eventos recientes (fecha + tipo + nota). No prometas monitoreo automático ni avisos futuros; ofrece registrar eventos o recordatorios manuales.**'
 ].join('\n');
 
@@ -79,6 +80,20 @@ const TOOLS_DEF = [
         occurred_at: { type: "STRING", description: "Fecha ISO (opcional, default now)" }
       },
       required: ["crop_id", "type"]
+    }
+  },
+  {
+    name: "get_pending_payments",
+    description: "Consulta deudas o cobros pendientes activos (no transferidos), filtrados por fecha o cultivo.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        range: { type: "STRING", enum: ["today","7d","30d","month","all"], description: "Rango de fechas (default 30d)" },
+        crop_id: { type: "STRING", description: "Filtrar por cultivo (opcional)" },
+        group_by: { type: "STRING", enum: ["client","none"], description: "Agrupar por cliente (default client)" },
+        include_transferred: { type: "BOOLEAN", description: "Incluir items ya transferidos a ingresos/perdidas (default false)" }
+      },
+      required: []
     }
   },
   {
@@ -434,6 +449,110 @@ async function handleLogEvent(args: any, authHeader: string) {
   }
 }
 
+async function handleGetPendingPayments(args: any, authHeader: string) {
+  try {
+    const { range = '30d', crop_id, group_by = 'client', include_transferred = false } = args;
+
+    // 1. Calculate Date Range
+    const now = new Date();
+    let startStr = '';
+
+    if (range !== 'all') {
+        if (range === 'today') {
+            startStr = now.toISOString().split('T')[0];
+        } else if (range === '7d') {
+            const past = new Date(now); past.setDate(now.getDate() - 7);
+            startStr = past.toISOString().split('T')[0];
+        } else if (range === 'month') { // Current month
+            const first = new Date(now.getFullYear(), now.getMonth(), 1);
+            startStr = first.toISOString().split('T')[0];
+        } else { // Default 30d
+            const past = new Date(now); past.setDate(now.getDate() - 30);
+            startStr = past.toISOString().split('T')[0];
+        }
+    }
+
+    // 2. Build Query
+    let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,created_at&deleted_at=is.null`;
+
+    // Active filter (exclude transferred unless requested)
+    if (!include_transferred) {
+        // PostgREST "is distinct from" syntax or just "not.eq"
+        // Since we want to include NULL and 'active' and 'reverted', but exclude 'transferred'.
+        // "transfer_state=neq.transferred" should work, keeping NULLs?
+        // PostgREST neq keeps nulls? No, strictly SQL usually drops nulls on comparison unless IS DISTINCT FROM.
+        // If transfer_state can be null, neq.transferred might exclude nulls.
+        // Safer: is.distinct_from would be ideal but filter syntax is limited.
+        // Alternative: or=(transfer_state.is.null,transfer_state.neq.transferred)
+        // Let's try explicit OR logic or ensure column has default. schema says default 'active'.
+        // So assuming mostly 'active' or 'transferred' or 'reverted'.
+        // However, older rows might be NULL.
+        // Let's use logic: NOT transferred.
+        // PostgREST: not.eq.transferred (if nulls are issue, we check)
+        // Let's rely on filter: `transfer_state=neq.transferred`
+        // NOTE: Postgres comparison `!=` returns null for nulls.
+        // Safe bet: `or=(transfer_state.is.null,transfer_state.neq.transferred)`
+        query += `&or=(transfer_state.is.null,transfer_state.neq.transferred)`;
+    }
+
+    if (startStr) {
+        query += `&fecha=gte.${startStr}`;
+    }
+    if (crop_id) {
+        query += `&crop_id=eq.${crop_id}`;
+    }
+
+    // Order by date desc
+    query += `&order=fecha.desc`;
+
+    // 3. Execute
+    const data = await supabaseRequest('GET', query, null, authHeader);
+    const rows = Array.isArray(data) ? data : [];
+
+    // 4. Transform & Aggregate
+    const totalAmount = rows.reduce((sum: number, item: any) => sum + (Number(item.monto) || 0), 0);
+
+    const ONE_DAY = 1000 * 60 * 60 * 24;
+    const enriched = rows.map((item: any) => {
+        const d = new Date(item.fecha);
+        const diff = Math.round((now.getTime() - d.getTime()) / ONE_DAY);
+        return {
+            ...item,
+            days_outstanding: diff
+        };
+    });
+
+    // Grouping
+    let grouped = null;
+    if (group_by === 'client') {
+        const map: Record<string, { client: string, total: number, count: number }> = {};
+        enriched.forEach((item: any) => {
+            const client = item.cliente || 'Sin Cliente';
+            if (!map[client]) map[client] = { client, total: 0, count: 0 };
+            map[client].total += Number(item.monto) || 0;
+            map[client].count += 1;
+        });
+        grouped = Object.values(map).sort((a, b) => b.total - a.total);
+    }
+
+    return {
+        ok: true,
+        data: {
+            summary: {
+                total_pending: totalAmount,
+                count: rows.length,
+                range_start: startStr || 'all-time'
+            },
+            by_client: grouped, // Optional
+            latest_items: enriched.slice(0, 10) // Top 10 most recent
+        }
+    };
+
+  } catch (err: any) {
+    return { ok: false, error: 'GET_PENDING_ERROR', message: err.message };
+  }
+}
+
 // --- MAIN SERVE ---
 
 Deno.serve(async (req) => {
@@ -568,6 +687,8 @@ Deno.serve(async (req) => {
           toolResult = await handleGetFinanceSummary(toolArgs, authHeader);
         } else if (toolName === 'get_my_crops') {
           toolResult = await handleGetMyCrops(toolArgs, authHeader);
+        } else if (toolName === 'get_pending_payments') {
+          toolResult = await handleGetPendingPayments(toolArgs, authHeader);
         }
 
         // --- SECURE LOGGING RESULT ---

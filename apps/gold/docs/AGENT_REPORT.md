@@ -40,9 +40,49 @@
 - CSS: transfer-modal-overlay, transfer-badge-origin/reverted
 - Build: `pnpm build:gold` PASS
 
+
 ---
 
-## 🧪 SESIÓN: QA Cierre v9.6 (2026-02-03)
+## 🤖 SESIÓN: Agro Assistant Tool #5 - get_pending_payments (2026-02-03)
+
+### Diagnóstico
+1. **Necesidad**: El asistente no sabe responder "¿quién me debe?" ni filtrar deudas por antigüedad.
+2. **Schema `agro_pending` (Verificado)**:
+   - ✅ `transfer_state`: Permite filtrar activos vs transferidos.
+   - ✅ `cliente`: Permite agrupar deudas.
+   - ✅ `deleted_at`: Permite soft-delete check.
+   - ✅ `monto`, `fecha`, `crop_id`: Datos clave para el reporte.
+3. **Restricción**: Debe usar RLS (usuario actual) y no service_role.
+
+### Plan
+1. Implementar `get_pending_payments` en `supabase/functions/agro-assistant/index.ts`.
+   - **Inputs**: `range` (today/7d/30d/all), `crop_id`, `group_by`, `include_transferred`.
+   - **Lógica**: Query a `agro_pending` filtrando `deleted_at IS NULL` y `transfer_state != 'transferred'` (default).
+   - **Calculos**: Totales, días de antigüedad (`days_outstanding`), agrupación por cliente.
+2. Actualizar `SYSTEM_PROMPT` para instruir al LLM sobre el uso de esta tool.
+3. Smoke Tests manuales en chat.
+
+### DoD
+- [ ] Tool implementada y funcional.
+- [ ] Filtrado correcto de transferidos/borrados.
+- [ ] Respuesta estructurada (resumen + detalles).
+- [ ] Build PASS.
+
+### Riesgos
+- Alucinaciones del LLM si el prompt no es claro sobre cuándo usar esta tool. -> Mitigación: Instrucción explícita en System Prompt.
+
+### Resultado
+- **Implementación**: `get_pending_payments` en `index.ts` (lines 449+).
+- **System Prompt**: Actualizado con instrucción específica para preguntas de deuda.
+- **SQL Verification**:
+  - `agro_pending`: 15 items activos, Total $527 USD (aprox).
+  - Deudores: Jose Luis (4 items), Jesus Berraco (1), Marino (2), Gollo (2), Eliezer (1).
+- **Build**: `pnpm build:gold` ✅ PASS.
+
+### Estado
+✅ QA PASS — IA Agéntica V1 completa con 5 tools.
+
+
 
 ### Schema Verification
 1. **agro_pending**: Faltaban columnas de transferencia -> ✅ Aplicado `agro_pending_transfer_v1.sql`
