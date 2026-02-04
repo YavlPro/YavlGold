@@ -18,7 +18,15 @@
     "build:v9": "vite build",
     "preview:v9": "vite preview",
     "verify:mpa": "KILL_ON_PORT=1 bash scripts/verify-mpa.sh",
-    "assets:optimize": "node scripts/optimize-images.mjs"
+    "assets:optimize": "node scripts/optimize-images.mjs",
+    "sb:init": "cd apps/gold && supabase init",
+    "sb:up": "cd apps/gold && supabase start -x studio,imgproxy,vector,logflare,edge-runtime,supavisor,postgres-meta,mailpit",
+    "sb:up:ui": "cd apps/gold && supabase start -x imgproxy,vector,logflare,edge-runtime,supavisor,mailpit",
+    "sb:down": "cd apps/gold && supabase stop",
+    "sb:status": "cd apps/gold && supabase status",
+    "dev:online": "pnpm -C apps/gold dev -- --mode online",
+    "dev:offline": "pnpm sb:up && pnpm -C apps/gold dev -- --mode offline",
+    "stop": "pnpm sb:down"
   },
   "keywords": [
     "yavl",

@@ -4350,3 +4350,76 @@ Implementar "smart retry" en frontend:
 - Search .search-container actualizado con overlay/shine/lift y focus-within usando tokens DNA.
 - Pruebas manuales: NO VERIFICADO.
 - Build: pnpm build:gold OK (2026-02-01).
+
+## Diagnostico (tarea actual - Supabase Online/Offline local-first)
+- Falta hoy un flujo soberano Online/Offline documentado: no existen scripts `sb:*`, no existen `dev:online/dev:offline` apuntando a `apps/gold`, no hay plantillas `.env.online/.env.offline` y no hay doc local-first para 8GB.
+- Mapa MPA y navegacion: `apps/gold/vite.config.js` define entradas `index.html`, `cookies.html`, `faq.html`, `soporte.html`, `dashboard/index.html`, `creacion.html`, `dashboard/perfil.html`, `dashboard/configuracion.html`, `academia/index.html`, `agro/index.html`, `crypto/index.html`, `herramientas/index.html`, `tecnologia/index.html`, `social/index.html`. `apps/gold/vercel.json` activa `cleanUrls` y rutas para `/academia`, `/crypto`, `/tecnologia` y redirect `/herramientas -> /tecnologia`. `apps/gold/index.html` navega por anclas `#inicio/#modulos/#testimonios` y tiene cards que apuntan a `./agro/` y `./crypto/`. `apps/gold/dashboard/index.html` es el dashboard principal.
+- Supabase (instanciacion/auth): `apps/gold/assets/js/config/supabase-config.js` crea `createClient` usando `import.meta.env.VITE_SUPABASE_URL` y `import.meta.env.VITE_SUPABASE_ANON_KEY` (singleton). `apps/gold/assets/js/main.js` re-exporta `supabase`. `apps/gold/assets/js/auth/authClient.js`, `authUI.js` y `apps/gold/dashboard/auth-guard.js` consumen ese cliente (o el global).
+- Dashboard (consultas actuales vs faltantes): `apps/gold/dashboard/index.html` consulta `modules` y usa `FavoritesManager` (`user_favorites`), `StatsManager` (conteos en `modules`), `NotificationsManager` (`notifications`) y `AnnouncementsManager` (`announcements`), y perfiles via `ProfileManager` (`profiles`). Hay fallback local con `apps/gold/assets/js/utils/activityTracker.js` (`YG_ACTIVITY_V1`). Progreso academico existe en `apps/gold/assets/js/academia.js` (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) pero no se refleja en dashboard.
+- Clima/Agro: `apps/gold/assets/js/geolocation.js` prioriza Manual > GPS > IP y usa keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`. `apps/gold/agro/dashboard.js` usa `initWeather/displayWeather`, cachea en `yavlgold_weather_*` y expone debug con `?debug=1`.
+- Crypto: existe `apps/gold/crypto/` con `index.html`, `crypto.js`, `crypto.css` y un `package.json` solo para preview; Vite MPA ya incluye `crypto/index.html` y Vercel enruta `/crypto`.
+
+## Inventario (tarea actual - scripts existentes y colisiones)
+- Root `package.json` scripts relevantes: `dev`, `build`, `test`, `build:gold`, `lint`, `clean`, `dev:v9`, `build:v9`, `preview:v9`, `verify:mpa`, `assets:optimize`. No existen `sb:*`, `dev:online`, `dev:offline` ni `stop`, por lo tanto no hay colisiones.
+- `apps/gold/package.json` scripts relevantes: `dev`, `build`, `preview`, `clean:gold`. Sin colisiones con los nuevos nombres requeridos.
+
+## Plan de cambios (tarea actual - Supabase Online/Offline local-first)
+1. Verificar `supabase start --help` para confirmar `-x` y nombres de servicios soportados.
+2. Agregar scripts en root `package.json` (respetando anti-colision) para `sb:init/sb:up/sb:up:ui/sb:down/sb:status/dev:online/dev:offline/stop` apuntando a `apps/gold`.
+3. Crear `apps/gold/.env.online.example` y `apps/gold/.env.offline.example` con placeholders sin secretos.
+4. Crear `apps/gold/docs/LOCAL_FIRST.md` con flujo Online/Offline, primera vez, comandos y guia para 8GB.
+5. Verificar uso de env en `supabase-config.js` y documentar en reporte; no tocar codigo si ya usa `import.meta.env`.
+
+## DoD (tarea actual - Supabase Online/Offline local-first)
+- [ ] Root package.json: agregar scripts sb:init, sb:up, sb:up:ui, sb:down, sb:status (compatibles con Windows).
+- [ ] Root package.json: agregar scripts dev:online y dev:offline que apunten explicitamente a apps/gold (NO usar turbo run dev).
+- [ ] Perfil OFFLINE “A optimizado” usando supabase start -x excluyendo: studio,imgproxy,vector,logflare,edge-runtime,supavisor,postgres-meta,mailpit.
+- [ ] Perfil OFFLINE “A con UI” (sb:up:ui) que permita Studio:
+- [ ] NO excluir: studio, postgres-meta
+- [ ] SI excluir: imgproxy,vector,logflare,edge-runtime,supavisor,mailpit
+- [ ] Crear plantillas: apps/gold/.env.online.example y apps/gold/.env.offline.example.
+- [ ] Crear docs: apps/gold/docs/LOCAL_FIRST.md con flujo Online/Offline + primera vez (pull de imagenes) + recursos recomendados para 8GB.
+- [ ] Actualizar apps/gold/docs/AGENT_REPORT.md (PASO 0, ver abajo).
+- [ ] Mantener JSON valido: NO introducir comentarios // en package.json.
+- [ ] No romper scripts existentes ni cambiar runtime/produccion.
+
+## Riesgos y mitigaciones (tarea actual - Supabase Online/Offline local-first)
+- 8GB RAM: usar perfil liviano (`sb:up`) y apagar con `pnpm stop` para liberar RAM cuando no se use.
+- Primera vez requiere internet: sin conexion no se pueden descargar imagenes de Docker necesarias para Supabase local.
+- Puertos ocupados (54321/54323/etc): detener procesos que los usen o ajustar puertos en configuracion de Supabase si aplica.
+- Docker Resource Saver: puede pausar contenedores y provocar timeouts; desactivarlo durante desarrollo activo o reanudar contenedores.
+
+## Resultado esperado (tarea actual - Supabase Online/Offline local-first)
+- En Windows 11 + Docker Desktop con 8GB se puede levantar Supabase local liviano con `pnpm sb:up`, ver URL/anon key con `pnpm sb:status` y desarrollar `apps/gold` con `pnpm dev:offline`.
+- Studio queda disponible solo con `pnpm sb:up:ui`.
+- Para cloud, basta con `pnpm dev:online` y `.env.online`.
+- Todo se puede detener con `pnpm stop` para liberar recursos.
+
+## Fuentes (tarea actual - Supabase Online/Offline local-first)
+- Salida de `supabase start --help` (CLI instalada v2.72.7): flag `-x` disponible y lista de contenedores soportados.
+- `package.json` (root) y `apps/gold/package.json`.
+- `apps/gold/vite.config.js`, `apps/gold/vercel.json`, `apps/gold/index.html`, `apps/gold/dashboard/index.html`.
+- `apps/gold/assets/js/config/supabase-config.js`, `apps/gold/assets/js/main.js`, `apps/gold/assets/js/auth/authClient.js`, `apps/gold/dashboard/auth-guard.js`.
+- `apps/gold/assets/js/modules/moduleManager.js`, `apps/gold/assets/js/components/notifications.js`, `apps/gold/assets/js/announcements/announcementsManager.js`, `apps/gold/assets/js/utils/activityTracker.js`, `apps/gold/assets/js/academia.js`.
+- `apps/gold/assets/js/geolocation.js`, `apps/gold/agro/dashboard.js`.
+- `apps/gold/crypto/` (index.html, crypto.js, crypto.css).
+
+## Diagnostico (tarea actual - .env example ignorados)
+1) El root `.gitignore` ignora `.env.*` y `apps/gold/.env.*` con unica excepcion `!apps/gold/.env.example`, por lo que `.env.online.example` y `.env.offline.example` quedan ignorados.
+2) `git status` no listaba `.env.online.example`, lo que coincide con el patron ignorado.
+3) Se requiere versionar plantillas `*.example` sin abrir la puerta a secretos reales.
+
+## Plan (tarea actual - .env example ignorados)
+1) Verificar ignore actual con `git check-ignore -v`.
+2) Ajustar `.gitignore` para permitir `*.env.*.example` tanto en root como en `apps/gold`.
+3) Revalidar que los ejemplos ya no estan ignorados.
+
+## DoD (tarea actual - .env example ignorados)
+- [ ] `.env.*.example` NO ignorados por git.
+- [ ] `.env` y `.env.*` reales siguen ignorados.
+
+## Fuentes (tarea actual - .env example ignorados)
+- `.gitignore` (root) y salida de `git check-ignore -v`.
+## Actualizacion de resultados (tarea actual - .env example ignorados)
+- Se ajusto `.gitignore` para permitir `!.env.*.example` y `!apps/gold/.env.*.example` manteniendo el bloqueo de secretos.
+- `git check-ignore -v` ahora muestra regla de des-ignorado para ambos ejemplos (quedan listos para versionar).

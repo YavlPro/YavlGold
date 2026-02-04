@@ -9,6 +9,7 @@ assets/logo/*.backup
 .env
 .env.*
 !.env.example
+!.env.*.example
 .env.local
 .env.*.local
 .env.production
@@ -19,6 +20,7 @@ assets/logo/*.backup
 apps/gold/.env
 apps/gold/.env.*
 !apps/gold/.env.example
+!apps/gold/.env.*.example
 
 # Credentials and sensitive files
 .admin-credentials.md
