@@ -47,6 +47,9 @@ const SYSTEM_PROMPT = [
   'REGLAS DE ENRUTAMIENTO (OBLIGATORIAS):',
   '1) Si el usuario pregunta por deudas/cobros/cuentas por cobrar/pagos pendientes ("debe", "me debe", "pendiente", "cobrar", "¿quién me debe?"):',
   '   - SIEMPRE llama get_pending_payments.',
+  '   - USA los valores de `totals.active` y `counts.active` para la respuesta principal.',
+  '   - Solo menciona `totals.transferred` si el usuario pide explícitamente "incluye transferidos" o "histórico".',
+  '   - Lista a los deudores (`by_client`) basándote en los datos devueltos.',
   '   - NO llames get_crop_status.',
   '   - NO preguntes por "cultivo" a menos que el usuario lo pida explícitamente.',
   '',
@@ -485,8 +488,8 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         }
     }
 
-    // 2. Build Query - Fetch ALL non-deleted in range (we separate in memory)
-    let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,created_at&deleted_at=is.null`;
+    // 2. Build Query - Fetch ALL non-deleted (we split in memory to provide full summary)
+    let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,transferred_to,created_at&deleted_at=is.null`;
 
     if (startStr) {
         query += `&fecha=gte.${startStr}`;
@@ -495,20 +498,23 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         query += `&crop_id=eq.${crop_id}`;
     }
 
-    // Order by date desc
     query += `&order=fecha.desc`;
 
     // 3. Execute
     const data = await supabaseRequest('GET', query, null, authHeader);
     const allRows = Array.isArray(data) ? data : [];
 
-    // 4. Split Active vs Transferred
-    // Active = transfer_state IS NULL OR 'active' OR 'reverted' (anything != 'transferred')
+    // 4. Split Active vs Transferred (Robust Check)
     const activeRows: any[] = [];
     const transferredRows: any[] = [];
 
     allRows.forEach((item: any) => {
-        if (item.transfer_state === 'transferred') {
+        // Robust check: considered transferred if state is 'transferred' OR has a destination
+        const isTransferred =
+            item.transfer_state === 'transferred' ||
+            (item.transferred_to !== null && item.transferred_to !== undefined && item.transferred_to !== '');
+
+        if (isTransferred) {
             transferredRows.push(item);
         } else {
             activeRows.push(item);
@@ -521,8 +527,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     const transferredTotal = sumAmount(transferredRows);
     const grandTotal = activeTotal + transferredTotal;
 
-    // 5. Select items for Detail View based on flag
-    // If include_transferred=true, we show ALL. If false (default), ONLY active.
+    // 5. Select items for Detail View
     const displayRows = include_transferred ? allRows : activeRows;
 
     const ONE_DAY = 1000 * 60 * 60 * 24;
@@ -535,7 +540,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         };
     });
 
-    // Grouping (only for the displayed set)
+    // Grouping
     let grouped = null;
     if (group_by === 'client') {
         const map: Record<string, { client: string, total: number, count: number }> = {};
@@ -551,16 +556,23 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     return {
         ok: true,
         data: {
-            summary: {
-                total_active: activeTotal,
-                total_transferred: transferredTotal,
-                grand_total: grandTotal,
-                count_active: activeRows.length,
-                count_transferred: transferredRows.length,
-                range_start: startStr || 'all-time'
+            // Strict structure as requested
+            counts: {
+                active: activeRows.length,
+                transferred: transferredRows.length,
+                total: allRows.length
             },
-            by_client: grouped, // Based on displayRows
-            latest_items: enriched.slice(0, 10) // Based on displayRows
+            totals: {
+                active: activeTotal,
+                transferred: transferredTotal,
+                grand_total: grandTotal
+            },
+            summary: { // Keep legacy summary field for backward compat/prompt safety
+                range_start: startStr || 'all-time',
+                msg: "Use totals.active for 'who owes me'"
+            },
+            by_client: grouped,
+            latest_items: enriched.slice(0, 10)
         }
     };
 

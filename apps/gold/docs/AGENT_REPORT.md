@@ -123,6 +123,23 @@
 ### Estado
 ✅ QA PASS DEFINITIVO — Tool #5 lógica corregida.
 
+---
+
+## 🔒 SESIÓN: Hardening de Totales (Active vs Transferred) (2026-02-03)
+
+### Diagnóstico Final
+- A pesar del primer fix, existe riesgo de inconsistencia si `transfer_state` no está sincronizado con `transferred_to`.
+- La UI muestra 2 transferidos, SQL mostraba 0 con query simple.
+
+### Solución Robusta
+- **Lógica de conteo**: Se considera transferido si `transfer_state == 'transferred'` **O** `transferred_to IS NOT NULL`.
+- **System Prompt**: Se añadió regla explícita para usar `totals.active` en preguntas de deuda.
+- **Respuesta Tool**: Se estructura en `{ counts: { active, ... }, totals: { active, ... } }` para eliminar ambigüedad.
+
+### Estado
+✅ **Ready for Deploy**. Build PASS.
+
+
 
 
 
