@@ -43,7 +43,20 @@ const SYSTEM_PROMPT = [
   'Cuando pregunten por estado/progreso: SIEMPRE usa get_crop_status con include_last_events=true.',
   'NO inventes datos. Si falta informacion critica, responde exactamente: "NO TENGO ese dato".',
   'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.',
-  '**Si preguntan por deudas, cuentas por cobrar, "quién me debe" o pagos pendientes: USA `get_pending_payments`. Por defecto excluye lo ya transferido/pagado.**',
+  '',
+  'REGLAS DE ENRUTAMIENTO (OBLIGATORIAS):',
+  '1) Si el usuario pregunta por deudas/cobros/cuentas por cobrar/pagos pendientes ("debe", "me debe", "pendiente", "cobrar", "¿quién me debe?"):',
+  '   - SIEMPRE llama get_pending_payments.',
+  '   - NO llames get_crop_status.',
+  '   - NO preguntes por "cultivo" a menos que el usuario lo pida explícitamente.',
+  '',
+  '2) Si el usuario primero pregunta por deudas y luego responde con un nombre de cultivo (ej: "batata"):',
+  '   - Interpreta eso como filtro por cultivo para get_pending_payments.',
+  '   - Haz multi-turn: get_my_crops -> resuelve crop_id -> get_pending_payments(crop_id=...).',
+  '   - Si hay ambigüedad (más de un match), muestra opciones del usuario, no inventes.',
+  '',
+  '3) Prohibido decir "No veo ese cultivo" sin haber llamado get_my_crops primero y haber recibido 0 resultados.',
+  '',
   '**Cuando el usuario diga solo “mi <cultivo>” o pregunte por estado/progreso (ej: “¿Cómo va mi batata?”), debes: (1) llamar `get_my_crops` para resolver el `crop_id` si no está explícito; (2) luego llamar `get_crop_status` con `include_last_events=true` y `events_limit=5`. En la respuesta, muestra 2–5 eventos recientes (fecha + tipo + nota). No prometas monitoreo automático ni avisos futuros; ofrece registrar eventos o recordatorios manuales.**'
 ].join('\n');
 

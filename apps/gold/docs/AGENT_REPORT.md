@@ -82,6 +82,25 @@
 ### Estado
 ✅ QA PASS — IA Agéntica V1 completa con 5 tools.
 
+---
+
+## 🧠 SESIÓN: Refinamiento de Routing AI (2026-02-03)
+
+### Diagnóstico
+- La IA confundía preguntas de deudas ("pendiente de batata") con estado de cultivo, llamando `get_crop_status` en lugar de `get_pending_payments` filtrado.
+- Causa: Ambigüedad en el System Prompt sobre la palabra "batata".
+
+### Solución
+- Se agregaron **Reglas de Enrutamiento Obligatorias** en `SYSTEM_PROMPT`.
+- Regla 1: Palabras clave de deuda -> SIEMPRE `get_pending_payments`.
+- Regla 2: Deuda + Cultivo -> Filtar `get_pending_payments(crop_id)`.
+- Regla 3: Prohibido inventar "no veo cultivo" sin buscar antes.
+
+### Resultado
+- Build PASS.
+- Prompt reforzado para diferenciar intención financiera vs técnica.
+
+
 
 
 ### Schema Verification
