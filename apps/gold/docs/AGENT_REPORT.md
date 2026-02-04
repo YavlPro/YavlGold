@@ -139,6 +139,29 @@
 ### Estado
 ✅ **Ready for Deploy**. Build PASS.
 
+---
+
+## 🐞 SESIÓN: Robust Filtering & Strict Totals (2026-02-03)
+
+### Diagnóstico
+- **Problema**: Prompt "quien falta por pagar" devuelve "15 pagos pendientes $527", sumando transferidos.
+- **Causa**: El prompt no es suficientemente restrictivo sobre qué total usar por defecto, y la lógica de "transferido" puede ser frágil en datos legacy.
+- **Evidencia**: UI muestra "Ver transferidos (2)", confirming existence of non-active items.
+
+### Plan
+1. **System Prompt**: Instruir explícitamente usar `totals.active` para preguntas de "quién debe". Prohibido mencionar `grand_total` por defecto.
+2. **Handler Logic**:
+   - Definir `isTransferred` como `(transfer_state == 'transferred' OR transferred_to IN ('income', 'losses'))`.
+   - Garantizar retorno de estructura `{ counts: {active, transferred}, totals: {active, transferred} }`.
+3. **Logging**: Agregar logs de inicio/fin con latencia para depuración.
+
+### DoD
+- [ ] "¿Quién me debe?" -> Responde SOLO con activos ($332).
+- [ ] "Incluye transferidos" -> Responde con desglose (Activos + Transferidos = Histórico).
+- [ ] Filtro robusto aplicado (doble chequeo de columnas).
+- [ ] Build (`pnpm build:gold`) PASS.
+
+
 
 
 

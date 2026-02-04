@@ -45,13 +45,13 @@ const SYSTEM_PROMPT = [
   'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.',
   '',
   'REGLAS DE ENRUTAMIENTO (OBLIGATORIAS):',
-  '1) Si el usuario pregunta por deudas/cobros/cuentas por cobrar/pagos pendientes ("debe", "me debe", "pendiente", "cobrar", "¿quién me debe?"):',
+  '1) Si el usuario pregunta por deudas/cobros/cuentas por cobrar/pagos pendientes ("debe", "me debe", "pendiente", "cobrar", "¿quién me debe?", "por pagar"):',
   '   - SIEMPRE llama get_pending_payments.',
-  '   - USA los valores de `totals.active` y `counts.active` para la respuesta principal.',
-  '   - Solo menciona `totals.transferred` si el usuario pide explícitamente "incluye transferidos" o "histórico".',
-  '   - Lista a los deudores (`by_client`) basándote en los datos devueltos.',
-  '   - NO llames get_crop_status.',
-  '   - NO preguntes por "cultivo" a menos que el usuario lo pida explícitamente.',
+  '   - USA EXCLUSIVAMENTE `totals.active` y `counts.active` para la respuesta principal.',
+  '   - NO menciones el total histórico ni los transferidos a menos que el usuario lo pida explícitamente ("histórico", "incluye transferidos").',
+  '   - Si `totals.active` es 0, di "No tienes pagos pendientes activos".',
+  '   - Lista a los deudores (`by_client`) basándote en los datos activos.',
+  '   - NO llames get_crop_status ni preguntes por cultivo si no es necesario.',
   '',
   '2) Si el usuario primero pregunta por deudas y luego responde con un nombre de cultivo (ej: "batata"):',
   '   - Interpreta eso como filtro por cultivo para get_pending_payments.',
@@ -466,6 +466,9 @@ async function handleLogEvent(args: any, authHeader: string) {
 }
 
 async function handleGetPendingPayments(args: any, authHeader: string) {
+  const start = performance.now();
+  console.log(`[Tool:Start] get_pending_payments args=${JSON.stringify(args)}`);
+
   try {
     const { range = '30d', crop_id, group_by = 'client', include_transferred = false } = args;
 
@@ -489,7 +492,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     }
 
     // 2. Build Query - Fetch ALL non-deleted (we split in memory to provide full summary)
-    let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,transferred_to,created_at&deleted_at=is.null`;
+    let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,transferred_to,transferred_at,created_at&deleted_at=is.null`;
 
     if (startStr) {
         query += `&fecha=gte.${startStr}`;
@@ -504,15 +507,16 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     const data = await supabaseRequest('GET', query, null, authHeader);
     const allRows = Array.isArray(data) ? data : [];
 
-    // 4. Split Active vs Transferred (Robust Check)
+    // 4. Split Active vs Transferred (Robust Check V3)
     const activeRows: any[] = [];
     const transferredRows: any[] = [];
 
     allRows.forEach((item: any) => {
-        // Robust check: considered transferred if state is 'transferred' OR has a destination
+        // Robust check: considered transferred if state is 'transferred', has destination, OR has timestamp
         const isTransferred =
             item.transfer_state === 'transferred' ||
-            (item.transferred_to !== null && item.transferred_to !== undefined && item.transferred_to !== '');
+            (item.transferred_to === 'income' || item.transferred_to === 'losses') ||
+            (item.transferred_at !== null && item.transferred_at !== undefined && item.transferred_at !== '');
 
         if (isTransferred) {
             transferredRows.push(item);
@@ -528,6 +532,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     const grandTotal = activeTotal + transferredTotal;
 
     // 5. Select items for Detail View
+    // Standard: show valid active items. If user asked for transferred, show everything.
     const displayRows = include_transferred ? allRows : activeRows;
 
     const ONE_DAY = 1000 * 60 * 60 * 24;
@@ -536,7 +541,8 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         const diff = Math.round((now.getTime() - d.getTime()) / ONE_DAY);
         return {
             ...item,
-            days_outstanding: diff
+            days_outstanding: diff,
+            status: activeRows.includes(item) ? 'active' : 'transferred'
         };
     });
 
@@ -553,10 +559,13 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         grouped = Object.values(map).sort((a, b) => b.total - a.total);
     }
 
+    const duration = Math.round(performance.now() - start);
+    console.log(`[Tool:End] get_pending_payments active=${activeRows.length} transferred=${transferredRows.length} time=${duration}ms`);
+
     return {
         ok: true,
         data: {
-            // Strict structure as requested
+            // Precise counts and totals for AI to choose from
             counts: {
                 active: activeRows.length,
                 transferred: transferredRows.length,
@@ -567,9 +576,9 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
                 transferred: transferredTotal,
                 grand_total: grandTotal
             },
-            summary: { // Keep legacy summary field for backward compat/prompt safety
+            summary: {
                 range_start: startStr || 'all-time',
-                msg: "Use totals.active for 'who owes me'"
+                msg: "Use 'totals.active' for default 'who owes me' answers."
             },
             by_client: grouped,
             latest_items: enriched.slice(0, 10)
@@ -577,6 +586,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
     };
 
   } catch (err: any) {
+    console.error(`[Tool:Error] get_pending_payments: ${err.message}`);
     return { ok: false, error: 'GET_PENDING_ERROR', message: err.message };
   }
 }
