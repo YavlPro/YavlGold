@@ -100,6 +100,30 @@
 - Build PASS.
 - Prompt reforzado para diferenciar intención financiera vs técnica.
 
+---
+
+## 🐞 SESIÓN: Fix Active vs Transferred Totals (2026-02-03)
+
+### Diagnóstico
+- **Discrepancia**: Tool #5 reportaba total histórico ($527) en lugar de solo activo ($332), porque la IA recibía todos los items (o el filtro no separaba el conteo).
+- **Causa**: `handleGetPendingPayments` sumaba todo lo recibido.
+
+### Solución
+- Refactor `handleGetPendingPayments`:
+  - Fetch de todo el rango (`deleted_at IS NULL`).
+  - Separación en memoria: `activeRows` vs `transferredRows`.
+  - Cálculo de `summary.total_active` y `summary.total_transferred`.
+  - `detailed_items` respeta flag `include_transferred`.
+
+### Resultado QA (Cierre)
+- **UI confirma**: 13 registros activos ($332) + 2 transferidos ($195) = Total histórico $527.
+- **Fix**: Tool ahora retorna estructura desglosada.
+- **Criterio**: "¿Quién me debe?" usa `total_active` ($332). "Incluye transferidos" muestra desglose.
+
+### Estado
+✅ QA PASS DEFINITIVO — Tool #5 lógica corregida.
+
+
 
 
 

@@ -485,28 +485,8 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         }
     }
 
-    // 2. Build Query
+    // 2. Build Query - Fetch ALL non-deleted in range (we separate in memory)
     let query = `agro_pending?select=id,monto,fecha,cliente,concepto,crop_id,transfer_state,created_at&deleted_at=is.null`;
-
-    // Active filter (exclude transferred unless requested)
-    if (!include_transferred) {
-        // PostgREST "is distinct from" syntax or just "not.eq"
-        // Since we want to include NULL and 'active' and 'reverted', but exclude 'transferred'.
-        // "transfer_state=neq.transferred" should work, keeping NULLs?
-        // PostgREST neq keeps nulls? No, strictly SQL usually drops nulls on comparison unless IS DISTINCT FROM.
-        // If transfer_state can be null, neq.transferred might exclude nulls.
-        // Safer: is.distinct_from would be ideal but filter syntax is limited.
-        // Alternative: or=(transfer_state.is.null,transfer_state.neq.transferred)
-        // Let's try explicit OR logic or ensure column has default. schema says default 'active'.
-        // So assuming mostly 'active' or 'transferred' or 'reverted'.
-        // However, older rows might be NULL.
-        // Let's use logic: NOT transferred.
-        // PostgREST: not.eq.transferred (if nulls are issue, we check)
-        // Let's rely on filter: `transfer_state=neq.transferred`
-        // NOTE: Postgres comparison `!=` returns null for nulls.
-        // Safe bet: `or=(transfer_state.is.null,transfer_state.neq.transferred)`
-        query += `&or=(transfer_state.is.null,transfer_state.neq.transferred)`;
-    }
 
     if (startStr) {
         query += `&fecha=gte.${startStr}`;
@@ -520,13 +500,33 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
 
     // 3. Execute
     const data = await supabaseRequest('GET', query, null, authHeader);
-    const rows = Array.isArray(data) ? data : [];
+    const allRows = Array.isArray(data) ? data : [];
 
-    // 4. Transform & Aggregate
-    const totalAmount = rows.reduce((sum: number, item: any) => sum + (Number(item.monto) || 0), 0);
+    // 4. Split Active vs Transferred
+    // Active = transfer_state IS NULL OR 'active' OR 'reverted' (anything != 'transferred')
+    const activeRows: any[] = [];
+    const transferredRows: any[] = [];
+
+    allRows.forEach((item: any) => {
+        if (item.transfer_state === 'transferred') {
+            transferredRows.push(item);
+        } else {
+            activeRows.push(item);
+        }
+    });
+
+    const sumAmount = (arr: any[]) => arr.reduce((sum, item) => sum + (Number(item.monto) || 0), 0);
+
+    const activeTotal = sumAmount(activeRows);
+    const transferredTotal = sumAmount(transferredRows);
+    const grandTotal = activeTotal + transferredTotal;
+
+    // 5. Select items for Detail View based on flag
+    // If include_transferred=true, we show ALL. If false (default), ONLY active.
+    const displayRows = include_transferred ? allRows : activeRows;
 
     const ONE_DAY = 1000 * 60 * 60 * 24;
-    const enriched = rows.map((item: any) => {
+    const enriched = displayRows.map((item: any) => {
         const d = new Date(item.fecha);
         const diff = Math.round((now.getTime() - d.getTime()) / ONE_DAY);
         return {
@@ -535,7 +535,7 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         };
     });
 
-    // Grouping
+    // Grouping (only for the displayed set)
     let grouped = null;
     if (group_by === 'client') {
         const map: Record<string, { client: string, total: number, count: number }> = {};
@@ -552,12 +552,15 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
         ok: true,
         data: {
             summary: {
-                total_pending: totalAmount,
-                count: rows.length,
+                total_active: activeTotal,
+                total_transferred: transferredTotal,
+                grand_total: grandTotal,
+                count_active: activeRows.length,
+                count_transferred: transferredRows.length,
                 range_start: startStr || 'all-time'
             },
-            by_client: grouped, // Optional
-            latest_items: enriched.slice(0, 10) // Top 10 most recent
+            by_client: grouped, // Based on displayRows
+            latest_items: enriched.slice(0, 10) // Based on displayRows
         }
     };
 
