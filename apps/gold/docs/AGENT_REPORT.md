@@ -137,7 +137,23 @@
 - **Respuesta Tool**: Se estructura en `{ counts: { active, ... }, totals: { active, ... } }` para eliminar ambigüedad.
 
 ### Estado
-✅ **Ready for Deploy**. Build PASS.
+✅ QA PASS DEFINITIVO — Tool #5 lógica corregida.
+
+---
+
+## 🔒 SESIÓN: Hardening de Totales V3 (2026-02-03)
+
+### Diagnóstico V3
+- La "Lógica Robusta V2" falló al detectar 2 ítems específicos.
+- **Causa Raíz**: Estos ítems tenían `transfer_state='active'` y `transferred_to=NULL`, pero `transferred_at` tenía timestamp. La V2 no chequeaba timestamp.
+
+### Solución V3 (Definitiva)
+- **Code Change**: Se agregó chequeo explícito `item.transferred_at !== null` en la lógica `isTransferred` de `index.ts`.
+- **Validación**: Build PASS. Deploy exitoso.
+
+### Estado Final
+✅ **QA PASS**. La herramienta ahora detecta transferencias por estado, destino o timestamp.
+
 
 ---
 
