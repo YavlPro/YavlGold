@@ -1800,9 +1800,9 @@
                             <form id="pending-form" class="pending-form" onsubmit="event.preventDefault();">
                                 <div class="facturero-grid">
                                     <div class="input-group field-concept">
-                                        <label class="input-label" for="input-concepto-pendiente">Concepto *</label>
+                                        <label class="input-label" for="input-concepto-pendiente">Concepto (deuda) *</label>
                                         <input type="text" id="input-concepto-pendiente" class="styled-input"
-                                            placeholder="Ej: Venta a cr&eacute;dito" required
+                                            placeholder="Ej: Pendiente por venta a cr&eacute;dito" required
                                             style="padding-left: 1rem;">
                                     </div>
                                     <div class="input-group field-amount">
@@ -2468,6 +2468,9 @@
                 loadExpenses(); // loadExpenses is hoisted
                 if (typeof window.loadCrops === 'function') window.loadCrops();
             });
+            document.addEventListener('agro:crop:changed', () => {
+                loadExpenses();
+            });
 
             // Exponer handler globalmente para el input onchange del HTML
             window.handleReceiptUpload = async function (input) {
@@ -2519,12 +2522,20 @@
                 try {
                     const { data: { user } } = await supabase.auth.getUser();
                     if (!user) return; // Silent return if not logged in
+                    const activeCropId = typeof window.getSelectedCropId === 'function'
+                        ? window.getSelectedCropId()
+                        : null;
 
-                    const { data, error } = await supabase
+                    let expenseQuery = supabase
                         .from('agro_expenses')
                         .select('*')
                         .is('deleted_at', null)
                         .order('date', { ascending: false }); // Newest first
+                    if (activeCropId) {
+                        expenseQuery = expenseQuery.eq('crop_id', activeCropId);
+                    }
+
+                    const { data, error } = await expenseQuery;
 
                     if (error) throw error;
 

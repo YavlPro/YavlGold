@@ -24,7 +24,7 @@ limitations under the License.
     <link rel="icon" type="image/webp" href="/brand/logo.webp">
     <link rel="apple-touch-icon" href="/brand/logo.webp">
 
-    <!-- ðŸ”’ PROTECCIÃ“N DE RUTA: Verificar autenticaciÃ³n antes de cargar la pÃ¡gina -->
+    <!-- 🔒 PROTECCIÓN DE RUTA: Verificar autenticación antes de cargar la página -->
     <script>
         (function () {
             function checkSupabaseSession() {
@@ -38,19 +38,19 @@ limitations under the License.
                             try {
                                 const parsed = JSON.parse(token);
                                 if (parsed && parsed.access_token) {
-                                    console.log('[YavlSuite] âœ… SesiÃ³n encontrada');
+                                    console.log('[YavlSuite] ✅ Sesión encontrada');
                                     return true;
                                 }
                             } catch (e) {
-                                console.error('[YavlSuite] Error verificando sesiÃ³n:', e);
+                                console.error('[YavlSuite] Error verificando sesión:', e);
                             }
                         }
                     }
 
-                    console.log('[YavlSuite] â›” No hay sesiÃ³n, redirigiendo...');
+                    console.log('[YavlSuite] ⛔ No hay sesión, redirigiendo...');
                     return false;
                 } catch (e) {
-                    console.error('[YavlSuite] Error al verificar sesiÃ³n:', e);
+                    console.error('[YavlSuite] Error al verificar sesión:', e);
                     return false;
                 }
             }
@@ -59,22 +59,22 @@ limitations under the License.
                 sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
                 window.location.replace('/#login');
             } else {
-                console.log('[YavlSuite] âœ… SesiÃ³n vÃ¡lida, permitiendo acceso');
+                console.log('[YavlSuite] ✅ Sesión válida, permitiendo acceso');
             }
         })();
     </script>
-    <!-- Tailwind CSS para un diseÃ±o responsivo y moderno -->
+    <!-- Tailwind CSS para un diseño responsivo y moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- LibrerÃ­a para leer etiquetas ID3 de archivos MP3 -->
+    <!-- Librería para leer etiquetas ID3 de archivos MP3 -->
     <script src="https://cdn.jsdelivr.net/npm/jsmediatags@3.9.7/dist/jsmediatags.min.js"></script>
-    <!-- Google Fonts para una tipografÃ­a cyberpunk -->
+    <!-- Google Fonts para una tipografía cyberpunk -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap"
         rel="stylesheet">
     <style>
-        /* âœ¨ PREMIUM GOLD/DARK THEME - Polished Metallic Look */
+        /* ✨ PREMIUM GOLD/DARK THEME - Polished Metallic Look */
         :root {
       /*  TIPOGRAFÍAS OFICIALES */
       --font-heading: 'Orbitron', sans-serif;
@@ -110,7 +110,7 @@ limitations under the License.
             font-family: 'Orbitron', sans-serif;
         }
 
-        /* âœ¨ Premium metallic border with warm glow */
+        /* ✨ Premium metallic border with warm glow */
         .neon-border {
             border: 2px solid var(--gold-bright);
             box-shadow:
@@ -120,7 +120,7 @@ limitations under the License.
                 inset 0 0 15px rgba(212, 175, 55, 0.1);
         }
 
-        /* âœ¨ Premium buttons with warm glow animation */
+        /* ✨ Premium buttons with warm glow animation */
         .neon-button {
             transition: all 0.3s ease;
             border: 1px solid var(--gold-bright);
@@ -153,7 +153,7 @@ limitations under the License.
         }
 
 
-        /* âœ¨ Premium pulse animation with warm golden glow */
+        /* ✨ Premium pulse animation with warm golden glow */
         @keyframes pulse-shadow-gold {
             0% {
                 box-shadow: 0 0 5px var(--warm-glow-soft), inset 0 0 5px rgba(253, 185, 49, 0.15);
@@ -168,7 +168,7 @@ limitations under the License.
             }
         }
 
-        /* âœ¨ Premium range slider with gold gradient */
+        /* ✨ Premium range slider with gold gradient */
         input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -265,7 +265,7 @@ limitations under the License.
         <!-- Contenido principal: Reproductor y Lista de canciones -->
         <main class="flex-grow flex flex-col md:flex-row p-2 sm:p-4 gap-2 sm:gap-4 overflow-hidden">
 
-            <!-- Panel Izquierdo: CarÃ¡tula y Controles -->
+            <!-- Panel Izquierdo: Carátula y Controles -->
             <div
                 class="w-full md:w-1/3 flex flex-col items-center justify-center p-2 sm:p-4 bg-gray-900/30 rounded-lg space-y-2 sm:space-y-4">
                 <div id="art-container"
@@ -281,7 +281,7 @@ limitations under the License.
                     <input type="file" id="image-input" class="hidden" accept="image/*">
                     <button id="upload-image-btn"
                         class="absolute top-2 right-2 neon-button p-1.5 rounded-full opacity-50 hover:opacity-100"
-                        title="Subir carÃ¡tula para esta canciÃ³n" aria-label="Subir carÃ¡tula para esta canciÃ³n">
+                        title="Subir carátula para esta canción" aria-label="Subir carátula para esta canción">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H5.5z" />
                             <path d="M9 13l3-3m0 0l3 3m-3-3v8" />
@@ -293,11 +293,11 @@ limitations under the License.
                     <div class="flex items-center justify-center gap-2">
                         <div>
                             <h2 id="song-title" class="text-lg sm:text-xl font-orbitron text-white">Selecciona una
-                                canciÃ³n</h2>
+                                canción</h2>
                             <p id="song-artist" class="text-sm text-[var(--secondary-green)]">YavlMusic</p>
                         </div>
                         <button id="favorite-current-btn" class="neon-button p-2 rounded-full text-gray-400"
-                            aria-label="Marcar como favorita la canciÃ³n actual">
+                            aria-label="Marcar como favorita la canción actual">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -313,21 +313,21 @@ limitations under the License.
                     <div class="flex justify-between items-center text-xs mt-1">
                         <span id="current-time">0:00</span>
                         <button id="art-mode-btn" class="neon-button px-2 py-0.5 rounded-md text-xs"
-                            title="Cambiar modo de visualizaciÃ³n">Visualizador</button>
+                            title="Cambiar modo de visualización">Visualizador</button>
                         <span id="total-duration">0:00</span>
                     </div>
                 </div>
 
                 <!-- Controles Principales -->
                 <div class="flex items-center space-x-2 sm:space-x-4">
-                    <button id="shuffle-btn" class="neon-button p-3 rounded-full" aria-label="ReproducciÃ³n aleatoria">
+                    <button id="shuffle-btn" class="neon-button p-3 rounded-full" aria-label="Reproducción aleatoria">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M19 9l-2 2m0 0l-2-2m2 2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v4m12 0a2 2 0 012 2v4a2 2 0 01-2 2H7a2 2 0 01-2-2v-4m16 8l-2-2m0 0l-2 2m2-2v-4" />
                         </svg>
                     </button>
-                    <button id="prev-btn" class="neon-button p-3 rounded-full" aria-label="CanciÃ³n anterior">
+                    <button id="prev-btn" class="neon-button p-3 rounded-full" aria-label="Canción anterior">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -346,15 +346,15 @@ limitations under the License.
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
                         </svg>
                     </button>
-                    <button id="next-btn" class="neon-button p-3 rounded-full" aria-label="Siguiente canciÃ³n">
+                    <button id="next-btn" class="neon-button p-3 rounded-full" aria-label="Siguiente canción">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                         </svg>
                     </button>
-                    <button id="repeat-btn" class="neon-button p-3 rounded-full" aria-label="RepeticiÃ³n: desactivado"
-                        title="Cambiar modo de repeticiÃ³n">
+                    <button id="repeat-btn" class="neon-button p-3 rounded-full" aria-label="Repetición: desactivado"
+                        title="Cambiar modo de repetición">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -374,24 +374,24 @@ limitations under the License.
                 </div>
             </div>
 
-            <!-- Panel Derecho: Lista de Canciones y BÃºsqueda -->
+            <!-- Panel Derecho: Lista de Canciones y Búsqueda -->
             <div class="w-full md:w-2/3 flex flex-col bg-gray-900/30 rounded-lg p-2 sm:p-4 space-y-2 sm:space-y-4">
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                     <input type="file" id="file-input" multiple accept=".mp3,audio/mpeg" class="hidden">
                     <button id="add-files-btn"
-                        class="neon-button py-1 px-2 text-base sm:py-2 sm:px-4 sm:text-lg rounded-md col-span-2 sm:col-span-1">AÃ±adir
+                        class="neon-button py-1 px-2 text-base sm:py-2 sm:px-4 sm:text-lg rounded-md col-span-2 sm:col-span-1">Añadir
                         Archivos</button>
                     <button id="show-favorites-btn" class="neon-button py-1 px-2 text-base sm:py-2 sm:px-4 rounded-md">
-                        Favoritos â˜…
+                        Favoritos ★
                     </button>
                     <select id="genre-filter"
                         class="neon-select bg-black border border-[var(--primary-blue)] rounded-md p-1.5 sm:p-2 text-[var(--primary-blue)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-orange)]">
-                        <option>Todos los GÃ©neros</option>
+                        <option>Todos los Géneros</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                     <button id="export-btn" class="neon-button py-1 px-2 sm:py-2 sm:px-4 rounded-md"
-                        title="Exportar biblioteca (metadatos y carÃ¡tulas)">Exportar</button>
+                        title="Exportar biblioteca (metadatos y carátulas)">Exportar</button>
                     <div>
                         <input type="file" id="import-input" accept="application/json" class="hidden">
                         <button id="import-btn" class="neon-button w-full py-1 px-2 sm:py-2 sm:px-4 rounded-md"
@@ -401,7 +401,7 @@ limitations under the License.
                         title="Borrar biblioteca local">Reset</button>
                 </div>
 
-                <!-- Barra de BÃºsqueda -->
+                <!-- Barra de Búsqueda -->
                 <div class="relative">
                     <input type="text" id="search-bar" placeholder="Buscar en la lista..."
                         class="w-full p-1.5 sm:p-2 rounded-md neon-input pl-8">
@@ -417,14 +417,14 @@ limitations under the License.
 
                 <div id="playlist-container" class="flex-grow bg-black/50 rounded-lg overflow-y-auto custom-scrollbar">
                     <ul id="playlist" class="p-2 space-y-1">
-                        <li class="p-3 text-gray-500 text-center">Cargando tu mÃºsica...</li>
+                        <li class="p-3 text-gray-500 text-center">Cargando tu música...</li>
                     </ul>
                 </div>
             </div>
 
         </main>
 
-        <!-- CrÃ©ditos del creador -->
+        <!-- Créditos del creador -->
         <footer class="p-2 text-center border-t border-blue-500/10 flex-shrink-0">
             <p class="text-xs text-gray-600">Creado por Yerikson Varela</p>
         </footer>
@@ -433,12 +433,12 @@ limitations under the License.
         <!-- Drag & Drop overlay -->
         <div id="drop-overlay"
             class="hidden absolute inset-0 z-40 bg-[rgba(0,255,255,0.08)] backdrop-blur-[1px] border-2 border-dashed border-[var(--primary-blue)] flex items-center justify-center text-[var(--primary-blue)] font-orbitron text-xl">
-            Suelta tus archivos MP3 aquÃ­
+            Suelta tus archivos MP3 aquí
         </div>
 
-        <!-- BotÃ³n Flotante de InformaciÃ³n -->
+        <!-- Botón Flotante de Información -->
         <button id="info-modal-btn" class="absolute bottom-4 right-4 z-20 neon-button p-3 rounded-full"
-            aria-label="Abrir informaciÃ³n y soporte">
+            aria-label="Abrir información y soporte">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -446,14 +446,14 @@ limitations under the License.
             </svg>
         </button>
 
-        <!-- Modal de InformaciÃ³n -->
+        <!-- Modal de Información -->
         <div id="info-modal"
             class="hidden absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div
                 class="w-full max-w-2xl max-h-[85vh] bg-black/80 neon-border rounded-lg flex flex-col p-4 relative text-gray-300">
                 <button id="close-modal-btn" class="absolute top-3 right-4 text-3xl text-gray-400 hover:text-white"
                     aria-label="Cerrar modal">&times;</button>
-                <h2 class="text-2xl font-orbitron text-[var(--primary-blue)] text-center mb-4">InformaciÃ³n</h2>
+                <h2 class="text-2xl font-orbitron text-[var(--primary-blue)] text-center mb-4">Información</h2>
                 <div class="flex border-b border-blue-500/30 mb-4">
                     <button data-tab="readme"
                         class="tab-btn flex-1 p-2 neon-button rounded-t-md rounded-b-none">README</button>
@@ -463,35 +463,35 @@ limitations under the License.
                 <div class="flex-grow overflow-y-auto custom-scrollbar pr-2">
                     <div id="readme-content" class="tab-content space-y-3">
                         <h3 class="font-orbitron text-lg text-[var(--secondary-green)]">Bienvenido a YavlMusic V2.0</h3>
-                        <p>Un reproductor de mÃºsica local con una estÃ©tica cyberpunk, diseÃ±ado para ser rÃ¡pido,
+                        <p>Un reproductor de música local con una estética cyberpunk, diseñado para ser rápido,
                             personalizable y visualmente atractivo.</p>
                         <h4 class="font-bold text-[var(--primary-blue)]">Novedades en V2.0:</h4>
                         <ul class="list-disc list-inside space-y-1 pl-4">
-                            <li><strong>Â¡Modo Offline!</strong> Tu mÃºsica, carÃ¡tulas y listas se guardan en el
-                                navegador. Â¡No necesitas volver a cargar los archivos!</li>
-                            <li><strong>ReproducciÃ³n Aleatoria:</strong> Un nuevo botÃ³n para mezclar tu mÃºsica.</li>
+                            <li><strong>¡Modo Offline!</strong> Tu música, carátulas y listas se guardan en el
+                                navegador. ¡No necesitas volver a cargar los archivos!</li>
+                            <li><strong>Reproducción Aleatoria:</strong> Un nuevo botón para mezclar tu música.</li>
                         </ul>
-                        <h4 class="font-bold text-[var(--primary-blue)]">CaracterÃ­sticas Principales:</h4>
+                        <h4 class="font-bold text-[var(--primary-blue)]">Características Principales:</h4>
                         <ul class="list-disc list-inside space-y-1 pl-4">
-                            <li><strong>ReproducciÃ³n Local y Persistente:</strong> AÃ±ade tus archivos .mp3 y disfruta
-                                sin conexiÃ³n, siempre.</li>
-                            <li><strong>Visualizador de Audio:</strong> Barras de neÃ³n que reaccionan a tu mÃºsica.</li>
-                            <li><strong>CarÃ¡tulas Personalizadas:</strong> Sube una imagen para cada canciÃ³n.</li>
-                            <li><strong>OrganizaciÃ³n por GÃ©neros:</strong> Crea y asigna tus propios gÃ©neros musicales.
+                            <li><strong>Reproducción Local y Persistente:</strong> Añade tus archivos .mp3 y disfruta
+                                sin conexión, siempre.</li>
+                            <li><strong>Visualizador de Audio:</strong> Barras de neón que reaccionan a tu música.</li>
+                            <li><strong>Carátulas Personalizadas:</strong> Sube una imagen para cada canción.</li>
+                            <li><strong>Organización por Géneros:</strong> Crea y asigna tus propios géneros musicales.
                             </li>
                             <li><strong>Lista de Favoritos:</strong> Guarda tus canciones preferidas.</li>
-                            <li><strong>BÃºsqueda y Filtros:</strong> Encuentra canciones fÃ¡cilmente.</li>
+                            <li><strong>Búsqueda y Filtros:</strong> Encuentra canciones fácilmente.</li>
                         </ul>
-                        <h4 class="font-bold text-[var(--primary-blue)]">Â¿CÃ³mo usar?</h4>
-                        <p>1. Haz clic en "AÃ±adir Archivos" para seleccionar tus canciones.<br>2. Usa los controles para
-                            reproducir, pausar, y cambiar de pista.<br>3. Personaliza el gÃ©nero de cada canciÃ³n y
-                            mÃ¡rcalas como favoritas.<br>4. Â¡Explora los modos de visualizaciÃ³n y sube tus propias
-                            carÃ¡tulas!</p>
+                        <h4 class="font-bold text-[var(--primary-blue)]">¿Cómo usar?</h4>
+                        <p>1. Haz clic en "Añadir Archivos" para seleccionar tus canciones.<br>2. Usa los controles para
+                            reproducir, pausar, y cambiar de pista.<br>3. Personaliza el género de cada canción y
+                            márcalas como favoritas.<br>4. ¡Explora los modos de visualización y sube tus propias
+                            carátulas!</p>
                     </div>
                     <div id="support-content" class="hidden tab-content text-center pt-8 space-y-4">
                         <h3 class="font-orbitron text-lg text-[var(--secondary-green)]">Soporte y Sugerencias</h3>
-                        <p>Para dudas, problemas tÃ©cnicos o para enviar sugerencias, puedes contactar directamente al
-                            desarrollador a travÃ©s de Telegram.</p>
+                        <p>Para dudas, problemas técnicos o para enviar sugerencias, puedes contactar directamente al
+                            desarrollador a través de Telegram.</p>
                         <a href="https://t.me/YavlPro" target="_blank"
                             class="mt-4 inline-block neon-button py-2 px-6 rounded-md text-lg">Contactar por
                             Telegram</a>
@@ -621,7 +621,7 @@ limitations under the License.
                 songKeysRequest.onsuccess = () => {
                     playlist = songKeysRequest.result.map(name => ({ name }));
 
-                    // Cargar metadatos despuÃ©s de cargar las canciones
+                    // Cargar metadatos después de cargar las canciones
                     const metadataStore = transaction.objectStore(STORES.METADATA);
                     const genresRequest = metadataStore.get('genres');
                     const favoritesRequest = metadataStore.get('favorites');
@@ -674,7 +674,7 @@ limitations under the License.
                     const bufferLength = analyser.frequencyBinCount;
                     dataArray = new Uint8Array(bufferLength);
                 } catch (e) {
-                    console.error("Web Audio API no es soportada o fallÃ³ al iniciar:", e);
+                    console.error("Web Audio API no es soportada o falló al iniciar:", e);
                 }
             }
 
@@ -694,7 +694,7 @@ limitations under the License.
                 for (let i = 0; i < dataArray.length; i++) {
                     const barHeight = (dataArray[i] / 255) * height * 0.9;
                     const gradient = canvasCtx.createLinearGradient(0, height, 0, height - barHeight);
-                    // âœ¨ PREMIUM METALLIC GRADIENT: Dark gold base â†’ Bright gold tip
+                    // ✨ PREMIUM METALLIC GRADIENT: Dark gold base → Bright gold tip
                     gradient.addColorStop(0, '#996515');   // Gold Dark (base)
                     gradient.addColorStop(0.4, '#D4AF37'); // Gold Base (middle)
                     gradient.addColorStop(0.7, '#FDB931'); // Gold Bright
@@ -727,7 +727,7 @@ limitations under the License.
                     artModeBtn.textContent = "Visualizador";
                 } else if (mode === 2) {
                     customArtImg.classList.remove('hidden');
-                    artModeBtn.textContent = "CarÃ¡tula";
+                    artModeBtn.textContent = "Carátula";
                 }
             }
 
@@ -773,7 +773,7 @@ limitations under the License.
                         if (!playlist.some(p => p.name === file.name)) {
                             store.put(file, file.name);
                             const item = { name: file.name };
-                            // Intentar leer ID3 para tÃ­tulo/artista usando jsmediatags
+                            // Intentar leer ID3 para título/artista usando jsmediatags
                             if (window.jsmediatags) {
                                 try {
                                     jsmediatags.read(file, {
@@ -794,7 +794,7 @@ limitations under the License.
                                                         const tx2 = db.transaction([STORES.IMAGES], 'readwrite');
                                                         tx2.objectStore(STORES.IMAGES).put(dataURL, file.name);
                                                         tx2.oncomplete = () => {
-                                                            // Si es la canciÃ³n actual y estamos en modo carÃ¡tula, actualizarla
+                                                            // Si es la canción actual y estamos en modo carátula, actualizarla
                                                             if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
                                                                 customArtImg.src = dataURL;
                                                                 if (artMode === 2) setArtDisplay(2);
@@ -804,10 +804,10 @@ limitations under the License.
                                                     reader.readAsDataURL(blob);
                                                 } catch { }
                                             }
-                                            // Si es la canciÃ³n actual, actualizar UI
+                                            // Si es la canción actual, actualizar UI
                                             if (currentTrackIndex > -1 && playlist[currentTrackIndex]?.name === item.name) {
                                                 songTitle.textContent = item.title || item.name.replace('.mp3', '');
-                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin GÃ©nero";
+                                                songArtist.textContent = songGenres[item.name] || item.artist || "Sin Género";
                                             }
                                         },
                                         onError: () => { }
@@ -859,7 +859,7 @@ limitations under the License.
                     const songData = playlist[trackIndex];
                     const file = await getSongFromDB(songData.name);
                     if (!file) {
-                        console.error("No se pudo cargar la canciÃ³n de la base de datos.");
+                        console.error("No se pudo cargar la canción de la base de datos.");
                         return;
                     }
 
@@ -873,7 +873,7 @@ limitations under the License.
                     audioPlayer.src = URL.createObjectURL(file);
                     const item = playlist[trackIndex] || { name: file.name };
                     songTitle.textContent = (item.title && item.title.trim()) ? item.title : file.name.replace('.mp3', '');
-                    songArtist.textContent = songGenres[file.name] || item.artist || "Sin GÃ©nero";
+                    songArtist.textContent = songGenres[file.name] || item.artist || "Sin Género";
 
                     const imageData = await getImageFromDB(file.name);
                     if (imageData) {
@@ -902,7 +902,7 @@ limitations under the License.
                 playIcon.classList.add('hidden');
                 pauseIcon.classList.remove('hidden');
 
-                audioPlayer.play().catch(e => console.warn("Error de reproducciÃ³n:", e.name));
+                audioPlayer.play().catch(e => console.warn("Error de reproducción:", e.name));
 
                 if (artMode === 1) drawVisualizer();
             }
@@ -930,7 +930,7 @@ limitations under the License.
                     if (indexToDelete === currentTrackIndex) {
                         pauseTrack();
                         audioPlayer.src = "";
-                        songTitle.textContent = "Selecciona una canciÃ³n";
+                        songTitle.textContent = "Selecciona una canción";
                         songArtist.textContent = "YavlMusic";
                         progressBar.value = 0;
                         currentTimeEl.textContent = "0:00";
@@ -973,11 +973,11 @@ limitations under the License.
                 let filteredList = sourceList
                     .filter(item => item && item.file)
                     .filter(item => item.file.name.toLowerCase().includes(searchTerm))
-                    .filter(item => selectedGenre === 'Todos los GÃ©neros' || songGenres[item.file.name] === selectedGenre);
+                    .filter(item => selectedGenre === 'Todos los Géneros' || songGenres[item.file.name] === selectedGenre);
 
                 if (filteredList.length === 0) {
                     const message = playlist.length === 0
-                        ? 'Tu biblioteca estÃ¡ vacÃ­a. AÃ±ade archivos para empezar.'
+                        ? 'Tu biblioteca está vacía. Añade archivos para empezar.'
                         : 'No se encontraron resultados.';
                     playlistElement.innerHTML = `<li class="p-3 text-gray-500 text-center">${message}</li>`;
                     return;
@@ -1001,7 +1001,7 @@ limitations under the License.
                     genreSelect.addEventListener('change', (e) => {
                         e.stopPropagation();
                         if (e.target.value === 'add_new') {
-                            const newGenre = prompt('Introduce el nuevo nombre del gÃ©nero:');
+                            const newGenre = prompt('Introduce el nuevo nombre del género:');
                             if (newGenre && newGenre.trim()) {
                                 songGenres[file.name] = newGenre.trim();
                                 saveDataToDB();
@@ -1015,7 +1015,7 @@ limitations under the License.
                             else songGenres[file.name] = e.target.value;
                             saveDataToDB();
                             updateMainGenreFilter();
-                            if (currentTrackIndex === originalIndex) songArtist.textContent = songGenres[file.name] || "Sin GÃ©nero";
+                            if (currentTrackIndex === originalIndex) songArtist.textContent = songGenres[file.name] || "Sin Género";
                         }
                     });
 
@@ -1046,8 +1046,8 @@ limitations under the License.
             // =================================================================
             const getHeartSVG = (f) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>`;
             function toggleFavorite(idx) { const i = favorites.indexOf(idx); if (i > -1) favorites.splice(i, 1); else favorites.push(idx); saveDataToDB(); renderPlaylist(); updateCurrentFavoriteButton(); }
-            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los GÃ©neros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
-            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin GÃ©nero</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">AÃ±adir nuevo...</option>`; s.value = g || 'none'; }
+            function updateMainGenreFilter() { const c = genreFilter.value; const u = ["Todos los Géneros", ...new Set(Object.values(songGenres))]; genreFilter.innerHTML = ''; u.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreFilter.appendChild(o) }); if (u.includes(c)) genreFilter.value = c; }
+            function updateGenreOptionsForSelect(s, g) { const u = [...new Set(Object.values(songGenres))]; s.innerHTML = `<option value="none">Sin Género</option>`; u.forEach(gn => { const o = document.createElement('option'); o.value = gn; o.textContent = gn; s.appendChild(o) }); s.innerHTML += `<option value="add_new" class="text-[var(--accent-orange)]">Añadir nuevo...</option>`; s.value = g || 'none'; }
             function highlightCurrentTrack() { document.querySelectorAll('#playlist li').forEach(i => { i.style.backgroundColor = ''; i.style.color = ''; if (parseInt(i.dataset.index) === currentTrackIndex) { i.style.backgroundColor = 'rgba(0,255,255,0.7)'; i.style.color = 'black'; i.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) } }); }
             function updateCurrentFavoriteButton() { if (currentTrackIndex < 0 || !playlist.length) { favoriteCurrentBtn.innerHTML = getHeartSVG(false); favoriteCurrentBtn.classList.remove('text-pink-500'); favoriteCurrentBtn.classList.add('text-gray-400'); return; } const f = favorites.includes(currentTrackIndex); favoriteCurrentBtn.innerHTML = getHeartSVG(f); favoriteCurrentBtn.classList.toggle('text-pink-500', f); favoriteCurrentBtn.classList.toggle('text-gray-400', !f); }
             const playPauseHandler = () => isPlaying ? pauseTrack() : playTrack();
@@ -1122,7 +1122,7 @@ limitations under the License.
                 repeatMode = (repeatMode + 1) % 3;
                 // Visual feedback
                 repeatBtn.classList.toggle('active', repeatMode > 0);
-                const titles = ['RepeticiÃ³n: desactivado', 'RepeticiÃ³n: lista', 'RepeticiÃ³n: pista'];
+                const titles = ['Repetición: desactivado', 'Repetición: lista', 'Repetición: pista'];
                 repeatBtn.setAttribute('aria-label', titles[repeatMode]);
                 repeatBtn.setAttribute('title', titles[repeatMode]);
                 settings.repeat = repeatMode; saveDataToDB();
@@ -1240,7 +1240,7 @@ limitations under the License.
             // Reset biblioteca
             resetBtn.addEventListener('click', () => {
                 if (!db) return;
-                if (!confirm('Â¿Seguro que quieres borrar toda tu biblioteca local?')) return;
+                if (!confirm('¿Seguro que quieres borrar toda tu biblioteca local?')) return;
                 const tx = db.transaction([STORES.SONGS, STORES.IMAGES, STORES.METADATA], 'readwrite');
                 tx.objectStore(STORES.SONGS).clear();
                 tx.objectStore(STORES.IMAGES).clear();
@@ -1249,7 +1249,7 @@ limitations under the License.
                     pauseTrack(); audioPlayer.src = '';
                     playlist = []; favorites = []; songGenres = {};
                     settings = { volume: 0.5, shuffle: false, repeat: 0, artMode: 1 };
-                    songTitle.textContent = 'Selecciona una canciÃ³n'; songArtist.textContent = 'YavlMusic';
+                    songTitle.textContent = 'Selecciona una canción'; songArtist.textContent = 'YavlMusic';
                     progressBar.value = 0; currentTimeEl.textContent = '0:00'; totalDurationEl.textContent = '0:00'; currentTrackIndex = -1;
                     renderPlaylist(); updateMainGenreFilter(); saveDataToDB();
                 };
@@ -1258,14 +1258,14 @@ limitations under the License.
             // Redimensionar visualizador en resize
             window.addEventListener('resize', () => { if (typeof resizeVisualizerCanvas === 'function' && artMode === 1) resizeVisualizerCanvas(); });
 
-            // Drag & Drop para aÃ±adir archivos
+            // Drag & Drop para añadir archivos
             function suppressDefaults(e) { e.preventDefault(); e.stopPropagation(); }
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
                 document.addEventListener(eventName, suppressDefaults, false);
             });
             document.addEventListener('dragenter', () => dropOverlay.classList.remove('hidden'));
             document.addEventListener('dragleave', (e) => {
-                // SÃ³lo ocultar cuando salimos del documento
+                // Sólo ocultar cuando salimos del documento
                 if (e.target === document || e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
                     dropOverlay.classList.add('hidden');
                 }
@@ -1277,7 +1277,7 @@ limitations under the License.
                 dropOverlay.classList.add('hidden');
             });
 
-            // Atajos de teclado bÃ¡sicos
+            // Atajos de teclado básicos
             document.addEventListener('keydown', (e) => {
                 const tag = (e.target && (e.target.tagName || '')).toLowerCase();
                 if (tag === 'input' || tag === 'textarea' || e.ctrlKey || e.metaKey || e.altKey) return;

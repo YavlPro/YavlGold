@@ -43,6 +43,205 @@
 
 ---
 
+## 🔄 SESIÓN: Mojibake Cleanup (2026-02-05)
+
+### Diagnóstico (VERIFICADO en repo)
+1. **MPA + rutas**: sin cambios; ver sesiones previas (2026-02-02). Archivos clave: `apps/gold/vite.config.js`, `apps/gold/vercel.json`, `apps/gold/index.html`, `apps/gold/dashboard/index.html`.
+2. **Supabase/auth**: sin cambios; referencias en `assets/js/config/supabase-config.js`, `assets/js/auth/authClient.js`, `assets/js/auth/authUI.js`, `dashboard/auth-guard.js`.
+3. **Dashboard datos**: sin cambios; no aplica a esta limpieza.
+4. **Agro/Clima**: sin cambios; no aplica a esta limpieza.
+5. **Crypto**: `apps/gold/crypto/index_old.html` contiene mojibake en textos UI (archivo legacy).
+6. `rg -n "\\u00C3|\\u00C2|\\u00E2|\\u00F0"` devuelve coincidencias en `apps/gold/docs/AGENT_REPORT.md` (texto histórico) y `apps/gold/crypto/index_old.html`.
+
+### Plan
+1. Limpiar mojibake en `apps/gold/docs/AGENT_REPORT.md` (reemplazo de secuencias corruptas y evitar literales en ejemplos usando escapes).
+2. Limpiar mojibake en `apps/gold/crypto/index_old.html` (strings a UTF-8).
+3. Verificar que `rg -n "\\u00C3|\\u00C2|\\u00E2|\\u00F0"` quede vacío.
+4. Ejecutar `pnpm build:gold` y actualizar este reporte con resultado.
+
+### DoD
+- [x] `rg` limpio de secuencias mojibake (`\\u00C3`, `\\u00C2`, `\\u00E2`, `\\u00F0`) en el repo.
+- [x] AGENT_REPORT sin literales mojibake (usar escapes en ejemplos).
+- [x] Build PASS.
+
+### Archivos a tocar
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/crypto/index_old.html`
+
+### Archivos modificados
+- `apps/gold/docs/AGENT_REPORT.md` — limpieza de mojibake + escapes en ejemplos + control chars corregidos.
+- `apps/gold/crypto/index_old.html` — textos corregidos a UTF-8.
+
+### Resultado
+✅ `rg -n "\\u00C3|\\u00C2|\\u00E2|\\u00F0"` sin coincidencias en `apps/gold`.
+✅ AGENT_REPORT sin literales mojibake ni caracteres de control.
+
+### Build
+- `pnpm build:gold` ✅ PASS.
+
+
+## 🔄 SESIÓN: Facturero Rollback Mensaje + Contexto Seguro (2026-02-05)
+
+### Diagnóstico (VERIFICADO en repo)
+1) **`notas` en Pendientes** puede no existir en DB y fallar inserts si no se trata como opcional.  
+2) **Rollback**: si falla el delete del origen, se intenta borrar el destino; si ese rollback falla por RLS, se requiere mensaje explícito.  
+3) **Contexto**: asegurar que la causa quede preservada incluso si `notas` no existe.
+
+### Plan (quirúrgico)
+1) Tratar `notas` como campo opcional en Pendiente y **además** concatenar causa en `concepto` para fallback seguro.  
+2) Agregar mensaje explícito si el rollback falla (delete origen falló y rollback del destino también).  
+3) Ejecutar `pnpm build:gold`.
+
+### DoD
+- [x] `notas` opcional + causa también en `concepto` (fallback seguro).  
+- [x] Mensaje explícito si rollback falla por RLS/permisos.  
+- [x] Rollback extra por origin-meta cuando aplique.  
+- [x] Build PASS.
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — fallback seguro para causa/notas y mensajes de rollback.  
+
+### Resultado
+✅ Causa preservada en `concepto` y `notas` (si existe).  
+✅ Mensaje explícito cuando el rollback no puede borrar el destino.  
+✅ Rollback por `origin_table/origin_id` si el delete por ID falla.  
+
+### Build
+- `pnpm build:gold` ✅ PASS.
+
+## 🔄 SESIÓN: Facturero Transfer Rollback + Preservar Campos (2026-02-05)
+
+### Diagnóstico (VERIFICADO en repo)
+1) **Riesgo de duplicados invisibles**: en transferencias de Ingresos/Pérdidas se inserta destino y luego se intenta borrar el origen. Si el delete falla (RLS / `deleted_at` inexistente), queda un duplicado.  
+2) **Pérdida de contexto**: al transferir, se pierde `comprador` (Ingreso→Pérdida) y `causa` (Pérdida→Ingreso/Pendiente).  
+
+### Plan (quirúrgico)
+1) **Rollback de transferencia**: si falla el delete, borrar el destino recién creado.  
+2) **Preservar campos**:  
+   - Ingreso→Pérdida: incluir comprador en `causa`.  
+   - Pérdida→Ingreso: incluir `causa` en `concepto`.  
+   - Pérdida→Pendiente: incluir `causa` en `notas`.  
+3) Ejecutar `pnpm build:gold`.
+
+### DoD
+- [x] Transfer no deja duplicados si falla el delete.  
+- [x] Campos de contexto preservados en destino.  
+- [x] Build PASS.
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — rollback de transferencias y preservación de campos (`comprador` / `causa`).  
+
+### Resultado
+✅ Rollback si falla el delete (se elimina el destino recién creado).  
+✅ Preservación de contexto: comprador en `causa` (Ingreso→Pérdida) y `causa` en concepto/notas (Pérdida→Ingreso/Pendiente).  
+
+### Build
+- `pnpm build:gold` ✅ PASS.
+
+## 🔄 SESIÓN: Facturero Multi-Ciclo + Transferencias + Orden por Fecha + Copy Pendientes (2026-02-05)
+
+### Diagnóstico (VERIFICADO en repo, sin inventar schema)
+1) **MPA + navegación**  
+   - `apps/gold/vite.config.js`: entradas MPA (main/cookies/faq/soporte/dashboard/creacion/perfil/configuracion/academia/agro/crypto/herramientas/tecnologia/social).  
+   - `apps/gold/vercel.json`: `cleanUrls`, `trailingSlash`, redirects `/herramientas -> /tecnologia`, routes para `/academia`, `/crypto`, `/tecnologia`, `/music`.  
+   - `apps/gold/index.html`: landing con navegación por anchors y cards que apuntan a `./agro/` y `./crypto/`.  
+   - `apps/gold/dashboard/index.html`: panel post-login.
+2) **Supabase/auth**  
+   - Cliente: `apps/gold/assets/js/config/supabase-config.js` (`createClient` con `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`).  
+   - Auth: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`, guard en `apps/gold/dashboard/auth-guard.js`.
+3) **Dashboard: consultas y faltantes**  
+   - `dashboard/index.html`: consulta `profiles`, `modules`, `user_favorites`, `notifications`, `announcements`, `feedback`.  
+   - Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en código de Academia, pero no integrado al dashboard.
+4) **Clima/Agro: prioridad Manual > GPS > IP + storage keys**  
+   - `apps/gold/assets/js/geolocation.js`: `getCoordsSmart` y keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.  
+   - `apps/gold/agro/dashboard.js`: `initWeather`, `displayWeather`, caches `yavlgold_weather_*`, debug `?debug=1`.
+5) **Crypto: estado real**  
+   - `apps/gold/crypto/` existe con HTML/JS/CSS y se integra como página MPA (no app aparte).
+
+**Facturero (problema actual)**  
+- **Mezcla de cultivos**: `refreshFactureroHistory()` en `apps/gold/agro/agro.js` y `loadIncomes()`/`loadExpenses()` no filtran por `crop_id`.  
+- **Orden por fecha**: `refreshFactureroHistory()` ordena por `created_at` y `getRowTimestamp()` prioriza `created_at` → rompe backdating.  
+- **Transferencias**: botón “Transferir” solo existe en Pendientes (`btn-transfer-pending` + `showTransferChoiceModal()`); Ingresos/Pérdidas solo tienen “Revertir” si vienen de pendiente.  
+- **Copy Pendientes**: placeholder de concepto es “Ej: Venta a crédito”, induce confusión.
+
+**Schema DB**  
+- No hay definición de tablas `agro_*` en `apps/gold/supabase/` (solo `agro_crops`/ROI).  
+- Columnas usadas en código (`crop_id`, `fecha`, `date`, `transfer_state`, etc.) **NO VERIFICADAS en repo**, pero ya referenciadas por el código existente.
+
+### Plan (quirúrgico)
+1) **Estado de cultivo seleccionado** en `apps/gold/agro/agro.js`:  
+   - Crear `selectedCropId` persistido en `localStorage` (key nueva, versión V1).  
+   - Aplicar clase activa en cards y **indicador ⭕**.  
+   - Cambiar cultivo -> emitir evento `agro:crop:changed` para refresco inmediato.
+2) **Filtro por cultivo (online/offline)**  
+   - `refreshFactureroHistory()` → filtrar por `crop_id` cuando hay `selectedCropId`.  
+   - `loadIncomes()` (agro.js) y `loadExpenses()` (agro/index.html) → filtrar por `crop_id`.  
+3) **Transferencias en Ingresos/Pérdidas**  
+   - Refactorizar `showTransferChoiceModal()` a helper reutilizable.  
+   - Agregar botón “Transferir” en rows de ingresos/pérdidas con opciones:  
+     - Ingresos → Pendientes / Pérdidas  
+     - Pérdidas → Pendientes / Ingresos  
+   - Reusar lógica base de Pendientes para UI/confirmaciones y mantener estilo.  
+4) **Orden por fecha del evento**  
+   - Ajustar `getRowTimestamp()` y `getDayKey()` para priorizar `fecha`/`date`.  
+   - Ajustar queries `order()` en `refreshFactureroHistory()` y `fetchAgroLosses()` a `fecha` (y desempate por `created_at`).  
+5) **Copy Pendientes**  
+   - Cambiar placeholder/label del concepto para reflejar deuda/pendiente.
+
+### DoD Checklist
+**A) Historial/Facturero por cultivo**
+- [x] Filtrado por `crop_id` en todas las listas.  
+- [x] UI con indicador ⭕ en cultivo activo.  
+- [x] Cambio de cultivo refresca sin reload.
+
+**B) Transferencias Ingresos/Pérdidas**
+- [x] Botón “Transferir” en Ingresos (Pendientes/Pérdidas).  
+- [x] Botón “Transferir” en Pérdidas (Pendientes/Ingresos).  
+- [x] Reusa helper base + UI consistente.
+
+**C) Orden por fecha del evento**
+- [x] Orden y agrupación por `fecha`/`date` (no `created_at`).  
+- [x] Backdating permitido (≤ hoy).  
+- [x] Bloqueo de fechas futuras intacto.
+
+**D) Copy Pendientes**
+- [x] Placeholder y label alineados a deuda/pendiente.  
+
+### Riesgos y mitigación
+- **Columnas no verificadas en repo**: usar solo campos ya existentes en el código y fallback si faltan (sin inventar schema).  
+- **RLS / filtros**: mantener `eq('user_id', user.id)` y filtros existentes.  
+- **UX**: asegurar que el cambio de cultivo no dispare recargas de crops ni loops; usar evento dedicado.
+
+### Pruebas manuales planificadas
+1) Crear 2 cultivos → seleccionar cada uno → facturero/historial solo de ese cultivo + indicador ⭕.  
+2) Ingresos: transferir a Pendientes y a Pérdidas (mismo cultivo).  
+3) Pérdidas: transferir a Pendientes y a Ingresos (mismo cultivo).  
+4) Backdating: crear registro con fecha de ayer → se ordena como ayer; bloquear fecha futura.  
+5) Placeholder Pendientes: texto coherente con deuda.
+
+### Resultado esperado
+- Facturero y historial separados por cultivo (online/offline sin mezcla).  
+- Transferencias consistentes en Ingresos y Pérdidas con UI uniforme.  
+- Orden por fecha del evento y backdating correcto.  
+- Copy de Pendientes sin confusión.
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — selección de cultivo + filtrado + orden por fecha + transferencias ingresos/pérdidas.  
+- `apps/gold/agro/agro.css` — highlight e indicador ⭕ en cultivo activo.  
+- `apps/gold/agro/index.html` — placeholder pendiente + filtro por cultivo en gastos + listener `agro:crop:changed`.  
+
+### Resultado
+✅ Facturero/historial filtrados por cultivo con indicador activo.  
+✅ Transferencias en Ingresos y Pérdidas disponibles y consistentes con UI base.  
+✅ Orden por fecha del evento (backdating correcto).  
+✅ Copy de Pendientes alineado a deuda.  
+
+### Build
+- `pnpm build:gold` ✅ PASS.
+
+### Pruebas manuales
+- NO VERIFICADO (pendiente de QA en navegador).
+
 ## 🤖 SESIÓN: Agro Assistant Tool #5 - get_pending_payments (2026-02-03)
 
 ### Diagnóstico
@@ -211,26 +410,26 @@
 
 ### Diagnóstico
 1. **Origen del mojibake**: `apps/gold/dashboard/music.html` contiene caracteres corruptos en botones de UI (iconos) detectados por `rg`:
-   - `show-favorites-btn`: `â˜…` (estrella).
-   - `export-btn`: `â†“` (flecha abajo).
-   - `import-btn`: `â†‘` (flecha arriba).
-   - `reset-btn` y `close-modal-btn`: `âœ•` (X).
-   - Comentario en JS con `â†’` (no UI, pero rompe el grep).
+   - `show-favorites-btn`: `★` (estrella).
+   - `export-btn`: `↓` (flecha abajo).
+   - `import-btn`: `↑` (flecha arriba).
+   - `reset-btn` y `close-modal-btn`: `✕` (X).
+   - Comentario en JS con `->` (no UI, pero rompe el grep).
 2. **Ubicación**: zona de controles debajo del botón “Añadir” y botón de cierre del modal en la misma página.
 3. **Estado funcional**: reproducción OK (confirmado por usuario). Solo UI/encoding.
 4. **Regla**: evitar símbolos Unicode crudos; preferir ASCII o SVG inline.
 
 ### Plan
 1. Reemplazar los textos mojibake por SVG inline (estrella, descarga, subida, cerrar) o ASCII legible.
-2. Corregir el comentario con `â†’` a ASCII `->`.
-3. Verificar que `rg -n "Ã|Â|â" ... music.html` quede vacío.
+2. Corregir el comentario con `->` a ASCII `->`.
+3. Verificar que `rg -n "\\u00C3|\\u00C2|\\u00E2" ... music.html` quede vacío.
 4. Build `pnpm build:gold` y actualizar este reporte con resultado + QA.
 
 ### DoD
 - [x] Sin mojibake en Music Suite (UI).
 - [x] Botones/chips bajo “Añadir” legibles.
 - [x] Botón cuadrado a la derecha del selector OK.
-- [x] `rg` limpio de `Ã|Â|â` en `music.html`.
+- [x] `rg` limpio de `\\u00C3|\\u00C2|\\u00E2` en `music.html`.
 - [x] Build PASS.
 
 ### Archivos a tocar
@@ -243,7 +442,7 @@
 
 ### Resultado
 ✅ Botones de favoritos/exportar/importar/reset y cierre de modal sin mojibake.
-✅ `rg -n "Ã|Â|â" apps/gold/dashboard/music.html` sin coincidencias.
+✅ `rg -n "\\u00C3|\\u00C2|\\u00E2" apps/gold/dashboard/music.html` sin coincidencias.
 ✅ Build PASS: `pnpm build:gold`.
 
 ### Pruebas manuales
@@ -258,12 +457,12 @@
 4. **Agro/Clima**: prioridad Manual > GPS > IP en `assets/js/geolocation.js` (`getCoordsSmart`), uso en `agro/dashboard.js`. Keys: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
 5. **Crypto**: `apps/gold/crypto/` existe como página MPA dentro de `apps/gold` (inputs en Vite). Carpeta con HTML/JS/CSS y backups.
 6. **Reproductor**: UI del player está en `apps/gold/dashboard/music.html` (link desde `apps/gold/dashboard/index.html` → `/dashboard/music.html`).
-7. **Mojibake**: strings en `apps/gold/dashboard/music.html` contienen secuencias literales `MÃ`, `Ã±`, etc. (`rg` lo confirma). `<meta charset="UTF-8">` ya existe; la fuente parece ser el propio archivo (texto corrompido), no Supabase ni JSON externo.
+7. **Mojibake**: strings en `apps/gold/dashboard/music.html` contienen secuencias literales `M\\u00C3`, `ñ`, etc. (`rg` lo confirma). `<meta charset="UTF-8">` ya existe; la fuente parece ser el propio archivo (texto corrompido), no Supabase ni JSON externo.
 8. **Audio**: el player usa `<audio id="audio-player">`, `URL.createObjectURL` para MP3 locales y `jsmediatags` para ID3; no hay fetch remoto, por lo que CORS/404 no deberían aplicar. Requiere QA manual con archivo MP3.
 
 ### Plan
 1. Corregir strings mojibake en `apps/gold/dashboard/music.html` y guardar en UTF-8.
-2. Verificar que no queden secuencias `MÃ` en el player (rg puntual).
+2. Verificar que no queden secuencias `M\\u00C3` en el player (rg puntual).
 3. QA de audio: revisar wiring de `<audio>` + botones play/pause/next/prev; validar con prueba manual (archivo MP3 local).
 4. Actualizar `apps/gold/docs/AGENT_REPORT.md` con resultado + pruebas y correr `pnpm build:gold`.
 
@@ -281,7 +480,7 @@
 - `apps/gold/docs/AGENT_REPORT.md` — diagnóstico + plan + resultado de esta sesión.
 
 ### Resultado
-✅ Textos del reproductor con acentos correctos (sin `MÃ`/`Â`).
+✅ Textos del reproductor con acentos correctos (sin `M\\u00C3` u otras secuencias corruptas).
 ✅ `<meta charset="UTF-8">` ya estaba presente, no se requirió cambio.
 ✅ Build PASS: `pnpm build:gold`.
 
@@ -2271,7 +2470,7 @@ Exit code: 0
 ## V9.5.6 - Facturero Advanced State + Meta (2026-01-22)
 
 ### Diagnostico
-1) El acordeon "Opciones avanzadas" no recuerda estado por pestaÃ±a.
+1) El acordeon "Opciones avanzadas" no recuerda estado por pestaña.
 2) Falta un mini-resumen cuando el acordeon esta cerrado (evidencia + notas).
 3) Limpiar debe resetear resumen sin forzar cierre.
 
@@ -2559,18 +2758,18 @@ Exit code: 0
 ## V9.6.6 - Landing copy sobrio (2026-01-26)
 
 ### Diagnostico
-1) El copy de la landing usa lenguaje hiperbÃ³lico ("Ãšnico en el Mundo", "Premium", "RevoluciÃ³n") que reduce credibilidad.
+1) El copy de la landing usa lenguaje hiperbólico ("Único en el Mundo", "Premium", "Revolución") que reduce credibilidad.
 2) Hay promesas absolutas y adjetivos grandilocuentes en badges, descripciones y CTA.
 3) Existen errores de encoding visibles (ej: "Tecnolog?a") que afectan calidad percibida.
 
 ### Plan
-1) Reemplazar frases hype por copy sobrio y factual manteniendo intenciÃ³n original.
+1) Reemplazar frases hype por copy sobrio y factual manteniendo intención original.
 2) Corregir acentos visibles en textos de la landing (sin tocar CSS/JS/estructura).
 3) Ejecutar `pnpm build:gold` y reportar resultado.
 
 ### QA Checklist
 - [ ] Landing carga sin cambios visuales (solo texto).
-- [ ] Botones conservan funciÃ³n y jerarquÃ­a.
+- [ ] Botones conservan función y jerarquía.
 - [ ] Copy suena sobrio, sin promesas absolutas.
 - [ ] Sin errores de encoding evidentes.
 
@@ -2583,36 +2782,36 @@ Exit code: 0
 
 ---
 
-## V9.6.7 - Landing copy sin repeticiÃ³n de estado (2026-01-26)
+## V9.6.7 - Landing copy sin repetición de estado (2026-01-26)
 
 ### Diagnostico
-1) El copy repite "en desarrollo / en construcciÃ³n / en evoluciÃ³n" en badges, CTA y footer.
-2) Esa repeticiÃ³n reduce claridad y hace que el mensaje se perciba redundante.
+1) El copy repite "en desarrollo / en construcción / en evolución" en badges, CTA y footer.
+2) Esa repetición reduce claridad y hace que el mensaje se perciba redundante.
 
 ### Plan (reemplazos exactos)
 1) Badges hero:
-   - "En evoluciÃ³n" -> "En desarrollo"
+   - "En evolución" -> "En desarrollo"
    - "Acceso temprano" se mantiene
-   - "Premium" / "Ãšnico en el Mundo" no aplica (ya removidos)
+   - "Premium" / "Único en el Mundo" no aplica (ya removidos)
    - Nuevo badge: "Actualizaciones frecuentes"
-2) CTA ConstrucciÃ³n:
-   - "Estamos en construcciÃ³n. Ãšnete a nuestra comunidad en Telegram para recibir avances del proyecto."
-     -> "Estamos desarrollando el ecosistema. Ãšnete a Telegram para recibir avances y participar en pruebas."
-3) MÃ³dulos (descripciones):
-   - Duelos en Vivo -> "Competencias en tiempo real. Certificaciones en preparaciÃ³n."
-   - TecnologÃ­a Educativa -> "Herramientas para anÃ¡lisis, investigaciÃ³n y automatizaciÃ³n. Contenidos en preparaciÃ³n."
-   - MÃ³dulo de Ajedrez -> "Sistema de aprendizaje de ajedrez en progreso. AnÃ¡lisis guiado y prÃ¡cticas progresivas."
-   - Agricultura TecnolÃ³gica -> "GestiÃ³n agrÃ­cola y planificaciÃ³n. Marketplace e integraciÃ³n IoT en preparaciÃ³n."
-   - YavlGold Crypto -> "Datos de mercado y herramientas de anÃ¡lisis. Trading y on-chain en preparaciÃ³n."
-   - Suite Multimedia -> "Reproductor y biblioteca multimedia. Funciones para creadores en preparaciÃ³n."
+2) CTA Construcción:
+   - "Estamos en construcción. Únete a nuestra comunidad en Telegram para recibir avances del proyecto."
+     -> "Estamos desarrollando el ecosistema. Únete a Telegram para recibir avances y participar en pruebas."
+3) Módulos (descripciones):
+   - Duelos en Vivo -> "Competencias en tiempo real. Certificaciones en preparación."
+   - Tecnología Educativa -> "Herramientas para análisis, investigación y automatización. Contenidos en preparación."
+   - Módulo de Ajedrez -> "Sistema de aprendizaje de ajedrez en progreso. Análisis guiado y prácticas progresivas."
+   - Agricultura Tecnológica -> "Gestión agrícola y planificación. Marketplace e integración IoT en preparación."
+   - YavlGold Crypto -> "Datos de mercado y herramientas de análisis. Trading y on-chain en preparación."
+   - Suite Multimedia -> "Reproductor y biblioteca multimedia. Funciones para creadores en preparación."
 4) Footer:
-   - "ðŸš§ En construcciÃ³n - Desarrollo en progreso ðŸš§" -> "ðŸš§ Desarrollo en progreso ðŸš§"
+   - "🚧 En construcción - Desarrollo en progreso 🚧" -> "🚧 Desarrollo en progreso 🚧"
    - "Ecosistema en desarrollo." -> "Ecosistema en progreso."
 
 ### QA Checklist
 - [ ] Landing sin cambios de layout (solo texto).
 - [ ] La "Y" se mantiene visible.
-- [ ] Sin repeticiÃ³n fuerte de "en desarrollo/en construcciÃ³n".
+- [ ] Sin repetición fuerte de "en desarrollo/en construcción".
 - [ ] CTAs y links funcionan igual.
 
 ### Build
@@ -3136,9 +3335,9 @@ git push
 ## V9.4.2 - Landing light-mode: html sync + vars en html/body (2026-01-26)
 
 ### Diagnostico
-1) **Root cause**: el tema se aplica solo en `body.light-mode`, pero `html` mantiene variables dark; cualquier gap/secciÃ³n transparente deja ver fondo oscuro (franja negra).
+1) **Root cause**: el tema se aplica solo en `body.light-mode`, pero `html` mantiene variables dark; cualquier gap/sección transparente deja ver fondo oscuro (franja negra).
 2) **Hook real**: el toggle usa `body.classList.toggle('light-mode')` en `apps/gold/index.html` (no `data-theme`).
-3) **Superficies dependientes**: hero/secciones/overlays usan `--landing-*`, por lo que deben resolverse tambiÃ©n en `html.light-mode`.
+3) **Superficies dependientes**: hero/secciones/overlays usan `--landing-*`, por lo que deben resolverse también en `html.light-mode`.
 
 ### Plan
 1) Sincronizar clase `light-mode` en `<html>` y `<body>` desde el toggle.
@@ -3157,7 +3356,7 @@ git push
 ### Diagnostico
 1) DevTools confirma que en light-mode el target de la franja negra es `BODY` y su `computed background` sigue en `rgb(11,12,15)` aunque `body` tiene `class="landing-page light-mode"`.
 2) No hay JS asignando `document.body.style.background` en `apps/gold/index.html` (solo `overflow`), por lo que el override debe hacerse por CSS para ganar a reglas/inline externos.
-3) El fondo oscuro del `body` se filtra en gaps entre secciones (mÃ¡rgenes/espacios/zonas transparentes), no es un divider real.
+3) El fondo oscuro del `body` se filtra en gaps entre secciones (márgenes/espacios/zonas transparentes), no es un divider real.
 
 ### Plan
 1) Forzar `body.landing-page` a usar `background-color: var(--landing-page-bg)` (sin hardcode).
@@ -3174,9 +3373,9 @@ git push
 ## V9.4.4 - Landing light-mode: HERO consistente (2026-01-26)
 
 ### Diagnostico
-1) En `apps/gold/index.html` el HERO usa `background: var(--landing-hero-bg)` y overlays por `::before` con `--landing-hero-glow`; no hay overrides especÃ­ficos de light para el HERO ni reducciÃ³n de overlay.
-2) No existen reglas `@media` que cambien el background del HERO en mÃ³vil; el problema es de variables/overlays en light y/o falta de override en `body.landing-page.light-mode`.
-3) El hero en desktop se ve “empastado” por la combinaciÃ³n del glow grande (`::before`) con el fondo claro sin ajuste; en mÃ³vil el HERO queda oscuro por falta de override duro sobre el fondo del HERO.
+1) En `apps/gold/index.html` el HERO usa `background: var(--landing-hero-bg)` y overlays por `::before` con `--landing-hero-glow`; no hay overrides específicos de light para el HERO ni reducción de overlay.
+2) No existen reglas `@media` que cambien el background del HERO en móvil; el problema es de variables/overlays en light y/o falta de override en `body.landing-page.light-mode`.
+3) El hero en desktop se ve “empastado” por la combinación del glow grande (`::before`) con el fondo claro sin ajuste; en móvil el HERO queda oscuro por falta de override duro sobre el fondo del HERO.
 
 ### Plan
 1) Crear variables de hero dedicadas: `--landing-hero-bg`, `--landing-hero-overlay`, `--landing-hero-glow-opacity` y definir overrides en `html.light-mode, body.light-mode`.
@@ -3185,7 +3384,7 @@ git push
 4) Mantener el fix del fondo de body/html y no alterar dark-mode.
 
 ### DoD
-- [ ] Light-mode: HERO coherente en mÃ³vil y desktop (sin negro ni overlay gris fuerte).
+- [ ] Light-mode: HERO coherente en móvil y desktop (sin negro ni overlay gris fuerte).
 - [ ] Dark-mode intacto (sin regresiones).
 - [ ] Franja negra no reaparece.
 - [ ] Toggle de tema funciona igual (clases `light-mode` en html/body).
@@ -3201,8 +3400,8 @@ git push
 
 ### Diagnostico
 1) La Edge Function `supabase/functions/agro-assistant/index.ts` solo permite `https://yavlgold.com` y `http://localhost*`. No incluye `https://www.yavlgold.com`, por lo que el preflight desde PROD falla con CORS (`No 'Access-Control-Allow-Origin' header`).
-2) La funciÃ³n responde `OPTIONS` con 200/403 sin headers CORS si el origen no estÃ¡ permitido; el navegador bloquea antes del POST.
-3) En el frontend (`apps/gold/agro/agro.js`) el manejo de errores muestra mensajes genÃ©ricos y puede loguear `undefined` en casos de red/CORS (no hay mensaje humano consistente).
+2) La función responde `OPTIONS` con 200/403 sin headers CORS si el origen no está permitido; el navegador bloquea antes del POST.
+3) En el frontend (`apps/gold/agro/agro.js`) el manejo de errores muestra mensajes genéricos y puede loguear `undefined` en casos de red/CORS (no hay mensaje humano consistente).
 
 ### Plan
 1) Backend: ajustar allowlist CORS (agregar `https://www.yavlgold.com`, `http://127.0.0.1:5173`, `http://localhost:5173`) y devolver headers CORS + `Vary: Origin` en todas las respuestas (incluyendo OPTIONS/errores).
@@ -3212,8 +3411,8 @@ git push
 ### DoD
 - [ ] Asistente Agro funciona en PROD (yavlgold.com) sin error CORS.
 - [ ] Edge Function `agro-assistant` responde OPTIONS y POST con headers CORS correctos.
-- [ ] UI muestra error humano consistente (sin “undefined”) en mÃ³vil y desktop.
-- [ ] Sin regresiones en mÃ³dulos Agro.
+- [ ] UI muestra error humano consistente (sin “undefined”) en móvil y desktop.
+- [ ] Sin regresiones en módulos Agro.
 - [x] `pnpm build:gold` OK.
 
 ### Archivos a tocar
@@ -3222,7 +3421,7 @@ git push
 - `apps/gold/docs/AGENT_REPORT.md`
 
 ### Pruebas / Gates
-- Manual: enviar mensaje en /agro; verificar OPTIONS 204 con `access-control-allow-origin` vÃ¡lido y POST sin CORS.
+- Manual: enviar mensaje en /agro; verificar OPTIONS 204 con `access-control-allow-origin` válido y POST sin CORS.
 - Manual: forzar error de red y validar mensaje humano.
 - Build: `pnpm build:gold`.
 
@@ -3236,19 +3435,19 @@ git push
 
 ### Diagnostico
 1) CORS en PROD falla por preflight sin `Access-Control-Allow-Origin` desde `https://www.yavlgold.com`. La Edge Function debe responder `OPTIONS` con headers correctos y mantener allowlist estricta.
-2) Se requiere un header de versiÃ³n para verificar despliegue (`x-agro-assistant-version`) desde Network.
+2) Se requiere un header de versión para verificar despliegue (`x-agro-assistant-version`) desde Network.
 3) El mensaje de error en desktop no es visible/consistente; necesitamos un estilo de error con alto contraste y una ruta clara de mensaje humano.
 
 ### Plan
 1) Edge Function (`supabase/functions/agro-assistant/index.ts`): helper CORS con allowlist exacta, `Access-Control-Max-Age`, `Vary: Origin` y `x-agro-assistant-version` en TODAS las respuestas (OPTIONS/POST/errores).
-2) Frontend (`apps/gold/agro/agro.js`): normalizar mensajes de error (red/CORS/funciÃ³n) y evitar `unknown/undefined`.
-3) Estilos (`apps/gold/agro/agro.css`): clase de mensaje error con color/contraste legible en desktop y mÃ³vil.
+2) Frontend (`apps/gold/agro/agro.js`): normalizar mensajes de error (red/CORS/función) y evitar `unknown/undefined`.
+3) Estilos (`apps/gold/agro/agro.css`): clase de mensaje error con color/contraste legible en desktop y móvil.
 
 ### DoD
-- [ ] Preflight OPTIONS responde 204 con headers CORS vÃ¡lidos.
+- [ ] Preflight OPTIONS responde 204 con headers CORS válidos.
 - [ ] POST funciona desde https://www.yavlgold.com y https://yavlgold.com sin CORS.
 - [ ] CORS headers en todas las respuestas (success/error).
-- [ ] UI muestra mensaje humano visible en desktop y mÃ³vil (sin “unknown/undefined”).
+- [ ] UI muestra mensaje humano visible en desktop y móvil (sin “unknown/undefined”).
 - [ ] Header `x-agro-assistant-version` visible en Network.
 - [x] `pnpm build:gold` OK.
 
@@ -3563,9 +3762,9 @@ Implementar "smart retry" en frontend:
 - **Pruebas Manuales**: El código implementa la lógica de reintento inteligente solicitada. Se espera que el error 400 desaparezca en producción al descartar automáticamente el filtro `deleted_at` cuando la base de datos lo rechace.
 
 ## Phase 2 Final Fix (Agro Losses 400)
-- **Diagnosis**: Confirmed 'category' column was missing in gro_losses but requested by gro-stats.js.
-- **Resolution**: Removed category from gro-stats.js fetch column list.
-- **Enhancement**: Implemented 'Fix B' (LocalStorage cache) in both gro.js and gro-stats.js for robust schema capability caching.
+- **Diagnosis**: Confirmed 'category' column was missing in agro_losses but requested by agro-stats.js.
+- **Resolution**: Removed category from agro-stats.js fetch column list.
+- **Enhancement**: Implemented 'Fix B' (LocalStorage cache) in both agro.js and agro-stats.js for robust schema capability caching.
 - **Verification**: pnpm build:gold passed.
 
 ## Diagnostico (tarea actual - Campana Agro Facturero)
@@ -3695,7 +3894,7 @@ Implementar "smart retry" en frontend:
 - [ ] Ejecutar pnpm build:gold y documentar.
 
 ## DoD (tarea actual - Mojibake clima/luna Agro)
-- [ ] Clima/Luna sin "ðŸ" ni "Â".
+- [ ] Clima/Luna sin "\\u00F0\\u009F" ni secuencias corruptas.
 - [ ] Temperatura muestra "°C" correcto.
 - [ ] Sin cambios de estilo/layout.
 - [ ] pnpm build:gold OK.
@@ -3705,7 +3904,7 @@ Implementar "smart retry" en frontend:
 - Pruebas manuales: NO ejecutadas.
 
 ## Diagnostico (tarea actual - Spec Agro Chat Redesign)
-- Se solicita crear especificacion en raiz para rediseo del chat Agro sin tocar logica Gemini Flash, agregando historial real y anti-mojibake.
+- Se solicita crear especificacion en raiz para rediseño del chat Agro sin tocar logica Gemini Flash, agregando historial real y anti-mojibake.
 
 ## Plan (tarea actual - Spec Agro Chat Redesign)
 - [ ] Crear archivo `AGRO_CHAT_REDESIGN_SPEC.md` en raiz con el contenido provisto.

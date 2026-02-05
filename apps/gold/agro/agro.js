@@ -22,8 +22,87 @@ const CROPS_LOADING_ID = 'agro-crops-loading';
 const CROPS_EMPTY_ID = 'agro-crops-empty';
 const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const AGRO_CROPS_STATE_KEY = '__AGRO_CROPS_STATE';
+const AGRO_SELECTED_CROP_KEY = 'YG_AGRO_SELECTED_CROP_V1';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
+
+let selectedCropId = null;
+
+function normalizeCropId(value) {
+    if (value === undefined || value === null) return null;
+    const str = String(value).trim();
+    return str ? str : null;
+}
+
+function readSelectedCropId() {
+    try {
+        return normalizeCropId(localStorage.getItem(AGRO_SELECTED_CROP_KEY));
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeSelectedCropId(value) {
+    try {
+        if (!value) {
+            localStorage.removeItem(AGRO_SELECTED_CROP_KEY);
+        } else {
+            localStorage.setItem(AGRO_SELECTED_CROP_KEY, String(value));
+        }
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function applySelectedCropUI() {
+    const cards = document.querySelectorAll('.crop-card');
+    if (!cards.length) return;
+    cards.forEach((card) => {
+        const cardId = normalizeCropId(card.dataset.cropId);
+        const isSelected = !!(selectedCropId && cardId && cardId === selectedCropId);
+        card.classList.toggle('is-selected', isSelected);
+        card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
+}
+
+function dispatchCropChanged() {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('agro:crop:changed', {
+        detail: { cropId: selectedCropId }
+    }));
+}
+
+function setSelectedCropId(nextId, options = {}) {
+    const normalized = normalizeCropId(nextId);
+    if (normalized === selectedCropId) return false;
+    selectedCropId = normalized;
+    writeSelectedCropId(selectedCropId);
+    applySelectedCropUI();
+    if (typeof window !== 'undefined') {
+        window.YG_AGRO_SELECTED_CROP_ID = selectedCropId;
+    }
+    if (!options.silent) {
+        dispatchCropChanged();
+    }
+    return true;
+}
+
+function syncSelectedCropFromList(crops, options = {}) {
+    const list = Array.isArray(crops) ? crops : [];
+    const stored = normalizeCropId(readSelectedCropId());
+    const hasStored = stored && list.some((crop) => normalizeCropId(crop?.id) === stored);
+    let nextId = stored;
+    if (!hasStored) {
+        nextId = list.length ? normalizeCropId(list[0]?.id) : null;
+    }
+    const changed = setSelectedCropId(nextId, { silent: options.silent });
+    if (!changed) {
+        applySelectedCropUI();
+    }
+    return selectedCropId;
+}
+
+selectedCropId = readSelectedCropId();
 
 // ============================================================
 // DATE VALIDATION HELPERS (V9.6.6)
@@ -93,23 +172,23 @@ window.assertDateNotFuture = assertDateNotFuture;
  * Priority: created_at > updated_at > fecha/date field (noon local).
  */
 function getRowTimestamp(row, dateFieldName = 'fecha') {
-    // Priority 1: created_at (full ISO timestamp)
-    if (row.created_at) {
-        const ts = Date.parse(row.created_at);
-        if (!isNaN(ts)) return ts;
-    }
-    // Priority 2: updated_at
-    if (row.updated_at) {
-        const ts = Date.parse(row.updated_at);
-        if (!isNaN(ts)) return ts;
-    }
-    // Priority 3: date field (YYYY-MM-DD) -> use noon local to avoid timezone edge cases
+    // Priority 1: event date (YYYY-MM-DD) -> use noon local to avoid timezone edge cases
     const dateStr = row[dateFieldName] || row.fecha || row.date;
     if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
         const datePart = dateStr.slice(0, 10);
         const [yyyy, mm, dd] = datePart.split('-').map(Number);
         const d = new Date(yyyy, mm - 1, dd, 12, 0, 0);
         return d.getTime();
+    }
+    // Priority 2: created_at (full ISO timestamp)
+    if (row.created_at) {
+        const ts = Date.parse(row.created_at);
+        if (!isNaN(ts)) return ts;
+    }
+    // Priority 3: updated_at
+    if (row.updated_at) {
+        const ts = Date.parse(row.updated_at);
+        if (!isNaN(ts)) return ts;
     }
     // Fallback: epoch 0 (will sort to end)
     return 0;
@@ -119,17 +198,17 @@ function getRowTimestamp(row, dateFieldName = 'fecha') {
  * Get day key (YYYY-MM-DD) from row for grouping.
  */
 function getDayKey(row, dateFieldName = 'fecha') {
-    // Try created_at first (local day)
+    // Try event date field first
+    const dateStr = row[dateFieldName] || row.fecha || row.date;
+    if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+        return dateStr.slice(0, 10);
+    }
+    // Fallback: created_at (local day)
     if (row.created_at) {
         const d = new Date(row.created_at);
         if (!isNaN(d.getTime())) {
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
-    }
-    // Try date field
-    const dateStr = row[dateFieldName] || row.fecha || row.date;
-    if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-        return dateStr.slice(0, 10);
     }
     return 'unknown';
 }
@@ -1309,22 +1388,62 @@ async function handleRevertLoss(lossId) {
  * Show modal to choose transfer destination (income or losses)
  * @returns {Promise<'income'|'losses'|null>}
  */
-function showTransferChoiceModal() {
+function showTransferChoiceModal(options = {}) {
     return new Promise((resolve) => {
+        const title = options.title || '\u00bfA d\u00f3nde transferir?';
+        const choices = Array.isArray(options.choices) && options.choices.length
+            ? options.choices
+            : [
+                { value: 'income', label: 'Ingresos (Pagado)' },
+                { value: 'losses', label: 'P\u00e9rdidas (Cancelado)' }
+            ];
+
+        const styleMap = {
+            income: {
+                className: 'transfer-to-income',
+                color: '#4ade80',
+                border: 'rgba(74, 222, 128, 0.5)',
+                bg: 'rgba(74, 222, 128, 0.15)',
+                icon: 'fa-arrow-right'
+            },
+            losses: {
+                className: 'transfer-to-losses',
+                color: '#ef4444',
+                border: 'rgba(239, 68, 68, 0.5)',
+                bg: 'rgba(239, 68, 68, 0.15)',
+                icon: 'fa-times'
+            },
+            pendientes: {
+                className: 'transfer-to-pendientes',
+                color: '#C8A752',
+                border: 'rgba(200, 167, 82, 0.5)',
+                bg: 'rgba(200, 167, 82, 0.15)',
+                icon: 'fa-clock'
+            }
+        };
+
+        const buttonsHtml = choices.map((choice) => {
+            const key = choice.value;
+            const style = styleMap[key] || styleMap.pendientes;
+            const icon = choice.icon || style.icon;
+            return `
+                <button type="button" class="transfer-choice-btn ${style.className}" data-choice="${key}"
+                    style="background: ${style.bg}; border: 1px solid ${style.border}; color: ${style.color}; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                    <i class="fa ${icon}"></i> ${choice.label}
+                </button>
+            `;
+        }).join('');
+
         // Create modal overlay
         const overlay = document.createElement('div');
         overlay.className = 'transfer-modal-overlay';
         overlay.innerHTML = `
             <div class="transfer-modal">
-                <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1rem;">¿A dónde transferir?</h3>
+                <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1rem;">${title}</h3>
                 <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <button type="button" class="transfer-choice-btn transfer-to-income" style="background: rgba(74, 222, 128, 0.15); border: 1px solid rgba(74, 222, 128, 0.5); color: #4ade80; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
-                        <i class="fa fa-arrow-right"></i> Ingresos (Pagado)
-                    </button>
-                    <button type="button" class="transfer-choice-btn transfer-to-losses" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.5); color: #ef4444; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
-                        <i class="fa fa-times"></i> Pérdidas (Cancelado)
-                    </button>
-                    <button type="button" class="transfer-cancel-btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;">
+                    ${buttonsHtml}
+                    <button type="button" class="transfer-cancel-btn" data-choice="__cancel__"
+                        style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;">
                         Cancelar
                     </button>
                 </div>
@@ -1333,27 +1452,26 @@ function showTransferChoiceModal() {
 
         document.body.appendChild(overlay);
 
-        // Event handlers
-        overlay.querySelector('.transfer-to-income').addEventListener('click', () => {
-            document.body.removeChild(overlay);
-            resolve('income');
-        });
+        const cleanup = () => {
+            if (overlay.parentNode) {
+                document.body.removeChild(overlay);
+            }
+        };
 
-        overlay.querySelector('.transfer-to-losses').addEventListener('click', () => {
-            document.body.removeChild(overlay);
-            resolve('losses');
-        });
-
-        overlay.querySelector('.transfer-cancel-btn').addEventListener('click', () => {
-            document.body.removeChild(overlay);
-            resolve(null);
-        });
-
-        // Click outside to cancel
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                document.body.removeChild(overlay);
+                cleanup();
                 resolve(null);
+                return;
+            }
+            const btn = e.target.closest('[data-choice]');
+            if (!btn) return;
+            const choice = btn.dataset.choice;
+            cleanup();
+            if (!choice || choice === '__cancel__') {
+                resolve(null);
+            } else {
+                resolve(choice);
             }
         });
     });
@@ -1461,6 +1579,22 @@ function renderHistoryRow(tabName, item, config) {
             `
         : '';
 
+    const incomeTransferBtn = isIncome
+        ? `
+                <button type="button" class="btn-transfer-income" data-tab="${tabName}" data-id="${item.id}" title="Transferir ingreso" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-arrow-right-long"></i>
+                </button>
+            `
+        : '';
+
+    const lossTransferBtn = isLoss
+        ? `
+                <button type="button" class="btn-transfer-loss" data-tab="${tabName}" data-id="${item.id}" title="Transferir pérdida" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-arrow-right-long"></i>
+                </button>
+            `
+        : '';
+
     // V9.7: Revert button for income/losses from pending (only if not already reverted)
     let revertBtn = '';
     if (fromPending && !incomeOrLossReverted) {
@@ -1499,6 +1633,8 @@ function renderHistoryRow(tabName, item, config) {
                     <i class="fa fa-copy"></i>
                 </button>
                 ${transferBtn}
+                ${incomeTransferBtn}
+                ${lossTransferBtn}
                 ${revertBtn}
                 <button type="button" class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-trash"></i>
@@ -1559,6 +1695,12 @@ async function enrichFactureroItems(tabName, items) {
     return enriched;
 }
 
+function filterFactureroBySelectedCrop(items) {
+    if (!Array.isArray(items)) return [];
+    if (!selectedCropId) return items;
+    return items.filter((item) => normalizeCropId(item?.crop_id) === selectedCropId);
+}
+
 /**
  * V9.5.1: Refreshes facturero history for a specific tab with CRUD buttons
  * @param {string} tabName - 'gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'
@@ -1593,12 +1735,19 @@ async function fetchAgroLosses(supabase, userId) {
     }
 
     const base = () =>
-        supabase
-            .from('agro_losses')
-            .select('*, agro_crops(name)')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(20);
+        (() => {
+            let q = supabase
+                .from('agro_losses')
+                .select('*, agro_crops(name)')
+                .eq('user_id', userId)
+                .order('fecha', { ascending: false })
+                .order('created_at', { ascending: false })
+                .limit(20);
+            if (selectedCropId) {
+                q = q.eq('crop_id', selectedCropId);
+            }
+            return q;
+        })();
 
     // si ya sabemos que NO hay soft-delete, no hacemos intento 1
     if (AGRO_LOSSES_SUPPORTS_SOFT_DELETE === false) {
@@ -1662,10 +1811,16 @@ async function refreshFactureroHistory(tabName, options = {}) {
             const selectClause = buildFactureroSelectClause(selectFields);
 
             const buildQuery = (clause) => {
+                const orderField = config.dateField || 'fecha';
                 let q = supabase
                     .from(config.table)
                     .select(clause)
-                    .eq('user_id', user.id)
+                    .eq('user_id', user.id);
+                if (selectedCropId) {
+                    q = q.eq('crop_id', selectedCropId);
+                }
+                q = q
+                    .order(orderField, { ascending: false })
                     .order('created_at', { ascending: false })
                     .limit(20);
                 if (config.supportsDeletedAt) {
@@ -1716,12 +1871,13 @@ async function refreshFactureroHistory(tabName, options = {}) {
         }
 
         const enrichedItems = await enrichFactureroItems(tabName, items || []);
+        const filteredItems = filterFactureroBySelectedCrop(enrichedItems);
         if (tabName === 'pendientes') {
-            pendingCache = enrichedItems;
+            pendingCache = filteredItems;
         }
-        renderHistoryList(tabName, config, enrichedItems, showActions);
+        renderHistoryList(tabName, config, filteredItems, showActions);
         if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias' || tabName === 'gastos' || tabName === 'ingresos') {
-            syncFactureroNotifications(tabName, enrichedItems);
+            syncFactureroNotifications(tabName, filteredItems);
         }
 
     } catch (err) {
@@ -2184,7 +2340,7 @@ function notifyFacturero(message, type = 'info') {
     }
 }
 
-function buildPendingTransferModal(pending) {
+function buildTransferMetaModal(options = {}) {
     const existing = document.getElementById('pending-transfer-modal');
     if (existing) existing.remove();
 
@@ -2202,7 +2358,7 @@ function buildPendingTransferModal(pending) {
     const header = document.createElement('div');
     header.className = 'pending-transfer-header';
     const title = document.createElement('h3');
-    title.textContent = 'Transferir Pendiente';
+    title.textContent = options.title || 'Transferir';
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'pending-transfer-close';
@@ -2213,66 +2369,68 @@ function buildPendingTransferModal(pending) {
     const body = document.createElement('div');
     body.className = 'pending-transfer-body';
 
-    const detailRows = [
-        { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
-        { label: 'Cliente', value: pending.cliente || 'N/A' },
-        { label: 'Monto', value: `$${Number(pending.monto || 0).toFixed(2)}` },
-        { label: 'Fecha pendiente', value: pending.fecha || 'N/A' }
-    ];
-
+    const detailRows = Array.isArray(options.rows) ? options.rows : [];
     detailRows.forEach((row) => {
         const line = document.createElement('div');
         line.className = 'pending-transfer-row';
         const label = document.createElement('span');
-        label.textContent = row.label;
+        label.textContent = row.label || '';
         const value = document.createElement('strong');
-        value.textContent = row.value;
+        value.textContent = row.value || '-';
         line.append(label, value);
         body.appendChild(line);
     });
 
-    const categoryGroup = document.createElement('div');
-    categoryGroup.className = 'input-group';
-    const categoryLabel = document.createElement('label');
-    categoryLabel.className = 'input-label';
-    categoryLabel.textContent = 'Categoria ingreso';
-    categoryLabel.setAttribute('for', 'pending-transfer-category');
-    const categorySelect = document.createElement('select');
-    categorySelect.id = 'pending-transfer-category';
-    categorySelect.className = 'styled-input';
-    categorySelect.style.paddingLeft = '1rem';
-    const categories = [
-        { value: 'ventas', label: 'Ventas' },
-        { value: 'servicios', label: 'Servicios' },
-        { value: 'subsidios', label: 'Subsidios' },
-        { value: 'otros', label: 'Otros' }
-    ];
-    categories.forEach((opt) => {
-        const option = document.createElement('option');
-        option.value = opt.value;
-        option.textContent = opt.label;
-        categorySelect.appendChild(option);
-    });
-    categorySelect.value = 'ventas';
-    categoryGroup.append(categoryLabel, categorySelect);
-
-    const dateGroup = document.createElement('div');
-    dateGroup.className = 'input-group';
-    const dateLabel = document.createElement('label');
-    dateLabel.className = 'input-label';
-    dateLabel.textContent = 'Fecha de ingreso';
-    dateLabel.setAttribute('for', 'pending-transfer-date');
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.id = 'pending-transfer-date';
-    dateInput.className = 'styled-input';
-    dateInput.style.paddingLeft = '1rem';
+    const showCategory = options.showCategory !== false;
+    const showDate = options.showDate !== false;
     const today = getTodayLocalISO();
-    dateInput.value = today;
-    dateInput.max = today;
-    dateGroup.append(dateLabel, dateInput);
 
-    body.append(categoryGroup, dateGroup);
+    if (showCategory) {
+        const categoryGroup = document.createElement('div');
+        categoryGroup.className = 'input-group';
+        const categoryLabel = document.createElement('label');
+        categoryLabel.className = 'input-label';
+        categoryLabel.textContent = options.categoryLabel || 'Categoria ingreso';
+        categoryLabel.setAttribute('for', 'pending-transfer-category');
+        const categorySelect = document.createElement('select');
+        categorySelect.id = 'pending-transfer-category';
+        categorySelect.className = 'styled-input';
+        categorySelect.style.paddingLeft = '1rem';
+        const categories = [
+            { value: 'ventas', label: 'Ventas' },
+            { value: 'servicios', label: 'Servicios' },
+            { value: 'subsidios', label: 'Subsidios' },
+            { value: 'otros', label: 'Otros' }
+        ];
+        categories.forEach((opt) => {
+            const option = document.createElement('option');
+            option.value = opt.value;
+            option.textContent = opt.label;
+            categorySelect.appendChild(option);
+        });
+        categorySelect.value = options.defaultCategory || 'ventas';
+        categoryGroup.append(categoryLabel, categorySelect);
+        body.appendChild(categoryGroup);
+    }
+
+    if (showDate) {
+        const dateGroup = document.createElement('div');
+        dateGroup.className = 'input-group';
+        const dateLabel = document.createElement('label');
+        dateLabel.className = 'input-label';
+        dateLabel.textContent = options.dateLabel || 'Fecha';
+        dateLabel.setAttribute('for', 'pending-transfer-date');
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.id = 'pending-transfer-date';
+        dateInput.className = 'styled-input';
+        dateInput.style.paddingLeft = '1rem';
+        const defaultDate = options.defaultDate || today;
+        dateInput.value = defaultDate;
+        dateInput.max = today;
+        dateGroup.append(dateLabel, dateInput);
+        body.appendChild(dateGroup);
+    }
 
     const actions = document.createElement('div');
     actions.className = 'pending-transfer-actions';
@@ -2285,7 +2443,7 @@ function buildPendingTransferModal(pending) {
     confirmBtn.type = 'button';
     confirmBtn.className = 'btn btn-primary';
     confirmBtn.id = 'pending-transfer-confirm';
-    confirmBtn.textContent = 'Transferir';
+    confirmBtn.textContent = options.confirmText || 'Transferir';
     actions.append(cancelBtn, confirmBtn);
 
     card.append(header, body, actions);
@@ -2295,9 +2453,9 @@ function buildPendingTransferModal(pending) {
     return modal;
 }
 
-function openPendingTransferModal(pending) {
+function openTransferMetaModal(options = {}) {
     return new Promise((resolve) => {
-        const modal = buildPendingTransferModal(pending);
+        const modal = buildTransferMetaModal(options);
         if (!modal) {
             resolve({ confirmed: false });
             return;
@@ -2315,8 +2473,8 @@ function openPendingTransferModal(pending) {
         const confirmBtn = modal.querySelector('#pending-transfer-confirm');
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => {
-                const category = modal.querySelector('#pending-transfer-category')?.value || 'ventas';
-                const date = modal.querySelector('#pending-transfer-date')?.value || getTodayLocalISO();
+                const category = modal.querySelector('#pending-transfer-category')?.value || null;
+                const date = modal.querySelector('#pending-transfer-date')?.value || null;
                 modal.remove();
                 resolve({ confirmed: true, category, date });
             });
@@ -2349,12 +2507,37 @@ async function handlePendingTransfer(itemId) {
     }
 
     // V9.7: First show choice modal (income vs losses)
-    const destination = await showTransferChoiceModal();
+    const destination = await showTransferChoiceModal({
+        title: 'Transferir pendiente',
+        choices: [
+            { value: 'income', label: 'Ingresos (Pagado)' },
+            { value: 'losses', label: 'Pérdidas (Cancelado)' }
+        ]
+    });
     if (!destination) return; // User cancelled
 
-    // Then show existing modal for date/category
-    const decision = await openPendingTransferModal(pending);
+    // Then show meta modal for date/category
+    const decision = await openTransferMetaModal({
+        title: destination === 'income' ? 'Transferir a Ingresos' : 'Transferir a Pérdidas',
+        rows: [
+            { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
+            { label: 'Cliente', value: pending.cliente || 'N/A' },
+            { label: 'Monto', value: `$${Number(pending.monto || 0).toFixed(2)}` },
+            { label: 'Fecha pendiente', value: pending.fecha || 'N/A' }
+        ],
+        showCategory: destination === 'income',
+        showDate: true,
+        defaultCategory: 'ventas',
+        dateLabel: destination === 'income' ? 'Fecha de ingreso' : 'Fecha de pérdida',
+        defaultDate: getTodayLocalISO()
+    });
     if (!decision?.confirmed) return;
+    const decisionDate = decision.date || getTodayLocalISO();
+    const dateCheck = assertDateNotFuture(decisionDate, 'Fecha');
+    if (!dateCheck.valid) {
+        notifyFacturero(`⚠️ ${dateCheck.error}`, 'warning');
+        return;
+    }
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -2372,7 +2555,7 @@ async function handlePendingTransfer(itemId) {
                 user_id: user.id,
                 concepto: conceptFinal,
                 monto: Number(pending.monto || 0),
-                fecha: decision.date,
+                fecha: decisionDate,
                 categoria: decision.category || 'ventas',
                 soporte_url: pending.evidence_url || null,
                 crop_id: pending.crop_id || null,
@@ -2440,7 +2623,7 @@ async function handlePendingTransfer(itemId) {
                 user_id: user.id,
                 description: conceptFinal,
                 amount: Number(pending.monto || 0),
-                date: decision.date,
+                date: decisionDate,
                 category: decision.category || 'cancelacion',
                 crop_id: pending.crop_id || null,
                 unit_type: pending.unit_type || null,
@@ -2502,6 +2685,396 @@ async function handlePendingTransfer(itemId) {
     }
 }
 
+async function insertFactureroRow(table, payload, optionalFields = []) {
+    let { error } = await supabase.from(table).insert(payload);
+    if (!error) return { error: null };
+    const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
+    if (!hasMissingOptional) return { error };
+
+    const fallbackPayload = { ...payload };
+    optionalFields.forEach((field) => {
+        delete fallbackPayload[field];
+    });
+    const retry = await supabase.from(table).insert(fallbackPayload);
+    return { error: retry.error };
+}
+
+async function softDeleteFactureroRow(table, rowId, userId) {
+    if (!rowId) return { success: false, error: 'ID no disponible' };
+    const { error: softError } = await supabase
+        .from(table)
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', rowId)
+        .eq('user_id', userId);
+
+    if (!softError) return { success: true };
+    if (String(softError.message || '').toLowerCase().includes('deleted_at')) {
+        const { error: hardError } = await supabase
+            .from(table)
+            .delete()
+            .eq('id', rowId)
+            .eq('user_id', userId);
+        return hardError ? { success: false, error: hardError } : { success: true };
+    }
+    return { success: false, error: softError };
+}
+
+function isOriginMetaMissingColumns(error) {
+    return isMissingColumnError(error, 'origin_table')
+        || isMissingColumnError(error, 'origin_id')
+        || isMissingColumnError(error, 'transfer_state');
+}
+
+async function rollbackInsertedRow({ table, userId, insertedId, originMeta }) {
+    // 1) Prefer rollback by ID (soft-delete fallback included)
+    if (insertedId) {
+        const byId = await softDeleteFactureroRow(table, insertedId, userId);
+        if (byId.success) return { ok: true, method: 'by_id' };
+    }
+
+    // 2) Fallback rollback by origin meta if available
+    if (originMeta?.origin_table && originMeta?.origin_id) {
+        try {
+            let q = supabase
+                .from(table)
+                .delete()
+                .eq('user_id', userId)
+                .eq('origin_table', originMeta.origin_table)
+                .eq('origin_id', originMeta.origin_id);
+            if (originMeta.transfer_state) {
+                q = q.eq('transfer_state', originMeta.transfer_state);
+            }
+            const { error } = await q;
+            if (error) {
+                if (isOriginMetaMissingColumns(error)) {
+                    return { ok: false, method: 'origin_missing_cols', error };
+                }
+                return { ok: false, method: 'origin_delete_failed', error };
+            }
+            return { ok: true, method: 'by_origin' };
+        } catch (err) {
+            return { ok: false, method: 'origin_exception', error: err };
+        }
+    }
+
+    return { ok: false, method: 'no_rollback_path' };
+}
+
+function buildTransferId(prefix) {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+async function handleIncomeTransfer(itemId) {
+    let income = incomeCache.find((item) => String(item.id) === String(itemId));
+    if (!income) {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Sesión expirada.');
+            const { data, error } = await supabase
+                .from('agro_income')
+                .select('*')
+                .eq('id', itemId)
+                .eq('user_id', user.id)
+                .single();
+            if (error) throw error;
+            income = data;
+        } catch (err) {
+            notifyFacturero('No se encontró el ingreso seleccionado.', 'warning');
+            return;
+        }
+    }
+
+    const destination = await showTransferChoiceModal({
+        title: 'Transferir ingreso',
+        choices: [
+            { value: 'pendientes', label: 'Pendientes (Deuda)' },
+            { value: 'losses', label: 'Pérdidas (Cancelado)' }
+        ]
+    });
+    if (!destination) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Debes iniciar sesión para transferir.');
+
+        if (destination === 'pendientes') {
+            if (income.origin_table === 'agro_pending' && income.origin_id) {
+                await handleRevertIncome(income.id);
+                return;
+            }
+
+            const whoData = getWhoData('ingresos', income, income.concepto || '');
+            const pendingId = buildTransferId('pending');
+            const pendingPayload = {
+                id: pendingId,
+                user_id: user.id,
+                concepto: whoData.concept || income.concepto || 'Pendiente',
+                monto: Number(income.monto || 0),
+                fecha: income.fecha || getTodayLocalISO(),
+                cliente: whoData.who || null,
+                evidence_url: getFactureroEvidenceValue('ingresos', income) || null,
+                crop_id: income.crop_id || null,
+                unit_type: income.unit_type || null,
+                unit_qty: Number.isFinite(Number(income.unit_qty)) ? Number(income.unit_qty) : null,
+                quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null
+            };
+
+            const insertResult = await insertFactureroRow('agro_pending', pendingPayload, [
+                'unit_type',
+                'unit_qty',
+                'quantity_kg'
+            ]);
+            if (insertResult.error) throw insertResult.error;
+
+            const deleteResult = await softDeleteFactureroRow('agro_income', income.id, user.id);
+            if (!deleteResult.success) {
+                const rollback = await rollbackInsertedRow({
+                    table: 'agro_pending',
+                    userId: user.id,
+                    insertedId: pendingId
+                });
+                if (!rollback.ok) {
+                    throw new Error('Transferencia cancelada: no se pudo borrar el registro original ni revertir el destino (permisos/RLS).');
+                }
+                throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
+            }
+
+            notifyFacturero('✅ Ingreso transferido a Pendientes.', 'success');
+            await refreshFactureroHistory('pendientes');
+            document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        }
+
+        if (destination === 'losses') {
+            const whoData = getWhoData('ingresos', income, income.concepto || '');
+            const buyerLabel = whoData.who ? `Comprador: ${whoData.who}` : '';
+            const lossCause = buyerLabel ? `Transferido desde ingresos • ${buyerLabel}` : 'Transferido desde ingresos';
+            const lossId = buildTransferId('loss');
+            const lossPayload = {
+                id: lossId,
+                user_id: user.id,
+                concepto: whoData.concept || income.concepto || 'Pérdida',
+                monto: Number(income.monto || 0),
+                fecha: income.fecha || getTodayLocalISO(),
+                causa: lossCause,
+                evidence_url: getFactureroEvidenceValue('ingresos', income) || null,
+                crop_id: income.crop_id || null,
+                unit_type: income.unit_type || null,
+                unit_qty: Number.isFinite(Number(income.unit_qty)) ? Number(income.unit_qty) : null,
+                quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null,
+                origin_table: 'agro_income',
+                origin_id: income.id,
+                transfer_state: 'active'
+            };
+
+            const insertResult = await insertFactureroRow('agro_losses', lossPayload, [
+                'unit_type',
+                'unit_qty',
+                'quantity_kg',
+                'origin_table',
+                'origin_id',
+                'transfer_state'
+            ]);
+            if (insertResult.error) throw insertResult.error;
+
+            const deleteResult = await softDeleteFactureroRow('agro_income', income.id, user.id);
+            if (!deleteResult.success) {
+                const rollback = await rollbackInsertedRow({
+                    table: 'agro_losses',
+                    userId: user.id,
+                    insertedId: lossId,
+                    originMeta: {
+                        origin_table: 'agro_income',
+                        origin_id: income.id,
+                        transfer_state: 'active'
+                    }
+                });
+                if (!rollback.ok) {
+                    throw new Error('Transferencia cancelada: no se pudo borrar el registro original ni revertir el destino (permisos/RLS).');
+                }
+                throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
+            }
+
+            notifyFacturero('✅ Ingreso transferido a Pérdidas.', 'success');
+            await refreshFactureroHistory('perdidas');
+            document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        }
+
+        await updateStats();
+    } catch (err) {
+        console.error('[AGRO] Income transfer error:', err.message);
+        notifyFacturero(`Error al transferir: ${err.message}`, 'warning');
+    }
+}
+
+async function handleLossTransfer(itemId) {
+    let loss = null;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Sesión expirada.');
+        const { data, error } = await supabase
+            .from('agro_losses')
+            .select('*')
+            .eq('id', itemId)
+            .eq('user_id', user.id)
+            .single();
+        if (error) throw error;
+        loss = data;
+    } catch (err) {
+        notifyFacturero('No se encontró la pérdida seleccionada.', 'warning');
+        return;
+    }
+
+    const destination = await showTransferChoiceModal({
+        title: 'Transferir pérdida',
+        choices: [
+            { value: 'pendientes', label: 'Pendientes (Reactivar)' },
+            { value: 'income', label: 'Ingresos (Recuperado)' }
+        ]
+    });
+    if (!destination) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Debes iniciar sesión para transferir.');
+
+        if (destination === 'pendientes') {
+            if (loss.origin_table === 'agro_pending' && loss.origin_id) {
+                await handleRevertLoss(loss.id);
+                return;
+            }
+
+            const pendingId = buildTransferId('pending');
+            const baseConcept = loss.concepto || 'Pendiente';
+            const causeMeta = loss.causa ? `Causa: ${loss.causa}` : '';
+            const pendingConcept = causeMeta ? `${baseConcept} — ${causeMeta}` : baseConcept;
+            const pendingNotes = loss.causa ? `Causa: ${loss.causa}` : null;
+            const pendingPayload = {
+                id: pendingId,
+                user_id: user.id,
+                concepto: pendingConcept,
+                monto: Number(loss.monto || 0),
+                fecha: loss.fecha || getTodayLocalISO(),
+                cliente: null,
+                notas: pendingNotes,
+                evidence_url: getFactureroEvidenceValue('perdidas', loss) || null,
+                crop_id: loss.crop_id || null,
+                unit_type: loss.unit_type || null,
+                unit_qty: Number.isFinite(Number(loss.unit_qty)) ? Number(loss.unit_qty) : null,
+                quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null
+            };
+
+            const insertResult = await insertFactureroRow('agro_pending', pendingPayload, [
+                'unit_type',
+                'unit_qty',
+                'quantity_kg',
+                'notas'
+            ]);
+            if (insertResult.error) throw insertResult.error;
+
+            const deleteResult = await softDeleteFactureroRow('agro_losses', loss.id, user.id);
+            if (!deleteResult.success) {
+                const rollback = await rollbackInsertedRow({
+                    table: 'agro_pending',
+                    userId: user.id,
+                    insertedId: pendingId
+                });
+                if (!rollback.ok) {
+                    throw new Error('Transferencia cancelada: no se pudo borrar el registro original ni revertir el destino (permisos/RLS).');
+                }
+                throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
+            }
+
+            notifyFacturero('✅ Pérdida transferida a Pendientes.', 'success');
+            await refreshFactureroHistory('pendientes');
+            await refreshFactureroHistory('perdidas');
+        }
+
+        if (destination === 'income') {
+            const decision = await openTransferMetaModal({
+                title: 'Transferir a Ingresos',
+                rows: [
+                    { label: 'Concepto', value: loss.concepto || 'Sin concepto' },
+                    { label: 'Monto', value: `$${Number(loss.monto || 0).toFixed(2)}` },
+                    { label: 'Fecha pérdida', value: loss.fecha || 'N/A' }
+                ],
+                showCategory: true,
+                showDate: true,
+                defaultCategory: 'otros',
+                dateLabel: 'Fecha de ingreso',
+                defaultDate: loss.fecha || getTodayLocalISO()
+            });
+            if (!decision?.confirmed) return;
+            const decisionDate = decision.date || getTodayLocalISO();
+            const dateCheck = assertDateNotFuture(decisionDate, 'Fecha');
+            if (!dateCheck.valid) {
+                notifyFacturero(`⚠️ ${dateCheck.error}`, 'warning');
+                return;
+            }
+
+            const baseConcept = loss.concepto || 'Ingreso';
+            const causeMeta = loss.causa ? `Causa: ${loss.causa}` : '';
+            const conceptFinal = causeMeta ? `${baseConcept} — ${causeMeta}` : baseConcept;
+            const incomeId = buildTransferId('income');
+            const incomePayload = {
+                id: incomeId,
+                user_id: user.id,
+                concepto: conceptFinal,
+                monto: Number(loss.monto || 0),
+                fecha: decisionDate,
+                categoria: decision.category || 'otros',
+                soporte_url: getFactureroEvidenceValue('perdidas', loss) || null,
+                crop_id: loss.crop_id || null,
+                unit_type: loss.unit_type || null,
+                unit_qty: Number.isFinite(Number(loss.unit_qty)) ? Number(loss.unit_qty) : null,
+                quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null,
+                origin_table: 'agro_losses',
+                origin_id: loss.id,
+                transfer_state: 'active'
+            };
+
+            const insertResult = await insertFactureroRow('agro_income', incomePayload, [
+                'unit_type',
+                'unit_qty',
+                'quantity_kg',
+                'origin_table',
+                'origin_id',
+                'transfer_state'
+            ]);
+            if (insertResult.error) throw insertResult.error;
+
+            const deleteResult = await softDeleteFactureroRow('agro_losses', loss.id, user.id);
+            if (!deleteResult.success) {
+                const rollback = await rollbackInsertedRow({
+                    table: 'agro_income',
+                    userId: user.id,
+                    insertedId: incomeId,
+                    originMeta: {
+                        origin_table: 'agro_losses',
+                        origin_id: loss.id,
+                        transfer_state: 'active'
+                    }
+                });
+                if (!rollback.ok) {
+                    throw new Error('Transferencia cancelada: no se pudo borrar el registro original ni revertir el destino (permisos/RLS).');
+                }
+                throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
+            }
+
+            notifyFacturero('✅ Pérdida transferida a Ingresos.', 'success');
+            await refreshFactureroHistory('perdidas');
+            document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        }
+
+        await updateStats();
+    } catch (err) {
+        console.error('[AGRO] Loss transfer error:', err.message);
+        notifyFacturero(`Error al transferir: ${err.message}`, 'warning');
+    }
+}
+
 function setupCropActionListeners() {
     if (document.__agroCropActionsBound) return;
     document.__agroCropActionsBound = true;
@@ -2532,7 +3105,27 @@ function setupCropActionListeners() {
             } else {
                 console.warn('[AGRO] Crop edit missing id');
             }
+            return;
         }
+
+        const cropCard = e.target.closest('.crop-card');
+        if (cropCard) {
+            const cropId = cropCard.dataset.cropId;
+            if (cropId) {
+                setSelectedCropId(cropId);
+            }
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.classList.contains('crop-card')) return;
+        const cropId = target.dataset.cropId;
+        if (!cropId) return;
+        e.preventDefault();
+        setSelectedCropId(cropId);
     });
 
     console.info('[AGRO] Crop action listeners initialized');
@@ -2604,6 +3197,30 @@ function setupFactureroCrudListeners() {
             return;
         }
 
+        const transferIncomeBtn = e.target.closest('.btn-transfer-income');
+        if (transferIncomeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const itemId = transferIncomeBtn.dataset.id;
+            console.info('[AGRO] Income transfer click', { itemId });
+            if (itemId) {
+                await handleIncomeTransfer(itemId);
+            }
+            return;
+        }
+
+        const transferLossBtn = e.target.closest('.btn-transfer-loss');
+        if (transferLossBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const itemId = transferLossBtn.dataset.id;
+            console.info('[AGRO] Loss transfer click', { itemId });
+            if (itemId) {
+                await handleLossTransfer(itemId);
+            }
+            return;
+        }
+
         // V9.7: Revert income to pending
         const revertIncomeBtn = e.target.closest('.btn-revert-income');
         if (revertIncomeBtn) {
@@ -2643,11 +3260,28 @@ async function initFactureroHistories() {
     console.info('[AGRO] V9.5.1: All facturero histories initialized');
 }
 
+function refreshFactureroForSelectedCrop() {
+    refreshFactureroHistory('pendientes');
+    refreshFactureroHistory('perdidas');
+    refreshFactureroHistory('transferencias');
+    if (typeof loadIncomes === 'function') {
+        loadIncomes();
+    }
+}
+
+if (typeof document !== 'undefined') {
+    document.addEventListener('agro:crop:changed', () => {
+        refreshFactureroForSelectedCrop();
+    });
+}
+
 // Expose globally
 window.populateCropDropdowns = populateCropDropdowns;
 window.refreshFactureroHistory = refreshFactureroHistory;
 window.closeEditModal = closeEditModal;
 window.saveEditModal = saveEditModal;
+window.getSelectedCropId = () => selectedCropId;
+window.setSelectedCropId = setSelectedCropId;
 if (typeof window !== 'undefined') {
     window.YGAgroTemplates = Object.assign(window.YGAgroTemplates || {}, {
         storeCropTemplateMapping,
@@ -2819,9 +3453,15 @@ function createCropCardElement(crop, index) {
     const delay = 4 + index; // Para animaciones escalonadas
     const card = document.createElement('div');
     card.className = `card crop-card animate-in delay-${delay}`;
-    if (crop?.id !== undefined && crop?.id !== null) {
-        card.dataset.cropId = String(crop.id);
+    const cropId = crop?.id !== undefined && crop?.id !== null ? String(crop.id) : null;
+    if (cropId) {
+        card.dataset.cropId = cropId;
     }
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    const isSelected = !!(selectedCropId && cropId && cropId === selectedCropId);
+    card.classList.toggle('is-selected', isSelected);
+    card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
 
     const actions = document.createElement('div');
     actions.className = 'crop-card-actions';
@@ -3132,6 +3772,11 @@ export async function loadCrops() {
             logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             renderEmptyCropsState(cropsGrid);
             logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
+            const hadSelection = !!selectedCropId;
+            setSelectedCropId(null, { silent: true });
+            if (hadSelection) {
+                dispatchCropChanged();
+            }
             const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [] });
             dispatchCropsReady(snapshot);
             return;
@@ -3148,6 +3793,11 @@ export async function loadCrops() {
             fragment.appendChild(createCropCardElement(crop, i));
         });
         cropsGrid.appendChild(fragment);
+        const prevSelected = selectedCropId;
+        syncSelectedCropFromList(crops, { silent: true });
+        if (prevSelected !== selectedCropId) {
+            dispatchCropChanged();
+        }
         logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
         const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops });
         dispatchCropsReady(snapshot);
@@ -4897,6 +5547,20 @@ function renderIncomeItem(listEl, income, signedUrl) {
     duplicateIcon.className = 'fa-solid fa-copy';
     duplicateIcon.style.fontSize = '0.8rem';
     duplicateBtn.appendChild(duplicateIcon);
+
+    const transferBtn = document.createElement('button');
+    transferBtn.type = 'button';
+    transferBtn.className = 'btn-transfer-income';
+    transferBtn.dataset.tab = 'ingresos';
+    transferBtn.dataset.id = income.id ? String(income.id) : '';
+    transferBtn.title = 'Transferir ingreso';
+    transferBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200, 167, 82, 0.45); color: #C8A752; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+
+    const transferIcon = document.createElement('i');
+    transferIcon.className = 'fa-solid fa-arrow-right-long';
+    transferIcon.style.fontSize = '0.8rem';
+    transferBtn.appendChild(transferIcon);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'income-delete-btn';
@@ -4978,7 +5642,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
         }
     });
 
-    actions.append(amount, editBtn, duplicateBtn, deleteBtn);
+    actions.append(amount, editBtn, duplicateBtn, transferBtn, deleteBtn);
     item.append(left, actions);
     listEl.appendChild(item);
 }
@@ -4997,6 +5661,9 @@ async function loadIncomes() {
             .select('*')
             .eq('user_id', user.id)
             .order('fecha', { ascending: false });
+        if (selectedCropId) {
+            query = query.eq('crop_id', selectedCropId);
+        }
 
         if (incomeDeletedAtSupported !== false) {
             query = query.is('deleted_at', null);
@@ -5005,11 +5672,15 @@ async function loadIncomes() {
         let { data, error } = await query;
         if (error && error.message && error.message.toLowerCase().includes('deleted_at')) {
             incomeDeletedAtSupported = false;
-            const fallback = await supabase
+            let fallbackQuery = supabase
                 .from('agro_income')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('fecha', { ascending: false });
+            if (selectedCropId) {
+                fallbackQuery = fallbackQuery.eq('crop_id', selectedCropId);
+            }
+            const fallback = await fallbackQuery;
             data = fallback.data;
             error = fallback.error;
         } else if (!error) {

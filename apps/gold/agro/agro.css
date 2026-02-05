@@ -101,6 +101,31 @@
   border-color: #ef4444;
 }
 
+/* V9.7.2: Crop selection highlight + indicator */
+.crop-card {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, outline 0.2s ease;
+}
+
+.crop-card.is-selected {
+  outline: 1px solid rgba(200, 167, 82, 0.6);
+  box-shadow: 0 0 0 1px rgba(200, 167, 82, 0.25), 0 12px 25px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+.crop-card.is-selected::after {
+  content: '';
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gold-primary, #C8A752);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.7), 0 0 10px rgba(200, 167, 82, 0.6);
+}
+
 /* V9.5.1: Edit modal for facturero */
 #modal-edit-facturero {
   position: fixed;
@@ -2039,4 +2064,3 @@ body.modal-open {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
