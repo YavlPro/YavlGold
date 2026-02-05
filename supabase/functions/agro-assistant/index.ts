@@ -45,20 +45,43 @@ const SYSTEM_PROMPT = [
   'Formato de respuesta: Diagnostico/Estado -> Acciones/Confirmacion -> Seguimiento.',
   '',
   'REGLAS DE ENRUTAMIENTO (OBLIGATORIAS):',
-  '1) Si el usuario pregunta por deudas/cobros/cuentas por cobrar/pagos pendientes ("debe", "me debe", "pendiente", "cobrar", "¿quién me debe?", "por pagar"):',
+  '0) Prioridad alta (PENDIENTES): si el texto indica deuda/por cobrar/pendiente o negacion de pago HACIA MI:',
+  '   - Ej: "no me han pagado", "no me ha pagado", "aun no me pagan", "quien no me ha pagado", "falta por pagar", "faltan por pagar", "por cobrar", "cobros pendientes", "pagos pendientes", "me debe", "me deben", "deben pagar", "quien me debe", "me quedaron debiendo", "quedo pendiente".',
+  '   - Nota: si el usuario dice "tengo que pagar" / "debo pagar" (yo pagando), pide aclaracion (no asumas cuentas por cobrar).',
   '   - SIEMPRE llama get_pending_payments.',
   '   - USA EXCLUSIVAMENTE `totals.active` y `counts.active` para la respuesta principal.',
   '   - NO menciones el total histórico ni los transferidos a menos que el usuario lo pida explícitamente ("histórico", "incluye transferidos").',
   '   - Si `totals.active` es 0, di "No tienes pagos pendientes activos".',
   '   - Lista a los deudores (`by_client`) basándote en los datos activos.',
   '   - NO llames get_crop_status ni preguntes por cultivo si no es necesario.',
+  '   - Si menciona cultivo en la MISMA frase (ej: "¿quien no me ha pagado de batata?"): get_my_crops -> resolver crop_id -> get_pending_payments(crop_id=...).',
   '',
-  '2) Si el usuario primero pregunta por deudas y luego responde con un nombre de cultivo (ej: "batata"):',
+  '1) Pagos recibidos/cobrados (sin negacion):',
+  '   - Ej: "quien me pago", "quien ya me pago", "me pagaron", "ya me pagaron", "cobre", "cobraron", "recibi", "recibidos", "cobrados", "cobros recibidos", "me cancelaron", "me abonaron", "me depositaron", "pagos recibidos de hoy".',
+  '   - Si pide detalle/listado (lista, detalle, transacciones, movimientos, quien, de quien, ultimos pagos) => get_payments_received.',
+  '   - SIEMPRE llama get_payments_received.',
+  '   - Responde con totales y top clientes segun el rango pedido.',
+  '   - Si no hay pagos: di "No hay pagos en el rango".',
+  '   - Si menciona cultivo en la MISMA frase (ej: "¿quien me pago de batata?"): get_my_crops -> resolver crop_id -> get_payments_received(crop_id=...).',
+  '',
+  '2) Resumen financiero / balance (gastos e ingresos, neto):',
+  '   - Ej: "¿Cómo vamos hoy de balance, en neto?", "balance de hoy", "balance del mes", "resumen financiero", "neto", "gastos e ingresos", "ingresos de hoy", "ingresos del mes".',
+  '   - SIEMPRE llama get_finance_summary (aunque diga "ingresos").',
+  '   - Si niega detalle/pagos/listado y pide balance/neto/resumen => get_finance_summary.',
+  '   - Si niega balance/neto/resumen, NO forzar get_finance_summary.',
+  '',
+  '3) Si el usuario menciona AMBOS (recibidos y pendientes) en la misma frase:',
+  '   - Pregunta si quiere ambos reportes, o si pide ambos explicitamente, ejecuta primero get_payments_received y luego get_pending_payments.',
+  '',
+  '4) Si solo dice "cobros" o "pagos" sin contexto:',
+  '   - Pide aclaracion: "¿Cobros recibidos o por cobrar?" y espera respuesta.',
+  '',
+  '5) Si el usuario primero pregunta por deudas y luego responde con un nombre de cultivo (ej: "batata"):',
   '   - Interpreta eso como filtro por cultivo para get_pending_payments.',
   '   - Haz multi-turn: get_my_crops -> resuelve crop_id -> get_pending_payments(crop_id=...).',
   '   - Si hay ambigüedad (más de un match), muestra opciones del usuario, no inventes.',
   '',
-  '3) Prohibido decir "No veo ese cultivo" sin haber llamado get_my_crops primero y haber recibido 0 resultados.',
+  '6) Prohibido decir "No veo ese cultivo" sin haber llamado get_my_crops primero y haber recibido 0 resultados.',
   '',
   '**Cuando el usuario diga solo “mi <cultivo>” o pregunte por estado/progreso (ej: “¿Cómo va mi batata?”), debes: (1) llamar `get_my_crops` para resolver el `crop_id` si no está explícito; (2) luego llamar `get_crop_status` con `include_last_events=true` y `events_limit=5`. En la respuesta, muestra 2–5 eventos recientes (fecha + tipo + nota). No prometas monitoreo automático ni avisos futuros; ofrece registrar eventos o recordatorios manuales.**'
 ].join('\n');
@@ -110,6 +133,27 @@ const TOOLS_DEF = [
         include_transferred: { type: "BOOLEAN", description: "Incluir items ya transferidos a ingresos/perdidas (default false)" }
       },
       required: []
+    }
+  },
+  {
+    name: "get_payments_received",
+    description: "Consulta pagos recibidos (ingresos) en un rango, con opcion de filtrar solo los provenientes de pendientes.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        range: {
+          type: "OBJECT",
+          properties: {
+            preset: { type: "STRING", enum: ["today","7d","30d","month","all"], description: "Rango de fechas" }
+          },
+          required: ["preset"]
+        },
+        crop_id: { type: "STRING", description: "Filtrar por cultivo (opcional)" },
+        only_from_pending: { type: "BOOLEAN", description: "Solo ingresos cuyo origin_table='agro_pending' (default false)" },
+        include_details: { type: "BOOLEAN", description: "Incluir lista de pagos y last_payments (default true)" },
+        include_reverted: { type: "BOOLEAN", description: "Incluir ingresos revertidos (default false)" }
+      },
+      required: ["range"]
     }
   },
   {
@@ -171,6 +215,121 @@ function isOutOfScopeQuery(prompt: string) {
   const hasAgro = AGRO_KEYWORDS.some((kw) => normalized.includes(kw));
   const hasNonAgro = NON_AGRO_KEYWORDS.some((kw) => normalized.includes(kw));
   return hasNonAgro && !hasAgro;
+}
+
+// --- DATE & MONEY HELPERS ---
+
+const BUSINESS_TZ = 'America/Caracas';
+
+function getTodayYMD(timeZone: string) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+
+  const map: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  }
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
+function ymdToUtcDate(ymd: string) {
+  const [y, m, d] = ymd.split('-').map((v) => Number(v));
+  return new Date(Date.UTC(y, (m || 1) - 1, d || 1));
+}
+
+function formatYMDFromUTC(date: Date) {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function addDaysYMD(ymd: string, deltaDays: number) {
+  const date = ymdToUtcDate(ymd);
+  date.setUTCDate(date.getUTCDate() + deltaDays);
+  return formatYMDFromUTC(date);
+}
+
+function resolveRangePreset(preset: string | undefined) {
+  const today = getTodayYMD(BUSINESS_TZ);
+  const safePreset = preset || '30d';
+
+  if (safePreset === 'all') {
+    return { preset: 'all', from: null, to: null, timezone: BUSINESS_TZ };
+  }
+
+  if (safePreset === 'today') {
+    return { preset: 'today', from: today, to: today, timezone: BUSINESS_TZ };
+  }
+
+  if (safePreset === '7d') {
+    return { preset: '7d', from: addDaysYMD(today, -6), to: today, timezone: BUSINESS_TZ };
+  }
+
+  if (safePreset === '30d') {
+    return { preset: '30d', from: addDaysYMD(today, -29), to: today, timezone: BUSINESS_TZ };
+  }
+
+  if (safePreset === 'month') {
+    const [y, m] = today.split('-');
+    return { preset: 'month', from: `${y}-${m}-01`, to: today, timezone: BUSINESS_TZ };
+  }
+
+  // Fallback
+  return { preset: safePreset, from: today, to: today, timezone: BUSINESS_TZ };
+}
+
+function moneyToCents(value: any, scale = 2): bigint {
+  if (value === null || value === undefined) return 0n;
+  let str = String(value).trim();
+  if (!str) return 0n;
+
+  let negative = false;
+  if (str.startsWith('-')) {
+    negative = true;
+    str = str.slice(1);
+  }
+
+  str = str.replace(/,/g, '');
+  const [wholeRaw, fracRaw = ''] = str.split('.');
+  const whole = (wholeRaw || '0').replace(/[^0-9]/g, '') || '0';
+  let frac = (fracRaw || '').replace(/[^0-9]/g, '');
+  if (frac.length > scale) frac = frac.slice(0, scale);
+  frac = frac.padEnd(scale, '0');
+
+  const centsStr = `${whole}${frac}`.replace(/^0+(?=\d)/, '') || '0';
+  let cents = BigInt(centsStr);
+  if (negative) cents = -cents;
+  return cents;
+}
+
+function formatCents(cents: bigint, scale = 2) {
+  const negative = cents < 0n;
+  let value = negative ? -cents : cents;
+  let str = value.toString();
+
+  if (scale > 0) {
+    if (str.length <= scale) {
+      str = str.padStart(scale + 1, '0');
+    }
+    const whole = str.slice(0, -scale);
+    const frac = str.slice(-scale);
+    return `${negative ? '-' : ''}${whole}.${frac}`;
+  }
+
+  return `${negative ? '-' : ''}${str}`;
+}
+
+function sumMoney(values: any[], scale = 2) {
+  let total = 0n;
+  for (const val of values) {
+    total += moneyToCents(val, scale);
+  }
+  return formatCents(total, scale);
 }
 
 // --- DB HELPERS ---
@@ -238,38 +397,36 @@ async function handleGetFinanceSummary(args: any, authHeader: string) {
     let startStr, endStr;
 
     // 1. Resolve Dates
-    const now = new Date();
+    const today = getTodayYMD(BUSINESS_TZ);
 
     if (range?.preset) {
        if (range.preset === 'today') {
-         startStr = now.toISOString().split('T')[0];
-         endStr = startStr;
+         startStr = today;
+         endStr = today;
        } else if (range.preset === '7d') {
-         const past = new Date(now); past.setDate(now.getDate() - 7);
-         startStr = past.toISOString().split('T')[0];
-         endStr = now.toISOString().split('T')[0];
+         startStr = addDaysYMD(today, -6);
+         endStr = today;
        } else if (range.preset === '30d') {
-         const past = new Date(now); past.setDate(now.getDate() - 30);
-         startStr = past.toISOString().split('T')[0];
-         endStr = now.toISOString().split('T')[0];
+         startStr = addDaysYMD(today, -29);
+         endStr = today;
        } else if (range.preset === 'month') {
-         const first = new Date(now.getFullYear(), now.getMonth(), 1);
-         startStr = first.toISOString().split('T')[0];
-         endStr = now.toISOString().split('T')[0];
+         const [y, m] = today.split('-');
+         startStr = `${y}-${m}-01`;
+         endStr = today;
        }
     } else if (range?.from) {
        startStr = range.from;
-       endStr = range.to || now.toISOString().split('T')[0];
+       endStr = range.to || today;
     } else {
        // Default to month if missing
-       const first = new Date(now.getFullYear(), now.getMonth(), 1);
-       startStr = first.toISOString().split('T')[0];
-       endStr = now.toISOString().split('T')[0];
+       const [y, m] = today.split('-');
+       startStr = `${y}-${m}-01`;
+       endStr = today;
     }
 
     // 2. Parallel Fetch (Expenses & Income)
     const expUrl = `agro_expenses?select=amount,category&deleted_at=is.null&date=gte.${startStr}&date=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
-    const incUrl = `agro_income?select=amount&deleted_at=is.null&date=gte.${startStr}&date=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
+    const incUrl = `agro_income?select=monto,fecha&deleted_at=is.null&fecha=gte.${startStr}&fecha=lte.${endStr}` + (crop_id ? `&crop_id=eq.${crop_id}` : '');
 
     const [expRes, incRes] = await Promise.all([
        supabaseRequest('GET', expUrl, null, authHeader),
@@ -281,7 +438,7 @@ async function handleGetFinanceSummary(args: any, authHeader: string) {
     const income = Array.isArray(incRes) ? incRes : [];
 
     const totalExp = expenses.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
-    const totalInc = income.reduce((sum: number, item: any) => sum + (Number(item.amount) || 0), 0);
+    const totalInc = income.reduce((sum: number, item: any) => sum + (Number(item.monto) || 0), 0);
 
     // Group Expense Categories
     const catMap: Record<string, number> = {};
@@ -591,6 +748,173 @@ async function handleGetPendingPayments(args: any, authHeader: string) {
   }
 }
 
+async function handleGetPaymentsReceived(args: any, authHeader: string) {
+  const start = performance.now();
+
+  const rangePreset = args?.range?.preset || args?.range || '30d';
+  const cropId = args?.crop_id || null;
+  const onlyFromPending = args?.only_from_pending === true;
+  const includeDetails = args?.include_details !== false;
+  const includeReverted = args?.include_reverted === true;
+
+  const cropMasked = cropId ? String(cropId).slice(-6) : 'N/A';
+  console.log(`[Tool:Start] tool=get_payments_received preset=${rangePreset} crop=${cropMasked} include_details=${includeDetails} only_from_pending=${onlyFromPending}`);
+
+  try {
+    const range = resolveRangePreset(rangePreset);
+    const notes: string[] = [];
+
+    let query = [
+      'agro_income?select=id,concepto,monto,fecha,categoria,soporte_url,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,reverted_at,created_at',
+      'deleted_at=is.null'
+    ].join('&');
+
+    if (!includeReverted) {
+      query += '&reverted_at=is.null';
+    }
+
+    if (range.from && range.to) {
+      query += `&fecha=gte.${range.from}&fecha=lte.${range.to}`;
+    }
+
+    if (cropId) {
+      query += `&crop_id=eq.${cropId}`;
+    }
+
+    if (onlyFromPending) {
+      query += `&origin_table=eq.agro_pending`;
+    }
+
+    query += '&order=fecha.desc&order=created_at.desc&limit=200';
+
+    const incomeRows = await supabaseRequest('GET', query, null, authHeader);
+    const incomes = Array.isArray(incomeRows) ? incomeRows : [];
+
+    const pendingIds = incomes
+      .filter((row: any) => row.origin_table === 'agro_pending' && row.origin_id)
+      .map((row: any) => row.origin_id);
+
+    const pendingClientMap: Record<string, string> = {};
+
+    if (pendingIds.length > 0) {
+      try {
+        const uniqueIds = Array.from(new Set(pendingIds));
+        const pendingQuery = `agro_pending?select=id,cliente&id=in.(${uniqueIds.join(',')})`;
+        const pendingRows = await supabaseRequest('GET', pendingQuery, null, authHeader);
+        const pendings = Array.isArray(pendingRows) ? pendingRows : [];
+        for (const row of pendings) {
+          if (row?.id) {
+            pendingClientMap[row.id] = row.cliente || '(sin cliente)';
+          }
+        }
+      } catch (err: any) {
+        notes.push('No se pudo resolver cliente desde pendientes.');
+      }
+    }
+
+    const normalized = incomes.map((row: any) => {
+      const fromPending = row.origin_table === 'agro_pending';
+      const cliente = fromPending
+        ? (pendingClientMap[row.origin_id] || '(sin cliente)')
+        : null;
+
+      return {
+        ...row,
+        from_pending: fromPending,
+        cliente
+      };
+    });
+
+    const fromPendingRows = normalized.filter((row: any) => row.from_pending);
+    const directRows = normalized.filter((row: any) => !row.from_pending);
+
+    const totalAmount = sumMoney(normalized.map((row: any) => row.monto));
+    const fromPendingAmount = sumMoney(fromPendingRows.map((row: any) => row.monto));
+    const directAmount = sumMoney(directRows.map((row: any) => row.monto));
+
+    const byClientMap: Record<string, { client: string; count: number; amount: bigint; last_date: string }> = {};
+
+    for (const row of normalized) {
+      const clientLabel = row.from_pending ? (row.cliente || '(sin cliente)') : '(ingreso directo)';
+      if (!byClientMap[clientLabel]) {
+        byClientMap[clientLabel] = {
+          client: clientLabel,
+          count: 0,
+          amount: 0n,
+          last_date: row.fecha
+        };
+      }
+      byClientMap[clientLabel].count += 1;
+      byClientMap[clientLabel].amount += moneyToCents(row.monto);
+      if (row.fecha && row.fecha > byClientMap[clientLabel].last_date) {
+        byClientMap[clientLabel].last_date = row.fecha;
+      }
+    }
+
+    const byClient = Object.values(byClientMap)
+      .map((entry) => ({
+        client: entry.client,
+        count: entry.count,
+        amount: formatCents(entry.amount),
+        last_date: entry.last_date
+      }))
+      .sort((a, b) => {
+        const aVal = moneyToCents(a.amount);
+        const bVal = moneyToCents(b.amount);
+        if (aVal === bVal) return b.count - a.count;
+        return aVal > bVal ? -1 : 1;
+      })
+      .slice(0, 20);
+
+    const lastPayments = includeDetails
+      ? normalized.slice(0, 5).map((row: any) => ({
+        id: row.id,
+        fecha: row.fecha,
+        monto: formatCents(moneyToCents(row.monto)),
+        concepto: row.concepto || null,
+        categoria: row.categoria || null,
+        crop_id: row.crop_id || null,
+        unit_type: row.unit_type || null,
+        unit_qty: row.unit_qty ?? null,
+        quantity_kg: row.quantity_kg ?? null,
+        from_pending: row.from_pending,
+        cliente: row.from_pending ? (row.cliente || '(sin cliente)') : null,
+        origin_id: row.origin_id || null,
+        transfer_state: row.transfer_state || null
+      }))
+      : [];
+
+    if (normalized.length === 0) {
+      notes.push('No hay pagos en el rango.');
+    }
+
+    const duration = Math.round(performance.now() - start);
+    console.log(`[Tool:End] tool=get_payments_received ok=true count=${normalized.length} time=${duration}ms`);
+
+    return {
+      ok: true,
+      data: {
+        range,
+        totals: {
+          count: normalized.length,
+          total_amount: totalAmount,
+          from_pending_count: fromPendingRows.length,
+          from_pending_amount: fromPendingAmount,
+          direct_count: directRows.length,
+          direct_amount: directAmount
+        },
+        by_client: byClient,
+        last_payments: lastPayments,
+        notes
+      }
+    };
+  } catch (err: any) {
+    const duration = Math.round(performance.now() - start);
+    console.log(`[Tool:End] tool=get_payments_received ok=false time=${duration}ms`);
+    return { ok: false, error: 'GET_PAYMENTS_ERROR', message: err.message };
+  }
+}
+
 // --- MAIN SERVE ---
 
 Deno.serve(async (req) => {
@@ -727,6 +1051,8 @@ Deno.serve(async (req) => {
           toolResult = await handleGetMyCrops(toolArgs, authHeader);
         } else if (toolName === 'get_pending_payments') {
           toolResult = await handleGetPendingPayments(toolArgs, authHeader);
+        } else if (toolName === 'get_payments_received') {
+          toolResult = await handleGetPaymentsReceived(toolArgs, authHeader);
         }
 
         // --- SECURE LOGGING RESULT ---
