@@ -8,10 +8,10 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// 2. Diagnóstico de Arranque (Para ver en consola qué llave se está usando)
-console.log('[SupabaseConfig] 🔌 Inicializando cliente...');
-console.log('[SupabaseConfig] 🌐 URL:', supabaseUrl);
-console.log('[SupabaseConfig] 🔑 KEY Prefix:', supabaseKey ? supabaseKey.substring(0, 10) + '...' : 'UNDEFINED');
+// 2. Diagnóstico de Arranque (solo en desarrollo, sin exponer secretos/metadata)
+if (import.meta.env.DEV) {
+    console.log('[SupabaseConfig] 🔌 Inicializando cliente...');
+}
 
 // 3. Validación de Seguridad
 if (!supabaseUrl || !supabaseKey) {

@@ -556,7 +556,7 @@
         // Cargar perfil desde Supabase
         const { data: profile, error } = await window.AuthClient.supabase
           .from('profiles')
-          .select('*')
+          .select('user_id,display_name,username,bio,phone,country,experience_level,trading_style,level,xp_points,lessons_completed,created_at')
           .eq('user_id', user.id)
           .single();
 

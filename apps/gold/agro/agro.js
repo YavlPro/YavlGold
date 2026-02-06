@@ -25,6 +25,10 @@ const AGRO_CROPS_STATE_KEY = '__AGRO_CROPS_STATE';
 const AGRO_SELECTED_CROP_KEY = 'YG_AGRO_SELECTED_CROP_V1';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
+const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
+const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
+const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
+const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,evidence_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
 
 let selectedCropId = null;
 
@@ -1069,7 +1073,7 @@ async function transferPendingToIncome(pendingId) {
     // 1. Fetch pending item
     const { data: pending, error: fetchError } = await supabase
         .from('agro_pending')
-        .select('*')
+        .select(AGRO_PENDING_TRANSFER_COLUMNS)
         .eq('id', pendingId)
         .eq('user_id', userId)
         .single();
@@ -1145,7 +1149,7 @@ async function transferPendingToLoss(pendingId) {
     // 1. Fetch pending item
     const { data: pending, error: fetchError } = await supabase
         .from('agro_pending')
-        .select('*')
+        .select(AGRO_PENDING_TRANSFER_COLUMNS)
         .eq('id', pendingId)
         .eq('user_id', userId)
         .single();
@@ -1222,7 +1226,7 @@ async function revertIncomeToPending(incomeId, reason = '') {
     // 1. Fetch income with origin info
     const { data: income, error: fetchError } = await supabase
         .from('agro_income')
-        .select('*')
+        .select(AGRO_INCOME_TRANSFER_COLUMNS)
         .eq('id', incomeId)
         .eq('user_id', userId)
         .single();
@@ -1290,7 +1294,7 @@ async function revertLossToPending(lossId, reason = '') {
     // 1. Fetch loss with origin info
     const { data: loss, error: fetchError } = await supabase
         .from('agro_losses')
-        .select('*')
+        .select(AGRO_LOSS_TRANSFER_COLUMNS)
         .eq('id', lossId)
         .eq('user_id', userId)
         .single();
@@ -2775,7 +2779,7 @@ async function handleIncomeTransfer(itemId) {
             if (!user) throw new Error('Sesión expirada.');
             const { data, error } = await supabase
                 .from('agro_income')
-                .select('*')
+                .select(AGRO_INCOME_TRANSFER_COLUMNS)
                 .eq('id', itemId)
                 .eq('user_id', user.id)
                 .single();
@@ -2916,7 +2920,7 @@ async function handleLossTransfer(itemId) {
         if (!user) throw new Error('Sesión expirada.');
         const { data, error } = await supabase
             .from('agro_losses')
-            .select('*')
+            .select(AGRO_LOSS_TRANSFER_COLUMNS)
             .eq('id', itemId)
             .eq('user_id', user.id)
             .single();
@@ -5658,7 +5662,7 @@ async function loadIncomes() {
 
         let query = supabase
             .from('agro_income')
-            .select('*')
+            .select(AGRO_INCOME_LIST_COLUMNS)
             .eq('user_id', user.id)
             .order('fecha', { ascending: false });
         if (selectedCropId) {
@@ -5674,7 +5678,7 @@ async function loadIncomes() {
             incomeDeletedAtSupported = false;
             let fallbackQuery = supabase
                 .from('agro_income')
-                .select('*')
+                .select(AGRO_INCOME_LIST_COLUMNS)
                 .eq('user_id', user.id)
                 .order('fecha', { ascending: false });
             if (selectedCropId) {
@@ -9303,4 +9307,3 @@ window.deleteCrop = deleteCrop;
 
     console.log('[AgroRepo] 📦 Widget manager loaded (lazy init on accordion open)');
 })();
-

@@ -1,6 +1,14 @@
 // YAVLGOLD - AUTH UI v2.0.1
 import logo3D from '../../images/logo.webp';
 
+function getSafeAvatarUrl(user) {
+  if (user?.avatar) return user.avatar;
+  if (window.AuthClient?.buildLocalAvatar) {
+    return window.AuthClient.buildLocalAvatar(user?.name || user?.email || 'Usuario');
+  }
+  return '';
+}
+
 const AuthUI = {
   elements: {},
   isRecoveryMode: false,
@@ -146,6 +154,10 @@ const AuthUI = {
     });
 
     window.addEventListener('auth:profileUpdated', () => this.updateUI());
+    window.addEventListener('auth:callback:error', (event) => {
+      const message = event?.detail?.message || 'No se pudo completar el acceso.';
+      this.showError('login', message);
+    });
   },
 
   // Cambiar entre tabs
@@ -701,9 +713,7 @@ const AuthUI = {
         const avatar = this.elements.userMenu.querySelector('.user-avatar-sm');
         if (nameSpan) nameSpan.textContent = user.name || user.email?.split('@')[0] || 'Usuario';
         if (avatar) {
-          avatar.src =
-            user.avatar ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email || 'User')}&background=C8A752&color=0B0C0F&bold=true`;
+          avatar.src = getSafeAvatarUrl(user);
           avatar.alt = user.name || user.email || 'User';
         }
       }

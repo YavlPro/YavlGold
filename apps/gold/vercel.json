@@ -35,6 +35,10 @@
       "source": "/(.*)",
       "headers": [
         {
+          "key": "X-YG-Config",
+          "value": "apps-gold-vercel-active"
+        },
+        {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
         },
@@ -62,6 +66,33 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/agro",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), microphone=(), camera=()"
+        }
+      ]
+    },
+    {
+      "source": "/agro/",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), microphone=(), camera=()"
+        }
+      ]
+    },
+    {
+      "source": "/agro/:path*",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), microphone=(), camera=()"
         }
       ]
     }

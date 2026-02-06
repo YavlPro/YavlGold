@@ -41,8 +41,8 @@
       --dorado-oscuro: #9a7b3a;
 
       /* Gradientes para Badges SOLAMENTE */
-      --badge-azul: linear-gradient(135deg, #3498db, #2980b9);
-      --badge-morado: linear-gradient(135deg, #9b59b6, #8e44ad);
+      --badge-azul: linear-gradient(135deg, #c8a752, #9a7b3a);
+      --badge-morado: linear-gradient(135deg, #e8d5a3, #c8a752);
       --badge-dorado: linear-gradient(135deg, #C8A752, #9a7b3a);
 
       /* Tipografía */
@@ -676,13 +676,13 @@
     /* Badge Azul - En Desarrollo */
     .badge-desarrollo {
       background: var(--badge-azul);
-      box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
     }
 
     /* Badge Morado - Próximamente */
     .badge-proximo {
       background: var(--badge-morado);
-      box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
     }
 
     /* Badge Activo (Dorado sutil) */
@@ -1618,8 +1618,8 @@
       <div class="welcome-header">
         <div class="yg-bg-emoji yg-float" aria-hidden="true">🏡</div>
         <img id="header-avatar" class="header-avatar"
-          src="https://ui-avatars.com/api/?name=U&background=1a1a1a&color=D4AF37&size=128&bold=true" alt="Avatar"
-          onerror="this.src='https://ui-avatars.com/api/?name=U&background=1a1a1a&color=D4AF37&size=128&bold=true'">
+          src="/assets/images/logo.webp" alt="Avatar"
+          onerror="this.src='/assets/images/logo.webp'">
         <div class="welcome-text">
           <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
           <p>Tu ecosistema digital de aprendizaje, tecnología y comunidad.</p>
@@ -1734,7 +1734,7 @@
           <div class="yg-profile-avatarRow">
             <div class="yg-profile-avatarWrap">
               <img id="settings-avatar-img" class="yg-profile-avatar"
-                src="https://ui-avatars.com/api/?name=User&background=C8A752&color=0B0C0F&bold=true" alt="Avatar">
+                src="/assets/images/logo.webp" alt="Avatar">
               <label for="avatar-file-input" class="yg-profile-avatarOverlay">
                 <i class="fas fa-camera"></i>
               </label>
@@ -2192,7 +2192,7 @@
 
         const { data: modules, error } = await supabase
           .from('modules')
-          .select('*')
+          .select('id,title,name,slug,module_key,route,path,description,icon,status,badge,is_locked,min_level,thumbnail_url,features')
           .order('min_level', { ascending: true });
 
         if (error) {

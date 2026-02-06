@@ -23,6 +23,7 @@ export default defineConfig({
         faq: 'faq.html',
         soporte: 'soporte.html',
         dashboard: 'dashboard/index.html',
+        music: 'dashboard/music.html',
         creacion: 'creacion.html',
         perfil: 'dashboard/perfil.html',
         configuracion: 'dashboard/configuracion.html',

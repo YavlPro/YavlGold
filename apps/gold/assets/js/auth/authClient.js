@@ -5,12 +5,48 @@
 
 // 🚨 INYECCIÓN TEMPRANA: Detectar recovery ANTES de que Supabase despierte
 (function () {
-    const hash = window.location.hash || '';
-    if (hash.includes('type=recovery')) {
+    const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    const searchParams = new URLSearchParams(window.location.search || '');
+    const flowType = (hashParams.get('type') || searchParams.get('type') || '').toLowerCase();
+    if (flowType === 'recovery') {
         sessionStorage.setItem('yavl_recovery_pending', 'true');
         console.log('[AuthClient] ⚡ INSTANTE CERO: Recovery detectado. Bandera plantada.');
     }
 })();
+
+const LOGIN_REDIRECT_URL = '/index.html#login';
+
+function normalizeAvatarLabel(value) {
+    if (typeof value !== 'string') return 'Usuario';
+    const trimmed = value.trim();
+    return trimmed || 'Usuario';
+}
+
+function getInitials(label) {
+    const clean = normalizeAvatarLabel(label);
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (!words.length) return 'U';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i += 1) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function buildLocalAvatarDataUri(seed) {
+    const label = normalizeAvatarLabel(seed);
+    const initials = getInitials(label);
+    const palette = ['#C8A752', '#B8941F', '#9D8040', '#E4D08E'];
+    const bg = palette[hashString(label) % palette.length];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="${bg}"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Rajdhani, Arial, sans-serif" font-size="36" font-weight="700" fill="#0a0a0a">${initials}</text></svg>`;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
 
 const authClient = {
     supabase: null,
@@ -36,14 +72,14 @@ const authClient = {
 
         this._clientReady = true;
 
-        // 2. PROCESAR HASH (MAGIC LINK / RECOVERY) - INTERCAMBIO FORZADO
+        // 2. PROCESAR CALLBACK AUTH (PKCE/HASH LEGACY)
         let sessionFromHash = null;
         if (this._checkForUrlHash()) {
             sessionFromHash = await this._processUrlHash();
         }
 
         // 2.5 FRENO DE EMERGENCIA: Detectar flujo de recuperación de contraseña
-        const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
+        const isRecoveryFlow = this._isRecoveryFlowUrl();
         if (isRecoveryFlow && sessionFromHash) {
             console.log('[AuthClient] 🔑 Flujo de RECOVERY detectado. Dejando nota para AuthUI...');
             this._processSession(sessionFromHash);
@@ -73,38 +109,83 @@ const authClient = {
         console.log('[AuthClient] ✅ Sistema operativo');
     },
 
+    _isRecoveryFlowUrl() {
+        const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+        const searchParams = new URLSearchParams(window.location.search || '');
+        const flowType = (hashParams.get('type') || searchParams.get('type') || '').toLowerCase();
+        return flowType === 'recovery';
+    },
+
+    _notifyAuthCallbackError(message) {
+        const safeMessage = message || 'No se pudo procesar el enlace de acceso.';
+        console.error('[AuthClient] ❌ Auth callback error:', safeMessage);
+        window.dispatchEvent(new CustomEvent('auth:callback:error', { detail: { message: safeMessage } }));
+        if (window.AuthUI?.showError) {
+            window.AuthUI.showError('login', safeMessage);
+        }
+    },
+
+    _clearAuthCallbackUrl() {
+        try {
+            const cleanUrl = new URL(window.location.href);
+            ['code', 'type', 'error', 'error_code', 'error_description'].forEach((key) => cleanUrl.searchParams.delete(key));
+            const query = cleanUrl.searchParams.toString();
+            const nextUrl = `${cleanUrl.pathname}${query ? `?${query}` : ''}`;
+            window.history.replaceState({}, document.title, nextUrl);
+        } catch (_e) {
+            // Ignore URL cleanup failures.
+        }
+    },
+
     /**
-     * TÁCTICA VITAL: Forzar intercambio de token desde URL
+     * TÁCTICA VITAL: procesar callback PKCE y fallback hash legacy
      */
     async _processUrlHash() {
         if (!this.supabase || typeof window === 'undefined') return null;
-        console.log('[AuthClient] 🔗 Procesando Hash explícitamente...');
+        console.log('[AuthClient] 🔗 Procesando callback de autenticación...');
+
+        const searchParams = new URLSearchParams(window.location.search || '');
+        const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+        const code = searchParams.get('code');
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
 
         try {
-            const { data, error } = await this.supabase.auth.getSessionFromUrl({ storeSession: true });
-
-            if (error) {
-                console.error('[AuthClient] ❌ Error hash:', error.message);
-                return null;
+            if (code) {
+                const { data, error } = await this.supabase.auth.exchangeCodeForSession(code);
+                if (error) {
+                    this._notifyAuthCallbackError('No se pudo validar el enlace de acceso. Solicita uno nuevo.');
+                    return null;
+                }
+                this._clearAuthCallbackUrl();
+                return data?.session || null;
             }
 
-            if (data?.session) {
-                console.log('[AuthClient] ✅ Sesión capturada del Hash');
-                // Limpiar URL
-                // const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
-                // window.history.replaceState(null, document.title, cleanUrl);
-                return data.session;
+            if (accessToken && refreshToken) {
+                const { data, error } = await this.supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                });
+                if (error) {
+                    this._notifyAuthCallbackError('No se pudo restaurar la sesión desde el enlace.');
+                    return null;
+                }
+                this._clearAuthCallbackUrl();
+                return data?.session || null;
             }
+
             return null;
-        } catch (e) {
-            console.error('[AuthClient] ❌ Excepción Hash:', e);
+        } catch (_e) {
+            this._notifyAuthCallbackError('Error inesperado procesando el enlace de acceso.');
             return null;
         }
     },
 
     _checkForUrlHash() {
         if (typeof window === 'undefined') return false;
+        const searchParams = new URLSearchParams(window.location.search || '');
         const hash = window.location.hash || '';
+        if (searchParams.get('code')) return true;
         // Detectar: Token O MagicLink O Recovery
         return hash.includes('access_token=') || hash.includes('type=magiclink') || hash.includes('type=recovery');
     },
@@ -154,7 +235,7 @@ const authClient = {
     async _enforceAuth() {
         // 🔒 REFUERZO DE TITANIO: Doble candado - Si hay bandera O hash de recovery, PARALIZAR
         const hasRecoveryFlag = sessionStorage.getItem('yavl_recovery_pending') === 'true';
-        const hasRecoveryHash = (window.location.hash || '').includes('type=recovery');
+        const hasRecoveryHash = this._isRecoveryFlowUrl();
 
         if (hasRecoveryFlag || hasRecoveryHash) {
             console.log('[AuthGuard] 🛑 Recovery detectado (flag:', hasRecoveryFlag, 'hash:', hasRecoveryHash, '). PARALIZADO.');
@@ -177,14 +258,14 @@ const authClient = {
         if (this._isProtected(path) && !session) {
             this._isRedirecting = true;
             sessionStorage.setItem("__returnTo", window.location.href);
-            console.log('[AuthGuard] REDIRECT -> / (protected-no-session)');
-            window.location.replace("/");
+            console.log('[AuthGuard] REDIRECT ->', LOGIN_REDIRECT_URL, '(protected-no-session)');
+            window.location.replace(LOGIN_REDIRECT_URL);
             return;
         }
 
         // Usuario logueado en Home -> Dashboard (o returnTo)
         // PASO A: NO redirigir si estamos en flujo de recovery
-        const isRecoveryFlow = (window.location.hash || '').includes('type=recovery');
+        const isRecoveryFlow = this._isRecoveryFlowUrl();
         if (this._isAuthEntry(path) && session && !isRecoveryFlow) {
             this._isRedirecting = true;
             this._processSession(session);
@@ -216,7 +297,7 @@ const authClient = {
             if (event === "SIGNED_OUT" && this._isProtected(path)) {
                 if (!this._isRedirecting) {
                     this._isRedirecting = true;
-                    window.location.replace("/");
+                    window.location.replace(LOGIN_REDIRECT_URL);
                 }
                 return;
             }
@@ -224,7 +305,7 @@ const authClient = {
             // 🧱 MURO DE CONTENCIÓN TOTAL: Bloquear TODO en SIGNED_IN si hay recovery
             if (event === 'SIGNED_IN') {
                 const hasRecoveryFlag = sessionStorage.getItem('yavl_recovery_pending') === 'true';
-                const hasRecoveryHash = (window.location.hash || '').includes('type=recovery');
+                const hasRecoveryHash = this._isRecoveryFlowUrl();
 
                 if (hasRecoveryFlag || hasRecoveryHash) {
                     console.log('[AuthGuard] 🧱 MURO: SIGNED_IN bloqueado por recovery. Sesión activa, sin redirect.');
@@ -264,12 +345,16 @@ const authClient = {
 
     _processSession(session) {
         if (!session?.user) return;
+        const displayName = session.user.user_metadata?.name
+            || session.user.user_metadata?.full_name
+            || session.user.email?.split('@')[0]
+            || 'Usuario';
         this.currentSession = {
             user: {
                 id: session.user.id,
                 email: session.user.email,
-                name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-                avatar: session.user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user.email)}&background=C8A752&color=0B0C0F&bold=true`,
+                name: displayName,
+                avatar: session.user.user_metadata?.avatar_url || this.buildLocalAvatar(displayName),
                 role: 'user'
             },
             token: session.access_token,
@@ -440,6 +525,7 @@ const authClient = {
     isAuthenticated: function () { return !!this.currentSession; },
     getCurrentUser: function () { return this.currentSession?.user; },
     getSession: function () { return this.currentSession; },
+    buildLocalAvatar: function (seed) { return buildLocalAvatarDataUri(seed || 'Usuario'); },
 
     emitAuthChange(event) {
         window.dispatchEvent(new CustomEvent(`auth:${event.toLowerCase()}`, { detail: { user: this.currentSession?.user } }));
