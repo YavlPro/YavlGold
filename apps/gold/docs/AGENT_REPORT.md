@@ -4926,3 +4926,81 @@ Revertir este lote:
 1. Logueado en `/agro/`: clima debe pasar de `--` a temperatura real o fallback (sin quedar congelado).
 2. Verificar selector manual/GPS/IP sigue operativo.
 3. `pnpm build:gold` debe pasar.
+
+---
+
+## 🧭 SESIÓN: Vercel Routing Cleanup v1.1 (2026-02-06)
+
+### Reporte de Diagnóstico (Regla #1)
+1. **Mapa MPA + navegación actual**
+   - `apps/gold/vite.config.js` confirma entradas MPA reales: `academia/index.html`, `agro/index.html`, `crypto/index.html`, `dashboard/index.html`, `dashboard/perfil.html`, `dashboard/configuracion.html`, etc.
+   - `apps/gold/vercel.json` actual mezcla `rewrites` parciales y `routes` legacy.
+   - `apps/gold/index.html` mantiene navegación principal por módulos.
+   - `apps/gold/dashboard/index.html` mantiene entrada canónica de dashboard.
+
+2. **Instanciación de Supabase/auth**
+   - `apps/gold/assets/js/config/supabase-config.js` es el cliente central.
+   - `apps/gold/assets/js/auth/authClient.js`, `authUI.js` y `apps/gold/dashboard/auth-guard.js` continúan siendo la capa auth vigente (sin cambios en este lote).
+
+3. **Dashboard: consultas actuales y faltantes**
+   - Sigue consultando `profiles`, `modules`, `user_favorites`, `notifications` (anuncios/feedback vía managers).
+   - Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe pero no está integrado plenamente al dashboard principal.
+
+4. **Clima/Agro**
+   - `getCoordsSmart` en `apps/gold/assets/js/geolocation.js` mantiene prioridad Manual > GPS > IP.
+   - `apps/gold/agro/dashboard.js` usa `initWeather`/`displayWeather` y keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+
+5. **Crypto estado real**
+   - `apps/gold/crypto/` ya está integrado como página MPA de Vite.
+   - Deuda legacy de `crypto/package.json` persiste, fuera de alcance de este commit.
+
+### Hallazgo específico de routing
+1. `apps/gold/vercel.json` tiene `routes` legacy apuntando a `/apps/...`:
+   - `/apps/academia/index.html`, `/apps/crypto/index.html`, `/apps/tecnologia/index.html`
+2. El output real de build (`apps/gold/dist/*`) no contiene `/apps/...`; contiene rutas directas:
+   - `dist/academia/index.html`
+   - `dist/agro/index.html`
+   - `dist/crypto/index.html`
+   - `dist/dashboard/index.html`, `dist/dashboard/perfil.html`, `dist/dashboard/configuracion.html`
+
+### Plan quirúrgico (archivos exactos)
+1. `apps/gold/vercel.json`
+   - Eliminar bloque `routes` legacy.
+   - Consolidar en `rewrites` explícitos para `/agro`, `/crypto`, `/academia`, `/dashboard`, subpáginas de dashboard y `music`.
+   - Mantener `cleanUrls`, `trailingSlash`, `redirects` y `headers`.
+   - No interceptar `/assets/*` (manteniendo reglas específicas de assets).
+2. `apps/gold/docs/AGENT_REPORT.md`
+   - Registrar diagnóstico, plan, riesgos y rollback.
+
+### Riesgos
+1. Cambios en rewrites pueden generar 404 si se omite alguna variante con/sin slash.
+2. Con `cleanUrls: true` + `trailingSlash: true`, compatibilidad de `.html` requiere reglas explícitas.
+
+### Rollback
+1. Revertir:
+   - `apps/gold/vercel.json`
+   - `apps/gold/docs/AGENT_REPORT.md`
+
+### Implementación aplicada
+1. Se eliminó completamente `routes` del `vercel.json` (deuda legacy `/apps/...`).
+2. Se movió el enrutamiento MPA a `rewrites` explícitos para:
+   - `/academia` y `/academia/`
+   - `/agro` y `/agro/`
+   - `/crypto` y `/crypto/`
+   - `/dashboard` y `/dashboard/`
+   - `/dashboard/perfil`, `/dashboard/perfil/`, `/dashboard/perfil.html`
+   - `/dashboard/configuracion`, `/dashboard/configuracion/`, `/dashboard/configuracion.html`
+   - `/music` y `/music/`
+3. Se mantuvieron `cleanUrls`, `trailingSlash`, `redirects` de herramientas→tecnología y `headers` (incluido cache de `/assets/*`).
+
+### DoD
+- [x] Eliminadas reglas legacy `/apps/...`.
+- [x] Rutas canónicas de módulos mapeadas a output real de `dist`.
+- [x] Compatibilidad dashboard para variantes con/sin slash y `.html`.
+- [x] `/assets/*` no interceptado por rewrites catch-all.
+- [x] `pnpm build:gold` OK.
+- [ ] Smoke manual de rutas en entorno browser (pendiente).
+
+### Verificación técnica
+- `node -e "JSON.parse(...vercel.json...)"` ✅ válido.
+- `pnpm build:gold` ✅ PASS (2026-02-06).

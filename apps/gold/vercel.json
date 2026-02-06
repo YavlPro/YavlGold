@@ -6,6 +6,26 @@
     { "source": "/herramientas/:path*", "destination": "/tecnologia/:path*", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/academia", "destination": "/academia/index.html" },
+    { "source": "/academia/", "destination": "/academia/index.html" },
+    { "source": "/academia/:path*", "destination": "/academia/:path*" },
+    { "source": "/agro", "destination": "/agro/index.html" },
+    { "source": "/agro/", "destination": "/agro/index.html" },
+    { "source": "/agro/:path*", "destination": "/agro/:path*" },
+    { "source": "/crypto", "destination": "/crypto/index.html" },
+    { "source": "/crypto/", "destination": "/crypto/index.html" },
+    { "source": "/crypto/:path*", "destination": "/crypto/:path*" },
+    { "source": "/dashboard", "destination": "/dashboard/index.html" },
+    { "source": "/dashboard/", "destination": "/dashboard/index.html" },
+    { "source": "/dashboard/perfil", "destination": "/dashboard/perfil.html" },
+    { "source": "/dashboard/perfil/", "destination": "/dashboard/perfil.html" },
+    { "source": "/dashboard/perfil.html", "destination": "/dashboard/perfil.html" },
+    { "source": "/dashboard/configuracion", "destination": "/dashboard/configuracion.html" },
+    { "source": "/dashboard/configuracion/", "destination": "/dashboard/configuracion.html" },
+    { "source": "/dashboard/configuracion.html", "destination": "/dashboard/configuracion.html" },
+    { "source": "/dashboard/:path*", "destination": "/dashboard/:path*" },
+    { "source": "/music", "destination": "/dashboard/music.html" },
+    { "source": "/music/", "destination": "/dashboard/music.html" },
     { "source": "/tecnologia", "destination": "/tecnologia/index.html" },
     { "source": "/tecnologia/", "destination": "/tecnologia/index.html" },
     { "source": "/tecnologia/:path*", "destination": "/tecnologia/:path*" }
@@ -45,14 +65,5 @@
         }
       ]
     }
-  ],
-  "routes": [
-    { "src": "^/academia/?$", "dest": "/apps/academia/index.html" },
-    { "src": "^/academia/(.*)$", "dest": "/apps/academia/$1" },
-    { "src": "^/crypto/?$", "dest": "/apps/crypto/index.html" },
-    { "src": "^/crypto/(.*)$", "dest": "/apps/crypto/$1" },
-    { "src": "^/tecnologia/?$", "dest": "/apps/tecnologia/index.html" },
-    { "src": "^/tecnologia/(.*)$", "dest": "/apps/tecnologia/index.html" },
-    { "src": "^/music/?$", "dest": "/dashboard/music.html" }
   ]
 }
