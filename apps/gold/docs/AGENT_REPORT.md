@@ -5321,6 +5321,37 @@ Revertir:
 
 ---
 
+## ✅ SESIÓN: Vercel final post-probe (2026-02-06)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. El probe confirmó que `vercel.json` root sí gobierna en producción:
+   - `X-YG-Config` visible en `/music`.
+   - `/music` dejó de 404 (200 OK).
+2. Faltaba salir de modo probe para restaurar seguridad completa:
+   - `Permissions-Policy` global bloqueada.
+   - Excepción explícita de geolocalización solo para `/agro/*`.
+
+### Plan quirúrgico
+1. Ajustar solo `vercel.json` root:
+   - Mantener rewrite `/music` + `/music/` a `/dashboard/music.html`.
+   - Restaurar headers de seguridad.
+   - Regla global no-agro con `geolocation=()`.
+   - Regla específica agro con `geolocation=(self)`.
+2. Corregir redirect heredado:
+   - `/herramientas/:path*` -> `/tecnologia/:path*`.
+3. Ejecutar `pnpm build:gold`.
+
+### Riesgos y mitigación
+1. Riesgo de solape de headers entre regla global y agro.
+   - Mitigación: exclusión con lookahead en no-agro `/:path((?!agro(?:/|$)).+)` + reglas agro específicas.
+
+### Rollback
+1. Revertir:
+   - `vercel.json`
+   - `apps/gold/docs/AGENT_REPORT.md`
+
+---
+
 ## 🧪 SESIÓN: Probe Deploy mínimo de configuración root (2026-02-06)
 
 ### Paso 0 — Diagnóstico (Regla #1)
