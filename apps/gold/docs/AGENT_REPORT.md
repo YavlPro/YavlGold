@@ -83,28 +83,28 @@
 ## 🔄 SESIÓN: Facturero Rollback Mensaje + Contexto Seguro (2026-02-05)
 
 ### Diagnóstico (VERIFICADO en repo)
-1) **`notas` en Pendientes** puede no existir en DB y fallar inserts si no se trata como opcional.  
-2) **Rollback**: si falla el delete del origen, se intenta borrar el destino; si ese rollback falla por RLS, se requiere mensaje explícito.  
+1) **`notas` en Pendientes** puede no existir en DB y fallar inserts si no se trata como opcional.
+2) **Rollback**: si falla el delete del origen, se intenta borrar el destino; si ese rollback falla por RLS, se requiere mensaje explícito.
 3) **Contexto**: asegurar que la causa quede preservada incluso si `notas` no existe.
 
 ### Plan (quirúrgico)
-1) Tratar `notas` como campo opcional en Pendiente y **además** concatenar causa en `concepto` para fallback seguro.  
-2) Agregar mensaje explícito si el rollback falla (delete origen falló y rollback del destino también).  
+1) Tratar `notas` como campo opcional en Pendiente y **además** concatenar causa en `concepto` para fallback seguro.
+2) Agregar mensaje explícito si el rollback falla (delete origen falló y rollback del destino también).
 3) Ejecutar `pnpm build:gold`.
 
 ### DoD
-- [x] `notas` opcional + causa también en `concepto` (fallback seguro).  
-- [x] Mensaje explícito si rollback falla por RLS/permisos.  
-- [x] Rollback extra por origin-meta cuando aplique.  
+- [x] `notas` opcional + causa también en `concepto` (fallback seguro).
+- [x] Mensaje explícito si rollback falla por RLS/permisos.
+- [x] Rollback extra por origin-meta cuando aplique.
 - [x] Build PASS.
 
 ### Archivos modificados
-- `apps/gold/agro/agro.js` — fallback seguro para causa/notas y mensajes de rollback.  
+- `apps/gold/agro/agro.js` — fallback seguro para causa/notas y mensajes de rollback.
 
 ### Resultado
-✅ Causa preservada en `concepto` y `notas` (si existe).  
-✅ Mensaje explícito cuando el rollback no puede borrar el destino.  
-✅ Rollback por `origin_table/origin_id` si el delete por ID falla.  
+✅ Causa preservada en `concepto` y `notas` (si existe).
+✅ Mensaje explícito cuando el rollback no puede borrar el destino.
+✅ Rollback por `origin_table/origin_id` si el delete por ID falla.
 
 ### Build
 - `pnpm build:gold` ✅ PASS.
@@ -112,28 +112,28 @@
 ## 🔄 SESIÓN: Facturero Transfer Rollback + Preservar Campos (2026-02-05)
 
 ### Diagnóstico (VERIFICADO en repo)
-1) **Riesgo de duplicados invisibles**: en transferencias de Ingresos/Pérdidas se inserta destino y luego se intenta borrar el origen. Si el delete falla (RLS / `deleted_at` inexistente), queda un duplicado.  
-2) **Pérdida de contexto**: al transferir, se pierde `comprador` (Ingreso→Pérdida) y `causa` (Pérdida→Ingreso/Pendiente).  
+1) **Riesgo de duplicados invisibles**: en transferencias de Ingresos/Pérdidas se inserta destino y luego se intenta borrar el origen. Si el delete falla (RLS / `deleted_at` inexistente), queda un duplicado.
+2) **Pérdida de contexto**: al transferir, se pierde `comprador` (Ingreso→Pérdida) y `causa` (Pérdida→Ingreso/Pendiente).
 
 ### Plan (quirúrgico)
-1) **Rollback de transferencia**: si falla el delete, borrar el destino recién creado.  
-2) **Preservar campos**:  
-   - Ingreso→Pérdida: incluir comprador en `causa`.  
-   - Pérdida→Ingreso: incluir `causa` en `concepto`.  
-   - Pérdida→Pendiente: incluir `causa` en `notas`.  
+1) **Rollback de transferencia**: si falla el delete, borrar el destino recién creado.
+2) **Preservar campos**:
+   - Ingreso→Pérdida: incluir comprador en `causa`.
+   - Pérdida→Ingreso: incluir `causa` en `concepto`.
+   - Pérdida→Pendiente: incluir `causa` en `notas`.
 3) Ejecutar `pnpm build:gold`.
 
 ### DoD
-- [x] Transfer no deja duplicados si falla el delete.  
-- [x] Campos de contexto preservados en destino.  
+- [x] Transfer no deja duplicados si falla el delete.
+- [x] Campos de contexto preservados en destino.
 - [x] Build PASS.
 
 ### Archivos modificados
-- `apps/gold/agro/agro.js` — rollback de transferencias y preservación de campos (`comprador` / `causa`).  
+- `apps/gold/agro/agro.js` — rollback de transferencias y preservación de campos (`comprador` / `causa`).
 
 ### Resultado
-✅ Rollback si falla el delete (se elimina el destino recién creado).  
-✅ Preservación de contexto: comprador en `causa` (Ingreso→Pérdida) y `causa` en concepto/notas (Pérdida→Ingreso/Pendiente).  
+✅ Rollback si falla el delete (se elimina el destino recién creado).
+✅ Preservación de contexto: comprador en `causa` (Ingreso→Pérdida) y `causa` en concepto/notas (Pérdida→Ingreso/Pendiente).
 
 ### Build
 - `pnpm build:gold` ✅ PASS.
@@ -141,100 +141,100 @@
 ## 🔄 SESIÓN: Facturero Multi-Ciclo + Transferencias + Orden por Fecha + Copy Pendientes (2026-02-05)
 
 ### Diagnóstico (VERIFICADO en repo, sin inventar schema)
-1) **MPA + navegación**  
-   - `apps/gold/vite.config.js`: entradas MPA (main/cookies/faq/soporte/dashboard/creacion/perfil/configuracion/academia/agro/crypto/herramientas/tecnologia/social).  
-   - `apps/gold/vercel.json`: `cleanUrls`, `trailingSlash`, redirects `/herramientas -> /tecnologia`, routes para `/academia`, `/crypto`, `/tecnologia`, `/music`.  
-   - `apps/gold/index.html`: landing con navegación por anchors y cards que apuntan a `./agro/` y `./crypto/`.  
+1) **MPA + navegación**
+   - `apps/gold/vite.config.js`: entradas MPA (main/cookies/faq/soporte/dashboard/creacion/perfil/configuracion/academia/agro/crypto/herramientas/tecnologia/social).
+   - `apps/gold/vercel.json`: `cleanUrls`, `trailingSlash`, redirects `/herramientas -> /tecnologia`, routes para `/academia`, `/crypto`, `/tecnologia`, `/music`.
+   - `apps/gold/index.html`: landing con navegación por anchors y cards que apuntan a `./agro/` y `./crypto/`.
    - `apps/gold/dashboard/index.html`: panel post-login.
-2) **Supabase/auth**  
-   - Cliente: `apps/gold/assets/js/config/supabase-config.js` (`createClient` con `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`).  
+2) **Supabase/auth**
+   - Cliente: `apps/gold/assets/js/config/supabase-config.js` (`createClient` con `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`).
    - Auth: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`, guard en `apps/gold/dashboard/auth-guard.js`.
-3) **Dashboard: consultas y faltantes**  
-   - `dashboard/index.html`: consulta `profiles`, `modules`, `user_favorites`, `notifications`, `announcements`, `feedback`.  
+3) **Dashboard: consultas y faltantes**
+   - `dashboard/index.html`: consulta `profiles`, `modules`, `user_favorites`, `notifications`, `announcements`, `feedback`.
    - Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en código de Academia, pero no integrado al dashboard.
-4) **Clima/Agro: prioridad Manual > GPS > IP + storage keys**  
-   - `apps/gold/assets/js/geolocation.js`: `getCoordsSmart` y keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.  
+4) **Clima/Agro: prioridad Manual > GPS > IP + storage keys**
+   - `apps/gold/assets/js/geolocation.js`: `getCoordsSmart` y keys `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.
    - `apps/gold/agro/dashboard.js`: `initWeather`, `displayWeather`, caches `yavlgold_weather_*`, debug `?debug=1`.
-5) **Crypto: estado real**  
+5) **Crypto: estado real**
    - `apps/gold/crypto/` existe con HTML/JS/CSS y se integra como página MPA (no app aparte).
 
-**Facturero (problema actual)**  
-- **Mezcla de cultivos**: `refreshFactureroHistory()` en `apps/gold/agro/agro.js` y `loadIncomes()`/`loadExpenses()` no filtran por `crop_id`.  
-- **Orden por fecha**: `refreshFactureroHistory()` ordena por `created_at` y `getRowTimestamp()` prioriza `created_at` → rompe backdating.  
-- **Transferencias**: botón “Transferir” solo existe en Pendientes (`btn-transfer-pending` + `showTransferChoiceModal()`); Ingresos/Pérdidas solo tienen “Revertir” si vienen de pendiente.  
+**Facturero (problema actual)**
+- **Mezcla de cultivos**: `refreshFactureroHistory()` en `apps/gold/agro/agro.js` y `loadIncomes()`/`loadExpenses()` no filtran por `crop_id`.
+- **Orden por fecha**: `refreshFactureroHistory()` ordena por `created_at` y `getRowTimestamp()` prioriza `created_at` → rompe backdating.
+- **Transferencias**: botón “Transferir” solo existe en Pendientes (`btn-transfer-pending` + `showTransferChoiceModal()`); Ingresos/Pérdidas solo tienen “Revertir” si vienen de pendiente.
 - **Copy Pendientes**: placeholder de concepto es “Ej: Venta a crédito”, induce confusión.
 
-**Schema DB**  
-- No hay definición de tablas `agro_*` en `apps/gold/supabase/` (solo `agro_crops`/ROI).  
+**Schema DB**
+- No hay definición de tablas `agro_*` en `apps/gold/supabase/` (solo `agro_crops`/ROI).
 - Columnas usadas en código (`crop_id`, `fecha`, `date`, `transfer_state`, etc.) **NO VERIFICADAS en repo**, pero ya referenciadas por el código existente.
 
 ### Plan (quirúrgico)
-1) **Estado de cultivo seleccionado** en `apps/gold/agro/agro.js`:  
-   - Crear `selectedCropId` persistido en `localStorage` (key nueva, versión V1).  
-   - Aplicar clase activa en cards y **indicador ⭕**.  
+1) **Estado de cultivo seleccionado** en `apps/gold/agro/agro.js`:
+   - Crear `selectedCropId` persistido en `localStorage` (key nueva, versión V1).
+   - Aplicar clase activa en cards y **indicador ⭕**.
    - Cambiar cultivo -> emitir evento `agro:crop:changed` para refresco inmediato.
-2) **Filtro por cultivo (online/offline)**  
-   - `refreshFactureroHistory()` → filtrar por `crop_id` cuando hay `selectedCropId`.  
-   - `loadIncomes()` (agro.js) y `loadExpenses()` (agro/index.html) → filtrar por `crop_id`.  
-3) **Transferencias en Ingresos/Pérdidas**  
-   - Refactorizar `showTransferChoiceModal()` a helper reutilizable.  
-   - Agregar botón “Transferir” en rows de ingresos/pérdidas con opciones:  
-     - Ingresos → Pendientes / Pérdidas  
-     - Pérdidas → Pendientes / Ingresos  
-   - Reusar lógica base de Pendientes para UI/confirmaciones y mantener estilo.  
-4) **Orden por fecha del evento**  
-   - Ajustar `getRowTimestamp()` y `getDayKey()` para priorizar `fecha`/`date`.  
-   - Ajustar queries `order()` en `refreshFactureroHistory()` y `fetchAgroLosses()` a `fecha` (y desempate por `created_at`).  
-5) **Copy Pendientes**  
+2) **Filtro por cultivo (online/offline)**
+   - `refreshFactureroHistory()` → filtrar por `crop_id` cuando hay `selectedCropId`.
+   - `loadIncomes()` (agro.js) y `loadExpenses()` (agro/index.html) → filtrar por `crop_id`.
+3) **Transferencias en Ingresos/Pérdidas**
+   - Refactorizar `showTransferChoiceModal()` a helper reutilizable.
+   - Agregar botón “Transferir” en rows de ingresos/pérdidas con opciones:
+     - Ingresos → Pendientes / Pérdidas
+     - Pérdidas → Pendientes / Ingresos
+   - Reusar lógica base de Pendientes para UI/confirmaciones y mantener estilo.
+4) **Orden por fecha del evento**
+   - Ajustar `getRowTimestamp()` y `getDayKey()` para priorizar `fecha`/`date`.
+   - Ajustar queries `order()` en `refreshFactureroHistory()` y `fetchAgroLosses()` a `fecha` (y desempate por `created_at`).
+5) **Copy Pendientes**
    - Cambiar placeholder/label del concepto para reflejar deuda/pendiente.
 
 ### DoD Checklist
 **A) Historial/Facturero por cultivo**
-- [x] Filtrado por `crop_id` en todas las listas.  
-- [x] UI con indicador ⭕ en cultivo activo.  
+- [x] Filtrado por `crop_id` en todas las listas.
+- [x] UI con indicador ⭕ en cultivo activo.
 - [x] Cambio de cultivo refresca sin reload.
 
 **B) Transferencias Ingresos/Pérdidas**
-- [x] Botón “Transferir” en Ingresos (Pendientes/Pérdidas).  
-- [x] Botón “Transferir” en Pérdidas (Pendientes/Ingresos).  
+- [x] Botón “Transferir” en Ingresos (Pendientes/Pérdidas).
+- [x] Botón “Transferir” en Pérdidas (Pendientes/Ingresos).
 - [x] Reusa helper base + UI consistente.
 
 **C) Orden por fecha del evento**
-- [x] Orden y agrupación por `fecha`/`date` (no `created_at`).  
-- [x] Backdating permitido (≤ hoy).  
+- [x] Orden y agrupación por `fecha`/`date` (no `created_at`).
+- [x] Backdating permitido (≤ hoy).
 - [x] Bloqueo de fechas futuras intacto.
 
 **D) Copy Pendientes**
-- [x] Placeholder y label alineados a deuda/pendiente.  
+- [x] Placeholder y label alineados a deuda/pendiente.
 
 ### Riesgos y mitigación
-- **Columnas no verificadas en repo**: usar solo campos ya existentes en el código y fallback si faltan (sin inventar schema).  
-- **RLS / filtros**: mantener `eq('user_id', user.id)` y filtros existentes.  
+- **Columnas no verificadas en repo**: usar solo campos ya existentes en el código y fallback si faltan (sin inventar schema).
+- **RLS / filtros**: mantener `eq('user_id', user.id)` y filtros existentes.
 - **UX**: asegurar que el cambio de cultivo no dispare recargas de crops ni loops; usar evento dedicado.
 
 ### Pruebas manuales planificadas
-1) Crear 2 cultivos → seleccionar cada uno → facturero/historial solo de ese cultivo + indicador ⭕.  
-2) Ingresos: transferir a Pendientes y a Pérdidas (mismo cultivo).  
-3) Pérdidas: transferir a Pendientes y a Ingresos (mismo cultivo).  
-4) Backdating: crear registro con fecha de ayer → se ordena como ayer; bloquear fecha futura.  
+1) Crear 2 cultivos → seleccionar cada uno → facturero/historial solo de ese cultivo + indicador ⭕.
+2) Ingresos: transferir a Pendientes y a Pérdidas (mismo cultivo).
+3) Pérdidas: transferir a Pendientes y a Ingresos (mismo cultivo).
+4) Backdating: crear registro con fecha de ayer → se ordena como ayer; bloquear fecha futura.
 5) Placeholder Pendientes: texto coherente con deuda.
 
 ### Resultado esperado
-- Facturero y historial separados por cultivo (online/offline sin mezcla).  
-- Transferencias consistentes en Ingresos y Pérdidas con UI uniforme.  
-- Orden por fecha del evento y backdating correcto.  
+- Facturero y historial separados por cultivo (online/offline sin mezcla).
+- Transferencias consistentes en Ingresos y Pérdidas con UI uniforme.
+- Orden por fecha del evento y backdating correcto.
 - Copy de Pendientes sin confusión.
 
 ### Archivos modificados
-- `apps/gold/agro/agro.js` — selección de cultivo + filtrado + orden por fecha + transferencias ingresos/pérdidas.  
-- `apps/gold/agro/agro.css` — highlight e indicador ⭕ en cultivo activo.  
-- `apps/gold/agro/index.html` — placeholder pendiente + filtro por cultivo en gastos + listener `agro:crop:changed`.  
+- `apps/gold/agro/agro.js` — selección de cultivo + filtrado + orden por fecha + transferencias ingresos/pérdidas.
+- `apps/gold/agro/agro.css` — highlight e indicador ⭕ en cultivo activo.
+- `apps/gold/agro/index.html` — placeholder pendiente + filtro por cultivo en gastos + listener `agro:crop:changed`.
 
 ### Resultado
-✅ Facturero/historial filtrados por cultivo con indicador activo.  
-✅ Transferencias en Ingresos y Pérdidas disponibles y consistentes con UI base.  
-✅ Orden por fecha del evento (backdating correcto).  
-✅ Copy de Pendientes alineado a deuda.  
+✅ Facturero/historial filtrados por cultivo con indicador activo.
+✅ Transferencias en Ingresos y Pérdidas disponibles y consistentes con UI base.
+✅ Orden por fecha del evento (backdating correcto).
+✅ Copy de Pendientes alineado a deuda.
 
 ### Build
 - `pnpm build:gold` ✅ PASS.
@@ -4647,3 +4647,109 @@ Implementar "smart retry" en frontend:
   - `20260108101500_create_user_favorites.sql`
 - Sin cambios en contenido SQL; solo nombres.
 - Nota: si el estado local quedo inconsistente, usar `supabase db reset` antes de `pnpm sb:up`.
+
+---
+
+## 🌾 SESIÓN: AgroRepo Widget Integration (2026-02-05)
+
+### Diagnóstico (VERIFICADO en repo)
+
+**Fuente del widget**: `Obra final agrorepo.html` (2089 líneas)
+- **CSS**: ~1114 líneas incluyendo resets globales, :root variables, @keyframes `pulse`, scrollbar styles
+- **JS**: ~724 líneas en IIFE, usa LocalStorage con key `agrorepo_yavlgold_v1`
+- **HTML**: Full-page app con sidebar, editor, preview panel, modals, toasts
+
+**Riesgos de colisión CSS** (ALTO):
+1. Reset global: `*, *::before, *::after { ... }` (línea 114)
+2. `html { font-size: 16px; ... }` (línea 116)
+3. `body { ... }` con background, font-family (líneas 118-125)
+4. `body::before` / `body::after` con gradients/noise (líneas 130-156)
+5. `:root { ... }` variables (--bg-primary, --gold-primary, etc.) (líneas 62-111)
+6. `::selection` global (línea 1075)
+7. `@keyframes pulse` (línea 333) — colisiona con potenciales animaciones existentes
+8. `::-webkit-scrollbar` global (líneas 1070-1073)
+9. `.modal-overlay` usa `position: fixed` (líneas 890-902)
+10. `.toast-container` usa `position: fixed` (línea 1009)
+
+**Riesgos de colisión JS** (MEDIO):
+1. `APP_STORAGE_KEY = 'agrorepo_yavlgold_v1'` — único, sin conflicto
+2. `document.addEventListener('DOMContentLoaded', init)` — puede correr antes de lazy load si no lo aislamos
+3. `document.addEventListener('keydown', ...)` para Ctrl+S/N/Enter, Escape — globales
+4. `copyEntry` con `navigator.clipboard` — seguro
+5. File System Access API — seguro, solo en user gesture
+
+**Estructura Agro existente**:
+- `index.html`: 3338 líneas, usa `<details class="yg-accordion">` pattern
+- `agro.js`: 8709 líneas, modular con ES exports
+- `agro.css`: 2067 líneas, NO tiene estilos `.yg-accordion` (definidos en index.html)
+- Acordeones existentes: weekly, ROI, facturero (gastos/pendientes/perdidas/transferencias/ingresos)
+
+### Plan (Fases)
+
+**Fase 1 — HTML Structure**
+1. Agregar nuevo acordeón `<details id="yg-acc-agrorepo">` al sidebar o sección principal de Agro.
+2. Dentro: `<div id="agro-widget-root" style="position: relative;"></div>`
+3. Dentro: `<template id="agro-repo-template">` con todo el markup extraído del HTML fuente (sin `<script>`).
+4. Feature flag: si `AGRO_REPO_ENABLED = false`, el acordeón se oculta con `hidden` o `display:none`.
+
+**Fase 2 — CSS Scoping (Jaula)**
+1. Extraer TODO el CSS del widget.
+2. Prefijar TODAS las reglas bajo `#agro-widget-root`:
+   - `body { ... }` → `#agro-widget-root { ... }`
+   - `html { ... }` → eliminar o convertir a variables
+   - `*, *::before, *::after { ... }` → `#agro-widget-root *, #agro-widget-root *::before, ...`
+   - `:root { ... }` → `#agro-widget-root { --arw-bg-primary: ...; }` (prefijo único)
+   - `.modal-overlay` → `#agro-widget-root .arw-modal-overlay` con `position: absolute`
+   - `.toast-container` → `#agro-widget-root .arw-toast-container` con `position: absolute`
+3. Renombrar `@keyframes pulse` → `@keyframes arwPulse` y actualizar referencias.
+4. Clases a prefijar: `.app-container` → `.arw-app-container`, etc.
+
+**Fase 3 — JS Isolation (Manager)**
+1. Crear función `initAgroRepo(rootEl)` que:
+   - Clona el template y lo inyecta en `rootEl`
+   - Inicializa el state, DOM cache, y event bindings SOLO dentro del root
+   - Retorna objeto `{ destroy? }` para cleanup opcional
+2. Modificar todos los `document.getElementById` → `rootEl.querySelector('#...')`
+3. Modificar `document.addEventListener('keydown', ...)` → `rootEl.addEventListener('keydown', ...)`
+4. Guard `isLoaded` para evitar doble init.
+5. Lazy trigger: escuchar evento `toggle` del acordeón; en el primer `open`, clonar template e inicializar.
+
+**Fase 4 — Feature Flag + Integration**
+1. Constante `const AGRO_REPO_ENABLED = true;` en agro.js (o variable de configuración).
+2. Si OFF: `#yg-acc-agrorepo` tiene `hidden` attribute.
+3. Fallback: si `initAgroRepo` falla, mostrar mensaje de error dentro del panel sin romper Agro.
+
+### DoD Checklist
+- [ ] **CSS Scoping**: Ningún estilo del widget afecta fuera de `#agro-widget-root`.
+- [ ] **Lazy HTML (Template)**: El DOM del widget NO existe en load inicial; solo un `<template>`.
+- [ ] **JS Isolation**: El JS del widget NO corre hasta que el HTML se inyecta; no contamina `window`; no registra listeners globales.
+- [ ] **Load-once / keep-alive**: Se inicializa una sola vez; abrir/cerrar acordeón no re-inicializa.
+- [ ] **No fixed**: Prohibido `position: fixed` para contenedores principales del widget.
+- [ ] **Feature flag**: Poder desactivar el widget sin tocar data ni romper Agro.
+- [ ] **Build OK**: `pnpm build:gold` debe pasar.
+- [ ] **Manual smoke test**: checklist mínimo ejecutado.
+
+### Archivos a tocar
+- `apps/gold/agro/index.html` — acordeón + root + template
+- `apps/gold/agro/agro.css` — CSS del widget enjaulado (~500+ líneas)
+- `apps/gold/agro/agro.js` — initAgroRepo manager + lazy init hook
+- `apps/gold/docs/AGENT_REPORT.md` — este reporte
+
+### Pruebas manuales (Smoke Test)
+1. Cargar Agro: sin abrir el acordeón → cero errores consola; Agro funciona normal.
+2. Abrir acordeón AgroRepo: se inyecta el DOM del widget UNA vez; aparece correcto.
+3. Cerrar/abrir 20 veces: no duplica UI, no duplica listeners, no duplica requests.
+4. Verificar CSS: fuera del panel nada cambia (tipografías/colores/layout).
+5. Confirmar restricción: contenedor principal del widget NO usa `position: fixed`.
+
+### Build
+- `pnpm build:gold`
+
+### Riesgos y mitigación
+1. **CSS leaks**: Mitigado con prefijado estricto bajo `#agro-widget-root`.
+2. **JS memory leaks**: Mitigado con keep-alive (no destroy/re-init) y event delegation.
+3. **LocalStorage collision**: Key `agrorepo_yavlgold_v1` es única, sin riesgo.
+4. **Keyboard shortcuts globales**: Convertir a listeners locales en el root.
+
+### Estado
+🔄 PENDIENTE APROBACIÓN — Diagnóstico y Plan listos. Esperando gate del usuario.

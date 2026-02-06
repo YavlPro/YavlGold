@@ -1800,7 +1800,8 @@
                             <form id="pending-form" class="pending-form" onsubmit="event.preventDefault();">
                                 <div class="facturero-grid">
                                     <div class="input-group field-concept">
-                                        <label class="input-label" for="input-concepto-pendiente">Concepto (deuda) *</label>
+                                        <label class="input-label" for="input-concepto-pendiente">Concepto (deuda)
+                                            *</label>
                                         <input type="text" id="input-concepto-pendiente" class="styled-input"
                                             placeholder="Ej: Pendiente por venta a cr&eacute;dito" required
                                             style="padding-left: 1rem;">
@@ -2187,7 +2188,227 @@
     </section>
 
 
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         AGROREPO WIDGET ACCORDION (Lazy Load)
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <section class="agro-repo-section animate-in delay-6" id="agro-repo-section" style="margin-top: 2rem;">
+        <details class="yg-accordion" id="yg-acc-agrorepo">
+            <summary class="yg-accordion-summary" aria-controls="agrorepo-content" aria-expanded="false">
+                <span class="yg-accordion-icon">🌾</span>
+                <span class="yg-accordion-title">AgroRepo (Bitácora)</span>
+                <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+            </summary>
+            <div class="yg-accordion-content" id="agrorepo-content">
+                <div id="agro-widget-root">
+                    <!-- Widget DOM will be injected here on first open -->
+                    <div class="arw-loading">
+                        <span>Cargando AgroRepo...</span>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </section>
+
+    <!-- AgroRepo Template: NOT rendered until first accordion open -->
+    <template id="agro-repo-template">
+        <div class="arw-app-container">
+            <!-- SIDEBAR -->
+            <aside class="arw-sidebar" id="arw-sidebar">
+                <div class="arw-sidebar-header">
+                    <div class="arw-logo">
+                        <div class="arw-logo-icon">🌾</div>
+                        <div class="arw-logo-text">
+                            <h1>AgroRepo</h1>
+                            <span>YavlGold Ecosystem</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="arw-sidebar-actions">
+                    <button class="arw-btn-new-bitacora" id="arw-btnNewBitacora">
+                        <span>➕</span> Nueva Bitácora
+                    </button>
+                </div>
+                <div class="arw-bitacoras-section">
+                    <div class="arw-section-title">📁 Mis Bitácoras</div>
+                    <ul class="arw-bitacora-list" id="arw-bitacoraList"></ul>
+                </div>
+                <div class="arw-sidebar-footer">
+                    <div class="arw-storage-info">
+                        <span class="arw-storage-indicator"></span>
+                        <span id="arw-storageStatus">Datos locales · 100% Offline</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT -->
+            <main class="arw-main-content">
+                <header class="arw-main-header">
+                    <div class="arw-header-left">
+                        <button class="arw-menu-toggle" id="arw-menuToggle">☰</button>
+                        <nav class="arw-breadcrumb" id="arw-breadcrumb">
+                            <span class="arw-breadcrumb-item">AgroRepo</span>
+                        </nav>
+                    </div>
+                    <div class="arw-header-actions">
+                        <button class="arw-btn-icon" id="arw-btnOpenFile">
+                            <span>📂</span>
+                            <span class="arw-btn-text">Abrir</span>
+                        </button>
+                        <button class="arw-btn-icon" id="arw-btnExportAll">
+                            <span>📥</span>
+                            <span class="arw-btn-text">Backup JSON</span>
+                        </button>
+                        <button class="arw-btn-icon arw-btn-primary" id="arw-btnSaveFile">
+                            <span>💾</span>
+                            <span class="arw-btn-text">Guardar .md</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="arw-content-area" id="arw-contentArea">
+                    <!-- Welcome Screen -->
+                    <div class="arw-welcome-screen" id="arw-welcomeScreen">
+                        <div class="arw-welcome-icon">🌱</div>
+                        <h2 class="arw-welcome-title">Bienvenido a AgroRepo</h2>
+                        <p class="arw-welcome-subtitle">
+                            Tu bitácora digital de cultivos para La Grita, Táchira.
+                            Registra, organiza y exporta el historial de tus siembras.<br>
+                            <strong style="color: var(--gold-primary);">100% Offline. 100% Tuyo. Cero
+                                dependencias.</strong>
+                        </p>
+                        <div class="arw-features-grid">
+                            <div class="arw-feature-card">
+                                <div class="arw-feature-icon">📴</div>
+                                <div class="arw-feature-title">Sin Internet</div>
+                                <div class="arw-feature-text">Funciona 100% offline. Tus datos nunca salen de tu laptop.
+                                </div>
+                            </div>
+                            <div class="arw-feature-card">
+                                <div class="arw-feature-icon">⚡</div>
+                                <div class="arw-feature-title">Ultra Rápido</div>
+                                <div class="arw-feature-text">Respuesta en &lt;5ms. Sin esperas de carga ni servidores
+                                    lentos.</div>
+                            </div>
+                            <div class="arw-feature-card">
+                                <div class="arw-feature-icon">🔒</div>
+                                <div class="arw-feature-title">100% Privado</div>
+                                <div class="arw-feature-text">Tus datos de cultivo son tuyos. Nadie más tiene acceso.
+                                </div>
+                            </div>
+                        </div>
+                        <button class="arw-btn-new-bitacora" id="arw-btnWelcomeNew"
+                            style="width: auto; padding: 16px 36px;">
+                            <span>🌾</span> Crear Primera Bitácora
+                        </button>
+                    </div>
+
+                    <!-- Editor View (initially hidden) -->
+                    <div class="arw-editor-panel" id="arw-editorPanel" style="display: none;">
+                        <div class="arw-input-area">
+                            <div class="arw-input-group">
+                                <label class="arw-input-label">Tipo de Registro</label>
+                                <div class="arw-type-selector" id="arw-typeSelector">
+                                    <div class="arw-type-option arw-type-observation active" data-type="observation">
+                                        <span>👁️</span> Observación
+                                    </div>
+                                    <div class="arw-type-option arw-type-action" data-type="action">
+                                        <span>🔧</span> Acción
+                                    </div>
+                                    <div class="arw-type-option arw-type-issue" data-type="issue">
+                                        <span>⚠️</span> Problema
+                                    </div>
+                                    <div class="arw-type-option arw-type-harvest" data-type="harvest">
+                                        <span>🌾</span> Cosecha
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="arw-input-group">
+                                <label class="arw-input-label">Descripción del Reporte (Markdown soportado)</label>
+                                <textarea class="arw-input-field" id="arw-reportContent"
+                                    placeholder="Ej: Hoy apliqué **abono orgánico** en las parcelas:&#10;- Lote Norte: 2kg/ha&#10;- Lote Sur: 1.5kg/ha"></textarea>
+                            </div>
+                            <div class="arw-input-footer">
+                                <span class="arw-char-count"><span id="arw-charCount">0</span> caracteres</span>
+                                <button class="arw-btn-submit" id="arw-submitBtn" disabled>
+                                    <span>✓</span> Registrar Entrada
+                                </button>
+                            </div>
+                        </div>
+                        <div class="arw-commits-container" id="arw-commitsContainer">
+                            <div class="arw-commits-header">
+                                <div class="arw-commits-title">
+                                    <span>📜</span> Historial de Registros
+                                    <span class="arw-commits-count" id="arw-commitsCount">0</span>
+                                </div>
+                            </div>
+                            <div class="arw-commits-timeline" id="arw-commitsTimeline">
+                                <div class="arw-empty-state">
+                                    <div class="arw-empty-state-icon">📝</div>
+                                    <div class="arw-empty-state-title">Sin registros aún</div>
+                                    <div class="arw-empty-state-text">Agrega tu primer reporte para comenzar a
+                                        documentar esta bitácora.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Modal: Nueva Bitácora -->
+        <div class="arw-modal-overlay" id="arw-newBitacoraModal">
+            <div class="arw-modal">
+                <div class="arw-modal-header">
+                    <h3 class="arw-modal-title">🌱 Nueva Bitácora de Cultivo</h3>
+                    <button class="arw-modal-close" id="arw-modalClose">×</button>
+                </div>
+                <div class="arw-modal-body">
+                    <div class="arw-input-group">
+                        <label class="arw-input-label">Nombre de la Bitácora</label>
+                        <input type="text" class="arw-input-field" id="arw-bitacoraName"
+                            placeholder="Ej: Maíz Lote Norte 2026">
+                    </div>
+                    <label class="arw-input-label" style="margin-top: 18px;">Tipo de Cultivo</label>
+                    <div class="arw-crop-options" id="arw-cropOptions">
+                        <div class="arw-crop-option" data-crop="maiz">
+                            <div class="arw-crop-option-icon">🌽</div>
+                            <div class="arw-crop-option-name">Maíz</div>
+                        </div>
+                        <div class="arw-crop-option" data-crop="caraota">
+                            <div class="arw-crop-option-icon">🫘</div>
+                            <div class="arw-crop-option-name">Caraota</div>
+                        </div>
+                        <div class="arw-crop-option" data-crop="tomate">
+                            <div class="arw-crop-option-icon">🍅</div>
+                            <div class="arw-crop-option-name">Tomate</div>
+                        </div>
+                        <div class="arw-crop-option" data-crop="papa">
+                            <div class="arw-crop-option-icon">🥔</div>
+                            <div class="arw-crop-option-name">Papa</div>
+                        </div>
+                        <div class="arw-crop-option" data-crop="cafe">
+                            <div class="arw-crop-option-icon">☕</div>
+                            <div class="arw-crop-option-name">Café</div>
+                        </div>
+                        <div class="arw-crop-option" data-crop="otro">
+                            <div class="arw-crop-option-icon">🌿</div>
+                            <div class="arw-crop-option-name">Otro</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="arw-modal-footer">
+                    <button class="arw-btn-cancel" id="arw-btnModalCancel">Cancelar</button>
+                    <button class="arw-btn-submit" id="arw-btnCreateBitacora">Crear Bitácora</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div class="arw-toast-container" id="arw-toastContainer"></div>
+    </template>
+
     <script type="module">
+
         import { supabase } from '../assets/js/config/supabase-config.js';
 
         // --- GLOBAL HANDLERS (Supabase Crops) ---

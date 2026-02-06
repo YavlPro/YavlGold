@@ -8706,3 +8706,601 @@ window.deleteCrop = deleteCrop;
         initBuildMarker();
     });
 })();
+
+// ============================================================
+// AGROREPO WIDGET MANAGER (V1.0)
+// Lazy-loaded, isolated, feature-flagged
+// ============================================================
+(function () {
+    'use strict';
+
+    // FEATURE FLAG: Set to false to disable widget
+    const AGRO_REPO_ENABLED = true;
+
+    // Check feature flag (early exit)
+    if (!AGRO_REPO_ENABLED) {
+        console.log('[AgroRepo] ⛔ Widget disabled by feature flag');
+        const section = document.getElementById('agro-repo-section');
+        if (section) section.style.display = 'none';
+        return;
+    }
+
+    // Constants
+    const STORAGE_KEY = 'agrorepo_yavlgold_v1';
+    const CROP_ICONS = {
+        maiz: '🌽',
+        caraota: '🫘',
+        tomate: '🍅',
+        papa: '🥔',
+        cafe: '☕',
+        otro: '🌿'
+    };
+
+    // State
+    let widgetInitialized = false;
+    let bitacoras = [];
+    let currentBitacoraId = null;
+    let selectedCropType = null;
+    let selectedRecordType = 'observation';
+
+    // DOM References (populated after init)
+    let root = null;
+    let sidebar = null;
+    let bitacoraList = null;
+    let welcomeScreen = null;
+    let editorPanel = null;
+    let commitsTimeline = null;
+    let commitsCount = null;
+    let modal = null;
+    let toastContainer = null;
+
+    // ============================================================
+    // INITIALIZATION (Lazy on accordion open)
+    // ============================================================
+
+    function initWidget() {
+        // Guard 1: Internal IIFE state
+        if (widgetInitialized) return;
+
+        root = document.getElementById('agro-widget-root');
+        if (!root) {
+            console.error('[AgroRepo] Root element not found');
+            return;
+        }
+
+        // Guard 2: Data attribute on root (survives HMR / double-load)
+        if (root.dataset.loaded === '1') {
+            console.log('[AgroRepo] Already loaded (data-loaded). Skipping.');
+            return;
+        }
+
+        // Mark as loaded
+        widgetInitialized = true;
+        root.dataset.loaded = '1';
+
+        console.log('[AgroRepo] 🌾 Initializing widget...');
+
+        // Clone template content into root
+        const template = document.getElementById('agro-repo-template');
+        if (!template) {
+            console.error('[AgroRepo] Template not found');
+            return;
+        }
+
+        // Clear loading state and inject template
+        root.innerHTML = '';
+        root.appendChild(template.content.cloneNode(true));
+
+        // Cache DOM references
+        cacheReferences();
+
+        // Load data from localStorage
+        loadFromStorage();
+
+        // Bind event handlers
+        bindEvents();
+
+        // Render initial state
+        renderBitacoraList();
+        updateView();
+
+        console.log('[AgroRepo] ✅ Widget initialized with', bitacoras.length, 'bitácoras');
+    }
+
+    function cacheReferences() {
+        sidebar = root.querySelector('.arw-sidebar');
+        bitacoraList = root.querySelector('#arw-bitacoraList');
+        welcomeScreen = root.querySelector('#arw-welcomeScreen');
+        editorPanel = root.querySelector('#arw-editorPanel');
+        commitsTimeline = root.querySelector('#arw-commitsTimeline');
+        commitsCount = root.querySelector('#arw-commitsCount');
+        modal = root.querySelector('#arw-newBitacoraModal');
+        toastContainer = root.querySelector('#arw-toastContainer');
+    }
+
+    // ============================================================
+    // EVENT BINDING
+    // ============================================================
+
+    function bindEvents() {
+        // New Bitácora buttons
+        const btnNewBitacora = root.querySelector('#arw-btnNewBitacora');
+        const btnWelcomeNew = root.querySelector('#arw-btnWelcomeNew');
+        if (btnNewBitacora) btnNewBitacora.addEventListener('click', openModal);
+        if (btnWelcomeNew) btnWelcomeNew.addEventListener('click', openModal);
+
+        // Modal controls
+        const modalClose = root.querySelector('#arw-modalClose');
+        const btnModalCancel = root.querySelector('#arw-btnModalCancel');
+        const btnCreateBitacora = root.querySelector('#arw-btnCreateBitacora');
+        if (modalClose) modalClose.addEventListener('click', closeModal);
+        if (btnModalCancel) btnModalCancel.addEventListener('click', closeModal);
+        if (btnCreateBitacora) btnCreateBitacora.addEventListener('click', createBitacora);
+
+        // Crop type selection
+        const cropOptions = root.querySelectorAll('.arw-crop-option');
+        cropOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                cropOptions.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedCropType = opt.dataset.crop;
+            });
+        });
+
+        // Record type selection
+        const typeOptions = root.querySelectorAll('.arw-type-option');
+        typeOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                typeOptions.forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                selectedRecordType = opt.dataset.type;
+            });
+        });
+
+        // Report content input
+        const reportContent = root.querySelector('#arw-reportContent');
+        const charCount = root.querySelector('#arw-charCount');
+        const submitBtn = root.querySelector('#arw-submitBtn');
+        if (reportContent) {
+            reportContent.addEventListener('input', () => {
+                const len = reportContent.value.length;
+                if (charCount) charCount.textContent = len;
+                if (submitBtn) submitBtn.disabled = len === 0;
+            });
+        }
+
+        // Submit button
+        if (submitBtn) submitBtn.addEventListener('click', addRecord);
+
+        // Mobile menu toggle
+        const menuToggle = root.querySelector('#arw-menuToggle');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                sidebar?.classList.toggle('open');
+            });
+        }
+
+        // Header actions
+        const btnSaveFile = root.querySelector('#arw-btnSaveFile');
+        const btnExportAll = root.querySelector('#arw-btnExportAll');
+        const btnOpenFile = root.querySelector('#arw-btnOpenFile');
+        if (btnSaveFile) btnSaveFile.addEventListener('click', exportMarkdown);
+        if (btnExportAll) btnExportAll.addEventListener('click', exportJSON);
+        if (btnOpenFile) btnOpenFile.addEventListener('click', importJSON);
+    }
+
+    // ============================================================
+    // STORAGE
+    // ============================================================
+
+    function loadFromStorage() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                const parsed = JSON.parse(data);
+                bitacoras = parsed.bitacoras || [];
+                currentBitacoraId = parsed.currentBitacoraId || null;
+            }
+        } catch (err) {
+            console.error('[AgroRepo] Error loading from storage:', err);
+            bitacoras = [];
+        }
+    }
+
+    function saveToStorage() {
+        try {
+            const data = JSON.stringify({
+                bitacoras,
+                currentBitacoraId,
+                lastUpdated: new Date().toISOString()
+            });
+            localStorage.setItem(STORAGE_KEY, data);
+        } catch (err) {
+            console.error('[AgroRepo] Error saving to storage:', err);
+        }
+    }
+
+    // ============================================================
+    // BITÁCORA MANAGEMENT
+    // ============================================================
+
+    function createBitacora() {
+        const nameInput = root.querySelector('#arw-bitacoraName');
+        const name = nameInput?.value?.trim();
+
+        if (!name) {
+            showToast('⚠️ Por favor ingresa un nombre para la bitácora', 'warning');
+            nameInput?.focus();
+            return;
+        }
+
+        if (!selectedCropType) {
+            showToast('⚠️ Por favor selecciona un tipo de cultivo', 'warning');
+            return;
+        }
+
+        const newBitacora = {
+            id: generateId(),
+            name,
+            cropType: selectedCropType,
+            cropIcon: CROP_ICONS[selectedCropType] || '🌿',
+            records: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        bitacoras.push(newBitacora);
+        currentBitacoraId = newBitacora.id;
+        saveToStorage();
+
+        closeModal();
+        renderBitacoraList();
+        updateView();
+        showToast('✅ Bitácora creada exitosamente', 'success');
+    }
+
+    function selectBitacora(id) {
+        currentBitacoraId = id;
+        saveToStorage();
+        renderBitacoraList();
+        updateView();
+        sidebar?.classList.remove('open'); // Close mobile sidebar
+    }
+
+    function getCurrentBitacora() {
+        return bitacoras.find(b => b.id === currentBitacoraId);
+    }
+
+    // ============================================================
+    // RECORDS MANAGEMENT
+    // ============================================================
+
+    function addRecord() {
+        const content = root.querySelector('#arw-reportContent')?.value?.trim();
+        if (!content) {
+            showToast('⚠️ Por favor ingresa una descripción', 'warning');
+            return;
+        }
+
+        const bitacora = getCurrentBitacora();
+        if (!bitacora) {
+            showToast('⚠️ Selecciona una bitácora primero', 'warning');
+            return;
+        }
+
+        const record = {
+            id: generateId(),
+            type: selectedRecordType,
+            content,
+            createdAt: new Date().toISOString()
+        };
+
+        bitacora.records.unshift(record);
+        bitacora.updatedAt = new Date().toISOString();
+        saveToStorage();
+
+        // Clear input
+        const reportContent = root.querySelector('#arw-reportContent');
+        if (reportContent) {
+            reportContent.value = '';
+            root.querySelector('#arw-charCount').textContent = '0';
+            root.querySelector('#arw-submitBtn').disabled = true;
+        }
+
+        renderRecords();
+        showToast('✅ Registro agregado', 'success');
+    }
+
+    // ============================================================
+    // RENDERING
+    // ============================================================
+
+    function renderBitacoraList() {
+        if (!bitacoraList) return;
+
+        if (bitacoras.length === 0) {
+            bitacoraList.innerHTML = '<li class="arw-empty-list" style="padding: 12px 18px; color: var(--arw-text-muted); font-size: 12px;">Sin bitácoras aún</li>';
+            return;
+        }
+
+        bitacoraList.innerHTML = bitacoras.map(b => `
+            <li class="arw-bitacora-item ${b.id === currentBitacoraId ? 'active' : ''}"
+                data-id="${b.id}">
+                <span class="arw-bitacora-icon">${b.cropIcon}</span>
+                <div class="arw-bitacora-info">
+                    <div class="arw-bitacora-name">${escapeHtml(b.name)}</div>
+                    <div class="arw-bitacora-meta">${b.records.length} registros</div>
+                </div>
+            </li>
+        `).join('');
+
+        // Bind click handlers
+        bitacoraList.querySelectorAll('.arw-bitacora-item').forEach(item => {
+            item.addEventListener('click', () => {
+                selectBitacora(item.dataset.id);
+            });
+        });
+    }
+
+    function renderRecords() {
+        if (!commitsTimeline || !commitsCount) return;
+
+        const bitacora = getCurrentBitacora();
+        if (!bitacora || bitacora.records.length === 0) {
+            commitsTimeline.innerHTML = `
+                <div class="arw-empty-state">
+                    <div class="arw-empty-state-icon">📝</div>
+                    <div class="arw-empty-state-title">Sin registros aún</div>
+                    <div class="arw-empty-state-text">Agrega tu primer reporte para comenzar a documentar esta bitácora.</div>
+                </div>
+            `;
+            commitsCount.textContent = '0';
+            return;
+        }
+
+        commitsCount.textContent = bitacora.records.length;
+        commitsTimeline.innerHTML = bitacora.records.map(r => {
+            const typeIcons = {
+                observation: '👁️',
+                action: '🔧',
+                issue: '⚠️',
+                harvest: '🌾'
+            };
+            const typeLabels = {
+                observation: 'Observación',
+                action: 'Acción',
+                issue: 'Problema',
+                harvest: 'Cosecha'
+            };
+            return `
+                <div class="arw-commit-item" style="padding: 14px; background: var(--arw-bg-tertiary); border-radius: var(--arw-radius-md); margin-bottom: 10px; border: 1px solid var(--arw-border-subtle);">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="font-size: 16px;">${typeIcons[r.type] || '📝'}</span>
+                        <span style="font-size: 11px; text-transform: uppercase; color: var(--arw-gold-primary); font-weight: 600;">${typeLabels[r.type] || r.type}</span>
+                        <span style="font-size: 10px; color: var(--arw-text-muted); margin-left: auto;">${formatDate(r.createdAt)}</span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--arw-text-primary); line-height: 1.6;">${escapeHtml(r.content)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateView() {
+        const bitacora = getCurrentBitacora();
+
+        if (bitacora) {
+            if (welcomeScreen) welcomeScreen.style.display = 'none';
+            if (editorPanel) editorPanel.style.display = 'flex';
+            renderRecords();
+
+            const breadcrumb = root.querySelector('#arw-breadcrumb');
+            if (breadcrumb) {
+                breadcrumb.innerHTML = `
+                    <span class="arw-breadcrumb-item">AgroRepo</span>
+                    <span style="color: var(--arw-text-muted); margin: 0 8px;">›</span>
+                    <span class="arw-breadcrumb-item" style="color: var(--arw-gold-primary);">${escapeHtml(bitacora.name)}</span>
+                `;
+            }
+        } else {
+            if (welcomeScreen) welcomeScreen.style.display = 'flex';
+            if (editorPanel) editorPanel.style.display = 'none';
+
+            const breadcrumb = root.querySelector('#arw-breadcrumb');
+            if (breadcrumb) {
+                breadcrumb.innerHTML = '<span class="arw-breadcrumb-item">AgroRepo</span>';
+            }
+        }
+    }
+
+    // ============================================================
+    // MODAL
+    // ============================================================
+
+    function openModal() {
+        selectedCropType = null;
+        root.querySelectorAll('.arw-crop-option').forEach(o => o.classList.remove('selected'));
+        const nameInput = root.querySelector('#arw-bitacoraName');
+        if (nameInput) nameInput.value = '';
+        modal?.classList.add('active');
+        setTimeout(() => nameInput?.focus(), 100);
+    }
+
+    function closeModal() {
+        modal?.classList.remove('active');
+    }
+
+    // ============================================================
+    // EXPORT/IMPORT
+    // ============================================================
+
+    function exportMarkdown() {
+        const bitacora = getCurrentBitacora();
+        if (!bitacora) {
+            showToast('⚠️ Selecciona una bitácora primero', 'warning');
+            return;
+        }
+
+        let md = `# ${bitacora.name}\n\n`;
+        md += `📅 Creada: ${formatDate(bitacora.createdAt)}\n`;
+        md += `🌾 Cultivo: ${bitacora.cropIcon} ${bitacora.cropType}\n\n`;
+        md += `---\n\n## Registros (${bitacora.records.length})\n\n`;
+
+        const typeLabels = {
+            observation: '👁️ Observación',
+            action: '🔧 Acción',
+            issue: '⚠️ Problema',
+            harvest: '🌾 Cosecha'
+        };
+
+        bitacora.records.forEach(r => {
+            md += `### ${typeLabels[r.type] || r.type} - ${formatDate(r.createdAt)}\n\n`;
+            md += `${r.content}\n\n---\n\n`;
+        });
+
+        downloadFile(md, `${sanitizeFilename(bitacora.name)}.md`, 'text/markdown');
+        showToast('📄 Markdown exportado', 'success');
+    }
+
+    function exportJSON() {
+        const data = JSON.stringify({ bitacoras, exportedAt: new Date().toISOString() }, null, 2);
+        downloadFile(data, 'agrorepo_backup.json', 'application/json');
+        showToast('📥 Backup JSON descargado', 'success');
+    }
+
+    function importJSON() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+
+                if (Array.isArray(data.bitacoras)) {
+                    const count = data.bitacoras.length;
+                    if (confirm(`Se importarán ${count} bitácoras. ¿Continuar?`)) {
+                        // Merge instead of replace
+                        data.bitacoras.forEach(imported => {
+                            if (!bitacoras.find(b => b.id === imported.id)) {
+                                bitacoras.push(imported);
+                            }
+                        });
+                        saveToStorage();
+                        renderBitacoraList();
+                        showToast(`✅ ${count} bitácoras importadas`, 'success');
+                    }
+                } else {
+                    showToast('⚠️ Formato de archivo inválido', 'warning');
+                }
+            } catch (err) {
+                console.error('[AgroRepo] Import error:', err);
+                showToast('❌ Error al importar archivo', 'error');
+            }
+        };
+        input.click();
+    }
+
+    // ============================================================
+    // UTILITIES
+    // ============================================================
+
+    function generateId() {
+        return 'arw_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function formatDate(isoStr) {
+        try {
+            const d = new Date(isoStr);
+            return d.toLocaleDateString('es-VE', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return isoStr;
+        }
+    }
+
+    function sanitizeFilename(name) {
+        return name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
+    }
+
+    function downloadFile(content, filename, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function showToast(message, type = 'info') {
+        if (!toastContainer) return;
+
+        const toast = document.createElement('div');
+        toast.className = 'arw-toast';
+        toast.textContent = message;
+        toast.style.borderColor = type === 'success' ? 'var(--arw-success)' :
+            type === 'warning' ? 'var(--arw-warning)' :
+                type === 'error' ? 'var(--arw-danger)' : 'var(--arw-border-gold)';
+        toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // ============================================================
+    // ACCORDION TOGGLE LISTENER (Lazy Init)
+    // ============================================================
+
+    function setupAccordionListener() {
+        const accordion = document.getElementById('yg-acc-agrorepo');
+        if (!accordion) {
+            console.warn('[AgroRepo] Accordion not found in DOM');
+            return;
+        }
+
+        // Idempotent: Only bind listener once (survives HMR)
+        if (accordion.dataset.listenerBound === '1') {
+            console.log('[AgroRepo] Listener already bound. Skipping.');
+            return;
+        }
+        accordion.dataset.listenerBound = '1';
+
+        accordion.addEventListener('toggle', () => {
+            if (accordion.open && !widgetInitialized) {
+                initWidget();
+            }
+        });
+
+        // Also check if already open on page load
+        if (accordion.open) {
+            initWidget();
+        }
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupAccordionListener);
+    } else {
+        setupAccordionListener();
+    }
+
+    console.log('[AgroRepo] 📦 Widget manager loaded (lazy init on accordion open)');
+})();
+
