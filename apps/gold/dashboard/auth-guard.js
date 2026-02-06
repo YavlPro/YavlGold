@@ -1,91 +1,56 @@
-﻿/**
- * Guardián del Dashboard - Protección de Acceso V2.0
- * YavlGold V9.4 - Fix de compatibilidad módulo/global
- *
- * IMPORTANTE: Este script usa el cliente Supabase GLOBAL (window.supabase)
- * que ya está cargado en el HTML. No usamos imports ESM aquí para evitar
- * conflictos entre el script global y los módulos.
+/**
+ * Dashboard Auth Guard (ESM)
+ * Protege páginas de dashboard antes de inicializar lógica sensible.
  */
+import { supabase } from '../assets/js/config/supabase-config.js';
 
-(async () => {
-    console.log("🛡️ [AuthGuard] Verificando credenciales de acceso...");
+const LOGIN_URL = '/index.html#login';
+let hasPassed = false;
+let checkInFlight = null;
 
-    // Esperar a que Supabase esté disponible globalmente
-    const waitForSupabase = () => {
-        return new Promise((resolve, reject) => {
-            let attempts = 0;
-            const maxAttempts = 50; // 5 segundos máximo
-
-            const check = () => {
-                attempts++;
-
-                // Opción 1: Cliente global creado por supabase-js script
-                if (typeof window !== 'undefined' && window.supabase && window.supabase.auth) {
-                    console.log("🛡️ [AuthGuard] ✅ Supabase global detectado");
-                    resolve(window.supabase);
-                    return;
-                }
-
-                // Opción 2: AuthClient ya inicializado
-                if (typeof window !== 'undefined' && window.AuthClient && window.AuthClient.supabase) {
-                    console.log("🛡️ [AuthGuard] ✅ AuthClient detectado");
-                    resolve(window.AuthClient.supabase);
-                    return;
-                }
-
-                if (attempts >= maxAttempts) {
-                    reject(new Error("Timeout: Supabase no disponible"));
-                    return;
-                }
-
-                setTimeout(check, 100);
-            };
-
-            check();
-        });
-    };
-
+function redirectToLogin(reason = 'unknown') {
     try {
-        // NO fallback: obliga uso del cliente central desde supabase-config.js
-        if (!window.supabase) {
-            console.error("🛡️ [AuthGuard] ❌ Cliente Supabase no disponible. Verifica carga de supabase-config.js");
-        }
-
-        const client = await waitForSupabase();
-
-        if (!client) {
-            console.warn("⚠️ [AuthGuard] Cliente Supabase no disponible");
-            window.location.href = '/index.html#login';
-            return;
-        }
-
-        // Verificar sesión
-        const { data: { session }, error } = await client.auth.getSession();
-
-        if (error) {
-            console.error("❌ [AuthGuard] Error al verificar sesión:", error);
-            window.location.href = '/index.html#login';
-            return;
-        }
-
-        if (!session) {
-            console.warn("⛔ [AuthGuard] Intruso detectado. Redirigiendo al Login.");
-            window.location.href = '/index.html#login';
-            return;
-        }
-
-        // ✅ Sesión válida (email redactado por privacidad)
-        const emailMasked = session.user.email.replace(/(.{2}).+(@.+)/, '$1***$2');
-        console.log("✅ [AuthGuard] Acceso concedido Comandante:", emailMasked);
-
-        // Emitir evento para que otros scripts sepan que el usuario está autenticado
-        window.dispatchEvent(new CustomEvent('auth:guard:passed', {
-            detail: { user: session.user }
-        }));
-
-    } catch (error) {
-        console.error("❌ [AuthGuard] Error crítico:", error.message);
-        // En caso de error, redirigir al login
-        window.location.href = '/index.html#login';
+        sessionStorage.setItem('__returnTo', window.location.href);
+    } catch (_e) {
+        // Ignore storage errors.
     }
-})();
+    window.dispatchEvent(new CustomEvent('auth:guard:failed', { detail: { reason } }));
+    window.location.replace(LOGIN_URL);
+}
+
+async function check() {
+    if (checkInFlight) return checkInFlight;
+
+    checkInFlight = (async () => {
+        try {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error || !session) {
+                redirectToLogin(error ? 'session_error' : 'no_session');
+                return false;
+            }
+
+            hasPassed = true;
+            window.dispatchEvent(new CustomEvent('auth:guard:passed', {
+                detail: { user: session.user }
+            }));
+            return true;
+        } catch (_err) {
+            redirectToLogin('guard_exception');
+            return false;
+        } finally {
+            checkInFlight = null;
+        }
+    })();
+
+    return checkInFlight;
+}
+
+const DashboardAuthGuard = {
+    check,
+    hasPassed: () => hasPassed
+};
+
+window.YGDashboardAuthGuard = DashboardAuthGuard;
+check();
+
+export default DashboardAuthGuard;

@@ -563,6 +563,7 @@
 
   <!-- Scripts -->
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
+  <script type="module" src="./auth-guard.js"></script>
   <script type="module" src="../assets/js/auth.js"></script>
 
   <script>
@@ -572,7 +573,7 @@
     window.addEventListener('load', async () => {
       const user = await window.AuthClient.getCurrentUser();
       if (!user) {
-        window.location.href = '/dashboard/';
+        window.location.href = '/index.html#login';
       }
     });
 
@@ -657,8 +658,7 @@
       alert('🚧 Configuración de 2FA próximamente.\n\nEsta función estará disponible en una próxima actualización.');
     }
 
-    // Cargar preferencias guardadas
-    window.addEventListener('load', () => {
+    function restorePreferences() {
       const saved = localStorage.getItem('yavlgold_preferences');
       if (saved) {
         const preferences = JSON.parse(saved);
@@ -674,7 +674,16 @@
         document.getElementById('show-stats').checked = preferences.showStats || false;
         document.getElementById('anonymous-mode').checked = preferences.anonymousMode || false;
       }
-    });
+    }
+
+    // Cargar configuración solo cuando guard confirme sesión
+    function startConfigPage() {
+      restorePreferences();
+    }
+    window.addEventListener('auth:guard:passed', startConfigPage, { once: true });
+    if (window.YGDashboardAuthGuard?.hasPassed?.()) {
+      startConfigPage();
+    }
   </script>
 </body>
 

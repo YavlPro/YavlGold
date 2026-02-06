@@ -4812,3 +4812,57 @@ Implementar "smart retry" en frontend:
    - buscar y cerrar rápido → sin errores de render asíncrono.
 5. Build:
    - `pnpm build:gold` debe pasar.
+
+---
+
+## 🛡️ SESIÓN: Dashboard Auth Guard Wiring (2026-02-06)
+
+### Paso 0 — Diagnóstico
+1. `apps/gold/dashboard/auth-guard.js` existe pero no está cableado en:
+   - `apps/gold/dashboard/index.html`
+   - `apps/gold/dashboard/perfil.html`
+   - `apps/gold/dashboard/configuracion.html`
+2. `dashboard/index.html` ya valida sesión dentro de su script principal, pero no usa guard centralizado.
+3. `perfil.html` y `configuracion.html` dependen de `../assets/js/auth.js` (bridge legacy) y sus redirects de fallback apuntan a `/dashboard/`, no a login.
+4. `dashboard/auth-guard.js` actual depende de `window.supabase` / `window.AuthClient`, lo que no es robusto con módulos ESM si no se expone cliente global.
+
+### Plan quirúrgico
+1. Migrar `apps/gold/dashboard/auth-guard.js` a guard ESM directo usando cliente central (`../assets/js/config/supabase-config.js`).
+2. Cablear el guard en los 3 HTML de dashboard con `<script type="module" src="./auth-guard.js">` antes de la lógica sensible.
+3. Ajustar `perfil.html` y `configuracion.html` para:
+   - usar evento `auth:guard:passed` como trigger de inicialización,
+   - redirigir a `/index.html#login` cuando no hay sesión.
+4. Ejecutar `pnpm build:gold` y smoke técnico de rutas protegidas.
+
+### DoD
+- [x] Guard cableado en `index.html`, `perfil.html`, `configuracion.html`.
+- [x] No inicializar lógica sensible sin sesión.
+- [x] Build `pnpm build:gold` OK.
+- [ ] Smoke: incógnito `/dashboard/` redirige login; logueado carga normal (pendiente QA navegador).
+
+### Riesgos
+1. Doble chequeo de sesión (guard + scripts existentes) puede generar redirección redundante pero segura.
+2. Cambios en timing de inicialización en páginas perfil/configuración (evento guard) pueden revelar dependencias ocultas.
+
+### Rollback
+Revertir este lote:
+- `apps/gold/dashboard/auth-guard.js`
+- `apps/gold/dashboard/index.html`
+- `apps/gold/dashboard/perfil.html`
+- `apps/gold/dashboard/configuracion.html`
+
+### Resultado de implementación
+1. `dashboard/auth-guard.js` migrado a ESM con `supabase-config` central, evento `auth:guard:passed` y redirección a `/index.html#login` sin depender de globals legacy.
+2. Guard cableado en:
+   - `dashboard/index.html`
+   - `dashboard/perfil.html`
+   - `dashboard/configuracion.html`
+3. `perfil.html` y `configuracion.html` inicializan solo tras `auth:guard:passed` (con fallback `hasPassed()`).
+4. `dashboard/index.html` alinea redirect de sesión inválida a `/index.html#login` y arranque condicionado por guard.
+
+### Verificación técnica
+- `pnpm build:gold` ✅ PASS (2026-02-06).
+- Evidencia estática:
+  - script `./auth-guard.js` presente en los 3 HTML.
+  - hooks `auth:guard:passed` presentes en `perfil.html` y `configuracion.html`.
+  - `index.html` inicia dashboard mediante guard.

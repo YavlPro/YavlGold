@@ -2014,6 +2014,7 @@
 
   <!-- Scripts -->
   <!-- Auth Guard & Main Logic -->
+  <script type="module" src="./auth-guard.js"></script>
   <script type="module" src="../assets/js/main.js"></script>
   <!-- Profile Manager -->
   <script type="module" src="../assets/js/profile/profileManager.js"></script>
@@ -2038,7 +2039,7 @@
 
       if (error || !session) {
         console.warn('[Dashboard] Sin sesión. Redirigiendo...');
-        window.location.href = '/';
+        window.location.href = '/index.html#login';
         return;
       }
 
@@ -2577,7 +2578,13 @@
       setTimeout(setupFilterSystem, 100);
     });
 
-    initDashboard();
+    function startDashboardPage() {
+      initDashboard();
+    }
+    window.addEventListener('auth:guard:passed', startDashboardPage, { once: true });
+    if (window.YGDashboardAuthGuard?.hasPassed?.()) {
+      startDashboardPage();
+    }
   </script>
 
   <!-- ⚙️ Settings Modal Logic (Refactored v2.0 - Delegates to ProfileManager) -->

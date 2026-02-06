@@ -534,6 +534,7 @@
 
   <!-- Scripts -->
   <!-- Sistema de autenticación desde workspace package @yavl/auth -->
+  <script type="module" src="./auth-guard.js"></script>
   <script type="module" src="../assets/js/auth.js"></script>
 
   <script>
@@ -546,7 +547,7 @@
       try {
         const user = await window.AuthClient.getCurrentUser();
         if (!user) {
-          window.location.href = '/dashboard/';
+          window.location.href = '/index.html#login';
           return;
         }
 
@@ -684,10 +685,14 @@
       }
     }
 
-    // Cargar perfil al iniciar
-    window.addEventListener('load', () => {
+    // Cargar perfil solo cuando guard confirme sesión
+    function startPerfilPage() {
       loadUserProfile();
-    });
+    }
+    window.addEventListener('auth:guard:passed', startPerfilPage, { once: true });
+    if (window.YGDashboardAuthGuard?.hasPassed?.()) {
+      startPerfilPage();
+    }
   </script>
 </body>
 
