@@ -5004,3 +5004,79 @@ Revertir este lote:
 ### Verificación técnica
 - `node -e "JSON.parse(...vercel.json...)"` ✅ válido.
 - `pnpm build:gold` ✅ PASS (2026-02-06).
+
+---
+
+## 🪙 SESIÓN: Crypto Legacy Cleanup (2026-02-06)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. **Mapa MPA + navegación actual**
+   - `apps/gold/vite.config.js` publica MPA real con entradas `crypto/index.html`, `agro/index.html`, `academia/index.html`, `dashboard/index.html`, etc.
+   - `apps/gold/vercel.json` ya enruta por `rewrites` hacia rutas reales de `dist/*`.
+   - `apps/gold/index.html` enlaza módulos principales (incluido acceso a Crypto).
+   - `apps/gold/dashboard/index.html` renderiza módulos desde la tabla `modules`.
+
+2. **Instanciación de Supabase/auth**
+   - Cliente central: `apps/gold/assets/js/config/supabase-config.js`.
+   - Auth: `apps/gold/assets/js/auth/authClient.js`, `authUI.js`.
+   - Guard dashboard: `apps/gold/dashboard/auth-guard.js`.
+
+3. **Dashboard: datos actuales y faltantes**
+   - Dashboard consume `profiles`, `modules`, `user_favorites`, `notifications`; managers cubren `announcements` y `feedback`.
+   - Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en `academia.js` pero no está integrado totalmente en dashboard principal.
+
+4. **Clima/Agro**
+   - `apps/gold/assets/js/geolocation.js` usa prioridad Manual > GPS > IP y llaves `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.
+   - `apps/gold/agro/dashboard.js` usa `initWeather`/`displayWeather` con caches `yavlgold_weather_*`.
+
+5. **Crypto estado real**
+   - Crypto productivo vive en `apps/gold/crypto/index.html` + `crypto.js` dentro de MPA.
+   - `apps/gold/crypto/package.json` es residual legacy:
+     - nombre `@yavl/suite`
+     - scripts `python3 -m http.server`
+   - `pnpm-workspace.yaml` solo incluye `apps/*` y `packages/*`, por lo que `apps/gold/crypto/package.json` **no** participa del workspace.
+   - `apps/gold/dashboard/index.html` contiene un parche runtime (MutationObserver + DOM rewrite) `SUITE → CRYPTO`.
+
+### Plan quirúrgico (archivos exactos)
+1. `apps/gold/crypto/package.json`
+   - Eliminar archivo residual (no usado por workspace/build oficial).
+2. `apps/gold/dashboard/index.html`
+   - Remover parche runtime `SUITE → CRYPTO`.
+   - Implementar mapper explícito de compatibilidad en `normalizeModules` para legacy `suite` (solo campos de módulo), sin MutationObserver.
+3. `apps/gold/docs/AGENT_REPORT.md`
+   - Registrar diagnóstico, plan, riesgos, rollback y resultados.
+
+### Riesgos
+1. Si existen datos legacy `suite` no previstos por el mapper, la tarjeta podría mostrarse sin normalizar.
+2. Si coexistieran filas `suite` y `crypto`, puede haber comportamiento duplicado según datos remotos.
+
+### Mitigación
+1. Mapper por campos canónicos (`slug/module_key/route/path/name/title`) y `legacy_keys` para compatibilidad de favoritos/actividad.
+2. Build obligatorio y verificación estática de referencias `suite` en dashboard.
+
+### Rollback
+1. Revertir:
+   - `apps/gold/crypto/package.json` (restaurar)
+   - `apps/gold/dashboard/index.html`
+   - `apps/gold/docs/AGENT_REPORT.md`
+
+### Implementación aplicada
+1. Se eliminó `apps/gold/crypto/package.json` por residual:
+   - no participa en workspace (`pnpm-workspace.yaml` = `apps/*`, `packages/*`),
+   - no afecta el build oficial (`pnpm build:gold`).
+2. En `apps/gold/dashboard/index.html`:
+   - se removió el bloque runtime `SUITE → CRYPTO` basado en `MutationObserver`,
+   - se añadió mapper explícito en `normalizeModules`:
+     - compatibilidad legacy para `suite` por campos canónicos (`slug/module_key/route/path/name/title`),
+     - normalización a `crypto` (`slug/module_key/route/path`) con `legacy_keys`.
+
+### DoD
+- [x] `apps/gold/crypto/package.json` limpiado (eliminado por residual no usado).
+- [x] Parche runtime `SUITE → CRYPTO` removido.
+- [x] Compatibilidad legacy movida a mapper explícito y acotado.
+- [x] `pnpm build:gold` OK.
+- [ ] Smoke manual `/crypto/` y dashboard logueado (pendiente QA navegador).
+
+### Verificación técnica
+- `Test-Path apps/gold/crypto/package.json` → `false` (archivo eliminado).
+- `pnpm build:gold` ✅ PASS (2026-02-06).

@@ -2108,8 +2108,8 @@
     /**
      * Load modules from Supabase and render them dynamically
      */
-    function isLegacyToolsModule(mod) {
-      const candidates = [
+    function getModuleLegacyValues(mod) {
+      return [
         mod?.slug,
         mod?.module_key,
         mod?.route,
@@ -2117,35 +2117,69 @@
         mod?.href,
         mod?.name,
         mod?.title
-      ];
+      ].filter((value) => typeof value === 'string' && value.trim().length > 0);
+    }
 
-      return candidates.some((value) => {
-        if (typeof value !== 'string') return false;
-        const lower = value.toLowerCase();
+    function hasLegacySignal(mod, matcher) {
+      return getModuleLegacyValues(mod).some((value) => matcher(value.toLowerCase()));
+    }
+
+    function collectLegacyKeys(mod) {
+      const keys = [
+        ...(Array.isArray(mod?.legacy_keys) ? mod.legacy_keys : []),
+        typeof mod?.slug === 'string' ? mod.slug : null,
+        typeof mod?.module_key === 'string' ? mod.module_key : null
+      ].filter(Boolean);
+
+      return Array.from(new Set(keys));
+    }
+
+    function isLegacyToolsModule(mod) {
+      return hasLegacySignal(mod, (lower) => {
         return lower.includes('herramientas') || lower.includes('tools');
+      });
+    }
+
+    function isLegacySuiteModule(mod) {
+      return hasLegacySignal(mod, (lower) => {
+        return lower.includes('/suite/') || /\bsuite\b/.test(lower);
       });
     }
 
     function normalizeModules(modules) {
       return (modules || []).map((mod) => {
-        if (!isLegacyToolsModule(mod)) return mod;
+        if (isLegacyToolsModule(mod)) {
+          const legacyKeys = collectLegacyKeys(mod);
 
-        const legacyKeys = [];
-        if (typeof mod.slug === 'string') legacyKeys.push(mod.slug);
-        if (typeof mod.module_key === 'string' && mod.module_key !== mod.slug) {
-          legacyKeys.push(mod.module_key);
+          return {
+            ...mod,
+            title: 'Tecnología',
+            name: 'Tecnología',
+            slug: 'tecnologia',
+            module_key: 'tecnologia',
+            route: '/tecnologia/',
+            path: '/tecnologia/',
+            legacy_keys: legacyKeys
+          };
         }
 
-        return {
-          ...mod,
-          title: 'Tecnología',
-          name: 'Tecnología',
-          slug: 'tecnologia',
-          module_key: 'tecnologia',
-          route: '/tecnologia/',
-          path: '/tecnologia/',
-          legacy_keys: Array.from(new Set(legacyKeys))
-        };
+        if (isLegacySuiteModule(mod)) {
+          const legacyKeys = collectLegacyKeys(mod);
+          return {
+            ...mod,
+            title: 'Crypto',
+            name: 'Crypto',
+            slug: 'crypto',
+            module_key: 'crypto',
+            route: '/crypto/',
+            path: '/crypto/',
+            icon: mod.icon || '₿',
+            description: 'Inteligencia de Mercados, Trading y Análisis On-Chain.',
+            legacy_keys: legacyKeys
+          };
+        }
+
+        return mod;
       });
     }
 
@@ -2865,90 +2899,6 @@
       }
     });
   </script>
-
-
-
-  <!-- Override Script: Force SUITE → CRYPTO -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Función que busca y destruye "Suite"
-      const patchDashboard = () => {
-        // Buscamos cualquier elemento que contenga el texto "SUITE"
-        const allElements = document.querySelectorAll('h3, h4, span, p, a, button');
-
-        allElements.forEach(el => {
-          const text = el.innerText?.trim()?.toUpperCase();
-
-          if (text === 'SUITE') {
-            el.innerText = 'CRYPTO';
-            // Si es un título, buscamos su contenedor para cambiar la descripción
-            const card = el.closest('div');
-            if (card) {
-              const desc = card.querySelector('p');
-              if (desc && desc.innerText.toLowerCase().includes('entretenimiento')) {
-                desc.innerText = 'Inteligencia de Mercados, Trading y Análisis On-Chain.';
-              }
-
-              const btn = card.querySelector('a[href*="suite"]') || card.querySelector('button');
-              if (btn) {
-                btn.innerText = 'EXPLORAR CRYPTO';
-                btn.href = '/crypto/';
-              }
-
-              // Forzar cambio de icono si existe
-              const icon = card.querySelector('.fa-box, .fa-music');
-              if (icon && icon.classList.contains('fa-box')) {
-                icon.classList.remove('fa-box');
-                icon.classList.add('fa-bitcoin-sign');
-              }
-
-              // 📸 CAMBIO DE THUMBNAIL (CSS Placeholder con icono Bitcoin)
-              const img = card.querySelector('img');
-              if (img) {
-                // Crear placeholder CSS en lugar de imagen externa
-                const placeholder = document.createElement('div');
-                placeholder.style.cssText = `
-                  width: 100%;
-                  height: 100%;
-                  min-height: 120px;
-                  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-                  border-radius: 12px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  border: 1px solid rgba(200, 167, 82, 0.2);
-                `;
-                placeholder.innerHTML = '<i class="fa-brands fa-bitcoin" style="font-size: 3rem; color: #C8A752; opacity: 0.8;"></i>';
-                img.parentNode.replaceChild(placeholder, img);
-              }
-            }
-          }
-
-          // También arreglar botones que digan "EXPLORAR SUITE"
-          if (el.innerText?.includes('EXPLORAR SUITE')) {
-            el.innerText = 'EXPLORAR CRYPTO';
-            if (el.href) el.href = '/crypto/';
-            if (el.closest('a')) el.closest('a').href = '/crypto/';
-          }
-
-          // Arreglar enlaces directos a /suite/
-          if (el.href && el.href.includes('/suite/')) {
-            el.href = el.href.replace('/suite/', '/crypto/');
-          }
-        });
-      };
-
-      // Ejecutar inmediatamente
-      patchDashboard();
-
-      // Y ejecutar cada vez que el DOM cambie (para cuando Supabase inyecte las cards)
-      const observer = new MutationObserver(patchDashboard);
-      observer.observe(document.body, { childList: true, subtree: true });
-
-      console.log('[Dashboard] 🔧 Override Script activo: SUITE → CRYPTO');
-    });
-  </script>
-
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const cards = document.querySelectorAll('.stat-card, .insight-card');
