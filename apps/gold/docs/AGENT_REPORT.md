@@ -4866,3 +4866,63 @@ Revertir este lote:
   - script `./auth-guard.js` presente en los 3 HTML.
   - hooks `auth:guard:passed` presentes en `perfil.html` y `configuracion.html`.
   - `index.html` inicia dashboard mediante guard.
+
+---
+
+## 🌦️ SESIÓN: Hotfix Clima Agro no inicia (2026-02-06)
+
+### Reporte de Diagnóstico (Regla #1)
+1. **Mapa MPA + navegación actual**
+   - `apps/gold/vite.config.js` define entradas MPA para `index`, `dashboard/*`, `academia`, `agro`, `crypto`, `tecnologia`, etc.
+   - `apps/gold/vercel.json` usa `cleanUrls` + `trailingSlash`; mantiene `routes` legacy hacia `/apps/...` para algunos módulos.
+   - `apps/gold/index.html` mantiene navegación principal y acceso a módulos (`./agro/`, `./crypto/`, etc.).
+   - `apps/gold/dashboard/index.html` sigue siendo dashboard principal protegido.
+
+2. **Instanciación de datos/auth Supabase**
+   - `apps/gold/assets/js/config/supabase-config.js` crea singleton `supabase` con variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+   - `apps/gold/assets/js/auth/authClient.js` inicializa auth, aplica guard por prefijos y ya incluye `"/agro"` en `PROTECTED_PREFIXES`.
+   - `apps/gold/assets/js/auth/authUI.js` consume `window.AuthClient` y gestiona login/register/logout UI.
+   - `apps/gold/dashboard/auth-guard.js` (ESM) exige sesión antes de inicializar páginas de dashboard.
+
+3. **Dashboard: qué consulta hoy y qué falta**
+   - Dashboard consulta actualmente `profiles`, `modules`, `user_favorites`, `notifications`; anuncios/feedback se gestionan desde managers (`announcements`, `feedback`).
+   - Progreso académico existe en `apps/gold/assets/js/academia.js` (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) pero no está integrado de forma nativa al dashboard principal.
+
+4. **Clima/Agro: prioridad y storage keys**
+   - `apps/gold/assets/js/geolocation.js` mantiene prioridad `Manual > GPS > IP` y usa:
+     - `YG_MANUAL_LOCATION`
+     - `yavlgold_gps_cache`
+     - `yavlgold_ip_cache`
+     - `yavlgold_location_pref`
+   - `apps/gold/agro/dashboard.js` usa `initWeather()` + `displayWeather()`, caches `yavlgold_weather_*`, y debug por `?debug=1` o `YG_GEO_DEBUG`.
+   - **Causa raíz encontrada del “clima no funciona”**: `apps/gold/agro/dashboard.js` inicializa solo en `DOMContentLoaded`, pero en `apps/gold/agro/index.html` se carga vía `import('./dashboard.js')` después de validación async de sesión; cuando eso ocurre, `DOMContentLoaded` puede haber pasado y `initWeather()` no se ejecuta.
+
+5. **Crypto: estado real**
+   - `apps/gold/crypto/` existe como módulo MPA (`index.html`, `crypto.js`, `crypto.css`) y está en entradas de Vite.
+   - Persiste deuda legacy (`apps/gold/crypto/package.json` con nombre `@yavl/suite` y scripts `python3 -m http.server`), pero no forma parte de este hotfix.
+
+### Plan quirúrgico (archivos exactos)
+1. `apps/gold/agro/dashboard.js`
+   - Reemplazar init anclado únicamente a `DOMContentLoaded` por arranque robusto:
+     - si `document.readyState === 'loading'`: esperar evento.
+     - si no: inicializar inmediatamente.
+   - Mantener lógica existente (`initWeather`, `calculateMoonPhase`, `initParticles`, intervalo) sin reescritura.
+2. `apps/gold/docs/AGENT_REPORT.md`
+   - Registrar diagnóstico, plan, riesgos, rollback y pruebas de esta sesión.
+
+### Riesgos
+1. Doble inicialización si no se protege el bootstrap del dashboard.
+2. Efectos secundarios menores en timers si se monta más de una vez.
+
+### Mitigación
+1. Añadir flag local de inicialización en `dashboard.js` para asegurar `run once`.
+
+### Rollback
+1. Revertir:
+   - `apps/gold/agro/dashboard.js`
+   - `apps/gold/docs/AGENT_REPORT.md`
+
+### Pruebas planificadas
+1. Logueado en `/agro/`: clima debe pasar de `--` a temperatura real o fallback (sin quedar congelado).
+2. Verificar selector manual/GPS/IP sigue operativo.
+3. `pnpm build:gold` debe pasar.

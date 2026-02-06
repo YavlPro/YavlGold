@@ -801,7 +801,12 @@ function initParticles() {
 // ============================================
 // INICIALIZACION
 // ============================================
-document.addEventListener('DOMContentLoaded', function () {
+let dashboardWidgetsStarted = false;
+
+function startDashboardWidgets() {
+    if (dashboardWidgetsStarted) return;
+    dashboardWidgetsStarted = true;
+
     initWeather();
     calculateMoonPhase();
     initParticles();
@@ -810,5 +815,11 @@ document.addEventListener('DOMContentLoaded', function () {
     setInterval(function () {
         if (currentLocation) fetchWeather();
     }, 600000);
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startDashboardWidgets, { once: true });
+} else {
+    startDashboardWidgets();
+}
 
