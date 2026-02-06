@@ -41,9 +41,18 @@ const ICONS = {
 
 // Estado del clima
 let currentLocation = null;
-const GEO_DEBUG_ENABLED = typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).get('debug') === '1';
+function isGeoDebugEnabled() {
+    if (typeof window === 'undefined') return false;
+    if (new URLSearchParams(window.location.search).get('debug') === '1') return true;
+    try {
+        return window.localStorage.getItem('YG_GEO_DEBUG') === '1';
+    } catch (_e) {
+        return false;
+    }
+}
+const GEO_DEBUG_ENABLED = isGeoDebugEnabled();
 let geoDebugPanel = null;
+let locationSearchRequestId = 0;
 
 /**
  * Generate cache key based on lat/lon (rounded to 2 decimals)
@@ -120,6 +129,17 @@ function formatAge(ms) {
     return `${min}m`;
 }
 
+function formatTs(ts) {
+    if (!ts) return '-';
+    const d = new Date(ts);
+    if (Number.isNaN(d.getTime())) return '-';
+    return d.toLocaleString('es-VE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
 function updateGeoDebugPanel() {
     if (!GEO_DEBUG_ENABLED || !geoDebugPanel) return;
     const debug = window.YGGeolocation?.getDebugState?.();
@@ -130,9 +150,11 @@ function updateGeoDebugPanel() {
     const ip = debug.cache?.ip || {};
     const label = currentLocation?.label || last.label || '-';
     const source = (currentLocation?.source || last.source || '-').toUpperCase();
+    const lastLat = Number(last.lat);
+    const lastLon = Number(last.lon);
     const coords = currentLocation
         ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lon.toFixed(4)}`
-        : (last.lat && last.lon ? `${Number(last.lat).toFixed(4)}, ${Number(last.lon).toFixed(4)}` : '-');
+        : (Number.isFinite(lastLat) && Number.isFinite(lastLon) ? `${lastLat.toFixed(4)}, ${lastLon.toFixed(4)}` : '-');
 
     geoDebugPanel.innerHTML = `
         <div style="color:#C8A752; font-weight:700; margin-bottom:6px;">Geo Debug</div>
@@ -140,8 +162,13 @@ function updateGeoDebugPanel() {
         <div><strong>label:</strong> ${label}</div>
         <div><strong>coords:</strong> ${coords}</div>
         <div><strong>pref:</strong> ${(debug.preference || '-').toUpperCase()}</div>
+        <div><strong>override:</strong> ${debug.override || '-'}</div>
+        <div><strong>decision ts:</strong> ${formatTs(last.timestamp)}</div>
+        <div><strong>debug ts:</strong> ${formatTs(debug.updatedAt)}</div>
         <div style="margin-top:6px;"><strong>gps cache:</strong> ${gps.hit ? 'hit' : 'miss'} | age ${formatAge(gps.ageMs)}</div>
+        <div><strong>gps ts:</strong> ${formatTs(gps.timestamp)}</div>
         <div><strong>ip cache:</strong> ${ip.hit ? 'hit' : 'miss'} | age ${formatAge(ip.ageMs)}</div>
+        <div><strong>ip ts:</strong> ${formatTs(ip.timestamp)}</div>
     `;
 }
 
@@ -165,7 +192,6 @@ async function initWeather() {
         currentLocation = await Geo.getCoordsSmart({ preferIp: preferIp });
         console.log('[Agro] Location:', currentLocation.source, '-', currentLocation.label);
         await fetchWeather();
-        updateGeoDebugPanel();
         updateGeoDebugPanel();
     } catch (err) {
         console.error('[Agro] Location error:', err);
@@ -437,9 +463,12 @@ function openLocationSelector() {
     document.getElementById('location-search-input').addEventListener('input', function (e) {
         clearTimeout(searchTimeout);
         const query = e.target.value.trim();
+        const targetRequestId = ++locationSearchRequestId;
+        const resultsContainer = getLocationResultsContainer();
+        if (!resultsContainer) return;
 
         if (query.length < 2) {
-            document.getElementById('location-results').innerHTML = `
+            resultsContainer.innerHTML = `
                 <p style="color: #666; font-size: 12px; text-align: center; padding: 20px;">
                     Escribe al menos 2 caracteres para buscar
                 </p>
@@ -447,14 +476,14 @@ function openLocationSelector() {
             return;
         }
 
-        document.getElementById('location-results').innerHTML = `
+        resultsContainer.innerHTML = `
             <p style="color: #888; font-size: 12px; text-align: center; padding: 20px;">
                 ${ICONS.search} Buscando...
             </p>
         `;
 
         searchTimeout = setTimeout(function () {
-            searchLocations(query);
+            searchLocations(query, targetRequestId);
         }, 300);
     });
 
@@ -468,19 +497,31 @@ function openLocationSelector() {
  * Close location selector modal
  */
 function closeLocationSelector() {
+    locationSearchRequestId += 1;
     const modal = document.getElementById('location-search-modal');
     if (modal) modal.remove();
+}
+
+function getLocationResultsContainer() {
+    const modal = document.getElementById('location-search-modal');
+    if (!modal) return null;
+    return modal.querySelector('#location-results');
 }
 
 /**
  * Search locations using geocoding API
  */
-async function searchLocations(query) {
+async function searchLocations(query, requestId) {
     const Geo = window.YGGeolocation;
-    const resultsContainer = document.getElementById('location-results');
+    if (!Geo) return;
+    let resultsContainer = getLocationResultsContainer();
+    if (!resultsContainer) return;
 
     try {
         const results = await Geo.searchLocations(query);
+        if (requestId !== locationSearchRequestId) return;
+        resultsContainer = getLocationResultsContainer();
+        if (!resultsContainer) return;
 
         if (results.length === 0) {
             resultsContainer.innerHTML = `
@@ -518,6 +559,9 @@ async function searchLocations(query) {
         });
 
     } catch (err) {
+        if (requestId !== locationSearchRequestId) return;
+        resultsContainer = getLocationResultsContainer();
+        if (!resultsContainer) return;
         console.error('[Agro] Search error:', err);
         resultsContainer.innerHTML = `
             <p style="color: #f87171; font-size: 12px; text-align: center; padding: 20px;">

@@ -4753,3 +4753,62 @@ Implementar "smart retry" en frontend:
 
 ### Estado
 🔄 PENDIENTE APROBACIÓN — Diagnóstico y Plan listos. Esperando gate del usuario.
+
+---
+
+## 🚑 SESIÓN: HOTFIX Agro Route Guard + Geo Priority + Coord 0 + Race Modal (2026-02-06)
+
+### Paso 0 — Diagnóstico
+1. **`/agro` no protegido en guard principal**:
+   - `apps/gold/assets/js/auth/authClient.js` no incluía `"/agro"` en `PROTECTED_PREFIXES`.
+2. **Agro inicializaba módulos sin exigir sesión en su bootstrap final**:
+   - `apps/gold/agro/index.html` cargaba `agro.js`, `dashboard.js` y demás módulos directamente.
+3. **Geo con inversión silenciosa de prioridad**:
+   - `apps/gold/assets/js/geolocation.js` usaba `preferIp` para invertir a `IP -> GPS` sin marcar override explícito.
+4. **Coordenadas `0` tratadas como inválidas por checks truthy**:
+   - validaciones tipo `if (lat && lon)` en lectura manual y respuesta IP.
+5. **Race del modal de búsqueda de ubicación**:
+   - resultados asíncronos podían intentar render en contenedor inexistente tras cerrar modal.
+
+### Plan quirúrgico
+1. `apps/gold/assets/js/auth/authClient.js`
+   - Agregar `"/agro"` a rutas protegidas.
+   - Endurecer match de ruta protegida por segmento (`/ruta` o `/ruta/...`) para evitar falsos positivos.
+2. `apps/gold/agro/index.html`
+   - Reemplazar bootstrap directo por bootstrap protegido:
+     - validar sesión con cliente central Supabase,
+     - redirigir a `/index.html#login` si no hay sesión,
+     - cargar módulos Agro solo si sesión válida.
+3. `apps/gold/assets/js/geolocation.js`
+   - Corregir validación de coords para aceptar `0`.
+   - Mantener Manual como prioridad máxima.
+   - Convertir `preferIp`/`ipOnly` en override explícito y visible en debug (sin inversión silenciosa).
+4. `apps/gold/agro/dashboard.js`
+   - Blindar modal de búsqueda con request-id y validación de contenedor activo.
+   - Mejorar panel debug con timestamps y soporte de flag local `YG_GEO_DEBUG`.
+
+### Riesgos
+1. **Cambio de orden en guard**: puede afectar casos borde de rutas protegidas.
+2. **Bootstrap protegido en Agro**: si sesión expira durante carga, se redirige antes de inicializar.
+3. **Override IP explícito**: mantiene compatibilidad con flujo “VPN/IP”, pero ahora queda trazable en debug.
+
+### Rollback
+1. Revertir este lote de archivos:
+   - `apps/gold/assets/js/auth/authClient.js`
+   - `apps/gold/agro/index.html`
+   - `apps/gold/assets/js/geolocation.js`
+   - `apps/gold/agro/dashboard.js`
+2. Mantener este reporte para trazabilidad histórica.
+
+### Pruebas planificadas
+1. Incógnito → `/agro/` debe redirigir a login.
+2. Con sesión → `/agro/` debe iniciar normal.
+3. Geo:
+   - Manual gana siempre.
+   - Sin manual: GPS primero, IP fallback.
+   - Con override explícito (`preferIp`): visible en debug.
+   - Coord `0,0` válida.
+4. Modal selector:
+   - buscar y cerrar rápido → sin errores de render asíncrono.
+5. Build:
+   - `pnpm build:gold` debe pasar.

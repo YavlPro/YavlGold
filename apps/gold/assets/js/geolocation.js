@@ -32,18 +32,32 @@
     const IP_CACHE_KEY = 'yavlgold_ip_cache';
     const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
     const PREF_KEY = 'yavlgold_location_pref'; // 'gps' or 'ip'
-    const DEBUG_ENABLED = typeof global !== 'undefined'
-        && global.location
-        && new URLSearchParams(global.location.search).get('debug') === '1';
+    function isDebugEnabled() {
+        if (typeof global === 'undefined' || !global.location) return false;
+        if (new URLSearchParams(global.location.search).get('debug') === '1') return true;
+        try {
+            return global.localStorage.getItem('YG_GEO_DEBUG') === '1';
+        } catch (_e) {
+            return false;
+        }
+    }
+
+    const DEBUG_ENABLED = isDebugEnabled();
 
     const debugState = {
         enabled: DEBUG_ENABLED,
         preference: null,
+        override: null,
         manual: null,
         cache: { gps: null, ip: null },
         lastDecision: null,
         updatedAt: null
     };
+
+    function toFiniteCoord(value) {
+        const num = typeof value === 'number' ? value : Number(value);
+        return Number.isFinite(num) ? num : null;
+    }
 
     function setDebugState(partial) {
         if (!DEBUG_ENABLED) return;
@@ -72,10 +86,14 @@
             const stored = localStorage.getItem(MANUAL_LOCATION_KEY);
             if (!stored) return null;
             const data = JSON.parse(stored);
-            // Validate required fields
-            if (data && data.lat && data.lon && data.label) {
-                setDebugState({ manual: { ...data } });
-                return data;
+            const lat = toFiniteCoord(data && data.lat);
+            const lon = toFiniteCoord(data && data.lon);
+            const label = typeof (data && data.label) === 'string' ? data.label.trim() : '';
+            // Validate required fields (coord 0 is valid)
+            if (lat !== null && lon !== null && label) {
+                const normalized = { ...data, lat: lat, lon: lon, label: label };
+                setDebugState({ manual: { ...normalized } });
+                return normalized;
             }
             setDebugState({ manual: null });
             return null;
@@ -88,10 +106,17 @@
 
     function setManualLocation(location) {
         try {
+            const lat = toFiniteCoord(location && location.lat);
+            const lon = toFiniteCoord(location && location.lon);
+            const label = typeof (location && location.label) === 'string' ? location.label.trim() : '';
+            if (lat === null || lon === null || !label) {
+                console.warn('[Geo] Manual location invalid payload');
+                return null;
+            }
             const data = {
-                lat: location.lat,
-                lon: location.lon,
-                label: location.label,
+                lat: lat,
+                lon: lon,
+                label: label,
                 source: 'manual',
                 timestamp: Date.now(),
                 // Optional metadata
@@ -309,8 +334,10 @@
             }
 
             const data = await response.json();
+            const lat = toFiniteCoord(data.latitude);
+            const lon = toFiniteCoord(data.longitude);
 
-            if (!data.latitude || !data.longitude) {
+            if (lat === null || lon === null) {
                 throw new Error('No coordinates in IP response');
             }
 
@@ -328,8 +355,8 @@
                 : 'Ubicaci\u00F3n por IP: ';
 
             const result = {
-                lat: data.latitude,
-                lon: data.longitude,
+                lat: lat,
+                lon: lon,
                 source: 'ip',
                 label: labelPrefix + locationInfo,
                 city: data.city || null,
@@ -359,11 +386,16 @@
 
     async function getCoordsSmart(options) {
         options = options || {};
-        const preferIp = options.preferIp || false;
+        const ipOverride = options.preferIp === true || options.ipOnly === true;
         const forceRefresh = options.forceRefresh || false;
         const ignoreManual = options.ignoreManual || false;
-        const mode = preferIp ? 'ip' : 'gps';
+        const mode = ipOverride ? 'ip' : 'gps';
         let usedCache = false;
+
+        setDebugState({ override: ipOverride ? 'IP_FIRST_OVERRIDE' : 'GPS_FIRST_DEFAULT' });
+        if (ipOverride) {
+            debugLog('Explicit override enabled: preferIp/ipOnly=true (Manual still has highest priority).');
+        }
 
         // 1. Check manual location FIRST (highest priority)
         if (!ignoreManual) {
@@ -376,7 +408,9 @@
                         label: manual.label,
                         lat: manual.lat,
                         lon: manual.lon,
-                        usedCache: false
+                        usedCache: false,
+                        override: ipOverride ? 'IP_FIRST_OVERRIDE' : 'GPS_FIRST_DEFAULT',
+                        timestamp: Date.now()
                     }
                 });
                 return manual;
@@ -395,7 +429,9 @@
                         label: cached.label || 'cached',
                         lat: cached.lat,
                         lon: cached.lon,
-                        usedCache: true
+                        usedCache: true,
+                        override: ipOverride ? 'IP_FIRST_OVERRIDE' : 'GPS_FIRST_DEFAULT',
+                        timestamp: cached.timestamp || Date.now()
                     }
                 });
                 return cached;
@@ -404,12 +440,12 @@
 
         let result = null;
 
-        if (preferIp) {
-            // VPN/IP mode: IP → GPS → Fallback
-            console.log('[Geo] Mode: IP (VPN) first');
+        if (ipOverride) {
+            // Explicit override mode: IP → GPS → Fallback
+            console.log('[Geo] Mode: IP-first override (explicit)');
             result = await getIpCoords(false);
             if (!result) {
-                console.log('[Geo] IP failed, trying GPS...');
+                console.log('[Geo] IP override failed, trying GPS...');
                 result = await getBrowserCoords();
             }
         } else {
@@ -437,7 +473,9 @@
                 label: result.label,
                 lat: result.lat,
                 lon: result.lon,
-                usedCache: usedCache
+                usedCache: usedCache,
+                override: ipOverride ? 'IP_FIRST_OVERRIDE' : 'GPS_FIRST_DEFAULT',
+                timestamp: Date.now()
             }
         });
 

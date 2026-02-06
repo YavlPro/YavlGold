@@ -131,7 +131,7 @@ const authClient = {
     },
 
     // --- SMART AUTH GUARD V9.4 (ANTI-LOOP ENHANCED) ---
-    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/crypto", "/tecnologia", "/herramientas"],
+    PROTECTED_PREFIXES: ["/dashboard", "/academia", "/agro", "/crypto", "/tecnologia", "/herramientas"],
 
     _authGuardInitialized: false,
     _isRedirecting: false,  // Lock para evitar múltiples redirects
@@ -140,7 +140,11 @@ const authClient = {
     _currentPath() { return this._normalizePath(window.location.pathname); },
 
     _isProtected(path) {
-        return this.PROTECTED_PREFIXES.some(prefix => path.includes(prefix));
+        const normalized = this._normalizePath(path);
+        return this.PROTECTED_PREFIXES.some(prefix => {
+            const normalizedPrefix = this._normalizePath(prefix);
+            return normalized === normalizedPrefix || normalized.startsWith(normalizedPrefix + '/');
+        });
     },
 
     _isAuthEntry(path) {

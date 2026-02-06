@@ -3050,32 +3050,65 @@
         });
     </script>
 
-    <script type="module" src="agro.js"></script>
-    <script src="../assets/js/geolocation.js" type="module"></script>
-    <script type="module" src="dashboard.js"></script>
-    <script type="module" src="../assets/js/utils/activityTracker.js"></script>
     <script type="module">
-        import { initMarketIntelligence, startTickerAutoRefresh } from './agro-market.js';
-        import { initPlanning } from './agro-planning.js';
-        import { initInteractions } from './agro-interactions.js';
-        import { initStats, computeAgroFinanceSummaryV1, updateUIFromSummary } from './agro-stats.js';
-        import { initNotifications } from './agro-notifications.js';
+        import { supabase } from '../assets/js/config/supabase-config.js';
 
-        // Expose unified stats globally for inline scripts
-        window.refreshAgroStats = async function () {
-            const summary = await computeAgroFinanceSummaryV1();
-            if (summary) updateUIFromSummary(summary);
-            return summary;
-        };
-        document.addEventListener('DOMContentLoaded', () => {
-            window.YGActivity?.attachModuleTracking('agro', { title: 'Agro', path: '/agro/' });
-            initMarketIntelligence();
-            startTickerAutoRefresh();
-            initPlanning();
-            initInteractions();
-            initStats();
-            initNotifications();
-        });
+        async function bootstrapAgro() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error || !session) {
+                    window.location.replace('/index.html#login');
+                    return;
+                }
+
+                await import('./agro.js');
+                await import('../assets/js/geolocation.js');
+                await import('./dashboard.js');
+                await import('../assets/js/utils/activityTracker.js');
+
+                const [
+                    marketModule,
+                    planningModule,
+                    interactionsModule,
+                    statsModule,
+                    notificationsModule
+                ] = await Promise.all([
+                    import('./agro-market.js'),
+                    import('./agro-planning.js'),
+                    import('./agro-interactions.js'),
+                    import('./agro-stats.js'),
+                    import('./agro-notifications.js')
+                ]);
+
+                // Expose unified stats globally for inline scripts
+                window.refreshAgroStats = async function () {
+                    const summary = await statsModule.computeAgroFinanceSummaryV1();
+                    if (summary) statsModule.updateUIFromSummary(summary);
+                    return summary;
+                };
+
+                const initProtectedModules = () => {
+                    window.YGActivity?.attachModuleTracking('agro', { title: 'Agro', path: '/agro/' });
+                    marketModule.initMarketIntelligence();
+                    marketModule.startTickerAutoRefresh();
+                    planningModule.initPlanning();
+                    interactionsModule.initInteractions();
+                    statsModule.initStats();
+                    notificationsModule.initNotifications();
+                };
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initProtectedModules, { once: true });
+                } else {
+                    initProtectedModules();
+                }
+            } catch (err) {
+                console.error('[AgroGuard] Error validando sesión:', err);
+                window.location.replace('/index.html#login');
+            }
+        }
+
+        bootstrapAgro();
     </script>
 
     <!-- V9.5.3: Centro Estadistico -->
