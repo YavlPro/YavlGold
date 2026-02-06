@@ -28,36 +28,14 @@
     }
   ],
   "rewrites": [
-    { "source": "/academia", "destination": "/academia/index.html" },
-    { "source": "/academia/:path*", "destination": "/academia/:path*" },
-    { "source": "/agro", "destination": "/agro/index.html" },
-    { "source": "/agro/:path*", "destination": "/agro/:path*" },
-    { "source": "/tecnologia", "destination": "/tecnologia/index.html" },
-    { "source": "/tecnologia/", "destination": "/tecnologia/index.html" },
-    { "source": "/tecnologia/:path*", "destination": "/tecnologia/:path*" },
-    { "source": "/suite", "destination": "/suite/index.html" },
-    { "source": "/suite/:path*", "destination": "/suite/:path*" },
-    { "source": "/social", "destination": "/social/index.html" },
-    { "source": "/social/:path*", "destination": "/social/:path*" },
-    { "source": "/dashboard", "destination": "/dashboard/index.html" },
-    { "source": "/dashboard/configuracion", "destination": "/dashboard/configuracion.html" },
-    { "source": "/dashboard/perfil", "destination": "/dashboard/perfil.html" },
-    { "source": "/profile", "destination": "/profile/index.html" },
-    { "source": "/cookies", "destination": "/cookies.html" },
-    { "source": "/faq", "destination": "/faq.html" },
-    { "source": "/roadmap", "destination": "/roadmap.html" }
+    { "source": "/music", "destination": "/dashboard/music.html" },
+    { "source": "/music/", "destination": "/dashboard/music.html" }
   ],
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/:path*",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/(.*).html",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "X-YG-Config", "value": "root-vercel-active" }
       ]
     }
   ]

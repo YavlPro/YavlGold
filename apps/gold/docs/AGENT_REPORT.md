@@ -5080,3 +5080,278 @@ Revertir este lote:
 ### Verificación técnica
 - `Test-Path apps/gold/crypto/package.json` → `false` (archivo eliminado).
 - `pnpm build:gold` ✅ PASS (2026-02-06).
+
+---
+
+## 🧪 SESIÓN: Hardening Consistencia ADN + Agro Clima + Auth Callback (2026-02-06)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. **Mapa MPA + navegación actual**
+   - `apps/gold/vite.config.js` confirma MPA Vite con entradas: `index`, `dashboard/*`, `academia`, `agro`, `crypto`, `tecnologia`, `social`.
+   - `apps/gold/vercel.json` ya usa `rewrites` por módulo, pero mantiene header global `Permissions-Policy: geolocation=()` que bloquea GPS en Agro.
+   - `apps/gold/index.html` sigue como landing principal con navegación a módulos.
+   - `apps/gold/dashboard/index.html` carga módulos desde Supabase y mantiene mapper legacy para `suite -> crypto`.
+
+2. **Instanciación de datos/auth de Supabase**
+   - Cliente central: `apps/gold/assets/js/config/supabase-config.js`.
+   - Auth principal: `apps/gold/assets/js/auth/authClient.js` + `apps/gold/assets/js/auth/authUI.js`.
+   - Guard dashboard: `apps/gold/dashboard/auth-guard.js`.
+   - Hallazgo: `authClient.js` usa `getSessionFromUrl` (flujo legacy), no el flujo PKCE con `exchangeCodeForSession`.
+
+3. **Dashboard: qué consulta hoy y qué le falta**
+   - Activo: `profiles`, `modules`, `user_favorites`, `notifications` (más managers para `announcements` y `feedback`).
+   - Hallazgo: persiste `select('*')` en rutas críticas (`dashboard/index.html`, `dashboard/perfil.html`, `assets/js/modules/moduleManager.js`).
+   - Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en academia pero no integrado completo en dashboard principal.
+
+4. **Clima/Agro: prioridad Manual > GPS > IP + storage keys**
+   - Lógica de geolocalización: `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`) con keys:
+     - `YG_MANUAL_LOCATION`
+     - `yavlgold_gps_cache`
+     - `yavlgold_ip_cache`
+     - `yavlgold_location_pref`
+   - Consumo en clima: `apps/gold/agro/dashboard.js` (`initWeather`, `displayWeather`) y cache `yavlgold_weather_*`.
+   - Hallazgo real de producción: la política HTTP global bloquea geolocalización del navegador en Agro, aunque la lógica JS esté bien.
+
+5. **Crypto: estado real**
+   - Crypto ya integrado como MPA (`apps/gold/crypto/index.html` + `crypto.js`).
+   - Rewrite `/music` apunta a `dashboard/music.html`, pero `vite.config.js` no lo publica como input, provocando 404 en `dist`.
+
+### Plan quirúrgico (archivos exactos)
+1. `apps/gold/vercel.json`
+   - Mantener `geolocation=()` global.
+   - Agregar excepción de `Permissions-Policy` solo para `/agro/*` (geolocation permitida para el mismo origen).
+2. `apps/gold/vite.config.js`
+   - Añadir `dashboard/music.html` como input MPA para que `/music` resuelva a archivo existente en `dist`.
+3. `apps/gold/assets/js/auth/authClient.js`
+   - Migrar callback auth: `?code=` -> `exchangeCodeForSession`.
+   - Fallback explícito para hash tokens legacy (`setSession`).
+   - Unificar redirects de no-sesión a `/index.html#login`.
+   - Eliminar fallback de avatar con `ui-avatars.com` (PII) y reemplazar por avatar local (data URI).
+4. `apps/gold/assets/js/auth/authUI.js`
+   - Consumir avatar local seguro (sin llamadas a terceros con email/nombre).
+   - Mostrar error visible en callback auth fallido (`auth:callback:error`).
+5. `apps/gold/assets/js/config/supabase-config.js`
+   - Quitar logs públicos de URL/prefijo de key en bootstrap (dejar solo log mínimo en DEV).
+6. `apps/gold/dashboard/index.html`
+   - Reemplazar `select('*')` de módulos por columnas explícitas.
+   - Ajustar badges de desarrollo/próximamente a paleta dorada (sin azul/morado).
+7. `apps/gold/dashboard/perfil.html`
+   - Reemplazar `select('*')` por columnas explícitas de perfil.
+8. `apps/gold/assets/js/modules/moduleManager.js`
+   - Reemplazar `select('*')` por columnas explícitas en cargas de módulos y `id` para contadores.
+9. `apps/gold/agro/agro.js`
+   - Reducir `select('*')` en queries críticas de transferencias/ingresos a columnas explícitas (sin reescribir flujos).
+10. `apps/gold/index.html`
+   - Ajustar badges/estados con acento dorado para consistencia DNA.
+
+### DoD objetivo de esta sesión
+- [x] GPS en Agro preparado con excepción de política solo en `/agro/*`.
+- [x] Callback auth compatible PKCE (`exchangeCodeForSession`) y errores visibles.
+- [x] Cero fallback avatar con PII a terceros.
+- [x] Reducción de `select('*')` en rutas críticas (dashboard/perfil/moduleManager/agro).
+- [x] UI principal sin acento azul/morado (dorado/negro).
+- [x] `/music` construye y responde sin 404.
+- [x] Redirect de no-sesión unificado a `/index.html#login`.
+- [x] Build `pnpm build:gold` PASS.
+
+### Riesgos y mitigación
+1. **Columns mismatch en `select` explícitos**:
+   - Mitigación: usar columnas ya consumidas por código existente y validar con build.
+2. **Política de headers en Vercel**:
+   - Mitigación: regla específica para `/agro/*` y verificación manual posterior de permiso GPS.
+3. **Flujo recovery/magic-link**:
+   - Mitigación: fallback para hash legacy + evento de error visible.
+
+### Rollback
+Revertir archivos de esta sesión:
+- `apps/gold/vercel.json`
+- `apps/gold/vite.config.js`
+- `apps/gold/assets/js/auth/authClient.js`
+- `apps/gold/assets/js/auth/authUI.js`
+- `apps/gold/assets/js/config/supabase-config.js`
+- `apps/gold/dashboard/index.html`
+- `apps/gold/dashboard/perfil.html`
+- `apps/gold/assets/js/modules/moduleManager.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/index.html`
+
+### Implementación aplicada
+1. `apps/gold/vercel.json`
+   - Se mantuvo `Permissions-Policy: geolocation=()` global.
+   - Se añadieron headers específicos para `/agro`, `/agro/` y `/agro/:path*` con `geolocation=(self)`.
+2. `apps/gold/vite.config.js`
+   - Se agregó `music: 'dashboard/music.html'` al input MPA para que exista en `dist`.
+3. `apps/gold/assets/js/auth/authClient.js`
+   - Se reemplazó el flujo legacy `getSessionFromUrl` por:
+     - `exchangeCodeForSession(code)` (PKCE),
+     - fallback legacy `setSession({ access_token, refresh_token })`.
+   - Se agregó evento de error visible `auth:callback:error`.
+   - Se unificó redirect de no-sesión a `/index.html#login`.
+   - Se eliminó fallback `ui-avatars.com` y se implementó avatar local SVG (data URI).
+4. `apps/gold/assets/js/auth/authUI.js`
+   - Se consume avatar local seguro vía `window.AuthClient.buildLocalAvatar`.
+   - Se muestra mensaje visible al recibir `auth:callback:error`.
+5. `apps/gold/assets/js/config/supabase-config.js`
+   - Se removieron logs públicos de URL/prefijo de key; queda log mínimo solo en `import.meta.env.DEV`.
+6. `apps/gold/dashboard/index.html`
+   - Se cambió `select('*')` de módulos a columnas explícitas.
+   - Se migraron badges de desarrollo/próximo a gradientes dorados.
+   - Se reemplazaron placeholders estáticos de avatar remoto por recurso local (`/assets/images/logo.webp`).
+7. `apps/gold/dashboard/perfil.html`
+   - Se cambió `select('*')` por columnas explícitas de perfil.
+8. `apps/gold/assets/js/modules/moduleManager.js`
+   - Se añadieron columnas explícitas para módulos.
+   - Contadores migrados a `select('id', { count: 'exact', head: true })` y `module_key` para favoritos.
+9. `apps/gold/agro/agro.js`
+   - Se agregaron columnas explícitas en queries críticas de transferencias e ingresos.
+   - Se dejaron 3 `select('*')` intencionalmente en flujos dinámicos (edición/duplicado/crops) para no romper serialización genérica.
+10. `apps/gold/index.html`
+   - Se eliminaron acentos azul/morado en badges/estatus y se normalizó a dorado.
+
+### Verificación técnica
+- `pnpm build:gold` ✅ PASS (2026-02-06).
+- `dist/dashboard/music.html` ✅ existe tras build.
+- `rg -n "ui-avatars|getSessionFromUrl" apps/gold/assets/js/auth` ✅ sin coincidencias.
+- `rg -n "ui-avatars|getSessionFromUrl" apps/gold/dist apps/gold/assets/js/auth apps/gold/dashboard/index.html` ✅ sin coincidencias.
+- `rg -n "select\\('\\*'" apps/gold/dashboard/index.html apps/gold/dashboard/perfil.html apps/gold/assets/js/modules/moduleManager.js apps/gold/agro/agro.js`:
+  - ✅ Dashboard/Perfil/ModuleManager sin `select('*')`.
+  - ⚠️ Agro mantiene 3 casos intencionales por compatibilidad dinámica.
+- `rg -n "#3498db|#2980b9|#9b59b6|#8e44ad" apps/gold/index.html apps/gold/dashboard/index.html` ✅ sin coincidencias.
+
+### Pruebas manuales
+- [ ] Pendiente ejecutar en navegador:
+  1. GPS en `/agro/` con política de headers aplicada.
+  2. Recovery/Magic link real con `?code=`.
+  3. Navegación directa a `/music`.
+
+---
+
+## 🧭 SESIÓN: Root Vercel Config Alignment + Canary (2026-02-06)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. **Causa dominante confirmada**
+   - Producción responde con comportamiento del archivo `c:\\Users\\yerik\\gold\\vercel.json` (root monorepo), no con `apps/gold/vercel.json`.
+   - Evidencia funcional:
+     - `/music` en producción da `404`.
+     - `/dashboard/music.html` en producción da `200`.
+     - root `vercel.json` no tenía rewrite para `/music`.
+2. **Headers de seguridad en producción**
+   - No se observaba `Permissions-Policy` en respuestas HEAD de producción.
+   - root `vercel.json` no contenía esas reglas; las reglas estaban solo en `apps/gold/vercel.json` (no activo en deploy actual).
+3. **Riesgo de colisión de headers**
+   - En `apps/gold/vercel.json` existía patrón global + excepción agro para la misma key `Permissions-Policy`, con posible ambigüedad si ambos matchs aplican.
+
+### Plan quirúrgico (archivos exactos)
+1. `vercel.json` (root del repo)
+   - Agregar rewrite explícito para `/music` y `/music/` -> `/dashboard/music.html`.
+   - Agregar header canario global `X-YG-Config` para verificar en producción qué config está activa.
+   - Definir `Permissions-Policy` sin ambigüedad:
+     - regla exclusiva para `/agro/:path*` con `geolocation=(self)`,
+     - regla exclusiva para no-agro con `geolocation=()`, usando patrón negativo.
+   - Mantener cache de assets.
+2. `apps/gold/vercel.json`
+   - Agregar `X-YG-Config` distinto para diagnóstico rápido si en el futuro se cambia Root Directory a `apps/gold`.
+
+### Riesgos y mitigación
+1. **Regex de exclusión no-agro**
+   - Mitigación: usar patrón `"/((?!agro(?:/|$)).*)"` y validar JSON + build.
+2. **Cambios de routing en root**
+   - Mitigación: tocar solo `/music` y headers; no reescribir rewrites completos.
+
+### Rollback
+Revertir:
+- `vercel.json`
+- `apps/gold/vercel.json`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Implementación aplicada
+1. `vercel.json` (root)
+   - Se agregó rewrite:
+     - `/music` -> `/dashboard/music.html`
+     - `/music/` -> `/dashboard/music.html`
+   - Se agregó canary header:
+     - `X-YG-Config: root-vercel-active`
+   - Se agregaron reglas de seguridad con `Permissions-Policy` sin solape de intención:
+     - `/agro`, `/agro/`, `/agro/:path*` -> `geolocation=(self), microphone=(), camera=()`
+     - `"/((?!agro(?:/|$)).*)"` -> `geolocation=(), microphone=(), camera=()`
+2. `apps/gold/vercel.json`
+   - Se añadió canary distinto:
+     - `X-YG-Config: apps-gold-vercel-active`
+   - Objetivo: detectar rápidamente cuál config gobierna en producción según header visible.
+
+### DoD
+- [x] Identificada causa de desalineación (root config activo en prod).
+- [x] Canary header agregado para diagnóstico de archivo activo.
+- [x] Rewrite `/music` agregado en root config.
+- [x] Políticas `Permissions-Policy` añadidas con separación agro/no-agro.
+- [x] `pnpm build:gold` PASS.
+
+### Verificación técnica
+- `node -e "JSON.parse(fs.readFileSync('vercel.json'))"` ✅ válido.
+- `node -e "JSON.parse(fs.readFileSync('apps/gold/vercel.json'))"` ✅ válido.
+- `pnpm build:gold` ✅ PASS (2026-02-06).
+
+### Pruebas manuales pendientes (post-deploy)
+1. `curl -I https://www.yavlgold.com/ | grep -i x-yg-config`
+2. `curl -I https://www.yavlgold.com/agro/ | grep -i permissions-policy`
+3. `curl -I https://www.yavlgold.com/music`
+
+---
+
+## 🧩 SESIÓN: Vercel Pattern Compatibility Tweak (2026-02-06)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. El patrón no-agro en root se dejó como `"/((?!agro(?:/|$)).*)"`.
+2. Riesgo detectado: en Vercel/path-to-regexp algunos despliegues manejan mejor negative lookahead cuando está dentro de parámetro nombrado (`:path(...)`).
+3. Objetivo: mantener exclusión mutua Agro/no-Agro sin ambigüedad y con máxima compatibilidad.
+
+### Plan quirúrgico
+1. Ajustar solo `vercel.json` (root):
+   - Cambiar `source` no-agro a `"/:path((?!agro(?:/|$)).*)"`
+2. Ejecutar `pnpm build:gold` para validación general.
+
+### Riesgo y mitigación
+1. **Match de raíz `/`**:
+   - Mitigación: validar post-deploy que `/` retorne header esperado.
+
+### Rollback
+1. Revertir:
+   - `vercel.json`
+   - `apps/gold/docs/AGENT_REPORT.md`
+
+---
+
+## 🧪 SESIÓN: Probe Deploy mínimo de configuración root (2026-02-06)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. En producción y en deployment URL se observó:
+   - Sin header canary `X-YG-Config`.
+   - Sin `Permissions-Policy`.
+   - `/music` en 404 mientras `/dashboard/music.html` responde 200.
+2. Conclusión operativa:
+   - El deploy evaluado no está aplicando la lógica esperada de `vercel.json` root (o no corresponde al commit de configuración).
+3. Necesidad inmediata:
+   - Aislar con configuración mínima y no ambigua para verificar lectura efectiva de config en deploy.
+
+### Plan quirúrgico
+1. Tocar solo `vercel.json` (root) en modo probe:
+   - Dejar `rewrites` mínimos únicamente para:
+     - `/music` -> `/dashboard/music.html`
+     - `/music/` -> `/dashboard/music.html`
+   - Dejar un único `headers` global:
+     - `source: "/:path*"`
+     - `X-YG-Config: root-vercel-active`
+2. Mantener build settings (`buildCommand`, `outputDirectory`, `installCommand`) sin cambios.
+3. Ejecutar `pnpm build:gold`.
+4. Verificar post-deploy:
+   - `curl -I /` con `X-YG-Config`.
+   - `curl -I -L /music` sin 404.
+
+### Riesgos y mitigación
+1. Riesgo temporal de perder rewrites/headers avanzados durante el probe.
+   - Mitigación: commit corto y reversible; restaurar config completa tras validar canary.
+
+### Rollback
+1. Revertir:
+   - `vercel.json`
+   - `apps/gold/docs/AGENT_REPORT.md`
