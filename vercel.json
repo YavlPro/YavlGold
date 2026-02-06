@@ -33,7 +33,7 @@
   ],
   "headers": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "headers": [
         { "key": "X-YG-Config", "value": "root-vercel-active" }
       ]
