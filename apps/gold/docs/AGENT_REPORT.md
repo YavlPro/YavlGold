@@ -1,4 +1,24 @@
-﻿---
+---
+
+## 🐞 SESIÓN: Fix Dashboard Modules Select Sync (2026-02-06)
+
+### Diagnóstico
+- **Error**: "Error al cargar módulos" en dashboard.
+- **Causa**: El select de dashboard/index.html (línea 2195) no incluía is_active, mientras que moduleManager.js sí la incluía.
+- **Tipo**: Caso D — columnas desincronizadas entre archivos.
+
+### Plan
+1. Añadir is_active al select en dashboard/index.html para sincronizar con moduleManager.js.
+2. Build y verificar.
+
+### Archivos modificados
+- apps/gold/dashboard/index.html — añadido is_active al select de modules (línea 2195).
+
+### Resultado
+✅ Columnas sincronizadas entre dashboard/index.html y moduleManager.js.
+✅ Build PASS: pnpm build:gold.
+
+---
 
 ## 🔄 SESIÓN: Facturero Transfer Enhancement v9.7 (2026-02-03)
 

@@ -1458,6 +1458,7 @@
         text-align: center;
       }
     }
+
     /* ============================================
            ?? INSIGHTS (Continuar / Resumen / Recomendado)
         ============================================ */
@@ -1617,8 +1618,7 @@
     <section class="welcome-section">
       <div class="welcome-header">
         <div class="yg-bg-emoji yg-float" aria-hidden="true">🏡</div>
-        <img id="header-avatar" class="header-avatar"
-          src="/assets/images/logo.webp" alt="Avatar"
+        <img id="header-avatar" class="header-avatar" src="/assets/images/logo.webp" alt="Avatar"
           onerror="this.src='/assets/images/logo.webp'">
         <div class="welcome-text">
           <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
@@ -1666,9 +1666,11 @@
       <div class="insight-card" id="summary-card">
         <div class="insight-title">Resumen</div>
         <ul class="summary-list">
-          <li class="summary-item"><span>Modulos visitados</span><span id="summary-visited" class="summary-value">0</span></li>
+          <li class="summary-item"><span>Modulos visitados</span><span id="summary-visited"
+              class="summary-value">0</span></li>
           <li class="summary-item"><span>Ultimo modulo</span><span id="summary-last" class="summary-value">-</span></li>
-          <li class="summary-item"><span>Favoritos</span><span id="summary-favorites" class="summary-value">0</span></li>
+          <li class="summary-item"><span>Favoritos</span><span id="summary-favorites" class="summary-value">0</span>
+          </li>
           <li class="summary-item"><span>No leidas</span><span id="summary-unread" class="summary-value">0</span></li>
         </ul>
       </div>
@@ -1733,8 +1735,7 @@
         <div class="yg-profile-body">
           <div class="yg-profile-avatarRow">
             <div class="yg-profile-avatarWrap">
-              <img id="settings-avatar-img" class="yg-profile-avatar"
-                src="/assets/images/logo.webp" alt="Avatar">
+              <img id="settings-avatar-img" class="yg-profile-avatar" src="/assets/images/logo.webp" alt="Avatar">
               <label for="avatar-file-input" class="yg-profile-avatarOverlay">
                 <i class="fas fa-camera"></i>
               </label>
@@ -2192,7 +2193,7 @@
 
         const { data: modules, error } = await supabase
           .from('modules')
-          .select('id,title,name,slug,module_key,route,path,description,icon,status,badge,is_locked,min_level,thumbnail_url,features')
+          .select('id,title,name,slug,module_key,route,path,description,icon,status,badge,is_locked,min_level,thumbnail_url,features,is_active')
           .order('min_level', { ascending: true });
 
         if (error) {
@@ -2931,4 +2932,3 @@
 </body>
 
 </html>
-
