@@ -9,7 +9,7 @@ import { logger } from '../utils/logger.js';
 const CACHE_KEY = 'yavl_modules_v1';
 const CACHE_TTL = 300000; // 5 minutos
 const FAVORITES_CACHE_KEY = 'yavl_favorites_v1';
-const MODULE_SELECT_COLUMNS = 'id,title,name,slug,module_key,route,path,description,icon,status,badge,is_locked,min_level,thumbnail_url,features,is_active';
+const MODULE_SELECT_COLUMNS = 'id,title,description,thumbnail_url,route,is_active,is_locked,min_level,created_at';
 
 export const ModuleManager = {
     /**
