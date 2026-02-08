@@ -2483,22 +2483,9 @@
 
         import { supabase } from '../assets/js/config/supabase-config.js';
 
-        // --- GLOBAL HANDLERS (Supabase Crops) ---
-        window.openCropModal = function () {
-            const modal = document.getElementById('modal-new-crop');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.style.display = 'flex';
-            }
-        };
+        // NOTE: openCropModal and closeCropModal are defined in agro.js
+        // They use CSS class '.active' for modal visibility
 
-        window.closeCropModal = function () {
-            const modal = document.getElementById('modal-new-crop');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.style.display = 'none';
-            }
-        };
 
         window.saveCrop = async function () {
             // Selector robusto con ID fijo (candado definitivo)
