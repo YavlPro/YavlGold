@@ -2209,8 +2209,32 @@
         </details>
     </section>
 
-    <!-- AgroRepo Template: NOT rendered until first accordion open -->
+    <!-- AgroRepo Ultimate Template: NOT rendered until first accordion open -->
     <template id="agro-repo-template">
+        <!-- Sidebar Backdrop (mobile) -->
+        <div class="arw-sidebar-backdrop" id="arw-sidebarBackdrop"></div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="arw-modal-overlay" id="arw-deleteModal">
+            <div class="arw-modal">
+                <div class="arw-modal-header">
+                    <h3 class="arw-modal-title">⚠️ Confirmar Eliminación</h3>
+                    <button class="arw-modal-close" id="arw-deleteModalClose">×</button>
+                </div>
+                <div class="arw-modal-body">
+                    <p id="arw-deleteModalText"
+                        style="color:var(--arw-text-secondary);font-size:0.88rem;line-height:1.6;">
+                        ¿Estás seguro? Esta acción no se puede deshacer.
+                    </p>
+                </div>
+                <div class="arw-modal-footer">
+                    <button class="arw-btn-cancel" id="arw-deleteModalCancel">Cancelar</button>
+                    <button class="arw-btn-submit" id="arw-deleteModalConfirm"
+                        style="background:var(--arw-danger);border-color:var(--arw-danger);">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
         <div class="arw-app-container">
             <!-- SIDEBAR -->
             <aside class="arw-sidebar" id="arw-sidebar">
@@ -2223,19 +2247,37 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="arw-sidebar-actions">
-                    <button class="arw-btn-new-bitacora" id="arw-btnNewBitacora">
-                        <span>➕</span> Nueva Bitácora
-                    </button>
+                    <div class="arw-new-bitacora-form" style="display:flex;gap:8px;">
+                        <input type="text" id="arw-newBitacoraInput" placeholder="Nuevo cultivo..." maxlength="40"
+                            autocomplete="off" class="arw-input-field"
+                            style="flex:1;min-height:40px;padding:8px 12px;font-size:13px;">
+                        <button id="arw-btnCreateBitacora" class="arw-btn-submit"
+                            style="padding:8px 14px;min-width:40px;" title="Crear bitácora (Ctrl+N)">+</button>
+                    </div>
                 </div>
+
                 <div class="arw-bitacoras-section">
                     <div class="arw-section-title">📁 Mis Bitácoras</div>
                     <ul class="arw-bitacora-list" id="arw-bitacoraList"></ul>
                 </div>
+
                 <div class="arw-sidebar-footer">
+                    <div class="arw-sidebar-stats"
+                        style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                        <div style="font-size:11px;color:var(--arw-text-secondary);">
+                            <span>Bitácoras:</span> <strong id="arw-statBitacoras"
+                                style="color:var(--arw-gold-primary);">0</strong>
+                        </div>
+                        <div style="font-size:11px;color:var(--arw-text-secondary);">
+                            <span>Reportes:</span> <strong id="arw-statReportes"
+                                style="color:var(--arw-gold-primary);">0</strong>
+                        </div>
+                    </div>
                     <div class="arw-storage-info">
                         <span class="arw-storage-indicator"></span>
-                        <span id="arw-storageStatus">Datos locales · 100% Offline</span>
+                        <span id="arw-storageStatus">LocalStorage · 100% Offline</span>
                     </div>
                 </div>
             </aside>
@@ -2250,157 +2292,187 @@
                         </nav>
                     </div>
                     <div class="arw-header-actions">
-                        <button class="arw-btn-icon" id="arw-btnOpenFile">
+                        <button class="arw-btn-icon" id="arw-btnOpenFile" title="Importar backup JSON">
                             <span>📂</span>
-                            <span class="arw-btn-text">Abrir</span>
+                            <span class="arw-btn-text">Importar</span>
                         </button>
-                        <button class="arw-btn-icon" id="arw-btnExportAll">
-                            <span>📥</span>
-                            <span class="arw-btn-text">Backup JSON</span>
+                        <button class="arw-btn-icon" id="arw-btnExportJSON" title="Exportar JSON (Ctrl+E)">
+                            <span>📦</span>
+                            <span class="arw-btn-text">JSON</span>
                         </button>
-                        <button class="arw-btn-icon arw-btn-primary" id="arw-btnSaveFile">
+                        <button class="arw-btn-icon" id="arw-btnExportMD" title="Exportar Markdown">
+                            <span>📝</span>
+                            <span class="arw-btn-text">Markdown</span>
+                        </button>
+                        <button class="arw-btn-icon arw-btn-primary" id="arw-btnSaveFile"
+                            title="Guardar en disco (Ctrl+S)">
                             <span>💾</span>
-                            <span class="arw-btn-text">Guardar .md</span>
+                            <span class="arw-btn-text">Guardar</span>
                         </button>
                     </div>
                 </header>
 
-                <div class="arw-content-area" id="arw-contentArea">
-                    <!-- Welcome Screen -->
-                    <div class="arw-welcome-screen" id="arw-welcomeScreen">
-                        <div class="arw-welcome-icon">🌱</div>
-                        <h2 class="arw-welcome-title">Bienvenido a AgroRepo</h2>
-                        <p class="arw-welcome-subtitle">
-                            Tu bitácora digital de cultivos para La Grita, Táchira.
-                            Registra, organiza y exporta el historial de tus siembras.<br>
-                            <strong style="color: var(--gold-primary);">100% Offline. 100% Tuyo. Cero
-                                dependencias.</strong>
-                        </p>
-                        <div class="arw-features-grid">
-                            <div class="arw-feature-card">
-                                <div class="arw-feature-icon">📴</div>
-                                <div class="arw-feature-title">Sin Internet</div>
-                                <div class="arw-feature-text">Funciona 100% offline. Tus datos nunca salen de tu laptop.
+                <div class="arw-content-wrapper" style="display:flex;flex:1;overflow:hidden;">
+                    <div class="arw-content-area" id="arw-contentArea" style="flex:1;overflow-y:auto;padding:24px;">
+                        <!-- Welcome Screen -->
+                        <div class="arw-welcome-screen" id="arw-welcomeScreen">
+                            <div class="arw-welcome-icon">🌾</div>
+                            <h2 class="arw-welcome-title">Bienvenido a <strong>AgroRepo</strong></h2>
+                            <p class="arw-welcome-subtitle">
+                                Tu bitácora digital de cultivos para La Grita, Táchira.
+                                Registra, organiza y exporta el historial de tus siembras.<br>
+                                <strong style="color:var(--arw-gold-primary);">100% Offline · 100% Tuyo · Cero
+                                    Dependencias</strong>
+                            </p>
+                            <div class="arw-features-grid">
+                                <div class="arw-feature-card">
+                                    <div class="arw-feature-icon">📴</div>
+                                    <div class="arw-feature-title">Sin Internet</div>
+                                    <div class="arw-feature-text">Funciona 100% offline. Datos en tu laptop.</div>
                                 </div>
-                            </div>
-                            <div class="arw-feature-card">
-                                <div class="arw-feature-icon">⚡</div>
-                                <div class="arw-feature-title">Ultra Rápido</div>
-                                <div class="arw-feature-text">Respuesta en &lt;5ms. Sin esperas de carga ni servidores
-                                    lentos.</div>
-                            </div>
-                            <div class="arw-feature-card">
-                                <div class="arw-feature-icon">🔒</div>
-                                <div class="arw-feature-title">100% Privado</div>
-                                <div class="arw-feature-text">Tus datos de cultivo son tuyos. Nadie más tiene acceso.
+                                <div class="arw-feature-card">
+                                    <div class="arw-feature-icon">⚡</div>
+                                    <div class="arw-feature-title">Ultra Rápido</div>
+                                    <div class="arw-feature-text">Respuesta en &lt;1ms. Sin servidores lentos.</div>
+                                </div>
+                                <div class="arw-feature-card">
+                                    <div class="arw-feature-icon">🔒</div>
+                                    <div class="arw-feature-title">100% Privado</div>
+                                    <div class="arw-feature-text">Tus datos de cultivo son solo tuyos.</div>
                                 </div>
                             </div>
                         </div>
-                        <button class="arw-btn-new-bitacora" id="arw-btnWelcomeNew"
-                            style="width: auto; padding: 16px 36px;">
-                            <span>🌾</span> Crear Primera Bitácora
-                        </button>
+
+                        <!-- Editor View (initially hidden) -->
+                        <div class="arw-editor-panel" id="arw-editorPanel" style="display: none;">
+                            <div class="arw-input-area">
+                                <label class="arw-input-label" style="display:flex;align-items:center;gap:8px;">
+                                    <span class="arw-pulse-dot"
+                                        style="width:8px;height:8px;background:var(--arw-success);border-radius:50%;animation:arw-pulse 2s infinite;"></span>
+                                    Nuevo Reporte de Campo
+                                </label>
+                                <textarea class="arw-input-field" id="arw-reportContent"
+                                    placeholder="Escribe tu reporte... Soporta **Markdown**. Ej: Hoy apliqué **abono orgánico** a las 6AM.&#10;- Lote Norte: 2kg/ha&#10;- Lote Sur: 1.5kg/ha"></textarea>
+
+                                <div class="arw-report-toolbar"
+                                    style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:12px;flex-wrap:wrap;gap:12px;">
+                                    <div class="arw-report-tags" id="arw-reportTags"
+                                        style="display:flex;flex-wrap:wrap;gap:6px;">
+                                        <button class="arw-tag-btn" data-tag="riego"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">💧
+                                            Riego</button>
+                                        <button class="arw-tag-btn" data-tag="abono"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">🧪
+                                            Abono</button>
+                                        <button class="arw-tag-btn" data-tag="plaga"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">🐛
+                                            Plaga</button>
+                                        <button class="arw-tag-btn" data-tag="cosecha"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">🌽
+                                            Cosecha</button>
+                                        <button class="arw-tag-btn" data-tag="siembra"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">🌱
+                                            Siembra</button>
+                                        <button class="arw-tag-btn" data-tag="clima"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">🌦️
+                                            Clima</button>
+                                        <button class="arw-tag-btn" data-tag="general"
+                                            style="padding:6px 12px;background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:20px;font-size:12px;cursor:pointer;color:var(--arw-text-secondary);transition:all 0.15s ease;">📋
+                                            General</button>
+                                    </div>
+                                    <button class="arw-btn-submit" id="arw-submitBtn">
+                                        ✓ Registrar Reporte
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="arw-commits-container" id="arw-commitsContainer">
+                                <div class="arw-commits-header">
+                                    <div class="arw-commits-title">
+                                        📜 Historial de Reportes
+                                        <span class="arw-commits-count" id="arw-commitsCount">0</span>
+                                    </div>
+                                </div>
+                                <div class="arw-commits-timeline" id="arw-commitsTimeline">
+                                    <div class="arw-empty-state">
+                                        <div class="arw-empty-state-icon">📝</div>
+                                        <div class="arw-empty-state-title">Sin reportes aún</div>
+                                        <div class="arw-empty-state-text">Escribe tu primer reporte de campo arriba
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Editor View (initially hidden) -->
-                    <div class="arw-editor-panel" id="arw-editorPanel" style="display: none;">
-                        <div class="arw-input-area">
-                            <div class="arw-input-group">
-                                <label class="arw-input-label">Tipo de Registro</label>
-                                <div class="arw-type-selector" id="arw-typeSelector">
-                                    <div class="arw-type-option arw-type-observation active" data-type="observation">
-                                        <span>👁️</span> Observación
-                                    </div>
-                                    <div class="arw-type-option arw-type-action" data-type="action">
-                                        <span>🔧</span> Acción
-                                    </div>
-                                    <div class="arw-type-option arw-type-issue" data-type="issue">
-                                        <span>⚠️</span> Problema
-                                    </div>
-                                    <div class="arw-type-option arw-type-harvest" data-type="harvest">
-                                        <span>🌾</span> Cosecha
-                                    </div>
+                    <!-- Preview Panel (Right Side Stats) -->
+                    <aside class="arw-preview-panel" id="arw-previewPanel"
+                        style="display:none;width:280px;background:var(--arw-bg-secondary);border-left:1px solid var(--arw-border-subtle);overflow-y:auto;flex-shrink:0;">
+                        <div class="arw-preview-header"
+                            style="padding:16px 18px;border-bottom:1px solid var(--arw-border-subtle);background:rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--arw-text-primary);">
+                            <span>📊</span> Resumen de Bitácora
+                        </div>
+                        <div class="arw-preview-content" style="padding:18px;">
+                            <div class="arw-stats-grid"
+                                style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                                <div class="arw-stat-card"
+                                    style="background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:var(--arw-radius-md);padding:16px;text-align:center;">
+                                    <div class="arw-stat-card-value" id="arw-pvStatTotal"
+                                        style="font-size:24px;font-weight:700;color:var(--arw-gold-bright);">0</div>
+                                    <div class="arw-stat-card-label"
+                                        style="font-size:10px;text-transform:uppercase;color:var(--arw-text-muted);margin-top:4px;">
+                                        Registros</div>
+                                </div>
+                                <div class="arw-stat-card"
+                                    style="background:var(--arw-bg-tertiary);border:1px solid var(--arw-border-subtle);border-radius:var(--arw-radius-md);padding:16px;text-align:center;">
+                                    <div class="arw-stat-card-value" id="arw-pvStatDays"
+                                        style="font-size:24px;font-weight:700;color:var(--arw-gold-bright);">0</div>
+                                    <div class="arw-stat-card-label"
+                                        style="font-size:10px;text-transform:uppercase;color:var(--arw-text-muted);margin-top:4px;">
+                                        Días Activo</div>
                                 </div>
                             </div>
-                            <div class="arw-input-group">
-                                <label class="arw-input-label">Descripción del Reporte (Markdown soportado)</label>
-                                <textarea class="arw-input-field" id="arw-reportContent"
-                                    placeholder="Ej: Hoy apliqué **abono orgánico** en las parcelas:&#10;- Lote Norte: 2kg/ha&#10;- Lote Sur: 1.5kg/ha"></textarea>
+                            <div class="arw-info-section" style="margin-bottom:20px;">
+                                <div class="arw-info-title"
+                                    style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--arw-text-muted);margin-bottom:12px;font-weight:600;">
+                                    Información del Cultivo</div>
+                                <div class="arw-info-item"
+                                    style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;">
+                                    <span class="arw-info-key" style="color:var(--arw-text-secondary);">Nombre</span>
+                                    <span class="arw-info-val" id="arw-pvInfoName"
+                                        style="color:var(--arw-text-primary);font-weight:500;">—</span>
+                                </div>
+                                <div class="arw-info-item"
+                                    style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;">
+                                    <span class="arw-info-key" style="color:var(--arw-text-secondary);">Creada</span>
+                                    <span class="arw-info-val" id="arw-pvInfoCreated"
+                                        style="color:var(--arw-text-primary);font-weight:500;">—</span>
+                                </div>
+                                <div class="arw-info-item"
+                                    style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;">
+                                    <span class="arw-info-key" style="color:var(--arw-text-secondary);">Último
+                                        reporte</span>
+                                    <span class="arw-info-val" id="arw-pvInfoLast"
+                                        style="color:var(--arw-text-primary);font-weight:500;">—</span>
+                                </div>
+                                <div class="arw-info-item"
+                                    style="display:flex;justify-content:space-between;padding:8px 0;font-size:12px;">
+                                    <span class="arw-info-key"
+                                        style="color:var(--arw-text-secondary);">Almacenamiento</span>
+                                    <span class="arw-info-val" style="color:var(--arw-success);font-weight:500;">💾
+                                        Local-First</span>
+                                </div>
                             </div>
-                            <div class="arw-input-footer">
-                                <span class="arw-char-count"><span id="arw-charCount">0</span> caracteres</span>
-                                <button class="arw-btn-submit" id="arw-submitBtn" disabled>
-                                    <span>✓</span> Registrar Entrada
-                                </button>
+                            <div class="arw-info-section">
+                                <div class="arw-info-title"
+                                    style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--arw-text-muted);margin-bottom:12px;font-weight:600;">
+                                    Distribución de Tags</div>
+                                <div id="arw-pvTagStats"></div>
                             </div>
                         </div>
-                        <div class="arw-commits-container" id="arw-commitsContainer">
-                            <div class="arw-commits-header">
-                                <div class="arw-commits-title">
-                                    <span>📜</span> Historial de Registros
-                                    <span class="arw-commits-count" id="arw-commitsCount">0</span>
-                                </div>
-                            </div>
-                            <div class="arw-commits-timeline" id="arw-commitsTimeline">
-                                <div class="arw-empty-state">
-                                    <div class="arw-empty-state-icon">📝</div>
-                                    <div class="arw-empty-state-title">Sin registros aún</div>
-                                    <div class="arw-empty-state-text">Agrega tu primer reporte para comenzar a
-                                        documentar esta bitácora.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    </aside>
                 </div>
             </main>
-        </div>
-
-        <!-- Modal: Nueva Bitácora -->
-        <div class="arw-modal-overlay" id="arw-newBitacoraModal">
-            <div class="arw-modal">
-                <div class="arw-modal-header">
-                    <h3 class="arw-modal-title">🌱 Nueva Bitácora de Cultivo</h3>
-                    <button class="arw-modal-close" id="arw-modalClose">×</button>
-                </div>
-                <div class="arw-modal-body">
-                    <div class="arw-input-group">
-                        <label class="arw-input-label">Nombre de la Bitácora</label>
-                        <input type="text" class="arw-input-field" id="arw-bitacoraName"
-                            placeholder="Ej: Maíz Lote Norte 2026">
-                    </div>
-                    <label class="arw-input-label" style="margin-top: 18px;">Tipo de Cultivo</label>
-                    <div class="arw-crop-options" id="arw-cropOptions">
-                        <div class="arw-crop-option" data-crop="maiz">
-                            <div class="arw-crop-option-icon">🌽</div>
-                            <div class="arw-crop-option-name">Maíz</div>
-                        </div>
-                        <div class="arw-crop-option" data-crop="caraota">
-                            <div class="arw-crop-option-icon">🫘</div>
-                            <div class="arw-crop-option-name">Caraota</div>
-                        </div>
-                        <div class="arw-crop-option" data-crop="tomate">
-                            <div class="arw-crop-option-icon">🍅</div>
-                            <div class="arw-crop-option-name">Tomate</div>
-                        </div>
-                        <div class="arw-crop-option" data-crop="papa">
-                            <div class="arw-crop-option-icon">🥔</div>
-                            <div class="arw-crop-option-name">Papa</div>
-                        </div>
-                        <div class="arw-crop-option" data-crop="cafe">
-                            <div class="arw-crop-option-icon">☕</div>
-                            <div class="arw-crop-option-name">Café</div>
-                        </div>
-                        <div class="arw-crop-option" data-crop="otro">
-                            <div class="arw-crop-option-icon">🌿</div>
-                            <div class="arw-crop-option-name">Otro</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="arw-modal-footer">
-                    <button class="arw-btn-cancel" id="arw-btnModalCancel">Cancelar</button>
-                    <button class="arw-btn-submit" id="arw-btnCreateBitacora">Crear Bitácora</button>
-                </div>
-            </div>
         </div>
 
         <!-- Toast Container -->

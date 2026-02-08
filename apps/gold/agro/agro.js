@@ -8712,598 +8712,659 @@ window.deleteCrop = deleteCrop;
 })();
 
 // ============================================================
-// AGROREPO WIDGET MANAGER (V1.0)
-// Lazy-loaded, isolated, feature-flagged
+// AGROREPO ULTIMATE ENGINE v2.0.0
+// Local-First, Feature-Complete, Premium UX
 // ============================================================
 (function () {
     'use strict';
 
-    // FEATURE FLAG: Set to false to disable widget
-    const AGRO_REPO_ENABLED = true;
+    // FEATURE FLAG
+    const AGROREPO_ENABLED = true;
 
-    // Check feature flag (early exit)
-    if (!AGRO_REPO_ENABLED) {
-        console.log('[AgroRepo] ⛔ Widget disabled by feature flag');
+    if (!AGROREPO_ENABLED) {
+        console.log('[AgroRepo] ⛔ Widget disabled');
         const section = document.getElementById('agro-repo-section');
         if (section) section.style.display = 'none';
         return;
     }
 
     // Constants
-    const STORAGE_KEY = 'agrorepo_yavlgold_v1';
+    const APP_KEY = 'agrorepo_ultimate_v2';
     const CROP_ICONS = {
-        maiz: '🌽',
-        caraota: '🫘',
-        tomate: '🍅',
-        papa: '🥔',
-        cafe: '☕',
-        otro: '🌿'
+        maiz: '🌽', caraota: '🫘', tomate: '🍅', papa: '🥔',
+        cafe: '☕', lechuga: '🥬', cebolla: '🧅', ajo: '🧄', otro: '🌾'
+    };
+    const TAG_CONFIG = {
+        riego: { icon: '💧', label: 'Riego' },
+        abono: { icon: '🧪', label: 'Abono' },
+        plaga: { icon: '🐛', label: 'Plaga' },
+        cosecha: { icon: '🌽', label: 'Cosecha' },
+        siembra: { icon: '🌱', label: 'Siembra' },
+        clima: { icon: '🌦️', label: 'Clima' },
+        general: { icon: '📋', label: 'General' }
     };
 
     // State
-    let widgetInitialized = false;
-    let bitacoras = [];
-    let currentBitacoraId = null;
-    let selectedCropType = null;
-    let selectedRecordType = 'observation';
+    const state = {
+        bitacoras: [],
+        activeBitacoraId: null,
+        selectedTags: [],
+        lastSaved: null
+    };
 
-    // DOM References (populated after init)
+    // DOM refs
     let root = null;
-    let sidebar = null;
-    let bitacoraList = null;
-    let welcomeScreen = null;
-    let editorPanel = null;
-    let commitsTimeline = null;
-    let commitsCount = null;
-    let modal = null;
-    let toastContainer = null;
+    let widgetInitialized = false;
+    let _deleteCallback = null;
 
-    // ============================================================
-    // INITIALIZATION (Lazy on accordion open)
-    // ============================================================
+    // ─── UTILITIES ─────────────────────────────────────────
+    const $ = id => root?.querySelector(`#${id}`) || document.getElementById(id);
+    const generateId = () => 'arw_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    const generateHash = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+    const escapeHtml = str => { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; };
 
-    function initWidget() {
-        // Guard 1: Internal IIFE state
-        if (widgetInitialized) return;
-
-        root = document.getElementById('agro-widget-root');
-        if (!root) {
-            console.error('[AgroRepo] Root element not found');
-            return;
-        }
-
-        // Guard 2: Data attribute on root (survives HMR / double-load)
-        if (root.dataset.loaded === '1') {
-            console.log('[AgroRepo] Already loaded (data-loaded). Skipping.');
-            return;
-        }
-
-        // Mark as loaded
-        widgetInitialized = true;
-        root.dataset.loaded = '1';
-
-        console.log('[AgroRepo] 🌾 Initializing widget...');
-
-        // Clone template content into root
-        const template = document.getElementById('agro-repo-template');
-        if (!template) {
-            console.error('[AgroRepo] Template not found');
-            return;
-        }
-
-        // Clear loading state and inject template
-        root.innerHTML = '';
-        root.appendChild(template.content.cloneNode(true));
-
-        // Cache DOM references
-        cacheReferences();
-
-        // Load data from localStorage
-        loadFromStorage();
-
-        // Bind event handlers
-        bindEvents();
-
-        // Render initial state
-        renderBitacoraList();
-        updateView();
-
-        console.log('[AgroRepo] ✅ Widget initialized with', bitacoras.length, 'bitácoras');
-    }
-
-    function cacheReferences() {
-        sidebar = root.querySelector('.arw-sidebar');
-        bitacoraList = root.querySelector('#arw-bitacoraList');
-        welcomeScreen = root.querySelector('#arw-welcomeScreen');
-        editorPanel = root.querySelector('#arw-editorPanel');
-        commitsTimeline = root.querySelector('#arw-commitsTimeline');
-        commitsCount = root.querySelector('#arw-commitsCount');
-        modal = root.querySelector('#arw-newBitacoraModal');
-        toastContainer = root.querySelector('#arw-toastContainer');
-    }
-
-    // ============================================================
-    // EVENT BINDING
-    // ============================================================
-
-    function bindEvents() {
-        // New Bitácora buttons
-        const btnNewBitacora = root.querySelector('#arw-btnNewBitacora');
-        const btnWelcomeNew = root.querySelector('#arw-btnWelcomeNew');
-        if (btnNewBitacora) btnNewBitacora.addEventListener('click', openModal);
-        if (btnWelcomeNew) btnWelcomeNew.addEventListener('click', openModal);
-
-        // Modal controls
-        const modalClose = root.querySelector('#arw-modalClose');
-        const btnModalCancel = root.querySelector('#arw-btnModalCancel');
-        const btnCreateBitacora = root.querySelector('#arw-btnCreateBitacora');
-        if (modalClose) modalClose.addEventListener('click', closeModal);
-        if (btnModalCancel) btnModalCancel.addEventListener('click', closeModal);
-        if (btnCreateBitacora) btnCreateBitacora.addEventListener('click', createBitacora);
-
-        // Crop type selection
-        const cropOptions = root.querySelectorAll('.arw-crop-option');
-        cropOptions.forEach(opt => {
-            opt.addEventListener('click', () => {
-                cropOptions.forEach(o => o.classList.remove('selected'));
-                opt.classList.add('selected');
-                selectedCropType = opt.dataset.crop;
-            });
-        });
-
-        // Record type selection
-        const typeOptions = root.querySelectorAll('.arw-type-option');
-        typeOptions.forEach(opt => {
-            opt.addEventListener('click', () => {
-                typeOptions.forEach(o => o.classList.remove('active'));
-                opt.classList.add('active');
-                selectedRecordType = opt.dataset.type;
-            });
-        });
-
-        // Report content input
-        const reportContent = root.querySelector('#arw-reportContent');
-        const charCount = root.querySelector('#arw-charCount');
-        const submitBtn = root.querySelector('#arw-submitBtn');
-        if (reportContent) {
-            reportContent.addEventListener('input', () => {
-                const len = reportContent.value.length;
-                if (charCount) charCount.textContent = len;
-                if (submitBtn) submitBtn.disabled = len === 0;
-            });
-        }
-
-        // Submit button
-        if (submitBtn) submitBtn.addEventListener('click', addRecord);
-
-        // Mobile menu toggle
-        const menuToggle = root.querySelector('#arw-menuToggle');
-        if (menuToggle) {
-            menuToggle.addEventListener('click', () => {
-                sidebar?.classList.toggle('open');
-            });
-        }
-
-        // Header actions
-        const btnSaveFile = root.querySelector('#arw-btnSaveFile');
-        const btnExportAll = root.querySelector('#arw-btnExportAll');
-        const btnOpenFile = root.querySelector('#arw-btnOpenFile');
-        if (btnSaveFile) btnSaveFile.addEventListener('click', exportMarkdown);
-        if (btnExportAll) btnExportAll.addEventListener('click', exportJSON);
-        if (btnOpenFile) btnOpenFile.addEventListener('click', importJSON);
-    }
-
-    // ============================================================
-    // STORAGE
-    // ============================================================
-
-    function loadFromStorage() {
+    function formatDate(iso) {
         try {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) {
-                const parsed = JSON.parse(data);
-                bitacoras = parsed.bitacoras || [];
-                currentBitacoraId = parsed.currentBitacoraId || null;
+            return new Date(iso).toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch { return iso; }
+    }
+
+    function timeAgo(iso) {
+        const diff = Date.now() - new Date(iso).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Ahora';
+        if (mins < 60) return `Hace ${mins}m`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `Hace ${hrs}h`;
+        return `Hace ${Math.floor(hrs / 24)}d`;
+    }
+
+    function getCropIcon(name) {
+        const lower = name.toLowerCase();
+        for (const [key, icon] of Object.entries(CROP_ICONS)) {
+            if (lower.includes(key)) return icon;
+        }
+        return '🌾';
+    }
+
+    function getStorageSize() {
+        const data = localStorage.getItem(APP_KEY) || '';
+        const bytes = new Blob([data]).size;
+        return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB';
+    }
+
+    function renderMarkdown(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/^- (.+)/gm, '<span style="color:var(--arw-text-muted);margin-right:6px">▸</span>$1');
+    }
+
+    function getTagLabel(tag) {
+        return TAG_CONFIG[tag] ? `${TAG_CONFIG[tag].icon} ${TAG_CONFIG[tag].label}` : tag;
+    }
+
+    // ─── PERSISTENCE ─────────────────────────────────────────
+    function persist() {
+        try {
+            localStorage.setItem(APP_KEY, JSON.stringify({
+                bitacoras: state.bitacoras,
+                activeBitacoraId: state.activeBitacoraId,
+                lastSaved: state.lastSaved
+            }));
+            updateStats();
+        } catch (e) {
+            console.error('[AgroRepo] Persist error:', e);
+            showToast('❌ Error al guardar', 'error');
+        }
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(APP_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                state.bitacoras = parsed.bitacoras || [];
+                state.activeBitacoraId = parsed.activeBitacoraId || null;
+                state.lastSaved = parsed.lastSaved || null;
             }
-        } catch (err) {
-            console.error('[AgroRepo] Error loading from storage:', err);
-            bitacoras = [];
+        } catch (e) {
+            console.error('[AgroRepo] Load error:', e);
+            state.bitacoras = [];
         }
     }
 
-    function saveToStorage() {
-        try {
-            const data = JSON.stringify({
-                bitacoras,
-                currentBitacoraId,
-                lastUpdated: new Date().toISOString()
-            });
-            localStorage.setItem(STORAGE_KEY, data);
-        } catch (err) {
-            console.error('[AgroRepo] Error saving to storage:', err);
+    // ─── TOAST ────────────────────────────────────────────
+    function showToast(message, type = 'info') {
+        const container = $('arw-toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'arw-toast';
+        toast.innerHTML = `<span style="font-size:1.1rem">${type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}</span>
+            <span style="font-size:0.82rem;color:var(--arw-text-primary)">${message}</span>`;
+        toast.style.borderColor = type === 'success' ? 'var(--arw-success)' : type === 'error' ? 'var(--arw-danger)' : type === 'warning' ? 'var(--arw-warning)' : 'var(--arw-border-gold)';
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    // ─── DELETE MODAL ─────────────────────────────────────
+    function showDeleteModal(text, callback) {
+        const modal = $('arw-deleteModal');
+        const modalText = $('arw-deleteModalText');
+        if (modal && modalText) {
+            modalText.textContent = text;
+            modal.classList.add('active');
+            _deleteCallback = callback;
         }
     }
 
-    // ============================================================
-    // BITÁCORA MANAGEMENT
-    // ============================================================
+    function closeDeleteModal() {
+        const modal = $('arw-deleteModal');
+        if (modal) modal.classList.remove('active');
+        _deleteCallback = null;
+    }
 
+    // ─── BITÁCORA CRUD ────────────────────────────────────
     function createBitacora() {
-        const nameInput = root.querySelector('#arw-bitacoraName');
-        const name = nameInput?.value?.trim();
-
+        const input = $('arw-newBitacoraInput');
+        const name = input?.value?.trim();
         if (!name) {
-            showToast('⚠️ Por favor ingresa un nombre para la bitácora', 'warning');
-            nameInput?.focus();
+            showToast('⚠️ Escribe el nombre del cultivo', 'warning');
+            input?.focus();
             return;
         }
-
-        if (!selectedCropType) {
-            showToast('⚠️ Por favor selecciona un tipo de cultivo', 'warning');
+        if (state.bitacoras.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+            showToast('⚠️ Ya existe una bitácora con ese nombre', 'warning');
             return;
         }
-
-        const newBitacora = {
+        const bitacora = {
             id: generateId(),
             name,
-            cropType: selectedCropType,
-            cropIcon: CROP_ICONS[selectedCropType] || '🌿',
-            records: [],
+            icon: getCropIcon(name),
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            reports: []
         };
-
-        bitacoras.push(newBitacora);
-        currentBitacoraId = newBitacora.id;
-        saveToStorage();
-
-        closeModal();
+        state.bitacoras.unshift(bitacora);
+        if (input) input.value = '';
+        persist();
         renderBitacoraList();
-        updateView();
-        showToast('✅ Bitácora creada exitosamente', 'success');
+        selectBitacora(bitacora.id);
+        showToast(`✅ Bitácora "<strong>${escapeHtml(name)}</strong>" creada`, 'success');
+    }
+
+    function deleteBitacora(id) {
+        const b = state.bitacoras.find(x => x.id === id);
+        if (!b) return;
+        showDeleteModal(`¿Eliminar "${b.name}" y sus ${b.reports.length} reportes? No se puede deshacer.`, () => {
+            state.bitacoras = state.bitacoras.filter(x => x.id !== id);
+            if (state.activeBitacoraId === id) {
+                state.activeBitacoraId = null;
+                showWelcome();
+            }
+            persist();
+            renderBitacoraList();
+            showToast(`🗑️ Bitácora "${escapeHtml(b.name)}" eliminada`);
+        });
     }
 
     function selectBitacora(id) {
-        currentBitacoraId = id;
-        saveToStorage();
+        state.activeBitacoraId = id;
+        persist();
         renderBitacoraList();
-        updateView();
-        sidebar?.classList.remove('open'); // Close mobile sidebar
+        showEditor();
+        closeSidebar();
     }
 
-    function getCurrentBitacora() {
-        return bitacoras.find(b => b.id === currentBitacoraId);
-    }
-
-    // ============================================================
-    // RECORDS MANAGEMENT
-    // ============================================================
-
-    function addRecord() {
-        const content = root.querySelector('#arw-reportContent')?.value?.trim();
-        if (!content) {
-            showToast('⚠️ Por favor ingresa una descripción', 'warning');
-            return;
-        }
-
-        const bitacora = getCurrentBitacora();
-        if (!bitacora) {
+    // ─── REPORTS ──────────────────────────────────────────
+    function commitReport() {
+        const textarea = $('arw-reportContent');
+        const text = textarea?.value?.trim();
+        if (!state.activeBitacoraId) {
             showToast('⚠️ Selecciona una bitácora primero', 'warning');
             return;
         }
-
-        const record = {
-            id: generateId(),
-            type: selectedRecordType,
-            content,
-            createdAt: new Date().toISOString()
-        };
-
-        bitacora.records.unshift(record);
-        bitacora.updatedAt = new Date().toISOString();
-        saveToStorage();
-
-        // Clear input
-        const reportContent = root.querySelector('#arw-reportContent');
-        if (reportContent) {
-            reportContent.value = '';
-            root.querySelector('#arw-charCount').textContent = '0';
-            root.querySelector('#arw-submitBtn').disabled = true;
-        }
-
-        renderRecords();
-        showToast('✅ Registro agregado', 'success');
-    }
-
-    // ============================================================
-    // RENDERING
-    // ============================================================
-
-    function renderBitacoraList() {
-        if (!bitacoraList) return;
-
-        if (bitacoras.length === 0) {
-            bitacoraList.innerHTML = '<li class="arw-empty-list" style="padding: 12px 18px; color: var(--arw-text-muted); font-size: 12px;">Sin bitácoras aún</li>';
+        if (!text) {
+            showToast('⚠️ Escribe algo en el reporte', 'warning');
+            textarea?.focus();
             return;
         }
+        const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+        if (!bitacora) return;
+        const report = {
+            id: generateId(),
+            hash: generateHash(),
+            content: text,
+            tags: [...state.selectedTags],
+            createdAt: new Date().toISOString()
+        };
+        if (report.tags.length === 0) report.tags.push('general');
+        bitacora.reports.unshift(report);
+        if (textarea) textarea.value = '';
+        state.selectedTags = [];
+        root?.querySelectorAll('.arw-tag-btn.selected')?.forEach(b => b.classList.remove('selected'));
+        persist();
+        renderTimeline();
+        renderPreview();
+        renderBitacoraList();
+        showToast(`✅ Reporte registrado · <strong style="font-family:monospace;color:var(--arw-gold-muted)">#${report.hash}</strong>`, 'success');
+    }
 
-        bitacoraList.innerHTML = bitacoras.map(b => `
-            <li class="arw-bitacora-item ${b.id === currentBitacoraId ? 'active' : ''}"
-                data-id="${b.id}">
-                <span class="arw-bitacora-icon">${b.cropIcon}</span>
+    function deleteReport(reportId) {
+        const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+        if (!bitacora) return;
+        showDeleteModal('¿Eliminar este reporte? No se puede deshacer.', () => {
+            bitacora.reports = bitacora.reports.filter(r => r.id !== reportId);
+            persist();
+            renderTimeline();
+            renderPreview();
+            renderBitacoraList();
+            showToast('🗑️ Reporte eliminado');
+        });
+    }
+
+    function copyReport(reportId) {
+        const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+        if (!bitacora) return;
+        const r = bitacora.reports.find(x => x.id === reportId);
+        if (!r) return;
+        const text = `[#${r.hash}] ${formatDate(r.createdAt)}\nTags: ${r.tags.join(', ')}\n\n${r.content}`;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('📋 Reporte copiado al portapapeles', 'success');
+        }).catch(() => {
+            showToast('❌ No se pudo copiar', 'error');
+        });
+    }
+
+    // ─── TAG SYSTEM ───────────────────────────────────────
+    function toggleTag(btn) {
+        const tag = btn.dataset.tag;
+        btn.classList.toggle('selected');
+        if (state.selectedTags.includes(tag)) {
+            state.selectedTags = state.selectedTags.filter(t => t !== tag);
+        } else {
+            state.selectedTags.push(tag);
+        }
+        // Update visual state
+        if (btn.classList.contains('selected')) {
+            btn.style.background = 'rgba(212,175,55,0.2)';
+            btn.style.borderColor = 'var(--arw-gold-primary)';
+            btn.style.color = 'var(--arw-gold-bright)';
+        } else {
+            btn.style.background = 'var(--arw-bg-tertiary)';
+            btn.style.borderColor = 'var(--arw-border-subtle)';
+            btn.style.color = 'var(--arw-text-secondary)';
+        }
+    }
+
+    // ─── RENDERING ───────────────────────────────────────
+    function renderBitacoraList() {
+        const list = $('arw-bitacoraList');
+        if (!list) return;
+        if (state.bitacoras.length === 0) {
+            list.innerHTML = `<li style="padding:24px 20px;text-align:center;color:var(--arw-text-muted);font-size:0.82rem;">No hay bitácoras aún.<br>¡Crea la primera arriba!</li>`;
+            return;
+        }
+        list.innerHTML = state.bitacoras.map(b => `
+            <li class="arw-bitacora-item ${b.id === state.activeBitacoraId ? 'active' : ''}" data-id="${b.id}">
+                <span class="arw-bitacora-icon">${b.icon}</span>
                 <div class="arw-bitacora-info">
                     <div class="arw-bitacora-name">${escapeHtml(b.name)}</div>
-                    <div class="arw-bitacora-meta">${b.records.length} registros</div>
+                    <div class="arw-bitacora-meta">${b.reports.length} reporte${b.reports.length !== 1 ? 's' : ''} · ${timeAgo(b.createdAt)}</div>
                 </div>
+                <button class="arw-bitacora-delete" data-del="${b.id}" title="Eliminar" style="background:none;border:none;color:var(--arw-text-muted);cursor:pointer;padding:4px 8px;font-size:14px;opacity:0;transition:opacity 0.2s;">✕</button>
             </li>
         `).join('');
-
-        // Bind click handlers
-        bitacoraList.querySelectorAll('.arw-bitacora-item').forEach(item => {
-            item.addEventListener('click', () => {
+        // Bind clicks
+        list.querySelectorAll('.arw-bitacora-item').forEach(item => {
+            item.addEventListener('click', e => {
+                if (e.target.closest('.arw-bitacora-delete')) return;
                 selectBitacora(item.dataset.id);
+            });
+            item.addEventListener('mouseenter', () => {
+                item.querySelector('.arw-bitacora-delete').style.opacity = '1';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.querySelector('.arw-bitacora-delete').style.opacity = '0';
+            });
+        });
+        list.querySelectorAll('.arw-bitacora-delete').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                deleteBitacora(btn.dataset.del);
             });
         });
     }
 
-    function renderRecords() {
-        if (!commitsTimeline || !commitsCount) return;
+    function showWelcome() {
+        const welcome = $('arw-welcomeScreen');
+        const editor = $('arw-editorPanel');
+        const preview = $('arw-previewPanel');
+        const breadcrumb = $('arw-breadcrumb');
+        if (welcome) welcome.style.display = 'flex';
+        if (editor) editor.style.display = 'none';
+        if (preview) preview.style.display = 'none';
+        if (breadcrumb) breadcrumb.innerHTML = '<span class="arw-breadcrumb-item">AgroRepo</span>';
+    }
 
-        const bitacora = getCurrentBitacora();
-        if (!bitacora || bitacora.records.length === 0) {
-            commitsTimeline.innerHTML = `
-                <div class="arw-empty-state">
-                    <div class="arw-empty-state-icon">📝</div>
-                    <div class="arw-empty-state-title">Sin registros aún</div>
-                    <div class="arw-empty-state-text">Agrega tu primer reporte para comenzar a documentar esta bitácora.</div>
-                </div>
-            `;
-            commitsCount.textContent = '0';
+    function showEditor() {
+        const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+        if (!bitacora) { showWelcome(); return; }
+        const welcome = $('arw-welcomeScreen');
+        const editor = $('arw-editorPanel');
+        const preview = $('arw-previewPanel');
+        const breadcrumb = $('arw-breadcrumb');
+        if (welcome) welcome.style.display = 'none';
+        if (editor) editor.style.display = 'flex';
+        if (preview) preview.style.display = 'block';
+        if (breadcrumb) {
+            breadcrumb.innerHTML = `<span class="arw-breadcrumb-item">AgroRepo</span>
+                <span style="color:var(--arw-text-muted);margin:0 8px;">›</span>
+                <span class="arw-breadcrumb-current" style="color:var(--arw-gold-primary);">${bitacora.icon} ${escapeHtml(bitacora.name)}</span>`;
+        }
+        renderTimeline();
+        renderPreview();
+    }
+
+    function renderTimeline() {
+        const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+        const container = $('arw-commitsTimeline');
+        const countEl = $('arw-commitsCount');
+        if (!container || !bitacora) return;
+        if (countEl) countEl.textContent = bitacora.reports.length;
+        if (bitacora.reports.length === 0) {
+            container.innerHTML = `<div class="arw-empty-state">
+                <div class="arw-empty-state-icon">📋</div>
+                <div class="arw-empty-state-title">Sin reportes aún</div>
+                <div class="arw-empty-state-text">Escribe tu primer reporte de campo arriba</div>
+            </div>`;
             return;
         }
-
-        commitsCount.textContent = bitacora.records.length;
-        commitsTimeline.innerHTML = bitacora.records.map(r => {
-            const typeIcons = {
-                observation: '👁️',
-                action: '🔧',
-                issue: '⚠️',
-                harvest: '🌾'
-            };
-            const typeLabels = {
-                observation: 'Observación',
-                action: 'Acción',
-                issue: 'Problema',
-                harvest: 'Cosecha'
-            };
-            return `
-                <div class="arw-commit-item" style="padding: 14px; background: var(--arw-bg-tertiary); border-radius: var(--arw-radius-md); margin-bottom: 10px; border: 1px solid var(--arw-border-subtle);">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                        <span style="font-size: 16px;">${typeIcons[r.type] || '📝'}</span>
-                        <span style="font-size: 11px; text-transform: uppercase; color: var(--arw-gold-primary); font-weight: 600;">${typeLabels[r.type] || r.type}</span>
-                        <span style="font-size: 10px; color: var(--arw-text-muted); margin-left: auto;">${formatDate(r.createdAt)}</span>
+        container.innerHTML = `<div class="arw-commit-timeline" style="position:relative;padding-left:20px;">
+            ${bitacora.reports.map(r => `
+                <div class="arw-commit-entry" style="position:relative;padding:14px;background:var(--arw-bg-tertiary);border-radius:var(--arw-radius-md);margin-bottom:12px;border:1px solid var(--arw-border-subtle);">
+                    <div style="position:absolute;left:-26px;top:18px;width:12px;height:12px;background:var(--arw-gold-primary);border-radius:50%;border:2px solid var(--arw-bg-primary);"></div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="font-family:monospace;font-size:11px;color:var(--arw-gold-muted);background:var(--arw-bg-elevated);padding:2px 8px;border-radius:4px;">#${r.hash}</span>
+                        <span style="font-size:10px;color:var(--arw-text-muted);">${formatDate(r.createdAt)}</span>
                     </div>
-                    <div style="font-size: 13px; color: var(--arw-text-primary); line-height: 1.6;">${escapeHtml(r.content)}</div>
+                    <div style="font-size:13px;color:var(--arw-text-primary);line-height:1.6;margin-bottom:10px;">${renderMarkdown(escapeHtml(r.content))}</div>
+                    ${r.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+                        ${r.tags.map(t => `<span style="font-size:10px;padding:3px 8px;background:rgba(212,175,55,0.1);border:1px solid var(--arw-border-gold);border-radius:12px;color:var(--arw-gold-muted);">${getTagLabel(t)}</span>`).join('')}
+                    </div>` : ''}
+                    <div style="display:flex;gap:8px;">
+                        <button class="arw-action-copy" data-copy="${r.id}" style="background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">📋 Copiar</button>
+                        <button class="arw-action-del" data-del="${r.id}" style="background:none;border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">🗑️ Eliminar</button>
+                    </div>
                 </div>
-            `;
-        }).join('');
+            `).join('')}
+        </div>`;
+        container.querySelectorAll('.arw-action-copy').forEach(btn => {
+            btn.addEventListener('click', () => copyReport(btn.dataset.copy));
+        });
+        container.querySelectorAll('.arw-action-del').forEach(btn => {
+            btn.addEventListener('click', () => deleteReport(btn.dataset.del));
+        });
     }
 
-    function updateView() {
-        const bitacora = getCurrentBitacora();
-
-        if (bitacora) {
-            if (welcomeScreen) welcomeScreen.style.display = 'none';
-            if (editorPanel) editorPanel.style.display = 'flex';
-            renderRecords();
-
-            const breadcrumb = root.querySelector('#arw-breadcrumb');
-            if (breadcrumb) {
-                breadcrumb.innerHTML = `
-                    <span class="arw-breadcrumb-item">AgroRepo</span>
-                    <span style="color: var(--arw-text-muted); margin: 0 8px;">›</span>
-                    <span class="arw-breadcrumb-item" style="color: var(--arw-gold-primary);">${escapeHtml(bitacora.name)}</span>
-                `;
-            }
-        } else {
-            if (welcomeScreen) welcomeScreen.style.display = 'flex';
-            if (editorPanel) editorPanel.style.display = 'none';
-
-            const breadcrumb = root.querySelector('#arw-breadcrumb');
-            if (breadcrumb) {
-                breadcrumb.innerHTML = '<span class="arw-breadcrumb-item">AgroRepo</span>';
+    function renderPreview() {
+        const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+        if (!bitacora) return;
+        const pvStatTotal = $('arw-pvStatTotal');
+        const pvStatDays = $('arw-pvStatDays');
+        const pvInfoName = $('arw-pvInfoName');
+        const pvInfoCreated = $('arw-pvInfoCreated');
+        const pvInfoLast = $('arw-pvInfoLast');
+        const pvTagStats = $('arw-pvTagStats');
+        if (pvStatTotal) pvStatTotal.textContent = bitacora.reports.length;
+        const uniqueDays = new Set(bitacora.reports.map(r => new Date(r.createdAt).toDateString()));
+        if (pvStatDays) pvStatDays.textContent = uniqueDays.size;
+        if (pvInfoName) pvInfoName.textContent = bitacora.name;
+        if (pvInfoCreated) pvInfoCreated.textContent = formatDate(bitacora.createdAt);
+        const lastR = bitacora.reports[0];
+        if (pvInfoLast) pvInfoLast.textContent = lastR ? timeAgo(lastR.createdAt) : 'Sin reportes';
+        // Tag distribution
+        const tagCount = {};
+        bitacora.reports.forEach(r => {
+            (r.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; });
+        });
+        if (pvTagStats) {
+            const entries = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
+            if (entries.length === 0) {
+                pvTagStats.innerHTML = '<p style="font-size:0.78rem;color:var(--arw-text-muted);">Sin datos aún</p>';
+            } else {
+                pvTagStats.innerHTML = entries.map(([tag, count]) => `
+                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;">
+                        <span style="color:var(--arw-text-secondary);">${getTagLabel(tag)}</span>
+                        <span style="color:var(--arw-gold-primary);font-weight:600;">${count}</span>
+                    </div>
+                `).join('');
             }
         }
     }
 
-    // ============================================================
-    // MODAL
-    // ============================================================
-
-    function openModal() {
-        selectedCropType = null;
-        root.querySelectorAll('.arw-crop-option').forEach(o => o.classList.remove('selected'));
-        const nameInput = root.querySelector('#arw-bitacoraName');
-        if (nameInput) nameInput.value = '';
-        modal?.classList.add('active');
-        setTimeout(() => nameInput?.focus(), 100);
+    function updateStats() {
+        const total = state.bitacoras.reduce((s, b) => s + b.reports.length, 0);
+        const statBitacoras = $('arw-statBitacoras');
+        const statReportes = $('arw-statReportes');
+        const storageStatus = $('arw-storageStatus');
+        if (statBitacoras) statBitacoras.textContent = state.bitacoras.length;
+        if (statReportes) statReportes.textContent = total;
+        if (storageStatus) storageStatus.textContent = `LocalStorage · ${getStorageSize()} · 100% Offline`;
     }
 
-    function closeModal() {
-        modal?.classList.remove('active');
+    // ─── EXPORT/IMPORT ────────────────────────────────────
+    async function saveToFile() {
+        const data = JSON.stringify({ bitacoras: state.bitacoras, exportedAt: new Date().toISOString(), version: '2.0.0' }, null, 2);
+        const fileName = `agrorepo_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        if ('showSaveFilePicker' in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [{ description: 'AgroRepo Data', accept: { 'application/json': ['.json'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(data);
+                await writable.close();
+                state.lastSaved = new Date().toISOString();
+                persist();
+                showToast('💾 Datos guardados en disco', 'success');
+                return;
+            } catch (e) { if (e.name === 'AbortError') return; }
+        }
+        downloadBlob(data, fileName, 'application/json');
+        showToast('💾 Archivo JSON descargado', 'success');
     }
 
-    // ============================================================
-    // EXPORT/IMPORT
-    // ============================================================
-
-    function exportMarkdown() {
-        const bitacora = getCurrentBitacora();
-        if (!bitacora) {
-            showToast('⚠️ Selecciona una bitácora primero', 'warning');
+    async function exportJSON() {
+        if (state.bitacoras.length === 0) {
+            showToast('⚠️ No hay datos para exportar', 'warning');
             return;
         }
+        const data = JSON.stringify({
+            exportedAt: new Date().toISOString(),
+            version: '2.0.0',
+            system: 'AgroRepo Ultimate | YavlGold',
+            bitacoras: state.bitacoras
+        }, null, 2);
+        const fileName = `agrorepo_backup_${new Date().toISOString().slice(0, 10)}.json`;
+        downloadBlob(data, fileName, 'application/json');
+        showToast('📦 Backup JSON descargado', 'success');
+    }
 
-        let md = `# ${bitacora.name}\n\n`;
-        md += `📅 Creada: ${formatDate(bitacora.createdAt)}\n`;
-        md += `🌾 Cultivo: ${bitacora.cropIcon} ${bitacora.cropType}\n\n`;
-        md += `---\n\n## Registros (${bitacora.records.length})\n\n`;
-
-        const typeLabels = {
-            observation: '👁️ Observación',
-            action: '🔧 Acción',
-            issue: '⚠️ Problema',
-            harvest: '🌾 Cosecha'
-        };
-
-        bitacora.records.forEach(r => {
-            md += `### ${typeLabels[r.type] || r.type} - ${formatDate(r.createdAt)}\n\n`;
-            md += `${r.content}\n\n---\n\n`;
+    async function exportMarkdown() {
+        if (state.bitacoras.length === 0) {
+            showToast('⚠️ No hay datos para exportar', 'warning');
+            return;
+        }
+        let md = `# 🌾 AgroRepo Ultimate — Exportación Completa\n`;
+        md += `**Fecha:** ${new Date().toLocaleString('es-VE')}\n`;
+        md += `**Bitácoras:** ${state.bitacoras.length}\n\n---\n\n`;
+        state.bitacoras.forEach(b => {
+            md += `## ${b.icon} ${b.name}\n`;
+            md += `*Creada: ${formatDate(b.createdAt)} · ${b.reports.length} reportes*\n\n`;
+            b.reports.forEach(r => {
+                md += `### \`#${r.hash}\` — ${formatDate(r.createdAt)}\n`;
+                if (r.tags?.length) md += `**Tags:** ${r.tags.join(', ')}\n\n`;
+                md += `${r.content}\n\n---\n\n`;
+            });
         });
-
-        downloadFile(md, `${sanitizeFilename(bitacora.name)}.md`, 'text/markdown');
-        showToast('📄 Markdown exportado', 'success');
+        const fileName = `agrorepo_export_${new Date().toISOString().slice(0, 10)}.md`;
+        downloadBlob(md, fileName, 'text/markdown');
+        showToast('📝 Exportación Markdown descargada', 'success');
     }
 
-    function exportJSON() {
-        const data = JSON.stringify({ bitacoras, exportedAt: new Date().toISOString() }, null, 2);
-        downloadFile(data, 'agrorepo_backup.json', 'application/json');
-        showToast('📥 Backup JSON descargado', 'success');
-    }
-
-    function importJSON() {
+    function importData() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
-        input.onchange = async (e) => {
+        input.onchange = e => {
             const file = e.target.files[0];
             if (!file) return;
-
-            try {
-                const text = await file.text();
-                const data = JSON.parse(text);
-
-                if (Array.isArray(data.bitacoras)) {
-                    const count = data.bitacoras.length;
-                    if (confirm(`Se importarán ${count} bitácoras. ¿Continuar?`)) {
-                        // Merge instead of replace
-                        data.bitacoras.forEach(imported => {
-                            if (!bitacoras.find(b => b.id === imported.id)) {
-                                bitacoras.push(imported);
-                            }
-                        });
-                        saveToStorage();
-                        renderBitacoraList();
-                        showToast(`✅ ${count} bitácoras importadas`, 'success');
-                    }
-                } else {
-                    showToast('⚠️ Formato de archivo inválido', 'warning');
+            const reader = new FileReader();
+            reader.onload = ev => {
+                try {
+                    const imported = JSON.parse(ev.target.result);
+                    const bitacoras = imported.bitacoras;
+                    if (!bitacoras || !Array.isArray(bitacoras)) throw new Error('Formato inválido');
+                    let added = 0;
+                    bitacoras.forEach(ib => {
+                        if (!state.bitacoras.some(b => b.id === ib.id)) {
+                            state.bitacoras.push(ib);
+                            added++;
+                        }
+                    });
+                    persist();
+                    renderBitacoraList();
+                    showToast(`📂 Importadas ${added} bitácora${added !== 1 ? 's' : ''} nueva${added !== 1 ? 's' : ''}`, 'success');
+                } catch (err) {
+                    showToast('❌ Archivo no tiene formato AgroRepo válido', 'error');
+                    console.error('[AgroRepo] Import error:', err);
                 }
-            } catch (err) {
-                console.error('[AgroRepo] Import error:', err);
-                showToast('❌ Error al importar archivo', 'error');
-            }
+            };
+            reader.readAsText(file);
         };
         input.click();
     }
 
-    // ============================================================
-    // UTILITIES
-    // ============================================================
-
-    function generateId() {
-        return 'arw_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    function formatDate(isoStr) {
-        try {
-            const d = new Date(isoStr);
-            return d.toLocaleDateString('es-VE', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch {
-            return isoStr;
-        }
-    }
-
-    function sanitizeFilename(name) {
-        return name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
-    }
-
-    function downloadFile(content, filename, mimeType) {
+    function downloadBlob(content, filename, mimeType) {
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
 
-    function showToast(message, type = 'info') {
-        if (!toastContainer) return;
-
-        const toast = document.createElement('div');
-        toast.className = 'arw-toast';
-        toast.textContent = message;
-        toast.style.borderColor = type === 'success' ? 'var(--arw-success)' :
-            type === 'warning' ? 'var(--arw-warning)' :
-                type === 'error' ? 'var(--arw-danger)' : 'var(--arw-border-gold)';
-        toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(100%)';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+    // ─── MOBILE SIDEBAR ──────────────────────────────────
+    function toggleSidebar() {
+        const sidebar = $('arw-sidebar');
+        const backdrop = $('arw-sidebarBackdrop');
+        sidebar?.classList.toggle('open');
+        backdrop?.classList.toggle('show');
     }
 
-    // ============================================================
-    // ACCORDION TOGGLE LISTENER (Lazy Init)
-    // ============================================================
+    function closeSidebar() {
+        const sidebar = $('arw-sidebar');
+        const backdrop = $('arw-sidebarBackdrop');
+        sidebar?.classList.remove('open');
+        backdrop?.classList.remove('show');
+    }
 
+    // ─── EVENT BINDING ──────────────────────────────────
+    function bindEvents() {
+        // Create bitacora
+        $('arw-btnCreateBitacora')?.addEventListener('click', createBitacora);
+        $('arw-newBitacoraInput')?.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); createBitacora(); }
+        });
+        // Tags
+        root?.querySelectorAll('.arw-tag-btn')?.forEach(btn => {
+            btn.addEventListener('click', () => toggleTag(btn));
+        });
+        // Submit report
+        $('arw-submitBtn')?.addEventListener('click', commitReport);
+        // Mobile menu
+        $('arw-menuToggle')?.addEventListener('click', toggleSidebar);
+        $('arw-sidebarBackdrop')?.addEventListener('click', closeSidebar);
+        // Header actions
+        $('arw-btnOpenFile')?.addEventListener('click', importData);
+        $('arw-btnExportJSON')?.addEventListener('click', exportJSON);
+        $('arw-btnExportMD')?.addEventListener('click', exportMarkdown);
+        $('arw-btnSaveFile')?.addEventListener('click', saveToFile);
+        // Delete modal
+        $('arw-deleteModalConfirm')?.addEventListener('click', () => {
+            if (_deleteCallback) _deleteCallback();
+            closeDeleteModal();
+        });
+        $('arw-deleteModalCancel')?.addEventListener('click', closeDeleteModal);
+        $('arw-deleteModalClose')?.addEventListener('click', closeDeleteModal);
+        $('arw-deleteModal')?.addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeDeleteModal();
+        });
+        // Keyboard shortcuts
+        root?.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveToFile(); }
+            if (e.ctrlKey && e.key === 'e') { e.preventDefault(); exportJSON(); }
+            if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); commitReport(); }
+            if (e.key === 'Escape') { closeDeleteModal(); closeSidebar(); }
+        });
+    }
+
+    // ─── INIT ────────────────────────────────────────────
+    function initWidget() {
+        if (widgetInitialized) return;
+        root = document.getElementById('agro-widget-root');
+        if (!root) { console.error('[AgroRepo] Root not found'); return; }
+        if (root.dataset.loaded === '1') { console.log('[AgroRepo] Already loaded'); return; }
+        widgetInitialized = true;
+        root.dataset.loaded = '1';
+        console.log('[AgroRepo] 🌾 Initializing Ultimate Engine v2.0...');
+        const template = document.getElementById('agro-repo-template');
+        if (!template) { console.error('[AgroRepo] Template not found'); return; }
+        root.innerHTML = '';
+        root.appendChild(template.content.cloneNode(true));
+        loadState();
+        bindEvents();
+        renderBitacoraList();
+        updateStats();
+        if (state.activeBitacoraId) {
+            const exists = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+            if (exists) showEditor();
+            else { state.activeBitacoraId = null; persist(); }
+        }
+        console.log('[AgroRepo] ✅ Widget initialized with', state.bitacoras.length, 'bitácoras');
+    }
+
+    // ─── ACCORDION LISTENER ──────────────────────────────
     function setupAccordionListener() {
         const accordion = document.getElementById('yg-acc-agrorepo');
-        if (!accordion) {
-            console.warn('[AgroRepo] Accordion not found in DOM');
-            return;
-        }
-
-        // Idempotent: Only bind listener once (survives HMR)
-        if (accordion.dataset.listenerBound === '1') {
-            console.log('[AgroRepo] Listener already bound. Skipping.');
-            return;
-        }
+        if (!accordion) { console.warn('[AgroRepo] Accordion not found'); return; }
+        if (accordion.dataset.listenerBound === '1') return;
         accordion.dataset.listenerBound = '1';
-
         accordion.addEventListener('toggle', () => {
-            if (accordion.open && !widgetInitialized) {
-                initWidget();
-            }
+            if (accordion.open && !widgetInitialized) initWidget();
         });
-
-        // Also check if already open on page load
-        if (accordion.open) {
-            initWidget();
-        }
+        if (accordion.open) initWidget();
     }
 
-    // Initialize on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupAccordionListener);
     } else {
         setupAccordionListener();
     }
 
-    console.log('[AgroRepo] 📦 Widget manager loaded (lazy init on accordion open)');
+    console.log('[AgroRepo] 📦 Ultimate Engine v2.0 loaded (lazy init on accordion open)');
 })();
+
+
+
+
+
