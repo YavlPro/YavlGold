@@ -101,33 +101,8 @@
             }
         }
 
-        /* Subtle hero glow - matching landing page */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 1000px;
-            height: 1000px;
-            background: radial-gradient(circle, rgba(200, 167, 82, 0.08) 0%, transparent 70%);
-            opacity: 0.5;
-            animation: pulseSubtle 6s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
 
-        @keyframes pulseSubtle {
-
-            0%,
-            100% {
-                transform: translate(-50%, -50%) scale(1);
-            }
-
-            50% {
-                transform: translate(-50%, -50%) scale(1.05);
-            }
-        }
+        /* Pure black background - no gold glow animation */
 
 
         /* ============================================ LAYOUT CONTAINER ============================================ */
