@@ -7505,12 +7505,7 @@ function getAssistantCropFocus(activeTab) {
     }
 
     if (!selectedCrop) {
-        selectedCrop = crops.find((crop) => {
-            const templateDuration = getTemplateDurationForCrop(crop);
-            const progress = computeCropProgress(crop, templateDuration);
-            const status = resolveCropStatus(crop, progress);
-            return normalizeCropStatus(status) !== 'finalizado';
-        }) || crops[0] || null;
+        selectedCrop = crops[0] || null;
     }
 
     if (!selectedCrop) return null;

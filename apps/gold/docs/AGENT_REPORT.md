@@ -1,5 +1,29 @@
 ---
 
+## 🔍 SESIÓN: Diagnóstico Ingresos Cultivos Finalizados (2026-02-09)
+
+### Diagnóstico
+- **Reporte**: "Ingresos de cultivos finalizados no aparecen en facturero."
+- **Auditoría**: 8 funciones clave revisadas (`loadIncomes`, `refreshFactureroHistory`, `filterFactureroBySelectedCrop`, `populateCropDropdowns`, `createCropCardElement`, `computeAgroFinanceSummaryV1`, `syncSelectedCropFromList`, `getAssistantCropFocus`).
+- **Supabase**: 21 ingresos activos para batata (finalizada), 0 soft-deleted. Data íntegra.
+- **Resultado**: **NO existe filtro frontend que oculte ingresos por status de cultivo**. El problema era UX: al cargar la página, el sistema selecciona el cultivo más reciente (Maíz o Batata 2, ambos con 0 ingresos), y el usuario no sabía que debía hacer click en la batata finalizada.
+- **Único código con `finalizado`**: `getAssistantCropFocus()` (línea 7512) prefería crops no-finalizados como default del AI assistant — no afectaba facturero.
+
+### Plan
+1. Eliminar preferencia por crops no-finalizados en `getAssistantCropFocus()`.
+2. Actualizar AGENT_REPORT.md.
+3. Build.
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — `getAssistantCropFocus()`: reemplazado `crops.find(…!=='finalizado')` por `crops[0]`.
+
+### Resultado
+✅ AI assistant ya no ignora cultivos finalizados como contexto default.
+✅ Los 21 ingresos de batata siguen visibles al seleccionar ese cultivo.
+✅ Build: `pnpm build:gold` PASS.
+
+---
+
 ## 🐞 SESIÓN: Fix Dashboard Modules Select Sync (2026-02-06)
 
 ### Diagnóstico
