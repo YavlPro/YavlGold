@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <script type="module" src="../dashboard/auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YavlGold Crypto - Market Data</title>
@@ -27,8 +28,8 @@
                 <span>Atras</span>
             </a>
             <div class="nav-title">MERCADO</div>
-            <button id="notification-bell" class="nav-icon btn-notification notification-bell yg-glowpulse" type="button"
-                aria-label="Notificaciones" title="Notificaciones">
+            <button id="notification-bell" class="nav-icon btn-notification notification-bell yg-glowpulse"
+                type="button" aria-label="Notificaciones" title="Notificaciones">
                 <i class="fas fa-bell" aria-hidden="true"></i>
                 <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
             </button>
@@ -94,7 +95,8 @@
     <footer class="crypto-footer" id="app-footer">
         <p>(c) <span id="footer-year">2026</span> YavlGold - Open Source (MIT License)</p>
         <p class="footer-meta">Version <span id="footer-version">9.4.0</span> - Pulso Vital -
-            <a class="footer-link" href="/">Inicio</a></p>
+            <a class="footer-link" href="/">Inicio</a>
+        </p>
     </footer>
 
     <div class="crypto-modal" id="crypto-detail-modal" role="dialog" aria-modal="true" aria-hidden="true">
