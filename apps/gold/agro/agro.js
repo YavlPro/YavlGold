@@ -1925,6 +1925,11 @@ function renderHistoryList(tabName, config, items, showActions) {
         ? applyPendingTransferFilter(itemsWithCropNames)
         : itemsWithCropNames;
 
+    // V9.6.3: Ensure parent container is visible when items exist
+    if (parent) {
+        parent.style.display = filteredItems.length > 0 ? 'block' : 'none';
+    }
+
     if (filteredItems.length === 0) {
         if (isPendingTab && itemsWithCropNames.length > 0) {
             container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
@@ -3257,14 +3262,16 @@ function setupFactureroCrudListeners() {
 
 // V9.5.1: Refresh all facturero histories on init
 async function initFactureroHistories() {
-    const tabs = ['pendientes', 'perdidas', 'transferencias'];
+    const tabs = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'];
     for (const tab of tabs) {
         await refreshFactureroHistory(tab);
     }
-    console.info('[AGRO] V9.5.1: All facturero histories initialized');
+    console.info('[AGRO] V9.6.3: All facturero histories initialized (including gastos+ingresos)');
 }
 
 function refreshFactureroForSelectedCrop() {
+    refreshFactureroHistory('gastos');
+    refreshFactureroHistory('ingresos');
     refreshFactureroHistory('pendientes');
     refreshFactureroHistory('perdidas');
     refreshFactureroHistory('transferencias');

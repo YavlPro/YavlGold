@@ -1,25 +1,24 @@
 ---
 
-## 🔍 SESIÓN: Diagnóstico Ingresos Cultivos Finalizados (2026-02-09)
+## 🔍 SESIÓN: Fix Ingresos Facturero — Cultivos Finalizados (2026-02-09)
 
 ### Diagnóstico
 - **Reporte**: "Ingresos de cultivos finalizados no aparecen en facturero."
-- **Auditoría**: 8 funciones clave revisadas (`loadIncomes`, `refreshFactureroHistory`, `filterFactureroBySelectedCrop`, `populateCropDropdowns`, `createCropCardElement`, `computeAgroFinanceSummaryV1`, `syncSelectedCropFromList`, `getAssistantCropFocus`).
-- **Supabase**: 21 ingresos activos para batata (finalizada), 0 soft-deleted. Data íntegra.
-- **Resultado**: **NO existe filtro frontend que oculte ingresos por status de cultivo**. El problema era UX: al cargar la página, el sistema selecciona el cultivo más reciente (Maíz o Batata 2, ambos con 0 ingresos), y el usuario no sabía que debía hacer click en la batata finalizada.
-- **Único código con `finalizado`**: `getAssistantCropFocus()` (línea 7512) prefería crops no-finalizados como default del AI assistant — no afectaba facturero.
-
-### Plan
-1. Eliminar preferencia por crops no-finalizados en `getAssistantCropFocus()`.
-2. Actualizar AGENT_REPORT.md.
-3. Build.
+- **Auditoría**: 8 funciones clave revisadas. Doble pipeline de renderizado identificado.
+- **Supabase**: 21 ingresos activos para batata (finalizada). Data íntegra.
+- **Causa raíz**: `refreshFactureroForSelectedCrop()` solo llamaba a `refreshFactureroHistory()` para pendientes/pérdidas/transferencias. Ingresos y gastos estaban excluidos del pipeline CRUD (renderHistoryList). Además, `income-recent-container` arrancaba con `display: none` y solo `loadIncomes()` lo cambiaba a visible.
+- **Fix 1**: `getAssistantCropFocus()` — eliminada preferencia por crops no-finalizados en contexto IA.
+- **Fix 2**: `initFactureroHistories()` — agregados 'gastos' e 'ingresos' al loop de inicialización.
+- **Fix 3**: `refreshFactureroForSelectedCrop()` — agregados `refreshFactureroHistory('gastos')` e `refreshFactureroHistory('ingresos')` al handler de cambio de cultivo.
+- **Fix 4**: `renderHistoryList()` — agregado `parent.style.display = 'block'` para hacer visible el contenedor padre cuando hay items.
 
 ### Archivos modificados
-- `apps/gold/agro/agro.js` — `getAssistantCropFocus()`: reemplazado `crops.find(…!=='finalizado')` por `crops[0]`.
+- `apps/gold/agro/agro.js` — 4 cambios en 3 funciones.
 
 ### Resultado
-✅ AI assistant ya no ignora cultivos finalizados como contexto default.
-✅ Los 21 ingresos de batata siguen visibles al seleccionar ese cultivo.
+✅ AI assistant ya no ignora cultivos finalizados.
+✅ Income history se carga en init y se refresca al cambiar cultivo via pipeline CRUD.
+✅ Contenedor padre ahora es visible cuando hay items.
 ✅ Build: `pnpm build:gold` PASS.
 
 ---
