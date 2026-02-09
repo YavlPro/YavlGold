@@ -6,11 +6,12 @@
 - **Reporte**: "Ingresos de cultivos finalizados no aparecen en facturero."
 - **Auditoría**: 8 funciones clave revisadas. Doble pipeline de renderizado identificado.
 - **Supabase**: 21 ingresos activos para batata (finalizada). Data íntegra.
-- **Causa raíz**: `refreshFactureroForSelectedCrop()` solo llamaba a `refreshFactureroHistory()` para pendientes/pérdidas/transferencias. Ingresos y gastos estaban excluidos del pipeline CRUD (renderHistoryList). Además, `income-recent-container` arrancaba con `display: none` y solo `loadIncomes()` lo cambiaba a visible.
+- **Causa raíz REAL**: `AGRO_INCOME_LIST_COLUMNS` y `FACTURERO_EVIDENCE_FIELDS.ingresos` incluían `evidence_url`, pero la tabla `agro_income` NO tiene esa columna (solo `soporte_url`). Cada fetch de ingresos retornaba **400 Bad Request**. Los ingresos NUNCA cargaron.
 - **Fix 1**: `getAssistantCropFocus()` — eliminada preferencia por crops no-finalizados en contexto IA.
 - **Fix 2**: `initFactureroHistories()` — agregados 'gastos' e 'ingresos' al loop de inicialización.
-- **Fix 3**: `refreshFactureroForSelectedCrop()` — agregados `refreshFactureroHistory('gastos')` e `refreshFactureroHistory('ingresos')` al handler de cambio de cultivo.
-- **Fix 4**: `renderHistoryList()` — agregado `parent.style.display = 'block'` para hacer visible el contenedor padre cuando hay items.
+- **Fix 3**: `refreshFactureroForSelectedCrop()` — agregados `refreshFactureroHistory('gastos'/'ingresos')` al handler de cambio de cultivo.
+- **Fix 4**: `renderHistoryList()` — agregado `parent.style.display = 'block'` para contenedor padre.
+- **Fix 5 (ROOT CAUSE)**: Eliminado `evidence_url` de `AGRO_INCOME_LIST_COLUMNS` y `FACTURERO_EVIDENCE_FIELDS.ingresos`.
 
 ### Archivos modificados
 - `apps/gold/agro/agro.js` — 4 cambios en 3 funciones.
