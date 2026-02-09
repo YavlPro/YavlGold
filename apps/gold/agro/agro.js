@@ -28,7 +28,7 @@ const AGRO_DEBUG = typeof window !== 'undefined'
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
 const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
-const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,evidence_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
+const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
 
 let selectedCropId = null;
 
@@ -695,7 +695,7 @@ const PENDING_TRANSFER_FILTER_KEY = 'YG_PENDING_SHOW_TRANSFERRED_V1';
 
 const FACTURERO_EVIDENCE_FIELDS = {
     gastos: ['evidence_url'],
-    ingresos: ['soporte_url', 'evidence_url'],
+    ingresos: ['soporte_url'], // agro_income does NOT have evidence_url column
     pendientes: ['evidence_url'], // soporte_url not in DB
     perdidas: ['evidence_url'],   // soporte_url not in DB
     transferencias: ['evidence_url'] // soporte_url not in DB
