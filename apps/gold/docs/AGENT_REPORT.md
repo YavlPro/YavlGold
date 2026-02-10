@@ -1,5 +1,22 @@
 ---
 
+## 🆕 SESIÓN: AgroLog — Exportar Historial MD (2026-02-09)
+
+### Implementación
+- **Feature**: Botón "📄 Exportar MD" en cada tab del facturero cuando hay items.
+- **Función**: `exportAgroLog(tabName)` — consulta Supabase sin límite, genera `.md` con resumen, checkboxes `[ ]`, evidencia, footer confidencial.
+- **UTF-8 BOM**: `\ufeff` incluido para compatibilidad Windows.
+- **Filename**: `AgroLog_{Cultivo}_{Tab}_{YYYY-MM-DD}.md`
+- **Sin cultivo seleccionado**: Título "Vista General — Todos los cultivos", filename `AgroLog_General_...`
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — `exportAgroLog()` (~120 líneas), botón en `renderHistoryList()`, `window.exportAgroLog`.
+
+### Resultado
+✅ Build: `pnpm build:gold` PASS.
+
+---
+
 ## 🔍 SESIÓN: Fix Ingresos Facturero — Cultivos Finalizados (2026-02-09)
 
 ### Diagnóstico
