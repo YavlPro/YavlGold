@@ -6,6 +6,7 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { updateStats } from './agro-stats.js';
 import { syncFactureroNotifications } from './agro-notifications.js';
 import './agro.css';
+import { openAgroWizard } from './agro-wizard.js';
 
 // ============================================================
 // ESTADO DEL MÓDULO
@@ -1942,8 +1943,11 @@ function renderHistoryList(tabName, config, items, showActions) {
         const dayGroups = groupRowsByDay(filteredItems, dateField);
 
         let html = '';
-        // V9.6.3: Export button
-        html += `<div style="text-align: right; margin-bottom: 0.5rem;"><button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button></div>`;
+        // V9.6.3: Export + Wizard buttons
+        html += `<div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 0.5rem;">`;
+        html += `<button type="button" onclick="launchAgroWizard('${tabName}')" style="background: linear-gradient(135deg, rgba(200,167,82,0.15), rgba(200,167,82,0.05)); border: 1px solid rgba(200,167,82,0.5); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Registro guiado"><i class="fa fa-plus"></i> Nuevo</button>`;
+        html += `<button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button>`;
+        html += `</div>`;
         for (const group of dayGroups) {
             // Day header
             html += `<div class="facturero-day-header">${group.label}</div>`;
@@ -2099,6 +2103,19 @@ async function exportAgroLog(tabName) {
         console.error('[AgroLog] Export error:', err);
         alert('Error al exportar: ' + (err.message || err));
     }
+}
+
+// V9.6.3: AgroWizard launcher — passes deps from module scope
+function launchAgroWizard(tabName) {
+    openAgroWizard(tabName, {
+        supabase,
+        cropsCache,
+        selectedCropId,
+        refreshFactureroHistory,
+        loadIncomes: typeof loadIncomes === 'function' ? loadIncomes : null,
+        getTodayLocalISO: typeof getTodayLocalISO === 'function' ? getTodayLocalISO : null,
+        buildConceptWithWho
+    });
 }
 
 async function refreshFactureroAfterChange(tabName) {
@@ -3437,6 +3454,7 @@ if (typeof document !== 'undefined') {
 window.populateCropDropdowns = populateCropDropdowns;
 window.refreshFactureroHistory = refreshFactureroHistory;
 window.exportAgroLog = exportAgroLog;
+window.launchAgroWizard = launchAgroWizard;
 window.closeEditModal = closeEditModal;
 window.saveEditModal = saveEditModal;
 window.getSelectedCropId = () => selectedCropId;
