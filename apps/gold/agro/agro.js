@@ -2004,6 +2004,8 @@ async function exportAgroLog(tabName) {
             .order('created_at', { ascending: false });
         if (selectedCropId) q = q.eq('crop_id', selectedCropId);
         if (config.supportsDeletedAt) q = q.is('deleted_at', null);
+        // V9.6.3: Pendientes export = solo deudas activas (excluir transferidos)
+        if (tabName === 'pendientes') q = q.neq('transfer_state', 'transferred');
 
         const { data, error } = await q;
         if (error) { console.error('[AgroLog] fetch error:', error); alert('Error cargando datos.'); return; }
