@@ -1943,11 +1943,8 @@ function renderHistoryList(tabName, config, items, showActions) {
         const dayGroups = groupRowsByDay(filteredItems, dateField);
 
         let html = '';
-        // V9.6.3: Export + Wizard buttons
-        html += `<div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 0.5rem;">`;
-        html += `<button type="button" onclick="launchAgroWizard('${tabName}')" style="background: linear-gradient(135deg, rgba(200,167,82,0.15), rgba(200,167,82,0.05)); border: 1px solid rgba(200,167,82,0.5); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Registro guiado"><i class="fa fa-plus"></i> Nuevo</button>`;
-        html += `<button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button>`;
-        html += `</div>`;
+        // V9.6.3: Export button (Wizard button moved to Form Header)
+        html += `<div style="text-align: right; margin-bottom: 0.5rem;"><button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button></div>`;
         for (const group of dayGroups) {
             // Day header
             html += `<div class="facturero-day-header">${group.label}</div>`;
@@ -2115,6 +2112,71 @@ function launchAgroWizard(tabName) {
         loadIncomes: typeof loadIncomes === 'function' ? loadIncomes : null,
         getTodayLocalISO: typeof getTodayLocalISO === 'function' ? getTodayLocalISO : null,
         buildConceptWithWho
+    });
+}
+
+function createWizardButton(tabName) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'wizard-trigger-btn';
+    btn.innerHTML = '<i class="fa fa-plus"></i> Nuevo';
+    btn.title = 'Registro guiado';
+    btn.style.cssText = `
+        background: linear-gradient(135deg, rgba(200,167,82,0.2), rgba(200,167,82,0.1));
+        border: 1px solid rgba(200,167,82,0.5);
+        color: #C8A752;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        font-family: inherit;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+        margin-right: 10px;
+        font-weight: 600;
+        transition: all 0.2s;
+    `;
+    btn.onmouseover = () => {
+        btn.style.background = 'linear-gradient(135deg, rgba(200,167,82,0.3), rgba(200,167,82,0.15))';
+        btn.style.transform = 'translateY(-1px)';
+        btn.style.boxShadow = '0 2px 8px rgba(200,167,82,0.2)';
+    };
+    btn.onmouseout = () => {
+        btn.style.background = 'linear-gradient(135deg, rgba(200,167,82,0.2), rgba(200,167,82,0.1))';
+        btn.style.transform = 'translateY(0)';
+        btn.style.boxShadow = 'none';
+    };
+    btn.onclick = (e) => {
+        e.stopPropagation(); // Prevent accordion toggle
+        e.preventDefault();
+        launchAgroWizard(tabName);
+    };
+    return btn;
+}
+
+function injectWizardInvokers() {
+    // Static tabs with Accordion Summaries
+    const config = [
+        { tab: 'gastos', selector: '#tab-panel-gastos .yg-accordion-summary' },
+        { tab: 'pendientes', selector: '#tab-panel-pendientes .yg-accordion-summary' },
+        { tab: 'perdidas', selector: '#tab-panel-perdidas .yg-accordion-summary' },
+        { tab: 'transferencias', selector: '#tab-panel-transferencias .yg-accordion-summary' }
+    ];
+
+    config.forEach(({ tab, selector }) => {
+        const summary = document.querySelector(selector);
+        if (summary && !summary.querySelector('.wizard-trigger-btn')) {
+            const btn = createWizardButton(tab);
+            // Insert before the chevron (last child)
+            const chevron = summary.querySelector('.yg-accordion-chevron');
+            if (chevron) {
+                summary.insertBefore(btn, chevron);
+            } else {
+                summary.appendChild(btn);
+            }
+        }
     });
 }
 
@@ -5111,6 +5173,21 @@ function ensureIncomeSection(targetContainer) {
     let listContainer = existingListContainer;
 
     if (!form) {
+        // V9.6.3: Inject Header with Wizard Button for Income
+        const header = document.createElement('div');
+        header.className = 'income-section-header';
+        header.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);';
+
+        const title = document.createElement('h3');
+        title.textContent = 'Registrar Ingreso';
+        title.style.cssText = 'color: #C8A752; font-size: 1.1rem; margin: 0; font-family: "Orbitron", sans-serif;';
+
+        const wizBtn = createWizardButton('ingresos');
+        wizBtn.style.marginRight = '0'; // Reset margin for this context
+
+        header.append(title, wizBtn);
+        wrapper.appendChild(header);
+
         form = document.createElement('form');
         form.id = 'income-form';
         form.className = 'income-form';
@@ -8284,6 +8361,7 @@ export function initAgro() {
     });
 
     console.log('[Agro] ✅ Módulo V9.5.1 inicializado');
+    injectWizardInvokers(); // V9.6.3: Wizard buttons
 }
 
 // Auto-inicializar si el DOM ya está listo

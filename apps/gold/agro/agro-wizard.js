@@ -710,18 +710,27 @@ export async function openAgroWizard(tabName, deps) {
         // Input sync
         const conceptoEl = overlay.querySelector('#wiz-concepto');
         if (conceptoEl) {
-            conceptoEl.addEventListener('input', () => { state.concepto = conceptoEl.value.trim(); });
+            conceptoEl.addEventListener('input', () => {
+                state.concepto = conceptoEl.value.trim();
+                updateFooterState();
+            });
             setTimeout(() => { conceptoEl.focus(); scrollIntoViewSafe(conceptoEl); }, 100);
         }
 
         const whoEl = overlay.querySelector('#wiz-who');
         if (whoEl) {
-            whoEl.addEventListener('input', () => { state.who = whoEl.value.trim(); });
+            whoEl.addEventListener('input', () => {
+                state.who = whoEl.value.trim();
+                // who is optional, but good to know
+            });
         }
 
         const fechaEl = overlay.querySelector('#wiz-fecha');
         if (fechaEl) {
-            fechaEl.addEventListener('change', () => { state.fecha = fechaEl.value; });
+            fechaEl.addEventListener('change', () => {
+                state.fecha = fechaEl.value;
+                updateFooterState();
+            });
         }
 
         const kgEl = overlay.querySelector('#wiz-kg');
@@ -731,7 +740,10 @@ export async function openAgroWizard(tabName, deps) {
 
         const montoEl = overlay.querySelector('#wiz-monto');
         if (montoEl) {
-            montoEl.addEventListener('input', () => { state.monto = montoEl.value; });
+            montoEl.addEventListener('input', () => {
+                state.monto = montoEl.value;
+                updateFooterState();
+            });
             if (state.step === 3) {
                 setTimeout(() => { montoEl.focus(); scrollIntoViewSafe(montoEl); }, 100);
             }
@@ -778,6 +790,23 @@ export async function openAgroWizard(tabName, deps) {
         if (kgEl) state.quantityKg = kgEl.value;
         const montoEl = overlay.querySelector('#wiz-monto');
         if (montoEl) state.monto = montoEl.value;
+    }
+
+    function updateFooterState() {
+        const nextBtn = overlay.querySelector('[data-action="next"]');
+        const submitBtn = overlay.querySelector('[data-action="submit"]');
+
+        if (state.step === 2 && nextBtn) {
+            // Step 2 needs Concepto
+            nextBtn.disabled = !state.concepto;
+        } else if (state.step === 3 && nextBtn) {
+            // Step 3 needs Amount > 0
+            nextBtn.disabled = !(Number(state.monto) > 0);
+        } else if (state.step === 4 && submitBtn) {
+            // Final step needs everything
+            const canSubmit = state.concepto && Number(state.monto) > 0 && state.fecha;
+            submitBtn.disabled = !canSubmit;
+        }
     }
 
     function scrollIntoViewSafe(el) {
