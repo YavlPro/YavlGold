@@ -1942,6 +1942,8 @@ function renderHistoryList(tabName, config, items, showActions) {
         const dayGroups = groupRowsByDay(filteredItems, dateField);
 
         let html = '';
+        // V9.6.3: Export button
+        html += `<div style="text-align: right; margin-bottom: 0.5rem;"><button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button></div>`;
         for (const group of dayGroups) {
             // Day header
             html += `<div class="facturero-day-header">${group.label}</div>`;
@@ -1952,6 +1954,149 @@ function renderHistoryList(tabName, config, items, showActions) {
     }
 
     console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${filteredItems.length} items grouped by day`);
+}
+
+// ============================================================
+// V9.6.3: AGROLOG EXPORT — Markdown history download
+// ============================================================
+
+const AGROLOG_TAB_LABELS = {
+    gastos: 'Gastos',
+    ingresos: 'Ingresos',
+    pendientes: 'Pendientes',
+    perdidas: 'Pérdidas',
+    transferencias: 'Transferencias'
+};
+
+async function exportAgroLog(tabName) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { alert('Sesión no válida.'); return; }
+
+        // Get crop name
+        let cropLabel = 'Vista General — Todos los cultivos';
+        let cropStatus = '';
+        let filenameCrop = 'General';
+        if (selectedCropId) {
+            const { data: cropData } = await supabase
+                .from('agro_crops')
+                .select('name, status')
+                .eq('id', selectedCropId)
+                .single();
+            if (cropData) {
+                cropLabel = cropData.name || 'Cultivo';
+                cropStatus = cropData.status || '';
+                filenameCrop = cropLabel.replace(/[^\w\sáéíóúñ-]/gi, '').trim().replace(/\s+/g, '-');
+            }
+        }
+
+        // Fetch ALL records (no limit)
+        const selectFields = buildFactureroSelectFields(tabName, config);
+        const selectClause = buildFactureroSelectClause(selectFields);
+        let q = supabase
+            .from(config.table)
+            .select(selectClause)
+            .eq('user_id', user.id)
+            .order(config.dateField || 'fecha', { ascending: false })
+            .order('created_at', { ascending: false });
+        if (selectedCropId) q = q.eq('crop_id', selectedCropId);
+        if (config.supportsDeletedAt) q = q.is('deleted_at', null);
+
+        const { data, error } = await q;
+        if (error) { console.error('[AgroLog] fetch error:', error); alert('Error cargando datos.'); return; }
+        const items = Array.isArray(data) ? data : [];
+        if (items.length === 0) { alert('No hay registros para exportar.'); return; }
+
+        // Build Markdown
+        const tabLabel = AGROLOG_TAB_LABELS[tabName] || tabName;
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
+        const statusSuffix = cropStatus ? ` (${cropStatus})` : '';
+
+        let md = `# 🌾 AgroLog: ${cropLabel}\n`;
+        md += `> **Reporte:** ${tabLabel}\n`;
+        md += `> **Cultivo:** ${cropLabel}${statusSuffix}\n`;
+        md += `> **Fecha:** ${dateStr} ${timeStr}\n`;
+        md += `> **Sistema:** YavlGold\n\n`;
+
+        // Summary
+        const totalMonto = items.reduce((s, it) => s + (Number(it[config.amountField]) || 0), 0);
+        md += `## 📊 Resumen\n`;
+        md += `- **Total Registros:** ${items.length}\n`;
+        md += `- **Monto Total:** $${totalMonto.toFixed(2)}\n\n`;
+        md += `---\n\n`;
+
+        // Table header — build dynamic columns
+        const whoMeta = WHO_FIELD_META[tabName];
+        const whoLabel = whoMeta ? whoMeta.label : null;
+        const hasUnits = (config.extraFields || []).includes('unit_type');
+
+        let header = '| ✓ | Fecha | Concepto';
+        let separator = '|:-:|-------|--------';
+        if (whoLabel) { header += ` | ${whoLabel}`; separator += '|--------'; }
+        if (hasUnits) { header += ' | Cantidad'; separator += '|---------'; }
+        header += ' | Monto | Evidencia |';
+        separator += '|------:|-----------|';
+        md += `## 📝 Detalle\n`;
+        md += `_Marca con una \`x\` los items verificados \`[x]\`_\n\n`;
+        md += header + '\n' + separator + '\n';
+
+        // Table rows
+        for (const item of items) {
+            const fecha = item[config.dateField || 'fecha'] || 'S/F';
+            const rawConcept = item[config.conceptField] || 'Sin concepto';
+            const whoData = getWhoData(tabName, item, rawConcept);
+            const concept = (whoData.concept || rawConcept).replace(/\|/g, '·');
+            const who = (whoData.who || '').replace(/\|/g, '·');
+            const amount = Number(item[config.amountField] || 0).toFixed(2);
+
+            // Units
+            let unitText = '';
+            if (hasUnits) {
+                const parts = [];
+                const uSummary = formatUnitSummary(item.unit_type, item.unit_qty);
+                const kSummary = formatKgSummary(item.quantity_kg);
+                if (uSummary) parts.push(uSummary);
+                if (kSummary) parts.push(kSummary);
+                unitText = parts.join(' · ') || '-';
+            }
+
+            // Evidence
+            const evidenceRaw = getFactureroEvidenceValue(tabName, item);
+            const evidenceText = evidenceRaw ? `[📎 Ver](${evidenceRaw})` : '-';
+
+            let row = `| [ ] | ${fecha} | ${concept}`;
+            if (whoLabel) row += ` | ${who || '-'}`;
+            if (hasUnits) row += ` | ${unitText}`;
+            row += ` | $${amount} | ${evidenceText} |`;
+            md += row + '\n';
+        }
+
+        // Footer
+        md += `\n---\n\n`;
+        md += `> ⚠️ Documento confidencial — datos financieros personales\n`;
+        md += `> Generado por YavlGold · yavlgold.com\n`;
+
+        // Download with UTF-8 BOM
+        const blob = new Blob(['\ufeff' + md], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `AgroLog_${filenameCrop}_${tabLabel}_${dateStr}.md`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        console.info(`[AgroLog] Exported ${items.length} ${tabName} items for ${cropLabel}`);
+    } catch (err) {
+        console.error('[AgroLog] Export error:', err);
+        alert('Error al exportar: ' + (err.message || err));
+    }
 }
 
 async function refreshFactureroAfterChange(tabName) {
@@ -3289,6 +3434,7 @@ if (typeof document !== 'undefined') {
 // Expose globally
 window.populateCropDropdowns = populateCropDropdowns;
 window.refreshFactureroHistory = refreshFactureroHistory;
+window.exportAgroLog = exportAgroLog;
 window.closeEditModal = closeEditModal;
 window.saveEditModal = saveEditModal;
 window.getSelectedCropId = () => selectedCropId;
