@@ -2129,6 +2129,7 @@ function injectWizardInvokers() {
     // Static tabs with Accordion Summaries
     const config = [
         { tab: 'gastos', selector: '#tab-panel-gastos .yg-accordion-summary' },
+        { tab: 'ingresos', selector: '#tab-panel-ingresos .yg-accordion-summary' },
         { tab: 'pendientes', selector: '#tab-panel-pendientes .yg-accordion-summary' },
         { tab: 'perdidas', selector: '#tab-panel-perdidas .yg-accordion-summary' },
         { tab: 'transferencias', selector: '#tab-panel-transferencias .yg-accordion-summary' }
