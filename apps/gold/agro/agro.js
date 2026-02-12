@@ -4154,6 +4154,8 @@ let expenseCache = [];
 let expenseDeletedAtSupported = null;
 let expenseDeletedAtRefreshDone = false;
 let agroStoragePatched = false;
+let incomeCache = [];
+let incomeDeletedAtSupported = null;
 
 function setExpenseCache(data) {
     const rows = Array.isArray(data) ? data : [];
@@ -4619,6 +4621,101 @@ async function loadIncomes() {
         console.error('[Agro] Error cargando ingresos:', err);
     }
 }
+const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
+const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias']);
+
+function formatShortCurrency(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '$0';
+    if (Math.abs(number) >= 1000) {
+        return `$${(number / 1000).toFixed(1)}k`;
+    }
+    return `$${number.toFixed(0)}`;
+}
+
+async function deleteEvidenceFile(path) {
+    if (!path) return;
+    try {
+        const { error } = await supabase.storage
+            .from(AGRO_STORAGE_BUCKET_ID)
+            .remove([path]);
+        if (error) {
+            console.warn('[Agro] Failed to delete evidence:', error.message);
+        } else {
+            console.log('[Agro] Evidence deleted:', path);
+        }
+    } catch (err) {
+        console.warn('[Agro] Evidence delete error:', err.message);
+    }
+}
+
+async function getSignedEvidenceUrl(path, options = {}) {
+    if (!path) return null;
+    const quiet = options?.quiet === true;
+
+    try {
+        const { data, error } = await supabase.storage
+            .from(AGRO_STORAGE_BUCKET_ID)
+            .createSignedUrl(path, 3600);
+
+        if (error) {
+            if (!quiet) {
+                console.warn('[Agro] Signed URL error:', error.message);
+            }
+            return null;
+        }
+
+        return data?.signedUrl || null;
+    } catch (err) {
+        if (!quiet) {
+            console.warn('[Agro] Signed URL exception:', err.message);
+        }
+        return null;
+    }
+}
+
+function showEvidenceToast(message, type = 'info') {
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, type);
+        return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'agro-evidence-toast';
+    toast.textContent = message;
+
+    const colors = {
+        success: { bg: 'rgba(74, 222, 128, 0.15)', border: 'rgba(74, 222, 128, 0.4)', color: '#4ade80' },
+        warning: { bg: 'rgba(200, 167, 82, 0.15)', border: 'rgba(200, 167, 82, 0.4)', color: '#C8A752' },
+        info: { bg: 'rgba(255, 255, 255, 0.1)', border: 'rgba(255, 255, 255, 0.2)', color: '#fff' }
+    };
+    const c = colors[type] || colors.info;
+
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        padding: 1rem 1.5rem;
+        background: ${c.bg};
+        border: 1px solid ${c.border};
+        color: ${c.color};
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        backdrop-filter: blur(10px);
+    `;
+
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 function initIncomeHistory() {
     document.addEventListener('data-refresh', () => {
         loadIncomes();
@@ -6546,7 +6643,6 @@ export function initAgro() {
     setupHeaderIdentity();
     initIncomeHistory();
     initFinanceTabs();
-    initAdvancedPanels();
     initAgroAssistantModal();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD

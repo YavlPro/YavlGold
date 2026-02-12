@@ -5437,6 +5437,23 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 ### Build
 - `pnpm build:gold` ✅ PASS (2026-02-11)
 
+### Paso 2 — Restauración de variables/funciones huérfanas (2026-02-11)
+**Causa:** El Paso 1 eliminó declaraciones y funciones que aún tenían referencias activas.
+
+**Restaurados en `apps/gold/agro/agro.js`:**
+1) `FIN_TAB_STORAGE_KEY`, `FIN_TAB_NAMES` — usados por navegación de tabs financieros.
+2) `incomeCache`, `incomeDeletedAtSupported` — variables de estado para ingresos.
+3) `formatShortCurrency()` — formatea montos en balance summary.
+4) `showEvidenceToast()` — notificaciones toast para operaciones de evidencia.
+5) `deleteEvidenceFile()` — borrado cascada de archivos de evidencia en Storage.
+6) `getSignedEvidenceUrl()` — genera URLs firmadas para archivos de evidencia.
+
+**Eliminado (dead call):**
+- `initAdvancedPanels()` en `initAgro()` — función y HTML ya no existen.
+
+### Build
+- `pnpm build:gold` ✅ PASS (2026-02-11)
+
 ---
 
 ## 🧹 SESIÓN: Dashboard Dev Count Removal (2026-02-11)
