@@ -262,8 +262,7 @@ export const StatsManager = {
     async updateAllStats() {
         await Promise.all([
             this.updateModulesCount(),
-            this.updateFavoritesCount(),
-            this.updateDevCount()
+            this.updateFavoritesCount()
         ]);
     },
 
@@ -308,24 +307,7 @@ export const StatsManager = {
         }
     },
 
-    /**
-     * Update modules in development count
-     */
-    async updateDevCount() {
-        try {
-            const { count, error } = await supabase
-                .from('modules')
-                .select('id', { count: 'exact', head: true })
-                .eq('badge', 'development');
 
-            if (!error) {
-                const el = document.getElementById('stat-dev') || document.querySelector('[data-stat="dev"]');
-                if (el) el.textContent = count || 0;
-            }
-        } catch (err) {
-            logger.error('[StatsManager] Dev count error:', err.message);
-        }
-    }
 };
 
 // Make available globally for inline scripts

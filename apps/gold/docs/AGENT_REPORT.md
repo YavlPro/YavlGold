@@ -5437,6 +5437,22 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 ### Build
 - `pnpm build:gold` ✅ PASS (2026-02-11)
 
+---
+
+## 🧹 SESIÓN: Dashboard Dev Count Removal (2026-02-11)
+
+### Contexto
+- Se eliminó la estadística de “En Desarrollo” porque no aporta valor al usuario final y generaba un 400 en Supabase por usar la columna inexistente `badge`.
+
+### Cambios aplicados
+1) **`apps/gold/assets/js/modules/moduleManager.js`**
+   - Eliminado `updateDevCount()` y su ejecución en `updateAllStats()`.
+2) **`apps/gold/dashboard/index.html`**
+   - Eliminada la card de estadísticas “En Desarrollo” (`#stat-dev`).
+
+### Build
+- `pnpm build:gold` ✅ PASS (2026-02-11)
+
 ## 🧩 SESIÓN: Vercel Pattern Compatibility Tweak (2026-02-06)
 
 ### Paso 0 — Diagnóstico (Regla #1)
