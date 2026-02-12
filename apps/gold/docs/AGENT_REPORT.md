@@ -5359,6 +5359,84 @@ Revertir:
 
 ---
 
+## 🧹 SESIÓN: Refactor Agro Legacy Forms (Paso 0 — 2026-02-11)
+
+### ✅ Verificación crítica
+- **AgroWizard NO usa `saveIncome()`**. El wizard inserta directamente con `supabase.from(meta.table).insert(...)`.
+  - Evidencia: `openAgroWizard` construye `insertData` y ejecuta `supabase.from(meta.table).insert(insertData)`.
+  - No hay referencias a `saveIncome` en `agro-wizard.js`.
+
+### Candidatos a eliminar (handlers legacy)
+> Objetivo: dejar AgroWizard como único sistema de registro. Se mantiene solo lectura/visualización.
+
+1) **Expense form inline en `apps/gold/agro/index.html`**
+   - **Qué es:** Script inline (DOMContentLoaded) que maneja `expense-form`, `loadExpenses`, `renderExpenseItem`.
+   - **Quién lo llamaba:** HTML `#expense-form` + `btn-save` submit handler y carga inicial con `data-refresh`.
+   - **Confirmación actual:** AgroWizard cubre registro de gastos; este script es el sistema legacy y se desactivará.
+
+2) **`initFinanceFormHandlers()` en `apps/gold/agro/agro.js`**
+   - **Qué es:** Registra submit handlers para `pending-form`, `loss-form`, `transfer-form`.
+   - **Quién lo llamaba:** `initAgro()` lo invoca en la inicialización del módulo.
+   - **Confirmación actual:** AgroWizard inserta directo en DB; no depende de estos handlers.
+
+3) **`saveIncome()` en `apps/gold/agro/agro.js`**
+   - **Qué es:** Legacy save handler para `income-form`.
+   - **Quién lo llamaba:** Submit de `income-form` en `initIncomeModule()`.
+   - **Confirmación actual:** AgroWizard inserta directo; no llama `saveIncome()`.
+
+4) **`initIncomeModule()` + `ensureIncomeSection()` + helpers relacionados**
+   - **Qué es:** Inyectan el DOM del form legacy de ingresos y conectan handlers (incluye `clearIncomeForm`, `enterIncomeEditMode`, `handleIncomeFileUpload`, `resetIncomeDropzone`).
+   - **Quién lo llamaba:** `initAgro()` ejecuta `initIncomeModule()`.
+   - **Confirmación actual:** AgroWizard reemplaza la creación de ingresos; el form legacy no quedará como fallback.
+
+5) **Variables de estado legacy ingresos**
+   - `incomeEditId`, `incomeEditSupportPath` (solo usadas por el flujo de edición legacy del form).
+
+6) **Forms HTML legacy en `apps/gold/agro/index.html`**
+   - `<form id="pending-form">`
+   - `<form id="loss-form">`
+   - `<form id="transfer-form">`
+   - Sección/form legacy de ingresos (inyectado por `ensureIncomeSection()`)
+   - **Confirmación actual:** al eliminar handlers se retirarán también los formularios legacy.
+
+### Funciones que se CONSERVAN (lectura/visualización)
+- `loadIncomes()`
+- `renderIncomeItem()`
+- `buildIncomeSignedUrlMap()`
+- `renderHistoryList()`
+- `computeAgroFinanceSummaryV1()`
+- `refreshFactureroHistory()`
+- `filterFactureroBySelectedCrop()`
+- `formatUnitSummary()`, `formatKgSummary()`
+
+### Siguiente paso
+Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectura.
+
+### Paso 1 — Cirugía aplicada (2026-02-11)
+1) **`apps/gold/agro/index.html`**
+   - Eliminados formularios legacy: `expense-form`, `pending-form`, `loss-form`, `transfer-form`.
+   - Eliminado script inline `DOMContentLoaded` (load/save/render de gastos, drag & drop, handlers de submit/clean).
+   - Reemplazo UI por mensaje “wizard-only” en cada tab de registro.
+   - Añadido contenedor de historial para ingresos (`income-recent-container`, `income-list`).
+2) **`apps/gold/agro/agro.js`**
+   - Eliminados handlers legacy: `saveIncome`, `initIncomeModule`, `ensureIncomeSection`, `clearIncomeForm`,
+     `enterIncomeEditMode`, `handleIncomeFileUpload`, `resetIncomeDropzone`, `initFinanceFormHandlers` y helpers
+     `build*StoragePath` legacy + verificación `checkCriticalFormUniqueness`.
+   - Nuevo `initIncomeHistory()` para mantener refresh/historial sin formulario.
+   - `refreshFactureroHistory()` ahora actualiza `expenseCache` para balance/estadísticas.
+   - `refreshFactureroAfterChange()` refresca gastos como el resto de tabs.
+3) **Conservado (lectura/visualización)**
+   - `loadIncomes`, `renderIncomeItem`, `buildIncomeSignedUrlMap`, `renderHistoryList`,
+     `computeAgroFinanceSummaryV1`, `refreshFactureroHistory`, `filterFactureroBySelectedCrop`.
+
+### Conteo de líneas removidas
+- `apps/gold/agro/agro.js`: **-1800 +6**
+- `apps/gold/agro/index.html`: **-848 +54**
+- **Total:** -2648 +60
+
+### Build
+- `pnpm build:gold` ✅ PASS (2026-02-11)
+
 ## 🧩 SESIÓN: Vercel Pattern Compatibility Tweak (2026-02-06)
 
 ### Paso 0 — Diagnóstico (Regla #1)

@@ -1577,121 +1577,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-gastos-form">
-                            <form id="expense-form" class="expense-form" onsubmit="event.preventDefault();">
-                                <div class="facturero-grid">
-
-                                    <!-- Concepto -->
-                                    <div class="input-group field-concept">
-                                        <label class="input-label" for="expense-concept">Concepto *</label>
-                                        <input type="text" id="expense-concept" class="styled-input"
-                                            placeholder="Ej: Compra de fertilizante" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-
-                                    <!-- Monto -->
-                                    <div class="input-group field-amount">
-                                        <label class="input-label" for="expense-amount">Monto *</label>
-                                        <div class="input-wrapper">
-                                            <span class="input-prefix">$</span>
-                                            <input type="number" id="expense-amount" class="styled-input"
-                                                placeholder="0.00" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-
-                                    <!-- Fecha -->
-                                    <div class="input-group field-date">
-                                        <label class="input-label" for="expense-date">Fecha *</label>
-                                        <input type="date" id="expense-date" class="styled-input" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-
-                                    <!-- Categor&iacute;a -->
-                                    <div class="input-group field-dynamic">
-                                        <label class="input-label" for="expense-category">Categor&iacute;a *</label>
-                                        <select id="expense-category" class="styled-input" required
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">Seleccionar...</option>
-                                            <option value="mano-de-obra">Mano de Obra</option>
-                                            <option value="insumos">Insumos</option>
-                                            <option value="mantenimiento">Mantenimiento</option>
-                                            <option value="transporte">Transporte</option>
-                                            <option value="otros">Otros</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- V9.5: Asociar a Cultivo (opcional) -->
-                                    <div class="input-group field-crop">
-                                        <label class="input-label" for="expense-crop-id">Asociar a Cultivo
-                                            (opcional)</label>
-                                        <select id="expense-crop-id" class="styled-input crop-selector"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">General (sin asociar)</option>
-                                            <!-- Populated dynamically by JS -->
-                                        </select>
-                                    </div>
-
-                                    <div class="facturero-actions">
-                                        <button type="button" id="btn-clean" class="btn"
-                                            style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                            onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                            onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                            Limpiar
-                                        </button>
-                                        <button type="submit" id="btn-save" class="btn btn-primary"
-                                            style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                            onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                            onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                            Registrar Gasto
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <details class="advanced-panel" id="expense-advanced" data-tab="gastos">
-                                    <summary class="advanced-summary">
-                                        <span>Opciones avanzadas</span>
-                                        <span class="advanced-meta" id="advanced-meta-gastos"></span>
-                                        <span class="chev">&#9662;</span>
-                                    </summary>
-                                    <div class="advanced-content">
-                                        <div class="input-group">
-                                            <label class="input-label" for="expense-notes">Notas (opcional)</label>
-                                            <textarea id="expense-notes" class="styled-input"
-                                                placeholder="Detalles adicionales del gasto..." rows="2"
-                                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <label class="input-label">Evidencia (Recibo/Foto)</label>
-                                            <div id="upload-dropzone" class="upload-dropzone compact-dropzone">
-                                                <button type="button" class="evidence-trigger">
-                                                    <span class="evidence-icon">&#128206;</span>
-                                                    <span>Adjuntar evidencia</span>
-                                                </button>
-                                                <div class="evidence-row is-hidden">
-                                                    <span class="evidence-name"></span>
-                                                    <button type="button" class="evidence-view">Ver</button>
-                                                    <button type="button" class="evidence-change">Cambiar</button>
-                                                </div>
-                                                <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB) - Opcional</p>
-                                            </div>
-                                            <input type="file" id="expense-receipt"
-                                                accept="image/jpeg,image/png,image/webp,application/pdf"
-                                                style="display: none;" onchange="handleReceiptUpload(this)">
-                                        </div>
-                                    </div>
-                                </details>
-                            </form>
-
-                            <!-- Nota t&eacute;cnica para futuro -->
-                            <div
-                                style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: var(--radius-sm);">
-                                <p
-                                    style="color: #60a5fa; font-size: 0.8rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fa-solid fa-cloud-check"></i>
-                                    <span>Conectado a YavlGold Cloud: Tus gastos se sincronizan en tiempo real.</span>
+                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                                    El registro de gastos ahora se hace con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
                                 </p>
                             </div>
-
                         </div>
                     </details>
                     <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
@@ -1715,7 +1605,42 @@
                 </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-ingresos" role="tabpanel"
-                    aria-labelledby="tab-btn-ingresos" aria-hidden="true" data-tab="ingresos"></div>
+                    aria-labelledby="tab-btn-ingresos" aria-hidden="true" data-tab="ingresos">
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
+                        <summary class="yg-accordion-summary" aria-controls="facturero-ingresos-form"
+                            aria-expanded="true">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-circle-dollar-to-slot"></i></span>
+                            <span class="yg-accordion-title">Registrar ingreso</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-ingresos-form">
+                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                                    El registro de ingresos se realiza con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                </p>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
+                        <summary class="yg-accordion-summary" aria-controls="facturero-ingresos-history"
+                            aria-expanded="false">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span class="yg-accordion-title">Historial</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-ingresos-history">
+                            <div id="income-recent-container" style="margin-top: 2rem; display: none;">
+                                <h3
+                                    style="color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;">
+                                    &Uacute;ltimos Ingresos (Sesi&oacute;n Actual)</h3>
+                                <div id="income-list" class="facturero-history-list"
+                                    style="display: flex; flex-direction: column; gap: 0.8rem; max-height: 350px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
+                                    <!-- Los ingresos se inyectar&aacute;n aqu&iacute; -->
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
 
                 <div class="tab-panel is-hidden" id="tab-panel-pendientes" role="tabpanel"
                     aria-labelledby="tab-btn-pendientes" aria-hidden="true" data-tab="pendientes">
@@ -1727,115 +1652,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-pendientes-form">
-                            <form id="pending-form" class="pending-form" onsubmit="event.preventDefault();">
-                                <div class="facturero-grid">
-                                    <div class="input-group field-concept">
-                                        <label class="input-label" for="input-concepto-pendiente">Concepto (deuda)
-                                            *</label>
-                                        <input type="text" id="input-concepto-pendiente" class="styled-input"
-                                            placeholder="Ej: Pendiente por venta a cr&eacute;dito" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-                                    <div class="input-group field-amount">
-                                        <label class="input-label" for="input-monto-pendiente">Monto *</label>
-                                        <div class="input-wrapper">
-                                            <span class="input-prefix">$</span>
-                                            <input type="number" id="input-monto-pendiente" class="styled-input"
-                                                placeholder="0.00" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-                                    <div class="input-group field-date">
-                                        <label class="input-label" for="input-fecha-pendiente">Fecha *</label>
-                                        <input type="date" id="input-fecha-pendiente" class="styled-input" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-                                    <div class="input-group field-dynamic">
-                                        <label class="input-label" for="input-cliente-pendiente">Cliente</label>
-                                        <input type="text" id="input-cliente-pendiente" class="styled-input"
-                                            placeholder="Ej: Distribuidor local" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <div class="input-group field-unit">
-                                        <label class="input-label" for="pending-unit-type">Presentacion</label>
-                                        <select id="pending-unit-type" class="styled-input"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">Seleccionar...</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="input-group field-unit-qty">
-                                        <label class="input-label" for="pending-unit-qty">Cantidad (unidad)</label>
-                                        <input type="number" id="pending-unit-qty" class="styled-input"
-                                            placeholder="Ej: 2" step="0.01" min="0" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <div class="input-group field-kg">
-                                        <label class="input-label" for="pending-quantity-kg">Kilogramos</label>
-                                        <input type="number" id="pending-quantity-kg" class="styled-input"
-                                            placeholder="Ej: 50" step="0.01" min="0" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <!-- V9.5: Asociar a Cultivo (opcional) -->
-                                    <div class="input-group field-crop">
-                                        <label class="input-label" for="pending-crop-id">Asociar a Cultivo
-                                            (opcional)</label>
-                                        <select id="pending-crop-id" class="styled-input crop-selector"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">General (sin asociar)</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="facturero-actions">
-                                        <button type="reset" id="btn-limpiar-pendiente" class="btn"
-                                            style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                            onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                            onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                            Limpiar
-                                        </button>
-                                        <button type="submit" id="btn-registrar-pendiente" class="btn btn-primary"
-                                            style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                            onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                            onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                            Registrar Pendiente
-                                        </button>
-                                    </div>
-                                </div>
-                                <details class="advanced-panel" id="pending-advanced" data-tab="pendientes">
-                                    <summary class="advanced-summary">
-                                        <span>Opciones avanzadas</span>
-                                        <span class="advanced-meta" id="advanced-meta-pendientes"></span>
-                                        <span class="chev">&#9662;</span>
-                                    </summary>
-                                    <div class="advanced-content">
-                                        <div class="input-group">
-                                            <label class="input-label" for="input-notas-pendiente">Notas
-                                                (opcional)</label>
-                                            <textarea id="input-notas-pendiente" class="styled-input"
-                                                placeholder="Condiciones de pago, cuotas, etc." rows="2"
-                                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <label class="input-label">Evidencia (opcional)</label>
-                                            <div id="pending-dropzone" class="upload-dropzone compact-dropzone">
-                                                <button type="button" class="evidence-trigger">
-                                                    <span class="evidence-icon">&#128206;</span>
-                                                    <span>Adjuntar evidencia</span>
-                                                </button>
-                                                <div class="evidence-row is-hidden">
-                                                    <span class="evidence-name"></span>
-                                                    <button type="button" class="evidence-view">Ver</button>
-                                                    <button type="button" class="evidence-change">Cambiar</button>
-                                                </div>
-                                                <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB)</p>
-                                            </div>
-                                            <input type="file" id="pending-receipt"
-                                                accept="image/jpeg,image/png,image/webp,application/pdf"
-                                                style="display: none;">
-                                        </div>
-                                    </div>
-                                </details>
-                            </form>
+                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                                    El registro de pendientes se hace con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                </p>
+                            </div>
                         </div>
                     </details>
                     <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
@@ -1861,113 +1682,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-perdidas-form">
-                            <form id="loss-form" class="loss-form" onsubmit="event.preventDefault();">
-                                <div class="facturero-grid">
-                                    <div class="input-group field-concept">
-                                        <label class="input-label" for="input-concepto-perdida">Concepto *</label>
-                                        <input type="text" id="input-concepto-perdida" class="styled-input"
-                                            placeholder="Ej: Cosecha da&ntilde;ada" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-                                    <div class="input-group field-amount">
-                                        <label class="input-label" for="input-monto-perdida">Monto *</label>
-                                        <div class="input-wrapper">
-                                            <span class="input-prefix">$</span>
-                                            <input type="number" id="input-monto-perdida" class="styled-input"
-                                                placeholder="0.00" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-                                    <div class="input-group field-date">
-                                        <label class="input-label" for="input-fecha-perdida">Fecha *</label>
-                                        <input type="date" id="input-fecha-perdida" class="styled-input" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-                                    <div class="input-group field-dynamic">
-                                        <label class="input-label" for="input-causa-perdida">Causa</label>
-                                        <input type="text" id="input-causa-perdida" class="styled-input"
-                                            placeholder="Ej: Plaga, robo" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <div class="input-group field-unit">
-                                        <label class="input-label" for="loss-unit-type">Presentacion</label>
-                                        <select id="loss-unit-type" class="styled-input"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">Seleccionar...</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="input-group field-unit-qty">
-                                        <label class="input-label" for="loss-unit-qty">Cantidad (unidad)</label>
-                                        <input type="number" id="loss-unit-qty" class="styled-input" placeholder="Ej: 2"
-                                            step="0.01" min="0" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <div class="input-group field-kg">
-                                        <label class="input-label" for="loss-quantity-kg">Kilogramos</label>
-                                        <input type="number" id="loss-quantity-kg" class="styled-input"
-                                            placeholder="Ej: 50" step="0.01" min="0" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <!-- V9.5: Asociar a Cultivo (opcional) -->
-                                    <div class="input-group field-crop">
-                                        <label class="input-label" for="loss-crop-id">Asociar a Cultivo
-                                            (opcional)</label>
-                                        <select id="loss-crop-id" class="styled-input crop-selector"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">General (sin asociar)</option>
-                                        </select>
-                                    </div>
-                                    <div class="facturero-actions">
-                                        <button type="reset" id="btn-limpiar-perdida" class="btn"
-                                            style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                            onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                            onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                            Limpiar
-                                        </button>
-                                        <button type="submit" id="btn-registrar-perdida" class="btn btn-primary"
-                                            style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                            onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                            onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                            Registrar P&eacute;rdida
-                                        </button>
-                                    </div>
-                                </div>
-                                <details class="advanced-panel" id="loss-advanced" data-tab="perdidas">
-                                    <summary class="advanced-summary">
-                                        <span>Opciones avanzadas</span>
-                                        <span class="advanced-meta" id="advanced-meta-perdidas"></span>
-                                        <span class="chev">&#9662;</span>
-                                    </summary>
-                                    <div class="advanced-content">
-                                        <div class="input-group">
-                                            <label class="input-label" for="input-notas-perdida">Notas
-                                                (opcional)</label>
-                                            <textarea id="input-notas-perdida" class="styled-input"
-                                                placeholder="Detalles de la p&eacute;rdida" rows="2"
-                                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <label class="input-label">Evidencia (opcional)</label>
-                                            <div id="loss-dropzone" class="upload-dropzone compact-dropzone">
-                                                <button type="button" class="evidence-trigger">
-                                                    <span class="evidence-icon">&#128206;</span>
-                                                    <span>Adjuntar evidencia</span>
-                                                </button>
-                                                <div class="evidence-row is-hidden">
-                                                    <span class="evidence-name"></span>
-                                                    <button type="button" class="evidence-view">Ver</button>
-                                                    <button type="button" class="evidence-change">Cambiar</button>
-                                                </div>
-                                                <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB)</p>
-                                            </div>
-                                            <input type="file" id="loss-receipt"
-                                                accept="image/jpeg,image/png,image/webp,application/pdf"
-                                                style="display: none;">
-                                        </div>
-                                    </div>
-                                </details>
-                            </form>
+                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                                    El registro de p&eacute;rdidas se realiza con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                </p>
+                            </div>
                         </div>
                     </details>
                     <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
@@ -1993,112 +1712,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-transferencias-form">
-                            <form id="transfer-form" class="transfer-form" onsubmit="event.preventDefault();">
-                                <div class="facturero-grid">
-                                    <div class="input-group field-concept">
-                                        <label class="input-label" for="input-concepto-transferencia">Concepto *</label>
-                                        <input type="text" id="input-concepto-transferencia" class="styled-input"
-                                            placeholder="Ej: Apoyo comunitario" required style="padding-left: 1rem;">
-                                    </div>
-                                    <div class="input-group field-amount">
-                                        <label class="input-label" for="input-monto-transferencia">Monto *</label>
-                                        <div class="input-wrapper">
-                                            <span class="input-prefix">$</span>
-                                            <input type="number" id="input-monto-transferencia" class="styled-input"
-                                                placeholder="0.00" step="0.01" min="0" required>
-                                        </div>
-                                    </div>
-                                    <div class="input-group field-date">
-                                        <label class="input-label" for="input-fecha-transferencia">Fecha *</label>
-                                        <input type="date" id="input-fecha-transferencia" class="styled-input" required
-                                            style="padding-left: 1rem;">
-                                    </div>
-                                    <div class="input-group field-dynamic">
-                                        <label class="input-label" for="input-destino-transferencia">Destino</label>
-                                        <input type="text" id="input-destino-transferencia" class="styled-input"
-                                            placeholder="Ej: Cooperativa, familia" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <div class="input-group field-unit">
-                                        <label class="input-label" for="transfer-unit-type">Presentacion</label>
-                                        <select id="transfer-unit-type" class="styled-input"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">Seleccionar...</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="input-group field-unit-qty">
-                                        <label class="input-label" for="transfer-unit-qty">Cantidad (unidad)</label>
-                                        <input type="number" id="transfer-unit-qty" class="styled-input"
-                                            placeholder="Ej: 2" step="0.01" min="0" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <div class="input-group field-kg">
-                                        <label class="input-label" for="transfer-quantity-kg">Kilogramos</label>
-                                        <input type="number" id="transfer-quantity-kg" class="styled-input"
-                                            placeholder="Ej: 50" step="0.01" min="0" style="padding-left: 1rem;">
-                                    </div>
-
-                                    <!-- V9.5: Asociar a Cultivo (opcional) -->
-                                    <div class="input-group field-crop">
-                                        <label class="input-label" for="transfer-crop-id">Asociar a Cultivo
-                                            (opcional)</label>
-                                        <select id="transfer-crop-id" class="styled-input crop-selector"
-                                            style="padding-left: 1rem; cursor: pointer;">
-                                            <option value="">General (sin asociar)</option>
-                                        </select>
-                                    </div>
-                                    <div class="facturero-actions">
-                                        <button type="reset" id="btn-limpiar-transferencia" class="btn"
-                                            style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.3s;"
-                                            onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'"
-                                            onmouseout="this.style.borderColor='rgba(255,255,255,0.2)';this.style.color='rgba(255,255,255,0.7)'">
-                                            Limpiar
-                                        </button>
-                                        <button type="submit" id="btn-registrar-transferencia" class="btn btn-primary"
-                                            style="background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c)); color: #000; padding: 12px 32px; border: none; border-radius: var(--radius-pill); cursor: pointer; font-weight: 700; transition: all 0.3s;"
-                                            onmouseover="this.style.boxShadow='0 0 25px rgba(200, 167, 82, 0.5)';this.style.transform='translateY(-2px)'"
-                                            onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'">
-                                            Registrar Transferencia
-                                        </button>
-                                    </div>
-                                </div>
-                                <details class="advanced-panel" id="transfer-advanced" data-tab="transferencias">
-                                    <summary class="advanced-summary">
-                                        <span>Opciones avanzadas</span>
-                                        <span class="advanced-meta" id="advanced-meta-transferencias"></span>
-                                        <span class="chev">&#9662;</span>
-                                    </summary>
-                                    <div class="advanced-content">
-                                        <div class="input-group">
-                                            <label class="input-label" for="input-notas-transferencia">Notas
-                                                (opcional)</label>
-                                            <textarea id="input-notas-transferencia" class="styled-input"
-                                                placeholder="Detalles de la transferencia" rows="2"
-                                                style="padding: 1rem; resize: vertical; min-height: 60px;"></textarea>
-                                        </div>
-
-                                        <div class="input-group">
-                                            <label class="input-label">Evidencia (opcional)</label>
-                                            <div id="transfer-dropzone" class="upload-dropzone compact-dropzone">
-                                                <button type="button" class="evidence-trigger">
-                                                    <span class="evidence-icon">&#128206;</span>
-                                                    <span>Adjuntar evidencia</span>
-                                                </button>
-                                                <div class="evidence-row is-hidden">
-                                                    <span class="evidence-name"></span>
-                                                    <button type="button" class="evidence-view">Ver</button>
-                                                    <button type="button" class="evidence-change">Cambiar</button>
-                                                </div>
-                                                <p class="evidence-hint">JPG, PNG, WebP o PDF (Max. 5MB)</p>
-                                            </div>
-                                            <input type="file" id="transfer-receipt"
-                                                accept="image/jpeg,image/png,image/webp,application/pdf"
-                                                style="display: none;">
-                                        </div>
-                                    </div>
-                                </details>
-                            </form>
+                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                                    El registro de transferencias se hace con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                </p>
+                            </div>
                         </div>
                     </details>
                     <details class="yg-accordion facturero-accordion" data-accordion-group="facturero">
@@ -2625,418 +2243,6 @@
             finally { btn.innerHTML = originalText; btn.disabled = false; }
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Referencias DOM
-            const expenseForm = document.getElementById('expense-form');
-            const btnClean = document.getElementById('btn-clean');
-            const btnSave = document.getElementById('btn-save');
-            const dropzone = document.getElementById('upload-dropzone');
-            const fileInput = document.getElementById('expense-receipt');
-            const dateInput = document.getElementById('expense-date');
-            const expensesContainer = document.getElementById('recent-transactions-container');
-            const expensesList = document.getElementById('expenses-list');
-            const cropsGrid = document.querySelector('.crops-grid');
-            window.closeCropModal();
-            const evidenceUi = window.agroEvidenceUI;
-
-            if (dropzone && fileInput) {
-                if (evidenceUi?.bindCompactEvidenceControls) {
-                    evidenceUi.bindCompactEvidenceControls(dropzone, fileInput);
-                } else {
-                    dropzone.addEventListener('click', () => fileInput.click());
-                }
-                if (evidenceUi?.resetCompactEvidenceDropzone) {
-                    evidenceUi.resetCompactEvidenceDropzone(dropzone);
-                }
-            }
-
-            // V9.6.6: Set max date to today (local timezone) to block future dates
-            if (dateInput && typeof window.getTodayLocalISO === 'function') {
-                const todayLocal = window.getTodayLocalISO();
-                dateInput.max = todayLocal;
-                if (!dateInput.value) dateInput.value = todayLocal;
-            }
-
-            // --- DATA LOADING & LOGIC ---
-            // UNIFIED STATS: Use window.refreshAgroStats() from agro-stats.js
-            // This replaces the old updateStats() that read from agro_stats table
-            async function updateStats() {
-                if (typeof window.refreshAgroStats === 'function') {
-                    await window.refreshAgroStats();
-                } else {
-                    console.warn('[AGRO] refreshAgroStats not yet available, retrying...');
-                    setTimeout(updateStats, 500);
-                }
-            }
-
-
-            // loadCrops is now provided by agro.js via window.loadCrops
-            // DO NOT define a duplicate here - it causes crops to disappear on data-refresh
-
-            document.addEventListener('data-refresh', () => {
-                updateStats();
-                loadExpenses(); // loadExpenses is hoisted
-                if (typeof window.loadCrops === 'function') window.loadCrops();
-            });
-            document.addEventListener('agro:crop:changed', () => {
-                loadExpenses();
-            });
-
-            // Exponer handler globalmente para el input onchange del HTML
-            window.handleReceiptUpload = async function (input) {
-                const file = input.files[0];
-                if (!file) return;
-
-                // Use hardened validation with magic bytes (from agro.js)
-                if (typeof window.validateEvidenceFile === 'function') {
-                    const validation = await window.validateEvidenceFile(file);
-                    if (!validation.valid) {
-                        if (typeof window.showEvidenceToast === 'function') {
-                            window.showEvidenceToast(validation.error, 'warning');
-                        } else {
-                            alert(validation.error);
-                        }
-                        input.value = '';
-                        if (dropzone && evidenceUi?.resetCompactEvidenceDropzone) {
-                            evidenceUi.resetCompactEvidenceDropzone(dropzone);
-                        }
-                        return;
-                    }
-                } else {
-                    // Fallback: basic size check if validators not loaded yet
-                    if (file.size > 5 * 1024 * 1024) {
-                        alert('El archivo es muy grande. Máximo 5MB.');
-                        input.value = '';
-                        if (btnClean) btnClean.click();
-                        return;
-                    }
-                }
-
-                if (dropzone) {
-                    if (evidenceUi?.openAdvancedPanelFor) {
-                        evidenceUi.openAdvancedPanelFor(dropzone);
-                    }
-                    if (evidenceUi?.setCompactEvidenceDropzone) {
-                        evidenceUi.setCompactEvidenceDropzone(dropzone, file);
-                    }
-                }
-            };
-
-            // Inicializar Fecha
-            if (dateInput) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
-
-            // --- CARGAR GASTOS DESDE SUPABASE ---
-            async function loadExpenses() {
-                try {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return; // Silent return if not logged in
-                    const activeCropId = typeof window.getSelectedCropId === 'function'
-                        ? window.getSelectedCropId()
-                        : null;
-
-                    let expenseQuery = supabase
-                        .from('agro_expenses')
-                        .select('*')
-                        .is('deleted_at', null)
-                        .order('date', { ascending: false }); // Newest first
-                    if (activeCropId) {
-                        expenseQuery = expenseQuery.eq('crop_id', activeCropId);
-                    }
-
-                    const { data, error } = await expenseQuery;
-
-                    if (error) throw error;
-
-                    if (expensesList && data) {
-                        expensesList.innerHTML = ''; // Clear list
-
-                        // V9.6.7: Group by day using helpers from agro.js
-                        if (typeof window.groupRowsByDay === 'function' && typeof window.formatDayHeader === 'function') {
-                            const dayGroups = window.groupRowsByDay(data, 'date');
-
-                            for (const group of dayGroups) {
-                                // Insert day header
-                                const dayHeader = document.createElement('div');
-                                dayHeader.className = 'facturero-day-header';
-                                dayHeader.textContent = group.label;
-                                expensesList.appendChild(dayHeader);
-
-                                // Insert items for this day (already sorted DESC within group)
-                                for (const expense of group.rows) {
-                                    renderExpenseItem(
-                                        expense.concept,
-                                        expense.amount,
-                                        expense.category,
-                                        null, // No local file object
-                                        expense.evidence_url,
-                                        expense.date,
-                                        expense.id,
-                                        true // V9.6.7: append mode (not prepend)
-                                    );
-                                }
-                            }
-                        } else {
-                            // Fallback: old logic
-                            [...data].reverse().forEach(expense => {
-                                renderExpenseItem(
-                                    expense.concept,
-                                    expense.amount,
-                                    expense.category,
-                                    null,
-                                    expense.evidence_url,
-                                    expense.date,
-                                    expense.id
-                                );
-                            });
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error cargando gastos:", e);
-                }
-            }
-
-            // Cargar al inicio
-            // Refresh all data (Stats + Expenses + Crops)
-            document.dispatchEvent(new CustomEvent('data-refresh'));
-
-            // --- A) FUNCIÓN LIMPIAR ---
-            if (btnClean) {
-                btnClean.addEventListener('click', (e) => {
-                    e.preventDefault();
-
-                    // 1. Vaciar inputs
-                    document.getElementById('expense-concept').value = '';
-                    document.getElementById('expense-amount').value = '';
-                    if (dateInput) {
-                        // V9.6.6: Use local timezone
-                        dateInput.value = typeof window.getTodayLocalISO === 'function'
-                            ? window.getTodayLocalISO()
-                            : new Date().toISOString().split('T')[0];
-                    }
-                    document.getElementById('expense-category').selectedIndex = 0;
-                    document.getElementById('expense-notes').value = '';
-
-                    // 2. Resetear archivo
-                    if (fileInput) fileInput.value = '';
-
-                    if (dropzone && evidenceUi?.resetCompactEvidenceDropzone) {
-                        evidenceUi.resetCompactEvidenceDropzone(dropzone);
-                    }
-                    if (evidenceUi?.updateAdvancedMetaForPanel) {
-                        const panel = document.getElementById('expense-advanced');
-                        evidenceUi.updateAdvancedMetaForPanel(panel);
-                    }
-                });
-            }
-
-            // --- B) FUNCIÓN REGISTRAR (SUPABASE) ---
-            if (expenseForm) {
-                expenseForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-
-                    const concept = document.getElementById('expense-concept').value.trim();
-                    const amount = document.getElementById('expense-amount').value.trim();
-                    const category = document.getElementById('expense-category').value;
-                    // V9.6.6: Use local timezone fallback
-                    const dateVal = dateInput?.value || (typeof window.getTodayLocalISO === 'function' ? window.getTodayLocalISO() : new Date().toISOString().split('T')[0]);
-                    const file = fileInput ? fileInput.files[0] : null;
-
-                    // 1. VALIDAR
-                    if (!concept || !amount || !category) {
-                        alert('⚠️ Por favor completa los campos obligatorios: Concepto, Monto y Categoría.');
-                        return;
-                    }
-
-                    // V9.6.6: Block future dates and invalid dates
-                    if (typeof window.assertDateNotFuture === 'function') {
-                        const dateCheck = window.assertDateNotFuture(dateVal, 'Fecha');
-                        if (!dateCheck.valid) {
-                            alert('⚠️ ' + dateCheck.error);
-                            return;
-                        }
-                    }
-
-                    // 2. UI LOADING
-                    if (btnSave) {
-                        const originalBtnText = btnSave.innerHTML;
-                        btnSave.innerHTML = `<i class="fa-solid fa-cloud-upload animate-bounce"></i> Guardando...`;
-                        btnSave.disabled = true;
-                        btnSave.style.opacity = '0.7';
-
-                        try {
-                            // Auth Check
-                            const { data: { user } } = await supabase.auth.getUser();
-                            if (!user) throw new Error("Debes iniciar sesión para guardar gastos.");
-
-                            let evidenceUrl = null;
-
-                            // 3. STORAGE UPLOAD
-                            if (file) {
-                                const fileExt = file.name.split('.').pop();
-                                // Clean filename
-                                const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '_');
-                                const storagePath = `${user.id}/${Date.now()}_${cleanName}.${fileExt}`;
-
-                                const { error: uploadError } = await supabase.storage
-                                    .from('agro-evidence')
-                                    .upload(storagePath, file);
-
-                                if (uploadError) throw uploadError;
-
-                                const { data: publicData } = supabase.storage
-                                    .from('agro-evidence')
-                                    .getPublicUrl(storagePath);
-
-                                evidenceUrl = publicData.publicUrl;
-                            }
-
-                            // 4. DB INSERT
-                            // V9.5: Get crop_id from dropdown
-                            const expenseCropSelect = document.getElementById('expense-crop-id');
-                            const expenseCropId = expenseCropSelect?.value || null;
-
-                            const { error: insertError } = await supabase
-                                .from('agro_expenses')
-                                .insert({
-                                    user_id: user.id,
-                                    concept: concept,
-                                    amount: parseFloat(amount),
-                                    category: category,
-                                    date: dateVal,
-                                    evidence_url: evidenceUrl,
-                                    crop_id: expenseCropId || null // V9.5
-                                });
-
-                            if (insertError) throw insertError;
-
-                            // 5. SUCCESS
-                            alert('✅ Gasto Guardado');
-                            if (btnClean) btnClean.click();
-                            document.dispatchEvent(new CustomEvent('data-refresh'));
-
-                        } catch (err) {
-                            console.error(err);
-                            alert('❌ Error al guardar: ' + err.message);
-                        } finally {
-                            btnSave.innerHTML = originalBtnText;
-                            btnSave.disabled = false;
-                            btnSave.style.opacity = '1';
-                        }
-                    }
-                });
-            }
-
-            // Helper para renderizar item en la lista
-            function renderExpenseItem(concept, amount, category, file, remoteUrl, dateVal, expenseId, appendMode = false) {
-                if (expensesContainer && expensesList) {
-                    expensesContainer.style.display = 'block';
-
-                    const item = document.createElement('div');
-                    item.className = 'expense-item animate-in';
-                    item.style.background = 'rgba(255,255,255,0.03)';
-                    item.style.border = '1px solid rgba(255,255,255,0.05)';
-                    item.style.borderRadius = '8px';
-                    item.style.padding = '1rem';
-                    item.style.display = 'flex';
-                    item.style.justifyContent = 'space-between';
-                    item.style.alignItems = 'center';
-                    item.style.marginBottom = '0.5rem';
-                    if (expenseId) {
-                        item.dataset.expenseId = String(expenseId);
-                    }
-
-                    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                    let dateStr = '';
-                    if (dateVal) {
-                        const [year, month, day] = dateVal.split('-').map(Number);
-                        dateStr = `${day} ${months[month - 1]} ${year}`;
-                    } else {
-                        const now = new Date();
-                        dateStr = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-                    }
-
-                    // Generar Link de Evidencia (Local Blob o Remote URL)
-                    let fileLinkHtml = '';
-                    if (file) {
-                        try {
-                            const fileUrl = URL.createObjectURL(file);
-                            fileLinkHtml = `• <a href="${fileUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver recibo"><i class="fa-solid fa-paperclip"></i> ${file.name}</a>`;
-                        } catch (e) {
-                            fileLinkHtml = `• 📎 ${file.name}`;
-                        }
-                    } else if (remoteUrl) {
-                        // Extract simplistic name or just show 'Ver recibo'
-                        fileLinkHtml = `• <a href="${remoteUrl}" target="_blank" style="color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Ver recibo"><i class="fa-solid fa-cloud"></i> Ver recibo</a>`;
-                    }
-
-                    const safeExpenseId = expenseId ? String(expenseId) : '';
-                    const actionButtons = expenseId ? `
-                        <button type="button" class="btn-edit-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                            <i class="fa fa-pen"></i>
-                        </button>
-                        <button type="button" class="btn-duplicate-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                            <i class="fa fa-copy"></i>
-                        </button>
-                        <button type="button" class="btn-delete-facturero" data-tab="gastos" data-id="${safeExpenseId}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    ` : '';
-
-                    item.innerHTML = `
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); display: flex; align-items: center; justify-content: center; color: var(--gold-primary);">
-                                <i class="fa-solid fa-money-bill-wave"></i>
-                            </div>
-                            <div>
-                                <div style="color: #fff; font-weight: 600; font-size: 0.95rem;">${concept}</div>
-                                <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">
-                                    ${category.toUpperCase()} • ${dateStr} ${fileLinkHtml}
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.4rem;">
-                            <div style="color: #ef4444; font-weight: 700; font-size: 1rem;">
-                                -$${parseFloat(amount).toFixed(2)}
-                            </div>
-                            ${actionButtons}
-                        </div>
-                    `;
-
-                    if (appendMode) {
-                        expensesList.appendChild(item);
-                    } else {
-                        expensesList.insertBefore(item, expensesList.firstChild);
-                    }
-                }
-            }
-
-            // Drag & Drop Handlers
-            if (dropzone) {
-                dropzone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if (fileInput && !fileInput.value) {
-                        dropzone.classList.add('is-dragover');
-                    }
-                });
-                dropzone.addEventListener('dragleave', () => {
-                    dropzone.classList.remove('is-dragover');
-                });
-                dropzone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropzone.classList.remove('is-dragover');
-                    if (fileInput) {
-                        const input = document.getElementById('expense-receipt');
-                        input.files = e.dataTransfer.files;
-                        handleReceiptUpload(input);
-                        if (evidenceUi?.openAdvancedPanelFor) {
-                            evidenceUi.openAdvancedPanelFor(dropzone);
-                        }
-                    }
-                });
-            }
-        });
     </script>
 
     <script type="module">
