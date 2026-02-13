@@ -7,6 +7,8 @@ import { updateStats } from './agro-stats.js';
 import { syncFactureroNotifications } from './agro-notifications.js';
 import './agro.css';
 import { openAgroWizard } from './agro-wizard.js';
+import { exportCropReport } from './agro-crop-report.js';
+import { exportStatsReport } from './agro-stats-report.js';
 
 // ============================================================
 // ESTADO DEL MÓDULO
@@ -3296,6 +3298,18 @@ function setupCropActionListeners() {
             return;
         }
 
+        const reportBtn = e.target.closest('.btn-report-crop');
+        if (reportBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cropId = reportBtn.dataset.id || reportBtn.closest('.crop-card')?.dataset.cropId;
+            console.info('[AGRO] Crop report click', { cropId });
+            if (cropId) {
+                exportCropReport(cropId);
+            }
+            return;
+        }
+
         const editBtn = e.target.closest('.btn-edit-crop');
         if (editBtn) {
             e.preventDefault();
@@ -3690,7 +3704,16 @@ function createCropCardElement(crop, index) {
         deleteBtn.dataset.id = cropId;
     }
 
-    actions.append(editBtn, deleteBtn);
+    const reportBtn = document.createElement('button');
+    reportBtn.className = 'btn-report-crop';
+    reportBtn.type = 'button';
+    reportBtn.title = 'Informe del Cultivo';
+    reportBtn.innerHTML = '<i class="fa-solid fa-chart-bar"></i>';
+    if (crop?.id !== undefined && crop?.id !== null) {
+        reportBtn.dataset.id = String(crop.id);
+    }
+
+    actions.append(reportBtn, editBtn, deleteBtn);
 
     const header = document.createElement('div');
     header.className = 'crop-card-header';
@@ -5070,6 +5093,13 @@ function initStatsCenterModal() {
 
     if (closeBtn) {
         closeBtn.addEventListener('click', closeStatsCenter);
+    }
+
+    const exportBtn = document.getElementById('btn-export-stats');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            exportStatsReport();
+        });
     }
 
     tabs.forEach((tab) => {
@@ -7148,6 +7178,26 @@ window.deleteCrop = deleteCrop;
         }
         .btn-edit-crop:hover {
             background: #C8A752;
+            transform: scale(1.1);
+        }
+        .btn-report-crop {
+            width: 28px;
+            height: 28px;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: #60a5fa;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-report-crop:hover {
+            background: #60a5fa;
+            color: #0a0a0a;
             transform: scale(1.1);
         }
     `;

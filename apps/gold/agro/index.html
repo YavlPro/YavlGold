@@ -1577,9 +1577,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-gastos-form">
-                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                            <div
+                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
                                 <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
-                                    El registro de gastos ahora se hace con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                    El registro de gastos ahora se hace con el wizard. Usa el bot&oacute;n
+                                    <strong>Nuevo</strong> en el header.
                                 </p>
                             </div>
                         </div>
@@ -1614,9 +1616,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-ingresos-form">
-                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                            <div
+                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
                                 <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
-                                    El registro de ingresos se realiza con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                    El registro de ingresos se realiza con el wizard. Usa el bot&oacute;n
+                                    <strong>Nuevo</strong> en el header.
                                 </p>
                             </div>
                         </div>
@@ -1652,9 +1656,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-pendientes-form">
-                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                            <div
+                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
                                 <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
-                                    El registro de pendientes se hace con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                    El registro de pendientes se hace con el wizard. Usa el bot&oacute;n
+                                    <strong>Nuevo</strong> en el header.
                                 </p>
                             </div>
                         </div>
@@ -1682,9 +1688,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-perdidas-form">
-                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                            <div
+                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
                                 <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
-                                    El registro de p&eacute;rdidas se realiza con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                    El registro de p&eacute;rdidas se realiza con el wizard. Usa el bot&oacute;n
+                                    <strong>Nuevo</strong> en el header.
                                 </p>
                             </div>
                         </div>
@@ -1712,9 +1720,11 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-transferencias-form">
-                            <div style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
+                            <div
+                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
                                 <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
-                                    El registro de transferencias se hace con el wizard. Usa el bot&oacute;n <strong>Nuevo</strong> en el header.
+                                    El registro de transferencias se hace con el wizard. Usa el bot&oacute;n
+                                    <strong>Nuevo</strong> en el header.
                                 </p>
                             </div>
                         </div>
@@ -2312,9 +2322,17 @@
             tabindex="-1">
             <div class="stats-center-header">
                 <h3 id="stats-center-title">Centro Estad&iacute;stico</h3>
-                <button type="button" class="btn-close" id="btn-close-stats" aria-label="Cerrar estadisticas">
-                    &times;
-                </button>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button type="button" id="btn-export-stats" title="Exportar informe estad&iacute;stico"
+                        style="background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s ease;"
+                        onmouseover="this.style.background='rgba(96,165,250,0.25)'"
+                        onmouseout="this.style.background='rgba(96,165,250,0.1)'">
+                        <i class="fa-solid fa-chart-bar"></i> Exportar
+                    </button>
+                    <button type="button" class="btn-close" id="btn-close-stats" aria-label="Cerrar estadisticas">
+                        &times;
+                    </button>
+                </div>
             </div>
             <div class="stats-center-body">
                 <div class="stats-center-tabs" role="tablist" aria-label="Secciones de estadisticas">
