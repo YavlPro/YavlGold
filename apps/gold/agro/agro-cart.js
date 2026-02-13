@@ -19,6 +19,7 @@ let _initialized = false;
 let _carts = [];
 let _activeCartId = null;
 let _activeCartItems = [];
+let _cartListenerAC = null;
 
 // ============================================================
 // INIT
@@ -37,7 +38,7 @@ export async function initAgroCart(deps) {
     _refreshExpenses = deps.refreshFactureroHistory || null;
 
     // Fetch exchange rates (non-blocking)
-    initExchangeRates().then(r => { if (r) _exchangeRates = r; }).catch(() => {});
+    initExchangeRates().then(r => { if (r) _exchangeRates = r; }).catch(() => { });
 
     _initialized = true;
     await loadCarts();
@@ -656,6 +657,9 @@ function renderEditItemModal(item) {
 // ============================================================
 
 function attachCartListeners(container) {
+    if (_cartListenerAC) _cartListenerAC.abort();
+    _cartListenerAC = new AbortController();
+    const signal = _cartListenerAC.signal;
     let addCurrency = 'COP';
 
     container.addEventListener('click', async (e) => {
@@ -703,7 +707,7 @@ function attachCartListeners(container) {
             if (priceEl) priceEl.value = '';
             return;
         }
-    });
+    }, { signal });
 
     // Cart chip selection
     container.addEventListener('click', async (e) => {
@@ -715,7 +719,7 @@ function attachCartListeners(container) {
             await loadCartItems(cartId);
             renderCartTab();
         }
-    });
+    }, { signal });
 
     // Currency toggle in add form
     container.addEventListener('click', (e) => {
@@ -725,12 +729,12 @@ function attachCartListeners(container) {
         curBtn.classList.add('is-active');
         addCurrency = curBtn.dataset.currency;
         updateAddPreview(addCurrency);
-    });
+    }, { signal });
 
     // USD preview on price input
     const priceInput = container.querySelector('#cart-item-price');
     if (priceInput) {
-        priceInput.addEventListener('input', () => updateAddPreview(addCurrency));
+        priceInput.addEventListener('input', () => updateAddPreview(addCurrency), { signal });
     }
 }
 

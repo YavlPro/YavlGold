@@ -5137,6 +5137,19 @@ function switchTab(tabName, options = {}) {
     }
 }
 
+// V9.8: Agro Agenda lazy-loader
+let _agendaModuleLoaded = false;
+window.openAgroAgenda = async function () {
+    try {
+        const { initAgroAgenda } = await import('./agro-agenda.js');
+        await initAgroAgenda({ supabase, cropsCache });
+        _agendaModuleLoaded = true;
+    } catch (err) {
+        console.error('[AGRO] Failed to load agenda module:', err);
+        alert('Error al cargar la agenda: ' + err.message);
+    }
+};
+
 let _cartModuleLoaded = false;
 async function initCartTabLazy() {
     if (_cartModuleLoaded) return;
