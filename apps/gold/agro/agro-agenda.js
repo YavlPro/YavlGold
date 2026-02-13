@@ -14,21 +14,21 @@ const BASE_NEW_MOON = new Date('2026-01-19T00:00:00');
 const LUNAR_CYCLE = 29.53058867;
 
 const TYPE_CONFIG = {
-    riego:       { icon: '💧', label: 'Riego' },
-    abono:       { icon: '🧪', label: 'Abono' },
-    fumigacion:  { icon: '🌿', label: 'Fumigación' },
-    poda:        { icon: '✂️', label: 'Poda' },
-    siembra:     { icon: '🌱', label: 'Siembra' },
-    cosecha:     { icon: '🌾', label: 'Cosecha' },
-    compra:      { icon: '🛒', label: 'Compra' },
+    riego: { icon: '💧', label: 'Riego' },
+    abono: { icon: '🧪', label: 'Abono' },
+    fumigacion: { icon: '🌿', label: 'Fumigación' },
+    poda: { icon: '✂️', label: 'Poda' },
+    siembra: { icon: '🌱', label: 'Siembra' },
+    cosecha: { icon: '🌾', label: 'Cosecha' },
+    compra: { icon: '🛒', label: 'Compra' },
     observacion: { icon: '👁️', label: 'Observación' },
-    otro:        { icon: '📝', label: 'Otro' }
+    otro: { icon: '📝', label: 'Otro' }
 };
 
 const MOON_RECOMMENDATIONS = {
-    nueva:     '🌑 Luna nueva: buen día para raíces y tubérculos',
+    nueva: '🌑 Luna nueva: buen día para raíces y tubérculos',
     creciente: '🌓 Luna creciente: buen momento para sembrar',
-    llena:     '🌕 Luna llena: evitar siembra, bueno para cosecha',
+    llena: '🌕 Luna llena: evitar siembra, bueno para cosecha',
     menguante: '🌗 Luna menguante: buen momento para podar y abonar'
 };
 
@@ -382,7 +382,7 @@ function renderAgendaContent() {
     const selMonthName = MONTHS_ES[selDate.getMonth()];
 
     modal.innerHTML = `
-        <div class="aga-modal" onclick="event.stopPropagation()">
+        <div class="aga-modal">
             <!-- Header with weather -->
             <div class="aga-header">
                 <div class="aga-header-top">
@@ -455,7 +455,7 @@ function openCreateModal() {
     overlay.id = 'aga-create-overlay';
     overlay.className = 'aga-create-overlay';
     overlay.innerHTML = `
-        <div class="aga-create-modal" onclick="event.stopPropagation()">
+        <div class="aga-create-modal">
             <h3 class="aga-create-title">+ Nueva Actividad</h3>
 
             <label class="aga-label">¿Qué vas a hacer?</label>
