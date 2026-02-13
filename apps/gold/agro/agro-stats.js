@@ -382,7 +382,7 @@ export async function computeAgroFinanceSummaryV1() {
         let expenseTotal = 0;
         const costByCategory = {};
         try {
-            const expenseColumns = ['id', 'user_id', 'amount', 'category', 'created_at'];
+            const expenseColumns = ['id', 'user_id', 'amount', 'monto_usd', 'currency', 'category', 'created_at'];
             const result = await selectAgroTable('agro_expenses', expenseColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching expenses:', result.error);
@@ -390,7 +390,7 @@ export async function computeAgroFinanceSummaryV1() {
             const expenses = result?.data;
             if (expenses) {
                 expenses.forEach(e => {
-                    const amt = parseFloat(e.amount) || 0;
+                    const amt = parseFloat(e.monto_usd) || parseFloat(e.amount) || 0;
                     expenseTotal += amt;
                     const cat = e.category || 'Otros';
                     costByCategory[cat] = (costByCategory[cat] || 0) + amt;
@@ -404,7 +404,7 @@ export async function computeAgroFinanceSummaryV1() {
         let incomeTotal = 0;
         let incomeRows = null;
         try {
-            const incomeColumns = ['id', 'user_id', 'monto', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const incomeColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
             const result = await selectAgroTable('agro_income', incomeColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching income:', result.error);
@@ -412,7 +412,7 @@ export async function computeAgroFinanceSummaryV1() {
             incomeRows = result?.data;
             if (incomeRows) {
                 incomeRows.forEach(i => {
-                    incomeTotal += parseFloat(i.monto) || 0;
+                    incomeTotal += parseFloat(i.monto_usd) || parseFloat(i.monto) || 0;
                 });
             }
         } catch (err) {
@@ -423,7 +423,7 @@ export async function computeAgroFinanceSummaryV1() {
         let pendingTotal = 0;
         let pendingRows = null;
         try {
-            const pendingColumns = ['id', 'user_id', 'monto', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const pendingColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
             const result = await selectAgroTable('agro_pending', pendingColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching pending:', result.error);
@@ -431,7 +431,7 @@ export async function computeAgroFinanceSummaryV1() {
             pendingRows = result?.data;
             if (pendingRows) {
                 pendingRows.forEach(p => {
-                    pendingTotal += parseFloat(p.monto) || 0;
+                    pendingTotal += parseFloat(p.monto_usd) || parseFloat(p.monto) || 0;
                 });
             }
         } catch (err) {
@@ -443,7 +443,7 @@ export async function computeAgroFinanceSummaryV1() {
         let lossesRows = null;
         try {
             // V9.6 Fix: Removed 'category' which does not exist in DB
-            const lossesColumns = ['id', 'user_id', 'monto', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const lossesColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
             const result = await selectAgroTable('agro_losses', lossesColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
@@ -451,7 +451,7 @@ export async function computeAgroFinanceSummaryV1() {
             lossesRows = result?.data;
             if (lossesRows) {
                 lossesRows.forEach(l => {
-                    const amt = parseFloat(l.monto) || 0;
+                    const amt = parseFloat(l.monto_usd) || parseFloat(l.monto) || 0;
                     lossesTotal += amt;
                     const cat = l.category || 'Pérdidas';
                     costByCategory[cat] = (costByCategory[cat] || 0) + amt;
@@ -465,7 +465,7 @@ export async function computeAgroFinanceSummaryV1() {
         let transfersTotal = 0;
         let transfersRows = null;
         try {
-            const transferColumns = ['id', 'user_id', 'monto', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
+            const transferColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
             const result = await selectAgroTable('agro_transfers', transferColumns, true, userId);
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching transfers:', result.error);
@@ -473,7 +473,7 @@ export async function computeAgroFinanceSummaryV1() {
             transfersRows = result?.data;
             if (transfersRows) {
                 transfersRows.forEach(t => {
-                    transfersTotal += parseFloat(t.monto) || 0;
+                    transfersTotal += parseFloat(t.monto_usd) || parseFloat(t.monto) || 0;
                 });
             }
         } catch (err) {

@@ -53,7 +53,7 @@ async function fetchIncome(userId) {
     try {
         const { data, error } = await supabase
             .from('agro_income')
-            .select('id,concepto,monto,fecha,crop_id,deleted_at')
+            .select('id,concepto,monto,monto_usd,currency,fecha,crop_id,deleted_at')
             .eq('user_id', userId)
             .is('deleted_at', null);
         if (error) { console.warn('[StatsReport] income error:', error.message); return []; }
@@ -68,7 +68,7 @@ async function fetchExpenses(userId) {
     try {
         const { data, error } = await supabase
             .from('agro_expenses')
-            .select('id,amount,crop_id,deleted_at')
+            .select('id,amount,monto_usd,currency,crop_id,deleted_at')
             .eq('user_id', userId)
             .is('deleted_at', null);
         if (error) { console.warn('[StatsReport] expenses error:', error.message); return []; }
@@ -83,7 +83,7 @@ async function fetchPending(userId) {
     try {
         const { data, error } = await supabase
             .from('agro_pending')
-            .select('id,concepto,monto,fecha,cliente,crop_id,deleted_at,transfer_state')
+            .select('id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at,transfer_state')
             .eq('user_id', userId)
             .is('deleted_at', null)
             .neq('transfer_state', 'transferred');
@@ -99,7 +99,7 @@ async function fetchLosses(userId) {
     try {
         const { data, error } = await supabase
             .from('agro_losses')
-            .select('id,monto,crop_id,deleted_at')
+            .select('id,monto,monto_usd,currency,crop_id,deleted_at')
             .eq('user_id', userId)
             .is('deleted_at', null);
         if (error) { console.warn('[StatsReport] losses error:', error.message); return []; }
@@ -133,19 +133,19 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
 
     for (const r of incomeRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.incomeCents += toCents(r.monto);
+        if (e) e.incomeCents += toCents(r.monto_usd ?? r.monto);
     }
     for (const r of expenseRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.expenseCents += toCents(r.amount);
+        if (e) e.expenseCents += toCents(r.monto_usd ?? r.amount);
     }
     for (const r of pendingRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.pendingCents += toCents(r.monto);
+        if (e) e.pendingCents += toCents(r.monto_usd ?? r.monto);
     }
     for (const r of lossesRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.lossesCents += toCents(r.monto);
+        if (e) e.lossesCents += toCents(r.monto_usd ?? r.monto);
     }
 
     let md = '| Cultivo | Estado | Ingresos | Costos | Ganancia | Pendientes | ROI |\n';

@@ -9,6 +9,7 @@ import './agro.css';
 import { openAgroWizard } from './agro-wizard.js';
 import { exportCropReport } from './agro-crop-report.js';
 import { exportStatsReport } from './agro-stats-report.js';
+import { formatCurrencyDisplay, SUPPORTED_CURRENCIES } from './agro-exchange.js';
 
 // ============================================================
 // ESTADO DEL MÓDULO
@@ -1495,6 +1496,13 @@ function applyPendingTransferFilter(items) {
     return items.filter((item) => !isPendingTransferred(item));
 }
 
+function _fmtItemCurrency(item, config, amount) {
+    const currency = item.currency || 'USD';
+    if (currency === 'USD') return `$${amount.toFixed(2)}`;
+    const montoUsd = Number(item.monto_usd) || amount;
+    return formatCurrencyDisplay(amount, currency, montoUsd);
+}
+
 function renderHistoryRow(tabName, item, config) {
     const rawConcept = item[config.conceptField] || 'Sin concepto';
     const amount = Number(item[config.amountField] || 0);
@@ -1598,7 +1606,7 @@ function renderHistoryRow(tabName, item, config) {
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
-                <span style="color: ${tabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">$${amount.toFixed(2)}</span>
+                <span style="color: ${tabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">${_fmtItemCurrency(item, config, amount)}</span>
                 <button type="button" class="btn-edit-facturero" data-tab="${tabName}" data-id="${item.id}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-pen"></i>
                 </button>
@@ -1628,6 +1636,9 @@ function buildFactureroSelectFields(tabName, config) {
     add(config?.dateField);
     add('created_at');
     add('crop_id');
+    add('currency');
+    add('exchange_rate');
+    add('monto_usd');
     (config?.extraFields || []).forEach(add);
     const optional = getFactureroOptionalFields(tabName);
     (optional || []).forEach(add);
@@ -1852,6 +1863,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
             expenseCache = filteredItems;
         }
         renderHistoryList(tabName, config, filteredItems, showActions);
+        injectHistorySearchInput(tabName, config);
         if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias' || tabName === 'gastos' || tabName === 'ingresos') {
             syncFactureroNotifications(tabName, filteredItems);
         }
@@ -1929,6 +1941,72 @@ function renderHistoryList(tabName, config, items, showActions) {
 }
 
 // ============================================================
+// V9.8: FACTURERO SEARCH FILTER (client-side)
+// ============================================================
+
+const _searchNormalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+function injectHistorySearchInput(tabName, config) {
+    const container = document.getElementById(config.listId);
+    if (!container) return;
+    const items = container.querySelectorAll('.facturero-item');
+    if (items.length === 0) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'facturero-search-wrapper';
+    wrapper.style.cssText = 'margin-bottom: 0.5rem;';
+    wrapper.innerHTML = `<input type="text" class="facturero-search-input" placeholder="\uD83D\uDD0D Buscar por nombre, cultivo o monto..." style="width:100%;min-height:48px;background:#0B0C0F;border:1px solid #C8A752;border-radius:8px;padding:10px 14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;box-sizing:border-box;outline:none;" onfocus="this.style.boxShadow='0 0 8px rgba(200,167,82,0.3)'" onblur="this.style.boxShadow='none'">`;
+    wrapper.querySelector('input').style.setProperty('--placeholder-color', '#888');
+
+    const exportDiv = container.querySelector('div[style*="text-align: right"]');
+    if (exportDiv) { exportDiv.after(wrapper); } else { container.prepend(wrapper); }
+
+    const input = wrapper.querySelector('.facturero-search-input');
+    input.addEventListener('input', () => {
+        const query = _searchNormalize(input.value.trim());
+        const allItems = container.querySelectorAll('.facturero-item');
+        const dayHeaders = container.querySelectorAll('.facturero-day-header');
+        let totalVisible = 0;
+
+        allItems.forEach(item => {
+            const match = !query || _searchNormalize(item.textContent || '').includes(query);
+            item.style.display = match ? '' : 'none';
+            if (match) totalVisible++;
+        });
+
+        dayHeaders.forEach(header => {
+            let next = header.nextElementSibling;
+            let hasVisible = false;
+            while (next && !next.classList.contains('facturero-day-header') && !next.classList.contains('facturero-search-wrapper')) {
+                if (next.classList.contains('facturero-item') && next.style.display !== 'none') hasVisible = true;
+                next = next.nextElementSibling;
+            }
+            header.style.display = hasVisible ? '' : 'none';
+        });
+
+        let noRes = container.querySelector('.facturero-no-results');
+        if (query && totalVisible === 0) {
+            if (!noRes) {
+                noRes = document.createElement('p');
+                noRes.className = 'facturero-no-results';
+                noRes.style.cssText = 'color:#888;font-size:0.85rem;text-align:center;padding:1rem;';
+                wrapper.after(noRes);
+            }
+            noRes.textContent = `Sin resultados para "${input.value.trim()}"`;
+            noRes.style.display = 'block';
+        } else if (noRes) {
+            noRes.style.display = 'none';
+        }
+    });
+}
+
+function resetHistorySearch() {
+    document.querySelectorAll('.facturero-search-input').forEach(el => {
+        if (el.value) { el.value = ''; el.dispatchEvent(new Event('input')); }
+    });
+}
+
+// ============================================================
 // V9.6.3: AGROLOG EXPORT — Markdown history download
 // ============================================================
 
@@ -1997,11 +2075,12 @@ async function exportAgroLog(tabName) {
         md += `> **Fecha:** ${dateStr} ${timeStr}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
 
-        // Summary
-        const totalMonto = items.reduce((s, it) => s + (Number(it[config.amountField]) || 0), 0);
+        // Summary — always in USD
+        const usdField = 'monto_usd';
+        const totalMontoUsd = items.reduce((s, it) => s + (Number(it[usdField]) || Number(it[config.amountField]) || 0), 0);
         md += `## 📊 Resumen\n`;
         md += `- **Total Registros:** ${items.length}\n`;
-        md += `- **Monto Total:** $${totalMonto.toFixed(2)}\n\n`;
+        md += `- **Monto Total (USD):** $${totalMontoUsd.toFixed(2)}\n\n`;
         md += `---\n\n`;
 
         // Table header — build dynamic columns
@@ -2013,8 +2092,8 @@ async function exportAgroLog(tabName) {
         let separator = '|:-:|-------|--------';
         if (whoLabel) { header += ` | ${whoLabel}`; separator += '|--------'; }
         if (hasUnits) { header += ' | Cantidad'; separator += '|---------'; }
-        header += ' | Monto | Evidencia |';
-        separator += '|------:|-----------|';
+        header += ' | Moneda | Monto | USD | Evidencia |';
+        separator += '|------:|------:|----:|-----------|';
         md += `## 📝 Detalle\n`;
         md += `_Marca con una \`x\` los items verificados \`[x]\`_\n\n`;
         md += header + '\n' + separator + '\n';
@@ -2027,6 +2106,8 @@ async function exportAgroLog(tabName) {
             const concept = (whoData.concept || rawConcept).replace(/\|/g, '·');
             const who = (whoData.who || '').replace(/\|/g, '·');
             const amount = Number(item[config.amountField] || 0).toFixed(2);
+            const currency = item.currency || 'USD';
+            const amtUsd = Number(item[usdField] || item[config.amountField] || 0).toFixed(2);
 
             // Units
             let unitText = '';
@@ -2046,7 +2127,7 @@ async function exportAgroLog(tabName) {
             let row = `| [ ] | ${fecha} | ${concept}`;
             if (whoLabel) row += ` | ${who || '-'}`;
             if (hasUnits) row += ` | ${unitText}`;
-            row += ` | $${amount} | ${evidenceText} |`;
+            row += ` | ${currency} | ${amount} | $${amtUsd} | ${evidenceText} |`;
             md += row + '\n';
         }
 
@@ -4846,6 +4927,7 @@ function switchTab(tabName, options = {}) {
     });
 
     writeStoredTab(tabName);
+    resetHistorySearch();
 }
 
 function initFinanceTabs() {
@@ -4880,6 +4962,7 @@ function ensureFactureroHighlightStyles() {
             background: rgba(200, 167, 82, 0.08);
             transition: box-shadow 0.2s ease, background 0.2s ease, outline 0.2s ease;
         }
+        .facturero-search-input::placeholder { color: #888; }
     `;
     document.head.appendChild(style);
 }

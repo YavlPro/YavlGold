@@ -16,35 +16,35 @@ const TAB_CONFIGS = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,fecha,categoria,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,categoria,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state'
     },
     gastos: {
         table: 'agro_expenses',
         conceptField: 'concept',
         amountField: 'amount',
         dateField: 'date',
-        columns: 'id,concept,amount,date,category,crop_id,deleted_at'
+        columns: 'id,concept,amount,monto_usd,currency,exchange_rate,date,category,crop_id,deleted_at'
     },
     pendientes: {
         table: 'agro_pending',
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state'
     },
     perdidas: {
         table: 'agro_losses',
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,fecha,causa,unit_type,unit_qty,quantity_kg,crop_id,deleted_at'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,causa,unit_type,unit_qty,quantity_kg,crop_id,deleted_at'
     },
     transferencias: {
         table: 'agro_transfers',
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,fecha,destino,unit_type,unit_qty,quantity_kg,crop_id,deleted_at'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,destino,unit_type,unit_qty,quantity_kg,crop_id,deleted_at'
     }
 };
 
@@ -241,10 +241,10 @@ export async function exportCropReport(cropId) {
         ]);
 
         // Compute totals in cents (integer arithmetic)
-        const totalIncomeCents = income.reduce((s, it) => s + toCents(it.monto), 0);
-        const totalExpensesCents = expenses.reduce((s, it) => s + toCents(it.amount), 0);
-        const totalPendingCents = pending.reduce((s, it) => s + toCents(it.monto), 0);
-        const totalLossesCents = losses.reduce((s, it) => s + toCents(it.monto), 0);
+        const totalIncomeCents = income.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
+        const totalExpensesCents = expenses.reduce((s, it) => s + toCents(it.monto_usd ?? it.amount), 0);
+        const totalPendingCents = pending.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
+        const totalLossesCents = losses.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const profitCents = totalIncomeCents - totalExpensesCents;
         const roiStr = totalExpensesCents > 0
             ? (((totalIncomeCents - totalExpensesCents) / totalExpensesCents) * 100).toFixed(1) + '%'

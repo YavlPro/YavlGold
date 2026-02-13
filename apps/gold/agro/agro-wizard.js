@@ -4,6 +4,8 @@
  * Exporta openAgroWizard(tabName, deps) como función principal.
  */
 
+import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
+
 // ============================================================
 // TAB METADATA
 // ============================================================
@@ -449,6 +451,10 @@ export async function openAgroWizard(tabName, deps) {
 
     injectWizardStyles();
 
+    // Fetch exchange rates (non-blocking)
+    let exchangeRates = { USD: 1, COP: null, VES: null };
+    initExchangeRates().then(r => { if (r) exchangeRates = r; }).catch(() => { });
+
     // Wizard state
     const state = {
         step: 1,
@@ -460,7 +466,10 @@ export async function openAgroWizard(tabName, deps) {
         unitType: '',
         unitQty: 1,
         quantityKg: '',
-        monto: ''
+        monto: '',
+        currency: 'USD',
+        exchangeRate: 1,
+        montoUsd: 0
     };
 
     // Pre-fill crop name
@@ -587,13 +596,44 @@ export async function openAgroWizard(tabName, deps) {
             </div>
         ` : '';
 
+        // Currency selector
+        const currencyBtns = Object.entries(SUPPORTED_CURRENCIES).map(([code, cfg]) => {
+            const sel = state.currency === code ? 'selected' : '';
+            return `<button type="button" class="wiz-unit-btn wiz-currency-btn ${sel}" data-currency="${code}" style="min-height:48px;"><span class="wiz-unit-icon">${cfg.flag}</span><span class="wiz-unit-label">${code === 'VES' ? 'Bs' : code}</span></button>`;
+        }).join('');
+
+        // Conversion preview (only for non-USD)
+        let conversionHtml = '';
+        if (state.currency !== 'USD') {
+            const effectiveRate = state.exchangeRate || getRate(state.currency, exchangeRates) || 0;
+            const monto = Number(state.monto) || 0;
+            const usdEquiv = effectiveRate > 0 ? (monto / effectiveRate).toFixed(2) : '—';
+            const overrideActive = hasOverride(state.currency);
+            conversionHtml = `
+                <div id="wiz-conversion-preview" style="text-align:center;margin-top:0.5rem;">
+                    <div style="color:#C8A752;font-size:0.9rem;">≈ $${usdEquiv} USD</div>
+                    <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">tasa: 1 USD = ${effectiveRate ? Number(effectiveRate).toLocaleString() : '—'} ${state.currency}</div>
+                </div>
+                <div class="wiz-field" style="margin-top:0.5rem;">
+                    <label class="wiz-label">Tasa ${state.currency}/USD ${overrideActive ? '(manual)' : '(mercado)'}</label>
+                    <input type="number" class="wiz-input" id="wiz-exchange-rate" placeholder="Ej: 4100" value="${effectiveRate || ''}" min="0.0001" step="any" inputmode="decimal">
+                    ${overrideActive ? '<button type="button" id="wiz-clear-override" style="background:transparent;border:none;color:#C8A752;font-size:0.75rem;cursor:pointer;margin-top:4px;">↻ Usar tasa del mercado</button>' : ''}
+                </div>
+            `;
+        }
+
+        const currSymbol = SUPPORTED_CURRENCIES[state.currency]?.symbol || '$';
+
         return `
             ${unitsHtml}
-            <p class="wiz-question">💵 ¿Monto?</p>
+            <p class="wiz-question">� Moneda</p>
+            <div class="wiz-unit-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem;">${currencyBtns}</div>
+            <p class="wiz-question">� ¿Monto?</p>
             <div class="wiz-field" style="text-align: center;">
-                <div style="color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-bottom: 0.3rem;">$</div>
+                <div style="color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-bottom: 0.3rem;">${currSymbol}</div>
                 <input type="number" class="wiz-input wiz-input-amount" id="wiz-monto" placeholder="0.00" value="${state.monto}" min="0.01" step="0.01" inputmode="decimal" required>
             </div>
+            ${conversionHtml}
         `;
     }
 
@@ -638,7 +678,7 @@ export async function openAgroWizard(tabName, deps) {
             </div>
             <div class="wiz-ticket-row">
                 <span class="wiz-ticket-label">💰 Monto</span>
-                <span class="wiz-ticket-value wiz-ticket-total">$${Number(state.monto || 0).toFixed(2)}</span>
+                <span class="wiz-ticket-value wiz-ticket-total">${formatWizardMonto()}</span>
             </div>
         `;
 
@@ -707,6 +747,45 @@ export async function openAgroWizard(tabName, deps) {
             });
         });
 
+        // Currency buttons (step 3)
+        overlay.querySelectorAll('.wiz-currency-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const code = btn.dataset.currency;
+                if (code && SUPPORTED_CURRENCIES[code]) {
+                    state.currency = code;
+                    if (code === 'USD') {
+                        state.exchangeRate = 1;
+                    } else {
+                        state.exchangeRate = getRate(code, exchangeRates) || state.exchangeRate || 0;
+                    }
+                    recalcMontoUsd();
+                    render();
+                }
+            });
+        });
+
+        // Exchange rate input (step 3)
+        const rateEl = overlay.querySelector('#wiz-exchange-rate');
+        if (rateEl) {
+            rateEl.addEventListener('input', () => {
+                state.exchangeRate = Number(rateEl.value) || 0;
+                recalcMontoUsd();
+                updateConversionPreview();
+                updateFooterState();
+            });
+        }
+
+        // Clear override button
+        const clearBtn = overlay.querySelector('#wiz-clear-override');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                clearOverride(state.currency);
+                state.exchangeRate = getRate(state.currency, exchangeRates) || 0;
+                recalcMontoUsd();
+                render();
+            });
+        }
+
         // Input sync
         const conceptoEl = overlay.querySelector('#wiz-concepto');
         if (conceptoEl) {
@@ -742,6 +821,8 @@ export async function openAgroWizard(tabName, deps) {
         if (montoEl) {
             montoEl.addEventListener('input', () => {
                 state.monto = montoEl.value;
+                recalcMontoUsd();
+                updateConversionPreview();
                 updateFooterState();
             });
             if (state.step === 3) {
@@ -790,6 +871,40 @@ export async function openAgroWizard(tabName, deps) {
         if (kgEl) state.quantityKg = kgEl.value;
         const montoEl = overlay.querySelector('#wiz-monto');
         if (montoEl) state.monto = montoEl.value;
+        const rateEl = overlay.querySelector('#wiz-exchange-rate');
+        if (rateEl) state.exchangeRate = Number(rateEl.value) || 0;
+    }
+
+    function recalcMontoUsd() {
+        const monto = Number(state.monto) || 0;
+        if (state.currency === 'USD') {
+            state.montoUsd = monto;
+        } else {
+            state.montoUsd = convertToUSD(monto, state.currency, state.exchangeRate);
+        }
+    }
+
+    function updateConversionPreview() {
+        const preview = overlay.querySelector('#wiz-conversion-preview');
+        if (!preview || state.currency === 'USD') return;
+        const monto = Number(state.monto) || 0;
+        const rate = state.exchangeRate || 0;
+        const usd = rate > 0 ? (monto / rate).toFixed(2) : '—';
+        preview.innerHTML = `
+            <div style="color:#C8A752;font-size:0.9rem;">≈ $${usd} USD</div>
+            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">tasa: 1 USD = ${rate ? Number(rate).toLocaleString() : '—'} ${state.currency}</div>
+        `;
+    }
+
+    function formatWizardMonto() {
+        const monto = Number(state.monto || 0);
+        if (state.currency === 'USD') return `$${monto.toFixed(2)}`;
+        const cfg = SUPPORTED_CURRENCIES[state.currency] || SUPPORTED_CURRENCIES.USD;
+        const localStr = cfg.decimals === 0
+            ? `${cfg.symbol} ${Math.round(monto).toLocaleString()}`
+            : `${cfg.symbol} ${monto.toFixed(cfg.decimals)}`;
+        const usdStr = `$${Number(state.montoUsd || 0).toFixed(2)}`;
+        return `${localStr} (≈ ${usdStr} USD · tasa: ${Number(state.exchangeRate || 0).toLocaleString()})`;
     }
 
     function updateFooterState() {
@@ -831,12 +946,19 @@ export async function openAgroWizard(tabName, deps) {
                 finalConcepto = buildConceptWithWho(tabName, state.concepto, state.who);
             }
 
+            // Recalc monto_usd before submit
+            recalcMontoUsd();
+            const montoNum = parseFloat(state.monto) || 0;
+
             const insertData = {
                 user_id: user.id,
                 crop_id: state.cropId || null,
                 [tabName === 'gastos' ? 'date' : 'fecha']: state.fecha,
                 [tabName === 'gastos' ? 'concept' : 'concepto']: finalConcepto,
-                [tabName === 'gastos' ? 'amount' : 'monto']: parseFloat(state.monto) || 0
+                [tabName === 'gastos' ? 'amount' : 'monto']: montoNum,
+                currency: state.currency || 'USD',
+                exchange_rate: state.exchangeRate || 1,
+                monto_usd: state.currency === 'USD' ? montoNum : (state.montoUsd || montoNum)
             };
 
             // Tab-specific WHO field (DB column)

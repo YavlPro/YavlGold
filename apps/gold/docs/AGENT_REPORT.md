@@ -1,5 +1,79 @@
 ---
 
+## 🆕 SESIÓN: Facturero Search + Multi-Moneda (2026-02-13)
+
+### Diagnóstico
+- **Mapa MPA**: `vite.config.js` → agro/index.html entrada MPA
+- **Facturero**: 5 tabs (gastos, ingresos, pendientes, perdidas, transferencias) con `FACTURERO_CONFIG`
+- **renderHistoryList()**: Agrupa items por día, cada item es `.facturero-item`
+- **Tab switch**: `switchTab()` togglea `.is-hidden` en paneles
+- **Crop change**: `agro:crop:changed` → `refreshFactureroForSelectedCrop()` → re-fetch + re-render
+- **Supabase tables**: `agro_income`, `agro_pending`, `agro_losses`, `agro_expenses`, `agro_transfers` — confirmadas sin columnas currency previas
+
+### Feature 1: Search Input en Historial
+- **Archivo**: `agro.js` (~65 líneas añadidas)
+- **Funciones**: `_searchNormalize()`, `injectHistorySearchInput()`, `resetHistorySearch()`
+- **Normalización**: NFD + strip diacritics + lowercase ("josé" ↔ "Jose", "bátata" ↔ "batata")
+- **Inyección**: después de `renderHistoryList()` en `refreshFactureroHistory()`, posicionado tras botón "Exportar MD"
+- **Filtro**: `display:none/block` en `.facturero-item`, oculta day headers sin items visibles
+- **"Sin resultados"**: mensaje dinámico `.facturero-no-results`
+- **Reset**: en `switchTab()` y automático al re-render por cambio de cultivo
+- **CSS**: `::placeholder { color: #888 }` en `ensureFactureroHighlightStyles()`
+- **Estilo**: fondo `#0B0C0F`, borde `#C8A752`, border-radius 8px, min-height 48px, font Rajdhani, focus glow dorado
+
+### Fase A: Schema Multi-Moneda (Supabase)
+- **Migración**: `add_multicurrency_columns` aplicada exitosamente
+- **Columnas**: `currency TEXT DEFAULT 'USD'`, `exchange_rate NUMERIC DEFAULT 1`, `monto_usd NUMERIC` (o `amount_usd` para gastos)
+- **Backfill**: registros existentes actualizados con `currency='USD'`, `exchange_rate=1`, `monto_usd=monto`
+- **Tablas**: agro_income, agro_pending, agro_losses, agro_expenses, agro_transfers
+
+### Fase B: Servicio de Tasas (agro-exchange.js)
+- **Archivo nuevo**: `agro-exchange.js` (~220 líneas)
+- **SUPPORTED_CURRENCIES**: USD ($), COP (🇨🇴), VES (Bs 🇻🇪)
+- **APIs**: Frankfurter (primaria, COP) → ER-API (fallback, COP+VES) → cache stale → null
+- **Cache**: localStorage `yavlgold_exchange_rates`, TTL 24h
+- **Override manual**: localStorage `yavlgold_exchange_override`, prioridad sobre API
+- **Exports**: `fetchExchangeRates`, `getRate`, `convertToUSD`, `convertFromUSD`, `initExchangeRates`, `formatCurrencyDisplay`, `setOverride`, `clearOverride`, `hasOverride`
+
+### Fase C: Wizard Multi-Moneda (agro-wizard.js)
+- **Import**: `SUPPORTED_CURRENCIES`, `initExchangeRates`, `getRate`, `convertToUSD`, `hasOverride`, `clearOverride`
+- **State**: `currency: 'USD'`, `exchangeRate: 1`, `montoUsd: 0`
+- **Step 3**: Selector de 3 botones (💵 USD, 🇨🇴 COP, 🇻🇪 Bs), preview de conversión "≈ $X.XX USD", input de tasa editable
+- **Step 4**: Summary muestra formato completo "COP 150,000 (≈ $36.59 USD · tasa: 4,100)"
+- **Submit**: Envía `currency`, `exchange_rate`, `monto_usd`/`amount_usd` a Supabase
+- **Override**: Botón "↻ Usar tasa del mercado" cuando hay override manual
+
+### Fase D: Historial Multi-Moneda (agro.js)
+- **Import**: `formatCurrencyDisplay`, `SUPPORTED_CURRENCIES` de agro-exchange.js
+- **`_fmtItemCurrency()`**: USD → "$36.59", COP → "COP 150,000 (≈ $36.59)", VES → "Bs 1,500 (≈ $33.33)"
+- **`buildFactureroSelectFields()`**: Añadido `currency`, `exchange_rate`, `monto_usd`/`amount_usd`
+- **`renderHistoryRow()`**: Usa `_fmtItemCurrency()` en vez de `$${amount.toFixed(2)}`
+
+### Fase E: Estadísticas en USD (agro-stats.js)
+- **`computeAgroFinanceSummaryV1()`**: Sumatorias usan `monto_usd ?? monto` (fallback para registros viejos)
+- **Columnas**: Añadido `monto_usd`, `currency` a todos los selects
+
+### Fase E.2: Exports MD con Moneda
+- **agro.js `exportAgroLog()`**: Columnas "Moneda | Monto | USD", total en USD
+- **agro-crop-report.js**: Select con `monto_usd/currency`, totals con `monto_usd ?? monto`
+- **agro-stats-report.js**: Select con `monto_usd/currency`, per-crop breakdown con USD
+
+### Archivos modificados
+| Archivo | Cambio |
+|---------|--------|
+| `agro/agro.js` | Search filter, `_fmtItemCurrency`, import exchange, export MD con moneda |
+| `agro/agro-wizard.js` | Import exchange, currency selector, conversion preview, submit con currency |
+| `agro/agro-exchange.js` | **NUEVO** — Servicio de tasas, cache, override, formatCurrencyDisplay |
+| `agro/agro-stats.js` | Sumatorias con `monto_usd`, columnas currency en selects |
+| `agro/agro-crop-report.js` | Columnas currency en selects, totals con `monto_usd` |
+| `agro/agro-stats-report.js` | Columnas currency en selects, per-crop con `monto_usd` |
+
+### Resultado
+✅ Build: `pnpm build:gold` PASS (exit code 0, UTF-8 guardrail OK)
+✅ Migración Supabase: `add_multicurrency_columns` aplicada
+
+---
+
 ## 🆕 SESIÓN: AgroLog — Exportar Historial MD (2026-02-09)
 
 ### Implementación
