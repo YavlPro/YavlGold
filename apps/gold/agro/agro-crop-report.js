@@ -94,7 +94,7 @@ function fmtUnits(item) {
     const unitType = String(item.unit_type || '').toLowerCase();
     const unitQty = Number(item.unit_qty);
     if (unitType && Number.isFinite(unitQty) && unitQty > 0) {
-        const labels = { saco: 'sacos', medio_saco: 'medios sacos', cesta: 'cestas' };
+        const labels = { saco: 'sacos', cesta: 'cestas', kg: 'kg' };
         parts.push(`${unitQty} ${labels[unitType] || unitType}`);
     }
     const kg = Number(item.quantity_kg);

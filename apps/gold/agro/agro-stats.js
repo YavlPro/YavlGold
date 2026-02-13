@@ -171,8 +171,8 @@ async function selectAgroTable(table, columns, useDeletedAt, userId) {
 
 const UNIT_LABELS = {
     saco: { singular: 'saco', plural: 'sacos' },
-    medio_saco: { singular: 'medio saco', plural: 'medios sacos' },
-    cesta: { singular: 'cesta', plural: 'cestas' }
+    cesta: { singular: 'cesta', plural: 'cestas' },
+    kg: { singular: 'kg', plural: 'kg' }
 };
 
 function normalizeUnitType(value) {
@@ -199,7 +199,7 @@ function getStatsCropFilter() {
 }
 
 function computeUnitTotals(rows, cropId) {
-    const totals = { saco: 0, medio_saco: 0, cesta: 0, kg: 0 };
+    const totals = { saco: 0, cesta: 0, kg: 0 };
     if (!Array.isArray(rows)) return totals;
     const cropKey = cropId ? String(cropId) : null;
 
@@ -222,13 +222,12 @@ function computeUnitTotals(rows, cropId) {
 }
 
 function formatUnitTotals(totals) {
-    const safe = totals || { saco: 0, medio_saco: 0, cesta: 0, kg: 0 };
+    const safe = totals || { saco: 0, cesta: 0, kg: 0 };
     const sacoText = formatUnitNumberWithZero(safe.saco);
-    const medioText = formatUnitNumberWithZero(safe.medio_saco);
     const cestaText = formatUnitNumberWithZero(safe.cesta);
     const kgText = formatUnitNumberWithZero(safe.kg);
 
-    return `Sacos ${sacoText} | Medios sacos ${medioText} | Cestas ${cestaText} | Kg ${kgText}`;
+    return `Sacos ${sacoText} | Cestas ${cestaText} | Kg ${kgText}`;
 }
 
 function computeCropExtremes(rows) {

@@ -764,7 +764,7 @@
 2. **Historial Pendientes** se renderiza en `renderHistoryList()` → `renderHistoryRow()` con botones Editar/Duplicar/Eliminar, pero **no existe** acción “Transferir” ni estado “Transferido”.
 3. **Unidades**:
    - UI ya tiene `Presentacion`, `Cantidad (unidad)` y `Kilogramos` en Pendientes/Pérdidas/Transferencias (`apps/gold/agro/index.html`).
-   - `INCOME_UNIT_OPTIONS` en `agro.js` incluye `saco`, `medio_saco`, `cesta`; **kg** se maneja por `quantity_kg`.
+   - `INCOME_UNIT_OPTIONS` en `agro.js` incluye `saco`, `cesta`, `kg`; peso adicional se maneja por `quantity_kg`.
    - SQL existente solo cubre `agro_income`: `supabase/sql/agro_income_units_v1.sql`. Para `agro_pending`, `agro_losses`, `agro_transfers` no hay patch explícito.
 4. **Ciclo/estado de cultivo**:
    - UI ya usa estados `sembrado/creciendo/produccion/finalizado` (`crop-status`).
@@ -788,7 +788,7 @@
    - Precedencia: si hay override → UI usa override; si no → usa status automático (derivado de progreso/fechas).
    - Mantener progreso automático intacto.
 4. **Unidades: UI + edit**:
-   - Mantener `kg` via `quantity_kg`, asegurar select de presentaciones con `saco/medio_saco/cesta`.
+   - Mantener `kg` via `quantity_kg`, asegurar select de presentaciones con `saco/cesta/kg`.
    - Ajustar render y validación para mobile (inputs compactos).
 5. **Acordeón Facturero**:
    - Preservar el acordeón activo al refrescar historial/editar.
@@ -3349,7 +3349,7 @@ git push
 ### Plan
 1) `apps/gold/agro/agro.js`: asegurar que el fetch del historial incluye `unit_type/unit_qty/quantity_kg` (select explicito si aplica), log opcional con `?debug=1`, y renderizar meta de unidades/kg con `formatUnitSummary`/`formatKgSummary` en un bloque visible.
 2) `apps/gold/agro/agro.css`: agregar estilo minimo para `.facturero-meta` (texto pequeño y muted) o reusar clases existentes sin romper layout.
-3) `apps/gold/agro/agro-stats.js`: agregar agregador de unidades por tipo (saco/medio_saco/cesta/kg) para ingresos, pendientes, transferencias y perdidas; soportar filtro por `crop_id` si existe selector.
+3) `apps/gold/agro/agro-stats.js`: agregar agregador de unidades por tipo (saco/cesta/kg) para ingresos, pendientes, transferencias y perdidas; soportar filtro por `crop_id` si existe selector.
 4) `apps/gold/agro/index.html`: agregar contenedor UI en Centro de Estadisticas para mostrar el resumen de unidades por tipo.
 5) Ejecutar `pnpm build:gold` y reportar resultado.
 

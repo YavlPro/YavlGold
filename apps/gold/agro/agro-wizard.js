@@ -69,8 +69,8 @@ const WIZARD_TAB_META = {
 
 const UNIT_OPTIONS = [
     { value: 'saco', label: 'Saco', icon: '🥡', singular: 'saco', plural: 'sacos' },
-    { value: 'medio_saco', label: 'Medio saco', icon: '🎒', singular: 'medio saco', plural: 'medios sacos' },
-    { value: 'cesta', label: 'Cesta', icon: '🧺', singular: 'cesta', plural: 'cestas' }
+    { value: 'cesta', label: 'Cesta', icon: '🧺', singular: 'cesta', plural: 'cestas' },
+    { value: 'kg', label: 'Kg', icon: '⚖️', singular: 'kg', plural: 'kg' }
 ];
 
 // ============================================================
@@ -291,8 +291,9 @@ function injectWizardStyles() {
             margin-bottom: 1rem;
         }
         .wiz-stepper-btn {
-            width: 48px; height: 48px;
-            border-radius: 50%;
+            min-width: 42px; height: 42px;
+            padding: 0 8px;
+            border-radius: 21px;
             background: rgba(200,167,82,0.12);
             border: 1px solid rgba(200,167,82,0.4);
             color: #C8A752;
@@ -447,7 +448,7 @@ export async function openAgroWizard(tabName, deps) {
     const meta = WIZARD_TAB_META[tabName];
     if (!meta) return;
 
-    const { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho } = deps;
+    const { supabase, cropsCache, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho } = deps;
 
     injectWizardStyles();
 
@@ -458,7 +459,7 @@ export async function openAgroWizard(tabName, deps) {
     // Wizard state
     const state = {
         step: 1,
-        cropId: selectedCropId || null,
+        cropId: null,
         cropName: '',
         concepto: '',
         who: '',
@@ -586,9 +587,11 @@ export async function openAgroWizard(tabName, deps) {
                 `).join('')}
             </div>
             <div class="wiz-stepper">
-                <button type="button" class="wiz-stepper-btn" data-action="dec">−</button>
+                <button type="button" class="wiz-stepper-btn" data-action="dec1">−1</button>
+                <button type="button" class="wiz-stepper-btn" data-action="dec05">−.5</button>
                 <span class="wiz-stepper-value" id="wiz-qty-display">${state.unitQty}</span>
-                <button type="button" class="wiz-stepper-btn" data-action="inc">+</button>
+                <button type="button" class="wiz-stepper-btn" data-action="inc05">+.5</button>
+                <button type="button" class="wiz-stepper-btn" data-action="inc1">+1</button>
             </div>
             <div class="wiz-field">
                 <label class="wiz-label">Kilogramos (opcional)</label>
@@ -734,14 +737,16 @@ export async function openAgroWizard(tabName, deps) {
             });
         });
 
-        // Stepper +/- (step 3)
+        // Stepper +/- (step 3) — 4 buttons with decimal support
         overlay.querySelectorAll('.wiz-stepper-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                if (btn.dataset.action === 'inc') {
-                    state.unitQty = Math.min(999, state.unitQty + 1);
-                } else {
-                    state.unitQty = Math.max(1, state.unitQty - 1);
-                }
+                const a = btn.dataset.action;
+                let delta = 0;
+                if (a === 'inc1') delta = 1;
+                else if (a === 'inc05') delta = 0.5;
+                else if (a === 'dec05') delta = -0.5;
+                else if (a === 'dec1') delta = -1;
+                state.unitQty = Math.max(0.1, Math.min(999, +(state.unitQty + delta).toFixed(1)));
                 const display = overlay.querySelector('#wiz-qty-display');
                 if (display) display.textContent = state.unitQty;
             });

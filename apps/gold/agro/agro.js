@@ -801,8 +801,8 @@ const WHO_FIELD_META = {
 const INCOME_UNIT_OPTIONS = [
     { value: '', label: 'Seleccionar...' },
     { value: 'saco', label: 'Saco', singular: 'saco', plural: 'sacos' },
-    { value: 'medio_saco', label: 'Medio saco', singular: 'medio saco', plural: 'medios sacos' },
-    { value: 'cesta', label: 'Cesta', singular: 'cesta', plural: 'cestas' }
+    { value: 'cesta', label: 'Cesta', singular: 'cesta', plural: 'cestas' },
+    { value: 'kg', label: 'Kg', singular: 'kg', plural: 'kg' }
 ];
 
 const FACTURERO_EXTRA_FIELD_META = {
