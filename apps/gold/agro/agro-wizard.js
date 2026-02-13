@@ -971,6 +971,8 @@ export async function openAgroWizard(tabName, deps) {
             if (tabName === 'perdidas' && state.who) insertData.causa = state.who;
             if (tabName === 'transferencias' && state.who) insertData.destino = state.who;
             // ingresos: who is embedded in concepto via buildConceptWithWho
+            // ingresos: categoria is NOT NULL in agro_income
+            if (tabName === 'ingresos') insertData.categoria = 'venta';
             // gastos: has category field but wizard uses simple concept
 
             // Units (if applicable)

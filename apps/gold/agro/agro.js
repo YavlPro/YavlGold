@@ -4929,7 +4929,7 @@ async function loadIncomes() {
     }
 }
 const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
-const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias']);
+const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'carrito']);
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -5130,6 +5130,30 @@ function switchTab(tabName, options = {}) {
 
     writeStoredTab(tabName);
     resetHistorySearch();
+
+    // Lazy-load Carrito module when tab is first activated
+    if (tabName === 'carrito') {
+        initCartTabLazy();
+    }
+}
+
+let _cartModuleLoaded = false;
+async function initCartTabLazy() {
+    if (_cartModuleLoaded) return;
+    _cartModuleLoaded = true;
+    try {
+        const { initAgroCart, injectCartStyles } = await import('./agro-cart.js');
+        injectCartStyles();
+        await initAgroCart({
+            supabase,
+            cropsCache,
+            refreshFactureroHistory
+        });
+    } catch (err) {
+        console.error('[AGRO] Failed to load cart module:', err);
+        const root = document.getElementById('agro-cart-root');
+        if (root) root.innerHTML = '<div style="color: #ef4444; padding: 1rem; text-align: center;">Error al cargar el carrito.</div>';
+    }
 }
 
 function initFinanceTabs() {

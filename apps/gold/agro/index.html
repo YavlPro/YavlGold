@@ -1567,6 +1567,8 @@
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-transferencias"
                     aria-selected="false" aria-controls="tab-panel-transferencias"
                     data-tab="transferencias">Transferencias</button>
+                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito" aria-selected="false"
+                    aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2; Carrito</button>
             </div>
 
             <div class="financial-tab-panels">
@@ -1743,6 +1745,15 @@
                             <div id="transfer-history-container"></div>
                         </div>
                     </details>
+                </div>
+
+                <div class="tab-panel is-hidden" id="tab-panel-carrito" role="tabpanel"
+                    aria-labelledby="tab-btn-carrito" aria-hidden="true" data-tab="carrito">
+                    <div id="agro-cart-root" style="padding: 0.5rem 0;">
+                        <div style="text-align: center; color: rgba(255,255,255,0.4); padding: 2rem;">
+                            Cargando carrito...
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

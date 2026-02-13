@@ -1,5 +1,40 @@
 ---
 
+## 🆕 SESIÓN: Wizard Bug Fix + Carrito Agro (2026-02-13)
+
+### Bug Fix: Wizard categoria NOT NULL
+- **Archivo**: `agro-wizard.js:975`
+- **Causa**: `agro_income.categoria` es NOT NULL sin default. El wizard para tab `ingresos` no enviaba `categoria` en el INSERT.
+- **Fix**: `if (tabName === 'ingresos') insertData.categoria = 'venta';`
+
+### Bug Fix: Wizard independiente del facturero (sesión anterior)
+- **Archivo**: `agro-wizard.js:450,461`
+- **Fix**: `cropId: null` en init (no pre-fill de `selectedCropId`), removido `selectedCropId` del destructuring.
+- El select de cultivo del facturero sigue filtrando el historial normalmente.
+
+### Feature: Carrito Agro (Lista de Compras Agrícola)
+- **Schema**: `agro_cart` + `agro_cart_items` con RLS, indexes, FK a `agro_expenses`
+- **Archivo nuevo**: `apps/gold/agro/agro-cart.js` (~580 líneas)
+  - CRUD carritos (crear, eliminar, completar)
+  - CRUD items (agregar, editar, eliminar)
+  - Checkbox compra → crea gasto en `agro_expenses` (category: 'insumos', crop_id del carrito)
+  - Desmarcar → elimina el gasto vinculado
+  - Resumen en vivo: total/comprado/falta en USD + barra progreso dorada
+  - Multi-moneda (USD/COP/VES) con preview USD
+  - Export MD (patrón AgroLog)
+  - Modal crear carrito (nombre + cultivo + notas)
+  - Modal editar item
+  - CSS inyectado (negro + dorado, mobile-first, checkboxes 48px)
+- **Integration**:
+  - `agro/index.html`: Tab `🛒 Carrito` + panel `#agro-cart-root`
+  - `agro.js`: `FIN_TAB_NAMES` incluye `'carrito'`, lazy load via `import('./agro-cart.js')` en `switchTab`
+- **Lazy loading**: Módulo solo se carga cuando el tab se activa por primera vez (31 kB chunk separado)
+
+### Build
+- `pnpm build:gold` → ✅ OK (121 modules, 2.10s)
+
+---
+
 ## 🆕 SESIÓN: Multi-Moneda Fase 2 — Edición, Exports, ROI (2026-02-14)
 
 ### Problema 1: Mojibake en Wizard
