@@ -13,7 +13,7 @@ const WIZARD_TAB_META = {
     pendientes: {
         title: 'Registrar Pendiente',
         icon: '⏳',
-        conceptPlaceholder: 'Ej: Venta a crédito',
+        conceptPlaceholder: 'Ej: pendiente o deuda',
         whoLabel: 'Cliente',
         whoPlaceholder: 'Ej: Jesús, Marino...',
         hasWho: true,
@@ -626,9 +626,9 @@ export async function openAgroWizard(tabName, deps) {
 
         return `
             ${unitsHtml}
-            <p class="wiz-question">� Moneda</p>
+            <p class="wiz-question">💱 Moneda</p>
             <div class="wiz-unit-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem;">${currencyBtns}</div>
-            <p class="wiz-question">� ¿Monto?</p>
+            <p class="wiz-question">💵 ¿Monto?</p>
             <div class="wiz-field" style="text-align: center;">
                 <div style="color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-bottom: 0.3rem;">${currSymbol}</div>
                 <input type="number" class="wiz-input wiz-input-amount" id="wiz-monto" placeholder="0.00" value="${state.monto}" min="0.01" step="0.01" inputmode="decimal" required>

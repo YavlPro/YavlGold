@@ -174,22 +174,29 @@ function parseWhoFromIncome(concept) {
 
 function buildBuyerRanking(incomeRows, pendingRows) {
     const buyers = new Map();
+    const currencyCount = new Map();
 
     for (const r of incomeRows) {
         const who = parseWhoFromIncome(r.concepto) || 'Sin comprador';
-        if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true });
+        if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(who);
         b.count += 1;
-        b.totalCents += toCents(r.monto);
+        b.totalCents += toCents(r.monto_usd ?? r.monto);
+        const cur = r.currency || 'USD';
+        b.currencies.add(cur);
+        currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
     for (const r of pendingRows) {
         const who = r.cliente || 'Sin cliente';
-        if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true });
+        if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(who);
         b.count += 1;
-        b.totalCents += toCents(r.monto);
+        b.totalCents += toCents(r.monto_usd ?? r.monto);
+        const cur = r.currency || 'USD';
+        b.currencies.add(cur);
         b.paid = false;
+        currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
     const sorted = Array.from(buyers.entries())
@@ -197,11 +204,12 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 
     if (!sorted.length) return 'Sin compradores registrados\n';
 
-    let md = '| Cliente | Compras | Total | Estado |\n';
-    md += '|---------|--------:|------:|--------|\n';
+    let md = '| Cliente | Compras | Monedas | Total (USD) | Estado |\n';
+    md += '|---------|--------:|---------|------------:|--------|\n';
     for (const [name, b] of sorted) {
         const estado = b.paid ? '✅ Pagado' : '⏳ Debe';
-        md += `| ${escMd(name)} | ${b.count} | ${centsToStr(b.totalCents)} | ${estado} |\n`;
+        const curs = Array.from(b.currencies).join(', ');
+        md += `| ${escMd(name)} | ${b.count} | ${curs} | ${centsToStr(b.totalCents)} | ${estado} |\n`;
     }
     return md;
 }
@@ -287,12 +295,13 @@ export async function exportStatsReport() {
         md += `| Pendientes por cobrar | ${centsToStr(pendingCents)} |\n`;
         md += `| Ingreso proyectado (si se cobra todo) | ${centsToStr(projIncomeCents)} |\n`;
         md += `| ROI proyectado | ${projRoiStr} |\n\n`;
+        md += `> _Moneda base: USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
 
         // Per-crop breakdown
         md += `## 🌾 Resumen por Cultivo\n`;
         md += buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
-        md += '\n---\n\n';
+        md += '\n> _Montos en USD \u00b7 Tasas al momento del registro_\n\n---\n\n';
 
         // Buyer ranking
         md += `## 👥 Ranking de Compradores\n`;

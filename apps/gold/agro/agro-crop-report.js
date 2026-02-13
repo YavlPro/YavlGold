@@ -146,58 +146,79 @@ async function fetchTabData(userId, cropId, tabName) {
 // MARKDOWN BUILDERS
 // ============================================================
 
+function fmtMontoWithCurrency(item, amountField) {
+    const monto = Number(item[amountField] || 0);
+    const currency = item.currency || 'USD';
+    const montoUsd = Number(item.monto_usd ?? item[amountField] ?? 0);
+    if (currency === 'USD') return centsToStr(toCents(monto));
+    const cfg = { COP: { symbol: 'COP', decimals: 0 }, VES: { symbol: 'Bs', decimals: 2 } };
+    const c = cfg[currency] || { symbol: currency, decimals: 2 };
+    const local = c.decimals === 0 ? `${c.symbol} ${Math.round(monto).toLocaleString()}` : `${c.symbol} ${monto.toFixed(c.decimals)}`;
+    return `${local} (\u2248 ${centsToStr(toCents(montoUsd))})`;
+}
+
 function buildIncomeTable(items) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Comprador | Cantidad | Monto |\n';
-    md += '|-------|----------|-----------|----------|------:|\n';
+    let md = '| Fecha | Concepto | Comprador | Cantidad | Moneda | Monto | USD |\n';
+    md += '|-------|----------|-----------|----------|--------|------:|----:|\n';
     for (const it of items) {
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('ingresos', raw);
-        md += `| ${fmtDate(it.fecha)} | ${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${centsToStr(toCents(it.monto))} |\n`;
+        const currency = it.currency || 'USD';
+        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        md += `| ${fmtDate(it.fecha)} | ${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
     }
     return md;
 }
 
 function buildExpenseTable(items) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Categoría | Monto |\n';
-    md += '|-------|----------|-----------|------:|\n';
+    let md = '| Fecha | Concepto | Categoría | Moneda | Monto | USD |\n';
+    md += '|-------|----------|-----------|--------|------:|----:|\n';
     for (const it of items) {
-        md += `| ${fmtDate(it.date)} | ${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${centsToStr(toCents(it.amount))} |\n`;
+        const currency = it.currency || 'USD';
+        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.amount));
+        md += `| ${fmtDate(it.date)} | ${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${centsToStr(toCents(it.amount))} | ${amtUsd} |\n`;
     }
     return md;
 }
 
 function buildPendingTable(items) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Cliente | Cantidad | Monto | Estado |\n';
-    md += '|-------|----------|---------|----------|------:|--------|\n';
+    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Estado |\n';
+    md += '|-------|----------|---------|----------|--------|------:|----:|--------|\n';
     for (const it of items) {
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('pendientes', raw);
         const client = it.cliente || parsed.who || '-';
         const state = it.transfer_state || 'pendiente';
-        md += `| ${fmtDate(it.fecha)} | ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${centsToStr(toCents(it.monto))} | ${escMd(state)} |\n`;
+        const currency = it.currency || 'USD';
+        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        md += `| ${fmtDate(it.fecha)} | ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(state)} |\n`;
     }
     return md;
 }
 
 function buildLossTable(items) {
     if (!items.length) return 'Sin pérdidas registradas ✅\n';
-    let md = '| Fecha | Concepto | Causa | Cantidad | Monto |\n';
-    md += '|-------|----------|-------|----------|------:|\n';
+    let md = '| Fecha | Concepto | Causa | Cantidad | Moneda | Monto | USD |\n';
+    md += '|-------|----------|-------|----------|--------|------:|----:|\n';
     for (const it of items) {
-        md += `| ${fmtDate(it.fecha)} | ${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${centsToStr(toCents(it.monto))} |\n`;
+        const currency = it.currency || 'USD';
+        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        md += `| ${fmtDate(it.fecha)} | ${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
     }
     return md;
 }
 
 function buildTransferTable(items) {
     if (!items.length) return 'Sin transferencias registradas\n';
-    let md = '| Fecha | Concepto | Destino | Cantidad | Monto |\n';
-    md += '|-------|----------|---------|----------|------:|\n';
+    let md = '| Fecha | Concepto | Destino | Cantidad | Moneda | Monto | USD |\n';
+    md += '|-------|----------|---------|----------|--------|------:|----:|\n';
     for (const it of items) {
-        md += `| ${fmtDate(it.fecha)} | ${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${centsToStr(toCents(it.monto))} |\n`;
+        const currency = it.currency || 'USD';
+        const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
+        md += `| ${fmtDate(it.fecha)} | ${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
     }
     return md;
 }
@@ -277,6 +298,7 @@ export async function exportCropReport(cropId) {
         md += `| Pendientes por cobrar | ${centsToStr(totalPendingCents)} |\n`;
         md += `| Pérdidas | ${centsToStr(totalLossesCents)} |\n`;
         md += `| ROI | ${roiStr} |\n\n`;
+        md += `> _Totales convertidos a USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
 
         // Income

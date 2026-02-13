@@ -9,7 +9,7 @@ import './agro.css';
 import { openAgroWizard } from './agro-wizard.js';
 import { exportCropReport } from './agro-crop-report.js';
 import { exportStatsReport } from './agro-stats-report.js';
-import { formatCurrencyDisplay, SUPPORTED_CURRENCIES } from './agro-exchange.js';
+import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 
 // ============================================================
 // ESTADO DEL MÓDULO
@@ -35,6 +35,7 @@ const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_i
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
 
 let selectedCropId = null;
+let editExchangeRates = { USD: 1, COP: null, VES: null };
 
 function normalizeCropId(value) {
     if (value === undefined || value === null) return null;
@@ -2371,6 +2372,11 @@ function openFactureroEditModal(tabName, item, config) {
         });
     }
 
+    // V9.8: Multi-currency edit — populate selector and wire listeners
+    const itemCurrency = item.currency || 'USD';
+    const itemRate = Number(item.exchange_rate) || 1;
+    _setupEditCurrencySelector(itemCurrency, itemRate);
+
     // Handle extra fields
     const extraContainer = document.getElementById('edit-extra-fields');
     if (extraContainer) {
@@ -2433,6 +2439,124 @@ function openFactureroEditModal(tabName, item, config) {
     modal.style.display = 'flex';
 }
 
+// V9.8: Multi-currency edit helpers
+let _editCurrency = 'USD';
+let _editExchangeRate = 1;
+
+function _setupEditCurrencySelector(currency, rate) {
+    _editCurrency = currency;
+    _editExchangeRate = rate;
+
+    const container = document.getElementById('edit-currency-selector');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Fetch rates in background (non-blocking)
+    initExchangeRates().then(r => { if (r) editExchangeRates = r; }).catch(() => { });
+
+    Object.entries(SUPPORTED_CURRENCIES).forEach(([code, cfg]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.currency = code;
+        btn.style.cssText = `
+            background: ${code === currency ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)'};
+            border: 1px solid ${code === currency ? '#C8A752' : 'rgba(200,167,82,0.2)'};
+            border-radius: 10px;
+            padding: 0.5rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            min-height: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.15rem;
+        `;
+        const flag = document.createElement('span');
+        flag.style.fontSize = '1.2rem';
+        flag.textContent = cfg.flag;
+        const label = document.createElement('span');
+        label.style.cssText = 'color: #fff; font-size: 0.75rem;';
+        label.textContent = code === 'VES' ? 'Bs' : code;
+        btn.append(flag, label);
+
+        btn.addEventListener('click', () => {
+            _editCurrency = code;
+            if (code === 'USD') {
+                _editExchangeRate = 1;
+            } else {
+                _editExchangeRate = getRate(code, editExchangeRates) || _editExchangeRate || 0;
+            }
+            // Update button selection styles
+            container.querySelectorAll('button').forEach(b => {
+                const sel = b.dataset.currency === code;
+                b.style.background = sel ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)';
+                b.style.borderColor = sel ? '#C8A752' : 'rgba(200,167,82,0.2)';
+            });
+            _updateEditRateUI();
+        });
+        container.appendChild(btn);
+    });
+
+    // Set initial rate input value
+    const rateInput = document.getElementById('edit-exchange-rate');
+    if (rateInput) {
+        rateInput.value = currency !== 'USD' ? (rate || '') : '';
+        rateInput.removeEventListener('input', _onEditRateInput);
+        rateInput.addEventListener('input', _onEditRateInput);
+    }
+
+    // Monto input listener for live conversion
+    const montoInput = document.getElementById('edit-monto');
+    if (montoInput) {
+        montoInput.removeEventListener('input', _onEditMontoInput);
+        montoInput.addEventListener('input', _onEditMontoInput);
+    }
+
+    _updateEditRateUI();
+}
+
+function _onEditRateInput() {
+    const rateInput = document.getElementById('edit-exchange-rate');
+    if (rateInput) _editExchangeRate = Number(rateInput.value) || 0;
+    _updateEditConversionPreview();
+}
+
+function _onEditMontoInput() {
+    _updateEditConversionPreview();
+}
+
+function _updateEditRateUI() {
+    const rateGroup = document.getElementById('edit-rate-group');
+    const rateLabel = document.getElementById('edit-rate-label');
+    const rateInput = document.getElementById('edit-exchange-rate');
+
+    if (_editCurrency === 'USD') {
+        if (rateGroup) rateGroup.style.display = 'none';
+        _editExchangeRate = 1;
+    } else {
+        if (rateGroup) rateGroup.style.display = 'block';
+        const overrideActive = hasOverride(_editCurrency);
+        if (rateLabel) rateLabel.textContent = `Tasa ${_editCurrency}/USD ${overrideActive ? '(manual)' : '(mercado)'}`;
+        if (rateInput) rateInput.value = _editExchangeRate || '';
+    }
+    _updateEditConversionPreview();
+}
+
+function _updateEditConversionPreview() {
+    const preview = document.getElementById('edit-conversion-preview');
+    if (!preview) return;
+    if (_editCurrency === 'USD') {
+        preview.textContent = '';
+        return;
+    }
+    const monto = Number(document.getElementById('edit-monto')?.value) || 0;
+    const rate = _editExchangeRate || 0;
+    const usd = rate > 0 ? (monto / rate).toFixed(2) : '\u2014';
+    preview.innerHTML = `<span style="color:#C8A752;">\u2248 $${usd} USD</span> <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;">(tasa: 1 USD = ${rate ? Number(rate).toLocaleString() : '\u2014'} ${_editCurrency})</span>`;
+}
+
 async function saveEditModal() {
     const itemId = document.getElementById('edit-item-id')?.value;
     const tabName = document.getElementById('edit-tab-name')?.value;
@@ -2467,11 +2591,21 @@ async function saveEditModal() {
             return;
         }
 
+        const editedMonto = parseFloat(document.getElementById('edit-monto')?.value) || 0;
+
+        // V9.8: Compute monto_usd from currency state
+        const editCurrency = _editCurrency || 'USD';
+        const editRate = _editExchangeRate || 1;
+        const editMontoUsd = editCurrency === 'USD' ? editedMonto : convertToUSD(editedMonto, editCurrency, editRate);
+
         const updateData = {
             [config.conceptField]: conceptForSave,
-            [config.amountField]: parseFloat(document.getElementById('edit-monto')?.value) || 0,
+            [config.amountField]: editedMonto,
             [config.dateField]: editDateValue,
-            crop_id: document.getElementById('edit-crop-id')?.value || null
+            crop_id: document.getElementById('edit-crop-id')?.value || null,
+            currency: editCurrency,
+            exchange_rate: editRate,
+            monto_usd: editMontoUsd
         };
 
         if (whoMeta?.field) {
@@ -4140,6 +4274,77 @@ window.loadCrops = loadCrops;
 // CALCULADORA ROI CON GUARDADO EN SUPABASE
 // ============================================================
 
+// V9.8: ROI multi-currency display state
+let _roiDisplayCurrency = 'USD';
+let _roiLastCalc = null; // { investment, revenue, profit, roi }
+
+function initRoiCurrencySelector() {
+    const container = document.getElementById('roi-currency-selector');
+    if (!container) return;
+    container.innerHTML = '';
+
+    Object.entries(SUPPORTED_CURRENCIES).forEach(([code, cfg]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.currency = code;
+        btn.style.cssText = `
+            background: ${code === 'USD' ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)'};
+            border: 1px solid ${code === 'USD' ? '#C8A752' : 'rgba(200,167,82,0.2)'};
+            border-radius: 8px;
+            padding: 0.35rem 0.75rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            min-height: 36px;
+            font-size: 0.8rem;
+            color: #fff;
+        `;
+        btn.innerHTML = `<span style="font-size:1rem;">${cfg.flag}</span> <span>${code === 'VES' ? 'Bs' : code}</span>`;
+        btn.addEventListener('click', () => {
+            _roiDisplayCurrency = code;
+            container.querySelectorAll('button').forEach(b => {
+                const sel = b.dataset.currency === code;
+                b.style.background = sel ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)';
+                b.style.borderColor = sel ? '#C8A752' : 'rgba(200,167,82,0.2)';
+            });
+            if (_roiLastCalc) _updateRoiDisplay();
+        });
+        container.appendChild(btn);
+    });
+}
+
+function _formatRoiAmount(usdValue) {
+    if (_roiDisplayCurrency === 'USD') return formatCurrency(usdValue);
+    const rate = getRate(_roiDisplayCurrency, editExchangeRates) || 1;
+    const local = usdValue * rate;
+    const cfg = SUPPORTED_CURRENCIES[_roiDisplayCurrency] || {};
+    const decimals = cfg.decimals ?? 2;
+    const sym = _roiDisplayCurrency === 'VES' ? 'Bs' : _roiDisplayCurrency;
+    const localStr = decimals === 0
+        ? `${sym} ${Math.round(local).toLocaleString()}`
+        : `${sym} ${local.toFixed(decimals)}`;
+    return `${localStr} (\u2248 ${formatCurrency(usdValue)})`;
+}
+
+function _updateRoiDisplay() {
+    if (!_roiLastCalc) return;
+    const { investment, revenue, profit, roi } = _roiLastCalc;
+
+    document.getElementById('resultInvestment').textContent = _formatRoiAmount(investment);
+    document.getElementById('resultRevenue').textContent = _formatRoiAmount(revenue);
+
+    const profitEl = document.getElementById('resultProfit');
+    profitEl.textContent = _formatRoiAmount(profit);
+    profitEl.className = `roi-value ${profit >= 0 ? 'profit' : 'loss'}`;
+
+    const roiEl = document.getElementById('resultROI');
+    roiEl.textContent = `${roi.toFixed(1)}%`;
+    roiEl.className = `roi-value ${roi >= 0 ? 'profit' : 'loss'}`;
+}
+
 /**
  * Calcula ROI y guarda en Supabase
  */
@@ -4151,17 +4356,14 @@ export async function calculateROI() {
     const profit = revenue - investment;
     const roi = investment > 0 ? ((profit / investment) * 100) : 0;
 
-    // Actualizar DOM
-    document.getElementById('resultInvestment').textContent = formatCurrency(investment);
-    document.getElementById('resultRevenue').textContent = formatCurrency(revenue);
+    // V9.8: Store last calc for currency switching
+    _roiLastCalc = { investment, revenue, profit, roi };
 
-    const profitEl = document.getElementById('resultProfit');
-    profitEl.textContent = formatCurrency(profit);
-    profitEl.className = `roi-value ${profit >= 0 ? 'profit' : 'loss'}`;
+    // Fetch rates if not loaded yet
+    try { const r = await initExchangeRates(); if (r) editExchangeRates = r; } catch { }
 
-    const roiEl = document.getElementById('resultROI');
-    roiEl.textContent = `${roi.toFixed(1)}%`;
-    roiEl.className = `roi-value ${roi >= 0 ? 'profit' : 'loss'}`;
+    // Actualizar DOM with currency-aware display
+    _updateRoiDisplay();
 
     // Mostrar resultados con animación
     const resultDiv = document.getElementById('roiResult');
@@ -6754,6 +6956,7 @@ export function initAgro() {
         calcBtn.addEventListener('click', calculateROI);
     }
     injectRoiClearButton(calcBtn);
+    initRoiCurrencySelector(); // V9.8: ROI multi-currency display
     setupHeaderIdentity();
     initIncomeHistory();
     initFinanceTabs();

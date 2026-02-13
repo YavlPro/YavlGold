@@ -1,5 +1,38 @@
 ---
 
+## 🆕 SESIÓN: Multi-Moneda Fase 2 — Edición, Exports, ROI (2026-02-14)
+
+### Problema 1: Mojibake en Wizard
+- **Archivo**: `agro-wizard.js` (líneas 629-631)
+- **Causa**: Caracteres UTF-8 rotos en las etiquetas de moneda/monto del step 3
+- **Fix**: Reemplazo de chars mojibake por emojis correctos: `💱 Moneda`, `💵 ¿Monto?`
+
+### Problema 2: Edición Multi-Moneda en Modal
+- **Archivos**: `agro.js` (~120 líneas), `agro/index.html` (10 líneas)
+- **HTML**: Selector de moneda `#edit-currency-selector` (3 botones grid), input tasa `#edit-exchange-rate`, preview `#edit-conversion-preview`
+- **JS**: `_setupEditCurrencySelector()`, `_updateEditRateUI()`, `_updateEditConversionPreview()`, `_onEditRateInput()`, `_onEditMontoInput()`
+- **Flujo**: Pre-selecciona moneda del registro → pre-llena tasa → conversión en vivo al cambiar monto/tasa → al guardar: UPDATE con `currency`, `exchange_rate`, `monto_usd`
+- **Import**: Añadido `initExchangeRates`, `getRate`, `convertToUSD`, `hasOverride`, `clearOverride` de `agro-exchange.js`
+
+### Problema 3: Exports MD con Moneda
+- **agro-crop-report.js**: Columnas `Moneda` y `USD` en todas las tablas (income, expense, pending, loss, transfer) + nota "Totales convertidos a USD" en resumen financiero + helper `fmtMontoWithCurrency()`
+- **agro-stats-report.js**: Buyer ranking usa `monto_usd` para totales + columna `Monedas` por comprador + nota "Moneda base: USD · Tasas al momento del registro" en resumen global y per-crop
+- **agro.js (AgroLog)**: Ya tenía columnas Moneda/USD — sin cambios necesarios
+
+### Problema 4: Calculadora ROI Multi-Moneda
+- **Archivos**: `agro.js` (~80 líneas), `agro/index.html` (2 líneas)
+- **HTML**: Container `#roi-currency-selector` sobre resultados ROI
+- **JS**: `initRoiCurrencySelector()` (3 botones USD/COP/VES), `_formatRoiAmount()`, `_updateRoiDisplay()`, `_roiLastCalc` state
+- **Comportamiento**: Montos se convierten al display currency con equivalente USD entre paréntesis. Porcentajes (ROI) no cambian con moneda. Cambio de moneda re-renderiza instantáneamente sin recalcular.
+- **Init**: Llamado en `initAgro()` tras `injectRoiClearButton()`
+
+### Build
+- `pnpm build:gold` → ✅ OK (exit 0)
+- UTF-8 guardrail → ✅ passed
+- 120 modules transformed
+
+---
+
 ## 🆕 SESIÓN: Facturero Search + Multi-Moneda (2026-02-13)
 
 ### Diagnóstico

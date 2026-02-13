@@ -1304,6 +1304,9 @@
                                 </div>
                             </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
                         </div>
+                        <!-- V9.8: ROI currency display selector -->
+                        <div style="display: flex; justify-content: center; gap: 0.5rem; margin: 0.75rem 0 0.25rem;"
+                            id="roi-currency-selector"></div>
                         <div class="roi-result" id="roiResult">
                             <div class="roi-grid">
                                 <div class="roi-item">
@@ -2681,6 +2684,21 @@
                 <div class="input-group">
                     <label class="input-label" for="edit-monto">Monto</label>
                     <input type="number" id="edit-monto" class="styled-input" step="0.01" min="0" required>
+                </div>
+
+                <!-- V9.8: Multi-currency edit -->
+                <div class="input-group" id="edit-currency-group">
+                    <label class="input-label">Moneda</label>
+                    <div id="edit-currency-selector"
+                        style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 0.5rem;">
+                    </div>
+                </div>
+                <div class="input-group" id="edit-rate-group" style="display: none;">
+                    <label class="input-label" for="edit-exchange-rate" id="edit-rate-label">Tasa</label>
+                    <input type="number" id="edit-exchange-rate" class="styled-input" step="any" min="0.0001"
+                        placeholder="Ej: 4100" inputmode="decimal">
+                    <div id="edit-conversion-preview"
+                        style="text-align: center; margin-top: 0.4rem; font-size: 0.85rem; color: #C8A752;"></div>
                 </div>
 
                 <div class="input-group">
