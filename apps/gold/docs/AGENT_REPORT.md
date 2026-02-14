@@ -5635,6 +5635,90 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 
 ---
 
+## 🆕 SESIÓN: Dashboard V9.8 + corrección de mojibake landing (2026-02-13)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. **MPA / routing**
+   - `apps/gold/vite.config.js`: entrada dashboard y landing confirmadas (`dashboard/index.html`, `index.html`).
+   - `apps/gold/vercel.json`: rewrites activos para `/dashboard`, `/dashboard/perfil`, `/dashboard/configuracion`.
+2. **Auth / Supabase (dashboard y global)**
+   - Cliente Supabase: `apps/gold/assets/js/config/supabase-config.js`.
+   - Auth cliente/UI: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`.
+   - Guard dashboard: `apps/gold/dashboard/auth-guard.js`.
+3. **Dashboard estado real (texto legacy detectado)**
+   - `apps/gold/dashboard/index.html` tenía copy legacy:
+     - "EL SANTUARIO DIGITAL"
+     - "Panel de Control v9.4"
+     - "ecosistema digital de aprendizaje"
+     - footer "Versión 9.4.0 · Pulso Vital Edition"
+   - Sección recomendada sin tilde: `primer modulo sin visitar`.
+4. **Mojibake landing**
+   - `apps/gold/index.html` presentaba `�` en hero, íconos de cards, CTA final y console log.
+5. **Verificación de páginas adicionales solicitadas**
+   - `apps/gold/dashboard/perfil.html`: sin referencias legacy (`Santuario`, `V9.4`, `Ecosistema`).
+   - `apps/gold/dashboard/configuracion.html`: sin referencias legacy (`Santuario`, `V9.4`, `Ecosistema`).
+
+### Plan quirúrgico
+1. Editar **solo texto** en `apps/gold/dashboard/index.html` para alinear identidad agrícola V9.8.
+2. Normalizar textos dinámicos de cards de módulos en `normalizeModules()` para asegurar:
+   - Agro = `✅ DISPONIBLE`
+   - Academia/Social/Tecnología = `PRÓXIMAMENTE`
+   - Crypto = `EN DESARROLLO`
+3. Corregir tildes solicitadas (`módulo`).
+4. Corregir mojibake en `apps/gold/index.html` (solo caracteres corruptos/emoji rotos).
+5. Ejecutar build oficial.
+
+### Cambios aplicados
+
+#### 1) Dashboard copy V9.8 (`apps/gold/dashboard/index.html`)
+- Header:
+  - `EL SANTUARIO DIGITAL` → `MI FINCA`
+  - `Panel de Control v9.4` → `Panel de Control V9.8`
+- Welcome:
+  - Texto actualizado a foco agrícola (cultivos, ventas, campo).
+  - Línea secundaria: "Explora las herramientas disponibles para tu finca."
+- Footer:
+  - `Versión 9.4.0 · Pulso Vital Edition` → `Versión 9.8.0 · Tu Finca Digital`.
+- Recomendado:
+  - `primer modulo sin visitar` → `primer módulo sin visitar`.
+
+#### 2) Módulos dinámicos del dashboard (`apps/gold/dashboard/index.html`)
+- Refactor leve de `normalizeModules()` para mapear textos/estatus por módulo:
+  - **Agro**: `status: 'available'` + descripción agrícola completa.
+  - **Academia**: `coming_soon` + copy práctico agricultura/finanzas/tecnología.
+  - **Social**: `coming_soon` + comunidad de agricultores.
+  - **Tecnología**: `coming_soon` + herramientas inteligentes para el campo.
+  - **Crypto**: `development` + datos de mercado/tasas de cambio.
+- `badgeMap` actualizado con estado `available` → `✅ DISPONIBLE`.
+
+#### 3) Corrección de mojibake landing (`apps/gold/index.html`)
+- Restaurados caracteres corruptos `�` por emojis correctos:
+  - Hero: `🌾 YAVLGOLD V9.8 🌾`
+  - Íconos cards: `🌾`, `🎵`, `🛠️`
+  - CTA comunidad: `🌾`
+  - Console log: `🌾 YavlGold V9.8 - Tu Finca Digital`
+
+### Verificaciones solicitadas
+1. Dashboard:
+   - Sin "Santuario" ✅
+   - Sin "V9.4" ✅
+   - Agro con "✅ DISPONIBLE" ✅
+   - Módulos restantes en "PRÓXIMAMENTE" o "EN DESARROLLO" ✅
+   - Footer con `V9.8.0` ✅
+2. Archivos adicionales:
+   - `dashboard/perfil.html` sin copy legacy ✅
+   - `dashboard/configuracion.html` sin copy legacy ✅
+3. Landing mojibake:
+   - Sin caracteres `�` y sin secuencias mojibake visibles (`Ã`, `Â`) ✅
+
+### Build
+- `pnpm build:gold` → ✅ OK
+- `agent-guard` → ✅
+- `agent-report-check` → ✅
+- UTF-8 check (`check-dist-utf8.mjs`) → ✅
+
+---
+
 ## ✅ SESIÓN: Vercel final post-probe (2026-02-06)
 
 ### Paso 0 — Diagnóstico (Regla #1)

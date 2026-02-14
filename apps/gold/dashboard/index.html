@@ -1,15 +1,15 @@
-﻿<!-- ⚠️ ARCHIVO QUIRÚRGICO: Logout es CAJA NEGRA. No refactorizar. v9.4 Pathfinder -->
+﻿<!-- ⚠️ ARCHIVO QUIRÚRGICO: Logout es CAJA NEGRA. No refactorizar. v9.8 Pathfinder -->
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>El Santuario Digital | Dashboard</title>
-  <meta name="description" content="Panel de control del Ecosistema YavlGold">
+  <title>Mi Finca | Dashboard</title>
+  <meta name="description" content="Panel de Control V9.8 para gestionar tu finca digital">
   <meta name="theme-color" content="#0a0a0a">
 
-  <!-- Favicon (YavlGold V9.4 Glow Logo) -->
+  <!-- Favicon (YavlGold V9.8 Glow Logo) -->
   <link rel="icon" type="image/webp" href="/assets/images/logo.webp">
   <link rel="apple-touch-icon" href="/brand/logo.webp">
 
@@ -28,7 +28,7 @@
 
   <style>
     /* ============================================
-           🎨 VARIABLES CSS - ADN VISUAL v9.4
+           🎨 VARIABLES CSS - ADN VISUAL v9.8
         ============================================ */
     :root {
       /* Colores Base Inmutables */
@@ -56,7 +56,7 @@
     }
 
     /* ============================================
-           🌟 ANIMACIONES - PULSO VITAL
+           🌟 ANIMACIONES - PULSO DORADO
         ============================================ */
     @keyframes pulse {
 
@@ -141,7 +141,7 @@
     }
 
     /* ============================================
-           🎆 FONDO PULSO VITAL - GRADIENTE QUE RESPIRA
+           🎆 FONDO DORADO - GRADIENTE QUE RESPIRA
         ============================================ */
     .pulso-vital {
       position: fixed;
@@ -1549,7 +1549,7 @@
 </head>
 
 <body data-page-protected="true">
-  <!-- 🎆 FONDO PULSO VITAL -->
+  <!-- 🎆 FONDO DORADO -->
   <div class="pulso-vital"></div>
 
   <!-- ✨ PARTÍCULAS DECORATIVAS -->
@@ -1572,8 +1572,8 @@
           <img src="/brand/logo.webp" alt="YavlGold">
         </div>
         <div class="logo-text">
-          <h1>EL SANTUARIO DIGITAL</h1>
-          <span>Panel de Control v9.4</span>
+          <h1>MI FINCA</h1>
+          <span>Panel de Control V9.8</span>
         </div>
       </div>
 
@@ -1622,11 +1622,11 @@
           onerror="this.src='/assets/images/logo.webp'">
         <div class="welcome-text">
           <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
-          <p>Tu ecosistema digital de aprendizaje, tecnología y comunidad.</p>
+          <p>Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.</p>
         </div>
       </div>
       <div class="welcome-divider"></div>
-      <p>Explora los módulos disponibles y potencia tu conocimiento.</p>
+      <p>Explora las herramientas disponibles para tu finca.</p>
     </section>
 
     <!-- 📊 ESTADÍSTICAS RÁPIDAS (Dynamic) -->
@@ -1692,8 +1692,8 @@
     <footer id="app-footer"
       style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
       <p>© <span id="footer-year">2026</span> YavlGold · Open Source (MIT License)</p>
-      <p style="margin-top: 0.5rem; color: var(--dorado-yavl);">Versión <span id="footer-version">9.4.0</span> · Pulso
-        Vital Edition — <a href="/" style="color: var(--dorado-yavl); text-decoration: none;">Volver al Inicio</a></p>
+      <p style="margin-top: 0.5rem; color: var(--dorado-yavl);">Versión <span id="footer-version">9.8.0</span> · Tu
+        Finca Digital — <a href="/" style="color: var(--dorado-yavl); text-decoration: none;">Volver al Inicio</a></p>
     </footer>
 
   </div>
@@ -2145,11 +2145,13 @@
 
     function normalizeModules(modules) {
       return (modules || []).map((mod) => {
-        if (isLegacyToolsModule(mod)) {
+        let normalized = mod;
+
+        if (isLegacyToolsModule(normalized)) {
           const legacyKeys = collectLegacyKeys(mod);
 
-          return {
-            ...mod,
+          normalized = {
+            ...normalized,
             title: 'Tecnología',
             name: 'Tecnología',
             slug: 'tecnologia',
@@ -2160,10 +2162,10 @@
           };
         }
 
-        if (isLegacySuiteModule(mod)) {
-          const legacyKeys = collectLegacyKeys(mod);
-          return {
-            ...mod,
+        if (isLegacySuiteModule(normalized)) {
+          const legacyKeys = collectLegacyKeys(normalized);
+          normalized = {
+            ...normalized,
             title: 'Crypto',
             name: 'Crypto',
             slug: 'crypto',
@@ -2171,12 +2173,70 @@
             route: '/crypto/',
             path: '/crypto/',
             icon: mod.icon || '₿',
-            description: 'Inteligencia de Mercados, Trading y Análisis On-Chain.',
+            description: 'Datos del mercado y tasas de cambio. Herramientas financieras en construcción.',
             legacy_keys: legacyKeys
           };
         }
 
-        return mod;
+        const key = String(
+          normalized?.slug || normalized?.module_key || normalized?.title || normalized?.name || ''
+        ).toLowerCase();
+
+        if (key.includes('agro')) {
+          normalized = {
+            ...normalized,
+            title: 'Agro',
+            name: 'Agro',
+            icon: normalized.icon || '🌾',
+            status: 'available',
+            description: 'Registra cultivos, controla gastos e ingresos en pesos y dólares, consulta el clima y planifica tu agenda agrícola.'
+          };
+        } else if (key.includes('academia')) {
+          normalized = {
+            ...normalized,
+            title: 'Academia',
+            name: 'Academia',
+            icon: normalized.icon || '🎓',
+            status: 'coming_soon',
+            description: 'Aprende sobre agricultura, finanzas y tecnología con contenido práctico.'
+          };
+        } else if (key.includes('social')) {
+          normalized = {
+            ...normalized,
+            title: 'Social',
+            name: 'Social',
+            icon: normalized.icon || '👥',
+            status: 'coming_soon',
+            description: 'Conecta con otros agricultores, comparte experiencias y aprende en comunidad.'
+          };
+        } else if (key.includes('tecnologia')) {
+          normalized = {
+            ...normalized,
+            title: 'Tecnología',
+            name: 'Tecnología',
+            icon: normalized.icon || '🛠️',
+            status: 'coming_soon',
+            description: 'Herramientas inteligentes para optimizar tu trabajo en el campo.'
+          };
+        } else if (key.includes('crypto')) {
+          normalized = {
+            ...normalized,
+            title: 'Crypto',
+            name: 'Crypto',
+            icon: normalized.icon || '📈',
+            status: 'development',
+            description: 'Datos del mercado y tasas de cambio. Herramientas financieras en construcción.'
+          };
+        }
+
+        if (!key.includes('agro') && normalized?.status === 'available') {
+          normalized = {
+            ...normalized,
+            status: 'coming_soon'
+          };
+        }
+
+        return normalized;
       });
     }
 
@@ -2309,7 +2369,7 @@
           id: getModuleId(mod),
           title: getModuleTitle(mod),
           path: getModuleRoute(mod),
-          reason: 'primer modulo sin visitar'
+          reason: 'primer módulo sin visitar'
         };
       }
 
@@ -2444,6 +2504,7 @@
       const html = modules.map(mod => {
         // Determine badge class and text based on status
         const badgeMap = {
+          'available': { class: 'badge-estrella', text: '✅ DISPONIBLE', icon: '' },
           'active': { class: 'badge-activo', text: '● ACTIVO', icon: '' },
           'development': { class: 'badge-desarrollo', text: '🔧 EN DESARROLLO', icon: '' },
           'coming_soon': { class: 'badge-proximo', text: '🔮 PRÓXIMAMENTE', icon: '' },
