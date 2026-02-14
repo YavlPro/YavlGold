@@ -2317,6 +2317,12 @@
       return mod?.route || mod?.path || (slug ? `/${slug}/` : '#');
     }
 
+    function isModuleAgro(mod) {
+      const id = String(getModuleId(mod) || '').toLowerCase();
+      const route = String(getModuleRoute(mod) || '').toLowerCase();
+      return id.includes('agro') || route.includes('/agro');
+    }
+
     function getLegacyKeys(mod) {
       return Array.isArray(mod?.legacy_keys) ? mod.legacy_keys : [];
     }
@@ -2357,7 +2363,8 @@
       return null;
     }
 
-    function resolveRecommendedModule(modules, visits, excludeId) {
+    function resolveRecommendedModule(modules, visits, excludeId, reasonPrefix = '') {
+      const prefix = reasonPrefix ? `${reasonPrefix} · ` : '';
       const list = (modules || []).filter(mod => getModuleId(mod));
       const eligible = list.filter(mod => getModuleId(mod) !== excludeId);
       if (eligible.length === 0) return null;
@@ -2369,7 +2376,7 @@
           id: getModuleId(mod),
           title: getModuleTitle(mod),
           path: getModuleRoute(mod),
-          reason: 'primer módulo sin visitar'
+          reason: `${prefix}primer módulo sin visitar`
         };
       }
 
@@ -2384,7 +2391,7 @@
         id: getModuleId(mod),
         title: getModuleTitle(mod),
         path: getModuleRoute(mod),
-        reason: 'menor actividad reciente'
+        reason: `${prefix}menor actividad reciente`
       };
     }
 
@@ -2444,7 +2451,15 @@
     function updateRecommendCard(summary, modules) {
       const visits = summary?.visits || {};
       const continueData = resolveContinueModule(summary?.lastModule, modules);
-      const recommended = resolveRecommendedModule(modules, visits, continueData?.id);
+      const agroModules = (modules || []).filter(isModuleAgro);
+      const usingAgro = agroModules.length > 0;
+      const candidates = usingAgro ? agroModules : modules;
+      const recommended = resolveRecommendedModule(
+        candidates,
+        visits,
+        continueData?.id,
+        usingAgro ? 'Agro' : ''
+      );
 
       updateInsightCard('recommend', recommended ? {
         title: recommended.title,
