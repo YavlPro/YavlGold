@@ -1,15 +1,15 @@
-# 🚫 INMUTABLE (v9.4) — NO EDITAR ESTE ARCHIVO
-# YAVLGOLD V9.4 VISUAL DNA (FORENSE, DESDE BACKUP)
+# 🧬 DNA HÍBRIDO V9.9 — FUSIÓN PRESTIGE
+# YAVLGOLD V9.9 VISUAL DNA (V9.4 INMUTABLE × PRESTIGE V9.9)
 
-**NOTA:** Documento generado exclusivamente desde el backup `index v9.4.html`. Si el diseño cambia, crear **v9.5**. NO editar este archivo.
+**NOTA:** Documento fusionado — Estructura v9.4 preservada + Estética Prestige v9.9 integrada. Nueva versión **v9.9**.
 
 ---
 
-## A) METADATOS INMUTABLES
-- Version: v9.4
-- Fuente: `index v9.4.html`
-- SHA256 fuente: `E03164D2DA68358DBF8A4E99190E2CCBE406A0D64B83D82B4F0F1AF651EC5419`
-- Fecha de extraccion: 2026-01-30
+## A) METADATOS
+- Version: v9.9 (Híbrida)
+- Fuente: `index v9.4.html` + `index prestige v9.9 dna fusion.html`
+- SHA256 fuente v9.4: `E03164D2DA68358DBF8A4E99190E2CCBE406A0D64B83D82B4F0F1AF651EC5419`
+- Fecha de fusión: 2026-02-15
 
 ---
 
@@ -250,16 +250,32 @@
 
 :root,[data-theme=dark]{--font-heading: "Orbitron", sans-serif`
 
+### B.7 Sistema Prestige v9.9 (NUEVO)
+| Variable | Valor | Descripción |
+| --- | --- | --- |
+| `--gg-gold-prestige` | `#E5D5A0` | Champán Dorado (acento elegante) |
+| `--gg-gold-prestige-light` | `#E4D08E` | Dorado Claro Prestige |
+| `--gg-gold-prestige-dark` | `#9D8040` | Dorado Oscuro Prestige |
+| `--text-gold-prestige` | `#E5D5A0` | Texto dorado Prestige |
+| `--border-prestige` | `1px solid rgba(229, 213, 160, 0.2)` | Borde elegante dorado |
+| `--shadow-prestige` | `0 0 20px rgba(229, 213, 160, 0.3)` | Glow suave dorado |
+| `--gradient-defi` | `linear-gradient(45deg, #8b5cf6, #06b6d4, #10b981)` | Gradiente DeFi |
+| `--gradient-chart` | `linear-gradient(45deg, #3b82f6, #8b5cf6, #ec4899)` | Gradiente Charts |
+
+**Colores Prestige adicionales (hardcodeados):** `#E5D5A0`, `#E4D08E`, `rgba(229, 213, 160, 0.2)`, `rgba(229, 213, 160, 0.3)`, `rgba(229, 213, 160, 0.4)`, `rgba(229, 213, 160, 0.5)`
+
 ---
 
 ## C) TIPOGRAFIA
 
 ### C.1 Imports / Links de fuentes
 - `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css`
-- `https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap`
+- `https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap`
 
 ### C.2 font-family usados
 `'Orbitron', sans-serif`, `'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`, `'Rajdhani', sans-serif`, `-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif`, `Georgia, serif`, `Orbitron,sans-serif`, `Rajdhani,sans-serif`, `Rajdhani,sans-serif}.btn-feedback{background:transparent`, `var(--font-body)`, `var(--font-heading)`, `var(--font-heading)!important}.font-body{font-family:var(--font-body)!important}.font-mono{font-family:var(--font-mono)!important}.text-gold{color:var(--gg-gold-primary)!important}.text-gold-bright{color:var(--gg-gold-bright)!important}.text-muted{color:var(--gg-text-muted)!important}.bg-gold{background:var(--gg-gold-primary)!important}.bg-glass{background:var(--gg-glass)!important`, `var(--font-heading)}.brand-logo{width:36px`
+
+**NUEVO v9.9:** `'Playfair Display', serif` (fuentes display/elegantes)
 
 ### C.3 font-weight usados
 `500`, `600`, `600}.auth-buttons{display:flex`, `600}.btn-login:active,.gg-header .btn-login:active{transform:scale(.98)`, `600}.user-menu-btn:hover{background:#c8a75233}.user-avatar-sm{width:32px`, `700`, `700}.gg-header .auth-buttons{grid-column:1 / -1`, `900`
@@ -435,6 +451,50 @@ from {
         opacity: 1;
         transform: translateY(0);
       }
+}
+```
+
+**@keyframes ghostFloat** (NUEVO v9.9)
+```css
+@keyframes ghostFloat {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1); 
+    opacity: 0.03;
+  }
+  50% { 
+    transform: translate(-50%, -55%) scale(1.05); 
+    opacity: 0.05;
+  }
+}
+```
+
+**@keyframes ghostSpin** (NUEVO v9.9)
+```css
+@keyframes ghostSpin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+```
+
+**@keyframes ghostPulse** (NUEVO v9.9)
+```css
+@keyframes ghostPulse {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1); 
+    opacity: 0.02;
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.1); 
+    opacity: 0.05;
+  }
+}
+```
+
+**@keyframes borderShimmer** (NUEVO v9.9)
+```css
+@keyframes borderShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 ```
 
@@ -2966,3 +3026,82 @@ Transiciones/animaciones detectadas (literal):
 - Font Awesome: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css` (Academia)
 - Favicon/logo: `/brand/logo.webp` (Academia index)
 - Nota: Tipografías coinciden con DNA base; versión de Font Awesome difiere del landing (6.5.1).
+
+---
+
+## G) GHOST EMOJI SYSTEM v9.9 (NUEVO)
+
+Sistema de marcas de agua atmosféricas con emojis gigantes animados para identificar secciones.
+
+### G.1 Implementación CSS
+```css
+/* Ghost Emoji Base */
+.hero::after {
+  content: '💎';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(15rem, 30vw, 25rem);
+  opacity: 0.04;
+  z-index: 0;
+  pointer-events: none;
+  animation: ghostFloat 8s ease-in-out infinite;
+  filter: sepia(100%) hue-rotate(5deg) saturate(500%) contrast(0.8);
+  mix-blend-mode: overlay;
+}
+```
+
+### G.2 Ghost Emojis por Sección
+
+| Sección | Emoji | Clase CSS | Animación | Duración |
+|---------|-------|-----------|-----------|----------|
+| Hero | 💎 | `.hero::after` | ghostFloat | 8s |
+| Academia | 🎓 | `.academy-ghost::before` | ghostFloat | 10s |
+| Tokens | 🧬 | `.tokens-ghost::before` | ghostFloat (reverse) | 12s |
+| Componentes | ⚙️ | `.components-ghost::before` | ghostSpin | 20s |
+| Animaciones | ✨ | `.animations-ghost::before` | ghostPulse | 6s |
+| Typography | 🅰 | `.typo-ghost::before` | ghostFloat | 9s |
+| Quotes | 📜 | `.quote-ghost::before` | ghostFloat | 7s |
+
+### G.3 CSS Base para Ghost Sections
+```css
+.academy-ghost,
+.tokens-ghost,
+.components-ghost,
+.animations-ghost,
+.typo-ghost,
+.quote-ghost {
+  position: relative;
+  overflow: hidden;
+}
+```
+
+### G.4 Efectos Aplicados
+- **Filtro:** `sepia(100%) hue-rotate(5deg) saturate(500%) contrast(0.8)`
+- **Blend Mode:** `overlay`
+- **Opacidad:** 0.02 - 0.05 (apenas visible)
+- **Pointer-events:** none (no interactivo)
+- **Z-index:** 0 (detrás del contenido)
+
+### G.5 Uso Recomendado
+```html
+<!-- Hero con ghost emoji 💎 -->
+<section class="hero">
+  <div class="hero-content">...</div>
+</section>
+
+<!-- Academia con ghost emoji 🎓 -->
+<section class="academy-ghost">
+  <!-- contenido -->
+</section>
+
+<!-- Quote section con ghost emoji 📜 -->
+<section class="quote-ghost" style="background: var(--bg-tertiary); padding: 4rem 2rem;">
+  <div class="quote-card">...</div>
+</section>
+```
+
+---
+
+**FIN DNA HÍBRIDO v9.9 — Fusión completada exitosamente**
