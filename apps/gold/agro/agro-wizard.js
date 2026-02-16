@@ -55,15 +55,15 @@ const WIZARD_TAB_META = {
         successMsg: '✅ Pérdida registrada'
     },
     transferencias: {
-        title: 'Registrar Transferencia',
-        icon: '🔄',
-        conceptPlaceholder: 'Ej: Envío a mercado',
-        whoLabel: 'Destino',
-        whoPlaceholder: 'Ej: Mercado central...',
+        title: 'Registrar Donación',
+        icon: '🎁',
+        conceptPlaceholder: 'Ej: Donación de producción',
+        whoLabel: 'Beneficiario',
+        whoPlaceholder: 'Ej: Vecino, iglesia...',
         hasWho: true,
         hasUnits: true,
         table: 'agro_transfers',
-        successMsg: '✅ Transferencia registrada'
+        successMsg: '✅ Donación registrada'
     }
 };
 
@@ -460,7 +460,7 @@ export async function openAgroWizard(tabName, deps) {
     const state = {
         step: 1,
         cropId: null,
-        cropName: '',
+        cropName: 'General / Sin cultivo',
         concepto: '',
         who: '',
         fecha: (typeof getTodayLocalISO === 'function' ? getTodayLocalISO() : new Date().toISOString().split('T')[0]),
@@ -529,9 +529,9 @@ export async function openAgroWizard(tabName, deps) {
         const crops = Array.isArray(cropsCache) ? cropsCache : [];
         let cardsHtml = `
             <button type="button" class="wiz-crop-btn ${!state.cropId ? 'selected' : ''}" data-crop-id="">
-                <span class="wiz-crop-icon">🏢</span>
-                <span class="wiz-crop-name">General</span>
-                <span class="wiz-crop-variety">Sin asociar</span>
+                <span class="wiz-crop-icon">📋</span>
+                <span class="wiz-crop-name">General / Sin cultivo</span>
+                <span class="wiz-crop-variety">No asociado a cultivo</span>
             </button>
         `;
         for (const crop of crops) {
@@ -722,7 +722,7 @@ export async function openAgroWizard(tabName, deps) {
                 state.cropId = id || null;
                 const crops = Array.isArray(cropsCache) ? cropsCache : [];
                 const match = id ? crops.find(c => String(c.id) === id) : null;
-                state.cropName = match ? (match.name || 'Cultivo') : 'General';
+                state.cropName = match ? (match.name || 'Cultivo') : 'General / Sin cultivo';
                 // Auto-advance
                 state.step = 2;
                 render();
@@ -971,9 +971,22 @@ export async function openAgroWizard(tabName, deps) {
             if (tabName === 'perdidas' && state.who) insertData.causa = state.who;
             if (tabName === 'transferencias' && state.who) insertData.destino = state.who;
             // ingresos: who is embedded in concepto via buildConceptWithWho
-            // ingresos: categoria is NOT NULL in agro_income
-            if (tabName === 'ingresos') insertData.categoria = 'venta';
-            // gastos: has category field but wizard uses simple concept
+            // Defensive defaults for NOT NULL constraints per tab.
+            if (tabName === 'ingresos') {
+                insertData.categoria = insertData.categoria || (insertData.crop_id ? 'ventas' : 'general');
+            }
+            if (tabName === 'gastos') {
+                insertData.category = insertData.category || (insertData.crop_id ? 'insumos' : 'general');
+            }
+            if (tabName === 'pendientes') {
+                insertData.cliente = insertData.cliente || 'Cliente general';
+            }
+            if (tabName === 'perdidas') {
+                insertData.causa = insertData.causa || 'Sin causa especificada';
+            }
+            if (tabName === 'transferencias') {
+                insertData.destino = insertData.destino || 'Beneficiario general';
+            }
 
             // Units (if applicable)
             if (meta.hasUnits && state.unitType) {

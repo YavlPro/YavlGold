@@ -5635,6 +5635,92 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 
 ---
 
+## ✅ SESIÓN: Agro V9.8 — Gastos category + General sin cultivo + Donaciones UI (2026-02-16)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. MPA/routing verificado:
+   - `apps/gold/vite.config.js`
+   - `apps/gold/vercel.json`
+   - `apps/gold/index.html`
+   - `apps/gold/dashboard/index.html`
+2. Supabase/Auth verificado:
+   - `apps/gold/assets/js/config/supabase-config.js`
+   - `apps/gold/assets/js/auth/authClient.js`
+   - `apps/gold/assets/js/auth/authUI.js`
+   - `apps/gold/dashboard/auth-guard.js`
+3. Dashboard actual:
+   - Consulta `profiles`, `modules`, `user_favorites`, `notifications`.
+   - Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en `academia.js`, no integrado como métrica central.
+4. Geo/Clima:
+   - Prioridad confirmada: Manual > GPS/IP cache > GPS/IP > fallback (`getCoordsSmart`).
+   - Claves confirmadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+5. Crypto:
+   - `apps/gold/crypto/` integrado en MPA, con `index.html` operativo y archivos legacy en carpeta.
+6. Issues detectados:
+   - Wizard no enviaba `category` en gastos (`agro_expenses`).
+   - Facturero forzaba cultivo seleccionado (ocultando por defecto registros `crop_id = NULL`).
+   - Textos visibles de tab `transferencias` no estaban alineados al lenguaje de campo.
+
+### Plan quirúrgico
+1. `apps/gold/agro/agro-wizard.js`
+   - Defaults defensivos NOT NULL por tab.
+   - `gastos.category` por contexto (`insumos` con cultivo / `general` sin cultivo).
+   - Renombrar copy visible de transferencias a donaciones y `Destino` a `Beneficiario`.
+2. `apps/gold/agro/agro.js`
+   - Habilitar vista general real con card `General` y filtro all (incluye `crop_id=NULL`).
+   - Mostrar `📋 General` en historial para registros sin cultivo.
+   - Actualizar labels visibles (AgroLog, edición, who-label) para donaciones.
+3. `apps/gold/agro/index.html`
+   - Tab/accordion/KPI: `Transferencias` -> `Donaciones` (texto visible).
+4. `apps/gold/agro/agro-crop-report.js`
+   - Sección y columna visible de donaciones (`Beneficiario`).
+5. `apps/gold/agro/agro-stats-report.js`
+   - Nueva sección MD: `Sin cultivo asociado` con resumen de ingresos/gastos/pendientes/pérdidas `crop_id=NULL`.
+6. `apps/gold/agro/agro-notifications.js`
+   - Labels de notificación visibles: donación/beneficiario.
+
+### Cambios aplicados
+1. `apps/gold/agro/agro-wizard.js`
+   - `transferencias` en UI ahora se presenta como donaciones.
+   - Opción de paso 1: `📋 General / Sin cultivo` como primera opción.
+   - Defaults NOT NULL defensivos:
+     - `ingresos.categoria`: `ventas` o `general`.
+     - `gastos.category`: `insumos` o `general`.
+     - `pendientes.cliente`: fallback.
+     - `perdidas.causa`: fallback.
+     - `transferencias.destino`: fallback.
+2. `apps/gold/agro/agro.js`
+   - Card nueva `Vista General` para filtros por cultivo en facturero.
+   - Selección general (`selectedCropId=null`) ahora soportada explícitamente.
+   - Historial renderiza cultivo siempre; si `crop_id` es null muestra `📋 General`.
+   - `WHO_FIELD_META.transferencias`: `Beneficiario`.
+   - Parser/formatter de concepto soporta `Beneficiario` y compatibilidad backward con `Destino`.
+   - AgroLog: tab `transferencias` exporta como `Donaciones`.
+   - Edit modal: `Editar Donación`.
+3. `apps/gold/agro/index.html`
+   - Tab visible: `Donaciones`.
+   - Accordion: `Registrar donación`.
+   - Copy: “registro de donaciones...”.
+   - KPI: icono regalo + label `Donaciones`.
+4. `apps/gold/agro/agro-crop-report.js`
+   - Tabla: columna `Beneficiario`.
+   - Sección: `🎁 Donaciones`.
+5. `apps/gold/agro/agro-stats-report.js`
+   - Sección añadida: `## 📋 Sin cultivo asociado`.
+6. `apps/gold/agro/agro-notifications.js`
+   - Labels visibles actualizados a `Donación/Donaciones`.
+   - Subtitle de notificación: `Beneficiario: ...`.
+
+### Verificación
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `vite build` → ✅
+   - `check-dist-utf8.mjs` → ✅
+
+---
+
 ## ✅ SESIÓN: Rename documento DNA visual a V9.8 (2026-02-16)
 
 ### Paso 0 — Diagnóstico (Regla #1)

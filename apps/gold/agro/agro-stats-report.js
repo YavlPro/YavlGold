@@ -166,6 +166,10 @@ function formatCropProgressLine(progress) {
     return `${pctRounded}% (día ${progress.dayIndex} de ${progress.totalDays})`;
 }
 
+function isUnassignedCropId(value) {
+    return value === null || value === undefined || String(value).trim() === '';
+}
+
 function isCropActive(crop) {
     const progress = computeCropProgress(crop);
     const status = resolveCropStatus(crop, progress);
@@ -257,7 +261,20 @@ async function fetchLosses(userId) {
 // ============================================================
 
 function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows) {
-    if (!crops.length) return 'Sin cultivos registrados\n';
+    const unassigned = {
+        incomeCents: 0,
+        expenseCents: 0,
+        pendingCents: 0,
+        lossesCents: 0,
+        incomeCount: 0,
+        expenseCount: 0,
+        pendingCount: 0,
+        lossesCount: 0
+    };
+
+    if (!crops.length) {
+        return { tableMd: 'Sin cultivos registrados\n', unassigned };
+    }
 
     const cropMap = new Map();
     for (const c of crops) {
@@ -275,19 +292,39 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
 
     for (const r of incomeRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.incomeCents += toCents(r.monto_usd ?? r.monto);
+        if (e) {
+            e.incomeCents += toCents(r.monto_usd ?? r.monto);
+        } else if (isUnassignedCropId(r.crop_id)) {
+            unassigned.incomeCents += toCents(r.monto_usd ?? r.monto);
+            unassigned.incomeCount += 1;
+        }
     }
     for (const r of expenseRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.expenseCents += toCents(r.monto_usd ?? r.amount);
+        if (e) {
+            e.expenseCents += toCents(r.monto_usd ?? r.amount);
+        } else if (isUnassignedCropId(r.crop_id)) {
+            unassigned.expenseCents += toCents(r.monto_usd ?? r.amount);
+            unassigned.expenseCount += 1;
+        }
     }
     for (const r of pendingRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.pendingCents += toCents(r.monto_usd ?? r.monto);
+        if (e) {
+            e.pendingCents += toCents(r.monto_usd ?? r.monto);
+        } else if (isUnassignedCropId(r.crop_id)) {
+            unassigned.pendingCents += toCents(r.monto_usd ?? r.monto);
+            unassigned.pendingCount += 1;
+        }
     }
     for (const r of lossesRows) {
         const e = cropMap.get(String(r.crop_id));
-        if (e) e.lossesCents += toCents(r.monto_usd ?? r.monto);
+        if (e) {
+            e.lossesCents += toCents(r.monto_usd ?? r.monto);
+        } else if (isUnassignedCropId(r.crop_id)) {
+            unassigned.lossesCents += toCents(r.monto_usd ?? r.monto);
+            unassigned.lossesCount += 1;
+        }
     }
 
     let md = '| Cultivo | Estado | Progreso | Ingresos | Costos | Ganancia | Pendientes | ROI |\n';
@@ -305,6 +342,31 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
         md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${centsToStr(c.incomeCents)} | ${centsToStr(costCents)} | ${centsToStr(profitCents)} | ${centsToStr(c.pendingCents)} | ${roi} |\n`;
     }
 
+    return { tableMd: md, unassigned };
+}
+
+function buildUnassignedSection(unassigned) {
+    const info = unassigned || {};
+    const totalCount = (info.incomeCount || 0)
+        + (info.expenseCount || 0)
+        + (info.pendingCount || 0)
+        + (info.lossesCount || 0);
+
+    let md = '## 📋 Sin cultivo asociado\n';
+    if (!totalCount) {
+        md += 'Sin movimientos sin cultivo asociado.\n\n';
+        return md;
+    }
+
+    const profitCents = (info.incomeCents || 0) - ((info.expenseCents || 0) + (info.lossesCents || 0));
+
+    md += '| Concepto | Registros | Monto (USD) |\n';
+    md += '|----------|----------:|------------:|\n';
+    md += `| Ingresos | ${info.incomeCount || 0} | ${centsToStr(info.incomeCents || 0)} |\n`;
+    md += `| Gastos | ${info.expenseCount || 0} | ${centsToStr(info.expenseCents || 0)} |\n`;
+    md += `| Pendientes | ${info.pendingCount || 0} | ${centsToStr(info.pendingCents || 0)} |\n`;
+    md += `| Pérdidas | ${info.lossesCount || 0} | ${centsToStr(info.lossesCents || 0)} |\n`;
+    md += `| Resultado neto | - | ${centsToStr(profitCents)} |\n\n`;
     return md;
 }
 
@@ -445,9 +507,12 @@ export async function exportStatsReport() {
         md += `---\n\n`;
 
         // Per-crop breakdown
+        const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
         md += `## 🌾 Resumen por Cultivo\n`;
-        md += buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
+        md += perCropBreakdown.tableMd;
         md += '\n> _Montos en USD \u00b7 Tasas al momento del registro_\n\n---\n\n';
+        md += buildUnassignedSection(perCropBreakdown.unassigned);
+        md += '---\n\n';
 
         // Buyer ranking
         md += `## 👥 Ranking de Compradores\n`;

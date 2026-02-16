@@ -27,6 +27,9 @@ const CROPS_EMPTY_ID = 'agro-crops-empty';
 const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const AGRO_CROPS_STATE_KEY = '__AGRO_CROPS_STATE';
 const AGRO_SELECTED_CROP_KEY = 'YG_AGRO_SELECTED_CROP_V1';
+const AGRO_GENERAL_VIEW_ID = '__general__';
+const AGRO_GENERAL_LABEL = '📋 General';
+const AGRO_GENERAL_SUBLABEL = 'Todos los cultivos';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
@@ -88,7 +91,10 @@ function applySelectedCropUI() {
     if (!cards.length) return;
     cards.forEach((card) => {
         const cardId = normalizeCropId(card.dataset.cropId);
-        const isSelected = !!(selectedCropId && cardId && cardId === selectedCropId);
+        const isGeneralCard = card.dataset.generalView === '1' || cardId === AGRO_GENERAL_VIEW_ID;
+        const isSelected = isGeneralCard
+            ? !selectedCropId
+            : !!(selectedCropId && cardId && cardId === selectedCropId);
         card.classList.toggle('is-selected', isSelected);
         card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     });
@@ -122,7 +128,7 @@ function syncSelectedCropFromList(crops, options = {}) {
     const hasStored = stored && list.some((crop) => normalizeCropId(crop?.id) === stored);
     let nextId = stored;
     if (!hasStored) {
-        nextId = list.length ? normalizeCropId(list[0]?.id) : null;
+        nextId = null;
     }
     const changed = setSelectedCropId(nextId, { silent: options.silent });
     if (!changed) {
@@ -814,7 +820,7 @@ function createEvidenceLinkElement(url) {
 const WHO_FIELD_META = {
     ingresos: { label: 'Comprador', icon: '👤', field: null },
     pendientes: { label: 'Cliente', icon: '👤', field: 'cliente' },
-    transferencias: { label: 'Destino', icon: '📌', field: 'destino' },
+    transferencias: { label: 'Beneficiario', icon: '🎁', field: 'destino' },
     perdidas: { label: 'Causa/Responsable', icon: '⚠️', field: 'causa' }
 };
 
@@ -892,7 +898,7 @@ function parseWhoFromConcept(tabName, concept) {
     }
 
     if (tabName === 'transferencias') {
-        const match = text.match(/^(.*?)\s+-\s+Destino:\s*(.+)$/i);
+        const match = text.match(/^(.*?)\s+-\s+(?:Beneficiario|Destino):\s*(.+)$/i);
         if (match) {
             return { who: match[2].trim(), concept: match[1].trim() };
         }
@@ -920,7 +926,7 @@ function buildConceptWithWho(tabName, concept, whoValue) {
         return `${safeConcept} - Cliente: ${who}`;
     }
     if (tabName === 'transferencias') {
-        return `${safeConcept} - Destino: ${who}`;
+        return `${safeConcept} - Beneficiario: ${who}`;
     }
     if (tabName === 'perdidas') {
         return `${safeConcept} - Causa: ${who}`;
@@ -1528,7 +1534,7 @@ function renderHistoryRow(tabName, item, config) {
     const rawConcept = item[config.conceptField] || 'Sin concepto';
     const amount = Number(item[config.amountField] || 0);
     const date = item[config.dateField];
-    const cropName = item.crop_name || '';
+    const cropLabel = resolveRecordCropLabel(item);
     const evidenceUrl = item.evidence_url_resolved || '';
     const evidenceHtml = evidenceUrl ? `<span>${buildEvidenceLinkHtml(evidenceUrl)}</span>` : '';
     const whoData = getWhoData(tabName, item, rawConcept);
@@ -1622,7 +1628,7 @@ function renderHistoryRow(tabName, item, config) {
                 ${originBadgeHtml}
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
-                    ${cropName ? `<span style="color: var(--gold-primary);">• ${escapeHtml(cropName)}</span>` : ''}
+                    <span style="color: var(--gold-primary);">• ${escapeHtml(cropLabel)}</span>
                     ${evidenceHtml}
                 </div>
             </div>
@@ -2036,7 +2042,7 @@ const AGROLOG_TAB_LABELS = {
     ingresos: 'Ingresos',
     pendientes: 'Pendientes',
     perdidas: 'Pérdidas',
-    transferencias: 'Transferencias'
+    transferencias: 'Donaciones'
 };
 
 async function exportAgroLog(tabName) {
@@ -2048,7 +2054,7 @@ async function exportAgroLog(tabName) {
         if (!user) { alert('Sesión no válida.'); return; }
 
         // Get crop name
-        let cropLabel = 'Vista General — Todos los cultivos';
+        let cropLabel = 'Vista General — Todos los cultivos + sin cultivo';
         let cropStatus = '';
         let filenameCrop = 'General';
         if (selectedCropId) {
@@ -2451,7 +2457,7 @@ function openFactureroEditModal(tabName, item, config) {
         'ingresos': 'Editar Ingreso',
         'pendientes': 'Editar Pendiente',
         'perdidas': 'Editar Pérdida',
-        'transferencias': 'Editar Transferencia'
+        'transferencias': 'Editar Donación'
     };
     const titleEl = document.getElementById('edit-modal-title');
     if (titleEl) titleEl.textContent = titles[tabName] || 'Editar Registro';
@@ -3592,6 +3598,10 @@ function setupCropActionListeners() {
 
         const cropCard = e.target.closest('.crop-card');
         if (cropCard) {
+            if (cropCard.dataset.generalView === '1' || cropCard.dataset.cropId === AGRO_GENERAL_VIEW_ID) {
+                setSelectedCropId(null);
+                return;
+            }
             const cropId = cropCard.dataset.cropId;
             if (cropId) {
                 setSelectedCropId(cropId);
@@ -3604,6 +3614,11 @@ function setupCropActionListeners() {
         const target = e.target;
         if (!(target instanceof HTMLElement)) return;
         if (!target.classList.contains('crop-card')) return;
+        if (target.dataset.generalView === '1' || target.dataset.cropId === AGRO_GENERAL_VIEW_ID) {
+            e.preventDefault();
+            setSelectedCropId(null);
+            return;
+        }
         const cropId = target.dataset.cropId;
         if (!cropId) return;
         e.preventDefault();
@@ -3933,6 +3948,70 @@ function normalizeProgress(value) {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return 0;
     return Math.max(0, Math.min(100, parsed));
+}
+
+function resolveCropNameFromCache(cropId) {
+    const normalizedId = normalizeCropId(cropId);
+    if (!normalizedId) return '';
+    const match = Array.isArray(cropsCache)
+        ? cropsCache.find((crop) => normalizeCropId(crop?.id) === normalizedId)
+        : null;
+    return String(match?.name || '').trim();
+}
+
+function resolveRecordCropLabel(item) {
+    const normalizedId = normalizeCropId(item?.crop_id);
+    if (!normalizedId) return AGRO_GENERAL_LABEL;
+    const direct = String(item?.crop_name || '').trim();
+    if (direct) return direct;
+    const fromCache = resolveCropNameFromCache(normalizedId);
+    return fromCache || 'Cultivo';
+}
+
+function createGeneralViewCardElement() {
+    const card = document.createElement('div');
+    card.className = 'card crop-card animate-in delay-4';
+    card.dataset.cropId = AGRO_GENERAL_VIEW_ID;
+    card.dataset.generalView = '1';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+
+    const header = document.createElement('div');
+    header.className = 'crop-card-header';
+
+    const cropInfo = document.createElement('div');
+    cropInfo.className = 'crop-info';
+
+    const icon = document.createElement('div');
+    icon.className = 'crop-icon';
+    icon.textContent = '📋';
+
+    const details = document.createElement('div');
+    details.className = 'crop-details-header';
+
+    const name = document.createElement('span');
+    name.className = 'crop-name';
+    name.textContent = 'Vista General';
+
+    const variety = document.createElement('span');
+    variety.className = 'crop-variety';
+    variety.textContent = AGRO_GENERAL_SUBLABEL;
+
+    details.append(name, variety);
+    cropInfo.append(icon, details);
+    header.appendChild(cropInfo);
+
+    const metaSection = document.createElement('div');
+    metaSection.className = 'crop-meta';
+    metaSection.append(
+        createMetaItem('Registros', 'Con y sin cultivo', 'meta-value')
+    );
+
+    card.append(header, metaSection);
+    const isSelected = !selectedCropId;
+    card.classList.toggle('is-selected', isSelected);
+    card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    return card;
 }
 
 function createCropCardElement(crop, index) {
@@ -4286,8 +4365,9 @@ export async function loadCrops() {
         logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
         cropsGrid.textContent = '';
         const fragment = document.createDocumentFragment();
+        fragment.appendChild(createGeneralViewCardElement());
         crops.forEach((crop, i) => {
-            fragment.appendChild(createCropCardElement(crop, i));
+            fragment.appendChild(createCropCardElement(crop, i + 1));
         });
         cropsGrid.appendChild(fragment);
         const prevSelected = selectedCropId;
@@ -4745,7 +4825,10 @@ function renderIncomeItem(listEl, income, signedUrl) {
     category.textContent = String(income.categoria || 'otros').replace(/-/g, ' ').toUpperCase();
     const dateStr = document.createElement('span');
     dateStr.textContent = formatDate(income.fecha);
-    meta.append(category, dateStr);
+    const cropLabel = document.createElement('span');
+    cropLabel.style.color = 'var(--gold-primary)';
+    cropLabel.textContent = resolveRecordCropLabel(income);
+    meta.append(category, dateStr, cropLabel);
 
     const unitSummary = formatUnitSummary(income.unit_type, income.unit_qty);
     if (unitSummary) {

@@ -348,8 +348,8 @@ function buildLossTable(items) {
 }
 
 function buildTransferTable(items) {
-    if (!items.length) return 'Sin transferencias registradas\n';
-    let md = '| Fecha | Concepto | Destino | Cantidad | Moneda | Monto | USD |\n';
+    if (!items.length) return 'Sin donaciones registradas\n';
+    let md = '| Fecha | Concepto | Beneficiario | Cantidad | Moneda | Monto | USD |\n';
     md += '|-------|----------|---------|----------|--------|------:|----:|\n';
     for (const it of items) {
         const currency = it.currency || 'USD';
@@ -461,7 +461,7 @@ export async function exportCropReport(cropId) {
         md += '\n';
 
         // Transfers
-        md += `## 🔄 Transferencias (${transfers.length})\n`;
+        md += `## 🎁 Donaciones (${transfers.length})\n`;
         md += buildTransferTable(transfers);
         md += '\n';
 

@@ -52,7 +52,7 @@ const FACTURERO_LABELS = {
     ingresos: { singular: 'Ingreso', plural: 'Ingresos' },
     pendientes: { singular: 'Pendiente', plural: 'Pendientes' },
     perdidas: { singular: 'Pérdida', plural: 'Pérdidas' },
-    transferencias: { singular: 'Transferencia', plural: 'Transferencias' }
+    transferencias: { singular: 'Donación', plural: 'Donaciones' }
 };
 // Facturero → Notificaciones (anti-ruido pero visible)
 // V9.6.5: Relajado para mostrar entradas relevantes sin ser "humo"
@@ -1192,7 +1192,7 @@ function getLossCause(item) {
 }
 
 function getTransferDest(item) {
-    return String(item?.destino || '').trim() || 'Destino';
+    return String(item?.destino || '').trim() || 'Beneficiario';
 }
 
 function getExpenseConcept(item) {
@@ -1361,7 +1361,7 @@ export function syncFactureroNotifications(tabName, items) {
             const unit = getUnitSummary(item);
 
             const title = `${buildFactureroChip('transferencias', false)}`;
-            const subtitle = `Destino: ${dest}`;
+            const subtitle = `Beneficiario: ${dest}`;
             const metaLine = `${amount}${unit ? ` • ${unit}` : ''}`;
 
             changed = upsertAgroNotification({
@@ -1371,7 +1371,7 @@ export function syncFactureroNotifications(tabName, items) {
                 subtitle,
                 message: subtitle,
                 metaLine,
-                icon: 'fa-right-left',
+                icon: 'fa-gift',
                 timestamp: rowDate || new Date(),
                 origin: 'facturero',
                 entity: 'transferencias',
