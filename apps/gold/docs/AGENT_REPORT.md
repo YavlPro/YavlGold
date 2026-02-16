@@ -6013,3 +6013,40 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 1. Revertir:
    - `vercel.json`
    - `apps/gold/docs/AGENT_REPORT.md`
+
+---
+
+## ✅ SESIÓN: Agro tab "Otros" para historial sin cultivo (2026-02-16)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. `apps/gold/agro/index.html` tenía tabs: Gastos, Ingresos, Pendientes, Pérdidas, Donaciones, Carrito; no existía `Otros`.
+2. `apps/gold/agro/agro.js` filtraba por `selectedCropId` en cada tab, pero no tenía vista mixta dedicada para `crop_id = NULL`.
+3. El historial y CRUD estaban centralizados en `refreshFactureroHistory` + `renderHistoryRow`.
+
+### Plan quirúrgico
+1. Añadir tab/panel `Otros` en `apps/gold/agro/index.html`.
+2. Crear fetch mixto en `apps/gold/agro/agro.js` para combinar `gastos/ingresos/pendientes/perdidas/transferencias` con `crop_id IS NULL`.
+3. Renderizar `Otros` en modo solo historial (sin acciones CRUD) y conservar tabs existentes.
+
+### Cambios aplicados
+1. `apps/gold/agro/index.html`
+   - Se agregó botón `Otros` (`data-tab="otros"`).
+   - Se agregó panel `tab-panel-otros` con contenedor `other-history-container`.
+2. `apps/gold/agro/agro.js`
+   - Se añadió `FACTURERO_CONFIG.otros`.
+   - Se implementaron helpers para consulta mixta de registros sin cultivo:
+     - `applyFactureroCropMode(...)`
+     - `fetchFactureroRowsByTab(...)`
+     - `normalizeOtherHistoryRow(...)`
+     - `fetchOtherGeneralRecords(...)`
+   - `refreshFactureroHistory('otros')` ahora carga historial combinado sin cultivo.
+   - `renderHistoryRow(...)` soporta filas mixtas con etiqueta de tipo (Gasto/Ingreso/Pendiente/Pérdida/Donación).
+   - En `Otros` se deshabilitan botones de acción y export MD para evitar operaciones ambiguas.
+   - Se incluyó `otros` en `FIN_TAB_NAMES`, `initFactureroHistories()` y `refreshFactureroForSelectedCrop()`.
+
+### Validación
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `check-dist-utf8` → ✅

@@ -1568,6 +1568,8 @@
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-transferencias"
                     aria-selected="false" aria-controls="tab-panel-transferencias"
                     data-tab="transferencias">Donaciones</button>
+                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-otros" aria-selected="false"
+                    aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito" aria-selected="false"
                     aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2; Carrito</button>
             </div>
@@ -1744,6 +1746,21 @@
                         </summary>
                         <div class="yg-accordion-content" id="facturero-transferencias-history">
                             <div id="transfer-history-container"></div>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="tab-panel is-hidden" id="tab-panel-otros" role="tabpanel"
+                    aria-labelledby="tab-btn-otros" aria-hidden="true" data-tab="otros">
+                    <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
+                        <summary class="yg-accordion-summary" aria-controls="facturero-otros-history"
+                            aria-expanded="true">
+                            <span class="yg-accordion-icon"><i class="fa-solid fa-layer-group"></i></span>
+                            <span class="yg-accordion-title">Historial sin cultivo asociado</span>
+                            <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                        </summary>
+                        <div class="yg-accordion-content" id="facturero-otros-history">
+                            <div id="other-history-container"></div>
                         </div>
                     </details>
                 </div>

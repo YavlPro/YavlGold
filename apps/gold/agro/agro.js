@@ -707,8 +707,23 @@ const FACTURERO_CONFIG = {
         dateField: 'fecha',
         extraFields: ['destino', 'unit_type', 'unit_qty', 'quantity_kg'],
         supportsDeletedAt: true
+    },
+    'otros': {
+        table: null,
+        containerId: 'other-history-container',
+        listId: 'other-history-list',
+        conceptField: 'concepto',
+        amountField: 'monto',
+        dateField: 'fecha',
+        extraFields: ['source_label'],
+        supportsDeletedAt: false,
+        compositeOnly: true
     }
 };
+
+const FACTURERO_OTHER_SOURCE_TABS = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'];
+const FACTURERO_OTHER_FETCH_LIMIT = 20;
+const FACTURERO_OTHER_RENDER_LIMIT = 80;
 
 const FACTURERO_OPTIONAL_FIELDS = {
     pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason'],
@@ -1530,18 +1545,32 @@ function _fmtItemCurrency(item, config, amount) {
     return formatCurrencyDisplay(amount, currency, montoUsd);
 }
 
-function renderHistoryRow(tabName, item, config) {
-    const rawConcept = item[config.conceptField] || 'Sin concepto';
-    const amount = Number(item[config.amountField] || 0);
-    const date = item[config.dateField];
+function renderHistoryRow(tabName, item, config, options = {}) {
+    const showActions = options.showActions !== false;
+    const sourceTab = tabName === 'otros' ? String(item?.source_tab || '').trim() : '';
+    const effectiveTabName = (tabName === 'otros' && FACTURERO_CONFIG[sourceTab]) ? sourceTab : tabName;
+    const rowConfig = FACTURERO_CONFIG[effectiveTabName] || config;
+    const conceptField = rowConfig?.conceptField || config?.conceptField || 'concepto';
+    const amountField = rowConfig?.amountField || config?.amountField || 'monto';
+    const dateField = rowConfig?.dateField || config?.dateField || 'fecha';
+
+    const rawConcept = item[conceptField] || item.concepto || 'Sin concepto';
+    const amount = Number(item[amountField] || item.monto || 0);
+    const date = item[dateField] || item.fecha || item.date || item.created_at;
     const cropLabel = resolveRecordCropLabel(item);
     const evidenceUrl = item.evidence_url_resolved || '';
     const evidenceHtml = evidenceUrl ? `<span>${buildEvidenceLinkHtml(evidenceUrl)}</span>` : '';
-    const whoData = getWhoData(tabName, item, rawConcept);
+    const whoData = getWhoData(effectiveTabName, item, rawConcept);
     const whoLine = whoData.who
-        ? `<div style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;">• ${formatWhoDisplay(tabName, whoData.who)}</div>`
+        ? `<div style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;">• ${formatWhoDisplay(effectiveTabName, whoData.who)}</div>`
         : '';
     const displayConcept = whoData.concept || rawConcept;
+    const sourceLabel = tabName === 'otros'
+        ? (item.source_label || AGROLOG_TAB_LABELS[effectiveTabName] || effectiveTabName)
+        : '';
+    const sourceLine = sourceLabel
+        ? `<div class="facturero-meta">Tipo: ${escapeHtml(sourceLabel)}</div>`
+        : '';
     const unitSummary = formatUnitSummary(item.unit_type, item.unit_qty);
     const kgSummary = formatKgSummary(item.quantity_kg);
     const unitMetaParts = [];
@@ -1549,9 +1578,9 @@ function renderHistoryRow(tabName, item, config) {
     if (kgSummary) unitMetaParts.push(escapeHtml(kgSummary));
     const unitHtml = unitMetaParts.length ? `<div class="facturero-meta">${unitMetaParts.join(' &bull; ')}</div>` : '';
 
-    const isPending = tabName === 'pendientes';
-    const isIncome = tabName === 'ingresos';
-    const isLoss = tabName === 'perdidas';
+    const isPending = effectiveTabName === 'pendientes';
+    const isIncome = effectiveTabName === 'ingresos';
+    const isLoss = effectiveTabName === 'perdidas';
 
     // V9.7: Transfer state tracking
     const transferred = isPending && isPendingTransferred(item);
@@ -1570,34 +1599,34 @@ function renderHistoryRow(tabName, item, config) {
     // V9.7: Origin badge for income/losses from pending
     let originBadgeHtml = '';
     if (fromPending) {
-        originBadgeHtml = `<div class="facturero-origin-badge">${formatOriginBadge(item, tabName)}</div>`;
+        originBadgeHtml = `<div class="facturero-origin-badge">${formatOriginBadge(item, effectiveTabName)}</div>`;
     }
 
     // Transfer button for pending items (not already transferred or reverted-back)
-    const showTransferBtn = isPending && !transferred;
+    const showTransferBtn = showActions && isPending && !transferred;
     const transferDisabled = FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
     const transferTitle = transferDisabled
         ? 'Transferencia no disponible (faltan columnas)'
         : 'Transferir a ingresos o pérdidas';
     const transferBtn = showTransferBtn
         ? `
-                <button type="button" class="btn-transfer-pending" data-tab="${tabName}" data-id="${item.id}" title="${transferTitle}" ${transferDisabled ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: ${transferDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.7rem; opacity: ${transferDisabled ? '0.4' : '1'};">
+                <button type="button" class="btn-transfer-pending" data-tab="${effectiveTabName}" data-id="${item.id}" title="${transferTitle}" ${transferDisabled ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: ${transferDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.7rem; opacity: ${transferDisabled ? '0.4' : '1'};">
                     <i class="fa fa-arrow-right-long"></i>
                 </button>
             `
         : '';
 
-    const incomeTransferBtn = isIncome
+    const incomeTransferBtn = showActions && isIncome
         ? `
-                <button type="button" class="btn-transfer-income" data-tab="${tabName}" data-id="${item.id}" title="Transferir ingreso" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                <button type="button" class="btn-transfer-income" data-tab="${effectiveTabName}" data-id="${item.id}" title="Transferir ingreso" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-arrow-right-long"></i>
                 </button>
             `
         : '';
 
-    const lossTransferBtn = isLoss
+    const lossTransferBtn = showActions && isLoss
         ? `
-                <button type="button" class="btn-transfer-loss" data-tab="${tabName}" data-id="${item.id}" title="Transferir pérdida" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                <button type="button" class="btn-transfer-loss" data-tab="${effectiveTabName}" data-id="${item.id}" title="Transferir pérdida" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-arrow-right-long"></i>
                 </button>
             `
@@ -1605,10 +1634,10 @@ function renderHistoryRow(tabName, item, config) {
 
     // V9.7: Revert button for income/losses from pending (only if not already reverted)
     let revertBtn = '';
-    if (fromPending && !incomeOrLossReverted) {
+    if (showActions && fromPending && !incomeOrLossReverted) {
         const revertClass = isIncome ? 'btn-revert-income' : 'btn-revert-loss';
         revertBtn = `
-            <button type="button" class="${revertClass}" data-tab="${tabName}" data-id="${item.id}" title="Devolver a Pendientes" style="background: transparent; border: 1px solid rgba(251,191,36,0.5); color: #fbbf24; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+            <button type="button" class="${revertClass}" data-tab="${effectiveTabName}" data-id="${item.id}" title="Devolver a Pendientes" style="background: transparent; border: 1px solid rgba(251,191,36,0.5); color: #fbbf24; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                 <i class="fa fa-undo"></i>
             </button>
         `;
@@ -1617,12 +1646,32 @@ function renderHistoryRow(tabName, item, config) {
     // V9.7: Row styling for reverted items
     const revertedStyle = incomeOrLossReverted ? 'opacity: 0.5;' : '';
     const itemStyle = `background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; ${revertedStyle}`;
+    const itemId = tabName === 'otros' ? (item.source_id || item.id) : item.id;
+    const itemTab = tabName === 'otros' ? effectiveTabName : tabName;
+    const actionButtons = showActions
+        ? `
+                <button type="button" class="btn-edit-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-pen"></i>
+                </button>
+                <button type="button" class="btn-duplicate-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-copy"></i>
+                </button>
+                ${transferBtn}
+                ${incomeTransferBtn}
+                ${lossTransferBtn}
+                ${revertBtn}
+                <button type="button" class="btn-delete-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-trash"></i>
+                </button>
+            `
+        : '';
 
     return `
-        <div class="facturero-item" data-id="${item.id}" data-tab="${tabName}" style="${itemStyle}">
+        <div class="facturero-item" data-id="${itemId}" data-tab="${itemTab}" style="${itemStyle}">
             <div style="flex: 1; min-width: 0;">
                 <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(displayConcept)}</div>
                 ${whoLine}
+                ${sourceLine}
                 ${unitHtml}
                 ${transferHtml}
                 ${originBadgeHtml}
@@ -1633,20 +1682,8 @@ function renderHistoryRow(tabName, item, config) {
                 </div>
             </div>
             <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
-                <span style="color: ${tabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">${_fmtItemCurrency(item, config, amount)}</span>
-                <button type="button" class="btn-edit-facturero" data-tab="${tabName}" data-id="${item.id}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-pen"></i>
-                </button>
-                <button type="button" class="btn-duplicate-facturero" data-tab="${tabName}" data-id="${item.id}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-copy"></i>
-                </button>
-                ${transferBtn}
-                ${incomeTransferBtn}
-                ${lossTransferBtn}
-                ${revertBtn}
-                <button type="button" class="btn-delete-facturero" data-tab="${tabName}" data-id="${item.id}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-trash"></i>
-                </button>
+                <span style="color: ${effectiveTabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">${_fmtItemCurrency(item, rowConfig, amount)}</span>
+                ${actionButtons}
             </div>
         </div>
     `;
@@ -1714,7 +1751,7 @@ function filterFactureroBySelectedCrop(items) {
 
 /**
  * V9.5.1: Refreshes facturero history for a specific tab with CRUD buttons
- * @param {string} tabName - 'gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'
+ * @param {string} tabName - 'gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros'
  * @param {object} options - { showActions: true }
  */
 
@@ -1737,7 +1774,21 @@ function _looksLikeMissingColumn(err) {
 
 const LS_LOSSES_SOFT_DELETE = 'YG_LOSSES_HAS_DELETED_AT_V1';
 
-async function fetchAgroLosses(supabase, userId) {
+function applyFactureroCropMode(query, cropMode = 'selected') {
+    if (!query) return query;
+    if (cropMode === 'null') {
+        return query.is('crop_id', null);
+    }
+    if (cropMode === 'selected' && selectedCropId) {
+        return query.eq('crop_id', selectedCropId);
+    }
+    return query;
+}
+
+async function fetchAgroLosses(supabase, userId, options = {}) {
+    const cropMode = options.cropMode || 'selected';
+    const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : 20;
+
     // Check localStorage cache first (Fix B)
     if (AGRO_LOSSES_SUPPORTS_SOFT_DELETE === null) {
         const cached = localStorage.getItem(LS_LOSSES_SOFT_DELETE);
@@ -1753,10 +1804,8 @@ async function fetchAgroLosses(supabase, userId) {
                 .eq('user_id', userId)
                 .order('fecha', { ascending: false })
                 .order('created_at', { ascending: false })
-                .limit(20);
-            if (selectedCropId) {
-                q = q.eq('crop_id', selectedCropId);
-            }
+                .limit(limit);
+            q = applyFactureroCropMode(q, cropMode);
             return q;
         })();
 
@@ -1796,6 +1845,115 @@ async function fetchAgroLosses(supabase, userId) {
     return [];
 }
 
+async function fetchFactureroRowsByTab(tabName, userId, options = {}) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config || !config.table || config.compositeOnly) return [];
+
+    const cropMode = options.cropMode || 'selected';
+    const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : 20;
+
+    // V9.6: Use smart retry for losses to avoid 400 on missing deleted_at
+    if (tabName === 'perdidas') {
+        return fetchAgroLosses(supabase, userId, { cropMode, limit });
+    }
+
+    const selectFields = buildFactureroSelectFields(tabName, config);
+    const selectClause = buildFactureroSelectClause(selectFields);
+
+    const buildQuery = (clause) => {
+        const orderField = config.dateField || 'fecha';
+        let q = supabase
+            .from(config.table)
+            .select(clause)
+            .eq('user_id', userId);
+        q = applyFactureroCropMode(q, cropMode);
+        q = q
+            .order(orderField, { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(limit);
+        if (config.supportsDeletedAt) {
+            q = q.is('deleted_at', null);
+        }
+        return q;
+    };
+
+    const { data, error } = await buildQuery(selectClause);
+
+    if (error) {
+        const optionalFields = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
+        const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
+        if (hasMissingOptional) {
+            FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = false;
+            const retryFields = buildFactureroSelectFields(tabName, config);
+            const retryClause = buildFactureroSelectClause(retryFields);
+            const retry = await buildQuery(retryClause);
+            if (retry.error) {
+                console.error(`[AGRO] V9.5.1: Error fetching ${tabName} (retry):`, retry.error.message);
+                return [];
+            }
+            return retry.data || [];
+        }
+
+        if (error.message && error.message.toLowerCase().includes('deleted_at')) {
+            // Legacy fallback logic for tables without soft-delete
+            config.supportsDeletedAt = false;
+            console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
+            const fallback = await buildQuery(selectClause);
+            if (fallback.error) {
+                console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
+                return [];
+            }
+            return fallback.data || [];
+        }
+
+        console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
+        return [];
+    }
+
+    if (FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] === null) {
+        FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = true;
+    }
+    return data || [];
+}
+
+function normalizeOtherHistoryRow(sourceTab, item, sourceConfig) {
+    const cfg = sourceConfig || {};
+    const conceptField = cfg.conceptField || 'concepto';
+    const amountField = cfg.amountField || 'monto';
+    const dateField = cfg.dateField || 'fecha';
+
+    return {
+        ...item,
+        id: `${sourceTab}:${item.id}`,
+        source_id: item.id,
+        source_tab: sourceTab,
+        source_label: AGROLOG_TAB_LABELS[sourceTab] || sourceTab,
+        concepto: item[conceptField] || item.concepto || item.concept || 'Sin concepto',
+        monto: Number(item[amountField] || item.monto || item.amount || 0),
+        fecha: item[dateField] || item.fecha || item.date || item.created_at || ''
+    };
+}
+
+async function fetchOtherGeneralRecords(userId) {
+    const groupedRows = await Promise.all(FACTURERO_OTHER_SOURCE_TABS.map(async (sourceTab) => {
+        const sourceConfig = FACTURERO_CONFIG[sourceTab];
+        const baseRows = await fetchFactureroRowsByTab(sourceTab, userId, {
+            cropMode: 'null',
+            limit: FACTURERO_OTHER_FETCH_LIMIT
+        });
+        const rows = sourceTab === 'pendientes'
+            ? baseRows.filter((item) => !isPendingTransferred(item))
+            : baseRows;
+        const enriched = await enrichFactureroItems(sourceTab, rows);
+        return enriched.map((item) => normalizeOtherHistoryRow(sourceTab, item, sourceConfig));
+    }));
+
+    return groupedRows
+        .flat()
+        .sort((a, b) => getRowTimestamp(b, 'fecha') - getRowTimestamp(a, 'fecha'))
+        .slice(0, FACTURERO_OTHER_RENDER_LIMIT);
+}
+
 async function refreshFactureroHistory(tabName, options = {}) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) {
@@ -1803,7 +1961,8 @@ async function refreshFactureroHistory(tabName, options = {}) {
         return;
     }
 
-    const { showActions = true } = options;
+    const isOthersTab = tabName === 'otros';
+    const { showActions = !isOthersTab } = options;
     const debugEnabled = typeof window !== 'undefined'
         && new URLSearchParams(window.location.search).get('debug') === '1';
 
@@ -1811,71 +1970,17 @@ async function refreshFactureroHistory(tabName, options = {}) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        let items = [];
-
-        // V9.6: Use smart retry for losses to avoid 400 on missing deleted_at
-        if (tabName === 'perdidas') {
-            items = await fetchAgroLosses(supabase, user.id);
-        } else {
-            // Standard fetch for other tabs
-            const selectFields = buildFactureroSelectFields(tabName, config);
-            const selectClause = buildFactureroSelectClause(selectFields);
-
-            const buildQuery = (clause) => {
-                const orderField = config.dateField || 'fecha';
-                let q = supabase
-                    .from(config.table)
-                    .select(clause)
-                    .eq('user_id', user.id);
-                if (selectedCropId) {
-                    q = q.eq('crop_id', selectedCropId);
-                }
-                q = q
-                    .order(orderField, { ascending: false })
-                    .order('created_at', { ascending: false })
-                    .limit(20);
-                if (config.supportsDeletedAt) {
-                    q = q.is('deleted_at', null);
-                }
-                return q;
-            };
-
-            const { data, error } = await buildQuery(selectClause);
-
-            if (error) {
-                const optionalFields = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
-                const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
-                if (hasMissingOptional) {
-                    FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = false;
-                    const retryFields = buildFactureroSelectFields(tabName, config);
-                    const retryClause = buildFactureroSelectClause(retryFields);
-                    const retry = await buildQuery(retryClause);
-                    if (retry.error) {
-                        console.error(`[AGRO] V9.5.1: Error fetching ${tabName} (retry):`, retry.error.message);
-                        return;
-                    }
-                    items = retry.data || [];
-                } else if (error.message && error.message.toLowerCase().includes('deleted_at')) {
-                    // Legacy fallback logic for other tables
-                    config.supportsDeletedAt = false;
-                    console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
-                    const fallback = await buildQuery(selectClause);
-                    if (fallback.error) {
-                        console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
-                        return;
-                    }
-                    items = fallback.data || [];
-                } else {
-                    console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, error.message);
-                    return;
-                }
-            } else {
-                items = data || [];
-                if (FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] === null) {
-                    FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = true;
-                }
+        if (isOthersTab) {
+            const otherItems = await fetchOtherGeneralRecords(user.id);
+            if (debugEnabled) {
+                console.log('[AGRO] otros row sample', otherItems?.[0]);
             }
+            renderHistoryList(tabName, config, otherItems, false);
+            injectHistorySearchInput(tabName, config);
+            return;
         }
+
+        const items = await fetchFactureroRowsByTab(tabName, user.id, { cropMode: 'selected', limit: 20 });
 
         if (debugEnabled) {
             console.log(`[AGRO] ${tabName} row sample`, items?.[0]);
@@ -1953,13 +2058,16 @@ function renderHistoryList(tabName, config, items, showActions) {
         const dayGroups = groupRowsByDay(filteredItems, dateField);
 
         let html = '';
+        const canExport = tabName !== 'otros';
         // V9.6.3: Export button (Wizard button moved to Form Header)
-        html += `<div style="text-align: right; margin-bottom: 0.5rem;"><button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button></div>`;
+        if (canExport) {
+            html += `<div style="text-align: right; margin-bottom: 0.5rem;"><button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button></div>`;
+        }
         for (const group of dayGroups) {
             // Day header
             html += `<div class="facturero-day-header">${group.label}</div>`;
             // Items for this day
-            html += group.rows.map(item => renderHistoryRow(tabName, item, config)).join('');
+            html += group.rows.map(item => renderHistoryRow(tabName, item, config, { showActions })).join('');
         }
         container.innerHTML = html;
     }
@@ -2042,12 +2150,17 @@ const AGROLOG_TAB_LABELS = {
     ingresos: 'Ingresos',
     pendientes: 'Pendientes',
     perdidas: 'Pérdidas',
-    transferencias: 'Donaciones'
+    transferencias: 'Donaciones',
+    otros: 'Otros'
 };
 
 async function exportAgroLog(tabName) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) return;
+    if (!config.table) {
+        alert('La exportación no está disponible para esta vista.');
+        return;
+    }
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -3750,7 +3863,7 @@ function setupFactureroCrudListeners() {
 
 // V9.5.1: Refresh all facturero histories on init
 async function initFactureroHistories() {
-    const tabs = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'];
+    const tabs = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros'];
     for (const tab of tabs) {
         await refreshFactureroHistory(tab);
     }
@@ -3763,6 +3876,7 @@ function refreshFactureroForSelectedCrop() {
     refreshFactureroHistory('pendientes');
     refreshFactureroHistory('perdidas');
     refreshFactureroHistory('transferencias');
+    refreshFactureroHistory('otros');
     if (typeof loadIncomes === 'function') {
         loadIncomes();
     }
@@ -5065,7 +5179,7 @@ async function loadIncomes() {
     }
 }
 const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
-const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'carrito']);
+const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'carrito']);
 
 function formatShortCurrency(value) {
     const number = Number(value);
