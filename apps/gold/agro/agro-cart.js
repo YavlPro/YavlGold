@@ -50,6 +50,31 @@ export function updateCartCrops(crops) {
     _cropsCache = Array.isArray(crops) ? crops : [];
 }
 
+function getFallbackCrops() {
+    if (typeof window !== 'undefined' && Array.isArray(window.__AGRO_CROPS_STATE?.crops) && window.__AGRO_CROPS_STATE.crops.length) {
+        return window.__AGRO_CROPS_STATE.crops;
+    }
+
+    try {
+        const local = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+        if (Array.isArray(local) && local.length) return local;
+    } catch (_err) {
+        // Ignore fallback parsing errors.
+    }
+
+    return [];
+}
+
+function getAvailableCrops() {
+    if (Array.isArray(_cropsCache) && _cropsCache.length) return _cropsCache;
+    const fallback = getFallbackCrops();
+    if (fallback.length) {
+        _cropsCache = fallback;
+        return fallback;
+    }
+    return [];
+}
+
 // ============================================================
 // DATA: CARTS
 // ============================================================
@@ -538,7 +563,7 @@ function renderAddItemForm() {
 }
 
 function renderNewCartModal() {
-    const cropOptions = (_cropsCache || []).map(c =>
+    const cropOptions = getAvailableCrops().map(c =>
         `<option value="${c.id}">${c.icon || '🌱'} ${escapeHtml(c.name || 'Cultivo')}${c.variety ? ' (' + escapeHtml(c.variety) + ')' : ''}</option>`
     ).join('');
 
@@ -554,7 +579,7 @@ function renderNewCartModal() {
             <div class="agro-cart-add-row">
                 <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Cultivo</label>
                 <select class="agro-cart-input" id="new-cart-crop">
-                    <option value="">General (sin asociar)</option>
+                    <option value="">Sin cultivo / General</option>
                     ${cropOptions}
                 </select>
             </div>

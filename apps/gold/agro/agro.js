@@ -36,6 +36,26 @@ const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comp
 
 let selectedCropId = null;
 let editExchangeRates = { USD: 1, COP: null, VES: null };
+let syncAgendaCropsFn = null;
+let syncCartCropsFn = null;
+
+function syncLazyCropConsumers(nextCrops) {
+    const safeCrops = Array.isArray(nextCrops) ? nextCrops : [];
+    try {
+        if (typeof syncAgendaCropsFn === 'function') {
+            syncAgendaCropsFn(safeCrops);
+        }
+    } catch (err) {
+        console.warn('[AGRO] Agenda crops sync error:', err?.message || err);
+    }
+    try {
+        if (typeof syncCartCropsFn === 'function') {
+            syncCartCropsFn(safeCrops);
+        }
+    } catch (err) {
+        console.warn('[AGRO] Cart crops sync error:', err?.message || err);
+    }
+}
 
 function normalizeCropId(value) {
     if (value === undefined || value === null) return null;
@@ -2800,9 +2820,28 @@ function buildTransferMetaModal(options = {}) {
         body.appendChild(line);
     });
 
+    const showConcept = options.showConcept === true;
     const showCategory = options.showCategory !== false;
     const showDate = options.showDate !== false;
     const today = getTodayLocalISO();
+
+    if (showConcept) {
+        const conceptGroup = document.createElement('div');
+        conceptGroup.className = 'input-group';
+        const conceptLabel = document.createElement('label');
+        conceptLabel.className = 'input-label';
+        conceptLabel.textContent = options.conceptLabel || 'Concepto';
+        conceptLabel.setAttribute('for', 'pending-transfer-concept');
+        const conceptInput = document.createElement('input');
+        conceptInput.type = 'text';
+        conceptInput.id = 'pending-transfer-concept';
+        conceptInput.className = 'styled-input';
+        conceptInput.style.paddingLeft = '1rem';
+        conceptInput.placeholder = options.conceptPlaceholder || 'Ej: Venta de batata - pagado';
+        conceptInput.value = options.defaultConcept || '';
+        conceptGroup.append(conceptLabel, conceptInput);
+        body.appendChild(conceptGroup);
+    }
 
     if (showCategory) {
         const categoryGroup = document.createElement('div');
@@ -2892,10 +2931,11 @@ function openTransferMetaModal(options = {}) {
         const confirmBtn = modal.querySelector('#pending-transfer-confirm');
         if (confirmBtn) {
             confirmBtn.addEventListener('click', () => {
+                const concept = modal.querySelector('#pending-transfer-concept')?.value?.trim() || '';
                 const category = modal.querySelector('#pending-transfer-category')?.value || null;
                 const date = modal.querySelector('#pending-transfer-date')?.value || null;
                 modal.remove();
-                resolve({ confirmed: true, category, date });
+                resolve({ confirmed: true, concept, category, date });
             });
         }
 
@@ -2935,6 +2975,9 @@ async function handlePendingTransfer(itemId) {
     });
     if (!destination) return; // User cancelled
 
+    const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
+    const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Ingreso' : 'Pérdida');
+
     // Then show meta modal for date/category
     const decision = await openTransferMetaModal({
         title: destination === 'income' ? 'Transferir a Ingresos' : 'Transferir a Pérdidas',
@@ -2944,6 +2987,9 @@ async function handlePendingTransfer(itemId) {
             { label: 'Monto', value: `$${Number(pending.monto || 0).toFixed(2)}` },
             { label: 'Fecha pendiente', value: pending.fecha || 'N/A' }
         ],
+        showConcept: true,
+        conceptLabel: destination === 'income' ? 'Concepto del ingreso' : 'Concepto de la pérdida',
+        defaultConcept: defaultTransferConcept,
         showCategory: destination === 'income',
         showDate: true,
         defaultCategory: 'ventas',
@@ -2951,6 +2997,11 @@ async function handlePendingTransfer(itemId) {
         defaultDate: getTodayLocalISO()
     });
     if (!decision?.confirmed) return;
+    const decisionConcept = String(decision.concept || '').trim();
+    if (!decisionConcept) {
+        notifyFacturero('⚠️ El concepto es obligatorio para transferir.', 'warning');
+        return;
+    }
     const decisionDate = decision.date || getTodayLocalISO();
     const dateCheck = assertDateNotFuture(decisionDate, 'Fecha');
     if (!dateCheck.valid) {
@@ -2965,8 +3016,8 @@ async function handlePendingTransfer(itemId) {
         if (destination === 'income') {
             // Transfer to Income
             const incomeId = crypto?.randomUUID ? crypto.randomUUID() : `inc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-            const concept = pending.concepto || 'Ingreso';
-            const buyer = pending.cliente || '';
+            const concept = decisionConcept;
+            const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
 
             const incomePayload = {
@@ -3033,8 +3084,8 @@ async function handlePendingTransfer(itemId) {
         } else if (destination === 'losses') {
             // Transfer to Losses
             const lossId = crypto?.randomUUID ? crypto.randomUUID() : `loss_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-            const concept = pending.concepto || 'Pérdida';
-            const buyer = pending.cliente || '';
+            const concept = decisionConcept;
+            const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? `${concept} — ${buyer}` : concept;
 
             const lossPayload = {
@@ -4213,6 +4264,7 @@ export async function loadCrops() {
 
         if (crops.length === 0) {
             cropsCache = [];
+            syncLazyCropConsumers(cropsCache);
             logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             renderEmptyCropsState(cropsGrid);
             logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
@@ -4228,6 +4280,7 @@ export async function loadCrops() {
 
         // Guardar en cache para edición
         cropsCache = crops;
+        syncLazyCropConsumers(cropsCache);
 
         // Renderizar cultivos
         logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
@@ -5141,7 +5194,9 @@ function switchTab(tabName, options = {}) {
 let _agendaModuleLoaded = false;
 window.openAgroAgenda = async function () {
     try {
-        const { initAgroAgenda } = await import('./agro-agenda.js');
+        const { initAgroAgenda, updateAgendaCrops } = await import('./agro-agenda.js');
+        syncAgendaCropsFn = typeof updateAgendaCrops === 'function' ? updateAgendaCrops : null;
+        syncLazyCropConsumers(cropsCache);
         await initAgroAgenda({ supabase, cropsCache });
         _agendaModuleLoaded = true;
     } catch (err) {
@@ -5155,7 +5210,9 @@ async function initCartTabLazy() {
     if (_cartModuleLoaded) return;
     _cartModuleLoaded = true;
     try {
-        const { initAgroCart, injectCartStyles } = await import('./agro-cart.js');
+        const { initAgroCart, injectCartStyles, updateCartCrops } = await import('./agro-cart.js');
+        syncCartCropsFn = typeof updateCartCrops === 'function' ? updateCartCrops : null;
+        syncLazyCropConsumers(cropsCache);
         injectCartStyles();
         await initAgroCart({
             supabase,
@@ -8285,8 +8342,3 @@ window.deleteCrop = deleteCrop;
 
     console.log('[AgroRepo] 📦 Ultimate Engine v2.0 loaded (lazy init on accordion open)');
 })();
-
-
-
-
-

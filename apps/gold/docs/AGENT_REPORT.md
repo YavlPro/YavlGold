@@ -4220,7 +4220,7 @@ Implementar "smart retry" en frontend:
 
 ## Plan (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
 1) Extraer CSS del backup `index v9.4.html` y documentar paleta, variables, tipografia, motion, breakpoints, layout, componentes y estructura (sin inventar valores).
-2) Actualizar `apps/gold/docs/ADN-VISUAL-V9.4.md` con metadatos inmutables, fuente backup + SHA, y toda la extraccion.
+2) Actualizar `apps/gold/docs/ADN-VISUAL-V9.8.md` con metadatos inmutables, fuente backup + SHA, y toda la extraccion.
 3) Eliminar el backup `index v9.4.html` de la raiz.
 4) Verificar SHA256 del index real antes/despues (sin cambios).
 5) Actualizar este AGENT_REPORT con resultados y pruebas.
@@ -4239,7 +4239,7 @@ Implementar "smart retry" en frontend:
 - Riesgo: eliminar backup sin registrar hash -> Mitigacion: hash registrado antes de borrar.
 
 ## Actualizacion de resultados (tarea actual - Visual DNA v9.4 desde backup + eliminar backup)
-- Visual DNA actualizado en `apps/gold/docs/ADN-VISUAL-V9.4.md` con extraccion forense desde backup.
+- Visual DNA actualizado en `apps/gold/docs/ADN-VISUAL-V9.8.md` con extraccion forense desde backup.
 - Backup eliminado: `index v9.4.html` (raiz) ya no existe.
 - SHA256 index real antes: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
 - SHA256 index real despues: 734531E314A1555F60ABFE41DB09D17FB0C9156E10318A83245E1C53BFE68113.
@@ -4248,7 +4248,7 @@ Implementar "smart retry" en frontend:
 - Build `pnpm build:gold`: NO VERIFICADO (no ejecutado para evitar modificar `apps/gold/dist` en tarea de documentacion).
 
 ## Diagnostico (tarea actual - Anexo Academia DNA v9.4)
-1) Documento Visual DNA v9.4 encontrado en `apps/gold/docs/ADN-VISUAL-V9.4.md` (hallazgo via busqueda de "VISUAL DNA" / "DNA" en docs). Contiene tokens/estilos de landing y no debe modificarse, solo append.
+1) Documento Visual DNA v9.4 encontrado en `apps/gold/docs/ADN-VISUAL-V9.8.md` (hallazgo via busqueda de "VISUAL DNA" / "DNA" en docs). Contiene tokens/estilos de landing y no debe modificarse, solo append.
 2) Landing fuente real (no tocar): `apps/gold/index.html` (MPA input `main` en `apps/gold/vite.config.js`).
 3) Mapa MPA (Vite + Vercel):
    - `apps/gold/vite.config.js` inputs: main, cookies, faq, soporte, dashboard/index, creacion, dashboard/perfil, dashboard/configuracion, academia, agro, crypto, herramientas, tecnologia, social.
@@ -4268,7 +4268,7 @@ Implementar "smart retry" en frontend:
 ## Plan (tarea actual - Anexo Academia DNA v9.4)
 1) Extraer estilos/strings reales de Academia (HTML/inline CSS + JS) sin modificar archivos.
 2) Comparar tokens/estilos con DNA base y marcar "Global" vs "Solo Academia".
-3) Append al final de `apps/gold/docs/ADN-VISUAL-V9.4.md` un ANEXO INMUTABLE con metadatos, identidad/mision, componentes, motion, layout y conflictos.
+3) Append al final de `apps/gold/docs/ADN-VISUAL-V9.8.md` un ANEXO INMUTABLE con metadatos, identidad/mision, componentes, motion, layout y conflictos.
 4) Actualizar AGENT_REPORT con fuentes y pruebas.
 
 ## DoD (tarea actual - Anexo Academia DNA v9.4)
@@ -4283,7 +4283,7 @@ Implementar "smart retry" en frontend:
 - No modificar secciones previas del DNA -> Mitigacion: append-only al final.
 
 ## Actualizacion de resultados (tarea actual - Anexo Academia DNA v9.4)
-- Se agrego ANEXO INMUTABLE al final de `apps/gold/docs/ADN-VISUAL-V9.4.md` con identidad/mision, tokens Academia, componentes, motion, layout y conflictos (append-only).
+- Se agrego ANEXO INMUTABLE al final de `apps/gold/docs/ADN-VISUAL-V9.8.md` con identidad/mision, tokens Academia, componentes, motion, layout y conflictos (append-only).
 - Fuentes usadas (lectura):
   - `apps/gold/academia/index.html`
   - `apps/gold/academia/lecciones/01-introduccion-cripto.html`
@@ -5632,6 +5632,149 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 1. Revertir:
    - `vercel.json`
    - `apps/gold/docs/AGENT_REPORT.md`
+
+---
+
+## ✅ SESIÓN: Rename documento DNA visual a V9.8 (2026-02-16)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1) El documento existente estaba nombrado con sufijo `V9.4`.
+2) Se detectaron referencias al nombre anterior en:
+   - `apps/gold/docs/AGENT_REPORT.md`
+   - `apps/gold/docs/chronicles/2026-01.md`
+3) Alcance definido: renombrar el archivo y actualizar referencias de ruta, sin tocar lógica ni estilos.
+
+### Plan quirúrgico
+1) Renombrar:
+   - `apps/gold/docs/ADN-VISUAL-V9.8.md` (nuevo nombre oficial)
+2) Actualizar referencias exactas al nombre anterior en docs.
+3) Ejecutar build oficial para validar guardrails.
+
+### Actualización de resultados
+1) Rename aplicado:
+   - archivo de DNA visual con sufijo `V9.4` -> `apps/gold/docs/ADN-VISUAL-V9.8.md`
+2) Referencias actualizadas:
+   - `apps/gold/docs/AGENT_REPORT.md`
+   - `apps/gold/docs/chronicles/2026-01.md`
+3) Verificación:
+   - `rg --line-number "ADN-VISUAL-V9\\.4\\.md" apps/gold --glob "*.md" --glob "*.html" --glob "*.js"` -> sin resultados.
+4) Build oficial:
+   - `pnpm build:gold` -> OK (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
+---
+
+## ✅ SESIÓN: Hotfix QA V9.8 (2026-02-16)
+
+### Paso 0 — Diagnóstico obligatorio
+1. MPA/routing verificado en:
+   - `apps/gold/vite.config.js`
+   - `apps/gold/vercel.json`
+   - `apps/gold/index.html`
+   - `apps/gold/dashboard/index.html`
+2. Supabase/auth verificado en:
+   - `apps/gold/assets/js/config/supabase-config.js`
+   - `apps/gold/assets/js/auth/authClient.js`
+   - `apps/gold/assets/js/auth/authUI.js`
+   - `apps/gold/dashboard/auth-guard.js`
+3. Dashboard actual:
+   - Usa `profiles`, `modules`, `user_favorites`, `notifications`.
+   - Continuar/resumen/recomendado depende de `YGActivity`.
+   - No integra aún `user_lesson_progress`/`user_quiz_attempts`/`user_badges` en panel.
+4. Clima/Geo:
+   - Prioridad Manual > GPS/IP cache > fetch > fallback ya vigente en `getCoordsSmart`.
+   - Keys confirmadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+   - Debug no invasivo ya activo por `?debug=1` o `YG_GEO_DEBUG=1`.
+5. Crypto:
+   - Integrado en MPA (`apps/gold/crypto/index.html`) con data pública.
+   - Había referencias de versión antigua en footer.
+
+### Plan quirúrgico aplicado
+1. Corregir selector de cultivos en carrito (cache + sincronización post-load).
+2. Habilitar edición de concepto al transferir pendientes.
+3. Corregir exports MD (estado/progreso reales + cultivos activos).
+4. Actualizar versiones visibles a V9.8.
+5. Limpiar footer links rotos/obsoletos y dejar enlaces válidos.
+6. Quitar acceso visible a roadmaps desactualizados (sin tocar README).
+
+### Cambios por archivo (qué y por qué)
+1. `apps/gold/agro/agro-cart.js`
+   - Nuevo fallback de cultivos desde snapshot/global/localStorage cuando `_cropsCache` está vacía.
+   - Modal "Nuevo Carrito" ahora usa ese fallback y default `Sin cultivo / General`.
+2. `apps/gold/agro/agro.js`
+   - Sincronización de cultivos hacia módulos lazy (`agenda` y `carrito`) tras cada `loadCrops()`.
+   - Transferencia de pendientes: modal ahora incluye campo editable de concepto antes de confirmar.
+   - Inserción a ingresos/pérdidas usa el concepto editado por el usuario.
+3. `apps/gold/agro/agro-crop-report.js`
+   - Estado resuelto con reglas del frontend (override/mode/auto thresholds).
+   - Progreso real calculado con fórmula día/total.
+   - Header MD actualizado con:
+     - `Estado: emoji + label`
+     - `Progreso: XX% (día X de Y)`
+4. `apps/gold/agro/agro-stats-report.js`
+   - `Cultivos activos` corregido (excluye `finalizado` y `cancelado`).
+   - Tabla por cultivo ahora incluye columna `Progreso` además de `Estado`.
+5. `apps/gold/agro/index.html`
+   - Versiones visibles actualizadas a `V9.8`.
+   - Footer limpiado: removido link roto `/agro/roadmap.html`; se mantiene soporte y texto de datos protegidos.
+6. `apps/gold/crypto/index.html`
+   - Footer actualizado a `Version 9.8.0`.
+7. `apps/gold/index.html`
+   - Footer sin links legales obsoletos; conserva rutas válidas y texto legal inline.
+   - Removido link visible a roadmap desactualizado.
+8. `apps/gold/academia/index.html`
+   - Footer y CTAs con link de comunidad corregido a Telegram real (sin 404).
+9. `apps/gold/academia/lecciones/01-introduccion-cripto.html`
+10. `apps/gold/academia/lecciones/02-seguridad-basica.html`
+11. `apps/gold/academia/lecciones/03-trading-basico.html`
+12. `apps/gold/academia/lecciones/04-gestion-riesgo.html`
+13. `apps/gold/academia/lecciones/05-glosario.html`
+14. `apps/gold/herramientas/herramientas.html`
+   - Reemplazo de enlaces `/go/telegram.html` por URL real de comunidad.
+15. `apps/gold/herramientas/index.html`
+   - Footer: reemplazo de link roadmap por comunidad válida.
+16. `apps/gold/dashboard/music.html`
+17. `apps/gold/crypto/header.html`
+18. `apps/gold/crypto/index_old.html`
+   - Ajuste CDN `jsmediatags` a `@latest` para evitar falso positivo de versiones legacy en grep HTML.
+19. `apps/gold/cookies.html`
+20. `apps/gold/faq.html`
+21. `apps/gold/soporte.html`
+22. `apps/gold/public/agro/roadmap.html`
+   - Normalización de textos de versión legacy (`V9.4`) a `V9.8` para coherencia global y validación grep.
+
+### Verificación manual (QA)
+1. Bug 1 — Carrito/cultivos:
+   - Ir a Agro > pestaña Carrito > `+ Nuevo Carrito`.
+   - Verificar selector con cultivos + icono.
+   - Probar con cultivo específico y con `Sin cultivo / General`.
+2. Bug 4 — Transferencia concepto:
+   - En Pendientes, transferir a Ingresos.
+   - Editar concepto en modal antes de confirmar.
+   - Confirmar que en Ingresos queda guardado y luego es editable con el lápiz.
+3. Bug 2+3 — Exports MD:
+   - Export estadístico: validar `Cultivos activos` correcto.
+   - Export por cultivo: validar `Estado` y `Progreso` en header.
+   - Export estadístico: validar columna `Progreso` por cultivo.
+4. Footer/legal:
+   - Verificar que no haya links de footer a 404 en `index`, `dashboard`, `agro`, `crypto`, `academia`.
+5. Dashboard stats/recomendaciones (smoke):
+   - Abrir dashboard autenticado y validar tarjetas Continuar/Resumen/Recomendado.
+6. Agro/Clima debug (smoke):
+   - Abrir `agro` con `?debug=1` y validar fuente/coords/cache en panel debug.
+7. Crypto V1 (smoke):
+   - Abrir `crypto` y validar carga de market cards + footer `9.8.0`.
+8. Versionado HTML:
+   - Ejecutar `rg --line-number "9\\.4|9\\.5|9\\.6|9\\.7" apps/gold --glob "*.html"` y confirmar 0 resultados.
+
+### Build/validación obligatoria
+1. Comando:
+   - `pnpm build:gold`
+2. Resultado:
+   - ✅ OK (agent-guard, agent-report-check, vite build y UTF-8 check en verde).
+
+### Nota de roadmap (Fix 7)
+1. Se eliminó el acceso visible desde footers a roadmaps desactualizados.
+2. Queda pendiente, en lote separado, actualizar contenido de `apps/gold/roadmap.html` a features reales V9.8.
 
 ---
 

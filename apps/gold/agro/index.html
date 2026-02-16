@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YavlGold V9.5 - Módulo Agro</title>
+    <title>YavlGold V9.8 - Módulo Agro</title>
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="apple-touch-icon" href="../assets/images/logo.webp"> <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1109,7 +1109,7 @@
         <header class="header animate-in" style="position: relative; z-index: 9999;">
             <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;" title="Volver al Inicio">
                 <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
-                    class="logo-text">YavlGold</span> <span class="version-badge">V9.5</span>
+                    class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span>
             </a>
             <nav class="header-nav" style="display: flex; gap: 0.5rem;">
                 <a href="/" class="nav-btn"
@@ -1243,7 +1243,7 @@
             </div> <!-- End of first row (Weather/Market/Moon) -->
 
 
-            <!-- V9.6.2: Proyección Semanal Collapsible -->
+        <!-- V9.8: Proyección Semanal Collapsible -->
             <details class="yg-accordion" id="yg-acc-weekly" open>
                 <summary class="yg-accordion-summary">
                     <span class="yg-accordion-icon"><i class="fa-solid fa-calendar-week"></i></span>
@@ -1276,7 +1276,7 @@
             <div class="crops-grid"> <!-- Cultivos cargados dinámicamente desde Supabase --> </div>
         </section>
 
-        <!-- V9.6.2: ROI Calculator Collapsible -->
+        <!-- V9.8: ROI Calculator Collapsible -->
         <section class="calculator-section">
             <details class="yg-accordion" id="yg-acc-roi" open>
                 <summary class="yg-accordion-summary">
@@ -1332,18 +1332,19 @@
             </details>
         </section> <!-- Footer -->
         <footer class="footer animate-in delay-6">
-            <p class="footer-text"> <span class="highlight">YavlGold</span> V9.5 • Módulo Agro • Desarrollado con 🌾
+            <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • Módulo Agro • Desarrollado con 🌾
                 para agricultores </p>
-            <div class="footer-links"> <a href="/cookies.html" class="footer-link">Legal</a> <a
-                    href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a> <a
-                    href="/agro/roadmap.html" class="footer-link">Roadmap</a> </div>
-            <div class="footer-build" id="agro-build-marker" data-build-version="V9.6.2" data-build-date="2026-01-25">
-                Agro Build: V9.6.2 • dev • 2026-01-25
+            <div class="footer-links">
+                <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
+                <span class="footer-link">Datos protegidos</span>
+            </div>
+            <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-build-date="2026-02-16">
+                Agro Build: V9.8 • dev • 2026-02-16
             </div>
         </footer>
     </div>
 
-    <!-- Modal: Agenda Lunar 2026 (Split View) - DNA Visual V9.4 -->
+    <!-- Modal: Agenda Lunar 2026 (Split View) - DNA Visual V9.8 -->
     <div id="modal-lunar" class="modal-overlay hidden"
         style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
         onclick="if(event.target === this) window.closeModal('modal-lunar')">
@@ -1397,7 +1398,7 @@
         </div>
     </div>
 
-    <!-- Modal: Centro Financiero (Market Hub v2) - DNA Visual V9.4 -->
+    <!-- Modal: Centro Financiero (Market Hub v2) - DNA Visual V9.8 -->
     <div id="modal-market" class="modal-overlay hidden"
         style="position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(12px); z-index: 1000; align-items: center; justify-content: center; padding: 16px;"
         onclick="if(event.target === this) window.closeModal('modal-market')">
@@ -1452,7 +1453,7 @@
         </div>
     </div>
 
-    <!-- Modal: Nuevo Cultivo - DNA Visual V9.4 -->
+    <!-- Modal: Nuevo Cultivo - DNA Visual V9.8 -->
     <div id="modal-new-crop" class="modal-overlay">
         <div class="modal-container"
             style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 60px rgba(200, 167, 82, 0.1);">
@@ -2330,7 +2331,7 @@
         bootstrapAgro();
     </script>
 
-    <!-- V9.5.3: Centro Estadistico -->
+    <!-- V9.8: Centro Estadistico -->
     <div id="modal-stats-center" class="modal" style="display: none;" aria-hidden="true">
         <div class="modal-content stats-center" role="dialog" aria-modal="true" aria-labelledby="stats-center-title"
             tabindex="-1">
@@ -2674,7 +2675,7 @@
         </div> <!-- /.modal-content.stats-center -->
     </div> <!-- /#modal-stats-center -->
 
-    <!-- V9.5.1: Modal Edit Facturero -->
+    <!-- V9.8: Modal Edit Facturero -->
     <div id="modal-edit-facturero" class="modal" style="display: none;">
         <div class="modal-content">
             <h3 id="edit-modal-title">Editar Registro</h3>
@@ -2737,7 +2738,7 @@
         </div>
     </div>
 
-    <!-- V9.5.7: Asistente Agro (IA real) -->
+    <!-- V9.8: Asistente Agro (IA real) -->
     <div id="modal-agro-assistant" class="modal" aria-hidden="true">
         <div class="assistant-backdrop" data-close="true"></div>
         <div class="modal-content agro-assistant assistant-sheet" role="dialog" aria-modal="true"

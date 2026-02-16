@@ -106,6 +106,142 @@ function sanitizeFilename(name) {
     return String(name || 'Cultivo').replace(/[^\w\sáéíóúñÁÉÍÓÚÑ-]/gi, '').trim().replace(/\s+/g, '-');
 }
 
+const CROP_STATUS_UI = {
+    sembrado: { emoji: '🌱', text: 'Sembrado' },
+    creciendo: { emoji: '🌿', text: 'Creciendo' },
+    produccion: { emoji: '🌾', text: 'Producción' },
+    finalizado: { emoji: '✅', text: 'Finalizado' },
+    cancelado: { emoji: '❌', text: 'Cancelado' }
+};
+
+const CROP_STATUS_LEGACY_MAP = {
+    growing: 'creciendo',
+    ready: 'produccion',
+    attention: 'sembrado',
+    harvested: 'finalizado'
+};
+
+const CROP_STATUS_THRESHOLDS = {
+    sembrado: 0,
+    creciendo: 25,
+    produccion: 70,
+    finalizado: 100
+};
+
+function clampNumber(value, min, max) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return min;
+    return Math.min(Math.max(n, min), max);
+}
+
+function getTodayKey() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function toUtcDate(dateStr) {
+    const parts = String(dateStr || '').split('-').map((p) => Number(p));
+    if (parts.length !== 3 || parts.some((p) => !Number.isFinite(p))) return null;
+    const [year, month, day] = parts;
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
+function diffDays(dateA, dateB) {
+    const a = toUtcDate(dateA);
+    const b = toUtcDate(dateB);
+    if (!a || !b) return null;
+    return Math.round((a.getTime() - b.getTime()) / 86400000);
+}
+
+function addDaysToDateKey(dateStr, days) {
+    const base = toUtcDate(dateStr);
+    if (!base || !Number.isFinite(days)) return null;
+    base.setUTCDate(base.getUTCDate() + Math.round(days));
+    const yyyy = base.getUTCFullYear();
+    const mm = String(base.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(base.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
+function normalizeCropStatus(status) {
+    const value = String(status || '').toLowerCase().trim();
+    if (!value) return 'creciendo';
+    if (CROP_STATUS_UI[value]) return value;
+    if (CROP_STATUS_LEGACY_MAP[value]) return CROP_STATUS_LEGACY_MAP[value];
+    return value;
+}
+
+function computeCropProgress(crop) {
+    const startDate = crop?.start_date;
+    if (!startDate) return { ok: false, percent: null, dayIndex: 0, totalDays: 0 };
+
+    const cycleDays = Number(crop?.cycle_days ?? crop?.template_duration_days);
+    let totalDays = Number.isFinite(cycleDays) && cycleDays > 0 ? Math.round(cycleDays) : null;
+    let endDate = totalDays ? addDaysToDateKey(startDate, totalDays) : null;
+
+    if (!totalDays && crop?.expected_harvest_date) {
+        const byDates = diffDays(crop.expected_harvest_date, startDate);
+        if (byDates !== null) {
+            totalDays = Math.max(1, byDates);
+            endDate = crop.expected_harvest_date;
+        }
+    }
+
+    if (!totalDays || !endDate) {
+        return { ok: false, percent: null, dayIndex: 0, totalDays: 0 };
+    }
+
+    const todayKey = getTodayKey();
+    const dayDiff = diffDays(todayKey, startDate);
+    const dayIndex = clampNumber((dayDiff === null ? 0 : dayDiff) + 1, 0, totalDays);
+    const percent = clampNumber((dayIndex / totalDays) * 100, 0, 100);
+
+    return {
+        ok: true,
+        percent,
+        dayIndex,
+        totalDays
+    };
+}
+
+function computeAutoCropStatus(crop, progress) {
+    if (crop?.actual_harvest_date) return 'finalizado';
+    if (!progress?.ok) {
+        const fallback = normalizeCropStatus(crop?.status);
+        return fallback || 'creciendo';
+    }
+    const percent = Number.isFinite(progress.percent) ? progress.percent : 0;
+    if (percent >= CROP_STATUS_THRESHOLDS.finalizado) return 'finalizado';
+    if (percent >= CROP_STATUS_THRESHOLDS.produccion) return 'produccion';
+    if (percent >= CROP_STATUS_THRESHOLDS.creciendo) return 'creciendo';
+    return 'sembrado';
+}
+
+function resolveCropStatus(crop, progress) {
+    const override = String(crop?.status_override || '').trim();
+    if (override) return normalizeCropStatus(override);
+    const mode = String(crop?.status_mode || '').toLowerCase().trim();
+    if (mode === 'auto') return computeAutoCropStatus(crop, progress);
+    if (crop?.status) return normalizeCropStatus(crop.status);
+    return computeAutoCropStatus(crop, progress);
+}
+
+function formatCropStatusLine(status) {
+    const normalized = normalizeCropStatus(status);
+    const meta = CROP_STATUS_UI[normalized];
+    if (!meta) return status || 'N/A';
+    return `${meta.emoji} ${meta.text}`;
+}
+
+function formatCropProgressLine(progress) {
+    if (!progress?.ok) return 'N/A';
+    const pctRounded = Math.round(Number(progress.percent) || 0);
+    return `${pctRounded}% (día ${progress.dayIndex} de ${progress.totalDays})`;
+}
+
 // ============================================================
 // QUERY HELPERS
 // ============================================================
@@ -241,7 +377,7 @@ export async function exportCropReport(cropId) {
         // Fetch crop info
         const { data: crop, error: cropErr } = await supabase
             .from('agro_crops')
-            .select('id,name,variety,status,area_size,start_date,expected_harvest_date,investment,progress')
+            .select('id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days')
             .eq('id', cropId)
             .eq('user_id', user.id)
             .single();
@@ -274,16 +410,19 @@ export async function exportCropReport(cropId) {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-        const progress = Number(crop.progress) || 0;
+        const progress = computeCropProgress(crop);
+        const resolvedStatus = resolveCropStatus(crop, progress);
+        const statusLine = formatCropStatusLine(resolvedStatus);
+        const progressLine = formatCropProgressLine(progress);
 
         // Build Markdown
         let md = '';
         md += `# 🌾 Informe de Cultivo: ${crop.name || 'Sin nombre'}\n`;
-        md += `> **Estado:** ${crop.status || 'N/A'}\n`;
+        md += `> **Estado:** ${statusLine}\n`;
         md += `> **Área:** ${crop.area_size || 0} ha\n`;
         md += `> **Siembra:** ${fmtDate(crop.start_date)}\n`;
         md += `> **Cosecha esperada:** ${fmtDate(crop.expected_harvest_date)}\n`;
-        md += `> **Progreso:** ${progress}%\n`;
+        md += `> **Progreso:** ${progressLine}\n`;
         md += `> **Fecha del reporte:** ${dateStr} ${timeStr}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
         md += `---\n\n`;
