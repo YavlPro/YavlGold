@@ -738,6 +738,9 @@ const FACTURERO_OPTIONAL_FIELDS_SUPPORT = {
 };
 
 const PENDING_TRANSFER_FILTER_KEY = 'YG_PENDING_SHOW_TRANSFERRED_V1';
+const OTHER_TRANSFER_FILTER_KEY = 'YG_OTHER_SHOW_TRANSFERRED_V1';
+const OTHER_TRANSFER_HISTORY_KEY = 'YG_OTHER_TRANSFER_HISTORY_V1';
+const OTHER_TRANSFER_HISTORY_LIMIT = 200;
 
 const FACTURERO_EVIDENCE_FIELDS = {
     gastos: ['evidence_url'],
@@ -1020,6 +1023,93 @@ function writePendingTransferFilter(value) {
         localStorage.setItem(PENDING_TRANSFER_FILTER_KEY, value ? '1' : '0');
     } catch (e) {
         // Ignore storage errors
+    }
+}
+
+function readOtherTransferFilter() {
+    try {
+        return localStorage.getItem(OTHER_TRANSFER_FILTER_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function writeOtherTransferFilter(value) {
+    try {
+        localStorage.setItem(OTHER_TRANSFER_FILTER_KEY, value ? '1' : '0');
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function readOtherTransferHistory() {
+    try {
+        const raw = localStorage.getItem(OTHER_TRANSFER_HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((entry) => entry && entry.source_tab && entry.source_id);
+    } catch (e) {
+        return [];
+    }
+}
+
+function writeOtherTransferHistory(entries) {
+    try {
+        const safe = Array.isArray(entries) ? entries.slice(0, OTHER_TRANSFER_HISTORY_LIMIT) : [];
+        localStorage.setItem(OTHER_TRANSFER_HISTORY_KEY, JSON.stringify(safe));
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function getOtherTransferKey(sourceTab, sourceId) {
+    return `${String(sourceTab || '').trim()}:${String(sourceId || '').trim()}`;
+}
+
+function upsertOtherTransferHistoryEntry(entry) {
+    if (!entry?.source_tab || !entry?.source_id) return;
+    const rows = readOtherTransferHistory();
+    const key = getOtherTransferKey(entry.source_tab, entry.source_id);
+    const next = [entry];
+    for (const row of rows) {
+        if (getOtherTransferKey(row.source_tab, row.source_id) === key) continue;
+        next.push(row);
+        if (next.length >= OTHER_TRANSFER_HISTORY_LIMIT) break;
+    }
+    writeOtherTransferHistory(next);
+}
+
+function getOtherTransferHistoryMap() {
+    const map = new Map();
+    const rows = readOtherTransferHistory();
+    rows.forEach((entry) => {
+        const key = getOtherTransferKey(entry.source_tab, entry.source_id);
+        if (!map.has(key)) {
+            map.set(key, entry);
+        }
+    });
+    return map;
+}
+
+function isOtherTransferredRecord(item) {
+    if (!item) return false;
+    if (item.other_transfer_state === 'transferred') return true;
+    if (item.source_tab === 'pendientes') return isPendingTransferred(item);
+    return false;
+}
+
+function formatOtherTransferMeta(item) {
+    if (!isOtherTransferredRecord(item)) return '';
+    const target = item?.other_transfer_target_name || item?.other_transfer_target_id || 'Cultivo';
+    const movedAtRaw = item?.other_transfer_moved_at || '';
+    if (!movedAtRaw) return `Transferido → ${target}`;
+    try {
+        const date = new Date(movedAtRaw);
+        if (Number.isNaN(date.getTime())) return `Transferido → ${target}`;
+        const stamp = date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        return `Transferido → ${target} (${stamp})`;
+    } catch (e) {
+        return `Transferido → ${target}`;
     }
 }
 
@@ -1538,6 +1628,49 @@ function applyPendingTransferFilter(items) {
     return items.filter((item) => !isPendingTransferred(item));
 }
 
+function ensureOtherTransferFilterUI(parent, items) {
+    if (!parent) return;
+    let wrapper = parent.querySelector('#other-transfer-filter');
+    if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.id = 'other-transfer-filter';
+        wrapper.className = 'pending-transfer-filter';
+        const label = document.createElement('label');
+        label.className = 'pending-transfer-label';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'other-transfer-toggle';
+        checkbox.checked = readOtherTransferFilter();
+        const text = document.createElement('span');
+        text.className = 'pending-transfer-text';
+        label.append(checkbox, text);
+        wrapper.appendChild(label);
+        parent.prepend(wrapper);
+
+        checkbox.addEventListener('change', () => {
+            writeOtherTransferFilter(checkbox.checked);
+            refreshFactureroHistory('otros');
+        });
+    }
+
+    const transferredCount = Array.isArray(items)
+        ? items.filter((item) => isOtherTransferredRecord(item)).length
+        : 0;
+    const text = wrapper.querySelector('.pending-transfer-text');
+    if (text) {
+        text.textContent = transferredCount > 0
+            ? `Ver transferidos (${transferredCount})`
+            : 'Ver transferidos';
+    }
+}
+
+function applyOtherTransferFilter(items) {
+    if (!Array.isArray(items)) return [];
+    const showTransferred = readOtherTransferFilter();
+    if (showTransferred) return items;
+    return items.filter((item) => !isOtherTransferredRecord(item));
+}
+
 function _fmtItemCurrency(item, config, amount) {
     const currency = item.currency || 'USD';
     if (currency === 'USD') return `$${amount.toFixed(2)}`;
@@ -1547,6 +1680,7 @@ function _fmtItemCurrency(item, config, amount) {
 
 function renderHistoryRow(tabName, item, config, options = {}) {
     const showActions = options.showActions !== false;
+    const isOtrosView = tabName === 'otros';
     const sourceTab = tabName === 'otros' ? String(item?.source_tab || '').trim() : '';
     const effectiveTabName = (tabName === 'otros' && FACTURERO_CONFIG[sourceTab]) ? sourceTab : tabName;
     const rowConfig = FACTURERO_CONFIG[effectiveTabName] || config;
@@ -1595,6 +1729,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     } else if (pendingReverted) {
         transferHtml = `<div class="facturero-meta facturero-transfer-meta facturero-reverted-meta">${formatTransferMeta(item)}</div>`;
     }
+    const otherTransferMeta = isOtrosView && item?.other_transfer_state === 'transferred'
+        ? `<div class="facturero-meta facturero-transfer-meta">${formatOtherTransferMeta(item)}</div>`
+        : '';
 
     // V9.7: Origin badge for income/losses from pending
     let originBadgeHtml = '';
@@ -1603,7 +1740,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     }
 
     // Transfer button for pending items (not already transferred or reverted-back)
-    const showTransferBtn = showActions && isPending && !transferred;
+    const showTransferBtn = showActions && !isOtrosView && isPending && !transferred;
     const transferDisabled = FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
     const transferTitle = transferDisabled
         ? 'Transferencia no disponible (faltan columnas)'
@@ -1616,7 +1753,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             `
         : '';
 
-    const incomeTransferBtn = showActions && isIncome
+    const incomeTransferBtn = showActions && !isOtrosView && isIncome
         ? `
                 <button type="button" class="btn-transfer-income" data-tab="${effectiveTabName}" data-id="${item.id}" title="Transferir ingreso" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-arrow-right-long"></i>
@@ -1624,7 +1761,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             `
         : '';
 
-    const lossTransferBtn = showActions && isLoss
+    const lossTransferBtn = showActions && !isOtrosView && isLoss
         ? `
                 <button type="button" class="btn-transfer-loss" data-tab="${effectiveTabName}" data-id="${item.id}" title="Transferir pérdida" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-arrow-right-long"></i>
@@ -1634,7 +1771,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     // V9.7: Revert button for income/losses from pending (only if not already reverted)
     let revertBtn = '';
-    if (showActions && fromPending && !incomeOrLossReverted) {
+    if (showActions && !isOtrosView && fromPending && !incomeOrLossReverted) {
         const revertClass = isIncome ? 'btn-revert-income' : 'btn-revert-loss';
         revertBtn = `
             <button type="button" class="${revertClass}" data-tab="${effectiveTabName}" data-id="${item.id}" title="Devolver a Pendientes" style="background: transparent; border: 1px solid rgba(251,191,36,0.5); color: #fbbf24; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
@@ -1648,6 +1785,14 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const itemStyle = `background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; ${revertedStyle}`;
     const itemId = tabName === 'otros' ? (item.source_id || item.id) : item.id;
     const itemTab = tabName === 'otros' ? effectiveTabName : tabName;
+    const canMoveFromGeneral = isOtrosView && !isOtherTransferredRecord(item) && !normalizeCropId(item?.crop_id);
+    const moveGeneralBtn = canMoveFromGeneral
+        ? `
+                <button type="button" class="btn-move-general" data-tab="${itemTab}" data-id="${itemId}" title="Mover a cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
+                    <i class="fa fa-arrow-right-long"></i>
+                </button>
+            `
+        : '';
     const actionButtons = showActions
         ? `
                 <button type="button" class="btn-edit-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
@@ -1656,6 +1801,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 <button type="button" class="btn-duplicate-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
                     <i class="fa fa-copy"></i>
                 </button>
+                ${moveGeneralBtn}
                 ${transferBtn}
                 ${incomeTransferBtn}
                 ${lossTransferBtn}
@@ -1674,6 +1820,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 ${sourceLine}
                 ${unitHtml}
                 ${transferHtml}
+                ${otherTransferMeta}
                 ${originBadgeHtml}
                 <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                     <span>${formatDate(date)}</span>
@@ -1916,40 +2063,131 @@ async function fetchFactureroRowsByTab(tabName, userId, options = {}) {
     return data || [];
 }
 
-function normalizeOtherHistoryRow(sourceTab, item, sourceConfig) {
+function normalizeOtherHistoryRow(sourceTab, item, sourceConfig, transferMeta = null) {
     const cfg = sourceConfig || {};
     const conceptField = cfg.conceptField || 'concepto';
     const amountField = cfg.amountField || 'monto';
     const dateField = cfg.dateField || 'fecha';
+    const sourceId = item?.id;
+    const key = getOtherTransferKey(sourceTab, sourceId);
+    const targetCropId = normalizeCropId(transferMeta?.target_crop_id);
+    const targetCropName = String(transferMeta?.target_crop_name || '').trim();
 
     return {
         ...item,
-        id: `${sourceTab}:${item.id}`,
-        source_id: item.id,
+        id: `${sourceTab}:${sourceId}`,
+        source_id: sourceId,
         source_tab: sourceTab,
+        other_key: key,
         source_label: AGROLOG_TAB_LABELS[sourceTab] || sourceTab,
         concepto: item[conceptField] || item.concepto || item.concept || 'Sin concepto',
         monto: Number(item[amountField] || item.monto || item.amount || 0),
-        fecha: item[dateField] || item.fecha || item.date || item.created_at || ''
+        fecha: item[dateField] || item.fecha || item.date || item.created_at || '',
+        other_transfer_state: transferMeta ? 'transferred' : 'active',
+        other_transfer_moved_at: transferMeta?.moved_at || '',
+        other_transfer_target_id: targetCropId || normalizeCropId(item?.crop_id),
+        other_transfer_target_name: targetCropName || ''
     };
 }
 
+async function fetchOtherTransferredRows(userId, historyMap) {
+    const historyEntries = Array.from(historyMap.values());
+    if (historyEntries.length === 0) return [];
+
+    const entriesByTab = new Map();
+    historyEntries.forEach((entry) => {
+        const sourceTab = String(entry?.source_tab || '').trim();
+        const sourceId = String(entry?.source_id || '').trim();
+        if (!sourceTab || !sourceId) return;
+        if (!entriesByTab.has(sourceTab)) entriesByTab.set(sourceTab, []);
+        entriesByTab.get(sourceTab).push(entry);
+    });
+
+    const groups = await Promise.all(Array.from(entriesByTab.entries()).map(async ([sourceTab, entries]) => {
+        const sourceConfig = FACTURERO_CONFIG[sourceTab];
+        if (!sourceConfig?.table) return [];
+
+        const ids = entries
+            .map((entry) => String(entry.source_id || '').trim())
+            .filter(Boolean);
+        if (ids.length === 0) return [];
+
+        const selectFields = new Set([
+            'id',
+            'crop_id',
+            'created_at',
+            'currency',
+            'monto_usd',
+            sourceConfig.conceptField,
+            sourceConfig.amountField,
+            sourceConfig.dateField,
+            ...(sourceConfig.extraFields || []),
+            ...(FACTURERO_EVIDENCE_FIELDS[sourceTab] || [])
+        ]);
+        const selectClause = buildFactureroSelectClause(Array.from(selectFields));
+        let query = supabase
+            .from(sourceConfig.table)
+            .select(selectClause)
+            .eq('user_id', userId)
+            .in('id', ids)
+            .order(sourceConfig.dateField || 'fecha', { ascending: false })
+            .order('created_at', { ascending: false });
+        if (sourceConfig.supportsDeletedAt) {
+            query = query.is('deleted_at', null);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+            console.warn(`[AGRO] Failed to load transfer history for otros/${sourceTab}:`, error.message || error);
+            return [];
+        }
+
+        const rows = Array.isArray(data) ? data : [];
+        const enriched = await enrichFactureroItems(sourceTab, rows);
+        return enriched
+            .map((item) => {
+                const key = getOtherTransferKey(sourceTab, item?.id);
+                const transferMeta = historyMap.get(key) || null;
+                if (!transferMeta) return null;
+                return normalizeOtherHistoryRow(sourceTab, item, sourceConfig, transferMeta);
+            })
+            .filter(Boolean);
+    }));
+
+    return groups.flat();
+}
+
 async function fetchOtherGeneralRecords(userId) {
+    const historyMap = getOtherTransferHistoryMap();
     const groupedRows = await Promise.all(FACTURERO_OTHER_SOURCE_TABS.map(async (sourceTab) => {
         const sourceConfig = FACTURERO_CONFIG[sourceTab];
         const baseRows = await fetchFactureroRowsByTab(sourceTab, userId, {
             cropMode: 'null',
             limit: FACTURERO_OTHER_FETCH_LIMIT
         });
-        const rows = sourceTab === 'pendientes'
-            ? baseRows.filter((item) => !isPendingTransferred(item))
-            : baseRows;
+        const rows = Array.isArray(baseRows) ? baseRows : [];
         const enriched = await enrichFactureroItems(sourceTab, rows);
-        return enriched.map((item) => normalizeOtherHistoryRow(sourceTab, item, sourceConfig));
+        return enriched.map((item) => normalizeOtherHistoryRow(sourceTab, item, sourceConfig, null));
     }));
 
-    return groupedRows
-        .flat()
+    const activeRows = groupedRows.flat();
+    const transferredRows = await fetchOtherTransferredRows(userId, historyMap);
+    const seen = new Set();
+    const mergedRows = [];
+    activeRows.forEach((row) => {
+        const key = row?.other_key || getOtherTransferKey(row?.source_tab, row?.source_id);
+        if (seen.has(key)) return;
+        seen.add(key);
+        mergedRows.push(row);
+    });
+    transferredRows.forEach((row) => {
+        const key = row?.other_key || getOtherTransferKey(row?.source_tab, row?.source_id);
+        if (seen.has(key)) return;
+        seen.add(key);
+        mergedRows.push(row);
+    });
+
+    return mergedRows
         .sort((a, b) => getRowTimestamp(b, 'fecha') - getRowTimestamp(a, 'fecha'))
         .slice(0, FACTURERO_OTHER_RENDER_LIMIT);
 }
@@ -1962,7 +2200,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
     }
 
     const isOthersTab = tabName === 'otros';
-    const { showActions = !isOthersTab } = options;
+    const { showActions = true } = options;
     const debugEnabled = typeof window !== 'undefined'
         && new URLSearchParams(window.location.search).get('debug') === '1';
 
@@ -1975,7 +2213,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
             if (debugEnabled) {
                 console.log('[AGRO] otros row sample', otherItems?.[0]);
             }
-            renderHistoryList(tabName, config, otherItems, false);
+            renderHistoryList(tabName, config, otherItems, showActions);
             injectHistorySearchInput(tabName, config);
             return;
         }
@@ -2033,22 +2271,29 @@ function renderHistoryList(tabName, config, items, showActions) {
         crop_name: item.agro_crops?.name || ''
     }));
     const isPendingTab = tabName === 'pendientes';
+    const isOthersTab = tabName === 'otros';
     if (isPendingTab && parent) {
         ensurePendingTransferFilterUI(parent, itemsWithCropNames);
+    }
+    if (isOthersTab && parent) {
+        ensureOtherTransferFilterUI(parent, itemsWithCropNames);
     }
 
     const filteredItems = isPendingTab
         ? applyPendingTransferFilter(itemsWithCropNames)
-        : itemsWithCropNames;
+        : (isOthersTab ? applyOtherTransferFilter(itemsWithCropNames) : itemsWithCropNames);
 
     // V9.6.3: Ensure parent container is visible when items exist
     if (parent) {
-        parent.style.display = filteredItems.length > 0 ? 'block' : 'none';
+        const keepVisibleForTransferFilter = (isPendingTab || isOthersTab) && itemsWithCropNames.length > 0;
+        parent.style.display = (filteredItems.length > 0 || keepVisibleForTransferFilter) ? 'block' : 'none';
     }
 
     if (filteredItems.length === 0) {
         if (isPendingTab && itemsWithCropNames.length > 0) {
             container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
+        } else if (isOthersTab && itemsWithCropNames.length > 0) {
+            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay movimientos transferidos visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
         } else {
             container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
         }
@@ -2295,15 +2540,45 @@ async function exportAgroLog(tabName) {
 }
 
 // V9.6.3: AgroWizard launcher — passes deps from module scope
-function launchAgroWizard(tabName) {
-    openAgroWizard(tabName, {
+async function pickWizardTabForGeneral() {
+    return showTransferChoiceModal({
+        title: 'Registrar movimiento general',
+        choices: [
+            { value: 'gastos', label: 'Gasto general' },
+            { value: 'ingresos', label: 'Ingreso general' },
+            { value: 'pendientes', label: 'Pendiente general' },
+            { value: 'perdidas', label: 'Pérdida general' },
+            { value: 'transferencias', label: 'Donación general' }
+        ]
+    });
+}
+
+async function launchAgroWizard(tabName) {
+    let targetTab = tabName;
+    let forcedCropId;
+    let lockCropSelection = false;
+    const refreshAlsoTabs = [];
+
+    if (tabName === 'otros') {
+        const pickedTab = await pickWizardTabForGeneral();
+        if (!pickedTab) return;
+        targetTab = pickedTab;
+        forcedCropId = null;
+        lockCropSelection = true;
+        refreshAlsoTabs.push('otros');
+    }
+
+    openAgroWizard(targetTab, {
         supabase,
         cropsCache,
         selectedCropId,
         refreshFactureroHistory,
         loadIncomes: typeof loadIncomes === 'function' ? loadIncomes : null,
         getTodayLocalISO: typeof getTodayLocalISO === 'function' ? getTodayLocalISO : null,
-        buildConceptWithWho
+        buildConceptWithWho,
+        forcedCropId,
+        lockCropSelection,
+        refreshAlsoTabs
     });
 }
 
@@ -2355,7 +2630,8 @@ function injectWizardInvokers() {
         { tab: 'ingresos', selector: '#tab-panel-ingresos .yg-accordion-summary' },
         { tab: 'pendientes', selector: '#tab-panel-pendientes .yg-accordion-summary' },
         { tab: 'perdidas', selector: '#tab-panel-perdidas .yg-accordion-summary' },
-        { tab: 'transferencias', selector: '#tab-panel-transferencias .yg-accordion-summary' }
+        { tab: 'transferencias', selector: '#tab-panel-transferencias .yg-accordion-summary' },
+        { tab: 'otros', selector: '#tab-panel-otros .yg-accordion-summary' }
     ];
 
     config.forEach(({ tab, selector }) => {
@@ -2374,11 +2650,14 @@ function injectWizardInvokers() {
 }
 
 async function refreshFactureroAfterChange(tabName) {
+    const refreshPromises = [];
     if (tabName === 'ingresos') {
         document.dispatchEvent(new CustomEvent('agro:income:changed'));
-        return;
+    } else if (tabName) {
+        refreshPromises.push(refreshFactureroHistory(tabName));
     }
-    await refreshFactureroHistory(tabName);
+    refreshPromises.push(refreshFactureroHistory('otros'));
+    await Promise.all(refreshPromises);
 }
 
 // ============================================================
@@ -2887,6 +3166,105 @@ async function duplicateFactureroItem(tabName, itemId) {
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Duplicate error:`, err.message);
         alert(`Error al duplicar: ${err.message}`);
+    }
+}
+
+function promptDestinationCropForGeneralMove(sourceTab) {
+    const crops = Array.isArray(cropsCache) ? cropsCache : [];
+    if (!crops.length) {
+        notifyFacturero('No hay cultivos disponibles para mover este registro.', 'warning');
+        return null;
+    }
+
+    const cropHint = crops
+        .map((crop) => `${crop.id}: ${crop.icon || '🌱'} ${crop.name || 'Cultivo'}`)
+        .join('\n');
+    const raw = prompt(`ID del cultivo destino para mover este ${AGROLOG_TAB_LABELS[sourceTab] || sourceTab}:\n${cropHint}`);
+    if (raw === null) return null;
+
+    const targetId = normalizeCropId(raw);
+    if (!targetId) {
+        notifyFacturero('Debes indicar un cultivo destino válido.', 'warning');
+        return null;
+    }
+
+    const match = crops.find((crop) => normalizeCropId(crop?.id) === targetId);
+    if (!match) {
+        notifyFacturero('El cultivo destino no existe en tu lista actual.', 'warning');
+        return null;
+    }
+
+    return {
+        id: targetId,
+        name: String(match.name || 'Cultivo').trim() || 'Cultivo'
+    };
+}
+
+async function handleMoveGeneralRecord(sourceTab, itemId) {
+    const config = FACTURERO_CONFIG[sourceTab];
+    if (!config?.table) {
+        notifyFacturero('No se puede mover este tipo de registro.', 'warning');
+        return;
+    }
+
+    const targetCrop = promptDestinationCropForGeneralMove(sourceTab);
+    if (!targetCrop) return;
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            notifyFacturero('Sesión expirada. Recarga la página.', 'warning');
+            return;
+        }
+
+        const selectFields = new Set([
+            'id',
+            'crop_id',
+            config.conceptField || 'concepto',
+            config.amountField || 'monto',
+            config.dateField || 'fecha'
+        ]);
+        const selectClause = Array.from(selectFields).join(', ');
+        const { data: row, error: fetchError } = await supabase
+            .from(config.table)
+            .select(selectClause)
+            .eq('id', itemId)
+            .eq('user_id', user.id)
+            .single();
+        if (fetchError || !row) {
+            throw new Error(fetchError?.message || 'Registro no encontrado.');
+        }
+
+        if (normalizeCropId(row.crop_id)) {
+            notifyFacturero('Este registro ya no está en General.', 'warning');
+            await refreshFactureroHistory('otros');
+            return;
+        }
+
+        const { error: updateError } = await supabase
+            .from(config.table)
+            .update({ crop_id: targetCrop.id })
+            .eq('id', itemId)
+            .eq('user_id', user.id);
+        if (updateError) throw updateError;
+
+        upsertOtherTransferHistoryEntry({
+            source_tab: sourceTab,
+            source_id: itemId,
+            target_crop_id: targetCrop.id,
+            target_crop_name: targetCrop.name,
+            moved_at: new Date().toISOString()
+        });
+
+        notifyFacturero(`✅ Registro movido a ${targetCrop.name}.`, 'success');
+        await refreshFactureroHistory(sourceTab);
+        await refreshFactureroHistory('otros');
+        if (normalizeCropId(selectedCropId) === normalizeCropId(targetCrop.id)) {
+            refreshFactureroForSelectedCrop();
+        }
+    } catch (err) {
+        console.error('[AGRO] Move general record error:', err.message);
+        notifyFacturero(`Error al mover: ${err.message}`, 'warning');
     }
 }
 
@@ -3788,6 +4166,21 @@ function setupFactureroCrudListeners() {
                 await duplicateFactureroItem(tabName, itemId);
             } else {
                 console.warn('[AGRO] Facturero duplicate missing data', { tabName, itemId });
+            }
+            return;
+        }
+
+        const moveGeneralBtn = e.target.closest('.btn-move-general');
+        if (moveGeneralBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const tabName = moveGeneralBtn.dataset.tab;
+            const itemId = moveGeneralBtn.dataset.id;
+            console.info('[AGRO] Facturero move general click', { tabName, itemId });
+            if (tabName && itemId) {
+                await handleMoveGeneralRecord(tabName, itemId);
+            } else {
+                console.warn('[AGRO] Facturero move general missing data', { tabName, itemId });
             }
             return;
         }

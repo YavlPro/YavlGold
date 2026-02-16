@@ -73,6 +73,12 @@ const UNIT_OPTIONS = [
     { value: 'kg', label: 'Kg', icon: '⚖️', singular: 'kg', plural: 'kg' }
 ];
 
+function normalizeWizardCropId(value) {
+    if (value === undefined || value === null) return null;
+    const text = String(value).trim();
+    return text || null;
+}
+
 // ============================================================
 // CSS INJECTION
 // ============================================================
@@ -442,13 +448,26 @@ function injectWizardStyles() {
 
 /**
  * @param {string} tabName - 'pendientes' | 'ingresos' | 'gastos' | 'perdidas' | 'transferencias'
- * @param {object} deps - { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho }
+ * @param {object} deps - { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho, forcedCropId, lockCropSelection, refreshAlsoTabs }
  */
 export async function openAgroWizard(tabName, deps) {
     const meta = WIZARD_TAB_META[tabName];
     if (!meta) return;
 
-    const { supabase, cropsCache, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho } = deps;
+    const {
+        supabase,
+        cropsCache,
+        refreshFactureroHistory,
+        loadIncomes,
+        getTodayLocalISO,
+        buildConceptWithWho
+    } = deps;
+    const hasForcedCropId = Object.prototype.hasOwnProperty.call(deps || {}, 'forcedCropId');
+    const forcedCropId = hasForcedCropId ? normalizeWizardCropId(deps.forcedCropId) : undefined;
+    const lockCropSelection = hasForcedCropId && deps?.lockCropSelection === true;
+    const refreshAlsoTabs = Array.isArray(deps?.refreshAlsoTabs)
+        ? deps.refreshAlsoTabs.filter(Boolean).map((tab) => String(tab))
+        : [];
 
     injectWizardStyles();
 
@@ -459,7 +478,7 @@ export async function openAgroWizard(tabName, deps) {
     // Wizard state
     const state = {
         step: 1,
-        cropId: null,
+        cropId: hasForcedCropId ? forcedCropId : null,
         cropName: 'General / Sin cultivo',
         concepto: '',
         who: '',
@@ -527,6 +546,27 @@ export async function openAgroWizard(tabName, deps) {
     // ============ STEP 1: CROP ============
     function renderStepCrop() {
         const crops = Array.isArray(cropsCache) ? cropsCache : [];
+        if (lockCropSelection) {
+            const forcedCrop = forcedCropId
+                ? crops.find((crop) => String(crop.id) === String(forcedCropId))
+                : null;
+            const cropName = forcedCrop?.name || 'General / Sin cultivo';
+            const cropVariety = forcedCrop
+                ? (forcedCrop.variety || 'Cultivo fijo para este registro')
+                : 'No asociado a cultivo';
+            const cropIcon = forcedCrop?.icon || (forcedCrop ? '🌱' : '📋');
+            return `
+                <p class="wiz-question">Contexto de cultivo</p>
+                <div class="wiz-crops-grid">
+                    <div class="wiz-crop-btn selected wiz-crop-fixed">
+                        <span class="wiz-crop-icon">${cropIcon}</span>
+                        <span class="wiz-crop-name">${escapeHtml(cropName)}</span>
+                        <span class="wiz-crop-variety">${escapeHtml(cropVariety)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         let cardsHtml = `
             <button type="button" class="wiz-crop-btn ${!state.cropId ? 'selected' : ''}" data-crop-id="">
                 <span class="wiz-crop-icon">📋</span>
@@ -716,9 +756,10 @@ export async function openAgroWizard(tabName, deps) {
     // ============ EVENT LISTENERS ============
     function attachStepListeners() {
         // Crop selection (step 1)
-        overlay.querySelectorAll('.wiz-crop-btn').forEach(btn => {
+        overlay.querySelectorAll('.wiz-crop-btn[data-crop-id]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.dataset.cropId || null;
+                if (hasForcedCropId) return;
                 state.cropId = id || null;
                 const crops = Array.isArray(cropsCache) ? cropsCache : [];
                 const match = id ? crops.find(c => String(c.id) === id) : null;
@@ -957,7 +998,7 @@ export async function openAgroWizard(tabName, deps) {
 
             const insertData = {
                 user_id: user.id,
-                crop_id: state.cropId || null,
+                crop_id: hasForcedCropId ? forcedCropId : (state.cropId || null),
                 [tabName === 'gastos' ? 'date' : 'fecha']: state.fecha,
                 [tabName === 'gastos' ? 'concept' : 'concepto']: finalConcepto,
                 [tabName === 'gastos' ? 'amount' : 'monto']: montoNum,
@@ -1030,7 +1071,10 @@ export async function openAgroWizard(tabName, deps) {
                     loadIncomes();
                 }
                 if (typeof refreshFactureroHistory === 'function') {
-                    refreshFactureroHistory(tabName);
+                    const tabsToRefresh = new Set([tabName, ...refreshAlsoTabs]);
+                    tabsToRefresh.forEach((tab) => {
+                        refreshFactureroHistory(tab);
+                    });
                 }
             }, 1500);
 

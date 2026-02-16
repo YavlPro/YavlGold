@@ -6050,3 +6050,52 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `agent-guard` → ✅
    - `agent-report-check` → ✅
    - `check-dist-utf8` → ✅
+
+---
+
+## ✅ SESIÓN: Otros full-power (acciones + transferidos) (2026-02-16)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. `Otros` estaba en modo solo lectura:
+   - sin bloque de registro con `+Nuevo`,
+   - sin acciones por ítem,
+   - sin toggle de `Ver transferidos`.
+2. La vista mezclada ya existía, pero no tenía flujo de movimiento General → Cultivo.
+
+### Plan quirúrgico
+1. Rehacer panel `Otros` con estructura de dos acordeones (Registrar + Historial).
+2. Rehabilitar acciones en el renderer y agregar acción de mover a cultivo para registros generales.
+3. Agregar filtro/toggle de transferidos para `Otros` y conservar historial de movimientos sin cambios de DB.
+4. Forzar wizard en contexto General cuando se invoca desde `Otros`.
+
+### Cambios aplicados
+1. `apps/gold/agro/index.html`
+   - `Otros` ahora tiene:
+     - acordeón `Registrar movimiento (General)` con botón `+Nuevo` inyectable por JS,
+     - acordeón `Historial`.
+2. `apps/gold/agro/agro.js`
+   - `Otros` dejó de ser solo lectura (`showActions` habilitado).
+   - Se agregó toggle `Ver transferidos (N)` para `Otros`:
+     - key: `YG_OTHER_SHOW_TRANSFERRED_V1`.
+   - Se agregó historial de movimientos General → Cultivo en `localStorage`:
+     - key: `YG_OTHER_TRANSFER_HISTORY_V1`.
+   - Se implementó botón por ítem en `Otros`:
+     - `btn-move-general` para mover registro con `crop_id = NULL` hacia un cultivo.
+   - Se agregaron helpers:
+     - lectura/escritura de filtro e historial transferido,
+     - carga de transferidos para `Otros`,
+     - render de meta de transferencia.
+   - Se extendió delegación de eventos para manejar `btn-move-general`.
+   - `refreshFactureroAfterChange(...)` ahora refresca también `otros`.
+   - `injectWizardInvokers()` ahora incluye `otros`.
+3. `apps/gold/agro/agro-wizard.js`
+   - Soporte de `forcedCropId`, `lockCropSelection`, `refreshAlsoTabs`.
+   - Desde `Otros`, `+Nuevo` permite elegir tipo de registro (gasto/ingreso/pendiente/pérdida/donación) y abre wizard forzando cultivo General (`crop_id = NULL`).
+   - Al guardar, refresca tab origen y también `otros`.
+
+### Validación
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `check-dist-utf8` → ✅
