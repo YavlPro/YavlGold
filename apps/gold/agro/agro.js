@@ -4323,6 +4323,22 @@ const CROP_STATUS_THRESHOLDS = {
     finalizado: 100
 };
 
+const CROP_FINISHED_STATUS_TOKENS = new Set([
+    'finalizado',
+    'cosechado',
+    'terminado',
+    'harvested',
+    'finished',
+    'done',
+    'closed',
+    'completado',
+    'completada'
+]);
+
+const CROP_CYCLE_HISTORY_SECTION_ID = 'crops-cycle-history-accordion';
+const CROP_CYCLE_HISTORY_TITLE_ID = 'crops-cycle-history-title';
+const CROP_CYCLE_HISTORY_GRID_ID = 'crops-cycle-history-grid';
+
 function normalizeCropStatus(status) {
     const value = String(status || '').toLowerCase().trim();
     if (!value) return 'creciendo';
@@ -4351,6 +4367,87 @@ function resolveCropStatus(crop, progress) {
     if (mode === 'auto') return computeAutoCropStatus(crop, progress);
     if (crop?.status) return normalizeCropStatus(crop.status);
     return computeAutoCropStatus(crop, progress);
+}
+
+function normalizeStatusToken(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function normalizeCycleDateKey(value) {
+    if (!value) return '';
+    const text = String(value).trim();
+    if (!text) return '';
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return '';
+    return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+function resolveCropEndDateKey(crop) {
+    const fields = [
+        'actual_harvest_date',
+        'fecha_cosecha',
+        'harvest_date',
+        'end_date',
+        'fecha_fin',
+        'finish_date',
+        'completed_at',
+        'closed_at'
+    ];
+    for (const field of fields) {
+        const key = normalizeCycleDateKey(crop?.[field]);
+        if (key) return key;
+    }
+    return '';
+}
+
+function resolveCropProgressPercent(crop, progress) {
+    const computedPercent = Number(progress?.percent);
+    if (Number.isFinite(computedPercent)) {
+        return clampNumber(computedPercent, 0, 100);
+    }
+    const storedPercent = Number(crop?.progress);
+    if (Number.isFinite(storedPercent)) {
+        return clampNumber(storedPercent, 0, 100);
+    }
+    return null;
+}
+
+function isCropFinishedCycle(crop, progress) {
+    const resolvedStatus = resolveCropStatus(crop, progress);
+    const normalizedResolved = normalizeCropStatus(resolvedStatus);
+    const explicitStatus = normalizeStatusToken(crop?.status_override || crop?.status || resolvedStatus);
+    const finishedByStatus = normalizedResolved === 'finalizado'
+        || CROP_FINISHED_STATUS_TOKENS.has(explicitStatus);
+
+    const endDateKey = resolveCropEndDateKey(crop);
+    const finishedByDate = endDateKey ? (diffDays(getTodayKey(), endDateKey) >= 0) : false;
+
+    const progressPercent = resolveCropProgressPercent(crop, progress);
+    const finishedByProgress = Number.isFinite(progressPercent) && progressPercent >= 100;
+
+    return finishedByStatus || finishedByDate || finishedByProgress;
+}
+
+function splitCropsByCycle(crops) {
+    const rows = Array.isArray(crops) ? crops : [];
+    const active = [];
+    const finished = [];
+
+    rows.forEach((crop) => {
+        const templateDuration = getTemplateDurationForCrop(crop);
+        const progress = computeCropProgress(crop, templateDuration);
+        if (isCropFinishedCycle(crop, progress)) {
+            finished.push(crop);
+        } else {
+            active.push(crop);
+        }
+    });
+
+    return { active, finished };
 }
 
 function getCropStatusMeta(status) {
@@ -4776,11 +4873,110 @@ function renderEmptyCropsState(cropsGrid) {
     cropsGrid.appendChild(emptyCard);
 }
 
+function buildNoActiveCropsCard(finishedCount = 0) {
+    return buildCropsStatusCard({
+        id: `${CROPS_EMPTY_ID}-active`,
+        icon: '📚',
+        title: 'No tienes cultivos activos',
+        subtitle: finishedCount > 0
+            ? `Revisa Historial de ciclos (${finishedCount}) para ver cultivos terminados`
+            : 'Crea un nuevo cultivo para iniciar un ciclo',
+        titleColor: 'var(--gold-primary)',
+        titleWeight: '600'
+    });
+}
+
+function ensureCropCycleHistorySection() {
+    const cropsSection = document.querySelector('.crops-section');
+    if (!cropsSection) return null;
+
+    let details = document.getElementById(CROP_CYCLE_HISTORY_SECTION_ID);
+    if (!details) {
+        details = document.createElement('details');
+        details.id = CROP_CYCLE_HISTORY_SECTION_ID;
+        details.className = 'yg-accordion animate-in delay-4';
+        details.open = false;
+
+        const summary = document.createElement('summary');
+        summary.className = 'yg-accordion-summary';
+
+        const icon = document.createElement('span');
+        icon.className = 'yg-accordion-icon';
+        icon.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
+
+        const title = document.createElement('span');
+        title.className = 'yg-accordion-title';
+        title.id = CROP_CYCLE_HISTORY_TITLE_ID;
+        title.textContent = 'Historial de ciclos (0)';
+
+        const chevron = document.createElement('span');
+        chevron.className = 'yg-accordion-chevron';
+        chevron.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+
+        summary.append(icon, title, chevron);
+
+        const content = document.createElement('div');
+        content.className = 'yg-accordion-content';
+
+        const historyGrid = document.createElement('div');
+        historyGrid.id = CROP_CYCLE_HISTORY_GRID_ID;
+        historyGrid.className = 'crops-grid';
+        historyGrid.style.marginTop = '1rem';
+
+        content.appendChild(historyGrid);
+        details.append(summary, content);
+        cropsSection.appendChild(details);
+    }
+
+    const titleEl = document.getElementById(CROP_CYCLE_HISTORY_TITLE_ID);
+    const gridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
+    return { details, titleEl, gridEl };
+}
+
+function hideCropCycleHistorySection() {
+    const details = document.getElementById(CROP_CYCLE_HISTORY_SECTION_ID);
+    if (details) {
+        details.style.display = 'none';
+    }
+}
+
+function renderCropCycleHistory(crops) {
+    const ui = ensureCropCycleHistorySection();
+    if (!ui) return;
+
+    const finishedCrops = Array.isArray(crops) ? crops : [];
+    const { details, titleEl, gridEl } = ui;
+    details.style.display = 'block';
+
+    if (titleEl) {
+        titleEl.textContent = `Historial de ciclos (${finishedCrops.length})`;
+    }
+    if (!gridEl) return;
+
+    gridEl.textContent = '';
+    if (finishedCrops.length === 0) {
+        const empty = document.createElement('p');
+        empty.style.color = 'var(--text-muted)';
+        empty.style.fontSize = '0.9rem';
+        empty.style.textAlign = 'center';
+        empty.style.padding = '1rem';
+        empty.textContent = 'Sin ciclos finalizados por ahora.';
+        gridEl.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    finishedCrops.forEach((crop, index) => {
+        fragment.appendChild(createCropCardElement(crop, (index % 6) + 1));
+    });
+    gridEl.appendChild(fragment);
+}
+
 /**
  * Carga cultivos del usuario (Supabase + LocalStorage fallback)
  */
 export async function loadCrops() {
-    const cropsGrid = document.querySelector('.crops-grid');
+    const cropsGrid = document.querySelector('.crops-section > .crops-grid');
     if (!cropsGrid) return;
 
     const requestId = ++cropsLoadSeq;
@@ -4853,6 +5049,7 @@ export async function loadCrops() {
             syncLazyCropConsumers(cropsCache);
             logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             renderEmptyCropsState(cropsGrid);
+            hideCropCycleHistorySection();
             logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             const hadSelection = !!selectedCropId;
             setSelectedCropId(null, { silent: true });
@@ -4867,26 +5064,37 @@ export async function loadCrops() {
         // Guardar en cache para edición
         cropsCache = crops;
         syncLazyCropConsumers(cropsCache);
+        const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(crops);
 
         // Renderizar cultivos
         logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
         cropsGrid.textContent = '';
         const fragment = document.createDocumentFragment();
         fragment.appendChild(createGeneralViewCardElement());
-        crops.forEach((crop, i) => {
+        if (activeCrops.length === 0) {
+            fragment.appendChild(buildNoActiveCropsCard(finishedCrops.length));
+        }
+        activeCrops.forEach((crop, i) => {
             fragment.appendChild(createCropCardElement(crop, i + 1));
         });
         cropsGrid.appendChild(fragment);
+        renderCropCycleHistory(finishedCrops);
         const prevSelected = selectedCropId;
         syncSelectedCropFromList(crops, { silent: true });
         if (prevSelected !== selectedCropId) {
             dispatchCropChanged();
         }
-        logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
+        logAgroDebug('[AGRO] renderCrops END', {
+            ts: new Date().toISOString(),
+            seq: requestId,
+            total: crops.length,
+            active: activeCrops.length,
+            finished: finishedCrops.length
+        });
         const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops });
         dispatchCropsReady(snapshot);
 
-        console.info(`[AGRO] V9.6: progress computed for crops (${crops.length})`);
+        console.info(`[AGRO] V9.8: active cycles ${activeCrops.length}, finished cycles ${finishedCrops.length} (total ${crops.length})`);
 
         // Animar progress bars
         setTimeout(() => {

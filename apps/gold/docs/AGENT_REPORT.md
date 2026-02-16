@@ -6099,3 +6099,67 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `agent-guard` → ✅
    - `agent-report-check` → ✅
    - `check-dist-utf8` → ✅
+
+---
+
+## 🧪 SESIÓN: Active Crops vs Historial de ciclos (2026-02-16)
+
+### Paso 0 — Diagnóstico (Regla #1)
+1. `apps/gold/agro/index.html` renderiza una sola grilla `.crops-grid` bajo el título **Active Crops**.
+2. `apps/gold/agro/agro.js` en `loadCrops()` renderiza todos los cultivos en esa grilla sin separar finalizados.
+3. El estado real del cultivo ya se resuelve con helpers existentes:
+   - `computeCropProgress(...)`
+   - `resolveCropStatus(...)`
+   - `normalizeCropStatus(...)`
+4. No existe hoy un contenedor/accordion para historial de ciclos dentro de Active Crops.
+
+### Plan quirúrgico
+1. Implementar helper de clasificación de ciclos en `agro.js`:
+   - separar `active` y `finished` usando:
+     - estado finalizado/cosechado/terminado,
+     - fecha de fin/cosecha <= hoy (si existe),
+     - progreso >= 100.
+2. Mantener `Active Crops` con solo cultivos activos.
+3. Crear (sin CSS nuevo) un acordeón reutilizando clases existentes `yg-accordion`:
+   - título: `Historial de ciclos (N)`,
+   - contenido: grilla de cultivos finalizados.
+4. Dejar DB/schema intactos (sin SQL), y solo ajustar render/DOM.
+5. Correr `pnpm build:gold` y registrar resultado.
+
+### DoD esperado
+- [ ] Active Crops muestra solo cultivos activos.
+- [ ] Existe acordeón `Historial de ciclos (N)` con cultivos terminados.
+- [ ] Criterios de terminado cubren estado, fecha fin/cosecha y progreso >= 100.
+- [ ] Sin cambios de DB/schema/RLS.
+- [ ] `pnpm build:gold` en verde.
+
+### Implementación aplicada
+1. `apps/gold/agro/agro.js`:
+   - Se añadió clasificación de ciclos:
+     - `splitCropsByCycle(...)`
+     - `isCropFinishedCycle(...)`
+     - criterio por estado, fecha de fin/cosecha y progreso >= 100.
+   - Se añadió acordeón dinámico dentro de Active Crops:
+     - `ensureCropCycleHistorySection(...)`
+     - `renderCropCycleHistory(...)`
+     - título dinámico `Historial de ciclos (N)`.
+   - `loadCrops()` ahora:
+     - renderiza en la grilla principal solo cultivos activos,
+     - envía cultivos terminados al acordeón de historial,
+     - mantiene `cropsCache` y estado global sin cambios de schema/DB.
+2. No se tocaron SQL, tablas, triggers ni RLS.
+3. No se tocó CSS custom del usuario.
+
+### DoD validado
+- [x] Active Crops muestra solo cultivos activos.
+- [x] Existe acordeón `Historial de ciclos (N)` con cultivos terminados.
+- [x] Criterios de terminado cubren estado, fecha fin/cosecha y progreso >= 100.
+- [x] Sin cambios de DB/schema/RLS.
+- [x] `pnpm build:gold` en verde.
+
+### Validación técnica
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `check-dist-utf8` → ✅
