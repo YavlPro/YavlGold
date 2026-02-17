@@ -1559,6 +1559,30 @@
                 </div>
             </div>
 
+            <div class="ops-context-steps" id="ops-context-steps">
+                <div class="ops-step-block" aria-label="Paso 1 Contexto">
+                    <p class="ops-step-label">PASO 1 · Contexto</p>
+                    <div class="ops-context-tags" role="group" aria-label="Seleccionar contexto">
+                        <button type="button" class="ops-context-tag is-active" data-context-mode="cultivos"
+                            aria-pressed="true">Cultivos</button>
+                        <button type="button" class="ops-context-tag" data-context-mode="donaciones"
+                            aria-pressed="false">Donaciones</button>
+                        <button type="button" class="ops-context-tag" data-context-mode="otros"
+                            aria-pressed="false">Otros</button>
+                    </div>
+                    <div class="ops-crop-context" id="ops-crop-context">
+                        <label for="ops-crop-select" class="ops-crop-label">Ciclo / Cultivo</label>
+                        <select id="ops-crop-select" class="styled-input crop-selector" aria-label="Seleccionar cultivo">
+                            <option value="">Cargando cultivos...</option>
+                        </select>
+                        <p class="ops-crop-message" id="ops-crop-message" hidden>No hay ciclos activos</p>
+                    </div>
+                </div>
+                <div class="ops-step-block" aria-label="Paso 2 Qué ver">
+                    <p class="ops-step-label">PASO 2 · Qué ver</p>
+                </div>
+            </div>
+
             <div class="financial-tabs" role="tablist" aria-label="Pestañas de finanzas agro">
                 <button type="button" class="financial-tab-btn is-active" role="tab" id="tab-btn-gastos"
                     aria-selected="true" aria-controls="tab-panel-gastos" data-tab="gastos">Gastos</button>

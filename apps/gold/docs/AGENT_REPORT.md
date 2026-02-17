@@ -1,5 +1,112 @@
 ---
 
+## 🆕 SESIÓN: Centro de Operaciones Legacy + Paso 1/Paso 2 (2026-02-17)
+
+### Diagnóstico (obligatorio antes de tocar runtime)
+
+1) **Mapa de puntos de entrada MPA y navegación**
+- `apps/gold/vite.config.js`: `appType: 'mpa'` con entradas `index.html`, `dashboard/index.html`, `agro/index.html`, `crypto/index.html`, etc.
+- `apps/gold/vercel.json`: clean URLs + rewrites explícitos para `/agro`, `/dashboard`, `/crypto`, `/academia`, `/tecnologia`.
+- `apps/gold/index.html`: landing con navegación a módulos (`./agro/`, `./crypto/`, etc.) y acceso a `/dashboard/`.
+- `apps/gold/dashboard/index.html`: página dashboard protegida, carga módulos dinámicos y tarjetas de insights.
+
+2) **Dónde se instancian datos/auth de Supabase**
+- `apps/gold/assets/js/config/supabase-config.js`: `createClient(...)` y export singleton `supabase`.
+- `apps/gold/assets/js/auth/authClient.js`: inicializa auth, procesa callback PKCE/hash, guard de rutas protegidas y eventos auth.
+- `apps/gold/assets/js/auth/authUI.js`: wiring de modales/login/register y respuesta a eventos auth.
+- `apps/gold/dashboard/auth-guard.js`: guard ESM de dashboard, valida `supabase.auth.getSession()` y redirige si no hay sesión.
+
+3) **Dashboard: qué consulta hoy y qué le falta**
+- Consultas actuales confirmadas:
+  - `profiles` (username/avatar),
+  - `modules` (listado cards),
+  - `user_favorites` (conteos + favoritos),
+  - `notifications` (no leídas),
+  - `announcements` y `feedback` vía managers inicializados en dashboard.
+- Estado de progreso académico:
+  - no hay integración directa en `dashboard/index.html` con `user_lesson_progress`, `user_quiz_attempts`, `user_badges`; el resumen de continuidad usa `YG_ACTIVITY_V1` (tracker local) como base.
+
+4) **Clima/Agro: prioridad Manual > GPS > IP y llaves storage**
+- `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`) mantiene prioridad Manual → GPS/IP según preferencia.
+- Keys confirmadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref` (+ weather cache `yavlgold_weather_*` en dashboard Agro).
+- `apps/gold/agro/dashboard.js`: `initWeather()` y render de clima; panel debug ya soportado con `?debug=1` o `YG_GEO_DEBUG=1`.
+
+5) **Crypto: estado real**
+- Existe implementación MPA activa en `apps/gold/crypto/index.html` + `crypto.js` + `crypto.css` (market data pública).
+- También existen artefactos legacy/backups (`index_old.html`, `script_backup.txt`).
+- Conclusión: crypto ya está montado como página MPA dentro de `apps/gold`, sin servidor Python como flujo principal.
+
+### Diagnóstico específico del problema actual (Agro Centro de Operaciones)
+- El reemplazo completo del historial legacy por wizard elevó riesgo de regresión funcional y acoplamientos ocultos.
+- El sistema actual legacy en `agro.js` ya tiene handlers estables:
+  - `switchTab()` (tabs de operaciones),
+  - `refreshFactureroHistory()` (fetch/render por tab),
+  - filtro por cultivo con `selectedCropId` + `agro:crop:changed`,
+  - render de historial existente (`renderHistoryList`) y export (`exportAgroLog`).
+- Estrategia correcta ahora: **no reemplazar historial**, solo agregar capa de orientación UX (Paso 1/Paso 2) y cablear a handlers existentes.
+
+### Plan quirúrgico (archivos exactos y por qué)
+1. `apps/gold/agro/index.html`
+- Insertar franja UX arriba de tabs:
+  - `PASO 1: Contexto` con tags `Cultivos | Donaciones | Otros`
+  - `PASO 2: Qué ver` etiquetando los tabs existentes (sin duplicarlos).
+- Agregar contenedor de selector de cultivo/ciclo para modo `Cultivos` (reutilizando estado/funciones legacy de selección, no lógica nueva de historial).
+
+2. `apps/gold/agro/agro.js`
+- Añadir estado mínimo de contexto:
+  - `contextMode = 'cultivos' | 'donaciones' | 'otros'`
+  - persistencia ligera de `paso1Context`, `lastTab` y `selectedCropId` existente.
+- Cablear:
+  - cambio de tag paso 1,
+  - auto-tab (`donaciones` -> `transferencias`, `otros` -> `otros`),
+  - mostrar/ocultar o deshabilitar selector en no-cultivos,
+  - restaurar último cultivo/tab al volver a cultivos,
+  - refresco reutilizando `switchTab()` + `refreshFactureroForSelectedCrop()`.
+- Borde crítico: evitar `crop_id null` involuntario cuando contexto es cultivos.
+
+3. `apps/gold/agro/agro.css`
+- Estilos mínimos para franja de pasos y pills (dark/gold), scroll horizontal móvil y estados activos.
+- Sin tocar layout legacy de historiales más allá de la nueva franja.
+
+### DoD checklist (copiado del requerimiento)
+- [ ] Se agrega una franja UI “Paso 1” + “Paso 2” SIN convertirlo en wizard:
+- [ ] Paso 1: tags horizontales “Cultivos | Donaciones | Otros”.
+- [ ] Si Paso 1 = Cultivos: mostrar el selector actual de ciclo/cultivo (reusarlo, no reinventarlo).
+- [ ] Si Paso 1 = Donaciones: auto-seleccionar el tab DONACIONES en Paso 2 y ocultar/inhabilitar selector de cultivo.
+- [ ] Si Paso 1 = Otros: auto-seleccionar el tab OTROS en Paso 2 y ocultar/inhabilitar selector de cultivo.
+- [ ] Al volver a “Cultivos”: se restaura el último cultivo seleccionado y el último tab usado (si aplica).
+- [ ] Paso 2 se mantiene igual (los tabs actuales), solo se “etiqueta” como PASO 2 y se conecta con Paso 1.
+- [ ] El Historial viejo y su lógica NO se reescriben. Solo se conectan los controles nuevos a la lógica existente.
+- [ ] No se pierde ninguna funcionalidad existente de Centro de Operaciones (listas, filtros, totales, export, etc).
+- [ ] Persistencia ligera:
+- [ ] Guardar en localStorage: paso1Context (cultivos/donaciones/otros), selectedCropId (si cultivos), lastTab (gastos/ingresos/etc).
+- [ ] Al cargar, si hay contexto guardado, restaurarlo sin romper el default estable.
+- [ ] Manejo de bordes:
+- [ ] Si no hay cultivos activos y Paso 1 = Cultivos, mostrar mensaje claro “No hay ciclos activos” y desactivar selector.
+- [ ] Evitar crop_id null involuntario: si contexto = Cultivos, nunca mandar null al cargar/filtrar.
+- [ ] Sin cambios de DB (no migraciones, no columnas nuevas, no funciones SQL).
+- [ ] pnpm build:gold (si existe) debe pasar y no debe haber errores en consola.
+
+### Riesgos y mitigación
+- **Riesgo:** conflicto entre auto-selección de tabs de Paso 1 y navegación manual de tabs.
+  - **Mitigación:** mantener `switchTab()` como fuente única de verdad y solo orquestar desde control de contexto.
+- **Riesgo:** pérdida del cultivo seleccionado al alternar contextos.
+  - **Mitigación:** snapshot local del último cultivo válido en modo cultivos + restore explícito.
+- **Riesgo:** consultas sin crop en modo cultivos.
+  - **Mitigación:** en modo cultivos forzar selección válida (o bloquear con mensaje “No hay ciclos activos”).
+- **Riesgo:** regresión visual en móvil.
+  - **Mitigación:** pills con scroll horizontal y touch targets >= 44/48px.
+
+### Pruebas manuales sugeridas + build
+1. Paso 1 Cultivos -> cambiar cultivo + tabs y validar historiales legacy.
+2. Paso 1 Donaciones -> auto-tab Donaciones + selector oculto/deshabilitado.
+3. Paso 1 Otros -> auto-tab Otros + selector oculto/deshabilitado.
+4. Recargar -> restaura contexto/tab/cultivo sin `crop_id` inválido.
+5. Consola sin errores.
+6. Build: `pnpm build:gold`.
+
+---
+
 ## 🆕 SESIÓN: Wizard Bug Fix + Carrito Agro (2026-02-13)
 
 ### Bug Fix: Wizard categoria NOT NULL
