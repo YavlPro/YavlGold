@@ -457,6 +457,7 @@ export async function openAgroWizard(tabName, deps) {
     const {
         supabase,
         cropsCache,
+        selectedCropId,
         refreshFactureroHistory,
         loadIncomes,
         getTodayLocalISO,
@@ -466,6 +467,12 @@ export async function openAgroWizard(tabName, deps) {
     // Treat crop as "forced" only when caller explicitly locks crop selection.
     const lockCropSelection = hasForcedCropProp && deps?.lockCropSelection === true;
     const forcedCropId = lockCropSelection ? normalizeWizardCropId(deps.forcedCropId) : null;
+    const normalizedSelectedCropId = lockCropSelection ? null : normalizeWizardCropId(selectedCropId);
+    const hasSelectedCropInCache = !!(normalizedSelectedCropId && Array.isArray(cropsCache)
+        && cropsCache.some((crop) => String(crop.id) === String(normalizedSelectedCropId)));
+    const initialCropId = lockCropSelection
+        ? forcedCropId
+        : (hasSelectedCropInCache ? normalizedSelectedCropId : null);
     const refreshAlsoTabs = Array.isArray(deps?.refreshAlsoTabs)
         ? deps.refreshAlsoTabs.filter(Boolean).map((tab) => String(tab))
         : [];
@@ -479,7 +486,7 @@ export async function openAgroWizard(tabName, deps) {
     // Wizard state
     const state = {
         step: 1,
-        cropId: lockCropSelection ? forcedCropId : null,
+        cropId: initialCropId,
         cropName: 'General / Sin cultivo',
         concepto: '',
         who: '',

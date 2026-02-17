@@ -6421,3 +6421,21 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `pnpm build:gold`
 2. Resultado:
    - ✅ OK (`agent-guard`, `agent-report-check`, `vite build`, `check-dist-utf8`).
+
+## ✅ HOTFIX: Wizard preselección contextual de cultivo (2026-02-17)
+
+### Diagnóstico
+1. El wizard seguía iniciando en `General / Sin cultivo` porque `openAgroWizard` ya no usaba `selectedCropId` del facturero en su estado inicial.
+2. Esto generaba percepción de “General preseleccionado sin elegirlo” al abrir desde contexto de cultivo.
+
+### Fix aplicado
+1. Archivo: `apps/gold/agro/agro-wizard.js`
+2. Se reintrodujo `selectedCropId` en destructuring de `deps`.
+3. Se normaliza y valida contra `cropsCache`.
+4. Estado inicial:
+   - si `lockCropSelection === true` -> usa `forcedCropId`
+   - si no hay lock y `selectedCropId` existe/valido -> preselecciona ese cultivo
+   - fallback -> `General / Sin cultivo`
+
+### Build
+1. `pnpm build:gold` -> ✅ OK
