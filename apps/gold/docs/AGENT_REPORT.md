@@ -6163,3 +6163,104 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `agent-guard` → ✅
    - `agent-report-check` → ✅
    - `check-dist-utf8` → ✅
+
+## 🧠 SESIÓN: Modo Enfoque Agro (2026-02-16)
+
+### Paso 0 — Diagnóstico (Gate obligatorio)
+1. `apps/gold/agro/index.html` contiene secciones clave visibles y ya usa patrón de acordeón `yg-accordion` reutilizable.
+2. Bloques principales detectados para flujo de trabajo:
+   - `kpi-section` (Dashboard Agro + accesos rápidos, incluye Agenda/HOY y Asistente)
+   - `crops-section` (Active Crops)
+   - `finances-section` (Finanzas Agro / Centro de Operaciones)
+3. Bloques extra detectados para mover fuera del flujo principal (sin borrar):
+   - widget de Mercados, widget Lunar, calculadora ROI, Centro Estadístico (botón), AgroRepo.
+4. `apps/gold/agro/agro.js` centraliza init del módulo (`initAgro`) y es punto correcto para:
+   - leer/escribir preferencia en localStorage,
+   - mover/restaurar nodos DOM sin recrear listeners,
+   - aplicar enfoque al cargar.
+
+### Plan quirúrgico
+1. `apps/gold/agro/index.html`
+   - Marcar bloques con `data-agro-section="..."` (agenda, activeCrops, ops, assistant + extras).
+   - Añadir toggle visible `🧠 Modo Enfoque` (accesible con `aria-pressed`).
+   - Añadir acordeón `Herramientas` con body `data-agro-tools-body` (colapsado).
+2. `apps/gold/agro/agro.js`
+   - Implementar `getAgroFocusMode()`, `setAgroFocusMode(v)`, `applyAgroFocusMode(isOn)` con key `YG_AGRO_FOCUS_MODE_V1`.
+   - Capturar posiciones originales (parent + nextSibling) y restaurar en modo completo.
+   - En ON: mantener flujo principal (agenda, activeCrops, ops, assistant) y mover extras a `Herramientas`.
+   - En OFF: devolver extras a posición original y ocultar `Herramientas` con `hidden` + `inert`.
+3. Validar build oficial (`pnpm build:gold`) y registrar evidencia.
+
+### DoD objetivo
+- [ ] Toggle `🧠 Modo Enfoque` funcional ON/OFF.
+- [ ] Persistencia en `YG_AGRO_FOCUS_MODE_V1`.
+- [ ] En ON: flujo principal priorizado + extras en `Herramientas` colapsado.
+- [ ] En OFF: restauración a vista completa original.
+- [ ] Sin cambios DB/schema/RLS y sin tocar CSS custom.
+- [ ] `pnpm build:gold` OK.
+
+### Riesgos y mitigación
+1. Riesgo: romper listeners por mover nodos.
+   - Mitigación: mover nodos existentes sin clonar ni re-render.
+2. Riesgo: foco de teclado en elementos ocultos.
+   - Mitigación: usar `hidden` + `inert` en contenedores ocultos.
+3. Riesgo: alterar orden original en modo completo.
+   - Mitigación: snapshot de posición original y restauración exacta.
+
+### Archivos objetivo
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Pruebas planificadas
+1. Toggle ON/OFF en sesión activa.
+2. Persistencia tras recarga.
+3. Integridad de tabs/wizard/acciones en Centro de Operaciones.
+4. Build oficial del monorepo Gold.
+
+### Implementación aplicada
+1. `apps/gold/agro/index.html`
+   - Se añadieron marcadores estables `data-agro-section` para secciones principales y extras:
+     - principales: `agenda`, `activeCrops`, `ops`, `assistant`
+     - extras: `stats`, `markets`, `lunar`, `roi`, `agroRepo`
+   - Se agregó toggle visible y accesible `🧠 Modo Enfoque`:
+     - id: `agro-focus-toggle`
+     - estado por `aria-pressed`.
+   - Se agregó contenedor `Herramientas` reutilizando patrón `yg-accordion`:
+     - sección: `#agro-tools-section`
+     - body de reubicación: `[data-agro-tools-body]`
+     - inicia oculto con `hidden` + `inert`.
+2. `apps/gold/agro/agro.js`
+   - Se implementó estado persistente en localStorage:
+     - key: `YG_AGRO_FOCUS_MODE_V1`
+     - valores: `"1"` (ON), `"0"` (OFF).
+   - Se implementó snapshot/restauración de layout sin clonar nodos:
+     - guarda `parent + nextSibling` por sección.
+   - Se implementó `applyAgroFocusMode(isOn)`:
+     - ON:
+       - prioriza flujo principal (`agenda -> activeCrops -> ops`),
+       - mantiene visible asistente,
+       - mueve extras a `Herramientas`,
+       - deja `Herramientas` colapsado por defecto,
+       - usa `hidden/inert` para ocultación accesible.
+     - OFF:
+       - restaura posiciones originales de todas las secciones,
+       - oculta `Herramientas` (`hidden/inert`),
+       - devuelve vista completa original.
+   - Se inicializa en `initAgro()` con `initAgroFocusMode()`.
+
+### DoD validado
+- [x] Toggle `🧠 Modo Enfoque` funcional ON/OFF.
+- [x] Persistencia en `YG_AGRO_FOCUS_MODE_V1`.
+- [x] En ON: flujo principal priorizado + extras en `Herramientas` colapsado.
+- [x] En OFF: restauración a vista completa original.
+- [x] Sin cambios DB/schema/RLS y sin tocar CSS custom.
+- [x] `pnpm build:gold` OK.
+
+### Validación técnica
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `vite build` → ✅
+   - `check-dist-utf8` → ✅

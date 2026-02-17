@@ -27,6 +27,12 @@ const CROPS_EMPTY_ID = 'agro-crops-empty';
 const AGRO_CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const AGRO_CROPS_STATE_KEY = '__AGRO_CROPS_STATE';
 const AGRO_SELECTED_CROP_KEY = 'YG_AGRO_SELECTED_CROP_V1';
+const AGRO_FOCUS_MODE_KEY = 'YG_AGRO_FOCUS_MODE_V1';
+const AGRO_FOCUS_TOGGLE_ID = 'agro-focus-toggle';
+const AGRO_TOOLS_SECTION_ID = 'agro-tools-section';
+const AGRO_TOOLS_ACCORDION_ID = 'yg-acc-tools';
+const AGRO_TOOLS_BODY_SELECTOR = '[data-agro-tools-body]';
+const AGRO_FOCUS_SNAPSHOT_TOOLS_KEY = '__agro_tools__';
 const AGRO_GENERAL_VIEW_ID = '__general__';
 const AGRO_GENERAL_LABEL = '📋 General';
 const AGRO_GENERAL_SUBLABEL = 'Todos los cultivos';
@@ -36,11 +42,15 @@ const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,u
 const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
+const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
+const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
 
 let selectedCropId = null;
 let editExchangeRates = { USD: 1, COP: null, VES: null };
 let syncAgendaCropsFn = null;
 let syncCartCropsFn = null;
+const agroFocusOriginalPositions = new Map();
+let agroFocusModeBound = false;
 
 function syncLazyCropConsumers(nextCrops) {
     const safeCrops = Array.isArray(nextCrops) ? nextCrops : [];
@@ -58,6 +68,196 @@ function syncLazyCropConsumers(nextCrops) {
     } catch (err) {
         console.warn('[AGRO] Cart crops sync error:', err?.message || err);
     }
+}
+
+function setElementHiddenInert(element, shouldHide) {
+    if (!element) return;
+    element.hidden = !!shouldHide;
+    if (shouldHide) {
+        element.setAttribute('inert', '');
+    } else {
+        element.removeAttribute('inert');
+    }
+}
+
+function getAgroFocusMode() {
+    try {
+        return localStorage.getItem(AGRO_FOCUS_MODE_KEY) === '1';
+    } catch (err) {
+        return false;
+    }
+}
+
+function setAgroFocusMode(value) {
+    try {
+        localStorage.setItem(AGRO_FOCUS_MODE_KEY, value ? '1' : '0');
+    } catch (err) {
+        // Ignore storage errors
+    }
+}
+
+function ensureAgroFocusModeDefault() {
+    try {
+        const current = localStorage.getItem(AGRO_FOCUS_MODE_KEY);
+        if (current !== '1' && current !== '0') {
+            localStorage.setItem(AGRO_FOCUS_MODE_KEY, '0');
+        }
+    } catch (err) {
+        // Ignore storage errors
+    }
+}
+
+function getAgroSectionElement(sectionKey) {
+    return document.querySelector(`[data-agro-section="${sectionKey}"]`);
+}
+
+function rememberAgroOriginalPosition(sectionKey, element) {
+    if (!sectionKey || !element || agroFocusOriginalPositions.has(sectionKey)) return;
+    agroFocusOriginalPositions.set(sectionKey, {
+        element,
+        parent: element.parentNode,
+        nextSibling: element.nextSibling
+    });
+}
+
+function captureAgroFocusOriginalLayout() {
+    if (agroFocusOriginalPositions.size > 0) return;
+
+    const sectionNodes = Array.from(document.querySelectorAll('[data-agro-section]'));
+    sectionNodes.forEach((node) => {
+        const key = node?.dataset?.agroSection;
+        if (!key) return;
+        rememberAgroOriginalPosition(key, node);
+    });
+
+    const toolsSection = document.getElementById(AGRO_TOOLS_SECTION_ID);
+    if (toolsSection) {
+        rememberAgroOriginalPosition(AGRO_FOCUS_SNAPSHOT_TOOLS_KEY, toolsSection);
+    }
+}
+
+function restoreAgroSection(sectionKey) {
+    const snapshot = agroFocusOriginalPositions.get(sectionKey);
+    if (!snapshot) return;
+
+    const { element, parent, nextSibling } = snapshot;
+    if (!element || !parent) return;
+
+    if (nextSibling && nextSibling.parentNode === parent) {
+        parent.insertBefore(element, nextSibling);
+    } else {
+        parent.appendChild(element);
+    }
+
+    setElementHiddenInert(element, false);
+}
+
+function getAgroToolsElements() {
+    const toolsSection = document.getElementById(AGRO_TOOLS_SECTION_ID);
+    if (!toolsSection) return null;
+    const toolsBody = toolsSection.querySelector(AGRO_TOOLS_BODY_SELECTOR);
+    if (!toolsBody) return null;
+    const toolsAccordion = document.getElementById(AGRO_TOOLS_ACCORDION_ID) || toolsSection.querySelector('details.yg-accordion');
+    return { toolsSection, toolsBody, toolsAccordion };
+}
+
+function updateAgroToolsTitle(toolsSection, toolsBody) {
+    if (!toolsSection || !toolsBody) return;
+    const titleEl = toolsSection.querySelector('.yg-accordion-title');
+    if (!titleEl) return;
+    const count = toolsBody.children.length;
+    titleEl.textContent = `Herramientas (${count})`;
+}
+
+function updateAgroFocusToggleUI(isOn) {
+    const toggle = document.getElementById(AGRO_FOCUS_TOGGLE_ID);
+    if (!toggle) return;
+    toggle.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+    toggle.textContent = isOn ? '\uD83E\uDDE0 Modo Enfoque: ON' : '\uD83E\uDDE0 Modo Enfoque: OFF';
+}
+
+function reorderAgroPrimarySectionsForFocus() {
+    const agenda = getAgroSectionElement('agenda');
+    if (!agenda || !agenda.parentNode) return;
+
+    const parent = agenda.parentNode;
+    let anchor = agenda;
+
+    AGRO_FOCUS_PRIMARY_KEYS
+        .filter((key) => key !== 'agenda')
+        .forEach((key) => {
+            const section = getAgroSectionElement(key);
+            if (!section) return;
+            if (anchor.nextSibling === section && section.parentNode === parent) {
+                anchor = section;
+                return;
+            }
+            parent.insertBefore(section, anchor.nextSibling);
+            anchor = section;
+        });
+}
+
+function restoreAgroFullLayout() {
+    for (const [sectionKey] of agroFocusOriginalPositions) {
+        if (sectionKey === AGRO_FOCUS_SNAPSHOT_TOOLS_KEY) continue;
+        restoreAgroSection(sectionKey);
+    }
+}
+
+function applyAgroFocusMode(isOn) {
+    captureAgroFocusOriginalLayout();
+    updateAgroFocusToggleUI(isOn);
+
+    const tools = getAgroToolsElements();
+    if (!tools) return;
+
+    const { toolsSection, toolsBody, toolsAccordion } = tools;
+
+    if (isOn) {
+        reorderAgroPrimarySectionsForFocus();
+
+        AGRO_FOCUS_EXTRA_KEYS.forEach((sectionKey) => {
+            const element = getAgroSectionElement(sectionKey);
+            if (!element || element.parentNode === toolsBody) return;
+            toolsBody.appendChild(element);
+            setElementHiddenInert(element, false);
+        });
+
+        AGRO_FOCUS_PRIMARY_KEYS.forEach((sectionKey) => {
+            setElementHiddenInert(getAgroSectionElement(sectionKey), false);
+        });
+        setElementHiddenInert(getAgroSectionElement('assistant'), false);
+
+        const hasTools = toolsBody.children.length > 0;
+        setElementHiddenInert(toolsSection, !hasTools);
+        if (toolsAccordion && hasTools) toolsAccordion.open = false;
+    } else {
+        restoreAgroFullLayout();
+        setElementHiddenInert(toolsSection, true);
+        if (toolsAccordion) toolsAccordion.open = false;
+    }
+
+    updateAgroToolsTitle(toolsSection, toolsBody);
+    console.info(`[AGRO] Focus mode ${isOn ? 'enabled' : 'disabled'}`);
+}
+
+function initAgroFocusMode() {
+    if (agroFocusModeBound) return;
+
+    captureAgroFocusOriginalLayout();
+    ensureAgroFocusModeDefault();
+
+    const toggle = document.getElementById(AGRO_FOCUS_TOGGLE_ID);
+    if (!toggle) return;
+
+    agroFocusModeBound = true;
+    toggle.addEventListener('click', () => {
+        const next = !getAgroFocusMode();
+        setAgroFocusMode(next);
+        applyAgroFocusMode(next);
+    });
+
+    applyAgroFocusMode(getAgroFocusMode());
 }
 
 function normalizeCropId(value) {
@@ -7858,6 +8058,7 @@ export function initAgro() {
     console.info('[AGRO] V9.6: facturero who-field enabled');
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
     initStatsCenterModal(); // V9.5.3: Centro Estadistico
+    initAgroFocusMode(); // V9.8: Modo Enfoque (UI only)
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
     setTimeout(() => {

@@ -1162,13 +1162,16 @@
                         class="user-name">Agricultor</span> </div>
             </div>
         </header> <!-- KPIs Section -->
-        <section class="kpi-section">
+        <section class="kpi-section" data-agro-section="agenda">
             <div class="section-header animate-in delay-1">
                 <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2>
-                <button type="button" class="stats-center-trigger" id="btn-open-stats-center">
+                <button type="button" class="stats-center-trigger" id="btn-open-stats-center" data-agro-section="stats">
                     &#128202; Centro Estad&iacute;stico
                 </button>
-                <button type="button" class="assistant-trigger" id="btn-open-agro-assistant">
+                <button type="button" class="assistant-trigger" id="agro-focus-toggle" aria-pressed="false">
+                    &#129504; Modo Enfoque: OFF
+                </button>
+                <button type="button" class="assistant-trigger" id="btn-open-agro-assistant" data-agro-section="assistant">
                     &#129302; Asistente Agro
                 </button>
             </div>
@@ -1189,7 +1192,7 @@
                 </div>
 
                 <!-- Mercados Widget -->
-                <div class="card kpi-card animate-in delay-3" style="overflow: hidden;">
+                <div class="card kpi-card animate-in delay-3" style="overflow: hidden;" data-agro-section="markets">
                     <div class="kpi-icon-wrapper" style="animation-delay: -2s;">📈</div>
                     <div class="kpi-content" style="width: 100%;">
                         <div class="kpi-label"
@@ -1222,7 +1225,7 @@
                 </div>
 
                 <!-- Luna Widget -->
-                <div class="card kpi-card animate-in delay-4">
+                <div class="card kpi-card animate-in delay-4" data-agro-section="lunar">
                     <div class="kpi-icon-wrapper" style="animation-delay: -4s;" id="moon-icon">🌙</div>
                     <div class="kpi-content">
                         <div class="kpi-label">Fase Lunar</div>
@@ -1268,7 +1271,7 @@
 
 
         <!-- Active Crops Section -->
-        <section class="crops-section">
+        <section class="crops-section" data-agro-section="activeCrops">
             <div class="section-header animate-in delay-3">
                 <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button class="btn btn-outline"
                     id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
@@ -1277,7 +1280,7 @@
         </section>
 
         <!-- V9.8: ROI Calculator Collapsible -->
-        <section class="calculator-section">
+        <section class="calculator-section" data-agro-section="roi">
             <details class="yg-accordion" id="yg-acc-roi" open>
                 <summary class="yg-accordion-summary">
                     <span class="yg-accordion-icon">🧮</span>
@@ -1541,7 +1544,7 @@
     <!-- ============================================
          💰 SECCIÓN FINANZAS - Control de Gastos
          ============================================ -->
-    <section class="finances-section" style="margin-top: 2rem; margin-bottom: 2rem;">
+    <section class="finances-section" style="margin-top: 2rem; margin-bottom: 2rem;" data-agro-section="ops">
         <div class="section-header animate-in">
             <h2 class="section-title"><span class="icon">💰</span> Finanzas Agro</h2>
             <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Control de gastos y registro
@@ -1794,11 +1797,25 @@
         </div>
     </section>
 
+    <section class="agro-tools-section animate-in delay-6" id="agro-tools-section" style="margin-top: 2rem;" hidden inert>
+        <details class="yg-accordion" id="yg-acc-tools">
+            <summary class="yg-accordion-summary" aria-controls="agro-tools-content" aria-expanded="false">
+                <span class="yg-accordion-icon">🧰</span>
+                <span class="yg-accordion-title">Herramientas</span>
+                <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+            </summary>
+            <div class="yg-accordion-content" id="agro-tools-content">
+                <div data-agro-tools-body></div>
+            </div>
+        </details>
+    </section>
+
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          AGROREPO WIDGET ACCORDION (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
-    <section class="agro-repo-section animate-in delay-6" id="agro-repo-section" style="margin-top: 2rem;">
+    <section class="agro-repo-section animate-in delay-6" id="agro-repo-section" style="margin-top: 2rem;"
+        data-agro-section="agroRepo">
         <details class="yg-accordion" id="yg-acc-agrorepo">
             <summary class="yg-accordion-summary" aria-controls="agrorepo-content" aria-expanded="false">
                 <span class="yg-accordion-icon">🌾</span>
