@@ -462,9 +462,10 @@ export async function openAgroWizard(tabName, deps) {
         getTodayLocalISO,
         buildConceptWithWho
     } = deps;
-    const hasForcedCropId = Object.prototype.hasOwnProperty.call(deps || {}, 'forcedCropId');
-    const forcedCropId = hasForcedCropId ? normalizeWizardCropId(deps.forcedCropId) : undefined;
-    const lockCropSelection = hasForcedCropId && deps?.lockCropSelection === true;
+    const hasForcedCropProp = Object.prototype.hasOwnProperty.call(deps || {}, 'forcedCropId');
+    // Treat crop as "forced" only when caller explicitly locks crop selection.
+    const lockCropSelection = hasForcedCropProp && deps?.lockCropSelection === true;
+    const forcedCropId = lockCropSelection ? normalizeWizardCropId(deps.forcedCropId) : null;
     const refreshAlsoTabs = Array.isArray(deps?.refreshAlsoTabs)
         ? deps.refreshAlsoTabs.filter(Boolean).map((tab) => String(tab))
         : [];
@@ -478,7 +479,7 @@ export async function openAgroWizard(tabName, deps) {
     // Wizard state
     const state = {
         step: 1,
-        cropId: hasForcedCropId ? forcedCropId : null,
+        cropId: lockCropSelection ? forcedCropId : null,
         cropName: 'General / Sin cultivo',
         concepto: '',
         who: '',
@@ -759,7 +760,7 @@ export async function openAgroWizard(tabName, deps) {
         overlay.querySelectorAll('.wiz-crop-btn[data-crop-id]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.dataset.cropId || null;
-                if (hasForcedCropId) return;
+                if (lockCropSelection) return;
                 state.cropId = id || null;
                 const crops = Array.isArray(cropsCache) ? cropsCache : [];
                 const match = id ? crops.find(c => String(c.id) === id) : null;
@@ -998,7 +999,7 @@ export async function openAgroWizard(tabName, deps) {
 
             const insertData = {
                 user_id: user.id,
-                crop_id: hasForcedCropId ? forcedCropId : (state.cropId || null),
+                crop_id: lockCropSelection ? forcedCropId : (state.cropId || null),
                 [tabName === 'gastos' ? 'date' : 'fecha']: state.fecha,
                 [tabName === 'gastos' ? 'concept' : 'concepto']: finalConcepto,
                 [tabName === 'gastos' ? 'amount' : 'monto']: montoNum,

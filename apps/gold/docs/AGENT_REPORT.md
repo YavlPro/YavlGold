@@ -6374,3 +6374,50 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `summary-direct-expenses` ≈ `2000.00`
    - `summary-cost` = inversión(rango) + gastos(rango) + pérdidas(rango)
    - `summary-profit` = ingresos(rango) - `summary-cost`
+
+## ✅ SESIÓN: Agro V9.8 — Fix crítico wizard `crop_id = NULL` al elegir cultivo (2026-02-17)
+
+### Diagnóstico forense (sin cambios previos)
+1. **Click de cards Paso 1** en `apps/gold/agro/agro-wizard.js`:
+   - Listener: `:758-770`
+   - Variable interna: `state.cropId = id || null` (`:763`)
+   - Visual `.selected`: se calcula en `renderStepCrop()` (`:571`, `:579`)
+2. **Lectura de `cropId` al guardar**:
+   - `insertData.crop_id` en `:999-1002`
+3. **Causa raíz confirmada**:
+   - `hasForcedCropId` se calculaba con `hasOwnProperty('forcedCropId')` (`:465`).
+   - El launcher (`apps/gold/agro/agro.js:2771-2781`) siempre pasa la key `forcedCropId` en el objeto deps (aun `undefined`).
+   - Resultado: el wizard trataba el cultivo como “forzado”, bloqueaba el flujo de selección y al insertar privilegiaba `forcedCropId` (normalizado a `null`) en lugar de `state.cropId`.
+
+### Plan quirúrgico aplicado
+1. `apps/gold/agro/agro-wizard.js`
+   - Forzar cultivo **solo** cuando `lockCropSelection === true`.
+   - Mantener `General / Sin cultivo` como `NULL` válido.
+   - Mantener flujo normal de selección por card para tabs no bloqueadas.
+2. `apps/gold/docs/AGENT_REPORT.md`
+   - Registrar diagnóstico + fix + validación.
+
+### Implementación aplicada
+1. `apps/gold/agro/agro-wizard.js`
+   - Nuevo gating:
+     - `hasForcedCropProp` + `lockCropSelection` explícito (`:465-468`).
+     - `forcedCropId` solo se usa cuando hay lock real.
+   - Estado inicial:
+     - `state.cropId` ahora usa `lockCropSelection ? forcedCropId : null` (`:482`).
+   - Click Paso 1:
+     - Guard clause cambia de `hasForcedCropId` a `lockCropSelection` (`:763`).
+   - Submit:
+     - `crop_id` ahora usa `lockCropSelection ? forcedCropId : (state.cropId || null)` (`:1002`).
+
+### Verificación de flujo esperado (código)
+1. Abrir wizard normal (sin lock) => `cropId = null` inicial (General).
+2. Click en cultivo => actualiza `state.cropId` con UUID y avanza.
+3. Click en General => `state.cropId = null`.
+4. Submit => inserta `state.cropId` (o `null` si General).
+5. Flujo bloqueado (solo cuando aplica, ej. `otros`) => mantiene `forcedCropId` (incluye `null` para General).
+
+### Build / validación técnica
+1. Comando:
+   - `pnpm build:gold`
+2. Resultado:
+   - ✅ OK (`agent-guard`, `agent-report-check`, `vite build`, `check-dist-utf8`).
