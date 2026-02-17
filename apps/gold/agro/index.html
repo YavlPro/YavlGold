@@ -2401,6 +2401,21 @@
                 </div>
             </div>
             <div class="stats-center-body">
+                <div
+                    style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-bottom: 0.9rem; padding: 0.75rem; border: 1px solid rgba(200, 167, 82, 0.18); border-radius: 10px; background: rgba(255,255,255,0.02);">
+                    <label style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 150px;">
+                        <span style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Desde</span>
+                        <input type="date" id="stats-date-start" class="styled-input" style="min-height: 40px;">
+                    </label>
+                    <label style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 150px;">
+                        <span style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Hasta</span>
+                        <input type="date" id="stats-date-end" class="styled-input" style="min-height: 40px;">
+                    </label>
+                    <button type="button" id="btn-stats-apply-range"
+                        style="min-height: 40px; padding: 0 0.9rem; border-radius: 8px; border: 1px solid rgba(200, 167, 82, 0.45); background: rgba(200, 167, 82, 0.12); color: #C8A752; font-weight: 700; cursor: pointer;">
+                        Aplicar rango
+                    </button>
+                </div>
                 <div class="stats-center-tabs" role="tablist" aria-label="Secciones de estadisticas">
                     <button type="button" class="stats-tab is-active" data-tab="kpis" role="tab" aria-selected="true">
                         KPIs
@@ -2694,8 +2709,14 @@
                                                     style="font-size: 1rem; color: #4ade80; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
                                             </div>
                                             <div
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.05); border: 1px solid rgba(248, 113, 113, 0.15); border-radius: 8px;">
+                                                <span style="font-size: 11px; color: #888;">Gastos directos</span>
+                                                <span id="summary-direct-expenses"
+                                                    style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
+                                            </div>
+                                            <div
                                                 style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px;">
-                                                <span style="font-size: 11px; color: #888;">Costo Total</span>
+                                                <span style="font-size: 11px; color: #888;">Costo Total (Inv+Gastos+P&eacute;rdidas)</span>
                                                 <span id="summary-cost"
                                                     style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
                                             </div>

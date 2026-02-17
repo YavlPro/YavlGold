@@ -6264,3 +6264,113 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `agent-report-check` → ✅
    - `vite build` → ✅
    - `check-dist-utf8` → ✅
+
+## 🧮 SESIÓN: Reconciliación Centro Estadístico por rango + reverted (2026-02-17)
+
+### Paso 0 — Diagnóstico (Gate obligatorio)
+1. `apps/gold/agro/agro-stats.js` calcula KPIs con histórico completo (sin rango):
+   - `agro_expenses` (`amount`) y `agro_income` (`monto`) se consultan sin `between` por fecha.
+2. Ingresos no excluyen `reverted_at` en el cálculo de stats (solo `deleted_at` por helper genérico).
+3. Definición financiera actual:
+   - `costTotal = cropsInvestmentTotal + expenseTotal + lossesTotal`
+   - `profitNet = incomeTotal - costTotal`
+   Esto es válido, pero en UI no se muestra explícito “Gastos directos” junto a “Costo total”, lo que dificulta reconciliación con auditoría SQL de gastos.
+4. `index.html` del modal stats no incluye controles de rango `start/end` actualmente.
+
+### Plan quirúrgico
+1. `apps/gold/agro/index.html`
+   - Añadir controles de rango en el Centro Estadístico:
+     - `#stats-date-start`, `#stats-date-end` y botón `#btn-stats-apply-range`.
+   - Añadir en Resumen Financiero fila “Gastos directos” (`#summary-direct-expenses`) sin alterar estilos globales.
+2. `apps/gold/agro/agro-stats.js`
+   - Extender helper de consulta para aceptar filtros opcionales:
+     - rango por fecha (between inclusivo),
+     - filtros `IS NULL` adicionales (para `reverted_at`).
+   - Aplicar rango en TODOS los datasets que alimentan KPIs/paneles (expenses, income, pending, losses, transfers, crops investment).
+   - En `agro_income`, aplicar además `reverted_at IS NULL`.
+   - Mantener fórmula de `costTotal` y publicar `directExpenseTotal` para UI.
+   - Integrar eventos del nuevo control de rango para refrescar stats.
+3. Validar build oficial y registrar evidencia.
+
+### DoD objetivo
+- [ ] Centro Estadístico respeta rango `start/end` seleccionado en cálculos mostrados.
+- [ ] Ingresos excluyen `reverted_at NOT NULL`.
+- [ ] UI muestra “Gastos directos” separado de “Costo total” (sin cambiar definición).
+- [ ] Sin cambios DB/schema/RLS/SQL/triggers.
+- [ ] Sin tocar CSS custom.
+- [ ] `pnpm build:gold` OK.
+
+### Riesgos y mitigación
+1. Riesgo: columnas faltantes entre entornos (`date`/`fecha`/`reverted_at`).
+   - Mitigación: detección de columna faltante + fallback por retries ya existentes del helper.
+2. Riesgo: cambiar un helper usado por otros flujos.
+   - Mitigación: nuevos parámetros opcionales, comportamiento legacy intacto sin opciones.
+3. Riesgo: confusión de usuario sobre costo.
+   - Mitigación: mostrar explícito “Gastos directos” junto al “Costo total”.
+
+### Archivos objetivo
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-stats.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Pruebas planificadas
+1. Rango `2026-02-11` a `2026-02-17`:
+   - gastos 2000, ingresos 400028, neto acorde.
+2. Cambiar rango y verificar variación de KPIs/panel.
+3. Verificar `summary-direct-expenses` vs `summary-cost`.
+4. Build oficial `pnpm build:gold`.
+
+### Implementación aplicada
+1. `apps/gold/agro/index.html`
+   - Se agregó selector de rango en el modal del Centro Estadístico:
+     - `#stats-date-start`
+     - `#stats-date-end`
+     - `#btn-stats-apply-range`
+   - Se añadió fila explícita en Resumen Financiero para reconciliación:
+     - `#summary-direct-expenses` = **Gastos directos**.
+   - Se mantuvo `Costo total` y se clarificó etiqueta: `Costo Total (Inv+Gastos+Pérdidas)`.
+2. `apps/gold/agro/agro-stats.js`
+   - Se implementó estado/persistencia de rango (`YG_AGRO_STATS_RANGE_V1`) y wiring de controles.
+   - Se extendió `selectAgroTable(...)` con filtros opcionales:
+     - rango de fecha inclusivo (`gte/lte`),
+     - filtros `IS NULL` adicionales (`nullFilters`),
+     - retries/fallback si faltan columnas (sin romper entornos legacy).
+   - Se aplicó rango en todos los datasets usados por el Centro Estadístico:
+     - `agro_expenses` por `date`
+     - `agro_income` por `fecha` + `reverted_at IS NULL`
+     - `agro_pending` por `fecha`
+     - `agro_losses` por `fecha`
+     - `agro_transfers` por `fecha`
+     - `agro_crops` (inversión) por `start_date`
+   - Se añadió fallback client-side por rango para asegurar consistencia incluso si falla filtro server-side por esquema.
+   - Se expuso en summary:
+     - `directExpenseTotal` (gastos directos)
+     - `dateRange` (rango aplicado)
+   - UI update:
+     - `summary-direct-expenses` ahora muestra gastos directos separados de `summary-cost`.
+
+### DoD validado
+- [x] Centro Estadístico respeta rango `start/end` seleccionado en cálculos mostrados.
+- [x] Ingresos excluyen `reverted_at NOT NULL`.
+- [x] UI muestra “Gastos directos” separado de “Costo total” (sin cambiar definición).
+- [x] Sin cambios DB/schema/RLS/SQL/triggers.
+- [x] Sin tocar CSS custom.
+- [x] `pnpm build:gold` OK.
+
+### Validación técnica
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `vite build` → ✅
+   - `check-dist-utf8` → ✅
+
+### Validación manual sugerida (con tus datos auditados)
+1. En Centro Estadístico:
+   - Rango `2026-02-11` a `2026-02-17`
+2. Esperado:
+   - `kpi-expenses-total` ≈ `2000.00`
+   - `summary-revenue` ≈ `400028.00`
+   - `summary-direct-expenses` ≈ `2000.00`
+   - `summary-cost` = inversión(rango) + gastos(rango) + pérdidas(rango)
+   - `summary-profit` = ingresos(rango) - `summary-cost`

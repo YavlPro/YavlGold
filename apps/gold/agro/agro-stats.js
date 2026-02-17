@@ -10,6 +10,7 @@ import supabase from '../assets/js/config/supabase-config.js';
 
 let roiChartInstance = null;
 let expensesChartInstance = null;
+const AGRO_STATS_RANGE_KEY = 'YG_AGRO_STATS_RANGE_V1';
 
 // Anti-race guard for refresh
 window.__YG_AGRO_STATS_REFRESH_INFLIGHT__ = false;
@@ -102,7 +103,193 @@ function isMissingColumnError(error, column) {
     return text.includes('column') && text.includes(col);
 }
 
-async function selectAgroTable(table, columns, useDeletedAt, userId) {
+function formatStatsDateKey(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function normalizeStatsDateKey(value) {
+    if (!value) return '';
+    const str = String(value).trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return '';
+    const [y, m, d] = str.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== (m - 1) || dt.getDate() !== d) return '';
+    return str;
+}
+
+function shiftStatsDateKey(dateKey, days) {
+    const safe = normalizeStatsDateKey(dateKey);
+    if (!safe || !Number.isFinite(days)) return '';
+    const [y, m, d] = safe.split('-').map(Number);
+    const utcMs = Date.UTC(y, m - 1, d) + (Math.trunc(days) * 24 * 60 * 60 * 1000);
+    return formatStatsDateKey(new Date(utcMs));
+}
+
+function getDefaultStatsRange() {
+    const today = formatStatsDateKey(new Date());
+    return {
+        startDate: shiftStatsDateKey(today, -6) || today,
+        endDate: today
+    };
+}
+
+function readStatsRangeStorage() {
+    try {
+        const raw = localStorage.getItem(AGRO_STATS_RANGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        const startDate = normalizeStatsDateKey(parsed?.startDate);
+        const endDate = normalizeStatsDateKey(parsed?.endDate);
+        if (!startDate || !endDate) return null;
+        return startDate <= endDate ? { startDate, endDate } : { startDate: endDate, endDate: startDate };
+    } catch (err) {
+        return null;
+    }
+}
+
+function writeStatsRangeStorage(range) {
+    try {
+        localStorage.setItem(AGRO_STATS_RANGE_KEY, JSON.stringify({
+            startDate: range.startDate,
+            endDate: range.endDate
+        }));
+    } catch (err) {
+        // Ignore storage errors
+    }
+}
+
+function syncStatsRangeInputs(range) {
+    const startInput = document.getElementById('stats-date-start');
+    const endInput = document.getElementById('stats-date-end');
+    if (startInput && range?.startDate) startInput.value = range.startDate;
+    if (endInput && range?.endDate) endInput.value = range.endDate;
+}
+
+function getStatsDateRange() {
+    const startInput = document.getElementById('stats-date-start');
+    const endInput = document.getElementById('stats-date-end');
+
+    const inputStart = normalizeStatsDateKey(startInput?.value);
+    const inputEnd = normalizeStatsDateKey(endInput?.value);
+    if (inputStart && inputEnd) {
+        const inputRange = inputStart <= inputEnd
+            ? { startDate: inputStart, endDate: inputEnd }
+            : { startDate: inputEnd, endDate: inputStart };
+        syncStatsRangeInputs(inputRange);
+        return inputRange;
+    }
+
+    const stored = readStatsRangeStorage();
+    if (stored) {
+        syncStatsRangeInputs(stored);
+        return stored;
+    }
+
+    const fallback = getDefaultStatsRange();
+    syncStatsRangeInputs(fallback);
+    return fallback;
+}
+
+function setStatsDateRange(startDateRaw, endDateRaw) {
+    const startDate = normalizeStatsDateKey(startDateRaw);
+    const endDate = normalizeStatsDateKey(endDateRaw);
+    if (!startDate || !endDate) return null;
+    const next = startDate <= endDate
+        ? { startDate, endDate }
+        : { startDate: endDate, endDate: startDate };
+    syncStatsRangeInputs(next);
+    writeStatsRangeStorage(next);
+    return next;
+}
+
+function triggerStatsRefreshFromControls() {
+    if (typeof window.refreshAgroStats === 'function') {
+        Promise.resolve(window.refreshAgroStats()).catch((err) => {
+            console.warn('[AGRO_STATS] refresh failed from range controls:', err?.message || err);
+        });
+        return;
+    }
+    computeAgroFinanceSummaryV1()
+        .then((summary) => {
+            if (summary) updateUIFromSummary(summary);
+        })
+        .catch((err) => {
+            console.warn('[AGRO_STATS] refresh failed (fallback):', err?.message || err);
+        });
+}
+
+function extractRowDateKey(row, preferredField) {
+    if (!row || typeof row !== 'object') return '';
+    const candidates = [
+        preferredField,
+        'fecha',
+        'date',
+        'start_date',
+        'created_at'
+    ].filter(Boolean);
+
+    for (const field of candidates) {
+        const raw = row[field];
+        if (!raw) continue;
+        const text = String(raw).trim();
+        const key = normalizeStatsDateKey(text.slice(0, 10));
+        if (key) return key;
+    }
+    return '';
+}
+
+function filterRowsByRange(rows, preferredField, startDate, endDate) {
+    if (!Array.isArray(rows)) return [];
+    const startKey = normalizeStatsDateKey(startDate);
+    const endKey = normalizeStatsDateKey(endDate);
+    if (!startKey || !endKey) return rows;
+    return rows.filter((row) => {
+        const rowKey = extractRowDateKey(row, preferredField);
+        if (!rowKey) return false;
+        return rowKey >= startKey && rowKey <= endKey;
+    });
+}
+
+function initStatsDateRangeControls() {
+    if (typeof document === 'undefined') return;
+    if (document.__agroStatsRangeBound) return;
+    document.__agroStatsRangeBound = true;
+
+    const startInput = document.getElementById('stats-date-start');
+    const endInput = document.getElementById('stats-date-end');
+    const applyBtn = document.getElementById('btn-stats-apply-range');
+    if (!startInput || !endInput || !applyBtn) return;
+
+    const today = formatStatsDateKey(new Date());
+    startInput.max = today;
+    endInput.max = today;
+
+    const initial = getStatsDateRange();
+    writeStatsRangeStorage(initial);
+
+    applyBtn.addEventListener('click', () => {
+        const next = setStatsDateRange(startInput.value, endInput.value);
+        if (!next) {
+            alert('Rango de fechas inválido.');
+            return;
+        }
+        triggerStatsRefreshFromControls();
+    });
+
+    const normalizeAndPersist = () => {
+        const next = setStatsDateRange(startInput.value, endInput.value);
+        if (next) {
+            startInput.value = next.startDate;
+            endInput.value = next.endDate;
+        }
+    };
+    startInput.addEventListener('change', normalizeAndPersist);
+    endInput.addEventListener('change', normalizeAndPersist);
+}
+
+async function selectAgroTable(table, columns, useDeletedAt, userId, options = {}) {
     if (schemaCaps.tables[table] === false) {
         return { data: null, error: null, skipped: true };
     }
@@ -114,8 +301,18 @@ async function selectAgroTable(table, columns, useDeletedAt, userId) {
     cols = cols.filter(col => columnCaps[col] !== false);
 
     let shouldUseDeletedAt = useDeletedAt && columnCaps.deleted_at !== false;
+    let dateField = options?.dateField && columnCaps[options.dateField] !== false
+        ? String(options.dateField)
+        : null;
+    const startDate = normalizeStatsDateKey(options?.startDate);
+    const endDate = normalizeStatsDateKey(options?.endDate);
+    let nullFilters = Array.isArray(options?.nullFilters)
+        ? options.nullFilters
+            .map((field) => String(field || '').trim())
+            .filter((field) => !!field && columnCaps[field] !== false)
+        : [];
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
         if (cols.length === 0) {
             return { data: [], error: null, skipped: true };
         }
@@ -127,6 +324,15 @@ async function selectAgroTable(table, columns, useDeletedAt, userId) {
         if (shouldUseDeletedAt) {
             query = query.is('deleted_at', null);
         }
+        if (dateField && startDate) {
+            query = query.gte(dateField, startDate);
+        }
+        if (dateField && endDate) {
+            query = query.lte(dateField, endDate);
+        }
+        nullFilters.forEach((field) => {
+            query = query.is(field, null);
+        });
 
         let { data, error } = await query;
 
@@ -147,6 +353,25 @@ async function selectAgroTable(table, columns, useDeletedAt, userId) {
         if (shouldUseDeletedAt && isMissingColumnError(error, 'deleted_at')) {
             markColumnMissing(table, 'deleted_at');
             shouldUseDeletedAt = false;
+            continue;
+        }
+
+        if (dateField && isMissingColumnError(error, dateField)) {
+            markColumnMissing(table, dateField);
+            dateField = null;
+            continue;
+        }
+
+        let removedNullFilter = false;
+        nullFilters = nullFilters.filter((field) => {
+            if (isMissingColumnError(error, field)) {
+                markColumnMissing(table, field);
+                removedNullFilter = true;
+                return false;
+            }
+            return true;
+        });
+        if (removedNullFilter) {
             continue;
         }
 
@@ -376,17 +601,24 @@ export async function computeAgroFinanceSummaryV1() {
 
         const userId = userData.user.id;
         const statsCropId = getStatsCropFilter();
+        const statsRange = getStatsDateRange();
+        const startDate = statsRange.startDate;
+        const endDate = statsRange.endDate;
 
         // 1) Expenses REALES (filtrar deleted_at IS NULL)
         let expenseTotal = 0;
         const costByCategory = {};
         try {
-            const expenseColumns = ['id', 'user_id', 'amount', 'monto_usd', 'currency', 'category', 'created_at'];
-            const result = await selectAgroTable('agro_expenses', expenseColumns, true, userId);
+            const expenseColumns = ['id', 'user_id', 'amount', 'monto_usd', 'currency', 'category', 'crop_id', 'date', 'created_at'];
+            const result = await selectAgroTable('agro_expenses', expenseColumns, true, userId, {
+                dateField: 'date',
+                startDate,
+                endDate
+            });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching expenses:', result.error);
             }
-            const expenses = result?.data;
+            const expenses = filterRowsByRange(result?.data, 'date', startDate, endDate);
             if (expenses) {
                 expenses.forEach(e => {
                     const amt = parseFloat(e.monto_usd) || parseFloat(e.amount) || 0;
@@ -403,12 +635,18 @@ export async function computeAgroFinanceSummaryV1() {
         let incomeTotal = 0;
         let incomeRows = null;
         try {
-            const incomeColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
-            const result = await selectAgroTable('agro_income', incomeColumns, true, userId);
+            const incomeColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'reverted_at', 'created_at'];
+            const result = await selectAgroTable('agro_income', incomeColumns, true, userId, {
+                dateField: 'fecha',
+                startDate,
+                endDate,
+                nullFilters: ['reverted_at']
+            });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching income:', result.error);
             }
-            incomeRows = result?.data;
+            incomeRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
+                .filter((row) => !row?.reverted_at);
             if (incomeRows) {
                 incomeRows.forEach(i => {
                     incomeTotal += parseFloat(i.monto_usd) || parseFloat(i.monto) || 0;
@@ -422,12 +660,16 @@ export async function computeAgroFinanceSummaryV1() {
         let pendingTotal = 0;
         let pendingRows = null;
         try {
-            const pendingColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
-            const result = await selectAgroTable('agro_pending', pendingColumns, true, userId);
+            const pendingColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'created_at'];
+            const result = await selectAgroTable('agro_pending', pendingColumns, true, userId, {
+                dateField: 'fecha',
+                startDate,
+                endDate
+            });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching pending:', result.error);
             }
-            pendingRows = result?.data;
+            pendingRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate);
             if (pendingRows) {
                 pendingRows.forEach(p => {
                     pendingTotal += parseFloat(p.monto_usd) || parseFloat(p.monto) || 0;
@@ -442,12 +684,16 @@ export async function computeAgroFinanceSummaryV1() {
         let lossesRows = null;
         try {
             // V9.6 Fix: Removed 'category' which does not exist in DB
-            const lossesColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
-            const result = await selectAgroTable('agro_losses', lossesColumns, true, userId);
+            const lossesColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'created_at'];
+            const result = await selectAgroTable('agro_losses', lossesColumns, true, userId, {
+                dateField: 'fecha',
+                startDate,
+                endDate
+            });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
             }
-            lossesRows = result?.data;
+            lossesRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate);
             if (lossesRows) {
                 lossesRows.forEach(l => {
                     const amt = parseFloat(l.monto_usd) || parseFloat(l.monto) || 0;
@@ -464,12 +710,16 @@ export async function computeAgroFinanceSummaryV1() {
         let transfersTotal = 0;
         let transfersRows = null;
         try {
-            const transferColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'created_at'];
-            const result = await selectAgroTable('agro_transfers', transferColumns, true, userId);
+            const transferColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'created_at'];
+            const result = await selectAgroTable('agro_transfers', transferColumns, true, userId, {
+                dateField: 'fecha',
+                startDate,
+                endDate
+            });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching transfers:', result.error);
             }
-            transfersRows = result?.data;
+            transfersRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate);
             if (transfersRows) {
                 transfersRows.forEach(t => {
                     transfersTotal += parseFloat(t.monto_usd) || parseFloat(t.monto) || 0;
@@ -484,12 +734,16 @@ export async function computeAgroFinanceSummaryV1() {
         let cropsRows = null;
         // V9.5: revenue_projected ELIMINADO - solo usamos ingresos reales
         try {
-            const cropColumns = ['id', 'user_id', 'name', 'variety', 'investment', 'status', 'created_at'];
-            const result = await selectAgroTable('agro_crops', cropColumns, true, userId);
+            const cropColumns = ['id', 'user_id', 'name', 'variety', 'investment', 'status', 'start_date', 'created_at'];
+            const result = await selectAgroTable('agro_crops', cropColumns, true, userId, {
+                dateField: 'start_date',
+                startDate,
+                endDate
+            });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching crops:', result.error);
             }
-            cropsRows = result?.data;
+            cropsRows = filterRowsByRange(result?.data, 'start_date', startDate, endDate);
             if (cropsRows) {
                 cropsRows.forEach(c => {
                     cropsInvestmentTotal += parseFloat(c.investment) || 0;
@@ -530,6 +784,7 @@ export async function computeAgroFinanceSummaryV1() {
 
         const summary = {
             expenseTotal,
+            directExpenseTotal: expenseTotal,
             incomeTotal,
             pendingTotal,
             lossesTotal,
@@ -547,7 +802,8 @@ export async function computeAgroFinanceSummaryV1() {
             cropExtremes,
             topSellingCrop,
             hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0 || pendingTotal > 0 || lossesTotal > 0 || transfersTotal > 0,
-            updatedAtISO: new Date().toISOString()
+            updatedAtISO: new Date().toISOString(),
+            dateRange: { startDate, endDate }
         };
 
         console.log('[AGRO_STATS] Summary computed:', summary);
@@ -687,6 +943,9 @@ export function updateUIFromSummary(summary) {
     const summaryRevenue = document.getElementById('summary-revenue');
     if (summaryRevenue) summaryRevenue.textContent = formatK(summary.incomeTotal);
 
+    const summaryDirectExpenses = document.getElementById('summary-direct-expenses');
+    if (summaryDirectExpenses) summaryDirectExpenses.textContent = formatK(summary.directExpenseTotal ?? summary.expenseTotal);
+
     const summaryCost = document.getElementById('summary-cost');
     if (summaryCost) summaryCost.textContent = formatK(summary.costTotal);
 
@@ -723,7 +982,11 @@ export function updateUIFromSummary(summary) {
         const diffMs = now - updatedAt;
         const diffMin = Math.floor(diffMs / 60000);
         const timeText = diffMin < 1 ? 'ahora' : `hace ${diffMin} min`;
-        statsTimestamp.textContent = `Actualizado ${timeText}`;
+        const range = summary.dateRange;
+        const rangeText = range?.startDate && range?.endDate
+            ? `Rango ${range.startDate} a ${range.endDate} · `
+            : '';
+        statsTimestamp.textContent = `${rangeText}Actualizado ${timeText}`;
         statsTimestamp.style.cssText = 'font-size: 0.75rem; color: #6b7280; font-style: italic;';
     }
 
@@ -789,6 +1052,7 @@ export function initStats() {
             if (typeof Chart !== 'undefined') {
                 setupROIChart();
                 setupExpensesChart();
+                initStatsDateRangeControls();
                 updateStats([]); // Init with empty stats
             }
         }, 500);
@@ -797,6 +1061,7 @@ export function initStats() {
 
     setupROIChart();
     setupExpensesChart();
+    initStatsDateRangeControls();
     updateStats([]); // Init with empty stats
 }
 
