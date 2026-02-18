@@ -79,6 +79,36 @@ function normalizeWizardCropId(value) {
     return text || null;
 }
 
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !CROP_TEXT_TOKEN_RE.test(value);
+}
+
+function getCropDisplayParts(crop, options = {}) {
+    const fallbackIcon = String(options.fallbackIcon || '🌱').trim() || '🌱';
+    const fallbackName = String(options.fallbackName || 'Cultivo').trim() || 'Cultivo';
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const iconCandidate = iconFromName || String(crop?.icon || '').trim();
+    const icon = isCropEmojiToken(iconCandidate) ? iconCandidate : fallbackIcon;
+    const name = tokens.slice(cursor).join(' ').trim() || fallbackName;
+
+    return { icon, name };
+}
+
 // ============================================================
 // CSS INJECTION
 // ============================================================
@@ -558,11 +588,14 @@ export async function openAgroWizard(tabName, deps) {
             const forcedCrop = forcedCropId
                 ? crops.find((crop) => String(crop.id) === String(forcedCropId))
                 : null;
-            const cropName = forcedCrop?.name || 'General / Sin cultivo';
+            const forcedDisplay = forcedCrop
+                ? getCropDisplayParts(forcedCrop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' })
+                : null;
+            const cropName = forcedDisplay?.name || 'General / Sin cultivo';
             const cropVariety = forcedCrop
                 ? (forcedCrop.variety || 'Cultivo fijo para este registro')
                 : 'No asociado a cultivo';
-            const cropIcon = forcedCrop?.icon || (forcedCrop ? '🌱' : '📋');
+            const cropIcon = forcedDisplay?.icon || (forcedCrop ? '🌱' : '📋');
             return `
                 <p class="wiz-question">Contexto de cultivo</p>
                 <div class="wiz-crops-grid">
@@ -585,10 +618,11 @@ export async function openAgroWizard(tabName, deps) {
         for (const crop of crops) {
             const id = String(crop.id);
             const sel = state.cropId === id ? 'selected' : '';
+            const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
             cardsHtml += `
                 <button type="button" class="wiz-crop-btn ${sel}" data-crop-id="${id}">
-                    <span class="wiz-crop-icon">${crop.icon || '🌱'}</span>
-                    <span class="wiz-crop-name">${escapeHtml(crop.name || 'Cultivo')}</span>
+                    <span class="wiz-crop-icon">${displayCrop.icon}</span>
+                    <span class="wiz-crop-name">${escapeHtml(displayCrop.name)}</span>
                     <span class="wiz-crop-variety">${escapeHtml(crop.variety || '')}</span>
                 </button>
             `;

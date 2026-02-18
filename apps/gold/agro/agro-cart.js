@@ -20,6 +20,32 @@ let _carts = [];
 let _activeCartId = null;
 let _activeCartItems = [];
 let _cartListenerAC = null;
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !CROP_TEXT_TOKEN_RE.test(value);
+}
+
+function getCropDisplayLabel(crop, fallbackIcon = '🌱', fallbackName = 'Cultivo') {
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const iconCandidate = iconFromName || String(crop?.icon || '').trim();
+    const icon = isCropEmojiToken(iconCandidate) ? iconCandidate : fallbackIcon;
+    const cleanName = tokens.slice(cursor).join(' ').trim() || fallbackName;
+    return `${icon} ${cleanName}`;
+}
 
 // ============================================================
 // INIT
@@ -388,7 +414,7 @@ function sanitize(str) {
 function getCropName(cropId) {
     if (!cropId) return 'General';
     const crop = (_cropsCache || []).find(c => String(c.id) === String(cropId));
-    return crop ? `${crop.icon || '🌱'} ${crop.name}` : 'Cultivo';
+    return crop ? getCropDisplayLabel(crop) : 'Cultivo';
 }
 
 function escapeHtml(text) {

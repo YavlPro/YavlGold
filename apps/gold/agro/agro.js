@@ -44,6 +44,10 @@ const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_i
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
+const CROP_DISPLAY_FALLBACK_ICON = '🌱';
+const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
+const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
+const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
 
 let selectedCropId = null;
 let editExchangeRates = { USD: 1, COP: null, VES: null };
@@ -51,6 +55,43 @@ let syncAgendaCropsFn = null;
 let syncCartCropsFn = null;
 const agroFocusOriginalPositions = new Map();
 let agroFocusModeBound = false;
+
+function isCropEmojiToken(token) {
+    const value = String(token || '').trim();
+    if (!value) return false;
+    return CROP_EMOJI_TOKEN_RE.test(value) && !CROP_TEXT_TOKEN_RE.test(value);
+}
+
+function normalizeCropIcon(icon, fallback = CROP_DISPLAY_FALLBACK_ICON) {
+    const value = String(icon || '').trim();
+    if (isCropEmojiToken(value)) return value;
+    return String(fallback || CROP_DISPLAY_FALLBACK_ICON).trim() || CROP_DISPLAY_FALLBACK_ICON;
+}
+
+function getCropDisplayParts(crop, options = {}) {
+    const fallbackIcon = normalizeCropIcon(options.fallbackIcon || CROP_DISPLAY_FALLBACK_ICON, CROP_DISPLAY_FALLBACK_ICON);
+    const fallbackName = String(options.fallbackName || CROP_DISPLAY_FALLBACK_NAME).trim() || CROP_DISPLAY_FALLBACK_NAME;
+    const rawName = String(crop?.name || '').trim();
+    const tokens = rawName ? rawName.split(/\s+/).filter(Boolean) : [];
+    const leadingIcons = [];
+    let cursor = 0;
+
+    while (cursor < tokens.length && isCropEmojiToken(tokens[cursor])) {
+        leadingIcons.push(tokens[cursor]);
+        cursor += 1;
+    }
+
+    const cleanedName = tokens.slice(cursor).join(' ').trim();
+    const iconFromName = leadingIcons.length ? leadingIcons[leadingIcons.length - 1] : '';
+    const icon = normalizeCropIcon(iconFromName || crop?.icon, fallbackIcon);
+    const name = cleanedName || (rawName && leadingIcons.length === 0 ? rawName : fallbackName);
+
+    return {
+        icon,
+        name,
+        label: `${icon} ${name}`
+    };
+}
 
 function syncLazyCropConsumers(nextCrops) {
     const safeCrops = Array.isArray(nextCrops) ? nextCrops : [];
@@ -800,7 +841,7 @@ async function populateCropDropdowns() {
     try {
         const { data: crops, error } = await supabase
             .from('agro_crops')
-            .select('id, name, variety')
+            .select('id, name, variety, icon')
             .is('deleted_at', null)
             .order('name');
 
@@ -832,11 +873,12 @@ async function populateCropDropdowns() {
 
             // Add crop options
             (crops || []).forEach(crop => {
+                const displayCrop = getCropDisplayParts(crop);
                 const option = document.createElement('option');
                 option.value = crop.id;
                 option.textContent = crop.variety
-                    ? `${crop.name} (${crop.variety})`
-                    : crop.name;
+                    ? `${displayCrop.label} (${crop.variety})`
+                    : displayCrop.label;
                 select.appendChild(option);
             });
 
@@ -3316,7 +3358,10 @@ async function duplicateFactureroItem(tabName, itemId) {
     if (!config) return;
 
     const cropHint = Array.isArray(cropsCache) && cropsCache.length
-        ? `\nCultivos disponibles:\n${cropsCache.map(crop => `${crop.id}: ${crop.name}`).join('\n')}`
+        ? `\nCultivos disponibles:\n${cropsCache.map((crop) => {
+            const displayCrop = getCropDisplayParts(crop);
+            return `${crop.id}: ${displayCrop.label}`;
+        }).join('\n')}`
         : '';
     const newCropId = prompt(`ID del cultivo destino (dejar vacio para general):${cropHint}`);
     if (newCropId === null) return;
@@ -3382,7 +3427,10 @@ function promptDestinationCropForGeneralMove(sourceTab) {
     }
 
     const cropHint = crops
-        .map((crop) => `${crop.id}: ${crop.icon || '🌱'} ${crop.name || 'Cultivo'}`)
+        .map((crop) => {
+            const displayCrop = getCropDisplayParts(crop);
+            return `${crop.id}: ${displayCrop.label}`;
+        })
         .join('\n');
     const raw = prompt(`ID del cultivo destino para mover este ${AGROLOG_TAB_LABELS[sourceTab] || sourceTab}:\n${cropHint}`);
     if (raw === null) return null;
@@ -4806,6 +4854,7 @@ function createGeneralViewCardElement() {
 }
 
 function createCropCardElement(crop, index) {
+    const displayCrop = getCropDisplayParts(crop);
     const delay = 4 + index; // Para animaciones escalonadas
     const card = document.createElement('div');
     card.className = `card crop-card animate-in delay-${delay}`;
@@ -4854,14 +4903,14 @@ function createCropCardElement(crop, index) {
 
     const cropIcon = document.createElement('div');
     cropIcon.className = 'crop-icon';
-    cropIcon.textContent = crop.icon || 'Seed';
+    cropIcon.textContent = displayCrop.icon;
 
     const details = document.createElement('div');
     details.className = 'crop-details-header';
 
     const name = document.createElement('span');
     name.className = 'crop-name';
-    name.textContent = crop.name || '';
+    name.textContent = displayCrop.name;
 
     const variety = document.createElement('span');
     variety.className = 'crop-variety';
@@ -6449,8 +6498,9 @@ function renderOpsCultivosPanel() {
     activeCrops.forEach((crop) => {
         const cropId = normalizeCropId(crop?.id);
         if (!cropId) return;
+        const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱' });
         activeRow.appendChild(buildOpsCultivoChip({
-            label: `${crop.icon || '🌱'} ${crop.name || 'Cultivo'}`,
+            label: displayCrop.label,
             meta: resolveOpsChipStatus(crop),
             cropId,
             selected: cropId === selectedId
@@ -6472,8 +6522,9 @@ function renderOpsCultivosPanel() {
         finishedCrops.forEach((crop) => {
             const cropId = normalizeCropId(crop?.id);
             if (!cropId) return;
+            const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌾' });
             finishedRow.appendChild(buildOpsCultivoChip({
-                label: `${crop.icon || '🌾'} ${crop.name || 'Cultivo'}`,
+                label: displayCrop.label,
                 meta: resolveOpsChipStatus(crop),
                 cropId,
                 selected: cropId === selectedId
