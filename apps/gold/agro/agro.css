@@ -1690,13 +1690,6 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.84);
 }
 
-.general-movement-scope {
-  white-space: normal;
-  line-height: 1.25;
-  font-size: 0.74rem;
-  color: rgba(200, 167, 82, 0.9);
-}
-
 .financial-tabs {
   gap: 0.45rem;
   padding-bottom: 0.15rem;

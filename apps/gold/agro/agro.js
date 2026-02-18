@@ -4800,9 +4800,6 @@ function createGeneralViewCardElement() {
             'general-movement-summary'
         )
     );
-    metaSection.append(
-        createMetaItem('Ámbito', 'Agro (no incluye Donaciones/Otros)', 'general-movement-scope')
-    );
 
     card.append(header, metaSection);
     return card;
@@ -6448,12 +6445,6 @@ function renderOpsCultivosPanel() {
     const selectedId = normalizeCropId(selectedCropId);
 
     activeRow.textContent = '';
-    activeRow.appendChild(buildOpsCultivoChip({
-        label: '📋 Vista General',
-        meta: 'Todos los movimientos',
-        cropId: null,
-        selected: !selectedId
-    }));
 
     activeCrops.forEach((crop) => {
         const cropId = normalizeCropId(crop?.id);

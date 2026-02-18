@@ -1,5 +1,41 @@
 ---
 
+## 🆕 SESIÓN: Quitar Ambigüedad Final (2026-02-18)
+
+### Diagnóstico
+- La línea `Ámbito: Agro (no incluye Donaciones/Otros)` en `Vista General` genera más preguntas de las que resuelve.
+- En Paso 1 del Centro de Operaciones, el chip `Vista General` dentro del selector puede parecer redundante/confuso cuando la comparación visual con un cultivo específico es similar.
+- Objetivo UX: reducir carga cognitiva y dejar solo decisiones claras (seleccionar cultivo real o ciclo finalizado).
+
+### Plan quirúrgico
+1. `apps/gold/agro/agro.js`
+- Eliminar la línea de copy `Ámbito...` de la card `Vista General` en Active Crops.
+- En el panel de cultivos de Paso 1, quitar el chip `Vista General` y mantener solo cultivos activos + finalizados.
+
+2. `apps/gold/agro/agro.css`
+- Eliminar estilo `.general-movement-scope` (queda sin uso).
+
+3. `apps/gold/agro/index.html`
+- Sin cambios funcionales requeridos para este ajuste.
+
+### DoD checklist
+- [x] Active Crops `Vista General` ya no muestra línea `Ámbito...`.
+- [x] Panel Paso 1 ya no renderiza chip `Vista General`.
+- [x] Selector Paso 1 mantiene chips de cultivos activos + acordeón de finalizados.
+- [x] Build `pnpm build:gold` ✅.
+
+### Resultado de ejecución
+- Build ejecutado: `pnpm build:gold` -> **OK**
+- Guardrails: `agent-guard`, `agent-report-check`, `check-dist-utf8` -> **OK**
+
+### Pruebas manuales sugeridas
+1. Confirmar que `Vista General` no muestra copy de ámbito.
+2. Confirmar que en Paso 1 solo salen cultivos reales y finalizados (sin `Vista General`).
+3. Cambiar entre cultivos y validar que el historial se diferencia.
+4. Ejecutar build y verificar consola sin errores.
+
+---
+
 ## 🆕 SESIÓN: Ajuste Final de Copy UX (2026-02-18)
 
 ### Diagnóstico
