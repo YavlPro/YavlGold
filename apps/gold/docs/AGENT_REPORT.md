@@ -1,5 +1,44 @@
 ---
 
+## 🆕 SESIÓN: Ajuste Final de Copy UX (2026-02-18)
+
+### Diagnóstico
+- Con Paso 1 reducido a `Cultivos`, mantener etiqueta de contexto + chip `Cultivos` resulta redundante y distrae de la acción real (elegir ciclo/cultivo).
+- En `Vista General` de Active Crops faltaba una aclaración explícita de alcance; el usuario no distingue rápido si el resumen incorpora `Donaciones/Otros`.
+
+### Plan quirúrgico
+1. `apps/gold/agro/index.html`
+- Cambiar label a `PASO 1 · Seleccionar cultivo`.
+- Quitar el chip/tag visible `Cultivos` en Paso 1 (mantener panel selector debajo).
+
+2. `apps/gold/agro/agro.js`
+- En card `Vista General` agregar copy de alcance:
+  - `Ámbito: Agro (no incluye Donaciones/Otros)`.
+- Mantener conteos y total del Centro de Operaciones intactos.
+
+3. `apps/gold/agro/agro.css`
+- Estilo mínimo para la línea de alcance en `Vista General`.
+
+### DoD checklist
+- [x] Paso 1 muestra `PASO 1 · Seleccionar cultivo`.
+- [x] Tag/chip `Cultivos` desaparece de Paso 1.
+- [x] Panel selector de cultivos (activos + finalizados) sigue operativo.
+- [x] `Vista General` muestra aclaración de alcance.
+- [x] Build `pnpm build:gold` ✅.
+
+### Resultado de ejecución
+- Build ejecutado: `pnpm build:gold` -> **OK**
+- Guardrails: `agent-guard`, `agent-report-check`, `check-dist-utf8` -> **OK**
+
+### Pruebas manuales sugeridas
+1. Validar encabezado nuevo de Paso 1.
+2. Confirmar ausencia del chip `Cultivos`.
+3. Confirmar funcionamiento normal del panel de selección.
+4. Verificar copy de alcance en `Vista General`.
+5. Ejecutar build y revisar consola.
+
+---
+
 ## 🆕 SESIÓN: Paso 1 Solo Cultivos + Totales de Movimientos (2026-02-18)
 
 ### Diagnóstico

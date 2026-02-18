@@ -4794,7 +4794,14 @@ function createGeneralViewCardElement() {
         createMetaItem('Movimientos', 'Todos los movimientos', 'meta-value')
     );
     metaSection.append(
-        createMetaItem('Resumen', formatOpsMovementSummaryLine(), 'general-movement-summary')
+        createMetaItem(
+            'Resumen',
+            formatOpsMovementSummaryLine(getOpsMovementSummaryState(), 'global', OPS_ACTIVE_CROPS_SUMMARY_ORDER),
+            'general-movement-summary'
+        )
+    );
+    metaSection.append(
+        createMetaItem('Ámbito', 'Agro (no incluye Donaciones/Otros)', 'general-movement-scope')
     );
 
     card.append(header, metaSection);
@@ -5970,6 +5977,7 @@ const OPS_LAST_CULTIVOS_TAB_KEY = 'YG_AGRO_OPS_LAST_CULTIVOS_TAB_V1';
 const OPS_CONTEXT_MODES = new Set(['cultivos']);
 const OPS_CONTEXT_TAB_MAP = Object.freeze({});
 const OPS_MOVEMENT_SUMMARY_ORDER = ['pendientes', 'ingresos', 'gastos', 'perdidas', 'transferencias', 'otros'];
+const OPS_ACTIVE_CROPS_SUMMARY_ORDER = ['pendientes', 'ingresos', 'gastos', 'perdidas'];
 const OPS_MOVEMENT_SUMMARY_LABELS = Object.freeze({
     pendientes: 'Pendientes',
     ingresos: 'Ingresos',
@@ -6202,12 +6210,12 @@ function getOpsMovementSummaryState() {
     return opsMovementSummaryState;
 }
 
-function formatOpsMovementSummaryLine(summaryState = getOpsMovementSummaryState(), scope = 'global') {
+function formatOpsMovementSummaryLine(summaryState = getOpsMovementSummaryState(), scope = 'global', order = OPS_MOVEMENT_SUMMARY_ORDER) {
     const sourceByTab = scope === 'context'
         ? (summaryState?.contextByTab || {})
         : (summaryState?.globalByTab || {});
 
-    const parts = OPS_MOVEMENT_SUMMARY_ORDER
+    const parts = (Array.isArray(order) ? order : OPS_MOVEMENT_SUMMARY_ORDER)
         .map((tabName) => {
             const count = Number(sourceByTab[tabName] || 0);
             if (count <= 0) return '';
@@ -6220,7 +6228,7 @@ function formatOpsMovementSummaryLine(summaryState = getOpsMovementSummaryState(
 
 function updateOpsMovementSummaryUI() {
     const summaryState = getOpsMovementSummaryState();
-    const summaryLine = formatOpsMovementSummaryLine(summaryState, 'global');
+    const summaryLine = formatOpsMovementSummaryLine(summaryState, 'global', OPS_ACTIVE_CROPS_SUMMARY_ORDER);
     const activeTab = String(getCurrentFinanceTab() || '').toLowerCase().trim();
     const hasActiveSummary = OPS_MOVEMENT_SUMMARY_ORDER.includes(activeTab);
     const total = hasActiveSummary
@@ -6590,7 +6598,6 @@ function applyOpsContextMode(nextMode, options = {}) {
 
 function initOperationsContextSteps() {
     const { tags } = getOpsContextElements();
-    if (!tags.length) return;
 
     tags.forEach((tag) => {
         if (tag.dataset.bound === '1') return;
