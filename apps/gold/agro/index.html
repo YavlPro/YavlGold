@@ -1570,6 +1570,25 @@
                         <button type="button" class="ops-context-tag" data-context-mode="otros"
                             aria-pressed="false">Otros</button>
                     </div>
+                    <div class="ops-cultivos-panel" id="ops-cultivos-panel" hidden inert>
+                        <div class="ops-cultivos-header">
+                            <p class="ops-cultivos-title">Seleccionar cultivo</p>
+                            <p class="ops-cultivos-subtitle">Usa Vista General o filtra por ciclo.</p>
+                        </div>
+                        <div class="ops-cultivos-chip-row" id="ops-cultivos-active-row" role="group"
+                            aria-label="Cultivos activos y vista general"></div>
+
+                        <details class="ops-cultivos-finished" id="ops-cultivos-finished">
+                            <summary class="ops-cultivos-finished-summary">
+                                <span>Ver historial de cultivos finalizados</span>
+                                <span class="ops-cultivos-count" id="ops-cultivos-finished-count">0</span>
+                            </summary>
+                            <div class="ops-cultivos-finished-body">
+                                <div class="ops-cultivos-chip-row" id="ops-cultivos-finished-row" role="group"
+                                    aria-label="Cultivos finalizados"></div>
+                            </div>
+                        </details>
+                    </div>
                 </div>
                 <div class="ops-step-block" aria-label="Paso 2 Qué ver">
                     <p class="ops-step-label">PASO 2 · Qué ver</p>

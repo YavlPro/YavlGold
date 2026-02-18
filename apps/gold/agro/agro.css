@@ -1536,6 +1536,145 @@ body.modal-open {
   box-shadow: 0 8px 20px rgba(200, 167, 82, 0.2);
 }
 
+.ops-cultivos-panel {
+  border: 1px solid rgba(200, 167, 82, 0.26);
+  border-radius: 14px;
+  padding: 0.75rem;
+  background: linear-gradient(180deg, rgba(200, 167, 82, 0.09), rgba(200, 167, 82, 0.02));
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ops-cultivos-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ops-cultivos-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 1px;
+  color: rgba(248, 224, 160, 0.95);
+  text-transform: uppercase;
+}
+
+.ops-cultivos-subtitle {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.ops-cultivos-chip-row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.1rem 0 0.2rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.ops-cultivo-chip {
+  border: 1px solid rgba(200, 167, 82, 0.34);
+  background: rgba(14, 14, 14, 0.88);
+  color: rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  min-height: 44px;
+  min-width: 132px;
+  padding: 0.45rem 0.8rem;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.05rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.ops-cultivo-chip:hover {
+  border-color: rgba(200, 167, 82, 0.62);
+  color: #fff;
+}
+
+.ops-cultivo-chip.is-active {
+  color: #0a0a0a;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c));
+  box-shadow: 0 8px 18px rgba(200, 167, 82, 0.26);
+}
+
+.ops-cultivo-chip[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ops-cultivo-chip-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.ops-cultivo-chip-meta {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.25px;
+  opacity: 0.82;
+}
+
+.ops-cultivos-finished {
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  border-radius: 12px;
+  background: rgba(12, 12, 12, 0.62);
+}
+
+.ops-cultivos-finished-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.58rem 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.ops-cultivos-finished-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ops-cultivos-finished[open] .ops-cultivos-finished-summary {
+  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+}
+
+.ops-cultivos-count {
+  border: 1px solid rgba(200, 167, 82, 0.4);
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  font-size: 0.72rem;
+  color: rgba(248, 224, 160, 0.92);
+  font-weight: 700;
+}
+
+.ops-cultivos-finished-body {
+  padding: 0.55rem 0.6rem 0.65rem;
+}
+
+.ops-cultivos-empty {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px dashed rgba(200, 167, 82, 0.2);
+  border-radius: 10px;
+  padding: 0.6rem;
+}
+
 .financial-tabs {
   gap: 0.45rem;
   padding-bottom: 0.15rem;
@@ -1854,6 +1993,16 @@ body.modal-open {
     padding: 0.52rem 0.9rem;
   }
 
+  .ops-cultivo-chip {
+    min-height: 46px;
+    min-width: 128px;
+    padding: 0.48rem 0.78rem;
+  }
+
+  .ops-cultivo-chip-name {
+    font-size: 0.82rem;
+  }
+
   .financial-tab-btn {
     padding: 0.32rem 0.6rem;
     font-size: 0.65rem;
@@ -1894,6 +2043,20 @@ body.modal-open {
 
   .ops-context-tag {
     min-height: 48px;
+  }
+
+  .ops-cultivos-panel {
+    padding: 0.68rem;
+  }
+
+  .ops-cultivos-finished-summary {
+    min-height: 48px;
+    padding: 0.58rem 0.62rem;
+  }
+
+  .ops-cultivo-chip {
+    min-height: 48px;
+    min-width: 122px;
   }
 
   .financial-operations-card .facturero-item {

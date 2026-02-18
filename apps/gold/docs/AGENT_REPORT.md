@@ -1,5 +1,64 @@
 ---
 
+## 🆕 SESIÓN: Paso 1 Cultivos con Panel + Finalizados (2026-02-17)
+
+### Diagnóstico
+- Se removió correctamente el selector en `Active Crops` para que esas cards sean informativas, pero faltaba un punto de selección explícito dentro del flujo guiado del Centro de Operaciones.
+- Requisito funcional: cuando `Paso 1 = Cultivos`, el usuario debe poder seleccionar `Vista General`, cultivos activos y cultivos finalizados desde el propio panel de operaciones, sin wizard y sin alterar la base legacy.
+- El mecanismo legacy ya existe y debe reutilizarse:
+  - `setSelectedCropId(...)`
+  - evento `agro:crop:changed`
+  - refresco vía `refreshFactureroForSelectedCrop()`
+
+### Plan quirúrgico
+1. `apps/gold/agro/index.html`
+- Añadir contenedor `ops-cultivos-panel` bajo los tags de Paso 1.
+- Incluir:
+  - fila de chips para `Vista General + activos`
+  - acordeón colapsable para `finalizados`
+
+2. `apps/gold/agro/agro.js`
+- Crear renderers del panel:
+  - `renderOpsCultivosPanel()`
+  - chips activos/finalizados con estado seleccionado.
+- Reusar `splitCropsByCycle(cropsCache)` para obtener activos/finalizados.
+- Click en chip:
+  - general -> `setSelectedCropId(null)`
+  - cultivo -> `setSelectedCropId(cropId)`
+- Mostrar panel solo cuando `opsContextMode === 'cultivos'`.
+- Mantener forzado de tabs en no-cultivos (`transferencias` / `otros`) y persistencias existentes.
+
+3. `apps/gold/agro/agro.css`
+- Estilos mínimos para panel de chips y acordeón finalizados en estética dark/gold.
+
+### DoD checklist
+- [x] En `Paso 1 = Cultivos`, aparece panel con `Vista General + activos`.
+- [x] Seleccionar `Vista General` deja `selectedCropId = null` y usa vista sin filtro.
+- [x] Seleccionar activo/finalizado aplica `selectedCropId` vía mecanismo legacy.
+- [x] Acordeón “Ver historial de cultivos finalizados” aparece y funciona.
+- [x] En `Donaciones/Otros`, panel de cultivos se oculta y se mantiene forcing de tabs.
+- [x] `Active Crops` sigue informativo (sin selector).
+- [x] `pnpm build:gold` ✅.
+
+### Resultado de ejecución
+- Build ejecutado: `pnpm build:gold` -> **OK**
+- Guardrails: `agent-guard`, `agent-report-check`, `check-dist-utf8` -> **OK**
+
+### Riesgos y mitigación
+- **Riesgo:** reintroducir selector en Active Crops por confusión de contexto.
+  - **Mitigación:** encapsular selección únicamente en `ops-cultivos-panel`.
+- **Riesgo:** inconsistencia visual al cambiar `selectedCropId`.
+  - **Mitigación:** re-render del panel en `agro:crop:changed` y en `AGRO_CROPS_READY`.
+
+### Pruebas manuales sugeridas
+1. Paso 1 Cultivos -> seleccionar `Vista General` -> historial sin filtro.
+2. Paso 1 Cultivos -> seleccionar cultivo activo -> historial filtrado.
+3. Abrir acordeón finalizados -> seleccionar ciclo finalizado -> historial filtrado.
+4. Paso 1 Donaciones/Otros -> panel oculto + tabs forzados.
+5. Build y consola sin errores.
+
+---
+
 ## 🆕 SESIÓN: Active Crops Sin Selector (2026-02-17)
 
 ### Diagnóstico

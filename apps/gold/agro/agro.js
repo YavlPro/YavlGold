@@ -4456,6 +4456,11 @@ if (typeof document !== 'undefined') {
         refreshFactureroForSelectedCrop();
     });
 }
+if (typeof window !== 'undefined') {
+    window.addEventListener('agro:crop:changed', () => {
+        refreshFactureroForSelectedCrop();
+    });
+}
 
 // Expose globally
 window.populateCropDropdowns = populateCropDropdowns;
@@ -5960,6 +5965,7 @@ const OPS_CONTEXT_TAB_MAP = Object.freeze({
 let opsContextMode = 'cultivos';
 let opsLastCultivosTab = 'gastos';
 let opsIsApplyingContext = false;
+let opsCultivosPanelEventsBound = false;
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -6138,7 +6144,12 @@ function getOpsForcedTab(mode = opsContextMode) {
 
 function getOpsContextElements() {
     return {
-        tags: Array.from(document.querySelectorAll('.ops-context-tag[data-context-mode]'))
+        tags: Array.from(document.querySelectorAll('.ops-context-tag[data-context-mode]')),
+        panel: document.getElementById('ops-cultivos-panel'),
+        activeRow: document.getElementById('ops-cultivos-active-row'),
+        finishedWrap: document.getElementById('ops-cultivos-finished'),
+        finishedRow: document.getElementById('ops-cultivos-finished-row'),
+        finishedCount: document.getElementById('ops-cultivos-finished-count')
     };
 }
 
@@ -6150,6 +6161,134 @@ function syncOpsContextTagsUI() {
         tag.classList.toggle('is-active', isActive);
         tag.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
+}
+
+function buildOpsCultivoChip({ label, meta = '', cropId = null, selected = false, disabled = false }) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'ops-cultivo-chip';
+    if (selected) {
+        chip.classList.add('is-active');
+    }
+    if (disabled) {
+        chip.disabled = true;
+    }
+    chip.dataset.cropId = normalizeCropId(cropId) || AGRO_GENERAL_VIEW_ID;
+    chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'ops-cultivo-chip-name';
+    labelEl.textContent = label;
+
+    const metaEl = document.createElement('span');
+    metaEl.className = 'ops-cultivo-chip-meta';
+    metaEl.textContent = meta;
+
+    chip.append(labelEl, metaEl);
+    return chip;
+}
+
+function buildOpsCultivosEmptyMessage(text) {
+    const empty = document.createElement('p');
+    empty.className = 'ops-cultivos-empty';
+    empty.textContent = text;
+    return empty;
+}
+
+function selectOpsCultivo(cropId) {
+    const normalized = normalizeCropId(cropId);
+    const changed = setSelectedCropId(normalized);
+    if (!changed) {
+        refreshFactureroForSelectedCrop();
+        renderOpsCultivosPanel();
+    }
+}
+
+function resolveOpsChipStatus(crop) {
+    const templateDuration = getTemplateDurationForCrop(crop);
+    const progress = computeCropProgress(crop, templateDuration);
+    const status = resolveCropStatus(crop, progress);
+    return getCropStatusMeta(status).text || 'Ciclo';
+}
+
+function renderOpsCultivosPanel() {
+    const { panel, activeRow, finishedWrap, finishedRow, finishedCount } = getOpsContextElements();
+    if (!panel || !activeRow || !finishedWrap || !finishedRow) return;
+    if (opsContextMode !== 'cultivos') return;
+
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
+    const selectedId = normalizeCropId(selectedCropId);
+
+    activeRow.textContent = '';
+    activeRow.appendChild(buildOpsCultivoChip({
+        label: '📋 Vista General',
+        meta: 'Con y sin cultivo',
+        cropId: null,
+        selected: !selectedId
+    }));
+
+    activeCrops.forEach((crop) => {
+        const cropId = normalizeCropId(crop?.id);
+        if (!cropId) return;
+        activeRow.appendChild(buildOpsCultivoChip({
+            label: `${crop.icon || '🌱'} ${crop.name || 'Cultivo'}`,
+            meta: resolveOpsChipStatus(crop),
+            cropId,
+            selected: cropId === selectedId
+        }));
+    });
+
+    if (activeCrops.length === 0) {
+        activeRow.appendChild(buildOpsCultivosEmptyMessage('No hay ciclos activos.'));
+    }
+
+    finishedRow.textContent = '';
+    if (finishedCount) {
+        finishedCount.textContent = String(finishedCrops.length);
+    }
+
+    if (finishedCrops.length === 0) {
+        finishedRow.appendChild(buildOpsCultivosEmptyMessage('Sin cultivos finalizados.'));
+    } else {
+        finishedCrops.forEach((crop) => {
+            const cropId = normalizeCropId(crop?.id);
+            if (!cropId) return;
+            finishedRow.appendChild(buildOpsCultivoChip({
+                label: `${crop.icon || '🌾'} ${crop.name || 'Cultivo'}`,
+                meta: resolveOpsChipStatus(crop),
+                cropId,
+                selected: cropId === selectedId
+            }));
+        });
+    }
+}
+
+function bindOpsCultivosPanelEvents() {
+    if (opsCultivosPanelEventsBound) return;
+    const { panel, activeRow, finishedRow } = getOpsContextElements();
+    if (!panel || !activeRow || !finishedRow) return;
+
+    opsCultivosPanelEventsBound = true;
+    const handleClick = (event) => {
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip || chip.disabled) return;
+        const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
+        selectOpsCultivo(cropId);
+    };
+
+    activeRow.addEventListener('click', handleClick);
+    finishedRow.addEventListener('click', handleClick);
+}
+
+function syncOpsCultivosPanelVisibility() {
+    const { panel, finishedWrap } = getOpsContextElements();
+    if (!panel) return;
+    const showPanel = opsContextMode === 'cultivos';
+    setElementHiddenInert(panel, !showPanel);
+    if (!showPanel && finishedWrap) {
+        finishedWrap.open = false;
+    }
 }
 
 function getCurrentFinanceTab() {
@@ -6191,6 +6330,10 @@ function applyOpsContextMode(nextMode, options = {}) {
     opsContextMode = mode;
     writeOpsContextMode(mode);
     syncOpsContextTagsUI();
+    syncOpsCultivosPanelVisibility();
+    if (mode === 'cultivos') {
+        renderOpsCultivosPanel();
+    }
 
     if (mode === 'cultivos') {
         const restoreTab = readOpsLastCultivosTab() || normalizeOpsCultivosTab(readStoredTab()) || 'gastos';
@@ -6236,9 +6379,18 @@ function initOperationsContextSteps() {
         });
     });
 
+    bindOpsCultivosPanelEvents();
+    if (typeof window !== 'undefined' && !window.__agroOpsCultivosPanelBound) {
+        window.__agroOpsCultivosPanelBound = true;
+        window.addEventListener('agro:crop:changed', renderOpsCultivosPanel);
+        window.addEventListener(AGRO_CROPS_READY_EVENT, renderOpsCultivosPanel);
+    }
+
     opsContextMode = readOpsContextMode();
     opsLastCultivosTab = readOpsLastCultivosTab() || normalizeOpsCultivosTab(readStoredTab()) || 'gastos';
     syncOpsContextTagsUI();
+    syncOpsCultivosPanelVisibility();
+    renderOpsCultivosPanel();
     applyOpsContextMode(opsContextMode, { refresh: false, focus: false });
 }
 
