@@ -58,6 +58,25 @@
 - NO ejecutar `git add/commit/push`.
 - Al final solo sugerir comandos: `git status` → `git add ...` → `git commit -m "..."` → `git push`.
 
+### 1.5 Bloque copy/paste para subir archivos (usuario)
+- Entregar siempre comandos listos para PowerShell sin ejecutarlos.
+- Opción A (subir archivos puntuales):
+  ```powershell
+  git status
+  $branch = git branch --show-current
+  git add <archivo1> <archivo2> <archivo3>
+  git commit -m "chore: describe tus cambios"
+  git push -u origin $branch
+  ```
+- Opción B (subir todo lo pendiente):
+  ```powershell
+  git status
+  $branch = git branch --show-current
+  git add -A
+  git commit -m "chore: describe tus cambios"
+  git push -u origin $branch
+  ```
+
 ---
 
 ## 2) Visual DNA 9.4 (UI/UX obligatoria)
