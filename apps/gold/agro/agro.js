@@ -294,13 +294,8 @@ function applySelectedCropUI() {
     const cards = document.querySelectorAll('.crop-card');
     if (!cards.length) return;
     cards.forEach((card) => {
-        const cardId = normalizeCropId(card.dataset.cropId);
-        const isGeneralCard = card.dataset.generalView === '1' || cardId === AGRO_GENERAL_VIEW_ID;
-        const isSelected = isGeneralCard
-            ? !selectedCropId
-            : !!(selectedCropId && cardId && cardId === selectedCropId);
-        card.classList.toggle('is-selected', isSelected);
-        card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        card.classList.remove('is-selected');
+        card.removeAttribute('aria-pressed');
     });
 }
 
@@ -4295,33 +4290,6 @@ function setupCropActionListeners() {
             return;
         }
 
-        const cropCard = e.target.closest('.crop-card');
-        if (cropCard) {
-            if (cropCard.dataset.generalView === '1' || cropCard.dataset.cropId === AGRO_GENERAL_VIEW_ID) {
-                setSelectedCropId(null);
-                return;
-            }
-            const cropId = cropCard.dataset.cropId;
-            if (cropId) {
-                setSelectedCropId(cropId);
-            }
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        const target = e.target;
-        if (!(target instanceof HTMLElement)) return;
-        if (!target.classList.contains('crop-card')) return;
-        if (target.dataset.generalView === '1' || target.dataset.cropId === AGRO_GENERAL_VIEW_ID) {
-            e.preventDefault();
-            setSelectedCropId(null);
-            return;
-        }
-        const cropId = target.dataset.cropId;
-        if (!cropId) return;
-        e.preventDefault();
-        setSelectedCropId(cropId);
     });
 
     console.info('[AGRO] Crop action listeners initialized');
@@ -4785,8 +4753,6 @@ function createGeneralViewCardElement() {
     card.className = 'card crop-card animate-in delay-4';
     card.dataset.cropId = AGRO_GENERAL_VIEW_ID;
     card.dataset.generalView = '1';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
 
     const header = document.createElement('div');
     header.className = 'crop-card-header';
@@ -4820,9 +4786,6 @@ function createGeneralViewCardElement() {
     );
 
     card.append(header, metaSection);
-    const isSelected = !selectedCropId;
-    card.classList.toggle('is-selected', isSelected);
-    card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     return card;
 }
 
@@ -4834,11 +4797,6 @@ function createCropCardElement(crop, index) {
     if (cropId) {
         card.dataset.cropId = cropId;
     }
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    const isSelected = !!(selectedCropId && cropId && cropId === selectedCropId);
-    card.classList.toggle('is-selected', isSelected);
-    card.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
 
     const actions = document.createElement('div');
     actions.className = 'crop-card-actions';

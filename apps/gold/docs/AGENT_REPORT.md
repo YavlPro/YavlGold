@@ -1,5 +1,48 @@
 ---
 
+## 🆕 SESIÓN: Active Crops Sin Selector (2026-02-17)
+
+### Diagnóstico
+- El comportamiento selector de ciclo está en las tarjetas de `Active Crops` (`.crop-card`): click/teclado llama `setSelectedCropId(...)`, dispara `agro:crop:changed` y aplica estado visual `.is-selected`.
+- Ese selector embebido en cards mezcla dos responsabilidades:
+  - panel informativo de cultivos,
+  - control de contexto/filtro del historial.
+- Requisito nuevo: conservar las cards como vista informativa, pero quitar completamente su rol de selector.
+
+### Plan quirúrgico
+1. `apps/gold/agro/agro.js`
+- Eliminar en `setupCropActionListeners()` los bloques de click/keydown que cambian `selectedCropId` al tocar `.crop-card`.
+- Quitar marcado visual de selección en creación/render de cards (`createGeneralViewCardElement`, `createCropCardElement`) y en `applySelectedCropUI`.
+- Mantener handlers de acciones por botón (`editar`, `eliminar`, `reporte`) sin cambios.
+
+2. `apps/gold/agro/agro.css`
+- Quitar estilos de estado seleccionado `.crop-card.is-selected` y su indicador.
+- Cambiar cursor de `.crop-card` a no-interactivo para evitar semántica de selector.
+
+3. `apps/gold/agro/index.html`
+- Sin cambios estructurales (solo verificar que no tenga onclick selector inline).
+
+### DoD checklist
+- [ ] Click en card de Active Crops no cambia `selectedCropId`.
+- [ ] Enter/Space sobre card no cambia `selectedCropId`.
+- [ ] Cards no muestran estado visual “selected”.
+- [ ] Centro de Operaciones Paso 1/2 permanece intacto.
+- [ ] Build `pnpm build:gold` en verde.
+
+### Riesgos y mitigación
+- **Riesgo:** perder acciones útiles de cards.
+  - **Mitigación:** solo remover selección, mantener botones de acciones existentes.
+- **Riesgo:** regresión en refrescos del historial.
+  - **Mitigación:** no tocar `refreshFactureroHistory()` ni lógica de tabs/contexto.
+
+### Pruebas manuales sugeridas
+1. Click en `Vista General` / `Maíz` / `Batata` no altera filtros de historial.
+2. Botones `Editar/Eliminar/Reporte` en cards siguen funcionando.
+3. Paso 1/2 en Centro de Operaciones sigue normal.
+4. Consola sin errores.
+
+---
+
 ## 🆕 SESIÓN: Paso 1 Desacoplado del Select (2026-02-17)
 
 ### Diagnóstico
