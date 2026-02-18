@@ -1,5 +1,54 @@
 ---
 
+## 🆕 SESIÓN: Paso 1 Solo Cultivos + Totales de Movimientos (2026-02-18)
+
+### Diagnóstico
+- Tener `Donaciones` y `Otros` en Paso 1 duplica decisiones que ya existen en Paso 2 (tabs legacy), y agrega fricción innecesaria.
+- El copy actual de `Vista General` (`Con y sin cultivo`) no comunica claramente que agrupa todos los movimientos financieros.
+- Falta un total visible y dinámico en Centro de Operaciones para dar contexto inmediato del volumen de registros.
+
+### Plan quirúrgico
+1. `apps/gold/agro/index.html`
+- Dejar Paso 1 con un solo tag: `Cultivos`.
+- Agregar línea de estado en Centro de Operaciones: `Todos los movimientos (Total: N)`.
+
+2. `apps/gold/agro/agro.js`
+- Mantener panel de cultivos debajo de Paso 1 (chips activos + acordeón finalizados) sin cambios de comportamiento.
+- Actualizar tarjeta `Vista General` de Active Crops:
+  - texto `Todos los movimientos`
+  - resumen por categoría (Pendientes/Ingresos/Gastos/Pérdidas/Donaciones/Otros).
+- Implementar conteos livianos (`head:true, count:'exact'`) con filtros legacy:
+  - `deleted_at IS NULL`
+  - `reverted_at IS NULL` cuando aplique
+  - filtro por `crop_id` cuando hay cultivo seleccionado y corresponde
+  - `Vista General` total sin filtro de cultivo.
+- Actualizar total `N` al cambiar tab, cultivo y en refrescos de historial.
+
+3. `apps/gold/agro/agro.css`
+- Estilos mínimos para línea total en ops y texto-resumen de `Vista General`.
+
+### DoD checklist
+- [x] Paso 1 muestra solo `Cultivos` (sin `Donaciones`/`Otros`).
+- [x] Panel de cultivos de Paso 1 sigue funcionando (activos + finalizados).
+- [x] Active Crops `Vista General` muestra `Todos los movimientos` + conteos por categoría.
+- [x] Active Crops sigue informativo (sin selector/filtros por click).
+- [x] Centro de Operaciones muestra `Todos los movimientos (Total: N)`.
+- [x] `N` se actualiza al cambiar tab, cambiar cultivo y refrescar historial.
+- [x] `pnpm build:gold` ✅.
+
+### Resultado de ejecución
+- Build ejecutado: `pnpm build:gold` -> **OK**
+- Guardrails: `agent-guard`, `agent-report-check`, `check-dist-utf8` -> **OK**
+
+### Pruebas manuales sugeridas
+1. Verificar que Paso 1 tenga solo el tag `Cultivos`.
+2. Probar selector de cultivos (chips activos/finalizados) debajo de Paso 1.
+3. Revisar `Vista General` en Active Crops: nuevo copy + resumen por categoría.
+4. Cambiar tab/cultivo y confirmar actualización de `Total: N`.
+5. Confirmar consola limpia y build en verde.
+
+---
+
 ## 🆕 SESIÓN: Paso 1 Cultivos con Panel + Finalizados (2026-02-17)
 
 ### Diagnóstico

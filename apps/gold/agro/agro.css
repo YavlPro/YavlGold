@@ -1478,6 +1478,14 @@ body.modal-open {
   font-size: 0.78rem;
 }
 
+.ops-total-display {
+  margin: 0.3rem 0 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(248, 224, 160, 0.9);
+  letter-spacing: 0.2px;
+}
+
 .ops-context-steps {
   display: flex;
   flex-direction: column;
@@ -1673,6 +1681,13 @@ body.modal-open {
   border: 1px dashed rgba(200, 167, 82, 0.2);
   border-radius: 10px;
   padding: 0.6rem;
+}
+
+.general-movement-summary {
+  white-space: normal;
+  line-height: 1.35;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.84);
 }
 
 .financial-tabs {
@@ -1993,6 +2008,10 @@ body.modal-open {
     padding: 0.52rem 0.9rem;
   }
 
+  .ops-total-display {
+    font-size: 0.8rem;
+  }
+
   .ops-cultivo-chip {
     min-height: 46px;
     min-width: 128px;
@@ -2043,6 +2062,10 @@ body.modal-open {
 
   .ops-context-tag {
     min-height: 48px;
+  }
+
+  .ops-total-display {
+    font-size: 0.78rem;
   }
 
   .ops-cultivos-panel {
