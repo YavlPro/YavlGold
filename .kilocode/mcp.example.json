@@ -1,20 +1,12 @@
 {
   "mcpServers": {
-    "git": {
-      "command": "uvx",
-      "args": [
-        "mcp-server-git",
-        "--repository",
-        "."
-      ]
-    },
     "supabase": {
       "command": "npx",
       "args": [
         "-y",
         "@supabase/mcp-server-supabase@0.5.5",
         "--access-token",
-        "${env:SUPABASE_ACCESS_TOKEN}"
+        "REPLACE_WITH_SUPABASE_ACCESS_TOKEN"
       ]
     }
   }

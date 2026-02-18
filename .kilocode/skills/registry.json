@@ -1,0 +1,122 @@
+[
+  {
+    "id": "canvas-design",
+    "path": ".kilocode/skills/canvas-design/SKILL.md",
+    "category": "creative-media",
+    "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "content-research-writer",
+    "path": ".kilocode/skills/content-research-writer/SKILL.md",
+    "category": "communication-writing",
+    "description": "Assists in writing high-quality content by conducting research, adding citations, improving hooks, iterating on outlines, and providing real-time feedback on each section. Transforms your writing process from solo effort to collaborative partnership.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "create-pull-request",
+    "path": ".kilocode/skills/create-pull-request/SKILL.md",
+    "category": "development",
+    "description": "Create a GitHub pull request following project conventions. Use when the user asks to create a PR, submit changes for review, or open a pull request. Handles commit analysis, branch management, and PR creation using the gh CLI tool.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "file-organizer",
+    "path": ".kilocode/skills/file-organizer/SKILL.md",
+    "category": "productivity-organization",
+    "description": "Intelligently organizes your files and folders across your computer by understanding context, finding duplicates, suggesting better structures, and automating cleanup tasks. Reduces cognitive load and keeps your digital workspace tidy without manual effort.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "internal-comms",
+    "path": ".kilocode/skills/internal-comms/SKILL.md",
+    "category": "business-marketing",
+    "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. The agent should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters, FAQs, incident reports, project updates, etc.).",
+    "has_examples": true,
+    "has_scripts": false
+  },
+  {
+    "id": "langsmith-fetch",
+    "path": ".kilocode/skills/langsmith-fetch/SKILL.md",
+    "category": "development",
+    "description": "Debug LangChain and LangGraph agents by fetching execution traces from LangSmith Studio. Use when debugging agent behavior, investigating errors, analyzing tool calls, checking memory operations, or examining agent performance. Automatically fetches recent traces and analyzes execution patterns. Requires langsmith-fetch CLI installed.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "lead-research-assistant",
+    "path": ".kilocode/skills/lead-research-assistant/SKILL.md",
+    "category": "business-marketing",
+    "description": "Identifies high-quality leads for your product or service by analyzing your business, searching for target companies, and providing actionable contact strategies. Perfect for sales, business development, and marketing professionals.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "mcp-builder",
+    "path": ".kilocode/skills/mcp-builder/SKILL.md",
+    "category": "development",
+    "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
+    "has_examples": false,
+    "has_scripts": true
+  },
+  {
+    "id": "meeting-insights-analyzer",
+    "path": ".kilocode/skills/meeting-insights-analyzer/SKILL.md",
+    "category": "communication-writing",
+    "description": "Analyzes meeting transcripts and recordings to uncover behavioral patterns, communication insights, and actionable feedback. Identifies when you avoid conflict, use filler words, dominate conversations, or miss opportunities to listen. Perfect for professionals seeking to improve their communication and leadership skills.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "skill-creator",
+    "path": ".kilocode/skills/skill-creator/SKILL.md",
+    "category": "development",
+    "description": "Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Kilo's capabilities with specialized knowledge, workflows, or tool integrations.",
+    "has_examples": false,
+    "has_scripts": true
+  },
+  {
+    "id": "skill-share",
+    "path": ".kilocode/skills/skill-share/SKILL.md",
+    "category": "development",
+    "description": "A skill that creates new agent skills and automatically shares them on Slack using Rube for seamless team collaboration and skill discovery.",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "vercel-deploy",
+    "path": ".kilocode/skills/vercel-deploy/SKILL.md",
+    "category": "development",
+    "description": "Deploy applications and websites to Vercel. Use this skill when the user requests deployment actions such as \"Deploy my app\", \"Deploy this to production\", \"Create a preview deployment\", \"Deploy and give me the link\", or \"Push this live\". No authentication required - returns preview URL and claimable deployment link.",
+    "has_examples": false,
+    "has_scripts": true
+  },
+  {
+    "id": "video-downloader",
+    "path": ".kilocode/skills/video-downloader/SKILL.md",
+    "category": "creative-media",
+    "description": "Download YouTube videos with customizable quality and format options. Use this skill when the user asks to download, save, or grab YouTube videos. Supports various quality settings (best, 1080p, 720p, 480p, 360p), multiple formats (mp4, webm, mkv), and audio-only downloads as MP3.",
+    "has_examples": false,
+    "has_scripts": true
+  },
+  {
+    "id": "web-design-guidelines",
+    "path": ".kilocode/skills/web-design-guidelines/SKILL.md",
+    "category": "development",
+    "description": "Review UI code for Web Interface Guidelines compliance. Use when asked to \"review my UI\", \"check accessibility\", \"audit design\", \"review UX\", or \"check my site against best practices\".",
+    "has_examples": false,
+    "has_scripts": false
+  },
+  {
+    "id": "webapp-testing",
+    "path": ".kilocode/skills/webapp-testing/SKILL.md",
+    "category": "development",
+    "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
+    "has_examples": true,
+    "has_scripts": true
+  }
+]
