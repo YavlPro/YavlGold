@@ -1,5 +1,57 @@
 ---
 
+## 🆕 SESIÓN: Paso 1 Desacoplado del Select (2026-02-17)
+
+### Diagnóstico
+- La franja Paso 1 quedó acoplada a `#ops-crop-select` (`index.html` + `agro.js`), obligando una selección local para operar en `cultivos`.
+- Ese acople contradice el objetivo legacy-first: el historial debe seguir usando la selección global existente (`selectedCropId` del flujo legacy) y, si no existe selección, caer en Vista General sin bloqueo.
+- Riesgo detectado: forzar selección o mostrar “No hay ciclos activos” desde Paso 1 puede ocultar historial válido y alterar comportamiento estable del legacy.
+- Decisión: el sistema legacy permanece como base hasta una V2 validada al 100%; solo se permiten capas de UX no invasivas.
+
+### Plan quirúrgico
+1. `apps/gold/agro/index.html`
+- Eliminar markup de `#ops-crop-select` y wrapper `ops-crop-context`.
+- Dejar Paso 1 únicamente con tags `Cultivos | Donaciones | Otros`.
+
+2. `apps/gold/agro/agro.css`
+- Remover estilos huérfanos de `ops-crop-context`, `ops-crop-label`, `#ops-crop-select`, `ops-crop-message`.
+- Conservar estilos de franja/tags.
+
+3. `apps/gold/agro/agro.js`
+- Quitar wiring y helpers dependientes del select.
+- En contexto `cultivos`: no bloquear por ausencia de cultivo.
+  - Si hay `selectedCropId` global: filtrar como legacy.
+  - Si no hay `selectedCropId`: no filtrar (Vista General).
+- Mantener forzado de tabs en contextos no-cultivos:
+  - `donaciones` -> `transferencias`
+  - `otros` -> `otros`
+- Mantener persistencia de `paso1Context` y `lastTabCultivos` sin contaminar con tabs no-cultivos.
+
+### DoD checklist (ajustado)
+- [ ] Remover completamente `#ops-crop-select` del UI y estilos.
+- [ ] Paso 1 queda solo con tags (sin selector local).
+- [ ] `opsContextMode === 'cultivos'` no bloquea si `selectedCropId` es null.
+- [ ] En `cultivos` sin `selectedCropId`, historial usa Vista General (sin filtro crop).
+- [ ] En `donaciones/otros`, no filtra por cultivo y fuerza tabs actuales.
+- [ ] Persistencia mantiene `paso1Context` y `lastTabCultivos` aislado.
+- [ ] Guard anti-bucle `opsIsApplyingContext` intacto.
+- [ ] `pnpm build:gold` en verde.
+
+### Riesgos y mitigación
+- **Riesgo:** pérdida de filtros esperados al quitar select local.
+  - **Mitigación:** no tocar `selectedCropId` legacy ni `agro:crop:changed`; solo eliminar la capa local.
+- **Riesgo:** comportamiento inconsistente al cambiar contexto.
+  - **Mitigación:** seguir usando `switchTab()` como fuente única y refrescos existentes.
+
+### Pruebas manuales sugeridas
+1. Paso 1 = Cultivos con cultivo seleccionado -> filtra por cultivo.
+2. Paso 1 = Cultivos sin cultivo seleccionado -> Vista General (sin bloqueo).
+3. Paso 1 = Donaciones -> tab `transferencias`.
+4. Paso 1 = Otros -> tab `otros`.
+5. Reload conserva `paso1Context` y `lastTabCultivos`.
+
+---
+
 ## 🆕 SESIÓN: Centro de Operaciones Legacy + Paso 1/Paso 2 (2026-02-17)
 
 ### Diagnóstico (obligatorio antes de tocar runtime)

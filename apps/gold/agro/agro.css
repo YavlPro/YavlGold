@@ -1554,48 +1554,6 @@ body.modal-open {
   box-shadow: 0 8px 20px rgba(200, 167, 82, 0.2);
 }
 
-.ops-crop-context {
-  display: grid;
-  gap: 0.35rem;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid rgba(200, 167, 82, 0.18);
-  border-radius: 12px;
-  background: rgba(12, 12, 12, 0.55);
-}
-
-.ops-crop-context.is-hidden {
-  display: none;
-}
-
-.ops-crop-context.is-disabled {
-  border-color: rgba(248, 113, 113, 0.35);
-  background: rgba(248, 113, 113, 0.05);
-}
-
-.ops-crop-label {
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.72);
-  font-weight: 600;
-}
-
-#ops-crop-select {
-  min-height: 42px;
-  padding: 0.5rem 0.75rem !important;
-  font-size: 0.92rem;
-}
-
-#ops-crop-select:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.ops-crop-message {
-  margin: 0;
-  font-size: 0.72rem;
-  color: #fca5a5;
-  font-weight: 600;
-}
-
 .financial-tabs {
   gap: 0.45rem;
   padding-bottom: 0.15rem;
@@ -1912,10 +1870,6 @@ body.modal-open {
   .ops-context-tag {
     min-height: 46px;
     padding: 0.52rem 0.9rem;
-  }
-
-  #ops-crop-select {
-    min-height: 46px;
   }
 
   .financial-tab-btn {

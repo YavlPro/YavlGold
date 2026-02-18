@@ -2412,15 +2412,6 @@ async function refreshFactureroHistory(tabName, options = {}) {
     const debugEnabled = typeof window !== 'undefined'
         && new URLSearchParams(window.location.search).get('debug') === '1';
 
-    if (shouldRequireCultivoFilter(tabName)) {
-        const hasSelection = ensureOpsCultivosSelection({ silent: true, preferredCropId: readOpsLastCultivosCropId() });
-        renderOpsCropSelector();
-        if (!hasSelection) {
-            renderNoActiveCyclesHistoryState(config);
-            return;
-        }
-    }
-
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -4494,10 +4485,6 @@ function refreshFactureroForSelectedCrop() {
 
 if (typeof document !== 'undefined') {
     document.addEventListener('agro:crop:changed', () => {
-        if (opsContextMode === 'cultivos') {
-            writeOpsLastCultivosCropId(selectedCropId);
-        }
-        renderOpsCropSelector();
         refreshFactureroForSelectedCrop();
     });
 }
@@ -6006,7 +5993,6 @@ const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', '
 const OPS_CULTIVOS_ALLOWED_TABS = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas']);
 const OPS_CONTEXT_STORAGE_KEY = 'paso1Context';
 const OPS_LAST_CULTIVOS_TAB_KEY = 'YG_AGRO_OPS_LAST_CULTIVOS_TAB_V1';
-const OPS_LAST_CULTIVOS_CROP_KEY = 'YG_AGRO_OPS_LAST_CULTIVOS_CROP_V1';
 const OPS_CONTEXT_MODES = new Set(['cultivos', 'donaciones', 'otros']);
 const OPS_CONTEXT_TAB_MAP = Object.freeze({
     donaciones: 'transferencias',
@@ -6187,27 +6173,6 @@ function writeOpsLastCultivosTab(tabName) {
     }
 }
 
-function readOpsLastCultivosCropId() {
-    try {
-        return normalizeCropId(localStorage.getItem(OPS_LAST_CULTIVOS_CROP_KEY));
-    } catch (_e) {
-        return null;
-    }
-}
-
-function writeOpsLastCultivosCropId(cropId) {
-    try {
-        const normalized = normalizeCropId(cropId);
-        if (!normalized) {
-            localStorage.removeItem(OPS_LAST_CULTIVOS_CROP_KEY);
-            return;
-        }
-        localStorage.setItem(OPS_LAST_CULTIVOS_CROP_KEY, normalized);
-    } catch (_e) {
-        // Ignore storage errors
-    }
-}
-
 function getOpsForcedTab(mode = opsContextMode) {
     const key = normalizeOpsContextMode(mode);
     return OPS_CONTEXT_TAB_MAP[key] || null;
@@ -6215,51 +6180,8 @@ function getOpsForcedTab(mode = opsContextMode) {
 
 function getOpsContextElements() {
     return {
-        tags: Array.from(document.querySelectorAll('.ops-context-tag[data-context-mode]')),
-        cropWrap: document.getElementById('ops-crop-context'),
-        cropSelect: document.getElementById('ops-crop-select'),
-        cropMessage: document.getElementById('ops-crop-message')
+        tags: Array.from(document.querySelectorAll('.ops-context-tag[data-context-mode]'))
     };
-}
-
-function getOpsActiveCrops() {
-    const rows = Array.isArray(cropsCache) ? cropsCache : [];
-    if (!rows.length) return [];
-    try {
-        const groups = splitCropsByCycle(rows);
-        if (Array.isArray(groups?.active)) return groups.active;
-    } catch (_e) {
-        // Fallback below
-    }
-    return rows;
-}
-
-function pickOpsCropId(preferredId, crops) {
-    const list = Array.isArray(crops) ? crops : [];
-    if (!list.length) return null;
-    const preferred = normalizeCropId(preferredId);
-    if (preferred) {
-        const match = list.find((crop) => normalizeCropId(crop?.id) === preferred);
-        if (match) return normalizeCropId(match.id);
-    }
-    return normalizeCropId(list[0]?.id);
-}
-
-function ensureOpsCultivosSelection(options = {}) {
-    if (opsContextMode !== 'cultivos') return true;
-    const activeCrops = getOpsActiveCrops();
-    if (!activeCrops.length) return false;
-
-    const current = normalizeCropId(selectedCropId);
-    const preferred = normalizeCropId(options.preferredCropId) || readOpsLastCultivosCropId() || current;
-    const target = pickOpsCropId(preferred, activeCrops);
-    if (!target) return false;
-
-    if (current !== target) {
-        setSelectedCropId(target, { silent: options.silent === true });
-    }
-    writeOpsLastCultivosCropId(target);
-    return true;
 }
 
 function syncOpsContextTagsUI() {
@@ -6272,55 +6194,6 @@ function syncOpsContextTagsUI() {
     });
 }
 
-function renderOpsCropSelector() {
-    const { cropWrap, cropSelect, cropMessage } = getOpsContextElements();
-    if (!cropWrap || !cropSelect || !cropMessage) return;
-
-    const isCultivos = opsContextMode === 'cultivos';
-    cropWrap.classList.toggle('is-hidden', !isCultivos);
-    cropSelect.disabled = !isCultivos;
-    if (!isCultivos) {
-        cropMessage.hidden = true;
-        cropWrap.classList.remove('is-disabled');
-        return;
-    }
-
-    const activeCrops = getOpsActiveCrops();
-    const current = normalizeCropId(selectedCropId);
-    const preferred = pickOpsCropId(current || readOpsLastCultivosCropId(), activeCrops);
-
-    cropSelect.textContent = '';
-    if (!activeCrops.length) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'No hay ciclos activos';
-        cropSelect.appendChild(option);
-        cropSelect.disabled = true;
-        cropWrap.classList.add('is-disabled');
-        cropMessage.textContent = 'No hay ciclos activos';
-        cropMessage.hidden = false;
-        return;
-    }
-
-    cropWrap.classList.remove('is-disabled');
-    cropMessage.hidden = true;
-    cropSelect.disabled = false;
-
-    activeCrops.forEach((crop) => {
-        const option = document.createElement('option');
-        option.value = String(crop.id);
-        option.textContent = crop.variety
-            ? `${crop.name} (${crop.variety})`
-            : (crop.name || 'Cultivo');
-        cropSelect.appendChild(option);
-    });
-
-    const nextValue = preferred || pickOpsCropId(null, activeCrops);
-    if (nextValue) {
-        cropSelect.value = nextValue;
-    }
-}
-
 function getCurrentFinanceTab() {
     return document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab || null;
 }
@@ -6328,37 +6201,15 @@ function getCurrentFinanceTab() {
 function rememberOpsCultivosState() {
     if (opsContextMode !== 'cultivos') return;
     const activeTab = getCurrentFinanceTab();
-    if (FIN_TAB_NAMES.has(activeTab)) {
-        opsLastCultivosTab = activeTab;
-        writeOpsLastCultivosTab(activeTab);
+    const safeTab = normalizeOpsCultivosTab(activeTab);
+    if (safeTab) {
+        opsLastCultivosTab = safeTab;
+        writeOpsLastCultivosTab(safeTab);
     }
-    const cropId = normalizeCropId(selectedCropId);
-    if (cropId) {
-        writeOpsLastCultivosCropId(cropId);
-    }
-}
-
-function shouldRequireCultivoFilter(tabName) {
-    if (opsContextMode !== 'cultivos') return false;
-    if (tabName === 'otros') return false;
-    return true;
-}
-
-function renderNoActiveCyclesHistoryState(config) {
-    const parent = document.getElementById(config?.containerId || '');
-    let container = document.getElementById(config?.listId || '');
-    if (!container && parent) {
-        container = document.createElement('div');
-        container.id = config.listId;
-        container.className = 'facturero-history-list';
-        parent.appendChild(container);
-    }
-    if (parent) parent.style.display = 'block';
-    if (!container) return;
-    container.innerHTML = '<p style="color:#fca5a5;font-size:0.85rem;text-align:center;padding:1rem;">No hay ciclos activos.</p>';
 }
 
 function handleOpsTabChanged(tabName) {
+    tabName = String(tabName || '').toLowerCase().trim();
     if (!FIN_TAB_NAMES.has(tabName)) return;
     if (opsIsApplyingContext) return;
     if (opsContextMode === 'cultivos') {
@@ -6384,12 +6235,12 @@ function applyOpsContextMode(nextMode, options = {}) {
     syncOpsContextTagsUI();
 
     if (mode === 'cultivos') {
-        ensureOpsCultivosSelection({ silent: true, preferredCropId: readOpsLastCultivosCropId() });
-        renderOpsCropSelector();
-
         const restoreTab = readOpsLastCultivosTab() || normalizeOpsCultivosTab(readStoredTab()) || 'gastos';
         opsIsApplyingContext = true;
-        switchTab(restoreTab, { focus });
+        const restored = switchTab(restoreTab, { focus });
+        if (!restored) {
+            switchTab('gastos', { focus });
+        }
         opsIsApplyingContext = false;
 
         if (shouldRefresh) {
@@ -6398,32 +6249,25 @@ function applyOpsContextMode(nextMode, options = {}) {
         return;
     }
 
-    renderOpsCropSelector();
     const forcedTab = getOpsForcedTab(mode);
     if (forcedTab) {
         opsIsApplyingContext = true;
-        switchTab(forcedTab, { focus });
+        const switched = switchTab(forcedTab, { focus });
+        let tabToRefresh = forcedTab;
+        if (!switched) {
+            switchTab('otros', { focus });
+            tabToRefresh = 'otros';
+        }
         opsIsApplyingContext = false;
         if (shouldRefresh) {
-            refreshFactureroHistory(forcedTab);
+            refreshFactureroHistory(tabToRefresh);
         }
     }
 }
 
 function initOperationsContextSteps() {
-    const { tags, cropSelect } = getOpsContextElements();
-    if (!tags.length || !cropSelect) return;
-
-    if (cropSelect.dataset.bound !== '1') {
-        cropSelect.dataset.bound = '1';
-        cropSelect.addEventListener('change', () => {
-            if (opsContextMode !== 'cultivos') return;
-            const cropId = normalizeCropId(cropSelect.value);
-            if (!cropId) return;
-            writeOpsLastCultivosCropId(cropId);
-            setSelectedCropId(cropId);
-        });
-    }
+    const { tags } = getOpsContextElements();
+    if (!tags.length) return;
 
     tags.forEach((tag) => {
         if (tag.dataset.bound === '1') return;
@@ -6437,20 +6281,7 @@ function initOperationsContextSteps() {
     opsContextMode = readOpsContextMode();
     opsLastCultivosTab = readOpsLastCultivosTab() || normalizeOpsCultivosTab(readStoredTab()) || 'gastos';
     syncOpsContextTagsUI();
-    renderOpsCropSelector();
     applyOpsContextMode(opsContextMode, { refresh: false, focus: false });
-
-    if (typeof window !== 'undefined' && window.addEventListener) {
-        window.addEventListener(AGRO_CROPS_READY_EVENT, () => {
-            if (opsContextMode === 'cultivos') {
-                ensureOpsCultivosSelection({ silent: true, preferredCropId: readOpsLastCultivosCropId() });
-            }
-            renderOpsCropSelector();
-            if (opsContextMode === 'cultivos') {
-                refreshFactureroForSelectedCrop();
-            }
-        });
-    }
 }
 
 function isElementInView(el) {
@@ -6506,11 +6337,11 @@ function syncFinanceAria(tabButtons, panels) {
 function switchTab(tabName, options = {}) {
     const tabButtons = Array.from(document.querySelectorAll('.financial-tab-btn'));
     const panels = Array.from(document.querySelectorAll('.finances-section .tab-panel'));
-    if (!tabName || tabButtons.length === 0 || panels.length === 0) return;
+    if (!tabName || tabButtons.length === 0 || panels.length === 0) return false;
 
-    if (!FIN_TAB_NAMES.has(tabName)) return;
+    if (!FIN_TAB_NAMES.has(tabName)) return false;
     const hasPanel = panels.some((panel) => panel.dataset.tab === tabName);
-    if (!hasPanel) return;
+    if (!hasPanel) return false;
 
     const shouldFocus = options.focus !== false;
 
@@ -6536,6 +6367,8 @@ function switchTab(tabName, options = {}) {
     if (tabName === 'carrito') {
         initCartTabLazy();
     }
+
+    return true;
 }
 
 // V9.8: Agro Agenda lazy-loader
