@@ -1897,6 +1897,17 @@ body.modal-open {
   font-size: 0.72rem;
 }
 
+.ops-rankings-note {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(200, 167, 82, 0.07);
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .financial-tabs {
   gap: 0.45rem;
   padding-bottom: 0.15rem;

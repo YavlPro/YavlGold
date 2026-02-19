@@ -383,9 +383,24 @@ export async function exportCropReport(cropId) {
             .single();
 
         if (cropErr || !crop) {
-            console.error('[CropReport] Crop not found:', cropErr);
-            alert('Cultivo no encontrado.');
-            return;
+            console.warn('[CropReport] Crop not found, using generic header. cropId:', cropId, 'error:', cropErr);
+            // Bug B fix: continue with placeholder instead of aborting
+            crop = {
+                id: cropId,
+                name: '(Cultivo no encontrado)',
+                crop_name: '(Cultivo no encontrado)',
+                variety: '',
+                status: 'desconocido',
+                status_override: null,
+                status_mode: null,
+                area_size: null,
+                start_date: null,
+                expected_harvest_date: null,
+                actual_harvest_date: null,
+                investment: null,
+                cycle_days: null,
+                template_duration_days: null,
+            };
         }
 
         // Fetch all tabs in parallel

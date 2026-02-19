@@ -6968,7 +6968,13 @@ function renderOpsRankings() {
         status.textContent = `Actualizado: ${updated} · Rango: ${rangeLabel}${cropFilter}`;
     }
 
-    renderOpsRankingList(topClients, opsRankingsState.topClients, (row, index) => {
+    // Bug A fix: filter out "Sin nombre" from the numbered list
+    const normBuyerName = (v) => String(v ?? '').trim().toLowerCase();
+    const allTopClients = normalizeOpsRankingsRows(opsRankingsState.topClients);
+    const unnamedClientRow = allTopClients.find((r) => normBuyerName(r?.buyer_name) === 'sin nombre');
+    const namedTopClients = allTopClients.filter((r) => normBuyerName(r?.buyer_name) !== 'sin nombre');
+
+    renderOpsRankingList(topClients, namedTopClients, (row, index) => {
         const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
         return createOpsRankingItem({
             index,
@@ -6977,6 +6983,21 @@ function renderOpsRankings() {
             meta: `${operationsLabel} · Última: ${formatOpsRankingDate(row?.last_date)}`
         });
     });
+
+    // Append unnamed note below the list (only if there are unnamed records)
+    const topClientsCard = topClients?.closest('.ops-ranking-card');
+    if (topClientsCard) {
+        // Remove any previously injected note to keep idempotent on re-renders
+        topClientsCard.querySelector('.ops-rankings-note')?.remove();
+        if (unnamedClientRow) {
+            const unnamedOps = Number(unnamedClientRow?.operations ?? 0);
+            const unnamedTotal = unnamedClientRow?.total ?? 0;
+            const noteEl = document.createElement('div');
+            noteEl.className = 'ops-rankings-note';
+            noteEl.textContent = `⚠️ ${formatOpsRankingCount(unnamedOps, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(unnamedTotal)}`;
+            topClientsCard.appendChild(noteEl);
+        }
+    }
 
     renderOpsRankingList(pendingClients, opsRankingsState.pendingClients, (row, index) => {
         const pendingLabel = formatOpsRankingCount(row?.pending_count, 'pendiente', 'pendientes');
@@ -7126,11 +7147,21 @@ function exportOpsRankingsMarkdown() {
         md += `\n`;
     };
 
-    appendSection('Top Clientes (Compras)', opsRankingsState.topClients, (row) => {
+    // Bug A fix: filter out "Sin nombre" from the numbered list in MD export
+    const normBuyerNameMd = (v) => String(v ?? '').trim().toLowerCase();
+    const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
+    const unnamedMd = allTopClientsMd.find((r) => normBuyerNameMd(r?.buyer_name) === 'sin nombre');
+    const namedTopClientsMd = allTopClientsMd.filter((r) => normBuyerNameMd(r?.buyer_name) !== 'sin nombre');
+
+    appendSection('Top Clientes (Compras)', namedTopClientsMd, (row) => {
         const name = getOpsRankingDisplayName(row?.buyer_name);
         const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
         return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
     });
+    if (unnamedMd) {
+        const unnamedOpsMd = Number(unnamedMd?.operations ?? 0);
+        md += `> ⚠️ ${formatOpsRankingCount(unnamedOpsMd, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(unnamedMd?.total)}\n\n`;
+    }
 
     appendSection('Pendientes por Cliente', opsRankingsState.pendingClients, (row) => {
         const name = getOpsRankingDisplayName(row?.client_name);
