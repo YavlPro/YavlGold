@@ -375,12 +375,14 @@ export async function exportCropReport(cropId) {
         if (!user) { alert('Sesión no válida.'); return; }
 
         // Fetch crop info
-        const { data: crop, error: cropErr } = await supabase
+        const { data: cropData, error: cropErr } = await supabase
             .from('agro_crops')
             .select('id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days')
             .eq('id', cropId)
             .eq('user_id', user.id)
             .single();
+
+        let crop = cropData;
 
         if (cropErr || !crop) {
             console.warn('[CropReport] Crop not found, using generic header. cropId:', cropId, 'error:', cropErr);
