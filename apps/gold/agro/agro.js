@@ -6745,7 +6745,8 @@ function getOpsRankingsElements() {
         exportBtn: document.getElementById('ops-rankings-export-btn'),
         topClients: document.getElementById('ops-rankings-top-clients'),
         pendingClients: document.getElementById('ops-rankings-pending-clients'),
-        topCrops: document.getElementById('ops-rankings-top-crops')
+        topCrops: document.getElementById('ops-rankings-top-crops'),
+        topCropsTitle: document.getElementById('ops-rankings-top-crops-title')
     };
 }
 
@@ -6772,14 +6773,22 @@ function formatOpsRankingTime(value) {
 
 function formatOpsRankingCurrency(value) {
     const amount = Number(value || 0);
-    if (!Number.isFinite(amount)) return '$0.00';
-    if (Math.abs(amount) >= 1000000) {
-        return `$${(amount / 1000000).toFixed(2)}M`;
-    }
-    if (Math.abs(amount) >= 1000) {
-        return `$${(amount / 1000).toFixed(2)}k`;
-    }
-    return `$${amount.toFixed(2)}`;
+    if (!Number.isFinite(amount)) return '$0';
+
+    const absolute = Math.abs(amount);
+    const hasDecimals = Math.abs(absolute - Math.round(absolute)) > 0.000001;
+    const formatter = new Intl.NumberFormat('es-VE', {
+        minimumFractionDigits: hasDecimals ? 2 : 0,
+        maximumFractionDigits: hasDecimals ? 2 : 0
+    });
+
+    return `${amount < 0 ? '-' : ''}$${formatter.format(absolute)}`;
+}
+
+function formatOpsRankingCount(value, singular, plural) {
+    const amount = Number(value);
+    const count = Number.isFinite(amount) ? Math.max(0, Math.trunc(amount)) : 0;
+    return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function sanitizeOpsRankingName(value) {
@@ -6861,7 +6870,7 @@ function resolveOpsRankingCropLabel(row) {
     return '🌱 Cultivo';
 }
 
-function renderOpsRankingList(listEl, rows, buildItem) {
+function renderOpsRankingList(listEl, rows, buildItem, options = {}) {
     if (!listEl) return;
     listEl.textContent = '';
 
@@ -6869,7 +6878,10 @@ function renderOpsRankingList(listEl, rows, buildItem) {
     if (safeRows.length === 0) {
         const empty = document.createElement('li');
         empty.className = 'ops-ranking-empty';
-        empty.textContent = 'Sin datos en el rango seleccionado.';
+        const emptyText = typeof options.emptyText === 'string' && options.emptyText.trim()
+            ? options.emptyText
+            : 'Sin datos en el rango seleccionado.';
+        empty.textContent = emptyText;
         listEl.appendChild(empty);
         return;
     }
@@ -6926,7 +6938,7 @@ function syncOpsRankingsControlsUI() {
 }
 
 function renderOpsRankings() {
-    const { panel, privacyHint, status, topClients, pendingClients, topCrops } = getOpsRankingsElements();
+    const { panel, privacyHint, status, topClients, pendingClients, topCrops, topCropsTitle } = getOpsRankingsElements();
     if (!panel || !status || !topClients || !pendingClients || !topCrops) return;
 
     syncOpsRankingsControlsUI();
@@ -6939,6 +6951,13 @@ function renderOpsRankings() {
 
     const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
     const cropFilter = selectedCropId ? ` · Cultivo: ${selectedCropId}` : ' · Vista general';
+    const hasSelectedCrop = !!selectedCropId;
+
+    if (topCropsTitle) {
+        topCropsTitle.textContent = hasSelectedCrop
+            ? 'Rentabilidad de este cultivo'
+            : 'Top Cultivos (Rentabilidad)';
+    }
 
     if (opsRankingsState.loading) {
         status.textContent = `Cargando rankings (${rangeLabel})${cropFilter}...`;
@@ -6950,22 +6969,22 @@ function renderOpsRankings() {
     }
 
     renderOpsRankingList(topClients, opsRankingsState.topClients, (row, index) => {
-        const operations = Number(row?.operations || 0);
+        const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
         return createOpsRankingItem({
             index,
             name: getOpsRankingDisplayName(row?.buyer_name),
             value: formatOpsRankingCurrency(row?.total),
-            meta: `${operations} operaciones · Última: ${formatOpsRankingDate(row?.last_date)}`
+            meta: `${operationsLabel} · Última: ${formatOpsRankingDate(row?.last_date)}`
         });
     });
 
     renderOpsRankingList(pendingClients, opsRankingsState.pendingClients, (row, index) => {
-        const pendingCount = Number(row?.pending_count || 0);
+        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'pendiente', 'pendientes');
         return createOpsRankingItem({
             index,
             name: getOpsRankingDisplayName(row?.client_name),
             value: formatOpsRankingCurrency(row?.total_pending),
-            meta: `${pendingCount} pendientes · Próximo: ${formatOpsRankingDate(row?.next_due_date)}`
+            meta: `${pendingLabel} · Próximo: ${formatOpsRankingDate(row?.next_due_date)}`
         });
     });
 
@@ -6979,6 +6998,10 @@ function renderOpsRankings() {
             meta: `Ingresos: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos: ${formatOpsRankingCurrency(row?.gastos)}`,
             valueColor: profitColor
         });
+    }, {
+        emptyText: hasSelectedCrop
+            ? 'Sin datos de rentabilidad para este cultivo en el rango seleccionado.'
+            : 'Sin datos en el rango seleccionado.'
     });
 }
 
@@ -7105,19 +7128,20 @@ function exportOpsRankingsMarkdown() {
 
     appendSection('Top Clientes (Compras)', opsRankingsState.topClients, (row) => {
         const name = getOpsRankingDisplayName(row?.buyer_name);
-        const operations = Number(row?.operations || 0);
-        return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operations} operaciones · última ${formatOpsRankingDate(row?.last_date)}`;
+        const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
+        return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
     });
 
     appendSection('Pendientes por Cliente', opsRankingsState.pendingClients, (row) => {
         const name = getOpsRankingDisplayName(row?.client_name);
-        const pendingCount = Number(row?.pending_count || 0);
-        return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingCount} pendientes · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
+        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'pendiente', 'pendientes');
+        return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
     });
 
-    appendSection('Top Cultivos (Rentabilidad)', opsRankingsState.topCrops, (row) => {
+    const topCropsTitle = selectedCropId ? 'Rentabilidad de este cultivo' : 'Top Cultivos (Rentabilidad)';
+    appendSection(topCropsTitle, opsRankingsState.topCrops, (row) => {
         const label = resolveOpsRankingCropLabel(row);
-        return `${label} · Profit ${formatOpsRankingCurrency(row?.profit)} · Ingresos ${formatOpsRankingCurrency(row?.ingresos)} · Gastos ${formatOpsRankingCurrency(row?.gastos)}`;
+        return `${label} · Rentabilidad ${formatOpsRankingCurrency(row?.profit)} · Ingresos ${formatOpsRankingCurrency(row?.ingresos)} · Gastos ${formatOpsRankingCurrency(row?.gastos)}`;
     });
 
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
