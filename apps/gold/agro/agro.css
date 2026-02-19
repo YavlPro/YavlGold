@@ -1803,6 +1803,12 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.72);
 }
 
+.ops-rankings-privacy-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.68);
+}
+
 .ops-rankings-grid {
   display: grid;
   gap: 0.65rem;

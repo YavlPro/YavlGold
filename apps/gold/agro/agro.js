@@ -6740,6 +6740,7 @@ function getOpsRankingsElements() {
         panel: document.getElementById('ops-rankings-panel'),
         rangeGroup: document.getElementById('ops-rankings-range'),
         hideNamesInput: document.getElementById('ops-rankings-hide-names'),
+        privacyHint: document.getElementById('ops-rankings-privacy-hint'),
         status: document.getElementById('ops-rankings-status'),
         exportBtn: document.getElementById('ops-rankings-export-btn'),
         topClients: document.getElementById('ops-rankings-top-clients'),
@@ -6925,10 +6926,16 @@ function syncOpsRankingsControlsUI() {
 }
 
 function renderOpsRankings() {
-    const { panel, status, topClients, pendingClients, topCrops } = getOpsRankingsElements();
+    const { panel, privacyHint, status, topClients, pendingClients, topCrops } = getOpsRankingsElements();
     if (!panel || !status || !topClients || !pendingClients || !topCrops) return;
 
     syncOpsRankingsControlsUI();
+
+    if (privacyHint) {
+        privacyHint.textContent = opsRankingsState.hideNames
+            ? 'Privacidad activa: se muestran iniciales para proteger nombres de compradores.'
+            : 'Privacidad desactivada: se muestran nombres completos.';
+    }
 
     const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
     const cropFilter = selectedCropId ? ` · Cultivo: ${selectedCropId}` : ' · Vista general';

@@ -54,7 +54,7 @@ DECLARE
     v_limit integer := LEAST(GREATEST(COALESCE(p_limit, 5), 1), 20);
     v_amount_expr text := 'COALESCE(monto, 0)';
     v_date_field text := 'fecha';
-    v_buyer_field text := 'comprador';
+    v_buyer_expr text := '''Sin nombre''';
     v_has_deleted_at boolean;
     v_has_reverted_at boolean;
     v_has_crop_id boolean;
@@ -128,27 +128,37 @@ BEGIN
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'comprador'
     ) THEN
-        v_buyer_field := 'comprador';
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(comprador), ''''), ''Sin nombre'')';
     ELSIF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'cliente'
     ) THEN
-        v_buyer_field := 'cliente';
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(cliente), ''''), ''Sin nombre'')';
     ELSIF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'client_name'
     ) THEN
-        v_buyer_field := 'client_name';
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(client_name), ''''), ''Sin nombre'')';
     ELSIF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'buyer_name'
     ) THEN
-        v_buyer_field := 'buyer_name';
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(buyer_name), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'buyer'
+    ) THEN
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(buyer), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'agro_income' AND column_name = 'customer_name'
+    ) THEN
+        v_buyer_expr := 'COALESCE(NULLIF(TRIM(customer_name), ''''), ''Sin nombre'')';
     END IF;
 
     v_sql := format('
         SELECT
-            COALESCE(NULLIF(TRIM(%1$I), ''''), ''Sin nombre'') AS buyer_name,
+            %1$s AS buyer_name,
             SUM(%2$s)::numeric AS total,
             COUNT(*)::bigint AS operations,
             MAX(%3$I)::date AS last_date
@@ -156,7 +166,7 @@ BEGIN
         WHERE user_id = $1
           AND ($2::date IS NULL OR %3$I >= $2::date)
           AND ($3::date IS NULL OR %3$I <= $3::date)
-    ', v_buyer_field, v_amount_expr, v_date_field);
+    ', v_buyer_expr, v_amount_expr, v_date_field);
 
     IF v_has_deleted_at THEN
         v_sql := v_sql || ' AND deleted_at IS NULL';
@@ -200,7 +210,7 @@ DECLARE
     v_amount_expr text := 'COALESCE(monto, 0)';
     v_date_field text := 'fecha';
     v_due_field text := 'fecha';
-    v_client_field text := 'cliente';
+    v_client_expr text := '''Sin nombre''';
     v_sql text;
 BEGIN
     IF v_uid IS NULL THEN
@@ -262,17 +272,37 @@ BEGIN
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'cliente'
     ) THEN
-        v_client_field := 'cliente';
+        v_client_expr := 'COALESCE(NULLIF(TRIM(cliente), ''''), ''Sin nombre'')';
     ELSIF EXISTS (
         SELECT 1 FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'client_name'
     ) THEN
-        v_client_field := 'client_name';
+        v_client_expr := 'COALESCE(NULLIF(TRIM(client_name), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'comprador'
+    ) THEN
+        v_client_expr := 'COALESCE(NULLIF(TRIM(comprador), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'buyer_name'
+    ) THEN
+        v_client_expr := 'COALESCE(NULLIF(TRIM(buyer_name), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'buyer'
+    ) THEN
+        v_client_expr := 'COALESCE(NULLIF(TRIM(buyer), ''''), ''Sin nombre'')';
+    ELSIF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = v_table_name AND column_name = 'customer_name'
+    ) THEN
+        v_client_expr := 'COALESCE(NULLIF(TRIM(customer_name), ''''), ''Sin nombre'')';
     END IF;
 
     v_sql := format('
         SELECT
-            COALESCE(NULLIF(TRIM(%1$I), ''''), ''Sin nombre'') AS client_name,
+            %1$s AS client_name,
             SUM(%2$s)::numeric AS total_pending,
             COUNT(*)::bigint AS pending_count,
             MIN(%3$I)::date AS next_due_date
@@ -280,7 +310,7 @@ BEGIN
         WHERE user_id = $1
           AND ($2::date IS NULL OR %5$I >= $2::date)
           AND ($3::date IS NULL OR %5$I <= $3::date)
-    ', v_client_field, v_amount_expr, v_due_field, v_table_name, v_date_field);
+    ', v_client_expr, v_amount_expr, v_due_field, v_table_name, v_date_field);
 
     IF EXISTS (
         SELECT 1 FROM information_schema.columns
