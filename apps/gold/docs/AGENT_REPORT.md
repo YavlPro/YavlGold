@@ -1,5 +1,42 @@
 ---
 
+## 🆕 SESIÓN: Modo Historial en Export de Ciclo Eliminado (2026-02-19)
+
+### Diagnóstico / Motivación
+
+El "Informe por Cultivo" (Paso 2) funcionaba en modo estricto (`deleted_at IS NULL`) incluso en ciclos eliminados. Si el 100% de los movimientos estaban soft-deleted, el report salía en cero — inaceptable para el agricultor como expediente del ciclo.
+
+**Separación de lentes de producto:**
+- **Operativo / estadístico** → estricto (`deleted_at IS NULL`) — para balances y resúmenes.
+- **Expediente del ciclo** → historial completo — para cultivos eliminados/archivados.
+
+### Plan quirúrgico (`agro-crop-report.js`)
+
+1. `fetchTabData` acepta `opts = { includeDeleted }` → solo aplica filtro `deleted_at` si `!includeDeleted`.
+2. `neq('transfer_state', 'transferred')` en pendientes también condicionado a `!includeDeleted`.
+3. Helpers nuevos: `countAliveDeleted(rows)` y `fmtCount(counts, historyMode)`.
+4. `historyMode = !cropExists` — automático cuando el cultivo no existe en `agro_crops`.
+5. Todos los `fetchTabData` calls pasan `{ includeDeleted: historyMode }`.
+6. Conteos en evidencia: `total (activos✓ / eliminados🗑)` en modo historial.
+7. Cabecera modo historial: `🗃️ Expediente — Ciclo Eliminado` + nota `🧾 Modo Historial`.
+8. Todos los builders (`buildIncomeTable`, `buildExpenseTable`, `buildPendingTable`, `buildLossTable`, `buildTransferTable`) aceptan `historyMode` y anteponen `[ELIMINADO]` en filas con `deleted_at != null`.
+
+### DoD checklist
+- [x] `fetchTabData` con parámetro `opts.includeDeleted`.
+- [x] Cultivo activo → sin cambios (estricto, `deleted_at IS NULL`).
+- [x] Cultivo eliminado/huérfano → todos los movimientos incluidos (soft-deleted).
+- [x] Conteos muestran `total (activos / eliminados)` en historyMode.
+- [x] Cada fila eliminada etiquetada `[ELIMINADO]` en el MD.
+- [x] Cabecera `🗃️ Expediente — Ciclo Eliminado` + nota `🧾 Modo Historial`.
+- [x] Helpers `countAliveDeleted` y `fmtCount` añadidos.
+- [x] Build `pnpm build:gold` ✅.
+
+### Resultado de ejecución
+- Build: `pnpm build:gold` → **OK** (exit 0)
+- Guardrails: `agent-guard`, `agent-report-check`, `check-dist-utf8` → **OK**
+
+---
+
 ## 🆕 SESIÓN: Auditoría Export Informe por Cultivo — Soft Delete (2026-02-19)
 
 ### Auditoría Export Informe por Cultivo — Soft Delete

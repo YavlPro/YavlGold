@@ -246,9 +246,17 @@ function formatCropProgressLine(progress) {
 // QUERY HELPERS
 // ============================================================
 
-async function fetchTabData(userId, cropId, tabName) {
+/**
+ * @param {string} userId
+ * @param {string} cropId
+ * @param {string} tabName
+ * @param {{ includeDeleted?: boolean }} [opts]
+ */
+async function fetchTabData(userId, cropId, tabName, opts = {}) {
     const cfg = TAB_CONFIGS[tabName];
     if (!cfg) return [];
+
+    const includeDeleted = !!opts.includeDeleted;
 
     try {
         let q = supabase
@@ -258,11 +266,13 @@ async function fetchTabData(userId, cropId, tabName) {
             .eq('crop_id', cropId)
             .order(cfg.dateField, { ascending: false });
 
-        // Soft-delete filter
-        q = q.is('deleted_at', null);
+        // Modo Historial: incluir soft-deleted cuando se solicita explícitamente
+        if (!includeDeleted) {
+            q = q.is('deleted_at', null);
+        }
 
-        // Exclude transferred pendientes
-        if (tabName === 'pendientes') {
+        // Exclude transferred pendientes (solo en modo operativo)
+        if (tabName === 'pendientes' && !includeDeleted) {
             q = q.neq('transfer_state', 'transferred');
         }
 
@@ -276,6 +286,19 @@ async function fetchTabData(userId, cropId, tabName) {
         console.warn(`[CropReport] Exception fetching ${tabName}:`, err);
         return [];
     }
+}
+
+/** Cuenta cuántas filas están activas vs. eliminadas (soft-delete) */
+function countAliveDeleted(rows) {
+    const deleted = rows.filter((r) => !!r.deleted_at).length;
+    const active = rows.length - deleted;
+    return { total: rows.length, active, deleted };
+}
+
+/** Formatea la celda de conteo para el bloque de evidencia */
+function fmtCount(counts, historyMode) {
+    if (!historyMode) return String(counts.total);
+    return `${counts.total} (${counts.active}✓ / ${counts.deleted}🗑)`;
 }
 
 // ============================================================
@@ -293,7 +316,12 @@ function fmtMontoWithCurrency(item, amountField) {
     return `${local} (\u2248 ${centsToStr(toCents(montoUsd))})`;
 }
 
-function buildIncomeTable(items) {
+/** Prefijo visual para filas soft-deleted en modo historial */
+function deletedFlag(row, historyMode) {
+    return historyMode && row.deleted_at ? '[ELIMINADO] ' : '';
+}
+
+function buildIncomeTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
     let md = '| Fecha | Concepto | Comprador | Cantidad | Moneda | Monto | USD |\n';
     md += '|-------|----------|-----------|----------|--------|------:|----:|\n';
@@ -302,24 +330,26 @@ function buildIncomeTable(items) {
         const parsed = parseWho('ingresos', raw);
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
-        md += `| ${fmtDate(it.fecha)} | ${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
+        const flag = deletedFlag(it, historyMode);
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
     }
     return md;
 }
 
-function buildExpenseTable(items) {
+function buildExpenseTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
     let md = '| Fecha | Concepto | Categoría | Moneda | Monto | USD |\n';
     md += '|-------|----------|-----------|--------|------:|----:|\n';
     for (const it of items) {
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.amount));
-        md += `| ${fmtDate(it.date)} | ${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${centsToStr(toCents(it.amount))} | ${amtUsd} |\n`;
+        const flag = deletedFlag(it, historyMode);
+        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${centsToStr(toCents(it.amount))} | ${amtUsd} |\n`;
     }
     return md;
 }
 
-function buildPendingTable(items) {
+function buildPendingTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
     let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Estado |\n';
     md += '|-------|----------|---------|----------|--------|------:|----:|--------|\n';
@@ -330,31 +360,34 @@ function buildPendingTable(items) {
         const state = it.transfer_state || 'pendiente';
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
-        md += `| ${fmtDate(it.fecha)} | ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(state)} |\n`;
+        const flag = deletedFlag(it, historyMode);
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(state)} |\n`;
     }
     return md;
 }
 
-function buildLossTable(items) {
+function buildLossTable(items, historyMode = false) {
     if (!items.length) return 'Sin pérdidas registradas ✅\n';
     let md = '| Fecha | Concepto | Causa | Cantidad | Moneda | Monto | USD |\n';
     md += '|-------|----------|-------|----------|--------|------:|----:|\n';
     for (const it of items) {
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
-        md += `| ${fmtDate(it.fecha)} | ${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
+        const flag = deletedFlag(it, historyMode);
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
     }
     return md;
 }
 
-function buildTransferTable(items) {
+function buildTransferTable(items, historyMode = false) {
     if (!items.length) return 'Sin donaciones registradas\n';
     let md = '| Fecha | Concepto | Beneficiario | Cantidad | Moneda | Monto | USD |\n';
     md += '|-------|----------|---------|----------|--------|------:|----:|\n';
     for (const it of items) {
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
-        md += `| ${fmtDate(it.fecha)} | ${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
+        const flag = deletedFlag(it, historyMode);
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
     }
     return md;
 }
@@ -393,13 +426,17 @@ export async function exportCropReport(cropId) {
             };
         }
 
+        // Modo Historial: cuando el cultivo no existe en agro_crops, incluir soft-deleted
+        const historyMode = !cropExists;
+        const fetchOpts = { includeDeleted: historyMode };
+
         // Fetch all tabs in parallel
         const [income, expenses, pending, losses, transfers] = await Promise.all([
-            fetchTabData(user.id, cropId, 'ingresos'),
-            fetchTabData(user.id, cropId, 'gastos'),
-            fetchTabData(user.id, cropId, 'pendientes'),
-            fetchTabData(user.id, cropId, 'perdidas'),
-            fetchTabData(user.id, cropId, 'transferencias')
+            fetchTabData(user.id, cropId, 'ingresos', fetchOpts),
+            fetchTabData(user.id, cropId, 'gastos', fetchOpts),
+            fetchTabData(user.id, cropId, 'pendientes', fetchOpts),
+            fetchTabData(user.id, cropId, 'perdidas', fetchOpts),
+            fetchTabData(user.id, cropId, 'transferencias', fetchOpts)
         ]);
 
         // Compute totals in cents (integer arithmetic)
@@ -408,12 +445,9 @@ export async function exportCropReport(cropId) {
         const totalPendingCents = pending.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const totalLossesCents = losses.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const profitCents = totalIncomeCents - totalExpensesCents;
-        const roiDependsOnCropMetadata = false;
-        const roiStr = (!cropExists && roiDependsOnCropMetadata)
-            ? '--- (cultivo no disponible)'
-            : (totalExpensesCents > 0
-                ? (((totalIncomeCents - totalExpensesCents) / totalExpensesCents) * 100).toFixed(1) + '%'
-                : 'N/A');
+        const roiStr = totalExpensesCents > 0
+            ? (((totalIncomeCents - totalExpensesCents) / totalExpensesCents) * 100).toFixed(1) + '%'
+            : 'N/A';
 
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
@@ -422,6 +456,13 @@ export async function exportCropReport(cropId) {
         const resolvedStatus = cropExists ? resolveCropStatus(crop, progress) : null;
         const statusLine = cropExists ? formatCropStatusLine(resolvedStatus) : null;
         const progressLine = cropExists ? formatCropProgressLine(progress) : null;
+
+        // Conteos por modo
+        const ci = countAliveDeleted(income);
+        const ce = countAliveDeleted(expenses);
+        const cp = countAliveDeleted(pending);
+        const cl = countAliveDeleted(losses);
+        const ct = countAliveDeleted(transfers);
 
         // Build Markdown
         let md = '';
@@ -433,16 +474,20 @@ export async function exportCropReport(cropId) {
             md += `> **Cosecha esperada:** ${fmtDate(crop.expected_harvest_date)}\n`;
             md += `> **Progreso:** ${progressLine}\n`;
         } else {
-            md += `# Informe — Transacciones asociadas a cultivo eliminado\n`;
+            md += `# 🗃️ Expediente — Ciclo Eliminado\n`;
+            md += `> 🧾 **Modo Historial:** incluye movimientos eliminados (soft-delete) para preservar el expediente del ciclo.\n`;
             md += `> ⚠️ El cultivo asociado ya no está disponible en agro_crops.\n`;
-            md += `> **crop_id usado:** ${cropId}\n`;
+            md += `> **crop_id:** \`${cropId}\`\n`;
         }
         md += `> **Fecha del reporte:** ${dateStr} ${timeStr}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
         md += `## 🔎 Evidencia (conteos)\n`;
+        if (historyMode) {
+            md += `> _Formato: total (activos ✓ / eliminados 🗑)_\n\n`;
+        }
         md += `| income | expenses | pending | losses | transfers |\n`;
         md += `|------:|---------:|--------:|-------:|----------:|\n`;
-        md += `| ${income.length} | ${expenses.length} | ${pending.length} | ${losses.length} | ${transfers.length} |\n\n`;
+        md += `| ${fmtCount(ci, historyMode)} | ${fmtCount(ce, historyMode)} | ${fmtCount(cp, historyMode)} | ${fmtCount(cl, historyMode)} | ${fmtCount(ct, historyMode)} |\n\n`;
         md += `---\n\n`;
 
         // Financial summary
@@ -459,28 +504,28 @@ export async function exportCropReport(cropId) {
         md += `---\n\n`;
 
         // Income
-        md += `## 📥 Ingresos (${income.length})\n`;
-        md += buildIncomeTable(income);
+        md += `## 📥 Ingresos (${fmtCount(ci, historyMode)})\n`;
+        md += buildIncomeTable(income, historyMode);
         md += '\n';
 
         // Expenses
-        md += `## 📤 Gastos (${expenses.length})\n`;
-        md += buildExpenseTable(expenses);
+        md += `## 📤 Gastos (${fmtCount(ce, historyMode)})\n`;
+        md += buildExpenseTable(expenses, historyMode);
         md += '\n';
 
         // Pending
-        md += `## ⏳ Pendientes (${pending.length})\n`;
-        md += buildPendingTable(pending);
+        md += `## ⏳ Pendientes (${fmtCount(cp, historyMode)})\n`;
+        md += buildPendingTable(pending, historyMode);
         md += '\n';
 
         // Losses
-        md += `## 📉 Pérdidas (${losses.length})\n`;
-        md += buildLossTable(losses);
+        md += `## 📉 Pérdidas (${fmtCount(cl, historyMode)})\n`;
+        md += buildLossTable(losses, historyMode);
         md += '\n';
 
         // Transfers
-        md += `## 🎁 Donaciones (${transfers.length})\n`;
-        md += buildTransferTable(transfers);
+        md += `## 🎁 Donaciones (${fmtCount(ct, historyMode)})\n`;
+        md += buildTransferTable(transfers, historyMode);
         md += '\n';
 
         // Footer
