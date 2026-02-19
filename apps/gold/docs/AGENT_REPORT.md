@@ -1,5 +1,44 @@
 ---
 
+## 🆕 SESIÓN: Guardia Anti-Accidente en Export de Ciclo Huérfano (2026-02-19)
+
+### Diagnóstico
+
+El export mostraba "Ciclo Eliminado" al clickar "Reporte" en **Batata amarilla 2** porque
+había una **card DOM huérfana** de QA cuyo botón llevaba el `crop_id` del ciclo QA
+(`1ab52a21-...`), no el ID real de Batata amarilla 2 (`1e2d3ada-...`).
+
+**Confirmado vía SQL:**
+
+| Crop | ID | deleted_at |
+|------|----|------------|
+| 🌱 🥔 Batata amarilla 2 | `1e2d3ada-0447-4fca-8c63-b063efd6c8dd` | `null` ✅ activa |
+| ciclo QA/borrado | `1ab52a21-985d-47d1-8b8d-879c503a78f1` | n/a — no existe en `agro_crops` |
+
+El call site en `agro.js:4324` toma el `cropId` del `dataset` del botón. Si hay una card
+huérfana en el DOM con el ID QA, el click exporta ese ciclo. El flujo en sí es correcto;
+el problema era la card sucia de QA.
+
+### Fix: Guardia de confirmación en `exportCropReport` (`agro-crop-report.js`)
+
+Cuando `cropData` no existe en `agro_crops`, en vez de proceder automáticamente:
+1. Muestra `window.confirm(...)` con el `crop_id` visible.
+2. Si el usuario cancela → `return` (no exporta nada).
+3. Si confirma → continúa en Modo Historial (incluye soft-deleted).
+
+Esto convierte el Modo Historial en una **acción deliberada**, no accidental.
+
+### DoD checklist
+- [x] Guardia `window.confirm` con crop_id expuesto antes de exportar huérfano.
+- [x] Crop activo (Batata amarilla 2) no se ve afectado — `cropExists=true` → sin confirmación.
+- [x] Modo Historial sigue disponible bajo decisión explícita del usuario.
+- [x] `pnpm build:gold` ✅
+
+### Resultado de ejecución
+- Build: `pnpm build:gold` → **OK** (exit 0)
+
+---
+
 ## 🆕 SESIÓN: Fix Semántica Pendientes — Transferidos vs Eliminados (2026-02-19)
 
 ### Problema

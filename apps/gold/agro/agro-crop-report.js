@@ -436,11 +436,22 @@ export async function exportCropReport(cropId) {
         let crop = cropData;
 
         if (!cropExists) {
-            console.warn('[CropReport] Crop not found, keeping strict crop_id export. cropId:', cropId, 'error:', cropErr);
-            crop = {
-                id: cropId,
-                name: 'Cultivo eliminado'
-            };
+            console.warn('[CropReport] Crop not found in agro_crops. cropId:', cropId, 'error:', cropErr);
+            // ── Guardia anti-accidente ────────────────────────────────────────────
+            // Este crop_id no existe en agro_crops. Puede ser:
+            //   A) un ciclo eliminado con movimientos históricos (soft-deleted)
+            //   B) un ciclo de QA/pruebas borrado definitivamente
+            // Pedimos confirmación explícita antes de exportar en Modo Historial.
+            const confirmed = window.confirm(
+                `⚠️ Modo Historial\n\n` +
+                `El cultivo asociado a este botón ya no existe en la base de datos.\n\n` +
+                `crop_id: ${cropId}\n\n` +
+                `¿Deseas exportar el expediente histórico del ciclo?\n` +
+                `(Incluirá movimientos eliminados marcados como [ELIMINADO] o [TRANSFERIDO])\n\n` +
+                `Pulsa Cancelar si esto no corresponde al cultivo que quieres exportar.`
+            );
+            if (!confirmed) return;
+            crop = { id: cropId, name: 'Ciclo eliminado' };
         }
 
         // Modo Historial: cuando el cultivo no existe en agro_crops, incluir soft-deleted
