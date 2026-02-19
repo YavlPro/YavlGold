@@ -1,5 +1,49 @@
 ---
 
+## 🆕 SESIÓN: Backfill Pendientes Pre-V9.7 — Transferred vs Eliminado (2026-02-19)
+
+### Diagnóstico
+
+El flujo **V9.7** (`transferPendingToIncome`) es correcto: usa `transfer_state='transferred'` +
+`transferred_at` + `transferred_to` **sin tocar `deleted_at`**.
+
+Sin embargo los registros **pre-V9.7** fueron "sacados" del facturero usando solo `deleted_at`
+(flujo viejo), dejando `transfer_state='active'` y `transferred_at=null`.
+Resultado: el expediente los mostraba como `[ELIMINADO]` cuando en realidad eran cobros.
+
+### Backfill SQL ejecutado
+
+**Migration:** `backfill_pending_transferred_state`
+
+```sql
+UPDATE agro_pending
+SET
+    transfer_state = 'transferred',
+    transferred_at = deleted_at,   -- proxy de la fecha de cobro
+    transferred_to = 'income'
+WHERE
+    deleted_at IS NOT NULL
+    AND (transfer_state = 'active' OR transfer_state IS NULL)
+    AND transferred_at IS NULL
+    AND upper(concepto) NOT LIKE '%QA%'
+    AND upper(concepto) NOT LIKE '%TEST%'
+    AND id != '1400d620-a85c-421c-b3fb-24466b50f3a3'; -- pendiente del ciclo QA excluido
+```
+
+### Resultado del backfill
+
+| Check | Resultado |
+|-------|-----------|
+| Cobros reclasificados como `transferred` | **11** ✅ |
+| Pendientes QA/Test que siguen como `[ELIMINADO]` | **7** ✅ |
+| Activos sin QA restantes | **1** (id `1400d620`, ciclo QA — correcto) |
+
+El expediente de ahora en adelante mostrará:
+- Cobros históricos → **[TRANSFERIDO]** en sección `⇔️ Pendientes transferidos`
+- Borrados de QA/pruebas → **[ELIMINADO]** en sección `🗑️ Pendientes eliminados`
+
+---
+
 ## 🆕 SESIÓN: Guardia Anti-Accidente en Export de Ciclo Huérfano (2026-02-19)
 
 ### Diagnóstico
