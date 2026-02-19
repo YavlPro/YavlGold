@@ -1,5 +1,85 @@
 ---
 
+## 🆕 SESIÓN: Auditoría Export Informe por Cultivo — Soft Delete (2026-02-19)
+
+### Auditoría Export Informe por Cultivo — Soft Delete
+
+#### 1. Resumen del caso
+
+Durante la validación del fix de export para cultivos huérfanos, se generó un informe
+con `income: 0 / expenses: 0 / pending: 0 / losses: 0 / transfers: 0` para el
+`crop_id = 1ab52a21-985d-47d1-8b8d-879c503a78f1`.
+
+Se investigó si el cero era un falso negativo o un comportamiento correcto del sistema.
+
+#### 2. Evidencia — Auditoría Supabase (vía MCP)
+
+**Consulta 1 — Existencia de registros:**
+
+| Tabla | Registros totales |
+|-------|------------------|
+| `agro_income` | 1 |
+| `agro_expenses` | 4 |
+| `agro_pending` | 3 |
+
+**Consulta 2 — Estado de `deleted_at`:**
+
+| Tabla | Activos (`deleted_at IS NULL`) | Eliminados (`deleted_at IS NOT NULL`) |
+|-------|-------------------------------|--------------------------------------|
+| `agro_income` | **0** | 1 |
+| `agro_expenses` | **0** | 4 |
+| `agro_pending` | **0** | 3 |
+
+**Conclusión de la auditoría:** El 100% de los registros vinculados a ese `crop_id`
+tienen `deleted_at IS NOT NULL`. Están correctamente marcados como eliminados.
+
+#### 3. Confirmación de comportamiento correcto
+
+La función `fetchTabData` en `agro-crop-report.js` aplica el filtro:
+
+```js
+q = q.is('deleted_at', null);   // línea 262
+```
+
+Este filtro excluye todos los registros soft-deleted. El resultado `0` en el informe
+es la representación honesta del estado activo del cultivo. El sistema **no está
+fallando**; está reportando con precisión.
+
+#### 4. Decisión de producto — Opción A: Modo Estricto (MANTENIDA)
+
+**El comportamiento actual se mantiene sin cambios.**
+
+- El export solo incluye registros con `deleted_at IS NULL`.
+- Registros eliminados no se muestran ni cuentan en totales.
+- Esta postura es contablemente correcta: un informe de operaciones activas
+  no debe incluir elementos borrados lógicamente.
+
+#### 5. Feature futuro (Modo Auditoría — opcional)
+
+Para un ciclo futuro, se puede agregar un parámetro opcional `includeDeleted: true`
+en `fetchTabData` que permita generar informes de auditoría con el histórico completo.
+Esta funcionalidad requiere:
+
+- Parámetro booleano en `exportCropReport`.
+- UI: botón secundario "Informe de Auditoría (incluye eliminados)".
+- Sección separada en el `.md` con nota visible de que contiene registros eliminados.
+
+**No se implementa en esta sesión.** Queda registrado como deuda técnica documentada.
+
+### DoD checklist
+- [x] Auditoría Supabase ejecutada (2 queries confirmatorias).
+- [x] Comportamiento del sistema verificado como correcto.
+- [x] Decisión de producto documentada (mantener modo estricto).
+- [x] Feature futuro "Modo Auditoría" registrado como deuda técnica.
+- [x] Sin cambios a código JS, queries ni lógica de export.
+- [x] `pnpm build:gold` ✅
+
+### Resultado de ejecución
+- Build ejecutado: `pnpm build:gold` → **OK**
+- Sin modificaciones de código en esta sesión.
+
+---
+
 ## 🆕 SESIÓN: Fix export Informe de Cultivo con `crop_id` huérfano (2026-02-19)
 
 ### Diagnóstico (Gate obligatorio)
