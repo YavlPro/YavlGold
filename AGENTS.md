@@ -1,4 +1,4 @@
-# AGENTS.md — YavlGold V9.4 (PROYECTO INMUTABLE)
+# AGENTS.md — YavlGold V9.8 (PROYECTO INMUTABLE)
 **Repo:** Monorepo Turborepo
 **App principal:** `apps/gold/`
 **Stack:** Vanilla JS (puro) + Vite (MPA) + Supabase + Vercel
@@ -79,7 +79,7 @@
 
 ---
 
-## 2) Visual DNA 9.4 (UI/UX obligatoria)
+## 2) Visual DNA V10.0 (UI/UX obligatoria)
 ### 2.1 Paleta y tipografías
 - Fondo principal: `#0a0a0a`
 - Acento dorado: `#C8A752`

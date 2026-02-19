@@ -2,7 +2,7 @@
 This file contains the technical architecture, constraints, and style guide for the YavlGold project. Use this context to generate code that complies with our strict Vanilla JS + Vite MPA architecture.
 
 ---
-# FICHA TECNICA - YavlGold V9.4
+# FICHA TECNICA - YavlGold V9.8
 
 **Fecha de Referencia:** 16/01/2026
 **Tipo de Proyecto:** Plataforma educativa, productiva y de servicios

@@ -1,4 +1,4 @@
-# FICHA TÉCNICA - YavlGold V9.4
+# FICHA TÉCNICA - YavlGold V9.8
 
 **Fecha de Referencia:** 16/01/2026
 **Tipo de Proyecto:** Plataforma educativa, productiva y de servicios
@@ -176,6 +176,10 @@ packages/
 - **Acento Dorado:** `#C8A752`
 - **Prohibido:** Azul/morado como acento principal
 
+### Documento Canónico de ADN Visual
+- **Versión:** `V10.0 (Inmutable)`
+- **Ruta:** `apps/gold/docs/ADN-VISUAL-V10.0.md`
+
 ### Tipografía
 - **Títulos:** Orbitron (futurista, tecnológica)
 - **Cuerpo:** Rajdhani (legible, moderna)
@@ -321,5 +325,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.0
-**Última Actualización:** 15/02/2026
+**Versión de Ficha:** 1.1
+**Última Actualización:** 19/02/2026
