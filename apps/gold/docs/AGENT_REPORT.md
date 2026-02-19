@@ -1,5 +1,47 @@
 ---
 
+## 🆕 SESIÓN: Fix Semántica Pendientes — Transferidos vs Eliminados (2026-02-19)
+
+### Problema
+
+En modo Historial, pendientes que fueron `transfer_state='transferred'` aparecían con la
+etiqueta `[ELIMINADO]` (vía `deleted_at`) en vez de `[TRANSFERIDO]`. Además, se sumaban
+al total de "Pendientes por cobrar", inflando artificialmente esa cifra.
+
+### Fix quirúrgico (`agro-crop-report.js`)
+
+**Split semántico de `pending` en 3 grupos:**
+
+```js
+isPendingTransferred(r)  // transfer_state='transferred' || !!transferred_at
+pendingActive      // !transferred && !deleted_at  → por cobrar
+pendingTransferred // transferred               → etiqueta [TRANSFERIDO]
+pendingDeletedReal // deleted_at && !transferred → etiqueta [ELIMINADO]
+```
+
+**Cambios en totales:** `totalPendingCents` usa solo `pendingActive`.
+
+**Secciones en el MD:**
+- `## ⏳ Pendientes activos — por cobrar` → solo `pendingActive`
+- `## ⇔️ Pendientes transferidos` → `buildPendingTransferredTable` con col. "Transferido a"
+- `## 🗑️ Pendientes eliminados` → solo si `historyMode && pendingDeletedReal.length > 0`
+
+**Nuevo builder:** `buildPendingTransferredTable(items)` — columna extra "Transferido a"
+usando `transferred_to || transfer_state`.
+
+### DoD checklist
+- [x] Pendientes transferidos → `[TRANSFERIDO]`, sección propia.
+- [x] Pendientes eliminados reales → `[ELIMINADO]`, sección propia (solo historyMode).
+- [x] `totalPendingCents` = solo activos (`pendingActive`).
+- [x] `buildPendingTransferredTable` añadido.
+- [x] Evidencia: desglose `total (activos✓ / transferidos↔ / eliminados🗑)`.
+- [x] `pnpm build:gold` ✅
+
+### Resultado de ejecución
+- Build: `pnpm build:gold` → **OK** (exit 0)
+
+---
+
 ## 🆕 SESIÓN: Modo Historial en Export de Ciclo Eliminado (2026-02-19)
 
 ### Diagnóstico / Motivación
