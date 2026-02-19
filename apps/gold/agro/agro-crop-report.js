@@ -382,26 +382,14 @@ export async function exportCropReport(cropId) {
             .eq('user_id', user.id)
             .single();
 
+        const cropExists = !cropErr && !!cropData;
         let crop = cropData;
 
-        if (cropErr || !crop) {
-            console.warn('[CropReport] Crop not found, using generic header. cropId:', cropId, 'error:', cropErr);
-            // Bug B fix: continue with placeholder instead of aborting
+        if (!cropExists) {
+            console.warn('[CropReport] Crop not found, keeping strict crop_id export. cropId:', cropId, 'error:', cropErr);
             crop = {
                 id: cropId,
-                name: '(Cultivo no encontrado)',
-                crop_name: '(Cultivo no encontrado)',
-                variety: '',
-                status: 'desconocido',
-                status_override: null,
-                status_mode: null,
-                area_size: null,
-                start_date: null,
-                expected_harvest_date: null,
-                actual_harvest_date: null,
-                investment: null,
-                cycle_days: null,
-                template_duration_days: null,
+                name: 'Cultivo eliminado'
             };
         }
 
@@ -420,28 +408,41 @@ export async function exportCropReport(cropId) {
         const totalPendingCents = pending.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const totalLossesCents = losses.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const profitCents = totalIncomeCents - totalExpensesCents;
-        const roiStr = totalExpensesCents > 0
-            ? (((totalIncomeCents - totalExpensesCents) / totalExpensesCents) * 100).toFixed(1) + '%'
-            : 'N/A';
+        const roiDependsOnCropMetadata = false;
+        const roiStr = (!cropExists && roiDependsOnCropMetadata)
+            ? '--- (cultivo no disponible)'
+            : (totalExpensesCents > 0
+                ? (((totalIncomeCents - totalExpensesCents) / totalExpensesCents) * 100).toFixed(1) + '%'
+                : 'N/A');
 
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-        const progress = computeCropProgress(crop);
-        const resolvedStatus = resolveCropStatus(crop, progress);
-        const statusLine = formatCropStatusLine(resolvedStatus);
-        const progressLine = formatCropProgressLine(progress);
+        const progress = cropExists ? computeCropProgress(crop) : null;
+        const resolvedStatus = cropExists ? resolveCropStatus(crop, progress) : null;
+        const statusLine = cropExists ? formatCropStatusLine(resolvedStatus) : null;
+        const progressLine = cropExists ? formatCropProgressLine(progress) : null;
 
         // Build Markdown
         let md = '';
-        md += `# 🌾 Informe de Cultivo: ${crop.name || 'Sin nombre'}\n`;
-        md += `> **Estado:** ${statusLine}\n`;
-        md += `> **Área:** ${crop.area_size || 0} ha\n`;
-        md += `> **Siembra:** ${fmtDate(crop.start_date)}\n`;
-        md += `> **Cosecha esperada:** ${fmtDate(crop.expected_harvest_date)}\n`;
-        md += `> **Progreso:** ${progressLine}\n`;
+        if (cropExists) {
+            md += `# 🌾 Informe de Cultivo: ${crop.name || 'Sin nombre'}\n`;
+            md += `> **Estado:** ${statusLine}\n`;
+            md += `> **Área:** ${crop.area_size || 0} ha\n`;
+            md += `> **Siembra:** ${fmtDate(crop.start_date)}\n`;
+            md += `> **Cosecha esperada:** ${fmtDate(crop.expected_harvest_date)}\n`;
+            md += `> **Progreso:** ${progressLine}\n`;
+        } else {
+            md += `# Informe — Transacciones asociadas a cultivo eliminado\n`;
+            md += `> ⚠️ El cultivo asociado ya no está disponible en agro_crops.\n`;
+            md += `> **crop_id usado:** ${cropId}\n`;
+        }
         md += `> **Fecha del reporte:** ${dateStr} ${timeStr}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
+        md += `## 🔎 Evidencia (conteos)\n`;
+        md += `| income | expenses | pending | losses | transfers |\n`;
+        md += `|------:|---------:|--------:|-------:|----------:|\n`;
+        md += `| ${income.length} | ${expenses.length} | ${pending.length} | ${losses.length} | ${transfers.length} |\n\n`;
         md += `---\n\n`;
 
         // Financial summary
@@ -492,13 +493,17 @@ export async function exportCropReport(cropId) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Informe_${sanitizeFilename(crop.name)}_${dateStr}.md`;
+        const fileLabel = cropExists
+            ? sanitizeFilename(crop.name)
+            : `cultivo-eliminado_${sanitizeFilename(cropId)}`;
+        link.download = `Informe_${fileLabel}_${dateStr}.md`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        console.info(`[CropReport] Exported report for "${crop.name}" (${income.length} income, ${expenses.length} expenses, ${pending.length} pending, ${losses.length} losses, ${transfers.length} transfers)`);
+        const exportedCropLabel = cropExists ? crop.name : `cultivo eliminado (${cropId})`;
+        console.info(`[CropReport] Exported report for "${exportedCropLabel}" (${income.length} income, ${expenses.length} expenses, ${pending.length} pending, ${losses.length} losses, ${transfers.length} transfers)`);
     } catch (err) {
         console.error('[CropReport] Export error:', err);
         alert('Error al exportar informe: ' + (err.message || err));

@@ -1,5 +1,81 @@
 ---
 
+## 🆕 SESIÓN: Fix export Informe de Cultivo con `crop_id` huérfano (2026-02-19)
+
+### Diagnóstico (Gate obligatorio)
+1. **Mapa de puntos de entrada MPA y navegación actual**
+- `apps/gold/vite.config.js`: `appType: 'mpa'` con entradas HTML para `index`, `dashboard`, `agro`, `crypto`, `academia`, `tecnologia`, `social`, etc.
+- `apps/gold/vercel.json`: `cleanUrls` + rewrites para `/agro`, `/crypto`, `/dashboard`, `/academia`, `/tecnologia` y rutas hijas.
+- `apps/gold/index.html`: landing con acceso a módulos (cards con `window.location.href='./agro/'`, `./crypto/`) y acceso a `/dashboard/`.
+- `apps/gold/dashboard/index.html`: dashboard protegido, carga módulos dinámicos desde DB y paneles de insights.
+
+2. **Dónde se instancian datos/auth de Supabase**
+- `apps/gold/assets/js/config/supabase-config.js`: `createClient(...)` y export singleton `supabase`.
+- `apps/gold/assets/js/auth/authClient.js`: init auth, procesamiento de callback, guard de rutas protegidas.
+- `apps/gold/assets/js/auth/authUI.js`: wiring de UI auth (login/register/recovery) y listeners de eventos.
+- `apps/gold/dashboard/auth-guard.js`: guard ESM para dashboard (`supabase.auth.getSession()` + redirect a login).
+
+3. **Dashboard: qué consulta hoy y qué falta**
+- `apps/gold/dashboard/index.html` consulta activamente:
+  - `profiles` (username/avatar),
+  - `modules` (cards),
+  - `user_favorites` (conteo y estrellas),
+  - `notifications` (no leídas).
+- Inicializa managers que trabajan con:
+  - `announcements` (`AnnouncementManager`),
+  - `feedback` (`FeedbackManager`),
+  - `notifications` (`NotificationsManager`).
+- Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en `apps/gold/assets/js/academia.js`, pero no está integrado al dashboard principal; continuidad/recomendación usa tracker local (`YG_ACTIVITY_V1`).
+
+4. **Clima/Agro: prioridad Manual > GPS > IP y llaves de storage**
+- `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`) mantiene prioridad: Manual -> cache/modo -> GPS/IP -> fallback.
+- `apps/gold/agro/dashboard.js` (`initWeather`, `displayWeather`) consume esa lógica y muestra panel debug con `?debug=1` o `YG_GEO_DEBUG=1`.
+- Keys detectadas:
+  - `YG_MANUAL_LOCATION`
+  - `yavlgold_gps_cache`
+  - `yavlgold_ip_cache`
+  - `yavlgold_location_pref`
+  - `yavlgold_weather_*` (prefijo por coords)
+
+5. **Crypto: estado real**
+- Existe `apps/gold/crypto/` con página MPA operativa (`crypto/index.html`) y artefactos legacy/backups.
+- Está integrado al build oficial de `apps/gold` vía Vite MPA, no como app separada con server Python en producción.
+
+### Diagnóstico específico del bug (Export Informe de Cultivo)
+- El export relevante está en `apps/gold/agro/agro-crop-report.js` (`exportCropReport`).
+- Consulta cultivo por `crop_id` + `user_id` en `agro_crops`; si falla, hoy crea objeto placeholder `"(Cultivo no encontrado)"`.
+- Las transacciones se consultan correctamente por `crop_id` estricto en cada tabla (`.eq('crop_id', cropId)`), por eso aparecen aunque el cultivo no exista.
+- El problema UX actual: se imprime cabecera estándar con campos N/A y título ambiguo.
+- El ROI actual se calcula con ingresos/egresos (USD), sin depender de metadatos del cultivo.
+
+### Plan quirúrgico
+1. `apps/gold/agro/agro-crop-report.js`
+- Mantener filtro estricto por `crop_id` en todas las tabs (sin fallback por nombre).
+- Separar render del encabezado por escenario:
+  - cultivo existe -> cabecera normal completa,
+  - cultivo eliminado -> título especial + nota ⚠️ + `crop_id`, sin bloque N/A.
+- Agregar evidencia al inicio con conteos numéricos por tipo: `income/expenses/pending/losses/transfers`.
+- Ajustar línea ROI:
+  - si depende solo de ingresos/egresos -> calcular,
+  - si dependiera de metadatos del cultivo -> `--- (cultivo no disponible)`.
+
+2. `apps/gold/docs/AGENT_REPORT.md`
+- Registrar diagnóstico, plan y DoD de esta sesión.
+
+### DoD checklist
+- [x] Caso A (cultivo existente): título/cabecera normal + ROI si aplica.
+- [x] Caso B (`crop_id` huérfano): título `Informe — Transacciones asociadas a cultivo eliminado` + nota ⚠️ + `crop_id`.
+- [x] En caso huérfano, no mostrar cabecera con N/A.
+- [x] Transacciones siempre filtradas estrictamente por `crop_id`.
+- [x] Incluir conteos por tipo al inicio (solo números).
+- [x] `pnpm build:gold` en verde.
+
+### Resultado de ejecución
+- Build ejecutado: `pnpm build:gold` -> **OK**
+- Guardrails: `agent-guard`, `agent-report-check`, `check-dist-utf8` -> **OK**
+
+---
+
 ## 🆕 SESIÓN: Quitar Ambigüedad Final (2026-02-18)
 
 ### Diagnóstico
