@@ -1604,6 +1604,8 @@
                     aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito" aria-selected="false"
                     aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2; Carrito</button>
+                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-rankings" aria-selected="false"
+                    aria-controls="tab-panel-rankings" data-tab="rankings">&#x1F3C6; Rankings</button>
             </div>
 
             <div class="financial-tab-panels">
@@ -1819,6 +1821,56 @@
                     <div id="agro-cart-root" style="padding: 0.5rem 0;">
                         <div style="text-align: center; color: rgba(255,255,255,0.4); padding: 2rem;">
                             Cargando carrito...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel is-hidden" id="tab-panel-rankings" role="tabpanel"
+                    aria-labelledby="tab-btn-rankings" aria-hidden="true" data-tab="rankings">
+                    <div class="ops-rankings-panel" id="ops-rankings-panel">
+                        <div class="ops-rankings-header">
+                            <div>
+                                <h4 class="ops-rankings-title">Rankings del Centro</h4>
+                                <p class="ops-rankings-subtitle">Vista rápida de compras, pendientes y rentabilidad.</p>
+                            </div>
+                            <button type="button" class="ops-rankings-export-btn" id="ops-rankings-export-btn">
+                                <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                                Exportar Markdown
+                            </button>
+                        </div>
+
+                        <div class="ops-rankings-toolbar">
+                            <div class="ops-rankings-range" id="ops-rankings-range" role="group"
+                                aria-label="Filtro de rango rankings">
+                                <button type="button" class="ops-rankings-range-btn" data-range="30d">30d</button>
+                                <button type="button" class="ops-rankings-range-btn is-active" data-range="90d">90d</button>
+                                <button type="button" class="ops-rankings-range-btn" data-range="6m">6m</button>
+                                <button type="button" class="ops-rankings-range-btn" data-range="12m">12m</button>
+                                <button type="button" class="ops-rankings-range-btn" data-range="all">Todo</button>
+                            </div>
+                            <label class="ops-rankings-privacy">
+                                <input type="checkbox" id="ops-rankings-hide-names" checked>
+                                Ocultar nombres (iniciales)
+                            </label>
+                        </div>
+
+                        <p class="ops-rankings-status" id="ops-rankings-status">Listo para cargar.</p>
+
+                        <div class="ops-rankings-grid">
+                            <article class="ops-ranking-card">
+                                <h5>Top Clientes (Compras)</h5>
+                                <ol id="ops-rankings-top-clients" class="ops-ranking-list"></ol>
+                            </article>
+
+                            <article class="ops-ranking-card">
+                                <h5>Pendientes por Cliente</h5>
+                                <ol id="ops-rankings-pending-clients" class="ops-ranking-list"></ol>
+                            </article>
+
+                            <article class="ops-ranking-card">
+                                <h5>Top Cultivos (Rentabilidad)</h5>
+                                <ol id="ops-rankings-top-crops" class="ops-ranking-list"></ol>
+                            </article>
                         </div>
                     </div>
                 </div>

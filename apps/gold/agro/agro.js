@@ -4499,6 +4499,7 @@ function refreshFactureroForSelectedCrop() {
     if (typeof loadIncomes === 'function') {
         loadIncomes();
     }
+    refreshOpsRankingsIfVisible();
 }
 
 if (typeof document !== 'undefined') {
@@ -6016,8 +6017,8 @@ async function loadIncomes() {
 }
 const FIN_TAB_STORAGE_KEY = 'YG_AGRO_FIN_TAB_V1';
 const FIN_TAB_STORAGE_LEGACY_KEY = 'lastTab';
-const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'carrito']);
-const OPS_CULTIVOS_ALLOWED_TABS = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros']);
+const FIN_TAB_NAMES = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'carrito', 'rankings']);
+const OPS_CULTIVOS_ALLOWED_TABS = new Set(['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros', 'rankings']);
 const OPS_CONTEXT_STORAGE_KEY = 'paso1Context';
 const OPS_LAST_CULTIVOS_TAB_KEY = 'YG_AGRO_OPS_LAST_CULTIVOS_TAB_V1';
 const OPS_CONTEXT_MODES = new Set(['cultivos']);
@@ -6042,6 +6043,32 @@ let opsMovementSummaryState = null;
 let opsMovementSummaryInFlight = null;
 let opsMovementSummaryQueued = false;
 let opsMovementSummaryTimer = null;
+const OPS_RANKINGS_RANGE_KEY = 'YG_AGRO_RANKINGS_RANGE_V1';
+const OPS_RANKINGS_PRIVACY_KEY = 'YG_AGRO_RANKINGS_PRIVACY_V1';
+const OPS_RANKINGS_DEFAULT_RANGE = '90d';
+const OPS_RANKINGS_LIMIT = 5;
+const OPS_RANKINGS_VALID_RANGES = new Set(['30d', '90d', '6m', '12m', 'all']);
+const OPS_RANKINGS_RANGE_LABELS = Object.freeze({
+    '30d': '30 días',
+    '90d': '90 días',
+    '6m': '6 meses',
+    '12m': '12 meses',
+    all: 'Todo'
+});
+
+let opsRankingsState = {
+    range: OPS_RANKINGS_DEFAULT_RANGE,
+    hideNames: true,
+    loading: false,
+    error: '',
+    updatedAt: null,
+    topClients: [],
+    pendingClients: [],
+    topCrops: []
+};
+let opsRankingsInitBound = false;
+let opsRankingsInFlight = null;
+let opsRankingsQueued = false;
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -6667,6 +6694,489 @@ function initOperationsContextSteps() {
     scheduleOpsMovementSummaryRefresh();
 }
 
+function normalizeOpsRankingsRange(value) {
+    const token = String(value || '').toLowerCase().trim();
+    return OPS_RANKINGS_VALID_RANGES.has(token) ? token : OPS_RANKINGS_DEFAULT_RANGE;
+}
+
+function readOpsRankingsRange() {
+    try {
+        return normalizeOpsRankingsRange(localStorage.getItem(OPS_RANKINGS_RANGE_KEY));
+    } catch (_e) {
+        return OPS_RANKINGS_DEFAULT_RANGE;
+    }
+}
+
+function writeOpsRankingsRange(value) {
+    const safeValue = normalizeOpsRankingsRange(value);
+    try {
+        localStorage.setItem(OPS_RANKINGS_RANGE_KEY, safeValue);
+    } catch (_e) {
+        // Ignore storage errors
+    }
+}
+
+function readOpsRankingsPrivacy() {
+    try {
+        const raw = localStorage.getItem(OPS_RANKINGS_PRIVACY_KEY);
+        if (raw === '0') return false;
+        if (raw === '1') return true;
+        return true;
+    } catch (_e) {
+        return true;
+    }
+}
+
+function writeOpsRankingsPrivacy(hideNames) {
+    try {
+        localStorage.setItem(OPS_RANKINGS_PRIVACY_KEY, hideNames ? '1' : '0');
+    } catch (_e) {
+        // Ignore storage errors
+    }
+}
+
+function getOpsRankingsElements() {
+    return {
+        panel: document.getElementById('ops-rankings-panel'),
+        rangeGroup: document.getElementById('ops-rankings-range'),
+        hideNamesInput: document.getElementById('ops-rankings-hide-names'),
+        status: document.getElementById('ops-rankings-status'),
+        exportBtn: document.getElementById('ops-rankings-export-btn'),
+        topClients: document.getElementById('ops-rankings-top-clients'),
+        pendingClients: document.getElementById('ops-rankings-pending-clients'),
+        topCrops: document.getElementById('ops-rankings-top-crops')
+    };
+}
+
+function formatOpsRankingDate(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('es-VE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+function formatOpsRankingTime(value) {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleTimeString('es-VE', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatOpsRankingCurrency(value) {
+    const amount = Number(value || 0);
+    if (!Number.isFinite(amount)) return '$0.00';
+    if (Math.abs(amount) >= 1000000) {
+        return `$${(amount / 1000000).toFixed(2)}M`;
+    }
+    if (Math.abs(amount) >= 1000) {
+        return `$${(amount / 1000).toFixed(2)}k`;
+    }
+    return `$${amount.toFixed(2)}`;
+}
+
+function sanitizeOpsRankingName(value) {
+    const clean = String(value || '').trim();
+    return clean || 'Sin nombre';
+}
+
+function maskOpsRankingName(value) {
+    const clean = sanitizeOpsRankingName(value);
+    const words = clean.split(/\s+/).filter(Boolean);
+    if (words.length === 0) return 'S. N.';
+    if (words.length === 1) return `${words[0].slice(0, 1).toUpperCase()}.`;
+    return `${words[0].slice(0, 1).toUpperCase()}. ${words[1].slice(0, 1).toUpperCase()}.`;
+}
+
+function getOpsRankingDisplayName(value) {
+    if (opsRankingsState.hideNames) {
+        return maskOpsRankingName(value);
+    }
+    return sanitizeOpsRankingName(value);
+}
+
+function resolveOpsRankingsDateRange(range) {
+    const now = new Date();
+    now.setHours(23, 59, 59, 999);
+
+    const toIso = (dateObj) => {
+        const d = new Date(dateObj);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    let from = null;
+    const safeRange = normalizeOpsRankingsRange(range);
+    if (safeRange === '30d') {
+        from = new Date(now);
+        from.setDate(from.getDate() - 29);
+    } else if (safeRange === '90d') {
+        from = new Date(now);
+        from.setDate(from.getDate() - 89);
+    } else if (safeRange === '6m') {
+        from = new Date(now);
+        from.setMonth(from.getMonth() - 6);
+        from.setDate(from.getDate() + 1);
+    } else if (safeRange === '12m') {
+        from = new Date(now);
+        from.setFullYear(from.getFullYear() - 1);
+        from.setDate(from.getDate() + 1);
+    }
+
+    return {
+        from: from ? toIso(from) : null,
+        to: toIso(now),
+        label: OPS_RANKINGS_RANGE_LABELS[safeRange] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE]
+    };
+}
+
+function normalizeOpsRankingsRows(rows) {
+    return Array.isArray(rows) ? rows : [];
+}
+
+function resolveOpsRankingCropLabel(row) {
+    const rawName = String(row?.crop_name || '').trim();
+    const cropId = normalizeCropId(row?.crop_id);
+
+    if (cropId && Array.isArray(cropsCache)) {
+        const match = cropsCache.find((crop) => normalizeCropId(crop?.id) === cropId);
+        if (match) {
+            return getCropDisplayParts(match, { fallbackIcon: '🌱', fallbackName: 'Cultivo' }).label;
+        }
+    }
+
+    if (rawName) {
+        return getCropDisplayParts({ name: rawName, icon: '🌱' }, { fallbackIcon: '🌱', fallbackName: 'Cultivo' }).label;
+    }
+
+    return '🌱 Cultivo';
+}
+
+function renderOpsRankingList(listEl, rows, buildItem) {
+    if (!listEl) return;
+    listEl.textContent = '';
+
+    const safeRows = normalizeOpsRankingsRows(rows);
+    if (safeRows.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'ops-ranking-empty';
+        empty.textContent = 'Sin datos en el rango seleccionado.';
+        listEl.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    safeRows.forEach((row, index) => {
+        const itemEl = buildItem(row, index);
+        if (itemEl) fragment.appendChild(itemEl);
+    });
+    listEl.appendChild(fragment);
+}
+
+function createOpsRankingItem({ index, name, value, meta, valueColor = '' }) {
+    const li = document.createElement('li');
+    li.className = 'ops-ranking-item';
+
+    const row = document.createElement('div');
+    row.className = 'ops-ranking-row';
+
+    const positionEl = document.createElement('span');
+    positionEl.className = 'ops-ranking-position';
+    positionEl.textContent = `#${index + 1}`;
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'ops-ranking-name';
+    nameEl.textContent = name;
+
+    const valueEl = document.createElement('span');
+    valueEl.className = 'ops-ranking-value';
+    valueEl.textContent = value;
+    if (valueColor) valueEl.style.color = valueColor;
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'ops-ranking-meta';
+    metaEl.textContent = meta;
+
+    row.append(positionEl, nameEl, valueEl);
+    li.append(row, metaEl);
+    return li;
+}
+
+function syncOpsRankingsControlsUI() {
+    const { rangeGroup, hideNamesInput } = getOpsRankingsElements();
+    if (rangeGroup) {
+        rangeGroup.querySelectorAll('.ops-rankings-range-btn').forEach((btn) => {
+            const active = normalizeOpsRankingsRange(btn.dataset.range) === opsRankingsState.range;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    }
+    if (hideNamesInput) {
+        hideNamesInput.checked = !!opsRankingsState.hideNames;
+    }
+}
+
+function renderOpsRankings() {
+    const { panel, status, topClients, pendingClients, topCrops } = getOpsRankingsElements();
+    if (!panel || !status || !topClients || !pendingClients || !topCrops) return;
+
+    syncOpsRankingsControlsUI();
+
+    const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
+    const cropFilter = selectedCropId ? ` · Cultivo: ${selectedCropId}` : ' · Vista general';
+
+    if (opsRankingsState.loading) {
+        status.textContent = `Cargando rankings (${rangeLabel})${cropFilter}...`;
+    } else if (opsRankingsState.error) {
+        status.textContent = `Error: ${opsRankingsState.error}`;
+    } else {
+        const updated = opsRankingsState.updatedAt ? formatOpsRankingTime(opsRankingsState.updatedAt) : '-';
+        status.textContent = `Actualizado: ${updated} · Rango: ${rangeLabel}${cropFilter}`;
+    }
+
+    renderOpsRankingList(topClients, opsRankingsState.topClients, (row, index) => {
+        const operations = Number(row?.operations || 0);
+        return createOpsRankingItem({
+            index,
+            name: getOpsRankingDisplayName(row?.buyer_name),
+            value: formatOpsRankingCurrency(row?.total),
+            meta: `${operations} operaciones · Última: ${formatOpsRankingDate(row?.last_date)}`
+        });
+    });
+
+    renderOpsRankingList(pendingClients, opsRankingsState.pendingClients, (row, index) => {
+        const pendingCount = Number(row?.pending_count || 0);
+        return createOpsRankingItem({
+            index,
+            name: getOpsRankingDisplayName(row?.client_name),
+            value: formatOpsRankingCurrency(row?.total_pending),
+            meta: `${pendingCount} pendientes · Próximo: ${formatOpsRankingDate(row?.next_due_date)}`
+        });
+    });
+
+    renderOpsRankingList(topCrops, opsRankingsState.topCrops, (row, index) => {
+        const profit = Number(row?.profit || 0);
+        const profitColor = profit >= 0 ? '#4ade80' : '#f87171';
+        return createOpsRankingItem({
+            index,
+            name: resolveOpsRankingCropLabel(row),
+            value: formatOpsRankingCurrency(profit),
+            meta: `Ingresos: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos: ${formatOpsRankingCurrency(row?.gastos)}`,
+            valueColor: profitColor
+        });
+    });
+}
+
+function isMissingRankingsRpc(error) {
+    const code = String(error?.code || '').toUpperCase();
+    const text = `${String(error?.message || '')} ${String(error?.details || '')}`.toLowerCase();
+    return (
+        code === 'PGRST202' ||
+        code === '42883' ||
+        text.includes('function') && text.includes('not found') ||
+        text.includes('could not find the function')
+    );
+}
+
+function pickRankingsErrorMessage(errors) {
+    if (!Array.isArray(errors) || errors.length === 0) return '';
+    const missingRpc = errors.some(isMissingRankingsRpc);
+    if (missingRpc) {
+        return 'RPC de rankings no disponible. Ejecuta supabase/sql/agro_rankings_rpc_v1.sql.';
+    }
+    return errors.map((err) => err?.message || 'Error de consulta').join(' | ');
+}
+
+async function fetchOpsRankingsData() {
+    const rangeDates = resolveOpsRankingsDateRange(opsRankingsState.range);
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user?.id) {
+        return {
+            topClients: [],
+            pendingClients: [],
+            topCrops: [],
+            error: 'Sesión no disponible.'
+        };
+    }
+
+    const params = {
+        p_from: rangeDates.from,
+        p_to: rangeDates.to,
+        p_limit: OPS_RANKINGS_LIMIT,
+        p_crop_id: selectedCropId || null
+    };
+
+    const [topClientsRes, pendingRes, cropsRes] = await Promise.all([
+        supabase.rpc('agro_rank_top_clients', params),
+        supabase.rpc('agro_rank_pending_clients', params),
+        supabase.rpc('agro_rank_top_crops_profit', params)
+    ]);
+
+    const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
+    return {
+        topClients: normalizeOpsRankingsRows(topClientsRes.data),
+        pendingClients: normalizeOpsRankingsRows(pendingRes.data),
+        topCrops: normalizeOpsRankingsRows(cropsRes.data),
+        error: pickRankingsErrorMessage(errors)
+    };
+}
+
+async function refreshOpsRankings() {
+    if (opsRankingsInFlight) {
+        opsRankingsQueued = true;
+        return opsRankingsInFlight;
+    }
+
+    opsRankingsState.loading = true;
+    opsRankingsState.error = '';
+    renderOpsRankings();
+
+    opsRankingsInFlight = (async () => {
+        try {
+            const result = await fetchOpsRankingsData();
+            opsRankingsState.topClients = result.topClients;
+            opsRankingsState.pendingClients = result.pendingClients;
+            opsRankingsState.topCrops = result.topCrops;
+            opsRankingsState.error = result.error || '';
+            opsRankingsState.updatedAt = new Date().toISOString();
+        } catch (err) {
+            opsRankingsState.topClients = [];
+            opsRankingsState.pendingClients = [];
+            opsRankingsState.topCrops = [];
+            opsRankingsState.error = err?.message || 'No se pudo cargar Rankings.';
+        } finally {
+            opsRankingsState.loading = false;
+            renderOpsRankings();
+        }
+    })();
+
+    try {
+        return await opsRankingsInFlight;
+    } finally {
+        opsRankingsInFlight = null;
+        if (opsRankingsQueued) {
+            opsRankingsQueued = false;
+            refreshOpsRankings().catch((err) => {
+                console.warn('[AGRO] Rankings refresh retry failed:', err?.message || err);
+            });
+        }
+    }
+}
+
+function exportOpsRankingsMarkdown() {
+    const now = new Date();
+    const dateStamp = now.toISOString().slice(0, 10);
+    const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
+    const cropLabel = selectedCropId ? `Cultivo: ${selectedCropId}` : 'Vista general';
+    const privacyLabel = opsRankingsState.hideNames ? 'Ocultar nombres: ON' : 'Ocultar nombres: OFF';
+
+    let md = `# 🏆 Rankings Agro\n\n`;
+    md += `- Fecha: ${now.toLocaleString('es-VE')}\n`;
+    md += `- Rango: ${rangeLabel}\n`;
+    md += `- ${cropLabel}\n`;
+    md += `- ${privacyLabel}\n\n`;
+
+    const appendSection = (title, rows, mapper) => {
+        md += `## ${title}\n\n`;
+        if (!Array.isArray(rows) || rows.length === 0) {
+            md += `Sin datos.\n\n`;
+            return;
+        }
+        rows.forEach((row, index) => {
+            md += `${index + 1}. ${mapper(row)}\n`;
+        });
+        md += `\n`;
+    };
+
+    appendSection('Top Clientes (Compras)', opsRankingsState.topClients, (row) => {
+        const name = getOpsRankingDisplayName(row?.buyer_name);
+        const operations = Number(row?.operations || 0);
+        return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operations} operaciones · última ${formatOpsRankingDate(row?.last_date)}`;
+    });
+
+    appendSection('Pendientes por Cliente', opsRankingsState.pendingClients, (row) => {
+        const name = getOpsRankingDisplayName(row?.client_name);
+        const pendingCount = Number(row?.pending_count || 0);
+        return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingCount} pendientes · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
+    });
+
+    appendSection('Top Cultivos (Rentabilidad)', opsRankingsState.topCrops, (row) => {
+        const label = resolveOpsRankingCropLabel(row);
+        return `${label} · Profit ${formatOpsRankingCurrency(row?.profit)} · Ingresos ${formatOpsRankingCurrency(row?.ingresos)} · Gastos ${formatOpsRankingCurrency(row?.gastos)}`;
+    });
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `AgroRankings_${dateStamp}.md`;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+
+function initOpsRankingsPanel() {
+    const { panel, rangeGroup, hideNamesInput, exportBtn } = getOpsRankingsElements();
+    if (!panel) return;
+
+    if (!opsRankingsInitBound) {
+        opsRankingsInitBound = true;
+        if (rangeGroup) {
+            rangeGroup.addEventListener('click', (event) => {
+                const button = event.target.closest('.ops-rankings-range-btn');
+                if (!button) return;
+                const nextRange = normalizeOpsRankingsRange(button.dataset.range);
+                if (nextRange === opsRankingsState.range) return;
+                opsRankingsState.range = nextRange;
+                writeOpsRankingsRange(nextRange);
+                renderOpsRankings();
+                refreshOpsRankings().catch((err) => {
+                    console.warn('[AGRO] Rankings range refresh failed:', err?.message || err);
+                });
+            });
+        }
+
+        if (hideNamesInput) {
+            hideNamesInput.addEventListener('change', () => {
+                opsRankingsState.hideNames = !!hideNamesInput.checked;
+                writeOpsRankingsPrivacy(opsRankingsState.hideNames);
+                renderOpsRankings();
+            });
+        }
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportOpsRankingsMarkdown);
+        }
+
+        document.addEventListener('data-refresh', refreshOpsRankingsIfVisible);
+        document.addEventListener('agro:income:changed', refreshOpsRankingsIfVisible);
+        document.addEventListener('agro:crop:changed', refreshOpsRankingsIfVisible);
+    }
+
+    opsRankingsState.range = readOpsRankingsRange();
+    opsRankingsState.hideNames = readOpsRankingsPrivacy();
+    renderOpsRankings();
+}
+
+function refreshOpsRankingsIfVisible() {
+    const activeTab = getCurrentFinanceTab();
+    if (activeTab !== 'rankings') return;
+    refreshOpsRankings().catch((err) => {
+        console.warn('[AGRO] Rankings refresh failed:', err?.message || err);
+    });
+}
+
 function isElementInView(el) {
     if (!el) return true;
     const rect = el.getBoundingClientRect();
@@ -6749,6 +7259,13 @@ function switchTab(tabName, options = {}) {
     // Lazy-load Carrito module when tab is first activated
     if (tabName === 'carrito') {
         initCartTabLazy();
+    }
+
+    if (tabName === 'rankings') {
+        initOpsRankingsPanel();
+        refreshOpsRankings().catch((err) => {
+            console.warn('[AGRO] Rankings refresh failed:', err?.message || err);
+        });
     }
 
     return true;
