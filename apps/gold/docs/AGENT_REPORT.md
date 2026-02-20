@@ -7330,3 +7330,48 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 
 ### Build
 1. `pnpm build:gold` -> ✅ OK
+
+## 🚧 SESIÓN: Agro V9.8 — Fix Top Clientes “sin comprador” por mapeo de campo (2026-02-20)
+
+### Diagnóstico
+1. En `apps/gold/agro/agro.js`, el bloque de Rankings clasifica y renderiza Top Clientes usando solo `row?.buyer_name`.
+2. Cuando el dataset llega con alias distinto (`comprador`, `buyer`, `customer_name`, `cliente`, etc.), el nombre no se resuelve y cae como vacío.
+3. Resultado visible: tarjeta “Top Clientes (Compras)” puede quedar vacía y el total termina en aviso “registros sin comprador”, aunque sí existan nombres en los registros.
+
+### Plan quirúrgico
+1. Agregar helper de normalización `pickOpsBuyerName(row)` con fallback multi-campo:
+   - `comprador`, `buyer`, `buyer_name`, `customer_name`, `customer`, `cliente`, `client`.
+2. Usar ese helper para:
+   - clasificar filas con/sin comprador en render UI,
+   - mostrar nombre en la lista Top Clientes,
+   - repetir la misma lógica en export Markdown.
+3. Mantener privacidad (iniciales) y resto de rankings sin cambios funcionales.
+4. Validar con `pnpm build:gold` y cerrar DoD en este reporte.
+
+### DoD
+- [x] Top Clientes (Compras) no queda vacío si existen compradores en dataset.
+- [x] “Registros sin comprador” solo cuenta filas realmente vacías/null.
+- [x] No se rompe privacidad ni otros rankings.
+- [x] `pnpm build:gold` en verde.
+
+### Implementación aplicada
+1. `apps/gold/agro/agro.js`
+   - Se añadieron constantes de compatibilidad para nombres de comprador en rankings:
+     - `OPS_RANKINGS_BUYER_NAME_FIELDS` con fallback multi-campo (`comprador`, `buyer`, `buyer_name`, `customer_name`, `customer`, `cliente`, `client`, `client_name`).
+     - `OPS_RANKINGS_MISSING_NAME_TOKENS` para identificar placeholders vacíos (`sin nombre`).
+   - Se implementó helper `pickOpsBuyerName(row)`:
+     - toma el primer nombre válido por fallback y descarta tokens vacíos/placeholders.
+   - Se actualizó render UI de Top Clientes:
+     - listado usa `pickOpsBuyerName(row)` en vez de `row?.buyer_name`,
+     - aviso “sin comprador” ahora suma solo filas realmente vacías (acumulado de `operations` + `total`).
+   - Se actualizó export Markdown de Top Clientes con la misma lógica (UI/MD consistentes).
+   - Se añadió observabilidad no invasiva:
+     - `console.info` de muestra de dataset (`keys` + fila) solo con `?debug=1`, una sola vez por sesión.
+
+### Validación técnica
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `vite build` → ✅
+   - `check-dist-utf8` → ✅

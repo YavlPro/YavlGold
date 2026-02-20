@@ -6250,6 +6250,17 @@ const OPS_RANKINGS_RANGE_LABELS = Object.freeze({
     '12m': '12 meses',
     all: 'Todo'
 });
+const OPS_RANKINGS_BUYER_NAME_FIELDS = Object.freeze([
+    'comprador',
+    'buyer',
+    'buyer_name',
+    'customer_name',
+    'customer',
+    'cliente',
+    'client',
+    'client_name'
+]);
+const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre']);
 
 let opsRankingsState = {
     range: OPS_RANKINGS_DEFAULT_RANGE,
@@ -6264,6 +6275,7 @@ let opsRankingsState = {
 let opsRankingsInitBound = false;
 let opsRankingsInFlight = null;
 let opsRankingsQueued = false;
+let opsRankingsDebugSampleLogged = false;
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -7047,6 +7059,26 @@ function normalizeOpsRankingsRows(rows) {
     return Array.isArray(rows) ? rows : [];
 }
 
+function normalizeOpsRankingNameToken(value) {
+    return String(value ?? '').trim();
+}
+
+function isOpsRankingMissingBuyerName(value) {
+    const token = normalizeOpsRankingNameToken(value).toLowerCase();
+    return OPS_RANKINGS_MISSING_NAME_TOKENS.has(token);
+}
+
+function pickOpsBuyerName(row) {
+    if (!row || typeof row !== 'object') return '';
+    for (const field of OPS_RANKINGS_BUYER_NAME_FIELDS) {
+        const candidate = normalizeOpsRankingNameToken(row?.[field]);
+        if (!candidate) continue;
+        if (isOpsRankingMissingBuyerName(candidate)) continue;
+        return candidate;
+    }
+    return '';
+}
+
 function resolveOpsRankingCropLabel(row) {
     const rawName = String(row?.crop_name || '').trim();
     const cropId = normalizeCropId(row?.crop_id);
@@ -7163,17 +7195,21 @@ function renderOpsRankings() {
         status.textContent = `Actualizado: ${updated} · Rango: ${rangeLabel}${cropFilter}`;
     }
 
-    // Bug A fix: filter out "Sin nombre" from the numbered list
-    const normBuyerName = (v) => String(v ?? '').trim().toLowerCase();
     const allTopClients = normalizeOpsRankingsRows(opsRankingsState.topClients);
-    const unnamedClientRow = allTopClients.find((r) => normBuyerName(r?.buyer_name) === 'sin nombre');
-    const namedTopClients = allTopClients.filter((r) => normBuyerName(r?.buyer_name) !== 'sin nombre');
+    const missingTopClients = allTopClients.filter((row) => !pickOpsBuyerName(row));
+    const namedTopClients = allTopClients.filter((row) => !!pickOpsBuyerName(row));
+    const missingTopClientsSummary = missingTopClients.reduce((acc, row) => {
+        acc.operations += Number(row?.operations || 0);
+        acc.total += Number(row?.total || 0);
+        return acc;
+    }, { operations: 0, total: 0 });
 
     renderOpsRankingList(topClients, namedTopClients, (row, index) => {
+        const buyerName = pickOpsBuyerName(row);
         const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
         return createOpsRankingItem({
             index,
-            name: getOpsRankingDisplayName(row?.buyer_name),
+            name: getOpsRankingDisplayName(buyerName),
             value: formatOpsRankingCurrency(row?.total),
             meta: `${operationsLabel} · Última: ${formatOpsRankingDate(row?.last_date)}`
         });
@@ -7184,9 +7220,9 @@ function renderOpsRankings() {
     if (topClientsCard) {
         // Remove any previously injected note to keep idempotent on re-renders
         topClientsCard.querySelector('.ops-rankings-note')?.remove();
-        if (unnamedClientRow) {
-            const unnamedOps = Number(unnamedClientRow?.operations ?? 0);
-            const unnamedTotal = unnamedClientRow?.total ?? 0;
+        if (missingTopClients.length > 0) {
+            const unnamedOps = missingTopClientsSummary.operations;
+            const unnamedTotal = missingTopClientsSummary.total;
             const noteEl = document.createElement('div');
             noteEl.className = 'ops-rankings-note';
             noteEl.textContent = `⚠️ ${formatOpsRankingCount(unnamedOps, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(unnamedTotal)}`;
@@ -7266,9 +7302,29 @@ async function fetchOpsRankingsData() {
         supabase.rpc('agro_rank_top_crops_profit', params)
     ]);
 
+    const topClientsRows = normalizeOpsRankingsRows(topClientsRes.data);
+    if (!opsRankingsDebugSampleLogged && topClientsRows.length > 0) {
+        let debugMode = false;
+        if (typeof window !== 'undefined') {
+            try {
+                debugMode = new URLSearchParams(window.location.search).get('debug') === '1';
+            } catch (_e) {
+                debugMode = false;
+            }
+        }
+        if (debugMode) {
+            opsRankingsDebugSampleLogged = true;
+            const sample = topClientsRows[0] || {};
+            console.info('[AGRO][Rankings] Top clientes sample:', {
+                keys: Object.keys(sample),
+                sample
+            });
+        }
+    }
+
     const errors = [topClientsRes.error, pendingRes.error, cropsRes.error].filter(Boolean);
     return {
-        topClients: normalizeOpsRankingsRows(topClientsRes.data),
+        topClients: topClientsRows,
         pendingClients: normalizeOpsRankingsRows(pendingRes.data),
         topCrops: normalizeOpsRankingsRows(cropsRes.data),
         error: pickRankingsErrorMessage(errors)
@@ -7342,20 +7398,22 @@ function exportOpsRankingsMarkdown() {
         md += `\n`;
     };
 
-    // Bug A fix: filter out "Sin nombre" from the numbered list in MD export
-    const normBuyerNameMd = (v) => String(v ?? '').trim().toLowerCase();
     const allTopClientsMd = normalizeOpsRankingsRows(opsRankingsState.topClients);
-    const unnamedMd = allTopClientsMd.find((r) => normBuyerNameMd(r?.buyer_name) === 'sin nombre');
-    const namedTopClientsMd = allTopClientsMd.filter((r) => normBuyerNameMd(r?.buyer_name) !== 'sin nombre');
+    const missingTopClientsMd = allTopClientsMd.filter((row) => !pickOpsBuyerName(row));
+    const namedTopClientsMd = allTopClientsMd.filter((row) => !!pickOpsBuyerName(row));
+    const missingTopClientsMdSummary = missingTopClientsMd.reduce((acc, row) => {
+        acc.operations += Number(row?.operations || 0);
+        acc.total += Number(row?.total || 0);
+        return acc;
+    }, { operations: 0, total: 0 });
 
     appendSection('Top Clientes (Compras)', namedTopClientsMd, (row) => {
-        const name = getOpsRankingDisplayName(row?.buyer_name);
+        const name = getOpsRankingDisplayName(pickOpsBuyerName(row));
         const operationsLabel = formatOpsRankingCount(row?.operations, 'operación', 'operaciones');
         return `${name} · ${formatOpsRankingCurrency(row?.total)} · ${operationsLabel} · última ${formatOpsRankingDate(row?.last_date)}`;
     });
-    if (unnamedMd) {
-        const unnamedOpsMd = Number(unnamedMd?.operations ?? 0);
-        md += `> ⚠️ ${formatOpsRankingCount(unnamedOpsMd, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(unnamedMd?.total)}\n\n`;
+    if (missingTopClientsMd.length > 0) {
+        md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(missingTopClientsMdSummary.total)}\n\n`;
     }
 
     appendSection('Pendientes por Cliente', opsRankingsState.pendingClients, (row) => {
