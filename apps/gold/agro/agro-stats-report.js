@@ -30,6 +30,90 @@ function escMd(str) {
     return String(str || '').replace(/\|/g, '·').replace(/\n/g, ' ');
 }
 
+function looksLikeSchemaMismatch(error) {
+    const blob = `${String(error?.message || '')} ${String(error?.details || '')} ${String(error?.hint || '')} ${String(error?.code || '')}`.toLowerCase();
+    return (
+        blob.includes('42703') ||
+        blob.includes('column') ||
+        blob.includes('does not exist') ||
+        blob.includes('could not find')
+    );
+}
+
+async function fetchRowsWithAttempts(table, userId, attempts = []) {
+    let lastError = null;
+    const list = Array.isArray(attempts) ? attempts : [];
+
+    for (const attempt of list) {
+        try {
+            let query = supabase
+                .from(table)
+                .select(attempt.select)
+                .eq('user_id', userId);
+            if (attempt.filterDeletedAt) {
+                query = query.is('deleted_at', null);
+            }
+            if (typeof attempt.extendQuery === 'function') {
+                query = attempt.extendQuery(query);
+            }
+
+            const { data, error } = await query;
+            if (!error) {
+                return { rows: Array.isArray(data) ? data : [], usedAttempt: attempt };
+            }
+
+            lastError = error;
+            if (!looksLikeSchemaMismatch(error)) {
+                break;
+            }
+        } catch (err) {
+            lastError = err;
+        }
+    }
+
+    return { rows: [], error: lastError };
+}
+
+function toSafeNumber(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    const raw = String(value ?? '').trim();
+    if (!raw) return 0;
+
+    const normalized = raw
+        .replace(/\s/g, '')
+        .replace(/\.(?=\d{3}(\D|$))/g, '')
+        .replace(/,(?=\d{3}(\D|$))/g, '')
+        .replace(',', '.');
+
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function resolveAmountUsd(row) {
+    const explicitUsd = toSafeNumber(row?.monto_usd);
+    if (row?.monto_usd !== null && row?.monto_usd !== undefined && row?.monto_usd !== '') {
+        return explicitUsd;
+    }
+
+    const amount = toSafeNumber(row?.monto ?? row?.amount);
+    const currency = String(row?.currency || 'USD').trim().toUpperCase();
+    const rate = toSafeNumber(row?.exchange_rate);
+    if (currency !== 'USD' && rate > 0) {
+        return amount / rate;
+    }
+    return amount;
+}
+
+function resolveBuyerName(row) {
+    const direct = String(row?.cliente || row?.comprador || '').trim();
+    if (direct) return direct;
+    const fromConcept = parseWhoFromIncome(row?.concepto);
+    return fromConcept || 'Sin comprador';
+}
+
 const CROP_STATUS_UI = {
     sembrado: { emoji: '🌱', text: 'Sembrado' },
     creciendo: { emoji: '🌿', text: 'Creciendo' },
@@ -182,13 +266,25 @@ function isCropActive(crop) {
 
 async function fetchCrops(userId) {
     try {
-        const { data, error } = await supabase
-            .from('agro_crops')
-            .select('id,name,variety,status,status_override,status_mode,start_date,expected_harvest_date,actual_harvest_date,cycle_days,template_duration_days,investment')
-            .eq('user_id', userId)
-            .is('deleted_at', null);
-        if (error) { console.warn('[StatsReport] crops error:', error.message); return []; }
-        return Array.isArray(data) ? data : [];
+        const attempts = [
+            {
+                select: 'id,name,variety,status,status_override,status_mode,start_date,expected_harvest_date,actual_harvest_date,cycle_days,template_duration_days,investment',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,name,variety,status,status_override,status_mode,start_date,expected_harvest_date,actual_harvest_date,cycle_days,template_duration_days,investment',
+                filterDeletedAt: false
+            },
+            {
+                select: 'id,name,variety,status,start_date,expected_harvest_date,actual_harvest_date,investment',
+                filterDeletedAt: false
+            }
+        ];
+        const { rows, error } = await fetchRowsWithAttempts('agro_crops', userId, attempts);
+        if (error) {
+            console.warn('[StatsReport] crops error:', error.message || error);
+        }
+        return rows;
     } catch (err) {
         console.warn('[StatsReport] crops exception:', err);
         return [];
@@ -197,13 +293,33 @@ async function fetchCrops(userId) {
 
 async function fetchIncome(userId) {
     try {
-        const { data, error } = await supabase
-            .from('agro_income')
-            .select('id,concepto,monto,monto_usd,currency,fecha,crop_id,deleted_at')
-            .eq('user_id', userId)
-            .is('deleted_at', null);
-        if (error) { console.warn('[StatsReport] income error:', error.message); return []; }
-        return Array.isArray(data) ? data : [];
+        const attempts = [
+            {
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,cliente,comprador',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,comprador',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,comprador',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,comprador',
+                filterDeletedAt: false
+            },
+            {
+                select: 'id,concepto,monto,fecha,crop_id,comprador',
+                filterDeletedAt: false
+            }
+        ];
+        const { rows, error } = await fetchRowsWithAttempts('agro_income', userId, attempts);
+        if (error) {
+            console.warn('[StatsReport] income error:', error.message || error);
+        }
+        return rows;
     } catch (err) {
         console.warn('[StatsReport] income exception:', err);
         return [];
@@ -385,23 +501,23 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     const currencyCount = new Map();
 
     for (const r of incomeRows) {
-        const who = parseWhoFromIncome(r.concepto) || 'Sin comprador';
+        const who = resolveBuyerName(r);
         if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(who);
         b.count += 1;
-        b.totalCents += toCents(r.monto_usd ?? r.monto);
-        const cur = r.currency || 'USD';
+        b.totalCents += toCents(resolveAmountUsd(r));
+        const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
         b.currencies.add(cur);
         currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);
     }
 
     for (const r of pendingRows) {
-        const who = r.cliente || 'Sin cliente';
+        const who = String(r?.cliente || r?.comprador || '').trim() || 'Sin cliente';
         if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(who);
         b.count += 1;
-        b.totalCents += toCents(r.monto_usd ?? r.monto);
-        const cur = r.currency || 'USD';
+        b.totalCents += toCents(resolveAmountUsd(r));
+        const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
         b.currencies.add(cur);
         b.paid = false;
         currencyCount.set(cur, (currencyCount.get(cur) || 0) + 1);

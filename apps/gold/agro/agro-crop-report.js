@@ -599,9 +599,13 @@ export async function exportCropReport(cropId, opts = {}) {
         const totalExpensesCents = expenses.reduce((s, it) => s + toCents(it.monto_usd ?? it.amount), 0);
         const totalPendingCents = pendingActive.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const totalLossesCents = losses.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
-        const profitCents = totalIncomeCents - totalExpensesCents;
-        const roiStr = totalExpensesCents > 0
-            ? (((totalIncomeCents - totalExpensesCents) / totalExpensesCents) * 100).toFixed(1) + '%'
+        const initialInvestmentCents = cropExists && crop?.investment !== null && crop?.investment !== undefined
+            ? toCents(crop.investment)
+            : 0;
+        const totalCostWithInvestmentCents = totalExpensesCents + initialInvestmentCents;
+        const profitCents = totalIncomeCents - totalCostWithInvestmentCents;
+        const roiStr = totalCostWithInvestmentCents > 0
+            ? (((totalIncomeCents - totalCostWithInvestmentCents) / totalCostWithInvestmentCents) * 100).toFixed(1) + '%'
             : 'N/A';
 
         const now = new Date();
@@ -672,7 +676,9 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
         md += `| Ingresos cobrados | ${centsToStr(totalIncomeCents)} |\n`;
-        md += `| Costos/Inversión | ${centsToStr(totalExpensesCents)} |\n`;
+        md += `| Inversión inicial | ${centsToStr(initialInvestmentCents)} |\n`;
+        md += `| Gastos vinculados | ${centsToStr(totalExpensesCents)} |\n`;
+        md += `| Costos/Inversión | ${centsToStr(totalCostWithInvestmentCents)} |\n`;
         md += `| Ganancia neta | ${centsToStr(profitCents)} |\n`;
         md += `| Pendientes por cobrar (activos) | ${centsToStr(totalPendingCents)} |\n`;
         md += `| Pérdidas | ${centsToStr(totalLossesCents)} |\n`;

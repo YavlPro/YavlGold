@@ -1197,7 +1197,10 @@ function getWhoData(tabName, item, concept) {
     const meta = WHO_FIELD_META[tabName] || null;
     const parsed = parseWhoFromConcept(tabName, concept);
     const fieldValue = meta?.field && item ? item[meta.field] : '';
-    const who = fieldValue || parsed.who || '';
+    const incomeFallback = tabName === 'ingresos'
+        ? (item?.comprador || item?.cliente || '')
+        : '';
+    const who = fieldValue || parsed.who || incomeFallback || '';
     return {
         who: String(who || '').trim(),
         concept: parsed.concept || concept || ''
@@ -1912,11 +1915,55 @@ function applyOtherTransferFilter(items) {
     return items.filter((item) => !isOtherTransferredRecord(item));
 }
 
+function toSafeLocaleNumber(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : null;
+    }
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+
+    const normalized = raw
+        .replace(/\s/g, '')
+        .replace(/\.(?=\d{3}(\D|$))/g, '')
+        .replace(/,(?=\d{3}(\D|$))/g, '')
+        .replace(',', '.');
+
+    const parsed = Number.parseFloat(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function _fmtItemCurrency(item, config, amount) {
-    const currency = item.currency || 'USD';
-    if (currency === 'USD') return `$${amount.toFixed(2)}`;
-    const montoUsd = Number(item.monto_usd) || amount;
-    return formatCurrencyDisplay(amount, currency, montoUsd);
+    const amountCandidates = [
+        amount,
+        item?.monto,
+        item?.amount,
+        item?.monto_usd
+    ];
+    let safeAmount = 0;
+    for (const candidate of amountCandidates) {
+        const parsed = toSafeLocaleNumber(candidate);
+        if (parsed !== null) {
+            safeAmount = parsed;
+            break;
+        }
+    }
+
+    const currencyRaw = String(item?.currency || 'USD').trim().toUpperCase();
+    const currency = SUPPORTED_CURRENCIES[currencyRaw] ? currencyRaw : 'USD';
+    const montoUsdParsed = toSafeLocaleNumber(item?.monto_usd);
+    const exchangeRateParsed = toSafeLocaleNumber(item?.exchange_rate);
+    const montoUsd = montoUsdParsed !== null
+        ? montoUsdParsed
+        : (currency !== 'USD' && exchangeRateParsed !== null && exchangeRateParsed > 0)
+            ? (safeAmount / exchangeRateParsed)
+            : safeAmount;
+
+    try {
+        return formatCurrencyDisplay(safeAmount, currency, montoUsd);
+    } catch (err) {
+        console.warn('[AGRO] Currency display fallback:', err?.message || err);
+        return `$${safeAmount.toFixed(2)}`;
+    }
 }
 
 function renderHistoryRow(tabName, item, config, options = {}) {
@@ -1930,7 +1977,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const dateField = rowConfig?.dateField || config?.dateField || 'fecha';
 
     const rawConcept = item[conceptField] || item.concepto || 'Sin concepto';
-    const amount = Number(item[amountField] || item.monto || 0);
+    const amount = Number(item?.[amountField] ?? item?.monto ?? item?.amount ?? 0);
     const date = item[dateField] || item.fecha || item.date || item.created_at;
     const cropLabel = resolveRecordCropLabel(item);
     const evidenceUrl = item.evidence_url_resolved || '';
@@ -2073,6 +2120,27 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 <span style="color: ${effectiveTabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">${_fmtItemCurrency(item, rowConfig, amount)}</span>
                 ${actionButtons}
             </div>
+        </div>
+    `;
+}
+
+function renderHistoryRowFallback(item, config) {
+    const conceptField = config?.conceptField || 'concepto';
+    const amountField = config?.amountField || 'monto';
+    const dateField = config?.dateField || 'fecha';
+    const concept = item?.[conceptField] || item?.concepto || item?.concept || 'Sin concepto';
+    const amountRaw = item?.[amountField] ?? item?.monto ?? item?.amount ?? 0;
+    const amountNum = Number(amountRaw);
+    const amount = Number.isFinite(amountNum) ? amountNum : 0;
+    const date = item?.[dateField] || item?.fecha || item?.date || item?.created_at || '';
+
+    return `
+        <div class="facturero-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
+            <div style="flex: 1; min-width: 0;">
+                <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(concept)}</div>
+                <div style="color: var(--text-muted); font-size: 0.75rem;">${formatDate(date)}</div>
+            </div>
+            <span style="color: #4ade80; font-weight: 700; font-size: 0.9rem;">$${amount.toFixed(2)}</span>
         </div>
     `;
 }
@@ -2559,7 +2627,14 @@ function renderHistoryList(tabName, config, items, showActions) {
             // Day header
             html += `<div class="facturero-day-header">${group.label}</div>`;
             // Items for this day
-            html += group.rows.map(item => renderHistoryRow(tabName, item, config, { showActions })).join('');
+            html += group.rows.map((item) => {
+                try {
+                    return renderHistoryRow(tabName, item, config, { showActions });
+                } catch (err) {
+                    console.warn(`[AGRO] Failed to render ${tabName} row ${item?.id || 'n/a'}:`, err?.message || err);
+                    return renderHistoryRowFallback(item, config);
+                }
+            }).join('');
         }
         container.innerHTML = html;
     }
@@ -2899,6 +2974,7 @@ function injectWizardInvokers() {
 async function refreshFactureroAfterChange(tabName) {
     const refreshPromises = [];
     if (tabName === 'ingresos') {
+        refreshPromises.push(refreshFactureroHistory('ingresos'));
         document.dispatchEvent(new CustomEvent('agro:income:changed'));
     } else if (tabName) {
         refreshPromises.push(refreshFactureroHistory(tabName));
@@ -6013,7 +6089,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
 
     const amount = document.createElement('div');
     amount.style.cssText = 'color: #4ade80; font-weight: 700; font-size: 1rem;';
-    amount.textContent = formatCurrency(income.monto);
+    amount.textContent = _fmtItemCurrency(income, FACTURERO_CONFIG.ingresos, Number(income?.monto ?? 0));
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
