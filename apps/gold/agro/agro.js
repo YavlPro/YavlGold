@@ -963,8 +963,9 @@ const FACTURERO_CONFIG = {
 };
 
 const FACTURERO_OTHER_SOURCE_TABS = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias'];
-const FACTURERO_OTHER_FETCH_LIMIT = 20;
-const FACTURERO_OTHER_RENDER_LIMIT = 80;
+const FACTURERO_HISTORY_FETCH_LIMIT = 200;
+const FACTURERO_OTHER_FETCH_LIMIT = FACTURERO_HISTORY_FETCH_LIMIT;
+const FACTURERO_OTHER_RENDER_LIMIT = FACTURERO_HISTORY_FETCH_LIMIT;
 
 const FACTURERO_OPTIONAL_FIELDS = {
     pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason'],
@@ -2247,7 +2248,7 @@ function applyFactureroCropMode(query, cropMode = 'selected') {
 
 async function fetchAgroLosses(supabase, userId, options = {}) {
     const cropMode = options.cropMode || 'selected';
-    const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : 20;
+    const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : FACTURERO_HISTORY_FETCH_LIMIT;
 
     // Check localStorage cache first (Fix B)
     if (AGRO_LOSSES_SUPPORTS_SOFT_DELETE === null) {
@@ -2310,7 +2311,7 @@ async function fetchFactureroRowsByTab(tabName, userId, options = {}) {
     if (!config || !config.table || config.compositeOnly) return [];
 
     const cropMode = options.cropMode || 'selected';
-    const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : 20;
+    const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : FACTURERO_HISTORY_FETCH_LIMIT;
 
     // V9.6: Use smart retry for losses to avoid 400 on missing deleted_at
     if (tabName === 'perdidas') {
@@ -2531,7 +2532,10 @@ async function refreshFactureroHistory(tabName, options = {}) {
             return;
         }
 
-        const items = await fetchFactureroRowsByTab(tabName, user.id, { cropMode: 'selected', limit: 20 });
+        const items = await fetchFactureroRowsByTab(tabName, user.id, {
+            cropMode: 'selected',
+            limit: FACTURERO_HISTORY_FETCH_LIMIT
+        });
 
         if (debugEnabled) {
             console.log(`[AGRO] ${tabName} row sample`, items?.[0]);
