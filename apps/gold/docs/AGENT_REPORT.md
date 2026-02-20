@@ -1,5 +1,81 @@
 ---
 
+## 🆕 SESIÓN: Desfricción de Historial QA en Agro (2026-02-19)
+
+### Diagnóstico (Paso 0 obligatorio)
+
+Hallazgos en runtime actual:
+
+- `apps/gold/agro/agro.js:5175` (`renderCropCycleHistory`) renderiza todos los ciclos finalizados recibidos, sin validar si cada `crop_id` todavía existe en `agro_crops`.
+- `apps/gold/agro/agro.js:4317` (`setupCropActionListeners`) toma `data-id`/`data-crop-id` del botón/card y llama directo a `exportCropReport(cropId)`.
+- `apps/gold/agro/agro-crop-report.js:420` ya valida existencia real del cultivo en `agro_crops`; si no existe, entra en confirmación de "Modo Historial".
+- El helper de verificación de existencia está implícito dentro de `exportCropReport` y no se reutiliza para la UI del historial.
+- Resultado UX: cards huérfanas de QA visibles por defecto en "Historial de ciclos" generan fricción y disparan flujo de historial por accidente.
+
+### Plan quirúrgico
+
+1. Exponer en `apps/gold/agro/agro-crop-report.js` helper reutilizable para resolver existencia de cultivos por `id` (sin duplicar query).
+2. En `apps/gold/agro/agro.js`, clasificar ciclos finalizados en:
+   - válidos (`crop` existe)
+   - huérfanos (`crop` no existe)
+3. Ajustar render de "Historial de ciclos":
+   - mostrar solo válidos por defecto
+   - agrupar huérfanos en sección colapsada `🧪 Auditoría`.
+4. Ajustar handler de export en `apps/gold/agro/agro.js`:
+   - si card huérfana, abrir modal de 3 opciones:
+     - Cancelar
+     - Exportar histórico (includeDeleted / modo historial)
+     - Exportar cultivo activo seleccionado (`selectedCropId`)
+5. Mantener export normal intacto para cultivos activos y validar con `pnpm build:gold`.
+
+### Decisión UX aplicada
+
+- `Historial de ciclos` ahora muestra solo ciclos válidos por defecto.
+- Los ciclos huérfanos no desaparecen: se preservan en acordeón colapsado `🧪 Auditoría (N)`.
+- En cards de auditoría se deshabilitan editar/eliminar para evitar acciones inválidas sobre `crop_id` inexistente.
+- El botón `Reporte` de card huérfana abre selector explícito:
+  - Cancelar
+  - Exportar histórico del ciclo huérfano
+  - Exportar cultivo activo seleccionado
+
+### Cambios ejecutados
+
+1. `apps/gold/agro/agro-crop-report.js`
+   - Nuevo helper exportado `resolveCropExistenceMap(userId, cropIds, opts)`.
+   - Nuevo helper exportado `fetchCropForUser(userId, cropId, selectFields)`.
+   - `exportCropReport(cropId, opts)` ahora acepta `skipHistoryConfirmation` para no duplicar confirmación cuando ya se decidió en UI.
+   - `exportCropReport` reutiliza `fetchCropForUser` (sin duplicar contrato de `cropExists`).
+
+2. `apps/gold/agro/agro.js`
+   - Importa `resolveCropExistenceMap`.
+   - Nueva clasificación `classifyCycleHistoryCrops(...)` para separar ciclos válidos vs huérfanos.
+   - `renderCropCycleHistory(...)` soporta dos listas y renderiza sección colapsada `🧪 Auditoría`.
+   - `createCropCardElement(...)` soporta `isAuditCard` (`data-crop-orphan="1"` + botones inválidos deshabilitados).
+   - Nuevo flujo `handleOrphanCropReportExport(...)` con modal de 3 opciones y validación de `selectedCropId` real.
+   - `loadCrops()` integra clasificación antes de render y mantiene contadores separados.
+
+3. `apps/gold/agro/agro.css`
+   - Estilos para `crop-history-audit`, `crop-history-audit-note`, `crop-card-audit`, `crop-action-disabled`.
+
+### Pruebas / validación
+
+- Build oficial:
+  - `pnpm build:gold` → **OK**.
+- Smoke Playwright:
+  - `open http://127.0.0.1:4173/agro/` sin sesión autenticada redirige a `/index.html#login` (guardia auth activa).
+  - En este entorno no fue posible ejecutar el flujo completo de historial/export huérfano por falta de sesión real.
+
+### DoD checklist (estado de esta sesión)
+
+- [x] Historial de ciclos oculta huérfanos por defecto.
+- [x] Huérfanos agrupados en sección colapsada `🧪 Auditoría`.
+- [x] Export de huérfano requiere decisión explícita y añade opción exportar cultivo activo seleccionado.
+- [x] Export de cultivo activo permanece por ruta normal (`exportCropReport(cropId)`).
+- [x] `pnpm build:gold` PASS.
+- [x] Documentación en `apps/gold/docs/AGENT_REPORT.md`.
+
+---
+
 ## 🆕 SESIÓN: Backfill Pendientes Pre-V9.7 — Transferred vs Eliminado (2026-02-19)
 
 ### Diagnóstico

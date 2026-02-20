@@ -101,6 +101,18 @@
   border-color: #ef4444;
 }
 
+.crop-action-disabled {
+  opacity: 0.35;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.crop-card-audit {
+  border-style: dashed;
+  border-color: rgba(200, 167, 82, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(200, 167, 82, 0.08);
+}
+
 /* V9.7.2: Crop selection highlight + indicator */
 .crop-card {
   position: relative;
@@ -2442,6 +2454,18 @@ body.modal-open {
 .yg-accordion-content {
   border-top: 1px solid rgba(200, 167, 82, 0.1);
   animation: slideDown 0.3s ease-out;
+}
+
+.crop-history-audit {
+  margin-top: 1rem;
+  border-style: dashed;
+  border-color: rgba(200, 167, 82, 0.3);
+}
+
+.crop-history-audit-note {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.82rem;
+  padding: 0.9rem 1.25rem 0.2rem;
 }
 
 @keyframes slideDown {
