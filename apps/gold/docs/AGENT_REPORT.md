@@ -7156,6 +7156,43 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `vite build` → ✅
    - `check-dist-utf8` → ✅
 
+## 🚧 SESIÓN: Agro V9.8 — Hardening Top Clientes con alias `who/label` (2026-02-20)
+
+### Diagnóstico
+1. En producción, Top Clientes sigue vacío con aviso `12 registros sin comprador: $320,05` aun teniendo ingresos.
+2. Eso indica que el ranking recibe montos/operations, pero el nombre no se está resolviendo desde las keys reales del payload.
+3. Hay señal de `who-field enabled`, por lo que el nombre podría venir en alias no cubiertos (`who`, `who_name`, `display_name`, `label`) o como objeto.
+
+### Plan quirúrgico
+1. Ampliar fallback de `OPS_RANKINGS_BUYER_NAME_FIELDS` con aliases adicionales de runtime/RPC.
+2. Endurecer `pickOpsBuyerName(row)` para soportar strings y objetos (`{name}`, `{label}`, `{display_name}`).
+3. Mantener intacto el resto del flujo de rankings y privacidad.
+4. Ejecutar `pnpm build:gold` y cerrar DoD.
+
+### DoD
+- [x] Top Clientes detecta comprador cuando el payload usa `who/label/display`.
+- [x] `sin comprador` solo representa filas realmente vacías.
+- [x] `pnpm build:gold` en verde.
+
+### Implementación aplicada
+1. `apps/gold/agro/agro.js`
+   - Se amplió `OPS_RANKINGS_BUYER_NAME_FIELDS` para cubrir alias de runtime/RPC:
+     - `who`, `who_name`, `who_display`, `buyer_display`, `display_name`, `name`, `label`.
+     - variantes `camelCase`: `whoName`, `whoDisplay`, `buyerName`, `buyerDisplay`, `customerName`, `clientName`, `displayName`.
+   - Se amplió `OPS_RANKINGS_MISSING_NAME_TOKENS` para considerar también `sin comprador`.
+   - Se endureció el parseo de nombre:
+     - `pickOpsBuyerNameFromValue(rawValue)` ahora soporta string/number y objetos con subkeys (`name`, `label`, `display_name`, etc.).
+     - `pickOpsBuyerName(row)` usa ese parser por cada alias configurado.
+   - Se mantuvo intacta la lógica de privacidad y render de tarjetas/listas.
+
+### Validación técnica
+1. Build oficial:
+   - `pnpm build:gold` → ✅ OK
+   - `agent-guard` → ✅
+   - `agent-report-check` → ✅
+   - `vite build` → ✅
+   - `check-dist-utf8` → ✅
+
 ## 🧮 SESIÓN: Reconciliación Centro Estadístico por rango + reverted (2026-02-17)
 
 ### Paso 0 — Diagnóstico (Gate obligatorio)

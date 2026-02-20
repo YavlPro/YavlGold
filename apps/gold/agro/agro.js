@@ -6254,13 +6254,27 @@ const OPS_RANKINGS_BUYER_NAME_FIELDS = Object.freeze([
     'comprador',
     'buyer',
     'buyer_name',
+    'buyer_display',
+    'buyerName',
+    'buyerDisplay',
     'customer_name',
     'customer',
+    'customerName',
     'cliente',
     'client',
-    'client_name'
+    'client_name',
+    'clientName',
+    'who',
+    'who_name',
+    'who_display',
+    'whoName',
+    'whoDisplay',
+    'display_name',
+    'displayName',
+    'name',
+    'label'
 ]);
-const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre']);
+const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre', 'sin comprador']);
 
 let opsRankingsState = {
     range: OPS_RANKINGS_DEFAULT_RANGE,
@@ -7060,7 +7074,10 @@ function normalizeOpsRankingsRows(rows) {
 }
 
 function normalizeOpsRankingNameToken(value) {
-    return String(value ?? '').trim();
+    if (typeof value === 'string' || typeof value === 'number') {
+        return String(value).trim();
+    }
+    return '';
 }
 
 function isOpsRankingMissingBuyerName(value) {
@@ -7068,10 +7085,37 @@ function isOpsRankingMissingBuyerName(value) {
     return OPS_RANKINGS_MISSING_NAME_TOKENS.has(token);
 }
 
+function pickOpsBuyerNameFromValue(rawValue) {
+    const direct = normalizeOpsRankingNameToken(rawValue);
+    if (direct) return direct;
+    if (!rawValue || typeof rawValue !== 'object') return '';
+
+    const nestedKeys = [
+        'name',
+        'label',
+        'display_name',
+        'displayName',
+        'who',
+        'who_name',
+        'whoName',
+        'buyer_name',
+        'buyerName',
+        'customer_name',
+        'customerName',
+        'title',
+        'value'
+    ];
+    for (const key of nestedKeys) {
+        const nested = normalizeOpsRankingNameToken(rawValue?.[key]);
+        if (nested) return nested;
+    }
+    return '';
+}
+
 function pickOpsBuyerName(row) {
     if (!row || typeof row !== 'object') return '';
     for (const field of OPS_RANKINGS_BUYER_NAME_FIELDS) {
-        const candidate = normalizeOpsRankingNameToken(row?.[field]);
+        const candidate = pickOpsBuyerNameFromValue(row?.[field]);
         if (!candidate) continue;
         if (isOpsRankingMissingBuyerName(candidate)) continue;
         return candidate;
