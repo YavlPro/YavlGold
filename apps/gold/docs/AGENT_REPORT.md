@@ -1,5 +1,63 @@
 ---
 
+## 🆕 SESIÓN: Robustez de metadata en export estricto (2026-02-20)
+
+### Diagnóstico (Paso 0 obligatorio)
+
+- El falso "Modo Historial" ya quedó corregido separando existencia vs metadata.
+- Persistía un efecto secundario: en algunos cultivos existentes, la metadata de cabecera caía a fallback (`Cultivo` + campos `N/A`) por fallo de `select` de columnas.
+- Causa probable: desalineación de columnas entre entornos (alguna columna del select largo no disponible en producción), haciendo que falle la consulta de metadata aunque el cultivo sí exista.
+
+### Plan quirúrgico
+
+1. En `apps/gold/agro/agro-crop-report.js` separar columnas de metadata en:
+   - `CROP_REPORT_COLUMNS_FULL`
+   - `CROP_REPORT_COLUMNS_SAFE`
+2. Hacer `fetchCropForUser` robusto:
+   - intentar con FULL
+   - ante error, reintentar con SAFE
+   - devolver `exists=true` si cualquiera retorna fila.
+3. Ajustar `exportCropReport` en ruta `cropExists=true`:
+   - título con nombre + fecha (`# 🌾 Informe de Cultivo: <nombre> — <YYYY-MM-DD>`)
+   - poblar header por campo (Estado, Área, Siembra, Cosecha esperada, Progreso, Inversión), dejando `N/A` solo donde falte dato puntual
+   - mantener estrictamente `includeDeleted=false` para cultivos existentes.
+4. Mantener flujo huérfano/auditoría sin cambios.
+
+### DoD checklist (objetivo de esta sesión)
+
+- [x] Cultivo existente: título con nombre + fecha, sin fallback genérico "Cultivo".
+- [x] Cultivo existente: header con datos reales cuando existan; `N/A` solo por campo faltante.
+- [x] Cultivo existente: modo estricto sin `[ELIMINADO]`.
+- [x] Cultivo huérfano: mantiene confirmación + Modo Historial opcional.
+- [x] `pnpm build:gold` en verde.
+
+### Cambios ejecutados
+
+1. `apps/gold/agro/agro-crop-report.js`
+   - Nuevas constantes:
+     - `CROP_REPORT_COLUMNS_FULL`
+     - `CROP_REPORT_COLUMNS_SAFE`
+   - `fetchCropForUser(...)` ahora hace fallback FULL -> SAFE cuando falla la consulta de metadata.
+   - `exportCropReport(...)` ahora:
+     - valida existencia solo con `resolveCropExistenceMap(..., { failOpen:false })`
+     - usa metadata solo para cabecera/título
+     - mantiene modo estricto fijo si el cultivo existe (`includeDeleted=false`)
+     - título: `# 🌾 Informe de Cultivo: <nombre> — <YYYY-MM-DD>`
+     - header por campo con `N/A` puntual + línea `Inversión`.
+
+2. `apps/gold/agro/agro.js`
+   - Sin cambios funcionales en esta sesión.
+   - Se conserva export normal vs export auditoría/huérfano.
+
+### Resultado de validación
+
+- Build oficial:
+  - `pnpm build:gold` -> **OK**.
+- Manual UI:
+  - pendiente de ejecución con sesión real autenticada (activo vs huérfano).
+
+---
+
 ## 🆕 SESIÓN: Fix falso "Modo Historial" en cultivo activo (2026-02-20)
 
 ### Diagnóstico (Paso 0 obligatorio)

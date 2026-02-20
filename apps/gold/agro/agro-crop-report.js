@@ -48,7 +48,8 @@ const TAB_CONFIGS = {
     }
 };
 
-const CROP_REPORT_COLUMNS = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days';
+const CROP_REPORT_COLUMNS_FULL = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days';
+const CROP_REPORT_COLUMNS_SAFE = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,investment';
 
 function normalizeCropId(value) {
     if (value === undefined || value === null) return null;
@@ -107,28 +108,48 @@ export async function resolveCropExistenceMap(userId, cropIds, opts = {}) {
  * Consulta un cultivo por id para el usuario.
  * Reutilizable en UI/exports para evitar duplicar contrato de `cropExists`.
  */
-export async function fetchCropForUser(userId, cropId, selectFields = CROP_REPORT_COLUMNS) {
+export async function fetchCropForUser(userId, cropId, selectFields = CROP_REPORT_COLUMNS_FULL) {
     const normalizedUserId = normalizeCropId(userId);
     const normalizedCropId = normalizeCropId(cropId);
     if (!normalizedUserId || !normalizedCropId) {
         return { exists: false, crop: null, error: null };
     }
 
-    try {
-        const { data, error } = await supabase
-            .from('agro_crops')
-            .select(selectFields || CROP_REPORT_COLUMNS)
-            .eq('id', normalizedCropId)
-            .eq('user_id', normalizedUserId)
-            .maybeSingle();
+    const requestedColumns = String(selectFields || CROP_REPORT_COLUMNS_FULL).trim() || CROP_REPORT_COLUMNS_FULL;
+    const attempts = requestedColumns === CROP_REPORT_COLUMNS_SAFE
+        ? [CROP_REPORT_COLUMNS_SAFE]
+        : [requestedColumns, CROP_REPORT_COLUMNS_SAFE];
+    const seen = new Set();
+    let lastError = null;
 
-        if (error) {
-            return { exists: false, crop: null, error };
+    for (const columns of attempts) {
+        if (seen.has(columns)) continue;
+        seen.add(columns);
+        try {
+            const { data, error } = await supabase
+                .from('agro_crops')
+                .select(columns)
+                .eq('id', normalizedCropId)
+                .eq('user_id', normalizedUserId)
+                .maybeSingle();
+
+            if (error) {
+                lastError = error;
+                continue;
+            }
+
+            if (data) {
+                return { exists: true, crop: data, error: null };
+            }
+            // No row for this user/crop_id -> no existe, no hace falta más retries.
+            return { exists: false, crop: null, error: null };
+        } catch (err) {
+            lastError = err;
+            continue;
         }
-        return { exists: !!data, crop: data || null, error: null };
-    } catch (err) {
-        return { exists: false, crop: null, error: err };
     }
+
+    return { exists: false, crop: null, error: lastError };
 }
 
 function toCents(value) {
@@ -513,18 +534,20 @@ export async function exportCropReport(cropId, opts = {}) {
         const existsMap = await resolveCropExistenceMap(user.id, [normalizedCropId], { failOpen: false });
         const cropExists = existsMap[normalizedCropId] === true;
         let crop = null;
+        let hasCropRow = false;
         let hasCropMetadata = false;
 
         if (cropExists) {
-            const cropLookup = await fetchCropForUser(user.id, normalizedCropId, CROP_REPORT_COLUMNS);
+            const cropLookup = await fetchCropForUser(user.id, normalizedCropId, CROP_REPORT_COLUMNS_FULL);
             if (cropLookup?.crop) {
                 crop = cropLookup.crop;
-                hasCropMetadata = true;
+                hasCropRow = true;
+                hasCropMetadata = !!(String(crop.name || '').trim() || String(crop.variety || '').trim());
             } else {
                 if (cropLookup?.error) {
                     console.warn('[CropReport] Crop metadata fetch failed, keeping strict mode:', cropLookup.error);
                 }
-                crop = { id: normalizedCropId, name: 'Cultivo' };
+                crop = { id: normalizedCropId, name: 'Sin nombre' };
             }
         } else {
             console.warn('[CropReport] Crop not found in agro_crops. cropId:', normalizedCropId);
@@ -584,14 +607,24 @@ export async function exportCropReport(cropId, opts = {}) {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-        const progress = cropExists && hasCropMetadata ? computeCropProgress(crop) : null;
-        const resolvedStatus = cropExists && hasCropMetadata ? resolveCropStatus(crop, progress) : null;
+        const cropName = String(crop?.name || '').trim() || String(crop?.variety || '').trim() || 'Sin nombre';
+        const progress = cropExists && hasCropRow ? computeCropProgress(crop) : null;
+        const resolvedStatus = cropExists && hasCropRow ? resolveCropStatus(crop, progress) : null;
+        const statusFallback = String(crop?.status || '').trim();
         const statusLine = cropExists
-            ? (hasCropMetadata ? formatCropStatusLine(resolvedStatus) : 'N/A')
+            ? (resolvedStatus
+                ? formatCropStatusLine(resolvedStatus)
+                : (statusFallback ? formatCropStatusLine(statusFallback) : 'N/A'))
             : null;
-        const progressLine = cropExists
-            ? (hasCropMetadata ? formatCropProgressLine(progress) : 'N/A')
-            : null;
+        const areaLine = cropExists && crop?.area_size !== null && crop?.area_size !== undefined
+            ? `${crop.area_size} ha`
+            : 'N/A';
+        const startLine = cropExists && crop?.start_date ? fmtDate(crop.start_date) : 'N/A';
+        const harvestLine = cropExists && crop?.expected_harvest_date ? fmtDate(crop.expected_harvest_date) : 'N/A';
+        const progressLine = cropExists && progress?.ok ? formatCropProgressLine(progress) : 'N/A';
+        const investmentLine = cropExists && crop?.investment !== null && crop?.investment !== undefined
+            ? centsToStr(toCents(crop.investment))
+            : 'N/A';
 
         // Conteos por modo
         const ci = countAliveDeleted(income);
@@ -606,16 +639,17 @@ export async function exportCropReport(cropId, opts = {}) {
         // Build Markdown
         let md = '';
         if (cropExists) {
-            md += `# 🌾 Informe de Cultivo: ${crop.name || 'Cultivo'}\n`;
+            md += `# 🌾 Informe de Cultivo: ${cropName} — ${dateStr}\n`;
             if (!hasCropMetadata) {
                 md += `> ⚠️ Metadata del cultivo no disponible; reporte generado en modo estricto.\n`;
                 md += `> **crop_id:** \`${normalizedCropId}\`\n`;
             }
             md += `> **Estado:** ${statusLine}\n`;
-            md += `> **Área:** ${hasCropMetadata ? `${crop.area_size || 0} ha` : 'N/A'}\n`;
-            md += `> **Siembra:** ${fmtDate(crop.start_date)}\n`;
-            md += `> **Cosecha esperada:** ${fmtDate(crop.expected_harvest_date)}\n`;
+            md += `> **Área:** ${areaLine}\n`;
+            md += `> **Siembra:** ${startLine}\n`;
+            md += `> **Cosecha esperada:** ${harvestLine}\n`;
             md += `> **Progreso:** ${progressLine}\n`;
+            md += `> **Inversión:** ${investmentLine}\n`;
         } else {
             md += `# 🗃️ Expediente — Ciclo Eliminado\n`;
             md += `> 🧾 **Modo Historial:** incluye movimientos eliminados (soft-delete) para preservar el expediente del ciclo.\n`;
@@ -698,7 +732,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const link = document.createElement('a');
         link.href = url;
         const fileLabel = cropExists
-            ? sanitizeFilename(crop.name)
+            ? sanitizeFilename(cropName)
             : `cultivo-eliminado_${sanitizeFilename(normalizedCropId)}`;
         link.download = `Informe_${fileLabel}_${dateStr}.md`;
         document.body.appendChild(link);
@@ -706,7 +740,7 @@ export async function exportCropReport(cropId, opts = {}) {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        const exportedCropLabel = cropExists ? crop.name : `cultivo eliminado (${normalizedCropId})`;
+        const exportedCropLabel = cropExists ? cropName : `cultivo eliminado (${normalizedCropId})`;
         console.info(`[CropReport] Exported report for "${exportedCropLabel}" (${income.length} income, ${expenses.length} expenses, ${pending.length} pending, ${losses.length} losses, ${transfers.length} transfers)`);
     } catch (err) {
         console.error('[CropReport] Export error:', err);
