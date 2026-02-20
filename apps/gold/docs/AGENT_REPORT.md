@@ -1,5 +1,59 @@
 ---
 
+## 🆕 SESIÓN: Fix falso "Modo Historial" en cultivo activo (2026-02-20)
+
+### Diagnóstico (Paso 0 obligatorio)
+
+- `exportCropReport` estaba derivando `cropExists` desde `fetchCropForUser(...)` con `select` largo.
+- Si ese fetch de metadata falla (columnas/permisos/timeout), el flujo marcaba `cropExists=false` y activaba "Modo Historial" aunque el `crop_id` sí existía.
+- Efecto: reportes de cultivos activos podían incluir soft-deleted (`[ELIMINADO]`) por activación incorrecta de `includeDeleted=true`.
+
+### Plan quirúrgico
+
+1. Separar responsabilidades en `apps/gold/agro/agro-crop-report.js`:
+   - Existencia del cultivo: `resolveCropExistenceMap(user.id, [cropId], { failOpen:false })`.
+   - Metadata de cabecera: `fetchCropForUser(...)` solo para enriquecer título/estado.
+2. En `exportCropReport`:
+   - Si `exists=true` => modo estricto fijo (`includeDeleted=false`), sin modal historial.
+   - Si metadata falla pero `exists=true` => mantener estricto y usar fallback de cabecera.
+   - Si `exists=false` => conservar confirmación/decisión de Modo Historial.
+3. Mantener `agro.js` sin cambios funcionales nuevos para export normal vs auditoría.
+
+### DoD checklist (objetivo de esta sesión)
+
+- [x] Cultivo existente: sin modal "Modo Historial" (por lógica de existencia separada).
+- [x] Cultivo existente: reporte estricto sin filas `deleted_at != null` (includeDeleted=false si existe).
+- [x] Cultivo huérfano: mantiene confirmación/decisión y Modo Historial opcional.
+- [x] Falla de metadata no forza `cropExists=false` si verificación por id dio `true`.
+- [x] `pnpm build:gold` en verde.
+
+### Cambios ejecutados
+
+1. `apps/gold/agro/agro-crop-report.js`
+   - `exportCropReport` ahora resuelve existencia primero con:
+     - `resolveCropExistenceMap(user.id, [cropId], { failOpen: false })`.
+   - Separación estricta:
+     - `cropExists=true` -> modo estricto fijo (`historyMode=false`, `includeDeleted=false`), sin modal historial.
+     - `cropExists=false` -> flujo existente de confirmación/decisión de historial.
+   - `fetchCropForUser` queda como metadata de cabecera (no define existencia).
+   - Si metadata falla y `cropExists=true`, se usa fallback de cabecera (`Cultivo` + `crop_id`) manteniendo modo estricto.
+   - Todas las lecturas de tabs usan `normalizedCropId` consistente.
+
+2. `apps/gold/agro/agro.js`
+   - Sin cambios funcionales nuevos en esta sesión.
+   - Se mantiene:
+     - export normal -> `exportCropReport(cropId)`.
+     - auditoría/huérfano -> `exportCropReport(orphanId, { skipHistoryConfirmation: true })`.
+
+### Pruebas / validación
+
+- Build oficial:
+  - `pnpm build:gold` -> **OK**.
+- Prueba manual de UI:
+  - Pendiente de ejecución con sesión real autenticada en navegador para validar los dos casos solicitados (activo vs huérfano) extremo a extremo.
+
+---
+
 ## 🆕 SESIÓN: Desfricción de Historial QA en Agro (2026-02-19)
 
 ### Diagnóstico (Paso 0 obligatorio)

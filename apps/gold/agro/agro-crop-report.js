@@ -509,13 +509,25 @@ export async function exportCropReport(cropId, opts = {}) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { alert('Sesión no válida.'); return; }
 
-        const cropLookup = await fetchCropForUser(user.id, cropId, CROP_REPORT_COLUMNS);
-        const cropExists = !!cropLookup.exists;
-        const cropErr = cropLookup.error;
-        let crop = cropLookup.crop;
+        const normalizedCropId = normalizeCropId(cropId) || String(cropId);
+        const existsMap = await resolveCropExistenceMap(user.id, [normalizedCropId], { failOpen: false });
+        const cropExists = existsMap[normalizedCropId] === true;
+        let crop = null;
+        let hasCropMetadata = false;
 
-        if (!cropExists) {
-            console.warn('[CropReport] Crop not found in agro_crops. cropId:', cropId, 'error:', cropErr);
+        if (cropExists) {
+            const cropLookup = await fetchCropForUser(user.id, normalizedCropId, CROP_REPORT_COLUMNS);
+            if (cropLookup?.crop) {
+                crop = cropLookup.crop;
+                hasCropMetadata = true;
+            } else {
+                if (cropLookup?.error) {
+                    console.warn('[CropReport] Crop metadata fetch failed, keeping strict mode:', cropLookup.error);
+                }
+                crop = { id: normalizedCropId, name: 'Cultivo' };
+            }
+        } else {
+            console.warn('[CropReport] Crop not found in agro_crops. cropId:', normalizedCropId);
             if (!skipHistoryConfirmation) {
                 // ── Guardia anti-accidente ────────────────────────────────────────
                 // Este crop_id no existe en agro_crops. Puede ser:
@@ -525,14 +537,14 @@ export async function exportCropReport(cropId, opts = {}) {
                 const confirmed = window.confirm(
                     `⚠️ Modo Historial\n\n` +
                     `El cultivo asociado a este botón ya no existe en la base de datos.\n\n` +
-                    `crop_id: ${cropId}\n\n` +
+                    `crop_id: ${normalizedCropId}\n\n` +
                     `¿Deseas exportar el expediente histórico del ciclo?\n` +
                     `(Incluirá movimientos eliminados marcados como [ELIMINADO] o [TRANSFERIDO])\n\n` +
                     `Pulsa Cancelar si esto no corresponde al cultivo que quieres exportar.`
                 );
                 if (!confirmed) return;
             }
-            crop = { id: cropId, name: 'Ciclo eliminado' };
+            crop = { id: normalizedCropId, name: 'Ciclo eliminado' };
         }
 
         // Modo Historial: cuando el cultivo no existe en agro_crops, incluir soft-deleted
@@ -541,11 +553,11 @@ export async function exportCropReport(cropId, opts = {}) {
 
         // Fetch all tabs in parallel
         const [income, expenses, pending, losses, transfers] = await Promise.all([
-            fetchTabData(user.id, cropId, 'ingresos', fetchOpts),
-            fetchTabData(user.id, cropId, 'gastos', fetchOpts),
-            fetchTabData(user.id, cropId, 'pendientes', fetchOpts),
-            fetchTabData(user.id, cropId, 'perdidas', fetchOpts),
-            fetchTabData(user.id, cropId, 'transferencias', fetchOpts)
+            fetchTabData(user.id, normalizedCropId, 'ingresos', fetchOpts),
+            fetchTabData(user.id, normalizedCropId, 'gastos', fetchOpts),
+            fetchTabData(user.id, normalizedCropId, 'pendientes', fetchOpts),
+            fetchTabData(user.id, normalizedCropId, 'perdidas', fetchOpts),
+            fetchTabData(user.id, normalizedCropId, 'transferencias', fetchOpts)
         ]);
 
         // ── Split semántico de pendientes ──────────────────────────────────────
@@ -572,10 +584,14 @@ export async function exportCropReport(cropId, opts = {}) {
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
-        const progress = cropExists ? computeCropProgress(crop) : null;
-        const resolvedStatus = cropExists ? resolveCropStatus(crop, progress) : null;
-        const statusLine = cropExists ? formatCropStatusLine(resolvedStatus) : null;
-        const progressLine = cropExists ? formatCropProgressLine(progress) : null;
+        const progress = cropExists && hasCropMetadata ? computeCropProgress(crop) : null;
+        const resolvedStatus = cropExists && hasCropMetadata ? resolveCropStatus(crop, progress) : null;
+        const statusLine = cropExists
+            ? (hasCropMetadata ? formatCropStatusLine(resolvedStatus) : 'N/A')
+            : null;
+        const progressLine = cropExists
+            ? (hasCropMetadata ? formatCropProgressLine(progress) : 'N/A')
+            : null;
 
         // Conteos por modo
         const ci = countAliveDeleted(income);
@@ -590,9 +606,13 @@ export async function exportCropReport(cropId, opts = {}) {
         // Build Markdown
         let md = '';
         if (cropExists) {
-            md += `# 🌾 Informe de Cultivo: ${crop.name || 'Sin nombre'}\n`;
+            md += `# 🌾 Informe de Cultivo: ${crop.name || 'Cultivo'}\n`;
+            if (!hasCropMetadata) {
+                md += `> ⚠️ Metadata del cultivo no disponible; reporte generado en modo estricto.\n`;
+                md += `> **crop_id:** \`${normalizedCropId}\`\n`;
+            }
             md += `> **Estado:** ${statusLine}\n`;
-            md += `> **Área:** ${crop.area_size || 0} ha\n`;
+            md += `> **Área:** ${hasCropMetadata ? `${crop.area_size || 0} ha` : 'N/A'}\n`;
             md += `> **Siembra:** ${fmtDate(crop.start_date)}\n`;
             md += `> **Cosecha esperada:** ${fmtDate(crop.expected_harvest_date)}\n`;
             md += `> **Progreso:** ${progressLine}\n`;
@@ -600,7 +620,7 @@ export async function exportCropReport(cropId, opts = {}) {
             md += `# 🗃️ Expediente — Ciclo Eliminado\n`;
             md += `> 🧾 **Modo Historial:** incluye movimientos eliminados (soft-delete) para preservar el expediente del ciclo.\n`;
             md += `> ⚠️ El cultivo asociado ya no está disponible en agro_crops.\n`;
-            md += `> **crop_id:** \`${cropId}\`\n`;
+            md += `> **crop_id:** \`${normalizedCropId}\`\n`;
         }
         md += `> **Fecha del reporte:** ${dateStr} ${timeStr}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
@@ -679,14 +699,14 @@ export async function exportCropReport(cropId, opts = {}) {
         link.href = url;
         const fileLabel = cropExists
             ? sanitizeFilename(crop.name)
-            : `cultivo-eliminado_${sanitizeFilename(cropId)}`;
+            : `cultivo-eliminado_${sanitizeFilename(normalizedCropId)}`;
         link.download = `Informe_${fileLabel}_${dateStr}.md`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        const exportedCropLabel = cropExists ? crop.name : `cultivo eliminado (${cropId})`;
+        const exportedCropLabel = cropExists ? crop.name : `cultivo eliminado (${normalizedCropId})`;
         console.info(`[CropReport] Exported report for "${exportedCropLabel}" (${income.length} income, ${expenses.length} expenses, ${pending.length} pending, ${losses.length} losses, ${transfers.length} transfers)`);
     } catch (err) {
         console.error('[CropReport] Export error:', err);
