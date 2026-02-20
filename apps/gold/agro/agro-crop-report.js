@@ -48,6 +48,89 @@ const TAB_CONFIGS = {
     }
 };
 
+const CROP_REPORT_COLUMNS = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days';
+
+function normalizeCropId(value) {
+    if (value === undefined || value === null) return null;
+    const text = String(value).trim();
+    return text || null;
+}
+
+/**
+ * Resuelve existencia de cultivos por id para el usuario.
+ * Devuelve mapa `{ [cropId]: boolean }`.
+ * En modo fail-open, ante error retorna `true` para no ocultar ciclos válidos por fallas de red.
+ */
+export async function resolveCropExistenceMap(userId, cropIds, opts = {}) {
+    const list = Array.isArray(cropIds) ? cropIds : [];
+    const ids = Array.from(
+        new Set(
+            list
+                .map((id) => normalizeCropId(id))
+                .filter(Boolean)
+        )
+    );
+    const fallbackExists = opts.failOpen !== false;
+    const map = Object.create(null);
+    ids.forEach((id) => {
+        map[id] = fallbackExists;
+    });
+    if (!ids.length) return map;
+
+    const normalizedUserId = normalizeCropId(userId);
+    if (!normalizedUserId) return map;
+
+    try {
+        const { data, error } = await supabase
+            .from('agro_crops')
+            .select('id')
+            .eq('user_id', normalizedUserId)
+            .in('id', ids);
+
+        if (error) {
+            console.warn('[CropReport] Error resolving crop existence map:', error.message);
+            return map;
+        }
+
+        const existingIds = new Set((data || []).map((row) => normalizeCropId(row?.id)).filter(Boolean));
+        ids.forEach((id) => {
+            map[id] = existingIds.has(id);
+        });
+        return map;
+    } catch (err) {
+        console.warn('[CropReport] Exception resolving crop existence map:', err);
+        return map;
+    }
+}
+
+/**
+ * Consulta un cultivo por id para el usuario.
+ * Reutilizable en UI/exports para evitar duplicar contrato de `cropExists`.
+ */
+export async function fetchCropForUser(userId, cropId, selectFields = CROP_REPORT_COLUMNS) {
+    const normalizedUserId = normalizeCropId(userId);
+    const normalizedCropId = normalizeCropId(cropId);
+    if (!normalizedUserId || !normalizedCropId) {
+        return { exists: false, crop: null, error: null };
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('agro_crops')
+            .select(selectFields || CROP_REPORT_COLUMNS)
+            .eq('id', normalizedCropId)
+            .eq('user_id', normalizedUserId)
+            .maybeSingle();
+
+        if (error) {
+            return { exists: false, crop: null, error };
+        }
+        return { exists: !!data, crop: data || null, error: null };
+    } catch (err) {
+        return { exists: false, crop: null, error: err };
+    }
+}
+
 function toCents(value) {
     return Math.round((Number(value) || 0) * 100);
 }
@@ -416,41 +499,39 @@ function buildTransferTable(items, historyMode = false) {
 /**
  * Generates and downloads a consolidated Markdown report for a single crop.
  * @param {string} cropId - UUID of the crop
+ * @param {{ skipHistoryConfirmation?: boolean }} [opts]
  */
-export async function exportCropReport(cropId) {
+export async function exportCropReport(cropId, opts = {}) {
     if (!cropId) { alert('No se seleccionó un cultivo.'); return; }
+    const skipHistoryConfirmation = !!opts.skipHistoryConfirmation;
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { alert('Sesión no válida.'); return; }
 
-        // Fetch crop info
-        const { data: cropData, error: cropErr } = await supabase
-            .from('agro_crops')
-            .select('id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days')
-            .eq('id', cropId)
-            .eq('user_id', user.id)
-            .single();
-
-        const cropExists = !cropErr && !!cropData;
-        let crop = cropData;
+        const cropLookup = await fetchCropForUser(user.id, cropId, CROP_REPORT_COLUMNS);
+        const cropExists = !!cropLookup.exists;
+        const cropErr = cropLookup.error;
+        let crop = cropLookup.crop;
 
         if (!cropExists) {
             console.warn('[CropReport] Crop not found in agro_crops. cropId:', cropId, 'error:', cropErr);
-            // ── Guardia anti-accidente ────────────────────────────────────────────
-            // Este crop_id no existe en agro_crops. Puede ser:
-            //   A) un ciclo eliminado con movimientos históricos (soft-deleted)
-            //   B) un ciclo de QA/pruebas borrado definitivamente
-            // Pedimos confirmación explícita antes de exportar en Modo Historial.
-            const confirmed = window.confirm(
-                `⚠️ Modo Historial\n\n` +
-                `El cultivo asociado a este botón ya no existe en la base de datos.\n\n` +
-                `crop_id: ${cropId}\n\n` +
-                `¿Deseas exportar el expediente histórico del ciclo?\n` +
-                `(Incluirá movimientos eliminados marcados como [ELIMINADO] o [TRANSFERIDO])\n\n` +
-                `Pulsa Cancelar si esto no corresponde al cultivo que quieres exportar.`
-            );
-            if (!confirmed) return;
+            if (!skipHistoryConfirmation) {
+                // ── Guardia anti-accidente ────────────────────────────────────────
+                // Este crop_id no existe en agro_crops. Puede ser:
+                //   A) un ciclo eliminado con movimientos históricos (soft-deleted)
+                //   B) un ciclo de QA/pruebas borrado definitivamente
+                // Pedimos confirmación explícita antes de exportar en Modo Historial.
+                const confirmed = window.confirm(
+                    `⚠️ Modo Historial\n\n` +
+                    `El cultivo asociado a este botón ya no existe en la base de datos.\n\n` +
+                    `crop_id: ${cropId}\n\n` +
+                    `¿Deseas exportar el expediente histórico del ciclo?\n` +
+                    `(Incluirá movimientos eliminados marcados como [ELIMINADO] o [TRANSFERIDO])\n\n` +
+                    `Pulsa Cancelar si esto no corresponde al cultivo que quieres exportar.`
+                );
+                if (!confirmed) return;
+            }
             crop = { id: cropId, name: 'Ciclo eliminado' };
         }
 
