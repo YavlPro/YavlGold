@@ -1,5 +1,93 @@
 ---
 
+## 🆕 SESIÓN: RPC Top Clients V3 — Fallback híbrido + parser de concepto (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA y navegación**
+- `apps/gold/vite.config.js`: MPA activo con entradas HTML por módulo.
+- `apps/gold/vercel.json`: clean URLs + rewrites.
+- `apps/gold/index.html`: navegación principal.
+- `apps/gold/dashboard/index.html`: panel y secciones de ranking.
+
+2) **Supabase/Auth**
+- Cliente/auth sin cambios:
+  - `apps/gold/assets/js/config/supabase-config.js`
+  - `apps/gold/assets/js/auth/authClient.js`
+  - `apps/gold/assets/js/auth/authUI.js`
+  - `apps/gold/dashboard/auth-guard.js`
+
+3) **Dashboard data**
+- El síntoma se concentra en RPC SQL (`agro_rank_top_clients`), no en query JS local.
+
+4) **Agro/Clima**
+- Sin cambios previstos en geolocalización/caches (Manual > GPS > IP).
+
+5) **Crypto**
+- Sin cambios (fuera de alcance).
+
+### Hallazgo raíz confirmado (DB real)
+
+- `agro_rank_top_clients(...)` para `crop_id = 1e2d3ada-0447-4fca-8c63-b063efd6c8dd` devuelve:
+  - `buyer_name = 'Sin nombre'`
+  - `operations = 14`
+  - `total = 347.233595...`
+- En `public.agro_income` **no existen** columnas de nombre (`cliente/comprador/buyer*`), solo `monto` y `monto_usd`.
+- Los nombres de comprador vienen embebidos en `concepto` (ej. `Venta a Cleiver - ...`), por eso el fallback por columnas no alcanza.
+
+### Plan quirúrgico
+
+1. Crear migración V3 en repo para versionar el fix:
+- `supabase/migrations/*_agro_top_clients_v3_hybrid_name_amount_fallback.sql`
+
+2. `CREATE OR REPLACE` de RPCs:
+- `public.agro_rank_top_clients(...)`:
+  - Builder row-by-row para monto (`amount_usd`, `amount`, `monto_usd`, `monto`).
+  - Builder row-by-row para nombre (`comprador/cliente/...`) y fallback parser desde `concepto` (`venta a ...`, `cliente: ...`).
+  - Mantener `name_key` con `lower(extensions.unaccent(...))`.
+- `public.agro_rank_pending_clients(...)`:
+  - Builder row-by-row para monto/nombre (híbrido robusto).
+  - Mantener canonical grouping actual.
+
+3. Aplicar migración en Supabase y validar con JWT/RLS simulado:
+- Verificar que Top Clients deje de caer en `Sin nombre` cuando hay nombre en `concepto`.
+- Verificar `dup_keys = 0`.
+
+4. Ejecutar build oficial:
+- `pnpm build:gold`
+
+### DoD (objetivo de esta sesión)
+
+- [x] `agro_rank_top_clients` deja de concentrar ventas válidas en `Sin nombre` cuando el comprador está en `concepto`.
+- [x] Fallback de monto en RPC top/pending queda híbrido row-by-row.
+- [x] Canonical key con `extensions.unaccent` se conserva.
+- [x] Migración V3 queda versionada en `supabase/migrations/`.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y validación (evidencia)
+
+1. Migración V3 versionada en repo:
+- `supabase/migrations/20260221230035_agro_top_clients_v3_hybrid_name_amount_fallback.sql`
+- Incluye:
+  - `create extension if not exists unaccent with schema extensions;`
+  - `create or replace function public.agro_rank_top_clients(...)`
+  - `create or replace function public.agro_rank_pending_clients(...)`
+
+2. Migración aplicada en Supabase:
+- Nombre aplicado: `agro_top_clients_v3_hybrid_name_amount_fallback`
+- Resultado: `success = true`.
+
+3. Validación funcional (JWT/RLS simulado, `crop_id = 1e2d3ada-0447-4fca-8c63-b063efd6c8dd`):
+- Antes del fix:
+  - `buyer_name = 'Sin nombre'`, `operations = 14`, `total = 347.233595...`
+- Después del fix:
+  - Top clients retorna compradores reales (`Jesús berraco`, `Luis azul`, `Orlando pineda`, `Cleiver`, `William`, `Pedro suarez`, etc.).
+  - Resumen técnico: `top_rows_total = 9`, `sin_nombre_rows = 0`, `dup_keys = 0`.
+
+4. Verificación de estructura de funciones:
+- `agro_rank_top_clients`: `has_concept_parser = true`, `has_name_builder = true`, `has_amount_builder = true`.
+- `agro_rank_pending_clients`: `has_name_builder = true`, `has_amount_builder = true`.
+
 ## 🆕 SESIÓN: RPC Canonical Grouping V2 (unaccent) (2026-02-21)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de runtime)
