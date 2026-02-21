@@ -1310,6 +1310,19 @@ export async function openAgroWizard(tabName, deps) {
                         refreshFactureroHistory(tab);
                     });
                 }
+                const impactsCropCards = tabName === 'gastos'
+                    || tabName === 'ingresos'
+                    || tabName === 'perdidas'
+                    || createdOperatingExpense;
+                if (impactsCropCards) {
+                    document.dispatchEvent(new CustomEvent('agro:crops:refresh', {
+                        detail: {
+                            source: 'wizard',
+                            tab: tabName,
+                            operatingExpense: createdOperatingExpense
+                        }
+                    }));
+                }
             }, 1500);
 
         } catch (err) {

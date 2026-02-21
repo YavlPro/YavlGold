@@ -21,6 +21,8 @@ let cropsLoadSeq = 0;
 let cropsLoadInFlight = false;
 let cropsLoadQueued = false;
 let cropsLastCount = 0;
+let cropsRefreshThrottleTimer = null;
+let cropsRefreshEventsBound = false;
 
 const CROPS_LOADING_ID = 'agro-crops-loading';
 const CROPS_EMPTY_ID = 'agro-crops-empty';
@@ -36,6 +38,7 @@ const AGRO_FOCUS_SNAPSHOT_TOOLS_KEY = '__agro_tools__';
 const AGRO_GENERAL_VIEW_ID = '__general__';
 const AGRO_GENERAL_LABEL = '📋 General';
 const AGRO_GENERAL_SUBLABEL = 'Todos los movimientos';
+const AGRO_CROPS_REFRESH_EVENT = 'agro:crops:refresh';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
@@ -3092,6 +3095,13 @@ async function refreshFactureroAfterChange(tabName) {
     }
     refreshPromises.push(refreshFactureroHistory('otros'));
     await Promise.all(refreshPromises);
+
+    const impactsCropCards = tabName === 'gastos' || tabName === 'ingresos' || tabName === 'perdidas';
+    if (impactsCropCards) {
+        document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
+            detail: { source: 'facturero', tab: tabName }
+        }));
+    }
 }
 
 // ============================================================
@@ -4768,6 +4778,28 @@ function refreshFactureroForSelectedCrop() {
         loadIncomes();
     }
     refreshOpsRankingsIfVisible();
+}
+
+function scheduleCropCardsRefresh(delayMs = 250) {
+    const wait = Number.isFinite(Number(delayMs)) ? Math.max(0, Number(delayMs)) : 250;
+    if (cropsRefreshThrottleTimer) {
+        clearTimeout(cropsRefreshThrottleTimer);
+    }
+    cropsRefreshThrottleTimer = setTimeout(() => {
+        cropsRefreshThrottleTimer = null;
+        Promise.resolve(loadCrops()).catch((err) => {
+            console.warn('[AGRO] crop cards refresh failed:', err?.message || err);
+        });
+    }, wait);
+}
+
+function bindCropRefreshEvents() {
+    if (cropsRefreshEventsBound || typeof document === 'undefined') return;
+    cropsRefreshEventsBound = true;
+    const refreshHandler = () => scheduleCropCardsRefresh(250);
+    document.addEventListener(AGRO_CROPS_REFRESH_EVENT, refreshHandler);
+    document.addEventListener('agro:income:changed', refreshHandler);
+    document.addEventListener('agro:losses:changed', refreshHandler);
 }
 
 if (typeof document !== 'undefined') {
@@ -9944,6 +9976,7 @@ export function initAgro() {
     initCropTemplateControls();
 
     // Cargar cultivos
+    bindCropRefreshEvents();
     loadCrops();
     setupCropActionListeners();
 
