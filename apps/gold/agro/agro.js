@@ -906,7 +906,7 @@ const FACTURERO_CONFIG = {
         conceptField: 'concept',
         amountField: 'amount',
         dateField: 'date',
-        extraFields: ['category'],
+        extraFields: ['category', 'currency', 'exchange_rate', 'monto_usd', 'crop_id', 'evidence_url', 'type'],
         supportsDeletedAt: true
     },
     'ingresos': {

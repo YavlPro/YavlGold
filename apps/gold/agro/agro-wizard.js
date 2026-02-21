@@ -1227,9 +1227,6 @@ export async function openAgroWizard(tabName, deps) {
 
                 const transferId = transferInsert.data?.id;
                 const conceptBase = String(state.concepto || 'Donación').trim();
-                const operatingConcept = state.who
-                    ? `Donación operativa a ${state.who}: ${conceptBase}`
-                    : `Donación operativa: ${conceptBase}`;
                 const linkedCropId = state.cropId || insertData.crop_id || null;
                 const transferUnitType = state.unitType || insertData.unit_type || null;
                 const transferUnitQtyRaw = state.unitQty ?? insertData.unit_qty;
@@ -1237,6 +1234,16 @@ export async function openAgroWizard(tabName, deps) {
                 const transferUnitQty = transferUnitType && Number.isFinite(transferUnitQtyParsed) && transferUnitQtyParsed > 0
                     ? transferUnitQtyParsed
                     : null;
+                const transferUnitOption = UNIT_OPTIONS.find((opt) => opt.value === transferUnitType);
+                const transferUnitLabel = transferUnitOption
+                    ? (transferUnitQty === 1 ? transferUnitOption.singular : transferUnitOption.plural)
+                    : transferUnitType;
+                const unitLabel = transferUnitQty && transferUnitLabel
+                    ? ` · ${transferUnitQty} ${transferUnitLabel}`
+                    : '';
+                const operatingConcept = state.who
+                    ? `Donación operativa a ${state.who}: ${conceptBase}${unitLabel}`
+                    : `Donación operativa: ${conceptBase}${unitLabel}`;
                 const expenseData = {
                     user_id: user.id,
                     crop_id: linkedCropId,
@@ -1246,9 +1253,7 @@ export async function openAgroWizard(tabName, deps) {
                     category: linkedCropId ? 'operativo' : 'general',
                     currency: insertData.currency || 'USD',
                     exchange_rate: insertData.exchange_rate || 1,
-                    monto_usd: insertData.monto_usd ?? montoNum,
-                    unit_qty: transferUnitQty,
-                    unit_type: transferUnitType
+                    monto_usd: insertData.monto_usd ?? montoNum
                 };
 
                 const expenseInsert = await supabase
