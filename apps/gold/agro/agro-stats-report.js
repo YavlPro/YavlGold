@@ -514,36 +514,36 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
     for (const r of incomeRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.incomeCents += toCents(r.monto_usd ?? r.monto);
+            e.incomeCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.incomeCents += toCents(r.monto_usd ?? r.monto);
+            unassigned.incomeCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
             unassigned.incomeCount += 1;
         }
     }
     for (const r of expenseRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.expenseCents += toCents(r.monto_usd ?? r.amount);
+            e.expenseCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.expenseCents += toCents(r.monto_usd ?? r.amount);
+            unassigned.expenseCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
             unassigned.expenseCount += 1;
         }
     }
     for (const r of pendingRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.pendingCents += toCents(r.monto_usd ?? r.monto);
+            e.pendingCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.pendingCents += toCents(r.monto_usd ?? r.monto);
+            unassigned.pendingCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
             unassigned.pendingCount += 1;
         }
     }
     for (const r of lossesRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.lossesCents += toCents(r.monto_usd ?? r.monto);
+            e.lossesCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.lossesCents += toCents(r.monto_usd ?? r.monto);
+            unassigned.lossesCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
             unassigned.lossesCount += 1;
         }
     }
@@ -607,8 +607,9 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 
     for (const r of incomeRows) {
         const who = resolveBuyerName(r);
-        if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true, currencies: new Set() });
-        const b = buyers.get(who);
+        const key = who.toLowerCase();
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
+        const b = buyers.get(key);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
         const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
@@ -617,9 +618,10 @@ function buildBuyerRanking(incomeRows, pendingRows) {
     }
 
     for (const r of pendingRows) {
-        const who = String(r?.cliente || r?.comprador || '').trim() || 'Sin cliente';
-        if (!buyers.has(who)) buyers.set(who, { count: 0, totalCents: 0, paid: true, currencies: new Set() });
-        const b = buyers.get(who);
+        const who = resolveBuyerName(r);
+        const key = who.toLowerCase();
+        if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
+        const b = buyers.get(key);
         b.count += 1;
         b.totalCents += toCents(resolveAmountUsd(r));
         const cur = String(r.currency || 'USD').trim().toUpperCase() || 'USD';
@@ -635,7 +637,8 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 
     let md = '| Cliente | Compras | Monedas | Total (USD) | Estado |\n';
     md += '|---------|--------:|---------|------------:|--------|\n';
-    for (const [name, b] of sorted) {
+    for (const [, b] of sorted) {
+        const name = b.displayWho;
         const estado = b.paid ? '✅ Pagado' : '⏳ Debe';
         const curs = Array.from(b.currencies).join(', ');
         md += `| ${escMd(name)} | ${b.count} | ${curs} | ${centsToStr(b.totalCents)} | ${estado} |\n`;

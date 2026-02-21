@@ -1,5 +1,191 @@
 ---
 
+## 🆕 SESIÓN: RPC Canonical Grouping V2 (unaccent) (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA y navegación**
+- `apps/gold/vite.config.js`: MPA activo con entradas HTML por módulo.
+- `apps/gold/vercel.json`: clean URLs + rewrites de módulos.
+- `apps/gold/index.html`: navegación principal y cards de módulos.
+- `apps/gold/dashboard/index.html`: dashboard con consumo de datos y rankings.
+
+2) **Supabase/Auth**
+- Cliente y auth sin cambios:
+  - `apps/gold/assets/js/config/supabase-config.js`
+  - `apps/gold/assets/js/auth/authClient.js`
+  - `apps/gold/assets/js/auth/authUI.js`
+  - `apps/gold/dashboard/auth-guard.js`
+
+3) **Dashboard data**
+- Se mantiene consumo de `profiles`, `modules`, `user_favorites`, `notifications`, `announcements`, `feedback`.
+- La intervención actual es backend RPC de ranking para normalización de nombres.
+
+4) **Agro/Clima**
+- Sin cambios en prioridad Manual > GPS > IP ni llaves de cache (`YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`).
+
+5) **Crypto**
+- Sin cambios en `apps/gold/crypto/`; tarea focalizada en SQL RPC.
+
+### Hallazgo específico
+
+- El parche previo resolvió fragmentación por casing/espacios con `name_key = lower(...)`.
+- Falta normalización estricta de tildes/diacríticos para colapsar `Jesús` y `jesus`.
+- Estado pre-ejecución (diagnóstico):
+  - `unaccent` no instalada (`has_unaccent = false`).
+  - RPCs `agro_rank_top_clients` y `agro_rank_pending_clients` ya agrupaban por `name_key` (sin `GROUP BY 1`).
+
+### Plan quirúrgico
+
+1. **DB migration** (`normalize_client_grouping_rpc_unaccent`)
+- `create extension if not exists unaccent with schema extensions;`
+- `CREATE OR REPLACE FUNCTION` sobre:
+  - `public.agro_rank_top_clients(...)`
+  - `public.agro_rank_pending_clients(...)`
+- Cambio mínimo:
+  - de `lower(regexp_replace(...))`
+  - a `lower(extensions.unaccent(regexp_replace(...)))`
+- Sin tocar firmas, retornos, filtros ni fallbacks de monto.
+
+2. **Validación**
+- Verificar extensión instalada.
+- Verificar que ambas funciones contienen `extensions.unaccent` y mantienen `GROUP BY name_key`.
+- Validar ausencia de duplicados por key canónica en salida RPC.
+
+### DoD (objetivo de esta sesión)
+
+- [x] `unaccent` instalada en proyecto Supabase.
+- [x] `agro_rank_top_clients` usa `name_key` con `extensions.unaccent`.
+- [x] `agro_rank_pending_clients` usa `name_key` con `extensions.unaccent`.
+- [x] Se mantiene agrupación por `name_key` (sin `GROUP BY 1`).
+- [x] Evidencia de validación registrada en `apps/gold/docs/AGENT_REPORT.md`.
+
+### Ejecución y validación (evidencia)
+
+1. Migración aplicada en Supabase:
+- `normalize_client_grouping_rpc_unaccent` sobre proyecto `gerzlzprkarikblqxpjt`.
+- SQL ejecutado:
+  - `create extension if not exists unaccent with schema extensions;`
+  - `create or replace function public.agro_rank_top_clients(...)`
+  - `create or replace function public.agro_rank_pending_clients(...)`
+
+2. Verificación de extensión:
+- Query: `select extname, extnamespace::regnamespace as schema from pg_extension where extname='unaccent';`
+- Resultado: `unaccent` instalada en schema `extensions`.
+
+3. Verificación de funciones:
+- Query de introspección (`pg_get_functiondef`) sobre ambas RPC.
+- Resultado:
+  - `has_unaccent = true`
+  - `groups_by_name_key = true`
+
+4. Criterio funcional:
+- Se mantiene contrato/firma de RPCs.
+- Se mantiene fallback de monto.
+- Solo se endurece `name_key` a:
+  - `lower(extensions.unaccent(regexp_replace(btrim(name_raw), '\s+', ' ', 'g')))`
+
+5. Build oficial del proyecto:
+- Comando: `pnpm build:gold`
+- Resultado: **OK** (`agent-guard: OK`, `agent-report-check: OK`, `vite build` exitoso, `check-dist-utf8` OK).
+
+6. Validación funcional real (JWT simulado + RLS):
+- Se simuló sesión `authenticated` con `set_config('request.jwt.claims', ...)` y `set local role authenticated`.
+- Se ejecutaron ambas RPC con firma real:
+  - `public.agro_rank_top_clients(p_from, p_to, p_limit, p_crop_id)`
+  - `public.agro_rank_pending_clients(p_from, p_to, p_limit, p_crop_id)`
+- Se usó `p_crop_id = NULL` (sin filtro de cultivo) y chequeo de duplicados con `name_key` canónico (`lower(extensions.unaccent(...))`).
+- Resultado técnico:
+  - `top_rows_total = 1`
+  - `pending_rows_total = 12`
+  - `top_rpc_dup_keys = 0`
+  - `pending_rpc_dup_keys = 0`
+- Conclusión: la salida RPC ya no fragmenta por mayúsculas/espacios/diacríticos en esta muestra funcional.
+
+## 🆕 SESIÓN: Cero Bugs Agro Stats Report (Hybrid Schema + Buyer Ranking) (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA (Vite + navegación actual)**
+- `apps/gold/vite.config.js`: `appType: 'mpa'` con entradas HTML activas para `index`, `dashboard`, `agro`, `crypto`, `academia`, `tecnologia`, `herramientas`, `social`, etc.
+- `apps/gold/vercel.json`: `cleanUrls` + `rewrites` para rutas limpias (`/dashboard`, `/agro`, `/crypto`, `/academia`, `/tecnologia`) y redirect legado de `/herramientas` -> `/tecnologia`.
+- `apps/gold/index.html`: navbar y cards con navegación a módulos (`./agro/`, `./crypto/`, `./herramientas/`) y acceso a `/dashboard/`.
+- `apps/gold/dashboard/index.html`: dashboard con bloques `Continuar / Resumen / Recomendado`, carga dinámica de módulos y managers de soporte.
+
+2) **Dónde se instancian datos/auth de Supabase**
+- `apps/gold/assets/js/config/supabase-config.js`: creación del cliente Supabase con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+- `apps/gold/assets/js/auth/authClient.js`: cliente auth central, guard de rutas protegidas y manejo de sesión.
+- `apps/gold/assets/js/auth/authUI.js`: capa UI de login/registro/recovery acoplada a `window.AuthClient`.
+- `apps/gold/dashboard/auth-guard.js`: guard ESM de dashboard (`supabase.auth.getSession()` + redirect a login).
+
+3) **Dashboard: qué consulta hoy y qué le falta**
+- Consultas activas detectadas en `apps/gold/dashboard/index.html`:
+  - `profiles` (usuario/avatar)
+  - `modules`
+  - `user_favorites`
+  - `notifications` (no leídas)
+  - managers de `announcements` y `feedback`.
+- Falta integración explícita de progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) en este flujo.
+
+4) **Clima/Agro: prioridad Manual > GPS > IP y storage keys**
+- Lógica en `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`) con prioridad Manual > (GPS/IP según preferencia) > fallback.
+- Uso en `apps/gold/agro/dashboard.js` (`initWeather`, `displayWeather`).
+- Keys detectadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+
+5) **Crypto: estado real**
+- `apps/gold/crypto/` existe con `index.html`, `crypto.js`, `crypto.css`, `index_old.html`, `script_backup.txt` (más assets de apoyo).
+- Está integrado como página MPA dentro de `apps/gold` (entrada en Vite + rewrites en Vercel).
+
+### Hallazgos específicos para esta tarea
+
+- En `apps/gold/agro/agro-stats-report.js`, `buildPerCropTable` usa sumatorias mixtas incompletas (`monto*` vs `amount*`) en cuatro bucles (`incomeRows`, `expenseRows`, `pendingRows`, `lossesRows`).
+- En `buildBuyerRanking`, `pendingRows` no usa `resolveBuyerName(r)` y agrupa el `Map` con llave case-sensitive, lo que fragmenta compradores por mayúsculas/minúsculas.
+
+### Plan quirúrgico (archivos exactos)
+
+1. `apps/gold/agro/agro-stats-report.js`
+- Unificar argumento de `toCents(...)` en los 4 bucles de `buildPerCropTable` a:
+  - `r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto`
+- En `buildBuyerRanking`:
+  - usar `const who = resolveBuyerName(r);` también para `pendingRows`
+  - agrupar por `const key = who.toLowerCase();`
+  - guardar nombre de presentación en `displayWho`
+  - renderizar Markdown con `displayWho` (no con llave normalizada).
+
+2. `apps/gold/docs/AGENT_REPORT.md`
+- Documentar ejecución, validación y cierre DoD.
+
+### DoD (objetivo de esta sesión)
+
+- [x] `buildPerCropTable` tolera esquema híbrido en los 4 bucles (income/expense/pending/losses).
+- [x] `buildBuyerRanking` unifica lectura de comprador en ingresos y pendientes con `resolveBuyerName`.
+- [x] Agrupación de compradores case-insensitive sin perder formato visual del nombre.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia final registrada en `apps/gold/docs/AGENT_REPORT.md`.
+
+### Cambios ejecutados
+
+1. `apps/gold/agro/agro-stats-report.js`
+- `buildPerCropTable(...)`:
+  - Se reemplazó el argumento de `toCents(...)` en los 4 bucles (`incomeRows`, `expenseRows`, `pendingRows`, `lossesRows`) tanto en acumulación por cultivo como en `unassigned` por:
+    - `r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto`
+- `buildBuyerRanking(...)`:
+  - En `pendingRows` se eliminó la extracción manual del cliente y se unificó con:
+    - `const who = resolveBuyerName(r);`
+  - En ambos bucles (`incomeRows` y `pendingRows`) se aplicó agrupación case-insensitive:
+    - `const key = who.toLowerCase();`
+    - `buyers.has(key)`, `buyers.set(key, ...)`, `buyers.get(key)`
+  - Se preserva nombre visual original con `displayWho` en el objeto del `Map`.
+  - En el render de tabla Markdown se imprime `displayWho` en vez de la llave normalizada.
+
+2. `apps/gold/docs/AGENT_REPORT.md`
+- Registro de diagnóstico Paso 0, plan quirúrgico, cierre DoD y evidencia de validación.
+
+### Validación
+
+- Build oficial ejecutado:
+  - `pnpm build:gold` -> **OK** (`agent-guard: OK`, `agent-report-check: OK`, `vite build` exitoso).
+
 ## 🆕 SESIÓN: Dependabot Alert #3 (High) — Fix mínimo minimatch (2026-02-21)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de runtime)
