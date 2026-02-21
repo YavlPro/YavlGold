@@ -1,5 +1,93 @@
 ---
 
+## 🆕 SESIÓN: RPC V4 — Date Filters Inclusivos por Día (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA y navegación**
+- `apps/gold/vite.config.js`: MPA activo con entradas HTML por módulo.
+- `apps/gold/vercel.json`: clean URLs + rewrites.
+- `apps/gold/index.html`: navegación principal.
+- `apps/gold/dashboard/index.html`: UI de rankings y rentabilidad.
+
+2) **Supabase/Auth**
+- Cliente/auth sin cambios:
+  - `apps/gold/assets/js/config/supabase-config.js`
+  - `apps/gold/assets/js/auth/authClient.js`
+  - `apps/gold/assets/js/auth/authUI.js`
+  - `apps/gold/dashboard/auth-guard.js`
+
+3) **Dashboard data**
+- `agro_rank_top_clients` y `agro_rank_top_crops_profit` ya están alineadas en monto (A/B `diff = 0`).
+- La discrepancia visual en ciertos cortes proviene del filtro de fecha cuando cae sobre columna timestamp.
+
+4) **Agro/Clima**
+- Sin cambios (fuera de alcance).
+
+5) **Crypto**
+- Sin cambios (fuera de alcance).
+
+### Hallazgo raíz
+
+- En ambos RPC (`agro_rank_top_clients`, `agro_rank_pending_clients`) el filtro usa:
+  - `%I >= $2::date`
+  - `%I <= $3::date`
+- Cuando `%I` es `timestamp` (ej. `created_at`), `<= $3::date` corta a `00:00:00` del día final.
+- Resultado: se excluyen filas del mismo `p_to` ocurridas más tarde.
+
+### Plan quirúrgico
+
+1. Crear migración nueva:
+- `supabase/migrations/*_agro_rpc_date_filters_inclusive.sql`
+- `supabase/migrations/*_agro_profit_date_filters_inclusive.sql` (alineación final A/B con rentabilidad)
+
+2. Ajuste mínimo en dos RPCs (sin tocar firma/retorno):
+- `agro_rank_top_clients`:
+  - `AND ($2::date IS NULL OR %3$I::date >= $2::date)`
+  - `AND ($3::date IS NULL OR %3$I::date <= $3::date)`
+- `agro_rank_pending_clients`:
+  - `AND ($2::date IS NULL OR %5$I::date >= $2::date)`
+  - `AND ($3::date IS NULL OR %5$I::date <= $3::date)`
+
+3. Aplicar migración en Supabase y validar A/B:
+- `sum(total)` de top clients vs `ingresos` de profit para mismo crop/rango.
+- Confirmar que `to_2026_02_20` incluye filas del día completo.
+
+4. Ejecutar build oficial:
+- `pnpm build:gold`
+
+### DoD (objetivo de esta sesión)
+
+- [x] Filtros de fecha en top/pending quedan inclusivos por día (`::date`).
+- [x] Se mantiene contrato de funciones y lógica V3 (parser `concepto`, `unaccent`, fallback híbrido).
+- [x] A/B top clients vs profit mantiene `diff = 0`.
+- [x] Corte `to_2026_02_20` refleja inclusión completa del día final.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y validación (evidencia)
+
+1. Migraciones versionadas en repo:
+- `supabase/migrations/20260221231536_agro_rpc_date_filters_inclusive.sql`
+- `supabase/migrations/20260221231722_agro_profit_date_filters_inclusive.sql`
+
+2. Migraciones aplicadas en Supabase:
+- `agro_rpc_date_filters_inclusive` -> `success = true`
+- `agro_profit_date_filters_inclusive` -> `success = true`
+
+3. Verificación estructural:
+- `agro_rank_top_clients`: filtros `%3$I::date >=` / `%3$I::date <=` activos.
+- `agro_rank_pending_clients`: filtros `%5$I::date >=` / `%5$I::date <=` activos.
+- `agro_rank_top_crops_profit`: filtros inclusivos por día activos en ingresos y gastos.
+
+4. A/B funcional (JWT/RLS simulado, `crop_id = 1e2d3ada-0447-4fca-8c63-b063efd6c8dd`):
+- `all_time`: `top_clients_total = 347.233595002411945`, `profit_ingresos = 347.233595002411945`, `diff = 0`.
+- `to_2026_02_20`: `top_clients_total = 333.633256716084021`, `profit_ingresos = 333.633256716084021`, `diff = 0`.
+
+5. Control por `fecha` (día final completo):
+- `sum_by_fecha (<= 2026-02-20) = 333.633256716084021`
+- `sum_top_rpc (<= 2026-02-20) = 333.633256716084021`
+- `diff = 0`.
+
 ## 🆕 SESIÓN: RPC Top Clients V3 — Fallback híbrido + parser de concepto (2026-02-21)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de runtime)
