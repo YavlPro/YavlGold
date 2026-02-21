@@ -907,6 +907,8 @@ const FACTURERO_CONFIG = {
         amountField: 'amount',
         dateField: 'date',
         extraFields: ['category', 'currency', 'exchange_rate', 'monto_usd', 'crop_id', 'evidence_url', 'type'],
+        editUiFields: ['evidence_url'],
+        hiddenEditFields: ['category', 'currency', 'exchange_rate', 'monto_usd', 'crop_id', 'type', 'user_id', 'created_at', 'deleted_at'],
         supportsDeletedAt: true
     },
     'ingresos': {
@@ -1092,6 +1094,22 @@ const INCOME_UNIT_OPTIONS = [
 ];
 
 const FACTURERO_EXTRA_FIELD_META = {
+    evidence_url: {
+        label: 'Evidencia (URL)',
+        type: 'url',
+        placeholder: 'https://...'
+    },
+    soporte_url: {
+        label: 'Evidencia (URL)',
+        type: 'url',
+        placeholder: 'https://...'
+    },
+    categoria: {
+        label: 'Categoria'
+    },
+    category: {
+        label: 'Categoria'
+    },
     unit_type: {
         label: 'Presentacion',
         type: 'select',
@@ -1137,6 +1155,14 @@ function formatKgSummary(value) {
     if (!Number.isFinite(num) || num <= 0) return '';
     const text = num % 1 === 0 ? String(num) : num.toFixed(2);
     return `${text} kg`;
+}
+
+function getFactureroEditFields(config, whoField = null) {
+    const sourceFields = Array.isArray(config?.editUiFields) ? config.editUiFields : (config?.extraFields || []);
+    const hidden = new Set(Array.isArray(config?.hiddenEditFields) ? config.hiddenEditFields : []);
+    return sourceFields
+        .map((field) => String(field || '').trim())
+        .filter((field) => !!field && field !== whoField && !hidden.has(field));
 }
 
 function parseWhoFromConcept(tabName, concept) {
@@ -3126,7 +3152,7 @@ function openFactureroEditModal(tabName, item, config) {
     const extraContainer = document.getElementById('edit-extra-fields');
     if (extraContainer) {
         extraContainer.innerHTML = '';
-        const extraFields = (config.extraFields || []).filter(field => field !== whoMeta?.field);
+        const extraFields = getFactureroEditFields(config, whoMeta?.field);
         extraFields.forEach(field => {
             const meta = FACTURERO_EXTRA_FIELD_META[field];
             const value = item[field] ?? '';
@@ -3353,13 +3379,17 @@ async function saveEditModal() {
             monto_usd: editMontoUsd
         };
 
+        // UX rule: category is internal and depends on crop linkage.
+        if (tabName === 'gastos') {
+            updateData.category = updateData.crop_id ? 'operativo' : 'general';
+        }
+
         if (whoMeta?.field) {
             updateData[whoMeta.field] = whoValue || null;
         }
 
         // Add extra fields
-        (config.extraFields || [])
-            .filter(field => field !== whoMeta?.field)
+        getFactureroEditFields(config, whoMeta?.field)
             .forEach(field => {
                 const el = document.getElementById(`edit-${field}`);
                 // console.log(`[AGRO] V9.6.5 extraField: ${field}, el:`, el, 'value:', el?.value);
