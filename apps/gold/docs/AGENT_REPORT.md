@@ -1,5 +1,88 @@
 ---
 
+## 🆕 SESIÓN: Dependabot Alert #3 (High) — Fix mínimo minimatch (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA / routing**
+- Sin cambios estructurales respecto a la sesión anterior:
+  - `apps/gold/vite.config.js` mantiene `appType: 'mpa'` y entradas HTML por módulo.
+  - `apps/gold/vercel.json` mantiene `cleanUrls` + rewrites actuales.
+  - `apps/gold/index.html` y `apps/gold/dashboard/index.html` siguen siendo los entrypoints de navegación principal.
+
+2) **Supabase/Auth**
+- Sin cambios previstos en:
+  - `apps/gold/assets/js/config/supabase-config.js`
+  - `apps/gold/assets/js/auth/authClient.js`
+  - `apps/gold/assets/js/auth/authUI.js`
+  - `apps/gold/dashboard/auth-guard.js`
+
+3) **Dashboard data**
+- Sin cambios funcionales previstos: consultas actuales (`profiles`, `modules`, `user_favorites`, `notifications`) se conservan.
+- No se toca integración de progreso académico en esta tarea.
+
+4) **Agro/Clima**
+- Sin cambios previstos en prioridad de geolocalización (Manual > GPS > IP) ni en claves de cache:
+  - `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+
+5) **Crypto**
+- Sin cambios funcionales en `apps/gold/crypto/`.
+- Tarea enfocada exclusivamente en seguridad de dependencias/lockfiles.
+
+### Hallazgo de seguridad (evidencia)
+
+- `pnpm audit --prod` -> sin vulnerabilidades.
+- `pnpm audit` -> 1 alta:
+  - `minimatch <10.2.1` (GHSA-3ppc-4f35-3m26), parche `>=10.2.1`.
+  - Path reportado: `apps/gold > rimraf@6.1.2 > glob@13.0.0 > minimatch@10.1.1`.
+- Validación lock npm de `apps/gold`:
+  - `npm audit --package-lock-only --omit=prod` reporta `minimatch <10.2.1` (y también `@isaacs/brace-expansion` en ese lock).
+
+### Plan quirúrgico
+
+1. `package.json` (root)
+- Agregar override de `pnpm` para forzar `minimatch` parcheado:
+  - `"minimatch": "10.2.1"`
+
+2. Lockfiles
+- Ejecutar `pnpm install` para refrescar `pnpm-lock.yaml` con resolución segura.
+- Refrescar `apps/gold/package-lock.json` en modo lock-only para que no quede desalineado con advisories.
+
+3. Validación obligatoria
+- `pnpm audit` (confirmar cero high del alert reportado).
+- `pnpm build:gold` en verde.
+
+### DoD (objetivo de esta sesión)
+
+- [x] Alert alto de `minimatch` mitigado en lock activo.
+- [x] Lock de `apps/gold` sin referencia vulnerable de `minimatch`.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia cerrada en `apps/gold/docs/AGENT_REPORT.md`.
+
+### Cambios ejecutados
+
+1. `package.json` (root)
+- Override agregado en `pnpm.overrides`:
+  - `"minimatch": "10.2.1"`
+- Se conserva override existente de `@isaacs/brace-expansion`.
+
+2. `pnpm-lock.yaml`
+- Refrescado con `pnpm install` para resolver árbol con versión parcheada.
+
+3. `apps/gold/package-lock.json`
+- Se validó con `npm audit --package-lock-only` y terminó en `found 0 vulnerabilities`.
+- `npm audit fix --package-lock-only` fue ejecutado como respaldo, sin cambios persistentes en diff.
+
+### Evidencia de verificación
+
+- Auditoría workspace:
+  - `pnpm audit` -> **No known vulnerabilities found**.
+  - `pnpm audit --prod` -> **No known vulnerabilities found**.
+- Auditoría lock npm de `apps/gold`:
+  - `npm audit --package-lock-only` -> **found 0 vulnerabilities**.
+- Build oficial:
+  - `pnpm build:gold` -> **OK** (`agent-guard: OK`, `agent-report-check: OK`, `vite build` exitoso).
+
 ## 🆕 SESIÓN: Trust & Consistency Sweep V9.8 (2026-02-21)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de runtime)
