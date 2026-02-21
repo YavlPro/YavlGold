@@ -97,10 +97,14 @@ function isMissingColumnError(error, column) {
     const details = (error.details || '').toLowerCase();
     const text = `${msg} ${details}`;
     const hasMissingPhrase = text.includes('does not exist') || text.includes('could not find') || text.includes('not found');
-    if (code === '42703') return true;
-    if (code === 'PGRST204' && hasMissingPhrase) return true;
+    const mentionsColumn = text.includes(col)
+        || text.includes(`"${col}"`)
+        || text.includes(`'${col}'`)
+        || text.includes(`.${col}`);
+    if (code === '42703') return hasMissingPhrase && text.includes('column') && mentionsColumn;
+    if (code === 'PGRST204') return hasMissingPhrase && text.includes('column') && mentionsColumn;
     if (!hasMissingPhrase) return false;
-    return text.includes('column') && text.includes(col);
+    return text.includes('column') && mentionsColumn;
 }
 
 function formatStatsDateKey(dateObj) {

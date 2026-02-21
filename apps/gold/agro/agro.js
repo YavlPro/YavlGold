@@ -42,9 +42,9 @@ const AGRO_CROPS_REFRESH_EVENT = 'agro:crops:refresh';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
-const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
+const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
-const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,comprador,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,origin_table,origin_id,transfer_state,deleted_at,created_at';
+const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
 const CROP_DISPLAY_FALLBACK_ICON = '🌱';
@@ -1334,9 +1334,14 @@ function isMissingColumnError(error, column) {
     const text = `${msg} ${details}`;
     const col = column.toLowerCase();
     const hasMissingPhrase = text.includes('does not exist') || text.includes('could not find') || text.includes('not found');
-    if (code === '42703') return true;
+    const mentionsColumn = text.includes(col)
+        || text.includes(`"${col}"`)
+        || text.includes(`'${col}'`)
+        || text.includes(`.${col}`);
+    if (code === '42703') return hasMissingPhrase && text.includes('column') && mentionsColumn;
+    if (code === 'PGRST204') return hasMissingPhrase && text.includes('column') && mentionsColumn;
     if (!hasMissingPhrase) return false;
-    return text.includes('column') && text.includes(col);
+    return text.includes('column') && mentionsColumn;
 }
 
 function isPendingTransferred(item) {
@@ -5103,6 +5108,23 @@ function isMissingTableError(error, tableName) {
 
 const LOSS_TABLE_CANDIDATES = ['agro_losses', 'agro_loss', 'agro_perdidas'];
 const lossTableAvailabilityCache = new Map();
+const tableMissingColumnsCache = new Map();
+
+function getTableMissingColumns(tableName) {
+    const key = String(tableName || '').trim();
+    if (!key) return new Set();
+    if (!tableMissingColumnsCache.has(key)) {
+        tableMissingColumnsCache.set(key, new Set());
+    }
+    return tableMissingColumnsCache.get(key);
+}
+
+function rememberMissingColumn(tableName, column) {
+    const key = String(tableName || '').trim();
+    const col = String(column || '').trim();
+    if (!key || !col) return;
+    getTableMissingColumns(key).add(col);
+}
 
 async function isTableAvailable(tableName) {
     const normalized = String(tableName || '').trim();
@@ -5137,11 +5159,12 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
         .filter(Boolean)));
     if (!normalizedUserId || ids.length === 0) return totals;
 
+    const missingColumns = getTableMissingColumns(tableName);
     const amountFields = (Array.isArray(options.amountFields) && options.amountFields.length
         ? options.amountFields
         : ['amount', 'monto'])
         .map((field) => String(field || '').trim())
-        .filter(Boolean);
+        .filter((field) => field && !missingColumns.has(field));
     let selectFields = Array.from(new Set([
         'crop_id',
         ...amountFields,
@@ -5149,10 +5172,10 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
         'exchange_rate',
         'monto_usd',
         ...(Array.isArray(options.optionalFields) ? options.optionalFields : [])
-    ].map((field) => String(field || '').trim()).filter(Boolean)));
+    ].map((field) => String(field || '').trim()).filter((field) => field && !missingColumns.has(field))));
     let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
         .map((field) => String(field || '').trim())
-        .filter(Boolean)));
+        .filter((field) => field && !missingColumns.has(field))));
 
     for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!selectFields.includes('crop_id')) break;
@@ -5187,6 +5210,7 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
         let removedAny = false;
         selectFields = selectFields.filter((field) => {
             if (isMissingColumnError(error, field)) {
+                rememberMissingColumn(tableName, field);
                 removedAny = true;
                 return false;
             }
@@ -5206,7 +5230,7 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
 
 async function fetchExpenseTotalsByCropIds(userId, cropIds) {
     return fetchUsdTotalsByCropIds('agro_expenses', userId, cropIds, {
-        amountFields: ['amount', 'monto'],
+        amountFields: ['amount'],
         optionalFields: ['deleted_at'],
         nullFilters: ['deleted_at']
     });
@@ -6654,38 +6678,67 @@ async function loadIncomes() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        let query = supabase
-            .from('agro_income')
-            .select(AGRO_INCOME_LIST_COLUMNS)
-            .eq('user_id', user.id)
-            .order('fecha', { ascending: false });
-        if (selectedCropId) {
-            query = query.eq('crop_id', selectedCropId);
+        const missingColumns = getTableMissingColumns('agro_income');
+        let selectFields = AGRO_INCOME_LIST_COLUMNS
+            .split(',')
+            .map((field) => String(field || '').trim())
+            .filter((field) => field && !missingColumns.has(field));
+
+        if (incomeDeletedAtSupported === false) {
+            selectFields = selectFields.filter((field) => field !== 'deleted_at');
         }
 
-        if (incomeDeletedAtSupported !== false) {
-            query = query.is('deleted_at', null);
-        }
+        let data = [];
+        let error = null;
 
-        let { data, error } = await query;
-        if (error && error.message && error.message.toLowerCase().includes('deleted_at')) {
-            incomeDeletedAtSupported = false;
-            let fallbackQuery = supabase
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+            if (!selectFields.length) break;
+
+            let query = supabase
                 .from('agro_income')
-                .select(AGRO_INCOME_LIST_COLUMNS)
+                .select(selectFields.join(', '))
                 .eq('user_id', user.id)
                 .order('fecha', { ascending: false });
             if (selectedCropId) {
-                fallbackQuery = fallbackQuery.eq('crop_id', selectedCropId);
+                query = query.eq('crop_id', selectedCropId);
             }
-            const fallback = await fallbackQuery;
-            data = fallback.data;
-            error = fallback.error;
-        } else if (!error) {
-            incomeDeletedAtSupported = true;
+
+            if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
+                query = query.is('deleted_at', null);
+            }
+
+            const result = await query;
+            data = result.data;
+            error = result.error;
+            if (!error) {
+                if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
+                    incomeDeletedAtSupported = true;
+                }
+                break;
+            }
+
+            if (incomeDeletedAtSupported !== false && isMissingColumnError(error, 'deleted_at')) {
+                rememberMissingColumn('agro_income', 'deleted_at');
+                incomeDeletedAtSupported = false;
+                selectFields = selectFields.filter((field) => field !== 'deleted_at');
+                continue;
+            }
+
+            let removedAny = false;
+            selectFields = selectFields.filter((field) => {
+                if (isMissingColumnError(error, field)) {
+                    rememberMissingColumn('agro_income', field);
+                    removedAny = true;
+                    return false;
+                }
+                return true;
+            });
+            if (removedAny) continue;
+
+            throw error;
         }
 
-        if (error) throw error;
+        if (error && !Array.isArray(data)) throw error;
 
         incomeCache = Array.isArray(data) ? data : [];
         try {

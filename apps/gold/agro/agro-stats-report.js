@@ -34,40 +34,109 @@ function looksLikeSchemaMismatch(error) {
     const blob = `${String(error?.message || '')} ${String(error?.details || '')} ${String(error?.hint || '')} ${String(error?.code || '')}`.toLowerCase();
     return (
         blob.includes('42703') ||
+        blob.includes('pgrst204') ||
+        blob.includes('42p01') ||
         blob.includes('column') ||
         blob.includes('does not exist') ||
         blob.includes('could not find')
     );
 }
 
+const statsReportMissingColumnsCache = new Map();
+
+function getMissingColumnsForTable(table) {
+    const key = String(table || '').trim().toLowerCase();
+    if (!key) return new Set();
+    if (!statsReportMissingColumnsCache.has(key)) {
+        statsReportMissingColumnsCache.set(key, new Set());
+    }
+    return statsReportMissingColumnsCache.get(key);
+}
+
+function rememberMissingColumn(table, column) {
+    const key = String(table || '').trim().toLowerCase();
+    const col = String(column || '').trim().toLowerCase();
+    if (!key || !col) return;
+    getMissingColumnsForTable(key).add(col);
+}
+
+function extractMissingColumnName(error) {
+    const text = `${String(error?.message || '')} ${String(error?.details || '')}`.toLowerCase();
+    const patterns = [
+        /column\s+([a-z0-9_]+)\s+does not exist/i,
+        /column\s+([a-z0-9_]+)\b/i,
+        /column\s+[a-z0-9_]+\.\s*([a-z0-9_]+)\s+does not exist/i,
+        /could not find the '([a-z0-9_]+)' column/i,
+        /'"([a-z0-9_]+)"'/i,
+        /'([a-z0-9_]+)'/i
+    ];
+    for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match?.[1]) return match[1].toLowerCase();
+    }
+    return '';
+}
+
 async function fetchRowsWithAttempts(table, userId, attempts = []) {
     let lastError = null;
     const list = Array.isArray(attempts) ? attempts : [];
+    const missingColumns = getMissingColumnsForTable(table);
 
     for (const attempt of list) {
-        try {
-            let query = supabase
-                .from(table)
-                .select(attempt.select)
-                .eq('user_id', userId);
-            if (attempt.filterDeletedAt) {
-                query = query.is('deleted_at', null);
-            }
-            if (typeof attempt.extendQuery === 'function') {
-                query = attempt.extendQuery(query);
-            }
+        let selectFields = String(attempt?.select || '')
+            .split(',')
+            .map((field) => String(field || '').trim())
+            .filter((field) => field.length > 0 && !missingColumns.has(field.toLowerCase()));
+        let applyDeletedAt = !!attempt?.filterDeletedAt && !missingColumns.has('deleted_at');
+        let useExtendedQuery = typeof attempt?.extendQuery === 'function';
 
-            const { data, error } = await query;
-            if (!error) {
-                return { rows: Array.isArray(data) ? data : [], usedAttempt: attempt };
-            }
+        for (let retry = 0; retry < 6; retry += 1) {
+            if (!selectFields.length) break;
 
-            lastError = error;
-            if (!looksLikeSchemaMismatch(error)) {
+            try {
+                let query = supabase
+                    .from(table)
+                    .select(selectFields.join(','))
+                    .eq('user_id', userId);
+                if (applyDeletedAt && selectFields.includes('deleted_at')) {
+                    query = query.is('deleted_at', null);
+                }
+                if (useExtendedQuery) {
+                    query = attempt.extendQuery(query);
+                }
+
+                const { data, error } = await query;
+                if (!error) {
+                    return { rows: Array.isArray(data) ? data : [], usedAttempt: attempt };
+                }
+
+                lastError = error;
+                if (!looksLikeSchemaMismatch(error)) {
+                    break;
+                }
+
+                const missingCol = extractMissingColumnName(error);
+                if (!missingCol) {
+                    break;
+                }
+
+                rememberMissingColumn(table, missingCol);
+                const beforeLength = selectFields.length;
+                selectFields = selectFields.filter((field) => field.toLowerCase() !== missingCol);
+
+                if (missingCol === 'deleted_at') {
+                    applyDeletedAt = false;
+                }
+
+                if (beforeLength === selectFields.length && useExtendedQuery) {
+                    useExtendedQuery = false;
+                }
+
+                continue;
+            } catch (err) {
+                lastError = err;
                 break;
             }
-        } catch (err) {
-            lastError = err;
         }
     }
 
@@ -278,6 +347,10 @@ async function fetchCrops(userId) {
             {
                 select: 'id,name,variety,status,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: false
+            },
+            {
+                select: 'id,name,variety,start_date,expected_harvest_date,investment',
+                filterDeletedAt: false
             }
         ];
         const { rows, error } = await fetchRowsWithAttempts('agro_crops', userId, attempts);
@@ -299,19 +372,23 @@ async function fetchIncome(userId) {
                 filterDeletedAt: true
             },
             {
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,cliente',
+                filterDeletedAt: true
+            },
+            {
                 select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,comprador',
                 filterDeletedAt: true
             },
             {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,comprador',
-                filterDeletedAt: true
-            },
-            {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,comprador',
+                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,cliente',
                 filterDeletedAt: false
             },
             {
-                select: 'id,concepto,monto,fecha,crop_id,comprador',
+                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id',
+                filterDeletedAt: false
+            },
+            {
+                select: 'id,concepto,monto,fecha,crop_id',
                 filterDeletedAt: false
             }
         ];
@@ -328,13 +405,21 @@ async function fetchIncome(userId) {
 
 async function fetchExpenses(userId) {
     try {
-        const { data, error } = await supabase
-            .from('agro_expenses')
-            .select('id,amount,monto_usd,currency,crop_id,deleted_at')
-            .eq('user_id', userId)
-            .is('deleted_at', null);
-        if (error) { console.warn('[StatsReport] expenses error:', error.message); return []; }
-        return Array.isArray(data) ? data : [];
+        const attempts = [
+            {
+                select: 'id,amount,monto_usd,currency,crop_id,deleted_at',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,amount,monto_usd,currency,crop_id',
+                filterDeletedAt: false
+            }
+        ];
+        const { rows, error } = await fetchRowsWithAttempts('agro_expenses', userId, attempts);
+        if (error) {
+            console.warn('[StatsReport] expenses error:', error.message || error);
+        }
+        return rows;
     } catch (err) {
         console.warn('[StatsReport] expenses exception:', err);
         return [];
@@ -343,14 +428,26 @@ async function fetchExpenses(userId) {
 
 async function fetchPending(userId) {
     try {
-        const { data, error } = await supabase
-            .from('agro_pending')
-            .select('id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at,transfer_state')
-            .eq('user_id', userId)
-            .is('deleted_at', null)
-            .neq('transfer_state', 'transferred');
-        if (error) { console.warn('[StatsReport] pending error:', error.message); return []; }
-        return Array.isArray(data) ? data : [];
+        const attempts = [
+            {
+                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at,transfer_state',
+                filterDeletedAt: true,
+                extendQuery: (query) => query.neq('transfer_state', 'transferred')
+            },
+            {
+                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id,deleted_at',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id',
+                filterDeletedAt: false
+            }
+        ];
+        const { rows, error } = await fetchRowsWithAttempts('agro_pending', userId, attempts);
+        if (error) {
+            console.warn('[StatsReport] pending error:', error.message || error);
+        }
+        return rows;
     } catch (err) {
         console.warn('[StatsReport] pending exception:', err);
         return [];
@@ -359,13 +456,21 @@ async function fetchPending(userId) {
 
 async function fetchLosses(userId) {
     try {
-        const { data, error } = await supabase
-            .from('agro_losses')
-            .select('id,monto,monto_usd,currency,crop_id,deleted_at')
-            .eq('user_id', userId)
-            .is('deleted_at', null);
-        if (error) { console.warn('[StatsReport] losses error:', error.message); return []; }
-        return Array.isArray(data) ? data : [];
+        const attempts = [
+            {
+                select: 'id,monto,monto_usd,currency,crop_id,deleted_at',
+                filterDeletedAt: true
+            },
+            {
+                select: 'id,monto,monto_usd,currency,crop_id',
+                filterDeletedAt: false
+            }
+        ];
+        const { rows, error } = await fetchRowsWithAttempts('agro_losses', userId, attempts);
+        if (error) {
+            console.warn('[StatsReport] losses error:', error.message || error);
+        }
+        return rows;
     } catch (err) {
         console.warn('[StatsReport] losses exception:', err);
         return [];
@@ -553,13 +658,33 @@ export async function exportStatsReport() {
         // Get profile name
         let userName = user.email || 'Usuario';
         try {
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name,username')
-                .eq('id', user.id)
-                .single();
-            if (profile) {
-                userName = profile.full_name || profile.username || userName;
+            const profileAttempts = [
+                'full_name,username',
+                'username',
+                'full_name'
+            ];
+            const profileIdColumns = ['id', 'user_id'];
+            let profileResolved = false;
+            for (const idColumn of profileIdColumns) {
+                for (const select of profileAttempts) {
+                    const { data: profile, error } = await supabase
+                        .from('profiles')
+                        .select(select)
+                        .eq(idColumn, user.id)
+                        .maybeSingle();
+                    if (error) {
+                        if (looksLikeSchemaMismatch(error)) continue;
+                        break;
+                    }
+                    if (profile) {
+                        userName = profile.full_name || profile.username || userName;
+                        profileResolved = true;
+                        break;
+                    }
+                }
+                if (profileResolved) {
+                    break;
+                }
             }
         } catch { /* ignore */ }
 
