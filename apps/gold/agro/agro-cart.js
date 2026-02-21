@@ -22,6 +22,7 @@ let _activeCartItems = [];
 let _cartListenerAC = null;
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
+const INACTIVE_CART_CROP_STATUSES = new Set(['finalizado', 'cancelado', 'harvested', 'cancelled', 'cosechado']);
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -99,6 +100,24 @@ function getAvailableCrops() {
         return fallback;
     }
     return [];
+}
+
+function normalizeCartCropStatus(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function isActiveCartCrop(crop) {
+    if (!crop || !crop.id) return false;
+    if (crop.actual_harvest_date) return false;
+    const override = normalizeCartCropStatus(crop.status_override);
+    if (override && INACTIVE_CART_CROP_STATUSES.has(override)) return false;
+    const status = normalizeCartCropStatus(crop.status);
+    if (status && INACTIVE_CART_CROP_STATUSES.has(status)) return false;
+    return true;
+}
+
+function getActiveAvailableCrops() {
+    return getAvailableCrops().filter(isActiveCartCrop);
 }
 
 // ============================================================
@@ -589,7 +608,7 @@ function renderAddItemForm() {
 }
 
 function renderNewCartModal() {
-    const cropOptions = getAvailableCrops().map(c =>
+    const cropOptions = getActiveAvailableCrops().map(c =>
         `<option value="${c.id}">${c.icon || '🌱'} ${escapeHtml(c.name || 'Cultivo')}${c.variety ? ' (' + escapeHtml(c.variety) + ')' : ''}</option>`
     ).join('');
 

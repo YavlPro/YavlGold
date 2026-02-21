@@ -419,8 +419,9 @@ function formatUnitNumberWithZero(value) {
 function getStatsCropFilter() {
     if (typeof document === 'undefined') return null;
     const el = document.getElementById('stats-crop-id') || document.querySelector('[data-stats-crop]');
-    const value = el?.value;
-    return value ? String(value) : null;
+    const value = el?.value || (typeof window !== 'undefined' ? window.YG_AGRO_SELECTED_CROP_ID : null);
+    const token = String(value || '').trim();
+    return token || null;
 }
 
 function computeUnitTotals(rows, cropId) {
@@ -604,6 +605,14 @@ export async function computeAgroFinanceSummaryV1() {
         const statsRange = getStatsDateRange();
         const startDate = statsRange.startDate;
         const endDate = statsRange.endDate;
+        const matchesStatsCrop = (row) => {
+            if (!statsCropId) return true;
+            return String(row?.crop_id || '') === String(statsCropId);
+        };
+        const matchesStatsCropById = (row) => {
+            if (!statsCropId) return true;
+            return String(row?.id || '') === String(statsCropId);
+        };
 
         // 1) Expenses REALES (filtrar deleted_at IS NULL)
         let expenseTotal = 0;
@@ -618,7 +627,8 @@ export async function computeAgroFinanceSummaryV1() {
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching expenses:', result.error);
             }
-            const expenses = filterRowsByRange(result?.data, 'date', startDate, endDate);
+            const expenses = filterRowsByRange(result?.data, 'date', startDate, endDate)
+                .filter(matchesStatsCrop);
             if (expenses) {
                 expenses.forEach(e => {
                     const amt = parseFloat(e.monto_usd) || parseFloat(e.amount) || 0;
@@ -646,7 +656,8 @@ export async function computeAgroFinanceSummaryV1() {
                 console.warn('[AGRO_STATS] Error fetching income:', result.error);
             }
             incomeRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
-                .filter((row) => !row?.reverted_at);
+                .filter((row) => !row?.reverted_at)
+                .filter(matchesStatsCrop);
             if (incomeRows) {
                 incomeRows.forEach(i => {
                     incomeTotal += parseFloat(i.monto_usd) || parseFloat(i.monto) || 0;
@@ -669,7 +680,8 @@ export async function computeAgroFinanceSummaryV1() {
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching pending:', result.error);
             }
-            pendingRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate);
+            pendingRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
+                .filter(matchesStatsCrop);
             if (pendingRows) {
                 pendingRows.forEach(p => {
                     pendingTotal += parseFloat(p.monto_usd) || parseFloat(p.monto) || 0;
@@ -693,7 +705,8 @@ export async function computeAgroFinanceSummaryV1() {
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
             }
-            lossesRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate);
+            lossesRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
+                .filter(matchesStatsCrop);
             if (lossesRows) {
                 lossesRows.forEach(l => {
                     const amt = parseFloat(l.monto_usd) || parseFloat(l.monto) || 0;
@@ -719,7 +732,8 @@ export async function computeAgroFinanceSummaryV1() {
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching transfers:', result.error);
             }
-            transfersRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate);
+            transfersRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
+                .filter(matchesStatsCrop);
             if (transfersRows) {
                 transfersRows.forEach(t => {
                     transfersTotal += parseFloat(t.monto_usd) || parseFloat(t.monto) || 0;
@@ -743,7 +757,8 @@ export async function computeAgroFinanceSummaryV1() {
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching crops:', result.error);
             }
-            cropsRows = filterRowsByRange(result?.data, 'start_date', startDate, endDate);
+            cropsRows = filterRowsByRange(result?.data, 'start_date', startDate, endDate)
+                .filter(matchesStatsCropById);
             if (cropsRows) {
                 cropsRows.forEach(c => {
                     cropsInvestmentTotal += parseFloat(c.investment) || 0;

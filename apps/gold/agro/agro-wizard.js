@@ -109,6 +109,38 @@ function getCropDisplayParts(crop, options = {}) {
     return { icon, name };
 }
 
+const INACTIVE_WIZARD_CROP_STATUSES = new Set([
+    'finalizado',
+    'cancelado',
+    'harvested',
+    'cancelled',
+    'cosechado'
+]);
+
+function normalizeWizardCropStatus(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function isActiveWizardCrop(crop) {
+    if (!crop || !crop.id) return false;
+    if (crop.actual_harvest_date) return false;
+    const override = normalizeWizardCropStatus(crop.status_override);
+    if (override && INACTIVE_WIZARD_CROP_STATUSES.has(override)) return false;
+    const status = normalizeWizardCropStatus(crop.status);
+    if (status && INACTIVE_WIZARD_CROP_STATUSES.has(status)) return false;
+    return true;
+}
+
+function getWizardActiveCrops(crops, includeCropId = null) {
+    const list = Array.isArray(crops) ? crops : [];
+    const active = list.filter(isActiveWizardCrop);
+    const includeId = normalizeWizardCropId(includeCropId);
+    if (!includeId) return active;
+    if (active.some((crop) => String(crop.id) === String(includeId))) return active;
+    const fallback = list.find((crop) => String(crop.id) === String(includeId));
+    return fallback ? [fallback, ...active] : active;
+}
+
 // ============================================================
 // CSS INJECTION
 // ============================================================
@@ -283,6 +315,28 @@ function injectWizardStyles() {
             text-align: center;
             font-weight: 700;
             letter-spacing: 1px;
+        }
+        .wiz-switch-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .wiz-switch-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #C8A752;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .wiz-switch-help {
+            margin: 0.4rem 0 0;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75rem;
+            line-height: 1.35;
         }
 
         /* Unit selector buttons */
@@ -527,7 +581,8 @@ export async function openAgroWizard(tabName, deps) {
         monto: '',
         currency: 'USD',
         exchangeRate: 1,
-        montoUsd: 0
+        montoUsd: 0,
+        countAsOperatingExpense: false
     };
 
     // Pre-fill crop name
@@ -583,7 +638,7 @@ export async function openAgroWizard(tabName, deps) {
 
     // ============ STEP 1: CROP ============
     function renderStepCrop() {
-        const crops = Array.isArray(cropsCache) ? cropsCache : [];
+        const crops = getWizardActiveCrops(cropsCache, state.cropId);
         if (lockCropSelection) {
             const forcedCrop = forcedCropId
                 ? crops.find((crop) => String(crop.id) === String(forcedCropId))
@@ -642,8 +697,39 @@ export async function openAgroWizard(tabName, deps) {
             </div>
         ` : '';
 
+        const activeCrops = getWizardActiveCrops(cropsCache, state.cropId);
+        const gastoCropOptions = activeCrops.map((crop) => {
+            const cropId = String(crop.id);
+            const selected = String(state.cropId || '') === cropId ? 'selected' : '';
+            const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
+            const variety = crop.variety ? ` (${escapeHtml(crop.variety)})` : '';
+            return `<option value="${cropId}" ${selected}>${escapeHtml(displayCrop.icon)} ${escapeHtml(displayCrop.name)}${variety}</option>`;
+        }).join('');
+
+        const gastoCropSelectHtml = tabName === 'gastos' && !lockCropSelection ? `
+            <div class="wiz-field">
+                <label class="wiz-label">Cultivo (gasto asociado)</label>
+                <select class="wiz-input" id="wiz-gasto-crop-id">
+                    <option value="" ${state.cropId ? '' : 'selected'}>General / Sin cultivo</option>
+                    ${gastoCropOptions}
+                </select>
+            </div>
+        ` : '';
+
+        const donationToggleHtml = tabName === 'transferencias' ? `
+            <div class="wiz-field">
+                <label class="wiz-label">Contabilidad de donación</label>
+                <label class="wiz-switch-row" for="wiz-transfer-operating-expense">
+                    <input type="checkbox" id="wiz-transfer-operating-expense" ${state.countAsOperatingExpense ? 'checked' : ''}>
+                    <span>Contabilizar como gasto operativo</span>
+                </label>
+                <p class="wiz-switch-help">Si activas este toggle, además de la donación se registrará un gasto operativo en el cultivo seleccionado.</p>
+            </div>
+        ` : '';
+
         return `
             <p class="wiz-question">¿Cuáles son los detalles?</p>
+            ${gastoCropSelectHtml}
             <div class="wiz-field">
                 <label class="wiz-label">Concepto *</label>
                 <input type="text" class="wiz-input" id="wiz-concepto" placeholder="${meta.conceptPlaceholder}" value="${escapeHtml(state.concepto)}" autocomplete="off" required>
@@ -653,6 +739,7 @@ export async function openAgroWizard(tabName, deps) {
                 <label class="wiz-label">Fecha</label>
                 <input type="date" class="wiz-input" id="wiz-fecha" value="${state.fecha}" max="${typeof getTodayLocalISO === 'function' ? getTodayLocalISO() : ''}">
             </div>
+            ${donationToggleHtml}
         `;
     }
 
@@ -756,6 +843,14 @@ export async function openAgroWizard(tabName, deps) {
                 </div>
             `;
         }
+        if (tabName === 'transferencias') {
+            rows += `
+                <div class="wiz-ticket-row">
+                    <span class="wiz-ticket-label">🧾 Gasto operativo</span>
+                    <span class="wiz-ticket-value">${state.countAsOperatingExpense ? 'Sí' : 'No'}</span>
+                </div>
+            `;
+        }
         rows += `
             <div class="wiz-ticket-row">
                 <span class="wiz-ticket-label">📅 Fecha</span>
@@ -811,6 +906,18 @@ export async function openAgroWizard(tabName, deps) {
                 render();
             });
         });
+
+        // Crop select (gastos)
+        const gastoCropEl = overlay.querySelector('#wiz-gasto-crop-id');
+        if (gastoCropEl) {
+            gastoCropEl.addEventListener('change', () => {
+                const cropId = normalizeWizardCropId(gastoCropEl.value);
+                state.cropId = cropId;
+                const rows = Array.isArray(cropsCache) ? cropsCache : [];
+                const match = cropId ? rows.find((crop) => String(crop.id) === String(cropId)) : null;
+                state.cropName = match ? (match.name || 'Cultivo') : 'General / Sin cultivo';
+            });
+        }
 
         // Unit buttons (step 3)
         overlay.querySelectorAll('.wiz-unit-btn').forEach(btn => {
@@ -900,6 +1007,13 @@ export async function openAgroWizard(tabName, deps) {
             });
         }
 
+        const donationExpenseToggle = overlay.querySelector('#wiz-transfer-operating-expense');
+        if (donationExpenseToggle) {
+            donationExpenseToggle.addEventListener('change', () => {
+                state.countAsOperatingExpense = donationExpenseToggle.checked;
+            });
+        }
+
         const kgEl = overlay.querySelector('#wiz-kg');
         if (kgEl) {
             kgEl.addEventListener('input', () => { state.quantityKg = kgEl.value; });
@@ -953,6 +1067,13 @@ export async function openAgroWizard(tabName, deps) {
         if (conceptoEl) state.concepto = conceptoEl.value.trim();
         const whoEl = overlay.querySelector('#wiz-who');
         if (whoEl) state.who = whoEl.value.trim();
+        const gastoCropEl = overlay.querySelector('#wiz-gasto-crop-id');
+        if (gastoCropEl) {
+            state.cropId = normalizeWizardCropId(gastoCropEl.value);
+            const rows = Array.isArray(cropsCache) ? cropsCache : [];
+            const match = state.cropId ? rows.find((crop) => String(crop.id) === String(state.cropId)) : null;
+            state.cropName = match ? (match.name || 'Cultivo') : 'General / Sin cultivo';
+        }
         const fechaEl = overlay.querySelector('#wiz-fecha');
         if (fechaEl) state.fecha = fechaEl.value;
         const kgEl = overlay.querySelector('#wiz-kg');
@@ -961,6 +1082,8 @@ export async function openAgroWizard(tabName, deps) {
         if (montoEl) state.monto = montoEl.value;
         const rateEl = overlay.querySelector('#wiz-exchange-rate');
         if (rateEl) state.exchangeRate = Number(rateEl.value) || 0;
+        const donationExpenseToggle = overlay.querySelector('#wiz-transfer-operating-expense');
+        if (donationExpenseToggle) state.countAsOperatingExpense = donationExpenseToggle.checked;
     }
 
     function recalcMontoUsd() {
@@ -1091,8 +1214,60 @@ export async function openAgroWizard(tabName, deps) {
                 delete insertData.monto;
             }
 
-            const { error } = await supabase.from(meta.table).insert(insertData);
-            if (error) throw error;
+            let successMessage = meta.successMsg;
+            let createdOperatingExpense = false;
+
+            if (tabName === 'transferencias' && state.countAsOperatingExpense) {
+                const transferInsert = await supabase
+                    .from('agro_transfers')
+                    .insert(insertData)
+                    .select('id')
+                    .single();
+                if (transferInsert.error) throw transferInsert.error;
+
+                const transferId = transferInsert.data?.id;
+                const conceptBase = String(state.concepto || 'Donación').trim();
+                const operatingConcept = state.who
+                    ? `Donación operativa a ${state.who}: ${conceptBase}`
+                    : `Donación operativa: ${conceptBase}`;
+                const expenseData = {
+                    user_id: user.id,
+                    crop_id: insertData.crop_id || null,
+                    date: state.fecha,
+                    concept: operatingConcept,
+                    amount: montoNum,
+                    category: insertData.crop_id ? 'operativo' : 'general',
+                    currency: insertData.currency || 'USD',
+                    exchange_rate: insertData.exchange_rate || 1,
+                    monto_usd: insertData.monto_usd ?? montoNum
+                };
+
+                const expenseInsert = await supabase
+                    .from('agro_expenses')
+                    .insert(expenseData)
+                    .select('id')
+                    .single();
+
+                if (expenseInsert.error) {
+                    if (transferId) {
+                        const rollback = await supabase
+                            .from('agro_transfers')
+                            .delete()
+                            .eq('id', transferId)
+                            .eq('user_id', user.id);
+                        if (rollback.error) {
+                            throw new Error(`Error creando gasto operativo y no se pudo revertir la donación: ${expenseInsert.error.message}`);
+                        }
+                    }
+                    throw expenseInsert.error;
+                }
+
+                createdOperatingExpense = true;
+                successMessage = '✅ Donación y gasto operativo registrados';
+            } else {
+                const { error } = await supabase.from(meta.table).insert(insertData);
+                if (error) throw error;
+            }
 
             // Show success
             const body = overlay.querySelector('.agro-wizard-body');
@@ -1100,7 +1275,7 @@ export async function openAgroWizard(tabName, deps) {
             if (body) body.innerHTML = `
                 <div class="wiz-success">
                     <div class="wiz-success-icon">✅</div>
-                    <div class="wiz-success-text">${meta.successMsg}</div>
+                    <div class="wiz-success-text">${successMessage}</div>
                 </div>
             `;
             if (footer) footer.style.display = 'none';
@@ -1114,6 +1289,9 @@ export async function openAgroWizard(tabName, deps) {
                 }
                 if (typeof refreshFactureroHistory === 'function') {
                     const tabsToRefresh = new Set([tabName, ...refreshAlsoTabs]);
+                    if (createdOperatingExpense) {
+                        tabsToRefresh.add('gastos');
+                    }
                     tabsToRefresh.forEach((tab) => {
                         refreshFactureroHistory(tab);
                     });
