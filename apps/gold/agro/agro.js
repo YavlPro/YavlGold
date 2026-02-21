@@ -5030,11 +5030,22 @@ function formatCurrency(value) {
     }).format(value || 0);
 }
 
-function resolveExpenseAmountUsd(row) {
+function resolveRecordAmountUsd(row, amountFields = []) {
     const explicitUsd = toSafeLocaleNumber(row?.monto_usd);
     if (explicitUsd !== null) return explicitUsd;
 
-    const amount = toSafeLocaleNumber(row?.amount ?? row?.monto) ?? 0;
+    let amount = 0;
+    const fields = Array.isArray(amountFields) && amountFields.length
+        ? amountFields
+        : ['amount', 'monto'];
+    for (const field of fields) {
+        const parsed = toSafeLocaleNumber(row?.[field]);
+        if (parsed !== null) {
+            amount = parsed;
+            break;
+        }
+    }
+
     const currency = String(row?.currency || 'USD').trim().toUpperCase();
     const rate = toSafeLocaleNumber(row?.exchange_rate) ?? 0;
 
@@ -5046,7 +5057,47 @@ function resolveExpenseAmountUsd(row) {
     return amount;
 }
 
-async function fetchExpenseTotalsByCropIds(userId, cropIds) {
+function isMissingTableError(error, tableName) {
+    if (!error) return false;
+    const code = String(error.code || '').toUpperCase();
+    if (code === '42P01') return true;
+    const msg = String(error.message || '').toLowerCase();
+    const details = String(error.details || '').toLowerCase();
+    const text = `${msg} ${details}`;
+    const table = String(tableName || '').toLowerCase();
+    if (!table) return text.includes('does not exist') && text.includes('relation');
+    return text.includes('relation') && text.includes(table) && text.includes('does not exist');
+}
+
+const LOSS_TABLE_CANDIDATES = ['agro_losses', 'agro_loss', 'agro_perdidas'];
+const lossTableAvailabilityCache = new Map();
+
+async function isTableAvailable(tableName) {
+    const normalized = String(tableName || '').trim();
+    if (!normalized) return false;
+    if (lossTableAvailabilityCache.has(normalized)) {
+        return lossTableAvailabilityCache.get(normalized);
+    }
+
+    try {
+        const { error } = await supabase
+            .from(normalized)
+            .select('id')
+            .limit(1);
+        if (isMissingTableError(error, normalized)) {
+            lossTableAvailabilityCache.set(normalized, false);
+            return false;
+        }
+        lossTableAvailabilityCache.set(normalized, true);
+        return true;
+    } catch (error) {
+        const missing = isMissingTableError(error, normalized);
+        lossTableAvailabilityCache.set(normalized, !missing);
+        return !missing;
+    }
+}
+
+async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {}) {
     const totals = new Map();
     const normalizedUserId = normalizeCropId(userId);
     const ids = Array.from(new Set((cropIds || [])
@@ -5054,43 +5105,101 @@ async function fetchExpenseTotalsByCropIds(userId, cropIds) {
         .filter(Boolean)));
     if (!normalizedUserId || ids.length === 0) return totals;
 
-    let includeDeletedAt = true;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-        const selectFields = includeDeletedAt
-            ? 'crop_id,amount,currency,exchange_rate,monto_usd,deleted_at'
-            : 'crop_id,amount,currency,exchange_rate,monto_usd';
+    const amountFields = (Array.isArray(options.amountFields) && options.amountFields.length
+        ? options.amountFields
+        : ['amount', 'monto'])
+        .map((field) => String(field || '').trim())
+        .filter(Boolean);
+    let selectFields = Array.from(new Set([
+        'crop_id',
+        ...amountFields,
+        'currency',
+        'exchange_rate',
+        'monto_usd',
+        ...(Array.isArray(options.optionalFields) ? options.optionalFields : [])
+    ].map((field) => String(field || '').trim()).filter(Boolean)));
+    let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
+        .map((field) => String(field || '').trim())
+        .filter(Boolean)));
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        if (!selectFields.includes('crop_id')) break;
+
         let query = supabase
-            .from('agro_expenses')
-            .select(selectFields)
+            .from(tableName)
+            .select(selectFields.join(', '))
             .eq('user_id', normalizedUserId)
             .in('crop_id', ids);
-        if (includeDeletedAt) {
-            query = query.is('deleted_at', null);
-        }
+        nullFilters.forEach((field) => {
+            if (selectFields.includes(field)) {
+                query = query.is(field, null);
+            }
+        });
 
         const { data, error } = await query;
         if (!error) {
             (Array.isArray(data) ? data : []).forEach((row) => {
-                if (row?.deleted_at) return;
                 const cropId = normalizeCropId(row?.crop_id);
                 if (!cropId) return;
-                const usd = resolveExpenseAmountUsd(row);
+                const usd = resolveRecordAmountUsd(row, amountFields);
                 if (!Number.isFinite(usd)) return;
                 totals.set(cropId, (totals.get(cropId) || 0) + usd);
             });
             return totals;
         }
 
-        if (includeDeletedAt && isMissingColumnError(error, 'deleted_at')) {
-            includeDeletedAt = false;
+        if (isMissingTableError(error, tableName)) {
+            return totals;
+        }
+
+        let removedAny = false;
+        selectFields = selectFields.filter((field) => {
+            if (isMissingColumnError(error, field)) {
+                removedAny = true;
+                return false;
+            }
+            return true;
+        });
+        if (removedAny) {
+            nullFilters = nullFilters.filter((field) => selectFields.includes(field));
             continue;
         }
 
-        console.warn('[Agro] No se pudo calcular gastos por cultivo:', error?.message || error);
+        console.warn(`[Agro] No se pudo calcular totales por cultivo en ${tableName}:`, error?.message || error);
         return totals;
     }
 
     return totals;
+}
+
+async function fetchExpenseTotalsByCropIds(userId, cropIds) {
+    return fetchUsdTotalsByCropIds('agro_expenses', userId, cropIds, {
+        amountFields: ['amount', 'monto'],
+        optionalFields: ['deleted_at'],
+        nullFilters: ['deleted_at']
+    });
+}
+
+async function fetchIncomeTotalsByCropIds(userId, cropIds) {
+    return fetchUsdTotalsByCropIds('agro_income', userId, cropIds, {
+        amountFields: ['monto', 'amount'],
+        optionalFields: ['deleted_at', 'reverted_at'],
+        nullFilters: ['deleted_at', 'reverted_at']
+    });
+}
+
+async function fetchLossTotalsByCropIds(userId, cropIds) {
+    const queryOptions = {
+        amountFields: ['monto', 'amount'],
+        optionalFields: ['deleted_at'],
+        nullFilters: ['deleted_at']
+    };
+    for (const tableName of LOSS_TABLE_CANDIDATES) {
+        const available = await isTableAvailable(tableName);
+        if (!available) continue;
+        return fetchUsdTotalsByCropIds(tableName, userId, cropIds, queryOptions);
+    }
+    return new Map();
 }
 
 function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
@@ -5103,6 +5212,22 @@ function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
         const breakdown = document.createElement('span');
         breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
         breakdown.textContent = `Base: ${formatCurrency(base)} + Gastos: ${formatCurrency(expenses)}`;
+        valueEl.appendChild(breakdown);
+    }
+    return item;
+}
+
+function createProfitMetaItem(incomeTotal, costTotal) {
+    const income = Number.isFinite(incomeTotal) ? incomeTotal : 0;
+    const costs = Number.isFinite(costTotal) ? costTotal : 0;
+    const net = income - costs;
+    const item = createMetaItem('Rentabilidad', formatCurrency(net));
+    const valueEl = item.querySelector('.meta-value');
+    if (valueEl) {
+        valueEl.style.color = net >= 0 ? 'var(--gold-light)' : 'var(--danger)';
+        const breakdown = document.createElement('span');
+        breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
+        breakdown.textContent = `Ingresos: ${formatCurrency(income)} | Costos: ${formatCurrency(costs)}`;
         valueEl.appendChild(breakdown);
     }
     return item;
@@ -5207,6 +5332,8 @@ function createCropCardElement(crop, index, options = {}) {
     const displayCrop = getCropDisplayParts(crop);
     const isAuditCard = !!options.isAuditCard;
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
+    const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
+    const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const delay = 4 + index; // Para animaciones escalonadas
     const card = document.createElement('div');
     card.className = `card crop-card animate-in delay-${delay}`;
@@ -5328,11 +5455,19 @@ function createCropCardElement(crop, index, options = {}) {
     const expenseInvestment = normalizedCropId && expenseTotalsByCrop
         ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
         : 0;
+    const incomeTotal = normalizedCropId && incomeTotalsByCrop
+        ? (Number(incomeTotalsByCrop.get(normalizedCropId)) || 0)
+        : 0;
+    const lossesTotal = normalizedCropId && lossTotalsByCrop
+        ? (Number(lossTotalsByCrop.get(normalizedCropId)) || 0)
+        : 0;
+    const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
     metaGrid.append(
         createMetaItem('Siembra', formatDate(crop.start_date)),
         createMetaItem('Cosecha Est.', formatDate(crop.expected_harvest_date)),
         createMetaItem('Area', `${crop.area_size} Ha`),
-        createInvestmentMetaItem(baseInvestment, expenseInvestment)
+        createInvestmentMetaItem(baseInvestment, expenseInvestment),
+        createProfitMetaItem(incomeTotal, totalCosts)
     );
 
     card.append(actions, header, progressSection, metaGrid);
@@ -5634,6 +5769,8 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const ui = ensureCropCycleHistorySection();
     if (!ui) return;
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
+    const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
+    const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
 
     const finishedCrops = Array.isArray(crops) ? crops : [];
     const auditCrops = Array.isArray(orphanCrops) ? orphanCrops : [];
@@ -5659,7 +5796,11 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     } else {
         const fragment = document.createDocumentFragment();
         finishedCrops.forEach((crop, index) => {
-            fragment.appendChild(createCropCardElement(crop, (index % 6) + 1, { expenseTotalsByCrop }));
+            fragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
+                expenseTotalsByCrop,
+                incomeTotalsByCrop,
+                lossTotalsByCrop
+            }));
         });
         gridEl.appendChild(fragment);
     }
@@ -5683,7 +5824,9 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     auditCrops.forEach((crop, index) => {
         auditFragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
             isAuditCard: true,
-            expenseTotalsByCrop
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop
         }));
     });
     auditGridEl.appendChild(auditFragment);
@@ -5760,11 +5903,18 @@ export async function loadCrops() {
         if (!isLatest) return;
 
         let expenseTotalsByCrop = new Map();
+        let incomeTotalsByCrop = new Map();
+        let lossTotalsByCrop = new Map();
         if (source === 'supabase' && currentUserId && crops.length > 0) {
-            expenseTotalsByCrop = await fetchExpenseTotalsByCropIds(
-                currentUserId,
-                crops.map((crop) => crop?.id)
-            );
+            const cropIds = crops.map((crop) => crop?.id);
+            const [expenseTotals, incomeTotals, lossTotals] = await Promise.all([
+                fetchExpenseTotalsByCropIds(currentUserId, cropIds),
+                fetchIncomeTotalsByCropIds(currentUserId, cropIds),
+                fetchLossTotalsByCropIds(currentUserId, cropIds)
+            ]);
+            expenseTotalsByCrop = expenseTotals;
+            incomeTotalsByCrop = incomeTotals;
+            lossTotalsByCrop = lossTotals;
             if (requestId !== cropsLoadSeq) return;
         }
 
@@ -5809,10 +5959,18 @@ export async function loadCrops() {
             fragment.appendChild(buildNoActiveCropsCard(visibleFinishedCrops.length));
         }
         activeCrops.forEach((crop, i) => {
-            fragment.appendChild(createCropCardElement(crop, i + 1, { expenseTotalsByCrop }));
+            fragment.appendChild(createCropCardElement(crop, i + 1, {
+                expenseTotalsByCrop,
+                incomeTotalsByCrop,
+                lossTotalsByCrop
+            }));
         });
         cropsGrid.appendChild(fragment);
-        renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, { expenseTotalsByCrop });
+        renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop
+        });
         const prevSelected = selectedCropId;
         syncSelectedCropFromList(crops, { silent: true });
         if (prevSelected !== selectedCropId) {
