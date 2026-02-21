@@ -1,5 +1,92 @@
 ---
 
+## 🆕 SESIÓN: Trust & Consistency Sweep V9.8 (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA (Vite + navegación)**
+- `apps/gold/vite.config.js`: `appType: 'mpa'` con entradas HTML para `index`, `dashboard`, `agro`, `crypto`, `academia`, `tecnologia`, `herramientas`, `social`, etc.
+- `apps/gold/vercel.json`: `cleanUrls` + `rewrites` para rutas limpias (`/dashboard`, `/agro`, `/crypto`, `/academia`, `/tecnologia`) y redirect legado de `/herramientas` -> `/tecnologia`.
+- `apps/gold/index.html`: landing V9.8 con navegación y cards de módulos (`./agro/`, `./crypto/`, `./herramientas/`) y acceso a `/dashboard/`.
+- `apps/gold/dashboard/index.html`: dashboard con módulos dinámicos, bloque `Continuar/Resumen/Recomendado`, y enlaces internos de navegación.
+
+2) **Instanciación de Supabase/Auth**
+- `apps/gold/assets/js/config/supabase-config.js`: `createClient(...)` con `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (sin secretos hardcodeados).
+- `apps/gold/assets/js/auth/authClient.js`: cliente auth central, carga `supabase-config.js`, aplica guard para rutas protegidas (`/dashboard`, `/academia`, `/agro`, `/crypto`, `/tecnologia`, `/herramientas`).
+- `apps/gold/assets/js/auth/authUI.js`: UI de login/registro/recovery consumiendo `window.AuthClient`.
+- `apps/gold/dashboard/auth-guard.js`: guard específico de dashboard con `supabase.auth.getSession()` y redirect a `/index.html#login`.
+
+3) **Dashboard: consultas actuales vs faltantes**
+- `apps/gold/dashboard/index.html` consulta:
+  - `profiles` (`username, avatar_url`)
+  - `modules` (`id,title,description,thumbnail_url,route,is_active,is_locked,min_level,created_at`)
+  - `user_favorites` (conteo por `user_id`)
+  - `notifications` (no leídas por `user_id` + `is_read=false`)
+- Además inicializa managers de `announcements` y `feedback`.
+- `apps/gold/assets/js/modules/moduleManager.js` también usa `modules` + `user_favorites` para cache/favoritos/stats.
+- **Faltante de integración académica**: no hay lectura activa de `user_lesson_progress`, `user_quiz_attempts`, `user_badges`.
+
+4) **Clima/Agro: prioridad y storage**
+- `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`) mantiene prioridad **Manual > GPS/IP (según preferencia) > fallback**.
+- Llaves detectadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.
+- `apps/gold/agro/dashboard.js` usa `initWeather`/`displayWeather`, cachea clima con prefijo `yavlgold_weather_`.
+- Debug geolocalización ya existe y se activa con `?debug=1` o `localStorage.YG_GEO_DEBUG=1` (panel no invasivo).
+
+5) **Crypto: estado real**
+- Carpeta `apps/gold/crypto/` existente con `index.html`, `crypto.js`, `crypto.css`, `index_old.html`, `script_backup.txt`.
+- Ya está integrado como página MPA (`vite.config.js` incluye `crypto: 'crypto/index.html'`, `vercel.json` reescribe `/crypto`).
+- No existe `apps/gold/crypto/package.json` en el estado actual del repo.
+
+### Plan quirúrgico (archivos exactos)
+
+1. `apps/gold/package.json`
+- Motivo: la versión fuente de build está en `9.4.0`; `main.js` inyecta `__APP_VERSION__` desde este archivo.
+- Cambio: subir a `9.8.0` para alinear versión pública en labels dinámicos.
+
+2. `apps/gold/faq.html`
+- Motivo: claim riesgoso "certificados digitales verificables".
+- Cambio: wording a "en preparación/próximamente", sin promesa verificable actual.
+
+3. `apps/gold/privacy.html`
+- Motivo: claim "cifrado de extremo a extremo" no verificable end-to-end en este frontend.
+- Cambio: wording verificable: "HTTPS/TLS en tránsito" + nota de cifrado en reposo gestionado por proveedor.
+
+4. `apps/gold/docs/AGENT_REPORT.md`
+- Motivo: registrar paso 0, ejecución, validación build y cierre DoD.
+- Cambio: actualizar checklist final con resultado.
+
+### DoD (objetivo de esta sesión)
+
+- [x] Sitio con versión pública V9.8 sin hardcodes legacy en copy/labels visibles.
+- [x] Sin claim "certificados verificables" en copy pública; reemplazado por "en preparación/próximamente".
+- [x] Sin claim "E2E/extremo a extremo" en copy pública; reemplazado por TLS en tránsito + nota de reposo por proveedor.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia final documentada en `apps/gold/docs/AGENT_REPORT.md`.
+
+### Cambios ejecutados
+
+1. `apps/gold/package.json`
+- `version: "9.4.0"` -> `version: "9.8.0"` para alinear `__APP_VERSION__` inyectada por Vite en labels dinámicos.
+
+2. `apps/gold/faq.html`
+- Reemplazo de claim de certificación:
+  - de: "certificados digitales verificables"
+  - a: "certificacion digital ... en preparacion ... proximamente".
+
+3. `apps/gold/privacy.html`
+- Reemplazo de claim de seguridad:
+  - de: "cifrado de extremo a extremo"
+  - a: "HTTPS/TLS en tránsito" + nota de cifrado en reposo por proveedor.
+
+### Evidencia de verificación
+
+- Búsqueda de claims riesgosos en HTML público:
+  - `rg -n "certificados verificables|cifrado de extremo a extremo|extremo a extremo|E2E|end-to-end" apps/gold --glob "*.html" --glob "!docs/**"` -> sin coincidencias.
+- Búsqueda de versiones legacy en HTML público:
+  - `rg -n "V9\\.4|V9\\.5|V9\\.6|V9\\.7" apps/gold --glob "*.html" --glob "!docs/**"` -> sin coincidencias.
+- Build oficial:
+  - `pnpm build:gold` -> **OK** (`@yavl/gold@9.8.0`, `agent-guard: OK`, `agent-report-check: OK`, `vite build` exitoso).
+
 ## 🆕 SESIÓN: Robustez de metadata en export estricto (2026-02-20)
 
 ### Diagnóstico (Paso 0 obligatorio)

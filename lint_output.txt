@@ -1,0 +1,31 @@
+
+> yavl-ecosystem@1.0.0 lint C:\Users\yerik\gold
+> turbo run lint
+
+ÔÇó turbo 2.7.3
+ÔÇó Packages in scope: @yavl/gold, @yavl/themes, @yavl/ui, @yavl/utils
+ÔÇó Running lint in 4 packages
+ÔÇó Remote caching disabled
+@yavl/utils:lint: cache miss, executing cc53ef287f19d3ba
+@yavl/ui:lint: cache miss, executing d9d98ea13a35d85a
+@yavl/themes:lint: cache miss, executing c4c1c88056a30524
+@yavl/utils:lint: 
+@yavl/utils:lint: > @yavl/utils@1.0.0 lint C:\Users\yerik\gold\packages\utils
+@yavl/utils:lint: > echo "Linting coming soon"
+@yavl/utils:lint: 
+@yavl/ui:lint: 
+@yavl/ui:lint: > @yavl/ui@1.0.0 lint C:\Users\yerik\gold\packages\ui
+@yavl/ui:lint: > echo "Linting coming soon"
+@yavl/ui:lint: 
+@yavl/utils:lint: "Linting coming soon"
+@yavl/themes:lint: 
+@yavl/themes:lint: > @yavl/themes@1.0.0 lint C:\Users\yerik\gold\packages\themes
+@yavl/themes:lint: > echo "Linting coming soon"
+@yavl/themes:lint: 
+@yavl/ui:lint: "Linting coming soon"
+@yavl/themes:lint: "Linting coming soon"
+
+ Tasks:    3 successful, 3 total
+Cached:    0 cached, 3 total
+  Time:    1.387s 
+
