@@ -162,12 +162,12 @@ function toSafeNumber(value) {
 }
 
 function resolveAmountUsd(row) {
-    const explicitUsd = toSafeNumber(row?.monto_usd);
-    if (row?.monto_usd !== null && row?.monto_usd !== undefined && row?.monto_usd !== '') {
-        return explicitUsd;
+    const explicitUsd = row?.amount_usd ?? row?.monto_usd;
+    if (explicitUsd !== null && explicitUsd !== undefined && explicitUsd !== '') {
+        return toSafeNumber(explicitUsd);
     }
 
-    const amount = toSafeNumber(row?.monto ?? row?.amount);
+    const amount = toSafeNumber(row?.amount ?? row?.monto);
     const currency = String(row?.currency || 'USD').trim().toUpperCase();
     const rate = toSafeNumber(row?.exchange_rate);
     if (currency !== 'USD' && rate > 0) {
@@ -514,36 +514,36 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
     for (const r of incomeRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.incomeCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            e.incomeCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.incomeCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            unassigned.incomeCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
             unassigned.incomeCount += 1;
         }
     }
     for (const r of expenseRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.expenseCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            e.expenseCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.expenseCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            unassigned.expenseCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
             unassigned.expenseCount += 1;
         }
     }
     for (const r of pendingRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.pendingCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            e.pendingCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.pendingCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            unassigned.pendingCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
             unassigned.pendingCount += 1;
         }
     }
     for (const r of lossesRows) {
         const e = cropMap.get(String(r.crop_id));
         if (e) {
-            e.lossesCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            e.lossesCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.lossesCents += toCents(r.amount_usd ?? r.amount ?? r.monto_usd ?? r.monto);
+            unassigned.lossesCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
             unassigned.lossesCount += 1;
         }
     }
@@ -607,7 +607,7 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 
     for (const r of incomeRows) {
         const who = resolveBuyerName(r);
-        const key = who.toLowerCase();
+        const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(key);
         b.count += 1;
@@ -619,7 +619,7 @@ function buildBuyerRanking(incomeRows, pendingRows) {
 
     for (const r of pendingRows) {
         const who = resolveBuyerName(r);
-        const key = who.toLowerCase();
+        const key = String(who).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         if (!buyers.has(key)) buyers.set(key, { displayWho: who, count: 0, totalCents: 0, paid: true, currencies: new Set() });
         const b = buyers.get(key);
         b.count += 1;

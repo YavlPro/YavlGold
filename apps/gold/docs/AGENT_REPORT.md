@@ -7944,3 +7944,61 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
    - `agent-report-check` → ✅
    - `vite build` → ✅
    - `check-dist-utf8` → ✅
+
+## 🆕 SESIÓN: Agro Stats Export V9.8 — USD-first + buyer key sin tildes (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) Estado del workspace (`git status -sb`)
+- `## main...origin/main`
+- Árbol limpio al inicio de la sesión.
+
+2) Diagnóstico breve
+- En `buildPerCropTable`, el fallback actual usa `amount` antes que `monto_usd` en las sumas por cultivo.
+- Riesgo: registros híbridos (`amount` en moneda local + `monto_usd` en USD) inflan montos si se toma `amount` primero.
+- En `buildBuyerRanking`, la key usa `toLowerCase()` pero no elimina diacríticos.
+- Riesgo: `Jesús` y `jesus` quedan en grupos separados pese a que backend ya normaliza con `unaccent`.
+
+3) Plan quirúrgico
+- Archivo runtime: `apps/gold/agro/agro-stats-report.js`
+  - `buildPerCropTable`: cambiar en los 4 bucles (incluyendo `unassigned`) a fallback USD-first:
+    - `r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto`
+  - `buildBuyerRanking`: key canónica sin tildes + lower:
+    - `String(who).trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()`
+  - Mantener `displayWho` para render visual.
+- Evidencia y cierre DoD en `apps/gold/docs/AGENT_REPORT.md`.
+
+### DoD (objetivo de esta sesión)
+
+- [ ] `buildPerCropTable` usa fallback USD-first en income/expense/pending/losses y `unassigned`.
+- [ ] `buildBuyerRanking` agrupa por key sin tildes + lower.
+- [ ] Se preserva `displayWho` para visualización.
+- [ ] `pnpm build:gold` PASS.
+- [ ] Evidencia y cierre DoD registrados en este reporte.
+
+### Ejecución y cierre DoD (validado)
+
+1. Cambios runtime aplicados en `apps/gold/agro/agro-stats-report.js`:
+- `buildPerCropTable` (4 bucles + `unassigned`) con fallback USD-first:
+  - `toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto)`
+- `buildBuyerRanking` con key canónica sin diacríticos:
+  - `const key = String(who).trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();`
+- Se mantiene `displayWho` para render visual del nombre.
+- Ajuste defensivo de monto en `resolveAmountUsd` para priorizar `amount_usd ?? monto_usd` antes de `amount/monto`.
+
+2. Evidencia de casos auditados:
+- Caso moneda híbrida: registro tipo `amount = 50000` (local/COP) y `monto_usd = 13.60` debe sumar `13.60` USD (USD-first), no `50000`.
+- Caso nombre con tildes/casing: `Jesús berraco` y `jesus berraco` ahora colapsan en una sola key canónica; se conserva visualización con `displayWho`.
+- Caso `Oliva/oliva`: también se mantiene unificado por key normalizada.
+
+3. Build gate oficial:
+- Comando: `pnpm build:gold`
+- Resultado: **PASS** (`agent-guard: OK`, `agent-report-check: OK`, `vite build: OK`, `check-dist-utf8: OK`).
+
+### DoD validado
+
+- [x] `buildPerCropTable` usa fallback USD-first en income/expense/pending/losses y `unassigned`.
+- [x] `buildBuyerRanking` agrupa por key sin tildes + lower.
+- [x] Se preserva `displayWho` para visualización.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia y cierre DoD registrados en este reporte.
