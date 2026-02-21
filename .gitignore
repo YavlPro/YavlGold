@@ -151,3 +151,6 @@ apps/suite/
 
 # Supabase extension artifacts
 **/supabase/snippets/
+
+lint_output.txt
+test_output.txt
