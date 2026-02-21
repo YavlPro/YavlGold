@@ -907,8 +907,8 @@ const FACTURERO_CONFIG = {
         amountField: 'amount',
         dateField: 'date',
         extraFields: ['category', 'currency', 'exchange_rate', 'monto_usd', 'crop_id', 'evidence_url', 'type'],
-        editUiFields: ['evidence_url'],
-        hiddenEditFields: ['category', 'currency', 'exchange_rate', 'monto_usd', 'crop_id', 'type', 'user_id', 'created_at', 'deleted_at'],
+        editUiFields: ['unit_type', 'unit_qty', 'quantity_kg'],
+        hiddenEditFields: ['category', 'currency', 'exchange_rate', 'monto_usd', 'crop_id', 'type', 'evidence_url', 'user_id', 'created_at', 'deleted_at'],
         supportsDeletedAt: true
     },
     'ingresos': {
@@ -1155,6 +1155,87 @@ function formatKgSummary(value) {
     if (!Number.isFinite(num) || num <= 0) return '';
     const text = num % 1 === 0 ? String(num) : num.toFixed(2);
     return `${text} kg`;
+}
+
+function parseExpenseConceptUnitMeta(concept) {
+    const raw = String(concept || '').trim();
+    if (!raw) {
+        return { concept: '', unit_type: '', unit_qty: '', quantity_kg: '' };
+    }
+
+    const parts = raw.split('·').map((part) => part.trim()).filter(Boolean);
+    if (parts.length <= 1) {
+        return { concept: raw, unit_type: '', unit_qty: '', quantity_kg: '' };
+    }
+
+    let baseConcept = parts[0];
+    let unitType = '';
+    let unitQty = '';
+    let quantityKg = '';
+
+    for (let i = 1; i < parts.length; i += 1) {
+        const part = parts[i];
+        const kgMatch = part.match(/^(-?\d+(?:[.,]\d+)?)\s*kg$/i);
+        if (kgMatch) {
+            const parsedKg = toSafeLocaleNumber(kgMatch[1]);
+            if (parsedKg !== null && parsedKg > 0) {
+                quantityKg = formatUnitQty(parsedKg);
+                continue;
+            }
+        }
+
+        const unitMatch = part.match(/^(-?\d+(?:[.,]\d+)?)\s+(.+)$/);
+        if (unitMatch) {
+            const parsedQty = toSafeLocaleNumber(unitMatch[1]);
+            const labelRaw = String(unitMatch[2] || '').trim().toLowerCase();
+            const option = INCOME_UNIT_OPTIONS.find((opt) => {
+                if (!opt?.value) return false;
+                const singular = String(opt.singular || '').trim().toLowerCase();
+                const plural = String(opt.plural || '').trim().toLowerCase();
+                return opt.value === labelRaw || singular === labelRaw || plural === labelRaw;
+            });
+            if (option && parsedQty !== null && parsedQty > 0) {
+                unitType = option.value;
+                unitQty = formatUnitQty(parsedQty);
+                continue;
+            }
+        }
+
+        baseConcept = `${baseConcept} · ${part}`.trim();
+    }
+
+    return {
+        concept: baseConcept,
+        unit_type: unitType,
+        unit_qty: unitQty,
+        quantity_kg: quantityKg
+    };
+}
+
+function buildExpenseConceptWithUnitMeta(baseConcept, unitTypeRaw, unitQtyRaw, quantityKgRaw) {
+    const cleanBase = String(baseConcept || '').trim();
+    const parts = cleanBase ? [cleanBase] : [];
+
+    const unitType = String(unitTypeRaw || '').trim().toLowerCase();
+    const unitQty = toSafeLocaleNumber(unitQtyRaw);
+    if (unitType && unitQty !== null && unitQty > 0) {
+        const option = INCOME_UNIT_OPTIONS.find((opt) => opt?.value === unitType);
+        const qtyText = formatUnitQty(unitQty);
+        const label = option
+            ? (unitQty === 1 ? option.singular : option.plural)
+            : unitType;
+        if (qtyText && label) {
+            parts.push(`${qtyText} ${label}`);
+        }
+    }
+
+    const kgValue = toSafeLocaleNumber(quantityKgRaw);
+    if (kgValue !== null && kgValue > 0) {
+        const kgText = formatKgSummary(kgValue);
+        if (kgText) parts.push(kgText);
+    }
+
+    return parts.join(' · ').trim();
 }
 
 function getFactureroEditFields(config, whoField = null) {
@@ -3117,8 +3198,13 @@ function openFactureroEditModal(tabName, item, config) {
     document.getElementById('edit-item-id').value = item.id;
     document.getElementById('edit-tab-name').value = tabName;
     const rawConcept = item[config.conceptField] || '';
+    const expenseConceptMeta = tabName === 'gastos'
+        ? parseExpenseConceptUnitMeta(rawConcept)
+        : null;
     const whoData = getWhoData(tabName, item, rawConcept);
-    document.getElementById('edit-concepto').value = whoData.concept || rawConcept;
+    document.getElementById('edit-concepto').value = expenseConceptMeta
+        ? (expenseConceptMeta.concept || '')
+        : (whoData.concept || rawConcept);
     document.getElementById('edit-monto').value = item[config.amountField] || '';
     document.getElementById('edit-fecha').value = item[config.dateField] || '';
 
@@ -3155,7 +3241,9 @@ function openFactureroEditModal(tabName, item, config) {
         const extraFields = getFactureroEditFields(config, whoMeta?.field);
         extraFields.forEach(field => {
             const meta = FACTURERO_EXTRA_FIELD_META[field];
-            const value = item[field] ?? '';
+            const value = (expenseConceptMeta && Object.prototype.hasOwnProperty.call(expenseConceptMeta, field))
+                ? (expenseConceptMeta[field] ?? '')
+                : (item[field] ?? '');
             const labelText = meta?.label || (field.charAt(0).toUpperCase() + field.slice(1));
 
             const group = document.createElement('div');
@@ -3353,6 +3441,12 @@ async function saveEditModal() {
         if (tabName === 'ingresos') {
             conceptForSave = buildConceptWithWho(tabName, conceptValue, whoValue);
         }
+        if (tabName === 'gastos') {
+            const unitTypeUi = document.getElementById('edit-unit_type')?.value || '';
+            const unitQtyUi = document.getElementById('edit-unit_qty')?.value || '';
+            const quantityKgUi = document.getElementById('edit-quantity_kg')?.value || '';
+            conceptForSave = buildExpenseConceptWithUnitMeta(conceptValue, unitTypeUi, unitQtyUi, quantityKgUi);
+        }
 
         // V9.6.6: Validate date before update
         const editDateValue = document.getElementById('edit-fecha')?.value;
@@ -3391,6 +3485,9 @@ async function saveEditModal() {
         // Add extra fields
         getFactureroEditFields(config, whoMeta?.field)
             .forEach(field => {
+                if (tabName === 'gastos' && (field === 'unit_type' || field === 'unit_qty' || field === 'quantity_kg')) {
+                    return;
+                }
                 const el = document.getElementById(`edit-${field}`);
                 // console.log(`[AGRO] V9.6.5 extraField: ${field}, el:`, el, 'value:', el?.value);
                 if (!el) return;
