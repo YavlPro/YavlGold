@@ -5030,6 +5030,84 @@ function formatCurrency(value) {
     }).format(value || 0);
 }
 
+function resolveExpenseAmountUsd(row) {
+    const explicitUsd = toSafeLocaleNumber(row?.monto_usd);
+    if (explicitUsd !== null) return explicitUsd;
+
+    const amount = toSafeLocaleNumber(row?.amount ?? row?.monto) ?? 0;
+    const currency = String(row?.currency || 'USD').trim().toUpperCase();
+    const rate = toSafeLocaleNumber(row?.exchange_rate) ?? 0;
+
+    if (currency !== 'USD' && rate > 0) {
+        const converted = convertToUSD(amount, currency, rate);
+        if (Number.isFinite(converted)) return converted;
+        return amount / rate;
+    }
+    return amount;
+}
+
+async function fetchExpenseTotalsByCropIds(userId, cropIds) {
+    const totals = new Map();
+    const normalizedUserId = normalizeCropId(userId);
+    const ids = Array.from(new Set((cropIds || [])
+        .map((id) => normalizeCropId(id))
+        .filter(Boolean)));
+    if (!normalizedUserId || ids.length === 0) return totals;
+
+    let includeDeletedAt = true;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+        const selectFields = includeDeletedAt
+            ? 'crop_id,amount,currency,exchange_rate,monto_usd,deleted_at'
+            : 'crop_id,amount,currency,exchange_rate,monto_usd';
+        let query = supabase
+            .from('agro_expenses')
+            .select(selectFields)
+            .eq('user_id', normalizedUserId)
+            .in('crop_id', ids);
+        if (includeDeletedAt) {
+            query = query.is('deleted_at', null);
+        }
+
+        const { data, error } = await query;
+        if (!error) {
+            (Array.isArray(data) ? data : []).forEach((row) => {
+                if (row?.deleted_at) return;
+                const cropId = normalizeCropId(row?.crop_id);
+                if (!cropId) return;
+                const usd = resolveExpenseAmountUsd(row);
+                if (!Number.isFinite(usd)) return;
+                totals.set(cropId, (totals.get(cropId) || 0) + usd);
+            });
+            return totals;
+        }
+
+        if (includeDeletedAt && isMissingColumnError(error, 'deleted_at')) {
+            includeDeletedAt = false;
+            continue;
+        }
+
+        console.warn('[Agro] No se pudo calcular gastos por cultivo:', error?.message || error);
+        return totals;
+    }
+
+    return totals;
+}
+
+function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
+    const base = Number.isFinite(baseInvestment) ? baseInvestment : 0;
+    const expenses = Number.isFinite(expenseInvestment) ? expenseInvestment : 0;
+    const total = base + expenses;
+    const item = createMetaItem('Inversion', formatCurrency(total), 'gold');
+    const valueEl = item.querySelector('.meta-value');
+    if (valueEl) {
+        const breakdown = document.createElement('span');
+        breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
+        breakdown.textContent = `Base: ${formatCurrency(base)} + Gastos: ${formatCurrency(expenses)}`;
+        valueEl.appendChild(breakdown);
+    }
+    return item;
+}
+
 // ============================================================
 // CARGAR CULTIVOS DESDE SUPABASE
 // ============================================================
@@ -5128,6 +5206,7 @@ function createGeneralViewCardElement() {
 function createCropCardElement(crop, index, options = {}) {
     const displayCrop = getCropDisplayParts(crop);
     const isAuditCard = !!options.isAuditCard;
+    const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const delay = 4 + index; // Para animaciones escalonadas
     const card = document.createElement('div');
     card.className = `card crop-card animate-in delay-${delay}`;
@@ -5244,11 +5323,16 @@ function createCropCardElement(crop, index, options = {}) {
 
     const metaGrid = document.createElement('div');
     metaGrid.className = 'crop-meta-grid';
+    const normalizedCropId = normalizeCropId(crop?.id);
+    const baseInvestment = toSafeLocaleNumber(crop?.investment) ?? 0;
+    const expenseInvestment = normalizedCropId && expenseTotalsByCrop
+        ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
+        : 0;
     metaGrid.append(
         createMetaItem('Siembra', formatDate(crop.start_date)),
         createMetaItem('Cosecha Est.', formatDate(crop.expected_harvest_date)),
         createMetaItem('Area', `${crop.area_size} Ha`),
-        createMetaItem('Inversion', formatCurrency(crop.investment), 'gold')
+        createInvestmentMetaItem(baseInvestment, expenseInvestment)
     );
 
     card.append(actions, header, progressSection, metaGrid);
@@ -5546,9 +5630,10 @@ async function classifyCycleHistoryCrops(finishedCrops, options = {}) {
     return { valid, orphan };
 }
 
-function renderCropCycleHistory(crops, orphanCrops = []) {
+function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const ui = ensureCropCycleHistorySection();
     if (!ui) return;
+    const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
 
     const finishedCrops = Array.isArray(crops) ? crops : [];
     const auditCrops = Array.isArray(orphanCrops) ? orphanCrops : [];
@@ -5574,7 +5659,7 @@ function renderCropCycleHistory(crops, orphanCrops = []) {
     } else {
         const fragment = document.createDocumentFragment();
         finishedCrops.forEach((crop, index) => {
-            fragment.appendChild(createCropCardElement(crop, (index % 6) + 1));
+            fragment.appendChild(createCropCardElement(crop, (index % 6) + 1, { expenseTotalsByCrop }));
         });
         gridEl.appendChild(fragment);
     }
@@ -5596,7 +5681,10 @@ function renderCropCycleHistory(crops, orphanCrops = []) {
     auditGridEl.textContent = '';
     const auditFragment = document.createDocumentFragment();
     auditCrops.forEach((crop, index) => {
-        auditFragment.appendChild(createCropCardElement(crop, (index % 6) + 1, { isAuditCard: true }));
+        auditFragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
+            isAuditCard: true,
+            expenseTotalsByCrop
+        }));
     });
     auditGridEl.appendChild(auditFragment);
 }
@@ -5630,11 +5718,13 @@ export async function loadCrops() {
         let crops = [];
         let error = null;
         let source = 'supabase';
+        let currentUserId = null;
 
         try {
             // 1. Intentar cargar desde Supabase
             const { data: userData } = await supabase.auth.getUser();
-            if (userData?.user?.id) {
+            currentUserId = normalizeCropId(userData?.user?.id);
+            if (currentUserId) {
                 const { data, error: sbError } = await supabase
                     .from('agro_crops')
                     .select('*')
@@ -5668,6 +5758,15 @@ export async function loadCrops() {
         });
 
         if (!isLatest) return;
+
+        let expenseTotalsByCrop = new Map();
+        if (source === 'supabase' && currentUserId && crops.length > 0) {
+            expenseTotalsByCrop = await fetchExpenseTotalsByCropIds(
+                currentUserId,
+                crops.map((crop) => crop?.id)
+            );
+            if (requestId !== cropsLoadSeq) return;
+        }
 
         // Actualizar Estadísticas siempre (aunque esté vacío)
         updateStats(crops);
@@ -5710,10 +5809,10 @@ export async function loadCrops() {
             fragment.appendChild(buildNoActiveCropsCard(visibleFinishedCrops.length));
         }
         activeCrops.forEach((crop, i) => {
-            fragment.appendChild(createCropCardElement(crop, i + 1));
+            fragment.appendChild(createCropCardElement(crop, i + 1, { expenseTotalsByCrop }));
         });
         cropsGrid.appendChild(fragment);
-        renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops);
+        renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, { expenseTotalsByCrop });
         const prevSelected = selectedCropId;
         syncSelectedCropFromList(crops, { silent: true });
         if (prevSelected !== selectedCropId) {
