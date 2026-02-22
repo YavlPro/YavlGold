@@ -11194,19 +11194,48 @@ window.deleteCrop = deleteCrop;
         const list = $('arw-bitacoraList');
         if (!list) return;
         if (state.bitacoras.length === 0) {
-            list.innerHTML = `<li style="padding:24px 20px;text-align:center;color:var(--arw-text-muted);font-size:0.82rem;">No hay bitácoras aún.<br>¡Crea la primera arriba!</li>`;
+            list.replaceChildren();
+            const emptyItem = document.createElement('li');
+            emptyItem.style.cssText = 'padding:24px 20px;text-align:center;color:var(--arw-text-muted);font-size:0.82rem;white-space:pre-line;';
+            emptyItem.textContent = 'No hay bitácoras aún.\n¡Crea la primera arriba!';
+            list.appendChild(emptyItem);
             return;
         }
-        list.innerHTML = state.bitacoras.map(b => `
-            <li class="arw-bitacora-item ${b.id === state.activeBitacoraId ? 'active' : ''}" data-id="${b.id}">
-                <span class="arw-bitacora-icon">${b.icon}</span>
-                <div class="arw-bitacora-info">
-                    <div class="arw-bitacora-name">${escapeHtml(b.name)}</div>
-                    <div class="arw-bitacora-meta">${b.reports.length} reporte${b.reports.length !== 1 ? 's' : ''} · ${timeAgo(b.createdAt)}</div>
-                </div>
-                <button class="arw-bitacora-delete" data-del="${b.id}" title="Eliminar" style="background:none;border:none;color:var(--arw-text-muted);cursor:pointer;padding:4px 8px;font-size:14px;opacity:0;transition:opacity 0.2s;">✕</button>
-            </li>
-        `).join('');
+        list.replaceChildren();
+        const fragment = document.createDocumentFragment();
+        state.bitacoras.forEach((b) => {
+            const item = document.createElement('li');
+            item.className = `arw-bitacora-item ${b.id === state.activeBitacoraId ? 'active' : ''}`;
+            item.dataset.id = b.id;
+
+            const icon = document.createElement('span');
+            icon.className = 'arw-bitacora-icon';
+            icon.textContent = String(b.icon || '');
+
+            const info = document.createElement('div');
+            info.className = 'arw-bitacora-info';
+
+            const name = document.createElement('div');
+            name.className = 'arw-bitacora-name';
+            name.textContent = String(b.name || '');
+
+            const meta = document.createElement('div');
+            meta.className = 'arw-bitacora-meta';
+            meta.textContent = `${b.reports.length} reporte${b.reports.length !== 1 ? 's' : ''} · ${timeAgo(b.createdAt)}`;
+
+            info.append(name, meta);
+
+            const del = document.createElement('button');
+            del.className = 'arw-bitacora-delete';
+            del.dataset.del = b.id;
+            del.title = 'Eliminar';
+            del.style.cssText = 'background:none;border:none;color:var(--arw-text-muted);cursor:pointer;padding:4px 8px;font-size:14px;opacity:0;transition:opacity 0.2s;';
+            del.textContent = '✕';
+
+            item.append(icon, info, del);
+            fragment.appendChild(item);
+        });
+        list.appendChild(fragment);
         // Bind clicks
         list.querySelectorAll('.arw-bitacora-item').forEach(item => {
             item.addEventListener('click', e => {
@@ -11393,15 +11422,30 @@ window.deleteCrop = deleteCrop;
         });
         if (pvTagStats) {
             const entries = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
+            pvTagStats.replaceChildren();
             if (entries.length === 0) {
-                pvTagStats.innerHTML = '<p style="font-size:0.78rem;color:var(--arw-text-muted);">Sin datos aún</p>';
+                const empty = document.createElement('p');
+                empty.style.cssText = 'font-size:0.78rem;color:var(--arw-text-muted);';
+                empty.textContent = 'Sin datos aún';
+                pvTagStats.appendChild(empty);
             } else {
-                pvTagStats.innerHTML = entries.map(([tag, count]) => `
-                    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;">
-                        <span style="color:var(--arw-text-secondary);">${getTagLabel(tag)}</span>
-                        <span style="color:var(--arw-gold-primary);font-weight:600;">${count}</span>
-                    </div>
-                `).join('');
+                const fragment = document.createDocumentFragment();
+                entries.forEach(([tag, count]) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;';
+
+                    const tagLabel = document.createElement('span');
+                    tagLabel.style.color = 'var(--arw-text-secondary)';
+                    tagLabel.textContent = getTagLabel(tag);
+
+                    const countLabel = document.createElement('span');
+                    countLabel.style.cssText = 'color:var(--arw-gold-primary);font-weight:600;';
+                    countLabel.textContent = String(count);
+
+                    row.append(tagLabel, countLabel);
+                    fragment.appendChild(row);
+                });
+                pvTagStats.appendChild(fragment);
             }
         }
     }

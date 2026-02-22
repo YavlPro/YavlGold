@@ -8280,3 +8280,51 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 - Build oficial:
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
+## 🆕 SESIÓN: CodeQL Batch 4 (agro.js cluster 11197/11200/11397/11399) (2026-02-22)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+- Estado inicial:
+  - `git status -sb` limpio (`## main...origin/main`).
+- Cluster objetivo en `apps/gold/agro/agro.js`:
+  1. `renderBitacoraList`:
+     - `list.innerHTML` estado vacío (`11197`).
+     - `list.innerHTML` con `state.bitacoras.map(...).join('')` (`11200`).
+  2. `renderPreview`:
+     - `pvTagStats.innerHTML` estado vacío (`11397`).
+     - `pvTagStats.innerHTML` distribución por tags (`11399`).
+- Riesgo: render dinámico con datos de estado/usuario en sinks HTML.
+
+### Plan quirúrgico
+1. Reescribir `renderBitacoraList` con `replaceChildren` + `DocumentFragment` + `createElement`.
+2. Reescribir el bloque de `pvTagStats` en `renderPreview` con nodos (`textContent`), sin `innerHTML`.
+3. Mantener clases, `data-*`, estilos inline y listeners existentes.
+4. Ejecutar `pnpm build:gold` y registrar evidencia.
+
+### DoD
+- [x] Eliminados los 4 sinks del cluster Batch 4.
+- [x] UX intacta (lista bitácoras, eliminar, hover, panel de tags).
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia y cierre documentados.
+
+### Ejecución y evidencia (cierre)
+- Archivo runtime tocado:
+  - `apps/gold/agro/agro.js`
+- Cambios aplicados:
+  1. `renderBitacoraList`
+     - Estado vacío: `list.innerHTML` → `replaceChildren` + `li` con `textContent` (`white-space: pre-line`).
+     - Lista de bitácoras: `map/join + innerHTML` → `DocumentFragment` + `createElement` + `textContent`.
+  2. `renderPreview`
+     - `pvTagStats.innerHTML` (vacío y distribución) → nodos con `replaceChildren`, `textContent`.
+- Verificaciones puntuales:
+  - `rg -n "list\.innerHTML|pvTagStats\.innerHTML" apps/gold/agro/agro.js` → sin coincidencias.
+- Métrica de barrido:
+  - `rg -n "innerHTML|insertAdjacentHTML|outerHTML|template\.innerHTML|DOMParser" apps/gold/agro`:
+    - antes Batch 4: `49`
+    - después Batch 4: `45`
+  - `rg -n "innerHTML|insertAdjacentHTML" apps/gold/agro/agro.js`:
+    - antes Batch 4: `20`
+    - después Batch 4: `16`
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
