@@ -8281,6 +8281,64 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
 
+## 🆕 SESIÓN: CodeQL Batch 5 (escapeHtml local + randomness + clear sinks) (2026-02-22)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+- Estado inicial:
+  - `git status -sb` limpio (`## main...origin/main`).
+- Hallazgos objetivo en `apps/gold/agro/agro.js`:
+  1. Helper local en AgroRepo:
+     - `const escapeHtml = ... return d.innerHTML;` (pattern de reinterpretación HTML).
+  2. Randomness no criptográfica:
+     - `Math.random()` en `createThreadId`, `initAccordions` fallback ID, y generadores `generateId`/`generateHash` de AgroRepo.
+  3. Sinks de limpieza:
+     - `innerHTML = ''` en varios bloques (`edit-extra-fields`, `edit-currency-selector`, `roi-currency-selector`, `agro-widget-root`).
+
+### Plan quirúrgico
+1. Introducir helper `randomBase36(...)` usando `crypto.getRandomValues` (fallback sin `Math.random`).
+2. Reemplazar usos de `Math.random` en IDs/hash por `randomBase36`.
+3. Eliminar helper local `escapeHtml` con `div.innerHTML` y ajustar mensajes de toast para no depender de HTML.
+4. Cambiar `innerHTML = ''` por `replaceChildren()` en clears directos.
+5. Ejecutar `pnpm build:gold` y registrar evidencia.
+
+### DoD
+- [x] Sin `Math.random()` en `apps/gold/agro/agro.js`.
+- [x] Sin helper local de escape basado en `innerHTML` en AgroRepo.
+- [x] Clears migrados a `replaceChildren()` en los 4 puntos identificados.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia y cierre documentados.
+
+### Ejecución y evidencia (cierre)
+- Archivo runtime tocado:
+  - `apps/gold/agro/agro.js`
+- Cambios aplicados:
+  1. Randomness:
+     - Nuevo helper `randomBase36(...)` con `crypto.getRandomValues`.
+     - `createThreadId`, fallback de `initAccordions`, y `generateId/generateHash` migrados para eliminar `Math.random`.
+  2. AgroRepo helper:
+     - Eliminado helper local `escapeHtml` basado en `div.innerHTML`.
+     - Mensajes de `showToast` ajustados a texto plano seguro (sin depender de HTML).
+  3. Clears:
+     - `innerHTML = ''` → `replaceChildren()` en:
+       - `edit-extra-fields`
+       - `edit-currency-selector`
+       - `roi-currency-selector`
+       - `agro-widget-root`
+- Verificaciones puntuales:
+  - `rg -n "Math\\.random" apps/gold/agro/agro.js` → sin coincidencias.
+  - `rg -n "const escapeHtml =" apps/gold/agro/agro.js` → sin coincidencias del helper local en AgroRepo (permanece el helper global string-only).
+  - `rg -n "innerHTML = ''" apps/gold/agro/agro.js` → sin coincidencias.
+- Métrica de barrido:
+  - `rg -n "innerHTML|insertAdjacentHTML|outerHTML|template\\.innerHTML|DOMParser" apps/gold/agro`:
+    - antes Batch 5: `45`
+    - después Batch 5: `40`
+  - `rg -n "innerHTML|insertAdjacentHTML" apps/gold/agro/agro.js`:
+    - antes Batch 5: `16`
+    - después Batch 5: `11`
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
 ## 🆕 SESIÓN: CodeQL Batch 4 (agro.js cluster 11197/11200/11397/11399) (2026-02-22)
 
 ### Paso 0 — Diagnóstico inicial (antes de editar runtime)

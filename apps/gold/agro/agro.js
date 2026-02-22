@@ -3442,7 +3442,7 @@ function openFactureroEditModal(tabName, item, config) {
     // Handle extra fields
     const extraContainer = document.getElementById('edit-extra-fields');
     if (extraContainer) {
-        extraContainer.innerHTML = '';
+        extraContainer.replaceChildren();
         const extraFields = getFactureroEditFields(config, whoMeta?.field);
         extraFields.forEach(field => {
             const meta = FACTURERO_EXTRA_FIELD_META[field];
@@ -3513,7 +3513,7 @@ function _setupEditCurrencySelector(currency, rate) {
 
     const container = document.getElementById('edit-currency-selector');
     if (!container) return;
-    container.innerHTML = '';
+    container.replaceChildren();
 
     // Fetch rates in background (non-blocking)
     initExchangeRates().then(r => { if (r) editExchangeRates = r; }).catch(() => { });
@@ -6287,7 +6287,7 @@ let _roiLastCalc = null; // { investment, revenue, profit, roi }
 function initRoiCurrencySelector() {
     const container = document.getElementById('roi-currency-selector');
     if (!container) return;
-    container.innerHTML = '';
+    container.replaceChildren();
 
     Object.entries(SUPPORTED_CURRENCIES).forEach(([code, cfg]) => {
         const btn = document.createElement('button');
@@ -8747,11 +8747,21 @@ function safeJsonParse(raw, fallback) {
     }
 }
 
+function randomBase36(length = 6) {
+    const size = Math.max(1, Number(length) || 6);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const bytes = new Uint8Array(size);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes, (byte) => (byte % 36).toString(36)).join('');
+    }
+    return (Date.now().toString(36) + '000000000000').slice(-size);
+}
+
 function createThreadId() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return crypto.randomUUID();
     }
-    return `t_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return `t_${Date.now()}_${randomBase36(6)}`;
 }
 
 function normalizeThread(thread) {
@@ -10798,7 +10808,7 @@ window.deleteCrop = deleteCrop;
             const content = el.querySelector('.yg-accordion-content');
             if (summary && content) {
                 if (!content.id) {
-                    const fallbackId = el.id ? `${el.id}-content` : `yg-acc-${Math.random().toString(16).slice(2)}-content`;
+                    const fallbackId = el.id ? `${el.id}-content` : `yg-acc-${randomBase36(10)}-content`;
                     content.id = fallbackId;
                 }
                 summary.setAttribute('role', 'button');
@@ -10942,9 +10952,8 @@ window.deleteCrop = deleteCrop;
 
     // ─── UTILITIES ─────────────────────────────────────────
     const $ = id => root?.querySelector(`#${id}`) || document.getElementById(id);
-    const generateId = () => 'arw_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-    const generateHash = () => Math.random().toString(36).slice(2, 8).toUpperCase();
-    const escapeHtml = str => { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; };
+    const generateId = () => `arw_${Date.now().toString(36)}_${randomBase36(6)}`;
+    const generateHash = () => randomBase36(6).toUpperCase();
 
     function formatDate(iso) {
         try {
@@ -11082,7 +11091,7 @@ window.deleteCrop = deleteCrop;
         persist();
         renderBitacoraList();
         selectBitacora(bitacora.id);
-        showToast(`✅ Bitácora "<strong>${escapeHtml(name)}</strong>" creada`, 'success');
+        showToast(`✅ Bitácora "${String(name || '')}" creada`, 'success');
     }
 
     function deleteBitacora(id) {
@@ -11096,7 +11105,7 @@ window.deleteCrop = deleteCrop;
             }
             persist();
             renderBitacoraList();
-            showToast(`🗑️ Bitácora "${escapeHtml(b.name)}" eliminada`);
+            showToast(`🗑️ Bitácora "${String(b?.name || '')}" eliminada`);
         });
     }
 
@@ -11632,7 +11641,7 @@ window.deleteCrop = deleteCrop;
         console.log('[AgroRepo] 🌾 Initializing Ultimate Engine v2.0...');
         const template = document.getElementById('agro-repo-template');
         if (!template) { console.error('[AgroRepo] Template not found'); return; }
-        root.innerHTML = '';
+        root.replaceChildren();
         root.appendChild(template.content.cloneNode(true));
         loadState();
         bindEvents();
