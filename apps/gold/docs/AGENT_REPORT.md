@@ -8235,3 +8235,48 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 - Build oficial:
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
+## 🆕 SESIÓN: CodeQL Batch 3 (agro.js P0 focalizado) (2026-02-22)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+- Estado inicial (`git status -sb`):
+  - `## main...origin/main` (árbol limpio, sin cambios locales).
+- Foco P0 acordado en `apps/gold/agro/agro.js`:
+  1. `injectHistorySearchInput` (`wrapper.innerHTML` con input y handlers inline).
+  2. `initRoiCurrencySelector` (`btn.innerHTML` con `${cfg.flag}` / `${code}`).
+  3. `showToast` (`toast.innerHTML` con `${message}`).
+  4. `showEditor` / breadcrumb (`innerHTML` con `${bitacora.icon}` y `${bitacora.name}`).
+  5. `renderTimeline` (`container.innerHTML` con map/join de reportes y contenido dinámico).
+
+### Plan quirúrgico
+1. Reemplazar los sinks P0 listados por construcción de nodos (`createElement`, `textContent`, `append`, `replaceChildren`).
+2. Mantener clases, estilos inline, IDs y `data-*` para no afectar UX ni listeners.
+3. En timeline, conservar acciones copiar/eliminar y métricas; evitar reinterpretación HTML de datos de bitácora.
+4. Ejecutar `pnpm build:gold` y registrar evidencia de cierre.
+
+### DoD
+- [x] `agro.js` sin los sinks P0 priorizados en Batch 3.
+- [x] UX conservada (search input, selector moneda ROI, toasts, breadcrumb y timeline).
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia y cierre registrados en este reporte.
+
+### Ejecución y evidencia (cierre)
+- Archivo runtime tocado:
+  - `apps/gold/agro/agro.js`
+- Reemplazos aplicados:
+  1. `injectHistorySearchInput`: input construido por DOM; removidos handlers inline `onfocus/onblur`.
+  2. `initRoiCurrencySelector`: botón de moneda sin `innerHTML` dinámico (`flagSpan` + `codeSpan`).
+  3. `showToast`: render por `textContent` para mensaje.
+  4. `showWelcome` + `showEditor`: breadcrumb por nodos, sin `innerHTML`.
+  5. `renderTimeline`: estado vacío y timeline por `createElement`/`append`, sin map/join HTML dinámico.
+- Verificaciones puntuales:
+  - `rg -n "wrapper\.innerHTML" apps/gold/agro/agro.js` → sin coincidencias.
+  - `rg -n "toast\.innerHTML" apps/gold/agro/agro.js` → sin coincidencias.
+  - `rg -n "breadcrumb\.innerHTML" apps/gold/agro/agro.js` → sin coincidencias.
+- Métrica de barrido:
+  - `rg -n "innerHTML|insertAdjacentHTML|outerHTML|template\.innerHTML|DOMParser" apps/gold/agro`:
+    - antes Batch 3: `56`
+    - después Batch 3: `49`
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).

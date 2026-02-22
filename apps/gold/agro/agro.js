@@ -2956,13 +2956,23 @@ function injectHistorySearchInput(tabName, config) {
     const wrapper = document.createElement('div');
     wrapper.className = 'facturero-search-wrapper';
     wrapper.style.cssText = 'margin-bottom: 0.5rem;';
-    wrapper.innerHTML = `<input type="text" class="facturero-search-input" placeholder="\uD83D\uDD0D Buscar por nombre, cultivo o monto..." style="width:100%;min-height:48px;background:#0B0C0F;border:1px solid #C8A752;border-radius:8px;padding:10px 14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;box-sizing:border-box;outline:none;" onfocus="this.style.boxShadow='0 0 8px rgba(200,167,82,0.3)'" onblur="this.style.boxShadow='none'">`;
-    wrapper.querySelector('input').style.setProperty('--placeholder-color', '#888');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'facturero-search-input';
+    input.placeholder = '\uD83D\uDD0D Buscar por nombre, cultivo o monto...';
+    input.style.cssText = "width:100%;min-height:48px;background:#0B0C0F;border:1px solid #C8A752;border-radius:8px;padding:10px 14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;box-sizing:border-box;outline:none;";
+    input.style.setProperty('--placeholder-color', '#888');
+    input.addEventListener('focus', () => {
+        input.style.boxShadow = '0 0 8px rgba(200,167,82,0.3)';
+    });
+    input.addEventListener('blur', () => {
+        input.style.boxShadow = 'none';
+    });
+    wrapper.appendChild(input);
 
     const exportDiv = container.querySelector('div[style*="text-align: right"]');
     if (exportDiv) { exportDiv.after(wrapper); } else { container.prepend(wrapper); }
 
-    const input = wrapper.querySelector('.facturero-search-input');
     input.addEventListener('input', () => {
         const query = _searchNormalize(input.value.trim());
         const allItems = container.querySelectorAll('.facturero-item');
@@ -6298,7 +6308,12 @@ function initRoiCurrencySelector() {
             font-size: 0.8rem;
             color: #fff;
         `;
-        btn.innerHTML = `<span style="font-size:1rem;">${cfg.flag}</span> <span>${code === 'VES' ? 'Bs' : code}</span>`;
+        const flagSpan = document.createElement('span');
+        flagSpan.style.fontSize = '1rem';
+        flagSpan.textContent = String(cfg.flag || '');
+        const codeSpan = document.createElement('span');
+        codeSpan.textContent = code === 'VES' ? 'Bs' : code;
+        btn.append(flagSpan, document.createTextNode(' '), codeSpan);
         btn.addEventListener('click', () => {
             _roiDisplayCurrency = code;
             container.querySelectorAll('button').forEach(b => {
@@ -11009,8 +11024,13 @@ window.deleteCrop = deleteCrop;
         if (!container) return;
         const toast = document.createElement('div');
         toast.className = 'arw-toast';
-        toast.innerHTML = `<span style="font-size:1.1rem">${type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}</span>
-            <span style="font-size:0.82rem;color:var(--arw-text-primary)">${message}</span>`;
+        const icon = document.createElement('span');
+        icon.style.fontSize = '1.1rem';
+        icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ';
+        const text = document.createElement('span');
+        text.style.cssText = 'font-size:0.82rem;color:var(--arw-text-primary)';
+        text.textContent = String(message || '');
+        toast.append(icon, text);
         toast.style.borderColor = type === 'success' ? 'var(--arw-success)' : type === 'error' ? 'var(--arw-danger)' : type === 'warning' ? 'var(--arw-warning)' : 'var(--arw-border-gold)';
         container.appendChild(toast);
         setTimeout(() => {
@@ -11216,7 +11236,13 @@ window.deleteCrop = deleteCrop;
         if (welcome) welcome.style.display = 'flex';
         if (editor) editor.style.display = 'none';
         if (preview) preview.style.display = 'none';
-        if (breadcrumb) breadcrumb.innerHTML = '<span class="arw-breadcrumb-item">AgroRepo</span>';
+        if (breadcrumb) {
+            breadcrumb.replaceChildren();
+            const root = document.createElement('span');
+            root.className = 'arw-breadcrumb-item';
+            root.textContent = 'AgroRepo';
+            breadcrumb.appendChild(root);
+        }
     }
 
     function showEditor() {
@@ -11230,9 +11256,18 @@ window.deleteCrop = deleteCrop;
         if (editor) editor.style.display = 'flex';
         if (preview) preview.style.display = 'block';
         if (breadcrumb) {
-            breadcrumb.innerHTML = `<span class="arw-breadcrumb-item">AgroRepo</span>
-                <span style="color:var(--arw-text-muted);margin:0 8px;">›</span>
-                <span class="arw-breadcrumb-current" style="color:var(--arw-gold-primary);">${bitacora.icon} ${escapeHtml(bitacora.name)}</span>`;
+            breadcrumb.replaceChildren();
+            const root = document.createElement('span');
+            root.className = 'arw-breadcrumb-item';
+            root.textContent = 'AgroRepo';
+            const sep = document.createElement('span');
+            sep.style.cssText = 'color:var(--arw-text-muted);margin:0 8px;';
+            sep.textContent = '›';
+            const current = document.createElement('span');
+            current.className = 'arw-breadcrumb-current';
+            current.style.color = 'var(--arw-gold-primary)';
+            current.textContent = `${bitacora.icon} ${bitacora.name}`;
+            breadcrumb.append(root, sep, current);
         }
         renderTimeline();
         renderPreview();
@@ -11245,32 +11280,88 @@ window.deleteCrop = deleteCrop;
         if (!container || !bitacora) return;
         if (countEl) countEl.textContent = bitacora.reports.length;
         if (bitacora.reports.length === 0) {
-            container.innerHTML = `<div class="arw-empty-state">
-                <div class="arw-empty-state-icon">📋</div>
-                <div class="arw-empty-state-title">Sin reportes aún</div>
-                <div class="arw-empty-state-text">Escribe tu primer reporte de campo arriba</div>
-            </div>`;
+            container.replaceChildren();
+            const emptyState = document.createElement('div');
+            emptyState.className = 'arw-empty-state';
+
+            const icon = document.createElement('div');
+            icon.className = 'arw-empty-state-icon';
+            icon.textContent = '📋';
+            const title = document.createElement('div');
+            title.className = 'arw-empty-state-title';
+            title.textContent = 'Sin reportes aún';
+            const text = document.createElement('div');
+            text.className = 'arw-empty-state-text';
+            text.textContent = 'Escribe tu primer reporte de campo arriba';
+
+            emptyState.append(icon, title, text);
+            container.appendChild(emptyState);
             return;
         }
-        container.innerHTML = `<div class="arw-commit-timeline" style="position:relative;padding-left:20px;">
-            ${bitacora.reports.map(r => `
-                <div class="arw-commit-entry" style="position:relative;padding:14px;background:var(--arw-bg-tertiary);border-radius:var(--arw-radius-md);margin-bottom:12px;border:1px solid var(--arw-border-subtle);">
-                    <div style="position:absolute;left:-26px;top:18px;width:12px;height:12px;background:var(--arw-gold-primary);border-radius:50%;border:2px solid var(--arw-bg-primary);"></div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="font-family:monospace;font-size:11px;color:var(--arw-gold-muted);background:var(--arw-bg-elevated);padding:2px 8px;border-radius:4px;">#${r.hash}</span>
-                        <span style="font-size:10px;color:var(--arw-text-muted);">${formatDate(r.createdAt)}</span>
-                    </div>
-                    <div style="font-size:13px;color:var(--arw-text-primary);line-height:1.6;margin-bottom:10px;">${renderMarkdown(escapeHtml(r.content))}</div>
-                    ${r.tags?.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-                        ${r.tags.map(t => `<span style="font-size:10px;padding:3px 8px;background:rgba(212,175,55,0.1);border:1px solid var(--arw-border-gold);border-radius:12px;color:var(--arw-gold-muted);">${getTagLabel(t)}</span>`).join('')}
-                    </div>` : ''}
-                    <div style="display:flex;gap:8px;">
-                        <button class="arw-action-copy" data-copy="${r.id}" style="background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">📋 Copiar</button>
-                        <button class="arw-action-del" data-del="${r.id}" style="background:none;border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">🗑️ Eliminar</button>
-                    </div>
-                </div>
-            `).join('')}
-        </div>`;
+        container.replaceChildren();
+        const timeline = document.createElement('div');
+        timeline.className = 'arw-commit-timeline';
+        timeline.style.cssText = 'position:relative;padding-left:20px;';
+
+        bitacora.reports.forEach((r) => {
+            const entry = document.createElement('div');
+            entry.className = 'arw-commit-entry';
+            entry.style.cssText = 'position:relative;padding:14px;background:var(--arw-bg-tertiary);border-radius:var(--arw-radius-md);margin-bottom:12px;border:1px solid var(--arw-border-subtle);';
+
+            const dot = document.createElement('div');
+            dot.style.cssText = 'position:absolute;left:-26px;top:18px;width:12px;height:12px;background:var(--arw-gold-primary);border-radius:50%;border:2px solid var(--arw-bg-primary);';
+
+            const header = document.createElement('div');
+            header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;';
+
+            const hash = document.createElement('span');
+            hash.style.cssText = 'font-family:monospace;font-size:11px;color:var(--arw-gold-muted);background:var(--arw-bg-elevated);padding:2px 8px;border-radius:4px;';
+            hash.textContent = `#${r.hash}`;
+
+            const createdAt = document.createElement('span');
+            createdAt.style.cssText = 'font-size:10px;color:var(--arw-text-muted);';
+            createdAt.textContent = formatDate(r.createdAt);
+            header.append(hash, createdAt);
+
+            const content = document.createElement('div');
+            content.style.cssText = 'font-size:13px;color:var(--arw-text-primary);line-height:1.6;margin-bottom:10px;white-space:pre-wrap;';
+            content.textContent = String(r.content || '');
+
+            entry.append(dot, header, content);
+
+            if (Array.isArray(r.tags) && r.tags.length > 0) {
+                const tagsWrap = document.createElement('div');
+                tagsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;';
+                r.tags.forEach((t) => {
+                    const tag = document.createElement('span');
+                    tag.style.cssText = 'font-size:10px;padding:3px 8px;background:rgba(212,175,55,0.1);border:1px solid var(--arw-border-gold);border-radius:12px;color:var(--arw-gold-muted);';
+                    tag.textContent = getTagLabel(t);
+                    tagsWrap.appendChild(tag);
+                });
+                entry.appendChild(tagsWrap);
+            }
+
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display:flex;gap:8px;';
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'arw-action-copy';
+            copyBtn.dataset.copy = r.id;
+            copyBtn.style.cssText = 'background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
+            copyBtn.textContent = '📋 Copiar';
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'arw-action-del';
+            delBtn.dataset.del = r.id;
+            delBtn.style.cssText = 'background:none;border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
+            delBtn.textContent = '🗑️ Eliminar';
+
+            actions.append(copyBtn, delBtn);
+            entry.appendChild(actions);
+            timeline.appendChild(entry);
+        });
+
+        container.appendChild(timeline);
         container.querySelectorAll('.arw-action-copy').forEach(btn => {
             btn.addEventListener('click', () => copyReport(btn.dataset.copy));
         });
