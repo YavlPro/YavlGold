@@ -3217,7 +3217,10 @@ function createWizardButton(tabName) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'wizard-trigger-btn';
-    btn.innerHTML = '<i class="fa fa-plus"></i> Nuevo';
+    btn.replaceChildren();
+    const plusIcon = document.createElement('i');
+    plusIcon.className = 'fa fa-plus';
+    btn.append(plusIcon, document.createTextNode(' Nuevo'));
     btn.title = 'Registro guiado';
     btn.style.cssText = `
         background: linear-gradient(135deg, rgba(200,167,82,0.2), rgba(200,167,82,0.1));
@@ -3971,7 +3974,7 @@ function buildTransferMetaModal(options = {}) {
     closeBtn.type = 'button';
     closeBtn.className = 'pending-transfer-close';
     closeBtn.dataset.close = 'true';
-    closeBtn.innerHTML = '&times;';
+    closeBtn.textContent = '×';
     header.append(title, closeBtn);
 
     const body = document.createElement('div');
@@ -5616,13 +5619,19 @@ function createCropCardElement(crop, index, options = {}) {
     editBtn.className = 'btn-edit-crop';
     editBtn.type = 'button';
     editBtn.title = 'Editar Cultivo';
-    editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+    editBtn.replaceChildren();
+    const editIcon = document.createElement('i');
+    editIcon.className = 'fa-solid fa-pen';
+    editBtn.appendChild(editIcon);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn-delete-crop';
     deleteBtn.type = 'button';
     deleteBtn.title = 'Eliminar Cultivo';
-    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+    deleteBtn.replaceChildren();
+    const trashIcon = document.createElement('i');
+    trashIcon.className = 'fa-solid fa-trash';
+    deleteBtn.appendChild(trashIcon);
 
     if (crop?.id !== undefined && crop?.id !== null) {
         const cropId = String(crop.id);
@@ -5634,7 +5643,10 @@ function createCropCardElement(crop, index, options = {}) {
     reportBtn.className = 'btn-report-crop';
     reportBtn.type = 'button';
     reportBtn.title = isAuditCard ? 'Informe del ciclo (auditoría)' : 'Informe del Cultivo';
-    reportBtn.innerHTML = '<i class="fa-solid fa-chart-bar"></i>';
+    reportBtn.replaceChildren();
+    const reportIcon = document.createElement('i');
+    reportIcon.className = 'fa-solid fa-chart-bar';
+    reportBtn.appendChild(reportIcon);
     if (crop?.id !== undefined && crop?.id !== null) {
         reportBtn.dataset.id = String(crop.id);
     }
@@ -5903,7 +5915,10 @@ function ensureCropCycleHistorySection() {
 
         const icon = document.createElement('span');
         icon.className = 'yg-accordion-icon';
-        icon.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
+        icon.replaceChildren();
+        const historyIcon = document.createElement('i');
+        historyIcon.className = 'fa-solid fa-clock-rotate-left';
+        icon.appendChild(historyIcon);
 
         const title = document.createElement('span');
         title.className = 'yg-accordion-title';
@@ -5912,7 +5927,10 @@ function ensureCropCycleHistorySection() {
 
         const chevron = document.createElement('span');
         chevron.className = 'yg-accordion-chevron';
-        chevron.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        chevron.replaceChildren();
+        const historyChevronIcon = document.createElement('i');
+        historyChevronIcon.className = 'fa-solid fa-chevron-down';
+        chevron.appendChild(historyChevronIcon);
 
         summary.append(icon, title, chevron);
 
@@ -5934,7 +5952,10 @@ function ensureCropCycleHistorySection() {
 
         const auditIcon = document.createElement('span');
         auditIcon.className = 'yg-accordion-icon';
-        auditIcon.innerHTML = '<i class="fa-solid fa-flask-vial"></i>';
+        auditIcon.replaceChildren();
+        const auditFlaskIcon = document.createElement('i');
+        auditFlaskIcon.className = 'fa-solid fa-flask-vial';
+        auditIcon.appendChild(auditFlaskIcon);
 
         const auditTitle = document.createElement('span');
         auditTitle.className = 'yg-accordion-title';
@@ -5943,7 +5964,10 @@ function ensureCropCycleHistorySection() {
 
         const auditChevron = document.createElement('span');
         auditChevron.className = 'yg-accordion-chevron';
-        auditChevron.innerHTML = '<i class="fa-solid fa-chevron-down"></i>';
+        auditChevron.replaceChildren();
+        const auditChevronIcon = document.createElement('i');
+        auditChevronIcon.className = 'fa-solid fa-chevron-down';
+        auditChevron.appendChild(auditChevronIcon);
 
         auditSummary.append(auditIcon, auditTitle, auditChevron);
 
@@ -8423,7 +8447,13 @@ async function initCartTabLazy() {
     } catch (err) {
         console.error('[AGRO] Failed to load cart module:', err);
         const root = document.getElementById('agro-cart-root');
-        if (root) root.innerHTML = '<div style="color: #ef4444; padding: 1rem; text-align: center;">Error al cargar el carrito.</div>';
+        if (root) {
+            root.replaceChildren();
+            const errBox = document.createElement('div');
+            errBox.style.cssText = 'color:#ef4444; padding:1rem; text-align:center;';
+            errBox.textContent = 'Error al cargar el carrito.';
+            root.appendChild(errBox);
+        }
     }
 }
 
@@ -8996,7 +9026,7 @@ function renderThreadList() {
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'assistant-thread-delete';
-        deleteBtn.innerHTML = '&#128465;'; // 🗑️
+        deleteBtn.textContent = '🗑️';
         deleteBtn.title = 'Eliminar conversacion';
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();

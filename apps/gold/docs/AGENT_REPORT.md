@@ -8339,6 +8339,52 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
 
+## 🆕 SESIÓN: CodeQL Batch 6 (P1 cart error sink + P2 icon literals) (2026-02-22)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+- Estado inicial:
+  - `git status -sb` limpio (`## main...origin/main`).
+- Top de sinks en `apps/gold/agro/agro.js`:
+  - `3220, 3974, 5619, 5625, 5637, 5906, 5915, 5937, 5946, 8426, 8999`.
+- Clasificación:
+  - P1: `8426` (`root.innerHTML` para error de carga del carrito).
+  - P2: iconos/literales estáticos (resto).
+
+### Plan quirúrgico
+1. Reemplazar P1 `8426` por `replaceChildren()` + nodo `div` con `textContent`.
+2. Reemplazar P2 de iconos/literales a construcción DOM:
+   - `btn/closeBtn/editBtn/deleteBtn/reportBtn/icon/chevron/auditIcon/auditChevron/deleteBtn`.
+3. Mantener mismas clases, títulos, estilos y listeners.
+4. Ejecutar `pnpm build:gold`.
+
+### DoD
+- [x] P1 (`8426`) eliminado.
+- [x] P2 icon batch aplicado sin cambios de UX.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia y cierre documentados.
+
+### Ejecución y evidencia (cierre)
+- Archivo runtime tocado:
+  - `apps/gold/agro/agro.js`
+- Cambios aplicados:
+  1. P1 (`8426`):
+     - Reemplazo de `root.innerHTML` por `replaceChildren()` + `div` con `textContent`.
+  2. P2 icon batch:
+     - `createWizardButton` (`fa-plus + "Nuevo"`).
+     - `pending-transfer-close` (`×` con `textContent`).
+     - Botones de cultivo (`edit/delete/report`) por nodos `<i>`.
+     - Iconos de historial/auditoría (`clock/chevron/flask/chevron`) por nodos `<i>`.
+     - `assistant-thread-delete` por `textContent` (`🗑️`).
+- Verificaciones puntuales:
+  - `rg -n "innerHTML|insertAdjacentHTML" apps/gold/agro/agro.js` → `0` coincidencias.
+- Métrica de barrido:
+  - `rg -n "innerHTML|insertAdjacentHTML|outerHTML|template\.innerHTML|DOMParser" apps/gold/agro`:
+    - antes Batch 6: `40`
+    - después Batch 6: `29`
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
 ## 🆕 SESIÓN: CodeQL Batch 4 (agro.js cluster 11197/11200/11397/11399) (2026-02-22)
 
 ### Paso 0 — Diagnóstico inicial (antes de editar runtime)
