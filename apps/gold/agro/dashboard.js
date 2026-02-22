@@ -468,19 +468,11 @@ function openLocationSelector() {
         if (!resultsContainer) return;
 
         if (query.length < 2) {
-            resultsContainer.innerHTML = `
-                <p style="color: #666; font-size: 12px; text-align: center; padding: 20px;">
-                    Escribe al menos 2 caracteres para buscar
-                </p>
-            `;
+            renderLocationResultsMessage(resultsContainer, 'Escribe al menos 2 caracteres para buscar', '#666');
             return;
         }
 
-        resultsContainer.innerHTML = `
-            <p style="color: #888; font-size: 12px; text-align: center; padding: 20px;">
-                ${ICONS.search} Buscando...
-            </p>
-        `;
+        renderLocationResultsMessage(resultsContainer, `${ICONS.search} Buscando...`, '#888');
 
         searchTimeout = setTimeout(function () {
             searchLocations(query, targetRequestId);
@@ -508,6 +500,62 @@ function getLocationResultsContainer() {
     return modal.querySelector('#location-results');
 }
 
+function renderLocationResultsMessage(container, message, color) {
+    if (!container) return;
+    container.replaceChildren();
+    const text = document.createElement('p');
+    text.style.cssText = `color: ${color || '#888'}; font-size: 12px; text-align: center; padding: 20px;`;
+    text.textContent = String(message || '');
+    container.appendChild(text);
+}
+
+function renderLocationResultList(container, results) {
+    if (!container) return;
+    container.replaceChildren();
+    const fragment = document.createDocumentFragment();
+
+    (results || []).forEach(function (loc) {
+        const label = String(loc?.label || '').trim();
+        const parts = label.split(', ');
+        const name = parts[0] || 'Ubicación';
+        const region = parts.slice(1).join(', ');
+
+        const item = document.createElement('div');
+        item.className = 'location-result-item';
+        item.dataset.lat = String(loc?.lat ?? '');
+        item.dataset.lon = String(loc?.lon ?? '');
+        item.dataset.label = label;
+        item.dataset.country = String(loc?.country || '');
+        item.dataset.admin1 = String(loc?.admin1 || '');
+
+        const nameNode = document.createElement('div');
+        nameNode.className = 'location-result-name';
+        nameNode.textContent = name;
+        item.appendChild(nameNode);
+
+        if (region) {
+            const regionNode = document.createElement('div');
+            regionNode.className = 'location-result-region';
+            regionNode.textContent = region;
+            item.appendChild(regionNode);
+        }
+
+        item.addEventListener('click', function () {
+            selectManualLocation({
+                lat: parseFloat(item.dataset.lat),
+                lon: parseFloat(item.dataset.lon),
+                label: item.dataset.label,
+                country: item.dataset.country,
+                admin1: item.dataset.admin1
+            });
+        });
+
+        fragment.appendChild(item);
+    });
+
+    container.appendChild(fragment);
+}
+
 /**
  * Search locations using geocoding API
  */
@@ -524,50 +572,18 @@ async function searchLocations(query, requestId) {
         if (!resultsContainer) return;
 
         if (results.length === 0) {
-            resultsContainer.innerHTML = `
-                <p style="color: #888; font-size: 12px; text-align: center; padding: 20px;">
-                    No se encontraron resultados para "${query}"
-                </p>
-            `;
+            renderLocationResultsMessage(resultsContainer, `No se encontraron resultados para "${query}"`, '#888');
             return;
         }
 
-        resultsContainer.innerHTML = results.map(function (loc) {
-            const parts = loc.label.split(', ');
-            const name = parts[0];
-            const region = parts.slice(1).join(', ');
-
-            return `
-                <div class="location-result-item" data-lat="${loc.lat}" data-lon="${loc.lon}" data-label="${loc.label}" data-country="${loc.country || ''}" data-admin1="${loc.admin1 || ''}">
-                    <div class="location-result-name">${name}</div>
-                    ${region ? '<div class="location-result-region">' + region + '</div>' : ''}
-                </div>
-            `;
-        }).join('');
-
-        // Add click handlers
-        resultsContainer.querySelectorAll('.location-result-item').forEach(function (item) {
-            item.addEventListener('click', function () {
-                selectManualLocation({
-                    lat: parseFloat(item.dataset.lat),
-                    lon: parseFloat(item.dataset.lon),
-                    label: item.dataset.label,
-                    country: item.dataset.country,
-                    admin1: item.dataset.admin1
-                });
-            });
-        });
+        renderLocationResultList(resultsContainer, results);
 
     } catch (err) {
         if (requestId !== locationSearchRequestId) return;
         resultsContainer = getLocationResultsContainer();
         if (!resultsContainer) return;
         console.error('[Agro] Search error:', err);
-        resultsContainer.innerHTML = `
-            <p style="color: #f87171; font-size: 12px; text-align: center; padding: 20px;">
-                ${ICONS.warning} Error al buscar. Verifica tu conexi\u00F3n.
-            </p>
-        `;
+        renderLocationResultsMessage(resultsContainer, `${ICONS.warning} Error al buscar. Verifica tu conexión.`, '#f87171');
     }
 }
 

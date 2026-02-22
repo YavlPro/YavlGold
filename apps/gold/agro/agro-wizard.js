@@ -603,26 +603,59 @@ export async function openAgroWizard(tabName, deps) {
         return `Paso ${step} de ${totalSteps} — ${labels[step] || ''}`;
     }
 
+    function buildSafeFragmentFromHtml(html) {
+        const template = document.createElement('template');
+        template.innerHTML = String(html || '');
+        template.content.querySelectorAll('script, iframe, object, embed').forEach((node) => node.remove());
+        template.content.querySelectorAll('*').forEach((el) => {
+            Array.from(el.attributes).forEach((attr) => {
+                const attrName = String(attr.name || '').toLowerCase();
+                const attrValue = String(attr.value || '');
+                if (attrName.startsWith('on')) {
+                    el.removeAttribute(attr.name);
+                    return;
+                }
+                if ((attrName === 'href' || attrName === 'src' || attrName === 'action' || attrName === 'formaction')
+                    && /^\s*javascript:/i.test(attrValue)) {
+                    el.removeAttribute(attr.name);
+                }
+            });
+        });
+        return template.content.cloneNode(true);
+    }
+
     function render() {
         const progress = (state.step / totalSteps) * 100;
 
-        overlay.innerHTML = `
-            <div class="agro-wizard-card">
-                <div class="agro-wizard-progress">
-                    <div class="agro-wizard-progress-fill" style="width: ${progress}%"></div>
-                </div>
-                <div class="agro-wizard-header">
-                    <h3>${meta.icon} ${meta.title}</h3>
-                    <p class="wiz-subtitle">${getStepSubtitle(state.step)}</p>
-                </div>
-                <div class="agro-wizard-body">
-                    ${renderStep()}
-                </div>
-                <div class="agro-wizard-footer">
-                    ${renderFooter()}
-                </div>
-            </div>
-        `;
+        const card = document.createElement('div');
+        card.className = 'agro-wizard-card';
+
+        const progressWrap = document.createElement('div');
+        progressWrap.className = 'agro-wizard-progress';
+        const progressFill = document.createElement('div');
+        progressFill.className = 'agro-wizard-progress-fill';
+        progressFill.style.width = `${progress}%`;
+        progressWrap.appendChild(progressFill);
+
+        const header = document.createElement('div');
+        header.className = 'agro-wizard-header';
+        const h3 = document.createElement('h3');
+        h3.textContent = `${meta.icon} ${meta.title}`;
+        const subtitle = document.createElement('p');
+        subtitle.className = 'wiz-subtitle';
+        subtitle.textContent = getStepSubtitle(state.step);
+        header.append(h3, subtitle);
+
+        const body = document.createElement('div');
+        body.className = 'agro-wizard-body';
+        body.appendChild(buildSafeFragmentFromHtml(renderStep()));
+
+        const footer = document.createElement('div');
+        footer.className = 'agro-wizard-footer';
+        footer.appendChild(buildSafeFragmentFromHtml(renderFooter()));
+
+        card.append(progressWrap, header, body, footer);
+        overlay.replaceChildren(card);
         attachStepListeners();
     }
 

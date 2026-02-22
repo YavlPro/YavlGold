@@ -328,12 +328,10 @@ function renderAgendaContent() {
     const todayPhase = getPhaseInfo(getMoonPhase(today));
     const moonRec = MOON_RECOMMENDATIONS[todayPhase.key] || '';
 
-    // Calendar grid
     const firstDay = new Date(_currentYear, _currentMonth, 1).getDay();
     const offset = firstDay === 0 ? 6 : firstDay - 1;
     const daysInMonth = new Date(_currentYear, _currentMonth + 1, 0).getDate();
 
-    // Items by date for dot indicators
     const itemsByDate = {};
     for (const item of _agendaItems) {
         const d = item.scheduled_date;
@@ -341,14 +339,113 @@ function renderAgendaContent() {
         itemsByDate[d].push(item);
     }
 
-    // Selected day items
     const selectedItems = itemsByDate[_selectedDate] || [];
 
-    // Calendar days HTML
-    let daysHtml = DAYS_SHORT.map(d => `<div class="aga-day-header">${d}</div>`).join('');
-    for (let i = 0; i < offset; i++) {
-        daysHtml += '<div class="aga-day-cell aga-empty"></div>';
+    const selDate = new Date(_selectedDate + 'T12:00:00');
+    const selMoon = getPhaseInfo(getMoonPhase(selDate));
+    const selMoonRec = MOON_RECOMMENDATIONS[selMoon.key] || '';
+
+    const selDay = selDate.getDate();
+    const selMonthName = MONTHS_ES[selDate.getMonth()];
+
+    modal.replaceChildren();
+
+    const card = document.createElement('div');
+    card.className = 'aga-modal';
+
+    const header = document.createElement('div');
+    header.className = 'aga-header';
+
+    const headerTop = document.createElement('div');
+    headerTop.className = 'aga-header-top';
+
+    const title = document.createElement('h3');
+    title.className = 'aga-title';
+    title.textContent = '🌾 Agenda Agrícola';
+
+    const headerRight = document.createElement('div');
+    headerRight.className = 'aga-header-right';
+
+    const monthLabel = document.createElement('span');
+    monthLabel.className = 'aga-month-label';
+    monthLabel.textContent = `${MONTHS_ES[_currentMonth]} ${_currentYear}`;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'aga-close-btn';
+    closeBtn.dataset.action = 'close-agenda';
+    const closeIcon = document.createElement('i');
+    closeIcon.className = 'fa-solid fa-xmark';
+    closeBtn.appendChild(closeIcon);
+
+    headerRight.append(monthLabel, closeBtn);
+    headerTop.append(title, headerRight);
+    header.appendChild(headerTop);
+
+    const weatherBar = document.createElement('div');
+    weatherBar.className = 'aga-weather-bar';
+    const weatherTemp = document.createElement('span');
+    weatherTemp.textContent = weather.temp ? weather.temp : '--';
+    const weatherDesc = document.createElement('span');
+    weatherDesc.textContent = String(weather.desc || '');
+    const weatherHumidity = document.createElement('span');
+    weatherHumidity.textContent = String(weather.humidity || '');
+    const moonToday = document.createElement('span');
+    moonToday.textContent = `${todayPhase.icon} ${todayPhase.name} (${todayPhase.pct}%)`;
+    weatherBar.append(weatherTemp, weatherDesc, weatherHumidity, moonToday);
+    header.appendChild(weatherBar);
+
+    if (moonRec) {
+        const moonRecEl = document.createElement('div');
+        moonRecEl.className = 'aga-moon-rec';
+        moonRecEl.textContent = moonRec;
+        header.appendChild(moonRecEl);
     }
+
+    const body = document.createElement('div');
+    body.className = 'aga-body';
+
+    const calendarSection = document.createElement('div');
+    calendarSection.className = 'aga-calendar-section';
+
+    const nav = document.createElement('div');
+    nav.className = 'aga-nav';
+
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'aga-nav-btn';
+    prevBtn.dataset.action = 'prev-month';
+    prevBtn.textContent = '◀';
+
+    const navLabel = document.createElement('span');
+    navLabel.className = 'aga-nav-label';
+    navLabel.textContent = `${MONTHS_ES[_currentMonth]} ${_currentYear}`;
+
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'aga-nav-btn';
+    nextBtn.dataset.action = 'next-month';
+    nextBtn.textContent = '▶';
+
+    nav.append(prevBtn, navLabel, nextBtn);
+    calendarSection.appendChild(nav);
+
+    const calendarGrid = document.createElement('div');
+    calendarGrid.className = 'aga-calendar-grid';
+
+    DAYS_SHORT.forEach((dayLabel) => {
+        const headerCell = document.createElement('div');
+        headerCell.className = 'aga-day-header';
+        headerCell.textContent = dayLabel;
+        calendarGrid.appendChild(headerCell);
+    });
+
+    for (let i = 0; i < offset; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'aga-day-cell aga-empty';
+        calendarGrid.appendChild(emptyCell);
+    }
+
     for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${_currentYear}-${String(_currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isToday = dateStr === todayStr;
@@ -357,109 +454,134 @@ function renderAgendaContent() {
         const moonInfo = getMoonPhaseForDay(_currentYear, _currentMonth, d);
         const showMoonIcon = moonInfo.icon === '🌑' || moonInfo.icon === '🌓' || moonInfo.icon === '🌕' || moonInfo.icon === '🌗';
 
+        const dayCell = document.createElement('div');
         let cls = 'aga-day-cell';
         if (isToday) cls += ' aga-today';
         if (isSelected) cls += ' aga-selected';
         if (hasItems) cls += ' aga-has-items';
+        dayCell.className = cls;
+        dayCell.dataset.date = dateStr;
 
-        daysHtml += `
-            <div class="${cls}" data-date="${dateStr}">
-                <span class="aga-day-num">${d}</span>
-                ${showMoonIcon ? `<span class="aga-moon-icon">${moonInfo.icon}</span>` : ''}
-                ${hasItems ? '<span class="aga-dot"></span>' : ''}
-            </div>`;
+        const dayNum = document.createElement('span');
+        dayNum.className = 'aga-day-num';
+        dayNum.textContent = String(d);
+        dayCell.appendChild(dayNum);
+
+        if (showMoonIcon) {
+            const moonIcon = document.createElement('span');
+            moonIcon.className = 'aga-moon-icon';
+            moonIcon.textContent = moonInfo.icon;
+            dayCell.appendChild(moonIcon);
+        }
+
+        if (hasItems) {
+            const dot = document.createElement('span');
+            dot.className = 'aga-dot';
+            dayCell.appendChild(dot);
+        }
+
+        calendarGrid.appendChild(dayCell);
     }
 
-    // Selected day activities
-    let activitiesHtml = '';
+    calendarSection.appendChild(calendarGrid);
+    body.appendChild(calendarSection);
+
+    const dayDetail = document.createElement('div');
+    dayDetail.className = 'aga-day-detail';
+
+    const dayDetailHeader = document.createElement('div');
+    dayDetailHeader.className = 'aga-day-detail-header';
+    const dayTitle = document.createElement('h4');
+    dayTitle.className = 'aga-day-title';
+    dayTitle.textContent = `${selDay} ${selMonthName}`;
+    const dayMoon = document.createElement('span');
+    dayMoon.className = 'aga-day-moon';
+    dayMoon.textContent = `${selMoon.icon} ${selMoon.name}`;
+    dayDetailHeader.append(dayTitle, dayMoon);
+    dayDetail.appendChild(dayDetailHeader);
+
+    if (selMoonRec) {
+        const dayMoonRec = document.createElement('div');
+        dayMoonRec.className = 'aga-day-moon-rec';
+        dayMoonRec.textContent = selMoonRec;
+        dayDetail.appendChild(dayMoonRec);
+    }
+
+    const activitiesList = document.createElement('div');
+    activitiesList.className = 'aga-activities-list';
+
     if (selectedItems.length === 0) {
-        activitiesHtml = '<div class="aga-empty-day">Día libre 🌤️</div>';
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'aga-empty-day';
+        emptyDay.textContent = 'Día libre 🌤️';
+        activitiesList.appendChild(emptyDay);
     } else {
-        for (const item of selectedItems) {
+        selectedItems.forEach((item) => {
             const tc = TYPE_CONFIG[item.type] || TYPE_CONFIG.otro;
             const cropName = getCropName(item.crop_id);
             const timeStr = item.scheduled_time ? item.scheduled_time.substring(0, 5) : '';
-            activitiesHtml += `
-                <div class="aga-activity ${item.completed ? 'aga-completed' : ''}" data-item-id="${item.id}">
-                    <button type="button" class="aga-check" data-action="toggle-complete" data-item-id="${item.id}">
-                        ${item.completed ? '☑' : '☐'}
-                    </button>
-                    <div class="aga-activity-info">
-                        <div class="aga-activity-title">${tc.icon} ${escapeHtml(item.title)}</div>
-                        <div class="aga-activity-meta">
-                            ${cropName !== 'General' ? `<span>${cropName}</span>` : ''}
-                            ${timeStr ? `<span>🕐 ${timeStr}</span>` : ''}
-                        </div>
-                    </div>
-                    <button type="button" class="aga-delete-btn" data-action="delete-item" data-item-id="${item.id}" title="Eliminar">
-                        <i class="fa fa-trash"></i>
-                    </button>
-                </div>`;
-        }
+
+            const activity = document.createElement('div');
+            activity.className = `aga-activity ${item.completed ? 'aga-completed' : ''}`.trim();
+            activity.dataset.itemId = String(item.id || '');
+
+            const checkBtn = document.createElement('button');
+            checkBtn.type = 'button';
+            checkBtn.className = 'aga-check';
+            checkBtn.dataset.action = 'toggle-complete';
+            checkBtn.dataset.itemId = String(item.id || '');
+            checkBtn.textContent = item.completed ? '☑' : '☐';
+
+            const info = document.createElement('div');
+            info.className = 'aga-activity-info';
+
+            const activityTitle = document.createElement('div');
+            activityTitle.className = 'aga-activity-title';
+            activityTitle.textContent = `${tc.icon} ${String(item.title || '')}`;
+
+            const activityMeta = document.createElement('div');
+            activityMeta.className = 'aga-activity-meta';
+            if (cropName !== 'General') {
+                const cropSpan = document.createElement('span');
+                cropSpan.textContent = cropName;
+                activityMeta.appendChild(cropSpan);
+            }
+            if (timeStr) {
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = `🕐 ${timeStr}`;
+                activityMeta.appendChild(timeSpan);
+            }
+
+            info.append(activityTitle, activityMeta);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'aga-delete-btn';
+            deleteBtn.dataset.action = 'delete-item';
+            deleteBtn.dataset.itemId = String(item.id || '');
+            deleteBtn.title = 'Eliminar';
+            const deleteIcon = document.createElement('i');
+            deleteIcon.className = 'fa fa-trash';
+            deleteBtn.appendChild(deleteIcon);
+
+            activity.append(checkBtn, info, deleteBtn);
+            activitiesList.appendChild(activity);
+        });
     }
 
-    // Selected date moon info
-    const selDate = new Date(_selectedDate + 'T12:00:00');
-    const selMoon = getPhaseInfo(getMoonPhase(selDate));
-    const selMoonRec = MOON_RECOMMENDATIONS[selMoon.key] || '';
+    dayDetail.appendChild(activitiesList);
 
-    // Format selected date
-    const selDay = selDate.getDate();
-    const selMonthName = MONTHS_ES[selDate.getMonth()];
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'aga-add-btn';
+    addBtn.dataset.action = 'open-create';
+    addBtn.textContent = '+ Agregar actividad';
+    dayDetail.appendChild(addBtn);
 
-    modal.innerHTML = `
-        <div class="aga-modal">
-            <!-- Header with weather -->
-            <div class="aga-header">
-                <div class="aga-header-top">
-                    <h3 class="aga-title">🌾 Agenda Agrícola</h3>
-                    <div class="aga-header-right">
-                        <span class="aga-month-label">${MONTHS_ES[_currentMonth]} ${_currentYear}</span>
-                        <button type="button" class="aga-close-btn" data-action="close-agenda">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="aga-weather-bar">
-                    <span>${weather.temp ? weather.temp : '--'}</span>
-                    <span>${weather.desc}</span>
-                    <span>${weather.humidity}</span>
-                    <span>${todayPhase.icon} ${todayPhase.name} (${todayPhase.pct}%)</span>
-                </div>
-                ${moonRec ? `<div class="aga-moon-rec">${moonRec}</div>` : ''}
-            </div>
+    body.appendChild(dayDetail);
 
-            <!-- Calendar -->
-            <div class="aga-body">
-                <div class="aga-calendar-section">
-                    <div class="aga-nav">
-                        <button type="button" class="aga-nav-btn" data-action="prev-month">◀</button>
-                        <span class="aga-nav-label">${MONTHS_ES[_currentMonth]} ${_currentYear}</span>
-                        <button type="button" class="aga-nav-btn" data-action="next-month">▶</button>
-                    </div>
-                    <div class="aga-calendar-grid">
-                        ${daysHtml}
-                    </div>
-                </div>
-
-                <!-- Day detail -->
-                <div class="aga-day-detail">
-                    <div class="aga-day-detail-header">
-                        <h4 class="aga-day-title">${selDay} ${selMonthName}</h4>
-                        <span class="aga-day-moon">${selMoon.icon} ${selMoon.name}</span>
-                    </div>
-                    ${selMoonRec ? `<div class="aga-day-moon-rec">${selMoonRec}</div>` : ''}
-
-                    <div class="aga-activities-list">
-                        ${activitiesHtml}
-                    </div>
-
-                    <button type="button" class="aga-add-btn" data-action="open-create">
-                        + Agregar actividad
-                    </button>
-                </div>
-            </div>
-        </div>`;
+    card.append(header, body);
+    modal.appendChild(card);
 }
 
 // ============================================================
@@ -469,63 +591,152 @@ function renderAgendaContent() {
 function openCreateModal() {
     if (document.getElementById('aga-create-overlay')) return;
 
-    const cropOptions = (_cropsCache || []).map(c =>
-        `<option value="${c.id}">${c.icon || '🌱'} ${escapeHtml(c.name || 'Cultivo')}${c.variety ? ' (' + escapeHtml(c.variety) + ')' : ''}</option>`
-    ).join('');
-
-    const typeButtons = Object.entries(TYPE_CONFIG).map(([key, cfg]) =>
-        `<button type="button" class="aga-type-pill" data-type="${key}">${cfg.icon} ${cfg.label}</button>`
-    ).join('');
-
     const overlay = document.createElement('div');
     overlay.id = 'aga-create-overlay';
     overlay.className = 'aga-create-overlay';
-    overlay.innerHTML = `
-        <div class="aga-create-modal">
-            <h3 class="aga-create-title">+ Nueva Actividad</h3>
+    const modal = document.createElement('div');
+    modal.className = 'aga-create-modal';
 
-            <label class="aga-label">¿Qué vas a hacer?</label>
-            <div class="aga-type-grid" id="aga-type-grid">
-                ${typeButtons}
-            </div>
+    const title = document.createElement('h3');
+    title.className = 'aga-create-title';
+    title.textContent = '+ Nueva Actividad';
+    modal.appendChild(title);
 
-            <label class="aga-label">Título</label>
-            <input type="text" class="aga-input" id="aga-create-title" placeholder="Ej: Regar el maíz" autocomplete="off">
+    const typeLabel = document.createElement('label');
+    typeLabel.className = 'aga-label';
+    typeLabel.textContent = '¿Qué vas a hacer?';
+    modal.appendChild(typeLabel);
 
-            <label class="aga-label">Cultivo</label>
-            <select class="aga-input" id="aga-create-crop">
-                <option value="">General (sin asociar)</option>
-                ${cropOptions}
-            </select>
+    const typeGrid = document.createElement('div');
+    typeGrid.className = 'aga-type-grid';
+    typeGrid.id = 'aga-type-grid';
+    Object.entries(TYPE_CONFIG).forEach(([key, cfg]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'aga-type-pill';
+        btn.dataset.type = key;
+        btn.textContent = `${cfg.icon} ${cfg.label}`;
+        typeGrid.appendChild(btn);
+    });
+    modal.appendChild(typeGrid);
 
-            <div class="aga-create-row">
-                <div>
-                    <label class="aga-label">Fecha</label>
-                    <input type="date" class="aga-input" id="aga-create-date" value="${_selectedDate}">
-                </div>
-                <div>
-                    <label class="aga-label">Hora (opcional)</label>
-                    <input type="time" class="aga-input" id="aga-create-time">
-                </div>
-            </div>
+    const titleLabel = document.createElement('label');
+    titleLabel.className = 'aga-label';
+    titleLabel.textContent = 'Título';
+    modal.appendChild(titleLabel);
 
-            <label class="aga-label">Notas (opcional)</label>
-            <input type="text" class="aga-input" id="aga-create-notes" placeholder="Detalles adicionales..." autocomplete="off">
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.className = 'aga-input';
+    titleInput.id = 'aga-create-title';
+    titleInput.placeholder = 'Ej: Regar el maíz';
+    titleInput.autocomplete = 'off';
+    modal.appendChild(titleInput);
 
-            <label class="aga-label">Repetir</label>
-            <div class="aga-recur-grid" id="aga-recur-grid">
-                <button type="button" class="aga-recur-pill is-active" data-recur="">No</button>
-                <button type="button" class="aga-recur-pill" data-recur="diario">Diario</button>
-                <button type="button" class="aga-recur-pill" data-recur="semanal">Semanal</button>
-                <button type="button" class="aga-recur-pill" data-recur="quincenal">Quincenal</button>
-                <button type="button" class="aga-recur-pill" data-recur="mensual">Mensual</button>
-            </div>
+    const cropLabel = document.createElement('label');
+    cropLabel.className = 'aga-label';
+    cropLabel.textContent = 'Cultivo';
+    modal.appendChild(cropLabel);
 
-            <div class="aga-create-actions">
-                <button type="button" class="aga-btn-secondary" data-action="cancel-create">Cancelar</button>
-                <button type="button" class="aga-btn-primary" data-action="confirm-create">✅ Programar</button>
-            </div>
-        </div>`;
+    const cropSelect = document.createElement('select');
+    cropSelect.className = 'aga-input';
+    cropSelect.id = 'aga-create-crop';
+    const generalOpt = document.createElement('option');
+    generalOpt.value = '';
+    generalOpt.textContent = 'General (sin asociar)';
+    cropSelect.appendChild(generalOpt);
+    (_cropsCache || []).forEach((crop) => {
+        const option = document.createElement('option');
+        option.value = String(crop?.id || '');
+        const icon = String(crop?.icon || '🌱');
+        const name = String(crop?.name || 'Cultivo');
+        const variety = String(crop?.variety || '').trim();
+        option.textContent = `${icon} ${name}${variety ? ` (${variety})` : ''}`;
+        cropSelect.appendChild(option);
+    });
+    modal.appendChild(cropSelect);
+
+    const dateRow = document.createElement('div');
+    dateRow.className = 'aga-create-row';
+
+    const dateWrap = document.createElement('div');
+    const dateLabel = document.createElement('label');
+    dateLabel.className = 'aga-label';
+    dateLabel.textContent = 'Fecha';
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.className = 'aga-input';
+    dateInput.id = 'aga-create-date';
+    dateInput.value = _selectedDate;
+    dateWrap.append(dateLabel, dateInput);
+
+    const timeWrap = document.createElement('div');
+    const timeLabel = document.createElement('label');
+    timeLabel.className = 'aga-label';
+    timeLabel.textContent = 'Hora (opcional)';
+    const timeInput = document.createElement('input');
+    timeInput.type = 'time';
+    timeInput.className = 'aga-input';
+    timeInput.id = 'aga-create-time';
+    timeWrap.append(timeLabel, timeInput);
+
+    dateRow.append(dateWrap, timeWrap);
+    modal.appendChild(dateRow);
+
+    const notesLabel = document.createElement('label');
+    notesLabel.className = 'aga-label';
+    notesLabel.textContent = 'Notas (opcional)';
+    modal.appendChild(notesLabel);
+
+    const notesInput = document.createElement('input');
+    notesInput.type = 'text';
+    notesInput.className = 'aga-input';
+    notesInput.id = 'aga-create-notes';
+    notesInput.placeholder = 'Detalles adicionales...';
+    notesInput.autocomplete = 'off';
+    modal.appendChild(notesInput);
+
+    const recurLabel = document.createElement('label');
+    recurLabel.className = 'aga-label';
+    recurLabel.textContent = 'Repetir';
+    modal.appendChild(recurLabel);
+
+    const recurGrid = document.createElement('div');
+    recurGrid.className = 'aga-recur-grid';
+    recurGrid.id = 'aga-recur-grid';
+    const recurOptions = [
+        { value: '', label: 'No', active: true },
+        { value: 'diario', label: 'Diario' },
+        { value: 'semanal', label: 'Semanal' },
+        { value: 'quincenal', label: 'Quincenal' },
+        { value: 'mensual', label: 'Mensual' }
+    ];
+    recurOptions.forEach((opt) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `aga-recur-pill${opt.active ? ' is-active' : ''}`;
+        btn.dataset.recur = opt.value;
+        btn.textContent = opt.label;
+        recurGrid.appendChild(btn);
+    });
+    modal.appendChild(recurGrid);
+
+    const actions = document.createElement('div');
+    actions.className = 'aga-create-actions';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'aga-btn-secondary';
+    cancelBtn.dataset.action = 'cancel-create';
+    cancelBtn.textContent = 'Cancelar';
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'aga-btn-primary';
+    confirmBtn.dataset.action = 'confirm-create';
+    confirmBtn.textContent = '✅ Programar';
+    actions.append(cancelBtn, confirmBtn);
+    modal.appendChild(actions);
+
+    overlay.appendChild(modal);
 
     // State for the create form
     let selectedType = '';

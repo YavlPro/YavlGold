@@ -2082,6 +2082,49 @@ function _fmtItemCurrency(item, config, amount) {
     }
 }
 
+function createFactureroActionButton({
+    className,
+    tab,
+    id,
+    title,
+    borderColor,
+    color,
+    iconClass,
+    disabled = false,
+    cursor = '',
+    opacity = ''
+}) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = className;
+    btn.dataset.tab = String(tab || '');
+    btn.dataset.id = String(id || '');
+    btn.title = title || '';
+    if (disabled) btn.disabled = true;
+
+    const effectiveCursor = cursor || (disabled ? 'not-allowed' : 'pointer');
+    const effectiveOpacity = opacity || (disabled ? '0.4' : '1');
+    btn.style.cssText = [
+        'background: transparent',
+        `border: 1px solid ${borderColor}`,
+        `color: ${color}`,
+        'width: 28px',
+        'height: 28px',
+        'border-radius: 50%',
+        'display: inline-flex',
+        'align-items: center',
+        'justify-content: center',
+        `cursor: ${effectiveCursor}`,
+        'font-size: 0.7rem',
+        `opacity: ${effectiveOpacity}`
+    ].join('; ');
+
+    const icon = document.createElement('i');
+    icon.className = iconClass;
+    btn.appendChild(icon);
+    return btn;
+}
+
 function renderHistoryRow(tabName, item, config, options = {}) {
     const showActions = options.showActions !== false;
     const isOtrosView = tabName === 'otros';
@@ -2097,24 +2140,18 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const date = item[dateField] || item.fecha || item.date || item.created_at;
     const cropLabel = resolveRecordCropLabel(item);
     const evidenceUrl = item.evidence_url_resolved || '';
-    const evidenceHtml = evidenceUrl ? `<span>${buildEvidenceLinkHtml(evidenceUrl)}</span>` : '';
+    const evidenceLink = createEvidenceLinkElement(evidenceUrl);
     const whoData = getWhoData(effectiveTabName, item, rawConcept);
-    const whoLine = whoData.who
-        ? `<div style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;">• ${formatWhoDisplay(effectiveTabName, whoData.who)}</div>`
-        : '';
     const displayConcept = whoData.concept || rawConcept;
     const sourceLabel = tabName === 'otros'
-        ? (item.source_label || AGROLOG_TAB_LABELS[effectiveTabName] || effectiveTabName)
-        : '';
-    const sourceLine = sourceLabel
-        ? `<div class="facturero-meta">Tipo: ${escapeHtml(sourceLabel)}</div>`
+        ? String(item.source_label || AGROLOG_TAB_LABELS[effectiveTabName] || effectiveTabName || '')
         : '';
     const unitSummary = formatUnitSummary(item.unit_type, item.unit_qty);
     const kgSummary = formatKgSummary(item.quantity_kg);
     const unitMetaParts = [];
     if (unitSummary) unitMetaParts.push(escapeHtml(unitSummary));
     if (kgSummary) unitMetaParts.push(escapeHtml(kgSummary));
-    const unitHtml = unitMetaParts.length ? `<div class="facturero-meta">${unitMetaParts.join(' &bull; ')}</div>` : '';
+    const unitText = unitMetaParts.join(' • ');
 
     const isPending = effectiveTabName === 'pendientes';
     const isIncome = effectiveTabName === 'ingresos';
@@ -2127,62 +2164,12 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const incomeOrLossReverted = (isIncome || isLoss) && isIncomeOrLossReverted(item);
 
     // Transfer meta for pending items
-    let transferHtml = '';
-    if (transferred) {
-        transferHtml = `<div class="facturero-meta facturero-transfer-meta">${formatTransferMeta(item)}</div>`;
-    } else if (pendingReverted) {
-        transferHtml = `<div class="facturero-meta facturero-transfer-meta facturero-reverted-meta">${formatTransferMeta(item)}</div>`;
-    }
-    const otherTransferMeta = isOtrosView && item?.other_transfer_state === 'transferred'
-        ? `<div class="facturero-meta facturero-transfer-meta">${formatOtherTransferMeta(item)}</div>`
-        : '';
-
-    // V9.7: Origin badge for income/losses from pending
-    let originBadgeHtml = '';
-    if (fromPending) {
-        originBadgeHtml = `<div class="facturero-origin-badge">${formatOriginBadge(item, effectiveTabName)}</div>`;
-    }
-
     // Transfer button for pending items (not already transferred or reverted-back)
     const showTransferBtn = showActions && !isOtrosView && isPending && !transferred;
     const transferDisabled = FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
     const transferTitle = transferDisabled
         ? 'Transferencia no disponible (faltan columnas)'
         : 'Transferir a ingresos o pérdidas';
-    const transferBtn = showTransferBtn
-        ? `
-                <button type="button" class="btn-transfer-pending" data-tab="${effectiveTabName}" data-id="${item.id}" title="${transferTitle}" ${transferDisabled ? 'disabled' : ''} style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: ${transferDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.7rem; opacity: ${transferDisabled ? '0.4' : '1'};">
-                    <i class="fa fa-arrow-right-long"></i>
-                </button>
-            `
-        : '';
-
-    const incomeTransferBtn = showActions && !isOtrosView && isIncome
-        ? `
-                <button type="button" class="btn-transfer-income" data-tab="${effectiveTabName}" data-id="${item.id}" title="Transferir ingreso" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-arrow-right-long"></i>
-                </button>
-            `
-        : '';
-
-    const lossTransferBtn = showActions && !isOtrosView && isLoss
-        ? `
-                <button type="button" class="btn-transfer-loss" data-tab="${effectiveTabName}" data-id="${item.id}" title="Transferir pérdida" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-arrow-right-long"></i>
-                </button>
-            `
-        : '';
-
-    // V9.7: Revert button for income/losses from pending (only if not already reverted)
-    let revertBtn = '';
-    if (showActions && !isOtrosView && fromPending && !incomeOrLossReverted) {
-        const revertClass = isIncome ? 'btn-revert-income' : 'btn-revert-loss';
-        revertBtn = `
-            <button type="button" class="${revertClass}" data-tab="${effectiveTabName}" data-id="${item.id}" title="Devolver a Pendientes" style="background: transparent; border: 1px solid rgba(251,191,36,0.5); color: #fbbf24; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                <i class="fa fa-undo"></i>
-            </button>
-        `;
-    }
 
     // V9.7: Row styling for reverted items
     const revertedStyle = incomeOrLossReverted ? 'opacity: 0.5;' : '';
@@ -2190,54 +2177,197 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const itemId = tabName === 'otros' ? (item.source_id || item.id) : item.id;
     const itemTab = tabName === 'otros' ? effectiveTabName : tabName;
     const canMoveFromGeneral = isOtrosView && !isOtherTransferredRecord(item) && !normalizeCropId(item?.crop_id);
-    const moveGeneralBtn = canMoveFromGeneral
-        ? `
-                <button type="button" class="btn-move-general" data-tab="${itemTab}" data-id="${itemId}" title="Mover a cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.5); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-arrow-right-long"></i>
-                </button>
-            `
-        : '';
-    const actionButtons = showActions
-        ? `
-                <button type="button" class="btn-edit-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Editar" style="background: transparent; border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-pen"></i>
-                </button>
-                <button type="button" class="btn-duplicate-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Duplicar a otro cultivo" style="background: transparent; border: 1px solid rgba(200,167,82,0.35); color: #C8A752; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-copy"></i>
-                </button>
-                ${moveGeneralBtn}
-                ${transferBtn}
-                ${incomeTransferBtn}
-                ${lossTransferBtn}
-                ${revertBtn}
-                <button type="button" class="btn-delete-facturero" data-tab="${itemTab}" data-id="${itemId}" title="Eliminar" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.7rem;">
-                    <i class="fa fa-trash"></i>
-                </button>
-            `
-        : '';
 
-    return `
-        <div class="facturero-item" data-id="${itemId}" data-tab="${itemTab}" style="${itemStyle}">
-            <div style="flex: 1; min-width: 0;">
-                <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(displayConcept)}</div>
-                ${whoLine}
-                ${sourceLine}
-                ${unitHtml}
-                ${transferHtml}
-                ${otherTransferMeta}
-                ${originBadgeHtml}
-                <div style="color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <span>${formatDate(date)}</span>
-                    <span style="color: var(--gold-primary);">• ${escapeHtml(cropLabel)}</span>
-                    ${evidenceHtml}
-                </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;">
-                <span style="color: ${effectiveTabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;">${_fmtItemCurrency(item, rowConfig, amount)}</span>
-                ${actionButtons}
-            </div>
-        </div>
-    `;
+    const row = document.createElement('div');
+    row.className = 'facturero-item';
+    row.dataset.id = String(itemId || '');
+    row.dataset.tab = String(itemTab || '');
+    row.style.cssText = itemStyle;
+
+    const left = document.createElement('div');
+    left.style.cssText = 'flex: 1; min-width: 0;';
+
+    const conceptDiv = document.createElement('div');
+    conceptDiv.style.cssText = 'color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+    conceptDiv.textContent = displayConcept;
+    left.appendChild(conceptDiv);
+
+    if (whoData.who) {
+        const whoDiv = document.createElement('div');
+        whoDiv.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;';
+        whoDiv.textContent = `• ${formatWhoDisplay(effectiveTabName, whoData.who)}`;
+        left.appendChild(whoDiv);
+    }
+
+    if (sourceLabel) {
+        const sourceDiv = document.createElement('div');
+        sourceDiv.className = 'facturero-meta';
+        sourceDiv.textContent = `Tipo: ${sourceLabel}`;
+        left.appendChild(sourceDiv);
+    }
+
+    if (unitText) {
+        const unitDiv = document.createElement('div');
+        unitDiv.className = 'facturero-meta';
+        unitDiv.textContent = unitText;
+        left.appendChild(unitDiv);
+    }
+
+    if (transferred || pendingReverted) {
+        const transferDiv = document.createElement('div');
+        transferDiv.className = pendingReverted
+            ? 'facturero-meta facturero-transfer-meta facturero-reverted-meta'
+            : 'facturero-meta facturero-transfer-meta';
+        transferDiv.textContent = formatTransferMeta(item);
+        left.appendChild(transferDiv);
+    }
+
+    if (isOtrosView && item?.other_transfer_state === 'transferred') {
+        const otherTransferDiv = document.createElement('div');
+        otherTransferDiv.className = 'facturero-meta facturero-transfer-meta';
+        otherTransferDiv.textContent = formatOtherTransferMeta(item);
+        left.appendChild(otherTransferDiv);
+    }
+
+    if (fromPending) {
+        const originBadge = document.createElement('div');
+        originBadge.className = 'facturero-origin-badge';
+        const badge = document.createElement('span');
+        if (incomeOrLossReverted) {
+            badge.className = 'transfer-badge transfer-badge-reverted';
+            badge.textContent = 'Revertido';
+        } else {
+            badge.className = 'transfer-badge transfer-badge-origin';
+            badge.textContent = `Transferido desde Pendientes • ${isLoss ? 'Cancelado' : 'Pagado'}`;
+        }
+        originBadge.appendChild(badge);
+        left.appendChild(originBadge);
+    }
+
+    const metaRow = document.createElement('div');
+    metaRow.style.cssText = 'color: var(--text-muted); font-size: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap;';
+
+    const dateSpan = document.createElement('span');
+    dateSpan.textContent = formatDate(date);
+    metaRow.appendChild(dateSpan);
+
+    const cropSpan = document.createElement('span');
+    cropSpan.style.color = 'var(--gold-primary)';
+    cropSpan.textContent = `• ${cropLabel}`;
+    metaRow.appendChild(cropSpan);
+
+    if (evidenceLink) {
+        const evidenceSpan = document.createElement('span');
+        evidenceSpan.appendChild(evidenceLink);
+        metaRow.appendChild(evidenceSpan);
+    }
+
+    left.appendChild(metaRow);
+    row.appendChild(left);
+
+    const right = document.createElement('div');
+    right.style.cssText = 'display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0;';
+
+    const amountSpan = document.createElement('span');
+    amountSpan.style.cssText = `color: ${effectiveTabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;`;
+    amountSpan.textContent = _fmtItemCurrency(item, rowConfig, amount);
+    right.appendChild(amountSpan);
+
+    if (showActions) {
+        right.appendChild(createFactureroActionButton({
+            className: 'btn-edit-facturero',
+            tab: itemTab,
+            id: itemId,
+            title: 'Editar',
+            borderColor: 'rgba(96,165,250,0.3)',
+            color: '#60a5fa',
+            iconClass: 'fa fa-pen'
+        }));
+
+        right.appendChild(createFactureroActionButton({
+            className: 'btn-duplicate-facturero',
+            tab: itemTab,
+            id: itemId,
+            title: 'Duplicar a otro cultivo',
+            borderColor: 'rgba(200,167,82,0.35)',
+            color: '#C8A752',
+            iconClass: 'fa fa-copy'
+        }));
+
+        if (canMoveFromGeneral) {
+            right.appendChild(createFactureroActionButton({
+                className: 'btn-move-general',
+                tab: itemTab,
+                id: itemId,
+                title: 'Mover a cultivo',
+                borderColor: 'rgba(200,167,82,0.5)',
+                color: '#C8A752',
+                iconClass: 'fa fa-arrow-right-long'
+            }));
+        }
+
+        if (showTransferBtn) {
+            right.appendChild(createFactureroActionButton({
+                className: 'btn-transfer-pending',
+                tab: effectiveTabName,
+                id: item.id,
+                title: transferTitle,
+                borderColor: 'rgba(200,167,82,0.5)',
+                color: '#C8A752',
+                iconClass: 'fa fa-arrow-right-long',
+                disabled: transferDisabled
+            }));
+        }
+
+        if (!isOtrosView && isIncome) {
+            right.appendChild(createFactureroActionButton({
+                className: 'btn-transfer-income',
+                tab: effectiveTabName,
+                id: item.id,
+                title: 'Transferir ingreso',
+                borderColor: 'rgba(200,167,82,0.5)',
+                color: '#C8A752',
+                iconClass: 'fa fa-arrow-right-long'
+            }));
+        }
+
+        if (!isOtrosView && isLoss) {
+            right.appendChild(createFactureroActionButton({
+                className: 'btn-transfer-loss',
+                tab: effectiveTabName,
+                id: item.id,
+                title: 'Transferir pérdida',
+                borderColor: 'rgba(200,167,82,0.5)',
+                color: '#C8A752',
+                iconClass: 'fa fa-arrow-right-long'
+            }));
+        }
+
+        if (!isOtrosView && fromPending && !incomeOrLossReverted) {
+            right.appendChild(createFactureroActionButton({
+                className: isIncome ? 'btn-revert-income' : 'btn-revert-loss',
+                tab: effectiveTabName,
+                id: item.id,
+                title: 'Devolver a Pendientes',
+                borderColor: 'rgba(251,191,36,0.5)',
+                color: '#fbbf24',
+                iconClass: 'fa fa-undo'
+            }));
+        }
+
+        right.appendChild(createFactureroActionButton({
+            className: 'btn-delete-facturero',
+            tab: itemTab,
+            id: itemId,
+            title: 'Eliminar',
+            borderColor: 'rgba(239,68,68,0.3)',
+            color: '#ef4444',
+            iconClass: 'fa fa-trash'
+        }));
+    }
+
+    row.appendChild(right);
+    return row;
 }
 
 function renderHistoryRowFallback(item, config) {
@@ -2250,15 +2380,29 @@ function renderHistoryRowFallback(item, config) {
     const amount = Number.isFinite(amountNum) ? amountNum : 0;
     const date = item?.[dateField] || item?.fecha || item?.date || item?.created_at || '';
 
-    return `
-        <div class="facturero-item" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-            <div style="flex: 1; min-width: 0;">
-                <div style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(concept)}</div>
-                <div style="color: var(--text-muted); font-size: 0.75rem;">${formatDate(date)}</div>
-            </div>
-            <span style="color: #4ade80; font-weight: 700; font-size: 0.9rem;">$${amount.toFixed(2)}</span>
-        </div>
-    `;
+    const row = document.createElement('div');
+    row.className = 'facturero-item';
+    row.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;';
+
+    const left = document.createElement('div');
+    left.style.cssText = 'flex: 1; min-width: 0;';
+
+    const conceptDiv = document.createElement('div');
+    conceptDiv.style.cssText = 'color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+    conceptDiv.textContent = concept;
+    left.appendChild(conceptDiv);
+
+    const dateDiv = document.createElement('div');
+    dateDiv.style.cssText = 'color: var(--text-muted); font-size: 0.75rem;';
+    dateDiv.textContent = formatDate(date);
+    left.appendChild(dateDiv);
+
+    const amountSpan = document.createElement('span');
+    amountSpan.style.cssText = 'color: #4ade80; font-weight: 700; font-size: 0.9rem;';
+    amountSpan.textContent = `$${amount.toFixed(2)}`;
+
+    row.append(left, amountSpan);
+    return row;
 }
 
 function buildFactureroSelectFields(tabName, config) {
@@ -2724,38 +2868,61 @@ function renderHistoryList(tabName, config, items, showActions) {
     }
 
     if (filteredItems.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.style.cssText = 'color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;';
         if (isPendingTab && itemsWithCropNames.length > 0) {
-            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
+            emptyMsg.textContent = 'No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.';
         } else if (isOthersTab && itemsWithCropNames.length > 0) {
-            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">No hay movimientos transferidos visibles. Activa "Ver transferidos" para mostrarlos.</p>`;
+            emptyMsg.textContent = 'No hay movimientos transferidos visibles. Activa "Ver transferidos" para mostrarlos.';
         } else {
-            container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;">Sin registros recientes.</p>`;
+            emptyMsg.textContent = 'Sin registros recientes.';
         }
+        container.replaceChildren(emptyMsg);
     } else {
         // V9.6.7: Group by day and render with headers
         const dateField = config.dateField || 'fecha';
         const dayGroups = groupRowsByDay(filteredItems, dateField);
 
-        let html = '';
+        const fragment = document.createDocumentFragment();
         const canExport = tabName !== 'otros';
         // V9.6.3: Export button (Wizard button moved to Form Header)
         if (canExport) {
-            html += `<div style="text-align: right; margin-bottom: 0.5rem;"><button type="button" onclick="exportAgroLog('${tabName}')" style="background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;" title="Exportar historial Markdown"><i class="fa fa-file-arrow-down"></i> Exportar MD</button></div>`;
+            const exportWrap = document.createElement('div');
+            exportWrap.style.cssText = 'text-align: right; margin-bottom: 0.5rem;';
+
+            const exportBtn = document.createElement('button');
+            exportBtn.type = 'button';
+            exportBtn.title = 'Exportar historial Markdown';
+            exportBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;';
+            exportBtn.addEventListener('click', () => exportAgroLog(tabName));
+
+            const icon = document.createElement('i');
+            icon.className = 'fa fa-file-arrow-down';
+            const label = document.createElement('span');
+            label.textContent = 'Exportar MD';
+            exportBtn.append(icon, label);
+            exportWrap.appendChild(exportBtn);
+            fragment.appendChild(exportWrap);
         }
+
         for (const group of dayGroups) {
-            // Day header
-            html += `<div class="facturero-day-header">${group.label}</div>`;
-            // Items for this day
-            html += group.rows.map((item) => {
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'facturero-day-header';
+            dayHeader.textContent = String(group.label || '');
+            fragment.appendChild(dayHeader);
+
+            group.rows.forEach((item) => {
                 try {
-                    return renderHistoryRow(tabName, item, config, { showActions });
+                    const rowEl = renderHistoryRow(tabName, item, config, { showActions });
+                    if (rowEl) fragment.appendChild(rowEl);
                 } catch (err) {
                     console.warn(`[AGRO] Failed to render ${tabName} row ${item?.id || 'n/a'}:`, err?.message || err);
-                    return renderHistoryRowFallback(item, config);
+                    const fallbackEl = renderHistoryRowFallback(item, config);
+                    if (fallbackEl) fragment.appendChild(fallbackEl);
                 }
-            }).join('');
+            });
         }
-        container.innerHTML = html;
+        container.replaceChildren(fragment);
     }
 
     console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${filteredItems.length} items grouped by day`);
@@ -3987,7 +4154,7 @@ async function handlePendingTransfer(itemId) {
 
         if (destination === 'income') {
             // Transfer to Income
-            const incomeId = crypto?.randomUUID ? crypto.randomUUID() : `inc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const incomeId = buildTransferId('inc');
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
@@ -4055,7 +4222,7 @@ async function handlePendingTransfer(itemId) {
 
         } else if (destination === 'losses') {
             // Transfer to Losses
-            const lossId = crypto?.randomUUID ? crypto.randomUUID() : `loss_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const lossId = buildTransferId('loss');
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? `${concept} — ${buyer}` : concept;
@@ -4202,11 +4369,21 @@ async function rollbackInsertedRow({ table, userId, insertedId, originMeta }) {
     return { ok: false, method: 'no_rollback_path' };
 }
 
+let _transferIdCounter = 0;
+
 function buildTransferId(prefix) {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
     }
-    return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(8);
+        crypto.getRandomValues(bytes);
+        const suffix = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+        return `${prefix}_${Date.now()}_${suffix}`;
+    }
+    _transferIdCounter = (_transferIdCounter + 1) % 0x1000000;
+    const fallbackSuffix = `${Date.now().toString(16)}_${_transferIdCounter.toString(16).padStart(6, '0')}`;
+    return `${prefix}_${Date.now()}_${fallbackSuffix}`;
 }
 
 async function handleIncomeTransfer(itemId) {

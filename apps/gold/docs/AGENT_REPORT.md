@@ -8052,3 +8052,85 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 3. Build oficial:
 - Comando: `pnpm build:gold`
 - Resultado: **PASS** (`agent-guard: OK`, `agent-report-check: OK`, `vite build: OK`, `check-dist-utf8: OK`).
+
+## 🆕 SESIÓN: CodeQL Sweep — XSS sinks + random seguro (2026-02-22)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+- Estado inicial (`git status -sb`): `## main...origin/main`.
+- Alertas objetivo (main):
+  - High `DOM text reinterpreted as HTML` en:
+    - `apps/gold/agro/agro-agenda.js:410` y `apps/gold/agro/agro-agenda.js:483`.
+    - `apps/gold/agro/agro-cart.js:617`.
+    - `apps/gold/agro/agro-wizard.js:609`.
+    - `apps/gold/agro/agro.js:2758`.
+    - `apps/gold/agro/dashboard.js:527`.
+  - Medium `Unsafe HTML constructed from library input` en:
+    - `apps/gold/agro/agro.js:2743`.
+  - High `Insecure randomness` en:
+    - `apps/gold/agro/agro.js:4170`.
+
+### Plan quirúrgico
+1. `apps/gold/agro/agro-agenda.js`
+   - Reemplazar render de `modal.innerHTML`/`overlay.innerHTML` por inyección segura:
+     - HTML base estático por `textContent` en `template`.
+     - Variables dinámicas vía `textContent`, `dataset`, `appendChild`, o escape explícito.
+   - Mantener estructura visual/event delegation intacta.
+2. `apps/gold/agro/agro-cart.js`
+   - Cambiar el modal de nuevo carrito (`overlay.innerHTML`) a construcción DOM segura (`createElement`, `textContent`, `option.textContent`).
+3. `apps/gold/agro/agro-wizard.js`
+   - Evitar sink de `overlay.innerHTML` en `render()` usando `replaceChildren` con `DocumentFragment` y sin interpolar texto no confiable como HTML.
+4. `apps/gold/agro/agro.js`
+   - Eliminar `innerHTML` directo en historial:
+     - mensajes vacíos por `textContent`.
+     - botón export por `createElement` + `addEventListener` (sin `onclick` string).
+     - filas usando `DocumentFragment` y `insertAdjacentHTML` solo sobre HTML generado internamente ya escapado por `renderHistoryRow*`.
+   - Corregir random inseguro en `buildTransferId` con `crypto.getRandomValues` fallback, sin `Math.random`.
+5. `apps/gold/agro/dashboard.js`
+   - Reemplazar render de resultados de búsqueda (`innerHTML` con query/label) por nodos seguros y `textContent`.
+
+### DoD (objetivo de esta sesión)
+- [ ] Sinks señalados por CodeQL migrados a inserción segura de texto/DOM.
+- [ ] `Math.random()` reemplazado en la ruta reportada por `crypto.randomUUID()` o `crypto.getRandomValues()`.
+- [ ] Sin cambio de UX/layout observable en Agenda/Carrito/Wizard/Historial/Buscador ubicación.
+- [ ] Build `pnpm build:gold` en verde.
+- [ ] Evidencia de ejecución y cierre DoD registrada en este reporte.
+
+### Ejecución y cierre DoD (validado)
+- `git status -sb` tras cambios:
+  - `M apps/gold/agro/agro-agenda.js`
+  - `M apps/gold/agro/agro-cart.js`
+  - `M apps/gold/agro/agro-wizard.js`
+  - `M apps/gold/agro/agro.js`
+  - `M apps/gold/agro/dashboard.js`
+  - `M apps/gold/docs/AGENT_REPORT.md`
+
+- Cambios aplicados (quirúrgicos) por alerta:
+  1. `apps/gold/agro/agro-agenda.js`
+     - Reemplazo de render principal de agenda (`renderAgendaContent`) de `innerHTML` dinámico a construcción DOM con `createElement`, `textContent`, `dataset` y `append`.
+     - Reemplazo del modal de creación (`openCreateModal`) de `overlay.innerHTML` a nodos seguros.
+  2. `apps/gold/agro/agro-cart.js`
+     - Reemplazo de `renderNewCartModal` de `overlay.innerHTML` a construcción DOM segura.
+  3. `apps/gold/agro/agro-wizard.js`
+     - `render()` migrado para evitar `overlay.innerHTML` directo; ahora compone header/progress por DOM y cuerpo/footer por `DocumentFragment` saneado (`buildSafeFragmentFromHtml`) con remoción de `on*`, `javascript:` y nodos peligrosos.
+  4. `apps/gold/agro/agro.js`
+     - `renderHistoryList` migrado a render por nodos (`replaceChildren`, `DocumentFragment`) sin `container.innerHTML = html`.
+     - Eliminado botón export por `onclick` string; ahora `addEventListener('click', ...)`.
+     - `renderHistoryRow` y `renderHistoryRowFallback` migrados de string HTML a nodos (`createElement` + `textContent`) para evitar reinterpretación de texto como HTML.
+     - `buildTransferId` actualizado para usar `crypto.randomUUID()` / `crypto.getRandomValues()` y fallback sin `Math.random()`.
+     - En transferencias pendientes, IDs de ingreso/pérdida ahora usan `buildTransferId(...)`.
+  5. `apps/gold/agro/dashboard.js`
+     - Buscador de ubicación (`searchLocations`) migrado de `innerHTML` dinámico (incluyendo query) a helpers de render seguro:
+       - `renderLocationResultsMessage(...)`
+       - `renderLocationResultList(...)`
+     - Mensajes y resultados se inyectan con `textContent` y nodos.
+
+- Build ejecutado:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard: OK`, `agent-report-check: OK`, `vite build` OK, `UTF-8 guardrail` OK).
+
+### DoD validado
+- [x] Sinks señalados por CodeQL migrados/mitigados con inserción DOM segura en las rutas reportadas.
+- [x] `Math.random()` reemplazado en la ruta de randomness reportada por `crypto.randomUUID()` / `crypto.getRandomValues()`.
+- [x] UX/layout se conserva (mismos IDs/clases/data-action en Agenda, Carrito, Wizard, Historial, Buscador ubicación).
+- [x] Build `pnpm build:gold` en verde.
+- [x] Evidencia y cierre DoD registrados en este reporte.

@@ -608,36 +608,90 @@ function renderAddItemForm() {
 }
 
 function renderNewCartModal() {
-    const cropOptions = getActiveAvailableCrops().map(c =>
-        `<option value="${c.id}">${c.icon || '🌱'} ${escapeHtml(c.name || 'Cultivo')}${c.variety ? ' (' + escapeHtml(c.variety) + ')' : ''}</option>`
-    ).join('');
-
     const overlay = document.createElement('div');
     overlay.className = 'agro-cart-modal-overlay';
-    overlay.innerHTML = `
-        <div class="agro-cart-modal">
-            <h3 style="color: #fff; margin: 0 0 1rem;">🛒 Nuevo Carrito</h3>
-            <div class="agro-cart-add-row">
-                <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Nombre *</label>
-                <input type="text" class="agro-cart-input" id="new-cart-name" placeholder="Ej: Siembra de Pepino" autocomplete="off">
-            </div>
-            <div class="agro-cart-add-row">
-                <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Cultivo</label>
-                <select class="agro-cart-input" id="new-cart-crop">
-                    <option value="">Sin cultivo / General</option>
-                    ${cropOptions}
-                </select>
-            </div>
-            <div class="agro-cart-add-row">
-                <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Notas (opcional)</label>
-                <input type="text" class="agro-cart-input" id="new-cart-notes" placeholder="Ej: Para la próxima cosecha" autocomplete="off">
-            </div>
-            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                <button type="button" class="agro-cart-btn-secondary" data-action="cancel-modal" style="flex: 1;">Cancelar</button>
-                <button type="button" class="agro-cart-btn-primary" data-action="confirm-create" style="flex: 1;">Crear carrito</button>
-            </div>
-        </div>
-    `;
+
+    const modal = document.createElement('div');
+    modal.className = 'agro-cart-modal';
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'color: #fff; margin: 0 0 1rem;';
+    title.textContent = '🛒 Nuevo Carrito';
+    modal.appendChild(title);
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'agro-cart-add-row';
+    const nameLabel = document.createElement('label');
+    nameLabel.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+    nameLabel.textContent = 'Nombre *';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'agro-cart-input';
+    nameInput.id = 'new-cart-name';
+    nameInput.placeholder = 'Ej: Siembra de Pepino';
+    nameInput.autocomplete = 'off';
+    nameRow.append(nameLabel, nameInput);
+    modal.appendChild(nameRow);
+
+    const cropRow = document.createElement('div');
+    cropRow.className = 'agro-cart-add-row';
+    const cropLabel = document.createElement('label');
+    cropLabel.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+    cropLabel.textContent = 'Cultivo';
+    const cropSelect = document.createElement('select');
+    cropSelect.className = 'agro-cart-input';
+    cropSelect.id = 'new-cart-crop';
+    const generalOpt = document.createElement('option');
+    generalOpt.value = '';
+    generalOpt.textContent = 'Sin cultivo / General';
+    cropSelect.appendChild(generalOpt);
+
+    getActiveAvailableCrops().forEach((c) => {
+        const opt = document.createElement('option');
+        opt.value = String(c?.id || '');
+        const cropName = String(c?.name || 'Cultivo');
+        const cropVariety = String(c?.variety || '').trim();
+        const cropIcon = String(c?.icon || '🌱');
+        opt.textContent = `${cropIcon} ${cropName}${cropVariety ? ` (${cropVariety})` : ''}`;
+        cropSelect.appendChild(opt);
+    });
+    cropRow.append(cropLabel, cropSelect);
+    modal.appendChild(cropRow);
+
+    const notesRow = document.createElement('div');
+    notesRow.className = 'agro-cart-add-row';
+    const notesLabel = document.createElement('label');
+    notesLabel.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+    notesLabel.textContent = 'Notas (opcional)';
+    const notesInput = document.createElement('input');
+    notesInput.type = 'text';
+    notesInput.className = 'agro-cart-input';
+    notesInput.id = 'new-cart-notes';
+    notesInput.placeholder = 'Ej: Para la próxima cosecha';
+    notesInput.autocomplete = 'off';
+    notesRow.append(notesLabel, notesInput);
+    modal.appendChild(notesRow);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display: flex; gap: 0.5rem; margin-top: 1rem;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'agro-cart-btn-secondary';
+    cancelBtn.dataset.action = 'cancel-modal';
+    cancelBtn.style.flex = '1';
+    cancelBtn.textContent = 'Cancelar';
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'agro-cart-btn-primary';
+    confirmBtn.dataset.action = 'confirm-create';
+    confirmBtn.style.flex = '1';
+    confirmBtn.textContent = 'Crear carrito';
+
+    actions.append(cancelBtn, confirmBtn);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
 
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
