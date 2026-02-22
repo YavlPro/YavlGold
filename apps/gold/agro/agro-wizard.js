@@ -603,27 +603,6 @@ export async function openAgroWizard(tabName, deps) {
         return `Paso ${step} de ${totalSteps} — ${labels[step] || ''}`;
     }
 
-    function buildSafeFragmentFromHtml(html) {
-        const template = document.createElement('template');
-        template.innerHTML = String(html || '');
-        template.content.querySelectorAll('script, iframe, object, embed').forEach((node) => node.remove());
-        template.content.querySelectorAll('*').forEach((el) => {
-            Array.from(el.attributes).forEach((attr) => {
-                const attrName = String(attr.name || '').toLowerCase();
-                const attrValue = String(attr.value || '');
-                if (attrName.startsWith('on')) {
-                    el.removeAttribute(attr.name);
-                    return;
-                }
-                if ((attrName === 'href' || attrName === 'src' || attrName === 'action' || attrName === 'formaction')
-                    && /^\s*javascript:/i.test(attrValue)) {
-                    el.removeAttribute(attr.name);
-                }
-            });
-        });
-        return template.content.cloneNode(true);
-    }
-
     function render() {
         const progress = (state.step / totalSteps) * 100;
 
@@ -648,11 +627,11 @@ export async function openAgroWizard(tabName, deps) {
 
         const body = document.createElement('div');
         body.className = 'agro-wizard-body';
-        body.appendChild(buildSafeFragmentFromHtml(renderStep()));
+        body.appendChild(renderStep());
 
         const footer = document.createElement('div');
         footer.className = 'agro-wizard-footer';
-        footer.appendChild(buildSafeFragmentFromHtml(renderFooter()));
+        footer.appendChild(renderFooter());
 
         card.append(progressWrap, header, body, footer);
         overlay.replaceChildren(card);
@@ -665,13 +644,22 @@ export async function openAgroWizard(tabName, deps) {
             case 2: return renderStepDetails();
             case 3: return renderStepQuantity();
             case 4: return renderStepSummary();
-            default: return '';
+            default: return document.createDocumentFragment();
         }
     }
 
     // ============ STEP 1: CROP ============
     function renderStepCrop() {
+        const fragment = document.createDocumentFragment();
         const crops = getWizardActiveCrops(cropsCache, state.cropId);
+
+        const question = document.createElement('p');
+        question.className = 'wiz-question';
+        fragment.appendChild(question);
+
+        const grid = document.createElement('div');
+        grid.className = 'wiz-crops-grid';
+
         if (lockCropSelection) {
             const forcedCrop = forcedCropId
                 ? crops.find((crop) => String(crop.id) === String(forcedCropId))
@@ -684,243 +672,432 @@ export async function openAgroWizard(tabName, deps) {
                 ? (forcedCrop.variety || 'Cultivo fijo para este registro')
                 : 'No asociado a cultivo';
             const cropIcon = forcedDisplay?.icon || (forcedCrop ? '🌱' : '📋');
-            return `
-                <p class="wiz-question">Contexto de cultivo</p>
-                <div class="wiz-crops-grid">
-                    <div class="wiz-crop-btn selected wiz-crop-fixed">
-                        <span class="wiz-crop-icon">${cropIcon}</span>
-                        <span class="wiz-crop-name">${escapeHtml(cropName)}</span>
-                        <span class="wiz-crop-variety">${escapeHtml(cropVariety)}</span>
-                    </div>
-                </div>
-            `;
+
+            question.textContent = 'Contexto de cultivo';
+            const card = document.createElement('div');
+            card.className = 'wiz-crop-btn selected wiz-crop-fixed';
+
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'wiz-crop-icon';
+            iconSpan.textContent = cropIcon;
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'wiz-crop-name';
+            nameSpan.textContent = cropName;
+            const varietySpan = document.createElement('span');
+            varietySpan.className = 'wiz-crop-variety';
+            varietySpan.textContent = cropVariety;
+
+            card.append(iconSpan, nameSpan, varietySpan);
+            grid.appendChild(card);
+            fragment.appendChild(grid);
+            return fragment;
         }
 
-        let cardsHtml = `
-            <button type="button" class="wiz-crop-btn ${!state.cropId ? 'selected' : ''}" data-crop-id="">
-                <span class="wiz-crop-icon">📋</span>
-                <span class="wiz-crop-name">General / Sin cultivo</span>
-                <span class="wiz-crop-variety">No asociado a cultivo</span>
-            </button>
-        `;
+        question.textContent = '¿A qué cultivo va este registro?';
+
+        const generalBtn = document.createElement('button');
+        generalBtn.type = 'button';
+        generalBtn.className = `wiz-crop-btn${!state.cropId ? ' selected' : ''}`;
+        generalBtn.dataset.cropId = '';
+
+        const generalIcon = document.createElement('span');
+        generalIcon.className = 'wiz-crop-icon';
+        generalIcon.textContent = '📋';
+        const generalName = document.createElement('span');
+        generalName.className = 'wiz-crop-name';
+        generalName.textContent = 'General / Sin cultivo';
+        const generalVariety = document.createElement('span');
+        generalVariety.className = 'wiz-crop-variety';
+        generalVariety.textContent = 'No asociado a cultivo';
+        generalBtn.append(generalIcon, generalName, generalVariety);
+        grid.appendChild(generalBtn);
+
         for (const crop of crops) {
             const id = String(crop.id);
-            const sel = state.cropId === id ? 'selected' : '';
             const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
-            cardsHtml += `
-                <button type="button" class="wiz-crop-btn ${sel}" data-crop-id="${id}">
-                    <span class="wiz-crop-icon">${displayCrop.icon}</span>
-                    <span class="wiz-crop-name">${escapeHtml(displayCrop.name)}</span>
-                    <span class="wiz-crop-variety">${escapeHtml(crop.variety || '')}</span>
-                </button>
-            `;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `wiz-crop-btn${state.cropId === id ? ' selected' : ''}`;
+            btn.dataset.cropId = id;
+
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'wiz-crop-icon';
+            iconSpan.textContent = displayCrop.icon;
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'wiz-crop-name';
+            nameSpan.textContent = displayCrop.name;
+            const varietySpan = document.createElement('span');
+            varietySpan.className = 'wiz-crop-variety';
+            varietySpan.textContent = crop.variety || '';
+
+            btn.append(iconSpan, nameSpan, varietySpan);
+            grid.appendChild(btn);
         }
-        return `
-            <p class="wiz-question">¿A qué cultivo va este registro?</p>
-            <div class="wiz-crops-grid">${cardsHtml}</div>
-        `;
+
+        fragment.appendChild(grid);
+        return fragment;
     }
 
     // ============ STEP 2: DETAILS ============
     function renderStepDetails() {
-        const whoHtml = meta.hasWho ? `
-            <div class="wiz-field">
-                <label class="wiz-label">${meta.whoLabel}</label>
-                <input type="text" class="wiz-input" id="wiz-who" placeholder="${meta.whoPlaceholder}" value="${escapeHtml(state.who)}" autocomplete="off">
-            </div>
-        ` : '';
-
+        const fragment = document.createDocumentFragment();
+        const question = document.createElement('p');
+        question.className = 'wiz-question';
+        question.textContent = '¿Cuáles son los detalles?';
+        fragment.appendChild(question);
         const activeCrops = getWizardActiveCrops(cropsCache, state.cropId);
-        const gastoCropOptions = activeCrops.map((crop) => {
-            const cropId = String(crop.id);
-            const selected = String(state.cropId || '') === cropId ? 'selected' : '';
-            const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
-            const variety = crop.variety ? ` (${escapeHtml(crop.variety)})` : '';
-            return `<option value="${cropId}" ${selected}>${escapeHtml(displayCrop.icon)} ${escapeHtml(displayCrop.name)}${variety}</option>`;
-        }).join('');
 
-        const gastoCropSelectHtml = tabName === 'gastos' && !lockCropSelection ? `
-            <div class="wiz-field">
-                <label class="wiz-label">Cultivo (gasto asociado)</label>
-                <select class="wiz-input" id="wiz-gasto-crop-id">
-                    <option value="" ${state.cropId ? '' : 'selected'}>General / Sin cultivo</option>
-                    ${gastoCropOptions}
-                </select>
-            </div>
-        ` : '';
+        if (tabName === 'gastos' && !lockCropSelection) {
+            const field = document.createElement('div');
+            field.className = 'wiz-field';
+            const label = document.createElement('label');
+            label.className = 'wiz-label';
+            label.textContent = 'Cultivo (gasto asociado)';
+            const select = document.createElement('select');
+            select.className = 'wiz-input';
+            select.id = 'wiz-gasto-crop-id';
 
-        const donationToggleHtml = tabName === 'transferencias' ? `
-            <div class="wiz-field">
-                <label class="wiz-label">Contabilidad de donación</label>
-                <label class="wiz-switch-row" for="wiz-transfer-operating-expense">
-                    <input type="checkbox" id="wiz-transfer-operating-expense" ${state.countAsOperatingExpense ? 'checked' : ''}>
-                    <span>Contabilizar como gasto operativo</span>
-                </label>
-                <p class="wiz-switch-help">Si activas este toggle, además de la donación se registrará un gasto operativo en el cultivo seleccionado.</p>
-            </div>
-        ` : '';
+            const generalOpt = document.createElement('option');
+            generalOpt.value = '';
+            generalOpt.textContent = 'General / Sin cultivo';
+            if (!state.cropId) generalOpt.selected = true;
+            select.appendChild(generalOpt);
 
-        return `
-            <p class="wiz-question">¿Cuáles son los detalles?</p>
-            ${gastoCropSelectHtml}
-            <div class="wiz-field">
-                <label class="wiz-label">Concepto *</label>
-                <input type="text" class="wiz-input" id="wiz-concepto" placeholder="${meta.conceptPlaceholder}" value="${escapeHtml(state.concepto)}" autocomplete="off" required>
-            </div>
-            ${whoHtml}
-            <div class="wiz-field">
-                <label class="wiz-label">Fecha</label>
-                <input type="date" class="wiz-input" id="wiz-fecha" value="${state.fecha}" max="${typeof getTodayLocalISO === 'function' ? getTodayLocalISO() : ''}">
-            </div>
-            ${donationToggleHtml}
-        `;
+            activeCrops.forEach((crop) => {
+                const cropId = String(crop.id);
+                const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
+                const option = document.createElement('option');
+                option.value = cropId;
+                option.selected = String(state.cropId || '') === cropId;
+                const variety = crop.variety ? ` (${crop.variety})` : '';
+                option.textContent = `${displayCrop.icon} ${displayCrop.name}${variety}`;
+                select.appendChild(option);
+            });
+
+            field.append(label, select);
+            fragment.appendChild(field);
+        }
+
+        const conceptField = document.createElement('div');
+        conceptField.className = 'wiz-field';
+        const conceptLabel = document.createElement('label');
+        conceptLabel.className = 'wiz-label';
+        conceptLabel.textContent = 'Concepto *';
+        const conceptInput = document.createElement('input');
+        conceptInput.type = 'text';
+        conceptInput.className = 'wiz-input';
+        conceptInput.id = 'wiz-concepto';
+        conceptInput.placeholder = meta.conceptPlaceholder;
+        conceptInput.value = state.concepto || '';
+        conceptInput.autocomplete = 'off';
+        conceptInput.required = true;
+        conceptField.append(conceptLabel, conceptInput);
+        fragment.appendChild(conceptField);
+
+        if (meta.hasWho) {
+            const whoField = document.createElement('div');
+            whoField.className = 'wiz-field';
+            const whoLabel = document.createElement('label');
+            whoLabel.className = 'wiz-label';
+            whoLabel.textContent = meta.whoLabel || 'Responsable';
+            const whoInput = document.createElement('input');
+            whoInput.type = 'text';
+            whoInput.className = 'wiz-input';
+            whoInput.id = 'wiz-who';
+            whoInput.placeholder = meta.whoPlaceholder || '';
+            whoInput.value = state.who || '';
+            whoInput.autocomplete = 'off';
+            whoField.append(whoLabel, whoInput);
+            fragment.appendChild(whoField);
+        }
+
+        const dateField = document.createElement('div');
+        dateField.className = 'wiz-field';
+        const dateLabel = document.createElement('label');
+        dateLabel.className = 'wiz-label';
+        dateLabel.textContent = 'Fecha';
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.className = 'wiz-input';
+        dateInput.id = 'wiz-fecha';
+        dateInput.value = state.fecha || '';
+        if (typeof getTodayLocalISO === 'function') dateInput.max = getTodayLocalISO();
+        dateField.append(dateLabel, dateInput);
+        fragment.appendChild(dateField);
+
+        if (tabName === 'transferencias') {
+            const donationField = document.createElement('div');
+            donationField.className = 'wiz-field';
+            const donationLabel = document.createElement('label');
+            donationLabel.className = 'wiz-label';
+            donationLabel.textContent = 'Contabilidad de donación';
+
+            const switchLabel = document.createElement('label');
+            switchLabel.className = 'wiz-switch-row';
+            switchLabel.htmlFor = 'wiz-transfer-operating-expense';
+
+            const check = document.createElement('input');
+            check.type = 'checkbox';
+            check.id = 'wiz-transfer-operating-expense';
+            check.checked = !!state.countAsOperatingExpense;
+            const checkText = document.createElement('span');
+            checkText.textContent = 'Contabilizar como gasto operativo';
+            switchLabel.append(check, checkText);
+
+            const help = document.createElement('p');
+            help.className = 'wiz-switch-help';
+            help.textContent = 'Si activas este toggle, además de la donación se registrará un gasto operativo en el cultivo seleccionado.';
+            donationField.append(donationLabel, switchLabel, help);
+            fragment.appendChild(donationField);
+        }
+
+        return fragment;
     }
 
     // ============ STEP 3: QUANTITY & AMOUNT ============
     function renderStepQuantity() {
-        const unitsHtml = meta.hasUnits ? `
-            <p class="wiz-question">¿Presentación?</p>
-            <div class="wiz-unit-grid">
-                ${UNIT_OPTIONS.map(u => `
-                    <button type="button" class="wiz-unit-btn ${state.unitType === u.value ? 'selected' : ''}" data-unit="${u.value}">
-                        <span class="wiz-unit-icon">${u.icon}</span>
-                        <span class="wiz-unit-label">${u.label}</span>
-                    </button>
-                `).join('')}
-            </div>
-            <div class="wiz-stepper">
-                <button type="button" class="wiz-stepper-btn" data-action="dec1">−1</button>
-                <button type="button" class="wiz-stepper-btn" data-action="dec05">−.5</button>
-                <span class="wiz-stepper-value" id="wiz-qty-display">${state.unitQty}</span>
-                <button type="button" class="wiz-stepper-btn" data-action="inc05">+.5</button>
-                <button type="button" class="wiz-stepper-btn" data-action="inc1">+1</button>
-            </div>
-            <div class="wiz-field">
-                <label class="wiz-label">Kilogramos (opcional)</label>
-                <input type="number" class="wiz-input" id="wiz-kg" placeholder="Ej: 50" value="${state.quantityKg}" min="0" step="0.01" inputmode="decimal">
-            </div>
-        ` : '';
+        const fragment = document.createDocumentFragment();
+        const addQuestion = (text) => {
+            const p = document.createElement('p');
+            p.className = 'wiz-question';
+            p.textContent = text;
+            fragment.appendChild(p);
+        };
 
-        // Currency selector
-        const currencyBtns = Object.entries(SUPPORTED_CURRENCIES).map(([code, cfg]) => {
-            const sel = state.currency === code ? 'selected' : '';
-            return `<button type="button" class="wiz-unit-btn wiz-currency-btn ${sel}" data-currency="${code}" style="min-height:48px;"><span class="wiz-unit-icon">${cfg.flag}</span><span class="wiz-unit-label">${code === 'VES' ? 'Bs' : code}</span></button>`;
-        }).join('');
+        if (meta.hasUnits) {
+            addQuestion('¿Presentación?');
 
-        // Conversion preview (only for non-USD)
-        let conversionHtml = '';
+            const unitGrid = document.createElement('div');
+            unitGrid.className = 'wiz-unit-grid';
+            UNIT_OPTIONS.forEach((u) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `wiz-unit-btn${state.unitType === u.value ? ' selected' : ''}`;
+                btn.dataset.unit = u.value;
+
+                const icon = document.createElement('span');
+                icon.className = 'wiz-unit-icon';
+                icon.textContent = u.icon;
+                const label = document.createElement('span');
+                label.className = 'wiz-unit-label';
+                label.textContent = u.label;
+                btn.append(icon, label);
+                unitGrid.appendChild(btn);
+            });
+            fragment.appendChild(unitGrid);
+
+            const stepper = document.createElement('div');
+            stepper.className = 'wiz-stepper';
+            const mkStepBtn = (action, text) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'wiz-stepper-btn';
+                btn.dataset.action = action;
+                btn.textContent = text;
+                return btn;
+            };
+            const qtyDisplay = document.createElement('span');
+            qtyDisplay.className = 'wiz-stepper-value';
+            qtyDisplay.id = 'wiz-qty-display';
+            qtyDisplay.textContent = String(state.unitQty);
+            stepper.append(
+                mkStepBtn('dec1', '−1'),
+                mkStepBtn('dec05', '−.5'),
+                qtyDisplay,
+                mkStepBtn('inc05', '+.5'),
+                mkStepBtn('inc1', '+1')
+            );
+            fragment.appendChild(stepper);
+
+            const kgField = document.createElement('div');
+            kgField.className = 'wiz-field';
+            const kgLabel = document.createElement('label');
+            kgLabel.className = 'wiz-label';
+            kgLabel.textContent = 'Kilogramos (opcional)';
+            const kgInput = document.createElement('input');
+            kgInput.type = 'number';
+            kgInput.className = 'wiz-input';
+            kgInput.id = 'wiz-kg';
+            kgInput.placeholder = 'Ej: 50';
+            kgInput.value = state.quantityKg || '';
+            kgInput.min = '0';
+            kgInput.step = '0.01';
+            kgInput.inputMode = 'decimal';
+            kgField.append(kgLabel, kgInput);
+            fragment.appendChild(kgField);
+        }
+
+        const currSymbol = SUPPORTED_CURRENCIES[state.currency]?.symbol || '$';
+        addQuestion('💱 Moneda');
+
+        const currencyGrid = document.createElement('div');
+        currencyGrid.className = 'wiz-unit-grid';
+        currencyGrid.style.cssText = 'grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem;';
+        Object.entries(SUPPORTED_CURRENCIES).forEach(([code, cfg]) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `wiz-unit-btn wiz-currency-btn${state.currency === code ? ' selected' : ''}`;
+            btn.dataset.currency = code;
+            btn.style.minHeight = '48px';
+
+            const icon = document.createElement('span');
+            icon.className = 'wiz-unit-icon';
+            icon.textContent = cfg.flag;
+            const label = document.createElement('span');
+            label.className = 'wiz-unit-label';
+            label.textContent = code === 'VES' ? 'Bs' : code;
+            btn.append(icon, label);
+            currencyGrid.appendChild(btn);
+        });
+        fragment.appendChild(currencyGrid);
+
+        addQuestion('💵 ¿Monto?');
+
+        const amountField = document.createElement('div');
+        amountField.className = 'wiz-field';
+        amountField.style.textAlign = 'center';
+        const symbol = document.createElement('div');
+        symbol.style.cssText = 'color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-bottom: 0.3rem;';
+        symbol.textContent = currSymbol;
+        const amountInput = document.createElement('input');
+        amountInput.type = 'number';
+        amountInput.className = 'wiz-input wiz-input-amount';
+        amountInput.id = 'wiz-monto';
+        amountInput.placeholder = '0.00';
+        amountInput.value = state.monto || '';
+        amountInput.min = '0.01';
+        amountInput.step = '0.01';
+        amountInput.inputMode = 'decimal';
+        amountInput.required = true;
+        amountField.append(symbol, amountInput);
+        fragment.appendChild(amountField);
+
         if (state.currency !== 'USD') {
             const effectiveRate = state.exchangeRate || getRate(state.currency, exchangeRates) || 0;
             const monto = Number(state.monto) || 0;
             const usdEquiv = effectiveRate > 0 ? (monto / effectiveRate).toFixed(2) : '—';
             const overrideActive = hasOverride(state.currency);
-            conversionHtml = `
-                <div id="wiz-conversion-preview" style="text-align:center;margin-top:0.5rem;">
-                    <div style="color:#C8A752;font-size:0.9rem;">≈ $${usdEquiv} USD</div>
-                    <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">tasa: 1 USD = ${effectiveRate ? Number(effectiveRate).toLocaleString() : '—'} ${state.currency}</div>
-                </div>
-                <div class="wiz-field" style="margin-top:0.5rem;">
-                    <label class="wiz-label">Tasa ${state.currency}/USD ${overrideActive ? '(manual)' : '(mercado)'}</label>
-                    <input type="number" class="wiz-input" id="wiz-exchange-rate" placeholder="Ej: 4100" value="${effectiveRate || ''}" min="0.0001" step="any" inputmode="decimal">
-                    ${overrideActive ? '<button type="button" id="wiz-clear-override" style="background:transparent;border:none;color:#C8A752;font-size:0.75rem;cursor:pointer;margin-top:4px;">↻ Usar tasa del mercado</button>' : ''}
-                </div>
-            `;
+
+            const preview = document.createElement('div');
+            preview.id = 'wiz-conversion-preview';
+            preview.style.cssText = 'text-align:center;margin-top:0.5rem;';
+            const previewTop = document.createElement('div');
+            previewTop.style.cssText = 'color:#C8A752;font-size:0.9rem;';
+            previewTop.textContent = `≈ $${usdEquiv} USD`;
+            const previewBottom = document.createElement('div');
+            previewBottom.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.75rem;';
+            previewBottom.textContent = `tasa: 1 USD = ${effectiveRate ? Number(effectiveRate).toLocaleString() : '—'} ${state.currency}`;
+            preview.append(previewTop, previewBottom);
+            fragment.appendChild(preview);
+
+            const rateField = document.createElement('div');
+            rateField.className = 'wiz-field';
+            rateField.style.marginTop = '0.5rem';
+            const rateLabel = document.createElement('label');
+            rateLabel.className = 'wiz-label';
+            rateLabel.textContent = `Tasa ${state.currency}/USD ${overrideActive ? '(manual)' : '(mercado)'}`;
+            const rateInput = document.createElement('input');
+            rateInput.type = 'number';
+            rateInput.className = 'wiz-input';
+            rateInput.id = 'wiz-exchange-rate';
+            rateInput.placeholder = 'Ej: 4100';
+            rateInput.value = effectiveRate || '';
+            rateInput.min = '0.0001';
+            rateInput.step = 'any';
+            rateInput.inputMode = 'decimal';
+            rateField.append(rateLabel, rateInput);
+
+            if (overrideActive) {
+                const clearBtn = document.createElement('button');
+                clearBtn.type = 'button';
+                clearBtn.id = 'wiz-clear-override';
+                clearBtn.style.cssText = 'background:transparent;border:none;color:#C8A752;font-size:0.75rem;cursor:pointer;margin-top:4px;';
+                clearBtn.textContent = '↻ Usar tasa del mercado';
+                rateField.appendChild(clearBtn);
+            }
+
+            fragment.appendChild(rateField);
         }
 
-        const currSymbol = SUPPORTED_CURRENCIES[state.currency]?.symbol || '$';
-
-        return `
-            ${unitsHtml}
-            <p class="wiz-question">💱 Moneda</p>
-            <div class="wiz-unit-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 1rem;">${currencyBtns}</div>
-            <p class="wiz-question">💵 ¿Monto?</p>
-            <div class="wiz-field" style="text-align: center;">
-                <div style="color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-bottom: 0.3rem;">${currSymbol}</div>
-                <input type="number" class="wiz-input wiz-input-amount" id="wiz-monto" placeholder="0.00" value="${state.monto}" min="0.01" step="0.01" inputmode="decimal" required>
-            </div>
-            ${conversionHtml}
-        `;
+        return fragment;
     }
 
     // ============ STEP 4: SUMMARY ============
     function renderStepSummary() {
+        const fragment = document.createDocumentFragment();
         const unitLabel = UNIT_OPTIONS.find(u => u.value === state.unitType);
         const qtyText = unitLabel ? `${state.unitQty} ${state.unitQty === 1 ? unitLabel.singular : unitLabel.plural}` : '';
         const kgText = state.quantityKg ? `${state.quantityKg} kg` : '';
         const cantidadParts = [qtyText, kgText].filter(Boolean);
         const cantidadDisplay = cantidadParts.length > 0 ? cantidadParts.join(' · ') : '-';
 
-        let rows = `
-            <div class="wiz-ticket-row">
-                <span class="wiz-ticket-label">🌱 Cultivo</span>
-                <span class="wiz-ticket-value">${escapeHtml(state.cropName || 'General')}</span>
-            </div>
-            <div class="wiz-ticket-row">
-                <span class="wiz-ticket-label">📝 Concepto</span>
-                <span class="wiz-ticket-value">${escapeHtml(state.concepto)}</span>
-            </div>
-        `;
-        if (meta.hasWho && state.who) {
-            rows += `
-                <div class="wiz-ticket-row">
-                    <span class="wiz-ticket-label">${meta.whoLabel}</span>
-                    <span class="wiz-ticket-value">${escapeHtml(state.who)}</span>
-                </div>
-            `;
-        }
-        if (meta.hasUnits && cantidadDisplay !== '-') {
-            rows += `
-                <div class="wiz-ticket-row">
-                    <span class="wiz-ticket-label">📦 Cantidad</span>
-                    <span class="wiz-ticket-value">${escapeHtml(cantidadDisplay)}</span>
-                </div>
-            `;
-        }
-        if (tabName === 'transferencias') {
-            rows += `
-                <div class="wiz-ticket-row">
-                    <span class="wiz-ticket-label">🧾 Gasto operativo</span>
-                    <span class="wiz-ticket-value">${state.countAsOperatingExpense ? 'Sí' : 'No'}</span>
-                </div>
-            `;
-        }
-        rows += `
-            <div class="wiz-ticket-row">
-                <span class="wiz-ticket-label">📅 Fecha</span>
-                <span class="wiz-ticket-value">${state.fecha}</span>
-            </div>
-            <div class="wiz-ticket-row">
-                <span class="wiz-ticket-label">💰 Monto</span>
-                <span class="wiz-ticket-value wiz-ticket-total">${formatWizardMonto()}</span>
-            </div>
-        `;
+        const question = document.createElement('p');
+        question.className = 'wiz-question';
+        question.textContent = '¿Todo correcto?';
+        fragment.appendChild(question);
 
-        return `
-            <p class="wiz-question">¿Todo correcto?</p>
-            <div class="wiz-ticket">${rows}</div>
-        `;
+        const ticket = document.createElement('div');
+        ticket.className = 'wiz-ticket';
+        const addRow = (labelText, valueText, valueClass = 'wiz-ticket-value') => {
+            const row = document.createElement('div');
+            row.className = 'wiz-ticket-row';
+            const label = document.createElement('span');
+            label.className = 'wiz-ticket-label';
+            label.textContent = labelText;
+            const value = document.createElement('span');
+            value.className = valueClass;
+            value.textContent = valueText;
+            row.append(label, value);
+            ticket.appendChild(row);
+        };
+
+        addRow('🌱 Cultivo', state.cropName || 'General');
+        addRow('📝 Concepto', state.concepto || '');
+        if (meta.hasWho && state.who) addRow(meta.whoLabel || 'Responsable', state.who);
+        if (meta.hasUnits && cantidadDisplay !== '-') addRow('📦 Cantidad', cantidadDisplay);
+        if (tabName === 'transferencias') addRow('🧾 Gasto operativo', state.countAsOperatingExpense ? 'Sí' : 'No');
+        addRow('📅 Fecha', state.fecha || '');
+        addRow('💰 Monto', formatWizardMonto(), 'wiz-ticket-value wiz-ticket-total');
+
+        fragment.appendChild(ticket);
+        return fragment;
     }
 
     // ============ FOOTER ============
     function renderFooter() {
+        const fragment = document.createDocumentFragment();
+        const mkBtn = (classes, action, text, disabled = false) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = classes;
+            btn.dataset.action = action;
+            btn.textContent = text;
+            btn.disabled = !!disabled;
+            return btn;
+        };
+
         if (state.step === 1) {
-            return `
-                <button type="button" class="wiz-btn wiz-btn-back" data-action="close">Cancelar</button>
-                <button type="button" class="wiz-btn wiz-btn-next" data-action="next" ${state.cropId !== null ? '' : ''}>Siguiente →</button>
-            `;
+            fragment.append(
+                mkBtn('wiz-btn wiz-btn-back', 'close', 'Cancelar'),
+                mkBtn('wiz-btn wiz-btn-next', 'next', 'Siguiente →')
+            );
+            return fragment;
         }
         if (state.step === totalSteps) {
             const canSubmit = state.concepto && Number(state.monto) > 0 && state.fecha;
-            return `
-                <button type="button" class="wiz-btn wiz-btn-back" data-action="prev">← Atrás</button>
-                <button type="button" class="wiz-btn wiz-btn-submit" data-action="submit" ${canSubmit ? '' : 'disabled'}>✅ REGISTRAR</button>
-            `;
+            fragment.append(
+                mkBtn('wiz-btn wiz-btn-back', 'prev', '← Atrás'),
+                mkBtn('wiz-btn wiz-btn-submit', 'submit', '✅ REGISTRAR', !canSubmit)
+            );
+            return fragment;
         }
         const canNext = state.step === 2 ? !!state.concepto : (Number(state.monto) > 0);
-        return `
-            <button type="button" class="wiz-btn wiz-btn-back" data-action="prev">← Atrás</button>
-            <button type="button" class="wiz-btn wiz-btn-next" data-action="next" ${canNext ? '' : 'disabled'}>Siguiente →</button>
-        `;
+        fragment.append(
+            mkBtn('wiz-btn wiz-btn-back', 'prev', '← Atrás'),
+            mkBtn('wiz-btn wiz-btn-next', 'next', 'Siguiente →', !canNext)
+        );
+        return fragment;
     }
 
     // ============ EVENT LISTENERS ============
@@ -955,6 +1132,7 @@ export async function openAgroWizard(tabName, deps) {
         // Unit buttons (step 3)
         overlay.querySelectorAll('.wiz-unit-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                if (!btn.dataset.unit) return;
                 state.unitType = btn.dataset.unit;
                 render();
             });
@@ -1134,10 +1312,14 @@ export async function openAgroWizard(tabName, deps) {
         const monto = Number(state.monto) || 0;
         const rate = state.exchangeRate || 0;
         const usd = rate > 0 ? (monto / rate).toFixed(2) : '—';
-        preview.innerHTML = `
-            <div style="color:#C8A752;font-size:0.9rem;">≈ $${usd} USD</div>
-            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">tasa: 1 USD = ${rate ? Number(rate).toLocaleString() : '—'} ${state.currency}</div>
-        `;
+        preview.replaceChildren();
+        const main = document.createElement('div');
+        main.style.cssText = 'color:#C8A752;font-size:0.9rem;';
+        main.textContent = `≈ $${usd} USD`;
+        const sub = document.createElement('div');
+        sub.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.75rem;';
+        sub.textContent = `tasa: 1 USD = ${rate ? Number(rate).toLocaleString() : '—'} ${state.currency}`;
+        preview.append(main, sub);
     }
 
     function formatWizardMonto() {
@@ -1178,7 +1360,10 @@ export async function openAgroWizard(tabName, deps) {
     async function handleSubmit(btn) {
         // Anti double-click
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
+        btn.replaceChildren();
+        const spinner = document.createElement('i');
+        spinner.className = 'fa fa-spinner fa-spin';
+        btn.append(spinner, document.createTextNode(' Guardando...'));
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -1319,12 +1504,19 @@ export async function openAgroWizard(tabName, deps) {
             // Show success
             const body = overlay.querySelector('.agro-wizard-body');
             const footer = overlay.querySelector('.agro-wizard-footer');
-            if (body) body.innerHTML = `
-                <div class="wiz-success">
-                    <div class="wiz-success-icon">✅</div>
-                    <div class="wiz-success-text">${successMessage}</div>
-                </div>
-            `;
+            if (body) {
+                body.replaceChildren();
+                const success = document.createElement('div');
+                success.className = 'wiz-success';
+                const successIcon = document.createElement('div');
+                successIcon.className = 'wiz-success-icon';
+                successIcon.textContent = '✅';
+                const successText = document.createElement('div');
+                successText.className = 'wiz-success-text';
+                successText.textContent = successMessage;
+                success.append(successIcon, successText);
+                body.appendChild(success);
+            }
             if (footer) footer.style.display = 'none';
 
             // Auto-close after 1.5s and refresh
@@ -1362,16 +1554,16 @@ export async function openAgroWizard(tabName, deps) {
             console.error('[AgroWizard] Submit error:', err);
             // Re-enable button — user doesn't lose data
             btn.disabled = false;
-            btn.innerHTML = '✅ REGISTRAR';
+            btn.textContent = '✅ REGISTRAR';
             const body = overlay.querySelector('.agro-wizard-body');
             if (body) {
                 const errDiv = body.querySelector('.wiz-error');
                 if (errDiv) errDiv.remove();
-                body.insertAdjacentHTML('beforeend', `
-                    <div class="wiz-error" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 0.75rem; margin-top: 1rem; color: #ef4444; font-size: 0.85rem; text-align: center;">
-                        ⚠️ ${escapeHtml(err.message || 'Error al guardar')}
-                    </div>
-                `);
+                const errorBox = document.createElement('div');
+                errorBox.className = 'wiz-error';
+                errorBox.style.cssText = 'background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 0.75rem; margin-top: 1rem; color: #ef4444; font-size: 0.85rem; text-align: center;';
+                errorBox.textContent = `⚠️ ${err.message || 'Error al guardar'}`;
+                body.appendChild(errorBox);
             }
         }
     }
@@ -1387,12 +1579,6 @@ export async function openAgroWizard(tabName, deps) {
                 if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
             }, 200);
         }
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = String(text || '');
-        return div.innerHTML;
     }
 
     // Mount

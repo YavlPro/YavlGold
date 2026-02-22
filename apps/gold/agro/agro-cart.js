@@ -711,43 +711,109 @@ function renderNewCartModal() {
 }
 
 function renderEditItemModal(item) {
-    const currencyBtns = Object.entries(SUPPORTED_CURRENCIES).map(([code, cfg]) =>
-        `<button type="button" class="agro-cart-cur-btn ${code === (item.currency || 'USD') ? 'is-active' : ''}" data-currency="${code}">${cfg.flag} ${code}</button>`
-    ).join('');
-
     const overlay = document.createElement('div');
     overlay.className = 'agro-cart-modal-overlay';
-    overlay.innerHTML = `
-        <div class="agro-cart-modal">
-            <h3 style="color: #fff; margin: 0 0 1rem;">✏️ Editar Item</h3>
-            <div class="agro-cart-add-row">
-                <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Nombre</label>
-                <input type="text" class="agro-cart-input" id="edit-item-name" value="${escapeHtml(item.name)}" autocomplete="off">
-            </div>
-            <div class="agro-cart-add-row agro-cart-add-row-split">
-                <div>
-                    <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Cantidad</label>
-                    <input type="number" class="agro-cart-input" id="edit-item-qty" value="${item.quantity}" min="0.1" step="0.1" inputmode="decimal">
-                </div>
-                <div>
-                    <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Unidad</label>
-                    <input type="text" class="agro-cart-input" id="edit-item-unit" value="${escapeHtml(item.unit)}" autocomplete="off">
-                </div>
-            </div>
-            <div class="agro-cart-add-row">
-                <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Precio</label>
-                <input type="number" class="agro-cart-input" id="edit-item-price" value="${item.monto}" min="0" step="0.01" inputmode="decimal">
-            </div>
-            <div class="agro-cart-add-row">
-                <label style="color: rgba(255,255,255,0.6); font-size: 0.8rem;">Moneda</label>
-                <div class="agro-cart-cur-group" id="edit-item-cur-group">${currencyBtns}</div>
-            </div>
-            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                <button type="button" class="agro-cart-btn-secondary" data-action="cancel-modal" style="flex: 1;">Cancelar</button>
-                <button type="button" class="agro-cart-btn-primary" data-action="confirm-edit" style="flex: 1;">Guardar</button>
-            </div>
-        </div>
-    `;
+
+    const modal = document.createElement('div');
+    modal.className = 'agro-cart-modal';
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'color: #fff; margin: 0 0 1rem;';
+    title.textContent = '✏️ Editar Item';
+    modal.appendChild(title);
+
+    const makeLabel = (text) => {
+        const label = document.createElement('label');
+        label.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.8rem;';
+        label.textContent = text;
+        return label;
+    };
+
+    const nameRow = document.createElement('div');
+    nameRow.className = 'agro-cart-add-row';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'agro-cart-input';
+    nameInput.id = 'edit-item-name';
+    nameInput.value = String(item?.name || '');
+    nameInput.autocomplete = 'off';
+    nameRow.append(makeLabel('Nombre'), nameInput);
+    modal.appendChild(nameRow);
+
+    const splitRow = document.createElement('div');
+    splitRow.className = 'agro-cart-add-row agro-cart-add-row-split';
+
+    const qtyWrap = document.createElement('div');
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.className = 'agro-cart-input';
+    qtyInput.id = 'edit-item-qty';
+    qtyInput.value = String(item?.quantity ?? 1);
+    qtyInput.min = '0.1';
+    qtyInput.step = '0.1';
+    qtyInput.inputMode = 'decimal';
+    qtyWrap.append(makeLabel('Cantidad'), qtyInput);
+
+    const unitWrap = document.createElement('div');
+    const unitInput = document.createElement('input');
+    unitInput.type = 'text';
+    unitInput.className = 'agro-cart-input';
+    unitInput.id = 'edit-item-unit';
+    unitInput.value = String(item?.unit || '');
+    unitInput.autocomplete = 'off';
+    unitWrap.append(makeLabel('Unidad'), unitInput);
+
+    splitRow.append(qtyWrap, unitWrap);
+    modal.appendChild(splitRow);
+
+    const priceRow = document.createElement('div');
+    priceRow.className = 'agro-cart-add-row';
+    const priceInput = document.createElement('input');
+    priceInput.type = 'number';
+    priceInput.className = 'agro-cart-input';
+    priceInput.id = 'edit-item-price';
+    priceInput.value = String(item?.monto ?? 0);
+    priceInput.min = '0';
+    priceInput.step = '0.01';
+    priceInput.inputMode = 'decimal';
+    priceRow.append(makeLabel('Precio'), priceInput);
+    modal.appendChild(priceRow);
+
+    const currencyRow = document.createElement('div');
+    currencyRow.className = 'agro-cart-add-row';
+    const currencyGroup = document.createElement('div');
+    currencyGroup.className = 'agro-cart-cur-group';
+    currencyGroup.id = 'edit-item-cur-group';
+
+    Object.entries(SUPPORTED_CURRENCIES).forEach(([code, cfg]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `agro-cart-cur-btn${code === (item.currency || 'USD') ? ' is-active' : ''}`;
+        btn.dataset.currency = code;
+        btn.textContent = `${cfg.flag} ${code}`;
+        currencyGroup.appendChild(btn);
+    });
+    currencyRow.append(makeLabel('Moneda'), currencyGroup);
+    modal.appendChild(currencyRow);
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display: flex; gap: 0.5rem; margin-top: 1rem;';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'agro-cart-btn-secondary';
+    cancelBtn.dataset.action = 'cancel-modal';
+    cancelBtn.style.flex = '1';
+    cancelBtn.textContent = 'Cancelar';
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'agro-cart-btn-primary';
+    saveBtn.dataset.action = 'confirm-edit';
+    saveBtn.style.flex = '1';
+    saveBtn.textContent = 'Guardar';
+    actions.append(cancelBtn, saveBtn);
+    modal.appendChild(actions);
+
+    overlay.appendChild(modal);
 
     let editCurrency = item.currency || 'USD';
 

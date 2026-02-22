@@ -8134,3 +8134,104 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 - [x] UX/layout se conserva (mismos IDs/clases/data-action en Agenda, Carrito, Wizard, Historial, Buscador ubicación).
 - [x] Build `pnpm build:gold` en verde.
 - [x] Evidencia y cierre DoD registrados en este reporte.
+
+## 🆕 SESIÓN: Hotfix CodeQL #61 (agro-wizard.js:608) (2026-02-22)
+
+### Paso 0 — Diagnóstico
+- Alerta abierta reportada por CodeQL:
+  - High `DOM text reinterpreted as HTML` en `apps/gold/agro/agro-wizard.js:608`.
+- Causa: el render del wizard usaba parseo de HTML en runtime para construir el body/footer del paso.
+
+### Plan quirúrgico
+1. Eliminar el parseo HTML en `render()` del wizard.
+2. Reescribir `renderStepCrop`, `renderStepDetails`, `renderStepQuantity`, `renderStepSummary` y `renderFooter` para devolver nodos (`DocumentFragment`/`createElement`) en lugar de strings HTML.
+3. Reemplazar sinks secundarios en el mismo módulo (`updateConversionPreview`, success/error UI de submit) por `textContent` y nodos.
+4. Ejecutar `pnpm build:gold`.
+
+### DoD
+- [x] `agro-wizard.js:608` deja de reinterpretar texto como HTML.
+- [x] Wizard conserva estructura/IDs/clases para no romper listeners y UX.
+- [x] Build `pnpm build:gold` PASS.
+
+### Evidencia
+- Comando ejecutado: `pnpm build:gold`.
+- Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
+## 🆕 SESIÓN: CodeQL #61 cierre residual `innerHTML` (2026-02-22)
+
+### Paso 0 — Diagnóstico
+- Estado previo (`git status -sb`): cambios locales en `apps/gold/agro/agro-wizard.js` y este reporte.
+- En `apps/gold/agro/agro-wizard.js` no quedaban sinks del flujo de render, pero sí un helper residual no usado:
+  - `escapeHtml()` devolviendo `div.innerHTML`.
+- Riesgo: aunque no se ejecute, CodeQL puede mantener señal de `DOM text reinterpreted as HTML`.
+
+### Plan quirúrgico
+1. Eliminar completamente `escapeHtml()` en `apps/gold/agro/agro-wizard.js` (helper no utilizado).
+2. Verificar que el archivo quede sin `innerHTML`/`insertAdjacentHTML`/`outerHTML`.
+3. Ejecutar build oficial `pnpm build:gold`.
+
+### DoD
+- [x] `agro-wizard.js` sin `innerHTML` residual.
+- [x] Sin cambio de UX/flujo (solo eliminación de helper muerto).
+- [x] `pnpm build:gold` PASS.
+
+### Evidencia
+- Verificación de sinks en wizard:
+  - `rg -n "innerHTML|insertAdjacentHTML|outerHTML|template\\.innerHTML|DOMParser" apps/gold/agro/agro-wizard.js`
+  - Resultado esperado: `0` coincidencias.
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
+## 🆕 SESIÓN: CodeQL Batch 2 (sinks dinámicos P0) (2026-02-22)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+- Estado inicial (`git status -sb`):
+  - `M apps/gold/agro/agro-wizard.js`
+  - `M apps/gold/docs/AGENT_REPORT.md`
+- Barrido global:
+  - `rg -n "innerHTML|insertAdjacentHTML|outerHTML|template\\.innerHTML|DOMParser" apps/gold/agro`
+- Foco Batch 2 (P0 con interpolación/taint probable):
+  1. `apps/gold/agro/agro-market.js:192`
+  2. `apps/gold/agro/agro-interactions.js:418`
+  3. `apps/gold/agro/agro-cart.js:720`
+  4. `apps/gold/agro/agro.js:1906`
+  5. `apps/gold/agro/agro.js:3598`
+  6. `apps/gold/agro/dashboard.js:429`
+
+### Plan quirúrgico
+1. `agro-market.js:192`
+   - Reemplazar `locationLabel.innerHTML` por nodos seguros (`createElement`, `textContent`).
+2. `agro-interactions.js:418`
+   - Reemplazar `container.innerHTML` de notice dinámico por `replaceChildren` + `textContent`.
+3. `agro-cart.js:720`
+   - Reescribir modal `renderEditItemModal` sin `overlay.innerHTML`; conservar clases/IDs/data-action.
+4. `agro.js:1906`
+   - Reescribir `showTransferChoiceModal` sin `overlay.innerHTML`; botones por DOM seguro.
+5. `agro.js:3598`
+   - Reemplazar preview de conversión (`innerHTML`) por nodos con `textContent`.
+6. `dashboard.js:429`
+   - Reescribir `openLocationSelector` sin `modal.innerHTML`; mantener IDs y listeners actuales.
+7. Ejecutar `pnpm build:gold` y registrar evidencia.
+
+### DoD
+- [x] Se eliminan los 6 sinks P0 del Batch 2 sin cambiar UX/layout.
+- [x] Se conservan IDs/clases/data-action para no romper listeners.
+- [x] `pnpm build:gold` PASS.
+- [x] Evidencia y cierre registrados en este reporte.
+
+### Ejecución y evidencia (cierre)
+- Archivos runtime tocados (Batch 2):
+  - `apps/gold/agro/agro-market.js` (`locationLabel.innerHTML` → DOM seguro)
+  - `apps/gold/agro/agro-interactions.js` (`renderMarketNotice` con `replaceChildren` + `textContent`)
+  - `apps/gold/agro/agro-cart.js` (`renderEditItemModal` sin `overlay.innerHTML`)
+  - `apps/gold/agro/agro.js` (`showTransferChoiceModal` y `_updateEditConversionPreview` sin `innerHTML`)
+  - `apps/gold/agro/dashboard.js` (`openLocationSelector` sin `modal.innerHTML`)
+- Verificaciones puntuales (sin coincidencias):
+  - `rg -n "locationLabel\.innerHTML" apps/gold/agro/agro-market.js`
+  - `rg -n "overlay\.innerHTML" apps/gold/agro/agro-cart.js apps/gold/agro/agro.js`
+  - `rg -n "preview\.innerHTML" apps/gold/agro/agro.js`
+  - `rg -n "modal\.innerHTML" apps/gold/agro/dashboard.js`
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).

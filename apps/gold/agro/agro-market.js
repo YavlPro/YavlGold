@@ -189,7 +189,11 @@ function detectUserCurrency(locationLabel) {
     }
 
     if (locationLabel) {
-        locationLabel.innerHTML = `<i class="fa-solid fa-location-dot" style="color: var(--gold-primary);"></i> ${label}`;
+        locationLabel.replaceChildren();
+        const icon = document.createElement('i');
+        icon.className = 'fa-solid fa-location-dot';
+        icon.style.color = 'var(--gold-primary)';
+        locationLabel.append(icon, document.createTextNode(` ${label}`));
     }
 
     return currency;

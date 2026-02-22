@@ -426,24 +426,38 @@ function openLocationSelector() {
 
     const modal = document.createElement('div');
     modal.id = 'location-search-modal';
-    modal.innerHTML = `
-        <div id="location-search-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h3 style="margin: 0; color: #C8A752; font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px;">
-                    SELECCIONAR UBICACION
-                </h3>
-                <button id="close-location-modal" style="background: none; border: none; color: #888; font-size: 20px; cursor: pointer; padding: 4px;">
-                    ×
-                </button>
-            </div>
-            <input type="text" id="location-search-input" placeholder="Buscar ciudad... (ej: La Grita, Madrid)" autocomplete="off">
-            <div id="location-results">
-                <p style="color: #666; font-size: 12px; text-align: center; padding: 20px;">
-                    Escribe el nombre de una ciudad para buscar
-                </p>
-            </div>
-        </div>
-    `;
+    const box = document.createElement('div');
+    box.id = 'location-search-box';
+
+    const header = document.createElement('div');
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;';
+
+    const title = document.createElement('h3');
+    title.style.cssText = "margin: 0; color: #C8A752; font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px;";
+    title.textContent = 'SELECCIONAR UBICACION';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'close-location-modal';
+    closeBtn.style.cssText = 'background: none; border: none; color: #888; font-size: 20px; cursor: pointer; padding: 4px;';
+    closeBtn.textContent = '×';
+
+    header.append(title, closeBtn);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'location-search-input';
+    input.placeholder = 'Buscar ciudad... (ej: La Grita, Madrid)';
+    input.autocomplete = 'off';
+
+    const results = document.createElement('div');
+    results.id = 'location-results';
+    const hint = document.createElement('p');
+    hint.style.cssText = 'color: #666; font-size: 12px; text-align: center; padding: 20px;';
+    hint.textContent = 'Escribe el nombre de una ciudad para buscar';
+    results.appendChild(hint);
+
+    box.append(header, input, results);
+    modal.appendChild(box);
 
     document.body.appendChild(modal);
 

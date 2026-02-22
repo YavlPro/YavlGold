@@ -415,7 +415,11 @@ function setMarketHubState(state, message) {
 
 function renderMarketNotice(container, message) {
     if (!container) return;
-    container.innerHTML = `<div style="text-align: center; color: var(--text-muted, #888); padding: 40px 0;">${message}</div>`;
+    container.replaceChildren();
+    const notice = document.createElement('div');
+    notice.style.cssText = 'text-align: center; color: var(--text-muted, #888); padding: 40px 0;';
+    notice.textContent = String(message || '');
+    container.appendChild(notice);
 }
 
 function renderCacheBadge(container, ageMinutes) {

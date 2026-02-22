@@ -1888,33 +1888,46 @@ function showTransferChoiceModal(options = {}) {
             }
         };
 
-        const buttonsHtml = choices.map((choice) => {
-            const key = choice.value;
-            const style = styleMap[key] || styleMap.pendientes;
-            const icon = choice.icon || style.icon;
-            return `
-                <button type="button" class="transfer-choice-btn ${style.className}" data-choice="${key}"
-                    style="background: ${style.bg}; border: 1px solid ${style.border}; color: ${style.color}; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
-                    <i class="fa ${icon}"></i> ${choice.label}
-                </button>
-            `;
-        }).join('');
-
         // Create modal overlay
         const overlay = document.createElement('div');
         overlay.className = 'transfer-modal-overlay';
-        overlay.innerHTML = `
-            <div class="transfer-modal">
-                <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1rem;">${title}</h3>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    ${buttonsHtml}
-                    <button type="button" class="transfer-cancel-btn" data-choice="__cancel__"
-                        style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;">
-                        Cancelar
-                    </button>
-                </div>
-            </div>
-        `;
+        const modal = document.createElement('div');
+        modal.className = 'transfer-modal';
+
+        const heading = document.createElement('h3');
+        heading.style.cssText = 'color: #fff; margin: 0 0 1rem 0; font-size: 1rem;';
+        heading.textContent = title;
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display: flex; flex-direction: column; gap: 0.75rem;';
+
+        choices.forEach((choice) => {
+            const key = choice.value;
+            const style = styleMap[key] || styleMap.pendientes;
+            const icon = choice.icon || style.icon;
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `transfer-choice-btn ${style.className}`;
+            btn.dataset.choice = key;
+            btn.style.cssText = `background: ${style.bg}; border: 1px solid ${style.border}; color: ${style.color}; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;`;
+
+            const iconEl = document.createElement('i');
+            iconEl.className = `fa ${icon}`;
+            btn.append(iconEl, document.createTextNode(` ${choice.label}`));
+            actions.appendChild(btn);
+        });
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'transfer-cancel-btn';
+        cancelBtn.dataset.choice = '__cancel__';
+        cancelBtn.style.cssText = 'background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;';
+        cancelBtn.textContent = 'Cancelar';
+        actions.appendChild(cancelBtn);
+
+        modal.append(heading, actions);
+        overlay.appendChild(modal);
 
         document.body.appendChild(overlay);
 
@@ -3595,7 +3608,14 @@ function _updateEditConversionPreview() {
     const monto = Number(document.getElementById('edit-monto')?.value) || 0;
     const rate = _editExchangeRate || 0;
     const usd = rate > 0 ? (monto / rate).toFixed(2) : '\u2014';
-    preview.innerHTML = `<span style="color:#C8A752;">\u2248 $${usd} USD</span> <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;">(tasa: 1 USD = ${rate ? Number(rate).toLocaleString() : '\u2014'} ${_editCurrency})</span>`;
+    preview.replaceChildren();
+    const amount = document.createElement('span');
+    amount.style.color = '#C8A752';
+    amount.textContent = `\u2248 $${usd} USD`;
+    const detail = document.createElement('span');
+    detail.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.75rem;';
+    detail.textContent = ` (tasa: 1 USD = ${rate ? Number(rate).toLocaleString() : '\u2014'} ${_editCurrency})`;
+    preview.append(amount, detail);
 }
 
 async function saveEditModal() {
