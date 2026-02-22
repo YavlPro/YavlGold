@@ -1,14 +1,14 @@
 AI coding agents: read AGENTS.md first and follow it strictly.
 
-# YavlGold V9.4 (Agro-Stable)
+# YavlGold V9.8
 
-> V9.4 Stable - Produccion en Vercel
+> V9.8 - Producción en Vercel
 
 ## Estado actual
 
-- Version: YavlGold V9.4 (Agro-Stable)
-- Fase: Produccion en Vercel
-- Enfoque: estabilidad, integridad de datos y UX consistente
+- Versión: YavlGold V9.8.0
+- Fase: Producción en Vercel
+- Estado: V9.8 (MPA + Supabase) — Agro Core estable, auditoría vitaminada cerrada.
 
 ## Modulo Agro (mejoras recientes)
 
@@ -23,7 +23,7 @@ AI coding agents: read AGENTS.md first and follow it strictly.
 - Frontend: Vanilla JS + Vite (DOM injection estricta).
 - Backend: Supabase (Auth, DB, Storage).
 - Monorepo: Turborepo + pnpm.
-- Deploy: Vercel (build `pnpm build:v9`).
+- Deploy: Vercel (build `pnpm build:gold`).
 
 ## Desarrollo rapido
 
@@ -37,7 +37,7 @@ pnpm dev
 ## Build de produccion
 
 ```bash
-pnpm build:v9
+pnpm build:gold
 ```
 
 ## Estructura del repositorio
@@ -46,7 +46,7 @@ pnpm build:v9
 gold/
   apps/
     gold/              # App principal
-      agro/            # Modulo Agro (V9.4 Stable)
+      agro/            # Modulo Agro (V9.8 estable)
       dashboard/       # Dashboard principal
       academia/        # Modulo Academia (en desarrollo)
       herramientas/    # Modulo Herramientas (en desarrollo)

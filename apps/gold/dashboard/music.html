@@ -193,14 +193,14 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                     <div
                         class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <button id="upload-image-btn" class="btn-outline px-4 py-2 text-xs uppercase">Cambiar
-                            Caratula</button>
+                            Carátula</button>
                     </div>
                     <input type="file" id="image-input" class="hidden" accept="image/*">
                 </div>
                 <div class="text-center mb-5">
                     <div class="flex items-center justify-center gap-2">
                         <div class="flex-grow min-w-0">
-                            <h2 id="song-title" class="text-lg font-bold text-white truncate">Selecciona una cancion
+                            <h2 id="song-title" class="text-lg font-bold text-white truncate">Selecciona una canción
                             </h2>
                             <p id="song-artist" class="text-sm text-[var(--gold-text)] truncate">Biblioteca Local</p>
                         </div>
@@ -256,7 +256,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
             </aside>
             <section class="flex-grow flex flex-col p-5 bg-black/10">
                 <div class="flex flex-wrap gap-3 mb-5">
-                    <button id="add-files-btn" class="btn-gold"><span class="mr-1">+</span> Anadir</button>
+                    <button id="add-files-btn" class="btn-gold"><span class="mr-1">+</span> Añadir</button>
                     <div class="flex-grow relative min-w-[150px]">
                         <input type="text" id="search-bar" placeholder="Buscar..." class="input-dark pl-9 w-full">
                         <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" fill="none"
@@ -266,7 +266,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                         </svg>
                     </div>
                     <select id="genre-filter" class="input-dark w-auto">
-                        <option>Todos los Generos</option>
+                        <option>Todos los Géneros</option>
                     </select>
                     <button id="show-favorites-btn" class="btn-outline px-3" title="Favoritos" aria-label="Favoritos">
                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -305,8 +305,8 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
                 </div>
                 <div id="playlist-container" class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
                     <ul id="playlist" class="space-y-1">
-                        <li class="p-8 text-center text-gray-500 italic">Tu biblioteca esta vacia. Arrastra MP3 o usa
-                            Anadir.</li>
+                        <li class="p-8 text-center text-gray-500 italic">Tu biblioteca está vacía. Arrastra MP3 o usa
+                            Añadir.</li>
                     </ul>
                 </div>
                 <input type="file" id="file-input" multiple accept=".mp3,audio/mpeg" class="hidden">
@@ -318,7 +318,7 @@ Copyright 2025 Yerikson Varela - Apache License 2.0
         <audio id="audio-player" crossorigin="anonymous"></audio>
         <div id="drop-overlay"
             class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center border-4 border-dashed border-[var(--gold-text)] m-4 rounded-xl">
-            <h2 class="text-2xl font-bold text-[var(--gold-text)] animate-pulse">SUELTA TU MUSICA AQUI</h2>
+            <h2 class="text-2xl font-bold text-[var(--gold-text)] animate-pulse">SUELTA TU MÚSICA AQUÍ</h2>
         </div>
         <button id="info-modal-btn" class="absolute bottom-3 right-4 text-gray-500 hover:text-white"><svg
                 class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

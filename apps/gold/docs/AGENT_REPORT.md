@@ -8002,3 +8002,53 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
 - [x] Se preserva `displayWho` para visualización.
 - [x] `pnpm build:gold` PASS.
 - [x] Evidencia y cierre DoD registrados en este reporte.
+
+## 🆕 SESIÓN: Copy & Consistency Sweep (Privacidad + Tildes + README + llms) (2026-02-21)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) Estado del workspace
+- `git status -sb` inicial: `## main...origin/main` (árbol limpio).
+
+2) Hallazgos del barrido
+- Privacidad:
+  - `apps/gold/privacy.html` ya estaba en TLS, pero faltaba nota explícita de no-E2E para evitar ambigüedad de claim.
+- Tildes UI (dashboard/music):
+  - `apps/gold/dashboard/index.html`: `Ir al modulo`, `Modulos visitados`, `Ultimo modulo`, `No leidas`.
+  - `apps/gold/dashboard/music.html`: `Caratula`, `cancion`, `Anadir`, `Generos`, `Tu biblioteca esta vacia`, `SUELTA TU MUSICA AQUI`.
+- README:
+  - `README.md` aún en V9.4/Agro-Stable y `build:v9`.
+- llms:
+  - `apps/gold/public/llms.txt` verificado multilinea (246 líneas), no truncado.
+
+3) Plan quirúrgico
+- Actualizar copy en privacidad con texto verificable: TLS en tránsito + controles de acceso + nota explícita de no-E2E.
+- Corregir tildes mínimas en strings visibles de dashboard/music.
+- Normalizar README público a V9.8 y `pnpm build:gold`.
+- Dejar `llms.txt` con nota explícita de formato UTF-8/multilinea/sin truncado.
+
+### DoD (objetivo de esta sesión)
+
+- [x] Privacidad sin claim E2E ambiguo; texto verificable (TLS + controles de acceso + no-E2E).
+- [x] Strings con tildes corregidas en dashboard/music.
+- [x] README actualizado a V9.8 (sin referencias V9.4/Agro-Stable/build:v9).
+- [x] `llms.txt` verificado y dejado con nota de formato multilinea/sin truncado.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y evidencia
+
+1. Archivos modificados:
+- `apps/gold/privacy.html`
+- `apps/gold/dashboard/index.html`
+- `apps/gold/dashboard/music.html`
+- `README.md`
+- `apps/gold/public/llms.txt`
+
+2. Verificaciones por búsqueda:
+- `README.md` sin coincidencias de `V9.4|Agro-Stable|build:v9`.
+- Strings antiguas de dashboard/music corregidas (solo quedan ocurrencias en comentarios no UI).
+- `llms.txt` mantiene formato multilinea (`246` líneas).
+
+3. Build oficial:
+- Comando: `pnpm build:gold`
+- Resultado: **PASS** (`agent-guard: OK`, `agent-report-check: OK`, `vite build: OK`, `check-dist-utf8: OK`).

@@ -324,6 +324,7 @@ git status
 2. **Sin Datos Sensibles:** Esta ficha NO contiene keys, tokens o credenciales
 3. **Contexto para Agentes:** Usar como referencia para entender estructura y reglas
 4. **Actualizacion:** Mantener sincronizada con cambios mayores del proyecto
+5. **Formato LLMs:** Mantener este archivo en UTF-8, multilinea y sin truncado
 
 ---
 
