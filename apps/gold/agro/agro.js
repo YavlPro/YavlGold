@@ -7527,7 +7527,9 @@ async function fetchFactureroCount(tabName, userId, options = {}) {
     for (let attempt = 0; attempt < 5; attempt += 1) {
         let query = supabase
             .from(config.table)
-            .select('id', { head: true, count: 'exact' })
+            // Avoid HEAD requests here to reduce cross-origin HEAD noise in some environments.
+            .select('id', { count: 'exact' })
+            .limit(1)
             .eq('user_id', userId);
 
         if (includeDeletedAt) query = query.is('deleted_at', null);

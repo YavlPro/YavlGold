@@ -2492,11 +2492,13 @@
         const [favoritesRes, unreadRes] = await Promise.all([
           supabase
             .from('user_favorites')
-            .select('module_key', { count: 'exact', head: true })
+            .select('module_key', { count: 'exact' })
+            .limit(1)
             .eq('user_id', user.id),
           supabase
             .from('notifications')
-            .select('id', { count: 'exact', head: true })
+            .select('id', { count: 'exact' })
+            .limit(1)
             .eq('user_id', user.id)
             .eq('is_read', false)
         ]);

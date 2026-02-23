@@ -414,7 +414,8 @@ export const AdminManager = {
             // Users count (profiles)
             const { count: usersCount } = await supabase
                 .from('profiles')
-                .select('*', { count: 'exact', head: true });
+                .select('*', { count: 'exact' })
+                .limit(1);
 
             const usersEl = document.getElementById('admin-stat-users');
             if (usersEl) usersEl.textContent = usersCount || 0;
@@ -422,7 +423,8 @@ export const AdminManager = {
             // Modules count
             const { count: modulesCount } = await supabase
                 .from('modules')
-                .select('*', { count: 'exact', head: true });
+                .select('*', { count: 'exact' })
+                .limit(1);
 
             const modulesEl = document.getElementById('admin-stat-modules');
             if (modulesEl) modulesEl.textContent = modulesCount || 0;
@@ -430,7 +432,8 @@ export const AdminManager = {
             // Feedback count
             const { count: feedbackCount } = await supabase
                 .from('feedback')
-                .select('*', { count: 'exact', head: true });
+                .select('*', { count: 'exact' })
+                .limit(1);
 
             const feedbackEl = document.getElementById('admin-stat-feedback');
             if (feedbackEl) feedbackEl.textContent = feedbackCount || 0;

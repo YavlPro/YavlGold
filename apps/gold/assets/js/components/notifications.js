@@ -36,7 +36,8 @@ export const NotificationsManager = {
 
             const { count, error } = await supabase
                 .from('notifications')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', session.user.id)
                 .eq('is_read', false);
 

@@ -273,7 +273,8 @@ export const StatsManager = {
         try {
             const { count, error } = await supabase
                 .from('modules')
-                .select('id', { count: 'exact', head: true })
+                .select('id', { count: 'exact' })
+                .limit(1)
                 .eq('is_active', true);
 
             if (!error) {
@@ -295,7 +296,8 @@ export const StatsManager = {
 
             const { count, error } = await supabase
                 .from('user_favorites')
-                .select('module_key', { count: 'exact', head: true })
+                .select('module_key', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', session.user.id);
 
             if (!error) {
@@ -318,4 +320,3 @@ if (typeof window !== 'undefined') {
 }
 
 export default ModuleManager;
-

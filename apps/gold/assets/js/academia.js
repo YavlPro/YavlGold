@@ -188,7 +188,8 @@ class AcademiaProgress {
             // Verificar si es la primera lección
             const { count } = await this.supabase
                 .from('user_lesson_progress')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', this.currentUser.id)
                 .eq('status', 'completed');
             
@@ -419,14 +420,16 @@ class AcademiaProgress {
             // Contar lecciones totales del módulo
             const { count: totalLessons } = await this.supabase
                 .from('lessons')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('module_id', lesson.module_id)
                 .eq('is_published', true);
             
             // Contar lecciones completadas del módulo
             const { count: completedLessons } = await this.supabase
                 .from('user_lesson_progress')
-                .select('lesson_id', { count: 'exact', head: true })
+                .select('lesson_id', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', this.currentUser.id)
                 .eq('status', 'completed')
                 .in('lesson_id', (await this.getModuleLessonIds(lesson.module_id)));
@@ -544,27 +547,31 @@ class AcademiaProgress {
             // Lecciones completadas
             const { count: lessonsCompleted } = await this.supabase
                 .from('user_lesson_progress')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', this.currentUser.id)
                 .eq('status', 'completed');
             
             // Quizzes aprobados
             const { count: quizzesPassed } = await this.supabase
                 .from('user_quiz_attempts')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', this.currentUser.id)
                 .eq('passed', true);
             
             // Badges obtenidos
             const { count: badgesEarned } = await this.supabase
                 .from('user_badges')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', this.currentUser.id);
             
             // Certificados
             const { count: certificates } = await this.supabase
                 .from('certificates')
-                .select('*', { count: 'exact', head: true })
+                .select('*', { count: 'exact' })
+                .limit(1)
                 .eq('user_id', this.currentUser.id);
             
             return {
