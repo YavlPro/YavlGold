@@ -8193,8 +8193,8 @@ function renderOpsRankings() {
 
     if (topCropsTitle) {
         topCropsTitle.textContent = hasSelectedCrop
-            ? 'Rentabilidad de este cultivo'
-            : 'Top Cultivos (Rentabilidad)';
+            ? 'Ingresos del cultivo (cobrados)'
+            : 'Top Cultivos (Ingresos cobrados)';
     }
 
     if (opsRankingsState.loading) {
@@ -8263,8 +8263,8 @@ function renderOpsRankings() {
         });
     }, {
         emptyText: hasSelectedCrop
-            ? 'Sin datos de rentabilidad para este cultivo en el rango seleccionado.'
-            : 'Sin datos en el rango seleccionado.'
+            ? 'Sin ingresos registrados para este cultivo en el rango seleccionado.'
+            : 'Sin ingresos registrados en el rango seleccionado.'
     });
 }
 
@@ -8433,11 +8433,20 @@ function exportOpsRankingsMarkdown() {
         return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
     });
 
-    const topCropsTitle = selectedCropId ? 'Rentabilidad de este cultivo' : 'Top Cultivos (Rentabilidad)';
-    appendSection(topCropsTitle, opsRankingsState.topCrops, (row) => {
-        const label = resolveOpsRankingCropLabel(row);
-        return `${label} · Rentabilidad ${formatOpsRankingCurrency(row?.profit)} · Ingresos ${formatOpsRankingCurrency(row?.ingresos)} · Gastos ${formatOpsRankingCurrency(row?.gastos)}`;
-    });
+    const topCropsTitle = selectedCropId ? 'Ingresos del cultivo (cobrados)' : 'Top Cultivos (Ingresos cobrados)';
+    md += `## ${topCropsTitle}\n\n`;
+    md += `> Nota: No incluye inversión base ni pendientes. Ver card del cultivo para rentabilidad completa.\n\n`;
+    if (!Array.isArray(opsRankingsState.topCrops) || opsRankingsState.topCrops.length === 0) {
+        md += selectedCropId
+            ? 'Sin ingresos registrados para este cultivo en el rango seleccionado.\n\n'
+            : 'Sin ingresos registrados en el rango seleccionado.\n\n';
+    } else {
+        opsRankingsState.topCrops.forEach((row, index) => {
+            const label = resolveOpsRankingCropLabel(row);
+            md += `${index + 1}. ${label} · Neto cobrado (Ingresos - Gastos) ${formatOpsRankingCurrency(row?.profit)} · Ingresos ${formatOpsRankingCurrency(row?.ingresos)} · Gastos ${formatOpsRankingCurrency(row?.gastos)}\n`;
+        });
+        md += `\n`;
+    }
 
     const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
