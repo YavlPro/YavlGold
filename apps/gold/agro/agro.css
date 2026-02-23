@@ -3374,3 +3374,157 @@ body.modal-open {
   font-size: 24px;
   animation: arw-float 2s ease-in-out infinite;
 }
+
+/* Agro Feedback Module (isolated) */
+.agro-feedback-fab {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 9999;
+  border: 1px solid rgba(200, 167, 82, 0.35);
+  background: rgba(10, 10, 10, 0.88);
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  padding: 10px 13px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.agro-feedback-fab:hover {
+  transform: translateY(-1px);
+  border-color: rgba(200, 167, 82, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(200, 167, 82, 0.2);
+}
+
+.agro-feedback-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(0, 0, 0, 0.64);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.agro-feedback-card {
+  width: min(520px, 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  background: rgba(10, 10, 10, 0.96);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.48);
+  padding: 14px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.agro-feedback-title {
+  margin: 0 0 6px;
+  color: var(--gold-primary, #C8A752);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.02rem;
+}
+
+.agro-feedback-hint {
+  margin: 0 0 10px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.88rem;
+}
+
+.agro-feedback-field-label {
+  display: block;
+  margin: 0 0 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  letter-spacing: 0.3px;
+}
+
+.agro-feedback-input,
+.agro-feedback-textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: 'Rajdhani', sans-serif;
+  padding: 10px;
+}
+
+.agro-feedback-input {
+  margin-bottom: 10px;
+}
+
+.agro-feedback-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.agro-feedback-input:focus,
+.agro-feedback-textarea:focus {
+  outline: none;
+  border-color: rgba(200, 167, 82, 0.6);
+  box-shadow: 0 0 0 2px rgba(200, 167, 82, 0.15);
+}
+
+.agro-feedback-status {
+  margin-top: 8px;
+  font-size: 0.86rem;
+  min-height: 1.2em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.agro-feedback-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.agro-feedback-btn {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agro-feedback-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.agro-feedback-btn-ghost {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.agro-feedback-btn-primary {
+  background: rgba(200, 167, 82, 0.18);
+  border-color: rgba(200, 167, 82, 0.36);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+@media (max-width: 640px) {
+  .agro-feedback-fab {
+    right: 12px;
+    bottom: 12px;
+    padding: 9px 11px;
+    font-size: 0.84rem;
+  }
+
+  .agro-feedback-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-feedback-fab {
+    transition: none;
+  }
+}
