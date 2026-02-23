@@ -5277,7 +5277,10 @@ function formatCurrency(value) {
     }).format(value || 0);
 }
 
-function resolveRecordAmountUsd(row, amountFields = []) {
+function resolveRecordAmountUsd(row, amountFields = [], meta = null) {
+    if (meta && typeof meta === 'object') {
+        meta.missingRate = false;
+    }
     const explicitUsd = toSafeLocaleNumber(row?.monto_usd);
     if (explicitUsd !== null) return explicitUsd;
 
@@ -5301,7 +5304,21 @@ function resolveRecordAmountUsd(row, amountFields = []) {
         if (Number.isFinite(converted)) return converted;
         return amount / rate;
     }
+    if (currency !== 'USD') {
+        if (meta && typeof meta === 'object') {
+            meta.missingRate = true;
+        }
+        return Number.NaN;
+    }
     return amount;
+}
+
+function incrementCountMap(map, key, amount = 1) {
+    if (!(map instanceof Map)) return;
+    const normalizedKey = normalizeCropId(key);
+    if (!normalizedKey) return;
+    const step = Number.isFinite(amount) ? amount : 1;
+    map.set(normalizedKey, (Number(map.get(normalizedKey)) || 0) + step);
 }
 
 function isMissingTableError(error, tableName) {
@@ -5388,6 +5405,9 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
         .filter((field) => field && !missingColumns.has(field))));
     const rowFilters = (Array.isArray(options.rowFilters) ? options.rowFilters : [])
         .filter((filterFn) => typeof filterFn === 'function');
+    const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map
+        ? options.missingRateCountsByCrop
+        : null;
 
     for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!selectFields.includes('crop_id')) break;
@@ -5405,22 +5425,36 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
 
         const { data, error } = await query;
         if (!error) {
-            (Array.isArray(data) ? data : []).forEach((row) => {
+            const rows = Array.isArray(data) ? data : [];
+            for (const row of rows) {
+                let passesFilters = true;
                 if (rowFilters.length > 0) {
                     for (const filterFn of rowFilters) {
                         try {
-                            if (!filterFn(row)) return;
-                        } catch (filterError) {
-                            return;
+                            if (!filterFn(row)) {
+                                passesFilters = false;
+                                break;
+                            }
+                        } catch (_filterError) {
+                            passesFilters = false;
+                            break;
                         }
                     }
                 }
+                if (!passesFilters) continue;
+
                 const cropId = normalizeCropId(row?.crop_id);
-                if (!cropId) return;
-                const usd = resolveRecordAmountUsd(row, amountFields);
-                if (!Number.isFinite(usd)) return;
+                if (!cropId) continue;
+
+                const conversionMeta = {};
+                const usd = resolveRecordAmountUsd(row, amountFields, conversionMeta);
+                if (conversionMeta.missingRate) {
+                    incrementCountMap(missingRateCountsByCrop, cropId, 1);
+                }
+                if (!Number.isFinite(usd)) continue;
+
                 totals.set(cropId, (totals.get(cropId) || 0) + usd);
-            });
+            }
             return totals;
         }
 
@@ -5449,24 +5483,27 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
     return totals;
 }
 
-async function fetchExpenseTotalsByCropIds(userId, cropIds) {
+async function fetchExpenseTotalsByCropIds(userId, cropIds, options = {}) {
     return fetchUsdTotalsByCropIds('agro_expenses', userId, cropIds, {
+        ...options,
         amountFields: ['amount'],
         optionalFields: ['deleted_at'],
         nullFilters: ['deleted_at']
     });
 }
 
-async function fetchIncomeTotalsByCropIds(userId, cropIds) {
+async function fetchIncomeTotalsByCropIds(userId, cropIds, options = {}) {
     return fetchUsdTotalsByCropIds('agro_income', userId, cropIds, {
+        ...options,
         amountFields: ['monto', 'amount'],
         optionalFields: ['deleted_at', 'reverted_at'],
         nullFilters: ['deleted_at', 'reverted_at']
     });
 }
 
-async function fetchLossTotalsByCropIds(userId, cropIds) {
+async function fetchLossTotalsByCropIds(userId, cropIds, options = {}) {
     const queryOptions = {
+        ...options,
         amountFields: ['monto', 'amount'],
         optionalFields: ['deleted_at'],
         nullFilters: ['deleted_at']
@@ -5479,14 +5516,20 @@ async function fetchLossTotalsByCropIds(userId, cropIds) {
     return new Map();
 }
 
-async function fetchPendingTotalsByCropIds(userId, cropIds) {
+async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
+    const baseRowFilters = [
+        (row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred'
+    ];
+    const extraRowFilters = Array.isArray(options.rowFilters)
+        ? options.rowFilters.filter((filterFn) => typeof filterFn === 'function')
+        : [];
+
     return fetchUsdTotalsByCropIds('agro_pending', userId, cropIds, {
+        ...options,
         amountFields: ['monto', 'amount'],
         optionalFields: ['deleted_at', 'transfer_state'],
         nullFilters: ['deleted_at'],
-        rowFilters: [
-            (row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred'
-        ]
+        rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
 }
 
@@ -5505,10 +5548,11 @@ function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
     return item;
 }
 
-function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0) {
+function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingRateCount = 0) {
     const income = Number.isFinite(incomeTotal) ? incomeTotal : 0;
     const costs = Number.isFinite(costTotal) ? costTotal : 0;
     const pending = Number.isFinite(pendingTotal) ? pendingTotal : 0;
+    const missing = Number.isFinite(missingRateCount) ? Math.max(0, Math.floor(missingRateCount)) : 0;
     const net = income - costs;
     const potential = net + pending;
     const item = createMetaItem('Rentabilidad (cobrado)', formatCurrency(net));
@@ -5524,6 +5568,12 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0) {
         pendingLine.textContent = `Por cobrar: ${formatCurrency(pending)} | Potencial: ${formatCurrency(potential)}`;
         valueEl.appendChild(breakdown);
         valueEl.appendChild(pendingLine);
+        if (missing > 0) {
+            const warningLine = document.createElement('span');
+            warningLine.style.cssText = 'display:block;font-size:0.62rem;font-weight:600;color:var(--danger);margin-top:2px;line-height:1.2;';
+            warningLine.textContent = `⚠️ ${missing} movimiento${missing === 1 ? '' : 's'} sin tasa (no incluidos)`;
+            valueEl.appendChild(warningLine);
+        }
     }
     return item;
 }
@@ -5630,6 +5680,7 @@ function createCropCardElement(crop, index, options = {}) {
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
+    const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
     const delay = 4 + index; // Para animaciones escalonadas
     const card = document.createElement('div');
     card.className = `card crop-card animate-in delay-${delay}`;
@@ -5769,13 +5820,16 @@ function createCropCardElement(crop, index, options = {}) {
     const pendingTotal = normalizedCropId && pendingTotalsByCrop
         ? (Number(pendingTotalsByCrop.get(normalizedCropId)) || 0)
         : 0;
+    const missingRateCount = normalizedCropId && missingRateCountsByCrop
+        ? (Number(missingRateCountsByCrop.get(normalizedCropId)) || 0)
+        : 0;
     const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
     metaGrid.append(
         createMetaItem('Siembra', formatDate(crop.start_date)),
         createMetaItem('Cosecha Est.', formatDate(crop.expected_harvest_date)),
         createMetaItem('Area', `${crop.area_size} Ha`),
         createInvestmentMetaItem(baseInvestment, expenseInvestment),
-        createProfitMetaItem(incomeTotal, totalCosts, pendingTotal)
+        createProfitMetaItem(incomeTotal, totalCosts, pendingTotal, missingRateCount)
     );
 
     card.append(actions, header, progressSection, metaGrid);
@@ -6092,6 +6146,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
+    const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
 
     const finishedCrops = Array.isArray(crops) ? crops : [];
     const auditCrops = Array.isArray(orphanCrops) ? orphanCrops : [];
@@ -6121,7 +6176,8 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
                 expenseTotalsByCrop,
                 incomeTotalsByCrop,
                 lossTotalsByCrop,
-                pendingTotalsByCrop
+                pendingTotalsByCrop,
+                missingRateCountsByCrop
             }));
         });
         gridEl.appendChild(fragment);
@@ -6149,7 +6205,8 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
             expenseTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
-            pendingTotalsByCrop
+            pendingTotalsByCrop,
+            missingRateCountsByCrop
         }));
     });
     auditGridEl.appendChild(auditFragment);
@@ -6229,13 +6286,15 @@ export async function loadCrops() {
         let incomeTotalsByCrop = new Map();
         let lossTotalsByCrop = new Map();
         let pendingTotalsByCrop = new Map();
+        let missingRateCountsByCrop = new Map();
         if (source === 'supabase' && currentUserId && crops.length > 0) {
             const cropIds = crops.map((crop) => crop?.id);
+            const totalsOptions = { missingRateCountsByCrop };
             const [expenseTotals, incomeTotals, lossTotals, pendingTotals] = await Promise.all([
-                fetchExpenseTotalsByCropIds(currentUserId, cropIds),
-                fetchIncomeTotalsByCropIds(currentUserId, cropIds),
-                fetchLossTotalsByCropIds(currentUserId, cropIds),
-                fetchPendingTotalsByCropIds(currentUserId, cropIds)
+                fetchExpenseTotalsByCropIds(currentUserId, cropIds, totalsOptions),
+                fetchIncomeTotalsByCropIds(currentUserId, cropIds, totalsOptions),
+                fetchLossTotalsByCropIds(currentUserId, cropIds, totalsOptions),
+                fetchPendingTotalsByCropIds(currentUserId, cropIds, totalsOptions)
             ]);
             expenseTotalsByCrop = expenseTotals;
             incomeTotalsByCrop = incomeTotals;
@@ -6289,7 +6348,8 @@ export async function loadCrops() {
                 expenseTotalsByCrop,
                 incomeTotalsByCrop,
                 lossTotalsByCrop,
-                pendingTotalsByCrop
+                pendingTotalsByCrop,
+                missingRateCountsByCrop
             }));
         });
         cropsGrid.appendChild(fragment);
@@ -6297,7 +6357,8 @@ export async function loadCrops() {
             expenseTotalsByCrop,
             incomeTotalsByCrop,
             lossTotalsByCrop,
-            pendingTotalsByCrop
+            pendingTotalsByCrop,
+            missingRateCountsByCrop
         });
         const prevSelected = selectedCropId;
         syncSelectedCropFromList(crops, { silent: true });
