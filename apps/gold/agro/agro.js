@@ -8258,7 +8258,7 @@ function renderOpsRankings() {
             index,
             name: resolveOpsRankingCropLabel(row),
             value: formatOpsRankingCurrency(profit),
-            meta: `Ingresos: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos: ${formatOpsRankingCurrency(row?.gastos)}`,
+            meta: `Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}`,
             valueColor: profitColor
         });
     }, {
@@ -8443,7 +8443,7 @@ function exportOpsRankingsMarkdown() {
     } else {
         opsRankingsState.topCrops.forEach((row, index) => {
             const label = resolveOpsRankingCropLabel(row);
-            md += `${index + 1}. ${label} · Neto cobrado (Ingresos - Gastos) ${formatOpsRankingCurrency(row?.profit)} · Ingresos ${formatOpsRankingCurrency(row?.ingresos)} · Gastos ${formatOpsRankingCurrency(row?.gastos)}\n`;
+            md += `${index + 1}. ${label} · Neto cobrado (Ingresos - Gastos) ${formatOpsRankingCurrency(row?.profit)} · Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}\n`;
         });
         md += `\n`;
     }
