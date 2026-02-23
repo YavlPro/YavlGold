@@ -8113,6 +8113,24 @@ function resolveOpsRankingCropLabel(row) {
     return '🌱 Cultivo';
 }
 
+function getOpsSelectedCropLabel(selectedId) {
+    const cropId = normalizeCropId(selectedId);
+    if (!cropId) return '📋 Vista General';
+
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    const crop = rows.find((item) => normalizeCropId(item?.id) === cropId);
+    if (!crop) return '🌱 Cultivo seleccionado';
+
+    const display = getCropDisplayParts(crop, { fallbackIcon: '🌱', fallbackName: 'Cultivo' });
+    const variety = String(crop?.variety || '').trim();
+    const nameNormalized = String(display?.name || '').trim().toLowerCase();
+    const varietyNormalized = variety.toLowerCase();
+    const includeVariety = variety && nameNormalized !== varietyNormalized && !nameNormalized.includes(varietyNormalized);
+    const suffix = includeVariety ? ` (${variety})` : '';
+
+    return `${display.icon} ${display.name}${suffix}`.trim();
+}
+
 function renderOpsRankingList(listEl, rows, buildItem, options = {}) {
     if (!listEl) return;
     listEl.textContent = '';
@@ -8193,7 +8211,8 @@ function renderOpsRankings() {
     }
 
     const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
-    const cropFilter = selectedCropId ? ` · Cultivo: ${selectedCropId}` : ' · Vista general';
+    const cropLabel = getOpsSelectedCropLabel(selectedCropId);
+    const cropFilter = ` · Cultivo: ${cropLabel}`;
     const hasSelectedCrop = !!selectedCropId;
 
     if (topCropsTitle) {
@@ -8393,7 +8412,7 @@ function exportOpsRankingsMarkdown() {
     const now = new Date();
     const dateStamp = now.toISOString().slice(0, 10);
     const rangeLabel = OPS_RANKINGS_RANGE_LABELS[opsRankingsState.range] || OPS_RANKINGS_RANGE_LABELS[OPS_RANKINGS_DEFAULT_RANGE];
-    const cropLabel = selectedCropId ? `Cultivo: ${selectedCropId}` : 'Vista general';
+    const cropLabel = `Cultivo: ${getOpsSelectedCropLabel(selectedCropId)}`;
     const privacyLabel = opsRankingsState.hideNames ? 'Ocultar nombres: ON' : 'Ocultar nombres: OFF';
 
     let md = `# 🏆 Rankings Agro\n\n`;
