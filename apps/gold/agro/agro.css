@@ -3509,6 +3509,16 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.95);
 }
 
+/* Fix: opciones del <select> legibles en el dropdown nativo (Chrome/Windows) */
+.agro-feedback-input {
+  color-scheme: dark;
+}
+
+.agro-feedback-input option {
+  background-color: rgba(10, 10, 10, 0.98);
+  color: rgba(255, 255, 255, 0.92);
+}
+
 @media (max-width: 640px) {
   .agro-feedback-fab {
     right: 12px;
