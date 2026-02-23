@@ -5386,6 +5386,8 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
     let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
         .map((field) => String(field || '').trim())
         .filter((field) => field && !missingColumns.has(field))));
+    const rowFilters = (Array.isArray(options.rowFilters) ? options.rowFilters : [])
+        .filter((filterFn) => typeof filterFn === 'function');
 
     for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!selectFields.includes('crop_id')) break;
@@ -5404,6 +5406,15 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
         const { data, error } = await query;
         if (!error) {
             (Array.isArray(data) ? data : []).forEach((row) => {
+                if (rowFilters.length > 0) {
+                    for (const filterFn of rowFilters) {
+                        try {
+                            if (!filterFn(row)) return;
+                        } catch (filterError) {
+                            return;
+                        }
+                    }
+                }
                 const cropId = normalizeCropId(row?.crop_id);
                 if (!cropId) return;
                 const usd = resolveRecordAmountUsd(row, amountFields);
@@ -5468,6 +5479,17 @@ async function fetchLossTotalsByCropIds(userId, cropIds) {
     return new Map();
 }
 
+async function fetchPendingTotalsByCropIds(userId, cropIds) {
+    return fetchUsdTotalsByCropIds('agro_pending', userId, cropIds, {
+        amountFields: ['monto', 'amount'],
+        optionalFields: ['deleted_at', 'transfer_state'],
+        nullFilters: ['deleted_at'],
+        rowFilters: [
+            (row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred'
+        ]
+    });
+}
+
 function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
     const base = Number.isFinite(baseInvestment) ? baseInvestment : 0;
     const expenses = Number.isFinite(expenseInvestment) ? expenseInvestment : 0;
@@ -5483,18 +5505,25 @@ function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
     return item;
 }
 
-function createProfitMetaItem(incomeTotal, costTotal) {
+function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0) {
     const income = Number.isFinite(incomeTotal) ? incomeTotal : 0;
     const costs = Number.isFinite(costTotal) ? costTotal : 0;
+    const pending = Number.isFinite(pendingTotal) ? pendingTotal : 0;
     const net = income - costs;
-    const item = createMetaItem('Rentabilidad', formatCurrency(net));
+    const potential = net + pending;
+    const item = createMetaItem('Rentabilidad (cobrado)', formatCurrency(net));
     const valueEl = item.querySelector('.meta-value');
     if (valueEl) {
         valueEl.style.color = net >= 0 ? 'var(--gold-light)' : 'var(--danger)';
         const breakdown = document.createElement('span');
         breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
-        breakdown.textContent = `Ingresos: ${formatCurrency(income)} | Costos: ${formatCurrency(costs)}`;
+        breakdown.textContent = `Ingresos cobrados: ${formatCurrency(income)} | Costos: ${formatCurrency(costs)}`;
+        const pendingLine = document.createElement('span');
+        pendingLine.style.cssText = 'display:block;font-size:0.64rem;font-weight:600;margin-top:2px;line-height:1.2;';
+        pendingLine.style.color = potential >= 0 ? 'var(--gold-light)' : 'var(--danger)';
+        pendingLine.textContent = `Por cobrar: ${formatCurrency(pending)} | Potencial: ${formatCurrency(potential)}`;
         valueEl.appendChild(breakdown);
+        valueEl.appendChild(pendingLine);
     }
     return item;
 }
@@ -5600,6 +5629,7 @@ function createCropCardElement(crop, index, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
+    const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const delay = 4 + index; // Para animaciones escalonadas
     const card = document.createElement('div');
     card.className = `card crop-card animate-in delay-${delay}`;
@@ -5736,13 +5766,16 @@ function createCropCardElement(crop, index, options = {}) {
     const lossesTotal = normalizedCropId && lossTotalsByCrop
         ? (Number(lossTotalsByCrop.get(normalizedCropId)) || 0)
         : 0;
+    const pendingTotal = normalizedCropId && pendingTotalsByCrop
+        ? (Number(pendingTotalsByCrop.get(normalizedCropId)) || 0)
+        : 0;
     const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
     metaGrid.append(
         createMetaItem('Siembra', formatDate(crop.start_date)),
         createMetaItem('Cosecha Est.', formatDate(crop.expected_harvest_date)),
         createMetaItem('Area', `${crop.area_size} Ha`),
         createInvestmentMetaItem(baseInvestment, expenseInvestment),
-        createProfitMetaItem(incomeTotal, totalCosts)
+        createProfitMetaItem(incomeTotal, totalCosts, pendingTotal)
     );
 
     card.append(actions, header, progressSection, metaGrid);
@@ -6058,6 +6091,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
+    const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
 
     const finishedCrops = Array.isArray(crops) ? crops : [];
     const auditCrops = Array.isArray(orphanCrops) ? orphanCrops : [];
@@ -6086,7 +6120,8 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
             fragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
                 expenseTotalsByCrop,
                 incomeTotalsByCrop,
-                lossTotalsByCrop
+                lossTotalsByCrop,
+                pendingTotalsByCrop
             }));
         });
         gridEl.appendChild(fragment);
@@ -6113,7 +6148,8 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
             isAuditCard: true,
             expenseTotalsByCrop,
             incomeTotalsByCrop,
-            lossTotalsByCrop
+            lossTotalsByCrop,
+            pendingTotalsByCrop
         }));
     });
     auditGridEl.appendChild(auditFragment);
@@ -6192,16 +6228,19 @@ export async function loadCrops() {
         let expenseTotalsByCrop = new Map();
         let incomeTotalsByCrop = new Map();
         let lossTotalsByCrop = new Map();
+        let pendingTotalsByCrop = new Map();
         if (source === 'supabase' && currentUserId && crops.length > 0) {
             const cropIds = crops.map((crop) => crop?.id);
-            const [expenseTotals, incomeTotals, lossTotals] = await Promise.all([
+            const [expenseTotals, incomeTotals, lossTotals, pendingTotals] = await Promise.all([
                 fetchExpenseTotalsByCropIds(currentUserId, cropIds),
                 fetchIncomeTotalsByCropIds(currentUserId, cropIds),
-                fetchLossTotalsByCropIds(currentUserId, cropIds)
+                fetchLossTotalsByCropIds(currentUserId, cropIds),
+                fetchPendingTotalsByCropIds(currentUserId, cropIds)
             ]);
             expenseTotalsByCrop = expenseTotals;
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
+            pendingTotalsByCrop = pendingTotals;
             if (requestId !== cropsLoadSeq) return;
         }
 
@@ -6249,14 +6288,16 @@ export async function loadCrops() {
             fragment.appendChild(createCropCardElement(crop, i + 1, {
                 expenseTotalsByCrop,
                 incomeTotalsByCrop,
-                lossTotalsByCrop
+                lossTotalsByCrop,
+                pendingTotalsByCrop
             }));
         });
         cropsGrid.appendChild(fragment);
         renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, {
             expenseTotalsByCrop,
             incomeTotalsByCrop,
-            lossTotalsByCrop
+            lossTotalsByCrop,
+            pendingTotalsByCrop
         });
         const prevSelected = selectedCropId;
         syncSelectedCropFromList(crops, { silent: true });
