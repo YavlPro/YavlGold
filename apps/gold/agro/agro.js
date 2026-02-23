@@ -5280,6 +5280,7 @@ function formatCurrency(value) {
 function resolveRecordAmountUsd(row, amountFields = [], meta = null) {
     if (meta && typeof meta === 'object') {
         meta.missingRate = false;
+        meta.missingCurrency = false;
     }
     const explicitUsd = toSafeLocaleNumber(row?.monto_usd);
     if (explicitUsd !== null) return explicitUsd;
@@ -5296,8 +5297,16 @@ function resolveRecordAmountUsd(row, amountFields = [], meta = null) {
         }
     }
 
-    const currency = String(row?.currency || 'USD').trim().toUpperCase();
+    const currency = String(row?.currency ?? '').trim().toUpperCase();
     const rate = toSafeLocaleNumber(row?.exchange_rate) ?? 0;
+
+    if (!currency) {
+        if (meta && typeof meta === 'object') {
+            meta.missingRate = true;
+            meta.missingCurrency = true;
+        }
+        return Number.NaN;
+    }
 
     if (currency !== 'USD' && rate > 0) {
         const converted = convertToUSD(amount, currency, rate);
@@ -5571,7 +5580,7 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
         if (missing > 0) {
             const warningLine = document.createElement('span');
             warningLine.style.cssText = 'display:block;font-size:0.62rem;font-weight:600;color:var(--danger);margin-top:2px;line-height:1.2;';
-            warningLine.textContent = `⚠️ ${missing} movimiento${missing === 1 ? '' : 's'} sin tasa (no incluidos)`;
+            warningLine.textContent = `⚠️ ${missing} movimiento${missing === 1 ? '' : 's'} sin tasa/moneda (no incluidos)`;
             valueEl.appendChild(warningLine);
         }
     }
