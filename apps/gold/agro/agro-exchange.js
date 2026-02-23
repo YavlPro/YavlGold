@@ -9,6 +9,14 @@
 const LS_RATES_KEY = 'yavlgold_exchange_rates';
 const LS_OVERRIDE_KEY = 'yavlgold_exchange_override';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const EXCHANGE_FETCH_TIMEOUT_MS = 10000;
+const RATE_FIELDS = ['COP', 'VES'];
+
+let lastExchangeStatus = {
+    source: 'unknown',
+    warning: '',
+    fetchedAt: null
+};
 
 export const SUPPORTED_CURRENCIES = {
     USD: { symbol: '$', name: 'Dólar', flag: '💵', decimals: 2 },
@@ -32,11 +40,12 @@ function getCachedRates() {
     }
 }
 
-function setCachedRates(rates) {
+function setCachedRates(rates, source = 'unknown') {
     try {
         localStorage.setItem(LS_RATES_KEY, JSON.stringify({
             rates,
-            fetchedAt: Date.now()
+            fetchedAt: Date.now(),
+            source
         }));
     } catch (e) {
         // storage full or blocked
@@ -99,26 +108,79 @@ export function clearAllOverrides() {
 // ============================================================
 
 async function fetchFromFrankfurter() {
-    const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=COP');
+    const res = await fetchWithTimeout('https://api.frankfurter.app/latest?from=USD&to=COP,VES');
     if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
     const data = await res.json();
-    // Frankfurter may not support VES
-    return {
-        USD: 1,
-        COP: data.rates?.COP || null,
-        VES: null // Frankfurter typically doesn't have VES
-    };
+    return normalizeRates(data?.rates);
 }
 
 async function fetchFromErApi() {
-    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const res = await fetchWithTimeout('https://open.er-api.com/v6/latest/USD');
     if (!res.ok) throw new Error(`ER-API ${res.status}`);
     const data = await res.json();
+    if (data?.result && data.result !== 'success') {
+        throw new Error(`ER-API result ${data.result}`);
+    }
+    return normalizeRates(data?.rates);
+}
+
+async function fetchWithTimeout(url) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), EXCHANGE_FETCH_TIMEOUT_MS);
+    try {
+        return await fetch(url, { signal: controller.signal });
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+function toValidRate(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function normalizeRates(rawRates = null) {
     return {
         USD: 1,
-        COP: data.rates?.COP || null,
-        VES: data.rates?.VES || null
+        COP: toValidRate(rawRates?.COP),
+        VES: toValidRate(rawRates?.VES)
     };
+}
+
+function mergeMissingRates(primary, fallback) {
+    const merged = normalizeRates(primary);
+    RATE_FIELDS.forEach((field) => {
+        if (!toValidRate(merged[field])) {
+            merged[field] = toValidRate(fallback?.[field]);
+        }
+    });
+    return merged;
+}
+
+function hasMissingRates(rates) {
+    return RATE_FIELDS.some((field) => !toValidRate(rates?.[field]));
+}
+
+function setExchangeStatus(source, warning = '', fetchedAt = null) {
+    lastExchangeStatus = {
+        source: String(source || 'unknown'),
+        warning: String(warning || ''),
+        fetchedAt: Number.isFinite(fetchedAt) ? fetchedAt : null
+    };
+}
+
+function readFreshCache(cached) {
+    if (!cached?.rates || !isCacheFresh(cached)) return null;
+    setExchangeStatus('cache:fresh', '', cached.fetchedAt || null);
+    return normalizeRates(cached.rates);
+}
+
+function readStaleCache(cached) {
+    if (!cached?.rates) return null;
+    const warning = 'tasa en caché (proveedores no disponibles)';
+    setExchangeStatus('cache:stale', warning, cached.fetchedAt || null);
+    console.warn(`[EXCHANGE] ${warning}`);
+    return normalizeRates(cached.rates);
 }
 
 /**
@@ -128,17 +190,22 @@ async function fetchFromErApi() {
 export async function fetchExchangeRates() {
     // Try primary API
     try {
-        const rates = await fetchFromFrankfurter();
-        // If VES missing, try fallback for VES only
-        if (!rates.VES) {
+        let rates = await fetchFromFrankfurter();
+        let source = 'api:frankfurter';
+        // Complete any missing rates from fallback provider
+        if (hasMissingRates(rates)) {
             try {
                 const fallback = await fetchFromErApi();
-                rates.VES = fallback.VES || null;
+                rates = mergeMissingRates(rates, fallback);
+                source = 'api:frankfurter+erapi';
             } catch (e) {
-                // VES stays null — user can set manually
+                // Keep available rates from provider 1
+                console.warn('[EXCHANGE] ER-API complement failed:', e.message);
             }
         }
-        setCachedRates(rates);
+        rates = normalizeRates(rates);
+        setCachedRates(rates, source);
+        setExchangeStatus(source, '');
         return rates;
     } catch (e) {
         console.warn('[EXCHANGE] Frankfurter failed:', e.message);
@@ -146,8 +213,9 @@ export async function fetchExchangeRates() {
 
     // Try fallback API
     try {
-        const rates = await fetchFromErApi();
-        setCachedRates(rates);
+        const rates = normalizeRates(await fetchFromErApi());
+        setCachedRates(rates, 'api:erapi');
+        setExchangeStatus('api:erapi', '');
         return rates;
     } catch (e) {
         console.warn('[EXCHANGE] ER-API failed:', e.message);
@@ -155,14 +223,16 @@ export async function fetchExchangeRates() {
 
     // Use stale cache
     const cached = getCachedRates();
-    if (cached?.rates) {
-        console.info('[EXCHANGE] Using stale cache');
-        return cached.rates;
+    const staleRates = readStaleCache(cached);
+    if (staleRates) {
+        return staleRates;
     }
 
     // No data at all
+    const warning = 'sin tasas disponibles; continuar con override manual o USD';
+    setExchangeStatus('fallback:none', warning);
     console.warn('[EXCHANGE] No rates available');
-    return { USD: 1, COP: null, VES: null };
+    return normalizeRates(null);
 }
 
 /**
@@ -174,16 +244,16 @@ export function getRate(currency, rates) {
 
     // Check manual override first
     const overrides = getOverrides();
-    if (overrides?.[currency]?.rate) {
+    if (toValidRate(overrides?.[currency]?.rate)) {
         return overrides[currency].rate;
     }
 
     // Use provided rates
-    if (rates?.[currency]) return rates[currency];
+    if (toValidRate(rates?.[currency])) return rates[currency];
 
     // Fallback to cached
     const cached = getCachedRates();
-    if (cached?.rates?.[currency]) return cached.rates[currency];
+    if (toValidRate(cached?.rates?.[currency])) return cached.rates[currency];
 
     return null;
 }
@@ -210,11 +280,20 @@ export function convertFromUSD(montoUsd, currency, rate) {
  */
 export async function initExchangeRates() {
     const cached = getCachedRates();
-    if (isCacheFresh(cached)) {
+    const freshRates = readFreshCache(cached);
+    if (freshRates) {
         console.info('[EXCHANGE] Using fresh cache');
-        return cached.rates;
+        return freshRates;
     }
     return fetchExchangeRates();
+}
+
+/**
+ * Returns metadata of the last exchange resolution.
+ * Useful for UX warnings like "tasa en caché".
+ */
+export function getExchangeStatus() {
+    return { ...lastExchangeStatus };
 }
 
 /**
@@ -222,7 +301,7 @@ export async function initExchangeRates() {
  */
 export function hasOverride(currency) {
     const overrides = getOverrides();
-    return !!(overrides?.[currency]?.rate);
+    return !!toValidRate(overrides?.[currency]?.rate);
 }
 
 /**
