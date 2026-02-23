@@ -5578,16 +5578,16 @@ async function fetchExpenseTotalsByCropIds(userId, cropIds, options = {}) {
 async function fetchIncomeTotalsByCropIds(userId, cropIds, options = {}) {
     return fetchUsdTotalsByCropIds('agro_income', userId, cropIds, {
         ...options,
-        amountFields: ['monto', 'amount'],
-        optionalFields: ['deleted_at', 'reverted_at'],
-        nullFilters: ['deleted_at', 'reverted_at']
+        amountFields: ['monto'],
+        optionalFields: ['deleted_at'],
+        nullFilters: ['deleted_at']
     });
 }
 
 async function fetchLossTotalsByCropIds(userId, cropIds, options = {}) {
     const queryOptions = {
         ...options,
-        amountFields: ['monto', 'amount'],
+        amountFields: ['monto'],
         optionalFields: ['deleted_at'],
         nullFilters: ['deleted_at']
     };
@@ -5609,7 +5609,7 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
 
     return fetchUsdTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
-        amountFields: ['monto', 'amount'],
+        amountFields: ['monto'],
         optionalFields: ['deleted_at', 'transfer_state'],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
