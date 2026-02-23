@@ -1551,27 +1551,45 @@ async function transferPendingToIncome(pendingId) {
     }
 
     // 3. Create income record
+    const incomeMoney = buildIncomeMonetaryFields(pending, pending.monto);
     const incomeData = {
         user_id: userId,
         concepto: pending.concepto,
-        monto: pending.monto,
+        monto: incomeMoney.monto,
         fecha: pending.fecha,
         categoria: 'venta',
         crop_id: pending.crop_id,
         unit_type: pending.unit_type,
         unit_qty: pending.unit_qty,
         quantity_kg: pending.quantity_kg,
+        currency: incomeMoney.currency,
+        exchange_rate: incomeMoney.exchange_rate,
+        monto_usd: incomeMoney.monto_usd,
         // V9.7: Transfer origin tracking
         origin_table: 'agro_pending',
         origin_id: pending.id,
         transfer_state: 'active'
     };
 
-    const { data: income, error: insertError } = await supabase
+    let { data: income, error: insertError } = await supabase
         .from('agro_income')
         .insert([incomeData])
         .select('id')
         .single();
+
+    if (insertError && (isMissingColumnError(insertError, 'currency') || isMissingColumnError(insertError, 'exchange_rate') || isMissingColumnError(insertError, 'monto_usd'))) {
+        const fallbackIncomeData = { ...incomeData };
+        delete fallbackIncomeData.currency;
+        delete fallbackIncomeData.exchange_rate;
+        delete fallbackIncomeData.monto_usd;
+        const fallbackInsert = await supabase
+            .from('agro_income')
+            .insert([fallbackIncomeData])
+            .select('id')
+            .single();
+        income = fallbackInsert.data;
+        insertError = fallbackInsert.error;
+    }
 
     if (insertError || !income) {
         return { success: false, error: insertError?.message || 'Error creando ingreso' };
@@ -4191,12 +4209,13 @@ async function handlePendingTransfer(itemId) {
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
+            const incomeMoney = buildIncomeMonetaryFields(pending, pending.monto);
 
             const incomePayload = {
                 id: incomeId,
                 user_id: user.id,
                 concepto: conceptFinal,
-                monto: Number(pending.monto || 0),
+                monto: incomeMoney.monto,
                 fecha: decisionDate,
                 categoria: decision.category || 'ventas',
                 soporte_url: pending.evidence_url || null,
@@ -4204,6 +4223,9 @@ async function handlePendingTransfer(itemId) {
                 unit_type: pending.unit_type || null,
                 unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
                 quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null,
+                currency: incomeMoney.currency,
+                exchange_rate: incomeMoney.exchange_rate,
+                monto_usd: incomeMoney.monto_usd,
                 // V9.7: Origin tracking
                 origin_table: 'agro_pending',
                 origin_id: pending.id,
@@ -4211,7 +4233,15 @@ async function handlePendingTransfer(itemId) {
             };
 
             let { error: insertError } = await supabase.from('agro_income').insert(incomePayload);
-            if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'unit_qty') || isMissingColumnError(insertError, 'quantity_kg') || isMissingColumnError(insertError, 'origin_table'))) {
+            if (insertError && (
+                isMissingColumnError(insertError, 'unit_type')
+                || isMissingColumnError(insertError, 'unit_qty')
+                || isMissingColumnError(insertError, 'quantity_kg')
+                || isMissingColumnError(insertError, 'origin_table')
+                || isMissingColumnError(insertError, 'currency')
+                || isMissingColumnError(insertError, 'exchange_rate')
+                || isMissingColumnError(insertError, 'monto_usd')
+            )) {
                 const fallbackPayload = { ...incomePayload };
                 delete fallbackPayload.unit_type;
                 delete fallbackPayload.unit_qty;
@@ -4219,6 +4249,9 @@ async function handlePendingTransfer(itemId) {
                 delete fallbackPayload.origin_table;
                 delete fallbackPayload.origin_id;
                 delete fallbackPayload.transfer_state;
+                delete fallbackPayload.currency;
+                delete fallbackPayload.exchange_rate;
+                delete fallbackPayload.monto_usd;
                 const retry = await supabase.from('agro_income').insert(fallbackPayload);
                 insertError = retry.error;
             }
@@ -4670,11 +4703,12 @@ async function handleLossTransfer(itemId) {
             const causeMeta = loss.causa ? `Causa: ${loss.causa}` : '';
             const conceptFinal = causeMeta ? `${baseConcept} — ${causeMeta}` : baseConcept;
             const incomeId = buildTransferId('income');
+            const incomeMoney = buildIncomeMonetaryFields(loss, loss.monto);
             const incomePayload = {
                 id: incomeId,
                 user_id: user.id,
                 concepto: conceptFinal,
-                monto: Number(loss.monto || 0),
+                monto: incomeMoney.monto,
                 fecha: decisionDate,
                 categoria: decision.category || 'otros',
                 soporte_url: getFactureroEvidenceValue('perdidas', loss) || null,
@@ -4682,6 +4716,9 @@ async function handleLossTransfer(itemId) {
                 unit_type: loss.unit_type || null,
                 unit_qty: Number.isFinite(Number(loss.unit_qty)) ? Number(loss.unit_qty) : null,
                 quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null,
+                currency: incomeMoney.currency,
+                exchange_rate: incomeMoney.exchange_rate,
+                monto_usd: incomeMoney.monto_usd,
                 origin_table: 'agro_losses',
                 origin_id: loss.id,
                 transfer_state: 'active'
@@ -4691,6 +4728,9 @@ async function handleLossTransfer(itemId) {
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
+                'currency',
+                'exchange_rate',
+                'monto_usd',
                 'origin_table',
                 'origin_id',
                 'transfer_state'
@@ -5275,6 +5315,37 @@ function formatCurrency(value) {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
     }).format(value || 0);
+}
+
+function buildIncomeMonetaryFields(sourceRow, amountCandidate) {
+    const amountParsed = toSafeLocaleNumber(amountCandidate);
+    const amount = amountParsed !== null ? amountParsed : 0;
+
+    const rawCurrency = String(sourceRow?.currency ?? '').trim().toUpperCase();
+    const currency = SUPPORTED_CURRENCIES[rawCurrency] ? rawCurrency : 'USD';
+    const rawRate = toSafeLocaleNumber(sourceRow?.exchange_rate);
+    const rate = currency === 'USD'
+        ? 1
+        : (rawRate !== null && rawRate > 0 ? rawRate : null);
+
+    const explicitUsd = toSafeLocaleNumber(sourceRow?.monto_usd);
+    let usdAmount = explicitUsd;
+    if (usdAmount === null) {
+        if (currency === 'USD') {
+            usdAmount = amount;
+        } else if (rate !== null && rate > 0) {
+            const converted = convertToUSD(amount, currency, rate);
+            usdAmount = Number.isFinite(converted) ? converted : (amount / rate);
+        }
+    }
+
+    const safeUsd = toSafeLocaleNumber(usdAmount);
+    return {
+        monto: amount,
+        currency,
+        exchange_rate: currency === 'USD' ? 1 : rate,
+        monto_usd: safeUsd !== null ? safeUsd : (currency === 'USD' ? amount : null)
+    };
 }
 
 function resolveRecordAmountUsd(row, amountFields = [], meta = null) {
