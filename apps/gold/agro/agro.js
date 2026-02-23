@@ -3312,7 +3312,10 @@ async function refreshFactureroAfterChange(tabName) {
     refreshPromises.push(refreshFactureroHistory('otros'));
     await Promise.all(refreshPromises);
 
-    const impactsCropCards = tabName === 'gastos' || tabName === 'ingresos' || tabName === 'perdidas';
+    const impactsCropCards = tabName === 'gastos'
+        || tabName === 'ingresos'
+        || tabName === 'pendientes'
+        || tabName === 'perdidas';
     if (impactsCropCards) {
         document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
             detail: { source: 'facturero', tab: tabName }

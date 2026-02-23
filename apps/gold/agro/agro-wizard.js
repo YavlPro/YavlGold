@@ -1537,6 +1537,7 @@ export async function openAgroWizard(tabName, deps) {
                 }
                 const impactsCropCards = tabName === 'gastos'
                     || tabName === 'ingresos'
+                    || tabName === 'pendientes'
                     || tabName === 'perdidas'
                     || createdOperatingExpense;
                 if (impactsCropCards) {
