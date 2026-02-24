@@ -3614,6 +3614,32 @@ body.modal-open {
   font-size: 0.86rem;
 }
 
+/* Fix: scroll interno del modal de Feedback (cuando el contenido crece) */
+.agro-feedback-overlay {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.agro-feedback-card {
+  max-height: min(84vh, 720px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 10px;
+}
+
+/* Mantener los botones siempre visibles abajo */
+.agro-feedback-actions {
+  position: sticky;
+  bottom: 0;
+  padding-top: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 10, 0) 0%,
+    rgba(10, 10, 10, 0.96) 38%,
+    rgba(10, 10, 10, 0.96) 100%
+  );
+}
+
 @media (max-width: 640px) {
   .agro-feedback-fab {
     right: 12px;
