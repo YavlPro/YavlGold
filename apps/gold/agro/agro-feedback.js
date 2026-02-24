@@ -69,6 +69,126 @@ function getFeedbackCategoryLabel(categoria) {
   return '📝 General';
 }
 
+function safeLocalStorageGet(key) {
+  if (!key) return '';
+  try {
+    return safeTrim(localStorage.getItem(key));
+  } catch (_err) {
+    return '';
+  }
+}
+
+function normalizeCropId(value) {
+  const clean = safeTrim(value);
+  if (!clean) return '';
+  if (clean === '__general__') return '';
+  return clean;
+}
+
+function parseCropLabelFromStatus(value) {
+  const text = safeTrim(value);
+  if (!text) return '';
+  const match = text.match(/cultivo:\s*(.+)$/i);
+  return safeTrim(match?.[1]);
+}
+
+function getVisibleAgroSectionKey() {
+  const sections = Array.from(document.querySelectorAll('[data-agro-section]'));
+  if (sections.length <= 0) return '';
+
+  const viewportHeight = Math.max(
+    Number(window.innerHeight) || 0,
+    Number(document.documentElement?.clientHeight) || 0
+  );
+  if (viewportHeight <= 0) return safeTrim(sections[0]?.dataset?.agroSection);
+
+  let bestKey = '';
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  sections.forEach((section) => {
+    const rect = section.getBoundingClientRect();
+    const isVisible = rect.bottom >= 0 && rect.top <= viewportHeight;
+    if (!isVisible) return;
+    const score = Math.abs(rect.top);
+    if (score < bestScore) {
+      bestScore = score;
+      bestKey = safeTrim(section?.dataset?.agroSection);
+    }
+  });
+
+  return bestKey;
+}
+
+function mapSectionLabel(sectionKey, activeTab) {
+  if (activeTab === 'rankings') return 'Rankings';
+  if (activeTab) return 'Facturero';
+
+  const key = safeTrim(sectionKey);
+  if (key === 'activeCrops') return 'Cards';
+  if (key === 'agroRepo') return 'AgroRepo';
+  if (key === 'agenda') return 'Agenda';
+  if (key === 'markets') return 'Mercados';
+  if (key === 'lunar') return 'Fase lunar';
+  if (key === 'stats') return 'Stats';
+  if (key === 'roi') return 'ROI';
+  if (key === 'assistant') return 'Asistente';
+  if (key === 'ops') return 'Facturero';
+  return key || 'Agro';
+}
+
+function collectAgroContext() {
+  const activeTabButton = document.querySelector('.financial-tab-btn.is-active');
+  const activeTab = safeTrim(activeTabButton?.dataset?.tab).toLowerCase();
+  const activeTabLabel = safeTrim(activeTabButton?.textContent);
+
+  const rangeButton = document.querySelector('.ops-rankings-range-btn.is-active');
+  const rankingsRange = safeTrim(rangeButton?.dataset?.range).toLowerCase();
+  const rankingsRangeLabel = safeTrim(rangeButton?.textContent);
+
+  const activeCropChip = document.querySelector('.ops-cultivo-chip.is-active');
+  const cropLabelFromChip = safeTrim(
+    activeCropChip?.querySelector('.ops-cultivo-chip-name')?.textContent
+  );
+  const cropIdFromChip = normalizeCropId(activeCropChip?.dataset?.cropId);
+  const cropIdFromStorage = normalizeCropId(
+    safeLocalStorageGet('YG_AGRO_SELECTED_CROP_V1') || safeLocalStorageGet('selectedCropId')
+  );
+
+  const rankingsStatus = document.getElementById('ops-rankings-status');
+  const cropLabelFromStatus = parseCropLabelFromStatus(rankingsStatus?.textContent);
+  const cropLabel = cropLabelFromChip || cropLabelFromStatus || (cropIdFromStorage ? '🌱 Cultivo seleccionado' : '📋 Vista General');
+
+  const sectionKey = activeTab ? 'ops' : getVisibleAgroSectionKey();
+  const sectionLabel = mapSectionLabel(sectionKey, activeTab);
+
+  const buildMarker = document.getElementById('agro-build-marker');
+  const buildText = safeTrim(buildMarker?.textContent);
+  const buildVersion = safeTrim(buildMarker?.dataset?.buildVersion);
+  const buildDate = safeTrim(buildMarker?.dataset?.buildDate);
+
+  const path = safeTrim(window.location.pathname) || '/agro/';
+  const query = safeTrim(window.location.search);
+
+  return {
+    module: 'agro',
+    section_key: sectionKey || 'ops',
+    section_label: sectionLabel,
+    active_tab: activeTab || '',
+    active_tab_label: activeTabLabel,
+    rankings_range: rankingsRange || '',
+    rankings_range_label: rankingsRangeLabel,
+    crop_label: cropLabel,
+    crop_id: cropIdFromChip || cropIdFromStorage || '',
+    online: navigator.onLine !== false,
+    build_version: buildVersion,
+    build_date: buildDate,
+    build_text: buildText,
+    path,
+    query,
+    debug: query.includes('debug=1')
+  };
+}
+
 async function fetchRecentFeedback(userId, limit = FEEDBACK_HISTORY_LIMIT) {
   const { data, error } = await supabase
     .from('agro_feedback')
@@ -425,12 +545,14 @@ function createModal() {
     const payload = {
       categoria,
       mensaje,
-      page: '/agro/',
+      page: window.location.pathname || '/agro/',
       version: FEEDBACK_VERSION,
       meta: {
         ts: Date.now(),
         ua: navigator.userAgent || '',
-        path: window.location.pathname || '/agro/'
+        path: window.location.pathname || '/agro/',
+        query: window.location.search || '',
+        context: collectAgroContext()
       }
     };
 
