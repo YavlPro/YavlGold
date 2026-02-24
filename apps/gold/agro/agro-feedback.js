@@ -3,9 +3,24 @@ import { supabase } from '../assets/js/config/supabase-config.js';
 const FEEDBACK_VERSION = 'V9.8';
 const FEEDBACK_QUEUE_KEY = 'YG_AGRO_FEEDBACK_QUEUE_V1';
 const FEEDBACK_QUEUE_LIMIT = 30;
+let feedbackFabButton = null;
 
 function safeTrim(value) {
   return String(value ?? '').trim();
+}
+
+function isAgroFeedbackUnavailableError(error) {
+  const code = safeTrim(error?.code).toUpperCase();
+  const message = safeTrim(error?.message).toLowerCase();
+  const details = safeTrim(error?.details).toLowerCase();
+  const combined = `${message} ${details}`;
+
+  if (code === 'PGRST205' || code === '42P01') return true;
+  if (!combined.includes('agro_feedback')) return false;
+  return combined.includes('schema cache')
+    || combined.includes('could not find')
+    || combined.includes('relation')
+    || combined.includes('does not exist');
 }
 
 function readQueue() {
@@ -24,6 +39,24 @@ function writeQueue(items) {
   } catch (_err) {
     // Ignore storage errors.
   }
+}
+
+function getQueueCount() {
+  return readQueue().length;
+}
+
+function formatQueueCount(count) {
+  if (!Number.isFinite(count) || count <= 0) return '0';
+  return count > 99 ? '99+' : String(count);
+}
+
+function updateFabQueueState() {
+  if (!feedbackFabButton) return;
+  const queueCount = getQueueCount();
+  feedbackFabButton.textContent = queueCount > 0
+    ? `💬 Feedback (${formatQueueCount(queueCount)})`
+    : '💬 Feedback';
+  feedbackFabButton.classList.toggle('has-queue', queueCount > 0);
 }
 
 function enqueueFeedback(payload) {
@@ -66,7 +99,8 @@ async function flushQueue(userId) {
   const pending = [];
   let sentCount = 0;
 
-  for (const item of queue) {
+  for (let index = 0; index < queue.length; index += 1) {
+    const item = queue[index];
     const { error } = await insertFeedback(userId, {
       categoria: item.categoria,
       mensaje: item.mensaje,
@@ -76,6 +110,10 @@ async function flushQueue(userId) {
     });
 
     if (error) {
+      if (isAgroFeedbackUnavailableError(error)) {
+        pending.push(...queue.slice(index));
+        break;
+      }
       pending.push(item);
       continue;
     }
@@ -164,7 +202,20 @@ function createModal() {
   sendBtn.className = 'agro-feedback-btn agro-feedback-btn-primary';
   sendBtn.textContent = 'Enviar';
 
-  actions.append(cancelBtn, sendBtn);
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.className = 'agro-feedback-btn agro-feedback-btn-secondary';
+  retryBtn.textContent = 'Reintentar ahora';
+
+  function refreshRetryButton() {
+    const pendingCount = getQueueCount();
+    retryBtn.disabled = pendingCount <= 0;
+    retryBtn.textContent = pendingCount > 0
+      ? `Reintentar ahora (${formatQueueCount(pendingCount)})`
+      : 'Reintentar ahora';
+  }
+
+  actions.append(retryBtn, cancelBtn, sendBtn);
   card.append(title, hint, categoryLabel, category, messageLabel, message, status, actions);
   overlay.appendChild(card);
 
@@ -175,6 +226,44 @@ function createModal() {
   cancelBtn.addEventListener('click', closeModal);
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay) closeModal();
+  });
+
+  retryBtn.addEventListener('click', async () => {
+    const pendingBefore = getQueueCount();
+    if (pendingBefore <= 0) {
+      status.textContent = 'No hay mensajes en cola.';
+      refreshRetryButton();
+      return;
+    }
+
+    retryBtn.disabled = true;
+    sendBtn.disabled = true;
+    cancelBtn.disabled = true;
+    status.textContent = 'Reintentando cola...';
+
+    try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        status.textContent = 'Inicia sesión para reenviar la cola.';
+        return;
+      }
+
+      const sentCount = await flushQueue(userId);
+      const remaining = getQueueCount();
+      updateFabQueueState();
+
+      if (remaining <= 0) {
+        status.textContent = sentCount > 0
+          ? '✅ Cola reenviada.'
+          : 'No había elementos pendientes.';
+      } else {
+        status.textContent = `Se reenviaron ${sentCount}. Pendientes: ${remaining}.`;
+      }
+    } finally {
+      sendBtn.disabled = false;
+      cancelBtn.disabled = false;
+      refreshRetryButton();
+    }
   });
 
   sendBtn.addEventListener('click', async () => {
@@ -207,6 +296,8 @@ function createModal() {
 
       if (!userId) {
         enqueueFeedback(payload);
+        updateFabQueueState();
+        refreshRetryButton();
         status.textContent = 'Guardado en cola. Inicia sesión para enviarlo.';
         sendBtn.disabled = false;
         cancelBtn.disabled = false;
@@ -214,20 +305,27 @@ function createModal() {
       }
 
       await flushQueue(userId);
+      updateFabQueueState();
+      refreshRetryButton();
       const { error } = await insertFeedback(userId, payload);
       if (error) throw error;
 
       status.textContent = '✅ Enviado. Gracias.';
       message.value = '';
       setTimeout(closeModal, 700);
-    } catch (_err) {
+    } catch (err) {
       enqueueFeedback(payload);
-      status.textContent = 'Guardado en cola por red/error. Se enviará después.';
+      updateFabQueueState();
+      refreshRetryButton();
+      status.textContent = isAgroFeedbackUnavailableError(err)
+        ? 'Feedback no disponible (migración pendiente). Guardado en cola local.'
+        : 'Guardado en cola por red/error. Se enviará después.';
       sendBtn.disabled = false;
       cancelBtn.disabled = false;
     }
   });
 
+  refreshRetryButton();
   return overlay;
 }
 
@@ -235,7 +333,9 @@ function initAgroFeedback() {
   if (document.querySelector('.agro-feedback-fab')) return;
 
   const button = createFabButton();
+  feedbackFabButton = button;
   document.body.appendChild(button);
+  updateFabQueueState();
 
   button.addEventListener('click', () => {
     const modal = createModal();
@@ -248,6 +348,7 @@ function initAgroFeedback() {
     const userId = await getCurrentUserId();
     if (!userId) return;
     await flushQueue(userId);
+    updateFabQueueState();
   };
 
   tryFlushQueue();
@@ -256,7 +357,9 @@ function initAgroFeedback() {
     if (event !== 'SIGNED_IN') return;
     const userId = session?.user?.id;
     if (!userId) return;
-    void flushQueue(userId);
+    void flushQueue(userId).then(() => {
+      updateFabQueueState();
+    });
   });
 }
 

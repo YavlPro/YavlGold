@@ -3401,6 +3401,11 @@ body.modal-open {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(200, 167, 82, 0.2);
 }
 
+.agro-feedback-fab.has-queue {
+  border-color: rgba(200, 167, 82, 0.65);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), 0 0 20px rgba(200, 167, 82, 0.25);
+}
+
 .agro-feedback-overlay {
   position: fixed;
   inset: 0;
@@ -3501,6 +3506,11 @@ body.modal-open {
 .agro-feedback-btn-ghost {
   background: transparent;
   color: rgba(255, 255, 255, 0.85);
+}
+
+.agro-feedback-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .agro-feedback-btn-primary {
