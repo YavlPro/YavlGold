@@ -3529,6 +3529,91 @@ body.modal-open {
   color: rgba(255, 255, 255, 0.92);
 }
 
+/* Feedback Inbox */
+.agro-feedback-history {
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 10px;
+}
+
+.agro-feedback-history-summary {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  list-style: none;
+}
+
+.agro-feedback-history-summary::-webkit-details-marker {
+  display: none;
+}
+
+.agro-feedback-history-body {
+  margin-top: 10px;
+}
+
+.agro-feedback-history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.agro-feedback-history-hint {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.82rem;
+}
+
+.agro-feedback-history-status {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.86rem;
+  min-height: 1.2em;
+  margin-bottom: 8px;
+}
+
+.agro-feedback-history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.agro-feedback-history-item {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.agro-feedback-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.agro-feedback-history-cat {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.agro-feedback-history-date {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.agro-feedback-history-msg {
+  color: rgba(255, 255, 255, 0.85);
+  white-space: pre-wrap;
+  line-height: 1.25;
+}
+
+.agro-feedback-history-empty {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.86rem;
+}
+
 @media (max-width: 640px) {
   .agro-feedback-fab {
     right: 12px;

@@ -3,6 +3,7 @@ import { supabase } from '../assets/js/config/supabase-config.js';
 const FEEDBACK_VERSION = 'V9.8';
 const FEEDBACK_QUEUE_KEY = 'YG_AGRO_FEEDBACK_QUEUE_V1';
 const FEEDBACK_QUEUE_LIMIT = 30;
+const FEEDBACK_HISTORY_LIMIT = 20;
 let feedbackFabButton = null;
 
 function safeTrim(value) {
@@ -48,6 +49,77 @@ function getQueueCount() {
 function formatQueueCount(count) {
   if (!Number.isFinite(count) || count <= 0) return '0';
   return count > 99 ? '99+' : String(count);
+}
+
+function formatFeedbackDate(value) {
+  try {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString();
+  } catch (_err) {
+    return '';
+  }
+}
+
+function getFeedbackCategoryLabel(categoria) {
+  const normalized = safeTrim(categoria).toLowerCase();
+  if (normalized === 'bug') return '🐛 Bug';
+  if (normalized === 'sugerencia') return '💡 Sugerencia';
+  if (normalized === 'pregunta') return '❓ Pregunta';
+  return '📝 General';
+}
+
+async function fetchRecentFeedback(userId, limit = FEEDBACK_HISTORY_LIMIT) {
+  const { data, error } = await supabase
+    .from('agro_feedback')
+    .select('id,categoria,mensaje,created_at,page,version')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
+function renderFeedbackRows(container, rows) {
+  container.innerHTML = '';
+
+  if (!Array.isArray(rows) || rows.length <= 0) {
+    const empty = document.createElement('div');
+    empty.className = 'agro-feedback-history-empty';
+    empty.textContent = 'Aún no hay feedback enviado.';
+    container.appendChild(empty);
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'agro-feedback-history-list';
+
+  rows.forEach((row) => {
+    const item = document.createElement('div');
+    item.className = 'agro-feedback-history-item';
+
+    const head = document.createElement('div');
+    head.className = 'agro-feedback-history-head';
+
+    const category = document.createElement('span');
+    category.className = 'agro-feedback-history-cat';
+    category.textContent = getFeedbackCategoryLabel(row?.categoria);
+
+    const date = document.createElement('span');
+    date.className = 'agro-feedback-history-date';
+    date.textContent = formatFeedbackDate(row?.created_at);
+
+    const message = document.createElement('div');
+    message.className = 'agro-feedback-history-msg';
+    message.textContent = safeTrim(row?.mensaje);
+
+    head.append(category, date);
+    item.append(head, message);
+    list.appendChild(item);
+  });
+
+  container.appendChild(list);
 }
 
 function updateFabQueueState() {
@@ -215,8 +287,65 @@ function createModal() {
       : 'Reintentar ahora';
   }
 
+  const historyDetails = document.createElement('details');
+  historyDetails.className = 'agro-feedback-history';
+
+  const historySummary = document.createElement('summary');
+  historySummary.className = 'agro-feedback-history-summary';
+  historySummary.textContent = '📥 Mis feedback enviados';
+
+  const historyBody = document.createElement('div');
+  historyBody.className = 'agro-feedback-history-body';
+
+  const historyTop = document.createElement('div');
+  historyTop.className = 'agro-feedback-history-top';
+
+  const historyHint = document.createElement('div');
+  historyHint.className = 'agro-feedback-history-hint';
+  historyHint.textContent = `Últimos ${FEEDBACK_HISTORY_LIMIT} mensajes (solo tú los ves).`;
+
+  const historyRefreshBtn = document.createElement('button');
+  historyRefreshBtn.type = 'button';
+  historyRefreshBtn.className = 'agro-feedback-btn agro-feedback-btn-secondary';
+  historyRefreshBtn.textContent = 'Actualizar';
+
+  const historyStatus = document.createElement('div');
+  historyStatus.className = 'agro-feedback-history-status';
+
+  const historyListHost = document.createElement('div');
+  historyListHost.className = 'agro-feedback-history-host';
+
+  historyTop.append(historyHint, historyRefreshBtn);
+  historyBody.append(historyTop, historyStatus, historyListHost);
+  historyDetails.append(historySummary, historyBody);
+
+  async function loadHistory() {
+    historyStatus.textContent = 'Cargando...';
+    historyRefreshBtn.disabled = true;
+
+    try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        historyStatus.textContent = 'Inicia sesión para ver tus envíos.';
+        historyListHost.innerHTML = '';
+        return;
+      }
+
+      const rows = await fetchRecentFeedback(userId);
+      historyStatus.textContent = '';
+      renderFeedbackRows(historyListHost, rows);
+    } catch (err) {
+      historyStatus.textContent = isAgroFeedbackUnavailableError(err)
+        ? 'Feedback no disponible (migración pendiente).'
+        : 'No se pudo cargar el historial.';
+      historyListHost.innerHTML = '';
+    } finally {
+      historyRefreshBtn.disabled = false;
+    }
+  }
+
   actions.append(retryBtn, cancelBtn, sendBtn);
-  card.append(title, hint, categoryLabel, category, messageLabel, message, status, actions);
+  card.append(title, hint, categoryLabel, category, messageLabel, message, status, historyDetails, actions);
   overlay.appendChild(card);
 
   function closeModal() {
@@ -226,6 +355,16 @@ function createModal() {
   cancelBtn.addEventListener('click', closeModal);
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay) closeModal();
+  });
+
+  historyRefreshBtn.addEventListener('click', () => {
+    void loadHistory();
+  });
+
+  historyDetails.addEventListener('toggle', () => {
+    if (historyDetails.open) {
+      void loadHistory();
+    }
   });
 
   retryBtn.addEventListener('click', async () => {
@@ -258,6 +397,10 @@ function createModal() {
           : 'No había elementos pendientes.';
       } else {
         status.textContent = `Se reenviaron ${sentCount}. Pendientes: ${remaining}.`;
+      }
+
+      if (historyDetails.open) {
+        await loadHistory();
       }
     } finally {
       sendBtn.disabled = false;
@@ -312,6 +455,10 @@ function createModal() {
 
       status.textContent = '✅ Enviado. Gracias.';
       message.value = '';
+
+      if (historyDetails.open) {
+        await loadHistory();
+      }
       setTimeout(closeModal, 700);
     } catch (err) {
       enqueueFeedback(payload);
