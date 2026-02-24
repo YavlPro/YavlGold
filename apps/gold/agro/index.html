@@ -668,6 +668,12 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        .status-lost {
+            background: rgba(248, 113, 113, 0.14);
+            color: var(--danger);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+        }
+
         /* Progress Bar */
         .progress-section {
             margin-bottom: var(--spacing-md);
@@ -1530,6 +1536,7 @@
                         <option value="creciendo">Creciendo</option>
                         <option value="produccion">En producci&oacute;n</option>
                         <option value="finalizado">Finalizado</option>
+                        <option value="lost" title="Perdido o da&ntilde;ado">Perdido (da&ntilde;ado)</option>
                     </select>
                 </div>
             </form>
@@ -2244,6 +2251,21 @@
                     alert('⚠️ ' + msg);
                 }
             };
+            const normalizeCycleStatus = (value) => {
+                const token = String(value || '')
+                    .trim()
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '');
+                if (!token) return '';
+                if (token === 'perdido' || token === 'perdida' || token === 'danado' || token === 'damaged' || token === 'lost') {
+                    return 'lost';
+                }
+                if (token === 'finalizado' || token === 'cosechado' || token === 'finished' || token === 'harvested') {
+                    return 'finalizado';
+                }
+                return token;
+            };
 
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -2319,6 +2341,9 @@
                     return 'sembrado';
                 };
                 const effectiveStatus = statusMode === 'auto' ? computeAutoStatus() : statusOverride;
+                const normalizedEffectiveStatus = normalizeCycleStatus(effectiveStatus);
+                const initialStatus = normalizeCycleStatus(document.getElementById('form-new-crop')?.dataset?.initialStatus || '');
+                const shouldPromptLostWizard = normalizedEffectiveStatus === 'lost' && initialStatus !== 'lost';
 
                 let insertedId = null;
 
@@ -2393,13 +2418,35 @@
                 if (insertedId && Number.isFinite(templateDuration) && templateDuration > 0) {
                     window.YGAgroTemplates?.storeCropTemplateMapping(insertedId, templateDuration);
                 }
+                const savedCropId = editId || insertedId || null;
+                const suggestedLossAmount = Number(investment) > 0 ? Number(investment) : '';
+                const safeCropName = String(name || '').trim() || 'Cultivo';
+
                 window.closeCropModal();
                 document.getElementById('form-new-crop').reset();
                 const editInput = document.getElementById('crop-edit-id');
                 if (editInput) editInput.value = '';
                 const statusSelect = document.getElementById('crop-status');
                 if (statusSelect) statusSelect.value = 'sembrado';
+                document.dispatchEvent(new CustomEvent('agro:crops:refresh', {
+                    detail: { source: 'crop-modal', status: normalizedEffectiveStatus || 'unknown' }
+                }));
                 document.dispatchEvent(new CustomEvent('data-refresh'));
+                if (shouldPromptLostWizard && savedCropId && typeof window.launchAgroWizard === 'function') {
+                    setTimeout(() => {
+                        window.launchAgroWizard('perdidas', {
+                            forcedCropId: savedCropId,
+                            lockCropSelection: true,
+                            prefill: {
+                                concepto: `Cultivo perdido: ${safeCropName}`,
+                                monto: suggestedLossAmount,
+                                currency: 'USD',
+                                exchangeRate: 1,
+                                fecha: getTodayKey()
+                            }
+                        });
+                    }, 120);
+                }
 
             } catch (e) { alert(e.message); }
             finally { btn.innerHTML = originalText; btn.disabled = false; }

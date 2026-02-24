@@ -2456,6 +2456,27 @@ body.modal-open {
   animation: slideDown 0.3s ease-out;
 }
 
+.crop-history-group {
+  margin-top: 1rem;
+}
+
+.crop-history-group:first-of-type {
+  margin-top: 1rem;
+}
+
+.crop-history-group-title {
+  margin: 0 0 0.75rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.84rem;
+  letter-spacing: 0.85px;
+  text-transform: uppercase;
+  color: rgba(248, 224, 160, 0.94);
+}
+
+.crop-history-group-title-lost {
+  color: var(--danger, #ef4444);
+}
+
 .crop-history-audit {
   margin-top: 1rem;
   border-style: dashed;

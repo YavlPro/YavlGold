@@ -114,11 +114,20 @@ const INACTIVE_WIZARD_CROP_STATUSES = new Set([
     'cancelado',
     'harvested',
     'cancelled',
-    'cosechado'
+    'cosechado',
+    'lost',
+    'perdido',
+    'perdida',
+    'danado',
+    'damaged'
 ]);
 
 function normalizeWizardCropStatus(value) {
-    return String(value || '').trim().toLowerCase();
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
 }
 
 function isActiveWizardCrop(crop) {
@@ -532,7 +541,7 @@ function injectWizardStyles() {
 
 /**
  * @param {string} tabName - 'pendientes' | 'ingresos' | 'gastos' | 'perdidas' | 'transferencias'
- * @param {object} deps - { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho, forcedCropId, lockCropSelection, refreshAlsoTabs }
+ * @param {object} deps - { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho, forcedCropId, lockCropSelection, refreshAlsoTabs, prefill }
  */
 export async function openAgroWizard(tabName, deps) {
     const meta = WIZARD_TAB_META[tabName];
@@ -560,6 +569,32 @@ export async function openAgroWizard(tabName, deps) {
     const refreshAlsoTabs = Array.isArray(deps?.refreshAlsoTabs)
         ? deps.refreshAlsoTabs.filter(Boolean).map((tab) => String(tab))
         : [];
+    const prefill = deps?.prefill && typeof deps.prefill === 'object' ? deps.prefill : null;
+    const todayISO = (typeof getTodayLocalISO === 'function'
+        ? getTodayLocalISO()
+        : new Date().toISOString().split('T')[0]);
+    const prefillDate = String(prefill?.fecha || '').trim();
+    const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(prefillDate) ? prefillDate : todayISO;
+    const prefillCurrency = String(prefill?.currency || 'USD').trim().toUpperCase();
+    const safeCurrency = SUPPORTED_CURRENCIES[prefillCurrency] ? prefillCurrency : 'USD';
+    const prefillAmount = Number(prefill?.monto);
+    const safeAmount = Number.isFinite(prefillAmount) && prefillAmount > 0
+        ? String(prefillAmount)
+        : '';
+    const prefillRate = Number(prefill?.exchangeRate);
+    const safeRate = Number.isFinite(prefillRate) && prefillRate > 0
+        ? prefillRate
+        : (safeCurrency === 'USD' ? 1 : (getRate(safeCurrency, { USD: 1 }) || 0));
+    const prefillUnitType = String(prefill?.unitType || '').trim().toLowerCase();
+    const safeUnitType = UNIT_OPTIONS.some((option) => option.value === prefillUnitType)
+        ? prefillUnitType
+        : '';
+    const prefillUnitQty = Number(prefill?.unitQty);
+    const safeUnitQty = Number.isFinite(prefillUnitQty) && prefillUnitQty > 0
+        ? Math.min(999, prefillUnitQty)
+        : 1;
+    const prefillKg = prefill?.quantityKg;
+    const safeKg = prefillKg === undefined || prefillKg === null ? '' : String(prefillKg);
 
     injectWizardStyles();
 
@@ -572,18 +607,28 @@ export async function openAgroWizard(tabName, deps) {
         step: 1,
         cropId: initialCropId,
         cropName: 'General / Sin cultivo',
-        concepto: '',
-        who: '',
-        fecha: (typeof getTodayLocalISO === 'function' ? getTodayLocalISO() : new Date().toISOString().split('T')[0]),
-        unitType: '',
-        unitQty: 1,
-        quantityKg: '',
-        monto: '',
-        currency: 'USD',
-        exchangeRate: 1,
+        concepto: String(prefill?.concepto || '').trim(),
+        who: String(prefill?.who || '').trim(),
+        fecha: safeDate,
+        unitType: safeUnitType,
+        unitQty: safeUnitQty,
+        quantityKg: safeKg,
+        monto: safeAmount,
+        currency: safeCurrency,
+        exchangeRate: safeRate,
         montoUsd: 0,
         countAsOperatingExpense: false
     };
+    if (state.currency === 'USD') {
+        state.exchangeRate = 1;
+    }
+    if (Number(state.monto) > 0) {
+        if (state.currency === 'USD') {
+            state.montoUsd = Number(state.monto);
+        } else if (state.exchangeRate > 0) {
+            state.montoUsd = convertToUSD(Number(state.monto), state.currency, state.exchangeRate);
+        }
+    }
 
     // Pre-fill crop name
     if (state.cropId && Array.isArray(cropsCache)) {

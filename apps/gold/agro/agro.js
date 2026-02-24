@@ -3202,7 +3202,8 @@ async function pickWizardTabForGeneral() {
     });
 }
 
-async function launchAgroWizard(tabName) {
+async function launchAgroWizard(tabName, options = {}) {
+    const wizardOptions = options && typeof options === 'object' ? options : {};
     let targetTab = tabName;
     let forcedCropId;
     let lockCropSelection = false;
@@ -3217,6 +3218,22 @@ async function launchAgroWizard(tabName) {
         refreshAlsoTabs.push('otros');
     }
 
+    if (Object.prototype.hasOwnProperty.call(wizardOptions, 'forcedCropId')) {
+        forcedCropId = normalizeCropId(wizardOptions.forcedCropId);
+    }
+    if (Object.prototype.hasOwnProperty.call(wizardOptions, 'lockCropSelection')) {
+        lockCropSelection = wizardOptions.lockCropSelection === true;
+    }
+    if (Array.isArray(wizardOptions.refreshAlsoTabs)) {
+        wizardOptions.refreshAlsoTabs
+            .map((tab) => String(tab || '').trim())
+            .filter(Boolean)
+            .forEach((tab) => refreshAlsoTabs.push(tab));
+    }
+    const prefill = wizardOptions.prefill && typeof wizardOptions.prefill === 'object'
+        ? wizardOptions.prefill
+        : null;
+
     openAgroWizard(targetTab, {
         supabase,
         cropsCache,
@@ -3227,7 +3244,8 @@ async function launchAgroWizard(tabName) {
         buildConceptWithWho,
         forcedCropId,
         lockCropSelection,
-        refreshAlsoTabs
+        refreshAlsoTabs,
+        prefill
     });
 }
 
@@ -5098,14 +5116,20 @@ const CROP_STATUS_UI = {
     sembrado: { class: 'status-attention', text: 'Sembrado' },
     creciendo: { class: 'status-growing', text: 'Creciendo' },
     produccion: { class: 'status-ready', text: 'En produccion' },
-    finalizado: { class: 'status-finished', text: 'Finalizado' }
+    finalizado: { class: 'status-finished', text: 'Finalizado' },
+    lost: { class: 'status-lost', text: 'Perdido' }
 };
 
 const CROP_STATUS_LEGACY_MAP = {
     growing: 'creciendo',
     ready: 'produccion',
     attention: 'sembrado',
-    harvested: 'finalizado'
+    harvested: 'finalizado',
+    perdido: 'lost',
+    perdida: 'lost',
+    danado: 'lost',
+    damaged: 'lost',
+    loss: 'lost'
 };
 
 const CROP_STATUS_THRESHOLDS = {
@@ -5124,20 +5148,35 @@ const CROP_FINISHED_STATUS_TOKENS = new Set([
     'done',
     'closed',
     'completado',
-    'completada'
+    'completada',
+    'lost',
+    'perdido',
+    'perdida',
+    'danado',
+    'damaged'
 ]);
 
 const CROP_CYCLE_HISTORY_SECTION_ID = 'crops-cycle-history-accordion';
 const CROP_CYCLE_HISTORY_TITLE_ID = 'crops-cycle-history-title';
+const CROP_CYCLE_FINISHED_SECTION_ID = 'crops-cycle-finished-section';
+const CROP_CYCLE_FINISHED_TITLE_ID = 'crops-cycle-finished-title';
 const CROP_CYCLE_HISTORY_GRID_ID = 'crops-cycle-history-grid';
+const CROP_CYCLE_LOST_SECTION_ID = 'crops-cycle-lost-section';
+const CROP_CYCLE_LOST_TITLE_ID = 'crops-cycle-lost-title';
+const CROP_CYCLE_LOST_GRID_ID = 'crops-cycle-lost-grid';
 const CROP_CYCLE_AUDIT_SECTION_ID = 'crops-cycle-history-audit';
 const CROP_CYCLE_AUDIT_TITLE_ID = 'crops-cycle-history-audit-title';
 const CROP_CYCLE_AUDIT_GRID_ID = 'crops-cycle-history-audit-grid';
 
 function normalizeCropStatus(status) {
-    const value = String(status || '').toLowerCase().trim();
+    const raw = String(status || '').toLowerCase().trim();
+    const value = raw
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
     if (!value) return 'creciendo';
+    if (CROP_STATUS_UI[raw]) return raw;
     if (CROP_STATUS_UI[value]) return value;
+    if (CROP_STATUS_LEGACY_MAP[raw]) return CROP_STATUS_LEGACY_MAP[raw];
     if (CROP_STATUS_LEGACY_MAP[value]) return CROP_STATUS_LEGACY_MAP[value];
     return value;
 }
@@ -5216,6 +5255,7 @@ function isCropFinishedCycle(crop, progress) {
     const normalizedResolved = normalizeCropStatus(resolvedStatus);
     const explicitStatus = normalizeStatusToken(crop?.status_override || crop?.status || resolvedStatus);
     const finishedByStatus = normalizedResolved === 'finalizado'
+        || normalizedResolved === 'lost'
         || CROP_FINISHED_STATUS_TOKENS.has(explicitStatus);
 
     const endDateKey = resolveCropEndDateKey(crop);
@@ -6069,6 +6109,24 @@ function buildNoActiveCropsCard(finishedCount = 0) {
     });
 }
 
+function createCycleHistoryGroupSection(config = {}) {
+    const section = document.createElement('section');
+    section.id = String(config.sectionId || '').trim();
+    section.className = 'crop-history-group';
+
+    const title = document.createElement('p');
+    title.id = String(config.titleId || '').trim();
+    title.className = `crop-history-group-title${config.titleClass ? ` ${config.titleClass}` : ''}`;
+    title.textContent = String(config.titleText || 'Historial de ciclos');
+
+    const grid = document.createElement('div');
+    grid.id = String(config.gridId || '').trim();
+    grid.className = 'crops-grid';
+
+    section.append(title, grid);
+    return { section, title, grid };
+}
+
 function ensureCropCycleHistorySection() {
     const cropsSection = document.querySelector('.crops-section');
     if (!cropsSection) return null;
@@ -6106,11 +6164,21 @@ function ensureCropCycleHistorySection() {
 
         const content = document.createElement('div');
         content.className = 'yg-accordion-content';
+        content.id = `${CROP_CYCLE_HISTORY_SECTION_ID}-content`;
 
-        const historyGrid = document.createElement('div');
-        historyGrid.id = CROP_CYCLE_HISTORY_GRID_ID;
-        historyGrid.className = 'crops-grid';
-        historyGrid.style.marginTop = '1rem';
+        const finishedGroup = createCycleHistoryGroupSection({
+            sectionId: CROP_CYCLE_FINISHED_SECTION_ID,
+            titleId: CROP_CYCLE_FINISHED_TITLE_ID,
+            gridId: CROP_CYCLE_HISTORY_GRID_ID,
+            titleText: 'Historial de ciclos finalizados (0)'
+        });
+        const lostGroup = createCycleHistoryGroupSection({
+            sectionId: CROP_CYCLE_LOST_SECTION_ID,
+            titleId: CROP_CYCLE_LOST_TITLE_ID,
+            gridId: CROP_CYCLE_LOST_GRID_ID,
+            titleText: 'Historial de ciclos perdidos (0)',
+            titleClass: 'crop-history-group-title-lost'
+        });
 
         const auditDetails = document.createElement('details');
         auditDetails.id = CROP_CYCLE_AUDIT_SECTION_ID;
@@ -6155,17 +6223,115 @@ function ensureCropCycleHistorySection() {
         auditContent.append(auditNote, auditGrid);
         auditDetails.append(auditSummary, auditContent);
 
-        content.append(historyGrid, auditDetails);
+        content.append(finishedGroup.section, lostGroup.section, auditDetails);
         details.append(summary, content);
         cropsSection.appendChild(details);
     }
 
+    let contentEl = details.querySelector(`#${CROP_CYCLE_HISTORY_SECTION_ID}-content`) || details.querySelector('.yg-accordion-content');
+    if (!contentEl) {
+        contentEl = document.createElement('div');
+        contentEl.className = 'yg-accordion-content';
+        contentEl.id = `${CROP_CYCLE_HISTORY_SECTION_ID}-content`;
+        details.appendChild(contentEl);
+    }
+
+    let auditDetailsEl = document.getElementById(CROP_CYCLE_AUDIT_SECTION_ID);
+    if (!auditDetailsEl) {
+        auditDetailsEl = document.createElement('details');
+        auditDetailsEl.id = CROP_CYCLE_AUDIT_SECTION_ID;
+        auditDetailsEl.className = 'yg-accordion crop-history-audit';
+        auditDetailsEl.open = false;
+
+        const auditSummary = document.createElement('summary');
+        auditSummary.className = 'yg-accordion-summary';
+
+        const auditIcon = document.createElement('span');
+        auditIcon.className = 'yg-accordion-icon';
+        auditIcon.replaceChildren();
+        const auditFlaskIcon = document.createElement('i');
+        auditFlaskIcon.className = 'fa-solid fa-flask-vial';
+        auditIcon.appendChild(auditFlaskIcon);
+
+        const auditTitle = document.createElement('span');
+        auditTitle.className = 'yg-accordion-title';
+        auditTitle.id = CROP_CYCLE_AUDIT_TITLE_ID;
+        auditTitle.textContent = '🧪 Auditoría (0)';
+
+        const auditChevron = document.createElement('span');
+        auditChevron.className = 'yg-accordion-chevron';
+        auditChevron.replaceChildren();
+        const auditChevronIcon = document.createElement('i');
+        auditChevronIcon.className = 'fa-solid fa-chevron-down';
+        auditChevron.appendChild(auditChevronIcon);
+
+        auditSummary.append(auditIcon, auditTitle, auditChevron);
+
+        const auditContent = document.createElement('div');
+        auditContent.className = 'yg-accordion-content';
+
+        const auditNote = document.createElement('p');
+        auditNote.className = 'crop-history-audit-note';
+        auditNote.textContent = 'Ciclos huérfanos detectados para trazabilidad. Exporta solo si corresponde.';
+
+        const auditGrid = document.createElement('div');
+        auditGrid.id = CROP_CYCLE_AUDIT_GRID_ID;
+        auditGrid.className = 'crops-grid';
+
+        auditContent.append(auditNote, auditGrid);
+        auditDetailsEl.append(auditSummary, auditContent);
+        contentEl.appendChild(auditDetailsEl);
+    }
+
+    let finishedSectionEl = document.getElementById(CROP_CYCLE_FINISHED_SECTION_ID);
+    if (!finishedSectionEl) {
+        const legacyFinishedGridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
+        const group = createCycleHistoryGroupSection({
+            sectionId: CROP_CYCLE_FINISHED_SECTION_ID,
+            titleId: CROP_CYCLE_FINISHED_TITLE_ID,
+            gridId: CROP_CYCLE_HISTORY_GRID_ID,
+            titleText: 'Historial de ciclos finalizados (0)'
+        });
+        if (legacyFinishedGridEl
+            && legacyFinishedGridEl !== group.grid
+            && !legacyFinishedGridEl.closest(`#${CROP_CYCLE_FINISHED_SECTION_ID}`)) {
+            group.section.replaceChild(legacyFinishedGridEl, group.grid);
+        }
+        contentEl.insertBefore(group.section, auditDetailsEl);
+        finishedSectionEl = group.section;
+    }
+
+    let lostSectionEl = document.getElementById(CROP_CYCLE_LOST_SECTION_ID);
+    if (!lostSectionEl) {
+        const group = createCycleHistoryGroupSection({
+            sectionId: CROP_CYCLE_LOST_SECTION_ID,
+            titleId: CROP_CYCLE_LOST_TITLE_ID,
+            gridId: CROP_CYCLE_LOST_GRID_ID,
+            titleText: 'Historial de ciclos perdidos (0)',
+            titleClass: 'crop-history-group-title-lost'
+        });
+        contentEl.insertBefore(group.section, auditDetailsEl);
+        lostSectionEl = group.section;
+    }
+
     const titleEl = document.getElementById(CROP_CYCLE_HISTORY_TITLE_ID);
-    const gridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
-    const auditDetailsEl = document.getElementById(CROP_CYCLE_AUDIT_SECTION_ID);
+    const finishedTitleEl = document.getElementById(CROP_CYCLE_FINISHED_TITLE_ID);
+    const finishedGridEl = document.getElementById(CROP_CYCLE_HISTORY_GRID_ID);
+    const lostTitleEl = document.getElementById(CROP_CYCLE_LOST_TITLE_ID);
+    const lostGridEl = document.getElementById(CROP_CYCLE_LOST_GRID_ID);
     const auditTitleEl = document.getElementById(CROP_CYCLE_AUDIT_TITLE_ID);
     const auditGridEl = document.getElementById(CROP_CYCLE_AUDIT_GRID_ID);
-    return { details, titleEl, gridEl, auditDetailsEl, auditTitleEl, auditGridEl };
+    return {
+        details,
+        titleEl,
+        finishedTitleEl,
+        finishedGridEl,
+        lostTitleEl,
+        lostGridEl,
+        auditDetailsEl,
+        auditTitleEl,
+        auditGridEl
+    };
 }
 
 function hideCropCycleHistorySection() {
@@ -6222,6 +6388,59 @@ async function classifyCycleHistoryCrops(finishedCrops, options = {}) {
     return { valid, orphan };
 }
 
+function splitClosedCycleHistory(crops) {
+    const list = Array.isArray(crops) ? crops : [];
+    const finished = [];
+    const lost = [];
+
+    list.forEach((crop) => {
+        const templateDuration = getTemplateDurationForCrop(crop);
+        const progress = computeCropProgress(crop, templateDuration);
+        const status = normalizeCropStatus(resolveCropStatus(crop, progress));
+        if (status === 'lost') {
+            lost.push(crop);
+            return;
+        }
+        finished.push(crop);
+    });
+
+    return { finished, lost };
+}
+
+function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
+    if (!gridEl) return;
+    const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
+    const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
+    const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
+    const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
+    const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const rows = Array.isArray(crops) ? crops : [];
+
+    gridEl.textContent = '';
+    if (rows.length === 0) {
+        const empty = document.createElement('p');
+        empty.style.color = 'var(--text-muted)';
+        empty.style.fontSize = '0.9rem';
+        empty.style.textAlign = 'center';
+        empty.style.padding = '1rem';
+        empty.textContent = emptyText;
+        gridEl.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    rows.forEach((crop, index) => {
+        fragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop
+        }));
+    });
+    gridEl.appendChild(fragment);
+}
+
 function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const ui = ensureCropCycleHistorySection();
     if (!ui) return;
@@ -6231,40 +6450,54 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
 
-    const finishedCrops = Array.isArray(crops) ? crops : [];
+    const closedCrops = Array.isArray(crops) ? crops : [];
+    const { finished: finishedCrops, lost: lostCrops } = splitClosedCycleHistory(closedCrops);
     const auditCrops = Array.isArray(orphanCrops) ? orphanCrops : [];
-    const { details, titleEl, gridEl, auditDetailsEl, auditTitleEl, auditGridEl } = ui;
+    const {
+        details,
+        titleEl,
+        finishedTitleEl,
+        finishedGridEl,
+        lostTitleEl,
+        lostGridEl,
+        auditDetailsEl,
+        auditTitleEl,
+        auditGridEl
+    } = ui;
     details.style.display = 'block';
 
     if (titleEl) {
-        titleEl.textContent = `Historial de ciclos (${finishedCrops.length})`;
+        titleEl.textContent = `Historial de ciclos (${closedCrops.length})`;
     }
-    if (!gridEl) return;
+    if (finishedTitleEl) {
+        finishedTitleEl.textContent = `Historial de ciclos finalizados (${finishedCrops.length})`;
+    }
+    if (lostTitleEl) {
+        lostTitleEl.textContent = `Historial de ciclos perdidos (${lostCrops.length})`;
+    }
+    if (!finishedGridEl || !lostGridEl) return;
 
-    gridEl.textContent = '';
-    if (finishedCrops.length === 0) {
-        const empty = document.createElement('p');
-        empty.style.color = 'var(--text-muted)';
-        empty.style.fontSize = '0.9rem';
-        empty.style.textAlign = 'center';
-        empty.style.padding = '1rem';
-        empty.textContent = auditCrops.length > 0
+    const hasAnyClosedCycle = (finishedCrops.length + lostCrops.length) > 0;
+    const finishedEmptyText = hasAnyClosedCycle
+        ? 'Sin ciclos finalizados por ahora.'
+        : (auditCrops.length > 0
             ? 'Sin ciclos válidos por ahora. Revisa la sección 🧪 Auditoría.'
-            : 'Sin ciclos finalizados por ahora.';
-        gridEl.appendChild(empty);
-    } else {
-        const fragment = document.createDocumentFragment();
-        finishedCrops.forEach((crop, index) => {
-            fragment.appendChild(createCropCardElement(crop, (index % 6) + 1, {
-                expenseTotalsByCrop,
-                incomeTotalsByCrop,
-                lossTotalsByCrop,
-                pendingTotalsByCrop,
-                missingRateCountsByCrop
-            }));
-        });
-        gridEl.appendChild(fragment);
-    }
+            : 'Sin ciclos cerrados por ahora.');
+
+    renderCropCycleGroup(finishedGridEl, finishedCrops, finishedEmptyText, {
+        expenseTotalsByCrop,
+        incomeTotalsByCrop,
+        lossTotalsByCrop,
+        pendingTotalsByCrop,
+        missingRateCountsByCrop
+    });
+    renderCropCycleGroup(lostGridEl, lostCrops, 'Sin ciclos perdidos por ahora.', {
+        expenseTotalsByCrop,
+        incomeTotalsByCrop,
+        lossTotalsByCrop,
+        pendingTotalsByCrop,
+        missingRateCountsByCrop
+    });
 
     if (auditTitleEl) {
         auditTitleEl.textContent = `🧪 Auditoría (${auditCrops.length})`;
@@ -10664,7 +10897,9 @@ export function openCropModal() {
     currentEditId = null;
 
     // Limpiar formulario
-    document.getElementById('form-new-crop')?.reset();
+    const cropForm = document.getElementById('form-new-crop');
+    cropForm?.reset();
+    if (cropForm?.dataset) cropForm.dataset.initialStatus = '';
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = '';
     const statusSelect = document.getElementById('crop-status');
@@ -10726,6 +10961,10 @@ export function openEditModal(id) {
             statusSelect.value = normalizeCropStatus(crop.status_override || crop.status);
         }
     }
+    const cropForm = document.getElementById('form-new-crop');
+    if (cropForm?.dataset) {
+        cropForm.dataset.initialStatus = normalizeCropStatus(crop.status_override || crop.status);
+    }
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = String(crop.id || '');
     const templateSelect = document.getElementById('crop-template');
@@ -10767,6 +11006,8 @@ export function closeCropModal() {
     }
     const editInput = document.getElementById('crop-edit-id');
     if (editInput) editInput.value = '';
+    const cropForm = document.getElementById('form-new-crop');
+    if (cropForm?.dataset) cropForm.dataset.initialStatus = '';
 }
 
 /**
