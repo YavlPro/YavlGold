@@ -4945,7 +4945,18 @@ async function handlePendingTransfer(itemId) {
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
-            const incomeMoney = buildIncomeMonetaryFields(pending, splitDraft.transferAmount);
+            const transferCurrencyRaw = String(splitConfig?.currencyLabel || pendingCurrencyLabel || 'COP').trim().toUpperCase();
+            const transferCurrencyCode = SUPPORTED_CURRENCIES[transferCurrencyRaw] ? transferCurrencyRaw : 'COP';
+            const moneySource = {
+                ...pending,
+                currency: transferCurrencyCode
+            };
+            const pendingRate = toSafeLocaleNumber(pending?.exchange_rate);
+            if (transferCurrencyCode !== 'USD' && pendingRate !== null && pendingRate > 0) {
+                moneySource.exchange_rate = pendingRate;
+            }
+            const incomeMoney = buildIncomeMonetaryFields(moneySource, splitDraft.transferAmount);
+            incomeMoney.currency = transferCurrencyCode;
             const splitMetaDestination = isPartialSplit
                 ? buildPartialSplitMetaPayload({
                     role: 'destination',
@@ -6209,8 +6220,10 @@ function buildIncomeMonetaryFields(sourceRow, amountCandidate) {
         ? 1
         : (rawRate !== null && rawRate > 0 ? rawRate : null);
 
+    const sourceAmount = toSafeLocaleNumber(sourceRow?.monto);
+    const sameAmountAsSource = sourceAmount !== null && Math.abs(sourceAmount - amount) < 1e-9;
     const explicitUsd = toSafeLocaleNumber(sourceRow?.monto_usd);
-    let usdAmount = explicitUsd;
+    let usdAmount = sameAmountAsSource ? explicitUsd : null;
     if (usdAmount === null) {
         if (currency === 'USD') {
             usdAmount = amount;
