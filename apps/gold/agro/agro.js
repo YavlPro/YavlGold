@@ -2664,6 +2664,11 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         }
         originBadge.appendChild(badge);
         left.appendChild(originBadge);
+    } else if (effectiveTabName === 'ingresos') {
+        const meta = document.createElement('div');
+        meta.className = 'facturero-meta facturero-transfer-meta facturero-origin-meta';
+        meta.textContent = 'Contado • Pagado';
+        left.appendChild(meta);
     }
 
     const metaRow = document.createElement('div');

@@ -2089,6 +2089,14 @@ body.modal-open {
   gap: 0.35rem;
 }
 
+.facturero-origin-meta {
+  color: rgba(200, 167, 82, 0.85);
+}
+.facturero-origin-meta::before {
+  content: "• ";
+  opacity: 0.7;
+}
+
 #recent-transactions-container {
   margin-top: 1rem !important;
 }
