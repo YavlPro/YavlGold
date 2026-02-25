@@ -1,11 +1,10 @@
 /**
  * YavlGold V9.7 — Agro Stats Report
  * Generates a global statistical Markdown report
- * reusing computeAgroFinanceSummaryV1() as single source of truth.
+ * from export raw rows to keep global and per-crop totals aligned.
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
-import { computeAgroFinanceSummaryV1 } from './agro-stats.js';
 
 // ============================================================
 // HELPERS
@@ -493,10 +492,6 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
         lossesCount: 0
     };
 
-    if (!crops.length) {
-        return { tableMd: 'Sin cultivos registrados\n', unassigned };
-    }
-
     const cropMap = new Map();
     for (const c of crops) {
         cropMap.set(String(c.id), {
@@ -513,57 +508,93 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
 
     for (const r of incomeRows) {
         const e = cropMap.get(String(r.crop_id));
+        const amountCents = toCents(resolveAmountUsd(r));
         if (e) {
-            e.incomeCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            e.incomeCents += amountCents;
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.incomeCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            unassigned.incomeCents += amountCents;
             unassigned.incomeCount += 1;
         }
     }
     for (const r of expenseRows) {
         const e = cropMap.get(String(r.crop_id));
+        const amountCents = toCents(resolveAmountUsd(r));
         if (e) {
-            e.expenseCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            e.expenseCents += amountCents;
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.expenseCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            unassigned.expenseCents += amountCents;
             unassigned.expenseCount += 1;
         }
     }
     for (const r of pendingRows) {
         const e = cropMap.get(String(r.crop_id));
+        const amountCents = toCents(resolveAmountUsd(r));
         if (e) {
-            e.pendingCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            e.pendingCents += amountCents;
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.pendingCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            unassigned.pendingCents += amountCents;
             unassigned.pendingCount += 1;
         }
     }
     for (const r of lossesRows) {
         const e = cropMap.get(String(r.crop_id));
+        const amountCents = toCents(resolveAmountUsd(r));
         if (e) {
-            e.lossesCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            e.lossesCents += amountCents;
         } else if (isUnassignedCropId(r.crop_id)) {
-            unassigned.lossesCents += toCents(r.amount_usd ?? r.monto_usd ?? r.amount ?? r.monto);
+            unassigned.lossesCents += amountCents;
             unassigned.lossesCount += 1;
         }
     }
 
-    let md = '| Cultivo | Estado | Progreso | Ingresos | Costos | Ganancia | Pendientes | ROI |\n';
-    md += '|---------|--------|----------|----------|--------|----------|------------|-----|\n';
+    const totals = {
+        investmentCents: 0,
+        incomeCents: 0,
+        expenseCents: 0,
+        pendingCents: 0,
+        lossesCents: 0,
+        costCents: 0,
+        profitCents: 0,
+        projectedIncomeCents: 0,
+        projectedProfitCents: 0
+    };
 
-    for (const [, c] of cropMap) {
-        const label = c.variety ? `${c.name} (${c.variety})` : c.name;
-        const costCents = c.investmentCents + c.expenseCents + c.lossesCents;
-        const profitCents = c.incomeCents - costCents;
-        const roi = costCents > 0 ? (((c.incomeCents - costCents) / costCents) * 100).toFixed(1) + '%' : 'N/A';
-        const progress = computeCropProgress(c.crop);
-        const status = resolveCropStatus(c.crop, progress);
-        const statusLine = formatCropStatusLine(status);
-        const progressLine = formatCropProgressLine(progress);
-        md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${centsToStr(c.incomeCents)} | ${centsToStr(costCents)} | ${centsToStr(profitCents)} | ${centsToStr(c.pendingCents)} | ${roi} |\n`;
+    let md = '';
+    if (!cropMap.size) {
+        md = 'Sin cultivos registrados\n';
+    } else {
+        md = '| Cultivo | Estado | Progreso | Ingresos | Costos | Ganancia | Pendientes | ROI |\n';
+        md += '|---------|--------|----------|----------|--------|----------|------------|-----|\n';
+
+        for (const [, c] of cropMap) {
+            totals.investmentCents += c.investmentCents;
+            totals.incomeCents += c.incomeCents;
+            totals.expenseCents += c.expenseCents;
+            totals.pendingCents += c.pendingCents;
+            totals.lossesCents += c.lossesCents;
+
+            const label = c.variety ? `${c.name} (${c.variety})` : c.name;
+            const costCents = c.investmentCents + c.expenseCents + c.lossesCents;
+            const profitCents = c.incomeCents - costCents;
+            const roi = costCents > 0 ? (((c.incomeCents - costCents) / costCents) * 100).toFixed(1) + '%' : 'N/A';
+            const progress = computeCropProgress(c.crop);
+            const status = resolveCropStatus(c.crop, progress);
+            const statusLine = formatCropStatusLine(status);
+            const progressLine = formatCropProgressLine(progress);
+            md += `| ${escMd(label)} | ${escMd(statusLine)} | ${escMd(progressLine)} | ${centsToStr(c.incomeCents)} | ${centsToStr(costCents)} | ${centsToStr(profitCents)} | ${centsToStr(c.pendingCents)} | ${roi} |\n`;
+        }
     }
 
-    return { tableMd: md, unassigned };
+    totals.incomeCents += unassigned.incomeCents;
+    totals.expenseCents += unassigned.expenseCents;
+    totals.pendingCents += unassigned.pendingCents;
+    totals.lossesCents += unassigned.lossesCents;
+    totals.costCents = totals.investmentCents + totals.expenseCents + totals.lossesCents;
+    totals.profitCents = totals.incomeCents - totals.costCents;
+    totals.projectedIncomeCents = totals.incomeCents + totals.pendingCents;
+    totals.projectedProfitCents = totals.projectedIncomeCents - totals.costCents;
+
+    return { tableMd: md, unassigned, totals };
 }
 
 function buildUnassignedSection(unassigned) {
@@ -691,9 +722,6 @@ export async function exportStatsReport() {
             }
         } catch { /* ignore */ }
 
-        // Compute unified summary (single source of truth)
-        const summary = await computeAgroFinanceSummaryV1();
-
         // Fetch raw rows for per-crop breakdown and buyer ranking
         const [crops, incomeRows, expenseRows, pendingRows, lossesRows] = await Promise.all([
             fetchCrops(user.id),
@@ -703,12 +731,14 @@ export async function exportStatsReport() {
             fetchLosses(user.id)
         ]);
 
-        // Use summary totals (already computed, audited)
-        const incomeCents = toCents(summary?.incomeTotal || 0);
-        const costCents = toCents(summary?.costTotal || 0);
-        const pendingCents = toCents(summary?.pendingTotal || 0);
-        const lossesCents = toCents(summary?.lossesTotal || 0);
-        const profitCents = incomeCents - costCents;
+        // Keep global totals aligned with the same source used in per-crop tables.
+        const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
+        const totals = perCropBreakdown.totals || {};
+        const incomeCents = Number(totals.incomeCents) || 0;
+        const costCents = Number(totals.costCents) || 0;
+        const pendingCents = Number(totals.pendingCents) || 0;
+        const lossesCents = Number(totals.lossesCents) || 0;
+        const profitCents = Number(totals.profitCents) || 0;
 
         // Margin = (profit / income) * 100
         const marginStr = incomeCents > 0 ? ((profitCents / incomeCents) * 100).toFixed(1) + '%' : 'N/A';
@@ -716,8 +746,8 @@ export async function exportStatsReport() {
         const roiStr = costCents > 0 ? ((profitCents / costCents) * 100).toFixed(1) + '%' : 'N/A';
 
         // Projected (if all pending is collected)
-        const projIncomeCents = incomeCents + pendingCents;
-        const projProfitCents = projIncomeCents - costCents;
+        const projIncomeCents = Number(totals.projectedIncomeCents) || (incomeCents + pendingCents);
+        const projProfitCents = Number(totals.projectedProfitCents) || (projIncomeCents - costCents);
         const projRoiStr = costCents > 0 ? (((projIncomeCents - costCents) / costCents) * 100).toFixed(1) + '%' : 'N/A';
 
         const activeCrops = crops.filter((crop) => isCropActive(crop));
@@ -751,7 +781,6 @@ export async function exportStatsReport() {
         md += `---\n\n`;
 
         // Per-crop breakdown
-        const perCropBreakdown = buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRows);
         md += `## 🌾 Resumen por Cultivo\n`;
         md += perCropBreakdown.tableMd;
         md += '\n> _Montos en USD \u00b7 Tasas al momento del registro_\n\n---\n\n';
