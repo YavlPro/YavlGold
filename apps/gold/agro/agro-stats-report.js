@@ -563,7 +563,7 @@ function buildPerCropTable(crops, incomeRows, expenseRows, pendingRows, lossesRo
     if (!cropMap.size) {
         md = 'Sin cultivos registrados\n';
     } else {
-        md = '| Cultivo | Estado | Progreso | Ingresos | Costos | Ganancia | Pendientes | ROI |\n';
+        md = '| Cultivo | Estado | Progreso | Pagados | Costos | Ganancia | Fiados | ROI |\n';
         md += '|---------|--------|----------|----------|--------|----------|------------|-----|\n';
 
         for (const [, c] of cropMap) {
@@ -614,9 +614,9 @@ function buildUnassignedSection(unassigned) {
 
     md += '| Concepto | Registros | Monto (USD) |\n';
     md += '|----------|----------:|------------:|\n';
-    md += `| Ingresos | ${info.incomeCount || 0} | ${centsToStr(info.incomeCents || 0)} |\n`;
+    md += `| Pagados | ${info.incomeCount || 0} | ${centsToStr(info.incomeCents || 0)} |\n`;
     md += `| Gastos | ${info.expenseCount || 0} | ${centsToStr(info.expenseCents || 0)} |\n`;
-    md += `| Pendientes | ${info.pendingCount || 0} | ${centsToStr(info.pendingCents || 0)} |\n`;
+    md += `| Fiados | ${info.pendingCount || 0} | ${centsToStr(info.pendingCents || 0)} |\n`;
     md += `| Pérdidas | ${info.lossesCount || 0} | ${centsToStr(info.lossesCents || 0)} |\n`;
     md += `| Resultado neto | - | ${centsToStr(profitCents)} |\n\n`;
     return md;
@@ -769,13 +769,13 @@ export async function exportStatsReport() {
         md += `## 💰 Resumen Global\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Total ingresos | ${centsToStr(incomeCents)} |\n`;
+        md += `| Total pagados | ${centsToStr(incomeCents)} |\n`;
         md += `| Total costos | ${centsToStr(costCents)} |\n`;
         md += `| Ganancia neta | ${centsToStr(profitCents)} |\n`;
         md += `| Margen | ${marginStr} |\n`;
         md += `| ROI | ${roiStr} |\n`;
-        md += `| Pendientes por cobrar | ${centsToStr(pendingCents)} |\n`;
-        md += `| Ingreso proyectado (si se cobra todo) | ${centsToStr(projIncomeCents)} |\n`;
+        md += `| Fiados por cobrar | ${centsToStr(pendingCents)} |\n`;
+        md += `| Pagado proyectado (si se cobra todo) | ${centsToStr(projIncomeCents)} |\n`;
         md += `| ROI proyectado | ${projRoiStr} |\n\n`;
         md += `> _Moneda base: USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
@@ -794,8 +794,8 @@ export async function exportStatsReport() {
 
         // Projection
         md += `## 📈 Proyección\n`;
-        md += `Si se cobran los ${centsToStr(pendingCents)} pendientes:\n`;
-        md += `- **Ingreso total:** ${centsToStr(projIncomeCents)}\n`;
+        md += `Si se cobran los ${centsToStr(pendingCents)} fiados:\n`;
+        md += `- **Pagado total:** ${centsToStr(projIncomeCents)}\n`;
         md += `- **Ganancia neta:** ${centsToStr(projProfitCents)}\n`;
         md += `- **ROI:** ${projRoiStr}\n\n`;
 

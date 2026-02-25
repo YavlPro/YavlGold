@@ -1480,11 +1480,11 @@ function formatTransferMeta(item) {
     const dest = item.transferred_to;
     let destLabel = '';
     if (dest === 'income') {
-        destLabel = 'Ingresos (Pagado)';
+        destLabel = 'Pagados';
     } else if (dest === 'losses') {
         destLabel = 'Pérdidas (Cancelado)';
     } else {
-        destLabel = 'Ingresos'; // Legacy fallback
+        destLabel = 'Pagados'; // Legacy fallback
     }
 
     // Check if reverted
@@ -1515,7 +1515,7 @@ function formatOriginBadge(item, tabName) {
     }
 
     const statusLabel = tabName === 'perdidas' ? 'Cancelado' : 'Pagado';
-    return `<span class="transfer-badge transfer-badge-origin">Transferido desde Pendientes • ${statusLabel}</span>`;
+    return `<span class="transfer-badge transfer-badge-origin">Transferido desde Fiados • ${statusLabel}</span>`;
 }
 
 // ============================================================
@@ -1541,7 +1541,7 @@ async function transferPendingToIncome(pendingId) {
         .single();
 
     if (fetchError || !pending) {
-        return { success: false, error: fetchError?.message || 'Pendiente no encontrado' };
+        return { success: false, error: fetchError?.message || 'Fiado no encontrado' };
     }
 
     // 2. Check idempotency - already transferred and not reverted?
@@ -1592,7 +1592,7 @@ async function transferPendingToIncome(pendingId) {
     }
 
     if (insertError || !income) {
-        return { success: false, error: insertError?.message || 'Error creando ingreso' };
+        return { success: false, error: insertError?.message || 'Error creando pagado' };
     }
 
     // 4. Update pending with transfer metadata
@@ -1635,7 +1635,7 @@ async function transferPendingToLoss(pendingId) {
         .single();
 
     if (fetchError || !pending) {
-        return { success: false, error: fetchError?.message || 'Pendiente no encontrado' };
+        return { success: false, error: fetchError?.message || 'Fiado no encontrado' };
     }
 
     // 2. Check idempotency
@@ -1650,7 +1650,7 @@ async function transferPendingToLoss(pendingId) {
         concepto: pending.concepto,
         monto: pending.monto,
         fecha: pending.fecha,
-        causa: 'Pendiente cancelado',
+        causa: 'Fiado cancelado',
         crop_id: pending.crop_id,
         unit_type: pending.unit_type,
         unit_qty: pending.unit_qty,
@@ -1712,12 +1712,12 @@ async function revertIncomeToPending(incomeId, reason = '') {
         .single();
 
     if (fetchError || !income) {
-        return { success: false, error: fetchError?.message || 'Ingreso no encontrado' };
+        return { success: false, error: fetchError?.message || 'Pagado no encontrado' };
     }
 
     // 2. Validate origin
     if (income.origin_table !== 'agro_pending' || !income.origin_id) {
-        return { success: false, error: 'Este ingreso no proviene de un pendiente' };
+        return { success: false, error: 'Este pagado no proviene de un fiado' };
     }
 
     // 3. Check idempotency
@@ -1732,7 +1732,7 @@ async function revertIncomeToPending(incomeId, reason = '') {
         .update({
             transfer_state: 'reverted',
             reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto a pendientes'
+            reverted_reason: reason || 'Devuelto a fiados'
         })
         .eq('id', incomeId)
         .eq('user_id', userId);
@@ -1747,7 +1747,7 @@ async function revertIncomeToPending(incomeId, reason = '') {
         .update({
             transfer_state: 'reverted',
             reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto desde ingreso'
+            reverted_reason: reason || 'Devuelto desde pagado'
         })
         .eq('id', income.origin_id)
         .eq('user_id', userId);
@@ -1785,7 +1785,7 @@ async function revertLossToPending(lossId, reason = '') {
 
     // 2. Validate origin
     if (loss.origin_table !== 'agro_pending' || !loss.origin_id) {
-        return { success: false, error: 'Esta pérdida no proviene de un pendiente' };
+        return { success: false, error: 'Esta pérdida no proviene de un fiado' };
     }
 
     // 3. Check idempotency
@@ -1800,7 +1800,7 @@ async function revertLossToPending(lossId, reason = '') {
         .update({
             transfer_state: 'reverted',
             reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto a pendientes'
+            reverted_reason: reason || 'Devuelto a fiados'
         })
         .eq('id', lossId)
         .eq('user_id', userId);
@@ -1833,7 +1833,7 @@ async function revertLossToPending(lossId, reason = '') {
  * @param {string} incomeId - ID of the income item
  */
 async function handleRevertIncome(incomeId) {
-    if (!confirm('¿Devolver este ingreso a Pendientes? El ingreso quedará marcado como revertido.')) {
+    if (!confirm('¿Devolver este pagado a Fiados? El pagado quedará marcado como revertido.')) {
         return;
     }
 
@@ -1853,7 +1853,7 @@ async function handleRevertIncome(incomeId) {
  * @param {string} lossId - ID of the loss item
  */
 async function handleRevertLoss(lossId) {
-    if (!confirm('¿Devolver esta pérdida a Pendientes? La pérdida quedará marcada como revertida.')) {
+    if (!confirm('¿Devolver esta pérdida a Fiados? La pérdida quedará marcada como revertida.')) {
         return;
     }
 
@@ -1878,7 +1878,7 @@ function showTransferChoiceModal(options = {}) {
         const choices = Array.isArray(options.choices) && options.choices.length
             ? options.choices
             : [
-                { value: 'income', label: 'Ingresos (Pagado)' },
+                { value: 'income', label: 'Pagados' },
                 { value: 'losses', label: 'P\u00e9rdidas (Cancelado)' }
             ];
 
@@ -2200,7 +2200,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const transferDisabled = FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes === false;
     const transferTitle = transferDisabled
         ? 'Transferencia no disponible (faltan columnas)'
-        : 'Transferir a ingresos o pérdidas';
+        : 'Transferir a pagados o pérdidas';
 
     // V9.7: Row styling for reverted items
     const revertedStyle = incomeOrLossReverted ? 'opacity: 0.5;' : '';
@@ -2269,7 +2269,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             badge.textContent = 'Revertido';
         } else {
             badge.className = 'transfer-badge transfer-badge-origin';
-            badge.textContent = `Transferido desde Pendientes • ${isLoss ? 'Cancelado' : 'Pagado'}`;
+            badge.textContent = `Transferido desde Fiados • ${isLoss ? 'Cancelado' : 'Pagado'}`;
         }
         originBadge.appendChild(badge);
         left.appendChild(originBadge);
@@ -2355,7 +2355,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 className: 'btn-transfer-income',
                 tab: effectiveTabName,
                 id: item.id,
-                title: 'Transferir ingreso',
+                title: 'Transferir pagado',
                 borderColor: 'rgba(200,167,82,0.5)',
                 color: '#C8A752',
                 iconClass: 'fa fa-arrow-right-long'
@@ -2379,7 +2379,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 className: isIncome ? 'btn-revert-income' : 'btn-revert-loss',
                 tab: effectiveTabName,
                 id: item.id,
-                title: 'Devolver a Pendientes',
+                title: 'Devolver a Fiados',
                 borderColor: 'rgba(251,191,36,0.5)',
                 color: '#fbbf24',
                 iconClass: 'fa fa-undo'
@@ -2902,7 +2902,7 @@ function renderHistoryList(tabName, config, items, showActions) {
         const emptyMsg = document.createElement('p');
         emptyMsg.style.cssText = 'color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;';
         if (isPendingTab && itemsWithCropNames.length > 0) {
-            emptyMsg.textContent = 'No hay pendientes visibles. Activa "Ver transferidos" para mostrarlos.';
+            emptyMsg.textContent = 'No hay fiados visibles. Activa "Ver transferidos" para mostrarlos.';
         } else if (isOthersTab && itemsWithCropNames.length > 0) {
             emptyMsg.textContent = 'No hay movimientos transferidos visibles. Activa "Ver transferidos" para mostrarlos.';
         } else {
@@ -3041,8 +3041,8 @@ function resetHistorySearch() {
 
 const AGROLOG_TAB_LABELS = {
     gastos: 'Gastos',
-    ingresos: 'Ingresos',
-    pendientes: 'Pendientes',
+    ingresos: 'Pagados',
+    pendientes: 'Fiados',
     perdidas: 'Pérdidas',
     transferencias: 'Donaciones',
     otros: 'Otros'
@@ -3088,7 +3088,7 @@ async function exportAgroLog(tabName) {
             .order('created_at', { ascending: false });
         if (selectedCropId) q = q.eq('crop_id', selectedCropId);
         if (config.supportsDeletedAt) q = q.is('deleted_at', null);
-        // V9.6.3: Pendientes export = solo deudas activas (excluir transferidos)
+        // V9.6.3: Fiados export = solo deudas activas (excluir transferidos)
         if (tabName === 'pendientes') q = q.neq('transfer_state', 'transferred');
 
         const { data, error } = await q;
@@ -3194,8 +3194,8 @@ async function pickWizardTabForGeneral() {
         title: 'Registrar movimiento general',
         choices: [
             { value: 'gastos', label: 'Gasto general' },
-            { value: 'ingresos', label: 'Ingreso general' },
-            { value: 'pendientes', label: 'Pendiente general' },
+            { value: 'ingresos', label: 'Pagado general' },
+            { value: 'pendientes', label: 'Fiado general' },
             { value: 'perdidas', label: 'Pérdida general' },
             { value: 'transferencias', label: 'Donación general' }
         ]
@@ -3534,8 +3534,8 @@ function openFactureroEditModal(tabName, item, config) {
     // Update title
     const titles = {
         'gastos': 'Editar Gasto',
-        'ingresos': 'Editar Ingreso',
-        'pendientes': 'Editar Pendiente',
+        'ingresos': 'Editar Pagado',
+        'pendientes': 'Editar Fiado',
         'perdidas': 'Editar Pérdida',
         'transferencias': 'Editar Donación'
     };
@@ -4059,7 +4059,7 @@ function buildTransferMetaModal(options = {}) {
         categoryGroup.className = 'input-group';
         const categoryLabel = document.createElement('label');
         categoryLabel.className = 'input-label';
-        categoryLabel.textContent = options.categoryLabel || 'Categoria ingreso';
+        categoryLabel.textContent = options.categoryLabel || 'Categoría pagado';
         categoryLabel.setAttribute('for', 'pending-transfer-category');
         const categorySelect = document.createElement('select');
         categorySelect.id = 'pending-transfer-category';
@@ -4162,12 +4162,12 @@ function openTransferMetaModal(options = {}) {
 async function handlePendingTransfer(itemId) {
     const pending = pendingCache.find((item) => String(item.id) === String(itemId));
     if (!pending) {
-        notifyFacturero('No se encontró el pendiente seleccionado.', 'warning');
+        notifyFacturero('No se encontró el fiado seleccionado.', 'warning');
         return;
     }
 
     if (isPendingTransferred(pending)) {
-        notifyFacturero('Este pendiente ya fue transferido.', 'warning');
+        notifyFacturero('Este fiado ya fue transferido.', 'warning');
         return;
     }
 
@@ -4178,33 +4178,33 @@ async function handlePendingTransfer(itemId) {
 
     // V9.7: First show choice modal (income vs losses)
     const destination = await showTransferChoiceModal({
-        title: 'Transferir pendiente',
+        title: 'Transferir fiado',
         choices: [
-            { value: 'income', label: 'Ingresos (Pagado)' },
+            { value: 'income', label: 'Pagados' },
             { value: 'losses', label: 'Pérdidas (Cancelado)' }
         ]
     });
     if (!destination) return; // User cancelled
 
     const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
-    const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Ingreso' : 'Pérdida');
+    const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Pagado' : 'Pérdida');
 
     // Then show meta modal for date/category
     const decision = await openTransferMetaModal({
-        title: destination === 'income' ? 'Transferir a Ingresos' : 'Transferir a Pérdidas',
+        title: destination === 'income' ? 'Transferir a Pagados' : 'Transferir a Pérdidas',
         rows: [
             { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
             { label: 'Cliente', value: pending.cliente || 'N/A' },
             { label: 'Monto', value: `$${Number(pending.monto || 0).toFixed(2)}` },
-            { label: 'Fecha pendiente', value: pending.fecha || 'N/A' }
+            { label: 'Fecha fiado', value: pending.fecha || 'N/A' }
         ],
         showConcept: true,
-        conceptLabel: destination === 'income' ? 'Concepto del ingreso' : 'Concepto de la pérdida',
+        conceptLabel: destination === 'income' ? 'Concepto del pagado' : 'Concepto de la pérdida',
         defaultConcept: defaultTransferConcept,
         showCategory: destination === 'income',
         showDate: true,
         defaultCategory: 'ventas',
-        dateLabel: destination === 'income' ? 'Fecha de ingreso' : 'Fecha de pérdida',
+        dateLabel: destination === 'income' ? 'Fecha de pago' : 'Fecha de pérdida',
         defaultDate: getTodayLocalISO()
     });
     if (!decision?.confirmed) return;
@@ -4302,7 +4302,7 @@ async function handlePendingTransfer(itemId) {
                 throw updateError;
             }
 
-            notifyFacturero('✅ Pendiente transferido a Ingresos (Pagado).', 'success');
+            notifyFacturero('✅ Fiado transferido a Pagados.', 'success');
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('ingresos');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
@@ -4368,7 +4368,7 @@ async function handlePendingTransfer(itemId) {
                 throw updateError;
             }
 
-            notifyFacturero('✅ Pendiente transferido a Pérdidas (Cancelado).', 'success');
+            notifyFacturero('✅ Fiado transferido a Pérdidas (Cancelado).', 'success');
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
             document.dispatchEvent(new CustomEvent('agro:losses:changed'));
@@ -4488,15 +4488,15 @@ async function handleIncomeTransfer(itemId) {
             if (error) throw error;
             income = data;
         } catch (err) {
-            notifyFacturero('No se encontró el ingreso seleccionado.', 'warning');
+            notifyFacturero('No se encontró el pagado seleccionado.', 'warning');
             return;
         }
     }
 
     const destination = await showTransferChoiceModal({
-        title: 'Transferir ingreso',
+        title: 'Transferir pagado',
         choices: [
-            { value: 'pendientes', label: 'Pendientes (Deuda)' },
+            { value: 'pendientes', label: 'Fiados (Deuda)' },
             { value: 'losses', label: 'Pérdidas (Cancelado)' }
         ]
     });
@@ -4517,7 +4517,7 @@ async function handleIncomeTransfer(itemId) {
             const pendingPayload = {
                 id: pendingId,
                 user_id: user.id,
-                concepto: whoData.concept || income.concepto || 'Pendiente',
+                concepto: whoData.concept || income.concepto || 'Fiado',
                 monto: Number(income.monto || 0),
                 fecha: income.fecha || getTodayLocalISO(),
                 cliente: whoData.who || null,
@@ -4548,7 +4548,7 @@ async function handleIncomeTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Ingreso transferido a Pendientes.', 'success');
+            notifyFacturero('✅ Pagado transferido a Fiados.', 'success');
             await refreshFactureroHistory('pendientes');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
         }
@@ -4556,7 +4556,7 @@ async function handleIncomeTransfer(itemId) {
         if (destination === 'losses') {
             const whoData = getWhoData('ingresos', income, income.concepto || '');
             const buyerLabel = whoData.who ? `Comprador: ${whoData.who}` : '';
-            const lossCause = buyerLabel ? `Transferido desde ingresos • ${buyerLabel}` : 'Transferido desde ingresos';
+            const lossCause = buyerLabel ? `Transferido desde pagados • ${buyerLabel}` : 'Transferido desde pagados';
             const lossId = buildTransferId('loss');
             const lossPayload = {
                 id: lossId,
@@ -4603,7 +4603,7 @@ async function handleIncomeTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Ingreso transferido a Pérdidas.', 'success');
+            notifyFacturero('✅ Pagado transferido a Pérdidas.', 'success');
             await refreshFactureroHistory('perdidas');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
         }
@@ -4636,8 +4636,8 @@ async function handleLossTransfer(itemId) {
     const destination = await showTransferChoiceModal({
         title: 'Transferir pérdida',
         choices: [
-            { value: 'pendientes', label: 'Pendientes (Reactivar)' },
-            { value: 'income', label: 'Ingresos (Recuperado)' }
+            { value: 'pendientes', label: 'Fiados (Reactivar)' },
+            { value: 'income', label: 'Pagados (Recuperado)' }
         ]
     });
     if (!destination) return;
@@ -4653,7 +4653,7 @@ async function handleLossTransfer(itemId) {
             }
 
             const pendingId = buildTransferId('pending');
-            const baseConcept = loss.concepto || 'Pendiente';
+            const baseConcept = loss.concepto || 'Fiado';
             const causeMeta = loss.causa ? `Causa: ${loss.causa}` : '';
             const pendingConcept = causeMeta ? `${baseConcept} — ${causeMeta}` : baseConcept;
             const pendingNotes = loss.causa ? `Causa: ${loss.causa}` : null;
@@ -4693,14 +4693,14 @@ async function handleLossTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Pérdida transferida a Pendientes.', 'success');
+            notifyFacturero('✅ Pérdida transferida a Fiados.', 'success');
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
         }
 
         if (destination === 'income') {
             const decision = await openTransferMetaModal({
-                title: 'Transferir a Ingresos',
+                title: 'Transferir a Pagados',
                 rows: [
                     { label: 'Concepto', value: loss.concepto || 'Sin concepto' },
                     { label: 'Monto', value: `$${Number(loss.monto || 0).toFixed(2)}` },
@@ -4709,7 +4709,7 @@ async function handleLossTransfer(itemId) {
                 showCategory: true,
                 showDate: true,
                 defaultCategory: 'otros',
-                dateLabel: 'Fecha de ingreso',
+                dateLabel: 'Fecha de pago',
                 defaultDate: loss.fecha || getTodayLocalISO()
             });
             if (!decision?.confirmed) return;
@@ -4720,7 +4720,7 @@ async function handleLossTransfer(itemId) {
                 return;
             }
 
-            const baseConcept = loss.concepto || 'Ingreso';
+            const baseConcept = loss.concepto || 'Pagado';
             const causeMeta = loss.causa ? `Causa: ${loss.causa}` : '';
             const conceptFinal = causeMeta ? `${baseConcept} — ${causeMeta}` : baseConcept;
             const incomeId = buildTransferId('income');
@@ -4776,7 +4776,7 @@ async function handleLossTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Pérdida transferida a Ingresos.', 'success');
+            notifyFacturero('✅ Pérdida transferida a Pagados.', 'success');
             await refreshFactureroHistory('perdidas');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
         }
@@ -5684,11 +5684,11 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
         valueEl.style.color = net >= 0 ? 'var(--gold-light)' : 'var(--danger)';
         const breakdown = document.createElement('span');
         breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
-        breakdown.textContent = `Ingresos cobrados: ${formatCurrency(income)} | Costos: ${formatCurrency(costs)}`;
+        breakdown.textContent = `Pagados: ${formatCurrency(income)} | Costos: ${formatCurrency(costs)}`;
         const pendingLine = document.createElement('span');
         pendingLine.style.cssText = 'display:block;font-size:0.64rem;font-weight:600;margin-top:2px;line-height:1.2;';
         pendingLine.style.color = potential >= 0 ? 'var(--gold-light)' : 'var(--danger)';
-        pendingLine.textContent = `Por cobrar: ${formatCurrency(pending)} | Potencial: ${formatCurrency(potential)}`;
+        pendingLine.textContent = `Fiados: ${formatCurrency(pending)} | Potencial: ${formatCurrency(potential)}`;
         valueEl.appendChild(breakdown);
         valueEl.appendChild(pendingLine);
         if (missing > 0) {
@@ -7127,7 +7127,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     const whoData = getWhoData('ingresos', income, income.concepto || '');
     const concept = document.createElement('div');
     concept.style.cssText = 'color: #fff; font-weight: 600; font-size: 0.95rem;';
-    concept.textContent = whoData.concept || income.concepto || 'Ingreso';
+    concept.textContent = whoData.concept || income.concepto || 'Pagado';
 
     let whoLine = null;
     if (whoData.who) {
@@ -7229,7 +7229,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     transferBtn.className = 'btn-transfer-income';
     transferBtn.dataset.tab = 'ingresos';
     transferBtn.dataset.id = income.id ? String(income.id) : '';
-    transferBtn.title = 'Transferir ingreso';
+    transferBtn.title = 'Transferir pagado';
     transferBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200, 167, 82, 0.45); color: #C8A752; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
 
     const transferIcon = document.createElement('i');
@@ -7261,16 +7261,16 @@ function renderIncomeItem(listEl, income, signedUrl) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!window.confirm('\u00bfEliminar ingreso?')) return;
+        if (!window.confirm('\u00bfEliminar pagado?')) return;
         const targetId = deleteBtn.dataset.id;
         if (!targetId) {
-            alert('No se pudo identificar el ingreso.');
+            alert('No se pudo identificar el pagado.');
             return;
         }
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            alert('Debes iniciar sesion para eliminar ingresos.');
+            alert('Debes iniciar sesion para eliminar pagados.');
             return;
         }
 
@@ -7300,11 +7300,11 @@ function renderIncomeItem(listEl, income, signedUrl) {
             if (!hardError) {
                 deleteSuccess = true;
             } else {
-                showEvidenceToast('Error al eliminar ingreso.', 'warning');
+                showEvidenceToast('Error al eliminar pagado.', 'warning');
                 console.error('[Agro] Income hard delete failed:', hardError.message);
             }
         } else {
-            showEvidenceToast('Error al eliminar ingreso.', 'warning');
+            showEvidenceToast('Error al eliminar pagado.', 'warning');
             console.error('[Agro] Income delete failed:', softError.message);
         }
 
@@ -7424,8 +7424,8 @@ const OPS_CONTEXT_TAB_MAP = Object.freeze({});
 const OPS_MOVEMENT_SUMMARY_ORDER = ['pendientes', 'ingresos', 'gastos', 'perdidas', 'transferencias', 'otros'];
 const OPS_ACTIVE_CROPS_SUMMARY_ORDER = ['pendientes', 'ingresos', 'gastos', 'perdidas'];
 const OPS_MOVEMENT_SUMMARY_LABELS = Object.freeze({
-    pendientes: 'Pendientes',
-    ingresos: 'Ingresos',
+    pendientes: 'Fiados',
+    ingresos: 'Pagados',
     gastos: 'Gastos',
     perdidas: 'Pérdidas',
     transferencias: 'Donaciones',
@@ -8450,8 +8450,8 @@ function renderOpsRankings() {
 
     if (topCropsTitle) {
         topCropsTitle.textContent = hasSelectedCrop
-            ? 'Ingresos del cultivo (cobrados)'
-            : 'Top Cultivos (Ingresos cobrados)';
+            ? 'Pagados del cultivo'
+            : 'Top Cultivos (Pagados)';
     }
 
     if (opsRankingsState.loading) {
@@ -8499,7 +8499,7 @@ function renderOpsRankings() {
     }
 
     renderOpsRankingList(pendingClients, opsRankingsState.pendingClients, (row, index) => {
-        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'pendiente', 'pendientes');
+        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
         return createOpsRankingItem({
             index,
             name: getOpsRankingDisplayName(row?.client_name),
@@ -8515,13 +8515,13 @@ function renderOpsRankings() {
             index,
             name: resolveOpsRankingCropLabel(row),
             value: formatOpsRankingCurrency(profit),
-            meta: `Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}`,
+            meta: `Pagados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}`,
             valueColor: profitColor
         });
     }, {
         emptyText: hasSelectedCrop
-            ? 'Sin ingresos registrados para este cultivo en el rango seleccionado.'
-            : 'Sin ingresos registrados en el rango seleccionado.'
+            ? 'Sin pagados registrados para este cultivo en el rango seleccionado.'
+            : 'Sin pagados registrados en el rango seleccionado.'
     });
 }
 
@@ -8684,23 +8684,23 @@ function exportOpsRankingsMarkdown() {
         md += `> ⚠️ ${formatOpsRankingCount(missingTopClientsMdSummary.operations, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(missingTopClientsMdSummary.total)}\n\n`;
     }
 
-    appendSection('Pendientes por Cliente', opsRankingsState.pendingClients, (row) => {
+    appendSection('Fiados por Cliente', opsRankingsState.pendingClients, (row) => {
         const name = getOpsRankingDisplayName(row?.client_name);
-        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'pendiente', 'pendientes');
+        const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
         return `${name} · ${formatOpsRankingCurrency(row?.total_pending)} · ${pendingLabel} · próximo ${formatOpsRankingDate(row?.next_due_date)}`;
     });
 
-    const topCropsTitle = selectedCropId ? 'Ingresos del cultivo (cobrados)' : 'Top Cultivos (Ingresos cobrados)';
+    const topCropsTitle = selectedCropId ? 'Pagados del cultivo' : 'Top Cultivos (Pagados)';
     md += `## ${topCropsTitle}\n\n`;
-    md += `> Nota: No incluye inversión base ni pendientes. Ver card del cultivo para rentabilidad completa.\n\n`;
+    md += `> Nota: No incluye inversión base ni fiados. Ver card del cultivo para rentabilidad completa.\n\n`;
     if (!Array.isArray(opsRankingsState.topCrops) || opsRankingsState.topCrops.length === 0) {
         md += selectedCropId
-            ? 'Sin ingresos registrados para este cultivo en el rango seleccionado.\n\n'
-            : 'Sin ingresos registrados en el rango seleccionado.\n\n';
+            ? 'Sin pagados registrados para este cultivo en el rango seleccionado.\n\n'
+            : 'Sin pagados registrados en el rango seleccionado.\n\n';
     } else {
         opsRankingsState.topCrops.forEach((row, index) => {
             const label = resolveOpsRankingCropLabel(row);
-            md += `${index + 1}. ${label} · Neto cobrado (Ingresos - Gastos) ${formatOpsRankingCurrency(row?.profit)} · Ingresos cobrados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}\n`;
+            md += `${index + 1}. ${label} · Neto cobrado (Pagados - Gastos) ${formatOpsRankingCurrency(row?.profit)} · Pagados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}\n`;
         });
         md += `\n`;
     }
@@ -11320,7 +11320,7 @@ window.deleteCrop = deleteCrop;
 
     window.initAgroAccordions = initAccordions;
 
-    // V9.6.2: Fix Facturero Edit Label (Pendientes -> Cliente)
+    // V9.6.2: Fix Facturero Edit Label (Fiados -> Cliente)
     function initFactureroLabelFix() {
         document.body.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-edit-facturero');

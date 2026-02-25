@@ -1302,7 +1302,7 @@
                                         id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01">
                                 </div>
                             </div>
-                            <div class="input-group"> <label class="input-label" for="revenue">Ingreso por Venta</label>
+                            <div class="input-group"> <label class="input-label" for="revenue">Pagado por Venta</label>
                                 <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
                                         id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01">
                                 </div>
@@ -1323,7 +1323,7 @@
                                     <div class="roi-value gold" id="resultInvestment">$0</div>
                                 </div>
                                 <div class="roi-item">
-                                    <div class="roi-label">Ingresos</div>
+                                    <div class="roi-label">Pagados</div>
                                     <div class="roi-value gold" id="resultRevenue">$0</div>
                                 </div>
                                 <div class="roi-item">
@@ -1599,9 +1599,9 @@
                 <button type="button" class="financial-tab-btn is-active" role="tab" id="tab-btn-gastos"
                     aria-selected="true" aria-controls="tab-panel-gastos" data-tab="gastos">Gastos</button>
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-ingresos" aria-selected="false"
-                    aria-controls="tab-panel-ingresos" data-tab="ingresos">Ingresos</button>
+                    aria-controls="tab-panel-ingresos" data-tab="ingresos">Pagados</button>
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-pendientes" aria-selected="false"
-                    aria-controls="tab-panel-pendientes" data-tab="pendientes">Pendientes</button>
+                    aria-controls="tab-panel-pendientes" data-tab="pendientes">Fiados</button>
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-perdidas" aria-selected="false"
                     aria-controls="tab-panel-perdidas" data-tab="perdidas">P&eacute;rdidas</button>
                 <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-transferencias"
@@ -1685,7 +1685,7 @@
                             <div id="income-recent-container" style="margin-top: 2rem; display: none;">
                                 <h3
                                     style="color: #fff; font-size: 1.1rem; margin-bottom: 1rem; border-left: 3px solid var(--gold-primary); padding-left: 0.8rem;">
-                                    &Uacute;ltimos Ingresos (Sesi&oacute;n Actual)</h3>
+                                    &Uacute;ltimos Pagados (Sesi&oacute;n Actual)</h3>
                                 <div id="income-list" class="facturero-history-list"
                                     style="display: flex; flex-direction: column; gap: 0.8rem; max-height: 350px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
                                     <!-- Los ingresos se inyectar&aacute;n aqu&iacute; -->
@@ -1874,13 +1874,13 @@
                             </article>
 
                             <article class="ops-ranking-card">
-                                <h5>Pendientes por Cliente</h5>
+                                <h5>Fiados por Cliente</h5>
                                 <ol id="ops-rankings-pending-clients" class="ops-ranking-list"></ol>
                             </article>
 
                             <article class="ops-ranking-card">
-                                <h5 id="ops-rankings-top-crops-title">Top Cultivos (Ingresos cobrados)</h5>
-                                <p class="ops-rankings-note" id="ops-rankings-top-crops-note">Nota: No incluye inversión base ni pendientes. Ver card del cultivo para rentabilidad completa.</p>
+                                <h5 id="ops-rankings-top-crops-title">Top Cultivos (Pagados)</h5>
+                                <p class="ops-rankings-note" id="ops-rankings-top-crops-note">Nota: No incluye inversión base ni fiados. Ver card del cultivo para rentabilidad completa.</p>
                                 <ol id="ops-rankings-top-crops" class="ops-ranking-list"></ol>
                             </article>
                         </div>
@@ -2605,18 +2605,18 @@
                                 </div>
                             </div>
 
-                            <!-- KPI: Pendientes -->
+                            <!-- KPI: Fiados -->
                             <div class="card kpi-card">
                                 <div class="kpi-icon-wrapper">
                                     <i class="fa-solid fa-hourglass-half" style="color: var(--gold-primary);"></i>
                                 </div>
                                 <div class="kpi-content">
-                                    <div class="kpi-label">Pendientes</div>
+                                    <div class="kpi-label">Fiados</div>
                                     <div class="kpi-value" style="color: var(--gold-primary);">
                                         <span class="highlight" id="kpi-pending-total">$0.00</span>
                                     </div>
                                     <div class="kpi-secondary">
-                                        <span class="kpi-tag">Cobros en espera</span>
+                                        <span class="kpi-tag">Fiados en espera</span>
                                     </div>
                                 </div>
                             </div>
@@ -2664,7 +2664,7 @@
                                             <span class="stats-units-value" id="stats-units-income">-</span>
                                         </div>
                                         <div class="stats-units-row">
-                                            <span class="kpi-tag">Pendiente</span>
+                                            <span class="kpi-tag">Fiado</span>
                                             <span class="stats-units-value" id="stats-units-pending">-</span>
                                         </div>
                                         <div class="stats-units-row">
@@ -2690,7 +2690,7 @@
                                             <span class="stats-units-value" id="stats-count-income">0</span>
                                         </div>
                                         <div class="stats-units-row">
-                                            <span class="kpi-tag">Pendiente</span>
+                                            <span class="kpi-tag">Fiado</span>
                                             <span class="stats-units-value" id="stats-count-pending">0</span>
                                         </div>
                                         <div class="stats-units-row">
@@ -2838,7 +2838,7 @@
                                         <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
                                             <div
                                                 style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 8px;">
-                                                <span style="font-size: 11px; color: #888;">Ingresos Reales</span>
+                                                <span style="font-size: 11px; color: #888;">Pagados Reales</span>
                                                 <span id="summary-revenue"
                                                     style="font-size: 1rem; color: #4ade80; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
                                             </div>
