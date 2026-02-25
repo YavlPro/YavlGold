@@ -1884,8 +1884,8 @@ async function handleRevertLoss(lossId) {
 }
 
 /**
- * Show modal to choose transfer destination (income or losses)
- * @returns {Promise<'income'|'losses'|null>}
+ * Show modal to choose transfer destination
+ * @returns {Promise<string|null>}
  */
 function showTransferChoiceModal(options = {}) {
     return new Promise((resolve) => {
@@ -1896,6 +1896,30 @@ function showTransferChoiceModal(options = {}) {
                 { value: 'income', label: 'Pagados' },
                 { value: 'losses', label: 'P\u00e9rdidas (Cancelado)' }
             ];
+
+        const variantMap = {
+            success: {
+                className: 'transfer-to-income',
+                color: '#4ade80',
+                border: 'rgba(74, 222, 128, 0.5)',
+                bg: 'rgba(74, 222, 128, 0.15)',
+                icon: 'fa-arrow-right'
+            },
+            danger: {
+                className: 'transfer-to-losses',
+                color: '#ef4444',
+                border: 'rgba(239, 68, 68, 0.5)',
+                bg: 'rgba(239, 68, 68, 0.15)',
+                icon: 'fa-times'
+            },
+            neutral: {
+                className: 'transfer-to-pendientes',
+                color: '#C8A752',
+                border: 'rgba(200, 167, 82, 0.5)',
+                bg: 'rgba(200, 167, 82, 0.15)',
+                icon: 'fa-clock'
+            }
+        };
 
         const styleMap = {
             income: {
@@ -1936,14 +1960,21 @@ function showTransferChoiceModal(options = {}) {
 
         choices.forEach((choice) => {
             const key = choice.value;
-            const style = styleMap[key] || styleMap.pendientes;
+            const variant = String(choice?.variant || '').trim().toLowerCase();
+            const style = styleMap[key] || variantMap[variant] || styleMap.pendientes;
             const icon = choice.icon || style.icon;
 
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = `transfer-choice-btn ${style.className}`;
             btn.dataset.choice = key;
-            btn.style.cssText = `background: ${style.bg}; border: 1px solid ${style.border}; color: ${style.color}; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;`;
+            const isDisabled = choice?.disabled === true;
+            btn.style.cssText = `background: ${style.bg}; border: 1px solid ${style.border}; color: ${style.color}; padding: 0.75rem 1rem; border-radius: 8px; cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.9rem;`;
+            if (isDisabled) {
+                btn.disabled = true;
+                btn.classList.add('is-disabled');
+                btn.setAttribute('aria-disabled', 'true');
+            }
 
             const iconEl = document.createElement('i');
             iconEl.className = `fa ${icon}`;
@@ -1978,6 +2009,7 @@ function showTransferChoiceModal(options = {}) {
             }
             const btn = e.target.closest('[data-choice]');
             if (!btn) return;
+            if (btn.disabled || btn.classList.contains('is-disabled')) return;
             const choice = btn.dataset.choice;
             cleanup();
             if (!choice || choice === '__cancel__') {
@@ -4656,15 +4688,23 @@ async function handlePendingTransfer(itemId) {
         return;
     }
 
-    // V9.7: First show choice modal (income vs losses)
+    // Wizard step 1: destination selection
     const destination = await showTransferChoiceModal({
-        title: 'Transferir fiado',
+        title: 'Paso 1 de 3 · ¿A dónde transferir?',
         choices: [
-            { value: 'income', label: 'Pagados' },
-            { value: 'losses', label: 'Pérdidas (Cancelado)' }
+            { value: 'income', label: 'Pagados', variant: 'success' },
+            { value: 'losses', label: 'Pérdidas (Cancelado)', variant: 'danger' },
+            { value: 'gastos', label: 'Gastos', variant: 'neutral' },
+            { value: 'transferencias', label: 'Donaciones', variant: 'neutral' },
+            { value: 'otros', label: 'Otros', variant: 'neutral' },
+            { value: 'pendientes', label: 'Fiados', variant: 'neutral', disabled: true }
         ]
     });
     if (!destination) return; // User cancelled
+    if (destination !== 'income' && destination !== 'losses') {
+        notifyFacturero('⚠️ Por ahora solo está habilitado: Fiados -> Pagados o Fiados -> Pérdidas. (Gastos/Donaciones/Otros: próximamente).', 'warning');
+        return;
+    }
 
     const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
     const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Pagado' : 'Pérdida');
@@ -4686,7 +4726,7 @@ async function handlePendingTransfer(itemId) {
 
     // Then show meta modal for date/category
     const decision = await openTransferMetaModal({
-        title: destination === 'income' ? 'Transferir a Pagados' : 'Transferir a Pérdidas',
+        title: `Paso 2 de 3 · ${destination === 'income' ? 'Datos para Pagados' : 'Datos para Pérdidas'}`,
         rows: [
             { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
             { label: 'Cliente', value: pending.cliente || 'N/A' },
@@ -4701,6 +4741,7 @@ async function handlePendingTransfer(itemId) {
         defaultCategory: 'ventas',
         dateLabel: destination === 'income' ? 'Fecha de pago' : 'Fecha de pérdida',
         defaultDate: getTodayLocalISO(),
+        confirmText: 'Siguiente',
         split: splitConfig
     });
     if (!decision?.confirmed) return;
@@ -4721,6 +4762,52 @@ async function handlePendingTransfer(itemId) {
         notifyFacturero(`⚠️ ${splitDraft.error}`, 'warning');
         return;
     }
+
+    const destinationLabel = destination === 'income' ? 'Pagados' : 'Pérdidas';
+    const summaryRows = [
+        { label: 'Origen', value: 'Fiados' },
+        { label: 'Destino', value: destinationLabel },
+        { label: 'Concepto', value: decisionConcept },
+        { label: 'Fecha', value: decisionDate }
+    ];
+    if (destination === 'income') {
+        summaryRows.push({ label: 'Categoría', value: decision.category || 'ventas' });
+    }
+    if (splitDraft.enabled) {
+        summaryRows.push(
+            { label: 'Cantidad total', value: formatSplitQuantity(splitDraft.qtyTotal, splitDraft.unitType) },
+            { label: 'Cantidad a transferir', value: formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType) },
+            { label: 'Cantidad restante', value: formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType) }
+        );
+        if (destination === 'income' && splitDraft.unitPriceTransfer !== null) {
+            summaryRows.push({
+                label: 'Precio unitario transferido',
+                value: `$${roundNumeric(splitDraft.unitPriceTransfer, 2).toFixed(2)}`
+            });
+        }
+    }
+    summaryRows.push({
+        label: 'Monto transferido',
+        value: `$${roundNumeric(splitDraft.transferAmount || 0, 2).toFixed(2)}`
+    });
+    if (splitDraft.enabled && splitDraft.isPartial) {
+        summaryRows.push({
+            label: 'Monto restante en Fiados',
+            value: `$${roundNumeric(splitDraft.remainingAmount || 0, 2).toFixed(2)}`
+        });
+    }
+
+    const confirmation = await openTransferMetaModal({
+        title: 'Paso 3 de 3 · Confirmar transferencia',
+        rows: summaryRows,
+        showConcept: false,
+        showCategory: false,
+        showDate: false,
+        confirmText: destination === 'income'
+            ? 'Confirmar y transferir a Pagados'
+            : 'Confirmar y transferir a Pérdidas'
+    });
+    if (!confirmation?.confirmed) return;
 
     const isPartialSplit = splitDraft.enabled && splitDraft.isPartial;
     const splitToState = destination === 'income' ? 'pagados' : 'perdidas';
