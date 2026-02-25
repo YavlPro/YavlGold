@@ -6,7 +6,7 @@ import supabase from '../assets/js/config/supabase-config.js';
 import { updateStats } from './agro-stats.js';
 import { syncFactureroNotifications } from './agro-notifications.js';
 import './agro.css';
-import { openAgroWizard } from './agro-wizard.js';
+import { openAgroWizard, ensureAgroWizardStyles } from './agro-wizard.js';
 import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js';
 import { exportStatsReport } from './agro-stats-report.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
@@ -1883,6 +1883,69 @@ async function handleRevertLoss(lossId) {
     }
 }
 
+function buildTransferWizardSubtitle(stepIndex, stepTotal, stepLabel = '') {
+    const step = Number(stepIndex);
+    const total = Number(stepTotal);
+    if (!Number.isFinite(step) || step < 1 || !Number.isFinite(total) || total < 1) return '';
+    const safeTotal = Math.max(1, Math.round(total));
+    const safeStep = Math.min(Math.max(1, Math.round(step)), safeTotal);
+    const label = String(stepLabel || '').trim();
+    return label
+        ? `Paso ${safeStep} de ${safeTotal} — ${label}`
+        : `Paso ${safeStep} de ${safeTotal}`;
+}
+
+function buildTransferWizardShell(options = {}) {
+    if (typeof ensureAgroWizardStyles === 'function') {
+        ensureAgroWizardStyles();
+    }
+
+    const overlay = document.createElement('div');
+    if (options.id) overlay.id = options.id;
+    overlay.className = 'agro-wizard-overlay';
+
+    const card = document.createElement('div');
+    card.className = 'agro-wizard-card';
+
+    const progressWrap = document.createElement('div');
+    progressWrap.className = 'agro-wizard-progress';
+    const progressFill = document.createElement('div');
+    progressFill.className = 'agro-wizard-progress-fill';
+    progressWrap.appendChild(progressFill);
+
+    const header = document.createElement('div');
+    header.className = 'agro-wizard-header';
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = String(options.title || 'Transferir').trim() || 'Transferir';
+    const subtitleEl = document.createElement('p');
+    subtitleEl.className = 'wiz-subtitle';
+
+    const subtitle = buildTransferWizardSubtitle(options.stepIndex, options.stepTotal, options.stepLabel)
+        || String(options.subtitle || '').trim();
+    if (subtitle) {
+        subtitleEl.textContent = subtitle;
+    } else {
+        subtitleEl.style.display = 'none';
+    }
+    const hasStep = subtitle.startsWith('Paso ');
+    if (hasStep) {
+        const pct = Math.round((Math.max(1, Number(options.stepIndex)) / Math.max(1, Number(options.stepTotal))) * 100);
+        progressFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+    } else {
+        progressWrap.style.display = 'none';
+    }
+    header.append(titleEl, subtitleEl);
+
+    const body = document.createElement('div');
+    body.className = 'agro-wizard-body';
+    const footer = document.createElement('div');
+    footer.className = 'agro-wizard-footer';
+
+    card.append(progressWrap, header, body, footer);
+    overlay.appendChild(card);
+    return { overlay, card, body, footer };
+}
+
 /**
  * Show modal to choose transfer destination
  * @returns {Promise<string|null>}
@@ -1945,15 +2008,17 @@ function showTransferChoiceModal(options = {}) {
             }
         };
 
-        // Create modal overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'transfer-modal-overlay';
-        const modal = document.createElement('div');
-        modal.className = 'transfer-modal';
+        const { overlay, body, footer } = buildTransferWizardShell({
+            title,
+            stepIndex: options.stepIndex,
+            stepTotal: options.stepTotal,
+            stepLabel: options.stepLabel || ''
+        });
 
-        const heading = document.createElement('h3');
-        heading.style.cssText = 'color: #fff; margin: 0 0 1rem 0; font-size: 1rem;';
-        heading.textContent = title;
+        const question = document.createElement('p');
+        question.className = 'wiz-question';
+        question.textContent = String(options.question || 'Selecciona el destino de esta transferencia');
+        body.appendChild(question);
 
         const actions = document.createElement('div');
         actions.style.cssText = 'display: flex; flex-direction: column; gap: 0.75rem;';
@@ -1981,43 +2046,47 @@ function showTransferChoiceModal(options = {}) {
             btn.append(iconEl, document.createTextNode(` ${choice.label}`));
             actions.appendChild(btn);
         });
+        body.appendChild(actions);
 
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
-        cancelBtn.className = 'transfer-cancel-btn';
+        cancelBtn.className = 'wiz-btn wiz-btn-back';
         cancelBtn.dataset.choice = '__cancel__';
-        cancelBtn.style.cssText = 'background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem;';
         cancelBtn.textContent = 'Cancelar';
-        actions.appendChild(cancelBtn);
-
-        modal.append(heading, actions);
-        overlay.appendChild(modal);
+        footer.appendChild(cancelBtn);
 
         document.body.appendChild(overlay);
 
-        const cleanup = () => {
-            if (overlay.parentNode) {
-                document.body.removeChild(overlay);
-            }
+        let done = false;
+        const finalize = (value) => {
+            if (done) return;
+            done = true;
+            document.removeEventListener('keydown', onKey);
+            if (overlay.parentNode) overlay.remove();
+            resolve(value);
+        };
+        const close = () => finalize(null);
+        const onKey = (e) => {
+            if (e.key === 'Escape') close();
         };
 
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                cleanup();
-                resolve(null);
+                close();
                 return;
             }
             const btn = e.target.closest('[data-choice]');
             if (!btn) return;
             if (btn.disabled || btn.classList.contains('is-disabled')) return;
             const choice = btn.dataset.choice;
-            cleanup();
             if (!choice || choice === '__cancel__') {
-                resolve(null);
+                close();
             } else {
-                resolve(choice);
+                finalize(choice);
             }
         });
+
+        document.addEventListener('keydown', onKey);
     });
 }
 
@@ -2142,9 +2211,11 @@ function isIntegerLike(value) {
 function formatQuantityValue(value, precision = 2) {
     const num = toSafeLocaleNumber(value);
     if (num === null) return '0';
+    if (Math.abs(num) < 1e-9) return '0';
     const decimals = precision === 0 || isIntegerLike(num) ? 0 : 2;
     const fixed = roundNumeric(num, decimals).toFixed(decimals);
-    return fixed.replace(/\.?0+$/, '');
+    const cleaned = fixed.replace(/\.?0+$/, '');
+    return cleaned === '' ? '0' : cleaned;
 }
 
 function getUnitOptionByType(unitType) {
@@ -4410,31 +4481,19 @@ function notifyFacturero(message, type = 'info') {
 function buildTransferMetaModal(options = {}) {
     const existing = document.getElementById('pending-transfer-modal');
     if (existing) existing.remove();
+    const { overlay, body, footer } = buildTransferWizardShell({
+        id: 'pending-transfer-modal',
+        title: options.title || 'Transferir',
+        stepIndex: options.stepIndex,
+        stepTotal: options.stepTotal,
+        stepLabel: options.stepLabel || ''
+    });
 
-    const modal = document.createElement('div');
-    modal.id = 'pending-transfer-modal';
-    modal.className = 'pending-transfer-modal';
-
-    const backdrop = document.createElement('div');
-    backdrop.className = 'pending-transfer-backdrop';
-    backdrop.dataset.close = 'true';
-
-    const card = document.createElement('div');
-    card.className = 'pending-transfer-card';
-
-    const header = document.createElement('div');
-    header.className = 'pending-transfer-header';
-    const title = document.createElement('h3');
-    title.textContent = options.title || 'Transferir';
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'pending-transfer-close';
-    closeBtn.dataset.close = 'true';
-    closeBtn.textContent = '×';
-    header.append(title, closeBtn);
-
-    const body = document.createElement('div');
-    body.className = 'pending-transfer-body';
+    const content = document.createElement('div');
+    content.className = 'pending-transfer-content';
+    content.style.display = 'grid';
+    content.style.gap = '0.75rem';
+    body.appendChild(content);
 
     const detailRows = Array.isArray(options.rows) ? options.rows : [];
     detailRows.forEach((row) => {
@@ -4445,7 +4504,7 @@ function buildTransferMetaModal(options = {}) {
         const value = document.createElement('strong');
         value.textContent = row.value || '-';
         line.append(label, value);
-        body.appendChild(line);
+        content.appendChild(line);
     });
 
     const showConcept = options.showConcept === true;
@@ -4469,7 +4528,7 @@ function buildTransferMetaModal(options = {}) {
         conceptInput.placeholder = options.conceptPlaceholder || 'Ej: Venta de batata - pagado';
         conceptInput.value = options.defaultConcept || '';
         conceptGroup.append(conceptLabel, conceptInput);
-        body.appendChild(conceptGroup);
+        content.appendChild(conceptGroup);
     }
 
     if (showCategory) {
@@ -4497,7 +4556,7 @@ function buildTransferMetaModal(options = {}) {
         });
         categorySelect.value = options.defaultCategory || 'ventas';
         categoryGroup.append(categoryLabel, categorySelect);
-        body.appendChild(categoryGroup);
+        content.appendChild(categoryGroup);
     }
 
     if (showDate) {
@@ -4516,7 +4575,7 @@ function buildTransferMetaModal(options = {}) {
         dateInput.value = defaultDate;
         dateInput.max = today;
         dateGroup.append(dateLabel, dateInput);
-        body.appendChild(dateGroup);
+        content.appendChild(dateGroup);
     }
 
     if (splitOptions?.enabled) {
@@ -4544,7 +4603,7 @@ function buildTransferMetaModal(options = {}) {
             qtyInput.style.paddingLeft = '1rem';
             qtyInput.value = formatQuantityValue(defaultQty, qtyPrecision);
             qtyGroup.append(qtyLabel, qtyInput);
-            body.appendChild(qtyGroup);
+            content.appendChild(qtyGroup);
 
             if (splitOptions.showUnitPrice) {
                 const priceGroup = document.createElement('div');
@@ -4575,7 +4634,7 @@ function buildTransferMetaModal(options = {}) {
                     originalHint.textContent = `${originalLabel}: ${fmtMoneyUI(originalUnitPrice, currencyLabel)}/u`;
                     priceGroup.appendChild(originalHint);
                 }
-                body.appendChild(priceGroup);
+                content.appendChild(priceGroup);
             }
 
             const preview = document.createElement('div');
@@ -4585,29 +4644,26 @@ function buildTransferMetaModal(options = {}) {
             const leftLine = document.createElement('div');
             leftLine.id = 'pending-transfer-preview-left';
             preview.append(moveLine, leftLine);
-            body.appendChild(preview);
+            content.appendChild(preview);
         }
     }
 
-    const actions = document.createElement('div');
-    actions.className = 'pending-transfer-actions';
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
-    cancelBtn.className = 'btn btn-cancel';
+    cancelBtn.className = 'wiz-btn wiz-btn-back';
     cancelBtn.dataset.close = 'true';
     cancelBtn.textContent = 'Cancelar';
     const confirmBtn = document.createElement('button');
     confirmBtn.type = 'button';
-    confirmBtn.className = 'btn btn-primary';
+    const confirmVariant = String(options.confirmVariant || '').trim().toLowerCase();
+    const confirmClass = confirmVariant === 'submit' ? 'wiz-btn wiz-btn-submit' : 'wiz-btn wiz-btn-next';
+    confirmBtn.className = confirmClass;
     confirmBtn.id = 'pending-transfer-confirm';
     confirmBtn.textContent = options.confirmText || 'Transferir';
-    actions.append(cancelBtn, confirmBtn);
+    footer.append(cancelBtn, confirmBtn);
 
-    card.append(header, body, actions);
-    modal.append(backdrop, card);
-    document.body.appendChild(modal);
-
-    return modal;
+    document.body.appendChild(overlay);
+    return overlay;
 }
 
 function openTransferMetaModal(options = {}) {
@@ -4678,6 +4734,9 @@ function openTransferMetaModal(options = {}) {
         modal.querySelectorAll('[data-close]').forEach((el) => {
             el.addEventListener('click', close);
         });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) close();
+        });
 
         const confirmBtn = modal.querySelector('#pending-transfer-confirm');
         if (confirmBtn) {
@@ -4714,7 +4773,11 @@ async function handlePendingTransfer(itemId) {
 
     // Wizard step 1: destination selection
     const destination = await showTransferChoiceModal({
-        title: 'Paso 1 de 3 · ¿A dónde transferir?',
+        title: 'Transferir fiado',
+        stepIndex: 1,
+        stepTotal: 3,
+        stepLabel: 'Destino',
+        question: '¿A qué historial deseas transferir?',
         choices: [
             { value: 'income', label: 'Pagados', variant: 'success' },
             { value: 'losses', label: 'Pérdidas (Cancelado)', variant: 'danger' },
@@ -4757,7 +4820,10 @@ async function handlePendingTransfer(itemId) {
 
     // Then show meta modal for date/category
     const decision = await openTransferMetaModal({
-        title: `Paso 2 de 3 · ${destination === 'income' ? 'Datos para Pagados' : 'Datos para Pérdidas'}`,
+        title: destination === 'income' ? 'Transferir a Pagados' : 'Transferir a Pérdidas',
+        stepIndex: 2,
+        stepTotal: 3,
+        stepLabel: 'Detalles',
         rows: [
             { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
             { label: 'Cliente', value: pending.cliente || 'N/A' },
@@ -4773,6 +4839,7 @@ async function handlePendingTransfer(itemId) {
         dateLabel: destination === 'income' ? 'Fecha de pago' : 'Fecha de pérdida',
         defaultDate: getTodayLocalISO(),
         confirmText: 'Siguiente',
+        confirmVariant: 'next',
         split: splitConfig
     });
     if (!decision?.confirmed) return;
@@ -4830,14 +4897,18 @@ async function handlePendingTransfer(itemId) {
     }
 
     const confirmation = await openTransferMetaModal({
-        title: 'Paso 3 de 3 · Confirmar transferencia',
+        title: 'Confirmar transferencia',
+        stepIndex: 3,
+        stepTotal: 3,
+        stepLabel: 'Confirmación',
         rows: summaryRows,
         showConcept: false,
         showCategory: false,
         showDate: false,
         confirmText: destination === 'income'
             ? 'Confirmar y transferir a Pagados'
-            : 'Confirmar y transferir a Pérdidas'
+            : 'Confirmar y transferir a Pérdidas',
+        confirmVariant: 'submit'
     });
     if (!confirmation?.confirmed) return;
 

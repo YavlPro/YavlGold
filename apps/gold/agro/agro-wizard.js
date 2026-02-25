@@ -535,6 +535,10 @@ function injectWizardStyles() {
     document.head.appendChild(style);
 }
 
+export function ensureAgroWizardStyles() {
+    injectWizardStyles();
+}
+
 // ============================================================
 // MAIN FUNCTION
 // ============================================================
@@ -596,7 +600,7 @@ export async function openAgroWizard(tabName, deps) {
     const prefillKg = prefill?.quantityKg;
     const safeKg = prefillKg === undefined || prefillKg === null ? '' : String(prefillKg);
 
-    injectWizardStyles();
+    ensureAgroWizardStyles();
 
     // Fetch exchange rates (non-blocking)
     let exchangeRates = { USD: 1, COP: null, VES: null };
