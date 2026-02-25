@@ -2163,6 +2163,19 @@ function formatSplitQuantity(value, unitType) {
     return `${qtyText} ${singular ? unitOption.singular : unitOption.plural}`;
 }
 
+function fmtMoneyUI(amount, currency = 'COP') {
+    const safeAmount = toSafeLocaleNumber(amount) ?? 0;
+    const code = String(currency || 'COP').trim().toUpperCase();
+    const cfg = SUPPORTED_CURRENCIES[code] || null;
+    const label = cfg?.symbol || code || 'COP';
+    const decimals = Number.isInteger(cfg?.decimals) ? cfg.decimals : 2;
+    const formatted = Number(safeAmount).toLocaleString('es-VE', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+    return `${label} ${formatted}`;
+}
+
 const SPLIT_STATE_LABELS = {
     fiado: 'Fiados',
     fiados: 'Fiados',
@@ -4552,6 +4565,16 @@ function buildTransferMetaModal(options = {}) {
                     priceInput.value = roundNumeric(defaultUnitPrice, 2).toFixed(2);
                 }
                 priceGroup.append(priceLabel, priceInput);
+
+                const originalUnitPrice = toSafeLocaleNumber(splitOptions.originalUnitPrice);
+                if (originalUnitPrice !== null && originalUnitPrice > 0) {
+                    const originalHint = document.createElement('div');
+                    originalHint.className = 'pending-transfer-unit-price-meta';
+                    const originalLabel = splitOptions.originalUnitPriceLabel || 'Precio unitario original (fiado)';
+                    const currencyLabel = splitOptions.currencyLabel || 'COP';
+                    originalHint.textContent = `${originalLabel}: ${fmtMoneyUI(originalUnitPrice, currencyLabel)}/u`;
+                    priceGroup.appendChild(originalHint);
+                }
                 body.appendChild(priceGroup);
             }
 
@@ -4618,12 +4641,13 @@ function openTransferMetaModal(options = {}) {
             const qtyLeftText = formatSplitQuantity(qtyLeft, splitOptions.unitType);
             const destinationLabel = splitOptions.destinationLabel || 'Destino';
             const originLabel = splitOptions.originLabel || 'Fiados';
+            const currencyLabel = splitOptions.currencyLabel || 'COP';
 
             let amountHint = '';
             const unitPrice = toSafeLocaleNumber(unitPriceInput?.value);
             if (unitPrice !== null && unitPrice > 0) {
                 const total = roundNumeric(qtyMove * unitPrice, 2);
-                amountHint = ` @ $${roundNumeric(unitPrice, 2).toFixed(2)}/u -> $${total.toFixed(2)}`;
+                amountHint = ` @ ${fmtMoneyUI(unitPrice, currencyLabel)}/u -> ${fmtMoneyUI(total, currencyLabel)}`;
             }
 
             previewMove.textContent = `Se moverán ${qtyMoveText} a ${destinationLabel}${amountHint}.`;
@@ -4709,6 +4733,10 @@ async function handlePendingTransfer(itemId) {
     const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
     const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Pagado' : 'Pérdida');
     const splitDraftBase = computePendingSplitDraft(pending, destination);
+    const pendingCurrencyLabel = (() => {
+        const raw = String(pending?.currency || '').trim().toUpperCase();
+        return SUPPORTED_CURRENCIES[raw] ? raw : 'COP';
+    })();
     const splitConfig = splitDraftBase.enabled ? {
         enabled: true,
         qtyTotal: splitDraftBase.qtyTotal,
@@ -4721,7 +4749,10 @@ async function handlePendingTransfer(itemId) {
             ? splitDraftBase.unitPriceOriginal
             : (toSafeLocaleNumber(pending?.monto) ?? 0),
         quantityLabel: 'Cantidad a transferir',
-        unitPriceLabel: 'Precio unitario (pagado)'
+        unitPriceLabel: 'Precio unitario (pagado)',
+        currencyLabel: pendingCurrencyLabel,
+        originalUnitPrice: splitDraftBase.unitPriceOriginal,
+        originalUnitPriceLabel: 'Precio unitario original (fiado)'
     } : null;
 
     // Then show meta modal for date/category
@@ -4763,6 +4794,7 @@ async function handlePendingTransfer(itemId) {
         return;
     }
 
+    const summaryCurrencyLabel = splitConfig?.currencyLabel || pendingCurrencyLabel || 'COP';
     const destinationLabel = destination === 'income' ? 'Pagados' : 'Pérdidas';
     const summaryRows = [
         { label: 'Origen', value: 'Fiados' },
@@ -4782,18 +4814,18 @@ async function handlePendingTransfer(itemId) {
         if (destination === 'income' && splitDraft.unitPriceTransfer !== null) {
             summaryRows.push({
                 label: 'Precio unitario transferido',
-                value: `$${roundNumeric(splitDraft.unitPriceTransfer, 2).toFixed(2)}`
+                value: `${fmtMoneyUI(splitDraft.unitPriceTransfer, summaryCurrencyLabel)}/u`
             });
         }
     }
     summaryRows.push({
         label: 'Monto transferido',
-        value: `$${roundNumeric(splitDraft.transferAmount || 0, 2).toFixed(2)}`
+        value: fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)
     });
     if (splitDraft.enabled && splitDraft.isPartial) {
         summaryRows.push({
             label: 'Monto restante en Fiados',
-            value: `$${roundNumeric(splitDraft.remainingAmount || 0, 2).toFixed(2)}`
+            value: fmtMoneyUI(splitDraft.remainingAmount || 0, summaryCurrencyLabel)
         });
     }
 
