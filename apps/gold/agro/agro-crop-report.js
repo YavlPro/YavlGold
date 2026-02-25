@@ -16,35 +16,35 @@ const TAB_CONFIGS = {
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,categoria,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,categoria,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,split_from_id,split_meta'
     },
     gastos: {
         table: 'agro_expenses',
         conceptField: 'concept',
         amountField: 'amount',
         dateField: 'date',
-        columns: 'id,concept,amount,monto_usd,currency,exchange_rate,date,category,crop_id,deleted_at'
+        columns: 'id,concept,amount,monto_usd,currency,exchange_rate,date,category,crop_id,deleted_at,split_from_id,split_meta'
     },
     pendientes: {
         table: 'agro_pending',
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,cliente,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,transfer_state,split_from_id,split_meta'
     },
     perdidas: {
         table: 'agro_losses',
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,causa,unit_type,unit_qty,quantity_kg,crop_id,deleted_at'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,causa,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,split_from_id,split_meta'
     },
     transferencias: {
         table: 'agro_transfers',
         conceptField: 'concepto',
         amountField: 'monto',
         dateField: 'fecha',
-        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,destino,unit_type,unit_qty,quantity_kg,crop_id,deleted_at'
+        columns: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,destino,unit_type,unit_qty,quantity_kg,crop_id,deleted_at,split_from_id,split_meta'
     }
 };
 
@@ -179,6 +179,17 @@ function escMd(str) {
     return String(str || '').replace(/\|/g, '·').replace(/\n/g, ' ');
 }
 
+function isMissingColumnError(error, column) {
+    if (!error || !column) return false;
+    const code = String(error.code || '').toUpperCase();
+    const text = `${String(error.message || '').toLowerCase()} ${String(error.details || '').toLowerCase()}`;
+    const col = String(column || '').toLowerCase();
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('not found') || text.includes('could not find');
+    const mentionsColumn = text.includes(col) || text.includes(`"${col}"`) || text.includes(`'${col}'`);
+    if (code === '42703' || code === 'PGRST204') return hasMissingPhrase && mentionsColumn;
+    return hasMissingPhrase && mentionsColumn;
+}
+
 function parseWho(tabName, concept) {
     const text = String(concept || '').trim();
     if (!text) return { concept: '', who: '' };
@@ -204,6 +215,84 @@ function fmtUnits(item) {
     const kg = Number(item.quantity_kg);
     if (Number.isFinite(kg) && kg > 0) parts.push(`${kg} kg`);
     return parts.join(' · ') || '-';
+}
+
+function normalizeSplitMeta(raw) {
+    if (!raw) return null;
+    let parsed = raw;
+    if (typeof parsed === 'string') {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch (_err) {
+            return null;
+        }
+    }
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (String(parsed.type || '').trim().toLowerCase() !== 'partial_transfer') return null;
+    const qtyTotal = Number(parsed.qty_total);
+    const qtyMoved = Number(parsed.qty_moved);
+    const qtyLeft = Number(parsed.qty_left);
+    if (!Number.isFinite(qtyTotal) || !Number.isFinite(qtyMoved) || !Number.isFinite(qtyLeft)) return null;
+    return {
+        ...parsed,
+        qty_total: qtyTotal,
+        qty_moved: qtyMoved,
+        qty_left: qtyLeft,
+        role: String(parsed.role || '').trim().toLowerCase() === 'destination' ? 'destination' : 'origin'
+    };
+}
+
+function splitStateLabel(value, fallback = 'Historial') {
+    const key = String(value || '').trim().toLowerCase();
+    const map = {
+        fiado: 'Fiados',
+        fiados: 'Fiados',
+        pendiente: 'Fiados',
+        pendientes: 'Fiados',
+        pagado: 'Pagados',
+        pagados: 'Pagados',
+        ingreso: 'Pagados',
+        ingresos: 'Pagados',
+        income: 'Pagados',
+        perdida: 'Pérdidas',
+        perdidas: 'Pérdidas',
+        losses: 'Pérdidas'
+    };
+    return map[key] || fallback;
+}
+
+function formatSplitQuantity(value, unitType) {
+    const qty = Number(value);
+    if (!Number.isFinite(qty)) return '-';
+    const qtyText = Number.isInteger(qty) ? String(qty) : String(Number(qty.toFixed(2)));
+    const labels = { saco: ['saco', 'sacos'], cesta: ['cesta', 'cestas'], kg: ['kg', 'kg'] };
+    const unitKey = String(unitType || '').toLowerCase();
+    if (!unitKey || !labels[unitKey]) return qtyText;
+    const [singular, plural] = labels[unitKey];
+    return `${qtyText} ${Math.abs(qty - 1) < 1e-9 ? singular : plural}`;
+}
+
+function buildSplitMdSummary(item, fallbackState = '') {
+    const meta = normalizeSplitMeta(item?.split_meta);
+    if (!meta) return '';
+    const qtyMoved = formatSplitQuantity(meta.qty_moved, meta.unit_type);
+    const qtyLeft = formatSplitQuantity(meta.qty_left, meta.unit_type);
+    const qtyTotal = formatSplitQuantity(meta.qty_total, meta.unit_type);
+    const toState = splitStateLabel(meta.to_state || fallbackState, 'Destino');
+    const fromState = splitStateLabel(meta.from_state, 'Fiados');
+    const unitPriceTransfer = Number(meta.unit_price_transfer);
+    const amountMoved = Number(meta.amount_moved);
+    const pricePart = Number.isFinite(unitPriceTransfer) && unitPriceTransfer > 0
+        ? ` @ $${unitPriceTransfer.toFixed(2)}/u`
+        : '';
+    const amountPart = Number.isFinite(amountMoved)
+        ? ` -> $${amountMoved.toFixed(2)}`
+        : '';
+
+    if (meta.role === 'destination') {
+        return `Transferido parcial: ${qtyMoved} de ${qtyTotal}${pricePart}${amountPart}. Quedan ${qtyLeft} en ${fromState}.`;
+    }
+    return `Restante tras transferencia parcial: ${qtyLeft} (de ${qtyTotal}). Se movieron ${qtyMoved} a ${toState}.`;
 }
 
 function sanitizeFilename(name) {
@@ -363,24 +452,36 @@ async function fetchTabData(userId, cropId, tabName, opts = {}) {
     const includeDeleted = !!opts.includeDeleted;
 
     try {
-        let q = supabase
-            .from(cfg.table)
-            .select(cfg.columns)
-            .eq('user_id', userId)
-            .eq('crop_id', cropId)
-            .order(cfg.dateField, { ascending: false });
+        const runQuery = (columns) => {
+            let q = supabase
+                .from(cfg.table)
+                .select(columns)
+                .eq('user_id', userId)
+                .eq('crop_id', cropId)
+                .order(cfg.dateField, { ascending: false });
 
-        // Modo Historial: incluir soft-deleted cuando se solicita explícitamente
-        if (!includeDeleted) {
-            q = q.is('deleted_at', null);
+            // Modo Historial: incluir soft-deleted cuando se solicita explícitamente
+            if (!includeDeleted) {
+                q = q.is('deleted_at', null);
+            }
+
+            // Exclude transferred fiados (solo en modo operativo)
+            if (tabName === 'pendientes' && !includeDeleted) {
+                q = q.neq('transfer_state', 'transferred');
+            }
+            return q;
+        };
+
+        let { data, error } = await runQuery(cfg.columns);
+        if (error && (isMissingColumnError(error, 'split_from_id') || isMissingColumnError(error, 'split_meta'))) {
+            const fallbackColumns = cfg.columns
+                .replace(/,\s*split_from_id/gi, '')
+                .replace(/,\s*split_meta/gi, '');
+            const retry = await runQuery(fallbackColumns);
+            data = retry.data;
+            error = retry.error;
         }
 
-        // Exclude transferred fiados (solo en modo operativo)
-        if (tabName === 'pendientes' && !includeDeleted) {
-            q = q.neq('transfer_state', 'transferred');
-        }
-
-        const { data, error } = await q;
         if (error) {
             console.warn(`[CropReport] Error fetching ${tabName}:`, error.message);
             return [];
@@ -427,37 +528,56 @@ function deletedFlag(row, historyMode) {
 
 function buildIncomeTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Comprador | Cantidad | Moneda | Monto | USD |\n';
-    md += '|-------|----------|-----------|----------|--------|------:|----:|\n';
-    for (const it of items) {
+    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'pagados'));
+    const hasSplit = splitNotes.some(Boolean);
+    let md = '| Fecha | Concepto | Comprador | Cantidad | Moneda | Monto | USD';
+    md += hasSplit ? ' | Split |\n' : ' |\n';
+    md += '|-------|----------|-----------|----------|--------|------:|----:';
+    md += hasSplit ? '|-------|\n' : '|\n';
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('ingresos', raw);
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
         const flag = deletedFlag(it, historyMode);
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
+        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(parsed.who) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd}`;
+        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
 function buildExpenseTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Categoría | Moneda | Monto | USD |\n';
-    md += '|-------|----------|-----------|--------|------:|----:|\n';
-    for (const it of items) {
+    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'gastos'));
+    const hasSplit = splitNotes.some(Boolean);
+    let md = '| Fecha | Concepto | Categoría | Moneda | Monto | USD';
+    md += hasSplit ? ' | Split |\n' : ' |\n';
+    md += '|-------|----------|-----------|--------|------:|----:';
+    md += hasSplit ? '|-------|\n' : '|\n';
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.amount));
         const flag = deletedFlag(it, historyMode);
-        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${centsToStr(toCents(it.amount))} | ${amtUsd} |\n`;
+        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
+        md += `| ${fmtDate(it.date)} | ${flag}${escMd(it.concept)} | ${escMd(it.category) || '-'} | ${currency} | ${centsToStr(toCents(it.amount))} | ${amtUsd}`;
+        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
 function buildPendingTable(items, historyMode = false) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Estado |\n';
-    md += '|-------|----------|---------|----------|--------|------:|----:|--------|\n';
-    for (const it of items) {
+    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'fiados'));
+    const hasSplit = splitNotes.some(Boolean);
+    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Estado';
+    md += hasSplit ? ' | Split |\n' : ' |\n';
+    md += '|-------|----------|---------|----------|--------|------:|----:|--------';
+    md += hasSplit ? '|-------|\n' : '|\n';
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('pendientes', raw);
         const client = it.cliente || parsed.who || '-';
@@ -465,7 +585,9 @@ function buildPendingTable(items, historyMode = false) {
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
         const flag = deletedFlag(it, historyMode);
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(state)} |\n`;
+        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(state)}`;
+        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
@@ -473,42 +595,63 @@ function buildPendingTable(items, historyMode = false) {
 /** Tabla para fiados que fueron transferidos a pagado/pérdida */
 function buildPendingTransferredTable(items) {
     if (!items.length) return 'Sin registros\n';
-    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Transferido a |\n';
-    md += '|-------|----------|---------|----------|--------|------:|----:|--------------|\n';
-    for (const it of items) {
+    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'fiados'));
+    const hasSplit = splitNotes.some(Boolean);
+    let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Transferido a';
+    md += hasSplit ? ' | Split |\n' : ' |\n';
+    md += '|-------|----------|---------|----------|--------|------:|----:|--------------';
+    md += hasSplit ? '|-------|\n' : '|\n';
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('pendientes', raw);
         const client = it.cliente || parsed.who || '-';
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
         const dest = it.transferred_to || it.transfer_state || 'pagado/pérdida';
-        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(dest)} |\n`;
+        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
+        md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(dest)}`;
+        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
 function buildLossTable(items, historyMode = false) {
     if (!items.length) return 'Sin pérdidas registradas ✅\n';
-    let md = '| Fecha | Concepto | Causa | Cantidad | Moneda | Monto | USD |\n';
-    md += '|-------|----------|-------|----------|--------|------:|----:|\n';
-    for (const it of items) {
+    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'perdidas'));
+    const hasSplit = splitNotes.some(Boolean);
+    let md = '| Fecha | Concepto | Causa | Cantidad | Moneda | Monto | USD';
+    md += hasSplit ? ' | Split |\n' : ' |\n';
+    md += '|-------|----------|-------|----------|--------|------:|----:';
+    md += hasSplit ? '|-------|\n' : '|\n';
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
         const flag = deletedFlag(it, historyMode);
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
+        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.causa) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd}`;
+        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }
 
 function buildTransferTable(items, historyMode = false) {
     if (!items.length) return 'Sin donaciones registradas\n';
-    let md = '| Fecha | Concepto | Beneficiario | Cantidad | Moneda | Monto | USD |\n';
-    md += '|-------|----------|---------|----------|--------|------:|----:|\n';
-    for (const it of items) {
+    const splitNotes = items.map((it) => buildSplitMdSummary(it, 'donaciones'));
+    const hasSplit = splitNotes.some(Boolean);
+    let md = '| Fecha | Concepto | Beneficiario | Cantidad | Moneda | Monto | USD';
+    md += hasSplit ? ' | Split |\n' : ' |\n';
+    md += '|-------|----------|---------|----------|--------|------:|----:';
+    md += hasSplit ? '|-------|\n' : '|\n';
+    for (let index = 0; index < items.length; index += 1) {
+        const it = items[index];
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
         const flag = deletedFlag(it, historyMode);
-        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} |\n`;
+        const splitText = splitNotes[index] ? escMd(splitNotes[index]) : '-';
+        md += `| ${fmtDate(it.fecha)} | ${flag}${escMd(it.concepto)} | ${escMd(it.destino) || '-'} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd}`;
+        md += hasSplit ? ` | ${splitText} |\n` : ' |\n';
     }
     return md;
 }

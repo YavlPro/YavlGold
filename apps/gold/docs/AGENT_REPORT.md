@@ -8183,6 +8183,126 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
 
+## 🆕 SESIÓN: Facturero Split Parcial por Unidades (2026-02-25)
+
+### Paso 0 — Diagnóstico obligatorio (antes de editar runtime)
+
+1) **Mapa MPA y navegación actual**
+- `apps/gold/vite.config.js`: `appType: 'mpa'`, entradas activas para `index`, `dashboard`, `agro`, `crypto`, `academia`, `tecnologia`, `social`, etc.
+- `apps/gold/vercel.json`: `cleanUrls`, rewrites por módulo (`/agro`, `/crypto`, `/dashboard`, `/academia`, `/tecnologia`) y redirect legado `/herramientas -> /tecnologia`.
+- `apps/gold/index.html`: navbar y cards que enrutan a módulos (`./agro/`, `./crypto/`, `./herramientas/`, `/dashboard/`).
+- `apps/gold/dashboard/index.html`: dashboard principal con módulos, insights y managers de notificaciones/feedback.
+
+2) **Instanciación de datos/auth Supabase**
+- `apps/gold/assets/js/config/supabase-config.js`: singleton `createClient(...)` con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+- `apps/gold/assets/js/auth/authClient.js`: sesión, auth guard inteligente y eventos auth.
+- `apps/gold/assets/js/auth/authUI.js`: UI de login/registro/recovery y wiring con `AuthClient`.
+- `apps/gold/dashboard/auth-guard.js`: guard ESM para páginas dashboard (redirección a `/index.html#login`).
+
+3) **Dashboard: consultas actuales y brechas**
+- Consultas activas en dashboard:
+  - `profiles`
+  - `modules`
+  - `user_favorites`
+  - `notifications`
+- Integraciones auxiliares:
+  - `announcements` vía managers de anuncios
+  - `feedback` vía `FeedbackManager`
+- Brecha confirmada:
+  - progreso académico existe en repo (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`, visto en `academia.js`) pero no está integrado en insights del dashboard principal.
+
+4) **Clima/Agro prioridad Manual > GPS > IP + keys**
+- Lógica en `apps/gold/assets/js/geolocation.js`:
+  - `getCoordsSmart` respeta prioridad manual primero, luego GPS/IP según preferencia, fallback final.
+  - keys: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`.
+- Uso en `apps/gold/agro/dashboard.js`:
+  - `initWeather`, `displayWeather`, panel debug activable por `?debug=1` o `YG_GEO_DEBUG=1`.
+  - weather cache: `yavlgold_weather_*`.
+
+5) **Crypto: estado real**
+- `apps/gold/crypto/` está integrado como página MPA (`crypto/index.html` en Vite + rewrites).
+- Hay archivos legacy/backups (`index_old.html`, `script_backup.txt`, `README.md` heredado), pero flujo productivo actual es MPA dentro de `apps/gold`.
+
+### Diagnóstico específico del flujo “Transferir” (Facturero)
+
+- Flujo activo ubicado en `apps/gold/agro/agro.js`:
+  - modal de metadatos: `buildTransferMetaModal` / `openTransferMetaModal`
+  - handler principal fiado -> pagado/pérdida: `handlePendingTransfer`
+  - transferencias relacionadas: `handleIncomeTransfer`, `handleLossTransfer`
+  - render historial: `renderHistoryRow`
+  - export MD: `exportAgroLog`
+- Hallazgo raíz:
+  - hoy la transferencia de fiado mueve el registro completo.
+  - no existe input de cantidad parcial ni precio unitario de transferencia.
+  - no hay trazabilidad explícita de split parcial para UI/Markdown.
+
+### Plan quirúrgico (sin mezclar historial)
+
+1. **Modelo de trazabilidad mínima**
+- Añadir `split_from_id` + `split_meta` (jsonb nullable) en tablas facturero involucradas, sin tablas nuevas.
+
+2. **Modal de transferencia**
+- Extender `openTransferMetaModal` para soportar:
+  - `quantity_to_transfer` (min 1, max qty original)
+  - `unit_price_transfer` (default desde movimiento origen)
+  - preview en vivo `se mueven X / quedan Y`.
+
+3. **Split real en transferencia**
+- En `handlePendingTransfer`:
+  - si `qty_transfer < qty_total`: insert destino + update origen restante.
+  - si `qty_transfer == qty_total`: mantener flujo completo actual.
+  - recalcular montos:
+    - transferido con `qty_transfer * unit_price_transfer`
+    - restante con `qty_restante * unit_price_original`.
+  - guardar `split_meta` en ambos lados y relación `split_from_id` en destino.
+
+4. **Render y Markdown**
+- UI historial: mostrar línea breve de split cuando exista `split_meta`.
+- `exportAgroLog`: añadir texto explícito de split parcial (`transferido X`, `quedan Y`, `precio unitario`, `total`).
+
+5. **Validación**
+- pruebas manuales A/B/C de transferencia parcial/completa.
+- `pnpm build:gold`.
+
+### Gates / Checklist (agent-report-check)
+- [x] Modal muestra cantidad y precio unitario al transferir fiado con unidades.
+- [x] Split parcial crea destino y deja restante en origen, sin mezclar historial.
+- [x] Transferencia completa sigue intacta.
+- [x] Historial renderiza trazabilidad split de forma clara.
+- [x] AgroLog Markdown refleja `transferido` y `restante`.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y evidencia (cierre)
+- Archivos runtime tocados:
+  - `apps/gold/agro/agro.js`
+  - `apps/gold/agro/agro.css`
+  - `apps/gold/agro/agro-crop-report.js`
+- Migración mínima agregada:
+  - `supabase/migrations/20260225162000_agro_facturero_split_meta_v1.sql`
+- Cambios aplicados:
+  1. `handlePendingTransfer` ahora soporta split parcial por `unit_qty`:
+     - mueve solo la cantidad elegida al destino.
+     - recalcula monto transferido por precio unitario (en Pagados).
+     - deja restante en Fiados con monto recalculado por precio unitario original.
+  2. Modal de transferencia (`openTransferMetaModal`) extendido con:
+     - `Cantidad a transferir`
+     - `Precio unitario (pagado)`
+     - preview en vivo `Se moverán X / Quedarán Y`.
+  3. Trazabilidad split:
+     - `split_from_id` + `split_meta` en inserciones destino y actualización origen.
+     - fallback seguro cuando columnas opcionales aún no existen.
+  4. Historial UI:
+     - render de nota `Split parcial` desde `split_meta` en filas afectadas.
+  5. Markdown:
+     - `exportAgroLog` añade columna `Split` cuando hay metadata.
+     - `agro-crop-report.js` incluye notas split en tablas (cuando existan datos).
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+- Pruebas manuales:
+  - No se ejecutaron con datos reales en esta sesión (sin interacción DB/UI en navegador).
+  - Queda checklist manual preparado en la entrega final para validar Caso A/B/C y export MD.
+
 ## 🆕 SESIÓN: CodeQL Batch 2 (sinks dinámicos P0) (2026-02-22)
 
 ### Paso 0 — Diagnóstico inicial (antes de editar runtime)

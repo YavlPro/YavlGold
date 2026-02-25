@@ -41,9 +41,9 @@ const AGRO_GENERAL_SUBLABEL = 'Todos los movimientos';
 const AGRO_CROPS_REFRESH_EVENT = 'agro:crops:refresh';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
-const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
-const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
-const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
+const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id,split_from_id,split_meta';
+const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,split_from_id,split_meta';
+const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,split_from_id,split_meta';
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
@@ -973,9 +973,9 @@ const FACTURERO_OTHER_FETCH_LIMIT = FACTURERO_HISTORY_FETCH_LIMIT;
 const FACTURERO_OTHER_RENDER_LIMIT = FACTURERO_HISTORY_FETCH_LIMIT;
 
 const FACTURERO_OPTIONAL_FIELDS = {
-    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason'],
-    ingresos: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason'],
-    perdidas: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason']
+    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason', 'split_from_id', 'split_meta'],
+    ingresos: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason', 'split_from_id', 'split_meta'],
+    perdidas: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason', 'split_from_id', 'split_meta']
 };
 
 const FACTURERO_OPTIONAL_FIELDS_SUPPORT = {
@@ -2079,6 +2079,258 @@ function toSafeLocaleNumber(value) {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
+function roundNumeric(value, decimals = 2) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 0;
+    const factor = 10 ** Math.max(0, Number(decimals) || 0);
+    return Math.round((num + Number.EPSILON) * factor) / factor;
+}
+
+function isIntegerLike(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return false;
+    return Math.abs(num - Math.round(num)) < 1e-9;
+}
+
+function formatQuantityValue(value, precision = 2) {
+    const num = toSafeLocaleNumber(value);
+    if (num === null) return '0';
+    const decimals = precision === 0 || isIntegerLike(num) ? 0 : 2;
+    const fixed = roundNumeric(num, decimals).toFixed(decimals);
+    return fixed.replace(/\.?0+$/, '');
+}
+
+function getUnitOptionByType(unitType) {
+    const key = String(unitType || '').trim().toLowerCase();
+    if (!key) return null;
+    return INCOME_UNIT_OPTIONS.find((opt) => opt.value === key) || null;
+}
+
+function formatSplitQuantity(value, unitType) {
+    const qty = toSafeLocaleNumber(value);
+    if (qty === null || qty < 0) return '-';
+    const qtyText = formatQuantityValue(qty, isIntegerLike(qty) ? 0 : 2);
+    const unitOption = getUnitOptionByType(unitType);
+    if (!unitOption) return qtyText;
+    const singular = Math.abs(qty - 1) < 1e-9;
+    return `${qtyText} ${singular ? unitOption.singular : unitOption.plural}`;
+}
+
+const SPLIT_STATE_LABELS = {
+    fiado: 'Fiados',
+    fiados: 'Fiados',
+    pendiente: 'Fiados',
+    pendientes: 'Fiados',
+    pagado: 'Pagados',
+    pagados: 'Pagados',
+    ingreso: 'Pagados',
+    ingresos: 'Pagados',
+    income: 'Pagados',
+    perdida: 'Pérdidas',
+    perdidas: 'Pérdidas',
+    losses: 'Pérdidas',
+    transferencias: 'Donaciones',
+    donaciones: 'Donaciones',
+    gastos: 'Gastos',
+    otros: 'Otros'
+};
+
+function formatSplitStateLabel(value, fallback = 'Historial') {
+    const key = String(value || '').trim().toLowerCase();
+    return SPLIT_STATE_LABELS[key] || fallback;
+}
+
+function normalizeSplitMeta(raw) {
+    if (!raw) return null;
+    let parsed = raw;
+    if (typeof parsed === 'string') {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch (_err) {
+            return null;
+        }
+    }
+    if (!parsed || typeof parsed !== 'object') return null;
+    const type = String(parsed.type || '').trim().toLowerCase();
+    if (type !== 'partial_transfer') return null;
+    const qtyTotal = toSafeLocaleNumber(parsed.qty_total);
+    const qtyMoved = toSafeLocaleNumber(parsed.qty_moved);
+    const qtyLeft = toSafeLocaleNumber(parsed.qty_left);
+    if (qtyTotal === null || qtyMoved === null || qtyLeft === null) return null;
+
+    return {
+        ...parsed,
+        type: 'partial_transfer',
+        role: String(parsed.role || '').trim().toLowerCase() === 'destination' ? 'destination' : 'origin',
+        qty_total: qtyTotal,
+        qty_moved: qtyMoved,
+        qty_left: qtyLeft
+    };
+}
+
+function buildPartialSplitMetaPayload(input = {}) {
+    const qtyTotal = toSafeLocaleNumber(input.qtyTotal);
+    const qtyMoved = toSafeLocaleNumber(input.qtyMoved);
+    const qtyLeft = toSafeLocaleNumber(input.qtyLeft);
+    if (qtyTotal === null || qtyMoved === null || qtyLeft === null) return null;
+    if (qtyTotal <= 0 || qtyMoved <= 0 || qtyLeft < 0 || qtyMoved >= qtyTotal) return null;
+
+    const unitPriceOriginal = toSafeLocaleNumber(input.unitPriceOriginal);
+    const unitPriceTransfer = toSafeLocaleNumber(input.unitPriceTransfer);
+    const amountMoved = toSafeLocaleNumber(input.amountMoved);
+    const amountLeft = toSafeLocaleNumber(input.amountLeft);
+    const movedAt = input.movedAt || new Date().toISOString();
+
+    const qtyPrecision = isIntegerLike(qtyTotal) && isIntegerLike(qtyMoved) && isIntegerLike(qtyLeft) ? 0 : 2;
+
+    return {
+        type: 'partial_transfer',
+        role: String(input.role || '').trim().toLowerCase() === 'destination' ? 'destination' : 'origin',
+        split_from_id: input.splitFromId || null,
+        from_state: String(input.fromState || 'fiados').trim().toLowerCase() || 'fiados',
+        to_state: String(input.toState || '').trim().toLowerCase() || null,
+        unit_type: String(input.unitType || '').trim().toLowerCase() || null,
+        qty_total: roundNumeric(qtyTotal, qtyPrecision),
+        qty_moved: roundNumeric(qtyMoved, qtyPrecision),
+        qty_left: roundNumeric(qtyLeft, qtyPrecision),
+        unit_price_original: unitPriceOriginal !== null ? roundNumeric(unitPriceOriginal, 6) : null,
+        unit_price_transfer: unitPriceTransfer !== null ? roundNumeric(unitPriceTransfer, 6) : null,
+        amount_moved: amountMoved !== null ? roundNumeric(amountMoved, 2) : null,
+        amount_left: amountLeft !== null ? roundNumeric(amountLeft, 2) : null,
+        moved_at: movedAt
+    };
+}
+
+function formatSplitMetaSummary(item, tabName, options = {}) {
+    const mode = options.mode === 'md' ? 'md' : 'ui';
+    const meta = normalizeSplitMeta(item?.split_meta);
+    if (!meta) return '';
+
+    const qtyMovedText = formatSplitQuantity(meta.qty_moved, meta.unit_type);
+    const qtyLeftText = formatSplitQuantity(meta.qty_left, meta.unit_type);
+    const qtyTotalText = formatSplitQuantity(meta.qty_total, meta.unit_type);
+    const fromLabel = formatSplitStateLabel(meta.from_state, 'Fiados');
+    const toLabel = formatSplitStateLabel(meta.to_state || tabName, 'Destino');
+    const priceTransfer = toSafeLocaleNumber(meta.unit_price_transfer);
+    const amountMoved = toSafeLocaleNumber(meta.amount_moved);
+
+    if (mode === 'md') {
+        const pricePart = priceTransfer !== null && priceTransfer > 0
+            ? ` @ $${roundNumeric(priceTransfer, 2).toFixed(2)}/u`
+            : '';
+        const amountPart = amountMoved !== null
+            ? ` -> $${roundNumeric(amountMoved, 2).toFixed(2)}`
+            : '';
+        if (meta.role === 'destination') {
+            return `Transferido parcial: ${qtyMovedText} de ${qtyTotalText}${pricePart}${amountPart}. Quedan ${qtyLeftText} en ${fromLabel}.`;
+        }
+        return `Restante tras transferencia parcial: ${qtyLeftText} (de ${qtyTotalText}). Se movieron ${qtyMovedText} a ${toLabel}.`;
+    }
+
+    if (meta.role === 'destination') {
+        return `Split parcial: movidos ${qtyMovedText} • quedan ${qtyLeftText} en ${fromLabel}`;
+    }
+    return `Restante split: quedan ${qtyLeftText} • movidos ${qtyMovedText} a ${toLabel}`;
+}
+
+function computePendingSplitDraft(pending, destination, decision = {}) {
+    const unitType = String(pending?.unit_type || '').trim().toLowerCase();
+    const qtyRaw = toSafeLocaleNumber(pending?.unit_qty);
+    const sourceAmount = toSafeLocaleNumber(pending?.monto) ?? 0;
+    const splitEnabled = !!unitType && qtyRaw !== null && qtyRaw > 1;
+
+    const base = {
+        enabled: splitEnabled,
+        unitType,
+        qtyTotal: splitEnabled ? qtyRaw : null,
+        qtyTransfer: splitEnabled ? qtyRaw : null,
+        qtyLeft: 0,
+        qtyPrecision: splitEnabled && isIntegerLike(qtyRaw) ? 0 : 2,
+        unitPriceOriginal: splitEnabled && qtyRaw > 0 ? (sourceAmount / qtyRaw) : null,
+        unitPriceTransfer: null,
+        transferAmount: sourceAmount,
+        remainingAmount: 0,
+        transferUnitQty: splitEnabled ? qtyRaw : (toSafeLocaleNumber(pending?.unit_qty) ?? null),
+        remainingUnitQty: 0,
+        transferKgQty: toSafeLocaleNumber(pending?.quantity_kg),
+        remainingKgQty: 0,
+        isPartial: false,
+        error: ''
+    };
+
+    if (!splitEnabled) {
+        base.transferUnitQty = toSafeLocaleNumber(pending?.unit_qty);
+        base.transferKgQty = toSafeLocaleNumber(pending?.quantity_kg);
+        return base;
+    }
+
+    const qtyTotal = base.qtyPrecision === 0
+        ? Math.round(base.qtyTotal)
+        : roundNumeric(base.qtyTotal, 2);
+
+    let qtyTransfer = toSafeLocaleNumber(decision?.quantity);
+    if (qtyTransfer === null) qtyTransfer = qtyTotal;
+    qtyTransfer = base.qtyPrecision === 0 ? Math.round(qtyTransfer) : roundNumeric(qtyTransfer, 2);
+
+    if (qtyTransfer < 1 || qtyTransfer > qtyTotal) {
+        base.error = `La cantidad a transferir debe estar entre 1 y ${formatQuantityValue(qtyTotal, base.qtyPrecision)}.`;
+        return base;
+    }
+
+    const qtyLeftRaw = Math.max(qtyTotal - qtyTransfer, 0);
+    const qtyLeft = base.qtyPrecision === 0 ? Math.round(qtyLeftRaw) : roundNumeric(qtyLeftRaw, 2);
+
+    const unitPriceOriginal = base.unitPriceOriginal;
+    const defaultTransferPrice = unitPriceOriginal !== null ? unitPriceOriginal : sourceAmount;
+    let unitPriceTransfer = defaultTransferPrice;
+    if (destination === 'income') {
+        const parsedPrice = toSafeLocaleNumber(decision?.unitPrice);
+        if (parsedPrice !== null) unitPriceTransfer = parsedPrice;
+        if (!(unitPriceTransfer > 0)) {
+            base.error = 'El precio unitario debe ser mayor a 0.';
+            return base;
+        }
+    }
+
+    let transferAmount = sourceAmount;
+    if (destination === 'income') {
+        transferAmount = roundNumeric(qtyTransfer * unitPriceTransfer, 2);
+    } else if (unitPriceOriginal !== null) {
+        transferAmount = roundNumeric(qtyTransfer * unitPriceOriginal, 2);
+    } else if (qtyTotal > 0) {
+        transferAmount = roundNumeric(sourceAmount * (qtyTransfer / qtyTotal), 2);
+    }
+
+    const remainingAmount = qtyLeft > 0
+        ? (unitPriceOriginal !== null
+            ? roundNumeric(qtyLeft * unitPriceOriginal, 2)
+            : roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2))
+        : 0;
+
+    const kgTotal = toSafeLocaleNumber(pending?.quantity_kg);
+    let transferKgQty = kgTotal;
+    let remainingKgQty = 0;
+    if (kgTotal !== null && kgTotal > 0 && qtyTotal > 0) {
+        transferKgQty = roundNumeric(kgTotal * (qtyTransfer / qtyTotal), 3);
+        remainingKgQty = qtyLeft > 0 ? roundNumeric(Math.max(kgTotal - transferKgQty, 0), 3) : 0;
+    }
+
+    return {
+        ...base,
+        qtyTotal,
+        qtyTransfer,
+        qtyLeft,
+        unitPriceTransfer,
+        transferAmount,
+        remainingAmount,
+        transferUnitQty: qtyTransfer,
+        remainingUnitQty: qtyLeft,
+        transferKgQty,
+        remainingKgQty,
+        isPartial: qtyLeft > 0
+    };
+}
+
 function _fmtItemCurrency(item, config, amount) {
     const amountCandidates = [
         amount,
@@ -2242,6 +2494,14 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         unitDiv.className = 'facturero-meta';
         unitDiv.textContent = unitText;
         left.appendChild(unitDiv);
+    }
+
+    const splitSummaryText = formatSplitMetaSummary(item, effectiveTabName, { mode: 'ui' });
+    if (splitSummaryText) {
+        const splitDiv = document.createElement('div');
+        splitDiv.className = 'facturero-meta facturero-transfer-meta facturero-split-meta';
+        splitDiv.textContent = splitSummaryText;
+        left.appendChild(splitDiv);
     }
 
     if (transferred || pendingReverted) {
@@ -3080,21 +3340,37 @@ async function exportAgroLog(tabName) {
         // Fetch ALL records (no limit)
         const selectFields = buildFactureroSelectFields(tabName, config);
         const selectClause = buildFactureroSelectClause(selectFields);
-        let q = supabase
-            .from(config.table)
-            .select(selectClause)
-            .eq('user_id', user.id)
-            .order(config.dateField || 'fecha', { ascending: false })
-            .order('created_at', { ascending: false });
-        if (selectedCropId) q = q.eq('crop_id', selectedCropId);
-        if (config.supportsDeletedAt) q = q.is('deleted_at', null);
-        // V9.6.3: Fiados export = solo deudas activas (excluir transferidos)
-        if (tabName === 'pendientes') q = q.neq('transfer_state', 'transferred');
+        const runExportQuery = (clause) => {
+            let query = supabase
+                .from(config.table)
+                .select(clause)
+                .eq('user_id', user.id)
+                .order(config.dateField || 'fecha', { ascending: false })
+                .order('created_at', { ascending: false });
+            if (selectedCropId) query = query.eq('crop_id', selectedCropId);
+            if (config.supportsDeletedAt) query = query.is('deleted_at', null);
+            if (tabName === 'pendientes') query = query.neq('transfer_state', 'transferred');
+            return query;
+        };
 
-        const { data, error } = await q;
+        let { data, error } = await runExportQuery(selectClause);
+        if (error) {
+            const optionalFields = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
+            const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
+            if (hasMissingOptional) {
+                FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = false;
+                const retryFields = buildFactureroSelectFields(tabName, config);
+                const retryClause = buildFactureroSelectClause(retryFields);
+                const retry = await runExportQuery(retryClause);
+                data = retry.data;
+                error = retry.error;
+            }
+        }
+
         if (error) { console.error('[AgroLog] fetch error:', error); alert('Error cargando datos.'); return; }
         const items = Array.isArray(data) ? data : [];
         if (items.length === 0) { alert('No hay registros para exportar.'); return; }
+        const hasSplitInfo = items.some((item) => !!formatSplitMetaSummary(item, tabName, { mode: 'md' }));
 
         // Build Markdown
         const tabLabel = AGROLOG_TAB_LABELS[tabName] || tabName;
@@ -3126,8 +3402,14 @@ async function exportAgroLog(tabName) {
         let separator = '|:-:|-------|--------';
         if (whoLabel) { header += ` | ${whoLabel}`; separator += '|--------'; }
         if (hasUnits) { header += ' | Cantidad'; separator += '|---------'; }
-        header += ' | Moneda | Monto | USD | Evidencia |';
-        separator += '|------:|------:|----:|-----------|';
+        header += ' | Moneda | Monto | USD | Evidencia';
+        separator += '|------:|------:|----:|-----------';
+        if (hasSplitInfo) {
+            header += ' | Split';
+            separator += '|------';
+        }
+        header += ' |';
+        separator += '|';
         md += `## 📝 Detalle\n`;
         md += `_Marca con una \`x\` los items verificados \`[x]\`_\n\n`;
         md += header + '\n' + separator + '\n';
@@ -3157,11 +3439,15 @@ async function exportAgroLog(tabName) {
             // Evidence
             const evidenceRaw = getFactureroEvidenceValue(tabName, item);
             const evidenceText = evidenceRaw ? `[📎 Ver](${evidenceRaw})` : '-';
+            const splitRaw = hasSplitInfo ? formatSplitMetaSummary(item, tabName, { mode: 'md' }) : '';
+            const splitText = splitRaw ? splitRaw.replace(/\|/g, '·') : '-';
 
             let row = `| [ ] | ${fecha} | ${concept}`;
             if (whoLabel) row += ` | ${who || '-'}`;
             if (hasUnits) row += ` | ${unitText}`;
-            row += ` | ${currency} | ${amount} | $${amtUsd} | ${evidenceText} |`;
+            row += ` | ${currency} | ${amount} | $${amtUsd} | ${evidenceText}`;
+            if (hasSplitInfo) row += ` | ${splitText}`;
+            row += ' |';
             md += row + '\n';
         }
 
@@ -4034,6 +4320,7 @@ function buildTransferMetaModal(options = {}) {
     const showConcept = options.showConcept === true;
     const showCategory = options.showCategory !== false;
     const showDate = options.showDate !== false;
+    const splitOptions = options.split && typeof options.split === 'object' ? options.split : null;
     const today = getTodayLocalISO();
 
     if (showConcept) {
@@ -4101,6 +4388,66 @@ function buildTransferMetaModal(options = {}) {
         body.appendChild(dateGroup);
     }
 
+    if (splitOptions?.enabled) {
+        const qtyTotalRaw = toSafeLocaleNumber(splitOptions.qtyTotal);
+        if (qtyTotalRaw !== null && qtyTotalRaw > 1) {
+            const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
+            const qtyStep = qtyPrecision === 0 ? '1' : '0.01';
+            let defaultQty = toSafeLocaleNumber(splitOptions.defaultQty);
+            if (defaultQty === null) defaultQty = qtyTotalRaw;
+            defaultQty = Math.max(1, Math.min(qtyTotalRaw, qtyPrecision === 0 ? Math.round(defaultQty) : roundNumeric(defaultQty, 2)));
+
+            const qtyGroup = document.createElement('div');
+            qtyGroup.className = 'input-group';
+            const qtyLabel = document.createElement('label');
+            qtyLabel.className = 'input-label';
+            qtyLabel.textContent = splitOptions.quantityLabel || 'Cantidad a transferir';
+            qtyLabel.setAttribute('for', 'pending-transfer-qty');
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.id = 'pending-transfer-qty';
+            qtyInput.className = 'styled-input';
+            qtyInput.min = '1';
+            qtyInput.max = String(qtyPrecision === 0 ? Math.round(qtyTotalRaw) : roundNumeric(qtyTotalRaw, 2));
+            qtyInput.step = qtyStep;
+            qtyInput.style.paddingLeft = '1rem';
+            qtyInput.value = formatQuantityValue(defaultQty, qtyPrecision);
+            qtyGroup.append(qtyLabel, qtyInput);
+            body.appendChild(qtyGroup);
+
+            if (splitOptions.showUnitPrice) {
+                const priceGroup = document.createElement('div');
+                priceGroup.className = 'input-group';
+                const priceLabel = document.createElement('label');
+                priceLabel.className = 'input-label';
+                priceLabel.textContent = splitOptions.unitPriceLabel || 'Precio unitario transferido';
+                priceLabel.setAttribute('for', 'pending-transfer-unit-price');
+                const priceInput = document.createElement('input');
+                priceInput.type = 'number';
+                priceInput.id = 'pending-transfer-unit-price';
+                priceInput.className = 'styled-input';
+                priceInput.min = '0';
+                priceInput.step = '0.01';
+                priceInput.style.paddingLeft = '1rem';
+                const defaultUnitPrice = toSafeLocaleNumber(splitOptions.defaultUnitPrice);
+                if (defaultUnitPrice !== null && defaultUnitPrice > 0) {
+                    priceInput.value = roundNumeric(defaultUnitPrice, 2).toFixed(2);
+                }
+                priceGroup.append(priceLabel, priceInput);
+                body.appendChild(priceGroup);
+            }
+
+            const preview = document.createElement('div');
+            preview.className = 'pending-transfer-preview';
+            const moveLine = document.createElement('div');
+            moveLine.id = 'pending-transfer-preview-move';
+            const leftLine = document.createElement('div');
+            leftLine.id = 'pending-transfer-preview-left';
+            preview.append(moveLine, leftLine);
+            body.appendChild(preview);
+        }
+    }
+
     const actions = document.createElement('div');
     actions.className = 'pending-transfer-actions';
     const cancelBtn = document.createElement('button');
@@ -4130,10 +4477,61 @@ function openTransferMetaModal(options = {}) {
             return;
         }
 
-        const close = () => {
-            modal.remove();
-            resolve({ confirmed: false });
+        const splitOptions = options.split && typeof options.split === 'object' ? options.split : null;
+        const qtyInput = modal.querySelector('#pending-transfer-qty');
+        const unitPriceInput = modal.querySelector('#pending-transfer-unit-price');
+        const previewMove = modal.querySelector('#pending-transfer-preview-move');
+        const previewLeft = modal.querySelector('#pending-transfer-preview-left');
+
+        const updateSplitPreview = () => {
+            if (!splitOptions?.enabled || !qtyInput || !previewMove || !previewLeft) return;
+            const qtyTotalRaw = toSafeLocaleNumber(splitOptions.qtyTotal);
+            if (qtyTotalRaw === null || qtyTotalRaw <= 1) return;
+
+            const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
+            let qtyMove = toSafeLocaleNumber(qtyInput.value);
+            if (qtyMove === null) qtyMove = qtyTotalRaw;
+            qtyMove = qtyPrecision === 0 ? Math.round(qtyMove) : roundNumeric(qtyMove, 2);
+            qtyMove = Math.max(1, Math.min(qtyTotalRaw, qtyMove));
+
+            const qtyLeftRaw = Math.max(qtyTotalRaw - qtyMove, 0);
+            const qtyLeft = qtyPrecision === 0 ? Math.round(qtyLeftRaw) : roundNumeric(qtyLeftRaw, 2);
+            const qtyMoveText = formatSplitQuantity(qtyMove, splitOptions.unitType);
+            const qtyLeftText = formatSplitQuantity(qtyLeft, splitOptions.unitType);
+            const destinationLabel = splitOptions.destinationLabel || 'Destino';
+            const originLabel = splitOptions.originLabel || 'Fiados';
+
+            let amountHint = '';
+            const unitPrice = toSafeLocaleNumber(unitPriceInput?.value);
+            if (unitPrice !== null && unitPrice > 0) {
+                const total = roundNumeric(qtyMove * unitPrice, 2);
+                amountHint = ` @ $${roundNumeric(unitPrice, 2).toFixed(2)}/u -> $${total.toFixed(2)}`;
+            }
+
+            previewMove.textContent = `Se moverán ${qtyMoveText} a ${destinationLabel}${amountHint}.`;
+            previewLeft.textContent = `Quedarán ${qtyLeftText} en ${originLabel}.`;
         };
+
+        qtyInput?.addEventListener('input', updateSplitPreview);
+        qtyInput?.addEventListener('blur', updateSplitPreview);
+        unitPriceInput?.addEventListener('input', updateSplitPreview);
+        unitPriceInput?.addEventListener('blur', updateSplitPreview);
+        updateSplitPreview();
+
+        let done = false;
+        const onKey = (e) => {
+            if (e.key === 'Escape') {
+                close();
+            }
+        };
+        const finalize = (payload) => {
+            if (done) return;
+            done = true;
+            document.removeEventListener('keydown', onKey);
+            modal.remove();
+            resolve(payload);
+        };
+        const close = () => finalize({ confirmed: false });
 
         modal.querySelectorAll('[data-close]').forEach((el) => {
             el.addEventListener('click', close);
@@ -4145,17 +4543,13 @@ function openTransferMetaModal(options = {}) {
                 const concept = modal.querySelector('#pending-transfer-concept')?.value?.trim() || '';
                 const category = modal.querySelector('#pending-transfer-category')?.value || null;
                 const date = modal.querySelector('#pending-transfer-date')?.value || null;
-                modal.remove();
-                resolve({ confirmed: true, concept, category, date });
+                const quantity = modal.querySelector('#pending-transfer-qty')?.value || null;
+                const unitPrice = modal.querySelector('#pending-transfer-unit-price')?.value || null;
+                finalize({ confirmed: true, concept, category, date, quantity, unitPrice });
             });
         }
 
-        document.addEventListener('keydown', function onKey(e) {
-            if (e.key === 'Escape') {
-                document.removeEventListener('keydown', onKey);
-                close();
-            }
-        });
+        document.addEventListener('keydown', onKey);
     });
 }
 
@@ -4188,6 +4582,21 @@ async function handlePendingTransfer(itemId) {
 
     const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
     const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Pagado' : 'Pérdida');
+    const splitDraftBase = computePendingSplitDraft(pending, destination);
+    const splitConfig = splitDraftBase.enabled ? {
+        enabled: true,
+        qtyTotal: splitDraftBase.qtyTotal,
+        defaultQty: splitDraftBase.qtyTotal,
+        unitType: splitDraftBase.unitType,
+        originLabel: 'Fiados',
+        destinationLabel: destination === 'income' ? 'Pagados' : 'Pérdidas',
+        showUnitPrice: destination === 'income',
+        defaultUnitPrice: splitDraftBase.unitPriceOriginal !== null
+            ? splitDraftBase.unitPriceOriginal
+            : (toSafeLocaleNumber(pending?.monto) ?? 0),
+        quantityLabel: 'Cantidad a transferir',
+        unitPriceLabel: 'Precio unitario (pagado)'
+    } : null;
 
     // Then show meta modal for date/category
     const decision = await openTransferMetaModal({
@@ -4205,7 +4614,8 @@ async function handlePendingTransfer(itemId) {
         showDate: true,
         defaultCategory: 'ventas',
         dateLabel: destination === 'income' ? 'Fecha de pago' : 'Fecha de pérdida',
-        defaultDate: getTodayLocalISO()
+        defaultDate: getTodayLocalISO(),
+        split: splitConfig
     });
     if (!decision?.confirmed) return;
     const decisionConcept = String(decision.concept || '').trim();
@@ -4220,6 +4630,35 @@ async function handlePendingTransfer(itemId) {
         return;
     }
 
+    const splitDraft = computePendingSplitDraft(pending, destination, decision);
+    if (splitDraft.error) {
+        notifyFacturero(`⚠️ ${splitDraft.error}`, 'warning');
+        return;
+    }
+
+    const isPartialSplit = splitDraft.enabled && splitDraft.isPartial;
+    const splitToState = destination === 'income' ? 'pagados' : 'perdidas';
+    const splitMovedAt = isPartialSplit ? new Date().toISOString() : null;
+    const splitMetaOrigin = isPartialSplit
+        ? buildPartialSplitMetaPayload({
+            role: 'origin',
+            splitFromId: pending.id,
+            fromState: 'fiados',
+            toState: splitToState,
+            unitType: splitDraft.unitType,
+            qtyTotal: splitDraft.qtyTotal,
+            qtyMoved: splitDraft.qtyTransfer,
+            qtyLeft: splitDraft.qtyLeft,
+            unitPriceOriginal: splitDraft.unitPriceOriginal,
+            unitPriceTransfer: splitDraft.unitPriceTransfer,
+            amountMoved: splitDraft.transferAmount,
+            amountLeft: splitDraft.remainingAmount,
+            movedAt: splitMovedAt
+        })
+        : null;
+    const splitMovedLabel = isPartialSplit ? formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType) : '';
+    const splitLeftLabel = isPartialSplit ? formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType) : '';
+
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Debes iniciar sesión para transferir.');
@@ -4230,7 +4669,24 @@ async function handlePendingTransfer(itemId) {
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? buildConceptWithWho('ingresos', concept, buyer) : concept;
-            const incomeMoney = buildIncomeMonetaryFields(pending, pending.monto);
+            const incomeMoney = buildIncomeMonetaryFields(pending, splitDraft.transferAmount);
+            const splitMetaDestination = isPartialSplit
+                ? buildPartialSplitMetaPayload({
+                    role: 'destination',
+                    splitFromId: pending.id,
+                    fromState: 'fiados',
+                    toState: splitToState,
+                    unitType: splitDraft.unitType,
+                    qtyTotal: splitDraft.qtyTotal,
+                    qtyMoved: splitDraft.qtyTransfer,
+                    qtyLeft: splitDraft.qtyLeft,
+                    unitPriceOriginal: splitDraft.unitPriceOriginal,
+                    unitPriceTransfer: splitDraft.unitPriceTransfer,
+                    amountMoved: splitDraft.transferAmount,
+                    amountLeft: splitDraft.remainingAmount,
+                    movedAt: splitMovedAt
+                })
+                : null;
 
             const incomePayload = {
                 id: incomeId,
@@ -4242,15 +4698,17 @@ async function handlePendingTransfer(itemId) {
                 soporte_url: pending.evidence_url || null,
                 crop_id: pending.crop_id || null,
                 unit_type: pending.unit_type || null,
-                unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
-                quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null,
+                unit_qty: Number.isFinite(Number(splitDraft.transferUnitQty)) ? Number(splitDraft.transferUnitQty) : null,
+                quantity_kg: Number.isFinite(Number(splitDraft.transferKgQty)) ? Number(splitDraft.transferKgQty) : null,
                 currency: incomeMoney.currency,
                 exchange_rate: incomeMoney.exchange_rate,
                 monto_usd: incomeMoney.monto_usd,
                 // V9.7: Origin tracking
                 origin_table: 'agro_pending',
                 origin_id: pending.id,
-                transfer_state: 'active'
+                transfer_state: 'active',
+                split_from_id: isPartialSplit ? pending.id : null,
+                split_meta: splitMetaDestination
             };
 
             let { error: insertError } = await supabase.from('agro_income').insert(incomePayload);
@@ -4262,6 +4720,8 @@ async function handlePendingTransfer(itemId) {
                 || isMissingColumnError(insertError, 'currency')
                 || isMissingColumnError(insertError, 'exchange_rate')
                 || isMissingColumnError(insertError, 'monto_usd')
+                || isMissingColumnError(insertError, 'split_from_id')
+                || isMissingColumnError(insertError, 'split_meta')
             )) {
                 const fallbackPayload = { ...incomePayload };
                 delete fallbackPayload.unit_type;
@@ -4273,18 +4733,28 @@ async function handlePendingTransfer(itemId) {
                 delete fallbackPayload.currency;
                 delete fallbackPayload.exchange_rate;
                 delete fallbackPayload.monto_usd;
+                delete fallbackPayload.split_from_id;
+                delete fallbackPayload.split_meta;
                 const retry = await supabase.from('agro_income').insert(fallbackPayload);
                 insertError = retry.error;
             }
             if (insertError) throw insertError;
 
-            const transferMeta = {
-                transferred_at: new Date().toISOString(),
-                transferred_income_id: incomeId,
-                transferred_by: user.id,
-                transferred_to: 'income',
-                transfer_state: 'transferred'
-            };
+            const transferMeta = isPartialSplit
+                ? {
+                    monto: splitDraft.remainingAmount,
+                    unit_qty: Number.isFinite(Number(splitDraft.remainingUnitQty)) ? Number(splitDraft.remainingUnitQty) : null,
+                    quantity_kg: Number.isFinite(Number(splitDraft.remainingKgQty)) ? Number(splitDraft.remainingKgQty) : null,
+                    split_meta: splitMetaOrigin,
+                    transfer_state: pending.transfer_state === 'reverted' ? 'active' : (pending.transfer_state || 'active')
+                }
+                : {
+                    transferred_at: new Date().toISOString(),
+                    transferred_income_id: incomeId,
+                    transferred_by: user.id,
+                    transferred_to: 'income',
+                    transfer_state: 'transferred'
+                };
 
             let { error: updateError } = await supabase
                 .from('agro_pending')
@@ -4292,7 +4762,32 @@ async function handlePendingTransfer(itemId) {
                 .eq('id', pending.id)
                 .eq('user_id', user.id);
 
-            if (updateError && (isMissingColumnError(updateError, 'transferred_at') || isMissingColumnError(updateError, 'transferred_to'))) {
+            if (updateError && isPartialSplit) {
+                const fallbackTransferMeta = { ...transferMeta };
+                let retried = false;
+                if (isMissingColumnError(updateError, 'split_meta')) {
+                    delete fallbackTransferMeta.split_meta;
+                    retried = true;
+                }
+                if (isMissingColumnError(updateError, 'unit_qty')) {
+                    delete fallbackTransferMeta.unit_qty;
+                    retried = true;
+                }
+                if (isMissingColumnError(updateError, 'quantity_kg')) {
+                    delete fallbackTransferMeta.quantity_kg;
+                    retried = true;
+                }
+                if (retried) {
+                    const retryUpdate = await supabase
+                        .from('agro_pending')
+                        .update(fallbackTransferMeta)
+                        .eq('id', pending.id)
+                        .eq('user_id', user.id);
+                    updateError = retryUpdate.error;
+                }
+            }
+
+            if (!isPartialSplit && updateError && (isMissingColumnError(updateError, 'transferred_at') || isMissingColumnError(updateError, 'transferred_to'))) {
                 FACTURERO_OPTIONAL_FIELDS_SUPPORT.pendientes = false;
                 await supabase.from('agro_income').delete().eq('id', incomeId).eq('user_id', user.id);
                 notifyFacturero('Faltan columnas de transferencia. Ejecuta el patch SQL.', 'warning');
@@ -4302,7 +4797,11 @@ async function handlePendingTransfer(itemId) {
                 throw updateError;
             }
 
-            notifyFacturero('✅ Fiado transferido a Pagados.', 'success');
+            if (isPartialSplit) {
+                notifyFacturero(`✅ Transferido parcial a Pagados: ${splitMovedLabel}. Quedan ${splitLeftLabel} en Fiados.`, 'success');
+            } else {
+                notifyFacturero('✅ Fiado transferido a Pagados.', 'success');
+            }
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('ingresos');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
@@ -4313,26 +4812,50 @@ async function handlePendingTransfer(itemId) {
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
             const conceptFinal = buyer ? `${concept} — ${buyer}` : concept;
+            const splitMetaDestination = isPartialSplit
+                ? buildPartialSplitMetaPayload({
+                    role: 'destination',
+                    splitFromId: pending.id,
+                    fromState: 'fiados',
+                    toState: splitToState,
+                    unitType: splitDraft.unitType,
+                    qtyTotal: splitDraft.qtyTotal,
+                    qtyMoved: splitDraft.qtyTransfer,
+                    qtyLeft: splitDraft.qtyLeft,
+                    unitPriceOriginal: splitDraft.unitPriceOriginal,
+                    unitPriceTransfer: splitDraft.unitPriceTransfer,
+                    amountMoved: splitDraft.transferAmount,
+                    amountLeft: splitDraft.remainingAmount,
+                    movedAt: splitMovedAt
+                })
+                : null;
 
             const lossPayload = {
                 id: lossId,
                 user_id: user.id,
                 description: conceptFinal,
-                amount: Number(pending.monto || 0),
+                amount: Number(splitDraft.transferAmount || 0),
                 date: decisionDate,
                 category: decision.category || 'cancelacion',
                 crop_id: pending.crop_id || null,
                 unit_type: pending.unit_type || null,
-                unit_qty: Number.isFinite(Number(pending.unit_qty)) ? Number(pending.unit_qty) : null,
-                quantity_kg: Number.isFinite(Number(pending.quantity_kg)) ? Number(pending.quantity_kg) : null,
+                unit_qty: Number.isFinite(Number(splitDraft.transferUnitQty)) ? Number(splitDraft.transferUnitQty) : null,
+                quantity_kg: Number.isFinite(Number(splitDraft.transferKgQty)) ? Number(splitDraft.transferKgQty) : null,
                 // V9.7: Origin tracking
                 origin_table: 'agro_pending',
                 origin_id: pending.id,
-                transfer_state: 'active'
+                transfer_state: 'active',
+                split_from_id: isPartialSplit ? pending.id : null,
+                split_meta: splitMetaDestination
             };
 
             let { error: insertError } = await supabase.from('agro_losses').insert(lossPayload);
-            if (insertError && (isMissingColumnError(insertError, 'unit_type') || isMissingColumnError(insertError, 'origin_table'))) {
+            if (insertError && (
+                isMissingColumnError(insertError, 'unit_type')
+                || isMissingColumnError(insertError, 'origin_table')
+                || isMissingColumnError(insertError, 'split_from_id')
+                || isMissingColumnError(insertError, 'split_meta')
+            )) {
                 const fallbackPayload = { ...lossPayload };
                 delete fallbackPayload.unit_type;
                 delete fallbackPayload.unit_qty;
@@ -4340,18 +4863,28 @@ async function handlePendingTransfer(itemId) {
                 delete fallbackPayload.origin_table;
                 delete fallbackPayload.origin_id;
                 delete fallbackPayload.transfer_state;
+                delete fallbackPayload.split_from_id;
+                delete fallbackPayload.split_meta;
                 const retry = await supabase.from('agro_losses').insert(fallbackPayload);
                 insertError = retry.error;
             }
             if (insertError) throw insertError;
 
-            const transferMeta = {
-                transferred_at: new Date().toISOString(),
-                transferred_income_id: lossId, // reusing field for loss ID
-                transferred_by: user.id,
-                transferred_to: 'losses',
-                transfer_state: 'transferred'
-            };
+            const transferMeta = isPartialSplit
+                ? {
+                    monto: splitDraft.remainingAmount,
+                    unit_qty: Number.isFinite(Number(splitDraft.remainingUnitQty)) ? Number(splitDraft.remainingUnitQty) : null,
+                    quantity_kg: Number.isFinite(Number(splitDraft.remainingKgQty)) ? Number(splitDraft.remainingKgQty) : null,
+                    split_meta: splitMetaOrigin,
+                    transfer_state: pending.transfer_state === 'reverted' ? 'active' : (pending.transfer_state || 'active')
+                }
+                : {
+                    transferred_at: new Date().toISOString(),
+                    transferred_income_id: lossId, // reusing field for loss ID
+                    transferred_by: user.id,
+                    transferred_to: 'losses',
+                    transfer_state: 'transferred'
+                };
 
             let { error: updateError } = await supabase
                 .from('agro_pending')
@@ -4359,7 +4892,32 @@ async function handlePendingTransfer(itemId) {
                 .eq('id', pending.id)
                 .eq('user_id', user.id);
 
-            if (updateError && isMissingColumnError(updateError, 'transferred_to')) {
+            if (updateError && isPartialSplit) {
+                const fallbackTransferMeta = { ...transferMeta };
+                let retried = false;
+                if (isMissingColumnError(updateError, 'split_meta')) {
+                    delete fallbackTransferMeta.split_meta;
+                    retried = true;
+                }
+                if (isMissingColumnError(updateError, 'unit_qty')) {
+                    delete fallbackTransferMeta.unit_qty;
+                    retried = true;
+                }
+                if (isMissingColumnError(updateError, 'quantity_kg')) {
+                    delete fallbackTransferMeta.quantity_kg;
+                    retried = true;
+                }
+                if (retried) {
+                    const retryUpdate = await supabase
+                        .from('agro_pending')
+                        .update(fallbackTransferMeta)
+                        .eq('id', pending.id)
+                        .eq('user_id', user.id);
+                    updateError = retryUpdate.error;
+                }
+            }
+
+            if (!isPartialSplit && updateError && isMissingColumnError(updateError, 'transferred_to')) {
                 await supabase.from('agro_losses').delete().eq('id', lossId).eq('user_id', user.id);
                 notifyFacturero('Faltan columnas de transferencia. Ejecuta el patch SQL.', 'warning');
                 return;
@@ -4368,7 +4926,11 @@ async function handlePendingTransfer(itemId) {
                 throw updateError;
             }
 
-            notifyFacturero('✅ Fiado transferido a Pérdidas (Cancelado).', 'success');
+            if (isPartialSplit) {
+                notifyFacturero(`✅ Transferido parcial a Pérdidas: ${splitMovedLabel}. Quedan ${splitLeftLabel} en Fiados.`, 'success');
+            } else {
+                notifyFacturero('✅ Fiado transferido a Pérdidas (Cancelado).', 'success');
+            }
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
             document.dispatchEvent(new CustomEvent('agro:losses:changed'));
