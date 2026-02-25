@@ -375,7 +375,7 @@ async function fetchTabData(userId, cropId, tabName, opts = {}) {
             q = q.is('deleted_at', null);
         }
 
-        // Exclude transferred pendientes (solo en modo operativo)
+        // Exclude transferred fiados (solo en modo operativo)
         if (tabName === 'pendientes' && !includeDeleted) {
             q = q.neq('transfer_state', 'transferred');
         }
@@ -461,7 +461,7 @@ function buildPendingTable(items, historyMode = false) {
         const raw = it.concepto || 'Sin concepto';
         const parsed = parseWho('pendientes', raw);
         const client = it.cliente || parsed.who || '-';
-        const state = it.transfer_state || 'pendiente';
+        const state = it.transfer_state || 'fiado';
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
         const flag = deletedFlag(it, historyMode);
@@ -470,7 +470,7 @@ function buildPendingTable(items, historyMode = false) {
     return md;
 }
 
-/** Tabla para pendientes que fueron transferidos a ingreso/pérdida */
+/** Tabla para fiados que fueron transferidos a pagado/pérdida */
 function buildPendingTransferredTable(items) {
     if (!items.length) return 'Sin registros\n';
     let md = '| Fecha | Concepto | Cliente | Cantidad | Moneda | Monto | USD | Transferido a |\n';
@@ -481,7 +481,7 @@ function buildPendingTransferredTable(items) {
         const client = it.cliente || parsed.who || '-';
         const currency = it.currency || 'USD';
         const amtUsd = centsToStr(toCents(it.monto_usd ?? it.monto));
-        const dest = it.transferred_to || it.transfer_state || 'ingreso/pérdida';
+        const dest = it.transferred_to || it.transfer_state || 'pagado/pérdida';
         md += `| ${fmtDate(it.fecha)} | [TRANSFERIDO] ${escMd(parsed.concept || raw)} | ${escMd(client)} | ${fmtUnits(it)} | ${currency} | ${centsToStr(toCents(it.monto))} | ${amtUsd} | ${escMd(dest)} |\n`;
     }
     return md;
@@ -583,8 +583,8 @@ export async function exportCropReport(cropId, opts = {}) {
             fetchTabData(user.id, normalizedCropId, 'transferencias', fetchOpts)
         ]);
 
-        // ── Split semántico de pendientes ──────────────────────────────────────
-        // transferred → pasó a ingreso/pérdida (etiqueta [TRANSFERIDO])
+        // ── Split semántico de fiados ──────────────────────────────────────────
+        // transferred → pasó a pagado/pérdida (etiqueta [TRANSFERIDO])
         // deleted_at sin transfer → borrado lógico real (etiqueta [ELIMINADO])
         function isPendingTransferred(r) {
             return r.transfer_state === 'transferred' || !!r.transferred_at;
@@ -594,7 +594,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const pendingDeletedReal = pending.filter(r => r.deleted_at && !isPendingTransferred(r));
 
         // Compute totals in cents (integer arithmetic)
-        // «Pendientes por cobrar» = SOLO activos (no inflamos con transferred)
+        // «Fiados por cobrar» = SOLO activos (no inflamos con transferred)
         const totalIncomeCents = income.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
         const totalExpensesCents = expenses.reduce((s, it) => s + toCents(it.monto_usd ?? it.amount), 0);
         const totalPendingCents = pendingActive.reduce((s, it) => s + toCents(it.monto_usd ?? it.monto), 0);
@@ -635,7 +635,7 @@ export async function exportCropReport(cropId, opts = {}) {
         const ce = countAliveDeleted(expenses);
         const cl = countAliveDeleted(losses);
         const ct = countAliveDeleted(transfers);
-        // Pendientes: desglose de 3 partes
+        // Fiados: desglose de 3 partes
         const cpCell = historyMode
             ? `${pending.length} (${pendingActive.length}✓ / ${pendingTransferred.length}↔ / ${pendingDeletedReal.length}🗑)`
             : String(pendingActive.length);
@@ -664,9 +664,9 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `> **Sistema:** YavlGold\n\n`;
         md += `## 🔎 Evidencia (conteos)\n`;
         if (historyMode) {
-            md += `> _Formato pendientes: total (activos ✓ / transferidos ↔ / eliminados 🗑)_\n\n`;
+            md += `> _Formato fiados: total (activos ✓ / transferidos ↔ / eliminados 🗑)_\n\n`;
         }
-        md += `| income | expenses | pending | losses | transfers |\n`;
+        md += `| Pagados | Gastos | Fiados | Pérdidas | Donaciones |\n`;
         md += `|------:|---------:|--------:|-------:|----------:|\n`;
         md += `| ${fmtCount(ci, historyMode)} | ${fmtCount(ce, historyMode)} | ${cpCell} | ${fmtCount(cl, historyMode)} | ${fmtCount(ct, historyMode)} |\n\n`;
         md += `---\n\n`;
@@ -675,19 +675,19 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `## 💰 Resumen Financiero\n`;
         md += `| Concepto | Monto |\n`;
         md += `|----------|------:|\n`;
-        md += `| Ingresos cobrados | ${centsToStr(totalIncomeCents)} |\n`;
+        md += `| Pagados | ${centsToStr(totalIncomeCents)} |\n`;
         md += `| Inversión inicial | ${centsToStr(initialInvestmentCents)} |\n`;
         md += `| Gastos vinculados | ${centsToStr(totalExpensesCents)} |\n`;
         md += `| Costos/Inversión | ${centsToStr(totalCostWithInvestmentCents)} |\n`;
         md += `| Ganancia neta | ${centsToStr(profitCents)} |\n`;
-        md += `| Pendientes por cobrar (activos) | ${centsToStr(totalPendingCents)} |\n`;
+        md += `| Fiados por cobrar (activos) | ${centsToStr(totalPendingCents)} |\n`;
         md += `| Pérdidas | ${centsToStr(totalLossesCents)} |\n`;
         md += `| ROI | ${roiStr} |\n\n`;
         md += `> _Totales convertidos a USD \u00b7 Tasas al momento del registro_\n\n`;
         md += `---\n\n`;
 
-        // Income
-        md += `## 📥 Ingresos (${fmtCount(ci, historyMode)})\n`;
+        // Pagados
+        md += `## 📥 Pagados (${fmtCount(ci, historyMode)})\n`;
         md += buildIncomeTable(income, historyMode);
         md += '\n';
 
@@ -696,23 +696,23 @@ export async function exportCropReport(cropId, opts = {}) {
         md += buildExpenseTable(expenses, historyMode);
         md += '\n';
 
-        // Pendientes — solo activos (por cobrar)
-        md += `## ⏳ Pendientes activos — por cobrar (${pendingActive.length})\n`;
+        // Fiados — solo activos (por cobrar)
+        md += `## ⏳ Fiados activos — por cobrar (${pendingActive.length})\n`;
         md += buildPendingTable(pendingActive, false);
         md += '\n';
 
-        // Pendientes transferidos (→ ingreso / pérdida)
+        // Fiados transferidos (→ pagado / pérdida)
         if (historyMode || pendingTransferred.length > 0) {
-            md += `## ⇔️ Pendientes transferidos (${pendingTransferred.length})\n`;
+            md += `## ⇔️ Fiados transferidos (${pendingTransferred.length})\n`;
             md += pendingTransferred.length
                 ? buildPendingTransferredTable(pendingTransferred)
-                : 'Sin pendientes transferidos\n';
+                : 'Sin fiados transferidos\n';
             md += '\n';
         }
 
-        // Pendientes eliminados reales (solo en historyMode)
+        // Fiados eliminados reales (solo en historyMode)
         if (historyMode && pendingDeletedReal.length > 0) {
-            md += `## 🗑️ Pendientes eliminados (${pendingDeletedReal.length})\n`;
+            md += `## 🗑️ Fiados eliminados (${pendingDeletedReal.length})\n`;
             md += buildPendingTable(pendingDeletedReal, true);
             md += '\n';
         }
