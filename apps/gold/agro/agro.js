@@ -4711,7 +4711,7 @@ function openTransferMetaModal(options = {}) {
             const unitPrice = toSafeLocaleNumber(unitPriceInput?.value);
             if (unitPrice !== null && unitPrice > 0) {
                 const total = roundNumeric(qtyMove * unitPrice, 2);
-                amountHint = ` @ ${fmtMoneyUI(unitPrice, currencyLabel)}/u -> ${fmtMoneyUI(total, currencyLabel)}`;
+                amountHint = ` · Total: ${fmtMoneyUI(total, currencyLabel)}`;
             }
 
             previewMove.textContent = `Se moverán ${qtyMoveText} a ${destinationLabel}${amountHint}.`;
@@ -4886,20 +4886,14 @@ async function handlePendingTransfer(itemId) {
             { label: 'Cantidad a transferir', value: formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType) },
             { label: 'Cantidad restante', value: formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType) }
         );
-        if (destination === 'income' && splitDraft.unitPriceTransfer !== null) {
-            summaryRows.push({
-                label: 'Precio unitario transferido',
-                value: `${fmtMoneyUI(splitDraft.unitPriceTransfer, summaryCurrencyLabel)}/u`
-            });
-        }
     }
     summaryRows.push({
-        label: 'Monto transferido',
+        label: 'Total transferido',
         value: fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)
     });
     if (splitDraft.enabled && splitDraft.isPartial) {
         summaryRows.push({
-            label: 'Monto restante en Fiados',
+            label: 'Total restante en Fiados',
             value: fmtMoneyUI(splitDraft.remainingAmount || 0, summaryCurrencyLabel)
         });
     }
@@ -4982,6 +4976,12 @@ async function handlePendingTransfer(itemId) {
                     movedAt: splitMovedAt
                 })
                 : null;
+            const transferUnitType = splitDraft.unitType || pending.unit_type || null;
+            const transferQtyRaw = splitDraft.transferUnitQty ?? splitDraft.qtyTransfer ?? pending.unit_qty;
+            const transferQty = toSafeLocaleNumber(transferQtyRaw);
+            const safeTransferQty = (transferQty !== null && Number.isFinite(Number(transferQty)))
+                ? Number(transferQty)
+                : null;
 
             const incomePayload = {
                 id: incomeId,
@@ -4992,8 +4992,8 @@ async function handlePendingTransfer(itemId) {
                 categoria: decision.category || 'ventas',
                 soporte_url: pending.evidence_url || null,
                 crop_id: pending.crop_id || null,
-                unit_type: pending.unit_type || null,
-                unit_qty: Number.isFinite(Number(splitDraft.transferUnitQty)) ? Number(splitDraft.transferUnitQty) : null,
+                unit_type: transferUnitType,
+                unit_qty: safeTransferQty,
                 quantity_kg: Number.isFinite(Number(splitDraft.transferKgQty)) ? Number(splitDraft.transferKgQty) : null,
                 currency: incomeMoney.currency,
                 exchange_rate: incomeMoney.exchange_rate,
