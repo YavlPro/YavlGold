@@ -11,15 +11,15 @@ import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOver
 // ============================================================
 const WIZARD_TAB_META = {
     pendientes: {
-        title: 'Registrar Pendiente',
+        title: 'Registrar Fiado',
         icon: '⏳',
-        conceptPlaceholder: 'Ej: pendiente o deuda',
+        conceptPlaceholder: 'Ej: fiado o deuda',
         whoLabel: 'Cliente',
         whoPlaceholder: 'Ej: Jesús, Marino...',
         hasWho: true,
         hasUnits: true,
         table: 'agro_pending',
-        successMsg: '✅ Pendiente registrado'
+        successMsg: '✅ Fiado registrado'
     },
     ingresos: {
         title: 'Registrar Ingreso',
