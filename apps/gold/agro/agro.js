@@ -41,9 +41,9 @@ const AGRO_GENERAL_SUBLABEL = 'Todos los movimientos';
 const AGRO_CROPS_REFRESH_EVENT = 'agro:crops:refresh';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
-const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id,split_from_id,split_meta';
-const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,split_from_id,split_meta';
-const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,split_from_id,split_meta';
+const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
+const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
+const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
@@ -973,15 +973,30 @@ const FACTURERO_OTHER_FETCH_LIMIT = FACTURERO_HISTORY_FETCH_LIMIT;
 const FACTURERO_OTHER_RENDER_LIMIT = FACTURERO_HISTORY_FETCH_LIMIT;
 
 const FACTURERO_OPTIONAL_FIELDS = {
-    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason', 'split_from_id', 'split_meta'],
-    ingresos: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason', 'split_from_id', 'split_meta'],
-    perdidas: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason', 'split_from_id', 'split_meta']
+    pendientes: ['transferred_at', 'transferred_income_id', 'transferred_by', 'transferred_to', 'transfer_state', 'reverted_at', 'reverted_reason'],
+    ingresos: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason'],
+    perdidas: ['origin_table', 'origin_id', 'transfer_state', 'reverted_at', 'reverted_reason']
 };
 
 const FACTURERO_OPTIONAL_FIELDS_SUPPORT = {
     pendientes: null,
     ingresos: null,
     perdidas: null
+};
+
+const FACTURERO_OPTIONAL_FIELDS_DISABLED = {
+    pendientes: new Set(),
+    ingresos: new Set(),
+    perdidas: new Set()
+};
+
+const FACTURERO_SPLIT_FIELDS = ['split_from_id', 'split_meta'];
+const FACTURERO_SPLIT_FIELDS_SUPPORT = {
+    gastos: null,
+    ingresos: null,
+    pendientes: null,
+    perdidas: null,
+    transferencias: null
 };
 
 const PENDING_TRANSFER_FILTER_KEY = 'YG_PENDING_SHOW_TRANSFERRED_V1';
@@ -2714,6 +2729,10 @@ function buildFactureroSelectFields(tabName, config) {
     const optional = getFactureroOptionalFields(tabName);
     (optional || []).forEach(add);
     (FACTURERO_EVIDENCE_FIELDS[tabName] || []).forEach(add);
+    const splitSupport = FACTURERO_SPLIT_FIELDS_SUPPORT[tabName];
+    if (config?.table && config?.compositeOnly !== true && splitSupport !== false) {
+        FACTURERO_SPLIT_FIELDS.forEach(add);
+    }
     return Array.from(fields);
 }
 
@@ -2728,7 +2747,39 @@ function getFactureroOptionalFields(tabName) {
     const optional = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
     const support = FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName];
     if (support === false) return [];
-    return optional;
+    const disabled = FACTURERO_OPTIONAL_FIELDS_DISABLED[tabName];
+    if (!(disabled instanceof Set) || disabled.size === 0) return optional;
+    return optional.filter((field) => !disabled.has(field));
+}
+
+function isFactureroOptionalFieldEnabled(tabName, fieldName) {
+    if (!tabName || !fieldName) return false;
+    const optional = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
+    if (!optional.includes(fieldName)) return false;
+    if (FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] === false) return false;
+    const disabled = FACTURERO_OPTIONAL_FIELDS_DISABLED[tabName];
+    return !(disabled instanceof Set && disabled.has(fieldName));
+}
+
+function disableMissingOptionalFields(tabName, error) {
+    if (!tabName || !error) return false;
+    if (FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] === false) return false;
+    const optional = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
+    if (!optional.length) return false;
+    const disabled = FACTURERO_OPTIONAL_FIELDS_DISABLED[tabName];
+    if (!(disabled instanceof Set)) return false;
+    let changed = false;
+    optional.forEach((field) => {
+        if (isMissingColumnError(error, field) && !disabled.has(field)) {
+            disabled.add(field);
+            changed = true;
+        }
+    });
+    return changed;
+}
+
+function hasMissingSplitColumns(error) {
+    return FACTURERO_SPLIT_FIELDS.some((field) => isMissingColumnError(error, field));
 }
 
 async function enrichFactureroItems(tabName, items) {
@@ -2888,28 +2939,44 @@ async function fetchFactureroRowsByTab(tabName, userId, options = {}) {
         return q;
     };
 
-    const { data, error } = await buildQuery(selectClause);
+    let data = null;
+    let error = null;
+    let retries = 0;
 
-    if (error) {
-        const optionalFields = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
-        const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
-        if (hasMissingOptional) {
-            FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = false;
-            const retryFields = buildFactureroSelectFields(tabName, config);
-            const retryClause = buildFactureroSelectClause(retryFields);
-            const retry = await buildQuery(retryClause);
-            if (retry.error) {
-                console.error(`[AGRO] V9.5.1: Error fetching ${tabName} (retry):`, retry.error.message);
-                return [];
-            }
-            return retry.data || [];
+    do {
+        const currentFields = buildFactureroSelectFields(tabName, config);
+        const currentClause = buildFactureroSelectClause(currentFields);
+        const result = await buildQuery(currentClause);
+        data = result.data;
+        error = result.error;
+        if (!error) break;
+
+        let shouldRetry = false;
+
+        if (hasMissingSplitColumns(error) && FACTURERO_SPLIT_FIELDS_SUPPORT[tabName] !== false) {
+            FACTURERO_SPLIT_FIELDS_SUPPORT[tabName] = false;
+            shouldRetry = true;
         }
 
+        if (!shouldRetry) {
+            const hasMissingOptional = disableMissingOptionalFields(tabName, error);
+            if (hasMissingOptional) {
+                shouldRetry = true;
+            }
+        }
+
+        if (!shouldRetry) break;
+        retries += 1;
+    } while (retries < 3);
+
+    if (error) {
         if (error.message && error.message.toLowerCase().includes('deleted_at')) {
             // Legacy fallback logic for tables without soft-delete
             config.supportsDeletedAt = false;
             console.warn(`[AGRO] V9.5.1: ${tabName} table lacks deleted_at, using hard delete`);
-            const fallback = await buildQuery(selectClause);
+            const fallbackFields = buildFactureroSelectFields(tabName, config);
+            const fallbackClause = buildFactureroSelectClause(fallbackFields);
+            const fallback = await buildQuery(fallbackClause);
             if (fallback.error) {
                 console.error(`[AGRO] V9.5.1: Error fetching ${tabName}:`, fallback.error.message);
                 return [];
@@ -2923,6 +2990,9 @@ async function fetchFactureroRowsByTab(tabName, userId, options = {}) {
 
     if (FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] === null) {
         FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = true;
+    }
+    if (FACTURERO_SPLIT_FIELDS_SUPPORT[tabName] === null) {
+        FACTURERO_SPLIT_FIELDS_SUPPORT[tabName] = true;
     }
     return data || [];
 }
@@ -3349,23 +3419,39 @@ async function exportAgroLog(tabName) {
                 .order('created_at', { ascending: false });
             if (selectedCropId) query = query.eq('crop_id', selectedCropId);
             if (config.supportsDeletedAt) query = query.is('deleted_at', null);
-            if (tabName === 'pendientes') query = query.neq('transfer_state', 'transferred');
+            if (tabName === 'pendientes' && isFactureroOptionalFieldEnabled('pendientes', 'transfer_state')) {
+                query = query.neq('transfer_state', 'transferred');
+            }
             return query;
         };
 
-        let { data, error } = await runExportQuery(selectClause);
-        if (error) {
-            const optionalFields = FACTURERO_OPTIONAL_FIELDS[tabName] || [];
-            const hasMissingOptional = optionalFields.some((field) => isMissingColumnError(error, field));
-            if (hasMissingOptional) {
-                FACTURERO_OPTIONAL_FIELDS_SUPPORT[tabName] = false;
-                const retryFields = buildFactureroSelectFields(tabName, config);
-                const retryClause = buildFactureroSelectClause(retryFields);
-                const retry = await runExportQuery(retryClause);
-                data = retry.data;
-                error = retry.error;
+        let data = null;
+        let error = null;
+        let retries = 0;
+        do {
+            const currentFields = buildFactureroSelectFields(tabName, config);
+            const currentClause = buildFactureroSelectClause(currentFields);
+            const result = await runExportQuery(currentClause);
+            data = result.data;
+            error = result.error;
+            if (!error) break;
+
+            let shouldRetry = false;
+            if (hasMissingSplitColumns(error) && FACTURERO_SPLIT_FIELDS_SUPPORT[tabName] !== false) {
+                FACTURERO_SPLIT_FIELDS_SUPPORT[tabName] = false;
+                shouldRetry = true;
             }
-        }
+
+            if (!shouldRetry) {
+                const hasMissingOptional = disableMissingOptionalFields(tabName, error);
+                if (hasMissingOptional) {
+                    shouldRetry = true;
+                }
+            }
+
+            if (!shouldRetry) break;
+            retries += 1;
+        } while (retries < 3);
 
         if (error) { console.error('[AgroLog] fetch error:', error); alert('Error cargando datos.'); return; }
         const items = Array.isArray(data) ? data : [];
