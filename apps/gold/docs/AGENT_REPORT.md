@@ -1,5 +1,71 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Privacidad global de compradores (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) **MPA / Routing (Vite + Vercel)**
+- `apps/gold/vite.config.js`: entradas MPA activas por página (`agro`, `dashboard`, `crypto`, etc.).
+- `apps/gold/vercel.json`: clean URLs/rewrite vigentes; sin cambios requeridos para esta tarea.
+- `apps/gold/index.html` y `apps/gold/dashboard/index.html`: navegación estable.
+
+2) **Auth / Supabase**
+- Cliente y guards vigentes:
+  - `apps/gold/assets/js/config/supabase-config.js`
+  - `apps/gold/assets/js/auth/authClient.js`
+  - `apps/gold/assets/js/auth/authUI.js`
+  - `apps/gold/dashboard/auth-guard.js`
+- Esta tarea no requiere cambios de auth ni queries.
+
+3) **Agro (área afectada)**
+- Historial Facturero renderiza filas en `renderHistoryRow(...)` y lista de pagados recientes en `renderIncomeItem(...)`.
+- Rankings renderiza nombres en `createOpsRankingItem(...)` + `renderOpsRankings(...)`.
+- Existe privacidad local en Rankings (`ops-rankings-hide-names` + `YG_AGRO_RANKINGS_PRIVACY_V1`), pero no aplica al resto del Facturero.
+
+### Plan de ejecución (quirúrgico)
+
+1. **Módulo nuevo de privacidad (UI-only)**
+- Crear `apps/gold/agro/agro-privacy.js` con:
+  - key global `YG_HIDE_BUYER_NAMES`
+  - init + apply + sync de controles
+  - `MutationObserver` para reaplicar máscara en re-renders dinámicos
+  - evento `agro:buyer-privacy:changed`
+
+2. **Wiring mínimo en Agro**
+- `apps/gold/agro/agro.js`:
+  - importar/init del módulo nuevo
+  - marcar nodos de nombres de comprador con `data-buyer-name="1"` + `data-raw-name`
+  - sincronizar estado de Rankings con la privacidad global (sin cambiar queries/cálculos)
+
+3. **UI/CSS**
+- `apps/gold/agro/index.html`: añadir botón global tipo ojo en header del Centro de Operaciones y convertir checkbox de Rankings a control global.
+- `apps/gold/agro/agro.css`: estilos de botón/estado enmascarado, sin segunda paleta.
+
+### DoD y límites
+
+- Toggle global persistente (`YG_HIDE_BUYER_NAMES`) para ocultar/mostrar nombres.
+- Cobertura: Facturero (Gastos/Pagados/Fiados/Pérdidas/Donaciones/Otros cuando aplique nombre) + Rankings.
+- Sin cambios en lógica CORE, queries ni cálculos.
+- `pnpm build:gold` PASS.
+- Smoke manual CORE/Network reportado al cierre (si no se ejecuta UI en sesión CLI, queda pendiente manual del operador).
+
+### Cierre (evidencia)
+
+- Archivos tocados:
+  - `apps/gold/agro/agro-privacy.js` (nuevo módulo privacidad global UI-only)
+  - `apps/gold/agro/agro.js` (wiring mínimo + marcado `data-buyer-name`)
+  - `apps/gold/agro/index.html` (botón global + checkbox rankings como control global)
+  - `apps/gold/agro/agro.css` (estilos botón privacidad y máscara)
+  - `apps/gold/docs/AGENT_REPORT.md`
+- Build gate:
+  - `pnpm build:gold` -> PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8` OK).
+- Ajuste posterior de hardening UX:
+  - Privacidad global ahora inicia en **OFF** por defecto (si no existe key, muestra nombres).
+  - Compatibilidad legacy: si existe `YG_AGRO_RANKINGS_PRIVACY_V1`, se migra una vez a `YG_HIDE_BUYER_NAMES`.
+- Smoke CORE / Network:
+  - Estado: **pendiente manual del operador** (flujo autenticado UI requerido).
+  - Alcance técnico preservado: sin cambios en queries/cálculos del CORE (solo presentación/DOM de nombres).
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Fronteras CORE + DB mínima perfiles (2026-02-26)
 
 ### Diagnóstico breve (estado actual)

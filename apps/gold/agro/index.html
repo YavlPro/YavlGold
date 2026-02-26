@@ -1577,6 +1577,13 @@
                     <p class="financial-operations-subtitle">Control unificado de movimientos sin scroll infinito.</p>
                     <p class="ops-total-display" id="ops-total-display">Todos los movimientos (Total: 0)</p>
                 </div>
+                <div class="financial-operations-actions">
+                    <button type="button" class="btn-privacy-toggle" id="ops-buyer-privacy-toggle"
+                        data-buyer-privacy-control="toggle" aria-pressed="false"
+                        title="Ocultar o mostrar nombres de compradores">
+                        👁 Ocultar nombres
+                    </button>
+                </div>
             </div>
 
             <div class="ops-context-steps" id="ops-context-steps">
@@ -1868,13 +1875,14 @@
                                 <button type="button" class="ops-rankings-range-btn" data-range="all">Todo</button>
                             </div>
                             <label class="ops-rankings-privacy">
-                                <input type="checkbox" id="ops-rankings-hide-names" checked>
-                                Ocultar nombres (iniciales)
+                                <input type="checkbox" id="ops-rankings-hide-names" checked
+                                    data-buyer-privacy-control="checkbox">
+                                Ocultar nombres
                             </label>
                         </div>
 
                         <p class="ops-rankings-privacy-hint" id="ops-rankings-privacy-hint">
-                            Privacidad activa: se muestran iniciales para proteger nombres de compradores.
+                            Privacidad activa: se ocultan nombres de compradores (••••).
                         </p>
 
                         <p class="ops-rankings-status" id="ops-rankings-status">Listo para cargar.</p>

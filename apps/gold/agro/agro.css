@@ -1543,6 +1543,56 @@ body.modal-open {
   gap: 0.25rem;
 }
 
+.financial-operations-card .financial-operations-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.financial-operations-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.btn-privacy-toggle {
+  border: 1px solid rgba(200, 167, 82, 0.35);
+  background: rgba(200, 167, 82, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  border-radius: 999px;
+  min-height: 38px;
+  padding: 0.45rem 0.95rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.btn-privacy-toggle:hover {
+  border-color: rgba(200, 167, 82, 0.55);
+  background: rgba(200, 167, 82, 0.14);
+  color: #fff3d0;
+}
+
+.btn-privacy-toggle[aria-pressed="true"] {
+  border-color: rgba(200, 167, 82, 0.7);
+  background: rgba(200, 167, 82, 0.2);
+  color: #fbe9ba;
+}
+
+.btn-privacy-toggle:focus-visible {
+  outline: 2px solid rgba(200, 167, 82, 0.6);
+  outline-offset: 2px;
+}
+
+.buyer-name-masked {
+  letter-spacing: 0.08em;
+}
+
 .financial-operations-title {
   font-size: 0.85rem;
   letter-spacing: 1.2px;
@@ -2360,6 +2410,15 @@ body.modal-open {
 
   .financial-operations-card .upload-dropzone.compact-dropzone {
     padding: 0.55rem 0.65rem;
+  }
+
+  .financial-operations-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .btn-privacy-toggle {
+    width: 100%;
   }
 
   .facturero-history-list {

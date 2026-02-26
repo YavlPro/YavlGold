@@ -10,6 +10,14 @@ import { openAgroWizard, ensureAgroWizardStyles } from './agro-wizard.js';
 import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js';
 import { exportStatsReport } from './agro-stats-report.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
+import {
+    BUYER_PRIVACY_CHANGE_EVENT,
+    BUYER_PRIVACY_MASK,
+    applyBuyerPrivacy,
+    initBuyerPrivacy,
+    readBuyerNamesHidden,
+    setBuyerNamesHidden
+} from './agro-privacy.js';
 
 // ==============================
 // CORE CRITICO — NO TOCAR
@@ -1352,6 +1360,14 @@ function formatWhoDisplay(tabName, whoValue) {
     return `${icon} ${label}: ${escapeHtml(whoValue)}`;
 }
 
+function markBuyerNameNode(node, buyerName) {
+    if (!node) return;
+    const raw = String(buyerName || '').trim();
+    if (!raw) return;
+    node.dataset.buyerName = '1';
+    node.dataset.rawName = raw;
+}
+
 function isMissingColumnError(error, column) {
     if (!error || !column) return false;
     const code = (error.code || '').toString();
@@ -2619,7 +2635,19 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     if (whoData.who) {
         const whoDiv = document.createElement('div');
         whoDiv.style.cssText = 'color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 2px;';
-        whoDiv.textContent = `• ${formatWhoDisplay(effectiveTabName, whoData.who)}`;
+
+        const whoMeta = WHO_FIELD_META[effectiveTabName];
+        const whoLabel = whoMeta?.label || 'Detalle';
+        const whoIcon = whoMeta?.icon || '•';
+
+        const whoPrefix = document.createElement('span');
+        whoPrefix.textContent = `• ${whoIcon} ${whoLabel}: `;
+
+        const whoName = document.createElement('span');
+        whoName.textContent = whoData.who;
+        markBuyerNameNode(whoName, whoData.who);
+
+        whoDiv.append(whoPrefix, whoName);
         left.appendChild(whoDiv);
     }
 
@@ -8236,7 +8264,15 @@ function renderIncomeItem(listEl, income, signedUrl) {
         const whoMeta = WHO_FIELD_META.ingresos;
         const whoLabel = whoMeta?.label || 'Comprador';
         const whoIcon = whoMeta?.icon || '👤';
-        whoLine.textContent = `• ${whoIcon} ${whoLabel}: ${whoData.who}`;
+
+        const whoPrefix = document.createElement('span');
+        whoPrefix.textContent = `• ${whoIcon} ${whoLabel}: `;
+
+        const whoName = document.createElement('span');
+        whoName.textContent = whoData.who;
+        markBuyerNameNode(whoName, whoData.who);
+
+        whoLine.append(whoPrefix, whoName);
     }
 
     const meta = document.createElement('div');
@@ -8542,7 +8578,6 @@ let opsMovementSummaryInFlight = null;
 let opsMovementSummaryQueued = false;
 let opsMovementSummaryTimer = null;
 const OPS_RANKINGS_RANGE_KEY = 'YG_AGRO_RANKINGS_RANGE_V1';
-const OPS_RANKINGS_PRIVACY_KEY = 'YG_AGRO_RANKINGS_PRIVACY_V1';
 const OPS_RANKINGS_DEFAULT_RANGE = '90d';
 const OPS_RANKINGS_LIMIT = 5;
 const OPS_RANKINGS_VALID_RANGES = new Set(['30d', '90d', '6m', '12m', 'all']);
@@ -8581,7 +8616,7 @@ const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre', 'sin comprad
 
 let opsRankingsState = {
     range: OPS_RANKINGS_DEFAULT_RANGE,
-    hideNames: true,
+    hideNames: readBuyerNamesHidden(),
     loading: false,
     error: '',
     updatedAt: null,
@@ -9243,22 +9278,11 @@ function writeOpsRankingsRange(value) {
 }
 
 function readOpsRankingsPrivacy() {
-    try {
-        const raw = localStorage.getItem(OPS_RANKINGS_PRIVACY_KEY);
-        if (raw === '0') return false;
-        if (raw === '1') return true;
-        return true;
-    } catch (_e) {
-        return true;
-    }
+    return readBuyerNamesHidden();
 }
 
 function writeOpsRankingsPrivacy(hideNames) {
-    try {
-        localStorage.setItem(OPS_RANKINGS_PRIVACY_KEY, hideNames ? '1' : '0');
-    } catch (_e) {
-        // Ignore storage errors
-    }
+    setBuyerNamesHidden(!!hideNames, { rootEl: document });
 }
 
 function getOpsRankingsElements() {
@@ -9322,12 +9346,8 @@ function sanitizeOpsRankingName(value) {
     return clean || 'Sin nombre';
 }
 
-function maskOpsRankingName(value) {
-    const clean = sanitizeOpsRankingName(value);
-    const words = clean.split(/\s+/).filter(Boolean);
-    if (words.length === 0) return 'S. N.';
-    if (words.length === 1) return `${words[0].slice(0, 1).toUpperCase()}.`;
-    return `${words[0].slice(0, 1).toUpperCase()}. ${words[1].slice(0, 1).toUpperCase()}.`;
+function maskOpsRankingName(_value) {
+    return BUYER_PRIVACY_MASK;
 }
 
 function getOpsRankingDisplayName(value) {
@@ -9488,7 +9508,7 @@ function renderOpsRankingList(listEl, rows, buildItem, options = {}) {
     listEl.appendChild(fragment);
 }
 
-function createOpsRankingItem({ index, name, value, meta, valueColor = '' }) {
+function createOpsRankingItem({ index, name, value, meta, valueColor = '', buyerName = '' }) {
     const li = document.createElement('li');
     li.className = 'ops-ranking-item';
 
@@ -9502,6 +9522,7 @@ function createOpsRankingItem({ index, name, value, meta, valueColor = '' }) {
     const nameEl = document.createElement('span');
     nameEl.className = 'ops-ranking-name';
     nameEl.textContent = name;
+    markBuyerNameNode(nameEl, buyerName);
 
     const valueEl = document.createElement('span');
     valueEl.className = 'ops-ranking-value';
@@ -9539,7 +9560,7 @@ function renderOpsRankings() {
 
     if (privacyHint) {
         privacyHint.textContent = opsRankingsState.hideNames
-            ? 'Privacidad activa: se muestran iniciales para proteger nombres de compradores.'
+            ? 'Privacidad activa: se ocultan nombres de compradores (••••).'
             : 'Privacidad desactivada: se muestran nombres completos.';
     }
 
@@ -9578,6 +9599,7 @@ function renderOpsRankings() {
         return createOpsRankingItem({
             index,
             name: getOpsRankingDisplayName(buyerName),
+            buyerName,
             value: formatOpsRankingCurrency(row?.total),
             meta: `${operationsLabel} · Última: ${formatOpsRankingDate(row?.last_date)}`
         });
@@ -9600,9 +9622,11 @@ function renderOpsRankings() {
 
     renderOpsRankingList(pendingClients, opsRankingsState.pendingClients, (row, index) => {
         const pendingLabel = formatOpsRankingCount(row?.pending_count, 'fiado', 'fiados');
+        const buyerName = String(row?.client_name || '').trim();
         return createOpsRankingItem({
             index,
-            name: getOpsRankingDisplayName(row?.client_name),
+            name: getOpsRankingDisplayName(buyerName),
+            buyerName,
             value: formatOpsRankingCurrency(row?.total_pending),
             meta: `${pendingLabel} · Próximo: ${formatOpsRankingDate(row?.next_due_date)}`
         });
@@ -9623,6 +9647,8 @@ function renderOpsRankings() {
             ? 'Sin pagados registrados para este cultivo en el rango seleccionado.'
             : 'Sin pagados registrados en el rango seleccionado.'
     });
+
+    applyBuyerPrivacy(panel, opsRankingsState.hideNames);
 }
 
 function isMissingRankingsRpc(error) {
@@ -9850,6 +9876,12 @@ function initOpsRankingsPanel() {
         if (exportBtn) {
             exportBtn.addEventListener('click', exportOpsRankingsMarkdown);
         }
+
+        document.addEventListener(BUYER_PRIVACY_CHANGE_EVENT, (event) => {
+            const hidden = !!event?.detail?.hidden;
+            opsRankingsState.hideNames = hidden;
+            renderOpsRankings();
+        });
 
         document.addEventListener('data-refresh', refreshOpsRankingsIfVisible);
         document.addEventListener('agro:income:changed', refreshOpsRankingsIfVisible);
@@ -11844,6 +11876,7 @@ export function initAgro() {
     setupHeaderIdentity();
     initIncomeHistory();
     initFinanceTabs();
+    initBuyerPrivacy(document);
     initOperationsContextSteps();
     initAgroAssistantModal();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
