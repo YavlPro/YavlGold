@@ -155,12 +155,35 @@ async function resolveSessionUser() {
     return state.user;
 }
 
-function fillProfileForm(profile = {}, user = null) {
-    const displayNameFallback = String(
+function resolveDisplayName(profile = {}, user = null) {
+    const fromProfile = String(profile?.display_name || '').trim();
+    if (fromProfile) return fromProfile;
+
+    const fallback = String(
         user?.user_metadata?.full_name
         || user?.email
         || 'Agricultor'
-    );
+    ).trim();
+
+    return fallback || 'Agricultor';
+}
+
+function updateProfileHeaderName(profile = {}, user = null) {
+    const displayName = resolveDisplayName(profile, user);
+
+    const titleEl = document.getElementById('agro-profile-title');
+    if (titleEl) {
+        titleEl.textContent = `Bienvenido, ${displayName}`;
+    }
+
+    const chipNameEl = document.querySelector('#agro-profile-button .user-name');
+    if (chipNameEl) {
+        chipNameEl.textContent = displayName;
+    }
+}
+
+function fillProfileForm(profile = {}, user = null) {
+    const displayNameFallback = resolveDisplayName(profile, user);
 
     PROFILE_FIELD_IDS.forEach((fieldName) => {
         const input = document.getElementById(`agro-profile-${fieldName}`);
@@ -172,12 +195,6 @@ function fillProfileForm(profile = {}, user = null) {
         }
         input.value = String(nextValue || '').trim();
     });
-
-    const titleEl = document.getElementById('agro-profile-title');
-    if (titleEl) {
-        const profileName = String(profile?.display_name || displayNameFallback || 'Agricultor').trim();
-        titleEl.textContent = `Bienvenido, ${profileName}`;
-    }
 }
 
 function readProfileForm() {
@@ -210,6 +227,7 @@ async function loadFarmerProfile() {
 
         state.profile = data || null;
         fillProfileForm(data || {}, user);
+        updateProfileHeaderName(data || {}, user);
         setProfileStatus('Perfil listo.', 'ok');
     } catch (error) {
         console.error('[AGRO_PROFILE] load profile error:', error);
@@ -247,6 +265,7 @@ async function saveFarmerProfile(event) {
         if (error) throw error;
 
         state.profile = payload;
+        updateProfileHeaderName(payload, user);
         setProfileStatus('Perfil guardado correctamente.', 'ok');
     } catch (error) {
         console.error('[AGRO_PROFILE] save profile error:', error);
