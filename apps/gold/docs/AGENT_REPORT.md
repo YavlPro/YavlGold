@@ -1,5 +1,84 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Perfil Agricultor modular + estadística global (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) **Entrada UX actual**
+- Header muestra chip visual `.user-profile` con “Bienvenido, Agricultor” sin interacción de perfil.
+- Existe botón KPI `#btn-open-stats-center` que abre un modal de “Centro Estadístico” aislado.
+
+2) **Datos/Auth**
+- Supabase y sesión están activos en Agro (`supabase` + guard en bootstrap del `index.html`).
+- Ya existe `public.agro_farmer_profile` con RLS owner-only, listo para CRUD de perfil.
+
+3) **Estado del código**
+- `agro.js` concentra UI + lógica de módulo.
+- Ya existe privacidad global (`agro-privacy.js`) para nombres/montos con `MutationObserver`.
+- Cards de ciclos y rankings ya marcan nodos sensibles (`data-buyer-name`, `data-money`).
+
+### Plan de cambios (modular)
+
+1. Crear `apps/gold/agro/agroestadistica.js`
+- Fuente única de stats globales (sin DOM).
+- API: `getGlobalStats({ supabase, userId, range })`.
+
+2. Crear `apps/gold/agro/agroperfil.js`
+- UI del perfil, CRUD de `agro_farmer_profile`, carga de stats y export MD.
+- Apertura desde header + CTA del dashboard agro.
+- Aplicación de privacidad sobre nodos del perfil (`data-buyer-name` / `data-money`).
+
+3. Ajustes de vista y wiring
+- `apps/gold/agro/index.html`: botón perfil en header, CTA “Ver Resumen Global en Perfil”, modal/panel de perfil.
+- `apps/gold/agro/agro.css`: estilos modal/panel perfil.
+- `apps/gold/agro/agro.js`: wiring mínimo `initAgroPerfil({ supabase })`.
+
+### Riesgos y mitigación
+
+- Riesgo: tocar CORE por accidente.
+  - Mitigación: no modificar queries/cálculos de Facturero/ciclos/historial; solo wiring y módulos nuevos.
+- Riesgo: doble fuente de stats.
+  - Mitigación: encapsular stats globales en `agroestadistica.js` y consumir desde perfil.
+- Riesgo: privacidad inconsistente en perfil.
+  - Mitigación: marcar nodos + aplicar `applyBuyerPrivacy`/`applyMoneyPrivacy` al render.
+
+### DoD de esta fase
+
+- Perfil Agricultor abre desde header/CTA y persiste campos opcionales.
+- Stats globales se muestran en perfil desde módulo `agroestadistica.js`.
+- Export MD disponible desde perfil.
+- Bloque aislado de acceso estadístico se convierte en CTA al perfil.
+- `pnpm build:gold` PASS.
+
+### Cierre (evidencia)
+
+- Archivos creados:
+  - `apps/gold/agro/agroestadistica.js`
+    - Fuente única de datos globales: cultivos (activos/finalizados/perdidos), dinero USD, top compradores y top cultivos.
+    - Normalización monetaria defensiva (USD/COP/VES) con fallback de tasa vía `agro-exchange`.
+  - `apps/gold/agro/agroperfil.js`
+    - Inicialización modular `initAgroPerfil({ supabase })`.
+    - Apertura/cierre de panel perfil desde header y CTA.
+    - CRUD owner-only en `agro_farmer_profile` (load + upsert).
+    - Render de resumen global y exportación Markdown.
+    - Integración de privacidad (`data-buyer-name` / `data-money`) para respetar toggles 👁/💰.
+- Archivos modificados:
+  - `apps/gold/agro/index.html`
+    - Se agregó modal/panel `#modal-agro-profile`.
+    - Se mantiene CTA `#btn-open-agro-profile` como entrada al resumen global dentro del perfil.
+  - `apps/gold/agro/agro.css`
+    - Estilos mobile-first del modal/panel de perfil.
+  - `apps/gold/agro/agro.js`
+    - Wiring mínimo: `initAgroPerfil({ supabase })`.
+    - Se removió inicialización del modal aislado del Centro Estadístico.
+  - Limpieza de legado:
+    - Eliminado completamente el Centro Estadístico aislado (`modal-stats-center`) en HTML/CSS/JS.
+    - No quedan referencias a `initStatsCenterModal` ni `btn-open-stats-center`.
+- Build gate:
+  - `pnpm build:gold` -> PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8` OK).
+- Smoke manual CORE:
+  - Estado: pendiente de validación manual en sesión autenticada (Facturero/ciclos/historial sin cambios funcionales esperados).
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Privacidad en cards AgroCrops/Ciclos (2026-02-27)
 
 ### Diagnóstico breve (estado actual)

@@ -8,7 +8,7 @@ import { syncFactureroNotifications } from './agro-notifications.js';
 import './agro.css';
 import { openAgroWizard, ensureAgroWizardStyles } from './agro-wizard.js';
 import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js';
-import { exportStatsReport } from './agro-stats-report.js';
+import { initAgroPerfil } from './agroperfil.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
@@ -10255,127 +10255,6 @@ function updateBalanceSummary(expenseTotal, incomeTotal) {
 }
 
 // ============================================================
-// V9.5.3: Centro Estadistico (modal)
-// ============================================================
-
-let statsCenterActiveTab = 'kpis';
-
-function setStatsCenterTab(tabName) {
-    const modal = document.getElementById('modal-stats-center');
-    if (!modal) return;
-
-    const targetTab = tabName || 'kpis';
-    statsCenterActiveTab = targetTab;
-
-    const tabs = modal.querySelectorAll('.stats-tab');
-    const panels = modal.querySelectorAll('.stats-panel');
-
-    tabs.forEach((btn) => {
-        const active = btn.dataset.tab === targetTab;
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-
-    panels.forEach((panel) => {
-        const active = panel.dataset.tab === targetTab;
-        panel.classList.toggle('is-active', active);
-        panel.setAttribute('aria-hidden', active ? 'false' : 'true');
-    });
-
-    if (targetTab === 'rentabilidad') {
-        if (typeof window.refreshAgroStats === 'function') {
-            Promise.resolve(window.refreshAgroStats()).catch((err) => {
-                console.warn('[AGRO] Stats refresh failed:', err?.message || err);
-            });
-        }
-        requestAnimationFrame(() => {
-            window.dispatchEvent(new Event('resize'));
-        });
-    }
-}
-
-function openStatsCenter() {
-    const modal = document.getElementById('modal-stats-center');
-    if (!modal) return;
-    modal.style.display = 'flex';
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('stats-center-open');
-    setStatsCenterTab('kpis');
-
-    if (typeof window.refreshAgroStats === 'function') {
-        Promise.resolve(window.refreshAgroStats()).catch((err) => {
-            console.warn('[AGRO] Stats refresh failed:', err?.message || err);
-        });
-    }
-
-    const content = modal.querySelector('.stats-center');
-    const scrollBody = modal.querySelector('.stats-center-body');
-    if (scrollBody) {
-        scrollBody.scrollTop = 0;
-    }
-    if (content) {
-        content.focus({ preventScroll: true });
-    }
-}
-
-function closeStatsCenter() {
-    const modal = document.getElementById('modal-stats-center');
-    if (!modal) return;
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('stats-center-open');
-}
-
-function initStatsCenterModal() {
-    if (document.__agroStatsCenterBound) return;
-    document.__agroStatsCenterBound = true;
-
-    const modal = document.getElementById('modal-stats-center');
-    const openBtn = document.getElementById('btn-open-stats-center');
-    const closeBtn = document.getElementById('btn-close-stats');
-    const tabs = modal?.querySelectorAll('.stats-tab') || [];
-
-    if (!modal) return;
-
-    if (openBtn) {
-        openBtn.addEventListener('click', openStatsCenter);
-    }
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeStatsCenter);
-    }
-
-    const exportBtn = document.getElementById('btn-export-stats');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
-            exportStatsReport();
-        });
-    }
-
-    tabs.forEach((tab) => {
-        tab.addEventListener('click', () => {
-            setStatsCenterTab(tab.dataset.tab);
-        });
-    });
-
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            closeStatsCenter();
-        }
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.style.display === 'flex') {
-            closeStatsCenter();
-        }
-    });
-
-    window.openStatsCenter = openStatsCenter;
-    window.closeStatsCenter = closeStatsCenter;
-    window.setStatsCenterTab = setStatsCenterTab;
-}
-
-// ============================================================
 // V9.5.6: Asistente Agro (IA real)
 // ============================================================
 
@@ -11937,13 +11816,13 @@ export function initAgro() {
     initIncomeHistory();
     initFinanceTabs();
     initBuyerPrivacy(document);
+    initAgroPerfil({ supabase });
     initOperationsContextSteps();
     initAgroAssistantModal();
     populateCropDropdowns(); // V9.5: Poblar dropdowns de cultivo
     setupFactureroCrudListeners(); // V9.5.1: Event delegation para CRUD
     console.info('[AGRO] V9.6: facturero who-field enabled');
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
-    initStatsCenterModal(); // V9.5.3: Centro Estadistico
     initAgroFocusMode(); // V9.8: Modo Enfoque (UI only)
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();

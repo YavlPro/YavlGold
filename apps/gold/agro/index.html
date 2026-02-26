@@ -1162,17 +1162,18 @@
 
             </div>
 
-            <div class="user-profile">
+            <button type="button" class="user-profile user-profile-btn" id="agro-profile-button"
+                aria-haspopup="dialog" aria-controls="modal-agro-profile" aria-expanded="false">
                 <div class="user-avatar">👨‍🌾</div>
                 <div class="user-info"> <span class="user-greeting">Bienvenido,</span> <span
                         class="user-name">Agricultor</span> </div>
-            </div>
+            </button>
         </header> <!-- KPIs Section -->
         <section class="kpi-section" data-agro-section="agenda">
             <div class="section-header animate-in delay-1">
                 <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2>
-                <button type="button" class="stats-center-trigger" id="btn-open-stats-center" data-agro-section="stats">
-                    &#128202; Centro Estad&iacute;stico
+                <button type="button" class="stats-center-trigger" id="btn-open-agro-profile" data-agro-section="profile">
+                    &#128202; Ver Resumen Global en Perfil
                 </button>
                 <button type="button" class="assistant-trigger" id="agro-focus-toggle" aria-pressed="false">
                     &#129504; Modo Enfoque: OFF
@@ -2608,6 +2609,153 @@
 
     </script>
 
+    <!-- V9.8: Perfil Agricultor (hub de resumen global) -->
+    <div id="modal-agro-profile" class="agro-profile-modal" aria-hidden="true">
+        <div class="agro-profile-backdrop" data-agro-profile-close></div>
+        <div class="agro-profile-panel" role="dialog" aria-modal="true" aria-labelledby="agro-profile-title"
+            tabindex="-1">
+            <header class="agro-profile-header">
+                <div>
+                    <p class="agro-profile-eyebrow">Perfil Agricultor</p>
+                    <h3 class="agro-profile-title" id="agro-profile-title">Bienvenido, Agricultor</h3>
+                </div>
+                <button type="button" class="agro-profile-close" aria-label="Cerrar perfil agricultor"
+                    data-agro-profile-close>
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="agro-profile-body">
+                <section class="agro-profile-section">
+                    <h4 class="agro-profile-section-title">Tus datos opcionales</h4>
+                    <form id="agro-profile-form" class="agro-profile-form">
+                        <label class="agro-profile-field">
+                            <span>Nombre visible</span>
+                            <input type="text" id="agro-profile-display_name" class="styled-input" maxlength="120"
+                                autocomplete="name">
+                        </label>
+                        <label class="agro-profile-field">
+                            <span>Finca</span>
+                            <input type="text" id="agro-profile-farm_name" class="styled-input" maxlength="120">
+                        </label>
+                        <label class="agro-profile-field">
+                            <span>Ubicación</span>
+                            <input type="text" id="agro-profile-location_text" class="styled-input" maxlength="180">
+                        </label>
+                        <div class="agro-profile-inline-fields">
+                            <label class="agro-profile-field">
+                                <span>Teléfono</span>
+                                <input type="text" id="agro-profile-phone" class="styled-input" maxlength="40">
+                            </label>
+                            <label class="agro-profile-field">
+                                <span>WhatsApp</span>
+                                <input type="text" id="agro-profile-whatsapp" class="styled-input" maxlength="40">
+                            </label>
+                        </div>
+                        <div class="agro-profile-inline-fields">
+                            <label class="agro-profile-field">
+                                <span>Instagram</span>
+                                <input type="text" id="agro-profile-instagram" class="styled-input" maxlength="80">
+                            </label>
+                            <label class="agro-profile-field">
+                                <span>Facebook</span>
+                                <input type="text" id="agro-profile-facebook" class="styled-input" maxlength="80">
+                            </label>
+                        </div>
+                        <label class="agro-profile-field">
+                            <span>Biografía</span>
+                            <textarea id="agro-profile-notes" class="styled-input" rows="4" maxlength="800"
+                                placeholder="Cuéntanos sobre tu enfoque agrícola"></textarea>
+                        </label>
+                        <button type="submit" id="btn-save-agro-profile" class="btn btn-primary">Guardar Perfil</button>
+                    </form>
+                </section>
+
+                <section class="agro-profile-section">
+                    <div class="agro-profile-stats-head">
+                        <h4 class="agro-profile-section-title">Resumen global</h4>
+                        <p class="agro-profile-updated" id="agro-profile-stats-updated">Actualizado: N/D</p>
+                    </div>
+
+                    <div class="agro-profile-crops-grid">
+                        <article class="agro-profile-stat-card">
+                            <span class="agro-profile-stat-label">Activos</span>
+                            <strong class="agro-profile-stat-value" id="agro-profile-crops-active">0</strong>
+                        </article>
+                        <article class="agro-profile-stat-card">
+                            <span class="agro-profile-stat-label">Finalizados</span>
+                            <strong class="agro-profile-stat-value" id="agro-profile-crops-finalized">0</strong>
+                        </article>
+                        <article class="agro-profile-stat-card">
+                            <span class="agro-profile-stat-label">Perdidos</span>
+                            <strong class="agro-profile-stat-value" id="agro-profile-crops-lost">0</strong>
+                        </article>
+                        <article class="agro-profile-stat-card">
+                            <span class="agro-profile-stat-label">Total cultivos</span>
+                            <strong class="agro-profile-stat-value" id="agro-profile-crops-total">0</strong>
+                        </article>
+                    </div>
+
+                    <div class="agro-profile-money-grid">
+                        <div class="agro-profile-money-row">
+                            <span>Ingresos cobrados</span>
+                            <strong id="agro-profile-money-income" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Gastos</span>
+                            <strong id="agro-profile-money-expenses" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Fiados</span>
+                            <strong id="agro-profile-money-pending" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Pérdidas</span>
+                            <strong id="agro-profile-money-losses" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Donaciones</span>
+                            <strong id="agro-profile-money-transfers" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Inversión base</span>
+                            <strong id="agro-profile-money-investment" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Costos totales</span>
+                            <strong id="agro-profile-money-cost" data-money="1">$0.00</strong>
+                        </div>
+                        <div class="agro-profile-money-row">
+                            <span>Rentabilidad</span>
+                            <strong id="agro-profile-money-profit" data-money="1">$0.00</strong>
+                        </div>
+                    </div>
+
+                    <div class="agro-profile-top-grid">
+                        <article class="agro-profile-top-card">
+                            <h5>Top Compradores (Pagados)</h5>
+                            <ol id="agro-profile-top-buyers" class="agro-profile-top-list"></ol>
+                        </article>
+                        <article class="agro-profile-top-card">
+                            <h5>Top Cultivos (Pagados)</h5>
+                            <ol id="agro-profile-top-crops" class="agro-profile-top-list"></ol>
+                        </article>
+                    </div>
+
+                    <button type="button" id="btn-export-agro-profile-md" class="agro-profile-export-btn">
+                        📄 Exportar Informe Global (MD)
+                    </button>
+                </section>
+            </div>
+
+            <footer class="agro-profile-footer">
+                <p id="agro-profile-status" class="agro-profile-status" data-level="muted">
+                    Abre tu perfil para cargar datos globales.
+                </p>
+            </footer>
+        </div>
+    </div>
+
     <script type="module">
         import { supabase } from '../assets/js/config/supabase-config.js';
 
@@ -2669,371 +2817,6 @@
         bootstrapAgro();
     </script>
     <script type="module" src="./agro-feedback.js"></script>
-
-    <!-- V9.8: Centro Estadistico -->
-    <div id="modal-stats-center" class="modal" style="display: none;" aria-hidden="true">
-        <div class="modal-content stats-center" role="dialog" aria-modal="true" aria-labelledby="stats-center-title"
-            tabindex="-1">
-            <div class="stats-center-header">
-                <h3 id="stats-center-title">Centro Estad&iacute;stico</h3>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button type="button" id="btn-export-stats" title="Exportar informe estad&iacute;stico"
-                        style="background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.3); color: #60a5fa; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem; transition: all 0.2s ease;"
-                        onmouseover="this.style.background='rgba(96,165,250,0.25)'"
-                        onmouseout="this.style.background='rgba(96,165,250,0.1)'">
-                        <i class="fa-solid fa-chart-bar"></i> Exportar
-                    </button>
-                    <button type="button" class="btn-close" id="btn-close-stats" aria-label="Cerrar estadisticas">
-                        &times;
-                    </button>
-                </div>
-            </div>
-            <div class="stats-center-body">
-                <div
-                    style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: end; margin-bottom: 0.9rem; padding: 0.75rem; border: 1px solid rgba(200, 167, 82, 0.18); border-radius: 10px; background: rgba(255,255,255,0.02);">
-                    <label style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 150px;">
-                        <span style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Desde</span>
-                        <input type="date" id="stats-date-start" class="styled-input" style="min-height: 40px;">
-                    </label>
-                    <label style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 150px;">
-                        <span style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px;">Hasta</span>
-                        <input type="date" id="stats-date-end" class="styled-input" style="min-height: 40px;">
-                    </label>
-                    <button type="button" id="btn-stats-apply-range"
-                        style="min-height: 40px; padding: 0 0.9rem; border-radius: 8px; border: 1px solid rgba(200, 167, 82, 0.45); background: rgba(200, 167, 82, 0.12); color: #C8A752; font-weight: 700; cursor: pointer;">
-                        Aplicar rango
-                    </button>
-                </div>
-                <div class="stats-center-tabs" role="tablist" aria-label="Secciones de estadisticas">
-                    <button type="button" class="stats-tab is-active" data-tab="kpis" role="tab" aria-selected="true">
-                        KPIs
-                    </button>
-                    <button type="button" class="stats-tab" data-tab="rentabilidad" role="tab" aria-selected="false">
-                        Rentabilidad
-                    </button>
-                </div>
-                <div class="stats-center-panels">
-                    <div class="stats-panel is-active" data-tab="kpis" role="tabpanel" aria-hidden="false">
-                        <div class="stats-center-grid">
-                            <!-- KPI: Gasto Facturero -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">&#129534;</div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Gasto Facturero</div>
-                                    <div class="kpi-value" style="color: #f87171;">
-                                        <span class="highlight" id="kpi-expenses-total">$0.00</span>
-                                    </div>
-                                    <div class="kpi-secondary">
-                                        <span class="kpi-tag">Gastos Operativos</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Inversion Cosecha -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">&#127793;</div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Inversi&oacute;n Cosecha</div>
-                                    <div class="kpi-value" style="color: #4ade80;">
-                                        <span class="highlight" id="kpi-crops-investment">$0.00</span>
-                                    </div>
-                                    <div class="kpi-secondary">
-                                        <span class="kpi-tag">Capital Sembrado</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Gasto Total -->
-                            <div class="card kpi-card"
-                                style="border-color: var(--gold-primary); background: rgba(200, 167, 82, 0.05);">
-                                <div class="kpi-icon-wrapper">&#128176;</div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label" style="color: var(--gold-primary);">Gasto Total</div>
-                                    <div class="kpi-value" style="color: var(--gold-primary);">
-                                        <span class="highlight" id="kpi-global-total">$0.00</span>
-                                    </div>
-                                    <div class="kpi-secondary">
-                                        <span class="kpi-tag" style="color: rgba(255,255,255,0.7);">Salida de Dinero
-                                            Real</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Fiados -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">
-                                    <i class="fa-solid fa-hourglass-half" style="color: var(--gold-primary);"></i>
-                                </div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Fiados</div>
-                                    <div class="kpi-value" style="color: var(--gold-primary);">
-                                        <span class="highlight" id="kpi-pending-total">$0.00</span>
-                                    </div>
-                                    <div class="kpi-secondary">
-                                        <span class="kpi-tag">Fiados en espera</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Perdidas -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">
-                                    <i class="fa-solid fa-triangle-exclamation" style="color: #f87171;"></i>
-                                </div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Perdidas</div>
-                                    <div class="kpi-value" style="color: #f87171;">
-                                        <span class="highlight" id="kpi-losses-total">$0.00</span>
-                                    </div>
-                                    <div class="kpi-secondary">
-                                        <span class="kpi-tag">Merma real</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Donaciones -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">
-                                    <i class="fa-solid fa-gift" style="color: var(--gold-primary);"></i>
-                                </div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Donaciones</div>
-                                    <div class="kpi-value" style="color: var(--gold-primary);">
-                                        <span class="highlight" id="kpi-transfers-total">$0.00</span>
-                                    </div>
-                                    <div class="kpi-secondary">
-                                        <span class="kpi-tag">Aportes solidarios</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Unidades -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">⚖️</div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Unidades</div>
-                                    <div class="kpi-secondary stats-units-list">
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Vendido</span>
-                                            <span class="stats-units-value" id="stats-units-income">-</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Fiado</span>
-                                            <span class="stats-units-value" id="stats-units-pending">-</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Transferido</span>
-                                            <span class="stats-units-value" id="stats-units-transfers">-</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Perdidas</span>
-                                            <span class="stats-units-value" id="stats-units-losses">-</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Movimientos -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">📌</div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Movimientos</div>
-                                    <div class="kpi-secondary stats-units-list">
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Vendido</span>
-                                            <span class="stats-units-value" id="stats-count-income">0</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Fiado</span>
-                                            <span class="stats-units-value" id="stats-count-pending">0</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Transferido</span>
-                                            <span class="stats-units-value" id="stats-count-transfers">0</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Perdido</span>
-                                            <span class="stats-units-value" id="stats-count-losses">0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- KPI: Cultivos -->
-                            <div class="card kpi-card">
-                                <div class="kpi-icon-wrapper">🌾</div>
-                                <div class="kpi-content">
-                                    <div class="kpi-label">Cultivos</div>
-                                    <div class="kpi-secondary stats-units-list">
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Más cultivado</span>
-                                            <span class="stats-units-value" id="stats-crop-most">Sin datos (0)</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Menos cultivado</span>
-                                            <span class="stats-units-value" id="stats-crop-least">Sin datos (0)</span>
-                                        </div>
-                                        <div class="stats-units-row">
-                                            <span class="kpi-tag">Más vendido</span>
-                                            <span class="stats-units-value" id="stats-crop-best-sold">Sin datos
-                                                (0)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stats-panel" data-tab="rentabilidad" role="tabpanel" aria-hidden="true">
-                        <!-- Statistics Section: Monitor de Rentabilidad -->
-                        <section class="stats-section animate-in delay-5" style="margin: 0;">
-                            <div class="section-header" style="margin-bottom: 1rem;">
-                                <h2 class="section-title"><span class="icon">📊</span> Monitor de Rentabilidad</h2>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-
-                                <!-- ROI Chart (Large) -->
-                                <div class="card"
-                                    style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08);">
-                                    <div
-                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                        <div>
-                                            <h3
-                                                style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 1rem; letter-spacing: 0.5px; margin: 0;">
-                                                Rentabilidad del Ciclo</h3>
-                                            <p style="font-size: 0.7rem; color: #666; margin: 4px 0 0 0;">Inversión vs.
-                                                Retorno Esperado
-                                            </p>
-                                        </div>
-                                        <div style="display: flex; gap: 8px; align-items: center;">
-                                            <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                                                <span id="roi-badge"
-                                                    style="font-size: 10px; padding: 4px 10px; border-radius: 20px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); color: #C8A752; font-family: 'Courier New', monospace; font-weight: 600;">ROI:
-                                                    0%</span>
-                                                <div id="roi-subtitle" class="roi-subtitle"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
-                                        <div style="display: flex; align-items: center; gap: 6px;">
-                                            <div
-                                                style="width: 12px; height: 3px; background: #C8A752; border-radius: 2px;">
-                                            </div>
-                                            <span style="font-size: 10px; color: #888;">Retorno</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; gap: 6px;">
-                                            <div style="width: 12px; height: 0; border-top: 2px dashed #ef4444;"></div>
-                                            <span style="font-size: 10px; color: #888;">Inversión</span>
-                                        </div>
-                                    </div>
-                                    <div style="height: 220px; width: 100%;">
-                                        <canvas id="roiChart"></canvas>
-                                    </div>
-                                </div>
-
-                                <!-- Expenses Chart Row -->
-                                <div class="stats-center-charts-row"
-                                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-
-                                    <!-- Expenses Doughnut -->
-                                    <div class="card"
-                                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
-                                        <h3
-                                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
-                                            Estructura de Costos</h3>
-                                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Desglose
-                                            operativo</p>
-                                        <div
-                                            style="height: 160px; width: 100%; display: flex; align-items: center; justify-content: center; position: relative;">
-                                            <canvas id="expensesChart"></canvas>
-                                            <div
-                                                style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;">
-                                                <span style="font-size: 10px; color: #666;">Total</span>
-                                                <span id="expenses-total"
-                                                    style="font-size: 1.2rem; font-weight: 700; color: #fff; font-family: 'Courier New', monospace;">$0k</span>
-                                            </div>
-                                        </div>
-                                        <div
-                                            style="margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 10px; color: #888;">
-                                            <div style="display: flex; align-items: center; gap: 6px;">
-                                                <div
-                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #C8A752;">
-                                                </div>
-                                                Insumos
-                                            </div>
-                                            <div style="display: flex; align-items: center; gap: 6px;">
-                                                <div
-                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;">
-                                                </div>
-                                                Riego/Luz
-                                            </div>
-                                            <div style="display: flex; align-items: center; gap: 6px;">
-                                                <div
-                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #a855f7;">
-                                                </div>
-                                                Mano de Obra
-                                            </div>
-                                            <div style="display: flex; align-items: center; gap: 6px;">
-                                                <div
-                                                    style="width: 8px; height: 8px; border-radius: 50%; background: #4b5563;">
-                                                </div>
-                                                Otros
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Quick Stats Summary -->
-                                    <div class="card"
-                                        style="padding: 1.5rem; position: relative; overflow: hidden; background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 50%, #000 100%); border: 1px solid rgba(200, 167, 82, 0.3); box-shadow: 0 0 30px rgba(200, 167, 82, 0.08); display: flex; flex-direction: column;">
-                                        <h3
-                                            style="font-family: 'Orbitron', sans-serif; color: #f0f0f0; font-size: 0.95rem; letter-spacing: 0.5px; margin: 0;">
-                                            Resumen Financiero</h3>
-                                        <p style="font-size: 0.7rem; color: #666; margin: 4px 0 1rem 0;">Ciclo actual
-                                        </p>
-                                        <div style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
-                                            <div
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 8px;">
-                                                <span style="font-size: 11px; color: #888;">Pagados Reales</span>
-                                                <span id="summary-revenue"
-                                                    style="font-size: 1rem; color: #4ade80; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                                            </div>
-                                            <div
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.05); border: 1px solid rgba(248, 113, 113, 0.15); border-radius: 8px;">
-                                                <span style="font-size: 11px; color: #888;">Gastos directos</span>
-                                                <span id="summary-direct-expenses"
-                                                    style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                                            </div>
-                                            <div
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 8px;">
-                                                <span style="font-size: 11px; color: #888;">Costo Total (Inv+Gastos+P&eacute;rdidas)</span>
-                                                <span id="summary-cost"
-                                                    style="font-size: 1rem; color: #f87171; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                                            </div>
-                                            <div
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 8px;">
-                                                <span style="font-size: 11px; color: #888;">Ganancia Neta</span>
-                                                <span id="summary-profit"
-                                                    style="font-size: 1rem; color: #C8A752; font-family: 'Courier New', monospace; font-weight: 700;">$0k</span>
-                                            </div>
-                                            <div
-                                                style="margin-top: auto; text-align: center; padding: 8px; background: rgba(255,255,255,0.02); border-radius: 6px;">
-                                                <span
-                                                    style="font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 1px;">Margen
-                                                    de Utilidad</span>
-                                                <div id="summary-margin"
-                                                    style="font-family: 'Orbitron', sans-serif; font-size: 1.5rem; color: #C8A752; font-weight: 700; margin-top: 4px;">
-                                                    0%</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-            </div>
-
-        </div> <!-- /.modal-content.stats-center -->
-    </div> <!-- /#modal-stats-center -->
 
     <!-- V9.8: Modal Edit Facturero -->
     <div id="modal-edit-facturero" class="modal" style="display: none;">
