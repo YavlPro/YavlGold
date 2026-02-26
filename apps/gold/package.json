@@ -17,6 +17,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.89.0"
   },
+  "overrides": {
+    "rollup": "4.59.0"
+  },
   "keywords": [
     "yavl",
     "trading",
