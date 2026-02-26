@@ -1555,6 +1555,8 @@ body.modal-open {
   margin-left: auto;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .btn-privacy-toggle {
@@ -1590,6 +1592,10 @@ body.modal-open {
 }
 
 .buyer-name-masked {
+  letter-spacing: 0.08em;
+}
+
+.money-masked {
   letter-spacing: 0.08em;
 }
 
@@ -2418,7 +2424,7 @@ body.modal-open {
   }
 
   .btn-privacy-toggle {
-    width: 100%;
+    width: calc(50% - 0.25rem);
   }
 
   .facturero-history-list {

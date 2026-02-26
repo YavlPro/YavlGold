@@ -14,6 +14,7 @@ import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
     applyBuyerPrivacy,
+    applyMoneyPrivacy,
     initBuyerPrivacy,
     readBuyerNamesHidden,
     setBuyerNamesHidden
@@ -1366,6 +1367,14 @@ function markBuyerNameNode(node, buyerName) {
     if (!raw) return;
     node.dataset.buyerName = '1';
     node.dataset.rawName = raw;
+}
+
+function markMoneyNode(node, rawMoneyText = '') {
+    if (!node) return;
+    const raw = String(rawMoneyText || node.textContent || '').trim();
+    if (!raw) return;
+    node.dataset.money = '1';
+    node.dataset.rawMoney = raw;
 }
 
 function isMissingColumnError(error, column) {
@@ -2739,6 +2748,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const amountSpan = document.createElement('span');
     amountSpan.style.cssText = `color: ${effectiveTabName === 'perdidas' ? '#ef4444' : '#4ade80'}; font-weight: 700; font-size: 0.9rem;`;
     amountSpan.textContent = _fmtItemCurrency(item, rowConfig, amount);
+    markMoneyNode(amountSpan, amountSpan.textContent);
     right.appendChild(amountSpan);
 
     if (showActions) {
@@ -2868,6 +2878,7 @@ function renderHistoryRowFallback(item, config) {
     const amountSpan = document.createElement('span');
     amountSpan.style.cssText = 'color: #4ade80; font-weight: 700; font-size: 0.9rem;';
     amountSpan.textContent = `$${amount.toFixed(2)}`;
+    markMoneyNode(amountSpan, amountSpan.textContent);
 
     row.append(left, amountSpan);
     return row;
@@ -6775,10 +6786,21 @@ function createInvestmentMetaItem(baseInvestmentUsd, expenseInvestmentUsd, fxSna
     const totalText = formatInvestmentTriplet(total, displayRates);
     const item = createMetaItem('Inversión (Total)', totalText, 'gold');
     const valueEl = item.querySelector('.meta-value');
+    markMoneyNode(valueEl, totalText);
     if (valueEl) {
         const breakdown = document.createElement('span');
         breakdown.className = 'crop-meta-subline';
-        breakdown.textContent = `Base: ${formatInvestmentTriplet(base, displayRates)} + Gastos: ${formatInvestmentTriplet(expenses, displayRates)}`;
+        const baseLabel = document.createElement('span');
+        baseLabel.textContent = 'Base: ';
+        const baseValue = document.createElement('span');
+        baseValue.textContent = formatInvestmentTriplet(base, displayRates);
+        markMoneyNode(baseValue, baseValue.textContent);
+        const plusLabel = document.createElement('span');
+        plusLabel.textContent = ' + Gastos: ';
+        const expenseValue = document.createElement('span');
+        expenseValue.textContent = formatInvestmentTriplet(expenses, displayRates);
+        markMoneyNode(expenseValue, expenseValue.textContent);
+        breakdown.append(baseLabel, baseValue, plusLabel, expenseValue);
         const fxLine = document.createElement('span');
         fxLine.className = 'crop-meta-subline is-muted';
         fxLine.textContent = buildInvestmentFxLine(fxSnapshot, displayRates);
@@ -6797,15 +6819,36 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
     const potential = net + pending;
     const item = createMetaItem('Rentabilidad (cobrado)', formatCurrency(net));
     const valueEl = item.querySelector('.meta-value');
+    markMoneyNode(valueEl, valueEl?.textContent || '');
     if (valueEl) {
         valueEl.style.color = net >= 0 ? 'var(--gold-light)' : 'var(--danger)';
         const breakdown = document.createElement('span');
         breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
-        breakdown.textContent = `Pagados: ${formatCurrency(income)} | Costos: ${formatCurrency(costs)}`;
+        const paidLabel = document.createElement('span');
+        paidLabel.textContent = 'Pagados: ';
+        const paidValue = document.createElement('span');
+        paidValue.textContent = formatCurrency(income);
+        markMoneyNode(paidValue, paidValue.textContent);
+        const costLabel = document.createElement('span');
+        costLabel.textContent = ' | Costos: ';
+        const costValue = document.createElement('span');
+        costValue.textContent = formatCurrency(costs);
+        markMoneyNode(costValue, costValue.textContent);
+        breakdown.append(paidLabel, paidValue, costLabel, costValue);
         const pendingLine = document.createElement('span');
         pendingLine.style.cssText = 'display:block;font-size:0.64rem;font-weight:600;margin-top:2px;line-height:1.2;';
         pendingLine.style.color = potential >= 0 ? 'var(--gold-light)' : 'var(--danger)';
-        pendingLine.textContent = `Fiados: ${formatCurrency(pending)} | Potencial: ${formatCurrency(potential)}`;
+        const pendingLabel = document.createElement('span');
+        pendingLabel.textContent = 'Fiados: ';
+        const pendingValue = document.createElement('span');
+        pendingValue.textContent = formatCurrency(pending);
+        markMoneyNode(pendingValue, pendingValue.textContent);
+        const potentialLabel = document.createElement('span');
+        potentialLabel.textContent = ' | Potencial: ';
+        const potentialValue = document.createElement('span');
+        potentialValue.textContent = formatCurrency(potential);
+        markMoneyNode(potentialValue, potentialValue.textContent);
+        pendingLine.append(pendingLabel, pendingValue, potentialLabel, potentialValue);
         valueEl.appendChild(breakdown);
         valueEl.appendChild(pendingLine);
         if (missing > 0) {
@@ -8324,6 +8367,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     const amount = document.createElement('div');
     amount.style.cssText = 'color: #4ade80; font-weight: 700; font-size: 1rem;';
     amount.textContent = _fmtItemCurrency(income, FACTURERO_CONFIG.ingresos, Number(income?.monto ?? 0));
+    markMoneyNode(amount, amount.textContent);
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
@@ -9508,7 +9552,7 @@ function renderOpsRankingList(listEl, rows, buildItem, options = {}) {
     listEl.appendChild(fragment);
 }
 
-function createOpsRankingItem({ index, name, value, meta, valueColor = '', buyerName = '' }) {
+function createOpsRankingItem({ index, name, value, meta, valueColor = '', buyerName = '', maskMetaMoney = false }) {
     const li = document.createElement('li');
     li.className = 'ops-ranking-item';
 
@@ -9527,11 +9571,15 @@ function createOpsRankingItem({ index, name, value, meta, valueColor = '', buyer
     const valueEl = document.createElement('span');
     valueEl.className = 'ops-ranking-value';
     valueEl.textContent = value;
+    markMoneyNode(valueEl, value);
     if (valueColor) valueEl.style.color = valueColor;
 
     const metaEl = document.createElement('div');
     metaEl.className = 'ops-ranking-meta';
     metaEl.textContent = meta;
+    if (maskMetaMoney) {
+        markMoneyNode(metaEl, meta);
+    }
 
     row.append(positionEl, nameEl, valueEl);
     li.append(row, metaEl);
@@ -9615,7 +9663,12 @@ function renderOpsRankings() {
             const unnamedTotal = missingTopClientsSummary.total;
             const noteEl = document.createElement('div');
             noteEl.className = 'ops-rankings-note';
-            noteEl.textContent = `⚠️ ${formatOpsRankingCount(unnamedOps, 'registro', 'registros')} sin comprador: ${formatOpsRankingCurrency(unnamedTotal)}`;
+            const notePrefix = document.createElement('span');
+            notePrefix.textContent = `⚠️ ${formatOpsRankingCount(unnamedOps, 'registro', 'registros')} sin comprador: `;
+            const noteAmount = document.createElement('span');
+            noteAmount.textContent = formatOpsRankingCurrency(unnamedTotal);
+            markMoneyNode(noteAmount, noteAmount.textContent);
+            noteEl.append(notePrefix, noteAmount);
             topClientsCard.appendChild(noteEl);
         }
     }
@@ -9640,7 +9693,8 @@ function renderOpsRankings() {
             name: resolveOpsRankingCropLabel(row),
             value: formatOpsRankingCurrency(profit),
             meta: `Pagados: ${formatOpsRankingCurrency(row?.ingresos)} · Gastos vinculados: ${formatOpsRankingCurrency(row?.gastos)}`,
-            valueColor: profitColor
+            valueColor: profitColor,
+            maskMetaMoney: true
         });
     }, {
         emptyText: hasSelectedCrop
@@ -9649,6 +9703,7 @@ function renderOpsRankings() {
     });
 
     applyBuyerPrivacy(panel, opsRankingsState.hideNames);
+    applyMoneyPrivacy(panel);
 }
 
 function isMissingRankingsRpc(error) {

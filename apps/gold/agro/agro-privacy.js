@@ -1,10 +1,15 @@
 const BUYER_PRIVACY_STORAGE_KEY = 'YG_HIDE_BUYER_NAMES';
 const BUYER_PRIVACY_LEGACY_KEY = 'YG_AGRO_RANKINGS_PRIVACY_V1';
+const MONEY_PRIVACY_STORAGE_KEY = 'YG_HIDE_MONEY_VALUES';
+
 const BUYER_PRIVACY_CHANGE_EVENT = 'agro:buyer-privacy:changed';
+const MONEY_PRIVACY_CHANGE_EVENT = 'agro:money-privacy:changed';
+
 const BUYER_PRIVACY_MASK = '••••';
+const MONEY_PRIVACY_MASK = '••••';
 
 const boundControls = new WeakSet();
-let buyerPrivacyObserver = null;
+let privacyObserver = null;
 let observerRaf = null;
 let storageListenerBound = false;
 
@@ -18,20 +23,35 @@ function resolveObserverTarget(rootEl) {
     return rootEl;
 }
 
+function normalizeHiddenValue(raw, fallback = false) {
+    if (raw === '1') return true;
+    if (raw === '0') return false;
+    return fallback;
+}
+
 export function readBuyerNamesHidden() {
     try {
         const raw = localStorage.getItem(BUYER_PRIVACY_STORAGE_KEY);
-        if (raw === '0') return false;
-        if (raw === '1') return true;
+        if (raw === '0' || raw === '1') return normalizeHiddenValue(raw, false);
 
         // Legacy compatibility: migrate rankings-only privacy to global key once.
         const legacy = localStorage.getItem(BUYER_PRIVACY_LEGACY_KEY);
         if (legacy === '0' || legacy === '1') {
-            const hidden = legacy === '1';
+            const hidden = normalizeHiddenValue(legacy, false);
             localStorage.setItem(BUYER_PRIVACY_STORAGE_KEY, hidden ? '1' : '0');
             return hidden;
         }
+
         return false;
+    } catch (_e) {
+        return false;
+    }
+}
+
+export function readMoneyValuesHidden() {
+    try {
+        const raw = localStorage.getItem(MONEY_PRIVACY_STORAGE_KEY);
+        return normalizeHiddenValue(raw, false);
     } catch (_e) {
         return false;
     }
@@ -48,80 +68,130 @@ function writeBuyerNamesHidden(hidden) {
     return safeHidden;
 }
 
-function collectBuyerNameNodes(rootEl) {
-    const nodes = [];
-    if (!rootEl) return nodes;
+function writeMoneyValuesHidden(hidden) {
+    const safeHidden = !!hidden;
+    try {
+        localStorage.setItem(MONEY_PRIVACY_STORAGE_KEY, safeHidden ? '1' : '0');
+    } catch (_e) {
+        // Ignore storage failures (private mode / blocked storage)
+    }
+    return safeHidden;
+}
 
-    if (rootEl instanceof Element && rootEl.matches('[data-buyer-name="1"]')) {
+function collectNodes(rootEl, selector) {
+    const nodes = [];
+    if (!rootEl || !selector) return nodes;
+
+    if (rootEl instanceof Element && rootEl.matches(selector)) {
         nodes.push(rootEl);
     }
 
-    rootEl.querySelectorAll('[data-buyer-name="1"]').forEach((node) => {
+    rootEl.querySelectorAll(selector).forEach((node) => {
         nodes.push(node);
     });
 
     return nodes;
 }
 
-function applyBuyerPrivacyToNode(node, hidden) {
+function applyPrivacyToNode(node, { hidden, datasetRawKey, maskClass, maskText, ariaLabel }) {
     if (!node) return;
 
     const currentText = String(node.textContent || '');
-    if (!node.dataset.rawName || !node.dataset.rawName.trim()) {
-        node.dataset.rawName = currentText;
+    const currentTrimmed = currentText.trim();
+
+    if (!hidden && currentTrimmed && currentText !== maskText) {
+        node.dataset[datasetRawKey] = currentText;
+    } else if (!node.dataset[datasetRawKey] || !node.dataset[datasetRawKey].trim()) {
+        node.dataset[datasetRawKey] = currentText;
     }
 
-    const rawName = String(node.dataset.rawName || '').trim();
-    if (!rawName) return;
+    const rawText = String(node.dataset[datasetRawKey] || '').trim();
+    if (!rawText) return;
 
     if (hidden) {
-        if (currentText !== BUYER_PRIVACY_MASK) {
-            node.textContent = BUYER_PRIVACY_MASK;
+        if (currentText !== maskText) {
+            node.textContent = maskText;
         }
-        node.classList.add('buyer-name-masked');
-        node.setAttribute('aria-label', 'Nombre oculto');
+        node.classList.add(maskClass);
+        node.setAttribute('aria-label', ariaLabel);
         return;
     }
 
-    if (currentText !== rawName) {
-        node.textContent = rawName;
+    if (currentText !== rawText) {
+        node.textContent = rawText;
     }
-    node.classList.remove('buyer-name-masked');
+    node.classList.remove(maskClass);
     node.removeAttribute('aria-label');
 }
 
-function syncBuyerPrivacyControl(control, hidden) {
+function syncPrivacyControl(control, hidden, type) {
     if (!(control instanceof Element)) return;
+    if (type === 'buyer') {
+        const controlType = String(control.dataset.buyerPrivacyControl || '').toLowerCase().trim();
+        if (controlType === 'checkbox' && control instanceof HTMLInputElement) {
+            control.checked = !!hidden;
+            control.setAttribute('aria-checked', hidden ? 'true' : 'false');
+            return;
+        }
+        control.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+        control.textContent = hidden ? '👁 Mostrar nombres' : '👁 Ocultar nombres';
+        return;
+    }
 
-    const controlType = String(control.dataset.buyerPrivacyControl || '').toLowerCase().trim();
+    const controlType = String(control.dataset.moneyPrivacyControl || '').toLowerCase().trim();
     if (controlType === 'checkbox' && control instanceof HTMLInputElement) {
         control.checked = !!hidden;
         control.setAttribute('aria-checked', hidden ? 'true' : 'false');
         return;
     }
-
     control.setAttribute('aria-pressed', hidden ? 'true' : 'false');
-    control.textContent = hidden ? '👁 Mostrar nombres' : '👁 Ocultar nombres';
+    control.textContent = hidden ? '💰 Mostrar montos' : '💰 Ocultar montos';
 }
 
 export function syncBuyerPrivacyControls(rootEl = document, hidden = readBuyerNamesHidden()) {
     const root = resolveRoot(rootEl);
     root.querySelectorAll('[data-buyer-privacy-control]').forEach((control) => {
-        syncBuyerPrivacyControl(control, hidden);
+        syncPrivacyControl(control, hidden, 'buyer');
     });
 }
 
-function emitBuyerPrivacyChanged(hidden) {
+export function syncMoneyPrivacyControls(rootEl = document, hidden = readMoneyValuesHidden()) {
+    const root = resolveRoot(rootEl);
+    root.querySelectorAll('[data-money-privacy-control]').forEach((control) => {
+        syncPrivacyControl(control, hidden, 'money');
+    });
+}
+
+function emitPrivacyChanged(eventName, hidden) {
     if (typeof document === 'undefined') return;
-    document.dispatchEvent(new CustomEvent(BUYER_PRIVACY_CHANGE_EVENT, {
+    document.dispatchEvent(new CustomEvent(eventName, {
         detail: { hidden: !!hidden }
     }));
 }
 
 export function applyBuyerPrivacy(rootEl = document, hidden = readBuyerNamesHidden()) {
     const root = resolveRoot(rootEl);
-    const nodes = collectBuyerNameNodes(root);
-    nodes.forEach((node) => applyBuyerPrivacyToNode(node, hidden));
+    const nodes = collectNodes(root, '[data-buyer-name="1"]');
+    nodes.forEach((node) => applyPrivacyToNode(node, {
+        hidden,
+        datasetRawKey: 'rawName',
+        maskClass: 'buyer-name-masked',
+        maskText: BUYER_PRIVACY_MASK,
+        ariaLabel: 'Nombre oculto'
+    }));
+    return hidden;
+}
+
+export function applyMoneyPrivacy(rootEl = document, hidden = readMoneyValuesHidden()) {
+    const root = resolveRoot(rootEl);
+    const nodes = collectNodes(root, '[data-money="1"]');
+    nodes.forEach((node) => applyPrivacyToNode(node, {
+        hidden,
+        datasetRawKey: 'rawMoney',
+        maskClass: 'money-masked',
+        maskText: MONEY_PRIVACY_MASK,
+        ariaLabel: 'Monto oculto'
+    }));
     return hidden;
 }
 
@@ -134,7 +204,22 @@ export function setBuyerNamesHidden(hidden, options = {}) {
     applyBuyerPrivacy(root, safeHidden);
 
     if (shouldEmit) {
-        emitBuyerPrivacyChanged(safeHidden);
+        emitPrivacyChanged(BUYER_PRIVACY_CHANGE_EVENT, safeHidden);
+    }
+
+    return safeHidden;
+}
+
+export function setMoneyValuesHidden(hidden, options = {}) {
+    const root = resolveRoot(options.rootEl || document);
+    const shouldEmit = options.emit !== false;
+    const safeHidden = writeMoneyValuesHidden(hidden);
+
+    syncMoneyPrivacyControls(root, safeHidden);
+    applyMoneyPrivacy(root, safeHidden);
+
+    if (shouldEmit) {
+        emitPrivacyChanged(MONEY_PRIVACY_CHANGE_EVENT, safeHidden);
     }
 
     return safeHidden;
@@ -143,6 +228,11 @@ export function setBuyerNamesHidden(hidden, options = {}) {
 export function toggleBuyerNamesHidden(options = {}) {
     const current = readBuyerNamesHidden();
     return setBuyerNamesHidden(!current, options);
+}
+
+export function toggleMoneyValuesHidden(options = {}) {
+    const current = readMoneyValuesHidden();
+    return setMoneyValuesHidden(!current, options);
 }
 
 function bindBuyerPrivacyControl(control, rootEl) {
@@ -163,10 +253,31 @@ function bindBuyerPrivacyControl(control, rootEl) {
     });
 }
 
-function bindBuyerPrivacyControls(rootEl) {
+function bindMoneyPrivacyControl(control, rootEl) {
+    if (!(control instanceof Element)) return;
+    if (boundControls.has(control)) return;
+    boundControls.add(control);
+
+    const controlType = String(control.dataset.moneyPrivacyControl || '').toLowerCase().trim();
+    if (controlType === 'checkbox' && control instanceof HTMLInputElement) {
+        control.addEventListener('change', () => {
+            setMoneyValuesHidden(!!control.checked, { rootEl });
+        });
+        return;
+    }
+
+    control.addEventListener('click', () => {
+        toggleMoneyValuesHidden({ rootEl });
+    });
+}
+
+function bindPrivacyControls(rootEl) {
     const root = resolveRoot(rootEl);
     root.querySelectorAll('[data-buyer-privacy-control]').forEach((control) => {
         bindBuyerPrivacyControl(control, root);
+    });
+    root.querySelectorAll('[data-money-privacy-control]').forEach((control) => {
+        bindMoneyPrivacyControl(control, root);
     });
 }
 
@@ -177,27 +288,33 @@ function scheduleObserverSync(rootEl) {
 
     observerRaf = requestAnimationFrame(() => {
         observerRaf = null;
-        const hidden = readBuyerNamesHidden();
-        bindBuyerPrivacyControls(rootEl);
-        syncBuyerPrivacyControls(rootEl, hidden);
-        applyBuyerPrivacy(rootEl, hidden);
+        const namesHidden = readBuyerNamesHidden();
+        const moneyHidden = readMoneyValuesHidden();
+        bindPrivacyControls(rootEl);
+        syncBuyerPrivacyControls(rootEl, namesHidden);
+        syncMoneyPrivacyControls(rootEl, moneyHidden);
+        applyBuyerPrivacy(rootEl, namesHidden);
+        applyMoneyPrivacy(rootEl, moneyHidden);
     });
 }
 
 export function initBuyerPrivacy(rootEl = document) {
     const root = resolveRoot(rootEl);
-    const hidden = readBuyerNamesHidden();
+    const namesHidden = readBuyerNamesHidden();
+    const moneyHidden = readMoneyValuesHidden();
 
-    bindBuyerPrivacyControls(root);
-    syncBuyerPrivacyControls(root, hidden);
-    applyBuyerPrivacy(root, hidden);
+    bindPrivacyControls(root);
+    syncBuyerPrivacyControls(root, namesHidden);
+    syncMoneyPrivacyControls(root, moneyHidden);
+    applyBuyerPrivacy(root, namesHidden);
+    applyMoneyPrivacy(root, moneyHidden);
 
     const observerTarget = resolveObserverTarget(root);
-    if (!buyerPrivacyObserver && observerTarget) {
-        buyerPrivacyObserver = new MutationObserver(() => {
+    if (!privacyObserver && observerTarget) {
+        privacyObserver = new MutationObserver(() => {
             scheduleObserverSync(root);
         });
-        buyerPrivacyObserver.observe(observerTarget, {
+        privacyObserver.observe(observerTarget, {
             childList: true,
             subtree: true
         });
@@ -206,19 +323,26 @@ export function initBuyerPrivacy(rootEl = document) {
     if (!storageListenerBound && typeof window !== 'undefined') {
         storageListenerBound = true;
         window.addEventListener('storage', (event) => {
-            if (event.key !== BUYER_PRIVACY_STORAGE_KEY) return;
-            const nextHidden = readBuyerNamesHidden();
-            syncBuyerPrivacyControls(document, nextHidden);
-            applyBuyerPrivacy(document, nextHidden);
-            emitBuyerPrivacyChanged(nextHidden);
+            if (event.key !== BUYER_PRIVACY_STORAGE_KEY && event.key !== MONEY_PRIVACY_STORAGE_KEY) return;
+            const nextNamesHidden = readBuyerNamesHidden();
+            const nextMoneyHidden = readMoneyValuesHidden();
+            syncBuyerPrivacyControls(document, nextNamesHidden);
+            syncMoneyPrivacyControls(document, nextMoneyHidden);
+            applyBuyerPrivacy(document, nextNamesHidden);
+            applyMoneyPrivacy(document, nextMoneyHidden);
+            emitPrivacyChanged(BUYER_PRIVACY_CHANGE_EVENT, nextNamesHidden);
+            emitPrivacyChanged(MONEY_PRIVACY_CHANGE_EVENT, nextMoneyHidden);
         });
     }
 
-    return hidden;
+    return namesHidden;
 }
 
 export {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
-    BUYER_PRIVACY_STORAGE_KEY
+    BUYER_PRIVACY_STORAGE_KEY,
+    MONEY_PRIVACY_CHANGE_EVENT,
+    MONEY_PRIVACY_MASK,
+    MONEY_PRIVACY_STORAGE_KEY
 };

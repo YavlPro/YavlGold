@@ -1,5 +1,35 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Privacidad global de montos (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) Ya existe privacidad global de nombres (`YG_HIDE_BUYER_NAMES`) aplicada por `apps/gold/agro/agro-privacy.js`.
+2) Los montos financieros se renderizan principalmente en:
+- `renderHistoryRow(...)` y `renderHistoryRowFallback(...)` (historial Facturero)
+- `renderIncomeItem(...)` (pagados recientes)
+- `createProfitMetaItem(...)` y `createInvestmentMetaItem(...)` (cards financieras)
+- `createOpsRankingItem(...)` + notas de rankings
+3) Riesgo principal: ocultar texto no monetario en nodos mixtos.
+
+### Plan de ejecución
+
+1. Extender `apps/gold/agro/agro-privacy.js` para soportar:
+- key `YG_HIDE_MONEY_VALUES`
+- controles `[data-money-privacy-control]`
+- aplicación de máscara en nodos `[data-money=\"1\"]`
+- integración con `MutationObserver` y evento `agro:money-privacy:changed`
+2. Marcar nodos monetarios en `apps/gold/agro/agro.js` con helper `markMoneyNode(...)` sin tocar queries/cálculos.
+3. Añadir botón global 💰 en `apps/gold/agro/index.html` junto al toggle de nombres.
+4. Ajustar estilos mínimos en `apps/gold/agro/agro.css`.
+5. Ejecutar `pnpm build:gold`.
+
+### Riesgos + mitigación
+
+- Riesgo: impacto en lógica CORE -> mitigación: solo marcado DOM y presentación.
+- Riesgo: doble fuente de privacidad -> mitigación: key única para montos (`YG_HIDE_MONEY_VALUES`), independiente de nombres.
+- Riesgo: re-render borra máscara -> mitigación: `MutationObserver` reaplica automáticamente.
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Privacidad global de compradores (2026-02-27)
 
 ### Diagnóstico breve (estado actual)
@@ -62,6 +92,12 @@
 - Ajuste posterior de hardening UX:
   - Privacidad global ahora inicia en **OFF** por defecto (si no existe key, muestra nombres).
   - Compatibilidad legacy: si existe `YG_AGRO_RANKINGS_PRIVACY_V1`, se migra una vez a `YG_HIDE_BUYER_NAMES`.
+- Extensión de privacidad financiera (UI-only):
+  - Se añadió toggle global `YG_HIDE_MONEY_VALUES` para ocultar/mostrar montos (máscara `••••`).
+  - Cobertura: historial Facturero, pagados recientes, métricas financieras de cards y valores de Rankings.
+  - Sin cambios de queries/cálculos CORE; solo marcado DOM (`data-money`) + aplicación visual.
+  - Hardening: el enmascarado de meta en Rankings pasó a flag explícito por render (`maskMetaMoney`) en vez de heurística por `includes('$')`.
+  - Hardening: sincronización de `data-rawName/data-rawMoney` cuando la privacidad está desactivada y el texto del nodo cambia por re-render.
 - Smoke CORE / Network:
   - Estado: **pendiente manual del operador** (flujo autenticado UI requerido).
   - Alcance técnico preservado: sin cambios en queries/cálculos del CORE (solo presentación/DOM de nombres).
