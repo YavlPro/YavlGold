@@ -1,5 +1,61 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Avatar editable en Perfil Agricultor (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) El perfil ya permite guardar datos en `agro_farmer_profile`, pero no expone controles para avatar.
+2) El header de Agro (`.user-profile .user-avatar`) sí soporta imagen si existe `user_metadata.avatar_url`.
+3) No hay flujo en `agroperfil.js` para actualizar avatar ni refrescar preview/avatar del chip desde perfil.
+
+### Plan de ejecución
+
+1. `apps/gold/agro/index.html`
+- Agregar UI de avatar en el formulario de perfil:
+  - preview
+  - campo URL
+  - input archivo (foto local)
+  - acción para limpiar avatar
+
+2. `apps/gold/agro/agroperfil.js`
+- Añadir helpers para:
+  - resolver y pintar avatar (preview + chip header)
+  - persistencia local opcional de foto subida (`localStorage`) por usuario
+  - actualización de `auth.user_metadata.avatar_url` cuando se usa URL
+- Integrar este flujo en `loadFarmerProfile()` y `saveFarmerProfile()`.
+
+3. `apps/gold/agro/agro.css`
+- Estilos del bloque de avatar dentro del modal de perfil.
+
+### Riesgos + mitigación
+
+- Riesgo: romper flujo de guardado de perfil.
+  - Mitigación: mantener `upsert` de `agro_farmer_profile` intacto y encapsular avatar en funciones separadas.
+- Riesgo: avatar inválido en UI.
+  - Mitigación: validar URL básica y fallback seguro a emoji.
+- Riesgo: tocar CORE por accidente.
+  - Mitigación: cambios limitados a perfil/header visual, sin alterar lógica/queries de Facturero/ciclos/historial.
+
+### DoD de esta fase
+
+- Perfil permite actualizar avatar por URL y subir foto local.
+- Header (chip/avatar) se actualiza en vivo tras guardar.
+- `pnpm build:gold` PASS.
+
+### Cierre (evidencia)
+
+- Archivos modificados:
+  - `apps/gold/agro/index.html`
+    - Se eliminó CTA duplicado de resumen global en dashboard.
+    - Se agregó editor de avatar en el perfil (preview + URL + subida local + limpiar).
+  - `apps/gold/agro/agroperfil.js`
+    - Se agregó flujo de avatar (metadata URL + foto local por usuario en `localStorage`).
+    - Refresh en vivo de avatar en preview del modal y chip superior del header.
+  - `apps/gold/agro/agro.css`
+    - Se añadieron estilos del editor de avatar.
+- Build gate:
+  - `pnpm build:gold` -> PASS.
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Perfil Agricultor modular + estadística global (2026-02-27)
 
 ### Diagnóstico breve (estado actual)

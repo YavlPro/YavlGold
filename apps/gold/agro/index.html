@@ -1172,9 +1172,6 @@
         <section class="kpi-section" data-agro-section="agenda">
             <div class="section-header animate-in delay-1">
                 <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2>
-                <button type="button" class="stats-center-trigger" id="btn-open-agro-profile" data-agro-section="profile">
-                    &#128202; Ver Resumen Global en Perfil
-                </button>
                 <button type="button" class="assistant-trigger" id="agro-focus-toggle" aria-pressed="false">
                     &#129504; Modo Enfoque: OFF
                 </button>
@@ -2629,6 +2626,30 @@
                 <section class="agro-profile-section">
                     <h4 class="agro-profile-section-title">Tus datos opcionales</h4>
                     <form id="agro-profile-form" class="agro-profile-form">
+                        <div class="agro-profile-avatar-editor">
+                            <div class="agro-profile-avatar-preview" id="agro-profile-avatar-preview" aria-hidden="true">
+                                👨‍🌾
+                            </div>
+                            <div class="agro-profile-avatar-controls">
+                                <label class="agro-profile-field">
+                                    <span>Avatar (URL)</span>
+                                    <input type="url" id="agro-profile-avatar_url" class="styled-input" maxlength="600"
+                                        placeholder="https://.../avatar.jpg">
+                                </label>
+                                <div class="agro-profile-avatar-actions">
+                                    <label class="agro-profile-avatar-upload-btn" for="agro-profile-avatar-file">
+                                        Subir foto
+                                    </label>
+                                    <input type="file" id="agro-profile-avatar-file" accept="image/*" hidden>
+                                    <button type="button" class="agro-profile-avatar-clear-btn" id="agro-profile-avatar-clear">
+                                        Quitar foto
+                                    </button>
+                                </div>
+                                <p class="agro-profile-avatar-hint">
+                                    Puedes usar URL pública o subir foto local para este dispositivo.
+                                </p>
+                            </div>
+                        </div>
                         <label class="agro-profile-field">
                             <span>Nombre visible</span>
                             <input type="text" id="agro-profile-display_name" class="styled-input" maxlength="120"

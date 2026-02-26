@@ -12,6 +12,13 @@ const PROFILE_STATUS_ID = 'agro-profile-status';
 const PROFILE_UPDATED_ID = 'agro-profile-stats-updated';
 const PROFILE_EXPORT_BUTTON_ID = 'btn-export-agro-profile-md';
 const PROFILE_SAVE_BUTTON_ID = 'btn-save-agro-profile';
+const PROFILE_AVATAR_PREVIEW_ID = 'agro-profile-avatar-preview';
+const PROFILE_AVATAR_URL_ID = 'agro-profile-avatar_url';
+const PROFILE_AVATAR_FILE_ID = 'agro-profile-avatar-file';
+const PROFILE_AVATAR_CLEAR_ID = 'agro-profile-avatar-clear';
+const LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
+const MAX_LOCAL_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
+const DEFAULT_AVATAR_EMOJI = '👨‍🌾';
 
 const PROFILE_FIELD_IDS = [
     'display_name',
@@ -51,7 +58,10 @@ const state = {
     user: null,
     supabase: null,
     openButtons: [],
-    lastFocusedTrigger: null
+    lastFocusedTrigger: null,
+    avatarDraftMode: 'none',
+    avatarDraftValue: '',
+    currentAvatarUrl: ''
 };
 
 function setProfileStatus(message = '', level = 'muted') {
@@ -168,6 +178,118 @@ function resolveDisplayName(profile = {}, user = null) {
     return fallback || 'Agricultor';
 }
 
+function getLocalAvatarStorageKey(userId) {
+    return `${LOCAL_AVATAR_KEY_PREFIX}${String(userId || '').trim()}`;
+}
+
+function readLocalAvatar(userId) {
+    const key = getLocalAvatarStorageKey(userId);
+    if (!key || key === LOCAL_AVATAR_KEY_PREFIX) return '';
+    try {
+        return String(localStorage.getItem(key) || '').trim();
+    } catch (_error) {
+        return '';
+    }
+}
+
+function writeLocalAvatar(userId, value) {
+    const key = getLocalAvatarStorageKey(userId);
+    if (!key || key === LOCAL_AVATAR_KEY_PREFIX) return;
+    try {
+        localStorage.setItem(key, String(value || '').trim());
+    } catch (_error) {
+        // Ignore storage errors
+    }
+}
+
+function clearLocalAvatar(userId) {
+    const key = getLocalAvatarStorageKey(userId);
+    if (!key || key === LOCAL_AVATAR_KEY_PREFIX) return;
+    try {
+        localStorage.removeItem(key);
+    } catch (_error) {
+        // Ignore storage errors
+    }
+}
+
+function normalizeAvatarUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (raw.startsWith('data:image/')) return raw;
+
+    try {
+        const parsed = new URL(raw);
+        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+            return parsed.toString();
+        }
+    } catch (_error) {
+        return '';
+    }
+
+    return '';
+}
+
+function renderAvatarNode(container, avatarUrl, altText) {
+    if (!container) return;
+    const safeUrl = normalizeAvatarUrl(avatarUrl);
+    if (!safeUrl) {
+        container.textContent = DEFAULT_AVATAR_EMOJI;
+        container.style.overflow = '';
+        return;
+    }
+
+    let img = container.querySelector('img');
+    if (!img) {
+        container.textContent = '';
+        img = document.createElement('img');
+        img.alt = altText || 'Avatar';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        container.appendChild(img);
+    }
+    img.alt = altText || 'Avatar';
+    img.src = safeUrl;
+    container.style.overflow = 'hidden';
+}
+
+function resolveEffectiveAvatarUrl(user = null) {
+    const userId = user?.id;
+    const localAvatar = normalizeAvatarUrl(readLocalAvatar(userId));
+    if (localAvatar) return localAvatar;
+
+    const metadataAvatar = normalizeAvatarUrl(user?.user_metadata?.avatar_url);
+    return metadataAvatar || '';
+}
+
+function updateProfileAvatarPreview(avatarUrl, profile = {}, user = null) {
+    const displayName = resolveDisplayName(profile, user);
+    const previewEl = document.getElementById(PROFILE_AVATAR_PREVIEW_ID);
+    renderAvatarNode(previewEl, avatarUrl, displayName);
+}
+
+function updateProfileHeaderAvatar(avatarUrl, profile = {}, user = null) {
+    const displayName = resolveDisplayName(profile, user);
+    const headerAvatarEl = document.querySelector('#agro-profile-button .user-avatar');
+    renderAvatarNode(headerAvatarEl, avatarUrl, displayName);
+}
+
+function syncAvatarFormFromUser(user = null, profile = {}) {
+    const avatarInput = document.getElementById(PROFILE_AVATAR_URL_ID);
+    const metadataAvatar = normalizeAvatarUrl(user?.user_metadata?.avatar_url);
+    if (avatarInput) {
+        avatarInput.value = metadataAvatar || '';
+    }
+
+    state.avatarDraftMode = 'none';
+    state.avatarDraftValue = '';
+    state.currentAvatarUrl = resolveEffectiveAvatarUrl(user);
+
+    updateProfileAvatarPreview(state.currentAvatarUrl, profile, user);
+    updateProfileHeaderAvatar(state.currentAvatarUrl, profile, user);
+}
+
 function updateProfileHeaderName(profile = {}, user = null) {
     const displayName = resolveDisplayName(profile, user);
 
@@ -180,6 +302,10 @@ function updateProfileHeaderName(profile = {}, user = null) {
     if (chipNameEl) {
         chipNameEl.textContent = displayName;
     }
+
+    const avatarUrl = state.currentAvatarUrl || resolveEffectiveAvatarUrl(user);
+    updateProfileAvatarPreview(avatarUrl, profile, user);
+    updateProfileHeaderAvatar(avatarUrl, profile, user);
 }
 
 function fillProfileForm(profile = {}, user = null) {
@@ -227,6 +353,7 @@ async function loadFarmerProfile() {
 
         state.profile = data || null;
         fillProfileForm(data || {}, user);
+        syncAvatarFormFromUser(user, data || {});
         updateProfileHeaderName(data || {}, user);
         setProfileStatus('Perfil listo.', 'ok');
     } catch (error) {
@@ -264,7 +391,52 @@ async function saveFarmerProfile(event) {
 
         if (error) throw error;
 
+        const metadataPatch = {};
+        const nextDisplayName = resolveDisplayName(payload, user);
+        const currentDisplayName = String(user?.user_metadata?.full_name || '').trim();
+        if (nextDisplayName !== currentDisplayName) {
+            metadataPatch.full_name = nextDisplayName;
+        }
+
+        const avatarInput = document.getElementById(PROFILE_AVATAR_URL_ID);
+        const inputAvatarUrl = normalizeAvatarUrl(avatarInput?.value);
+        const currentMetadataAvatar = normalizeAvatarUrl(user?.user_metadata?.avatar_url);
+
+        let nextAvatarUrl = '';
+        if (state.avatarDraftMode === 'local' && state.avatarDraftValue) {
+            nextAvatarUrl = state.avatarDraftValue;
+            writeLocalAvatar(user.id, state.avatarDraftValue);
+            if (currentMetadataAvatar) {
+                metadataPatch.avatar_url = null;
+            }
+        } else if (state.avatarDraftMode === 'clear') {
+            nextAvatarUrl = '';
+            clearLocalAvatar(user.id);
+            if (currentMetadataAvatar) {
+                metadataPatch.avatar_url = null;
+            }
+        } else {
+            nextAvatarUrl = inputAvatarUrl || '';
+            clearLocalAvatar(user.id);
+            if (nextAvatarUrl !== currentMetadataAvatar) {
+                metadataPatch.avatar_url = nextAvatarUrl || null;
+            }
+        }
+
+        if (Object.keys(metadataPatch).length > 0) {
+            const { data: authData, error: authError } = await state.supabase.auth.updateUser({
+                data: metadataPatch
+            });
+            if (authError) throw authError;
+            if (authData?.user) {
+                state.user = authData.user;
+            }
+        }
+
         state.profile = payload;
+        state.currentAvatarUrl = nextAvatarUrl;
+        state.avatarDraftMode = 'none';
+        state.avatarDraftValue = '';
         updateProfileHeaderName(payload, user);
         setProfileStatus('Perfil guardado correctamente.', 'ok');
     } catch (error) {
@@ -524,8 +696,7 @@ async function openAndRefreshProfile(triggerElement = null) {
 
 function bindOpenButtons() {
     const profileButton = document.getElementById('agro-profile-button');
-    const profileCta = document.getElementById('btn-open-agro-profile');
-    state.openButtons = [profileButton, profileCta].filter(Boolean);
+    state.openButtons = [profileButton].filter(Boolean);
     state.openButtons.forEach((button) => {
         button.addEventListener('click', (event) => {
             event.preventDefault();
@@ -566,6 +737,73 @@ function bindFormHandlers() {
         exportBtn.addEventListener('click', (event) => {
             event.preventDefault();
             exportProfileMarkdown();
+        });
+    }
+
+    const avatarUrlInput = document.getElementById(PROFILE_AVATAR_URL_ID);
+    if (avatarUrlInput) {
+        avatarUrlInput.addEventListener('input', () => {
+            const typedAvatar = normalizeAvatarUrl(avatarUrlInput.value);
+            state.avatarDraftMode = 'url';
+            state.avatarDraftValue = typedAvatar;
+            const effective = typedAvatar || resolveEffectiveAvatarUrl(state.user);
+            state.currentAvatarUrl = effective;
+            updateProfileAvatarPreview(effective, state.profile || {}, state.user);
+            updateProfileHeaderAvatar(effective, state.profile || {}, state.user);
+        });
+    }
+
+    const avatarFileInput = document.getElementById(PROFILE_AVATAR_FILE_ID);
+    if (avatarFileInput) {
+        avatarFileInput.addEventListener('change', () => {
+            const file = avatarFileInput.files?.[0];
+            if (!file) return;
+            if (!String(file.type || '').startsWith('image/')) {
+                setProfileStatus('Selecciona un archivo de imagen válido.', 'warn');
+                avatarFileInput.value = '';
+                return;
+            }
+            if (file.size > MAX_LOCAL_AVATAR_SIZE_BYTES) {
+                setProfileStatus('La imagen es muy grande. Máximo permitido: 2MB.', 'warn');
+                avatarFileInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const dataUrl = normalizeAvatarUrl(reader.result);
+                if (!dataUrl) {
+                    setProfileStatus('No se pudo procesar la imagen.', 'error');
+                    return;
+                }
+                state.avatarDraftMode = 'local';
+                state.avatarDraftValue = dataUrl;
+                state.currentAvatarUrl = dataUrl;
+                if (avatarUrlInput) avatarUrlInput.value = '';
+                updateProfileAvatarPreview(dataUrl, state.profile || {}, state.user);
+                updateProfileHeaderAvatar(dataUrl, state.profile || {}, state.user);
+                setProfileStatus('Foto local cargada. Guarda para aplicar el cambio.', 'ok');
+            };
+            reader.onerror = () => {
+                setProfileStatus('No se pudo leer la imagen seleccionada.', 'error');
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const avatarClearBtn = document.getElementById(PROFILE_AVATAR_CLEAR_ID);
+    if (avatarClearBtn) {
+        avatarClearBtn.addEventListener('click', () => {
+            state.avatarDraftMode = 'clear';
+            state.avatarDraftValue = '';
+            state.currentAvatarUrl = '';
+
+            if (avatarUrlInput) avatarUrlInput.value = '';
+            if (avatarFileInput) avatarFileInput.value = '';
+
+            updateProfileAvatarPreview('', state.profile || {}, state.user);
+            updateProfileHeaderAvatar('', state.profile || {}, state.user);
+            setProfileStatus('Avatar limpiado. Guarda para confirmar.', 'warn');
         });
     }
 }
