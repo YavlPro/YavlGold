@@ -330,3 +330,4 @@ git status
 
 **Version de Ficha:** 1.0
 **Ultima Actualizacion:** 15/02/2026
+# EOF — YavlGold llms.txt (do not truncate)

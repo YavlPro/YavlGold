@@ -8183,6 +8183,54 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
 
+## 🆕 SESIÓN: llms.txt hardening (2026-02-26)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+1) **Mapa MPA y navegación**
+- `apps/gold/vite.config.js`: appType `mpa` y entradas HTML por módulo sin manejo especial para `llms.txt`.
+- `apps/gold/vercel.json`: routing clean URLs/rewrite de páginas, sin regla específica para `llms.txt`.
+- `apps/gold/index.html` y `apps/gold/dashboard/index.html`: sin impacto directo en archivos estáticos.
+
+2) **Supabase/Auth**
+- Sin cambios: `apps/gold/assets/js/config/supabase-config.js`, `authClient.js`, `authUI.js`, `dashboard/auth-guard.js`.
+
+3) **Dashboard data**
+- Fuera de alcance para este lote.
+
+4) **Clima/Agro**
+- Fuera de alcance para este lote.
+
+5) **Crypto estado**
+- Fuera de alcance para este lote.
+
+Hallazgo raíz del lote:
+- El repositorio ya tenía una única fuente en `apps/gold/public/llms.txt` y el `dist/llms.txt` se generaba con 332 líneas.
+- Faltaba guardrail dedicado para detectar truncado/corte accidental en `llms.txt` durante build/deploy.
+
+### Plan quirúrgico
+1) Añadir sentinel explícito al final de `apps/gold/public/llms.txt`.
+2) Crear `apps/gold/scripts/check-llms.mjs` (valida presencia de sentinel, newline final, no cierre en backtick y mínimo de líneas).
+3) Integrar check en `apps/gold/package.json` script `build`.
+4) Ejecutar `pnpm build:gold`.
+
+### DoD
+- [x] `public/llms.txt` tiene sentinel EOF.
+- [x] Check automático `check-llms.mjs` agregado.
+- [x] Build de `apps/gold` ejecuta check de llms.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y evidencia (cierre)
+- Archivos tocados:
+  - `apps/gold/public/llms.txt`
+  - `apps/gold/scripts/check-llms.mjs`
+  - `apps/gold/package.json`
+- Evidencia local:
+  - `apps/gold/dist/llms.txt` existe y mantiene 332 líneas.
+  - Check nuevo corre dentro de build (`check-llms: OK`).
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `UTF-8 check`).
+
 ## 🆕 SESIÓN: Centro Estadístico Global — Soft Delete por defecto (2026-02-26)
 
 ### Paso 0 — Diagnóstico inicial (antes de editar runtime)
