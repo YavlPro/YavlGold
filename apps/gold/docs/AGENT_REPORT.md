@@ -1,5 +1,52 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Privacidad en cards AgroCrops/Ciclos (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) Los toggles globales de privacidad ya existen:
+- Nombres (`YG_HIDE_BUYER_NAMES`)
+- Montos (`YG_HIDE_MONEY_VALUES`)
+- Aplicación automática por `MutationObserver` en `apps/gold/agro/agro-privacy.js`.
+
+2) Renderer de cards de ciclos detectado en:
+- `createCropCardElement(...)` en `apps/gold/agro/agro.js`.
+- Allí se pinta título de cultivo (`.crop-name`) y variedad (`.crop-variety`).
+
+3) Montos de cards:
+- Inversión/Rentabilidad se renderizan vía `createInvestmentMetaItem(...)` y `createProfitMetaItem(...)`.
+- Ya cuentan con marcado `data-money` en valores monetarios.
+
+### Plan quirúrgico
+
+1. Marcar nombre y variedad visibles de card en `createCropCardElement(...)`:
+- `markBuyerNameNode(name, ...)`
+- `markBuyerNameNode(variety, ...)` solo si hay variedad real.
+
+2. Mantener cero cambios en lógica de negocio:
+- No tocar queries/cálculos/flujo CORE.
+- Solo marcado DOM para que los toggles existentes enmascaren en cards.
+
+3. Validar con build:
+- `pnpm build:gold` PASS.
+
+### Riesgos + mitigación
+
+- Riesgo: ocultar placeholder no sensible (`Sin variedad`).
+  - Mitigación: marcar variedad solo si el valor real existe.
+- Riesgo: regresión funcional en ciclos.
+  - Mitigación: cambios limitados a `data-*` de presentación.
+
+### Cierre (evidencia)
+
+- Archivo ajustado:
+  - `apps/gold/agro/agro.js` (`createCropCardElement` marca nombre/variedad con `data-buyer-name`).
+- Comportamiento esperado:
+  - 👁 ON oculta nombre y variedad real en cards de activos/finalizados/perdidos.
+  - 💰 ON mantiene cobertura previa de montos en inversión/rentabilidad sin tocar cálculos.
+- Build gate:
+  - `pnpm build:gold` -> PASS.
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Privacidad global de montos (2026-02-27)
 
 ### Diagnóstico breve (estado actual)

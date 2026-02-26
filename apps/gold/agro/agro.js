@@ -7044,10 +7044,15 @@ function createCropCardElement(crop, index, options = {}) {
     const name = document.createElement('span');
     name.className = 'crop-name';
     name.textContent = displayCrop.name;
+    markBuyerNameNode(name, displayCrop.name);
 
     const variety = document.createElement('span');
     variety.className = 'crop-variety';
-    variety.textContent = crop.variety || 'Sin variedad';
+    const varietyText = String(crop?.variety || '').trim();
+    variety.textContent = varietyText || 'Sin variedad';
+    if (varietyText) {
+        markBuyerNameNode(variety, varietyText);
+    }
 
     details.append(name, variety);
     cropInfo.append(cropIcon, details);
