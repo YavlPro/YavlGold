@@ -6515,17 +6515,169 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
     });
 }
 
-function createInvestmentMetaItem(baseInvestment, expenseInvestment) {
-    const base = Number.isFinite(baseInvestment) ? baseInvestment : 0;
-    const expenses = Number.isFinite(expenseInvestment) ? expenseInvestment : 0;
+const HARVEST_APPROX_TOOLTIP = 'Aprox.: La fecha estimada se calcula por duración promedio del cultivo. Puede variar según clima, manejo y condiciones reales.';
+
+function toPositiveRate(value) {
+    const parsed = toSafeLocaleNumber(value);
+    return parsed !== null && parsed > 0 ? parsed : null;
+}
+
+function normalizeCropInvestmentCurrency(value) {
+    const raw = String(value || '').trim().toUpperCase();
+    return SUPPORTED_CURRENCIES[raw] ? raw : 'USD';
+}
+
+function resolveCropFxSnapshot(crop) {
+    const cop = toPositiveRate(crop?.investment_fx_usd_cop ?? crop?.fx_usd_cop);
+    const ves = toPositiveRate(crop?.investment_fx_usd_ves ?? crop?.fx_usd_ves ?? crop?.investment_fx_usd_bs ?? crop?.fx_usd_bs);
+    const fxAtRaw = crop?.investment_fx_at ?? crop?.fx_at ?? null;
+    const fxAt = fxAtRaw ? new Date(fxAtRaw) : null;
+    return {
+        usdCop: cop,
+        usdVes: ves,
+        fxAt: fxAt && !Number.isNaN(fxAt.getTime()) ? fxAt : null,
+        hasSnapshot: !!(cop || ves)
+    };
+}
+
+function resolveEffectiveUsdRates(fxSnapshot) {
+    const marketCop = toPositiveRate(getRate('COP', editExchangeRates));
+    const marketVes = toPositiveRate(getRate('VES', editExchangeRates));
+    const usdCop = toPositiveRate(fxSnapshot?.usdCop) || marketCop;
+    const usdVes = toPositiveRate(fxSnapshot?.usdVes) || marketVes;
+    return { usdCop, usdVes };
+}
+
+function resolveCropInvestmentSnapshot(crop) {
+    const currency = normalizeCropInvestmentCurrency(crop?.investment_currency);
+    const legacyUsd = toSafeLocaleNumber(crop?.investment) ?? 0;
+    const amountStored = toSafeLocaleNumber(crop?.investment_amount);
+    const amount = amountStored !== null ? amountStored : legacyUsd;
+    const fxSnapshot = resolveCropFxSnapshot(crop);
+    const rates = resolveEffectiveUsdRates(fxSnapshot);
+
+    let usdEquiv = toSafeLocaleNumber(crop?.investment_usd_equiv);
+    if (usdEquiv === null) {
+        if (currency === 'USD') {
+            usdEquiv = amount;
+        } else {
+            const localRate = currency === 'COP' ? rates.usdCop : rates.usdVes;
+            if (localRate && localRate > 0) {
+                usdEquiv = convertToUSD(amount, currency, localRate);
+            }
+        }
+    }
+
+    if (!Number.isFinite(usdEquiv)) {
+        usdEquiv = legacyUsd;
+    }
+
+    return {
+        currency,
+        amount: Number.isFinite(amount) ? amount : 0,
+        usdEquiv: Number.isFinite(usdEquiv) ? usdEquiv : 0,
+        fxSnapshot
+    };
+}
+
+function formatMoneyByCode(value, code) {
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) {
+        if (code === 'COP') return 'N/D COP';
+        if (code === 'VES') return 'N/D Bs';
+        return 'N/D';
+    }
+
+    if (code === 'USD') {
+        return `$${amount.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        })}`;
+    }
+    if (code === 'COP') {
+        return `${Math.round(amount).toLocaleString('es-CO')} COP`;
+    }
+    return `${amount.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })} Bs`;
+}
+
+function formatInvestmentTriplet(usdAmount, rates) {
+    const safeUsd = Number.isFinite(usdAmount) ? usdAmount : 0;
+    const copAmount = Number.isFinite(rates?.usdCop) ? safeUsd * rates.usdCop : Number.NaN;
+    const vesAmount = Number.isFinite(rates?.usdVes) ? safeUsd * rates.usdVes : Number.NaN;
+    return `${formatMoneyByCode(safeUsd, 'USD')} · ${formatMoneyByCode(copAmount, 'COP')} · ${formatMoneyByCode(vesAmount, 'VES')}`;
+}
+
+function formatFxRateLabel(rate, code) {
+    const safeRate = Number(rate);
+    if (!Number.isFinite(safeRate) || safeRate <= 0) return 'N/D';
+    if (code === 'COP') {
+        return Math.round(safeRate).toLocaleString('es-CO');
+    }
+    return safeRate.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function formatFxTimestampLabel(fxDate) {
+    if (!(fxDate instanceof Date) || Number.isNaN(fxDate.getTime())) {
+        return 'sin fecha';
+    }
+    return fxDate.toLocaleString('es-VE', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function buildInvestmentFxLine(fxSnapshot, rates) {
+    const copRate = Number.isFinite(rates?.usdCop) ? rates.usdCop : Number.NaN;
+    const vesRate = Number.isFinite(rates?.usdVes) ? rates.usdVes : Number.NaN;
+    if (!Number.isFinite(copRate) && !Number.isFinite(vesRate)) {
+        return 'Cotización usada: no disponible (solo USD).';
+    }
+    const timestampLabel = fxSnapshot?.hasSnapshot
+        ? formatFxTimestampLabel(fxSnapshot?.fxAt)
+        : 'tasa actual';
+    return `Cotización usada: 1 USD = ${formatFxRateLabel(copRate, 'COP')} COP · 1 USD = ${formatFxRateLabel(vesRate, 'VES')} Bs (${timestampLabel})`;
+}
+
+function createEstimatedHarvestMetaItem(expectedHarvestDate) {
+    const item = createMetaItem('Cosecha Est.', formatDate(expectedHarvestDate));
+    const valueEl = item.querySelector('.meta-value');
+    if (valueEl) {
+        const hint = document.createElement('span');
+        hint.className = 'crop-meta-subline is-hint';
+        hint.textContent = 'Aprox. ⓘ';
+        hint.title = HARVEST_APPROX_TOOLTIP;
+        hint.setAttribute('aria-label', HARVEST_APPROX_TOOLTIP);
+        valueEl.appendChild(hint);
+    }
+    return item;
+}
+
+function createInvestmentMetaItem(baseInvestmentUsd, expenseInvestmentUsd, fxSnapshot, rates) {
+    const base = Number.isFinite(baseInvestmentUsd) ? baseInvestmentUsd : 0;
+    const expenses = Number.isFinite(expenseInvestmentUsd) ? expenseInvestmentUsd : 0;
     const total = base + expenses;
-    const item = createMetaItem('Inversion', formatCurrency(total), 'gold');
+    const displayRates = rates || resolveEffectiveUsdRates(fxSnapshot);
+    const totalText = formatInvestmentTriplet(total, displayRates);
+    const item = createMetaItem('Inversión (Total)', totalText, 'gold');
     const valueEl = item.querySelector('.meta-value');
     if (valueEl) {
         const breakdown = document.createElement('span');
-        breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
-        breakdown.textContent = `Base: ${formatCurrency(base)} + Gastos: ${formatCurrency(expenses)}`;
+        breakdown.className = 'crop-meta-subline';
+        breakdown.textContent = `Base: ${formatInvestmentTriplet(base, displayRates)} + Gastos: ${formatInvestmentTriplet(expenses, displayRates)}`;
+        const fxLine = document.createElement('span');
+        fxLine.className = 'crop-meta-subline is-muted';
+        fxLine.textContent = buildInvestmentFxLine(fxSnapshot, displayRates);
         valueEl.appendChild(breakdown);
+        valueEl.appendChild(fxLine);
     }
     return item;
 }
@@ -6789,7 +6941,10 @@ function createCropCardElement(crop, index, options = {}) {
     const metaGrid = document.createElement('div');
     metaGrid.className = 'crop-meta-grid';
     const normalizedCropId = normalizeCropId(crop?.id);
-    const baseInvestment = toSafeLocaleNumber(crop?.investment) ?? 0;
+    const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
+    const baseInvestment = investmentSnapshot.usdEquiv;
+    const fxSnapshot = investmentSnapshot.fxSnapshot;
+    const effectiveRates = resolveEffectiveUsdRates(fxSnapshot);
     const expenseInvestment = normalizedCropId && expenseTotalsByCrop
         ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
         : 0;
@@ -6808,9 +6963,9 @@ function createCropCardElement(crop, index, options = {}) {
     const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
     metaGrid.append(
         createMetaItem('Siembra', formatDate(crop.start_date)),
-        createMetaItem('Cosecha Est.', formatDate(crop.expected_harvest_date)),
+        createEstimatedHarvestMetaItem(crop.expected_harvest_date),
         createMetaItem('Area', `${crop.area_size} Ha`),
-        createInvestmentMetaItem(baseInvestment, expenseInvestment),
+        createInvestmentMetaItem(baseInvestment, expenseInvestment, fxSnapshot, effectiveRates),
         createProfitMetaItem(incomeTotal, totalCosts, pendingTotal, missingRateCount)
     );
 
@@ -7411,6 +7566,14 @@ export async function loadCrops() {
             await loadCropTemplates();
         } catch (e) {
             // Template load failures should not block crops rendering
+        }
+        try {
+            const rates = await initExchangeRates();
+            if (rates) {
+                editExchangeRates = rates;
+            }
+        } catch (e) {
+            // Non-blocking: cards fall back to USD if rates are unavailable.
         }
 
         let crops = [];
@@ -11763,6 +11926,17 @@ export function openCropModal() {
     if (editInput) editInput.value = '';
     const statusSelect = document.getElementById('crop-status');
     if (statusSelect) statusSelect.value = 'sembrado';
+    const investmentInput = document.getElementById('crop-investment');
+    if (investmentInput) investmentInput.value = '';
+    const investmentCurrency = document.getElementById('crop-investment-currency');
+    if (investmentCurrency) {
+        investmentCurrency.value = 'USD';
+        investmentCurrency.dispatchEvent(new Event('change'));
+    }
+    const investmentFxMeta = document.getElementById('crop-investment-fx-meta');
+    if (investmentFxMeta) {
+        investmentFxMeta.textContent = 'Cotización al guardar: se tomará la tasa vigente del Facturero.';
+    }
 
     // Actualizar UI del modal para modo "Nuevo"
     const modalTitle = document.querySelector('.modal-title');
@@ -11808,7 +11982,22 @@ export function openEditModal(id) {
     document.getElementById('crop-variety').value = crop.variety || '';
     document.getElementById('crop-icon').value = crop.icon || '';
     document.getElementById('crop-area').value = crop.area_size || '';
-    document.getElementById('crop-investment').value = crop.investment || '';
+    const editInvestment = resolveCropInvestmentSnapshot(crop);
+    const investmentInput = document.getElementById('crop-investment');
+    if (investmentInput) {
+        const roundedAmount = Math.round((Number(editInvestment.amount) || 0) * 100) / 100;
+        investmentInput.value = roundedAmount > 0 ? String(roundedAmount) : '';
+    }
+    const investmentCurrency = document.getElementById('crop-investment-currency');
+    if (investmentCurrency) {
+        investmentCurrency.value = editInvestment.currency;
+        investmentCurrency.dispatchEvent(new Event('change'));
+    }
+    const investmentFxMeta = document.getElementById('crop-investment-fx-meta');
+    if (investmentFxMeta) {
+        const currentRates = resolveEffectiveUsdRates(editInvestment.fxSnapshot);
+        investmentFxMeta.textContent = buildInvestmentFxLine(editInvestment.fxSnapshot, currentRates);
+    }
     document.getElementById('crop-start-date').value = crop.start_date || '';
     document.getElementById('crop-harvest-date').value = crop.expected_harvest_date || '';
     const statusSelect = document.getElementById('crop-status');

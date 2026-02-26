@@ -2143,6 +2143,13 @@
       });
     }
 
+    function normalizeModuleKey(value) {
+      return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+
     function normalizeModules(modules) {
       return (modules || []).map((mod) => {
         let normalized = mod;
@@ -2181,6 +2188,10 @@
         const key = String(
           normalized?.slug || normalized?.module_key || normalized?.title || normalized?.name || ''
         ).toLowerCase();
+        const keyNormalized = normalizeModuleKey(key);
+        const routeNormalized = normalizeModuleKey(
+          normalized?.route || normalized?.path || normalized?.href || ''
+        );
 
         if (key.includes('agro')) {
           normalized = {
@@ -2209,22 +2220,28 @@
             status: 'coming_soon',
             description: 'Conecta con otros agricultores, comparte experiencias y aprende en comunidad.'
           };
-        } else if (key.includes('tecnologia')) {
+        } else if (
+          keyNormalized.includes('tecnologia')
+          || routeNormalized.includes('/tecnologia')
+          || routeNormalized.includes('/herramientas')
+        ) {
           normalized = {
             ...normalized,
             title: 'Tecnología',
             name: 'Tecnología',
             icon: normalized.icon || '🛠️',
-            status: 'coming_soon',
+            status: 'unavailable',
+            force_disabled: true,
             description: 'Herramientas inteligentes para optimizar tu trabajo en el campo.'
           };
-        } else if (key.includes('crypto')) {
+        } else if (keyNormalized.includes('crypto') || routeNormalized.includes('/crypto')) {
           normalized = {
             ...normalized,
             title: 'Crypto',
             name: 'Crypto',
             icon: normalized.icon || '📈',
-            status: 'development',
+            status: 'unavailable',
+            force_disabled: true,
             description: 'Datos del mercado y tasas de cambio. Herramientas financieras en construcción.'
           };
         }
@@ -2525,11 +2542,12 @@
           'active': { class: 'badge-activo', text: '● ACTIVO', icon: '' },
           'development': { class: 'badge-desarrollo', text: '🔧 EN DESARROLLO', icon: '' },
           'coming_soon': { class: 'badge-proximo', text: '🔮 PRÓXIMAMENTE', icon: '' },
-          'locked': { class: 'badge-locked', text: '🔒 BLOQUEADO', icon: '' }
+          'locked': { class: 'badge-locked', text: '🔒 BLOQUEADO', icon: '' },
+          'unavailable': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' }
         };
 
         const badge = badgeMap[mod.status] || badgeMap['development'];
-        const isDisabled = mod.is_locked || mod.status === 'coming_soon';
+        const isDisabled = mod.is_locked || mod.status === 'coming_soon' || mod.status === 'unavailable' || mod.force_disabled === true;
         const icon = mod.icon || '📦';
         // FIX: Use mod.title (not mod.name)
         const title = (mod.title || mod.name || 'MÓDULO').toUpperCase();
@@ -2561,6 +2579,7 @@
 
         // Button text
         const btnText = mod.title || mod.name || 'Módulo';
+        const disabledCtaText = mod.status === 'unavailable' ? 'NO DISPONIBLE' : 'No Disponible';
 
         // Build card
         if (isDisabled) {
@@ -2574,7 +2593,7 @@
               </div>
               <p class="module-description">${description}</p>
               ${featuresHtml}
-              <button class="btn-modulo disabled">No Disponible</button>
+              <button class="btn-modulo disabled" aria-disabled="true" type="button">${disabledCtaText}</button>
             </div>
           `;
         }

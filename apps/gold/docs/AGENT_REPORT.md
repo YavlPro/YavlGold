@@ -8183,6 +8183,94 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
 
+## 🆕 SESIÓN: Agro ciclos multimoneda + Dashboard NO DISPONIBLE (2026-02-26)
+
+### Paso 0 — Diagnóstico obligatorio (antes de editar runtime)
+1. Mapa MPA y navegación actual:
+   - `apps/gold/vite.config.js`: MPA activo (`appType: 'mpa'`) con entradas para `index.html`, `dashboard/index.html`, `agro/index.html`, `crypto/index.html`, `tecnologia/index.html`, etc.
+   - `apps/gold/vercel.json`: `cleanUrls: true`, rewrites para `/agro`, `/crypto`, `/dashboard`, `/tecnologia` y redirects de `/herramientas` a `/tecnologia`.
+   - `apps/gold/index.html`: landing principal del proyecto.
+   - `apps/gold/dashboard/index.html`: render dinámico de cards de módulos desde Supabase.
+
+2. Dónde se instancian datos/auth de Supabase:
+   - `apps/gold/assets/js/config/supabase-config.js`: singleton `createClient(...)`.
+   - `apps/gold/assets/js/auth/authClient.js`, `authUI.js`: gestión sesión/callbacks UI auth.
+   - `apps/gold/dashboard/auth-guard.js`: guard para rutas dashboard con redirección a login si no hay sesión.
+
+3. Dashboard actual: qué consulta y qué falta:
+   - `apps/gold/dashboard/index.html` consulta `profiles`, `modules`, `user_favorites`, `notifications`.
+   - Managers en `assets/js/components/*` consultan `announcements` y `feedback`.
+   - No hay integración activa en este flujo para progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) en el dashboard principal.
+
+4. Agro/Clima (prioridad Manual > GPS > IP + storage):
+   - `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`) mantiene prioridad Manual > cache/método de preferencia > fallback.
+   - `apps/gold/agro/dashboard.js` usa `initWeather` y `displayWeather`.
+   - Keys confirmadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+   - Debug no invasivo ya activo con `?debug=1` o `YG_GEO_DEBUG=1`.
+
+5. Crypto: estado real en repo:
+   - Existe `apps/gold/crypto/` como página MPA integrada (entrada en Vite + rewrite Vercel + `crypto/index.html` + `crypto.js` operativo con market data pública).
+   - También hay archivos legacy/backups (`index_old.html`, `script_backup.txt`).
+   - No hay `apps/gold/crypto/package.json` en el estado actual del repo.
+
+6. Hallazgo raíz para esta tarea:
+   - Cards de ciclos en `apps/gold/agro/agro.js` muestran inversión solo en USD (`crop.investment`).
+   - Formulario de cultivo en `apps/gold/agro/index.html` guarda inversión base como número USD único.
+   - No se persiste snapshot FX de inversión base en `agro_crops`.
+
+### Plan quirúrgico (archivos exactos)
+1. `apps/gold/agro/index.html`
+   - Agregar selector moneda base de inversión (USD/COP/Bs) y línea de cotización usada en el modal.
+   - Actualizar `window.saveCrop` para:
+     - Reusar `initExchangeRates/getRate/convertToUSD` de `agro-exchange.js` (misma fuente Facturero).
+     - Calcular `investment_usd_equiv` y persistir snapshot FX.
+     - Mantener compatibilidad con esquemas viejos (fallback si faltan columnas).
+
+2. `apps/gold/agro/agro.js`
+   - Introducir helpers para resolver inversión multimoneda por cultivo (legacy + nuevo esquema).
+   - Reemplazar render de “Inversion” por total USD/COP/Bs + desglose “Base + Gastos” en 3 monedas.
+   - Agregar metadata “Cotización usada ... (fecha/hora)”.
+   - Marcar “Cosecha Est.” con metadata/tooltip de aproximación sin romper layout.
+   - Ajustar `openCropModal/openEditModal` para precargar inversión base y moneda.
+
+3. `supabase/migrations/20260226190000_agro_crops_investment_multicurrency.sql`
+   - Agregar columnas multimoneda + snapshot FX en `agro_crops` con `if not exists`.
+   - Backfill de legacy USD (`investment_amount/currency/usd_equiv`) para compatibilidad.
+
+4. `apps/gold/dashboard/index.html`
+   - Forzar estado NO DISPONIBLE solo en módulos Crypto y Tecnología.
+   - Badge “NO DISPONIBLE” + CTA deshabilitado sin navegación.
+   - No tocar Agro ni borrar contenido.
+
+### DoD (objetivo de esta sesión)
+- [x] PASO 0 actualizado en `apps/gold/docs/AGENT_REPORT.md`.
+- [x] Agro ciclos: inversión base en USD/COP/Bs + total en USD/COP/Bs.
+- [x] Agro ciclos: metadata de cotización usada reutilizando provider de Facturero.
+- [x] Agro ciclos: desglose Base + Gastos en multimoneda.
+- [x] Agro ciclos: metadata/tooltip “Cosecha Est.” aproximada.
+- [x] Dashboard: Crypto y Tecnología en NO DISPONIBLE (badge + CTA deshabilitado), sin tocar Agro.
+- [x] `pnpm build:gold` OK.
+
+### Ejecución y cierre (validado)
+- Archivos runtime tocados:
+  - `apps/gold/agro/agro.js`
+  - `apps/gold/agro/index.html`
+  - `apps/gold/dashboard/index.html`
+- Migración agregada:
+  - `supabase/migrations/20260226190000_agro_crops_investment_multicurrency.sql`
+- Cambios efectivos:
+  - Agro cards de ciclos ahora muestran inversión total en USD/COP/Bs, desglose Base + Gastos en 3 monedas y línea de cotización usada con fecha/hora (snapshot o fallback de mercado).
+  - Formulario de cultivo ahora permite inversión base en USD/COP/Bs, guarda `investment` como USD equivalente para compatibilidad y persiste snapshot FX (`investment_*`).
+  - “Cosecha Est.” ahora muestra metadata discreta “Aprox. ⓘ” con tooltip explicativo.
+  - Dashboard fuerza Crypto y Tecnología como `NO DISPONIBLE` (badge + CTA deshabilitado sin navegación).
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+- Ajuste post-auditoría:
+  - Metadata de inversión/cosecha migrada a clases CSS con tokens (`crop-meta-subline*`) en `apps/gold/agro/agro.css` para mejor compatibilidad visual en modos de tema.
+  - Copy ajustado a `Inversión (Total)`.
+  - Rebuild validado con `pnpm build:gold` ✅.
+
 ## 🆕 SESIÓN: llms.txt hardening (2026-02-26)
 
 ### Paso 0 — Diagnóstico inicial (antes de editar runtime)

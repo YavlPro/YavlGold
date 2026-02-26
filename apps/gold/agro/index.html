@@ -1509,12 +1509,24 @@
                             min="0.01" required style="padding-left: 1rem;">
                     </div>
                     <div class="input-group">
-                        <label class="input-label" for="crop-investment">Inversión ($)</label>
-                        <div class="input-wrapper">
-                            <span class="input-prefix">$</span>
-                            <input type="number" id="crop-investment" class="styled-input" placeholder="Ej: 5000"
-                                step="0.01" min="0">
+                        <label class="input-label" for="crop-investment">Inversión Base</label>
+                        <div style="display: flex; gap: 0.5rem; align-items: stretch;">
+                            <select id="crop-investment-currency" class="styled-input"
+                                style="max-width: 120px; padding-left: 1rem; cursor: pointer;">
+                                <option value="USD">USD</option>
+                                <option value="COP">COP</option>
+                                <option value="VES">Bs</option>
+                            </select>
+                            <div class="input-wrapper" style="flex: 1;">
+                                <span id="crop-investment-prefix" class="input-prefix">$</span>
+                                <input type="number" id="crop-investment" class="styled-input" placeholder="Ej: 5000"
+                                    step="0.01" min="0">
+                            </div>
                         </div>
+                        <p id="crop-investment-fx-meta"
+                            style="margin-top: 0.35rem; font-size: 0.72rem; color: rgba(255, 255, 255, 0.55); line-height: 1.25;">
+                            Cotización al guardar: se tomará la tasa vigente del Facturero.
+                        </p>
                     </div>
                 </div>
                 <div class="input-row">
@@ -2199,9 +2211,61 @@
     <script type="module">
 
         import { supabase } from '../assets/js/config/supabase-config.js';
+        import { initExchangeRates, getRate, convertToUSD } from './agro-exchange.js';
 
         // NOTE: openCropModal and closeCropModal are defined in agro.js
         // They use CSS class '.active' for modal visibility
+        const CROP_INVESTMENT_PREFIX_BY_CURRENCY = {
+            USD: '$',
+            COP: 'COP',
+            VES: 'Bs'
+        };
+
+        function formatFxPreview(rate, currency) {
+            if (!Number.isFinite(rate) || rate <= 0) return 'N/D';
+            if (currency === 'COP') return Math.round(rate).toLocaleString('es-CO');
+            return rate.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function refreshCropInvestmentPrefix() {
+            const currency = String(document.getElementById('crop-investment-currency')?.value || 'USD').toUpperCase();
+            const prefix = document.getElementById('crop-investment-prefix');
+            if (prefix) {
+                prefix.textContent = CROP_INVESTMENT_PREFIX_BY_CURRENCY[currency] || '$';
+            }
+        }
+
+        async function refreshCropInvestmentFxHint() {
+            const hint = document.getElementById('crop-investment-fx-meta');
+            if (!hint) return;
+            refreshCropInvestmentPrefix();
+            try {
+                const rates = await initExchangeRates();
+                const copRate = Number(getRate('COP', rates));
+                const vesRate = Number(getRate('VES', rates));
+                if (!Number.isFinite(copRate) && !Number.isFinite(vesRate)) {
+                    hint.textContent = 'Cotización al guardar: no disponible ahora (USD seguirá operativo).';
+                    return;
+                }
+                hint.textContent = `Cotización al guardar: 1 USD = ${formatFxPreview(copRate, 'COP')} COP · 1 USD = ${formatFxPreview(vesRate, 'VES')} Bs`;
+            } catch (_err) {
+                hint.textContent = 'Cotización al guardar: no disponible ahora (USD seguirá operativo).';
+            }
+        }
+
+        function bindCropInvestmentCurrencyUi() {
+            const currencySelect = document.getElementById('crop-investment-currency');
+            if (!currencySelect || currencySelect.dataset.fxBound === '1') return;
+            currencySelect.dataset.fxBound = '1';
+            currencySelect.addEventListener('change', () => {
+                refreshCropInvestmentPrefix();
+                refreshCropInvestmentFxHint();
+            });
+            refreshCropInvestmentPrefix();
+            refreshCropInvestmentFxHint();
+        }
+
+        bindCropInvestmentCurrencyUi();
 
 
         window.saveCrop = async function () {
@@ -2266,6 +2330,36 @@
                 }
                 return token;
             };
+            const OPTIONAL_CROP_COLUMNS = [
+                'status_mode',
+                'status_override',
+                'investment_amount',
+                'investment_currency',
+                'investment_usd_equiv',
+                'investment_fx_usd_cop',
+                'investment_fx_usd_ves',
+                'investment_fx_at'
+            ];
+            const hasOptionalColumnError = (error) => {
+                return OPTIONAL_CROP_COLUMNS.some((column) => isMissingColumnError(error, column));
+            };
+            const stripOptionalColumns = (payload) => {
+                OPTIONAL_CROP_COLUMNS.forEach((column) => {
+                    if (Object.prototype.hasOwnProperty.call(payload, column)) {
+                        delete payload[column];
+                    }
+                });
+            };
+            let fxRatesCache = { USD: 1, COP: null, VES: null };
+            const ensureFxRates = async () => {
+                try {
+                    const rates = await initExchangeRates();
+                    if (rates) fxRatesCache = rates;
+                } catch (_e) {
+                    // Mantener cache local; fallback a USD.
+                }
+                return fxRatesCache;
+            };
 
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -2274,8 +2368,10 @@
                 const name = document.getElementById('crop-name').value;
                 const variety = document.getElementById('crop-variety').value;
                 const icon = document.getElementById('crop-icon').value || '🌱';
-                const area = document.getElementById('crop-area').value;
-                const investment = document.getElementById('crop-investment').value || 0;
+                const area = Number.parseFloat(document.getElementById('crop-area').value || '0') || 0;
+                const investmentAmount = Number.parseFloat(document.getElementById('crop-investment').value || '0') || 0;
+                const investmentCurrencyRaw = String(document.getElementById('crop-investment-currency')?.value || 'USD').toUpperCase();
+                const investmentCurrency = ['USD', 'COP', 'VES'].includes(investmentCurrencyRaw) ? investmentCurrencyRaw : 'USD';
                 const sowDate = document.getElementById('crop-start-date').value;
                 let harvestDate = document.getElementById('crop-harvest-date').value;
                 const templateSelect = document.getElementById('crop-template');
@@ -2284,7 +2380,7 @@
                     ? Number(templateOption.dataset.duration)
                     : null;
 
-                if (!name || !area || !sowDate) throw new Error("Completa Nombre, Área y Fecha.");
+                if (!name || area <= 0 || !sowDate) throw new Error("Completa Nombre, Área y Fecha.");
 
                 // =====================================
                 // DATE VALIDATION (No Past / No Inverted)
@@ -2320,6 +2416,27 @@
                 }
                 // =====================================
 
+                const fxRates = await ensureFxRates();
+                const fxUsdCopRaw = Number(getRate('COP', fxRates));
+                const fxUsdVesRaw = Number(getRate('VES', fxRates));
+                const fxUsdCop = Number.isFinite(fxUsdCopRaw) && fxUsdCopRaw > 0 ? fxUsdCopRaw : null;
+                const fxUsdVes = Number.isFinite(fxUsdVesRaw) && fxUsdVesRaw > 0 ? fxUsdVesRaw : null;
+                const investmentRate = investmentCurrency === 'COP'
+                    ? fxUsdCop
+                    : (investmentCurrency === 'VES' ? fxUsdVes : 1);
+
+                if (investmentCurrency !== 'USD' && (!Number.isFinite(investmentRate) || investmentRate <= 0)) {
+                    showValidationError(`No hay cotización disponible para ${investmentCurrency === 'COP' ? 'COP' : 'Bs'}. Intenta nuevamente.`);
+                    return;
+                }
+
+                const investmentUsdEquivRaw = investmentCurrency === 'USD'
+                    ? investmentAmount
+                    : convertToUSD(investmentAmount, investmentCurrency, investmentRate);
+                const investmentUsdEquiv = Number(investmentUsdEquivRaw.toFixed(6));
+                const investmentBaseAmount = Number(investmentAmount.toFixed(6));
+                const investmentFxAt = new Date().toISOString();
+
                 const fullName = `${icon} ${name}`;
                 const editId = document.getElementById('crop-edit-id')?.value || '';
                 const statusValue = document.getElementById('crop-status')?.value || 'sembrado';
@@ -2352,29 +2469,39 @@
                         name: fullName,
                         variety,
                         area_size: area,
-                        investment,
+                        investment: investmentUsdEquiv,
+                        investment_amount: investmentBaseAmount,
+                        investment_currency: investmentCurrency,
+                        investment_usd_equiv: investmentUsdEquiv,
+                        investment_fx_usd_cop: fxUsdCop,
+                        investment_fx_usd_ves: fxUsdVes,
+                        investment_fx_at: investmentFxAt,
                         start_date: sowDate,
                         expected_harvest_date: harvestDate || null,
                         status: effectiveStatus,
                         status_mode: statusMode,
                         status_override: statusOverride
                     };
+                    let usedFallbackColumns = false;
                     let { error: updateError } = await supabase
                         .from('agro_crops')
                         .update(updatePayload)
                         .eq('id', editId)
                         .eq('user_id', user.id);
 
-                    if (updateError && (isMissingColumnError(updateError, 'status_mode') || isMissingColumnError(updateError, 'status_override'))) {
-                        delete updatePayload.status_mode;
-                        delete updatePayload.status_override;
+                    if (updateError && hasOptionalColumnError(updateError)) {
+                        stripOptionalColumns(updatePayload);
+                        usedFallbackColumns = true;
                         updateError = (await supabase
                             .from('agro_crops')
                             .update(updatePayload)
                             .eq('id', editId)
                             .eq('user_id', user.id)).error;
                         if (updateError) throw updateError;
-                        showValidationError('Faltan columnas de override en agro_crops. Ejecuta el patch SQL para guardar Auto/Manual.');
+                    }
+
+                    if (usedFallbackColumns) {
+                        showValidationError('Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.');
                     }
 
                     if (updateError) throw updateError;
@@ -2385,21 +2512,28 @@
                         name: fullName,
                         variety,
                         area_size: area,
-                        investment,
+                        investment: investmentUsdEquiv,
+                        investment_amount: investmentBaseAmount,
+                        investment_currency: investmentCurrency,
+                        investment_usd_equiv: investmentUsdEquiv,
+                        investment_fx_usd_cop: fxUsdCop,
+                        investment_fx_usd_ves: fxUsdVes,
+                        investment_fx_at: investmentFxAt,
                         start_date: sowDate,
                         expected_harvest_date: harvestDate || null,
                         status: effectiveStatus,
                         status_mode: statusMode,
                         status_override: statusOverride
                     };
+                    let usedFallbackColumns = false;
                     let { data: insertRows, error: insertError } = await supabase
                         .from('agro_crops')
                         .insert(insertPayload)
                         .select('id');
 
-                    if (insertError && (isMissingColumnError(insertError, 'status_mode') || isMissingColumnError(insertError, 'status_override'))) {
-                        delete insertPayload.status_mode;
-                        delete insertPayload.status_override;
+                    if (insertError && hasOptionalColumnError(insertError)) {
+                        stripOptionalColumns(insertPayload);
+                        usedFallbackColumns = true;
                         const retry = await supabase
                             .from('agro_crops')
                             .insert(insertPayload)
@@ -2407,7 +2541,10 @@
                         insertRows = retry.data;
                         insertError = retry.error;
                         if (insertError) throw insertError;
-                        showValidationError('Faltan columnas de override en agro_crops. Ejecuta el patch SQL para guardar Auto/Manual.');
+                    }
+
+                    if (usedFallbackColumns) {
+                        showValidationError('Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.');
                     }
 
                     if (insertError) throw insertError;
@@ -2419,7 +2556,7 @@
                     window.YGAgroTemplates?.storeCropTemplateMapping(insertedId, templateDuration);
                 }
                 const savedCropId = editId || insertedId || null;
-                const suggestedLossAmount = Number(investment) > 0 ? Number(investment) : '';
+                const suggestedLossAmount = Number(investmentUsdEquiv) > 0 ? Number(investmentUsdEquiv) : '';
                 const safeCropName = String(name || '').trim() || 'Cultivo';
 
                 window.closeCropModal();
@@ -2428,6 +2565,10 @@
                 if (editInput) editInput.value = '';
                 const statusSelect = document.getElementById('crop-status');
                 if (statusSelect) statusSelect.value = 'sembrado';
+                const investmentCurrencySelect = document.getElementById('crop-investment-currency');
+                if (investmentCurrencySelect) investmentCurrencySelect.value = 'USD';
+                refreshCropInvestmentPrefix();
+                refreshCropInvestmentFxHint();
                 document.dispatchEvent(new CustomEvent('agro:crops:refresh', {
                     detail: { source: 'crop-modal', status: normalizedEffectiveStatus || 'unknown' }
                 }));

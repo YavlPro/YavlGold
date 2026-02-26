@@ -113,6 +113,26 @@
   box-shadow: inset 0 0 0 1px rgba(200, 167, 82, 0.08);
 }
 
+/* Crop card metadata helper lines (token-based for light/dark consistency) */
+.crop-meta-subline {
+  display: block;
+  font-size: 0.64rem;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-top: 2px;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+.crop-meta-subline.is-muted {
+  font-size: 0.62rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+}
+
+.crop-meta-subline.is-hint {
+  font-size: 0.62rem;
+  cursor: help;
+}
+
 /* V9.7.2: Crop selection highlight + indicator */
 .crop-card {
   position: relative;
