@@ -11,6 +11,17 @@ import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js
 import { exportStatsReport } from './agro-stats-report.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 
+// ==============================
+// CORE CRITICO — NO TOCAR
+// Facturero / ciclos / historial
+// (lógica + queries + UI deben permanecer idénticas)
+// ==============================
+
+// ==============================
+// MODULARIZABLE (wrappers primero)
+// stats, exports, perfiles, clima, calculadora, UI secundaria
+// ==============================
+
 // ============================================================
 // ESTADO DEL MÓDULO
 // ============================================================

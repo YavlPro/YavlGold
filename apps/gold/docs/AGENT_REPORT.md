@@ -1,5 +1,107 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Fronteras CORE + DB mínima perfiles (2026-02-26)
+
+### Diagnóstico breve (estado actual)
+
+1) **MPA / Routing (Vite + Vercel)**
+- `apps/gold/vite.config.js`: MPA activo con entradas por página (`index`, `dashboard`, `agro`, `crypto`, `tecnologia`, etc.).
+- `apps/gold/vercel.json`: clean URLs + rewrites por módulo.
+- `apps/gold/index.html` y `apps/gold/dashboard/index.html`: navegación principal y acceso a módulos.
+
+2) **Auth / Supabase**
+- Cliente: `apps/gold/assets/js/config/supabase-config.js`.
+- Auth UI/cliente: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`.
+- Guard dashboard: `apps/gold/dashboard/auth-guard.js`.
+- No se requieren cambios de auth para esta fase.
+
+3) **Agro: CORE crítico vs modularizable**
+- CORE CRÍTICO intocable en esta fase: Facturero / ciclos / historial (lógica, queries, UI/DOM y comportamiento).
+- Modularizable en fases futuras: stats, exports, perfiles, clima, calculadora, UI secundaria.
+- En esta sesión no se moverá código: primero se blindan fronteras con comentarios.
+
+### Plan de ejecución (esta sesión)
+
+1. **Commit 0 (sin cambio funcional)**
+- Archivos:
+  - `apps/gold/agro/agro.js`
+  - `apps/gold/docs/AGENT_REPORT.md`
+- Acción:
+  - Agregar delimitadores de frontera `CORE CRITICO` y `MODULARIZABLE` en `agro.js`.
+  - No mover, renombrar ni reordenar funciones.
+  - Ejecutar `pnpm build:gold`.
+
+2. **Commit 1 (DB mínima perfiles)**
+- Archivos:
+  - `supabase/migrations/20260227HHMMSS_agro_profiles.sql` (timestamp real)
+  - `apps/gold/docs/AGENT_REPORT.md`
+- Acción:
+  - Crear `public.agro_buyers` y `public.agro_farmer_profile`.
+  - RLS owner-only (`auth.uid() = user_id`) para select/insert/update/delete.
+  - Sin tocar tablas CORE (facturero/ciclos/historial).
+  - Ejecutar `pnpm build:gold`.
+
+### Riesgos + mitigación
+
+1) **Riesgo: tocar CORE por accidente**
+- Mitigación:
+  - Commit 0: solo comentarios/separadores.
+  - Commit 1: solo tablas nuevas de perfiles + RLS.
+  - Verificación con diff acotado por archivos permitidos.
+
+2) **Riesgo: RLS incorrecto o permisivo**
+- Mitigación:
+  - Policies owner-only explícitas por operación.
+  - `drop policy if exists` + `create policy` re-ejecutable.
+  - Validación posterior de policies en DB.
+
+3) **Riesgo: romper build/gates**
+- Mitigación:
+  - `pnpm build:gold` obligatorio después de cada commit.
+  - No tocar lógica del CORE.
+
+### Evidencia de cierre esperada (esta sesión)
+
+- Build PASS por fase:
+  - Commit 0: `pnpm build:gold` OK.
+  - Commit 1: `pnpm build:gold` OK.
+- Smoke CORE:
+  - Se reporta estado sin cambios funcionales en Facturero/ciclos/historial.
+- Network/Console:
+  - Se reporta estado del smoke manual (si no se ejecuta localmente en esta sesión, queda marcado como pendiente del operador).
+
+### Cierre Commit 0
+
+- Archivos tocados:
+  - `apps/gold/agro/agro.js`
+  - `apps/gold/docs/AGENT_REPORT.md`
+- Alcance:
+  - Se agregaron solo delimitadores de frontera (`CORE CRITICO` / `MODULARIZABLE`) en `agro.js`.
+  - No hubo cambios funcionales, ni de queries, ni de UI del CORE.
+- Build gate:
+  - `pnpm build:gold` -> PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8` OK).
+- Smoke CORE:
+  - Estado: **pendiente manual del operador** (requiere flujo autenticado UI).
+  - Riesgo mitigado por diff no funcional (solo comentarios).
+
+### Cierre Commit 1
+
+- Archivos tocados:
+  - `supabase/migrations/20260227000500_agro_profiles.sql`
+  - `apps/gold/docs/AGENT_REPORT.md`
+- Migración aplicada en Supabase:
+  - Nombre aplicado: `agro_profiles`
+  - Resultado: `success = true`.
+- Verificación estructural DB:
+  - Tablas creadas: `public.agro_buyers`, `public.agro_farmer_profile`.
+  - RLS habilitado en ambas tablas (`relrowsecurity = true`).
+  - Policies owner-only por operación (`SELECT/INSERT/UPDATE/DELETE`) en ambas tablas.
+- Build gate:
+  - `pnpm build:gold` -> PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8` OK).
+- Smoke CORE / Network:
+  - Estado: **pendiente manual del operador**.
+  - En esta fase no se tocó lógica/UI/query del CORE; cambios acotados a nueva migración de perfiles.
+
 ## 🆕 SESIÓN: Agro “Sr. Barriga” — Normalización de Moneda en Totales (2026-02-26)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de runtime)
