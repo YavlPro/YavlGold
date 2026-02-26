@@ -1,5 +1,106 @@
 ---
 
+## 🆕 SESIÓN: Agro “Sr. Barriga” — Normalización de Moneda en Totales (2026-02-26)
+
+### Paso 0 — Diagnóstico obligatorio (antes de runtime)
+
+1) **Mapa MPA y navegación**
+- `apps/gold/vite.config.js`: MPA activo con entradas HTML por módulo (`agro`, `dashboard`, `crypto`, `tecnologia`, etc.).
+- `apps/gold/vercel.json`: clean URLs + rewrites por módulo (`/agro`, `/dashboard`, `/crypto`, `/tecnologia`).
+- `apps/gold/index.html`: navegación principal sin cambios requeridos para este fix.
+- `apps/gold/dashboard/index.html`: cards de módulos y CTAs; fuera del bug de conversión monetaria.
+
+2) **Supabase/Auth**
+- Cliente/Auth confirmados y sin cambios para este lote:
+  - `apps/gold/assets/js/config/supabase-config.js`
+  - `apps/gold/assets/js/auth/authClient.js`
+  - `apps/gold/assets/js/auth/authUI.js`
+  - `apps/gold/dashboard/auth-guard.js`
+
+3) **Dashboard data**
+- El bug actual no nace en Dashboard; nace en agregación monetaria de Agro cards.
+- Tablas operativas para Agro detectadas en código: `agro_income`, `agro_pending`, `agro_expenses` (con variaciones legacy de columnas opcionales).
+
+4) **Agro/Clima**
+- Prioridad Manual > GPS > IP se mantiene en:
+  - `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`)
+  - `apps/gold/agro/dashboard.js` (`initWeather`, `displayWeather`)
+- Llaves de storage verificadas (`YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`).
+
+5) **Crypto**
+- `apps/gold/crypto/` existe como módulo MPA; fuera del alcance del bug “Sr. Barriga”.
+
+### Hallazgo raíz
+
+- En Agro cards, los totales por cultivo se calculan vía `fetchUsdTotalsByCropIds(...)` + `resolveRecordAmountUsd(...)` en `apps/gold/agro/agro.js`.
+- La conversión no normaliza alias legacy de moneda (`bs`, `bolivares`, `vef`, etc.) antes de convertir, ni aprovecha snapshot FX por fila cuando exista.
+- Resultado: ciertos registros legacy con `currency` sucia o inconsistente pueden terminar tratados de forma incorrecta y disparar ingresos/costos en USD.
+
+### Plan quirúrgico
+
+1. **Runtime hardening en `apps/gold/agro/agro.js`**
+- Agregar helper de normalización de moneda (`USD/COP/VES`) con alias comunes.
+- Agregar resolver de snapshot FX por fila (si existe en datos).
+- Reemplazar la lógica de `resolveRecordAmountUsd` para convertir con:
+  - moneda normalizada,
+  - snapshot FX por fila,
+  - fallback de tasas actuales (`editExchangeRates`),
+  - conteo de movimientos omitidos cuando falte tasa/moneda.
+- Mantener compatibilidad con columnas opcionales y tablas legacy.
+
+2. **Backfill histórico SQL**
+- Nueva migración en `supabase/migrations/` para normalizar `currency` en:
+  - `public.agro_income`
+  - `public.agro_pending`
+  - `public.agro_expenses`
+- Ejecución defensiva: solo si tabla/columna existe.
+- Normalizar alias (`bs`, `ves`, `vef`, `bolivares`, `peso`, `usd`, etc.) a `VES/COP/USD`.
+
+3. **Validación**
+- Build oficial: `pnpm build:gold`.
+- Verificación manual dirigida:
+  - ingreso legacy en `COP/Bs` no debe inflar USD,
+  - cards deben mantener warning de movimientos sin tasa cuando aplique.
+
+### DoD (objetivo de esta sesión)
+
+- [x] Runtime: normalización robusta de moneda aplicada al agregador USD por cultivo.
+- [x] Runtime: uso de snapshot FX por fila con fallback de tasas actuales.
+- [x] SQL: migración de backfill para normalizar `currency` en ingresos/fiados/gastos.
+- [x] SQL: migración de constraints `CHECK` para forzar `USD|COP|VES` en ingresos/fiados/gastos.
+- [x] Compatibilidad: sin ruptura para filas legacy/columnas opcionales.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y validación (evidencia)
+
+1. Cambios runtime en `apps/gold/agro/agro.js`:
+- Nuevo helper `normalizeMoneyCurrency(...)` con alias para `USD/COP/VES`.
+- Nuevo helper `resolveRowFxSnapshot(...)` para snapshot FX por fila cuando exista.
+- Nuevo helper `toUsdEquivFromMoneyRow(...)` para convertir cada movimiento a USD de forma consistente.
+- `resolveRecordAmountUsd(...)` ahora usa el helper de conversión robusta.
+- `fetchUsdTotalsByCropIds(...)` pasa `fallbackRates` al convertidor y mantiene conteo de movimientos omitidos por falta de tasa.
+- `buildIncomeMonetaryFields(...)` y `_fmtItemCurrency(...)` ahora normalizan `currency` con el mismo helper (evita `bs/cop` fuera de estándar).
+
+2. Backfill SQL versionado:
+- `supabase/migrations/20260226204000_agro_movements_currency_backfill.sql`
+- Normaliza `currency` en `agro_income/agro_pending/agro_expenses` con ejecución defensiva (si tabla/columna no existe, se omite con `NOTICE`).
+- Hardening aplicado: variable de loop `v_table` + alias `information_schema.columns c` para evitar ambigüedades de nombres en filtros de existencia de columna.
+
+3. Constraint SQL versionado (tercer candado):
+- `supabase/migrations/20260226211000_agro_movements_currency_check.sql`
+- Agrega `CHECK (currency is null or currency in ('USD','COP','VES'))` por tabla (`agro_income`, `agro_pending`, `agro_expenses`) con estrategia defensiva:
+  - salta tablas/columnas inexistentes,
+  - `drop constraint if exists` previo para evitar conflictos de versiones.
+
+4. Build oficial:
+- Comando: `pnpm build:gold`
+- Resultado: `agent-guard: OK`, `agent-report-check: OK`, `vite build: OK`, `check-llms: OK`, `check-dist-utf8: OK`.
+
+5. Pruebas manuales (pendientes en entorno con datos reales):
+- Caso legacy con `currency` alias/minúscula (`cop`, `bs`, `bolivares`) para confirmar no inflación en USD.
+- Verificar que movimientos sin tasa válida incrementan warning y no se suman al neto.
+- Aplicar migraciones en orden (`...backfill.sql` -> `...currency_check.sql`) y validar que solo persisten `USD/COP/VES/NULL`.
+
 ## 🆕 SESIÓN: RPC V4 — Date Filters Inclusivos por Día (2026-02-21)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de runtime)

@@ -2478,8 +2478,7 @@ function _fmtItemCurrency(item, config, amount) {
         }
     }
 
-    const currencyRaw = String(item?.currency || 'USD').trim().toUpperCase();
-    const currency = SUPPORTED_CURRENCIES[currencyRaw] ? currencyRaw : 'USD';
+    const currency = normalizeMoneyCurrency(item?.currency) || 'USD';
     const montoUsdParsed = toSafeLocaleNumber(item?.monto_usd);
     const exchangeRateParsed = toSafeLocaleNumber(item?.exchange_rate);
     const montoUsd = montoUsdParsed !== null
@@ -6217,12 +6216,112 @@ function formatCurrency(value) {
     }).format(value || 0);
 }
 
+function normalizeMoneyCurrency(value) {
+    const raw = String(value || '').trim().toUpperCase();
+    if (!raw) return null;
+    const token = raw
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Z$]/g, '');
+    if (!token) return null;
+
+    if (token === '$' || token === 'USDT' || token.includes('USD') || token.includes('DOL')) return 'USD';
+    if (
+        token === 'BS'
+        || token === 'BSS'
+        || token === 'BOLIVAR'
+        || token === 'BOLIVARES'
+        || token === 'VES'
+        || token === 'VEF'
+    ) {
+        return 'VES';
+    }
+    if (token === 'COP' || token === 'COL' || token === 'PESO' || token === 'PESOS') return 'COP';
+    if (SUPPORTED_CURRENCIES[token]) return token;
+    return null;
+}
+
+function resolveMoneyAmountFromRow(row, amountFields = []) {
+    const fields = Array.isArray(amountFields) && amountFields.length
+        ? amountFields
+        : ['amount', 'monto', 'value', 'total'];
+    for (const field of fields) {
+        const parsed = toSafeLocaleNumber(row?.[field]);
+        if (parsed !== null) return parsed;
+    }
+    return 0;
+}
+
+function resolveRowFxSnapshot(row) {
+    const cop = toPositiveRate(row?.fx_usd_cop ?? row?.usd_cop ?? row?.investment_fx_usd_cop);
+    const ves = toPositiveRate(
+        row?.fx_usd_ves
+        ?? row?.usd_ves
+        ?? row?.investment_fx_usd_ves
+        ?? row?.fx_usd_bs
+        ?? row?.usd_bs
+        ?? row?.investment_fx_usd_bs
+    );
+    const fxAtRaw = row?.fx_at ?? row?.investment_fx_at ?? null;
+    const fxAt = fxAtRaw ? new Date(fxAtRaw) : null;
+    return {
+        usdCop: cop,
+        usdVes: ves,
+        fxAt: fxAt && !Number.isNaN(fxAt.getTime()) ? fxAt : null,
+        hasSnapshot: !!(cop || ves)
+    };
+}
+
+/**
+ * Convierte un movimiento (ingreso/gasto/fiado) a USD equivalente.
+ * - Normaliza currency legacy (bs/bolivares/vef/cop/usdt/etc.)
+ * - Prioriza snapshot FX por fila (si existe)
+ * - Hace fallback a tasas actuales del Facturero
+ * - Si falta tasa para moneda no-USD => NaN (no suma y se marca warning)
+ */
+function toUsdEquivFromMoneyRow(row, fallbackRates, bumpMissingRate, amountFields = [], meta = null) {
+    if (meta && typeof meta === 'object') {
+        meta.missingRate = false;
+        meta.missingCurrency = false;
+    }
+
+    const amount = resolveMoneyAmountFromRow(row, amountFields);
+    const explicitUsd = toSafeLocaleNumber(row?.monto_usd ?? row?.amount_usd ?? row?.usd_amount);
+    const currency = normalizeMoneyCurrency(row?.currency ?? row?.moneda ?? row?.currency_code);
+    const fxSnapshot = resolveRowFxSnapshot(row);
+    const rates = resolveEffectiveUsdRates(fxSnapshot);
+    const usdCop = toPositiveRate(rates?.usdCop) || toPositiveRate(getRate('COP', fallbackRates));
+    const usdVes = toPositiveRate(rates?.usdVes) || toPositiveRate(getRate('VES', fallbackRates));
+
+    if (currency === 'USD') return explicitUsd !== null ? explicitUsd : amount;
+
+    if (currency === 'COP' || currency === 'VES') {
+        const rowRate = toPositiveRate(row?.exchange_rate ?? row?.usd_rate ?? row?.rate);
+        const rate = rowRate || (currency === 'COP' ? usdCop : usdVes);
+        if (!rate || rate <= 0) {
+            if (meta && typeof meta === 'object') meta.missingRate = true;
+            if (typeof bumpMissingRate === 'function') bumpMissingRate();
+            return Number.NaN;
+        }
+        const converted = convertToUSD(amount, currency, rate);
+        return Number.isFinite(converted) ? converted : (amount / rate);
+    }
+
+    if (explicitUsd !== null) return explicitUsd;
+
+    if (meta && typeof meta === 'object') {
+        meta.missingRate = true;
+        meta.missingCurrency = true;
+    }
+    if (typeof bumpMissingRate === 'function') bumpMissingRate();
+    return Number.NaN;
+}
+
 function buildIncomeMonetaryFields(sourceRow, amountCandidate) {
     const amountParsed = toSafeLocaleNumber(amountCandidate);
     const amount = amountParsed !== null ? amountParsed : 0;
 
-    const rawCurrency = String(sourceRow?.currency ?? '').trim().toUpperCase();
-    const currency = SUPPORTED_CURRENCIES[rawCurrency] ? rawCurrency : 'USD';
+    const currency = normalizeMoneyCurrency(sourceRow?.currency) || 'USD';
     const rawRate = toSafeLocaleNumber(sourceRow?.exchange_rate);
     const rate = currency === 'USD'
         ? 1
@@ -6250,49 +6349,14 @@ function buildIncomeMonetaryFields(sourceRow, amountCandidate) {
     };
 }
 
-function resolveRecordAmountUsd(row, amountFields = [], meta = null) {
-    if (meta && typeof meta === 'object') {
-        meta.missingRate = false;
-        meta.missingCurrency = false;
-    }
-    const explicitUsd = toSafeLocaleNumber(row?.monto_usd);
-    if (explicitUsd !== null) return explicitUsd;
-
-    let amount = 0;
-    const fields = Array.isArray(amountFields) && amountFields.length
-        ? amountFields
-        : ['amount', 'monto'];
-    for (const field of fields) {
-        const parsed = toSafeLocaleNumber(row?.[field]);
-        if (parsed !== null) {
-            amount = parsed;
-            break;
-        }
-    }
-
-    const currency = String(row?.currency ?? '').trim().toUpperCase();
-    const rate = toSafeLocaleNumber(row?.exchange_rate) ?? 0;
-
-    if (!currency) {
-        if (meta && typeof meta === 'object') {
-            meta.missingRate = true;
-            meta.missingCurrency = true;
-        }
-        return Number.NaN;
-    }
-
-    if (currency !== 'USD' && rate > 0) {
-        const converted = convertToUSD(amount, currency, rate);
-        if (Number.isFinite(converted)) return converted;
-        return amount / rate;
-    }
-    if (currency !== 'USD') {
-        if (meta && typeof meta === 'object') {
-            meta.missingRate = true;
-        }
-        return Number.NaN;
-    }
-    return amount;
+function resolveRecordAmountUsd(row, amountFields = [], meta = null, fallbackRates = null) {
+    const bumpMissing = () => {
+        if (meta && typeof meta === 'object') meta.missingRate = true;
+    };
+    const rates = fallbackRates && typeof fallbackRates === 'object'
+        ? fallbackRates
+        : editExchangeRates;
+    return toUsdEquivFromMoneyRow(row, rates, bumpMissing, amountFields, meta);
 }
 
 function incrementCountMap(map, key, amount = 1) {
@@ -6390,6 +6454,9 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map
         ? options.missingRateCountsByCrop
         : null;
+    const fallbackRates = options.fallbackRates && typeof options.fallbackRates === 'object'
+        ? options.fallbackRates
+        : editExchangeRates;
 
     for (let attempt = 0; attempt < 8; attempt += 1) {
         if (!selectFields.includes('crop_id')) break;
@@ -6429,7 +6496,7 @@ async function fetchUsdTotalsByCropIds(tableName, userId, cropIds, options = {})
                 if (!cropId) continue;
 
                 const conversionMeta = {};
-                const usd = resolveRecordAmountUsd(row, amountFields, conversionMeta);
+                const usd = resolveRecordAmountUsd(row, amountFields, conversionMeta, fallbackRates);
                 if (conversionMeta.missingRate) {
                     incrementCountMap(missingRateCountsByCrop, cropId, 1);
                 }
