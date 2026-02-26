@@ -97,7 +97,8 @@ async function fetchRowsWithAttempts(table, userId, attempts = []) {
                     .from(table)
                     .select(selectFields.join(','))
                     .eq('user_id', userId);
-                if (applyDeletedAt && selectFields.includes('deleted_at')) {
+                // Exclude soft-deleted rows by default, even if deleted_at is not in select list.
+                if (applyDeletedAt) {
                     query = query.is('deleted_at', null);
                 }
                 if (useExtendedQuery) {
@@ -380,15 +381,15 @@ async function fetchIncome(userId) {
             },
             {
                 select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,cliente',
-                filterDeletedAt: false
+                filterDeletedAt: true
             },
             {
                 select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id',
-                filterDeletedAt: false
+                filterDeletedAt: true
             },
             {
                 select: 'id,concepto,monto,fecha,crop_id',
-                filterDeletedAt: false
+                filterDeletedAt: true
             }
         ];
         const { rows, error } = await fetchRowsWithAttempts('agro_income', userId, attempts);
@@ -411,7 +412,7 @@ async function fetchExpenses(userId) {
             },
             {
                 select: 'id,amount,monto_usd,currency,crop_id',
-                filterDeletedAt: false
+                filterDeletedAt: true
             }
         ];
         const { rows, error } = await fetchRowsWithAttempts('agro_expenses', userId, attempts);
@@ -439,7 +440,7 @@ async function fetchPending(userId) {
             },
             {
                 select: 'id,concepto,monto,monto_usd,currency,fecha,cliente,crop_id',
-                filterDeletedAt: false
+                filterDeletedAt: true
             }
         ];
         const { rows, error } = await fetchRowsWithAttempts('agro_pending', userId, attempts);
@@ -462,7 +463,7 @@ async function fetchLosses(userId) {
             },
             {
                 select: 'id,monto,monto_usd,currency,crop_id',
-                filterDeletedAt: false
+                filterDeletedAt: true
             }
         ];
         const { rows, error } = await fetchRowsWithAttempts('agro_losses', userId, attempts);

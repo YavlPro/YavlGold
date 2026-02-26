@@ -8183,6 +8183,43 @@ Aplicar cirugía: remover handlers legacy + forms HTML, mantener wizard y lectur
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
 
+## 🆕 SESIÓN: Centro Estadístico Global — Soft Delete por defecto (2026-02-26)
+
+### Paso 0 — Diagnóstico inicial (antes de editar runtime)
+1) **Mapa MPA y navegación**: verificado en sesiones previas de este documento (`vite.config.js`, `vercel.json`, `index.html`, `dashboard/index.html`) sin cambios en este lote.
+2) **Supabase/Auth**: sin cambios en cliente ni guards (`supabase-config.js`, `authClient.js`, `authUI.js`, `dashboard/auth-guard.js`).
+3) **Dashboard**: fuera de alcance funcional en este lote.
+4) **Agro/Clima**: fuera de alcance funcional en este lote.
+5) **Crypto**: fuera de alcance funcional en este lote.
+
+Hallazgo raíz del lote actual:
+- En `apps/gold/agro/agro-stats-report.js`, `fetchRowsWithAttempts(...)` solo aplicaba `query.is('deleted_at', null)` si `deleted_at` estaba en el `select`.
+- En varios intentos de `fetchIncome/fetchExpenses/fetchPending/fetchLosses`, el fallback tenía `filterDeletedAt: false`.
+- Resultado: el reporte estadístico global podía incluir filas soft-deleted y desalinear totales.
+
+### Plan quirúrgico
+1) Aplicar filtro `deleted_at IS NULL` por defecto cuando `filterDeletedAt=true`, independiente de si `deleted_at` está en columnas seleccionadas.
+2) Cambiar los intentos fallback a `filterDeletedAt: true` en ingresos/gastos/fiados/pérdidas.
+3) Mantener fallback de compatibilidad por esquema: si falta columna `deleted_at`, desactivar filtro solo para ese caso.
+4) Ejecutar `pnpm build:gold`.
+
+### DoD
+- [x] Filtro soft-delete aplicado por defecto en consultas del reporte estadístico global.
+- [x] Fallbacks de fetch mantienen exclusión de borrados lógicos.
+- [x] No se tocó UI ni lógica de módulos fuera del reporte.
+- [x] `pnpm build:gold` PASS.
+
+### Ejecución y evidencia (cierre)
+- Archivo runtime tocado:
+  - `apps/gold/agro/agro-stats-report.js`
+- Cambios aplicados:
+  1) `fetchRowsWithAttempts`: `applyDeletedAt` ahora aplica `query.is('deleted_at', null)` sin requerir `deleted_at` en `select`.
+  2) `fetchIncome`: intentos fallback marcados con `filterDeletedAt: true`.
+  3) `fetchExpenses/fetchPending/fetchLosses`: fallbacks con `filterDeletedAt: true`.
+- Build oficial:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
 ## 🆕 SESIÓN: Facturero Split Parcial por Unidades (2026-02-25)
 
 ### Paso 0 — Diagnóstico obligatorio (antes de editar runtime)
