@@ -12,6 +12,7 @@ import { initAgroPerfil } from './agroperfil.js';
 import { initAgroCompradores, openBuyerProfileByName } from './agrocompradores.js';
 import { initAgroSocial, openSocialPanel } from './agrosocial.js';
 import { initAgroCalculadora } from './agrocalculadora.js';
+import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
@@ -11875,6 +11876,7 @@ export function initAgro() {
     setupHeaderIdentity();
     initIncomeHistory();
     initFinanceTabs();
+    initClimaWeeklyEmbed();
     initBuyerPrivacy(document);
     initAgroCompradores({ supabase });
     initAgroSocial({ supabase });

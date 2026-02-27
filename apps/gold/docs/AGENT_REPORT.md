@@ -9522,3 +9522,71 @@ Hallazgo raíz del lote actual:
     - [ ] “Calcular” y “Limpiar” siguen operando con mismos resultados.
     - [ ] Network/Console sin 400/uncaught en flujo normal.
     - [ ] Facturero/ciclos/historial sin cambios.
+
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Integración Proyección Semanal en Clima Local (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) El widget “Clima Local” vive en `apps/gold/agro/index.html` dentro de la primera tarjeta KPI y actualmente no contiene la proyección semanal.
+
+2) La “Proyección Semanal” está separada como bloque grande en layout principal:
+- `details#yg-acc-weekly` + `#forecast-container` en `apps/gold/agro/index.html`.
+- Esto ocupa espacio vertical adicional en el dashboard.
+
+3) La lógica de forecast no está en CORE crítico:
+- Render semanal en `apps/gold/agro/agro-planning.js`, apuntando a `#forecast-container`.
+- Puede reubicarse en DOM manteniendo IDs sin tocar cálculos de Facturero/ciclos/historial.
+
+### Plan (1 commit)
+
+- Agregar control `📅 Ver pronóstico` dentro de “Clima Local”.
+- Agregar host embebido `#clima-weekly-host` en el card de clima (colapsado por defecto).
+- Retirar el bloque grande visible de “Proyección Semanal” y dejarlo como staging oculto para mover el nodo real.
+- Crear módulo `apps/gold/agro/agroclima-layout.js` para:
+  - mover `#yg-acc-weekly` al host (`appendChild`),
+  - manejar toggle abierto/cerrado y estado `aria-expanded`,
+  - cerrar con ESC si está abierto.
+- Wiring mínimo en `apps/gold/agro/agro.js` con `initClimaWeeklyEmbed()`.
+
+### Riesgos + mitigación
+
+- Riesgo: duplicar IDs de forecast.
+  - Mitigación: reparent del nodo existente (`#yg-acc-weekly` / `#forecast-container`), sin clonación.
+- Riesgo: romper render semanal.
+  - Mitigación: mantener `#forecast-container` y estructura interna original; solo cambia ubicación en DOM.
+- Riesgo: romper layout del card de clima.
+  - Mitigación: CSS de host colapsable + responsive, summary del acordeón oculto dentro del host para evitar doble control.
+
+### Evidencia esperada al cierre
+
+- [ ] `pnpm build:gold` PASS.
+- [ ] El bloque grande “Proyección Semanal” deja de ocupar espacio en layout principal.
+- [ ] `📅 Ver pronóstico` abre/cierra forecast dentro de “Clima Local”.
+- [ ] Sin errores de consola/red por IDs duplicados.
+
+### Cierre C1 — Proyección Semanal integrada en Clima Local
+
+- Archivos tocados:
+  - `apps/gold/agro/agroclima-layout.js` (nuevo)
+    - `initClimaWeeklyEmbed()` para mover `#yg-acc-weekly` al host de clima.
+    - Toggle `📅` con estados `is-open/is-collapsed`, `aria-expanded` y cierre por ESC.
+  - `apps/gold/agro/index.html`
+    - Botón `#btn-toggle-weekly-forecast` dentro del card “Clima Local”.
+    - Host `#clima-weekly-host` colapsado por defecto.
+    - El bloque grande de “Proyección Semanal” quedó en staging oculto (`#weekly-forecast-staging`) para reparent sin duplicar IDs.
+  - `apps/gold/agro/agro.css`
+    - Estilos del toggle y del contenedor embebido (`#clima-weekly-host`) con comportamiento colapsable y responsive.
+  - `apps/gold/agro/agro.js`
+    - Wiring mínimo: import + `initClimaWeeklyEmbed()` en `initAgro()`.
+
+- Gate de build:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `UTF-8 check`).
+
+- Smoke manual:
+  - Estado: pendiente validación en navegador por operador.
+  - Checklist:
+    - [ ] Ya no se ve el bloque grande de “Proyección Semanal” en layout principal.
+    - [ ] En “Clima Local”, `📅 Ver pronóstico` abre/cierra forecast embebido.
+    - [ ] Forecast sigue renderizando días/datos sin errores.
+    - [ ] Console/Network sin errores 400 ni uncaught en flujo normal.

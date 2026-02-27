@@ -288,6 +288,99 @@
   }
 }
 
+.kpi-weekly-controls {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+}
+
+.clima-weekly-toggle {
+  border: 1px solid rgba(200, 167, 82, 0.35);
+  background: rgba(200, 167, 82, 0.1);
+  color: var(--gold-primary, #C8A752);
+  border-radius: 999px;
+  padding: 0.32rem 0.72rem;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.clima-weekly-toggle:hover {
+  background: rgba(200, 167, 82, 0.2);
+  border-color: rgba(200, 167, 82, 0.6);
+}
+
+.clima-weekly-toggle[aria-expanded="true"] {
+  background: rgba(200, 167, 82, 0.22);
+  border-color: rgba(200, 167, 82, 0.65);
+}
+
+#clima-weekly-host {
+  width: 100%;
+  margin-top: 0.55rem;
+  transition: max-height 0.2s ease, opacity 0.2s ease, margin-top 0.2s ease;
+  max-height: 420px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+#clima-weekly-host.is-collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+#clima-weekly-host.is-open {
+  max-height: 420px;
+  opacity: 1;
+}
+
+#clima-weekly-host #yg-acc-weekly {
+  border: 0;
+  border-radius: 0;
+}
+
+#clima-weekly-host #yg-acc-weekly > .yg-accordion-summary {
+  display: none;
+}
+
+#clima-weekly-host #yg-acc-weekly > .yg-accordion-content {
+  padding: 0;
+}
+
+#clima-weekly-host #yg-acc-weekly .planning-panel {
+  margin-top: 0 !important;
+  padding: 0.75rem !important;
+  border-radius: 10px;
+}
+
+#clima-weekly-host #forecast-container {
+  height: 110px !important;
+  padding: 8px !important;
+}
+
+#clima-weekly-host #forecast-container > div {
+  font-size: 0.72rem;
+}
+
+@media (max-width: 768px) {
+  #clima-weekly-host {
+    max-height: 360px;
+  }
+
+  #clima-weekly-host.is-open {
+    max-height: 360px;
+  }
+
+  #clima-weekly-host #forecast-container {
+    height: 96px !important;
+    padding: 6px !important;
+  }
+}
+
 .stats-center-trigger {
   border: 1px solid rgba(200, 167, 82, 0.35);
   background: rgba(200, 167, 82, 0.12);
