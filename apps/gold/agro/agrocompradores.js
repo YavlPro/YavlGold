@@ -1,10 +1,12 @@
 import { applyBuyerPrivacy, applyMoneyPrivacy } from './agro-privacy.js';
+import { openPublicFarmerProfile } from './agropublico.js';
 
 const BUYER_MODAL_ID = 'modal-agro-buyer';
 const BUYER_FORM_ID = 'agro-buyer-form';
 const BUYER_STATUS_ID = 'agro-buyer-status';
 const BUYER_TITLE_ID = 'agro-buyer-title';
 const BUYER_SAVE_BUTTON_ID = 'btn-save-agro-buyer';
+const BUYER_OPEN_PUBLIC_BUTTON_ID = 'btn-open-buyer-public-profile';
 
 const BUYER_FIELD_IDS = [
     'display_name',
@@ -12,7 +14,8 @@ const BUYER_FIELD_IDS = [
     'whatsapp',
     'instagram',
     'facebook',
-    'notes'
+    'notes',
+    'linked_user_id'
 ];
 
 const state = {
@@ -20,7 +23,8 @@ const state = {
     supabase: null,
     currentUser: null,
     currentGroupKey: '',
-    currentDisplayName: ''
+    currentDisplayName: '',
+    currentLinkedUserId: ''
 };
 
 function setBuyerStatus(message = '', level = 'muted') {
@@ -46,6 +50,27 @@ function normalizeGroupKey(value) {
         .replace(/[^a-z0-9\s]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+function normalizeUuid(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function isValidUuid(value) {
+    const token = normalizeUuid(value);
+    if (!token) return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(token);
+}
+
+function syncOpenPublicButton() {
+    const button = document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID);
+    if (!button) return;
+    const linked = normalizeUuid(state.currentLinkedUserId);
+    const hasLinked = !!linked;
+    button.disabled = !hasLinked;
+    button.title = hasLinked
+        ? 'Abrir perfil público vinculado'
+        : 'Comprador no vinculado a un user_id público';
 }
 
 async function resolveSessionUser() {
@@ -90,6 +115,12 @@ function fillBuyerForm(buyer = {}) {
         input.value = String(buyer?.[fieldName] || '').trim();
     });
 
+    state.currentLinkedUserId = normalizeUuid(buyer?.linked_user_id || state.currentLinkedUserId || '');
+    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
+    if (linkedInput) {
+        linkedInput.value = state.currentLinkedUserId;
+    }
+
     const title = document.getElementById(BUYER_TITLE_ID);
     if (title) {
         const displayName = String(
@@ -101,6 +132,8 @@ function fillBuyerForm(buyer = {}) {
         title.dataset.buyerName = '1';
         title.dataset.rawName = displayName;
     }
+
+    syncOpenPublicButton();
 }
 
 function readBuyerForm() {
@@ -116,7 +149,7 @@ function readBuyerForm() {
 async function loadBuyer(userId, groupKey) {
     const { data, error } = await state.supabase
         .from('agro_buyers')
-        .select('id,user_id,display_name,group_key,phone,whatsapp,instagram,facebook,notes,created_at,updated_at')
+        .select('id,user_id,display_name,group_key,phone,whatsapp,instagram,facebook,notes,linked_user_id,created_at,updated_at')
         .eq('user_id', userId)
         .eq('group_key', groupKey)
         .maybeSingle();
@@ -126,6 +159,15 @@ async function loadBuyer(userId, groupKey) {
 }
 
 async function upsertBuyer(userId, groupKey, buyerData) {
+    const rawLinkedUserId = String(buyerData?.linked_user_id || '').trim();
+    let linkedUserId = normalizeUuid(state.currentLinkedUserId);
+    if (rawLinkedUserId) {
+        if (!isValidUuid(rawLinkedUserId)) {
+            throw new Error('El user_id vinculado no tiene formato UUID válido.');
+        }
+        linkedUserId = normalizeUuid(rawLinkedUserId);
+    }
+
     const payload = {
         user_id: userId,
         group_key: groupKey,
@@ -135,13 +177,14 @@ async function upsertBuyer(userId, groupKey, buyerData) {
         instagram: String(buyerData?.instagram || '').trim() || null,
         facebook: String(buyerData?.facebook || '').trim() || null,
         notes: String(buyerData?.notes || '').trim() || null,
+        linked_user_id: linkedUserId || null,
         updated_at: new Date().toISOString()
     };
 
     const { data, error } = await state.supabase
         .from('agro_buyers')
         .upsert(payload, { onConflict: 'user_id,group_key' })
-        .select('id,user_id,display_name,group_key,phone,whatsapp,instagram,facebook,notes,created_at,updated_at')
+        .select('id,user_id,display_name,group_key,phone,whatsapp,instagram,facebook,notes,linked_user_id,created_at,updated_at')
         .maybeSingle();
 
     if (error) throw error;
@@ -168,6 +211,7 @@ async function handleBuyerSave(event) {
         const formData = readBuyerForm();
         const saved = await upsertBuyer(user.id, state.currentGroupKey, formData);
         state.currentDisplayName = String(saved?.display_name || state.currentDisplayName || '').trim() || state.currentDisplayName;
+        state.currentLinkedUserId = normalizeUuid(saved?.linked_user_id || state.currentLinkedUserId || '');
         fillBuyerForm(saved);
         setBuyerStatus('Ficha guardada correctamente.', 'ok');
 
@@ -178,9 +222,30 @@ async function handleBuyerSave(event) {
         }
     } catch (error) {
         console.error('[AGRO_BUYERS] save error:', error);
-        setBuyerStatus('No se pudo guardar la ficha.', 'error');
+        const message = String(error?.message || '').trim();
+        if (message.toLowerCase().includes('uuid')) {
+            setBuyerStatus(message, 'warn');
+        } else {
+            setBuyerStatus('No se pudo guardar la ficha.', 'error');
+        }
     } finally {
         setSaveBusy(false);
+    }
+}
+
+async function handleOpenBuyerPublicProfile(event) {
+    event?.preventDefault();
+    const linkedUserId = normalizeUuid(state.currentLinkedUserId);
+    if (!linkedUserId) {
+        setBuyerStatus('Comprador no vinculado a usuario público.', 'warn');
+        return;
+    }
+
+    try {
+        await openPublicFarmerProfile(linkedUserId);
+    } catch (error) {
+        console.error('[AGRO_BUYERS] open public profile error:', error);
+        setBuyerStatus('No se pudo abrir el perfil público vinculado.', 'error');
     }
 }
 
@@ -205,6 +270,25 @@ function bindBuyerModalEvents() {
     if (form) {
         form.addEventListener('submit', handleBuyerSave);
     }
+
+    const openPublicButton = document.getElementById(BUYER_OPEN_PUBLIC_BUTTON_ID);
+    if (openPublicButton) {
+        openPublicButton.addEventListener('click', handleOpenBuyerPublicProfile);
+    }
+
+    const linkedInput = document.getElementById('agro-buyer-linked_user_id');
+    if (linkedInput) {
+        linkedInput.addEventListener('input', () => {
+            const raw = String(linkedInput.value || '').trim();
+            if (!raw) {
+                state.currentLinkedUserId = '';
+                syncOpenPublicButton();
+                return;
+            }
+            state.currentLinkedUserId = normalizeUuid(raw);
+            syncOpenPublicButton();
+        });
+    }
 }
 
 export async function openBuyerProfileByName(displayName) {
@@ -214,6 +298,7 @@ export async function openBuyerProfileByName(displayName) {
 
     state.currentDisplayName = safeName;
     state.currentGroupKey = groupKey;
+    state.currentLinkedUserId = '';
     openBuyerModal();
     setBuyerStatus('Cargando ficha del comprador...', 'muted');
 
@@ -262,8 +347,8 @@ export function initAgroCompradores({ supabase } = {}) {
     state.initialized = true;
 
     bindBuyerModalEvents();
+    syncOpenPublicButton();
     setBuyerStatus('Haz clic en un comprador del historial o rankings.', 'muted');
 }
 
 export { normalizeGroupKey };
-

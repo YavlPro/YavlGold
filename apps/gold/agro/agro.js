@@ -10,6 +10,8 @@ import { openAgroWizard, ensureAgroWizardStyles } from './agro-wizard.js';
 import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js';
 import { initAgroPerfil } from './agroperfil.js';
 import { initAgroCompradores, openBuyerProfileByName } from './agrocompradores.js';
+import { initAgroSocial, openSocialPanel } from './agrosocial.js';
+import { initAgroCalculadora } from './agrocalculadora.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
@@ -68,6 +70,7 @@ const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_i
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
+const AGRO_SOCIAL_OPEN_BUTTON_ID = 'btn-open-agro-social';
 const BUYER_PROFILE_CLICKABLE_SCOPE_SELECTOR = [
     '#recent-transactions-container',
     '#income-recent-container',
@@ -89,6 +92,7 @@ let syncCartCropsFn = null;
 const agroFocusOriginalPositions = new Map();
 let agroFocusModeBound = false;
 let buyerProfileClickHandlersBound = false;
+let agroSocialButtonBound = false;
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -1414,6 +1418,21 @@ function initBuyerProfileClickHandlers() {
         openBuyerProfileByName(rawName).catch((error) => {
             console.error('[AGRO_BUYERS] open from click error:', error);
             showEvidenceToast('No se pudo abrir la ficha del comprador.', 'warning');
+        });
+    });
+}
+
+function bindAgroSocialOpenButton() {
+    if (agroSocialButtonBound) return;
+    const openButton = document.getElementById(AGRO_SOCIAL_OPEN_BUTTON_ID);
+    if (!openButton) return;
+
+    agroSocialButtonBound = true;
+    openButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        openSocialPanel(event.currentTarget).catch((error) => {
+            console.error('[AGRO_SOCIAL] open panel error:', error);
+            showEvidenceToast('No se pudo abrir el panel Social.', 'warning');
         });
     });
 }
@@ -11858,7 +11877,10 @@ export function initAgro() {
     initFinanceTabs();
     initBuyerPrivacy(document);
     initAgroCompradores({ supabase });
+    initAgroSocial({ supabase });
+    initAgroCalculadora();
     initBuyerProfileClickHandlers();
+    bindAgroSocialOpenButton();
     initAgroPerfil({ supabase });
     initOperationsContextSteps();
     initAgroAssistantModal();

@@ -9327,3 +9327,198 @@ Hallazgo raíz del lote actual:
     - Abrir vista pública propia.
     - Comprador desde Historial/Rankings abre ficha local.
 
+
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Social v1 mínimo Agro (S1/S2) (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) **MPA / routing (Vite + Vercel)**
+- Entradas MPA en `apps/gold/vite.config.js` incluyen `agro`, `social`, `dashboard`, `crypto`, etc.
+- Rewrites/clean URLs en `apps/gold/vercel.json` ya cubren `/agro` y assets.
+- `apps/gold/agro/index.html` ya contiene header de Agro, Centro de Operaciones, Rankings y modales de perfil/comprador/perfil público.
+
+2) **Auth / Supabase**
+- Cliente Supabase central en `apps/gold/assets/js/config/supabase-config.js`.
+- Auth/UI en `apps/gold/assets/js/auth/authClient.js` y `authUI.js`.
+- Guard dashboard en `apps/gold/dashboard/auth-guard.js`.
+- Agro corre bajo sesión autenticada y RLS (sin bypasses).
+
+3) **Agro CORE crítico vs modularizable**
+- CORE crítico (intocable): Facturero/ciclos/historial (lógica, queries, cálculos, comportamiento).
+- Modularizable: `agrocompradores.js`, `agropublico.js`, `agroperfil.js`, `agro-privacy.js`, y modales/acciones UI adicionales.
+
+4) **Estado actual módulos objetivo**
+- `agrocompradores.js`: ficha buyer local en `agro_buyers` (sin vínculo `linked_user_id` aún).
+- `agropublico.js`: modal lectura de `agro_public_profiles`.
+- `agroperfil.js`: edición privada + bloque público opt-in.
+- `agro.js`: wiring mínimo de compradores/perfil + privacidad global.
+- No existe aún `agrosocial.js` ni tablas `agro_social_threads/messages`.
+
+### Plan por commit
+
+1) **S1 (DB mínima social + vínculo buyer->user)**
+- Crear migración idempotente:
+  - `alter table public.agro_buyers add column if not exists linked_user_id uuid null` + índice `(user_id, linked_user_id)`.
+  - Crear `public.agro_social_threads` y `public.agro_social_messages`.
+  - Activar RLS owner-only (select/insert/update/delete) en ambas tablas.
+  - `notify pgrst, 'reload schema'`.
+- Ejecutar `pnpm build:gold` (gate S1).
+
+2) **S2 (UI Social v1 + acción contextual)**
+- Crear `apps/gold/agro/agrosocial.js`:
+  - feed de perfiles públicos (`public_enabled=true`),
+  - hilos/mensajes owner-only,
+  - apertura de perfil público,
+  - privacidad 👁/💰 aplicada en panel.
+- Extender `agrocompradores.js`:
+  - `linked_user_id` en load/upsert,
+  - campo opcional UUID,
+  - botón “Ver perfil público”.
+- Ajustar `index.html` y `agro.css` con modal Social y botón de apertura.
+- Wiring mínimo en `agro.js` para `initAgroSocial` + botón abrir.
+- Ejecutar `pnpm build:gold` (gate S2).
+
+### Riesgos + mitigación
+
+- Riesgo: tocar CORE por accidente.
+  - Mitigación: cambios acotados a módulos nuevos/UI adicional/wiring mínimo, sin alterar funciones de cálculo o consultas CORE existentes.
+- Riesgo: RLS incorrecto en social.
+  - Mitigación: políticas owner-only explícitas, `drop policy if exists + create policy`, migración idempotente.
+- Riesgo: privacidad inconsistente en Social.
+  - Mitigación: marcar nodos sensibles con `data-buyer-name`, aplicar `applyBuyerPrivacy/applyMoneyPrivacy` tras renders.
+
+### Evidencia esperada al cierre
+
+- [ ] `pnpm build:gold` PASS en S1.
+- [ ] `pnpm build:gold` PASS en S2.
+- [ ] Smoke manual mínimo documentado (feed público, buyer->perfil público, chat owner-only).
+- [ ] 0 errores 400/uncaught en flujos normales.
+
+### Cierre S1 — DB social mínima + vínculo buyer->user
+
+- Archivo:
+  - `supabase/migrations/20260227192000_agro_social_v1.sql` (nuevo)
+    - `agro_buyers.linked_user_id` + índice `(user_id, linked_user_id)`.
+    - Tablas nuevas: `agro_social_threads`, `agro_social_messages`.
+    - RLS owner-only explícita en threads/messages (`select/insert/update/delete`).
+    - `drop policy if exists + create policy` (re-ejecutable) + `notify pgrst, 'reload schema'`.
+
+- Gate de build (S1):
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS.
+
+- Estado smoke S1:
+  - Pendiente validación manual en entorno con migración aplicada.
+
+### Cierre S2 — Panel Social v1 + acción contextual en compradores
+
+- Archivos:
+  - `apps/gold/agro/agrosocial.js` (nuevo)
+    - `initAgroSocial({ supabase })` + `openSocialPanel()`.
+    - Feed de `agro_public_profiles` (`public_enabled=true`) con apertura a `openPublicFarmerProfile(user_id)`.
+    - Bitácora owner-only: listar/crear hilos + listar/enviar mensajes.
+    - Render seguro con DOM APIs (`createElement`/`textContent`) sin sinks inseguros.
+    - Aplicación de privacidad global 👁/💰 al modal social.
+  - `apps/gold/agro/agrocompradores.js`
+    - Integración `linked_user_id` en select/upsert.
+    - Campo opcional UUID + validación de formato.
+    - Botón contextual “Ver perfil público” (abre perfil si existe vínculo).
+  - `apps/gold/agro/index.html`
+    - Botón `#btn-open-agro-social`.
+    - Campo buyer `#agro-buyer-linked_user_id` + botón `#btn-open-buyer-public-profile`.
+    - Modal nuevo `#modal-agro-social`.
+  - `apps/gold/agro/agro.css`
+    - Estilos modal social (feed + chat privado), responsive mobile-first.
+  - `apps/gold/agro/agro.js`
+    - Wiring mínimo: `initAgroSocial({ supabase })` + bind de apertura `#btn-open-agro-social`.
+    - Sin cambios en lógica/query/cálculo CORE.
+
+- Gate de build (S2):
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `UTF-8 check`).
+
+- Smoke manual (pendiente operador):
+  - [ ] Feed muestra solo perfiles con `public_enabled=true`.
+  - [ ] “Ver perfil” abre modal público desde Social.
+  - [ ] Ficha buyer abre “Ver perfil público” si `linked_user_id` existe.
+  - [ ] Chat owner-only: crear hilo + enviar mensaje + reabrir panel y persistencia.
+  - [ ] Privacidad 👁 enmascara nombres en panel social.
+  - [ ] Network/Console sin 400/uncaught en flujos normales.
+
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Calculadora ROI a modal (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) La “Calculadora ROI Rápida” está renderizada como bloque grande dentro del dashboard Agro:
+- `apps/gold/agro/index.html` sección `data-agro-section="roi"` con acordeón `#yg-acc-roi`.
+- Mantiene inputs/outputs con IDs consumidos por lógica existente (`investment`, `revenue`, `quantity`, `roiResult`, `resultInvestment`, `resultRevenue`, `resultProfit`, `resultROI`, `roi-currency-selector`).
+
+2) La lógica de cálculo no está en CORE crítico:
+- Cálculo + persistencia de ROI en `apps/gold/agro/agro.js` (`calculateROI`, `initRoiCurrencySelector`, `injectRoiClearButton`).
+- Es UI secundaria/modularizable y puede moverse a modal sin tocar Facturero/ciclos/historial.
+
+3) Estado de modales en Agro:
+- Ya existen patrones consistentes de modal (perfil/compradores/social) con cierre por backdrop/ESC y focus management.
+- Se puede reutilizar patrón con módulo dedicado.
+
+### Plan (1 commit)
+
+- Crear `apps/gold/agro/agrocalculadora.js`:
+  - `initAgroCalculadora()`
+  - `openAgroCalculadora(triggerEl?)`
+  - open/close + backdrop + ESC + focus/restore.
+- `apps/gold/agro/index.html`:
+  - retirar bloque grande ROI del layout principal,
+  - agregar botón/tag `🧮 Calculadora` en “Finanzas Agro”,
+  - agregar modal `#modal-agro-calculator` al final del documento con la calculadora (mismos IDs).
+- `apps/gold/agro/agro.css`:
+  - estilos modal calculadora (desktop + mobile).
+- `apps/gold/agro/agro.js`:
+  - wiring mínimo: importar e inicializar `initAgroCalculadora()`.
+  - no tocar lógica de cálculo ROI existente ni CORE.
+
+### Riesgos + mitigación
+
+- Riesgo: romper bindings por IDs duplicados o perdidos.
+  - Mitigación: mover la calculadora (no duplicar), conservar IDs exactos.
+- Riesgo: pérdida de eventos en botón calcular/limpiar.
+  - Mitigación: mantener flujo actual de `calculateROI` + `injectRoiClearButton` sobre los mismos nodos en modal.
+- Riesgo: impacto colateral en CORE.
+  - Mitigación: cambios acotados a UI secundaria (modal calculadora + wiring modular).
+
+### Evidencia esperada al cierre
+
+- [ ] `pnpm build:gold` PASS.
+- [ ] Modal abre con botón 🧮 y cierra por X/backdrop/ESC.
+- [ ] Focus accesible (focus al abrir + restore al cerrar).
+- [ ] Calcular y Limpiar funcionan dentro del modal.
+- [ ] Facturero/ciclos/historial sin cambios de comportamiento.
+
+### Cierre C1 — Calculadora ROI a modal + tag en Finanzas Agro
+
+- Archivos tocados:
+  - `apps/gold/agro/agrocalculadora.js` (nuevo)
+    - `initAgroCalculadora()` + `openAgroCalculadora(triggerEl?)`.
+    - Apertura/cierre por botón, backdrop, X y ESC.
+    - Focus management: foco al panel al abrir y restore al trigger al cerrar.
+  - `apps/gold/agro/index.html`
+    - Se retiró el bloque grande de calculadora del layout principal.
+    - Se agregó botón/tag `#btn-open-agro-calculator` en “Finanzas Agro”.
+    - Se agregó modal `#modal-agro-calculator` con la calculadora y los mismos IDs existentes.
+  - `apps/gold/agro/agro.css`
+    - Estilos del modal de calculadora (`body.agro-calculator-open`, panel/backdrop/responsive).
+  - `apps/gold/agro/agro.js`
+    - Wiring mínimo: import + `initAgroCalculadora()` en `initAgro()`.
+
+- Gate de build:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `UTF-8 check`).
+
+- Smoke manual:
+  - Estado: pendiente de ejecución en navegador por operador.
+  - Checklist:
+    - [ ] Botón 🧮 abre modal.
+    - [ ] Cierre por X, backdrop y ESC.
+    - [ ] “Calcular” y “Limpiar” siguen operando con mismos resultados.
+    - [ ] Network/Console sin 400/uncaught en flujo normal.
+    - [ ] Facturero/ciclos/historial sin cambios.

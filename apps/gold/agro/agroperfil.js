@@ -578,7 +578,8 @@ async function saveFarmerProfile(event) {
         if (publicProfileSkipped) {
             setProfileStatus('Perfil privado guardado. Falta migracion para perfil publico.', 'warn');
         } else {
-            setProfileStatus('Perfil guardado correctamente.', 'ok');
+            const pubMsg = publicPayload.public_enabled ? 'ACTIVADO ✅' : 'DESACTIVADO 🔒';
+            setProfileStatus(`Perfil guardado. Perfil público: ${pubMsg}`, 'ok');
         }
     } catch (error) {
         console.error('[AGRO_PROFILE] save profile error:', error);

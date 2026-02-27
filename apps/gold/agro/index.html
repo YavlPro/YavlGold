@@ -1283,61 +1283,7 @@
             <div class="crops-grid"> <!-- Cultivos cargados dinámicamente desde Supabase --> </div>
         </section>
 
-        <!-- V9.8: ROI Calculator Collapsible -->
-        <section class="calculator-section" data-agro-section="roi">
-            <details class="yg-accordion" id="yg-acc-roi" open>
-                <summary class="yg-accordion-summary">
-                    <span class="yg-accordion-icon">🧮</span>
-                    <span class="yg-accordion-title">Calculadora ROI Rápida</span>
-                    <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="yg-accordion-content">
-                    <div class="card animate-in delay-5">
-                        <div class="calculator-form">
-                            <div class="input-group"> <label class="input-label" for="investment">Costo de
-                                    Inversión</label>
-                                <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
-                                        id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01">
-                                </div>
-                            </div>
-                            <div class="input-group"> <label class="input-label" for="revenue">Pagado por Venta</label>
-                                <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
-                                        id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01">
-                                </div>
-                            </div>
-                            <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
-                                <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number"
-                                        id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1">
-                                </div>
-                            </div> <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
-                        </div>
-                        <!-- V9.8: ROI currency display selector -->
-                        <div style="display: flex; justify-content: center; gap: 0.5rem; margin: 0.75rem 0 0.25rem;"
-                            id="roi-currency-selector"></div>
-                        <div class="roi-result" id="roiResult">
-                            <div class="roi-grid">
-                                <div class="roi-item">
-                                    <div class="roi-label">Inversión</div>
-                                    <div class="roi-value gold" id="resultInvestment">$0</div>
-                                </div>
-                                <div class="roi-item">
-                                    <div class="roi-label">Pagados</div>
-                                    <div class="roi-value gold" id="resultRevenue">$0</div>
-                                </div>
-                                <div class="roi-item">
-                                    <div class="roi-label">Ganancia Neta</div>
-                                    <div class="roi-value" id="resultProfit">$0</div>
-                                </div>
-                                <div class="roi-item">
-                                    <div class="roi-label">ROI</div>
-                                    <div class="roi-value" id="resultROI">0%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </details>
-        </section> <!-- Footer -->
+        <!-- Footer -->
         <footer class="footer animate-in delay-6">
             <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • Módulo Agro • Desarrollado con 🌾
                 para agricultores </p>
@@ -1585,6 +1531,14 @@
                         data-money-privacy-control="toggle" aria-pressed="false"
                         title="Ocultar o mostrar montos financieros">
                         💰 Ocultar montos
+                    </button>
+                    <button type="button" class="btn-privacy-toggle" id="btn-open-agro-social"
+                        title="Abrir panel social Agro">
+                        💬 Social
+                    </button>
+                    <button type="button" class="btn-privacy-toggle" id="btn-open-agro-calculator"
+                        title="Abrir calculadora ROI">
+                        🧮 Calculadora
                     </button>
                 </div>
             </div>
@@ -2869,10 +2823,16 @@
                     <textarea id="agro-buyer-notes" class="styled-input" rows="4" maxlength="800"
                         placeholder="Preferencias, acuerdos o recordatorios del comprador"></textarea>
                 </label>
+                <label class="agro-buyer-field">
+                    <span>Vincular user_id público (opcional)</span>
+                    <input type="text" id="agro-buyer-linked_user_id" class="styled-input" maxlength="80"
+                        placeholder="UUID del usuario para abrir su perfil público">
+                </label>
 
                 <footer class="agro-buyer-footer">
                     <p id="agro-buyer-status" class="agro-buyer-status" data-level="muted"></p>
                     <div class="agro-buyer-actions">
+                        <button type="button" class="btn" id="btn-open-buyer-public-profile">Ver perfil público</button>
                         <button type="button" class="btn" data-agro-buyer-close>Cancelar</button>
                         <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar ficha</button>
                     </div>
@@ -2926,6 +2886,125 @@
             <footer class="agro-public-footer">
                 <p id="agro-public-status" class="agro-public-status" data-level="muted"></p>
             </footer>
+        </div>
+    </div>
+
+    <div id="modal-agro-social" class="agro-social-modal" aria-hidden="true">
+        <div class="agro-social-backdrop" data-agro-social-close></div>
+        <div class="agro-social-panel" role="dialog" aria-modal="true" aria-labelledby="agro-social-title" tabindex="-1">
+            <header class="agro-social-header">
+                <div>
+                    <p class="agro-social-eyebrow">Social v1</p>
+                    <h3 id="agro-social-title" class="agro-social-title">Red de Agricultores</h3>
+                </div>
+                <button type="button" class="agro-social-close" data-agro-social-close aria-label="Cerrar panel social">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="agro-social-body">
+                <section class="agro-social-column">
+                    <div class="agro-social-section-head">
+                        <h4>Perfiles públicos</h4>
+                    </div>
+                    <ul id="agro-social-feed-list" class="agro-social-feed-list"></ul>
+                </section>
+
+                <section class="agro-social-column agro-social-chat-column">
+                    <div class="agro-social-section-head">
+                        <h4>Bitácora privada</h4>
+                    </div>
+                    <div class="agro-social-thread-create">
+                        <input type="text" id="agro-social-thread-title-input" class="styled-input" maxlength="120"
+                            placeholder="Título del hilo (opcional)">
+                        <input type="text" id="agro-social-thread-buyer-key" class="styled-input" maxlength="120"
+                            placeholder="group_key comprador (opcional)">
+                        <button type="button" id="agro-social-new-thread" class="btn btn-primary">+ Nuevo hilo</button>
+                    </div>
+
+                    <div class="agro-social-thread-layout">
+                        <ul id="agro-social-threads-list" class="agro-social-threads-list"></ul>
+                        <div class="agro-social-messages-wrap">
+                            <h5 id="agro-social-thread-title">Selecciona un hilo</h5>
+                            <div id="agro-social-messages" class="agro-social-messages"></div>
+                            <form id="agro-social-composer-form" class="agro-social-composer-form">
+                                <textarea id="agro-social-composer" class="styled-input" rows="3" maxlength="1200"
+                                    placeholder="Escribe una nota privada del hilo"></textarea>
+                                <button type="submit" id="agro-social-send" class="btn btn-primary">Enviar</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="agro-social-footer">
+                <p id="agro-social-status" class="agro-social-status" data-level="muted">
+                    Abre Social para cargar perfiles públicos y tus hilos privados.
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <div id="modal-agro-calculator" class="agro-calculator-modal" aria-hidden="true">
+        <div class="agro-calculator-backdrop" data-agro-calculator-close></div>
+        <div class="agro-calculator-panel" role="dialog" aria-modal="true" aria-labelledby="agro-calculator-title"
+            tabindex="-1">
+            <header class="agro-calculator-header">
+                <div>
+                    <p class="agro-calculator-eyebrow">Calculadora ROI</p>
+                    <h3 id="agro-calculator-title" class="agro-calculator-title">Calculadora ROI Rápida</h3>
+                </div>
+                <button type="button" class="agro-calculator-close" data-agro-calculator-close
+                    aria-label="Cerrar calculadora">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="agro-calculator-body">
+                <div class="card animate-in delay-5">
+                    <div class="calculator-form">
+                        <div class="input-group"> <label class="input-label" for="investment">Costo de
+                                Inversión</label>
+                            <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
+                                    id="investment" class="styled-input" placeholder="Ej: 5000" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="input-group"> <label class="input-label" for="revenue">Pagado por Venta</label>
+                            <div class="input-wrapper"> <span class="input-prefix">$</span> <input type="number"
+                                    id="revenue" class="styled-input" placeholder="Ej: 8500" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="input-group"> <label class="input-label" for="quantity">Cantidad (kg)</label>
+                            <div class="input-wrapper"> <span class="input-prefix">📦</span> <input type="number"
+                                    id="quantity" class="styled-input" placeholder="Ej: 5000" min="0" step="1">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="calculateROI()"> Calcular 🚀 </button>
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 0.5rem; margin: 0.75rem 0 0.25rem;"
+                        id="roi-currency-selector"></div>
+                    <div class="roi-result" id="roiResult">
+                        <div class="roi-grid">
+                            <div class="roi-item">
+                                <div class="roi-label">Inversión</div>
+                                <div class="roi-value gold" id="resultInvestment">$0</div>
+                            </div>
+                            <div class="roi-item">
+                                <div class="roi-label">Pagados</div>
+                                <div class="roi-value gold" id="resultRevenue">$0</div>
+                            </div>
+                            <div class="roi-item">
+                                <div class="roi-label">Ganancia Neta</div>
+                                <div class="roi-value" id="resultProfit">$0</div>
+                            </div>
+                            <div class="roi-item">
+                                <div class="roi-label">ROI</div>
+                                <div class="roi-value" id="resultROI">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

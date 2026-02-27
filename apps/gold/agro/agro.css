@@ -1213,6 +1213,572 @@ body.agro-public-open {
   }
 }
 
+/* V9.8: Calculadora ROI en modal */
+body.agro-calculator-open {
+  overflow: hidden;
+}
+
+#modal-agro-calculator {
+  position: fixed;
+  inset: 0;
+  z-index: 10048;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+#modal-agro-calculator.is-open {
+  display: flex;
+}
+
+#modal-agro-calculator .agro-calculator-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(6px);
+}
+
+#modal-agro-calculator .agro-calculator-panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 96vw);
+  max-height: min(92vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(13, 13, 13, 0.98), rgba(6, 6, 6, 0.98));
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+#modal-agro-calculator .agro-calculator-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.95rem 1.05rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+}
+
+#modal-agro-calculator .agro-calculator-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 167, 82, 0.86);
+  font-family: "Orbitron", sans-serif;
+}
+
+#modal-agro-calculator .agro-calculator-title {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  font-family: "Orbitron", sans-serif;
+  color: rgba(245, 245, 245, 0.96);
+}
+
+#modal-agro-calculator .agro-calculator-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 167, 82, 0.34);
+  background: rgba(200, 167, 82, 0.08);
+  color: #c8a752;
+  cursor: pointer;
+}
+
+#modal-agro-calculator .agro-calculator-body {
+  padding: 0.95rem 1.05rem 1rem;
+  overflow: auto;
+}
+
+#modal-agro-calculator .card {
+  margin: 0;
+  padding: 1rem;
+}
+
+#modal-agro-calculator .calculator-form {
+  gap: 0.75rem;
+}
+
+#modal-agro-calculator .input-label {
+  font-size: 0.65rem;
+  letter-spacing: 1.2px;
+}
+
+#modal-agro-calculator .input-prefix {
+  font-size: 0.95rem;
+}
+
+#modal-agro-calculator .styled-input {
+  padding: 0.6rem 0.9rem 0.6rem 2.2rem;
+  font-size: 1rem;
+}
+
+#modal-agro-calculator .btn-primary {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.8px;
+}
+
+#modal-agro-calculator .roi-result {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+}
+
+#modal-agro-calculator .roi-grid {
+  gap: 0.5rem;
+}
+
+#modal-agro-calculator .roi-value {
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  #modal-agro-calculator .card {
+    padding: 0.9rem;
+  }
+
+  #modal-agro-calculator .calculator-form {
+    gap: 0.6rem;
+  }
+
+  #modal-agro-calculator .styled-input {
+    padding: 0.55rem 0.8rem 0.55rem 2.1rem;
+    font-size: 0.95rem;
+  }
+
+  #modal-agro-calculator .btn-primary {
+    padding: 0.55rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  #modal-agro-calculator {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  #modal-agro-calculator .agro-calculator-panel {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  #modal-agro-calculator .agro-calculator-body {
+    padding: 0.85rem;
+  }
+}
+
+/* V9.8: Social v1 panel (feed publico + bitacora privada) */
+body.agro-social-open {
+  overflow: hidden;
+}
+
+#modal-agro-social {
+  position: fixed;
+  inset: 0;
+  z-index: 10047;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+#modal-agro-social.is-open {
+  display: flex;
+}
+
+#modal-agro-social .agro-social-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(6px);
+}
+
+#modal-agro-social .agro-social-panel {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 96vw);
+  max-height: min(92vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(13, 13, 13, 0.98), rgba(6, 6, 6, 0.98));
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+#modal-agro-social .agro-social-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 0.95rem 1.05rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+}
+
+#modal-agro-social .agro-social-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 167, 82, 0.86);
+  font-family: "Orbitron", sans-serif;
+}
+
+#modal-agro-social .agro-social-title {
+  margin: 0.2rem 0 0;
+  font-size: 1.02rem;
+  font-family: "Orbitron", sans-serif;
+  color: rgba(245, 245, 245, 0.96);
+}
+
+#modal-agro-social .agro-social-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 167, 82, 0.34);
+  background: rgba(200, 167, 82, 0.08);
+  color: #c8a752;
+  cursor: pointer;
+}
+
+#modal-agro-social .agro-social-body {
+  padding: 0.95rem 1.05rem 0.85rem;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(420px, 1.5fr);
+  gap: 0.8rem;
+  overflow: auto;
+}
+
+#modal-agro-social .agro-social-column {
+  border: 1px solid rgba(200, 167, 82, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+#modal-agro-social .agro-social-section-head h4 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-family: "Orbitron", sans-serif;
+  letter-spacing: 0.06em;
+  color: #c8a752;
+  text-transform: uppercase;
+}
+
+#modal-agro-social .agro-social-feed-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  overflow: auto;
+}
+
+#modal-agro-social .agro-social-feed-item {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#modal-agro-social .agro-social-feed-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#modal-agro-social .agro-social-feed-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 167, 82, 0.34);
+  background: rgba(200, 167, 82, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c8a752;
+  font-size: 1.1rem;
+  overflow: hidden;
+}
+
+#modal-agro-social .agro-social-feed-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#modal-agro-social .agro-social-feed-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+#modal-agro-social .agro-social-feed-identity strong {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+#modal-agro-social .agro-social-feed-identity span {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#modal-agro-social .agro-social-view-profile-btn {
+  border: 1px solid rgba(200, 167, 82, 0.38);
+  background: rgba(200, 167, 82, 0.1);
+  color: #c8a752;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#modal-agro-social .agro-social-feed-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+}
+
+#modal-agro-social .agro-social-feed-meta {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.67);
+}
+
+#modal-agro-social .agro-social-feed-bio {
+  margin: 0.1rem 0 0;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.87);
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+
+#modal-agro-social .agro-social-chat-column {
+  min-height: 0;
+}
+
+#modal-agro-social .agro-social-thread-create {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+#modal-agro-social .agro-social-thread-layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.85fr) minmax(260px, 1.35fr);
+  gap: 0.6rem;
+  min-height: 0;
+  flex: 1;
+}
+
+#modal-agro-social .agro-social-threads-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 0;
+}
+
+#modal-agro-social .agro-social-thread-item {
+  padding: 0.35rem;
+}
+
+#modal-agro-social .agro-social-thread-btn {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.42rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+#modal-agro-social .agro-social-thread-btn.is-active {
+  border-color: rgba(200, 167, 82, 0.5);
+  background: rgba(200, 167, 82, 0.12);
+}
+
+#modal-agro-social .agro-social-thread-btn strong {
+  font-size: 0.76rem;
+}
+
+#modal-agro-social .agro-social-thread-btn span {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+#modal-agro-social .agro-social-messages-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+}
+
+#modal-agro-social .agro-social-messages-wrap h5 {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.94);
+  font-family: "Orbitron", sans-serif;
+}
+
+#modal-agro-social .agro-social-messages {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  padding: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow: auto;
+  min-height: 160px;
+  max-height: 300px;
+}
+
+#modal-agro-social .agro-social-message {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.4rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+#modal-agro-social .agro-social-message.is-note {
+  border-color: rgba(200, 167, 82, 0.35);
+  background: rgba(200, 167, 82, 0.08);
+}
+
+#modal-agro-social .agro-social-message-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+#modal-agro-social .agro-social-message-head strong {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.93);
+}
+
+#modal-agro-social .agro-social-message-head span {
+  font-size: 0.64rem;
+  color: rgba(255, 255, 255, 0.52);
+}
+
+#modal-agro-social .agro-social-message-body {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.3;
+  white-space: pre-wrap;
+}
+
+#modal-agro-social .agro-social-composer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+#modal-agro-social .agro-social-composer-form textarea.styled-input {
+  min-height: 72px;
+  resize: vertical;
+}
+
+#modal-agro-social .agro-social-empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.74rem;
+  font-style: italic;
+  padding: 0.3rem;
+}
+
+#modal-agro-social .agro-social-footer {
+  border-top: 1px solid rgba(200, 167, 82, 0.14);
+  padding: 0.72rem 1.05rem 0.85rem;
+}
+
+#modal-agro-social .agro-social-status {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+#modal-agro-social .agro-social-status[data-level="ok"] {
+  color: rgba(74, 222, 128, 0.95);
+}
+
+#modal-agro-social .agro-social-status[data-level="warn"] {
+  color: rgba(251, 191, 36, 0.95);
+}
+
+#modal-agro-social .agro-social-status[data-level="error"] {
+  color: rgba(248, 113, 113, 0.95);
+}
+
+@media (max-width: 980px) {
+  #modal-agro-social .agro-social-body {
+    grid-template-columns: 1fr;
+  }
+
+  #modal-agro-social .agro-social-thread-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  #modal-agro-social {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  #modal-agro-social .agro-social-panel {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  #modal-agro-social .agro-social-body {
+    padding: 0.8rem;
+    gap: 0.7rem;
+  }
+
+  #modal-agro-social .agro-social-thread-create {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* V9.5.7: Asistente Agro modal */
 body.modal-open {
   overflow: hidden;
