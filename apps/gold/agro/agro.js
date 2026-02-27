@@ -2542,24 +2542,32 @@ function formatSplitMetaSummary(item, tabName, options = {}) {
 }
 
 function computePendingSplitDraft(pending, destination, decision = {}) {
-    const unitType = String(pending?.unit_type || '').trim().toLowerCase();
-    const qtyRaw = toSafeLocaleNumber(pending?.unit_qty);
+    const splitMetaParsed = normalizeSplitMeta(pending?.split_meta);
+    const resolvedQty = resolvePendingQuantity(pending, splitMetaParsed);
+    const unitType = String(resolvedQty.unitType || '').trim().toLowerCase();
+    let qtyRaw = toSafeLocaleNumber(decision?.qtyTotal);
+    if (qtyRaw === null) qtyRaw = resolvedQty.qtyTotal;
+    const normalizedQtyRaw = qtyRaw !== null
+        ? (isIntegerLike(qtyRaw) ? Math.round(qtyRaw) : roundNumeric(qtyRaw, 2))
+        : null;
     const sourceAmount = toSafeLocaleNumber(pending?.monto) ?? 0;
     // V9.8.1: qtyRaw >= 1 para incluir "1 saco" y mostrar cantidad siempre que exista
-    const splitEnabled = !!unitType && qtyRaw !== null && qtyRaw >= 1;
+    const splitEnabled = !!unitType && normalizedQtyRaw !== null && normalizedQtyRaw >= 1;
 
     const base = {
         enabled: splitEnabled,
         unitType,
-        qtyTotal: splitEnabled ? qtyRaw : null,
-        qtyTransfer: splitEnabled ? qtyRaw : null,
+        qtyTotal: splitEnabled ? normalizedQtyRaw : null,
+        qtyTransfer: splitEnabled ? normalizedQtyRaw : null,
         qtyLeft: 0,
-        qtyPrecision: splitEnabled && isIntegerLike(qtyRaw) ? 0 : 2,
-        unitPriceOriginal: splitEnabled && qtyRaw > 0 ? (sourceAmount / qtyRaw) : null,
+        qtyPrecision: splitEnabled && isIntegerLike(normalizedQtyRaw) ? 0 : 2,
+        unitPriceOriginal: splitEnabled && normalizedQtyRaw > 0 ? (sourceAmount / normalizedQtyRaw) : null,
         unitPriceTransfer: null,
         transferAmount: sourceAmount,
         remainingAmount: 0,
-        transferUnitQty: splitEnabled ? qtyRaw : (toSafeLocaleNumber(pending?.unit_qty) ?? null),
+        transferUnitQty: splitEnabled
+            ? normalizedQtyRaw
+            : (toSafeLocaleNumber(pending?.unit_qty) ?? resolvedQty.qtyTotal ?? null),
         remainingUnitQty: 0,
         transferKgQty: toSafeLocaleNumber(pending?.quantity_kg),
         remainingKgQty: 0,
@@ -2568,7 +2576,7 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
     };
 
     if (!splitEnabled) {
-        base.transferUnitQty = toSafeLocaleNumber(pending?.unit_qty);
+        base.transferUnitQty = toSafeLocaleNumber(pending?.unit_qty) ?? resolvedQty.qtyTotal;
         base.transferKgQty = toSafeLocaleNumber(pending?.quantity_kg);
         return base;
     }
@@ -4795,82 +4803,119 @@ function buildTransferMetaModal(options = {}) {
     }
 
     if (splitOptions?.enabled) {
-        const qtyTotalRaw = toSafeLocaleNumber(splitOptions.qtyTotal);
-        if (qtyTotalRaw !== null && qtyTotalRaw >= 1) {
-            const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
-            const qtyStep = qtyPrecision === 0 ? '1' : '0.01';
-            let defaultQty = toSafeLocaleNumber(splitOptions.defaultQty);
-            if (defaultQty === null) defaultQty = qtyTotalRaw;
-            defaultQty = Math.max(1, Math.min(qtyTotalRaw, qtyPrecision === 0 ? Math.round(defaultQty) : roundNumeric(defaultQty, 2)));
+        const configuredQtyTotal = toSafeLocaleNumber(splitOptions.qtyTotal);
+        const needsQtyTotalInput = splitOptions.requireQtyTotal === true && configuredQtyTotal === null;
+        const effectiveQtyTotal = configuredQtyTotal;
+        const qtyPrecision = effectiveQtyTotal !== null && isIntegerLike(effectiveQtyTotal) ? 0 : 2;
+        const qtyStep = qtyPrecision === 0 ? '1' : '0.01';
+        const unitOption = getUnitOptionByType(splitOptions.unitType);
+        const unitLabelPlural = unitOption?.plural || 'unidades';
 
-            const canChooseQuantity = qtyTotalRaw > 1;
-            if (canChooseQuantity) {
-                const qtyGroup = document.createElement('div');
-                qtyGroup.className = 'input-group';
-                const qtyLabel = document.createElement('label');
-                qtyLabel.className = 'input-label';
-                const qtyTotalText = formatSplitQuantity(qtyTotalRaw, splitOptions.unitType);
-                qtyLabel.textContent = `${splitOptions.quantityLabel || 'Cantidad a transferir'} (de ${qtyTotalText})`;
-                qtyLabel.setAttribute('for', 'pending-transfer-qty');
-                const qtyInput = document.createElement('input');
-                qtyInput.type = 'number';
-                qtyInput.id = 'pending-transfer-qty';
-                qtyInput.className = 'styled-input';
-                qtyInput.min = '1';
-                qtyInput.max = String(qtyPrecision === 0 ? Math.round(qtyTotalRaw) : roundNumeric(qtyTotalRaw, 2));
-                qtyInput.step = qtyStep;
-                qtyInput.style.paddingLeft = '1rem';
-                qtyInput.value = formatQuantityValue(defaultQty, qtyPrecision);
-                qtyGroup.append(qtyLabel, qtyInput);
-                content.appendChild(qtyGroup);
-            }
-
-            if (splitOptions.showTransferTotal) {
-                const totalGroup = document.createElement('div');
-                totalGroup.className = 'input-group';
-                const totalLabel = document.createElement('label');
-                totalLabel.className = 'input-label';
-                totalLabel.textContent = splitOptions.transferTotalLabel || 'Monto total transferido';
-                totalLabel.setAttribute('for', 'pending-transfer-total');
-                const totalInput = document.createElement('input');
-                totalInput.type = 'number';
-                totalInput.id = 'pending-transfer-total';
-                totalInput.className = 'styled-input';
-                totalInput.min = '0';
-                totalInput.step = '0.01';
-                totalInput.style.paddingLeft = '1rem';
-                const defaultTransferTotal = toSafeLocaleNumber(splitOptions.defaultTransferTotal);
-                if (defaultTransferTotal !== null && defaultTransferTotal > 0) {
-                    totalInput.value = roundNumeric(defaultTransferTotal, 2).toFixed(2);
-                }
-                totalGroup.append(totalLabel, totalInput);
-
-                const transferHint = document.createElement('div');
-                transferHint.className = 'pending-transfer-unit-price-meta';
-                transferHint.textContent = 'El unitario se calcula internamente: total / cantidad.';
-                totalGroup.appendChild(transferHint);
-
-                const originalTotal = toSafeLocaleNumber(splitOptions.originalTransferTotal);
-                if (originalTotal !== null && originalTotal > 0) {
-                    const originalHint = document.createElement('div');
-                    originalHint.className = 'pending-transfer-unit-price-meta';
-                    const originalLabel = splitOptions.originalTransferTotalLabel || 'Total fiado (referencia)';
-                    const currencyLabel = splitOptions.currencyLabel || 'COP';
-                    originalHint.textContent = `${originalLabel}: ${fmtMoneyUI(originalTotal, currencyLabel)}`;
-                    totalGroup.appendChild(originalHint);
-                }
-                content.appendChild(totalGroup);
-            }
-
-            const preview = document.createElement('div');
-            preview.className = 'pending-transfer-preview';
-            const moveLine = document.createElement('div');
-            moveLine.id = 'pending-transfer-preview-move';
-            const leftLine = document.createElement('div');
-            leftLine.id = 'pending-transfer-preview-left';
-            preview.append(moveLine, leftLine);
-            content.appendChild(preview);
+        if (needsQtyTotalInput) {
+            const qtyTotalGroup = document.createElement('div');
+            qtyTotalGroup.className = 'input-group';
+            const qtyTotalLabel = document.createElement('label');
+            qtyTotalLabel.className = 'input-label';
+            qtyTotalLabel.textContent = `Cantidad total fiada (${unitLabelPlural})`;
+            qtyTotalLabel.setAttribute('for', 'pending-transfer-qty-total');
+            const qtyTotalInput = document.createElement('input');
+            qtyTotalInput.type = 'number';
+            qtyTotalInput.id = 'pending-transfer-qty-total';
+            qtyTotalInput.className = 'styled-input';
+            qtyTotalInput.min = '1';
+            qtyTotalInput.step = qtyStep;
+            qtyTotalInput.style.paddingLeft = '1rem';
+            qtyTotalInput.placeholder = 'Ej: 10';
+            qtyTotalGroup.append(qtyTotalLabel, qtyTotalInput);
+            content.appendChild(qtyTotalGroup);
         }
+
+        const canChooseQuantity = effectiveQtyTotal !== null && effectiveQtyTotal > 1;
+        const shouldRenderQuantityInput = canChooseQuantity || needsQtyTotalInput;
+        if (shouldRenderQuantityInput) {
+            let defaultQty = toSafeLocaleNumber(splitOptions.defaultQty);
+            if (defaultQty === null) defaultQty = effectiveQtyTotal;
+
+            const qtyGroup = document.createElement('div');
+            qtyGroup.className = 'input-group';
+            const qtyLabel = document.createElement('label');
+            qtyLabel.className = 'input-label';
+            if (effectiveQtyTotal !== null) {
+                const qtyTotalText = formatSplitQuantity(effectiveQtyTotal, splitOptions.unitType);
+                qtyLabel.textContent = `${splitOptions.quantityLabel || 'Cantidad a transferir'} (de ${qtyTotalText})`;
+            } else {
+                qtyLabel.textContent = splitOptions.quantityLabel || 'Cantidad a transferir';
+            }
+            qtyLabel.setAttribute('for', 'pending-transfer-qty');
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.id = 'pending-transfer-qty';
+            qtyInput.className = 'styled-input';
+            qtyInput.min = '1';
+            if (effectiveQtyTotal !== null) {
+                const clampedDefaultQty = Math.max(
+                    1,
+                    Math.min(
+                        effectiveQtyTotal,
+                        qtyPrecision === 0 ? Math.round(defaultQty ?? effectiveQtyTotal) : roundNumeric(defaultQty ?? effectiveQtyTotal, 2)
+                    )
+                );
+                qtyInput.max = String(qtyPrecision === 0 ? Math.round(effectiveQtyTotal) : roundNumeric(effectiveQtyTotal, 2));
+                qtyInput.value = formatQuantityValue(clampedDefaultQty, qtyPrecision);
+            } else if (defaultQty !== null && defaultQty > 0) {
+                qtyInput.value = formatQuantityValue(defaultQty, isIntegerLike(defaultQty) ? 0 : 2);
+            }
+            qtyInput.step = qtyStep;
+            qtyInput.style.paddingLeft = '1rem';
+            qtyGroup.append(qtyLabel, qtyInput);
+            content.appendChild(qtyGroup);
+        }
+
+        if (splitOptions.showTransferTotal) {
+            const totalGroup = document.createElement('div');
+            totalGroup.className = 'input-group';
+            const totalLabel = document.createElement('label');
+            totalLabel.className = 'input-label';
+            totalLabel.textContent = splitOptions.transferTotalLabel || 'Monto total transferido';
+            totalLabel.setAttribute('for', 'pending-transfer-total');
+            const totalInput = document.createElement('input');
+            totalInput.type = 'number';
+            totalInput.id = 'pending-transfer-total';
+            totalInput.className = 'styled-input';
+            totalInput.min = '0';
+            totalInput.step = '0.01';
+            totalInput.style.paddingLeft = '1rem';
+            const defaultTransferTotal = toSafeLocaleNumber(splitOptions.defaultTransferTotal);
+            if (defaultTransferTotal !== null && defaultTransferTotal > 0) {
+                totalInput.value = roundNumeric(defaultTransferTotal, 2).toFixed(2);
+            }
+            totalGroup.append(totalLabel, totalInput);
+
+            const transferHint = document.createElement('div');
+            transferHint.className = 'pending-transfer-unit-price-meta';
+            transferHint.textContent = 'El unitario se calcula internamente: total / cantidad.';
+            totalGroup.appendChild(transferHint);
+
+            const originalTotal = toSafeLocaleNumber(splitOptions.originalTransferTotal);
+            if (originalTotal !== null && originalTotal > 0) {
+                const originalHint = document.createElement('div');
+                originalHint.className = 'pending-transfer-unit-price-meta';
+                const originalLabel = splitOptions.originalTransferTotalLabel || 'Total fiado (referencia)';
+                const currencyLabel = splitOptions.currencyLabel || 'COP';
+                originalHint.textContent = `${originalLabel}: ${fmtMoneyUI(originalTotal, currencyLabel)}`;
+                totalGroup.appendChild(originalHint);
+            }
+            content.appendChild(totalGroup);
+        }
+
+        const preview = document.createElement('div');
+        preview.className = 'pending-transfer-preview';
+        const moveLine = document.createElement('div');
+        moveLine.id = 'pending-transfer-preview-move';
+        const leftLine = document.createElement('div');
+        leftLine.id = 'pending-transfer-preview-left';
+        preview.append(moveLine, leftLine);
+        content.appendChild(preview);
     }
 
     const cancelBtn = document.createElement('button');
@@ -4900,6 +4945,7 @@ function openTransferMetaModal(options = {}) {
         }
 
         const splitOptions = options.split && typeof options.split === 'object' ? options.split : null;
+        const qtyTotalInput = modal.querySelector('#pending-transfer-qty-total');
         const qtyInput = modal.querySelector('#pending-transfer-qty');
         const transferTotalInput = modal.querySelector('#pending-transfer-total');
         const previewMove = modal.querySelector('#pending-transfer-preview-move');
@@ -4907,15 +4953,28 @@ function openTransferMetaModal(options = {}) {
 
         const updateSplitPreview = () => {
             if (!splitOptions?.enabled || !previewMove || !previewLeft) return;
-            const qtyTotalRaw = toSafeLocaleNumber(splitOptions.qtyTotal);
-            if (qtyTotalRaw === null || qtyTotalRaw < 1) return;
+            const qtyTotalFixed = toSafeLocaleNumber(splitOptions.qtyTotal);
+            const qtyTotalDraft = toSafeLocaleNumber(qtyTotalInput?.value);
+            const qtyTotalRaw = qtyTotalFixed !== null ? qtyTotalFixed : qtyTotalDraft;
+            if (qtyTotalRaw === null || qtyTotalRaw < 1) {
+                previewMove.textContent = 'Define la cantidad total fiada para calcular la transferencia por cantidad.';
+                previewLeft.textContent = '';
+                return;
+            }
 
             const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
+            if (qtyInput) {
+                qtyInput.max = String(qtyPrecision === 0 ? Math.round(qtyTotalRaw) : roundNumeric(qtyTotalRaw, 2));
+                qtyInput.step = qtyPrecision === 0 ? '1' : '0.01';
+            }
             // V9.8.1: Si qtyTotal=1, no hay input de cantidad; asumir transfer total
             let qtyMove = qtyInput ? toSafeLocaleNumber(qtyInput.value) : qtyTotalRaw;
             if (qtyMove === null) qtyMove = qtyTotalRaw;
             qtyMove = qtyPrecision === 0 ? Math.round(qtyMove) : roundNumeric(qtyMove, 2);
             qtyMove = Math.max(1, Math.min(qtyTotalRaw, qtyMove));
+            if (qtyInput) {
+                qtyInput.value = formatQuantityValue(qtyMove, qtyPrecision);
+            }
 
             const qtyLeftRaw = Math.max(qtyTotalRaw - qtyMove, 0);
             const qtyLeft = qtyPrecision === 0 ? Math.round(qtyLeftRaw) : roundNumeric(qtyLeftRaw, 2);
@@ -4960,6 +5019,8 @@ function openTransferMetaModal(options = {}) {
             }
         };
 
+        qtyTotalInput?.addEventListener('input', updateSplitPreview);
+        qtyTotalInput?.addEventListener('blur', updateSplitPreview);
         qtyInput?.addEventListener('input', updateSplitPreview);
         qtyInput?.addEventListener('blur', updateSplitPreview);
         if (transferTotalInput && !transferTotalInput.dataset.auto) {
@@ -5000,9 +5061,17 @@ function openTransferMetaModal(options = {}) {
                 const concept = modal.querySelector('#pending-transfer-concept')?.value?.trim() || '';
                 const category = modal.querySelector('#pending-transfer-category')?.value || null;
                 const date = modal.querySelector('#pending-transfer-date')?.value || null;
+                const qtyTotal = modal.querySelector('#pending-transfer-qty-total')?.value || null;
                 const quantity = modal.querySelector('#pending-transfer-qty')?.value || null;
                 const transferTotal = modal.querySelector('#pending-transfer-total')?.value || null;
-                finalize({ confirmed: true, concept, category, date, quantity, transferTotal });
+                if (splitOptions?.requireQtyTotal) {
+                    const parsedQtyTotal = toSafeLocaleNumber(qtyTotal);
+                    if (parsedQtyTotal === null || parsedQtyTotal < 1) {
+                        notifyFacturero('⚠️ Ingresa la cantidad total fiada para continuar.', 'warning');
+                        return;
+                    }
+                }
+                finalize({ confirmed: true, concept, category, date, qtyTotal, quantity, transferTotal });
             });
         }
 
@@ -5052,26 +5121,45 @@ async function handlePendingTransfer(itemId) {
     const pendingWhoData = getWhoData('pendientes', pending, pending.concepto || '');
     const defaultTransferConcept = pendingWhoData.concept || pending.concepto || (destination === 'income' ? 'Pagado' : 'Pérdida');
     const splitDraftBase = computePendingSplitDraft(pending, destination);
+    const pendingQtyResolved = resolvePendingQuantity(pending);
     const pendingCurrencyLabel = (() => {
         const raw = String(pending?.currency || '').trim().toUpperCase();
         return SUPPORTED_CURRENCIES[raw] ? raw : 'COP';
     })();
-    const splitConfig = splitDraftBase.enabled ? {
-        enabled: true,
-        qtyTotal: splitDraftBase.qtyTotal,
-        defaultQty: splitDraftBase.qtyTotal,
-        unitType: splitDraftBase.unitType,
-        originLabel: 'Fiados',
-        destinationLabel: destination === 'income' ? 'Pagados' : 'Pérdidas',
-        showTransferTotal: destination === 'income',
-        defaultTransferTotal: splitDraftBase.transferAmount,
-        quantityLabel: 'Cantidad a transferir',
-        transferTotalLabel: 'Monto total transferido',
-        currencyLabel: pendingCurrencyLabel,
-        originalTransferTotal: toSafeLocaleNumber(pending?.monto),
-        originalTransferTotalLabel: 'Total fiado (referencia)',
-        sourceAmount: toSafeLocaleNumber(pending?.monto)
-    } : null;
+    const splitUnitType = String(splitDraftBase.unitType || pendingQtyResolved.unitType || pending.unit_type || '').trim().toLowerCase();
+    const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
+    const needsQtyTotalInput = destination === 'income' && !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
+    let splitConfig = null;
+    if (destination === 'income' && !!splitUnitType) {
+        splitConfig = {
+            enabled: true,
+            qtyTotal: splitQtyTotal,
+            defaultQty: splitQtyTotal,
+            requireQtyTotal: needsQtyTotalInput,
+            unitType: splitUnitType,
+            originLabel: 'Fiados',
+            destinationLabel: 'Pagados',
+            showTransferTotal: true,
+            defaultTransferTotal: splitDraftBase.transferAmount,
+            quantityLabel: 'Cantidad a transferir',
+            transferTotalLabel: 'Monto total transferido',
+            currencyLabel: pendingCurrencyLabel,
+            originalTransferTotal: toSafeLocaleNumber(pending?.monto),
+            originalTransferTotalLabel: 'Total fiado (referencia)',
+            sourceAmount: toSafeLocaleNumber(pending?.monto)
+        };
+    } else if (destination === 'losses' && splitDraftBase.enabled) {
+        splitConfig = {
+            enabled: true,
+            qtyTotal: splitDraftBase.qtyTotal,
+            defaultQty: splitDraftBase.qtyTotal,
+            unitType: splitDraftBase.unitType,
+            originLabel: 'Fiados',
+            destinationLabel: 'Pérdidas',
+            showTransferTotal: false,
+            sourceAmount: toSafeLocaleNumber(pending?.monto)
+        };
+    }
 
     // Then show meta modal for date/category
     const decision = await openTransferMetaModal({

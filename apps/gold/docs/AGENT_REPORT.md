@@ -13,6 +13,7 @@
 - UI Paso 2 de transferencia:
   - `Cantidad a transferir` (cuando hay más de 1 unidad disponible).
   - Input explícito `Monto total transferido` (`#pending-transfer-total`).
+  - Para legacy sin `unit_qty`: input `Cantidad total fiada` (`#pending-transfer-qty-total`) y desde allí habilita cálculo por cantidad.
   - Hint: `El unitario se calcula internamente: total / cantidad`.
 - Preview:
   - usa prorrateo automático como sugerencia.
@@ -21,6 +22,7 @@
   - payload envía `transferTotal` (sin campo `unitPrice`).
 - Cálculo:
   - `computePendingSplitDraft` prioriza únicamente `decision.transferTotal` para ingresos.
+  - `computePendingSplitDraft` ahora también acepta `decision.qtyTotal` (fallback legacy) y toma cantidad desde `unit_qty` / `split_meta.qty_total`.
   - mantiene clamp anti-inflado: no permitir `transferAmount > sourceAmount`.
 - Detalle visual:
   - `Total fiado` se muestra con `fmtMoneyUI(...)` y moneda real.
@@ -33,6 +35,9 @@
   - Pagados: 5 sacos, 200000 COP.
   - Fiados: 5 sacos, 300000 COP.
   - Sin input de precio unitario.
+- En fiados legacy sin cantidad persistida:
+  - el modal pide primero `Cantidad total fiada`,
+  - luego permite `Cantidad a transferir` + `Monto total transferido` en el mismo flujo.
 
 ## 🆕 SESIÓN: GATE 0 + FIX UI CANTIDAD EN WIZARD NUEVO (2026-02-27)
 
