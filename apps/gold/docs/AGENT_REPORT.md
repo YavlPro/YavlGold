@@ -1,5 +1,39 @@
 ---
 
+## 🆕 SESIÓN: FIX QUIRÚRGICO — Transferir a Pagados con monto GLOBAL (2026-02-27)
+
+### Diagnóstico
+
+- En Paso 2 del wizard de transferencia persistía semántica heredada de `unitPrice` en IDs/variables, aunque la etiqueta visual era “Monto total transferido”.
+- El objetivo funcional era explícito: decidir `cantidad + monto total global`, sin pedir precio unitario manual.
+
+### Cambios aplicados
+
+1) `apps/gold/agro/agro.js`
+- UI Paso 2 de transferencia:
+  - `Cantidad a transferir` (cuando hay más de 1 unidad disponible).
+  - Input explícito `Monto total transferido` (`#pending-transfer-total`).
+  - Hint: `El unitario se calcula internamente: total / cantidad`.
+- Preview:
+  - usa prorrateo automático como sugerencia.
+  - respeta monto total manual cuando el usuario lo edita.
+- Cierre del modal:
+  - payload envía `transferTotal` (sin campo `unitPrice`).
+- Cálculo:
+  - `computePendingSplitDraft` prioriza únicamente `decision.transferTotal` para ingresos.
+  - mantiene clamp anti-inflado: no permitir `transferAmount > sourceAmount`.
+- Detalle visual:
+  - `Total fiado` se muestra con `fmtMoneyUI(...)` y moneda real.
+  - ajuste de `dataset.auto` explícito (sin ternario redundante).
+  - cuando no quedan unidades pero hay diferencia de monto, preview muestra la diferencia real en vez de forzar `0`.
+
+### Resultado esperado
+
+- Ejemplo: 10 sacos, 500000 COP -> transferir 5 sacos y 200000 COP:
+  - Pagados: 5 sacos, 200000 COP.
+  - Fiados: 5 sacos, 300000 COP.
+  - Sin input de precio unitario.
+
 ## 🆕 SESIÓN: GATE 0 + FIX UI CANTIDAD EN WIZARD NUEVO (2026-02-27)
 
 ### Diagnóstico confirmado
