@@ -2439,26 +2439,24 @@ function formatSplitMetaSummary(item, tabName, options = {}) {
     const qtyTotalText = formatSplitQuantity(meta.qty_total, meta.unit_type);
     const fromLabel = formatSplitStateLabel(meta.from_state, 'Fiados');
     const toLabel = formatSplitStateLabel(meta.to_state || tabName, 'Destino');
-    const priceTransfer = toSafeLocaleNumber(meta.unit_price_transfer);
     const amountMoved = toSafeLocaleNumber(meta.amount_moved);
+    const amountLeft = toSafeLocaleNumber(meta.amount_left);
+    const amountMovedText = amountMoved !== null ? `$${roundNumeric(amountMoved, 2).toFixed(2)}` : null;
+    const amountLeftText = amountLeft !== null ? `$${roundNumeric(amountLeft, 2).toFixed(2)}` : null;
 
     if (mode === 'md') {
-        const pricePart = priceTransfer !== null && priceTransfer > 0
-            ? ` @ $${roundNumeric(priceTransfer, 2).toFixed(2)}/u`
-            : '';
-        const amountPart = amountMoved !== null
-            ? ` -> $${roundNumeric(amountMoved, 2).toFixed(2)}`
-            : '';
+        const amountMovedPart = amountMovedText ? ` -> ${amountMovedText}` : '';
+        const amountLeftPart = amountLeftText ? ` -> ${amountLeftText}` : '';
         if (meta.role === 'destination') {
-            return `Transferido parcial: ${qtyMovedText} de ${qtyTotalText}${pricePart}${amountPart}. Quedan ${qtyLeftText} en ${fromLabel}.`;
+            return `Transferido parcial: ${qtyMovedText} de ${qtyTotalText}${amountMovedPart}. Quedan ${qtyLeftText} en ${fromLabel}${amountLeftPart}.`;
         }
-        return `Restante tras transferencia parcial: ${qtyLeftText} (de ${qtyTotalText}). Se movieron ${qtyMovedText} a ${toLabel}.`;
+        return `Restante tras transferencia parcial: ${qtyLeftText} (de ${qtyTotalText})${amountLeftPart}. Se movieron ${qtyMovedText} a ${toLabel}${amountMovedPart}.`;
     }
 
     if (meta.role === 'destination') {
-        return `Split parcial: movidos ${qtyMovedText} • quedan ${qtyLeftText} en ${fromLabel}`;
+        return `Split parcial: movidos ${qtyMovedText}${amountMovedText ? ` (${amountMovedText})` : ''} • quedan ${qtyLeftText}${amountLeftText ? ` (${amountLeftText})` : ''} en ${fromLabel}`;
     }
-    return `Restante split: quedan ${qtyLeftText} • movidos ${qtyMovedText} a ${toLabel}`;
+    return `Restante split: quedan ${qtyLeftText}${amountLeftText ? ` (${amountLeftText})` : ''} • movidos ${qtyMovedText}${amountMovedText ? ` (${amountMovedText})` : ''} a ${toLabel}`;
 }
 
 function computePendingSplitDraft(pending, destination, decision = {}) {
@@ -2509,31 +2507,42 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
     const qtyLeft = base.qtyPrecision === 0 ? Math.round(qtyLeftRaw) : roundNumeric(qtyLeftRaw, 2);
 
     const unitPriceOriginal = base.unitPriceOriginal;
-    const defaultTransferPrice = unitPriceOriginal !== null ? unitPriceOriginal : sourceAmount;
-    let unitPriceTransfer = defaultTransferPrice;
-    if (destination === 'income') {
-        const parsedPrice = toSafeLocaleNumber(decision?.unitPrice);
-        if (parsedPrice !== null) unitPriceTransfer = parsedPrice;
-        if (!(unitPriceTransfer > 0)) {
-            base.error = 'El precio unitario debe ser mayor a 0.';
-            return base;
-        }
-    }
-
+    const transferTotalInput = toSafeLocaleNumber(decision?.transferTotal ?? decision?.unitPrice);
+    const ratio = qtyTotal > 0 ? (qtyTransfer / qtyTotal) : 1;
+    const defaultRatioAmount = roundNumeric(sourceAmount * ratio, 2);
     let transferAmount = sourceAmount;
+
     if (destination === 'income') {
-        transferAmount = roundNumeric(qtyTransfer * unitPriceTransfer, 2);
+        if (transferTotalInput !== null) {
+            if (!(transferTotalInput > 0)) {
+                base.error = 'El monto total transferido debe ser mayor a 0.';
+                return base;
+            }
+            if (transferTotalInput - sourceAmount > 1e-9) {
+                base.error = 'El monto total transferido no puede superar el total fiado.';
+                return base;
+            }
+            transferAmount = roundNumeric(transferTotalInput, 2);
+        } else {
+            transferAmount = defaultRatioAmount;
+        }
     } else if (unitPriceOriginal !== null) {
         transferAmount = roundNumeric(qtyTransfer * unitPriceOriginal, 2);
     } else if (qtyTotal > 0) {
-        transferAmount = roundNumeric(sourceAmount * (qtyTransfer / qtyTotal), 2);
+        transferAmount = roundNumeric(sourceAmount * ratio, 2);
     }
 
     const remainingAmount = qtyLeft > 0
-        ? (unitPriceOriginal !== null
+        ? (destination === 'income'
+            ? roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2)
+            : unitPriceOriginal !== null
             ? roundNumeric(qtyLeft * unitPriceOriginal, 2)
             : roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2))
         : 0;
+
+    const unitPriceTransfer = qtyTransfer > 0
+        ? roundNumeric(transferAmount / qtyTransfer, 6)
+        : null;
 
     const kgTotal = toSafeLocaleNumber(pending?.quantity_kg);
     let transferKgQty = kgTotal;
@@ -4728,7 +4737,7 @@ function buildTransferMetaModal(options = {}) {
                 priceGroup.className = 'input-group';
                 const priceLabel = document.createElement('label');
                 priceLabel.className = 'input-label';
-                priceLabel.textContent = splitOptions.unitPriceLabel || 'Precio unitario transferido';
+                priceLabel.textContent = splitOptions.unitPriceLabel || 'Monto total transferido';
                 priceLabel.setAttribute('for', 'pending-transfer-unit-price');
                 const priceInput = document.createElement('input');
                 priceInput.type = 'number';
@@ -4747,9 +4756,9 @@ function buildTransferMetaModal(options = {}) {
                 if (originalUnitPrice !== null && originalUnitPrice > 0) {
                     const originalHint = document.createElement('div');
                     originalHint.className = 'pending-transfer-unit-price-meta';
-                    const originalLabel = splitOptions.originalUnitPriceLabel || 'Precio unitario original (fiado)';
+                    const originalLabel = splitOptions.originalUnitPriceLabel || 'Total fiado (referencia)';
                     const currencyLabel = splitOptions.currencyLabel || 'COP';
-                    originalHint.textContent = `${originalLabel}: ${fmtMoneyUI(originalUnitPrice, currencyLabel)}/u`;
+                    originalHint.textContent = `${originalLabel}: ${fmtMoneyUI(originalUnitPrice, currencyLabel)}`;
                     priceGroup.appendChild(originalHint);
                 }
                 content.appendChild(priceGroup);
@@ -4816,21 +4825,44 @@ function openTransferMetaModal(options = {}) {
             const destinationLabel = splitOptions.destinationLabel || 'Destino';
             const originLabel = splitOptions.originLabel || 'Fiados';
             const currencyLabel = splitOptions.currencyLabel || 'COP';
+            const sourceAmount = toSafeLocaleNumber(splitOptions.sourceAmount);
+            const ratioAmount = sourceAmount !== null && qtyTotalRaw > 0
+                ? roundNumeric(sourceAmount * (qtyMove / qtyTotalRaw), 2)
+                : null;
+
+            if (unitPriceInput && unitPriceInput.dataset.auto !== '0' && ratioAmount !== null) {
+                unitPriceInput.value = ratioAmount.toFixed(2);
+            }
 
             let amountHint = '';
-            const unitPrice = toSafeLocaleNumber(unitPriceInput?.value);
-            if (unitPrice !== null && unitPrice > 0) {
-                const total = roundNumeric(qtyMove * unitPrice, 2);
-                amountHint = ` · Total: ${fmtMoneyUI(total, currencyLabel)}`;
+            let transferTotal = toSafeLocaleNumber(unitPriceInput?.value);
+            if (transferTotal === null && ratioAmount !== null) {
+                transferTotal = ratioAmount;
+            }
+
+            if (transferTotal !== null && transferTotal > 0) {
+                amountHint = ` · Total: ${fmtMoneyUI(transferTotal, currencyLabel)}`;
             }
 
             previewMove.textContent = `Se moverán ${qtyMoveText} a ${destinationLabel}${amountHint}.`;
-            previewLeft.textContent = `Quedarán ${qtyLeftText} en ${originLabel}.`;
+
+            let remainingHint = '';
+            if (sourceAmount !== null && transferTotal !== null && transferTotal >= 0) {
+                const leftAmount = roundNumeric(Math.max(sourceAmount - transferTotal, 0), 2);
+                remainingHint = ` · Total: ${fmtMoneyUI(leftAmount, currencyLabel)}`;
+            }
+            previewLeft.textContent = `Quedarán ${qtyLeftText} en ${originLabel}${remainingHint}.`;
         };
 
         qtyInput?.addEventListener('input', updateSplitPreview);
         qtyInput?.addEventListener('blur', updateSplitPreview);
-        unitPriceInput?.addEventListener('input', updateSplitPreview);
+        if (unitPriceInput) {
+            unitPriceInput.dataset.auto = unitPriceInput.value ? '1' : '1';
+        }
+        unitPriceInput?.addEventListener('input', () => {
+            unitPriceInput.dataset.auto = '0';
+            updateSplitPreview();
+        });
         unitPriceInput?.addEventListener('blur', updateSplitPreview);
         updateSplitPreview();
 
@@ -4863,8 +4895,8 @@ function openTransferMetaModal(options = {}) {
                 const category = modal.querySelector('#pending-transfer-category')?.value || null;
                 const date = modal.querySelector('#pending-transfer-date')?.value || null;
                 const quantity = modal.querySelector('#pending-transfer-qty')?.value || null;
-                const unitPrice = modal.querySelector('#pending-transfer-unit-price')?.value || null;
-                finalize({ confirmed: true, concept, category, date, quantity, unitPrice });
+                const transferTotal = modal.querySelector('#pending-transfer-unit-price')?.value || null;
+                finalize({ confirmed: true, concept, category, date, quantity, transferTotal, unitPrice: transferTotal });
             });
         }
 
@@ -4926,14 +4958,13 @@ async function handlePendingTransfer(itemId) {
         originLabel: 'Fiados',
         destinationLabel: destination === 'income' ? 'Pagados' : 'Pérdidas',
         showUnitPrice: destination === 'income',
-        defaultUnitPrice: splitDraftBase.unitPriceOriginal !== null
-            ? splitDraftBase.unitPriceOriginal
-            : (toSafeLocaleNumber(pending?.monto) ?? 0),
+        defaultUnitPrice: splitDraftBase.transferAmount,
         quantityLabel: 'Cantidad a transferir',
-        unitPriceLabel: 'Precio unitario (pagado)',
+        unitPriceLabel: 'Monto total transferido',
         currencyLabel: pendingCurrencyLabel,
-        originalUnitPrice: splitDraftBase.unitPriceOriginal,
-        originalUnitPriceLabel: 'Precio unitario original (fiado)'
+        originalUnitPrice: toSafeLocaleNumber(pending?.monto),
+        originalUnitPriceLabel: 'Total fiado (referencia)',
+        sourceAmount: toSafeLocaleNumber(pending?.monto)
     } : null;
 
     // Then show meta modal for date/category
@@ -4945,7 +4976,7 @@ async function handlePendingTransfer(itemId) {
         rows: [
             { label: 'Concepto', value: pending.concepto || 'Sin concepto' },
             { label: 'Cliente', value: pending.cliente || 'N/A' },
-            { label: 'Monto', value: `$${Number(pending.monto || 0).toFixed(2)}` },
+            { label: 'Total fiado', value: `$${Number(pending.monto || 0).toFixed(2)}` },
             { label: 'Fecha fiado', value: pending.fecha || 'N/A' }
         ],
         showConcept: true,
@@ -4991,20 +5022,23 @@ async function handlePendingTransfer(itemId) {
         summaryRows.push({ label: 'Categoría', value: decision.category || 'ventas' });
     }
     if (splitDraft.enabled) {
-        summaryRows.push(
-            { label: 'Cantidad total', value: formatSplitQuantity(splitDraft.qtyTotal, splitDraft.unitType) },
-            { label: 'Cantidad a transferir', value: formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType) },
-            { label: 'Cantidad restante', value: formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType) }
-        );
-    }
-    summaryRows.push({
-        label: 'Total transferido',
-        value: fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)
-    });
-    if (splitDraft.enabled && splitDraft.isPartial) {
+        const movedQtyText = formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType);
+        const leftQtyText = formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType);
+        summaryRows.push({ label: 'Cantidad total fiada', value: formatSplitQuantity(splitDraft.qtyTotal, splitDraft.unitType) });
         summaryRows.push({
-            label: 'Total restante en Fiados',
-            value: fmtMoneyUI(splitDraft.remainingAmount || 0, summaryCurrencyLabel)
+            label: 'Transferidos',
+            value: `${movedQtyText} -> Total: ${fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)}`
+        });
+        if (splitDraft.isPartial) {
+            summaryRows.push({
+                label: 'Quedan fiados',
+                value: `${leftQtyText} -> Total: ${fmtMoneyUI(splitDraft.remainingAmount || 0, summaryCurrencyLabel)}`
+            });
+        }
+    } else {
+        summaryRows.push({
+            label: 'Monto transferido',
+            value: fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)
         });
     }
 

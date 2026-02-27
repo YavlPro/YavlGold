@@ -1,5 +1,102 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Fiado→Pagado sin inflación (Sr. Barriga + Chavo) (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) **Mapa MPA (Vite + Vercel)**
+- `apps/gold/vite.config.js`: entrada MPA activa para `dashboard`, `agro`, `crypto`, etc.
+- `apps/gold/vercel.json`: clean URLs + rewrites para `/agro`, `/crypto`, `/dashboard`, `/tecnologia`.
+- `apps/gold/index.html`: navegación por cards (`./agro/`, `./crypto/`, `./herramientas/`) y enlace a `/dashboard/`.
+- `apps/gold/dashboard/index.html`: carga con `auth-guard.js` + `main.js`.
+
+2) **Supabase/Auth**
+- Cliente: `apps/gold/assets/js/config/supabase-config.js`.
+- Auth runtime: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`.
+- Guard dashboard: `apps/gold/dashboard/auth-guard.js`.
+
+3) **Dashboard datos**
+- Consultas activas: `profiles`, `modules`, `user_favorites`, `notifications`.
+- Managers activos: `announcements`, `feedback`.
+- Tracker local disponible: `YG_ACTIVITY_V1` (`apps/gold/assets/js/utils/activityTracker.js`).
+- Progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) existe en `assets/js/academia.js` pero no integrado en insights del dashboard principal.
+
+4) **Clima/Agro**
+- Prioridad de ubicación confirmada en runtime: `Manual > GPS > IP` en `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`).
+- Uso de clima en `apps/gold/agro/dashboard.js` (`initWeather`, `fetchWeather`, `displayWeather`).
+- Keys confirmadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+- Debug de geolocalización ya disponible por `?debug=1` o `localStorage.YG_GEO_DEBUG=1`.
+
+5) **Crypto estado real**
+- `apps/gold/crypto/index.html` + `apps/gold/crypto/crypto.js` están integrados al build MPA y consumen market data pública (Binance/FNG).
+- Existen artefactos legacy en la carpeta (`index_old.html`, backups, README legado), pero no son el flujo oficial de build.
+
+6) **Causa raíz del bug Sr. Barriga**
+- En `apps/gold/agro/agro.js`, función `computePendingSplitDraft(...)`, el flujo de Fiado→Pagado interpretaba el input como unitario y calculaba `transferAmount` multiplicando por cantidad.
+- En el wizard (paso de detalles) el label era “Precio unitario (pagado)”, induciendo entrada de total como si fuese unitario.
+- Resultado: montos inflados persistidos en el movimiento de pagados y en su `monto_usd`.
+
+### Plan de ejecución (quirúrgico)
+
+1) **Commit 1 — Lógica CORE (Sr. Barriga)**
+- Archivo: `apps/gold/agro/agro.js` (solo flujo de transfer wizard/apply).
+- Cambios:
+  - Interpretar el input como **monto total transferido**.
+  - Para parcial, default por prorrateo `ratio = qty_transfer / qty_total`.
+  - Derivar `unitPriceTransfer = transferAmount / qtyTransfer` solo para metadatos.
+  - Mantener `currency/exchange_rate/monto_usd` coherente usando `buildIncomeMonetaryFields(..., splitDraft.transferAmount)`.
+  - Historial split mostrando cantidad transferida/restante y monto transferido/restante.
+
+2) **Commit 2 — Copy/UI (Chavo)**
+- Archivo: `apps/gold/agro/agro.js` (copy del wizard ya embebido en JS).
+- Cambios:
+  - “Precio unitario” -> “Monto total transferido”.
+  - Paso 3 con resumen explícito:
+    - `Transferidos: X -> Total: $YYY`
+    - `Quedan fiados: Z -> Total: $WWW`
+
+3) **Documentación**
+- Actualizar `apps/gold/docs/AGENT_REPORT.md` con Gate 0 + cierre y evidencia.
+
+### Riesgos + mitigación
+
+- Riesgo: romper cálculos de transferencias no parciales.
+  - Mitigación: cambios acotados al branch de split/transfer en `computePendingSplitDraft(...)`.
+- Riesgo: inconsistencias en metadatos de split histórico.
+  - Mitigación: conservar payload `split_meta` y reforzar render de resumen con montos `amount_moved/amount_left`.
+- Riesgo: impacto en otras queries CORE.
+  - Mitigación: no se tocan queries/cálculos fuera del flujo Fiado→Pagado/Pérdidas del wizard.
+
+### Evidencia esperada
+
+- Smoke:
+  - `5 sacos / 200000` -> mover `3` => `120000` pagado, `80000` restante.
+  - `10 sacos / 500000` -> mover `8` => `400000` pagado, `100000` restante.
+  - `monto_usd` coherente con `currency/exchange_rate`.
+- Gate build:
+  - `pnpm build:gold` PASS.
+
+### Cierre (evidencia)
+
+- Archivos modificados:
+  - `apps/gold/agro/agro.js`
+    - `computePendingSplitDraft(...)`: el input del wizard se interpreta como **monto total transferido** (no unitario), con default por ratio en transferencias parciales.
+    - `openTransferMetaModal(...)` y bloque split del wizard: label/copy migrado a total y preview con totales movido/restante.
+    - Paso 3: resumen explícito `Transferidos -> Total` y `Quedan fiados -> Total`.
+    - Historial split: texto reforzado para incluir cantidad transferida/restante y montos transferido/restante.
+  - `apps/gold/docs/AGENT_REPORT.md`
+    - Gate 0 + plan + riesgos + cierre de esta sesión.
+
+- Build gate:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+
+- Smoke manual (pendiente operador UI):
+  - [ ] `5 sacos / 200000` -> transferir `3` => `120000` pagado, `80000` fiado.
+  - [ ] `10 sacos / 500000` -> transferir `8` => `400000` pagado, `100000` fiado.
+  - [ ] Verificar `monto_usd` consistente y sin duplicación de conversión.
+
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Avatar editable en Perfil Agricultor (2026-02-27)
 
 ### Diagnóstico breve (estado actual)
