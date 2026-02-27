@@ -1196,10 +1196,11 @@ function formatUnitQty(value) {
 function formatUnitSummary(unitType, unitQty) {
     const unitKey = String(unitType || '').toLowerCase();
     if (!unitKey) return '';
-    const option = INCOME_UNIT_OPTIONS.find((opt) => opt.value === unitKey);
-    if (!option) return '';
     const qtyText = formatUnitQty(unitQty);
     if (!qtyText) return '';
+    const option = INCOME_UNIT_OPTIONS.find((opt) => opt.value === unitKey);
+    // V9.8.1: fallback para unit_type legacy/desconocido — muestra qty + tipo raw
+    if (!option) return `${qtyText} ${unitKey}`;
     const label = Number(qtyText) === 1 ? option.singular : option.plural;
     return `${qtyText} ${label}`;
 }
@@ -1209,6 +1210,40 @@ function formatKgSummary(value) {
     if (!Number.isFinite(num) || num <= 0) return '';
     const text = num % 1 === 0 ? String(num) : num.toFixed(2);
     return `${text} kg`;
+}
+
+/**
+ * V9.8.1: Helper para resolver cantidad (qty + unitType) de un pending con fallbacks.
+ * Prioridad: unit_qty/unit_type del item > split_meta.qty_total/unit_type
+ * @param {object} pending - Registro de agro_pending o agro_income
+ * @param {object|null} splitMetaParsed - split_meta ya parseado (opcional)
+ * @returns {{ qtyTotal: number|null, unitType: string, hasQty: boolean }}
+ */
+function resolvePendingQuantity(pending, splitMetaParsed) {
+    try {
+        const unitQty = toSafeLocaleNumber(pending?.unit_qty);
+        const unitType = String(pending?.unit_type || '').trim().toLowerCase();
+        if (unitQty !== null && unitQty > 0) {
+            return { qtyTotal: unitQty, unitType, hasQty: true };
+        }
+        // Fallback: split_meta.qty_total
+        const meta = splitMetaParsed || normalizeSplitMeta(pending?.split_meta);
+        if (meta && meta.qty_total !== null && meta.qty_total > 0) {
+            return {
+                qtyTotal: meta.qty_total,
+                unitType: meta.unit_type || unitType,
+                hasQty: true
+            };
+        }
+        // Fallback: quantity_kg
+        const kgQty = toSafeLocaleNumber(pending?.quantity_kg);
+        if (kgQty !== null && kgQty > 0) {
+            return { qtyTotal: kgQty, unitType: 'kg', hasQty: true };
+        }
+        return { qtyTotal: null, unitType, hasQty: false };
+    } catch (_e) {
+        return { qtyTotal: null, unitType: '', hasQty: false };
+    }
 }
 
 function parseExpenseConceptUnitMeta(concept) {
@@ -2434,6 +2469,10 @@ function formatSplitMetaSummary(item, tabName, options = {}) {
     const meta = normalizeSplitMeta(item?.split_meta);
     if (!meta) return '';
 
+    // V9.8.1: Usar moneda del item para mostrar montos correctamente
+    const itemCurrency = String(item?.currency || meta.currency || 'COP').trim().toUpperCase();
+    const currencyLabel = SUPPORTED_CURRENCIES?.[itemCurrency] ? itemCurrency : 'COP';
+
     const qtyMovedText = formatSplitQuantity(meta.qty_moved, meta.unit_type);
     const qtyLeftText = formatSplitQuantity(meta.qty_left, meta.unit_type);
     const qtyTotalText = formatSplitQuantity(meta.qty_total, meta.unit_type);
@@ -2441,8 +2480,9 @@ function formatSplitMetaSummary(item, tabName, options = {}) {
     const toLabel = formatSplitStateLabel(meta.to_state || tabName, 'Destino');
     const amountMoved = toSafeLocaleNumber(meta.amount_moved);
     const amountLeft = toSafeLocaleNumber(meta.amount_left);
-    const amountMovedText = amountMoved !== null ? `$${roundNumeric(amountMoved, 2).toFixed(2)}` : null;
-    const amountLeftText = amountLeft !== null ? `$${roundNumeric(amountLeft, 2).toFixed(2)}` : null;
+    // V9.8.1: Mostrar monto con moneda del item, no hardcoded '$'
+    const amountMovedText = amountMoved !== null ? fmtMoneyUI(roundNumeric(amountMoved, 2), currencyLabel) : null;
+    const amountLeftText = amountLeft !== null ? fmtMoneyUI(roundNumeric(amountLeft, 2), currencyLabel) : null;
 
     if (mode === 'md') {
         const amountMovedPart = amountMovedText ? ` -> ${amountMovedText}` : '';
@@ -2463,7 +2503,8 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
     const unitType = String(pending?.unit_type || '').trim().toLowerCase();
     const qtyRaw = toSafeLocaleNumber(pending?.unit_qty);
     const sourceAmount = toSafeLocaleNumber(pending?.monto) ?? 0;
-    const splitEnabled = !!unitType && qtyRaw !== null && qtyRaw > 1;
+    // V9.8.1: qtyRaw >= 1 para incluir "1 saco" y mostrar cantidad siempre que exista
+    const splitEnabled = !!unitType && qtyRaw !== null && qtyRaw >= 1;
 
     const base = {
         enabled: splitEnabled,
@@ -2522,9 +2563,15 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
                 base.error = 'El monto total transferido no puede superar el total fiado.';
                 return base;
             }
+            // V9.8.1: transferTotalInput es el TOTAL transferido (no unitario)
             transferAmount = roundNumeric(transferTotalInput, 2);
         } else {
+            // V9.8.1: Default por prorrateo (qty_transfer / qty_total * sourceAmount)
             transferAmount = defaultRatioAmount;
+        }
+        // V9.8.1: Blindaje Sr. Barriga — clamp final para nunca superar el total fiado
+        if (transferAmount > sourceAmount + 1e-9) {
+            transferAmount = sourceAmount;
         }
     } else if (unitPriceOriginal !== null) {
         transferAmount = roundNumeric(qtyTransfer * unitPriceOriginal, 2);
@@ -2536,8 +2583,8 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
         ? (destination === 'income'
             ? roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2)
             : unitPriceOriginal !== null
-            ? roundNumeric(qtyLeft * unitPriceOriginal, 2)
-            : roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2))
+                ? roundNumeric(qtyLeft * unitPriceOriginal, 2)
+                : roundNumeric(Math.max(sourceAmount - transferAmount, 0), 2))
         : 0;
 
     const unitPriceTransfer = qtyTransfer > 0
@@ -4707,6 +4754,7 @@ function buildTransferMetaModal(options = {}) {
 
     if (splitOptions?.enabled) {
         const qtyTotalRaw = toSafeLocaleNumber(splitOptions.qtyTotal);
+        // V9.8.1: Mostrar input de cantidad solo si qtyTotal > 1 (con 1 unidad no hay elección)
         if (qtyTotalRaw !== null && qtyTotalRaw > 1) {
             const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
             const qtyStep = qtyPrecision === 0 ? '1' : '0.01';
@@ -4808,12 +4856,13 @@ function openTransferMetaModal(options = {}) {
         const previewLeft = modal.querySelector('#pending-transfer-preview-left');
 
         const updateSplitPreview = () => {
-            if (!splitOptions?.enabled || !qtyInput || !previewMove || !previewLeft) return;
+            if (!splitOptions?.enabled || !previewMove || !previewLeft) return;
             const qtyTotalRaw = toSafeLocaleNumber(splitOptions.qtyTotal);
-            if (qtyTotalRaw === null || qtyTotalRaw <= 1) return;
+            if (qtyTotalRaw === null || qtyTotalRaw < 1) return;
 
             const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
-            let qtyMove = toSafeLocaleNumber(qtyInput.value);
+            // V9.8.1: Si qtyTotal=1, no hay input de cantidad; asumir transfer total
+            let qtyMove = qtyInput ? toSafeLocaleNumber(qtyInput.value) : qtyTotalRaw;
             if (qtyMove === null) qtyMove = qtyTotalRaw;
             qtyMove = qtyPrecision === 0 ? Math.round(qtyMove) : roundNumeric(qtyMove, 2);
             qtyMove = Math.max(1, Math.min(qtyTotalRaw, qtyMove));
@@ -4849,9 +4898,15 @@ function openTransferMetaModal(options = {}) {
             let remainingHint = '';
             if (sourceAmount !== null && transferTotal !== null && transferTotal >= 0) {
                 const leftAmount = roundNumeric(Math.max(sourceAmount - transferTotal, 0), 2);
-                remainingHint = ` · Total: ${fmtMoneyUI(leftAmount, currencyLabel)}`;
+                remainingHint = leftAmount > 0 ? ` · Total: ${fmtMoneyUI(leftAmount, currencyLabel)}` : '';
             }
-            previewLeft.textContent = `Quedarán ${qtyLeftText} en ${originLabel}${remainingHint}.`;
+            if (qtyLeft > 0) {
+                previewLeft.textContent = `Quedarán ${qtyLeftText} en ${originLabel}${remainingHint}.`;
+            } else {
+                previewLeft.textContent = remainingHint
+                    ? `Quedan $0 en ${originLabel} — transferencia completa.`
+                    : `Transferencia completa de ${qtyMoveText}.`;
+            }
         };
 
         qtyInput?.addEventListener('input', updateSplitPreview);
@@ -5022,11 +5077,13 @@ async function handlePendingTransfer(itemId) {
         summaryRows.push({ label: 'Categoría', value: decision.category || 'ventas' });
     }
     if (splitDraft.enabled) {
+        // V9.8.1: Siempre mostrar cantidad total fiada + cantidad transferida/restante
         const movedQtyText = formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType);
         const leftQtyText = formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType);
         summaryRows.push({ label: 'Cantidad total fiada', value: formatSplitQuantity(splitDraft.qtyTotal, splitDraft.unitType) });
+        const transferLabel = splitDraft.isPartial ? 'Transferidos' : 'Cantidad transferida';
         summaryRows.push({
-            label: 'Transferidos',
+            label: transferLabel,
             value: `${movedQtyText} -> Total: ${fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)}`
         });
         if (splitDraft.isPartial) {
@@ -5036,6 +5093,14 @@ async function handlePendingTransfer(itemId) {
             });
         }
     } else {
+        // V9.8.1: Mostrar cantidad aunque splitEnabled=false (sin unit_type o qty < 1)
+        const fallbackQty = resolvePendingQuantity(pending);
+        if (fallbackQty.hasQty) {
+            summaryRows.push({
+                label: 'Cantidad',
+                value: formatSplitQuantity(fallbackQty.qtyTotal, fallbackQty.unitType)
+            });
+        }
         summaryRows.push({
             label: 'Monto transferido',
             value: fmtMoneyUI(splitDraft.transferAmount || 0, summaryCurrencyLabel)

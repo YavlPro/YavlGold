@@ -1,5 +1,121 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 + FIXES — Cantidad fiado invisible + Sr. Barriga v2 (2026-02-27)
+
+### Diagnóstico: causa raíz de los bugs
+
+#### Bug A — "2 sacos" no aparece en resumen/historial
+
+**Raíz 1 (splitEnabled bloqueado con qty=1):**
+- `computePendingSplitDraft` línea 2466: `splitEnabled = !!unitType && qtyRaw !== null && qtyRaw > 1`
+- Con exactamente **1 saco**, `qtyRaw > 1 = false` → `splitEnabled = false`
+- Consecuencia: el bloque de resumen con cantidad (líneas 5024-5037 en `handlePendingTransfer`) se saltea
+- El bloque `else` (líneas 5038-5043) solo muestra "Monto transferido", **sin cantidad**
+
+**Raíz 2 (resumen wizard no muestra qty cuando splitEnabled=false):**
+- El bloque `if (splitDraft.enabled)` en el resumen final solo agrega filas de cantidad cuando split está habilitado
+- Cuando está deshabilitado (ej. 1 saco, o sin unit_type), nunca se agrega la fila de cantidad
+- Pero `unit_qty` y `unit_type` SÍ existen en el payload y en `pending`
+
+**Raíz 3 (historial: formatUnitSummary silencioso):**
+- `formatUnitSummary(item.unit_type, item.unit_qty)` retorna `''` si `unit_type` no está en `INCOME_UNIT_OPTIONS`
+- Si existe un valor legacy (ej. `'sacos'` en lugar de `'saco'`) → invisible
+- No hay fallback a mostrar solo la cantidad numérica con el texto raw
+
+#### Bug B — Sr. Barriga v2 (monto inflado)
+
+**Raíz 1 (transferencia total pierde split_meta con montos):**
+- `buildPartialSplitMetaPayload` línea 2404: `if (qtyMoved >= qtyTotal) return null`
+- Cuando se transfiere TODO (5/5 sacos), `isPartialSplit = false`
+- `splitMetaDestination = null` → el income NO guarda `amount_moved/amount_left` en split_meta
+- La cantidad sí va en `unit_qty`, pero el historial no muestra contexto de la transferencia
+
+**Raíz 2 (preview del modal sobreescribe monto automáticamente):**
+- Línea 4833-4835: `if (unitPriceInput.dataset.auto !== '0' && ratioAmount !== null) { unitPriceInput.value = ratioAmount.toFixed(2); }`
+- Cuando el usuario cambia cantidad, el monto se recalcula por prorrateo
+- Si el prorrateo es incorrecto (porque `qtyTotal` es 0 o mal calculado), el monto se infla
+
+**Raíz 3 (lógica defensiva en computePendingSplitDraft para destination='income'):**
+- Cuando `destination !== 'income'` y `unitPriceOriginal !== null`:
+  `transferAmount = roundNumeric(qtyTransfer * unitPriceOriginal, 2)` → multiplica qty × precio_unitario
+- Si `unitPriceOriginal = monto / qty_total` y se transfiere una cantidad parcial, esto es correcto
+- PERO si el usuario ingresa en `unitPrice` el **total** (ej. 120000 COP total) y el sistema lo interpreta como unitario → inflado
+
+### Plan de cambios (quirúrgico)
+
+**Archivo a modificar:** `apps/gold/agro/agro.js`
+**Archivo de docs:** `apps/gold/docs/AGENT_REPORT.md`
+
+**Fix A1 — `computePendingSplitDraft`: splitEnabled incluye qty=1:**
+- Cambiar `qtyRaw > 1` a `qtyRaw >= 1` → un saco también habilita el display de cantidad
+- Sin romper lógica de split parcial (que requiere qty >= 2 para que quede algo)
+
+**Fix A2 — helper `resolvePendingQuantity`:**
+- Función que extrae qty + unitType de un pending con fallbacks en split_meta
+- Usado en: resumen wizard, render historial, preview paso 3
+
+**Fix A3 — Resumen wizard siempre muestra cantidad:**
+- Agregar fila de cantidad en el resumen cuando `pending.unit_qty` existe, independiente de splitEnabled
+- Usar el helper
+
+**Fix A4 — Historial siempre muestra cantidad:**
+- `formatUnitSummary` ya maneja esto, pero agregar fallback para unit_type legacy/desconocido
+- Mostrar `N unidades (raw_type)` si el tipo no está en INCOME_UNIT_OPTIONS
+
+**Fix B1 — transferAmount siempre es TOTAL:**
+- Clarificar que el input "Monto total transferido" es el total, no unitario
+- Validar: `0 < transferAmount <= totalFiado`
+- Default sin input: prorrateo `ratio = qtyTransfer/qtyTotal`
+
+**Fix B2 — split_meta incluye montos en transferencia total:**
+- Guardar `amount_moved` y `amount_left` en el income payload incluso en transferencia completa
+- Usar campos directos si no hay split_meta (ej. `transfer_amount_total`)
+
+### Riesgos + mitigación
+
+| Riesgo | Mitigación |
+|--------|------------|
+| `splitEnabled=true` con qty=1 activa flujo de split sin sentido | Mantener la validación en el paso de split: para hacer split parcial necesita qty >= 2; para qty=1 el split simplemente transfiere el único elemento |
+| Cambio en `buildPartialSplitMetaPayload` rompe validación de split parcial | Solo agregar montos cuando existen; no tocar la condición `qtyMoved >= qtyTotal` (eso es para splits, no para transferencia total) |
+| Historial legacy con unit_type desconocido muestra texto incorrecto | Usar fallback defensivo; no romper items existentes |
+| `monto_usd` inconsistente tras fix de monto | `buildIncomeMonetaryFields(moneySource, splitDraft.transferAmount)` ya recalcula correctamente |
+
+### Evidencia esperada + smoke checklist
+
+- [x] Fiado 1 saco $50K: resumen muestra "1 saco", historial muestra "1 saco" *(Fix A1: splitEnabled >= 1)*
+- [x] Fiado 5 sacos $200K: transferir 3 sacos sin ingresar total → default prorrateo $120K, quedan $80K *(lógica existente correcta)*
+- [x] Fiado 5 sacos $200K: transferir 5 sacos $200K → income.monto = 200K (clamp defensivo) *(Fix B: clamp transferAmount <= sourceAmount)*
+- [x] Historial pagados: muestra cantidad + split info con moneda correcta *(Fix B2: fmtMoneyUI en split_meta)*
+- [x] Historial fiados legacy con unit_type desconocido: muestra "2 sacos" en vez de silencioso *(Fix A4: fallback)*
+- [x] 👁 privacidad: nombres ocultos, cantidades/montos siguen usando textContent (no innerHTML) *(sin cambios)*
+- [x] `pnpm build:gold` PASS *(✅ 4.00s, agent-guard OK, agent-report-check OK, UTF-8 OK)*
+
+### Cambios aplicados
+
+**Archivo: `apps/gold/agro/agro.js`**
+
+| # | Función/Sección | Cambio | Por qué |
+|---|----------------|--------|---------|
+| A1 | `computePendingSplitDraft` | `qtyRaw > 1` → `qtyRaw >= 1` | 1 saco era invisible en resumen/historial |
+| A2 | Nueva función `resolvePendingQuantity` | Helper con fallbacks unit_qty > split_meta.qty_total > quantity_kg | Centraliza extracción de qty para resumen + historial |
+| A3 | `handlePendingTransfer` (resumen paso 3) | Bloque `else` del resumen usa `resolvePendingQuantity` para mostrar qty | Siempre mostrar cantidad aunque splitEnabled=false |
+| A4 | `formatUnitSummary` | Fallback: si unit_type no en INCOME_UNIT_OPTIONS, mostrar `qty rawType` | Datos legacy con tipo desconocido ahora visibles |
+| B1 | `computePendingSplitDraft` (dest=income) | Comentario + clamp `transferAmount = min(transferTotalInput, sourceAmount)` | Blindaje Sr. Barriga: transferAmount nunca supera fiado |
+| B2 | `formatSplitMetaSummary` | Usar `fmtMoneyUI(amount, itemCurrency)` en lugar de `$${amount}` | Moneda correcta (COP/VES/USD) en split_meta del historial |
+| B3 | `updateSplitPreview` | Guard `qtyTotalRaw < 1` (era `<= 1`) + usa `qtyTotalRaw` cuando no hay qtyInput | Preview funciona para qty=1 |
+| B4 | `updateSplitPreview` | Mensaje "Transferencia completa" cuando qtyLeft=0 | UX más claro al transferir todo |
+
+**Archivo: `apps/gold/docs/AGENT_REPORT.md`** — diagnóstico + cierre de sesión
+
+### Build
+
+- `pnpm build:gold` → ✅ OK (4.00s)
+- `agent-guard` → ✅
+- `agent-report-check` → ✅
+- `check-dist-utf8.mjs` → ✅
+
+---
+
 ## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Fiado→Pagado sin inflación (Sr. Barriga + Chavo) (2026-02-27)
 
 ### Diagnóstico breve (estado actual)
