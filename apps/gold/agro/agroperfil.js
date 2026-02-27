@@ -21,6 +21,7 @@ const PROFILE_PUBLIC_PREVIEW_BUTTON_ID = 'btn-open-agro-public-profile';
 const LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const MAX_LOCAL_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_AVATAR_EMOJI = '👨‍🌾';
+const SAFE_DATA_IMAGE_RE = /^data:(image\/(?:png|jpeg|jpg|webp|gif|avif));base64,([a-z0-9+/=\s]+)$/i;
 
 const PROFILE_FIELD_IDS = [
     'display_name',
@@ -224,10 +225,24 @@ function clearLocalAvatar(userId) {
     }
 }
 
+function normalizeDataImageUrl(value) {
+    const raw = String(value || '').trim();
+    const match = raw.match(SAFE_DATA_IMAGE_RE);
+    if (!match) return '';
+
+    const mime = String(match[1] || '').toLowerCase();
+    const payload = String(match[2] || '').replace(/\s+/g, '');
+    if (!mime || !payload) return '';
+
+    return `data:${mime};base64,${payload}`;
+}
+
 function normalizeAvatarUrl(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
-    if (raw.startsWith('data:image/')) return raw;
+    if (raw.startsWith('data:image/')) {
+        return normalizeDataImageUrl(raw);
+    }
 
     try {
         const parsed = new URL(raw);
@@ -241,10 +256,63 @@ function normalizeAvatarUrl(value) {
     return '';
 }
 
+function dataImageToObjectUrl(dataUrl) {
+    const match = String(dataUrl || '').match(SAFE_DATA_IMAGE_RE);
+    if (!match) return '';
+
+    const mime = String(match[1] || '').toLowerCase();
+    const payload = String(match[2] || '').replace(/\s+/g, '');
+    if (!mime || !payload) return '';
+
+    try {
+        const binary = atob(payload);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: mime });
+        return URL.createObjectURL(blob);
+    } catch (_error) {
+        return '';
+    }
+}
+
+function releaseAvatarObjectUrl(container) {
+    if (!container) return;
+    const previousObjectUrl = String(container.dataset.avatarObjectUrl || '').trim();
+    if (previousObjectUrl && previousObjectUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previousObjectUrl);
+    }
+    delete container.dataset.avatarObjectUrl;
+}
+
+function resolveAvatarSrcForRender(container, safeUrl) {
+    const normalized = String(safeUrl || '').trim();
+    if (!normalized) {
+        releaseAvatarObjectUrl(container);
+        return '';
+    }
+
+    if (normalized.startsWith('data:image/')) {
+        const objectUrl = dataImageToObjectUrl(normalized);
+        if (!objectUrl) {
+            releaseAvatarObjectUrl(container);
+            return '';
+        }
+        releaseAvatarObjectUrl(container);
+        container.dataset.avatarObjectUrl = objectUrl;
+        return objectUrl;
+    }
+
+    releaseAvatarObjectUrl(container);
+    return normalized;
+}
+
 function renderAvatarNode(container, avatarUrl, altText) {
     if (!container) return;
     const safeUrl = normalizeAvatarUrl(avatarUrl);
-    if (!safeUrl) {
+    const renderSrc = resolveAvatarSrcForRender(container, safeUrl);
+    if (!renderSrc) {
         container.textContent = DEFAULT_AVATAR_EMOJI;
         container.style.overflow = '';
         return;
@@ -262,7 +330,7 @@ function renderAvatarNode(container, avatarUrl, altText) {
         container.appendChild(img);
     }
     img.alt = altText || 'Avatar';
-    img.src = safeUrl;
+    img.src = renderSrc;
     container.style.overflow = 'hidden';
 }
 
