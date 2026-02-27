@@ -11,9 +11,10 @@
 
 1) `apps/gold/agro/agro.js`
 - UI Paso 2 de transferencia:
-  - `Cantidad a transferir` (cuando hay más de 1 unidad disponible).
+  - `Cantidad total fiada` ahora se muestra siempre en Fiado->Pagados (editable, prefill defensivo).
+  - `Cantidad a transferir` ahora se muestra siempre en Fiado->Pagados (aunque sea 1).
   - Input explícito `Monto total transferido` (`#pending-transfer-total`).
-  - Para legacy sin `unit_qty`: input `Cantidad total fiada` (`#pending-transfer-qty-total`) y desde allí habilita cálculo por cantidad.
+  - Para legacy sin `unit_qty`: el mismo input `Cantidad total fiada` corrige `qtyTotal` en línea y alimenta preview/cálculo.
   - Hint: `El unitario se calcula internamente: total / cantidad`.
 - Preview:
   - usa prorrateo automático como sugerencia.
