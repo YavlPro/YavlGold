@@ -9212,3 +9212,118 @@ Hallazgo raíz del lote actual:
 - Build oficial:
   - Comando: `pnpm build:gold`
   - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `UTF-8 check`).
+
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Buyers CRM local + Perfil Público opt-in (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) **MPA / Routing (Vite + Vercel)**
+- Entradas MPA activas en `apps/gold/vite.config.js`.
+- Rewrites/clean URLs en `apps/gold/vercel.json`.
+- Páginas base de navegación vigentes: `apps/gold/index.html`, `apps/gold/dashboard/index.html`, `apps/gold/agro/index.html`.
+
+2) **Auth / Supabase**
+- Cliente Supabase central: `apps/gold/assets/js/config/supabase-config.js`.
+- Auth guard/UI: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`, `apps/gold/dashboard/auth-guard.js`.
+- Agro opera con sesión autenticada y RLS owner-only.
+
+3) **Agro: CORE crítico vs modularizable**
+- CORE crítico (no tocar lógica/queries/cálculos): Facturero, ciclos, historial.
+- Modularizable (permitido): UI adicional (modales), listeners delegados, módulos auxiliares (`agroperfil.js`, `agroestadistica.js`, `agro-privacy.js`).
+
+4) **Estado actual de perfiles/compradores**
+- `public.agro_buyers` existe con RLS owner-only.
+- `public.agro_farmer_profile` existe con RLS owner-only.
+- Perfil modular actual (`agroperfil.js`) y stats (`agroestadistica.js`) ya operativos.
+- Privacidad global 👁/💰 activa en `agro-privacy.js` usando `data-buyer-name` y `data-money`.
+
+### Plan de ejecución
+
+1) **Commit A — CRM local de compradores**
+- Crear módulo `apps/gold/agro/agrocompradores.js` (CRUD `agro_buyers`, normalización `group_key`, modal ficha).
+- Agregar modal en `apps/gold/agro/index.html`.
+- Agregar estilos modal en `apps/gold/agro/agro.css`.
+- Wiring mínimo en `apps/gold/agro/agro.js`:
+  - `initAgroCompradores({ supabase })`
+  - delegación click en nombres (`data-buyer-name`) dentro de Historial/Rankings.
+  - bloqueo cuando privacidad 👁 esté activa.
+
+2) **Commit B — Perfil público opt-in**
+- Crear migración `supabase/migrations/*_agro_public_profiles.sql` con RLS:
+  - `select`: público si `public_enabled=true` o dueño.
+  - `insert/update/delete`: owner-only.
+- Crear módulo `apps/gold/agro/agropublico.js` para lectura/modal público.
+- Extender `apps/gold/agro/agroperfil.js` con sección pública (toggle + campos) y `upsert` en `agro_public_profiles`.
+- Ajustes de markup/CSS en `apps/gold/agro/index.html` y `apps/gold/agro/agro.css`.
+
+### Riesgos + mitigación
+
+- Riesgo: tocar CORE por accidente.
+  - Mitigación: cambios solo en UI/listeners/modales/módulos nuevos; sin alterar queries/cálculos de Facturero/ciclos/historial.
+- Riesgo: RLS incorrecto en perfil público.
+  - Mitigación: policies explícitas (owner-only write, read público condicionado) y verificación con casos owner/no-owner.
+- Riesgo: fuga visual con privacidad activa.
+  - Mitigación: respetar `readBuyerNamesHidden()` para bloquear apertura de ficha desde nombres enmascarados; mantener marcado `data-buyer-name` / `data-money`.
+
+### Evidencia al cierre (pendiente de ejecución)
+
+- [ ] `pnpm build:gold` PASS por fase (Commit A y Commit B).
+- [ ] Smoke CORE PASS (sin cambios de comportamiento en Facturero/ciclos/historial).
+- [ ] Smoke nuevas UIs PASS (ficha comprador + perfil público opt-in).
+- [ ] 0 errores 400 en flujos normales.
+
+### Cierre Commit A — Ficha local de compradores (private CRM)
+
+- Archivos:
+  - `apps/gold/agro/agrocompradores.js` (nuevo)
+    - `normalizeGroupKey`, `loadBuyer`, `upsertBuyer`, modal UI y handlers de guardar/cerrar.
+    - API exportada: `initAgroCompradores({ supabase })`, `openBuyerProfileByName(displayName)`.
+  - `apps/gold/agro/index.html`
+    - Nuevo modal `#modal-agro-buyer` + formulario `#agro-buyer-form`.
+  - `apps/gold/agro/agro.css`
+    - Estilos de modal CRM comprador (`#modal-agro-buyer`) y estados.
+  - `apps/gold/agro/agro.js`
+    - Wiring mínimo: import/init de compradores.
+    - Delegación click sobre `[data-buyer-name="1"]` acotada a Historial/Rankings.
+    - Bloqueo de apertura cuando 👁 está activo (`Desactiva 👁 para abrir ficha del comprador.`).
+
+- Gate de build (Commit A):
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS.
+
+- Smoke CORE (manual):
+  - Estado: pendiente validación manual en sesión autenticada (Facturero/ciclos/historial sin cambios de lógica/queries).
+
+### Cierre Commit B — Perfil público opt-in (base Social)
+
+- Archivos:
+  - `supabase/migrations/20260227163000_agro_public_profiles.sql` (nuevo)
+    - Tabla `public.agro_public_profiles`.
+    - RLS:
+      - `select`: `public_enabled = true OR auth.uid() = user_id`.
+      - `insert/update/delete`: owner-only.
+    - `notify pgrst, 'reload schema'`.
+  - `apps/gold/agro/agropublico.js` (nuevo)
+    - `initAgroPublico({ supabase })` + `openPublicFarmerProfile(userId)`.
+    - Modal de lectura y estados público/privado (owner/no-owner).
+  - `apps/gold/agro/agroperfil.js`
+    - Integración de sección pública en Perfil Agricultor.
+    - `loadPublicProfile()` + `upsert` de `agro_public_profiles` junto con el guardado privado.
+    - Botón de vista previa pública desde perfil.
+  - `apps/gold/agro/index.html`
+    - Campos opt-in de perfil público dentro del modal de perfil.
+    - Nuevo modal `#modal-agro-public-profile` (lectura).
+  - `apps/gold/agro/agro.css`
+    - Estilos de bloque opt-in público y modal público.
+
+- Gate de build (Commit B):
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS.
+
+- Smoke funcional (manual):
+  - Estado: pendiente validación manual en sesión autenticada + DB migrada.
+  - Flujos esperados:
+    - Guardar perfil privado + campos públicos.
+    - Abrir vista pública propia.
+    - Comprador desde Historial/Rankings abre ficha local.
+

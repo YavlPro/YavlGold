@@ -9,6 +9,7 @@ import './agro.css';
 import { openAgroWizard, ensureAgroWizardStyles } from './agro-wizard.js';
 import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js';
 import { initAgroPerfil } from './agroperfil.js';
+import { initAgroCompradores, openBuyerProfileByName } from './agrocompradores.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
@@ -67,6 +68,15 @@ const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_i
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
+const BUYER_PROFILE_CLICKABLE_SCOPE_SELECTOR = [
+    '#recent-transactions-container',
+    '#income-recent-container',
+    '#pending-history-container',
+    '#loss-history-container',
+    '#transfer-history-container',
+    '#other-history-container',
+    '#ops-rankings-panel'
+].join(', ');
 const CROP_DISPLAY_FALLBACK_ICON = '🌱';
 const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
@@ -78,6 +88,7 @@ let syncAgendaCropsFn = null;
 let syncCartCropsFn = null;
 const agroFocusOriginalPositions = new Map();
 let agroFocusModeBound = false;
+let buyerProfileClickHandlersBound = false;
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -1375,6 +1386,36 @@ function markMoneyNode(node, rawMoneyText = '') {
     if (!raw) return;
     node.dataset.money = '1';
     node.dataset.rawMoney = raw;
+}
+
+function initBuyerProfileClickHandlers() {
+    if (buyerProfileClickHandlersBound) return;
+    buyerProfileClickHandlersBound = true;
+
+    document.addEventListener('click', (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target) return;
+
+        const nameNode = target.closest('[data-buyer-name="1"]');
+        if (!nameNode) return;
+
+        const scopedRoot = nameNode.closest(BUYER_PROFILE_CLICKABLE_SCOPE_SELECTOR);
+        if (!scopedRoot) return;
+
+        const rawName = String(nameNode.dataset.rawName || '').trim();
+        if (!rawName || rawName === BUYER_PRIVACY_MASK) return;
+
+        if (readBuyerNamesHidden()) {
+            showEvidenceToast('Desactiva 👁 para abrir ficha del comprador.', 'warning');
+            return;
+        }
+
+        event.preventDefault();
+        openBuyerProfileByName(rawName).catch((error) => {
+            console.error('[AGRO_BUYERS] open from click error:', error);
+            showEvidenceToast('No se pudo abrir la ficha del comprador.', 'warning');
+        });
+    });
 }
 
 function isMissingColumnError(error, column) {
@@ -11816,6 +11857,8 @@ export function initAgro() {
     initIncomeHistory();
     initFinanceTabs();
     initBuyerPrivacy(document);
+    initAgroCompradores({ supabase });
+    initBuyerProfileClickHandlers();
     initAgroPerfil({ supabase });
     initOperationsContextSteps();
     initAgroAssistantModal();
