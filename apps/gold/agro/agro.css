@@ -1213,6 +1213,164 @@ body.agro-public-open {
   }
 }
 
+/* V9.8: Calculadora ROI en modal */
+body.agro-calculator-open {
+  overflow: hidden;
+}
+
+#modal-agro-calculator {
+  position: fixed;
+  inset: 0;
+  z-index: 10048;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+#modal-agro-calculator.is-open {
+  display: flex;
+}
+
+#modal-agro-calculator .agro-calculator-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.84);
+  backdrop-filter: blur(6px);
+}
+
+#modal-agro-calculator .agro-calculator-panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 96vw);
+  max-height: min(92vh, 860px);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(13, 13, 13, 0.98), rgba(6, 6, 6, 0.98));
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+#modal-agro-calculator .agro-calculator-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.95rem 1.05rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+}
+
+#modal-agro-calculator .agro-calculator-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200, 167, 82, 0.86);
+  font-family: "Orbitron", sans-serif;
+}
+
+#modal-agro-calculator .agro-calculator-title {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  font-family: "Orbitron", sans-serif;
+  color: rgba(245, 245, 245, 0.96);
+}
+
+#modal-agro-calculator .agro-calculator-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 167, 82, 0.34);
+  background: rgba(200, 167, 82, 0.08);
+  color: #c8a752;
+  cursor: pointer;
+}
+
+#modal-agro-calculator .agro-calculator-body {
+  padding: 0.95rem 1.05rem 1rem;
+  overflow: auto;
+}
+
+#modal-agro-calculator .card {
+  margin: 0;
+  padding: 1rem;
+}
+
+#modal-agro-calculator .calculator-form {
+  gap: 0.75rem;
+}
+
+#modal-agro-calculator .input-label {
+  font-size: 0.65rem;
+  letter-spacing: 1.2px;
+}
+
+#modal-agro-calculator .input-prefix {
+  font-size: 0.95rem;
+}
+
+#modal-agro-calculator .styled-input {
+  padding: 0.6rem 0.9rem 0.6rem 2.2rem;
+  font-size: 1rem;
+}
+
+#modal-agro-calculator .btn-primary {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.8px;
+}
+
+#modal-agro-calculator .roi-result {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+}
+
+#modal-agro-calculator .roi-grid {
+  gap: 0.5rem;
+}
+
+#modal-agro-calculator .roi-value {
+  font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  #modal-agro-calculator .card {
+    padding: 0.9rem;
+  }
+
+  #modal-agro-calculator .calculator-form {
+    gap: 0.6rem;
+  }
+
+  #modal-agro-calculator .styled-input {
+    padding: 0.55rem 0.8rem 0.55rem 2.1rem;
+    font-size: 0.95rem;
+  }
+
+  #modal-agro-calculator .btn-primary {
+    padding: 0.55rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  #modal-agro-calculator {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  #modal-agro-calculator .agro-calculator-panel {
+    width: 100%;
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  #modal-agro-calculator .agro-calculator-body {
+    padding: 0.85rem;
+  }
+}
+
 /* V9.8: Social v1 panel (feed publico + bitacora privada) */
 body.agro-social-open {
   overflow: hidden;

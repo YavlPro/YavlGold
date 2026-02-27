@@ -11,6 +11,7 @@ import { exportCropReport, resolveCropExistenceMap } from './agro-crop-report.js
 import { initAgroPerfil } from './agroperfil.js';
 import { initAgroCompradores, openBuyerProfileByName } from './agrocompradores.js';
 import { initAgroSocial, openSocialPanel } from './agrosocial.js';
+import { initAgroCalculadora } from './agrocalculadora.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
@@ -11877,6 +11878,7 @@ export function initAgro() {
     initBuyerPrivacy(document);
     initAgroCompradores({ supabase });
     initAgroSocial({ supabase });
+    initAgroCalculadora();
     initBuyerProfileClickHandlers();
     bindAgroSocialOpenButton();
     initAgroPerfil({ supabase });

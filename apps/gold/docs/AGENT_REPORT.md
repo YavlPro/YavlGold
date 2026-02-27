@@ -9444,3 +9444,81 @@ Hallazgo raíz del lote actual:
   - [ ] Chat owner-only: crear hilo + enviar mensaje + reabrir panel y persistencia.
   - [ ] Privacidad 👁 enmascara nombres en panel social.
   - [ ] Network/Console sin 400/uncaught en flujos normales.
+
+## 🆕 SESIÓN: GATE 0 (OBLIGATORIO) — Calculadora ROI a modal (2026-02-27)
+
+### Diagnóstico breve (estado actual)
+
+1) La “Calculadora ROI Rápida” está renderizada como bloque grande dentro del dashboard Agro:
+- `apps/gold/agro/index.html` sección `data-agro-section="roi"` con acordeón `#yg-acc-roi`.
+- Mantiene inputs/outputs con IDs consumidos por lógica existente (`investment`, `revenue`, `quantity`, `roiResult`, `resultInvestment`, `resultRevenue`, `resultProfit`, `resultROI`, `roi-currency-selector`).
+
+2) La lógica de cálculo no está en CORE crítico:
+- Cálculo + persistencia de ROI en `apps/gold/agro/agro.js` (`calculateROI`, `initRoiCurrencySelector`, `injectRoiClearButton`).
+- Es UI secundaria/modularizable y puede moverse a modal sin tocar Facturero/ciclos/historial.
+
+3) Estado de modales en Agro:
+- Ya existen patrones consistentes de modal (perfil/compradores/social) con cierre por backdrop/ESC y focus management.
+- Se puede reutilizar patrón con módulo dedicado.
+
+### Plan (1 commit)
+
+- Crear `apps/gold/agro/agrocalculadora.js`:
+  - `initAgroCalculadora()`
+  - `openAgroCalculadora(triggerEl?)`
+  - open/close + backdrop + ESC + focus/restore.
+- `apps/gold/agro/index.html`:
+  - retirar bloque grande ROI del layout principal,
+  - agregar botón/tag `🧮 Calculadora` en “Finanzas Agro”,
+  - agregar modal `#modal-agro-calculator` al final del documento con la calculadora (mismos IDs).
+- `apps/gold/agro/agro.css`:
+  - estilos modal calculadora (desktop + mobile).
+- `apps/gold/agro/agro.js`:
+  - wiring mínimo: importar e inicializar `initAgroCalculadora()`.
+  - no tocar lógica de cálculo ROI existente ni CORE.
+
+### Riesgos + mitigación
+
+- Riesgo: romper bindings por IDs duplicados o perdidos.
+  - Mitigación: mover la calculadora (no duplicar), conservar IDs exactos.
+- Riesgo: pérdida de eventos en botón calcular/limpiar.
+  - Mitigación: mantener flujo actual de `calculateROI` + `injectRoiClearButton` sobre los mismos nodos en modal.
+- Riesgo: impacto colateral en CORE.
+  - Mitigación: cambios acotados a UI secundaria (modal calculadora + wiring modular).
+
+### Evidencia esperada al cierre
+
+- [ ] `pnpm build:gold` PASS.
+- [ ] Modal abre con botón 🧮 y cierra por X/backdrop/ESC.
+- [ ] Focus accesible (focus al abrir + restore al cerrar).
+- [ ] Calcular y Limpiar funcionan dentro del modal.
+- [ ] Facturero/ciclos/historial sin cambios de comportamiento.
+
+### Cierre C1 — Calculadora ROI a modal + tag en Finanzas Agro
+
+- Archivos tocados:
+  - `apps/gold/agro/agrocalculadora.js` (nuevo)
+    - `initAgroCalculadora()` + `openAgroCalculadora(triggerEl?)`.
+    - Apertura/cierre por botón, backdrop, X y ESC.
+    - Focus management: foco al panel al abrir y restore al trigger al cerrar.
+  - `apps/gold/agro/index.html`
+    - Se retiró el bloque grande de calculadora del layout principal.
+    - Se agregó botón/tag `#btn-open-agro-calculator` en “Finanzas Agro”.
+    - Se agregó modal `#modal-agro-calculator` con la calculadora y los mismos IDs existentes.
+  - `apps/gold/agro/agro.css`
+    - Estilos del modal de calculadora (`body.agro-calculator-open`, panel/backdrop/responsive).
+  - `apps/gold/agro/agro.js`
+    - Wiring mínimo: import + `initAgroCalculadora()` en `initAgro()`.
+
+- Gate de build:
+  - Comando: `pnpm build:gold`
+  - Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `UTF-8 check`).
+
+- Smoke manual:
+  - Estado: pendiente de ejecución en navegador por operador.
+  - Checklist:
+    - [ ] Botón 🧮 abre modal.
+    - [ ] Cierre por X, backdrop y ESC.
+    - [ ] “Calcular” y “Limpiar” siguen operando con mismos resultados.
+    - [ ] Network/Console sin 400/uncaught en flujo normal.
+    - [ ] Facturero/ciclos/historial sin cambios.
