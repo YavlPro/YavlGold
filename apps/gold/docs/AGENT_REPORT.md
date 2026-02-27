@@ -1,5 +1,30 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 + FIX UI CANTIDAD EN WIZARD NUEVO (2026-02-27)
+
+### Diagnóstico confirmado
+
+- El guardado ya persistía `unit_qty` cuando `state.unitQty` era válido, pero la UI del wizard no mostraba un input numérico explícito de cantidad.
+- En flujos operativos esto generaba ambigüedad (usuarios no veían dónde ajustar cantidad), especialmente al comparar con modales legacy que sí muestran campos tradicionales.
+- El requerimiento quirúrgico fue hacer visible y obligatoria la cantidad (`unit_qty > 0`) para tabs con unidades, sin tocar CORE de facturero/ciclos.
+
+### Plan aplicado
+
+1) `apps/gold/agro/agro-wizard.js`
+- agregar input explícito `Cantidad (unidades)` en paso 3, sincronizado con el stepper.
+- validar unidades en navegación (`Siguiente`) y envío (`REGISTRAR`): cantidad > 0 y presentación seleccionada.
+- endurecer submit: si `meta.hasUnits`, rechazar guardado sin `unit_type` o `unit_qty` válido.
+
+2) `apps/gold/docs/AGENT_REPORT.md`
+- registrar diagnóstico + cambios + smoke esperado.
+
+### Smoke esperado
+
+- [ ] Wizard Nuevo (ingresos/fiados/pérdidas/donaciones): se ve campo `Cantidad (unidades)` y no permite avanzar con cantidad vacía/inválida.
+- [ ] Guardado exitoso crea filas con `unit_type` + `unit_qty` en tablas con unidades.
+- [ ] Transfer Fiado→Pagado mantiene resumen de cantidad (dependiendo de data fuente ya persistida).
+- [x] `pnpm build:gold` PASS.
+
 ## 🆕 SESIÓN: GATE 0 + CIERRE DEFINITIVO — Wizard "Nuevo" + split_meta (2026-02-27)
 
 ### Diagnóstico confirmado (Supabase)

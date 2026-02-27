@@ -715,6 +715,26 @@ export async function openAgroWizard(tabName, deps) {
         }
     }
 
+    function parseWizardQty(value) {
+        const parsed = Number.parseFloat(value);
+        if (!Number.isFinite(parsed) || parsed <= 0) return null;
+        return Math.min(999, parsed);
+    }
+
+    function formatWizardQty(value) {
+        const parsed = parseWizardQty(value);
+        if (parsed === null) return '';
+        return Number.isInteger(parsed)
+            ? String(parsed)
+            : String(Number(parsed.toFixed(2)));
+    }
+
+    function hasValidWizardUnitInput() {
+        if (!meta.hasUnits) return true;
+        const unitType = String(state.unitType || '').trim().toLowerCase();
+        return !!unitType && parseWizardQty(state.unitQty) !== null;
+    }
+
     // Pre-fill crop name
     if (state.cropId && Array.isArray(cropsCache)) {
         const match = cropsCache.find(c => String(c.id) === String(state.cropId));
@@ -1030,7 +1050,7 @@ export async function openAgroWizard(tabName, deps) {
             const qtyDisplay = document.createElement('span');
             qtyDisplay.className = 'wiz-stepper-value';
             qtyDisplay.id = 'wiz-qty-display';
-            qtyDisplay.textContent = String(state.unitQty);
+            qtyDisplay.textContent = formatWizardQty(state.unitQty) || '1';
             stepper.append(
                 mkStepBtn('dec1', '−1'),
                 mkStepBtn('dec05', '−.5'),
@@ -1038,6 +1058,24 @@ export async function openAgroWizard(tabName, deps) {
                 mkStepBtn('inc05', '+.5'),
                 mkStepBtn('inc1', '+1')
             );
+
+            const qtyField = document.createElement('div');
+            qtyField.className = 'wiz-field';
+            const qtyLabel = document.createElement('label');
+            qtyLabel.className = 'wiz-label';
+            qtyLabel.textContent = 'Cantidad (unidades)';
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'number';
+            qtyInput.className = 'wiz-input';
+            qtyInput.id = 'wiz-unit-qty';
+            qtyInput.placeholder = 'Ej: 2';
+            qtyInput.min = '0.01';
+            qtyInput.step = '0.01';
+            qtyInput.inputMode = 'decimal';
+            qtyInput.value = formatWizardQty(state.unitQty);
+            qtyField.append(qtyLabel, qtyInput);
+            fragment.appendChild(qtyField);
+
             fragment.appendChild(stepper);
 
             const kgField = document.createElement('div');
@@ -1157,7 +1195,11 @@ export async function openAgroWizard(tabName, deps) {
     function renderStepSummary() {
         const fragment = document.createDocumentFragment();
         const unitLabel = UNIT_OPTIONS.find(u => u.value === state.unitType);
-        const qtyText = unitLabel ? `${state.unitQty} ${state.unitQty === 1 ? unitLabel.singular : unitLabel.plural}` : '';
+        const parsedQty = parseWizardQty(state.unitQty);
+        const qtyValue = parsedQty === null ? '' : formatWizardQty(parsedQty);
+        const qtyText = unitLabel && qtyValue
+            ? `${qtyValue} ${parsedQty === 1 ? unitLabel.singular : unitLabel.plural}`
+            : '';
         const kgText = state.quantityKg ? `${state.quantityKg} kg` : '';
         const cantidadParts = [qtyText, kgText].filter(Boolean);
         const cantidadDisplay = cantidadParts.length > 0 ? cantidadParts.join(' · ') : '-';
@@ -1215,14 +1257,16 @@ export async function openAgroWizard(tabName, deps) {
             return fragment;
         }
         if (state.step === totalSteps) {
-            const canSubmit = state.concepto && Number(state.monto) > 0 && state.fecha;
+            const canSubmit = state.concepto && Number(state.monto) > 0 && state.fecha && hasValidWizardUnitInput();
             fragment.append(
                 mkBtn('wiz-btn wiz-btn-back', 'prev', '← Atrás'),
                 mkBtn('wiz-btn wiz-btn-submit', 'submit', '✅ REGISTRAR', !canSubmit)
             );
             return fragment;
         }
-        const canNext = state.step === 2 ? !!state.concepto : (Number(state.monto) > 0);
+        const canNext = state.step === 2
+            ? !!state.concepto
+            : (Number(state.monto) > 0 && hasValidWizardUnitInput());
         fragment.append(
             mkBtn('wiz-btn wiz-btn-back', 'prev', '← Atrás'),
             mkBtn('wiz-btn wiz-btn-next', 'next', 'Siguiente →', !canNext)
@@ -1277,11 +1321,29 @@ export async function openAgroWizard(tabName, deps) {
                 else if (a === 'inc05') delta = 0.5;
                 else if (a === 'dec05') delta = -0.5;
                 else if (a === 'dec1') delta = -1;
-                state.unitQty = Math.max(0.1, Math.min(999, +(state.unitQty + delta).toFixed(1)));
+                const baseQty = parseWizardQty(state.unitQty) ?? 1;
+                state.unitQty = Math.max(0.1, Math.min(999, +(baseQty + delta).toFixed(2)));
                 const display = overlay.querySelector('#wiz-qty-display');
-                if (display) display.textContent = state.unitQty;
+                const qtyText = formatWizardQty(state.unitQty) || '1';
+                if (display) display.textContent = qtyText;
+                const qtyInput = overlay.querySelector('#wiz-unit-qty');
+                if (qtyInput) qtyInput.value = qtyText;
+                updateFooterState();
             });
         });
+
+        const unitQtyEl = overlay.querySelector('#wiz-unit-qty');
+        if (unitQtyEl) {
+            unitQtyEl.addEventListener('input', () => {
+                const parsed = parseWizardQty(unitQtyEl.value);
+                state.unitQty = parsed === null ? '' : parsed;
+                const display = overlay.querySelector('#wiz-qty-display');
+                if (display) {
+                    display.textContent = formatWizardQty(state.unitQty) || '0';
+                }
+                updateFooterState();
+            });
+        }
 
         // Currency buttons (step 3)
         overlay.querySelectorAll('.wiz-currency-btn').forEach(btn => {
@@ -1419,6 +1481,11 @@ export async function openAgroWizard(tabName, deps) {
         if (fechaEl) state.fecha = fechaEl.value;
         const kgEl = overlay.querySelector('#wiz-kg');
         if (kgEl) state.quantityKg = kgEl.value;
+        const qtyEl = overlay.querySelector('#wiz-unit-qty');
+        if (qtyEl) {
+            const parsedQty = parseWizardQty(qtyEl.value);
+            state.unitQty = parsedQty === null ? '' : parsedQty;
+        }
         const montoEl = overlay.querySelector('#wiz-monto');
         if (montoEl) state.monto = montoEl.value;
         const rateEl = overlay.querySelector('#wiz-exchange-rate');
@@ -1471,11 +1538,11 @@ export async function openAgroWizard(tabName, deps) {
             // Step 2 needs Concepto
             nextBtn.disabled = !state.concepto;
         } else if (state.step === 3 && nextBtn) {
-            // Step 3 needs Amount > 0
-            nextBtn.disabled = !(Number(state.monto) > 0);
+            // Step 3 needs Amount > 0 and valid unit quantity for unit-based tabs
+            nextBtn.disabled = !(Number(state.monto) > 0 && hasValidWizardUnitInput());
         } else if (state.step === 4 && submitBtn) {
             // Final step needs everything
-            const canSubmit = state.concepto && Number(state.monto) > 0 && state.fecha;
+            const canSubmit = state.concepto && Number(state.monto) > 0 && state.fecha && hasValidWizardUnitInput();
             submitBtn.disabled = !canSubmit;
         }
     }
@@ -1561,11 +1628,15 @@ export async function openAgroWizard(tabName, deps) {
             // Units (if applicable)
             if (meta.hasUnits) {
                 const unitType = String(state.unitType || '').trim().toLowerCase();
-                const qty = Number.parseFloat(state.unitQty);
-                if (unitType && Number.isFinite(qty) && qty > 0) {
-                    insertData.unit_type = unitType;
-                    insertData.unit_qty = qty;
+                const qty = parseWizardQty(state.unitQty);
+                if (!unitType) {
+                    throw new Error('Selecciona una presentación.');
                 }
+                if (qty === null) {
+                    throw new Error('Ingresa una cantidad válida (mayor a 0).');
+                }
+                insertData.unit_type = unitType;
+                insertData.unit_qty = qty;
             }
             if (meta.hasUnits && state.quantityKg) {
                 const kg = Number.parseFloat(state.quantityKg);
