@@ -15,6 +15,7 @@
   - `Cantidad a transferir` ahora se muestra siempre en Fiado->Pagados (aunque sea 1).
   - Input explícito `Monto total transferido` (`#pending-transfer-total`).
   - Para legacy sin `unit_qty`: el mismo input `Cantidad total fiada` corrige `qtyTotal` en línea y alimenta preview/cálculo.
+  - Para legacy sin `unit_type`: fallback de unidad a `unidad` para no perder trazabilidad de cantidad transferida.
   - Hint: `El unitario se calcula internamente: total / cantidad`.
 - Preview:
   - usa prorrateo automático como sugerencia.
@@ -24,7 +25,10 @@
 - Cálculo:
   - `computePendingSplitDraft` prioriza únicamente `decision.transferTotal` para ingresos.
   - `computePendingSplitDraft` ahora también acepta `decision.qtyTotal` (fallback legacy) y toma cantidad desde `unit_qty` / `split_meta.qty_total`.
+  - `computePendingSplitDraft` acepta `decision.unitType` para no quedar en modo “solo dinero” cuando la fila legacy no trae tipo de unidad.
   - mantiene clamp anti-inflado: no permitir `transferAmount > sourceAmount`.
+- Render historial:
+  - `formatUnitSummary` ahora muestra `N unidades` cuando hay `unit_qty` pero falta `unit_type` (fallback visual no destructivo).
 - Detalle visual:
   - `Total fiado` se muestra con `fmtMoneyUI(...)` y moneda real.
   - ajuste de `dataset.auto` explícito (sin ternario redundante).

@@ -1195,9 +1195,13 @@ function formatUnitQty(value) {
 
 function formatUnitSummary(unitType, unitQty) {
     const unitKey = String(unitType || '').toLowerCase();
-    if (!unitKey) return '';
     const qtyText = formatUnitQty(unitQty);
     if (!qtyText) return '';
+    if (!unitKey) {
+        const qtyNum = Number(qtyText);
+        const genericLabel = Number.isFinite(qtyNum) && Math.abs(qtyNum - 1) < 1e-9 ? 'unidad' : 'unidades';
+        return `${qtyText} ${genericLabel}`;
+    }
     const option = INCOME_UNIT_OPTIONS.find((opt) => opt.value === unitKey);
     // V9.8.1: fallback para unit_type legacy/desconocido — muestra qty + tipo raw
     if (!option) return `${qtyText} ${unitKey}`;
@@ -2544,7 +2548,7 @@ function formatSplitMetaSummary(item, tabName, options = {}) {
 function computePendingSplitDraft(pending, destination, decision = {}) {
     const splitMetaParsed = normalizeSplitMeta(pending?.split_meta);
     const resolvedQty = resolvePendingQuantity(pending, splitMetaParsed);
-    const unitType = String(resolvedQty.unitType || '').trim().toLowerCase();
+    const unitType = String(decision?.unitType || resolvedQty.unitType || '').trim().toLowerCase();
     let qtyRaw = toSafeLocaleNumber(decision?.qtyTotal);
     if (qtyRaw === null) qtyRaw = resolvedQty.qtyTotal;
     const normalizedQtyRaw = qtyRaw !== null
@@ -5085,7 +5089,16 @@ function openTransferMetaModal(options = {}) {
                         return;
                     }
                 }
-                finalize({ confirmed: true, concept, category, date, qtyTotal, quantity, transferTotal });
+                finalize({
+                    confirmed: true,
+                    concept,
+                    category,
+                    date,
+                    qtyTotal,
+                    quantity,
+                    transferTotal,
+                    unitType: splitOptions?.unitType || null
+                });
             });
         }
 
@@ -5140,11 +5153,11 @@ async function handlePendingTransfer(itemId) {
         const raw = String(pending?.currency || '').trim().toUpperCase();
         return SUPPORTED_CURRENCIES[raw] ? raw : 'COP';
     })();
-    const splitUnitType = String(splitDraftBase.unitType || pendingQtyResolved.unitType || pending.unit_type || '').trim().toLowerCase();
+    const splitUnitType = String(splitDraftBase.unitType || pendingQtyResolved.unitType || pending.unit_type || 'unidad').trim().toLowerCase();
     const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
     const needsQtyTotalInput = destination === 'income' && !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
     let splitConfig = null;
-    if (destination === 'income' && !!splitUnitType) {
+    if (destination === 'income') {
         splitConfig = {
             enabled: true,
             qtyTotal: splitQtyTotal,
