@@ -5,6 +5,7 @@ import {
     readBuyerNamesHidden,
     readMoneyValuesHidden
 } from './agro-privacy.js';
+import { initAgroPublico, openPublicFarmerProfile } from './agropublico.js';
 
 const PROFILE_MODAL_ID = 'modal-agro-profile';
 const PROFILE_FORM_ID = 'agro-profile-form';
@@ -16,6 +17,7 @@ const PROFILE_AVATAR_PREVIEW_ID = 'agro-profile-avatar-preview';
 const PROFILE_AVATAR_URL_ID = 'agro-profile-avatar_url';
 const PROFILE_AVATAR_FILE_ID = 'agro-profile-avatar-file';
 const PROFILE_AVATAR_CLEAR_ID = 'agro-profile-avatar-clear';
+const PROFILE_PUBLIC_PREVIEW_BUTTON_ID = 'btn-open-agro-public-profile';
 const LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const MAX_LOCAL_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_AVATAR_EMOJI = '👨‍🌾';
@@ -29,6 +31,15 @@ const PROFILE_FIELD_IDS = [
     'instagram',
     'facebook',
     'notes'
+];
+
+const PUBLIC_PROFILE_FIELD_IDS = [
+    'display_name',
+    'avatar_url',
+    'bio',
+    'location_text',
+    'whatsapp',
+    'instagram'
 ];
 
 const CROP_STATS_IDS = {
@@ -54,6 +65,7 @@ const state = {
     loadingProfile: false,
     loadingStats: false,
     profile: null,
+    publicProfile: null,
     stats: null,
     user: null,
     supabase: null,
@@ -333,6 +345,96 @@ function readProfileForm() {
     return payload;
 }
 
+function fillPublicProfileForm(publicProfile = {}, privateProfile = {}, user = null) {
+    const enabledInput = document.getElementById('agro-profile-public_enabled');
+    if (enabledInput) {
+        enabledInput.checked = !!publicProfile?.public_enabled;
+    }
+
+    const privateName = resolveDisplayName(privateProfile, user);
+    const privateLocation = String(privateProfile?.location_text || '').trim();
+    const privateWhatsapp = String(privateProfile?.whatsapp || '').trim();
+    const privateInstagram = String(privateProfile?.instagram || '').trim();
+
+    const fallbackMap = {
+        display_name: privateName,
+        avatar_url: '',
+        bio: '',
+        location_text: privateLocation,
+        whatsapp: privateWhatsapp,
+        instagram: privateInstagram
+    };
+
+    PUBLIC_PROFILE_FIELD_IDS.forEach((fieldName) => {
+        const input = document.getElementById(`agro-profile-public-${fieldName}`);
+        if (!input) return;
+
+        const rawValue = publicProfile?.[fieldName];
+        const fallback = fallbackMap[fieldName] || '';
+        input.value = String((rawValue ?? fallback) || '').trim();
+    });
+}
+
+function readPublicProfileForm(privateProfileData = {}, user = null) {
+    const enabledInput = document.getElementById('agro-profile-public_enabled');
+    const payload = {
+        public_enabled: !!enabledInput?.checked
+    };
+
+    PUBLIC_PROFILE_FIELD_IDS.forEach((fieldName) => {
+        const input = document.getElementById(`agro-profile-public-${fieldName}`);
+        const raw = String(input?.value || '').trim();
+        if (fieldName === 'avatar_url') {
+            payload[fieldName] = normalizeAvatarUrl(raw) || null;
+            return;
+        }
+        payload[fieldName] = raw || null;
+    });
+
+    if (!payload.display_name) {
+        payload.display_name = resolveDisplayName(privateProfileData, user);
+    }
+
+    return payload;
+}
+
+function isMissingPublicProfileTableError(error) {
+    const code = String(error?.code || '').toUpperCase();
+    const text = `${String(error?.message || '')} ${String(error?.details || '')}`.toLowerCase();
+    const mentionsTable = text.includes('agro_public_profiles');
+
+    return (
+        code === '42P01' ||
+        code === 'PGRST205' ||
+        (mentionsTable && text.includes('does not exist')) ||
+        (mentionsTable && text.includes('could not find'))
+    );
+}
+
+async function loadPublicProfile() {
+    try {
+        const user = await resolveSessionUser();
+        if (!user?.id) {
+            throw new Error('Sesion no disponible.');
+        }
+
+        const { data, error } = await state.supabase
+            .from('agro_public_profiles')
+            .select('user_id,public_enabled,display_name,avatar_url,bio,location_text,whatsapp,instagram,created_at,updated_at')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        state.publicProfile = data || null;
+        fillPublicProfileForm(data || {}, state.profile || {}, user);
+    } catch (error) {
+        console.error('[AGRO_PROFILE] load public profile error:', error);
+        fillPublicProfileForm({}, state.profile || {}, state.user);
+        setProfileStatus('Perfil listo con aviso: no se pudo cargar el bloque publico.', 'warn');
+    }
+}
+
 async function loadFarmerProfile() {
     state.loadingProfile = true;
     setProfileStatus('Cargando perfil...', 'muted');
@@ -355,6 +457,7 @@ async function loadFarmerProfile() {
         fillProfileForm(data || {}, user);
         syncAvatarFormFromUser(user, data || {});
         updateProfileHeaderName(data || {}, user);
+        fillPublicProfileForm(state.publicProfile || {}, data || {}, user);
         setProfileStatus('Perfil listo.', 'ok');
     } catch (error) {
         console.error('[AGRO_PROFILE] load profile error:', error);
@@ -390,6 +493,38 @@ async function saveFarmerProfile(event) {
             .upsert(payload, { onConflict: 'user_id' });
 
         if (error) throw error;
+
+        const publicFormData = readPublicProfileForm(payload, user);
+        const publicPayload = {
+            user_id: user.id,
+            public_enabled: !!publicFormData.public_enabled,
+            display_name: String(publicFormData.display_name || '').trim() || null,
+            avatar_url: normalizeAvatarUrl(publicFormData.avatar_url) || null,
+            bio: String(publicFormData.bio || '').trim() || null,
+            location_text: String(publicFormData.location_text || '').trim() || null,
+            whatsapp: String(publicFormData.whatsapp || '').trim() || null,
+            instagram: String(publicFormData.instagram || '').trim() || null,
+            updated_at: new Date().toISOString()
+        };
+
+        let publicProfileSkipped = false;
+        let publicData = null;
+        const { data: publicDataRes, error: publicError } = await state.supabase
+            .from('agro_public_profiles')
+            .upsert(publicPayload, { onConflict: 'user_id' })
+            .select('user_id,public_enabled,display_name,avatar_url,bio,location_text,whatsapp,instagram,created_at,updated_at')
+            .maybeSingle();
+
+        if (publicError) {
+            if (isMissingPublicProfileTableError(publicError)) {
+                console.warn('[AGRO_PROFILE] agro_public_profiles no disponible. Se conserva guardado privado.');
+                publicProfileSkipped = true;
+            } else {
+                throw publicError;
+            }
+        } else {
+            publicData = publicDataRes || null;
+        }
 
         const metadataPatch = {};
         const nextDisplayName = resolveDisplayName(payload, user);
@@ -434,11 +569,17 @@ async function saveFarmerProfile(event) {
         }
 
         state.profile = payload;
+        state.publicProfile = publicData || publicPayload;
         state.currentAvatarUrl = nextAvatarUrl;
         state.avatarDraftMode = 'none';
         state.avatarDraftValue = '';
         updateProfileHeaderName(payload, user);
-        setProfileStatus('Perfil guardado correctamente.', 'ok');
+        fillPublicProfileForm(state.publicProfile, payload, state.user || user);
+        if (publicProfileSkipped) {
+            setProfileStatus('Perfil privado guardado. Falta migracion para perfil publico.', 'warn');
+        } else {
+            setProfileStatus('Perfil guardado correctamente.', 'ok');
+        }
     } catch (error) {
         console.error('[AGRO_PROFILE] save profile error:', error);
         setProfileStatus('No se pudo guardar el perfil.', 'error');
@@ -688,9 +829,10 @@ async function openAndRefreshProfile(triggerElement = null) {
         state.lastFocusedTrigger = triggerElement;
     }
     openProfileModal();
+    await loadFarmerProfile();
     await Promise.all([
-        loadFarmerProfile(),
-        loadGlobalStats()
+        loadGlobalStats(),
+        loadPublicProfile()
     ]);
 }
 
@@ -806,6 +948,24 @@ function bindFormHandlers() {
             setProfileStatus('Avatar limpiado. Guarda para confirmar.', 'warn');
         });
     }
+
+    const openPublicProfileBtn = document.getElementById(PROFILE_PUBLIC_PREVIEW_BUTTON_ID);
+    if (openPublicProfileBtn) {
+        openPublicProfileBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            try {
+                const user = await resolveSessionUser();
+                if (!user?.id) {
+                    setProfileStatus('Sesion no disponible para abrir perfil publico.', 'warn');
+                    return;
+                }
+                await openPublicFarmerProfile(user.id);
+            } catch (error) {
+                console.error('[AGRO_PROFILE] open public preview error:', error);
+                setProfileStatus('No se pudo abrir la vista publica.', 'error');
+            }
+        });
+    }
 }
 
 export function initAgroPerfil({ supabase } = {}) {
@@ -824,6 +984,7 @@ export function initAgroPerfil({ supabase } = {}) {
     state.supabase = supabase;
     state.initialized = true;
 
+    initAgroPublico({ supabase });
     bindOpenButtons();
     bindCloseHandlers();
     bindFormHandlers();

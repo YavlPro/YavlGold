@@ -2688,6 +2688,55 @@
                             <textarea id="agro-profile-notes" class="styled-input" rows="4" maxlength="800"
                                 placeholder="Cuéntanos sobre tu enfoque agrícola"></textarea>
                         </label>
+
+                        <section class="agro-profile-public-box">
+                            <header class="agro-profile-public-head">
+                                <div>
+                                    <h5>Perfil público (opt-in)</h5>
+                                    <p>Activa esta opción para mostrar tu perfil en Social.</p>
+                                </div>
+                                <button type="button" id="btn-open-agro-public-profile"
+                                    class="agro-profile-public-preview-btn">
+                                    Ver Perfil Público
+                                </button>
+                            </header>
+
+                            <label class="agro-profile-public-toggle">
+                                <input type="checkbox" id="agro-profile-public_enabled">
+                                Publicar perfil (visible para otros usuarios de Agro)
+                            </label>
+
+                            <label class="agro-profile-field">
+                                <span>Nombre público</span>
+                                <input type="text" id="agro-profile-public-display_name" class="styled-input" maxlength="120"
+                                    placeholder="Tu nombre en el perfil público">
+                            </label>
+                            <label class="agro-profile-field">
+                                <span>Avatar público (URL)</span>
+                                <input type="url" id="agro-profile-public-avatar_url" class="styled-input" maxlength="600"
+                                    placeholder="https://.../avatar-publico.jpg">
+                            </label>
+                            <label class="agro-profile-field">
+                                <span>Ubicación pública</span>
+                                <input type="text" id="agro-profile-public-location_text" class="styled-input" maxlength="180"
+                                    placeholder="Ciudad, estado o zona agrícola">
+                            </label>
+                            <div class="agro-profile-inline-fields">
+                                <label class="agro-profile-field">
+                                    <span>WhatsApp público</span>
+                                    <input type="text" id="agro-profile-public-whatsapp" class="styled-input" maxlength="40">
+                                </label>
+                                <label class="agro-profile-field">
+                                    <span>Instagram público</span>
+                                    <input type="text" id="agro-profile-public-instagram" class="styled-input" maxlength="80">
+                                </label>
+                            </div>
+                            <label class="agro-profile-field">
+                                <span>Bio pública</span>
+                                <textarea id="agro-profile-public-bio" class="styled-input" rows="3" maxlength="800"
+                                    placeholder="Presentación breve para otros agricultores"></textarea>
+                            </label>
+                        </section>
                         <button type="submit" id="btn-save-agro-profile" class="btn btn-primary">Guardar Perfil</button>
                     </form>
                 </section>
@@ -2773,6 +2822,109 @@
                 <p id="agro-profile-status" class="agro-profile-status" data-level="muted">
                     Abre tu perfil para cargar datos globales.
                 </p>
+            </footer>
+        </div>
+    </div>
+
+    <div id="modal-agro-buyer" class="agro-buyer-modal" aria-hidden="true">
+        <div class="agro-buyer-backdrop" data-agro-buyer-close></div>
+        <div class="agro-buyer-panel" role="dialog" aria-modal="true" aria-labelledby="agro-buyer-title" tabindex="-1">
+            <header class="agro-buyer-header">
+                <div>
+                    <p class="agro-buyer-eyebrow">CRM Local Privado</p>
+                    <h3 id="agro-buyer-title" class="agro-buyer-title">Ficha del Comprador</h3>
+                </div>
+                <button type="button" class="agro-buyer-close" data-agro-buyer-close aria-label="Cerrar ficha">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <form id="agro-buyer-form" class="agro-buyer-form">
+                <label class="agro-buyer-field">
+                    <span>Nombre visible</span>
+                    <input type="text" id="agro-buyer-display_name" class="styled-input" maxlength="120" required>
+                </label>
+                <div class="agro-buyer-inline">
+                    <label class="agro-buyer-field">
+                        <span>Teléfono</span>
+                        <input type="text" id="agro-buyer-phone" class="styled-input" maxlength="40">
+                    </label>
+                    <label class="agro-buyer-field">
+                        <span>WhatsApp</span>
+                        <input type="text" id="agro-buyer-whatsapp" class="styled-input" maxlength="40">
+                    </label>
+                </div>
+                <div class="agro-buyer-inline">
+                    <label class="agro-buyer-field">
+                        <span>Instagram</span>
+                        <input type="text" id="agro-buyer-instagram" class="styled-input" maxlength="80">
+                    </label>
+                    <label class="agro-buyer-field">
+                        <span>Facebook</span>
+                        <input type="text" id="agro-buyer-facebook" class="styled-input" maxlength="80">
+                    </label>
+                </div>
+                <label class="agro-buyer-field">
+                    <span>Notas</span>
+                    <textarea id="agro-buyer-notes" class="styled-input" rows="4" maxlength="800"
+                        placeholder="Preferencias, acuerdos o recordatorios del comprador"></textarea>
+                </label>
+
+                <footer class="agro-buyer-footer">
+                    <p id="agro-buyer-status" class="agro-buyer-status" data-level="muted"></p>
+                    <div class="agro-buyer-actions">
+                        <button type="button" class="btn" data-agro-buyer-close>Cancelar</button>
+                        <button type="submit" id="btn-save-agro-buyer" class="btn btn-primary">Guardar ficha</button>
+                    </div>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-agro-public-profile" class="agro-public-modal" aria-hidden="true">
+        <div class="agro-public-backdrop" data-agro-public-close></div>
+        <div class="agro-public-panel" role="dialog" aria-modal="true" aria-labelledby="agro-public-title" tabindex="-1">
+            <header class="agro-public-header">
+                <div class="agro-public-header-main">
+                    <div id="agro-public-avatar" class="agro-public-avatar" aria-hidden="true">👨‍🌾</div>
+                    <div>
+                        <p class="agro-public-eyebrow">Perfil Público</p>
+                        <h3 id="agro-public-title" class="agro-public-title">Perfil Público de Agricultor</h3>
+                        <span id="agro-public-visibility" class="agro-public-visibility" data-state="private">PRIVADO</span>
+                    </div>
+                </div>
+                <button type="button" class="agro-public-close" data-agro-public-close aria-label="Cerrar perfil público">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </header>
+
+            <div class="agro-public-body">
+                <dl class="agro-public-grid">
+                    <div class="agro-public-row">
+                        <dt>Nombre público</dt>
+                        <dd id="agro-public-display_name">No disponible</dd>
+                    </div>
+                    <div class="agro-public-row">
+                        <dt>Ubicación</dt>
+                        <dd id="agro-public-location_text">No disponible</dd>
+                    </div>
+                    <div class="agro-public-row">
+                        <dt>WhatsApp</dt>
+                        <dd id="agro-public-whatsapp">No disponible</dd>
+                    </div>
+                    <div class="agro-public-row">
+                        <dt>Instagram</dt>
+                        <dd id="agro-public-instagram">No disponible</dd>
+                    </div>
+                    <div class="agro-public-row agro-public-row-bio">
+                        <dt>Bio</dt>
+                        <dd id="agro-public-bio">No disponible</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <footer class="agro-public-footer">
+                <p id="agro-public-status" class="agro-public-status" data-level="muted"></p>
             </footer>
         </div>
     </div>
