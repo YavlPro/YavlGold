@@ -1491,6 +1491,48 @@ function isMissingColumnError(error, column) {
     return text.includes('column') && mentionsColumn;
 }
 
+async function insertRowWithMissingColumnFallback(tableName, payload, optionalFields = []) {
+    const table = String(tableName || '').trim();
+    if (!table) return { error: new Error('tableName requerido') };
+
+    const optional = Array.isArray(optionalFields)
+        ? optionalFields.map((field) => String(field || '').trim()).filter(Boolean)
+        : [];
+    const knownMissing = getTableMissingColumns(table);
+    let workingPayload = { ...(payload || {}) };
+
+    if (optional.length && knownMissing instanceof Set && knownMissing.size > 0) {
+        optional.forEach((field) => {
+            if (knownMissing.has(field)) {
+                delete workingPayload[field];
+            }
+        });
+    }
+
+    let lastError = null;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        const { error } = await supabase.from(table).insert(workingPayload);
+        if (!error) return { error: null };
+        lastError = error;
+
+        let removedAny = false;
+        const nextPayload = { ...workingPayload };
+
+        optional.forEach((field) => {
+            if (!Object.prototype.hasOwnProperty.call(nextPayload, field)) return;
+            if (!isMissingColumnError(error, field)) return;
+            delete nextPayload[field];
+            rememberMissingColumn(table, field);
+            removedAny = true;
+        });
+
+        if (!removedAny) return { error };
+        workingPayload = nextPayload;
+    }
+
+    return { error: lastError || new Error(`No se pudo insertar en ${table}`) };
+}
+
 function isPendingTransferred(item) {
     if (!item) return false;
     // V9.7: Use transfer_state for accurate detection
@@ -5215,33 +5257,20 @@ async function handlePendingTransfer(itemId) {
                 split_meta: splitMetaDestination
             };
 
-            let { error: insertError } = await supabase.from('agro_income').insert(incomePayload);
-            if (insertError && (
-                isMissingColumnError(insertError, 'unit_type')
-                || isMissingColumnError(insertError, 'unit_qty')
-                || isMissingColumnError(insertError, 'quantity_kg')
-                || isMissingColumnError(insertError, 'origin_table')
-                || isMissingColumnError(insertError, 'currency')
-                || isMissingColumnError(insertError, 'exchange_rate')
-                || isMissingColumnError(insertError, 'monto_usd')
-                || isMissingColumnError(insertError, 'split_from_id')
-                || isMissingColumnError(insertError, 'split_meta')
-            )) {
-                const fallbackPayload = { ...incomePayload };
-                delete fallbackPayload.unit_type;
-                delete fallbackPayload.unit_qty;
-                delete fallbackPayload.quantity_kg;
-                delete fallbackPayload.origin_table;
-                delete fallbackPayload.origin_id;
-                delete fallbackPayload.transfer_state;
-                delete fallbackPayload.currency;
-                delete fallbackPayload.exchange_rate;
-                delete fallbackPayload.monto_usd;
-                delete fallbackPayload.split_from_id;
-                delete fallbackPayload.split_meta;
-                const retry = await supabase.from('agro_income').insert(fallbackPayload);
-                insertError = retry.error;
-            }
+            const insertResult = await insertRowWithMissingColumnFallback('agro_income', incomePayload, [
+                'unit_type',
+                'unit_qty',
+                'quantity_kg',
+                'origin_table',
+                'origin_id',
+                'transfer_state',
+                'currency',
+                'exchange_rate',
+                'monto_usd',
+                'split_from_id',
+                'split_meta'
+            ]);
+            const insertError = insertResult.error;
             if (insertError) throw insertError;
 
             const transferMeta = isPartialSplit
@@ -6538,9 +6567,19 @@ function buildIncomeMonetaryFields(sourceRow, amountCandidate) {
         : (rawRate !== null && rawRate > 0 ? rawRate : null);
 
     const sourceAmount = toSafeLocaleNumber(sourceRow?.monto);
-    const sameAmountAsSource = sourceAmount !== null && Math.abs(sourceAmount - amount) < 1e-9;
     const explicitUsd = toSafeLocaleNumber(sourceRow?.monto_usd);
-    let usdAmount = sameAmountAsSource ? explicitUsd : null;
+    let usdAmount = null;
+
+    // Prioridad: reusar USD snapshot de origen con prorrateo para evitar conversión duplicada/invertida.
+    if (explicitUsd !== null && sourceAmount !== null && sourceAmount > 0) {
+        const ratio = amount / sourceAmount;
+        if (Number.isFinite(ratio) && ratio >= 0) {
+            usdAmount = roundNumeric(explicitUsd * ratio, 2);
+        }
+    } else if (explicitUsd !== null && sourceAmount !== null && Math.abs(sourceAmount - amount) < 1e-9) {
+        usdAmount = explicitUsd;
+    }
+
     if (usdAmount === null) {
         if (currency === 'USD') {
             usdAmount = amount;

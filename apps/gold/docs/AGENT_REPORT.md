@@ -1,5 +1,132 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 + CIERRE DEFINITIVO — Wizard "Nuevo" + split_meta (2026-02-27)
+
+### Diagnóstico confirmado (Supabase)
+
+- `agro_income` **sí** tiene: `unit_qty`, `unit_type`, `quantity_kg`, `currency`, `exchange_rate`, `monto_usd`.
+- `agro_income` **no** tenía `split_meta` (`42703` al consultar).
+- En muestras recientes coexistían:
+  - filas correctas (COP + unidades + USD coherente),
+  - filas con `origin_table = NULL`, `unit_* = NULL`, `currency='USD'`, `monto_usd NULL` (flujo manual/legacy).
+
+### Plan quirúrgico aplicado
+
+1) **DB idempotente (sin tocar CORE):**
+- nueva migración para `split_meta` en `agro_income`.
+
+2) **Wizard "Nuevo" (manual incomes):**
+- `apps/gold/agro/agro-wizard.js`:
+  - fallback selectivo por columnas faltantes (no destructivo),
+  - default de moneda a `COP` (en vez de `USD`),
+  - cálculo monetario robusto (`currency/exchange_rate/monto_usd`) sin conversión inválida,
+  - para ingresos manuales: `origin_table='manual_income'` y `transfer_state='active'`,
+  - persistencia de unidades al guardar (`unit_type/unit_qty` cuando hay selección válida).
+
+### Archivos tocados
+
+- `supabase/migrations/20260227213000_agro_income_split_meta.sql`
+  - `alter table ... add column if not exists split_meta jsonb`.
+- `apps/gold/agro/agro-wizard.js`
+  - helper de insert fallback selectivo,
+  - ajustes de default/normalización de moneda y USD,
+  - metadata explícita para ingresos manuales,
+  - persistencia de unidades.
+
+### Smoke checklist
+
+- [ ] Wizard **Nuevo -> Ingreso** con `2 sacos`, `100000 COP`:
+  - guarda `unit_qty=2`, `unit_type='saco'`,
+  - `currency='COP'`, `exchange_rate>0`, `monto_usd` razonable,
+  - `origin_table='manual_income'`.
+- [ ] Wizard **Fiado -> Pagado**:
+  - mantiene `origin_table='agro_pending'`,
+  - conserva cantidad en "Últimos Pagados".
+- [ ] Sin errores 400/uncaught en flujo.
+- [x] Build gate: `pnpm build:gold`.
+
+### Build resultado
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+
+## 🆕 SESIÓN: GATE 0 + FIX QUIRÚRGICO — Fiado→Pagado (cantidad + USD) (2026-02-27)
+
+### Gate 0 — Diagnóstico obligatorio
+
+1) **Mapa de entradas MPA + navegación actual**
+- `apps/gold/vite.config.js`: `appType: 'mpa'` y entradas HTML para `main`, `dashboard`, `agro`, `crypto`, `academia`, `tecnologia`, etc.
+- `apps/gold/vercel.json`: `cleanUrls` + `rewrites` para `/agro`, `/crypto`, `/dashboard`, `/academia`, `/tecnologia`.
+- `apps/gold/index.html`: navegación principal con tarjetas/módulos y scripts auth (`authClient.js`, `authUI.js`).
+- `apps/gold/dashboard/index.html`: dashboard autenticado, carga módulos, favoritos, notificaciones e insights.
+
+2) **Dónde se instancia Supabase/Auth**
+- Cliente único: `apps/gold/assets/js/config/supabase-config.js`.
+- Auth runtime: `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js`.
+- Guard del dashboard: `apps/gold/dashboard/auth-guard.js`.
+
+3) **Dashboard: qué consulta hoy y qué falta**
+- En dashboard se consultan activamente: `profiles`, `modules`, `user_favorites`, `notifications`.
+- Sistema de anuncios/feedback está integrado vía managers (`announcements`, `feedback`).
+- Progreso académico disponible en repo (`user_lesson_progress`, `user_quiz_attempts`, `user_badges` en `assets/js/academia.js`) pero no conectado al resumen principal del dashboard.
+
+4) **Clima/Agro: prioridad y storage keys**
+- Prioridad confirmada en `apps/gold/assets/js/geolocation.js#getCoordsSmart`: **Manual > GPS/IP por preferencia > Fallback**.
+- Uso en `apps/gold/agro/dashboard.js`: `initWeather()` y `displayWeather()`.
+- Keys confirmadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+
+5) **Crypto: estado real**
+- `apps/gold/crypto/` está integrado como página MPA real (`crypto/index.html` + `crypto.js` + `crypto.css`), con market data pública.
+- Existen archivos legacy/backups en carpeta, pero el flujo productivo está integrado al build de `apps/gold`.
+
+### Causa raíz confirmada (bug reportado)
+
+- En `apps/gold/agro/agro.js` (wizard Fiado→Pagado), el fallback de insert en `agro_income` eliminaba **muchas columnas a la vez** si faltaba una sola (ej. `split_meta`), incluyendo:
+  - `unit_type`, `unit_qty`, `quantity_kg` (rompe “2 sacos” en Pagados).
+  - `currency`, `exchange_rate`, `monto_usd` (rompe formato monetario y puede inflar USD visualmente).
+- El cálculo de `monto_usd` no priorizaba prorrateo desde `pending.monto_usd` cuando había split parcial; recalculaba por tasa en todos los casos no idénticos.
+
+### Plan quirúrgico (2 commits lógicos)
+
+A) **Persistencia qty + render coherente**
+- Cambiar el insert fallback de Fiado→Pagado para remover solo columnas realmente ausentes en DB.
+- Conservar `unit_type/unit_qty/quantity_kg` cuando existen en esquema y payload.
+
+B) **USD correcto anti “Sr. Barriga”**
+- Priorizar prorrateo de `monto_usd` cuando el pending ya trae snapshot USD:
+  - `transferUsd = pending.monto_usd * (transferAmount / pending.monto)`.
+- Si no hay `monto_usd`, convertir con dirección correcta (`local / rate`) mediante `convertToUSD`.
+
+### Riesgos + mitigación
+
+- Riesgo: fallback infinito o error no relacionado a columnas.
+  - Mitigación: loop acotado y solo reintenta cuando detecta columna faltante.
+- Riesgo: discrepancia por redondeo en USD prorrateado.
+  - Mitigación: redondeo a 2 decimales en el prorrateo.
+- Riesgo: impacto en CORE.
+  - Mitigación: cambios limitados al flujo de transferencia wizard e inserción en `agro_income`; sin tocar queries/cálculos CORE fuera de ese flujo.
+
+### Cierre de ejecución
+
+- Archivo modificado: `apps/gold/agro/agro.js`
+  - Nuevo helper: `insertRowWithMissingColumnFallback(...)` para fallback selectivo por columna faltante.
+  - Fix en wizard Fiado→Pagado: insert a `agro_income` ahora usa fallback selectivo y preserva cantidad/moneda cuando columnas existen.
+  - Fix monetario: `buildIncomeMonetaryFields(...)` ahora prioriza prorrateo de `monto_usd` y evita doble/inversa conversión.
+- Archivo modificado: `apps/gold/docs/AGENT_REPORT.md`
+  - Gate 0 + plan quirúrgico + cierre/smoke.
+
+### Smoke checklist (manual)
+
+- [ ] Caso simple: `2 sacos`, `100000 COP`, transferir todo -> Pagados muestra `2 sacos`, `monto_usd = 100000 / rate`.
+- [ ] Caso parcial: `5 sacos`, `200000 COP`, transferir `3` -> Pagados `3 sacos` y prorrateo monetario/ USD consistente.
+- [ ] Consola/Network: sin 400/uncaught en flujo de transferencia.
+- [x] Build gate: `pnpm build:gold`.
+
+### Build resultado
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS (`agent-guard`, `agent-report-check`, `vite build`, `check-llms`, `check-dist-utf8`).
+
 ## 🆕 SESIÓN: GATE 0 + FIXES — Cantidad fiado invisible + Sr. Barriga v2 (2026-02-27)
 
 ### Diagnóstico: causa raíz de los bugs

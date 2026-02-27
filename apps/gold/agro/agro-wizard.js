@@ -73,6 +73,83 @@ const UNIT_OPTIONS = [
     { value: 'kg', label: 'Kg', icon: '⚖️', singular: 'kg', plural: 'kg' }
 ];
 
+const DEFAULT_WIZARD_CURRENCY = 'COP';
+const wizardMissingColumnsCache = new Map();
+
+function getWizardMissingColumns(tableName) {
+    const key = String(tableName || '').trim();
+    if (!key) return new Set();
+    if (!wizardMissingColumnsCache.has(key)) {
+        wizardMissingColumnsCache.set(key, new Set());
+    }
+    return wizardMissingColumnsCache.get(key);
+}
+
+function rememberWizardMissingColumn(tableName, column) {
+    const key = String(tableName || '').trim();
+    const col = String(column || '').trim();
+    if (!key || !col) return;
+    getWizardMissingColumns(key).add(col);
+}
+
+function isMissingWizardColumnError(error, column) {
+    if (!error || !column) return false;
+    const code = String(error.code || '');
+    const message = String(error.message || '').toLowerCase();
+    const details = String(error.details || '').toLowerCase();
+    const text = `${message} ${details}`;
+    const col = String(column || '').toLowerCase();
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('could not find') || text.includes('not found');
+    const mentionsColumn = text.includes(col)
+        || text.includes(`"${col}"`)
+        || text.includes(`'${col}'`)
+        || text.includes(`.${col}`);
+    if (code === '42703' || code === 'PGRST204') {
+        return hasMissingPhrase && text.includes('column') && mentionsColumn;
+    }
+    if (!hasMissingPhrase) return false;
+    return text.includes('column') && mentionsColumn;
+}
+
+async function insertWizardRowWithFallback(supabase, tableName, payload, optionalFields = []) {
+    const table = String(tableName || '').trim();
+    if (!table) return { error: new Error('tableName requerido') };
+
+    const optional = Array.isArray(optionalFields)
+        ? optionalFields.map((field) => String(field || '').trim()).filter(Boolean)
+        : [];
+    const knownMissing = getWizardMissingColumns(table);
+    let workingPayload = { ...(payload || {}) };
+
+    if (optional.length && knownMissing instanceof Set && knownMissing.size > 0) {
+        optional.forEach((field) => {
+            if (knownMissing.has(field)) delete workingPayload[field];
+        });
+    }
+
+    let lastError = null;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        const { error } = await supabase.from(table).insert(workingPayload);
+        if (!error) return { error: null };
+        lastError = error;
+
+        let removedAny = false;
+        const nextPayload = { ...workingPayload };
+        optional.forEach((field) => {
+            if (!Object.prototype.hasOwnProperty.call(nextPayload, field)) return;
+            if (!isMissingWizardColumnError(error, field)) return;
+            delete nextPayload[field];
+            rememberWizardMissingColumn(table, field);
+            removedAny = true;
+        });
+
+        if (!removedAny) return { error };
+        workingPayload = nextPayload;
+    }
+
+    return { error: lastError || new Error(`No se pudo insertar en ${table}`) };
+}
+
 function normalizeWizardCropId(value) {
     if (value === undefined || value === null) return null;
     const text = String(value).trim();
@@ -579,8 +656,8 @@ export async function openAgroWizard(tabName, deps) {
         : new Date().toISOString().split('T')[0]);
     const prefillDate = String(prefill?.fecha || '').trim();
     const safeDate = /^\d{4}-\d{2}-\d{2}$/.test(prefillDate) ? prefillDate : todayISO;
-    const prefillCurrency = String(prefill?.currency || 'USD').trim().toUpperCase();
-    const safeCurrency = SUPPORTED_CURRENCIES[prefillCurrency] ? prefillCurrency : 'USD';
+    const prefillCurrency = String(prefill?.currency || DEFAULT_WIZARD_CURRENCY).trim().toUpperCase();
+    const safeCurrency = SUPPORTED_CURRENCIES[prefillCurrency] ? prefillCurrency : DEFAULT_WIZARD_CURRENCY;
     const prefillAmount = Number(prefill?.monto);
     const safeAmount = Number.isFinite(prefillAmount) && prefillAmount > 0
         ? String(prefillAmount)
@@ -607,6 +684,10 @@ export async function openAgroWizard(tabName, deps) {
     initExchangeRates().then(r => { if (r) exchangeRates = r; }).catch(() => { });
 
     // Wizard state
+    const defaultUnitType = meta.hasUnits
+        ? (safeUnitType || UNIT_OPTIONS[0]?.value || '')
+        : '';
+
     const state = {
         step: 1,
         cropId: initialCropId,
@@ -614,7 +695,7 @@ export async function openAgroWizard(tabName, deps) {
         concepto: String(prefill?.concepto || '').trim(),
         who: String(prefill?.who || '').trim(),
         fecha: safeDate,
-        unitType: safeUnitType,
+        unitType: defaultUnitType,
         unitQty: safeUnitQty,
         quantityKg: safeKg,
         monto: safeAmount,
@@ -1428,15 +1509,29 @@ export async function openAgroWizard(tabName, deps) {
             recalcMontoUsd();
             const montoNum = parseFloat(state.monto) || 0;
 
+            const chosenCurrency = String(state.currency || DEFAULT_WIZARD_CURRENCY).trim().toUpperCase();
+            const currencyCode = SUPPORTED_CURRENCIES[chosenCurrency] ? chosenCurrency : DEFAULT_WIZARD_CURRENCY;
+            const parsedRate = Number(state.exchangeRate);
+            const effectiveRate = currencyCode === 'USD'
+                ? 1
+                : (Number.isFinite(parsedRate) && parsedRate > 0
+                    ? parsedRate
+                    : (getRate(currencyCode, exchangeRates) || null));
+            const effectiveUsd = currencyCode === 'USD'
+                ? montoNum
+                : ((effectiveRate && effectiveRate > 0)
+                    ? convertToUSD(montoNum, currencyCode, effectiveRate)
+                    : null);
+
             const insertData = {
                 user_id: user.id,
                 crop_id: lockCropSelection ? forcedCropId : (state.cropId || null),
                 [tabName === 'gastos' ? 'date' : 'fecha']: state.fecha,
                 [tabName === 'gastos' ? 'concept' : 'concepto']: finalConcepto,
                 [tabName === 'gastos' ? 'amount' : 'monto']: montoNum,
-                currency: state.currency || 'USD',
-                exchange_rate: state.exchangeRate || 1,
-                monto_usd: state.currency === 'USD' ? montoNum : (state.montoUsd || montoNum)
+                currency: currencyCode,
+                exchange_rate: effectiveRate,
+                monto_usd: effectiveUsd
             };
 
             // Tab-specific WHO field (DB column)
@@ -1447,6 +1542,8 @@ export async function openAgroWizard(tabName, deps) {
             // Defensive defaults for NOT NULL constraints per tab.
             if (tabName === 'ingresos') {
                 insertData.categoria = insertData.categoria || (insertData.crop_id ? 'ventas' : 'general');
+                insertData.origin_table = 'manual_income';
+                insertData.transfer_state = 'active';
             }
             if (tabName === 'gastos') {
                 insertData.category = insertData.category || (insertData.crop_id ? 'insumos' : 'general');
@@ -1462,12 +1559,19 @@ export async function openAgroWizard(tabName, deps) {
             }
 
             // Units (if applicable)
-            if (meta.hasUnits && state.unitType) {
-                insertData.unit_type = state.unitType;
-                insertData.unit_qty = state.unitQty || null;
+            if (meta.hasUnits) {
+                const unitType = String(state.unitType || '').trim().toLowerCase();
+                const qty = Number.parseFloat(state.unitQty);
+                if (unitType && Number.isFinite(qty) && qty > 0) {
+                    insertData.unit_type = unitType;
+                    insertData.unit_qty = qty;
+                }
             }
             if (meta.hasUnits && state.quantityKg) {
-                insertData.quantity_kg = parseFloat(state.quantityKg) || null;
+                const kg = Number.parseFloat(state.quantityKg);
+                if (Number.isFinite(kg) && kg > 0) {
+                    insertData.quantity_kg = kg;
+                }
             }
 
             // Gastos uses different field names
@@ -1546,8 +1650,20 @@ export async function openAgroWizard(tabName, deps) {
                 createdOperatingExpense = true;
                 successMessage = '✅ Donación y gasto operativo registrados';
             } else {
-                const { error } = await supabase.from(meta.table).insert(insertData);
-                if (error) throw error;
+                const optionalFieldsByTab = {
+                    ingresos: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state'],
+                    pendientes: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd'],
+                    gastos: ['currency', 'exchange_rate', 'monto_usd'],
+                    perdidas: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd'],
+                    transferencias: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd']
+                };
+                const insertResult = await insertWizardRowWithFallback(
+                    supabase,
+                    meta.table,
+                    insertData,
+                    optionalFieldsByTab[tabName] || []
+                );
+                if (insertResult.error) throw insertResult.error;
             }
 
             // Show success
