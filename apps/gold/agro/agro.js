@@ -70,7 +70,9 @@ const AGRO_DEBUG = typeof window !== 'undefined'
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
 const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
-const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,created_at';
+const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta';
+const AGRO_LOSS_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,evidence_url,reverted_at,reverted_reason,split_meta';
+const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,reverted_at,created_at';
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
 const AGRO_SOCIAL_OPEN_BUTTON_ID = 'btn-open-agro-social';
@@ -96,6 +98,7 @@ const agroFocusOriginalPositions = new Map();
 let agroFocusModeBound = false;
 let buyerProfileClickHandlersBound = false;
 let agroSocialButtonBound = false;
+const revertTransferInFlightLocks = new Set();
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -1038,7 +1041,9 @@ const FACTURERO_SPLIT_FIELDS_SUPPORT = {
 };
 
 const PENDING_TRANSFER_FILTER_KEY = 'YG_PENDING_SHOW_TRANSFERRED_V1';
+const PENDING_REVERTED_FILTER_KEY = 'YG_PENDING_SHOW_REVERTED_V1';
 const OTHER_TRANSFER_FILTER_KEY = 'YG_OTHER_SHOW_TRANSFERRED_V1';
+const OTHER_REVERTED_FILTER_KEY = 'YG_OTHER_SHOW_REVERTED_V1';
 const OTHER_TRANSFER_HISTORY_KEY = 'YG_OTHER_TRANSFER_HISTORY_V1';
 const OTHER_TRANSFER_HISTORY_LIMIT = 200;
 
@@ -1539,8 +1544,53 @@ async function insertRowWithMissingColumnFallback(tableName, payload, optionalFi
     return { error: lastError || new Error(`No se pudo insertar en ${table}`) };
 }
 
+async function selectSingleWithMissingColumnFallback(tableName, fields, eqFilters = {}) {
+    const table = String(tableName || '').trim();
+    if (!table) return { data: null, error: new Error('tableName requerido') };
+
+    const missingColumns = getTableMissingColumns(table);
+    let selectFields = (Array.isArray(fields) ? fields : String(fields || '').split(','))
+        .map((field) => String(field || '').trim())
+        .filter((field) => field && !missingColumns.has(field));
+
+    let lastError = null;
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+        if (!selectFields.length) {
+            return { data: null, error: new Error(`Sin columnas disponibles para consultar ${table}`) };
+        }
+
+        let query = supabase
+            .from(table)
+            .select(selectFields.join(','))
+            .limit(1);
+
+        Object.entries(eqFilters || {}).forEach(([key, value]) => {
+            const field = String(key || '').trim();
+            if (!field) return;
+            query = query.eq(field, value);
+        });
+
+        const { data, error } = await query.single();
+        if (!error) return { data, error: null };
+        lastError = error;
+
+        let removedAny = false;
+        selectFields = selectFields.filter((field) => {
+            if (!isMissingColumnError(error, field)) return true;
+            rememberMissingColumn(table, field);
+            removedAny = true;
+            return false;
+        });
+
+        if (!removedAny) return { data: null, error };
+    }
+
+    return { data: null, error: lastError || new Error(`No se pudo consultar ${table}`) };
+}
+
 function isPendingTransferred(item) {
     if (!item) return false;
+    if (item.transfer_state === 'reverted' || item.reverted_at) return false;
     // V9.7: Use transfer_state for accurate detection
     if (item.transfer_state === 'transferred') return true;
     // Legacy fallback for data without transfer_state
@@ -1550,7 +1600,7 @@ function isPendingTransferred(item) {
 // V9.7: Check if a pending item was transferred but then reverted (back to active)
 function isPendingReverted(item) {
     if (!item) return false;
-    return item.transfer_state === 'reverted';
+    return item.transfer_state === 'reverted' || !!item.reverted_at || !!item.reverted_reason;
 }
 
 // V9.7: Check if income/loss originated from a pending transfer
@@ -1562,12 +1612,20 @@ function isFromPendingTransfer(item) {
 // V9.7: Check if income/loss was reverted back to pending
 function isIncomeOrLossReverted(item) {
     if (!item) return false;
-    return item.transfer_state === 'reverted';
+    return item.transfer_state === 'reverted' || !!item.reverted_at || !!item.reverted_reason;
 }
 
 function readPendingTransferFilter() {
     try {
         return localStorage.getItem(PENDING_TRANSFER_FILTER_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function readPendingRevertedFilter() {
+    try {
+        return localStorage.getItem(PENDING_REVERTED_FILTER_KEY) === '1';
     } catch (e) {
         return false;
     }
@@ -1581,6 +1639,14 @@ function writePendingTransferFilter(value) {
     }
 }
 
+function writePendingRevertedFilter(value) {
+    try {
+        localStorage.setItem(PENDING_REVERTED_FILTER_KEY, value ? '1' : '0');
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
 function readOtherTransferFilter() {
     try {
         return localStorage.getItem(OTHER_TRANSFER_FILTER_KEY) === '1';
@@ -1589,9 +1655,25 @@ function readOtherTransferFilter() {
     }
 }
 
+function readOtherRevertedFilter() {
+    try {
+        return localStorage.getItem(OTHER_REVERTED_FILTER_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
 function writeOtherTransferFilter(value) {
     try {
         localStorage.setItem(OTHER_TRANSFER_FILTER_KEY, value ? '1' : '0');
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function writeOtherRevertedFilter(value) {
+    try {
+        localStorage.setItem(OTHER_REVERTED_FILTER_KEY, value ? '1' : '0');
     } catch (e) {
         // Ignore storage errors
     }
@@ -1648,9 +1730,16 @@ function getOtherTransferHistoryMap() {
 
 function isOtherTransferredRecord(item) {
     if (!item) return false;
+    if (isOtherRevertedRecord(item)) return false;
     if (item.other_transfer_state === 'transferred') return true;
     if (item.source_tab === 'pendientes') return isPendingTransferred(item);
     return false;
+}
+
+function isOtherRevertedRecord(item) {
+    if (!item) return false;
+    if (item.source_tab === 'pendientes') return isPendingReverted(item);
+    return item.transfer_state === 'reverted' || !!item.reverted_at || !!item.reverted_reason;
 }
 
 function formatOtherTransferMeta(item) {
@@ -1887,179 +1976,594 @@ async function transferPendingToLoss(pendingId) {
     return { success: true, lossId: loss.id };
 }
 
-/**
- * Revert an income back to pending (mark income as reverted, reactivate pending)
- * @param {string} incomeId - ID of the income item
- * @param {string} reason - Optional reason for reverting
- * @returns {Promise<{success: boolean, pendingId?: string, error?: string}>}
- */
+function getRevertSourceLabel(sourceTab) {
+    return sourceTab === 'ingresos' ? 'Pagados' : 'Pérdidas';
+}
+
+function getRevertFromState(sourceTab) {
+    return sourceTab === 'ingresos' ? 'pagados' : 'perdidas';
+}
+
+async function fetchRevertSourceRecord(sourceTable, sourceId, userId, selectColumns) {
+    const fields = String(selectColumns || '')
+        .split(',')
+        .map((field) => String(field || '').trim())
+        .filter(Boolean);
+
+    const { data, error } = await selectSingleWithMissingColumnFallback(sourceTable, fields, {
+        id: sourceId,
+        user_id: userId
+    });
+    if (error || !data) {
+        return { data: null, error: error || new Error('Registro no encontrado') };
+    }
+    return { data, error: null };
+}
+
+async function openRevertToPendingWizard(sourceTab, sourceRow) {
+    const sourceLabel = getRevertSourceLabel(sourceTab);
+    const sourceAmount = toSafeLocaleNumber(sourceRow?.monto) ?? 0;
+    if (!(sourceAmount > 0)) {
+        notifyFacturero('⚠️ El monto del registro origen no es válido para revertir.', 'warning');
+        return null;
+    }
+
+    const sourceCurrency = normalizeMoneyCurrency(sourceRow?.currency) || 'COP';
+    const sourceQtyResolved = resolvePendingQuantity(sourceRow);
+    const splitDraftBase = computePendingSplitDraft(sourceRow, 'income');
+    const splitUnitType = String(splitDraftBase.unitType || sourceQtyResolved.unitType || sourceRow?.unit_type || 'unidad').trim().toLowerCase();
+    const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? sourceQtyResolved.qtyTotal);
+    const needsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
+
+    const whoData = getWhoData(sourceTab, sourceRow, sourceRow?.concepto || '');
+    const detailRows = [
+        { label: 'Concepto', value: sourceRow?.concepto || 'Sin concepto' },
+        { label: `Total en ${sourceLabel}`, value: fmtMoneyUI(sourceAmount, sourceCurrency) },
+        { label: 'Fecha original', value: sourceRow?.fecha || 'N/A' }
+    ];
+    if (whoData?.who) {
+        detailRows.push({ label: 'Cliente', value: whoData.who });
+    }
+
+    const splitConfig = {
+        enabled: true,
+        qtyTotal: splitQtyTotal,
+        defaultQty: splitQtyTotal || 1,
+        requireQtyTotal: needsQtyTotalInput,
+        forceQtyTotalInput: true,
+        forceTransferQtyInput: true,
+        unitType: splitUnitType,
+        originLabel: sourceLabel,
+        destinationLabel: 'Fiados',
+        showTransferTotal: true,
+        defaultTransferTotal: sourceAmount,
+        transferTotalLabel: 'Monto total a devolver',
+        currencyLabel: sourceCurrency,
+        originalTransferTotal: sourceAmount,
+        originalTransferTotalLabel: `Total en ${sourceLabel} (referencia)`,
+        sourceAmount
+    };
+
+    const decision = await openTransferMetaModal({
+        title: `Devolver ${sourceLabel} a Fiados`,
+        stepIndex: 1,
+        stepTotal: 2,
+        stepLabel: 'Detalles',
+        rows: detailRows,
+        showConcept: true,
+        conceptLabel: 'Motivo de devolución (opcional)',
+        defaultConcept: '',
+        showCategory: false,
+        showDate: true,
+        dateLabel: 'Fecha de devolución',
+        defaultDate: getTodayLocalISO(),
+        confirmText: 'Siguiente',
+        confirmVariant: 'next',
+        split: splitConfig
+    });
+    if (!decision?.confirmed) return null;
+
+    const decisionDate = decision.date || getTodayLocalISO();
+    const dateCheck = assertDateNotFuture(decisionDate, 'Fecha');
+    if (!dateCheck.valid) {
+        notifyFacturero(`⚠️ ${dateCheck.error}`, 'warning');
+        return null;
+    }
+
+    const splitDraft = computePendingSplitDraft(sourceRow, 'income', decision);
+    if (splitDraft.error) {
+        notifyFacturero(`⚠️ ${splitDraft.error}`, 'warning');
+        return null;
+    }
+
+    const movedQtyText = formatSplitQuantity(splitDraft.transferUnitQty ?? splitDraft.qtyTransfer, splitDraft.unitType || splitUnitType);
+    const leftQtyText = formatSplitQuantity(splitDraft.remainingUnitQty ?? splitDraft.qtyLeft, splitDraft.unitType || splitUnitType);
+    const summaryRows = [
+        { label: 'Origen', value: sourceLabel },
+        { label: 'Destino', value: 'Fiados' },
+        { label: 'Fecha', value: decisionDate },
+        {
+            label: 'Devueltos',
+            value: `${movedQtyText} -> Total: ${fmtMoneyUI(splitDraft.transferAmount || 0, sourceCurrency)}`
+        }
+    ];
+    if (splitDraft.isPartial) {
+        summaryRows.push({
+            label: `Quedan en ${sourceLabel}`,
+            value: `${leftQtyText} -> Total: ${fmtMoneyUI(splitDraft.remainingAmount || 0, sourceCurrency)}`
+        });
+    }
+    if (decision?.concept) {
+        summaryRows.push({ label: 'Motivo', value: String(decision.concept).trim() });
+    }
+
+    const confirmation = await openTransferMetaModal({
+        title: 'Confirmar devolución',
+        stepIndex: 2,
+        stepTotal: 2,
+        stepLabel: 'Confirmación',
+        rows: summaryRows,
+        showConcept: false,
+        showCategory: false,
+        showDate: false,
+        confirmText: 'Confirmar devolución',
+        confirmVariant: 'submit'
+    });
+    if (!confirmation?.confirmed) return null;
+
+    return {
+        splitDraft,
+        reason: String(decision.concept || '').trim(),
+        decisionDate
+    };
+}
+
+async function executeCompensationRevertToPending({
+    sourceTable,
+    sourceTab,
+    sourceRow,
+    userId,
+    splitDraft,
+    reason = '',
+    decisionDate
+}) {
+    const movedAt = new Date().toISOString();
+    const sourceLabel = getRevertSourceLabel(sourceTab);
+    const fromState = getRevertFromState(sourceTab);
+    const transferAmount = toSafeLocaleNumber(splitDraft?.transferAmount) ?? 0;
+    const remainingAmount = toSafeLocaleNumber(splitDraft?.remainingAmount) ?? 0;
+    const unitType = String(splitDraft?.unitType || sourceRow?.unit_type || 'unidad').trim().toLowerCase() || 'unidad';
+    const qtyTotal = toSafeLocaleNumber(splitDraft?.qtyTotal ?? resolvePendingQuantity(sourceRow).qtyTotal);
+    const qtyMoved = toSafeLocaleNumber(splitDraft?.qtyTransfer ?? splitDraft?.transferUnitQty);
+    const qtyLeft = toSafeLocaleNumber(splitDraft?.qtyLeft ?? splitDraft?.remainingUnitQty);
+    const isPartial = !!(splitDraft?.isPartial && remainingAmount > 0 && qtyTotal !== null && qtyMoved !== null && qtyLeft !== null);
+    const safeDecisionDate = decisionDate || getTodayLocalISO();
+    const reasonText = String(reason || '').trim();
+
+    const splitMetaPending = isPartial
+        ? buildPartialSplitMetaPayload({
+            role: 'destination',
+            splitFromId: sourceRow.id,
+            fromState,
+            toState: 'fiados',
+            unitType,
+            qtyTotal,
+            qtyMoved,
+            qtyLeft,
+            unitPriceOriginal: splitDraft?.unitPriceOriginal,
+            unitPriceTransfer: splitDraft?.unitPriceTransfer,
+            amountMoved: transferAmount,
+            amountLeft: remainingAmount,
+            movedAt
+        })
+        : null;
+    const splitMetaRemainder = isPartial
+        ? buildPartialSplitMetaPayload({
+            role: 'origin',
+            splitFromId: sourceRow.id,
+            fromState,
+            toState: 'fiados',
+            unitType,
+            qtyTotal,
+            qtyMoved,
+            qtyLeft,
+            unitPriceOriginal: splitDraft?.unitPriceOriginal,
+            unitPriceTransfer: splitDraft?.unitPriceTransfer,
+            amountMoved: transferAmount,
+            amountLeft: remainingAmount,
+            movedAt
+        })
+        : null;
+
+    const pendingId = buildTransferId('pending');
+    const sourceWhoData = getWhoData(sourceTab, sourceRow, sourceRow?.concepto || '');
+    const pendingConcept = sourceWhoData?.concept || sourceRow?.concepto || 'Fiado';
+    const pendingMoney = buildIncomeMonetaryFields(sourceRow, transferAmount);
+    const pendingPayload = {
+        id: pendingId,
+        user_id: userId,
+        concepto: pendingConcept,
+        monto: pendingMoney.monto,
+        fecha: safeDecisionDate,
+        cliente: sourceTab === 'ingresos' ? (sourceWhoData?.who || null) : null,
+        notas: reasonText || null,
+        evidence_url: getFactureroEvidenceValue(sourceTab, sourceRow) || null,
+        crop_id: sourceRow?.crop_id || null,
+        unit_type: unitType,
+        unit_qty: Number.isFinite(Number(splitDraft?.transferUnitQty)) ? Number(splitDraft.transferUnitQty) : null,
+        quantity_kg: Number.isFinite(Number(splitDraft?.transferKgQty)) ? Number(splitDraft.transferKgQty) : null,
+        currency: pendingMoney.currency,
+        exchange_rate: pendingMoney.exchange_rate,
+        monto_usd: pendingMoney.monto_usd,
+        transfer_state: 'active',
+        split_from_id: isPartial ? sourceRow.id : null,
+        split_meta: splitMetaPending
+    };
+
+    const pendingInsert = await insertRowWithMissingColumnFallback('agro_pending', pendingPayload, [
+        'cliente',
+        'notas',
+        'unit_type',
+        'unit_qty',
+        'quantity_kg',
+        'currency',
+        'exchange_rate',
+        'monto_usd',
+        'transfer_state',
+        'split_from_id',
+        'split_meta'
+    ]);
+    if (pendingInsert.error) {
+        return { success: false, error: pendingInsert.error?.message || 'No se pudo crear el movimiento compensatorio en Fiados.' };
+    }
+
+    let remainderId = null;
+    if (isPartial && remainingAmount > 0) {
+        const remainderMoney = buildIncomeMonetaryFields(sourceRow, remainingAmount);
+        remainderId = buildTransferId(sourceTab === 'ingresos' ? 'inc' : 'loss');
+        const remainderPayload = sourceTab === 'ingresos'
+            ? {
+                id: remainderId,
+                user_id: userId,
+                concepto: sourceRow?.concepto || 'Pagado',
+                monto: remainderMoney.monto,
+                fecha: sourceRow?.fecha || safeDecisionDate,
+                categoria: sourceRow?.categoria || 'ventas',
+                soporte_url: sourceRow?.soporte_url || null,
+                crop_id: sourceRow?.crop_id || null,
+                unit_type: unitType,
+                unit_qty: Number.isFinite(Number(splitDraft?.remainingUnitQty)) ? Number(splitDraft.remainingUnitQty) : null,
+                quantity_kg: Number.isFinite(Number(splitDraft?.remainingKgQty)) ? Number(splitDraft.remainingKgQty) : null,
+                currency: remainderMoney.currency,
+                exchange_rate: remainderMoney.exchange_rate,
+                monto_usd: remainderMoney.monto_usd,
+                origin_table: sourceRow?.origin_table || 'agro_pending',
+                origin_id: sourceRow?.origin_id || null,
+                transfer_state: 'active',
+                split_from_id: sourceRow.id,
+                split_meta: splitMetaRemainder
+            }
+            : {
+                id: remainderId,
+                user_id: userId,
+                concepto: sourceRow?.concepto || 'Pérdida',
+                monto: remainderMoney.monto,
+                fecha: sourceRow?.fecha || safeDecisionDate,
+                causa: sourceRow?.causa || 'Fiado cancelado',
+                evidence_url: sourceRow?.evidence_url || null,
+                crop_id: sourceRow?.crop_id || null,
+                unit_type: unitType,
+                unit_qty: Number.isFinite(Number(splitDraft?.remainingUnitQty)) ? Number(splitDraft.remainingUnitQty) : null,
+                quantity_kg: Number.isFinite(Number(splitDraft?.remainingKgQty)) ? Number(splitDraft.remainingKgQty) : null,
+                currency: remainderMoney.currency,
+                exchange_rate: remainderMoney.exchange_rate,
+                monto_usd: remainderMoney.monto_usd,
+                origin_table: sourceRow?.origin_table || 'agro_pending',
+                origin_id: sourceRow?.origin_id || null,
+                transfer_state: 'active',
+                split_from_id: sourceRow.id,
+                split_meta: splitMetaRemainder
+            };
+
+        const remainderInsert = await insertRowWithMissingColumnFallback(sourceTable, remainderPayload, [
+            'unit_type',
+            'unit_qty',
+            'quantity_kg',
+            'currency',
+            'exchange_rate',
+            'monto_usd',
+            'origin_table',
+            'origin_id',
+            'transfer_state',
+            'split_from_id',
+            'split_meta'
+        ]);
+        if (remainderInsert.error) {
+            await softDeleteFactureroRow('agro_pending', pendingId, userId);
+            return { success: false, error: remainderInsert.error?.message || 'No se pudo crear el remanente activo.' };
+        }
+    }
+
+    const sourceUpdatePayload = {
+        transfer_state: 'reverted',
+        reverted_at: new Date().toISOString(),
+        reverted_reason: reasonText || (isPartial ? 'Devuelto parcial a fiados' : 'Devuelto a fiados')
+    };
+    let { error: sourceUpdateError } = await supabase
+        .from(sourceTable)
+        .update(sourceUpdatePayload)
+        .eq('id', sourceRow.id)
+        .eq('user_id', userId);
+
+    if (sourceUpdateError
+        && (isMissingColumnError(sourceUpdateError, 'transfer_state')
+            || isMissingColumnError(sourceUpdateError, 'reverted_at')
+            || isMissingColumnError(sourceUpdateError, 'reverted_reason'))) {
+        const fallbackDelete = await softDeleteFactureroRow(sourceTable, sourceRow.id, userId);
+        if (fallbackDelete.success) {
+            sourceUpdateError = null;
+        }
+    }
+
+    if (sourceUpdateError) {
+        await softDeleteFactureroRow('agro_pending', pendingId, userId);
+        if (remainderId) {
+            await softDeleteFactureroRow(sourceTable, remainderId, userId);
+        }
+        return { success: false, error: sourceUpdateError?.message || 'No se pudo marcar el origen como revertido.' };
+    }
+
+    const movedQtyLabel = formatSplitQuantity(splitDraft?.transferUnitQty ?? splitDraft?.qtyTransfer, unitType);
+    const leftQtyLabel = formatSplitQuantity(splitDraft?.remainingUnitQty ?? splitDraft?.qtyLeft, unitType);
+    console.info('[AGRO] Reversión compensatoria aplicada:', {
+        sourceTable,
+        sourceId: sourceRow.id,
+        pendingId,
+        remainderId,
+        partial: isPartial
+    });
+
+    return {
+        success: true,
+        partial: isPartial,
+        movedQtyLabel,
+        leftQtyLabel,
+        movedAmount: transferAmount,
+        leftAmount: remainingAmount,
+        sourceLabel
+    };
+}
+
 async function revertIncomeToPending(incomeId, reason = '') {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) return { success: false, error: 'No autenticado' };
     const userId = userData.user.id;
 
-    // 1. Fetch income with origin info
-    const { data: income, error: fetchError } = await supabase
-        .from('agro_income')
-        .select(AGRO_INCOME_TRANSFER_COLUMNS)
-        .eq('id', incomeId)
-        .eq('user_id', userId)
-        .single();
-
-    if (fetchError || !income) {
-        return { success: false, error: fetchError?.message || 'Pagado no encontrado' };
+    const sourceResult = await fetchRevertSourceRecord('agro_income', incomeId, userId, AGRO_INCOME_REVERT_COLUMNS);
+    if (sourceResult.error || !sourceResult.data) {
+        return { success: false, error: sourceResult.error?.message || 'Pagado no encontrado' };
     }
-
-    // 2. Validate origin
+    const income = sourceResult.data;
     if (income.origin_table !== 'agro_pending' || !income.origin_id) {
         return { success: false, error: 'Este pagado no proviene de un fiado' };
     }
-
-    // 3. Check idempotency
-    if (income.transfer_state === 'reverted') {
-        console.info('[V9.7] Income already reverted, idempotent return');
-        return { success: true, pendingId: income.origin_id, message: 'Ya revertido' };
+    if (income.transfer_state === 'reverted' || income.reverted_at) {
+        return { success: true, message: 'Ya revertido' };
     }
 
-    // 4. Mark income as reverted
-    const { error: incomeUpdateError } = await supabase
-        .from('agro_income')
-        .update({
-            transfer_state: 'reverted',
-            reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto a fiados'
-        })
-        .eq('id', incomeId)
-        .eq('user_id', userId);
-
-    if (incomeUpdateError) {
-        return { success: false, error: incomeUpdateError.message };
+    const fullSplit = computePendingSplitDraft(income, 'income', {
+        qtyTotal: resolvePendingQuantity(income).qtyTotal,
+        quantity: resolvePendingQuantity(income).qtyTotal,
+        transferTotal: toSafeLocaleNumber(income?.monto),
+        unitType: income?.unit_type || 'unidad'
+    });
+    if (fullSplit.error) {
+        return { success: false, error: fullSplit.error };
     }
 
-    // 5. Reactivate pending
-    const { error: pendingUpdateError } = await supabase
-        .from('agro_pending')
-        .update({
-            transfer_state: 'reverted',
-            reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto desde pagado'
-        })
-        .eq('id', income.origin_id)
-        .eq('user_id', userId);
-
-    if (pendingUpdateError) {
-        console.error('[V9.7] Error reactivating pending:', pendingUpdateError);
-    }
-
-    console.info('[V9.7] Reverted income to pending:', { incomeId, pendingId: income.origin_id });
-    return { success: true, pendingId: income.origin_id };
+    return executeCompensationRevertToPending({
+        sourceTable: 'agro_income',
+        sourceTab: 'ingresos',
+        sourceRow: income,
+        userId,
+        splitDraft: fullSplit,
+        reason,
+        decisionDate: getTodayLocalISO()
+    });
 }
 
-/**
- * Revert a loss back to pending (mark loss as reverted, reactivate pending)
- * @param {string} lossId - ID of the loss item
- * @param {string} reason - Optional reason for reverting
- * @returns {Promise<{success: boolean, pendingId?: string, error?: string}>}
- */
 async function revertLossToPending(lossId, reason = '') {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user?.id) return { success: false, error: 'No autenticado' };
     const userId = userData.user.id;
 
-    // 1. Fetch loss with origin info
-    const { data: loss, error: fetchError } = await supabase
-        .from('agro_losses')
-        .select(AGRO_LOSS_TRANSFER_COLUMNS)
-        .eq('id', lossId)
-        .eq('user_id', userId)
-        .single();
-
-    if (fetchError || !loss) {
-        return { success: false, error: fetchError?.message || 'Pérdida no encontrada' };
+    const sourceResult = await fetchRevertSourceRecord('agro_losses', lossId, userId, AGRO_LOSS_REVERT_COLUMNS);
+    if (sourceResult.error || !sourceResult.data) {
+        return { success: false, error: sourceResult.error?.message || 'Pérdida no encontrada' };
     }
-
-    // 2. Validate origin
+    const loss = sourceResult.data;
     if (loss.origin_table !== 'agro_pending' || !loss.origin_id) {
         return { success: false, error: 'Esta pérdida no proviene de un fiado' };
     }
-
-    // 3. Check idempotency
-    if (loss.transfer_state === 'reverted') {
-        console.info('[V9.7] Loss already reverted, idempotent return');
-        return { success: true, pendingId: loss.origin_id, message: 'Ya revertido' };
+    if (loss.transfer_state === 'reverted' || loss.reverted_at) {
+        return { success: true, message: 'Ya revertido' };
     }
 
-    // 4. Mark loss as reverted
-    const { error: lossUpdateError } = await supabase
-        .from('agro_losses')
-        .update({
-            transfer_state: 'reverted',
-            reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto a fiados'
-        })
-        .eq('id', lossId)
-        .eq('user_id', userId);
-
-    if (lossUpdateError) {
-        return { success: false, error: lossUpdateError.message };
+    const fullSplit = computePendingSplitDraft(loss, 'income', {
+        qtyTotal: resolvePendingQuantity(loss).qtyTotal,
+        quantity: resolvePendingQuantity(loss).qtyTotal,
+        transferTotal: toSafeLocaleNumber(loss?.monto),
+        unitType: loss?.unit_type || 'unidad'
+    });
+    if (fullSplit.error) {
+        return { success: false, error: fullSplit.error };
     }
 
-    // 5. Reactivate pending
-    const { error: pendingUpdateError } = await supabase
-        .from('agro_pending')
-        .update({
-            transfer_state: 'reverted',
-            reverted_at: new Date().toISOString(),
-            reverted_reason: reason || 'Devuelto desde pérdida'
-        })
-        .eq('id', loss.origin_id)
-        .eq('user_id', userId);
-
-    if (pendingUpdateError) {
-        console.error('[V9.7] Error reactivating pending from loss:', pendingUpdateError);
-    }
-
-    console.info('[V9.7] Reverted loss to pending:', { lossId, pendingId: loss.origin_id });
-    return { success: true, pendingId: loss.origin_id };
+    return executeCompensationRevertToPending({
+        sourceTable: 'agro_losses',
+        sourceTab: 'perdidas',
+        sourceRow: loss,
+        userId,
+        splitDraft: fullSplit,
+        reason,
+        decisionDate: getTodayLocalISO()
+    });
 }
 
-/**
- * Handle revert from income to pending
- * @param {string} incomeId - ID of the income item
- */
 async function handleRevertIncome(incomeId) {
-    if (!confirm('¿Devolver este pagado a Fiados? El pagado quedará marcado como revertido.')) {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) {
+        notifyFacturero('Sesión expirada. Recarga la página.', 'warning');
         return;
     }
 
-    const result = await revertIncomeToPending(incomeId);
+    const lockKey = `income:${String(incomeId || '').trim()}`;
+    if (revertTransferInFlightLocks.has(lockKey)) {
+        notifyFacturero('⚠️ Esta devolución ya está en proceso.', 'warning');
+        return;
+    }
 
-    if (result.success) {
-        await refreshFactureroHistory('ingresos');
-        await refreshFactureroHistory('pendientes');
+    const sourceResult = await fetchRevertSourceRecord('agro_income', incomeId, userId, AGRO_INCOME_REVERT_COLUMNS);
+    if (sourceResult.error || !sourceResult.data) {
+        notifyFacturero('No se encontró el pagado seleccionado.', 'warning');
+        return;
+    }
+    const income = sourceResult.data;
+    if (income.origin_table !== 'agro_pending' || !income.origin_id) {
+        notifyFacturero('Este pagado no proviene de Fiados.', 'warning');
+        return;
+    }
+    if (income.transfer_state === 'reverted' || income.reverted_at) {
+        notifyFacturero('Este pagado ya fue revertido.', 'warning');
+        return;
+    }
+
+    const wizard = await openRevertToPendingWizard('ingresos', income);
+    if (!wizard) return;
+
+    revertTransferInFlightLocks.add(lockKey);
+    try {
+        notifyFacturero('Actualizando historial...', 'info');
+        const result = await executeCompensationRevertToPending({
+            sourceTable: 'agro_income',
+            sourceTab: 'ingresos',
+            sourceRow: income,
+            userId,
+            splitDraft: wizard.splitDraft,
+            reason: wizard.reason,
+            decisionDate: wizard.decisionDate
+        });
+        if (!result.success) {
+            notifyFacturero(`Error al devolver: ${result.error || 'No se pudo completar la operación.'}`, 'warning');
+            return;
+        }
+
+        if (result.partial) {
+            notifyFacturero(`✅ Devueltos ${result.movedQtyLabel} a Fiados. Quedan ${result.leftQtyLabel} en Pagados.`, 'success');
+        } else {
+            notifyFacturero('✅ Pagado devuelto a Fiados.', 'success');
+        }
+
+        await Promise.allSettled([
+            refreshFactureroHistory('ingresos'),
+            refreshFactureroHistory('pendientes'),
+            refreshFactureroHistory('otros'),
+            typeof loadIncomes === 'function' ? loadIncomes() : Promise.resolve()
+        ]);
+        document.dispatchEvent(new CustomEvent('agro:income:changed'));
+        document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
+            detail: { source: 'revert-income', cropId: income?.crop_id || null }
+        }));
+        refreshOpsRankingsIfVisible();
+        scheduleOpsMovementSummaryRefresh();
+        applyBuyerPrivacy(document, readBuyerNamesHidden());
+        if (typeof readMoneyValuesHidden === 'function') {
+            applyMoneyPrivacy(document, readMoneyValuesHidden());
+        } else {
+            applyMoneyPrivacy(document);
+        }
         await updateStats();
-    } else {
-        alert('Error: ' + (result.error || 'No se pudo revertir'));
+    } finally {
+        revertTransferInFlightLocks.delete(lockKey);
     }
 }
 
-/**
- * Handle revert from loss to pending
- * @param {string} lossId - ID of the loss item
- */
 async function handleRevertLoss(lossId) {
-    if (!confirm('¿Devolver esta pérdida a Fiados? La pérdida quedará marcada como revertida.')) {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) {
+        notifyFacturero('Sesión expirada. Recarga la página.', 'warning');
         return;
     }
 
-    const result = await revertLossToPending(lossId);
+    const lockKey = `loss:${String(lossId || '').trim()}`;
+    if (revertTransferInFlightLocks.has(lockKey)) {
+        notifyFacturero('⚠️ Esta devolución ya está en proceso.', 'warning');
+        return;
+    }
 
-    if (result.success) {
-        await refreshFactureroHistory('perdidas');
-        await refreshFactureroHistory('pendientes');
+    const sourceResult = await fetchRevertSourceRecord('agro_losses', lossId, userId, AGRO_LOSS_REVERT_COLUMNS);
+    if (sourceResult.error || !sourceResult.data) {
+        notifyFacturero('No se encontró la pérdida seleccionada.', 'warning');
+        return;
+    }
+    const loss = sourceResult.data;
+    if (loss.origin_table !== 'agro_pending' || !loss.origin_id) {
+        notifyFacturero('Esta pérdida no proviene de Fiados.', 'warning');
+        return;
+    }
+    if (loss.transfer_state === 'reverted' || loss.reverted_at) {
+        notifyFacturero('Esta pérdida ya fue revertida.', 'warning');
+        return;
+    }
+
+    const wizard = await openRevertToPendingWizard('perdidas', loss);
+    if (!wizard) return;
+
+    revertTransferInFlightLocks.add(lockKey);
+    try {
+        notifyFacturero('Actualizando historial...', 'info');
+        const result = await executeCompensationRevertToPending({
+            sourceTable: 'agro_losses',
+            sourceTab: 'perdidas',
+            sourceRow: loss,
+            userId,
+            splitDraft: wizard.splitDraft,
+            reason: wizard.reason,
+            decisionDate: wizard.decisionDate
+        });
+        if (!result.success) {
+            notifyFacturero(`Error al devolver: ${result.error || 'No se pudo completar la operación.'}`, 'warning');
+            return;
+        }
+
+        if (result.partial) {
+            notifyFacturero(`✅ Devueltos ${result.movedQtyLabel} a Fiados. Quedan ${result.leftQtyLabel} en Pérdidas.`, 'success');
+        } else {
+            notifyFacturero('✅ Pérdida devuelta a Fiados.', 'success');
+        }
+
+        await Promise.allSettled([
+            refreshFactureroHistory('perdidas'),
+            refreshFactureroHistory('pendientes'),
+            refreshFactureroHistory('otros')
+        ]);
+        document.dispatchEvent(new CustomEvent('agro:losses:changed'));
+        document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
+            detail: { source: 'revert-loss', cropId: loss?.crop_id || null }
+        }));
+        refreshOpsRankingsIfVisible();
+        scheduleOpsMovementSummaryRefresh();
+        applyBuyerPrivacy(document, readBuyerNamesHidden());
+        if (typeof readMoneyValuesHidden === 'function') {
+            applyMoneyPrivacy(document, readMoneyValuesHidden());
+        } else {
+            applyMoneyPrivacy(document);
+        }
         await updateStats();
-    } else {
-        alert('Error: ' + (result.error || 'No se pudo revertir'));
+    } finally {
+        revertTransferInFlightLocks.delete(lockKey);
     }
 }
 
@@ -2281,6 +2785,7 @@ function ensurePendingTransferFilterUI(parent, items) {
         wrapper.className = 'pending-transfer-filter';
         const label = document.createElement('label');
         label.className = 'pending-transfer-label';
+        label.htmlFor = 'pending-transfer-toggle';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = 'pending-transfer-toggle';
@@ -2290,29 +2795,92 @@ function ensurePendingTransferFilterUI(parent, items) {
         label.append(checkbox, text);
         wrapper.appendChild(label);
         parent.prepend(wrapper);
+    }
 
-        checkbox.addEventListener('change', () => {
-            writePendingTransferFilter(checkbox.checked);
-            refreshFactureroHistory('pendientes');
-        });
+    let labelTransferred = wrapper.querySelector('label[for="pending-transfer-toggle"]');
+    if (!labelTransferred) {
+        labelTransferred = document.createElement('label');
+        labelTransferred.className = 'pending-transfer-label';
+        labelTransferred.htmlFor = 'pending-transfer-toggle';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'pending-transfer-toggle';
+        checkbox.checked = readPendingTransferFilter();
+        const text = document.createElement('span');
+        text.className = 'pending-transfer-text';
+        labelTransferred.append(checkbox, text);
+        wrapper.appendChild(labelTransferred);
+    }
+
+    let labelReverted = wrapper.querySelector('label[for="pending-reverted-toggle"]');
+    if (!labelReverted) {
+        labelReverted = document.createElement('label');
+        labelReverted.className = 'pending-transfer-label';
+        labelReverted.htmlFor = 'pending-reverted-toggle';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'pending-reverted-toggle';
+        checkbox.checked = readPendingRevertedFilter();
+        const text = document.createElement('span');
+        text.className = 'pending-reverted-text';
+        labelReverted.append(checkbox, text);
+        wrapper.appendChild(labelReverted);
+    }
+
+    const transferToggle = wrapper.querySelector('#pending-transfer-toggle');
+    if (transferToggle) {
+        transferToggle.checked = readPendingTransferFilter();
+        if (transferToggle.dataset.bound !== '1') {
+            transferToggle.addEventListener('change', () => {
+                writePendingTransferFilter(transferToggle.checked);
+                refreshFactureroHistory('pendientes');
+            });
+            transferToggle.dataset.bound = '1';
+        }
+    }
+
+    const revertedToggle = wrapper.querySelector('#pending-reverted-toggle');
+    if (revertedToggle) {
+        revertedToggle.checked = readPendingRevertedFilter();
+        if (revertedToggle.dataset.bound !== '1') {
+            revertedToggle.addEventListener('change', () => {
+                writePendingRevertedFilter(revertedToggle.checked);
+                refreshFactureroHistory('pendientes');
+            });
+            revertedToggle.dataset.bound = '1';
+        }
     }
 
     const transferredCount = Array.isArray(items)
         ? items.filter((item) => isPendingTransferred(item)).length
         : 0;
-    const text = wrapper.querySelector('.pending-transfer-text');
-    if (text) {
-        text.textContent = transferredCount > 0
+    const revertedCount = Array.isArray(items)
+        ? items.filter((item) => isPendingReverted(item)).length
+        : 0;
+
+    const transferredText = wrapper.querySelector('.pending-transfer-text');
+    if (transferredText) {
+        transferredText.textContent = transferredCount > 0
             ? `Ver transferidos (${transferredCount})`
             : 'Ver transferidos';
+    }
+    const revertedText = wrapper.querySelector('.pending-reverted-text');
+    if (revertedText) {
+        revertedText.textContent = revertedCount > 0
+            ? `Ver revertidos (${revertedCount})`
+            : 'Ver revertidos';
     }
 }
 
 function applyPendingTransferFilter(items) {
     if (!Array.isArray(items)) return [];
     const showTransferred = readPendingTransferFilter();
-    if (showTransferred) return items;
-    return items.filter((item) => !isPendingTransferred(item));
+    const showReverted = readPendingRevertedFilter();
+    return items.filter((item) => {
+        if (isPendingReverted(item)) return showReverted;
+        if (isPendingTransferred(item)) return showTransferred;
+        return true;
+    });
 }
 
 function ensureOtherTransferFilterUI(parent, items) {
@@ -2324,6 +2892,7 @@ function ensureOtherTransferFilterUI(parent, items) {
         wrapper.className = 'pending-transfer-filter';
         const label = document.createElement('label');
         label.className = 'pending-transfer-label';
+        label.htmlFor = 'other-transfer-toggle';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = 'other-transfer-toggle';
@@ -2333,29 +2902,91 @@ function ensureOtherTransferFilterUI(parent, items) {
         label.append(checkbox, text);
         wrapper.appendChild(label);
         parent.prepend(wrapper);
+    }
 
-        checkbox.addEventListener('change', () => {
-            writeOtherTransferFilter(checkbox.checked);
-            refreshFactureroHistory('otros');
-        });
+    let labelTransferred = wrapper.querySelector('label[for="other-transfer-toggle"]');
+    if (!labelTransferred) {
+        labelTransferred = document.createElement('label');
+        labelTransferred.className = 'pending-transfer-label';
+        labelTransferred.htmlFor = 'other-transfer-toggle';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'other-transfer-toggle';
+        checkbox.checked = readOtherTransferFilter();
+        const text = document.createElement('span');
+        text.className = 'pending-transfer-text';
+        labelTransferred.append(checkbox, text);
+        wrapper.appendChild(labelTransferred);
+    }
+
+    let labelReverted = wrapper.querySelector('label[for="other-reverted-toggle"]');
+    if (!labelReverted) {
+        labelReverted = document.createElement('label');
+        labelReverted.className = 'pending-transfer-label';
+        labelReverted.htmlFor = 'other-reverted-toggle';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = 'other-reverted-toggle';
+        checkbox.checked = readOtherRevertedFilter();
+        const text = document.createElement('span');
+        text.className = 'pending-reverted-text';
+        labelReverted.append(checkbox, text);
+        wrapper.appendChild(labelReverted);
+    }
+
+    const transferToggle = wrapper.querySelector('#other-transfer-toggle');
+    if (transferToggle) {
+        transferToggle.checked = readOtherTransferFilter();
+        if (transferToggle.dataset.bound !== '1') {
+            transferToggle.addEventListener('change', () => {
+                writeOtherTransferFilter(transferToggle.checked);
+                refreshFactureroHistory('otros');
+            });
+            transferToggle.dataset.bound = '1';
+        }
+    }
+
+    const revertedToggle = wrapper.querySelector('#other-reverted-toggle');
+    if (revertedToggle) {
+        revertedToggle.checked = readOtherRevertedFilter();
+        if (revertedToggle.dataset.bound !== '1') {
+            revertedToggle.addEventListener('change', () => {
+                writeOtherRevertedFilter(revertedToggle.checked);
+                refreshFactureroHistory('otros');
+            });
+            revertedToggle.dataset.bound = '1';
+        }
     }
 
     const transferredCount = Array.isArray(items)
         ? items.filter((item) => isOtherTransferredRecord(item)).length
         : 0;
-    const text = wrapper.querySelector('.pending-transfer-text');
-    if (text) {
-        text.textContent = transferredCount > 0
+    const revertedCount = Array.isArray(items)
+        ? items.filter((item) => isOtherRevertedRecord(item)).length
+        : 0;
+    const transferredText = wrapper.querySelector('.pending-transfer-text');
+    if (transferredText) {
+        transferredText.textContent = transferredCount > 0
             ? `Ver transferidos (${transferredCount})`
             : 'Ver transferidos';
+    }
+    const revertedText = wrapper.querySelector('.pending-reverted-text');
+    if (revertedText) {
+        revertedText.textContent = revertedCount > 0
+            ? `Ver revertidos (${revertedCount})`
+            : 'Ver revertidos';
     }
 }
 
 function applyOtherTransferFilter(items) {
     if (!Array.isArray(items)) return [];
     const showTransferred = readOtherTransferFilter();
-    if (showTransferred) return items;
-    return items.filter((item) => !isOtherTransferredRecord(item));
+    const showReverted = readOtherRevertedFilter();
+    return items.filter((item) => {
+        if (isOtherRevertedRecord(item)) return showReverted;
+        if (isOtherTransferredRecord(item)) return showTransferred;
+        return true;
+    });
 }
 
 function toSafeLocaleNumber(value) {
@@ -3578,9 +4209,9 @@ function renderHistoryList(tabName, config, items, showActions) {
         const emptyMsg = document.createElement('p');
         emptyMsg.style.cssText = 'color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;';
         if (isPendingTab && itemsWithCropNames.length > 0) {
-            emptyMsg.textContent = 'No hay fiados visibles. Activa "Ver transferidos" para mostrarlos.';
+            emptyMsg.textContent = 'No hay fiados visibles. Activa "Ver transferidos" o "Ver revertidos" para mostrarlos.';
         } else if (isOthersTab && itemsWithCropNames.length > 0) {
-            emptyMsg.textContent = 'No hay movimientos transferidos visibles. Activa "Ver transferidos" para mostrarlos.';
+            emptyMsg.textContent = 'No hay movimientos visibles. Activa "Ver transferidos" o "Ver revertidos" para mostrarlos.';
         } else {
             emptyMsg.textContent = 'Sin registros recientes.';
         }
@@ -4474,6 +5105,94 @@ async function saveEditModal() {
                 }
                 updateData[field] = el.value?.trim() || null;
             });
+
+        // Lote 2: Si el movimiento viene de Fiados y el usuario reduce monto/cantidad en edición,
+        // aplicar reversión parcial append-only en lugar de edición destructiva.
+        if (tabName === 'ingresos' || tabName === 'perdidas') {
+            const sourceTable = tabName === 'ingresos' ? 'agro_income' : 'agro_losses';
+            const sourceColumns = tabName === 'ingresos' ? AGRO_INCOME_REVERT_COLUMNS : AGRO_LOSS_REVERT_COLUMNS;
+            const sourceResult = await fetchRevertSourceRecord(sourceTable, itemId, user.id, sourceColumns);
+            const sourceRow = sourceResult?.data;
+            if (sourceRow && sourceRow.origin_table === 'agro_pending' && !sourceRow.reverted_at && sourceRow.transfer_state !== 'reverted') {
+                const originalAmount = toSafeLocaleNumber(sourceRow?.monto) ?? 0;
+                const nextAmount = toSafeLocaleNumber(updateData[config.amountField]) ?? originalAmount;
+                const originalQty = resolvePendingQuantity(sourceRow);
+                const nextQtyRaw = toSafeLocaleNumber(updateData.unit_qty);
+                const nextQty = nextQtyRaw !== null ? nextQtyRaw : originalQty.qtyTotal;
+
+                const amountReduced = nextAmount + 1e-9 < originalAmount;
+                const qtyReduced = originalQty.qtyTotal !== null
+                    && nextQty !== null
+                    && nextQty + 1e-9 < originalQty.qtyTotal;
+
+                if (amountReduced || qtyReduced) {
+                    const movedAmount = roundNumeric(Math.max(originalAmount - nextAmount, 0), 2);
+                    let movedQty = null;
+                    const qtyTotalForAuto = originalQty.qtyTotal !== null ? originalQty.qtyTotal : 1;
+                    if (originalQty.qtyTotal !== null) {
+                        if (qtyReduced) {
+                            const qtyPrecision = isIntegerLike(originalQty.qtyTotal) ? 0 : 2;
+                            movedQty = roundNumeric(Math.max(originalQty.qtyTotal - nextQty, 0), qtyPrecision);
+                        } else if (amountReduced && originalAmount > 0) {
+                            const qtyPrecision = isIntegerLike(originalQty.qtyTotal) ? 0 : 2;
+                            movedQty = roundNumeric(originalQty.qtyTotal * (movedAmount / originalAmount), qtyPrecision);
+                        }
+                    }
+
+                    const autoSplit = computePendingSplitDraft(sourceRow, 'income', {
+                        unitType: originalQty.unitType || sourceRow.unit_type || updateData.unit_type || 'unidad',
+                        qtyTotal: qtyTotalForAuto,
+                        quantity: movedQty !== null ? movedQty : qtyTotalForAuto,
+                        transferTotal: movedAmount
+                    });
+                    if (autoSplit.error || !(toSafeLocaleNumber(autoSplit.transferAmount) > 0)) {
+                        alert('No se pudo convertir la edición en devolución parcial. Usa el botón "Devolver a Fiados".');
+                        return;
+                    }
+
+                    const sourceLabel = tabName === 'ingresos' ? 'Pagados' : 'Pérdidas';
+                    const movedQtyLabel = formatSplitQuantity(autoSplit.transferUnitQty ?? autoSplit.qtyTransfer, autoSplit.unitType || sourceRow.unit_type || 'unidad');
+                    const autoConfirm = confirm(`Detectamos reducción en ${sourceLabel}. Se aplicará devolución parcial append-only (${movedQtyLabel} / ${fmtMoneyUI(autoSplit.transferAmount, normalizeMoneyCurrency(sourceRow?.currency) || 'COP')}) hacia Fiados. ¿Continuar?`);
+                    if (!autoConfirm) return;
+
+                    const compensation = await executeCompensationRevertToPending({
+                        sourceTable,
+                        sourceTab: tabName,
+                        sourceRow,
+                        userId: user.id,
+                        splitDraft: autoSplit,
+                        reason: 'Ajuste automático desde edición',
+                        decisionDate: editDateValue || getTodayLocalISO()
+                    });
+                    if (!compensation.success) {
+                        throw new Error(compensation.error || 'No se pudo aplicar la devolución parcial automática.');
+                    }
+
+                    closeEditModal();
+                    await Promise.allSettled([
+                        refreshFactureroAfterChange(tabName),
+                        refreshFactureroHistory('pendientes'),
+                        refreshFactureroHistory('otros'),
+                        typeof loadIncomes === 'function' ? loadIncomes() : Promise.resolve()
+                    ]);
+                    document.dispatchEvent(new CustomEvent('data-refresh'));
+                    document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
+                        detail: { source: 'edit-auto-revert', tab: tabName, id: itemId }
+                    }));
+                    refreshOpsRankingsIfVisible();
+                    scheduleOpsMovementSummaryRefresh();
+                    applyBuyerPrivacy(document, readBuyerNamesHidden());
+                    if (typeof readMoneyValuesHidden === 'function') {
+                        applyMoneyPrivacy(document, readMoneyValuesHidden());
+                    } else {
+                        applyMoneyPrivacy(document);
+                    }
+                    await updateStats();
+                    notifyFacturero('✅ Ajuste aplicado como devolución parcial append-only.', 'success');
+                    return;
+                }
+            }
+        }
 
         // console.log('[AGRO] V9.6.5 updateData:', { table: config.table, itemId, updateData });
 
@@ -6955,8 +7674,8 @@ async function fetchIncomeTotalsByCropIds(userId, cropIds, options = {}) {
     return fetchUsdTotalsByCropIds('agro_income', userId, cropIds, {
         ...options,
         amountFields: ['monto'],
-        optionalFields: ['deleted_at'],
-        nullFilters: ['deleted_at']
+        optionalFields: ['deleted_at', 'reverted_at'],
+        nullFilters: ['deleted_at', 'reverted_at']
     });
 }
 
@@ -6964,8 +7683,8 @@ async function fetchLossTotalsByCropIds(userId, cropIds, options = {}) {
     const queryOptions = {
         ...options,
         amountFields: ['monto'],
-        optionalFields: ['deleted_at'],
-        nullFilters: ['deleted_at']
+        optionalFields: ['deleted_at', 'reverted_at'],
+        nullFilters: ['deleted_at', 'reverted_at']
     };
     for (const tableName of LOSS_TABLE_CANDIDATES) {
         const available = await isTableAvailable(tableName);
@@ -8452,6 +9171,7 @@ let expenseDeletedAtRefreshDone = false;
 let agroStoragePatched = false;
 let incomeCache = [];
 let incomeDeletedAtSupported = null;
+let incomeRevertedAtSupported = null;
 
 function setExpenseCache(data) {
     const rows = Array.isArray(data) ? data : [];
@@ -8886,6 +9606,9 @@ async function loadIncomes() {
         if (incomeDeletedAtSupported === false) {
             selectFields = selectFields.filter((field) => field !== 'deleted_at');
         }
+        if (incomeRevertedAtSupported === false) {
+            selectFields = selectFields.filter((field) => field !== 'reverted_at');
+        }
 
         let data = [];
         let error = null;
@@ -8905,6 +9628,9 @@ async function loadIncomes() {
             if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
                 query = query.is('deleted_at', null);
             }
+            if (incomeRevertedAtSupported !== false && selectFields.includes('reverted_at')) {
+                query = query.is('reverted_at', null);
+            }
 
             const result = await query;
             data = result.data;
@@ -8913,6 +9639,9 @@ async function loadIncomes() {
                 if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
                     incomeDeletedAtSupported = true;
                 }
+                if (incomeRevertedAtSupported !== false && selectFields.includes('reverted_at')) {
+                    incomeRevertedAtSupported = true;
+                }
                 break;
             }
 
@@ -8920,6 +9649,12 @@ async function loadIncomes() {
                 rememberMissingColumn('agro_income', 'deleted_at');
                 incomeDeletedAtSupported = false;
                 selectFields = selectFields.filter((field) => field !== 'deleted_at');
+                continue;
+            }
+            if (incomeRevertedAtSupported !== false && isMissingColumnError(error, 'reverted_at')) {
+                rememberMissingColumn('agro_income', 'reverted_at');
+                incomeRevertedAtSupported = false;
+                selectFields = selectFields.filter((field) => field !== 'reverted_at');
                 continue;
             }
 
@@ -8939,7 +9674,9 @@ async function loadIncomes() {
 
         if (error && !Array.isArray(data)) throw error;
 
-        incomeCache = Array.isArray(data) ? data : [];
+        incomeCache = Array.isArray(data)
+            ? data.filter((row) => !row?.reverted_at)
+            : [];
         try {
             syncFactureroNotifications('ingresos', incomeCache);
         } catch (e) {
@@ -10578,10 +11315,12 @@ if (typeof window !== 'undefined') {
 
 let topIncomeCategoryCache = null;
 
-function sumAmounts(rows, field) {
+function sumAmounts(rows, field, options = {}) {
     if (!Array.isArray(rows)) return 0;
+    const skipReverted = options?.skipReverted === true;
     return rows.reduce((total, row) => {
         if (row?.deleted_at) return total;
+        if (skipReverted && row?.reverted_at) return total;
         const value = Number(row?.[field]);
         return total + (Number.isFinite(value) ? value : 0);
     }, 0);
@@ -11911,7 +12650,7 @@ function getTopIncomeCategoryFromCache(days = 365) {
 
     const totals = {};
     incomeCache.forEach((row) => {
-        if (row?.deleted_at) return;
+        if (row?.deleted_at || row?.reverted_at) return;
         const date = new Date(row?.fecha);
         if (Number.isNaN(date.getTime()) || date < cutoff) return;
         const category = String(row?.categoria || 'otros');
@@ -11942,31 +12681,64 @@ async function fetchTopIncomeCategory(days = 365) {
         cutoff.setDate(cutoff.getDate() - days);
         const cutoffDate = cutoff.toISOString().split('T')[0];
 
-        let query = supabase
-            .from('agro_income')
-            .select('categoria, monto, fecha, deleted_at')
-            .eq('user_id', user.id)
-            .gte('fecha', cutoffDate);
-
-        if (incomeDeletedAtSupported !== false) {
-            query = query.is('deleted_at', null);
+        let selectFields = ['categoria', 'monto', 'fecha', 'deleted_at', 'reverted_at'];
+        if (incomeDeletedAtSupported === false) {
+            selectFields = selectFields.filter((field) => field !== 'deleted_at');
+        }
+        if (incomeRevertedAtSupported === false) {
+            selectFields = selectFields.filter((field) => field !== 'reverted_at');
         }
 
-        let { data, error } = await query;
-        if (error && error.message && error.message.toLowerCase().includes('deleted_at')) {
-            incomeDeletedAtSupported = false;
-            const fallback = await supabase
+        let data = null;
+        let error = null;
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+            let query = supabase
                 .from('agro_income')
-                .select('categoria, monto, fecha')
+                .select(selectFields.join(', '))
                 .eq('user_id', user.id)
                 .gte('fecha', cutoffDate);
-            data = fallback.data;
-            error = fallback.error;
+
+            if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
+                query = query.is('deleted_at', null);
+            }
+            if (incomeRevertedAtSupported !== false && selectFields.includes('reverted_at')) {
+                query = query.is('reverted_at', null);
+            }
+
+            const result = await query;
+            data = result.data;
+            error = result.error;
+            if (!error) {
+                if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
+                    incomeDeletedAtSupported = true;
+                }
+                if (incomeRevertedAtSupported !== false && selectFields.includes('reverted_at')) {
+                    incomeRevertedAtSupported = true;
+                }
+                break;
+            }
+
+            let retried = false;
+            if (incomeDeletedAtSupported !== false && isMissingColumnError(error, 'deleted_at')) {
+                rememberMissingColumn('agro_income', 'deleted_at');
+                incomeDeletedAtSupported = false;
+                selectFields = selectFields.filter((field) => field !== 'deleted_at');
+                retried = true;
+            }
+            if (incomeRevertedAtSupported !== false && isMissingColumnError(error, 'reverted_at')) {
+                rememberMissingColumn('agro_income', 'reverted_at');
+                incomeRevertedAtSupported = false;
+                selectFields = selectFields.filter((field) => field !== 'reverted_at');
+                retried = true;
+            }
+            if (!retried) break;
         }
 
         if (error) throw error;
 
-        incomeCache = Array.isArray(data) ? data : incomeCache;
+        incomeCache = Array.isArray(data)
+            ? data.filter((row) => !row?.reverted_at)
+            : incomeCache;
         return getTopIncomeCategoryFromCache(days);
     } catch (err) {
         console.warn('[Agro] Top income category error:', err);
@@ -11976,7 +12748,7 @@ async function fetchTopIncomeCategory(days = 365) {
 
 async function updateBalanceAndTopCategory() {
     const expenseTotal = sumAmounts(expenseCache, 'amount');
-    const incomeTotal = sumAmounts(incomeCache, 'monto');
+    const incomeTotal = sumAmounts(incomeCache, 'monto', { skipReverted: true });
 
     updateBalanceSummary(expenseTotal, incomeTotal);
 

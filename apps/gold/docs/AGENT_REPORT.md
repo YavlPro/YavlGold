@@ -1,5 +1,187 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — LOTE 2 Reversión parcial append-only (2026-02-27)
+
+### 1) Mapa de puntos de entrada MPA y navegación actual
+
+- `apps/gold/vite.config.js`
+  - `appType: 'mpa'`.
+  - Entradas registradas: `index.html`, `dashboard/index.html`, `dashboard/perfil.html`, `dashboard/configuracion.html`, `dashboard/music.html`, `agro/index.html`, `academia/index.html`, `crypto/index.html`, `tecnologia/index.html`, `herramientas/index.html`, `social/index.html`, `cookies.html`, `faq.html`, `soporte.html`, `creacion.html`.
+- `apps/gold/vercel.json`
+  - `cleanUrls: true`, `trailingSlash: true`.
+  - Rewrites explícitos para `/agro`, `/dashboard`, `/academia`, `/crypto`, `/tecnologia` (+ variantes `/` y `:path*`).
+  - Redirects legacy `/herramientas -> /tecnologia`.
+- `apps/gold/index.html`
+  - Landing principal con navegación por módulos y autenticación.
+- `apps/gold/dashboard/index.html`
+  - Script ESM inline con guard de sesión, carga de módulos, insights y tarjetas.
+
+### 2) Dónde se instancian datos/auth de Supabase
+
+- `apps/gold/assets/js/config/supabase-config.js`
+  - Fuente única de cliente `supabase` via `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`.
+- `apps/gold/assets/js/auth/authClient.js`
+  - Inicialización de auth, procesamiento callbacks PKCE/hash, guardas de recovery, eventos auth.
+- `apps/gold/assets/js/auth/authUI.js`
+  - UI de login/registro/logout; escucha eventos de auth y refresca estado visual.
+- `apps/gold/dashboard/auth-guard.js`
+  - Protección de dashboard; `supabase.auth.getSession()` y redirect a `/index.html#login` si no hay sesión.
+
+### 3) Dashboard: qué consulta hoy y qué le falta
+
+- Consultas activas en dashboard:
+  - `profiles` (username/avatar),
+  - `modules` (cards y orden),
+  - `user_favorites` (conteos y favoritos),
+  - `notifications` (no leídas),
+  - `announcements` y `feedback` vía managers (`assets/js/components` y admin).
+- Recomendación/continuidad:
+  - usa `ActivityTracker` local (`window.YGActivity` / `ActivityTracker.getActivitySummary()`), no progreso académico integral.
+- Progreso académico disponible pero no integrado en dashboard:
+  - en `assets/js/academia.js` existen `user_lesson_progress`, `user_quiz_attempts`, `user_badges` (y relacionados), pero no conectados al resumen principal del dashboard.
+
+### 4) Clima/Agro: prioridad Manual > GPS > IP y llaves storage
+
+- Lógica: `apps/gold/assets/js/geolocation.js` (`getCoordsSmart`).
+  - Prioridad efectiva: Manual (`YG_MANUAL_LOCATION`) > preferencia GPS/IP (`yavlgold_location_pref`) > caches (`yavlgold_gps_cache`, `yavlgold_ip_cache`) > fallback.
+- Uso: `apps/gold/agro/dashboard.js` (`initWeather`, `displayWeather`).
+  - Cache de clima: `yavlgold_weather_*`.
+  - Debug no invasivo por `?debug=1` o `localStorage.YG_GEO_DEBUG=1`.
+
+### 5) Crypto: estado real
+
+- Existe `apps/gold/crypto/` con `index.html`, `crypto.js`, `crypto.css` (+ backups/README).
+- Ya está integrado como entrada MPA (`crypto/index.html`) en `vite.config.js` y rewrites de `vercel.json`.
+- No es app separada con servidor Python para el flujo oficial (`pnpm build:gold` manda).
+
+### Diagnóstico específico de este lote (reversión parcial)
+
+- Estado actual en `apps/gold/agro/agro.js`:
+  - `handleRevertIncome` / `handleRevertLoss` usan confirmación simple y reversión total.
+  - No existe wizard de reversión parcial (`cantidad + monto global`) para devolver fracción.
+  - Al crear estrategia append-only, hay que evitar doble conteo en totales/cards:
+    - `fetchIncomeTotalsByCropIds` no filtra `reverted_at`.
+    - `fetchLossTotalsByCropIds` no filtra `reverted_at`.
+    - `loadIncomes`/balance/top-category pueden incluir revertidos.
+    - `agro-stats.js` no excluye `reverted_at` en pérdidas y no excluye `transfer_state='transferred'` en pendientes.
+
+### Plan quirúrgico (archivos exactos)
+
+1) `apps/gold/agro/agro.js`
+- Implementar wizard de reversión parcial para Pagados/Pérdidas -> Fiados.
+- Persistencia append-only:
+  - crear movimiento compensatorio en `agro_pending`,
+  - marcar origen como `reverted`,
+  - si parcial: crear remanente activo en tabla origen con `split_meta`.
+- Mantener refresh inmediato (historiales, rankings, cards) y lock anti doble-submit.
+- Ajustar neteo local (`loadIncomes`, balance/top-category, totales por cultivo) para excluir revertidos.
+
+2) `apps/gold/agro/agro-stats.js`
+- Excluir revertidos en pérdidas (`reverted_at IS NULL`).
+- Excluir `transfer_state='transferred'` en pendientes para deuda activa real.
+
+3) `apps/gold/docs/AGENT_REPORT.md`
+- Registrar implementación + riesgos + smoke + resultado build.
+
+### Riesgos y mitigación
+
+- Riesgo: duplicado contable por fila original + remanente.
+  - Mitigación: excluir `reverted_at` en todas las agregaciones de ingresos/pérdidas.
+- Riesgo: entornos sin columnas opcionales.
+  - Mitigación: reusar fallback por columnas faltantes (`insertRowWithMissingColumnFallback` + detección `42703/PGRST204`).
+- Riesgo: doble click en revertir.
+  - Mitigación: lock por id de registro durante transacción.
+
+### Implementación aplicada (lote 2)
+
+1) `apps/gold/agro/agro.js`
+- Reversión parcial append-only para `Pagados -> Fiados` y `Pérdidas -> Fiados`:
+  - nuevo wizard de 2 pasos (detalles + confirmación),
+  - inputs: cantidad total, cantidad a devolver, monto total global a devolver (sin unitario en UI),
+  - preview y resumen de `devueltos` vs `quedan`.
+- Persistencia compensatoria:
+  - crea registro compensatorio en `agro_pending`,
+  - marca origen (`agro_income` / `agro_losses`) como `reverted`,
+  - si es parcial, crea remanente activo en origen con `split_meta`.
+- Blindajes:
+  - lock anti doble-submit para reversión (`revertTransferInFlightLocks`),
+  - fallback por columnas faltantes en selects/inserts (`selectSingleWithMissingColumnFallback` + `insertRowWithMissingColumnFallback`),
+  - refresh inmediato de historiales + cards + rankings + resumen de movimientos + privacidad post-render.
+- Caso “edité 5->3”:
+  - en `saveEditModal`, si el registro (ingreso/pérdida) proviene de `agro_pending` y reduce monto/cantidad, se convierte automáticamente en devolución parcial append-only (con confirmación), evitando edición destructiva.
+- Neteo local:
+  - `loadIncomes` excluye `reverted_at`,
+  - balance y top categoría excluyen revertidos,
+  - totales por cultivo en cards excluyen revertidos para ingresos/pérdidas.
+
+2) `apps/gold/agro/agro-stats.js`
+- Pendientes: excluye `transfer_state='transferred'` (deuda activa real).
+- Pérdidas: excluye `reverted_at` (evita doble conteo al compensar).
+
+### Smoke checklist (lote 2)
+
+- [x] Revertir desde Pagados ahora abre wizard con cantidad + monto global.
+- [x] Revertir desde Pérdidas ahora abre wizard con cantidad + monto global.
+- [x] Reversión parcial crea compensación en Fiados y remanente activo en origen.
+- [x] Reversión total mantiene flujo append-only sin editar histórico destructivamente.
+- [x] Editar un transferido de `5 -> 3` dispara flujo compensatorio automático (confirmado por código).
+- [x] Neteo de cards/stats evita doble conteo de revertidos.
+- [x] `pnpm build:gold` PASS.
+
+## 🆕 SESIÓN: GATE 0 + UX FACTURERO — filtro explícito de Revertidos (2026-02-27)
+
+### Gate 0 — Diagnóstico
+
+- En historial de Facturero, los revertidos se estaban visualizando bajo el toggle `Ver transferidos`, lo cual mezcla dos estados distintos.
+- Se detectó necesidad de separar semántica de filtro:
+  - `transferido` (movido de estado origen a destino),
+  - `revertido` (movimiento compensado/retornado).
+- Riesgo técnico detectado en UI: creación dinámica de toggles sin `for`/bind robusto podía duplicar nodos o perder listeners en refrescos.
+
+### Plan quirúrgico
+
+1) Mantener `Ver transferidos` y agregar `Ver revertidos` en historial de `Fiados` y `Otros`.
+2) Ajustar clasificadores:
+   - transferidos no deben incluir revertidos.
+   - revertidos detectados por `transfer_state='reverted'`, `reverted_at` o `reverted_reason`.
+3) Blindar render de toggles:
+   - `label.htmlFor` correcto,
+   - bind idempotente de listeners (evitar duplicados),
+   - persistencia en localStorage para ambos toggles.
+4) Mejorar mensajes vacíos para reflejar ambos toggles.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - nuevos filtros persistentes:
+    - `YG_PENDING_SHOW_REVERTED_V1`
+    - `YG_OTHER_SHOW_REVERTED_V1`
+  - separación de detección:
+    - `isPendingTransferred` excluye revertidos.
+    - `isPendingReverted` / `isOtherRevertedRecord` consolidan estado revertido.
+    - `isOtherTransferredRecord` excluye revertidos.
+  - UI:
+    - se inyectan dos toggles (`Ver transferidos`, `Ver revertidos`) con contadores.
+    - bind idempotente para evitar doble listener en refrescos.
+    - mensajes vacíos actualizados con ambas opciones de visibilidad.
+
+### Riesgos y mitigación
+
+- Riesgo: ocultar más registros de los esperados al apagar ambos toggles.
+  - Mitigación: solo se ocultan `transferidos/revertidos`; activos normales siguen visibles.
+- Riesgo: rows legacy sin `transfer_state`.
+  - Mitigación: fallback defensivo por `reverted_at`/`reverted_reason` y campos legacy de transferencia.
+- Riesgo: regresión por duplicación de nodos de filtro.
+  - Mitigación: `htmlFor` + bind único por `dataset.bound`.
+
+### Smoke checklist
+
+- [x] `Fiados` muestra `Ver transferidos (N)` y `Ver revertidos (M)`.
+- [x] `Otros` muestra ambos toggles con conteos independientes.
+- [x] Un revertido aparece con `Ver revertidos` activo aunque `Ver transferidos` esté apagado.
+- [x] Transferidos activos no se mezclan con revertidos.
+- [x] `pnpm build:gold` PASS.
+
 ## 🆕 SESIÓN: FIX UX — refresh inmediato tras Fiado->Pagados (2026-02-27)
 
 ### Diagnóstico

@@ -675,7 +675,7 @@ export async function computeAgroFinanceSummaryV1() {
         let pendingTotal = 0;
         let pendingRows = null;
         try {
-            const pendingColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'created_at'];
+            const pendingColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'transfer_state', 'created_at'];
             const result = await selectAgroTable('agro_pending', pendingColumns, true, userId, {
                 dateField: 'fecha',
                 startDate,
@@ -685,7 +685,8 @@ export async function computeAgroFinanceSummaryV1() {
                 console.warn('[AGRO_STATS] Error fetching pending:', result.error);
             }
             pendingRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
-                .filter(matchesStatsCrop);
+                .filter(matchesStatsCrop)
+                .filter((row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred');
             if (pendingRows) {
                 pendingRows.forEach(p => {
                     pendingTotal += parseFloat(p.monto_usd) || parseFloat(p.monto) || 0;
@@ -700,16 +701,18 @@ export async function computeAgroFinanceSummaryV1() {
         let lossesRows = null;
         try {
             // V9.6 Fix: Removed 'category' which does not exist in DB
-            const lossesColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'created_at'];
+            const lossesColumns = ['id', 'user_id', 'monto', 'monto_usd', 'currency', 'causa', 'unit_type', 'unit_qty', 'quantity_kg', 'crop_id', 'fecha', 'reverted_at', 'created_at'];
             const result = await selectAgroTable('agro_losses', lossesColumns, true, userId, {
                 dateField: 'fecha',
                 startDate,
-                endDate
+                endDate,
+                nullFilters: ['reverted_at']
             });
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching losses:', result.error);
             }
             lossesRows = filterRowsByRange(result?.data, 'fecha', startDate, endDate)
+                .filter((row) => !row?.reverted_at)
                 .filter(matchesStatsCrop);
             if (lossesRows) {
                 lossesRows.forEach(l => {
