@@ -21,6 +21,7 @@ import {
     applyMoneyPrivacy,
     initBuyerPrivacy,
     readBuyerNamesHidden,
+    readMoneyValuesHidden,
     setBuyerNamesHidden
 } from './agro-privacy.js';
 
@@ -47,6 +48,7 @@ let cropsLoadQueued = false;
 let cropsLastCount = 0;
 let cropsRefreshThrottleTimer = null;
 let cropsRefreshEventsBound = false;
+const pendingTransferInFlightLocks = new Set();
 
 const CROPS_LOADING_ID = 'agro-crops-loading';
 const CROPS_EMPTY_ID = 'agro-crops-empty';
@@ -5313,6 +5315,14 @@ async function handlePendingTransfer(itemId) {
         : null;
     const splitMovedLabel = isPartialSplit ? formatSplitQuantity(splitDraft.qtyTransfer, splitDraft.unitType) : '';
     const splitLeftLabel = isPartialSplit ? formatSplitQuantity(splitDraft.qtyLeft, splitDraft.unitType) : '';
+    const transferLockKey = String(pending?.id || itemId || '').trim();
+    if (transferLockKey && pendingTransferInFlightLocks.has(transferLockKey)) {
+        notifyFacturero('⚠️ Esta transferencia ya está en proceso. Espera un momento.', 'warning');
+        return;
+    }
+    if (transferLockKey) {
+        pendingTransferInFlightLocks.add(transferLockKey);
+    }
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -5461,9 +5471,30 @@ async function handlePendingTransfer(itemId) {
             } else {
                 notifyFacturero('✅ Fiado transferido a Pagados.', 'success');
             }
-            await refreshFactureroHistory('pendientes');
-            await refreshFactureroHistory('ingresos');
+            notifyFacturero('Actualizando historial...', 'info');
+            const refreshResults = await Promise.allSettled([
+                refreshFactureroHistory('pendientes'),
+                refreshFactureroHistory('ingresos'),
+                refreshFactureroHistory('otros'),
+                typeof loadIncomes === 'function' ? loadIncomes() : Promise.resolve()
+            ]);
+            refreshResults.forEach((result) => {
+                if (result.status === 'rejected') {
+                    console.warn('[AGRO] Pending->Income refresh warning:', result.reason?.message || result.reason);
+                }
+            });
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
+            document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
+                detail: { source: 'pending_transfer', tab: 'ingresos' }
+            }));
+            refreshOpsRankingsIfVisible();
+            scheduleOpsMovementSummaryRefresh();
+            applyBuyerPrivacy(document, readBuyerNamesHidden());
+            if (typeof readMoneyValuesHidden === 'function') {
+                applyMoneyPrivacy(document, readMoneyValuesHidden());
+            } else {
+                applyMoneyPrivacy(document);
+            }
 
         } else if (destination === 'losses') {
             // Transfer to Losses
@@ -5599,6 +5630,10 @@ async function handlePendingTransfer(itemId) {
     } catch (err) {
         console.error('[AGRO] Pending transfer error:', err.message);
         notifyFacturero(`Error al transferir: ${err.message}`, 'warning');
+    } finally {
+        if (transferLockKey) {
+            pendingTransferInFlightLocks.delete(transferLockKey);
+        }
     }
 }
 

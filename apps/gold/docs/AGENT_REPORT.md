@@ -1,5 +1,42 @@
 ---
 
+## 🆕 SESIÓN: FIX UX — refresh inmediato tras Fiado->Pagados (2026-02-27)
+
+### Diagnóstico
+
+- La transferencia persistía correctamente en DB, pero algunos paneles quedaban con estado en memoria hasta recarga manual.
+- El flujo Fiado->Pagados refrescaba parcialmente y no forzaba un ciclo completo de listas dependientes tras éxito.
+
+### Cambios aplicados
+
+1) `apps/gold/agro/agro.js` (rama `destination === 'income'` en `handlePendingTransfer`)
+- tras transferencia exitosa, ejecuta refresh inmediato y paralelo de:
+  - `refreshFactureroHistory('pendientes')`
+  - `refreshFactureroHistory('ingresos')`
+  - `refreshFactureroHistory('otros')`
+  - `loadIncomes()` (lista “Últimos Pagados”)
+- agrega `Promise.allSettled(...)` para evitar que un fallo aislado bloquee el resto del refresco.
+- dispara eventos y refrescos secundarios:
+  - `agro:income:changed`
+  - `AGRO_CROPS_REFRESH_EVENT`
+  - `refreshOpsRankingsIfVisible()`
+  - `scheduleOpsMovementSummaryRefresh()`
+- reaplica privacidad visual post-render:
+  - `applyBuyerPrivacy(document, readBuyerNamesHidden())`
+  - `applyMoneyPrivacy(document, readMoneyValuesHidden())` (fallback defensivo si helper no está disponible)
+- feedback UX: toast `Actualizando historial...`.
+- anti doble-submit:
+  - lock por `pending.id` durante el bloque de confirmación+persistencia+refresh,
+  - evita ejecutar dos transferencias simultáneas del mismo fiado.
+
+### Resultado esperado
+
+- Sin recargar la página, al confirmar Fiado->Pagados se actualizan inmediatamente:
+  - Últimos Pagados,
+  - Fiados,
+  - panel Otros,
+  - tarjetas/rankings dependientes.
+
 ## 🆕 SESIÓN: FIX QUIRÚRGICO — Transferir a Pagados con monto GLOBAL (2026-02-27)
 
 ### Diagnóstico
