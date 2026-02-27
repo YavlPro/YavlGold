@@ -1192,6 +1192,13 @@
                             <span class="kpi-tag" id="weather-desc">📍 Buscando ubicación...</span>
                             <span class="kpi-tag" id="weather-humidity">💧 --%</span>
                         </div>
+                        <div class="kpi-weekly-controls">
+                            <button type="button" class="clima-weekly-toggle" id="btn-toggle-weekly-forecast"
+                                aria-expanded="false" aria-controls="clima-weekly-host">
+                                📅 Ver pronóstico
+                            </button>
+                        </div>
+                        <div id="clima-weekly-host" class="clima-weekly-host is-collapsed" hidden></div>
                     </div>
                 </div>
 
@@ -1250,25 +1257,26 @@
             </div> <!-- End of first row (Weather/Market/Moon) -->
 
 
-        <!-- V9.8: Proyección Semanal Collapsible -->
-            <details class="yg-accordion" id="yg-acc-weekly" open>
-                <summary class="yg-accordion-summary">
-                    <span class="yg-accordion-icon"><i class="fa-solid fa-calendar-week"></i></span>
-                    <span class="yg-accordion-title">Proyección Semanal</span>
-                    <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
-                </summary>
-                <div class="yg-accordion-content">
-                    <div class="card planning-panel animate-in delay-5" style="margin-top: 0; padding: 1.5rem;">
-                        <div id="forecast-container"
-                            style="display: flex; justify-content: space-between; align-items: flex-end; height: 140px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px;">
-                            <div
-                                style="width: 100%; display: flex; align-items: center; justify-content: center; color: #666; font-size: 0.8rem;">
-                                <span style="animation: pulse 1.5s infinite;">🛰️ Calculando meteorología...</span>
+            <div id="weekly-forecast-staging" hidden aria-hidden="true">
+                <details class="yg-accordion" id="yg-acc-weekly" open>
+                    <summary class="yg-accordion-summary">
+                        <span class="yg-accordion-icon"><i class="fa-solid fa-calendar-week"></i></span>
+                        <span class="yg-accordion-title">Proyección Semanal</span>
+                        <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                    </summary>
+                    <div class="yg-accordion-content">
+                        <div class="card planning-panel animate-in delay-5" style="margin-top: 0; padding: 1.5rem;">
+                            <div id="forecast-container"
+                                style="display: flex; justify-content: space-between; align-items: flex-end; height: 140px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px;">
+                                <div
+                                    style="width: 100%; display: flex; align-items: center; justify-content: center; color: #666; font-size: 0.8rem;">
+                                    <span style="animation: pulse 1.5s infinite;">🛰️ Calculando meteorología...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </details>
+                </details>
+            </div>
         </section>
 
 
