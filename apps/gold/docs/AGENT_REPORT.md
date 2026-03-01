@@ -10521,3 +10521,71 @@ Hallazgo raíz del lote actual:
 
 - Comando: `pnpm build:gold`
 - Resultado: ✅ PASS.
+
+## 🆕 SESIÓN: GATE 0 — Informe global histórico multi-moneda (USD/COP/Bs) en export MD (2026-03-01)
+
+### Diagnóstico
+
+- `buildProfileMarkdown()` en `apps/gold/agro/agroperfil.js` ya exporta consolidado global, pero no explicita al inicio:
+  - alcance histórico total,
+  - monedas manejadas (USD/COP/Bs),
+  - regla de USD verificado para totales.
+- El bloque financiero usa `Resumen Financiero (USD)` + `Rentabilidad`, que puede confundir en escenario con fiados altos.
+- La sección legacy ya excluye correctamente, pero faltaba reforzar narrativa de “histórico multi-moneda” y “resultado actual vs potencial”.
+
+### Plan de cambios
+
+1) Ajustar únicamente copy/estructura del MD global (sin cambiar lógica de cálculo):
+- encabezado: alcance, periodo, monedas y regla de lectura,
+- renombrar bloque a `Resumen en USD (verificado)`,
+- agregar `Resultado actual`, `Resultado potencial` y `Tasa de cobro` (derivados de valores existentes),
+- reforzar sección legacy con naming `legacy` y negrita `No son USD confirmados.`.
+
+2) Compactar `Avisos` para evitar repetición de la alerta USD legacy ya detallada en su propia sección.
+
+3) Ejecutar `pnpm build:gold`.
+
+### Riesgos y mitigación
+
+- Riesgo: interpretar como cambio de negocio/cálculo.
+  - Mitigación: no se tocan queries ni exclusiones; solo presentación y derivados aritméticos de campos ya calculados.
+
+### Evidencia esperada
+
+- Export MD deja claro que es informe histórico de todo Facturero + cultivos, multi-moneda.
+- Se entiende diferencia entre resultado actual y potencial.
+- Se mantiene exclusión de legacy USD no confirmado.
+- Build en PASS.
+
+### Implementación aplicada (cierre)
+
+- Archivo: `apps/gold/agro/agroperfil.js`
+- `buildProfileMarkdown()` actualizado para dejar explícito que es informe global histórico multi-moneda:
+  - alcance/período/monedas (USD·COP·Bs) y regla de USD verificado,
+  - sección `Cómo leer este informe` con 3 bullets.
+- Bloque financiero renombrado a `Resumen en USD (verificado)`.
+- Se agregó lectura operativa sin cambiar cálculos base:
+  - `Resultado actual (solo cobrados)`,
+  - `Resultado potencial (si cobras todos los fiados)`,
+  - `Tasa de cobro`.
+- Se reforzó copy legacy:
+  - título: `Registros legacy marcados como USD (NO confirmados, excluidos)`,
+  - línea en negrita: `No son USD confirmados.`,
+  - columnas renombradas a `Monto/Moneda registrada (legacy)`.
+- `Avisos` compactado para evitar repetición de alerta USD legacy ya explicada.
+
+### Resultado build
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS.
+
+### Implementación aplicada (cierre)
+
+- Ajuste final de compatibilidad Markdown en `apps/gold/agro/agroperfil.js`:
+  - columna `Fecha` en la tabla legacy quedó sin alineación numérica (`---`),
+  - se mantiene `Monto` alineado numéricamente (`---:`).
+
+### Resultado build
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS.

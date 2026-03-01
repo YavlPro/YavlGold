@@ -818,6 +818,16 @@ function buildProfileMarkdown() {
         return formatUsd(value || 0);
     };
 
+    const safePercent = (value) => {
+        if (moneyHidden) return '••••';
+        const amount = Number(value);
+        if (!Number.isFinite(amount)) return 'N/D';
+        return `${amount.toLocaleString('es-VE', {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1
+        })}%`;
+    };
+
     const safePlainMoney = (value) => {
         if (moneyHidden) return '••••';
         const amount = Number(value);
@@ -828,10 +838,28 @@ function buildProfileMarkdown() {
         });
     };
 
+    const incomeUsd = Number(moneyStats.incomeUsd || 0);
+    const pendingUsd = Number(moneyStats.pendingUsd || 0);
+    const currentResultUsd = Number(moneyStats.profitUsd || 0);
+    const potentialResultUsd = currentResultUsd + pendingUsd;
+    const totalExpectedCollection = incomeUsd + pendingUsd;
+    const collectionRate = totalExpectedCollection > 0
+        ? (incomeUsd / totalExpectedCollection) * 100
+        : null;
+
     const lines = [
         '# Perfil Agricultor · Informe Global',
         '',
         `Generado: ${formatDateTime(new Date().toISOString())}`,
+        '- Alcance: Informe global histórico de todo el Facturero y todos los cultivos.',
+        '- Período: Desde el primer registro hasta hoy.',
+        '- Monedas: USD · COP · Bs (VES).',
+        '- Totales en USD: solo incluyen USD verificado (y conversiones confiables). Registros dudosos se excluyen y se muestran al final.',
+        '',
+        '## Cómo leer este informe',
+        '- Este consolidado mezcla todos los cultivos y todos los movimientos del Facturero.',
+        '- Fiados son montos por cobrar (no pérdidas directas).',
+        '- Si un registro legacy está marcado como USD sin verificación, se excluye del total para evitar inflación.',
         '',
         '## Datos del Agricultor',
         `- Nombre: ${profileData.display_name || 'Sin definir'}`,
@@ -849,7 +877,8 @@ function buildProfileMarkdown() {
         `- Perdidos: ${Number(cropStats.lost || 0)}`,
         `- Total: ${Number(cropStats.total || 0)}`,
         '',
-        '## Resumen Financiero (USD)',
+        '## Resumen en USD (verificado)',
+        '- Nota: bloque unificado para comparar en una sola moneda usando solo datos confiables.',
         `- Ingresos cobrados: ${safeMoney(moneyStats.incomeUsd)}`,
         `- Gastos: ${safeMoney(moneyStats.expenseUsd)}`,
         `- Fiados: ${safeMoney(moneyStats.pendingUsd)}`,
@@ -857,7 +886,9 @@ function buildProfileMarkdown() {
         `- Donaciones: ${safeMoney(moneyStats.transfersUsd)}`,
         `- Inversión base: ${safeMoney(moneyStats.investmentUsd)}`,
         `- Costos totales: ${safeMoney(moneyStats.costUsd)}`,
-        `- Rentabilidad: ${safeMoney(moneyStats.profitUsd)}`,
+        `- Resultado actual (solo cobrados): ${safeMoney(currentResultUsd)}`,
+        `- Resultado potencial (si cobras todos los fiados): ${safeMoney(potentialResultUsd)}`,
+        `- Tasa de cobro: ${safePercent(collectionRate)}`,
         '',
         '## Top Compradores (Pagados)',
     ];
@@ -884,13 +915,14 @@ function buildProfileMarkdown() {
     const unverifiedRows = Array.isArray(usdAudit.unverifiedRows) ? usdAudit.unverifiedRows : [];
     const unverifiedCount = Number(usdAudit.unverifiedCount || unverifiedRows.length || 0);
     if (unverifiedCount > 0) {
-        lines.push('', '## ⚠ Movimientos marcados como "USD" sin verificación (EXCLUIDOS de los totales)');
+        lines.push('', '## ⚠ Registros legacy marcados como USD (NO confirmados, excluidos)');
         lines.push('- Estos registros tienen moneda marcada como "USD" en legacy, pero sin `monto_usd` confiable.');
         lines.push('- Para evitar totales inflados, no se suman. Revisa la moneda o completa el campo USD.');
+        lines.push('- **No son USD confirmados.**');
         lines.push(`- Registros excluidos del total USD: ${unverifiedCount}`);
         lines.push('- Impacto en totales: 0 (excluidos)');
-        lines.push('', '| Módulo | Cliente | Fecha | Concepto | Monto guardado | Moneda guardada | Estado | Qué hacer |');
-        lines.push('| --- | --- | ---: | --- | ---: | --- | --- | --- |');
+        lines.push('', '| Módulo | Cliente | Fecha | Concepto | Monto registrado (legacy) | Moneda registrada (legacy) | Estado | Qué hacer |');
+        lines.push('| --- | --- | --- | --- | ---: | --- | --- | --- |');
 
         unverifiedRows.forEach((entry) => {
             const bucket = escapeMarkdownCell(entry?.bucket || 'General');
@@ -912,9 +944,19 @@ function buildProfileMarkdown() {
 
     if (Array.isArray(stats.warnings) && stats.warnings.length) {
         lines.push('', '## Avisos');
-        stats.warnings.forEach((warning) => {
-            lines.push(`- ${warning}`);
+        if (unverifiedCount > 0) {
+            lines.push(`- Hay ${unverifiedCount} registro(s) legacy excluido(s) (ver sección).`);
+        }
+
+        const nonUsdWarnings = stats.warnings.filter((warning) => {
+            const text = String(warning || '').toLowerCase();
+            return !text.includes('usd no verificado');
         });
+        if (nonUsdWarnings.length) {
+            lines.push(`- ${nonUsdWarnings[0]}`);
+        } else if (unverifiedCount === 0) {
+            lines.push(`- ${stats.warnings[0]}`);
+        }
     }
 
     return `${lines.join('\n')}\n`;
