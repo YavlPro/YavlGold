@@ -5898,15 +5898,21 @@ async function handlePendingTransfer(itemId) {
             originalTransferTotalLabel: 'Total fiado (referencia)',
             sourceAmount: toSafeLocaleNumber(pending?.monto)
         };
-    } else if (destination === 'losses' && splitDraftBase.enabled) {
+    } else if (destination === 'losses') {
+        const lossesNeedsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
         splitConfig = {
             enabled: true,
-            qtyTotal: splitDraftBase.qtyTotal,
-            defaultQty: splitDraftBase.qtyTotal,
-            unitType: splitDraftBase.unitType,
+            qtyTotal: splitQtyTotal,
+            defaultQty: splitQtyTotal,
+            requireQtyTotal: lossesNeedsQtyTotalInput,
+            forceQtyTotalInput: lossesNeedsQtyTotalInput,
+            forceTransferQtyInput: true,
+            unitType: splitUnitType,
             originLabel: 'Fiados',
             destinationLabel: 'Pérdidas',
+            quantityLabel: 'Cantidad a transferir',
             showTransferTotal: false,
+            currencyLabel: pendingCurrencyLabel,
             sourceAmount: toSafeLocaleNumber(pending?.monto)
         };
     }

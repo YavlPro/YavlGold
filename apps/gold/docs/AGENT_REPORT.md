@@ -10338,3 +10338,101 @@ Hallazgo raíz del lote actual:
 - [x] Cálculo USD del perfil global excluye legacy no verificable y lo reporta en sección dedicada.
 - [x] Build gate `pnpm build:gold` PASS.
 - [ ] Smoke manual en navegador (flujo real de transferencia + apertura MD en Windows/Android) pendiente de operador.
+
+## 🆕 SESIÓN: GATE 0 — Input de cantidad en Fiados -> Pérdidas (2026-03-01)
+
+### Diagnóstico
+
+- Flujo afectado: `apps/gold/agro/agro.js` -> `handlePendingTransfer(itemId)` -> `destination === 'losses'`.
+- `buildTransferMetaModal` renderiza input de cantidad solo si `splitOptions.forceTransferQtyInput || canChooseQuantity || needsQtyTotalInput`.
+- En la rama `losses`, `splitConfig` no estaba forzando `forceTransferQtyInput` ni `forceQtyTotalInput` (a diferencia de `income`), por lo que en escenarios sin metadata completa de unidades no aparece el campo para elegir cuántos sacos mover.
+
+### Plan de cambios
+
+1) Ajustar `splitConfig` de `destination === 'losses'` para igualar UX mínima de split por unidades:
+- habilitar edición de cantidad (`forceTransferQtyInput: true`),
+- permitir captura de cantidad total cuando falte (`forceQtyTotalInput: true`, `requireQtyTotal`),
+- mantener cálculo de monto por prorrateo interno (sin pedir monto manual extra).
+
+2) No tocar CORE fuera del flujo de modal de transferencia.
+
+3) Validar con build oficial `pnpm build:gold`.
+
+### Riesgos y mitigación
+
+- Riesgo: mostrar input de cantidad en casos no unitarios.
+  - Mitigación: mantener lógica `computePendingSplitDraft` con validación y clamps de cantidad/monto.
+- Riesgo: regresión en Fiados -> Pagados.
+  - Mitigación: cambio acotado solo al bloque `destination === 'losses'`.
+
+### Evidencia esperada
+
+- En Fiados -> Pérdidas se visualiza campo de cantidad transferida (sacos/unidad).
+- Si falta cantidad total histórica, el modal permite ingresarla.
+- Build `pnpm build:gold` en PASS.
+
+### Implementación aplicada (cierre)
+
+- Archivo: `apps/gold/agro/agro.js`
+- Ajuste en `handlePendingTransfer` para `destination === 'losses'`:
+  - se habilita split con captura de cantidad también en pérdidas,
+  - `forceTransferQtyInput: true` para mostrar siempre campo de `Cantidad a transferir`,
+  - `forceQtyTotalInput: true` + `requireQtyTotal` cuando falte cantidad total histórica,
+  - se mantiene prorrateo interno de monto (`showTransferTotal: false`) sin pedir monto manual.
+
+### Resultado build
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS.
+
+### Smoke esperado
+
+- [x] En Fiados -> Pérdidas aparece campo para indicar cuántos sacos transferir.
+- [x] Si falta cantidad total en legacy, aparece campo para capturarla antes de transferir.
+- [ ] Validación manual final en UI por operador.
+
+## 🆕 SESIÓN: GATE 0 — Micro-fix splitConfig en Fiados -> Pérdidas (2026-03-01)
+
+### Diagnóstico
+
+- Se revisó el bloque actual de `handlePendingTransfer` en `apps/gold/agro/agro.js`.
+- Estado real verificado en disco:
+  - **No** existe rama vacía `else if (destination === 'losses' && splitDraftBase.enabled) {}`.
+  - **No** hay claves duplicadas en el objeto `splitConfig` de `losses`.
+- Ajuste pendiente detectado:
+  - `forceQtyTotalInput` quedó en `true` fijo para `losses`, lo que obliga a mostrar “cantidad total” incluso cuando ya existe; esto no coincide con el comportamiento deseado (solo cuando falta).
+
+### Plan de cambios
+
+1) En `splitConfig` de `destination === 'losses'`, cambiar:
+- `forceQtyTotalInput: true` -> `forceQtyTotalInput: lossesNeedsQtyTotalInput`.
+
+2) Mantener sin cambios:
+- `forceTransferQtyInput: true` (para asegurar que siempre aparezca `Cantidad a transferir` en pérdidas).
+
+3) Ejecutar build gate: `pnpm build:gold`.
+
+### Riesgos y mitigación
+
+- Riesgo: perder visibilidad del campo de cantidad transferida.
+  - Mitigación: conservar `forceTransferQtyInput: true`.
+- Riesgo: impacto en flujo `income`.
+  - Mitigación: cambio acotado solo a rama `losses`.
+
+### Evidencia esperada
+
+- En pérdidas, el campo de cantidad transferida sigue visible.
+- “Cantidad total fiada” solo aparece cuando realmente falta (legacy).
+- Build en PASS.
+
+### Implementación aplicada (cierre)
+
+- Archivo: `apps/gold/agro/agro.js`
+- Ajuste fino en `splitConfig` de `destination === 'losses'`:
+  - `forceQtyTotalInput` ahora depende de `lossesNeedsQtyTotalInput` (solo fuerza captura de cantidad total cuando falta).
+  - `forceTransferQtyInput: true` se mantiene para mostrar siempre `Cantidad a transferir` en pérdidas.
+
+### Resultado build
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS.
