@@ -98,6 +98,24 @@ function setExportButtonBusy(isBusy) {
     exportBtn.textContent = isBusy ? 'Exportando...' : '📄 Exportar Informe Global (MD)';
 }
 
+function escapeMarkdownCell(value) {
+    return String(value ?? '')
+        .replace(/\r?\n/g, ' ')
+        .replace(/\|/g, '\\|')
+        .trim();
+}
+
+function normalizeMarkdownForExport(content) {
+    const text = String(content || '');
+    return text
+        .replace(/\uFEFF/g, '')
+        .replace(/\u00A0/g, ' ')
+        .replace(/[\u200B-\u200D]/g, '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/\n/g, '\r\n');
+}
+
 function markMoneyNode(node, rawText) {
     if (!node) return;
     const safeText = String(rawText || node.textContent || '').trim();
@@ -786,6 +804,7 @@ function buildProfileMarkdown() {
     const stats = state.stats || {};
     const cropStats = stats.crops || {};
     const moneyStats = stats.money || {};
+    const usdAudit = stats.usdAudit || {};
     const namesHidden = readBuyerNamesHidden();
     const moneyHidden = readMoneyValuesHidden();
 
@@ -797,6 +816,16 @@ function buildProfileMarkdown() {
     const safeMoney = (value) => {
         if (moneyHidden) return '••••';
         return formatUsd(value || 0);
+    };
+
+    const safePlainMoney = (value) => {
+        if (moneyHidden) return '••••';
+        const amount = Number(value);
+        if (!Number.isFinite(amount)) return 'N/D';
+        return amount.toLocaleString('es-VE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     };
 
     const lines = [
@@ -852,6 +881,30 @@ function buildProfileMarkdown() {
         });
     }
 
+    const unverifiedRows = Array.isArray(usdAudit.unverifiedRows) ? usdAudit.unverifiedRows : [];
+    const unverifiedCount = Number(usdAudit.unverifiedCount || unverifiedRows.length || 0);
+    if (unverifiedCount > 0) {
+        lines.push('', '## USD NO VERIFICADO (legacy)');
+        lines.push(`- Registros excluidos del total USD: ${unverifiedCount}`);
+        lines.push('', '| Módulo | Cliente | Concepto | Fecha | Monto original | Moneda | Motivo |');
+        lines.push('| --- | --- | --- | --- | ---: | --- | --- |');
+
+        unverifiedRows.forEach((entry) => {
+            const bucket = escapeMarkdownCell(entry?.bucket || 'General');
+            const cliente = escapeMarkdownCell(namesHidden ? '••••' : (entry?.cliente || 'Sin cliente'));
+            const concepto = escapeMarkdownCell(entry?.concepto || 'Sin concepto');
+            const fecha = escapeMarkdownCell(entry?.fecha || 'N/D');
+            const monto = escapeMarkdownCell(safePlainMoney(entry?.monto));
+            const currency = escapeMarkdownCell(entry?.currency || 'N/D');
+            const reason = escapeMarkdownCell(entry?.reason || 'No verificable');
+            lines.push(`| ${bucket} | ${cliente} | ${concepto} | ${fecha} | ${monto} | ${currency} | ${reason} |`);
+        });
+
+        if (unverifiedRows.length < unverifiedCount) {
+            lines.push(`| ... | ... | ... | ... | ... | ... | +${unverifiedCount - unverifiedRows.length} registro(s) adicional(es) |`);
+        }
+    }
+
     if (Array.isArray(stats.warnings) && stats.warnings.length) {
         lines.push('', '## Avisos');
         stats.warnings.forEach((warning) => {
@@ -863,7 +916,8 @@ function buildProfileMarkdown() {
 }
 
 function downloadMarkdown(content) {
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const normalized = normalizeMarkdownForExport(content);
+    const blob = new Blob([`\ufeff${normalized}`], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');

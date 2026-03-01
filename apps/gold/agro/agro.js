@@ -6220,7 +6220,20 @@ async function handlePendingTransfer(itemId) {
             const lossId = buildTransferId('loss');
             const concept = decisionConcept;
             const buyer = pendingWhoData.who || pending.cliente || '';
-            const conceptFinal = buyer ? `${concept} — ${buyer}` : concept;
+            const conceptFinal = buyer ? buildConceptWithWho('perdidas', concept, buyer) : concept;
+            const lossCause = buyer ? `Fiado cancelado · Cliente: ${buyer}` : 'Fiado cancelado';
+            const transferCurrencyRaw = String(splitConfig?.currencyLabel || pendingCurrencyLabel || 'COP').trim().toUpperCase();
+            const transferCurrencyCode = SUPPORTED_CURRENCIES[transferCurrencyRaw] ? transferCurrencyRaw : 'COP';
+            const moneySource = {
+                ...pending,
+                currency: transferCurrencyCode
+            };
+            const pendingRate = toSafeLocaleNumber(pending?.exchange_rate);
+            if (transferCurrencyCode !== 'USD' && pendingRate !== null && pendingRate > 0) {
+                moneySource.exchange_rate = pendingRate;
+            }
+            const lossMoney = buildIncomeMonetaryFields(moneySource, splitDraft.transferAmount);
+            lossMoney.currency = transferCurrencyCode;
             const splitMetaDestination = isPartialSplit
                 ? buildPartialSplitMetaPayload({
                     role: 'destination',
@@ -6242,14 +6255,17 @@ async function handlePendingTransfer(itemId) {
             const lossPayload = {
                 id: lossId,
                 user_id: user.id,
-                description: conceptFinal,
-                amount: Number(splitDraft.transferAmount || 0),
-                date: decisionDate,
-                category: decision.category || 'cancelacion',
+                concepto: conceptFinal,
+                monto: lossMoney.monto,
+                fecha: decisionDate,
+                causa: lossCause,
                 crop_id: pending.crop_id || null,
                 unit_type: pending.unit_type || null,
                 unit_qty: Number.isFinite(Number(splitDraft.transferUnitQty)) ? Number(splitDraft.transferUnitQty) : null,
                 quantity_kg: Number.isFinite(Number(splitDraft.transferKgQty)) ? Number(splitDraft.transferKgQty) : null,
+                currency: lossMoney.currency,
+                exchange_rate: lossMoney.exchange_rate,
+                monto_usd: lossMoney.monto_usd,
                 // V9.7: Origin tracking
                 origin_table: 'agro_pending',
                 origin_id: pending.id,
@@ -6258,25 +6274,20 @@ async function handlePendingTransfer(itemId) {
                 split_meta: splitMetaDestination
             };
 
-            let { error: insertError } = await supabase.from('agro_losses').insert(lossPayload);
-            if (insertError && (
-                isMissingColumnError(insertError, 'unit_type')
-                || isMissingColumnError(insertError, 'origin_table')
-                || isMissingColumnError(insertError, 'split_from_id')
-                || isMissingColumnError(insertError, 'split_meta')
-            )) {
-                const fallbackPayload = { ...lossPayload };
-                delete fallbackPayload.unit_type;
-                delete fallbackPayload.unit_qty;
-                delete fallbackPayload.quantity_kg;
-                delete fallbackPayload.origin_table;
-                delete fallbackPayload.origin_id;
-                delete fallbackPayload.transfer_state;
-                delete fallbackPayload.split_from_id;
-                delete fallbackPayload.split_meta;
-                const retry = await supabase.from('agro_losses').insert(fallbackPayload);
-                insertError = retry.error;
-            }
+            const insertResult = await insertRowWithMissingColumnFallback('agro_losses', lossPayload, [
+                'unit_type',
+                'unit_qty',
+                'quantity_kg',
+                'currency',
+                'exchange_rate',
+                'monto_usd',
+                'origin_table',
+                'origin_id',
+                'transfer_state',
+                'split_from_id',
+                'split_meta'
+            ]);
+            const insertError = insertResult.error;
             if (insertError) throw insertError;
 
             const transferMeta = isPartialSplit

@@ -25,8 +25,16 @@ const EMPTY_STATS = {
     topBuyers: [],
     topCrops: [],
     updatedAt: null,
-    warnings: []
+    warnings: [],
+    usdAudit: {
+        unverifiedCount: 0,
+        unverifiedByBucket: {},
+        unverifiedRows: []
+    }
 };
+
+const USD_LEGACY_OUTLIER_THRESHOLD = 1000;
+const USD_AUDIT_PREVIEW_LIMIT = 40;
 
 function toSafeNumber(value) {
     if (typeof value === 'number') {
@@ -57,6 +65,20 @@ function normalizeMoneyCurrency(value) {
     if (raw === 'VES' || raw === 'VEF' || raw === 'BS' || raw === 'BSS' || raw === 'BOLIVAR' || raw === 'BOLIVARES') return 'VES';
 
     return raw;
+}
+
+function roughlyEqual(a, b, epsilon = 1e-6) {
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+    return Math.abs(a - b) <= epsilon;
+}
+
+function resolvePrimaryAmount(row, amountFields) {
+    const fields = Array.isArray(amountFields) ? amountFields : [];
+    for (const field of fields) {
+        const candidate = toSafeNumber(row?.[field]);
+        if (Number.isFinite(candidate)) return candidate;
+    }
+    return null;
 }
 
 function isMissingTableError(error) {
@@ -122,26 +144,123 @@ async function fetchRowsWithFallback(supabaseClient, table, userId, columnVarian
     return [];
 }
 
-function resolveUsdAmount(row, amountFields, rates) {
+function evaluateUsdAmount(row, amountFields, options = {}) {
+    const outlierThreshold = Number(options.outlierThreshold || USD_LEGACY_OUTLIER_THRESHOLD);
+    const amount = resolvePrimaryAmount(row, amountFields);
     const explicitUsd = toSafeNumber(row?.monto_usd ?? row?.amount_usd ?? row?.usd_amount);
-    if (Number.isFinite(explicitUsd)) return explicitUsd;
-
-    let amount = null;
-    for (const field of amountFields) {
-        amount = toSafeNumber(row?.[field]);
-        if (Number.isFinite(amount)) break;
-    }
-    if (!Number.isFinite(amount)) return 0;
-
     const currency = normalizeMoneyCurrency(row?.currency ?? row?.moneda ?? row?.currency_code);
-    if (currency === 'USD') return amount;
+    const exchangeRate = toPositiveRate(row?.exchange_rate ?? row?.usd_rate ?? row?.rate);
 
-    const rowRate = toPositiveRate(row?.exchange_rate ?? row?.usd_rate ?? row?.rate);
-    const fallbackRate = currency === 'COP' ? rates.usdCop : rates.usdVes;
-    const effectiveRate = rowRate || fallbackRate;
-    if (!effectiveRate) return 0;
+    if (Number.isFinite(explicitUsd)) {
+        return {
+            verified: true,
+            usd: explicitUsd,
+            amount,
+            currency,
+            exchangeRate,
+            reason: ''
+        };
+    }
 
-    return convertToUSD(amount, currency, effectiveRate);
+    if (!Number.isFinite(amount)) {
+        return {
+            verified: false,
+            usd: 0,
+            amount: null,
+            currency,
+            exchangeRate,
+            reason: 'Monto inválido o ausente'
+        };
+    }
+
+    if (currency === 'USD') {
+        const rateMissingOrOne = exchangeRate === null || roughlyEqual(exchangeRate, 1);
+        const usdMissingOrSameAmount = explicitUsd === null || roughlyEqual(explicitUsd, amount);
+        const seemsLegacyOutlier = rateMissingOrOne && usdMissingOrSameAmount && Math.abs(amount) > outlierThreshold;
+
+        if (seemsLegacyOutlier) {
+            return {
+                verified: false,
+                usd: 0,
+                amount,
+                currency,
+                exchangeRate,
+                reason: `USD legacy sospechoso (>${outlierThreshold} sin monto_usd confiable)`
+            };
+        }
+
+        return {
+            verified: true,
+            usd: amount,
+            amount,
+            currency,
+            exchangeRate,
+            reason: ''
+        };
+    }
+
+    if (currency !== 'COP' && currency !== 'VES') {
+        return {
+            verified: false,
+            usd: 0,
+            amount,
+            currency,
+            exchangeRate,
+            reason: `Moneda ${currency} sin regla de conversión`
+        };
+    }
+
+    if (!exchangeRate) {
+        return {
+            verified: false,
+            usd: 0,
+            amount,
+            currency,
+            exchangeRate,
+            reason: 'Sin exchange_rate para convertir a USD'
+        };
+    }
+
+    const converted = convertToUSD(amount, currency, exchangeRate);
+    if (!Number.isFinite(converted)) {
+        return {
+            verified: false,
+            usd: 0,
+            amount,
+            currency,
+            exchangeRate,
+            reason: 'No se pudo convertir a USD'
+        };
+    }
+
+    return {
+        verified: true,
+        usd: converted,
+        amount,
+        currency,
+        exchangeRate,
+        reason: ''
+    };
+}
+
+function buildUsdUnverifiedEntry(row, evaluation, bucket) {
+    const concept = String(row?.concepto || row?.concept || row?.description || 'Sin concepto').trim() || 'Sin concepto';
+    const parsedBuyer = parseBuyerName(concept);
+    const fallbackBuyer = parsedBuyer && parsedBuyer !== 'Sin comprador' ? parsedBuyer : '';
+    const cliente = String(row?.cliente || row?.client || fallbackBuyer || '').trim() || 'Sin cliente';
+    const rawDate = String(row?.fecha || row?.date || row?.created_at || '').trim();
+    const normalizedDate = normalizeDateKey(rawDate);
+    const amount = Number.isFinite(evaluation?.amount) ? evaluation.amount : null;
+
+    return {
+        bucket: String(bucket || 'General'),
+        cliente,
+        concepto: concept,
+        fecha: normalizedDate || rawDate || 'N/D',
+        monto: amount,
+        currency: evaluation?.currency || 'N/D',
+        reason: String(evaluation?.reason || 'No verificable')
+    };
 }
 
 function resolveCropInvestmentUsd(crop, rates) {
@@ -324,11 +443,43 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         return acc;
     }, { total: 0, active: 0, finalized: 0, lost: 0 });
 
-    const incomeUsd = incomes.reduce((sum, row) => sum + resolveUsdAmount(row, ['monto', 'amount'], effectiveRates), 0);
-    const pendingUsd = pending.reduce((sum, row) => sum + resolveUsdAmount(row, ['monto', 'amount'], effectiveRates), 0);
-    const expenseUsd = expenses.reduce((sum, row) => sum + resolveUsdAmount(row, ['amount', 'monto'], effectiveRates), 0);
-    const lossesUsd = losses.reduce((sum, row) => sum + resolveUsdAmount(row, ['monto', 'amount'], effectiveRates), 0);
-    const transfersUsd = transfers.reduce((sum, row) => sum + resolveUsdAmount(row, ['monto', 'amount'], effectiveRates), 0);
+    const usdUnverifiedByBucket = {};
+    const usdUnverifiedRows = [];
+    const incomeUsdByRow = new WeakMap();
+
+    function pushUsdUnverified(bucket, row, evaluation) {
+        const key = String(bucket || 'General');
+        usdUnverifiedByBucket[key] = (usdUnverifiedByBucket[key] || 0) + 1;
+        if (usdUnverifiedRows.length < USD_AUDIT_PREVIEW_LIMIT) {
+            usdUnverifiedRows.push(buildUsdUnverifiedEntry(row, evaluation, key));
+        }
+    }
+
+    function sumRowsUsd(rows, amountFields, bucket, rowUsdMap = null) {
+        let total = 0;
+        rows.forEach((row) => {
+            const evaluation = evaluateUsdAmount(row, amountFields, {
+                outlierThreshold: USD_LEGACY_OUTLIER_THRESHOLD
+            });
+
+            if (!evaluation.verified) {
+                if (rowUsdMap) rowUsdMap.set(row, 0);
+                pushUsdUnverified(bucket, row, evaluation);
+                return;
+            }
+
+            const usd = Number(evaluation.usd || 0);
+            total += usd;
+            if (rowUsdMap) rowUsdMap.set(row, usd);
+        });
+        return total;
+    }
+
+    const incomeUsd = sumRowsUsd(incomes, ['monto', 'amount'], 'Ingresos', incomeUsdByRow);
+    const pendingUsd = sumRowsUsd(pending, ['monto', 'amount'], 'Fiados');
+    const expenseUsd = sumRowsUsd(expenses, ['amount', 'monto'], 'Gastos');
+    const lossesUsd = sumRowsUsd(losses, ['monto', 'amount'], 'Pérdidas');
+    const transfersUsd = sumRowsUsd(transfers, ['monto', 'amount'], 'Donaciones');
     const investmentUsd = crops.reduce((sum, row) => sum + resolveCropInvestmentUsd(row, effectiveRates), 0);
 
     const cropMap = new Map();
@@ -342,9 +493,10 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
 
     const buyerTotals = new Map();
     incomes.forEach((row) => {
+        const totalUsd = Number(incomeUsdByRow.get(row) || 0);
+        if (!(totalUsd > 0)) return;
         const buyer = parseBuyerName(row?.concepto);
         const key = buyer.toLowerCase();
-        const totalUsd = resolveUsdAmount(row, ['monto', 'amount'], effectiveRates);
         const current = buyerTotals.get(key) || { name: buyer, totalUsd: 0, count: 0 };
         current.totalUsd += totalUsd;
         current.count += 1;
@@ -353,9 +505,10 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
 
     const cropTotals = new Map();
     incomes.forEach((row) => {
+        const totalUsd = Number(incomeUsdByRow.get(row) || 0);
+        if (!(totalUsd > 0)) return;
         const cropId = String(row?.crop_id || '').trim();
         if (!cropId) return;
-        const totalUsd = resolveUsdAmount(row, ['monto', 'amount'], effectiveRates);
         const current = cropTotals.get(cropId) || {
             cropId,
             cropName: resolveCropLabel(cropMap, cropId),
@@ -369,6 +522,10 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
 
     const costUsd = investmentUsd + expenseUsd + lossesUsd;
     const profitUsd = incomeUsd - costUsd;
+    const usdUnverifiedCount = Object.values(usdUnverifiedByBucket).reduce((sum, value) => sum + Number(value || 0), 0);
+    if (usdUnverifiedCount > 0) {
+        warnings.push(`USD no verificado: ${usdUnverifiedCount} movimiento(s) excluido(s) del total.`);
+    }
 
     return {
         crops: cropsSummary,
@@ -385,6 +542,11 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
         topBuyers: buildTopRows(buyerTotals),
         topCrops: buildTopRows(cropTotals),
         updatedAt: new Date().toISOString(),
-        warnings
+        warnings,
+        usdAudit: {
+            unverifiedCount: usdUnverifiedCount,
+            unverifiedByBucket: usdUnverifiedByBucket,
+            unverifiedRows: usdUnverifiedRows
+        }
     };
 }

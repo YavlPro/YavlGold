@@ -10218,3 +10218,123 @@ Hallazgo raíz del lote actual:
     - [ ] En “Clima Local”, `📅 Ver pronóstico` abre/cierra forecast embebido.
     - [ ] Forecast sigue renderizando días/datos sin errores.
     - [ ] Console/Network sin errores 400 ni uncaught en flujo normal.
+
+## 🆕 SESIÓN: GATE 0 — Fix Fiados->Pérdidas + MD UTF-8 + USD NO VERIFICADO (2026-03-01)
+
+### Diagnóstico
+
+1) **Mapa MPA / navegación**
+- `apps/gold/vite.config.js`: `appType: 'mpa'` y entrada activa para `agro/index.html`, `dashboard/index.html`, `crypto/index.html` y demás módulos.
+- `apps/gold/vercel.json`: `cleanUrls` + `rewrites` activos para `/agro`, `/dashboard`, `/crypto`, `/academia`, `/tecnologia`.
+- `apps/gold/index.html`: landing con navegación de módulos.
+- `apps/gold/dashboard/index.html`: dashboard autenticado (guard + módulos).
+
+2) **Supabase/Auth (instanciación actual)**
+- `apps/gold/assets/js/config/supabase-config.js`: cliente único `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`.
+- `apps/gold/assets/js/auth/authClient.js` y `authUI.js`: sesión/auth callbacks + UI auth.
+- `apps/gold/dashboard/auth-guard.js`: `supabase.auth.getSession()` y redirect a login si no hay sesión.
+
+3) **Dashboard hoy vs faltante**
+- Consume `profiles`, `modules`, `user_favorites`, `notifications`, `announcements`, `feedback`.
+- Progreso académico existe (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`) pero no está integrado al resumen principal.
+
+4) **Clima/Agro prioridad y keys**
+- `apps/gold/assets/js/geolocation.js#getCoordsSmart`: prioridad efectiva **Manual > GPS/IP (según preferencia) > fallback**.
+- Keys verificadas: `YG_MANUAL_LOCATION`, `yavlgold_gps_cache`, `yavlgold_ip_cache`, `yavlgold_location_pref`, `yavlgold_weather_*`.
+- `apps/gold/agro/dashboard.js` ya usa `initWeather`/`displayWeather` + panel debug no invasivo por `?debug=1` o `YG_GEO_DEBUG=1`.
+
+5) **Crypto estado real**
+- `apps/gold/crypto/` ya está integrado como página MPA productiva (`crypto/index.html` + `crypto.js`), no como flujo principal Python.
+
+6) **Causa raíz bug Fiados -> Pérdidas (confirmada)**
+- En `apps/gold/agro/agro.js`, rama `handlePendingTransfer(... destination === 'losses')`, el `lossPayload` usa campos incorrectos (`description`, `amount`, `date`, `category`) propios de gastos/legacy inglés, no de `agro_losses`.
+- `agro_losses` opera con `concepto`, `monto`, `fecha`, `causa` (+ monetarios opcionales `currency`, `exchange_rate`, `monto_usd`).
+- Esto explica el error observado de schema cache: intento de usar columna `amount` contra `agro_losses`.
+
+7) **Mojibake + USD inflado en MD global**
+- Export MD global está en `apps/gold/agro/agroperfil.js` y descarga con `Blob([content])` sin BOM/normalización adicional.
+- Resumen USD para ese MD viene de `apps/gold/agro/agroestadistica.js#getGlobalStats`, donde `resolveUsdAmount` acepta casos legacy `currency='USD'` sin heurística de verificación; esto puede inflar totals por filas mal etiquetadas.
+
+### Plan de cambios
+
+1) **`apps/gold/agro/agro.js`**
+- Corregir payload Fiados->Pérdidas para escribir columnas reales de `agro_losses` (`concepto/monto/fecha/causa`).
+- Mantener split_meta/split_from_id y usar fallback selectivo por columnas faltantes con `insertRowWithMissingColumnFallback(...)`.
+- Incluir monetarios `currency/exchange_rate/monto_usd` con cálculo consistente y refresh inmediato de UI (pendientes + pérdidas + otros).
+
+2) **`apps/gold/agro/agroestadistica.js`**
+- Endurecer cálculo USD para perfil global:
+  - priorizar `monto_usd` válido,
+  - convertir solo con `exchange_rate` de la fila cuando `currency != 'USD'`,
+  - marcar y excluir del total filas USD legacy sospechosas (NO VERIFICADO) según heurística defensiva.
+- Exponer auditoría (`usdAudit`) para export MD transparente.
+
+3) **`apps/gold/agro/agroperfil.js`**
+- Export MD robusto UTF-8 Windows/Android: sanitizar NBSP/control chars, normalizar `CRLF`, anteponer BOM.
+- Agregar sección `USD NO VERIFICADO (legacy)` con lista breve (cliente/concepto/fecha/monto/currency/motivo).
+
+4) **Migraciones**
+- No crear columna `amount` en `agro_losses`.
+- No se planea migración DB en este lote salvo bloqueo real de schema fuera del código.
+
+### Riesgos y mitigación
+
+- Riesgo: entornos con columnas opcionales faltantes (`split_meta`, `currency`, etc.).
+  - Mitigación: `insertRowWithMissingColumnFallback` con degradación selectiva (sin borrar campos sanos de forma masiva).
+- Riesgo: falso positivo en heurística USD NO VERIFICADO.
+  - Mitigación: aplicar solo en señales fuertes (USD + sin `monto_usd` confiable + tasa nula/1 + monto alto) y reportar explícitamente en MD.
+- Riesgo: regresión visual en export.
+  - Mitigación: cambios solo en generación/serialización del markdown, sin alterar layout UI.
+
+### Evidencia esperada
+
+- Smoke 1: Fiados -> Pérdidas persiste sin error de columna `amount` y refresca historial inmediatamente.
+- Smoke 2: Export MD global abre sin mojibake en Windows/Android.
+- Smoke 3: Resumen USD no se infla por legacy; filas dudosas aparecen en bloque `USD NO VERIFICADO (legacy)`.
+- Gate build: `pnpm build:gold` en PASS.
+
+### Implementación aplicada (cierre)
+
+1) `apps/gold/agro/agro.js`
+- Rama `handlePendingTransfer(... destination === 'losses')` corregida para `agro_losses`:
+  - antes: `description/amount/date/category` (incorrecto para pérdidas),
+  - ahora: `concepto/monto/fecha/causa` (correcto).
+- Se agregó cálculo monetario consistente para pérdidas (`currency`, `exchange_rate`, `monto_usd`) reutilizando el mismo patrón defensivo de transferencias.
+- Inserción endurecida con `insertRowWithMissingColumnFallback('agro_losses', ...)` y fallback selectivo por columna faltante (sin borrar campos válidos masivamente).
+
+2) `apps/gold/agro/agroestadistica.js`
+- Cálculo USD para perfil global endurecido con verificación:
+  - prioridad `monto_usd` válido,
+  - conversión de no-USD solo si existe `exchange_rate` válido en la fila,
+  - detección defensiva de USD legacy sospechoso (outlier) -> excluido de total.
+- Nuevo bloque de auditoría `usdAudit` en respuesta:
+  - `unverifiedCount`, `unverifiedByBucket`, `unverifiedRows`.
+- `topBuyers/topCrops` ahora agregan solo movimientos USD verificados.
+- Se agrega warning cuando hay registros excluidos por `USD no verificado`.
+
+3) `apps/gold/agro/agroperfil.js`
+- Export Markdown robusto para Windows/Android:
+  - saneo de `NBSP` y control chars,
+  - normalización de saltos a `CRLF`,
+  - prepend BOM UTF-8 (`\ufeff`) al Blob.
+- Informe global MD ahora incluye sección:
+  - `## USD NO VERIFICADO (legacy)`
+  - tabla breve con módulo/cliente/concepto/fecha/monto/currency/motivo (registros excluidos del total).
+
+### Resultado build
+
+- Comando ejecutado: `pnpm build:gold`
+- Resultado: ✅ PASS
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Smoke checklist de este lote
+
+- [x] Fiados -> Pérdidas deja de construir payload con `amount` y usa `monto` para `agro_losses`.
+- [x] Export MD global genera archivo UTF-8 con BOM y sin normalización problemática de NBSP.
+- [x] Cálculo USD del perfil global excluye legacy no verificable y lo reporta en sección dedicada.
+- [x] Build gate `pnpm build:gold` PASS.
+- [ ] Smoke manual en navegador (flujo real de transferencia + apertura MD en Windows/Android) pendiente de operador.
