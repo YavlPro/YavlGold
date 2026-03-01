@@ -1,6 +1,7 @@
 const WEEKLY_TOGGLE_ID = 'btn-toggle-weekly-forecast';
 const WEEKLY_HOST_ID = 'clima-weekly-host';
 const WEEKLY_ROOT_ID = 'yg-acc-weekly';
+const WEATHER_CARD_SELECTOR = '.agro-dash-card[data-widget="weather"]';
 
 const state = {
     initialized: false,
@@ -11,7 +12,23 @@ function getNodes() {
     const toggle = document.getElementById(WEEKLY_TOGGLE_ID);
     const host = document.getElementById(WEEKLY_HOST_ID);
     const weeklyRoot = document.getElementById(WEEKLY_ROOT_ID);
-    return { toggle, host, weeklyRoot };
+    const weatherCard = document.querySelector(WEATHER_CARD_SELECTOR);
+    const weatherFooter = weatherCard?.querySelector('.agro-dash-card__footer') || null;
+    return { toggle, host, weeklyRoot, weatherCard, weatherFooter };
+}
+
+function anchorNodesToWeatherKpi(nodes) {
+    if (!nodes.weatherCard || !nodes.toggle || !nodes.host) return;
+
+    // Keep toggle action inside weather KPI footer.
+    if (nodes.weatherFooter && nodes.toggle.parentElement !== nodes.weatherFooter) {
+        nodes.weatherFooter.appendChild(nodes.toggle);
+    }
+
+    // Keep weekly host as part of the weather KPI card.
+    if (nodes.host.parentElement !== nodes.weatherCard) {
+        nodes.weatherCard.appendChild(nodes.host);
+    }
 }
 
 function setOpen(nextOpen, nodes) {
@@ -56,16 +73,22 @@ function bindEvents(nodes) {
 }
 
 export function initClimaWeeklyEmbed() {
-    if (state.initialized) return;
-
     const nodes = getNodes();
     if (!nodes.toggle || !nodes.host || !nodes.weeklyRoot) {
         console.warn('[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized.');
         return;
     }
 
+    anchorNodesToWeatherKpi(nodes);
     moveWeeklyIntoHost(nodes);
-    setOpen(false, nodes);
-    bindEvents(nodes);
-    state.initialized = true;
+
+    if (!state.initialized) {
+        setOpen(false, nodes);
+        bindEvents(nodes);
+        state.initialized = true;
+        return;
+    }
+
+    // If init runs again, re-apply current UI state after re-anchoring.
+    setOpen(state.isOpen, nodes);
 }

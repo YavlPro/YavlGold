@@ -590,12 +590,11 @@
 }
 
 .agro-ops-v10 .content-section::after {
-  --ghost-size: 10rem;
   content: '🌾';
   position: absolute;
   right: -0.8rem;
   bottom: -1.4rem;
-  font-size: var(--ghost-size);
+  font-size: 10rem;
   line-height: 1;
   opacity: 0.02;
   filter: sepia(1);

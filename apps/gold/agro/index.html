@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/assets/css/motion-pack.css">
     <link rel="stylesheet" href="./agrociclos.css">
     <link rel="stylesheet" href="./agro-dashboard.css">
+    <link rel="stylesheet" href="./agro-operations.css">
     <style>
         /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */
         *,
@@ -1280,11 +1281,19 @@
 
 
         <!-- Active Crops Section -->
-        <section class="crops-section" data-agro-section="activeCrops">
-            <div class="section-header animate-in delay-3">
-                <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button class="btn btn-outline"
-                    id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
-            </div>
+        <section class="crops-section agro-ops-v10" data-agro-section="activeCrops">
+            <header class="module-header animate-in delay-3">
+                <div class="module-title-group">
+                    <div class="module-icon">🌱</div>
+                    <div class="module-heading">
+                        <h2 class="module-title">Active Crops</h2>
+                        <p class="module-subtitle">Gestión de ciclos productivos</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-gold" id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
+                </div>
+            </header>
             <div id="cyclesContainer" class="crops-grid"> <!-- Ciclos activos cargados dinámicamente --> </div>
         </section>
 
@@ -1512,12 +1521,16 @@
     <!-- ============================================
          💰 SECCIÓN FINANZAS - Control de Gastos
          ============================================ -->
-    <section class="finances-section" style="margin-top: 2rem; margin-bottom: 2rem;" data-agro-section="ops">
-        <div class="section-header animate-in">
-            <h2 class="section-title"><span class="icon">💰</span> Finanzas Agro</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Control de gastos y registro
-                de inversiones agrícolas</p>
-        </div>
+    <section class="finances-section agro-ops-v10" style="margin-top: 2rem; margin-bottom: 2rem;" data-agro-section="ops">
+        <header class="module-header animate-in">
+            <div class="module-title-group">
+                <div class="module-icon">💰</div>
+                <div class="module-heading">
+                    <h2 class="module-title">Finanzas Agro</h2>
+                    <p class="module-subtitle">Control de gastos y registro de inversiones agrícolas</p>
+                </div>
+            </div>
+        </header>
 
         <div class="card financial-operations-card">
             <div class="financial-operations-header">
