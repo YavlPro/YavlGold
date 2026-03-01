@@ -14,6 +14,7 @@ import { initAgroSocial, openSocialPanel } from './agrosocial.js';
 import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
+import { initCiclos } from './agrociclos.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
@@ -8223,6 +8224,90 @@ function createCropCardElement(crop, index, options = {}) {
     return card;
 }
 
+function mapStatusToCycleState(status) {
+    const normalized = normalizeCropStatus(status);
+    if (normalized === 'produccion') return 'produccion';
+    if (normalized === 'sembrado' || normalized === 'creciendo') return 'siembra';
+    return 'cosecha';
+}
+
+function buildActiveCycleCardsData(crops, options = {}) {
+    const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
+    const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
+    const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
+    const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
+    const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const rows = Array.isArray(crops) ? crops : [];
+
+    return rows.map((crop) => {
+        const displayCrop = getCropDisplayParts(crop);
+        const templateDuration = getTemplateDurationForCrop(crop);
+        const progress = computeCropProgress(crop, templateDuration);
+        const effectiveStatus = resolveCropStatus(crop, progress);
+        const statusMeta = getCropStatusMeta(effectiveStatus);
+        const cycleState = mapStatusToCycleState(effectiveStatus);
+        const normalizedCropId = normalizeCropId(crop?.id);
+
+        const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
+        const baseInvestment = investmentSnapshot.usdEquiv;
+        const fxSnapshot = investmentSnapshot.fxSnapshot;
+        const effectiveRates = resolveEffectiveUsdRates(fxSnapshot);
+
+        const expenseInvestment = normalizedCropId && expenseTotalsByCrop
+            ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const incomeTotal = normalizedCropId && incomeTotalsByCrop
+            ? (Number(incomeTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const lossesTotal = normalizedCropId && lossTotalsByCrop
+            ? (Number(lossTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const pendingTotal = normalizedCropId && pendingTotalsByCrop
+            ? (Number(pendingTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const missingRateCount = normalizedCropId && missingRateCountsByCrop
+            ? (Number(missingRateCountsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+
+        const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
+        const net = incomeTotal - totalCosts;
+        const potential = net + pendingTotal;
+        const areaSize = Number(crop?.area_size);
+        const areaText = Number.isFinite(areaSize) ? `${areaSize} Ha` : 'N/A';
+        const baseTriplet = formatInvestmentTriplet(baseInvestment, effectiveRates);
+        const cotizacionBase = buildInvestmentFxLine(fxSnapshot, effectiveRates);
+        const cotizacion = missingRateCount > 0
+            ? `${cotizacionBase} · ${missingRateCount} movimiento${missingRateCount === 1 ? '' : 's'} sin tasa/moneda.`
+            : cotizacionBase;
+
+        return {
+            id: crop?.id !== undefined && crop?.id !== null ? String(crop.id) : '',
+            nombre: displayCrop.name || 'Cultivo',
+            variedad: String(crop?.variety || '').trim() || 'Sin variedad',
+            icono: displayCrop.icon || '🌱',
+            estado: cycleState,
+            estadoTexto: statusMeta?.text || 'En producción',
+            area: areaText,
+            siembra: formatDate(crop?.start_date),
+            cosechaEst: formatDate(crop?.expected_harvest_date),
+            diaActual: progress.ok ? Number(progress.dayIndex || 0) : 0,
+            diasTotales: progress.ok ? Number(progress.totalDays || 0) : 0,
+            porcentaje: progress.ok ? normalizeProgress(progress.percent) : 0,
+            inversionUSD: baseInvestment,
+            rentabilidad: net,
+            potencialNeto: potential,
+            desglose: {
+                base: baseTriplet,
+                gastos: formatCurrency(expenseInvestment),
+                pagados: formatCurrency(incomeTotal),
+                costos: formatCurrency(totalCosts),
+                fiados: formatCurrency(pendingTotal),
+                cotizacion
+            }
+        };
+    });
+}
+
 function logAgroDebug(...args) {
     if (AGRO_DEBUG) {
         console.log(...args);
@@ -8926,21 +9011,23 @@ export async function loadCrops() {
         // Renderizar cultivos
         logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: crops.length });
         cropsGrid.textContent = '';
-        const fragment = document.createDocumentFragment();
-        fragment.appendChild(createGeneralViewCardElement());
-        if (activeCrops.length === 0) {
-            fragment.appendChild(buildNoActiveCropsCard(visibleFinishedCrops.length));
+        if (!cropsGrid.id) {
+            cropsGrid.id = 'cyclesContainer';
         }
-        activeCrops.forEach((crop, i) => {
-            fragment.appendChild(createCropCardElement(crop, i + 1, {
-                expenseTotalsByCrop,
-                incomeTotalsByCrop,
-                lossTotalsByCrop,
-                pendingTotalsByCrop,
-                missingRateCountsByCrop
-            }));
+        const activeCycleCards = buildActiveCycleCardsData(activeCrops, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop
         });
-        cropsGrid.appendChild(fragment);
+        const emptyActiveText = visibleFinishedCrops.length > 0
+            ? 'No hay ciclos activos por ahora.'
+            : 'No hay ciclos activos. Crea tu primer cultivo.';
+        await initCiclos(cropsGrid.id, {
+            cycles: activeCycleCards,
+            emptyStateText: emptyActiveText
+        });
         renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, {
             expenseTotalsByCrop,
             incomeTotalsByCrop,

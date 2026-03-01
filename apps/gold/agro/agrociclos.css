@@ -1,0 +1,481 @@
+@keyframes metallicShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes borderShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gold-4) 15%, transparent)); }
+  50% { transform: scale(1.04); filter: drop-shadow(0 0 10px color-mix(in srgb, var(--gold-4) 35%, transparent)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.agro-cycles {
+  --gold-1: #2a2218;
+  --gold-2: #3a3228;
+  --gold-3: #6b5a3e;
+  --gold-4: #C8A752;
+  --gold-5: #E8D48B;
+
+  --bg-0: #050505;
+  --bg-1: #0a0a0a;
+  --bg-2: #0B0C0F;
+  --bg-3: #111113;
+  --bg-4: #1a1a1f;
+
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --text-muted: #94A3B8;
+  --text-gold-prestige: #E5D5A0;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --border-neutral: rgba(255, 255, 255, 0.08);
+  --border-gold: rgba(200, 167, 82, 0.25);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  --shadow-gold-sm: 0 2px 10px rgba(200, 167, 82, 0.15);
+  --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.25);
+
+  --text-xs: 0.70rem;
+  --text-sm: 0.80rem;
+  --text-base: 0.92rem;
+  --text-md: 1.00rem;
+  --text-lg: 1.10rem;
+  --text-xl: 1.30rem;
+
+  --metallic-border: linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent);
+  --metallic-btn: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
+  --metallic-text: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
+}
+
+.agro-cycles .cycles-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+.agro-cycles .cycle-card {
+  position: relative;
+  background: var(--bg-4);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  animation: fadeInUp 180ms ease both;
+}
+
+.agro-cycles .cycle-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
+.agro-cycles .cycle-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-cycles .card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border-neutral);
+}
+
+.agro-cycles .crop-info {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.agro-cycles .crop-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-gold);
+  background: var(--gold-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.agro-cycles .crop-text {
+  min-width: 0;
+}
+
+.agro-cycles .crop-name {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--text-primary);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agro-cycles .crop-variety {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agro-cycles .card-header-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+}
+
+.agro-cycles .status-badge {
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-neutral);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: var(--text-xs);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.agro-cycles .status-badge.status-produccion {
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+  color: var(--gold-4);
+  border-color: var(--border-gold);
+}
+
+.agro-cycles .status-badge.status-siembra {
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.agro-cycles .status-badge.status-cosecha {
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+  color: var(--color-warning);
+  border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
+.agro-cycles .cycle-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.agro-cycles .cycle-action {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-neutral);
+  background: var(--bg-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.agro-cycles .cycle-action:hover {
+  color: var(--gold-4);
+  border-color: var(--border-gold);
+  background: color-mix(in srgb, var(--gold-4) 10%, var(--bg-4));
+}
+
+.agro-cycles .cycle-action[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.agro-cycles .progress-section {
+  padding: 0.85rem;
+  border-bottom: 1px solid var(--border-neutral);
+}
+
+.agro-cycles .progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.agro-cycles .progress-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.agro-cycles .progress-days {
+  font-size: var(--text-sm);
+  color: var(--text-gold-prestige);
+  font-weight: 700;
+}
+
+.agro-cycles .progress-track {
+  height: 9px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+  border: 1px solid var(--border-neutral);
+  overflow: hidden;
+}
+
+.agro-cycles .progress-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--metallic-btn);
+  background-size: 200% 100%;
+  animation: metallicShift 5s linear infinite;
+  transition: width 180ms ease;
+  position: relative;
+}
+
+.agro-cycles .progress-dot {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translate(50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--gold-5);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-cycles .data-grid {
+  padding: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.agro-cycles .data-cell {
+  background: var(--bg-3);
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.55rem;
+  min-height: 55px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.agro-cycles .data-label {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.agro-cycles .data-value {
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.agro-cycles .data-value.gold {
+  color: var(--gold-4);
+}
+
+.agro-cycles .data-value.success {
+  color: var(--color-success);
+}
+
+.agro-cycles .data-value.error {
+  color: var(--color-error);
+}
+
+.agro-cycles .profit-row {
+  border-top: 1px solid var(--border-neutral);
+  padding: 0.8rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.agro-cycles .profit-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.agro-cycles .profit-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-lg);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.agro-cycles .profit-value.success {
+  color: var(--color-success);
+}
+
+.agro-cycles .profit-value.error {
+  color: var(--color-error);
+}
+
+.agro-cycles .desglose {
+  margin: 0 0.85rem 0.85rem;
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-3);
+}
+
+.agro-cycles .desglose-toggle {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-sm);
+  color: var(--gold-3);
+  font-weight: 700;
+  transition: all 180ms ease;
+}
+
+.agro-cycles .desglose-toggle:hover {
+  color: var(--gold-4);
+  background: color-mix(in srgb, var(--gold-4) 8%, var(--bg-3));
+}
+
+.agro-cycles .desglose-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.agro-cycles .chevron {
+  transition: transform 180ms ease;
+  color: inherit;
+}
+
+.agro-cycles .desglose[open] .chevron {
+  transform: rotate(180deg);
+}
+
+.agro-cycles .desglose-body {
+  border-top: 1px solid var(--border-neutral);
+  background: var(--bg-4);
+  padding: 0.35rem 0.75rem 0.6rem;
+}
+
+.agro-cycles .desglose-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.25rem 0;
+}
+
+.agro-cycles .desglose-row span {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.agro-cycles .desglose-row span:first-child {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.agro-cycles .desglose-row.cotizacion span {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.agro-cycles .cycles-empty {
+  grid-column: 1 / -1;
+  background: var(--bg-4);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem;
+  text-align: center;
+}
+
+.agro-cycles .cycles-empty-icon {
+  display: block;
+  font-size: var(--text-xl);
+  margin-bottom: 0.25rem;
+}
+
+.agro-cycles .cycles-empty p {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+@media (min-width: 769px) {
+  .agro-cycles .cycles-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .agro-cycles .card-header,
+  .agro-cycles .progress-section,
+  .agro-cycles .data-grid,
+  .agro-cycles .profit-row {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+
+  .agro-cycles .desglose {
+    margin: 0 0.7rem 0.7rem;
+  }
+}

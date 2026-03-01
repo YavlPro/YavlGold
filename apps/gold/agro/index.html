@@ -17,6 +17,7 @@
     <!-- Chart.js for Statistics Visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/assets/css/motion-pack.css">
+    <link rel="stylesheet" href="./agrociclos.css">
     <style>
         /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */
         *,
@@ -1288,7 +1289,7 @@
                 <h2 class="section-title"><span class="icon">🌿</span> Active Crops</h2> <button class="btn btn-outline"
                     id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
             </div>
-            <div class="crops-grid"> <!-- Cultivos cargados dinámicamente desde Supabase --> </div>
+            <div id="cyclesContainer" class="crops-grid"> <!-- Ciclos activos cargados dinámicamente --> </div>
         </section>
 
         <!-- Footer -->
