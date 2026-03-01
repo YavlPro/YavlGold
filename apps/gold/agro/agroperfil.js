@@ -884,24 +884,29 @@ function buildProfileMarkdown() {
     const unverifiedRows = Array.isArray(usdAudit.unverifiedRows) ? usdAudit.unverifiedRows : [];
     const unverifiedCount = Number(usdAudit.unverifiedCount || unverifiedRows.length || 0);
     if (unverifiedCount > 0) {
-        lines.push('', '## USD NO VERIFICADO (legacy)');
+        lines.push('', '## ⚠ Movimientos marcados como "USD" sin verificación (EXCLUIDOS de los totales)');
+        lines.push('- Estos registros tienen moneda marcada como "USD" en legacy, pero sin `monto_usd` confiable.');
+        lines.push('- Para evitar totales inflados, no se suman. Revisa la moneda o completa el campo USD.');
         lines.push(`- Registros excluidos del total USD: ${unverifiedCount}`);
-        lines.push('', '| Módulo | Cliente | Concepto | Fecha | Monto original | Moneda | Motivo |');
-        lines.push('| --- | --- | --- | --- | ---: | --- | --- |');
+        lines.push('- Impacto en totales: 0 (excluidos)');
+        lines.push('', '| Módulo | Cliente | Fecha | Concepto | Monto guardado | Moneda guardada | Estado | Qué hacer |');
+        lines.push('| --- | --- | ---: | --- | ---: | --- | --- | --- |');
 
         unverifiedRows.forEach((entry) => {
             const bucket = escapeMarkdownCell(entry?.bucket || 'General');
             const cliente = escapeMarkdownCell(namesHidden ? '••••' : (entry?.cliente || 'Sin cliente'));
-            const concepto = escapeMarkdownCell(entry?.concepto || 'Sin concepto');
             const fecha = escapeMarkdownCell(entry?.fecha || 'N/D');
+            const concepto = escapeMarkdownCell(entry?.concepto || 'Sin concepto');
             const monto = escapeMarkdownCell(safePlainMoney(entry?.monto));
-            const currency = escapeMarkdownCell(entry?.currency || 'N/D');
-            const reason = escapeMarkdownCell(entry?.reason || 'No verificable');
-            lines.push(`| ${bucket} | ${cliente} | ${concepto} | ${fecha} | ${monto} | ${currency} | ${reason} |`);
+            const currencyRaw = escapeMarkdownCell(entry?.currency || 'N/D');
+            const currency = escapeMarkdownCell(`${currencyRaw} (no verificado)`);
+            const status = 'EXCLUIDO';
+            const nextAction = 'Cambiar moneda (si no era USD) o completar monto_usd';
+            lines.push(`| ${bucket} | ${cliente} | ${fecha} | ${concepto} | ${monto} | ${currency} | ${status} | ${nextAction} |`);
         });
 
         if (unverifiedRows.length < unverifiedCount) {
-            lines.push(`| ... | ... | ... | ... | ... | ... | +${unverifiedCount - unverifiedRows.length} registro(s) adicional(es) |`);
+            lines.push(`| ... | ... | ... | ... | ... | ... | ... | +${unverifiedCount - unverifiedRows.length} registro(s) adicional(es) |`);
         }
     }
 

@@ -10436,3 +10436,88 @@ Hallazgo raíz del lote actual:
 
 - Comando: `pnpm build:gold`
 - Resultado: ✅ PASS.
+
+## 🆕 SESIÓN: GATE 0 — UX copy de USD no verificado en MD global (2026-03-01)
+
+### Diagnóstico
+
+- La sección actual del MD (`buildProfileMarkdown` en `apps/gold/agro/agroperfil.js`) muestra `USD NO VERIFICADO (legacy)` con columnas `Monto original` + `Moneda`.
+- Aunque los registros ya están excluidos del total, el copy visual puede interpretarse como “USD real”, especialmente con montos altos.
+
+### Plan de cambios
+
+1) Ajustar solo la presentación en Markdown (sin tocar reglas de cálculo):
+- nuevo título de sección con advertencia explícita de exclusión,
+- texto breve de contexto humano,
+- tabla orientada a operador (`Monto guardado`, `Moneda guardada (no verificado)`, `Estado`, `Qué hacer`).
+
+2) Agregar línea de impacto:
+- `Impacto en totales: 0 (excluidos)`.
+
+### Riesgos y mitigación
+
+- Riesgo: cambiar semántica de datos.
+  - Mitigación: cambios solo en copy/render MD; no se modifica exclusión ni cálculo USD.
+
+### Evidencia esperada
+
+- Export MD muestra claramente que esos movimientos están excluidos y qué acción tomar.
+- Build oficial en PASS.
+
+### Implementación aplicada (cierre)
+
+- Archivo: `apps/gold/agro/agroperfil.js`
+- Se actualizó únicamente la presentación de la sección de USD no verificado en el Markdown exportado:
+  - nuevo título explícito de exclusión,
+  - explicación breve y legible para operador,
+  - tabla reestructurada con columnas: `Monto guardado`, `Moneda guardada`, `Estado`, `Qué hacer`,
+  - `Moneda guardada` ahora se muestra como `USD (no verificado)` cuando aplica,
+  - línea adicional: `Impacto en totales: 0 (excluidos)`.
+- No se tocó la lógica de exclusión/heurística, solo copy/UX de export.
+
+### Resultado build
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS.
+
+## 🆕 SESIÓN: GATE 0 — Refinamiento copy USD no verificado (2026-03-01)
+
+### Diagnóstico
+
+- Revisión directa de `buildProfileMarkdown` en `apps/gold/agro/agroperfil.js`:
+  - no existe sección duplicada ni tabla vieja (`USD NO VERIFICADO (legacy)` / `Monto original | Moneda | Motivo`).
+  - el bloque actual ya usa el nuevo encabezado y columnas operativas.
+- Mejora pendiente de UX/copy:
+  - reforzar redacción humana (`moneda marcada como USD en legacy`),
+  - hacer la acción más explícita (`Cambiar moneda ... o completar monto_usd`),
+  - mostrar `N/D (no verificado)` también como estado no validado.
+
+### Plan de cambios
+
+1) Ajustar copy en `apps/gold/agro/agroperfil.js` (solo texto/etiquetas).
+2) No tocar lógica de exclusión ni totales.
+3) Ejecutar `pnpm build:gold`.
+
+### Riesgos y mitigación
+
+- Riesgo: alterar comportamiento financiero.
+  - Mitigación: cambios solo en strings de export markdown.
+
+### Evidencia esperada
+
+- Sección única, copy claro y sin ambigüedad de USD real.
+- Build en PASS.
+
+### Implementación aplicada (cierre)
+
+- Archivo: `apps/gold/agro/agroperfil.js`
+- Refinamiento de copy/UX en la sección de USD no verificado del MD exportado:
+  - texto: `moneda marcada como USD en legacy`.
+  - acción: `Cambiar moneda (si no era USD) o completar monto_usd`.
+  - moneda mostrada como `<valor> (no verificado)` también para `N/D`.
+- Confirmado: no hay sección/tabla vieja duplicada en ese bloque.
+
+### Resultado build
+
+- Comando: `pnpm build:gold`
+- Resultado: ✅ PASS.
