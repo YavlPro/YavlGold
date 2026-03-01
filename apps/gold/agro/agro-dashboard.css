@@ -1,0 +1,481 @@
+@keyframes metallicShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes borderShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gold-4) 15%, transparent));
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--gold-4) 35%, transparent));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.agro-dashboard-v10 {
+  --gold-1: #2a2218;
+  --gold-2: #3a3228;
+  --gold-3: #6b5a3e;
+  --gold-4: #C8A752;
+  --gold-5: #E8D48B;
+
+  --bg-0: #050505;
+  --bg-1: #0a0a0a;
+  --bg-2: #0B0C0F;
+  --bg-3: #111113;
+  --bg-4: #1a1a1f;
+
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --text-muted: #94A3B8;
+  --text-gold-prestige: #E5D5A0;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --border-neutral: rgba(255,255,255,0.08);
+  --border-gold: rgba(200,167,82,0.25);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-gold-sm: 0 2px 10px rgba(200,167,82,0.15);
+  --shadow-gold-md: 0 5px 20px rgba(200,167,82,0.25);
+
+  --text-xs: 0.70rem;
+  --text-sm: 0.80rem;
+  --text-base: 0.92rem;
+  --text-md: 1.00rem;
+  --text-lg: 1.10rem;
+  --text-xl: 1.30rem;
+
+  --metallic-border: linear-gradient(90deg, transparent, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e, transparent);
+  --metallic-btn: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
+  --metallic-text: linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e);
+}
+
+.agro-dashboard-v10 .agro-dash-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.agro-dashboard-v10 .agro-dash-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-lg);
+  font-weight: 900;
+  line-height: 1.1;
+  background: var(--metallic-text);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: metallicShift 5s linear infinite;
+}
+
+.agro-dashboard-v10 .agro-dash-title::before {
+  content: none;
+}
+
+.agro-dashboard-v10 .agro-dash-icon {
+  display: inline-flex;
+  margin-right: 0.35rem;
+  font-size: var(--text-lg);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.agro-dashboard-v10 .agro-dash-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.agro-dashboard-v10 .agro-dash-toggle,
+.agro-dashboard-v10 .agro-dash-btn-assistant {
+  width: 100%;
+  min-height: 40px;
+  border-radius: var(--radius-md);
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.agro-dashboard-v10 .agro-dash-toggle {
+  position: relative;
+  border: 1px solid var(--border-gold);
+  background: var(--bg-3);
+  color: var(--text-secondary);
+  padding: 0.55rem 2.6rem 0.55rem 0.8rem;
+  text-align: left;
+}
+
+.agro-dashboard-v10 .agro-dash-toggle .toggle-label {
+  font-size: var(--text-xs);
+}
+
+.agro-dashboard-v10 .agro-dash-toggle .toggle-switch {
+  display: none;
+}
+
+.agro-dashboard-v10 .agro-dash-toggle::after {
+  content: '';
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.65rem;
+  height: 0.9rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-gold);
+  background: var(--bg-2);
+}
+
+.agro-dashboard-v10 .agro-dash-toggle::before {
+  content: '';
+  position: absolute;
+  right: 1.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-lg);
+  background: var(--gold-3);
+  box-shadow: var(--shadow-gold-sm);
+  z-index: 1;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.agro-dashboard-v10 .agro-dash-toggle[aria-pressed='true'] {
+  color: var(--text-gold-prestige);
+  border-color: var(--border-gold);
+}
+
+.agro-dashboard-v10 .agro-dash-toggle[aria-pressed='true']::after {
+  background: color-mix(in srgb, var(--gold-4) 16%, var(--bg-2));
+}
+
+.agro-dashboard-v10 .agro-dash-toggle[aria-pressed='true']::before {
+  transform: translate(-0.75rem, -50%);
+  background: var(--gold-5);
+}
+
+.agro-dashboard-v10 .agro-dash-btn-assistant {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--bg-3), var(--bg-3)) padding-box,
+    var(--metallic-border) border-box;
+  color: var(--gold-4);
+  padding: 0.55rem 0.8rem;
+}
+
+.agro-dashboard-v10 .agro-dash-toggle:hover,
+.agro-dashboard-v10 .agro-dash-btn-assistant:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-dashboard-v10 .agro-dash-separator {
+  width: 100%;
+  height: 1px;
+  margin: 0.75rem 0 0.95rem;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
+.agro-dashboard-v10 .agro-dash-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.agro-dashboard-v10 .agro-dash-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  animation: fadeInUp 180ms ease both;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.agro-dashboard-v10 .agro-dash-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
+.agro-dashboard-v10 .agro-dash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-dashboard-v10 .agro-dash-card:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.agro-dashboard-v10 .agro-dash-card:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.agro-dashboard-v10 .agro-dash-card:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.agro-dashboard-v10 .agro-dash-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-neutral);
+  background: var(--bg-4);
+}
+
+.agro-dashboard-v10 .agro-dash-card__icon {
+  font-size: var(--text-lg);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.agro-dashboard-v10 .agro-dash-card__label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-gold-prestige);
+  text-transform: uppercase;
+}
+
+.agro-dashboard-v10 .agro-dash-card__sub {
+  margin-left: auto;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.agro-dashboard-v10 .agro-dash-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text-secondary);
+}
+
+.agro-dashboard-v10 .agro-dash-card__footer {
+  padding: 0.7rem 0.8rem 0.8rem;
+  border-top: 1px solid var(--border-neutral);
+}
+
+.agro-dashboard-v10 .agro-dash-card__action {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--gold-4);
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.agro-dashboard-v10 .agro-dash-card__action:hover {
+  background: var(--gold-1);
+  color: var(--gold-5);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-dashboard-v10 .agro-weather-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.agro-dashboard-v10 .agro-weather-temp {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.agro-dashboard-v10 .agro-weather-location {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-gold-prestige);
+}
+
+.agro-dashboard-v10 .agro-weather-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.agro-dashboard-v10 .agro-weather-conditions {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.agro-dashboard-v10 .agro-weather-humidity {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.agro-dashboard-v10 #location-controls {
+  width: 100%;
+}
+
+.agro-dashboard-v10 .agro-market-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  white-space: nowrap;
+  min-height: 36px;
+  border: 1px solid var(--border-neutral);
+  border-radius: var(--radius-sm);
+  background: var(--bg-2);
+  overflow: hidden;
+  padding-left: 0.2rem;
+}
+
+.agro-dashboard-v10 .agro-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0 0.65rem;
+  border-right: 1px solid var(--border-neutral);
+}
+
+.agro-dashboard-v10 .agro-ticker-symbol {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.agro-dashboard-v10 .agro-ticker-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.agro-dashboard-v10 .agro-ticker-trend {
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.agro-dashboard-v10 .agro-ticker-up {
+  color: var(--color-success);
+}
+
+.agro-dashboard-v10 .agro-ticker-down {
+  color: var(--color-error);
+}
+
+.agro-dashboard-v10 .agro-ticker-meta {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.agro-dashboard-v10 .agro-lunar-icon {
+  display: flex;
+  justify-content: center;
+  font-size: var(--text-xl);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.agro-dashboard-v10 .agro-lunar-phase {
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.agro-dashboard-v10 .agro-lunar-tip {
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.agro-dashboard-v10 .clima-weekly-host {
+  margin: 0 0.8rem 0.8rem;
+}
+
+@media (min-width: 769px) {
+  .agro-dashboard-v10 .agro-dash-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .agro-dashboard-v10 .agro-dash-controls {
+    width: auto;
+    flex-direction: row;
+  }
+
+  .agro-dashboard-v10 .agro-dash-toggle,
+  .agro-dashboard-v10 .agro-dash-btn-assistant {
+    width: auto;
+    min-width: 176px;
+  }
+
+  .agro-dashboard-v10 .agro-dash-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

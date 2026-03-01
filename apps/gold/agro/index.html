@@ -18,6 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/assets/css/motion-pack.css">
     <link rel="stylesheet" href="./agrociclos.css">
+    <link rel="stylesheet" href="./agro-dashboard.css">
     <style>
         /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */
         *,
@@ -1170,92 +1171,87 @@
                         class="user-name">Agricultor</span> </div>
             </button>
         </header> <!-- KPIs Section -->
-        <section class="kpi-section" data-agro-section="agenda">
-            <div class="section-header animate-in delay-1">
-                <h2 class="section-title"><span class="icon">📊</span> Dashboard Agro</h2>
-                <button type="button" class="assistant-trigger" id="agro-focus-toggle" aria-pressed="false">
-                    &#129504; Modo Enfoque: OFF
-                </button>
-                <button type="button" class="assistant-trigger" id="btn-open-agro-assistant" data-agro-section="assistant">
-                    &#129302; Asistente Agro
-                </button>
+        <section class="kpi-section agro-dashboard-v10" data-agro-section="agenda">
+            <div class="agro-dash-header section-header animate-in delay-1">
+                <h2 class="agro-dash-title section-title">
+                    <span class="agro-dash-icon">📊</span> Dashboard Agro
+                </h2>
+                <div class="agro-dash-controls">
+                    <button type="button" class="assistant-trigger agro-dash-toggle" id="agro-focus-toggle" aria-pressed="false">
+                        <span class="toggle-label">Modo Enfoque</span>
+                        <span class="toggle-switch" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="assistant-trigger agro-dash-btn-assistant" id="btn-open-agro-assistant"
+                        data-agro-section="assistant">
+                        Asistente Agro
+                    </button>
+                </div>
             </div>
-            <div class="kpi-grid">
-                <!-- Clima Widget -->
-                <div class="card kpi-card animate-in delay-2">
-                    <div class="kpi-icon-wrapper">🌤️</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Clima Local</div>
-                        <div class="kpi-value">
-                            <span class="highlight" id="weather-temp">--</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag" id="weather-desc">📍 Buscando ubicación...</span>
-                            <span class="kpi-tag" id="weather-humidity">💧 --%</span>
-                        </div>
-                        <div class="kpi-weekly-controls">
-                            <button type="button" class="clima-weekly-toggle" id="btn-toggle-weekly-forecast"
-                                aria-expanded="false" aria-controls="clima-weekly-host">
-                                📅 Ver pronóstico
-                            </button>
-                        </div>
-                        <div id="clima-weekly-host" class="clima-weekly-host is-collapsed" hidden></div>
-                    </div>
-                </div>
 
-                <!-- Mercados Widget -->
-                <div class="card kpi-card animate-in delay-3" style="overflow: hidden;" data-agro-section="markets">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -2s;">📈</div>
-                    <div class="kpi-content" style="width: 100%;">
-                        <div class="kpi-label"
-                            style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>Mercados en Vivo</span>
-                            <span id="market-location"
-                                style="font-size: 0.65rem; color: var(--text-muted);">Detectando...</span>
+            <div class="agro-dash-separator" aria-hidden="true"></div>
+
+            <div class="kpi-grid agro-dash-grid">
+                <article class="card kpi-card agro-dash-card animate-in delay-2" data-widget="weather">
+                    <header class="agro-dash-card__header">
+                        <span class="agro-dash-card__icon">🌦️</span>
+                        <span class="agro-dash-card__label">CLIMA LOCAL</span>
+                    </header>
+                    <div class="agro-dash-card__body" id="weather-content">
+                        <div class="agro-weather-main">
+                            <span class="agro-weather-temp" id="weather-temp">--</span>
                         </div>
-                        <div
-                            style="position: relative; width: 100%; height: 36px; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-top: 6px;">
-                            <div id="market-ticker-track" class="animate-marquee"
-                                style="display: flex; gap: 0; white-space: nowrap; padding-left: 8px; height: 100%; align-items: center;">
-                                <span style="color: var(--text-muted); font-size: 0.8rem;">📡 Conectando satélites
-                                    financieros...</span>
-                            </div>
+                        <div class="agro-weather-location-wrap">
+                            <span class="agro-weather-location" id="weather-desc">📍 Buscando ubicación...</span>
                         </div>
-                        <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
-                            <button onclick="window.openMarketHub('crypto')"
-                                style="width: 100%; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(200, 167, 82, 0.15); border-radius: 6px; padding: 8px 12px; cursor: pointer; transition: all 0.2s;"
-                                onmouseover="this.style.background='rgba(200, 167, 82, 0.1)';this.style.borderColor='rgba(200, 167, 82, 0.3)'"
-                                onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(200, 167, 82, 0.15)'">
-                                <span
-                                    style="font-size: 10px; font-weight: 700; color: #ddd; letter-spacing: 0.5px;">CENTRO
-                                    FINANCIERO</span>
-                                <i class="fa-solid fa-up-right-from-square"
-                                    style="color: var(--gold-primary, #C8A752); font-size: 10px;"></i>
-                            </button>
+                        <div class="agro-weather-meta kpi-secondary">
+                            <span class="agro-weather-conditions" id="weather-conditions">--</span>
+                            <span class="agro-weather-humidity" id="weather-humidity">💧 --%</span>
                         </div>
                     </div>
-                </div>
-
-                <!-- Luna Widget -->
-                <div class="card kpi-card animate-in delay-4" data-agro-section="lunar">
-                    <div class="kpi-icon-wrapper" style="animation-delay: -4s;" id="moon-icon">🌙</div>
-                    <div class="kpi-content">
-                        <div class="kpi-label">Fase Lunar</div>
-                        <div class="kpi-value">
-                            Fase <span class="highlight" id="moon-phase">--</span>
-                        </div>
-                        <div class="kpi-secondary">
-                            <span class="kpi-tag" id="moon-advice">Calculando...</span>
-                        </div>
-                        <button onclick="window.openAgroAgenda()"
-                            style="margin-top: 10px; width: 100%; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; background: transparent; border: 1px solid rgba(200, 167, 82, 0.3); color: var(--gold-primary, #C8A752); padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 700;"
-                            onmouseover="this.style.background='var(--gold-primary)';this.style.color='#000'"
-                            onmouseout="this.style.background='transparent';this.style.color='var(--gold-primary)'">
-                            <i class="fa-solid fa-calendar-days"></i> Centro de Agenda
+                    <footer class="agro-dash-card__footer">
+                        <button type="button" class="agro-dash-card__action clima-weekly-toggle" id="btn-toggle-weekly-forecast"
+                            aria-expanded="false" aria-controls="clima-weekly-host">
+                            📅 Ver pronóstico
                         </button>
+                    </footer>
+                    <div id="clima-weekly-host" class="clima-weekly-host is-collapsed" hidden></div>
+                </article>
+
+                <article class="card kpi-card agro-dash-card animate-in delay-3" data-widget="markets" data-agro-section="markets">
+                    <header class="agro-dash-card__header">
+                        <span class="agro-dash-card__icon">📈</span>
+                        <span class="agro-dash-card__label">MERCADOS EN VIVO</span>
+                        <span class="agro-dash-card__sub" id="market-location">Detectando...</span>
+                    </header>
+                    <div class="agro-dash-card__body">
+                        <div id="market-ticker-track" class="agro-market-track animate-marquee">
+                            <span class="agro-ticker-item agro-ticker-meta">📡 Conectando satélites financieros...</span>
+                        </div>
                     </div>
-                </div>
-            </div> <!-- End of first row (Weather/Market/Moon) -->
+                    <footer class="agro-dash-card__footer">
+                        <button type="button" class="agro-dash-card__action" onclick="window.openMarketHub('crypto')">
+                            CENTRO FINANCIERO
+                        </button>
+                    </footer>
+                </article>
+
+                <article class="card kpi-card agro-dash-card animate-in delay-4" data-widget="lunar" data-agro-section="lunar">
+                    <header class="agro-dash-card__header">
+                        <span class="agro-dash-card__icon" id="moon-icon">🌕</span>
+                        <span class="agro-dash-card__label">FASE LUNAR</span>
+                    </header>
+                    <div class="agro-dash-card__body" id="moon-phase">
+                        <div class="agro-lunar-icon">🌕</div>
+                        <div class="agro-lunar-phase">--</div>
+                        <div class="agro-lunar-tip" id="moon-advice">Calculando...</div>
+                    </div>
+                    <footer class="agro-dash-card__footer">
+                        <button type="button" class="agro-dash-card__action" onclick="window.openAgroAgenda()">
+                            CENTRO DE AGENDA
+                        </button>
+                    </footer>
+                </article>
+            </div>
 
 
             <div id="weekly-forecast-staging" hidden aria-hidden="true">

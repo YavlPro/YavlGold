@@ -699,12 +699,12 @@ async function fetchWeather() {
  * Display weather data in the UI
  */
 function displayWeather(data) {
+    const weatherContentEl = document.getElementById('weather-content');
     const tempEl = document.getElementById('weather-temp');
     const descEl = document.getElementById('weather-desc');
+    const conditionsEl = document.getElementById('weather-conditions');
     const humEl = document.getElementById('weather-humidity');
-    const labelEl = document.querySelector('.kpi-card:first-child .kpi-value');
-
-    if (!tempEl) return;
+    if (!weatherContentEl || !tempEl) return;
 
     tempEl.textContent = `${data.temp}\u00B0C`;
 
@@ -728,18 +728,19 @@ function displayWeather(data) {
     else if (code >= 85 && code <= 86) { desc = 'Nevada'; icon = ICONS.snow; }
     else if (code >= 95 && code <= 99) { desc = 'Tormenta'; icon = ICONS.storm; }
 
-    if (descEl) descEl.textContent = `${icon} ${desc}`;
+    if (conditionsEl) conditionsEl.textContent = `${icon} ${desc}`;
 
-    if (labelEl && data.location) {
-        const sourceIcon = data.location.source === 'manual' ? ICONS.manual :
-            data.location.source === 'gps' ? ICONS.gps :
-                data.location.source === 'ip' ? ICONS.ip : ICONS.manual;
-        labelEl.textContent = `${sourceIcon} ${data.location.label}: `;
-        const tempSpan = document.createElement('span');
-        tempSpan.className = 'highlight';
-        tempSpan.id = 'weather-temp';
-        tempSpan.textContent = `${data.temp}\u00B0C`;
-        labelEl.appendChild(tempSpan);
+    if (descEl && data.location) {
+        const sourceIcon = data.location.source === 'manual'
+            ? ICONS.manual
+            : data.location.source === 'gps'
+                ? ICONS.gps
+                : data.location.source === 'ip'
+                    ? ICONS.ip
+                    : ICONS.manual;
+        descEl.textContent = `${sourceIcon} ${data.location.label}`;
+    } else if (descEl) {
+        descEl.textContent = `${ICONS.manual} Ubicacion no disponible`;
     }
 
     console.log('[Agro] Weather:', desc, '|', (data.location ? data.location.label : 'Unknown'));
@@ -754,7 +755,6 @@ function displayWeather(data) {
 // ============================================
 function calculateMoonPhase() {
     const phaseEl = document.getElementById('moon-phase');
-    const adviceEl = document.getElementById('moon-advice');
     const iconEl = document.getElementById('moon-icon');
 
     if (!phaseEl) return;
@@ -808,10 +808,12 @@ function calculateMoonPhase() {
             break;
     }
 
-    phaseEl.textContent = phaseName;
-    adviceEl.textContent = advice;
-
     if (iconEl) iconEl.textContent = icon;
+    phaseEl.innerHTML = `
+        <div class="agro-lunar-icon">${icon}</div>
+        <div class="agro-lunar-phase">${phaseName}</div>
+        <div class="agro-lunar-tip" id="moon-advice">${advice}</div>
+    `;
 
     console.log('[Agro] Moon Phase:', phaseName, '(Index:', b + ')');
 }
