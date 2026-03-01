@@ -201,6 +201,19 @@
   border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
 }
 
+/* === Finished mode variants === */
+.agro-cycles .status-badge.status-finalizado {
+  background: color-mix(in srgb, var(--gold-3) 15%, transparent);
+  color: var(--text-gold-prestige);
+  border-color: var(--border-gold);
+}
+
+.agro-cycles .status-badge.status-perdido {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
+}
+
 .agro-cycles .cycle-actions {
   display: flex;
   gap: 0.25rem;
@@ -287,6 +300,16 @@
   border-radius: var(--radius-pill);
   background: var(--gold-5);
   box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-cycles .progress-complete .progress-fill {
+  width: 100% !important;
+  background: var(--gold-3);
+  animation: none;
+}
+
+.agro-cycles .progress-complete .progress-dot {
+  display: none;
 }
 
 .agro-cycles .data-grid {
@@ -458,6 +481,19 @@
   font-size: var(--text-base);
   color: var(--text-secondary);
   font-weight: 600;
+}
+
+.agro-cycles--finished .cycle-card {
+  opacity: 0.92;
+}
+
+.agro-cycles--finished .cycle-card:hover {
+  opacity: 1;
+}
+
+.agro-cycles--finished .cycle-card::before {
+  animation-duration: 6s;
+  opacity: 0.6;
 }
 
 @media (min-width: 769px) {

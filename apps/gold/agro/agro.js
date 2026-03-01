@@ -14,7 +14,7 @@ import { initAgroSocial, openSocialPanel } from './agrosocial.js';
 import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
-import { initCiclos } from './agrociclos.js';
+import { initCiclos, renderFinishedCycles } from './agrociclos.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
@@ -74,6 +74,7 @@ const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_i
 const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta';
 const AGRO_LOSS_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,evidence_url,reverted_at,reverted_reason,split_meta';
 const AGRO_INCOME_LIST_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,soporte_url,currency,exchange_rate,monto_usd,deleted_at,reverted_at,created_at';
+const USE_V10_HISTORY = true;
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
 const AGRO_SOCIAL_OPEN_BUTTON_ID = 'btn-open-agro-social';
@@ -8231,6 +8232,28 @@ function mapStatusToCycleState(status) {
     return 'cosecha';
 }
 
+function mapStatusToFinishedCycleMeta(rawStatus, fallbackMeta = null) {
+    const token = normalizeStatusToken(rawStatus);
+    if (token === 'lost' || token === 'perdido' || token === 'perdida' || token === 'danado' || token === 'damaged' || token === 'loss' || token === 'fallido' || token === 'fallida') {
+        return { estado: 'perdido', estadoTexto: 'Perdido' };
+    }
+    if (token === 'cosechado' || token === 'harvested') {
+        return { estado: 'finalizado', estadoTexto: 'Cosechado' };
+    }
+    if (token === 'completado' || token === 'completada' || token === 'finished' || token === 'done' || token === 'closed') {
+        return { estado: 'finalizado', estadoTexto: 'Completado' };
+    }
+    if (token === 'finalizado' || token === 'terminado' || token === 'terminada') {
+        return { estado: 'finalizado', estadoTexto: 'Finalizado' };
+    }
+
+    const fallbackText = String(fallbackMeta?.text || '').trim();
+    if (fallbackText.toLowerCase() === 'perdido') {
+        return { estado: 'perdido', estadoTexto: 'Perdido' };
+    }
+    return { estado: 'finalizado', estadoTexto: fallbackText || 'Finalizado' };
+}
+
 function buildActiveCycleCardsData(crops, options = {}) {
     const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
     const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
@@ -8296,6 +8319,91 @@ function buildActiveCycleCardsData(crops, options = {}) {
             inversionUSD: baseInvestment,
             rentabilidad: net,
             potencialNeto: potential,
+            desglose: {
+                base: baseTriplet,
+                gastos: formatCurrency(expenseInvestment),
+                pagados: formatCurrency(incomeTotal),
+                costos: formatCurrency(totalCosts),
+                fiados: formatCurrency(pendingTotal),
+                cotizacion
+            }
+        };
+    });
+}
+
+function buildFinishedCycleCardsData(crops, options = {}) {
+    const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
+    const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
+    const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
+    const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
+    const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const groupType = String(options.groupType || '').toLowerCase().trim();
+    const rows = Array.isArray(crops) ? crops : [];
+
+    return rows.map((crop) => {
+        const displayCrop = getCropDisplayParts(crop);
+        const templateDuration = getTemplateDurationForCrop(crop);
+        const progress = computeCropProgress(crop, templateDuration);
+        const effectiveStatus = resolveCropStatus(crop, progress);
+        const statusMeta = getCropStatusMeta(effectiveStatus);
+        const normalizedCropId = normalizeCropId(crop?.id);
+
+        const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
+        const baseInvestment = investmentSnapshot.usdEquiv;
+        const fxSnapshot = investmentSnapshot.fxSnapshot;
+        const effectiveRates = resolveEffectiveUsdRates(fxSnapshot);
+
+        const expenseInvestment = normalizedCropId && expenseTotalsByCrop
+            ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const incomeTotal = normalizedCropId && incomeTotalsByCrop
+            ? (Number(incomeTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const lossesTotal = normalizedCropId && lossTotalsByCrop
+            ? (Number(lossTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const pendingTotal = normalizedCropId && pendingTotalsByCrop
+            ? (Number(pendingTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const missingRateCount = normalizedCropId && missingRateCountsByCrop
+            ? (Number(missingRateCountsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+
+        const totalCosts = baseInvestment + expenseInvestment + lossesTotal;
+        const finalNet = incomeTotal - totalCosts;
+        const areaSize = Number(crop?.area_size);
+        const areaText = Number.isFinite(areaSize) ? `${areaSize} Ha` : 'N/A';
+        const baseTriplet = formatInvestmentTriplet(baseInvestment, effectiveRates);
+        const cotizacionBase = buildInvestmentFxLine(fxSnapshot, effectiveRates);
+        const cotizacion = missingRateCount > 0
+            ? `${cotizacionBase} · ${missingRateCount} movimiento${missingRateCount === 1 ? '' : 's'} sin tasa/moneda.`
+            : cotizacionBase;
+        const finishedStatus = groupType === 'lost'
+            ? { estado: 'perdido', estadoTexto: 'Perdido' }
+            : mapStatusToFinishedCycleMeta(crop?.status_override || crop?.status || effectiveStatus, statusMeta);
+        const resolvedEndDate = resolveCropEndDateKey(crop);
+        const harvestDate = resolvedEndDate || crop?.actual_harvest_date || crop?.expected_harvest_date;
+        const totalDays = progress.ok
+            ? Number(progress.totalDays || 0)
+            : (Number(crop?.cycle_days) || 0);
+
+        return {
+            id: crop?.id !== undefined && crop?.id !== null ? String(crop.id) : '',
+            nombre: displayCrop.name || 'Cultivo',
+            variedad: String(crop?.variety || '').trim() || 'Sin variedad',
+            icono: displayCrop.icon || '🌱',
+            estado: finishedStatus.estado,
+            estadoTexto: finishedStatus.estadoTexto,
+            area: areaText,
+            siembra: formatDate(crop?.start_date),
+            cosechaEst: formatDate(harvestDate),
+            diaActual: totalDays > 0 ? totalDays : 0,
+            diasTotales: totalDays > 0 ? totalDays : 0,
+            porcentaje: 100,
+            inversionUSD: baseInvestment,
+            rentabilidad: finalNet,
+            potencialNeto: finalNet,
+            mode: 'finished',
             desglose: {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
@@ -8765,6 +8873,22 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
     const rows = Array.isArray(crops) ? crops : [];
 
+    if (USE_V10_HISTORY) {
+        const cardsData = buildFinishedCycleCardsData(rows, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop,
+            groupType: options.groupType
+        });
+        renderFinishedCycles(gridEl, cardsData, {
+            emptyStateText: emptyText
+        });
+        return;
+    }
+
+    gridEl.classList.remove('agro-cycles', 'agro-cycles--finished');
     gridEl.textContent = '';
     if (rows.length === 0) {
         const empty = document.createElement('p');
@@ -8838,14 +8962,16 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         incomeTotalsByCrop,
         lossTotalsByCrop,
         pendingTotalsByCrop,
-        missingRateCountsByCrop
+        missingRateCountsByCrop,
+        groupType: 'finished'
     });
     renderCropCycleGroup(lostGridEl, lostCrops, 'Sin ciclos perdidos por ahora.', {
         expenseTotalsByCrop,
         incomeTotalsByCrop,
         lossTotalsByCrop,
         pendingTotalsByCrop,
-        missingRateCountsByCrop
+        missingRateCountsByCrop,
+        groupType: 'lost'
     });
 
     if (auditTitleEl) {

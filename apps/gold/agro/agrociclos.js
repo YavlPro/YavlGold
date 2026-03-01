@@ -25,11 +25,21 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function normalizeToken(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function statusClassFor(state) {
-  const token = String(state || '').toLowerCase().trim();
+  const token = normalizeToken(state);
   if (token === 'produccion') return 'status-produccion';
   if (token === 'siembra') return 'status-siembra';
   if (token === 'cosecha') return 'status-cosecha';
+  if (token === 'finalizado' || token === 'cosechado' || token === 'completado') return 'status-finalizado';
+  if (token === 'perdido' || token === 'fallido') return 'status-perdido';
   return 'status-produccion';
 }
 
@@ -84,7 +94,10 @@ function buildActions(ciclo) {
 }
 
 function renderCard(ciclo, index = 0) {
-  const porcentaje = resolveProgress(ciclo);
+  const mode = String(ciclo?.mode || 'active').trim().toLowerCase() === 'finished'
+    ? 'finished'
+    : 'active';
+  const porcentaje = mode === 'finished' ? 100 : resolveProgress(ciclo);
   const esPositivo = toNumber(ciclo?.rentabilidad, 0) >= 0;
   const netoPositivo = toNumber(ciclo?.potencialNeto, 0) >= 0;
   const statusClass = statusClassFor(ciclo?.estado);
@@ -92,6 +105,11 @@ function renderCard(ciclo, index = 0) {
   const potencialText = formatSignedUsd(ciclo?.potencialNeto);
   const inversionText = formatUsdCompact(ciclo?.inversionUSD);
   const trendIcon = esPositivo ? '↗' : '↘';
+  const profitLabel = mode === 'finished' ? 'Rentabilidad Final' : 'Potencial Neto';
+  const progressText = mode === 'finished'
+    ? 'Completado'
+    : `Día ${toNumber(ciclo?.diaActual, 0)}/${toNumber(ciclo?.diasTotales, 0)} (${porcentaje}%)`;
+  const progressClass = mode === 'finished' ? 'progress-track progress-complete' : 'progress-track';
   const dataId = String(ciclo?.id || '').trim();
   const orphanData = ciclo?.isAuditCard ? ' data-crop-orphan="1"' : '';
 
@@ -102,9 +120,6 @@ function renderCard(ciclo, index = 0) {
   const desgloseCostos = String(desglose.costos || 'N/D');
   const desgloseFiados = String(desglose.fiados || 'N/D');
   const desgloseCotizacion = String(desglose.cotizacion || 'N/D');
-
-  const diaActual = toNumber(ciclo?.diaActual, 0);
-  const diasTotales = toNumber(ciclo?.diasTotales, 0);
 
   return `
     <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}"${orphanData} style="animation-delay:${index * 70}ms;">
@@ -126,9 +141,9 @@ function renderCard(ciclo, index = 0) {
       <div class="progress-section">
         <div class="progress-meta">
           <span class="progress-label">Progreso</span>
-          <span class="progress-days">Día ${diaActual}/${diasTotales} (${porcentaje}%)</span>
+          <span class="progress-days">${escapeHtml(progressText)}</span>
         </div>
-        <div class="progress-track">
+        <div class="${progressClass}">
           <div class="progress-fill" style="width:${porcentaje}%">
             <span class="progress-dot"></span>
           </div>
@@ -155,7 +170,7 @@ function renderCard(ciclo, index = 0) {
       </div>
 
       <div class="profit-row">
-        <span class="profit-label">Potencial Neto</span>
+        <span class="profit-label">${profitLabel}</span>
         <span class="profit-value ${netoPositivo ? 'success' : 'error'}" data-money="1" data-raw-money="${escapeAttr(potencialText)}">${escapeHtml(potencialText)}</span>
       </div>
 
@@ -207,8 +222,21 @@ function renderEmpty(text = 'No hay ciclos activos') {
 
 export function renderCycleCards(container, cycles = [], options = {}) {
   if (!container) return;
-  const rows = Array.isArray(cycles) ? cycles.filter(Boolean) : [];
+  const modeFromOptions = options.mode == null
+    ? ''
+    : String(options.mode).trim().toLowerCase();
+  const mode = modeFromOptions === 'finished'
+    ? 'finished'
+    : (modeFromOptions === 'active' ? 'active' : '');
+  const rows = (Array.isArray(cycles) ? cycles : [])
+    .filter(Boolean)
+    .map((cycle) => ({
+      ...cycle,
+      mode: mode || String(cycle?.mode || 'active').trim().toLowerCase()
+    }));
   const emptyText = options.emptyStateText || 'No hay ciclos activos';
+  container.classList.add('agro-cycles');
+  container.classList.toggle('agro-cycles--finished', mode === 'finished');
 
   if (rows.length === 0) {
     container.innerHTML = renderEmpty(emptyText);
@@ -220,6 +248,14 @@ export function renderCycleCards(container, cycles = [], options = {}) {
       ${rows.map((ciclo, index) => renderCard(ciclo, index)).join('')}
     </div>
   `;
+}
+
+export function renderFinishedCycles(container, cycles, options = {}) {
+  return renderCycleCards(container, cycles, {
+    ...options,
+    mode: 'finished',
+    emptyStateText: options.emptyStateText || 'No hay ciclos finalizados'
+  });
 }
 
 function mapDbRowToCycle(row) {
@@ -314,4 +350,3 @@ export async function initCiclos(containerId, options = {}) {
 
   await cargarCiclos(container, options);
 }
-
