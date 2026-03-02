@@ -1331,7 +1331,7 @@
 }
 
 .agro-ops-v10 .tx-actions-trigger {
-  display: none;
+  display: none !important;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -1538,7 +1538,7 @@
   }
 
   .agro-ops-v10 .tx-actions-trigger {
-    display: inline-flex;
+    display: inline-flex !important;
     min-height: 36px;
     padding: 0 12px;
     border-radius: var(--radius-pill);
@@ -1549,7 +1549,7 @@
   }
 
   .agro-ops-v10 .tx-actions > .tx-actions-btns {
-    display: none;
+    display: none !important;
     width: 100%;
     max-width: 100%;
     justify-content: flex-end;
@@ -1565,7 +1565,7 @@
   }
 
   .agro-ops-v10 .tx-actions.is-open > .tx-actions-btns {
-    display: flex;
+    display: flex !important;
   }
 
   .agro-ops-v10 .tx-actions > .tx-actions-btns .btn {

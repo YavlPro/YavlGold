@@ -10775,3 +10775,10 @@ Hallazgo raíz del lote actual:
   - sin desborde horizontal del layout.
 - Touch:
   - trigger y botones con hit-target mínimo 44px.
+
+### Ajuste adicional (compatibilidad Android)
+- Se reforzó la visibilidad del trigger por ancho (`@media (max-width: 768px)`) con prioridad de cascada:
+  - base desktop: `display: none !important`,
+  - móvil por ancho: `display: inline-flex !important`.
+- `pointer:coarse` quedó solo para hit-target 44px (sin depender de ese media query para mostrar/ocultar trigger).
+- También se fijó el colapso/expansión inline con prioridad (`tx-actions-btns` oculto por defecto en móvil y visible en `.is-open`).
