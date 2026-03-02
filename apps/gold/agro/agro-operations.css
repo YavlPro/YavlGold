@@ -1418,7 +1418,7 @@
   background: color-mix(in srgb, var(--color-success) 8%, transparent);
 }
 
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
   .agro-ops-v10 .tx-actions-trigger {
     display: none !important;
   }
@@ -1516,61 +1516,8 @@
   }
 }
 
-/* §19b Kebab Menu Mobile */
-@media (max-width: 768px) {
-  .agro-ops-v10 .tx-card {
-    overflow: hidden;
-  }
-
-  .agro-ops-v10 .tx-card.is-actions-open {
-    overflow: visible;
-  }
-
-  .agro-ops-v10 .tx-amount-group {
-    min-width: 0;
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .agro-ops-v10 .tx-detail {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  .agro-ops-v10 .tx-footer {
-    flex-direction: column;
-    align-items: stretch;
-    row-gap: 8px;
-    overflow: hidden;
-  }
-
-  .agro-ops-v10 .tx-card.is-actions-open .tx-footer {
-    overflow: visible;
-  }
-
-  .agro-ops-v10 .tx-footer-meta {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .agro-ops-v10 .tx-actions {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    position: relative;
-    justify-content: flex-end;
-    align-self: stretch;
-    align-items: flex-end;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    overflow: hidden;
-    gap: 8px;
-  }
-
-  .agro-ops-v10 .tx-card.is-actions-open .tx-actions {
-    overflow: visible;
-  }
-
+/* §19b Kebab Menu Compact (<=1024) */
+@media (max-width: 1024px) {
   .agro-ops-v10 .tx-actions-trigger {
     display: flex !important;
     min-height: 36px;
@@ -1589,8 +1536,8 @@
     position: absolute;
     right: 0;
     bottom: calc(100% + 8px);
-    width: min(280px, 100%);
-    max-width: 100%;
+    width: min(280px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
     align-items: stretch;
     padding: 8px;
     border-radius: var(--radius-md);
@@ -1622,6 +1569,58 @@
 
   .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger i {
     animation: spinOnce 200ms ease forwards;
+  }
+}
+
+/* Layout móvil real */
+@media (max-width: 768px) {
+  .agro-ops-v10 .tx-amount-group {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .agro-ops-v10 .tx-detail {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .agro-ops-v10 .tx-footer {
+    flex-direction: column;
+    align-items: stretch;
+    row-gap: 8px;
+    overflow: hidden;
+  }
+
+  .agro-ops-v10 .tx-card.is-actions-open .tx-footer {
+    overflow: visible;
+  }
+
+  .agro-ops-v10 .tx-footer-meta {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .agro-ops-v10 .tx-actions {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+    align-self: stretch;
+    align-items: flex-end;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    gap: 8px;
+  }
+
+  .agro-ops-v10 .tx-card.is-actions-open .tx-actions {
+    overflow: visible;
+  }
+
+  .agro-ops-v10 .tx-actions > .tx-actions-btns {
+    width: min(280px, 100%);
+    max-width: 100%;
   }
 }
 

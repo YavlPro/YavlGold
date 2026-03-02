@@ -10857,3 +10857,45 @@ Hallazgo raíz del lote actual:
 - En móvil (<=768): trigger visible siempre.
 - En desktop (>768): trigger oculto, acciones inline.
 - Build oficial en PASS.
+
+## 🆕 SESIÓN: GATE 0 — Compacto en 769–1024, inline desde 1025 (2026-03-02)
+
+### Diagnóstico
+- Forense confirmado: triggers existen en DOM, pero a `innerWidth=811` el breakpoint desktop (`min-width:769`) los oculta por CSS.
+- El rango 769–1024 es una zona intermedia donde mantener inline puede degradar accesibilidad visual de acciones.
+- La solución estable es tratar ese rango como compacto (kebab), dejando inline solo para anchos realmente desktop.
+
+### Plan
+- Ajustar solo `agro-operations.css`:
+  - Desktop inline desde `@media (min-width:1025)`.
+  - Modo compacto para `@media (max-width:1024)` en bloque de acciones.
+- Mantener JS intacto (render/handlers ya correctos).
+- Validar build y documentar cierre.
+
+### Riesgos / Mitigación
+- Riesgo: cambios de layout no deseados en tablet.
+  Mitigación: acotar ajustes al bloque de acciones y conservar el comportamiento existente de tarjetas.
+- Riesgo: regresión desktop amplio.
+  Mitigación: regla explícita inline en `>=1025`.
+
+### Evidencia esperada
+- 375px: trigger visible y panel compacto.
+- 811px: trigger visible y panel compacto.
+- >=1366px: acciones inline, trigger oculto.
+
+### Cierre breve
+- `apps/gold/agro/agro-operations.css`: breakpoint de inline movido a `>=1025`; el modo compacto de acciones se amplió a `<=1024`.
+- Se mantiene el patrón: compacto en widths medios (incluyendo 811px), inline solo en desktop amplio.
+- No se tocó `agro.js` en esta sesión (render/handlers intactos).
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+### Pruebas manuales recomendadas
+- 375px: validar `⋮` visible, abrir/cerrar panel, ejecutar acción.
+- 811px: validar `⋮` visible (ya no oculto por breakpoint), abrir panel en varias cards.
+- >=1366px: validar acciones inline visibles y trigger oculto.
+
+### Refinamiento de alcance (layout vs acciones)
+- Se separó el alcance del breakpoint compacto:
+  - `<=1024`: solo reglas de acciones compactas (trigger/panel).
+  - `<=768`: reglas de layout móvil real (`tx-footer`, wraps de metadata y estructura de acciones en columna).
+- Con esto, en 811px cambia solo el modo de acciones sin forzar layout móvil completo de `tx-card`.
