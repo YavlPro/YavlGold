@@ -1317,19 +1317,53 @@
 .agro-ops-v10 .tx-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-left: auto;
   justify-content: flex-end;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   touch-action: manipulation;
   position: relative;
   z-index: 2;
-  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
-/* §19b Kebab trigger - hidden on desktop */
 .agro-ops-v10 .tx-actions-trigger {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-gold);
+  background: transparent;
+  color: var(--gold-4);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.agro-ops-v10 .tx-actions-trigger i {
+  font-size: var(--text-sm);
+  transition: transform 180ms ease;
+}
+
+.agro-ops-v10 .tx-actions-trigger-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.agro-ops-v10 .tx-actions-trigger:hover,
+.agro-ops-v10 .tx-actions.is-open .tx-actions-trigger {
+  background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+}
+
+.agro-ops-v10 .tx-actions-btns {
+  display: none !important;
 }
 
 .agro-ops-v10 .tx-actions .btn {
@@ -1358,6 +1392,92 @@
   border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
   color: var(--color-success);
   background: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+
+.tx-actions-menu-root {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.tx-actions-menu-root.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tx-actions-menu-overlay {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  cursor: default;
+  background: color-mix(in srgb, var(--bg-0, #050505) 62%, transparent);
+}
+
+.tx-actions-menu-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  min-width: 190px;
+  max-width: min(90vw, 280px);
+  max-height: min(70vh, 420px);
+  overflow: auto;
+  padding: 8px;
+  border-radius: var(--radius-md, 12px);
+  border: 1px solid var(--border-gold, rgba(200,167,82,0.25));
+  background: var(--glass-bg, rgba(17,17,17,0.9));
+  backdrop-filter: var(--backdrop-blur, blur(12px));
+  box-shadow: var(--shadow-gold-md, 0 5px 20px rgba(200,167,82,0.25));
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tx-actions-menu-panel::-webkit-scrollbar {
+  display: none;
+}
+
+.tx-actions-menu-panel.is-sheet {
+  max-width: none;
+  max-height: min(60vh, 420px);
+}
+
+.tx-actions-menu-panel .tx-actions-btns {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  max-width: none !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+
+.tx-actions-menu-panel .tx-actions-btns .btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 38px;
+  height: auto !important;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.tx-actions-menu-panel .tx-actions-btns .btn::after {
+  content: attr(title);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: currentColor;
+  white-space: normal;
+}
+
+.tx-actions-menu-panel .tx-actions-btns .btn:disabled::after {
+  opacity: 0.7;
 }
 
 /* §20 TRANSACTION LIST CONTAINER (.tx-list) */
@@ -1476,65 +1596,26 @@
   }
 
   .agro-ops-v10 .tx-actions {
-    --tx-actions-trigger-space: 48px;
     width: 100%;
     max-width: 100%;
     margin-left: 0;
     justify-content: flex-end;
     align-self: flex-end;
-    flex-wrap: nowrap;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 6px;
     overflow: hidden;
   }
 
   .agro-ops-v10 .tx-actions-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 34px;
     height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
     border-radius: 50%;
-    background: transparent;
-    border: 1px solid var(--border-gold);
-    color: var(--gold-4);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 180ms ease, transform 180ms ease;
-    order: 999;
   }
 
-  .agro-ops-v10 .tx-actions-trigger i {
-    transition: transform 180ms ease;
-  }
-
-  .agro-ops-v10 .tx-actions-trigger:hover,
-  .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger {
-    background: color-mix(in srgb, var(--gold-4) 12%, transparent);
-  }
-
-  .agro-ops-v10 .tx-actions-btns {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 4px;
-    max-width: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
-    opacity: 0;
-    pointer-events: none;
-    white-space: nowrap;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    transition: max-width 200ms ease, opacity 150ms ease;
-  }
-
-  .agro-ops-v10 .tx-actions.is-open .tx-actions-btns {
-    max-width: calc(100% - var(--tx-actions-trigger-space));
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .agro-ops-v10 .tx-actions-btns::-webkit-scrollbar {
+  .agro-ops-v10 .tx-actions-trigger-label {
     display: none;
   }
 
@@ -1551,6 +1632,16 @@
   .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger i {
     animation: spinOnce 200ms ease forwards;
   }
+
+  .tx-actions-menu-panel {
+    max-width: min(92vw, 320px);
+  }
+}
+
+@media (max-width: 480px) {
+  .tx-actions-menu-panel {
+    max-width: calc(100vw - 20px);
+  }
 }
 
 /* Touch-first hit targets */
@@ -1562,22 +1653,12 @@
     min-height: 44px !important;
   }
 
-  .agro-ops-v10 .tx-actions .btn-icon-only,
-  .agro-ops-v10 .tx-actions [class*="btn-edit-facturero"],
-  .agro-ops-v10 .tx-actions [class*="btn-delete-facturero"],
-  .agro-ops-v10 .tx-actions [class*="btn-duplicate-facturero"],
-  .agro-ops-v10 .tx-actions [class*="btn-transfer"],
-  .agro-ops-v10 .tx-actions [class*="btn-move-general"],
-  .agro-ops-v10 .tx-actions [class*="btn-revert"] {
-    min-width: 44px !important;
+  .tx-actions-menu-panel .tx-actions-btns .btn {
     min-height: 44px !important;
-    width: auto !important;
-    height: auto !important;
-    flex: 0 0 auto;
   }
 
-  .agro-ops-v10 .tx-actions i,
-  .agro-ops-v10 .tx-actions svg {
+  .tx-actions-menu-panel .tx-actions-btns .btn i,
+  .tx-actions-menu-panel .tx-actions-btns .btn svg {
     transform: scale(0.9);
     transform-origin: center;
   }

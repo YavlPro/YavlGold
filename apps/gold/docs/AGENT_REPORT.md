@@ -10621,3 +10621,59 @@ Hallazgo raíz del lote actual:
 - Estructura final móvil estable: meta + acciones apiladas, kebab a la derecha, `tx-actions-btns` con `max-width` dinámico y scroll horizontal interno con scrollbar oculto.
 - Touch-first confirmado por CSS: trigger y botones con hit-target mínimo de 44px en `@media (hover:none) and (pointer:coarse)`.
 - Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+## 🆕 SESIÓN: GATE 0 — Mini-menú flotante de acciones Facturero (2026-03-02)
+
+### Diagnóstico
+- El historial facturero tenía menú kebab inline por card con estado `is-open` local y expansión dentro de la misma fila.
+- Aunque funcional, no resolvía bien el objetivo de “un solo botón de acciones por card + mini-menú flotante” y podía saturar layout en listas densas.
+- Se requería conservar handlers de negocio existentes (clases de botones y delegación) sin duplicar botones ni reescribir flujos.
+
+### Plan
+- Implementar singleton `ActionsMenu` en `agro.js` (overlay + panel flotante):
+  - un solo menú abierto a la vez,
+  - mover el nodo real `tx-actions-btns` al panel al abrir,
+  - devolver el nodo a su card al cerrar,
+  - cierre por fuera, `Escape`, `scroll` y `resize`,
+  - cierre tras ejecutar acción (sin tocar handlers de negocio).
+- Ajustar `agro-operations.css` para modo mini-menú:
+  - card no saturada (solo trigger en card),
+  - panel flotante con tokens V10 (glass/border/shadow),
+  - labels de acción derivadas de `title` (sin `innerHTML`),
+  - touch-first 44px en `hover:none + pointer:coarse`.
+- Mantener cambios acotados a `agro.js`, `agro-operations.css` y este reporte.
+
+### Riesgos / Mitigación
+- Riesgo: romper desktop o dejar botones huérfanos al refrescar lista.
+  Mitigación: `closeFactureroActionsMenu()` al rerender (`renderHistoryList`) y devolución explícita del nodo a su contenedor original.
+- Riesgo: afectar lógica de acciones.
+  Mitigación: se reutilizan los mismos botones/clases/data-attributes; no se modifica lógica de negocio.
+- Riesgo: desborde de panel en viewport pequeño.
+  Mitigación: posicionamiento con clamp y fallback `is-sheet` cuando no cabe arriba/abajo.
+
+### Evidencia esperada
+- Un solo trigger por card (`⋮/Acciones`), sin saturación de botones inline.
+- Panel flotante contenido en viewport, con cierre robusto y ejecución normal de acciones.
+- Hit-target táctil mínimo 44px en dispositivos touch.
+- `pnpm build:gold` en PASS.
+
+### Cierre breve
+- `agro.js`: se implementó menú flotante singleton para acciones facturero, con mover/devolver del nodo real `tx-actions-btns` para no duplicar botones ni tocar handlers de negocio.
+- `agro-operations.css`: se dejó el trigger por card y el panel flotante V10 (glass + borde dorado) con fallback `is-sheet` cuando no cabe en viewport.
+- Cierres cubiertos: click fuera (overlay), `Escape`, `resize`, `scroll` y cierre automático al ejecutar acción.
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+### Pruebas manuales recomendadas
+- iPhone SE (375px) y Pixel 7 (412px):
+  - abrir historial Fiados/Pagados/Pérdidas y tocar `⋮` en varias cards seguidas,
+  - verificar que solo exista un menú abierto a la vez,
+  - confirmar que el panel no se sale del viewport (o entra en modo `sheet`).
+- Interacción:
+  - tocar fuera del panel -> cierra,
+  - presionar `Esc` -> cierra,
+  - hacer scroll de página o resize -> cierra.
+- Acciones:
+  - ejecutar editar/duplicar/transferir/eliminar/revertir y verificar que la acción corre normal,
+  - confirmar que el menú se cierra tras ejecutar cada acción.
+- Touch:
+  - validar hit-target cómodo (>=44px) en trigger y opciones del menú en dispositivos táctiles.

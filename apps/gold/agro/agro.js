@@ -3382,37 +3382,190 @@ function createFactureroActionButton({
 }
 
 const FACTURERO_ACTIONS_MENU_STATE = {
-    row: null,
-    wrap: null,
-    icon: null
+    root: null,
+    overlay: null,
+    panel: null,
+    isOpen: false,
+    active: null,
+    onEsc: null,
+    onViewportChange: null
 };
 
-function closeOpenFactureroActionsMenu() {
-    const wrap = FACTURERO_ACTIONS_MENU_STATE.wrap;
-    const icon = FACTURERO_ACTIONS_MENU_STATE.icon;
+function ensureFactureroActionsMenuRoot() {
+    if (typeof document === 'undefined') return null;
+    const state = FACTURERO_ACTIONS_MENU_STATE;
 
-    if (wrap && wrap.classList.contains('is-open')) {
-        wrap.classList.remove('is-open');
+    if (state.root && document.body?.contains(state.root)) {
+        return state.root;
     }
 
-    if (icon) {
-        icon.className = 'fa fa-ellipsis-vertical';
-    }
+    const root = document.createElement('div');
+    root.className = 'tx-actions-menu-root';
+    root.setAttribute('aria-hidden', 'true');
 
-    FACTURERO_ACTIONS_MENU_STATE.row = null;
-    FACTURERO_ACTIONS_MENU_STATE.wrap = null;
-    FACTURERO_ACTIONS_MENU_STATE.icon = null;
+    const overlay = document.createElement('button');
+    overlay.type = 'button';
+    overlay.className = 'tx-actions-menu-overlay';
+    overlay.setAttribute('aria-label', 'Cerrar menú de acciones');
+
+    const panel = document.createElement('div');
+    panel.className = 'tx-actions-menu-panel';
+    panel.setAttribute('role', 'menu');
+    panel.setAttribute('aria-label', 'Acciones de registro');
+
+    root.append(overlay, panel);
+    document.body.appendChild(root);
+
+    overlay.addEventListener('click', () => {
+        closeFactureroActionsMenu();
+    });
+
+    panel.addEventListener('click', (event) => {
+        const actionBtn = event.target.closest('button');
+        if (!actionBtn) return;
+        window.setTimeout(() => {
+            closeFactureroActionsMenu();
+        }, 0);
+    });
+
+    state.root = root;
+    state.overlay = overlay;
+    state.panel = panel;
+    return root;
 }
 
-if (typeof window !== 'undefined' && typeof document !== 'undefined' && !window.__YG_FACTURERO_MENU_OUTSIDE_BOUND__) {
-    document.addEventListener('click', (event) => {
-        const openRow = FACTURERO_ACTIONS_MENU_STATE.row;
-        const openWrap = FACTURERO_ACTIONS_MENU_STATE.wrap;
-        if (!openRow || !openWrap) return;
-        if (openRow.contains(event.target)) return;
-        closeOpenFactureroActionsMenu();
-    }, true);
-    window.__YG_FACTURERO_MENU_OUTSIDE_BOUND__ = true;
+function positionFactureroActionsMenu(triggerBtn) {
+    const state = FACTURERO_ACTIONS_MENU_STATE;
+    const panel = state.panel;
+    if (!panel || !triggerBtn) return;
+
+    panel.classList.remove('is-sheet');
+    panel.style.left = '0px';
+    panel.style.top = '0px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+
+    const triggerRect = triggerBtn.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const margin = 10;
+    const gap = 8;
+    const viewportW = window.innerWidth || document.documentElement.clientWidth || 0;
+    const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+
+    const fitsBelow = triggerRect.bottom + gap + panelRect.height + margin <= viewportH;
+    const fitsAbove = triggerRect.top - gap - panelRect.height >= margin;
+
+    if (fitsBelow || fitsAbove) {
+        let top = fitsBelow ? triggerRect.bottom + gap : triggerRect.top - panelRect.height - gap;
+        let left = triggerRect.right - panelRect.width;
+        left = Math.min(Math.max(left, margin), Math.max(margin, viewportW - panelRect.width - margin));
+        top = Math.min(Math.max(top, margin), Math.max(margin, viewportH - panelRect.height - margin));
+        panel.style.left = `${left}px`;
+        panel.style.top = `${top}px`;
+        return;
+    }
+
+    panel.classList.add('is-sheet');
+    panel.style.left = `${margin}px`;
+    panel.style.right = `${margin}px`;
+    panel.style.bottom = `${margin}px`;
+    panel.style.top = 'auto';
+}
+
+function closeFactureroActionsMenu() {
+    const state = FACTURERO_ACTIONS_MENU_STATE;
+    const active = state.active;
+
+    if (!state.isOpen && !active) return;
+
+    if (active?.actionsWrap) {
+        active.actionsWrap.classList.remove('is-open');
+    }
+    if (active?.triggerIcon) {
+        active.triggerIcon.className = 'fa fa-ellipsis-vertical';
+    }
+    if (active?.triggerBtn) {
+        active.triggerBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    if (active?.actionsNode && active?.homeParent) {
+        if (active.homeNextSibling && active.homeParent.contains(active.homeNextSibling)) {
+            active.homeParent.insertBefore(active.actionsNode, active.homeNextSibling);
+        } else {
+            active.homeParent.appendChild(active.actionsNode);
+        }
+    }
+
+    if (state.root) {
+        state.root.classList.remove('is-open');
+        state.root.setAttribute('aria-hidden', 'true');
+    }
+
+    if (state.panel) {
+        state.panel.classList.remove('is-sheet');
+        state.panel.style.left = '';
+        state.panel.style.top = '';
+        state.panel.style.right = '';
+        state.panel.style.bottom = '';
+    }
+
+    if (state.onEsc) {
+        document.removeEventListener('keydown', state.onEsc);
+    }
+    if (state.onViewportChange) {
+        window.removeEventListener('resize', state.onViewportChange);
+        window.removeEventListener('scroll', state.onViewportChange);
+    }
+
+    state.isOpen = false;
+    state.active = null;
+    state.onEsc = null;
+    state.onViewportChange = null;
+}
+
+function openFactureroActionsMenu({ row, actionsWrap, actionsNode, triggerBtn, triggerIcon }) {
+    if (!actionsNode || !actionsWrap || !triggerBtn || !triggerIcon) return;
+    const root = ensureFactureroActionsMenuRoot();
+    if (!root) return;
+
+    closeFactureroActionsMenu();
+
+    const state = FACTURERO_ACTIONS_MENU_STATE;
+    state.active = {
+        row: row,
+        actionsWrap: actionsWrap,
+        actionsNode: actionsNode,
+        homeParent: actionsWrap,
+        homeNextSibling: actionsNode.nextSibling,
+        triggerBtn: triggerBtn,
+        triggerIcon: triggerIcon
+    };
+    state.isOpen = true;
+
+    actionsWrap.classList.add('is-open');
+    triggerIcon.className = 'fa fa-xmark';
+    triggerBtn.setAttribute('aria-expanded', 'true');
+
+    state.panel.appendChild(actionsNode);
+    state.root.classList.add('is-open');
+    state.root.setAttribute('aria-hidden', 'false');
+
+    state.onEsc = (event) => {
+        if (event.key === 'Escape') {
+            closeFactureroActionsMenu();
+        }
+    };
+    state.onViewportChange = () => {
+        closeFactureroActionsMenu();
+    };
+
+    document.addEventListener('keydown', state.onEsc);
+    window.addEventListener('resize', state.onViewportChange);
+    window.addEventListener('scroll', state.onViewportChange);
+
+    window.requestAnimationFrame(() => {
+        positionFactureroActionsMenu(triggerBtn);
+    });
 }
 
 function renderHistoryRow(tabName, item, config, options = {}) {
@@ -3802,14 +3955,19 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         const actionsWrap = document.createElement('div');
         actionsWrap.className = 'tx-actions';
 
-        // V9.9: Kebab trigger — visible solo en móvil (CSS lo controla en desktop)
+        // Trigger de acciones (abre menú flotante singleton)
         const trigger = document.createElement('button');
         trigger.type = 'button';
         trigger.className = 'tx-actions-trigger';
         trigger.title = 'Acciones';
+        trigger.setAttribute('aria-label', 'Acciones');
+        trigger.setAttribute('aria-expanded', 'false');
         const triggerIcon = document.createElement('i');
         triggerIcon.className = 'fa fa-ellipsis-vertical';
-        trigger.appendChild(triggerIcon);
+        const triggerLabel = document.createElement('span');
+        triggerLabel.className = 'tx-actions-trigger-label';
+        triggerLabel.textContent = 'Acciones';
+        trigger.append(triggerIcon, triggerLabel);
 
         // Contenedor de los botones (se colapsa en móvil)
         const btnsMenu = document.createElement('div');
@@ -3906,44 +4064,22 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             iconClass: 'fa fa-trash'
         }));
 
-        const closeOwnMenu = () => {
-            if (!actionsWrap.classList.contains('is-open')) return;
-            actionsWrap.classList.remove('is-open');
-            triggerIcon.className = 'fa fa-ellipsis-vertical';
-            if (FACTURERO_ACTIONS_MENU_STATE.wrap === actionsWrap) {
-                FACTURERO_ACTIONS_MENU_STATE.row = null;
-                FACTURERO_ACTIONS_MENU_STATE.wrap = null;
-                FACTURERO_ACTIONS_MENU_STATE.icon = null;
-            }
-        };
-
-        const openOwnMenu = () => {
-            closeOpenFactureroActionsMenu();
-            actionsWrap.classList.add('is-open');
-            triggerIcon.className = 'fa fa-xmark';
-            FACTURERO_ACTIONS_MENU_STATE.row = row;
-            FACTURERO_ACTIONS_MENU_STATE.wrap = actionsWrap;
-            FACTURERO_ACTIONS_MENU_STATE.icon = triggerIcon;
-        };
-
-        // Toggle lógica del trigger
         trigger.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const isThisOpen = FACTURERO_ACTIONS_MENU_STATE.wrap === actionsWrap
-                && actionsWrap.classList.contains('is-open');
+            const state = FACTURERO_ACTIONS_MENU_STATE;
+            const isThisOpen = state.active?.actionsWrap === actionsWrap && state.isOpen;
             if (isThisOpen) {
-                closeOwnMenu();
+                closeFactureroActionsMenu();
                 return;
             }
-            openOwnMenu();
-        });
-
-        // Cierre dentro de la tarjeta si se toca fuera del bloque de acciones
-        row.addEventListener('click', (e) => {
-            if (!actionsWrap.classList.contains('is-open')) return;
-            if (actionsWrap.contains(e.target)) return;
-            closeOwnMenu();
+            openFactureroActionsMenu({
+                row: row,
+                actionsWrap: actionsWrap,
+                actionsNode: btnsMenu,
+                triggerBtn: trigger,
+                triggerIcon: triggerIcon
+            });
         });
 
         actionsWrap.appendChild(trigger);
@@ -4476,6 +4612,8 @@ async function refreshFactureroHistory(tabName, options = {}) {
 }
 
 function renderHistoryList(tabName, config, items, showActions) {
+    closeFactureroActionsMenu();
+
     // Find or create list container
     let container = document.getElementById(config.listId);
     const parent = document.getElementById(config.containerId);
