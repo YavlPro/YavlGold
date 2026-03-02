@@ -3418,6 +3418,20 @@ function ensureFactureroActionsMenuListeners() {
     state.listenersReady = true;
 }
 
+function updateFactureroActionsMenuDirection(activeState) {
+    const actionsWrap = activeState?.actionsWrap;
+    const actionsNode = activeState?.actionsNode;
+    if (!actionsWrap || !actionsNode) return;
+    if (!actionsWrap.classList.contains('is-open')) return;
+
+    actionsWrap.classList.remove('open-down');
+    const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
+    const panelRect = actionsNode.getBoundingClientRect();
+    if (panelRect.top < 8 && viewportH > 0) {
+        actionsWrap.classList.add('open-down');
+    }
+}
+
 function closeFactureroActionsMenu() {
     const state = FACTURERO_ACTIONS_MENU_STATE;
     const active = state.active;
@@ -3426,6 +3440,10 @@ function closeFactureroActionsMenu() {
 
     if (active.actionsWrap) {
         active.actionsWrap.classList.remove('is-open');
+        active.actionsWrap.classList.remove('open-down');
+    }
+    if (active.row) {
+        active.row.classList.remove('is-actions-open');
     }
     if (active.triggerIcon) {
         active.triggerIcon.className = 'fa fa-ellipsis-vertical';
@@ -3436,7 +3454,7 @@ function closeFactureroActionsMenu() {
     state.active = null;
 }
 
-function openFactureroActionsMenu({ actionsWrap, actionsNode, triggerBtn, triggerIcon }) {
+function openFactureroActionsMenu({ row, actionsWrap, actionsNode, triggerBtn, triggerIcon }) {
     if (!actionsNode || !actionsWrap || !triggerBtn || !triggerIcon) return;
     ensureFactureroActionsMenuListeners();
 
@@ -3444,16 +3462,25 @@ function openFactureroActionsMenu({ actionsWrap, actionsNode, triggerBtn, trigge
 
     const state = FACTURERO_ACTIONS_MENU_STATE;
     state.active = {
+        row: row || null,
         actionsWrap: actionsWrap,
+        actionsNode: actionsNode,
         triggerBtn: triggerBtn,
         triggerIcon: triggerIcon
     };
 
     actionsWrap.classList.add('is-open');
+    if (row) {
+        row.classList.add('is-actions-open');
+    }
     triggerIcon.className = 'fa fa-xmark';
     triggerBtn.setAttribute('aria-expanded', 'true');
     actionsNode.removeEventListener('click', state.onActionClick);
     actionsNode.addEventListener('click', state.onActionClick);
+
+    window.requestAnimationFrame(() => {
+        updateFactureroActionsMenuDirection(state.active);
+    });
 }
 
 function renderHistoryRow(tabName, item, config, options = {}) {
@@ -3962,6 +3989,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 return;
             }
             openFactureroActionsMenu({
+                row: row,
                 actionsWrap: actionsWrap,
                 actionsNode: btnsMenu,
                 triggerBtn: trigger,

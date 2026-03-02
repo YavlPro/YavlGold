@@ -10782,3 +10782,51 @@ Hallazgo raíz del lote actual:
   - móvil por ancho: `display: inline-flex !important`.
 - `pointer:coarse` quedó solo para hit-target 44px (sin depender de ese media query para mostrar/ocultar trigger).
 - También se fijó el colapso/expansión inline con prioridad (`tx-actions-btns` oculto por defecto en móvil y visible en `.is-open`).
+
+## 🆕 SESIÓN: GATE 0 — Anclaje interno del menú en tx-card (2026-03-02)
+
+### Diagnóstico
+- En móvil, el trigger podía percibirse “suelto” por combinación de `overflow: visible` en la jerarquía (`tx-card/tx-footer/tx-actions`) y panel inline sin capa claramente anclada a la card.
+- El panel de acciones desplegado en flujo normal podía generar sensación de desorden visual al competir con separadores/títulos cercanos.
+- Se requería mantener desktop estable y, en móvil, mostrar acciones dentro de la card sin overlay global ni desbordes de documento.
+
+### Plan
+- Mantener card como ancla (`position: relative`) y controlar overflow por estado:
+  - por defecto contención (`overflow: hidden`),
+  - solo en card abierta (`is-actions-open`) habilitar visibilidad de capa interna.
+- Convertir panel móvil `tx-actions-btns` a capa absoluta interna dentro de `tx-actions`:
+  - apertura sobre el trigger (`bottom: calc(100% + 8px)`),
+  - grid de 2 columnas,
+  - altura máxima con scroll interno.
+- Añadir clase de estado en JS a la card abierta para sincronizar anclaje visual (`is-actions-open`).
+
+### Riesgos / Mitigación
+- Riesgo: recorte del panel.
+  Mitigación: `is-actions-open` habilita overflow solo en esa card y su footer/actions.
+- Riesgo: regresión desktop.
+  Mitigación: cambios de capa absoluta limitados al bloque móvil `@media (max-width: 768px)`.
+- Riesgo: afectar acciones de negocio.
+  Mitigación: no se tocaron handlers/queries/cálculos; solo estado de apertura visual.
+
+### Evidencia esperada
+- Trigger permanece en jerarquía del footer de cada card (sin “flotar” en el historial).
+- Panel abre dentro de la card como capa interna, sin empujar otras cards.
+- Sin desbordes horizontales de la página; acciones con hit-target táctil >=44px.
+
+### Cierre breve
+- `apps/gold/agro/agro.js`: `open/close` de acciones ahora marca/quita `is-actions-open` en la card activa.
+- `apps/gold/agro/agro-operations.css`: contención por defecto + apertura controlada por estado; panel móvil absoluto interno en grid (2 columnas) con `max-height` y scroll interno.
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+### Pruebas manuales recomendadas
+- Móvil 375px/412px:
+  - abrir `⋮ Acciones` en varias cards y confirmar que el trigger no “salta” fuera de su card,
+  - verificar que el panel se dibuja dentro de la card y no mueve tarjetas vecinas,
+  - validar ausencia de scroll horizontal global.
+- Desktop:
+  - confirmar acciones inline ordenadas dentro de la card, sin cambios de layout.
+
+### Micro-ajustes de blindaje
+- Limpieza de contención: se mantiene una única regla base de `overflow` por contenedor y la excepción de visibilidad solo con estado `is-actions-open`.
+- Ancla explícita del panel: en móvil, `.tx-actions` queda como contenedor relativo para posicionamiento absoluto de `tx-actions-btns`.
+- Fallback de borde superior: se agregó clase `open-down` (calculada en JS al abrir) para desplegar hacia abajo cuando el panel se recorta por arriba.

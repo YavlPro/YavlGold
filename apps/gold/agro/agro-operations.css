@@ -1055,7 +1055,7 @@
   border: 1px solid var(--border-neutral);
   border-radius: var(--radius-md);
   padding: 14px 16px;
-  overflow: visible;
+  overflow: hidden;
   transition: border-color 180ms ease, transform 180ms ease;
 }
 
@@ -1150,7 +1150,7 @@
   gap: 8px;
   margin-top: 6px;
   width: 100%;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .agro-ops-v10 .tx-footer-meta {
@@ -1327,6 +1327,16 @@
   width: auto;
   max-width: 100%;
   min-width: 0;
+  overflow: hidden;
+}
+
+.agro-ops-v10 .tx-card.is-actions-open {
+  z-index: 3;
+}
+
+.agro-ops-v10 .tx-card.is-actions-open,
+.agro-ops-v10 .tx-card.is-actions-open .tx-footer,
+.agro-ops-v10 .tx-card.is-actions-open .tx-actions {
   overflow: visible;
 }
 
@@ -1498,6 +1508,10 @@
 /* §19b Kebab Menu Mobile */
 @media (max-width: 768px) {
   .agro-ops-v10 .tx-card {
+    overflow: hidden;
+  }
+
+  .agro-ops-v10 .tx-card.is-actions-open {
     overflow: visible;
   }
 
@@ -1516,6 +1530,10 @@
     flex-direction: column;
     align-items: stretch;
     row-gap: 8px;
+    overflow: hidden;
+  }
+
+  .agro-ops-v10 .tx-card.is-actions-open .tx-footer {
     overflow: visible;
   }
 
@@ -1528,13 +1546,18 @@
     width: 100%;
     max-width: 100%;
     margin-left: 0;
+    position: relative;
     justify-content: flex-end;
     align-self: stretch;
     align-items: flex-end;
     flex-direction: column;
     flex-wrap: nowrap;
-    overflow: visible;
+    overflow: hidden;
     gap: 8px;
+  }
+
+  .agro-ops-v10 .tx-card.is-actions-open .tx-actions {
+    overflow: visible;
   }
 
   .agro-ops-v10 .tx-actions-trigger {
@@ -1542,6 +1565,8 @@
     min-height: 36px;
     padding: 0 12px;
     border-radius: var(--radius-pill);
+    position: relative;
+    z-index: 3;
   }
 
   .agro-ops-v10 .tx-actions-trigger-label {
@@ -1550,26 +1575,38 @@
 
   .agro-ops-v10 .tx-actions > .tx-actions-btns {
     display: none !important;
-    width: 100%;
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    width: min(280px, 100%);
     max-width: 100%;
-    justify-content: flex-end;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
+    align-items: stretch;
     padding: 8px;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-gold);
     background: color-mix(in srgb, var(--gold-4) 6%, transparent);
-    overflow-x: auto;
-    overflow-y: hidden;
+    box-shadow: var(--shadow-gold-xs);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    max-height: 220px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 4;
   }
 
   .agro-ops-v10 .tx-actions.is-open > .tx-actions-btns {
-    display: flex !important;
+    display: grid !important;
+  }
+
+  .agro-ops-v10 .tx-actions.open-down > .tx-actions-btns {
+    bottom: auto;
+    top: calc(100% + 8px);
   }
 
   .agro-ops-v10 .tx-actions > .tx-actions-btns .btn {
-    flex: 0 0 auto;
+    min-width: 0 !important;
+    width: 100% !important;
+    justify-content: center;
   }
 
   .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger i {
