@@ -13098,6 +13098,23 @@ function moveFooterToEnd() {
         || document.querySelector('.app-container > footer.footer');
     if (!footer) return;
 
+    const moduleSections = Array.from(document.querySelectorAll(
+        'section[data-agro-section], section#agro-tools-section'
+    ));
+    const lastModuleSection = moduleSections.length
+        ? moduleSections[moduleSections.length - 1]
+        : null;
+
+    if (lastModuleSection?.parentNode) {
+        const parent = lastModuleSection.parentNode;
+        const nextSibling = lastModuleSection.nextSibling;
+        if (footer.parentNode !== parent || footer.previousSibling !== lastModuleSection) {
+            parent.insertBefore(footer, nextSibling);
+        }
+        footer.style.marginTop = 'auto';
+        return;
+    }
+
     const container = footer.closest('.app-container')
         || document.querySelector('.app-container')
         || document.querySelector('#app')
