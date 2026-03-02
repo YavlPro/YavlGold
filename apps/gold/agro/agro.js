@@ -3501,6 +3501,12 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const row = document.createElement('div');
     row.className = ['facturero-item', 'tx-card', txTypeClass, hasTransferMeta ? 'tx-transferencia' : ''].filter(Boolean).join(' ');
+    row.style.position = 'relative';
+    row.style.background = 'var(--bg-4, #1a1a1f)';
+    row.style.border = '1px solid var(--border-neutral, rgba(255,255,255,0.12))';
+    row.style.borderRadius = '12px';
+    row.style.padding = '14px 16px';
+    row.style.marginBottom = '10px';
     row.dataset.id = String(itemId || '');
     row.dataset.tab = String(itemTab || '');
     if (incomeOrLossReverted) {
@@ -3509,9 +3515,24 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const layout = document.createElement('div');
     layout.className = 'tx-layout';
+    layout.style.display = 'grid';
+    layout.style.gridTemplateColumns = '40px 1fr auto';
+    layout.style.gridTemplateRows = 'auto auto';
+    layout.style.gap = '4px 12px';
+    layout.style.alignItems = 'start';
 
     const avatar = document.createElement('div');
     avatar.className = 'tx-avatar';
+    avatar.style.width = '40px';
+    avatar.style.height = '40px';
+    avatar.style.borderRadius = '12px';
+    avatar.style.border = '1px solid var(--border-gold, rgba(200,167,82,0.25))';
+    avatar.style.background = 'var(--gold-1, #2a2218)';
+    avatar.style.display = 'flex';
+    avatar.style.alignItems = 'center';
+    avatar.style.justifyContent = 'center';
+    avatar.style.fontSize = '1.1rem';
+    avatar.style.color = 'var(--gold-5, #E8D48B)';
     if (isPending) {
         avatar.textContent = '💰';
     } else if (effectiveTabName === 'gastos') {
@@ -3530,15 +3551,29 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const left = document.createElement('div');
     left.className = 'tx-body';
+    left.style.minWidth = '0';
 
     const conceptDiv = document.createElement('div');
     conceptDiv.className = 'tx-client';
+    conceptDiv.style.color = 'var(--text-primary, #ffffff)';
+    conceptDiv.style.fontFamily = "'Rajdhani', sans-serif";
+    conceptDiv.style.fontWeight = '700';
+    conceptDiv.style.fontSize = '0.8rem';
+    conceptDiv.style.whiteSpace = 'nowrap';
+    conceptDiv.style.overflow = 'hidden';
+    conceptDiv.style.textOverflow = 'ellipsis';
     conceptDiv.textContent = displayConcept;
     left.appendChild(conceptDiv);
 
     if (whoData.who) {
         const whoDiv = document.createElement('div');
         whoDiv.className = 'facturero-meta tx-detail';
+        whoDiv.style.color = 'var(--text-muted, #94A3B8)';
+        whoDiv.style.fontSize = '0.7rem';
+        whoDiv.style.fontWeight = '600';
+        whoDiv.style.display = 'flex';
+        whoDiv.style.flexWrap = 'wrap';
+        whoDiv.style.gap = '0.35rem';
 
         const whoMeta = WHO_FIELD_META[effectiveTabName];
         const whoLabel = whoMeta?.label || 'Detalle';
@@ -3558,6 +3593,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     if (sourceLabel) {
         const sourceDiv = document.createElement('div');
         sourceDiv.className = 'facturero-meta tx-detail';
+        sourceDiv.style.color = 'var(--text-muted, #94A3B8)';
+        sourceDiv.style.fontSize = '0.7rem';
+        sourceDiv.style.fontWeight = '600';
         sourceDiv.textContent = `Tipo: ${sourceLabel}`;
         left.appendChild(sourceDiv);
     }
@@ -3565,6 +3603,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     if (unitText) {
         const unitDiv = document.createElement('div');
         unitDiv.className = 'facturero-meta tx-detail';
+        unitDiv.style.color = 'var(--text-muted, #94A3B8)';
+        unitDiv.style.fontSize = '0.7rem';
+        unitDiv.style.fontWeight = '600';
         unitDiv.textContent = unitText;
         left.appendChild(unitDiv);
     }
@@ -3573,6 +3614,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     if (splitSummaryText) {
         const splitDiv = document.createElement('div');
         splitDiv.className = 'facturero-meta facturero-transfer-meta facturero-split-meta tx-detail';
+        splitDiv.style.color = 'var(--gold-3, #6b5a3e)';
+        splitDiv.style.fontSize = '0.7rem';
+        splitDiv.style.fontWeight = '600';
         splitDiv.textContent = splitSummaryText;
         left.appendChild(splitDiv);
     }
@@ -3582,6 +3626,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         transferDiv.className = pendingReverted
             ? 'facturero-meta facturero-transfer-meta facturero-reverted-meta tx-detail'
             : 'facturero-meta facturero-transfer-meta tx-detail';
+        transferDiv.style.color = 'var(--gold-3, #6b5a3e)';
+        transferDiv.style.fontSize = '0.7rem';
+        transferDiv.style.fontWeight = '600';
         transferDiv.textContent = formatTransferMeta(item);
         left.appendChild(transferDiv);
     }
@@ -3589,6 +3636,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     if (isOtrosView && item?.other_transfer_state === 'transferred') {
         const otherTransferDiv = document.createElement('div');
         otherTransferDiv.className = 'facturero-meta facturero-transfer-meta tx-detail';
+        otherTransferDiv.style.color = 'var(--gold-3, #6b5a3e)';
+        otherTransferDiv.style.fontSize = '0.7rem';
+        otherTransferDiv.style.fontWeight = '600';
         otherTransferDiv.textContent = formatOtherTransferMeta(item);
         left.appendChild(otherTransferDiv);
     }
@@ -3618,14 +3668,24 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const metaRow = document.createElement('div');
     metaRow.className = 'facturero-meta tx-detail';
+    metaRow.style.color = 'var(--text-muted, #94A3B8)';
+    metaRow.style.fontSize = '0.7rem';
+    metaRow.style.fontWeight = '600';
+    metaRow.style.display = 'flex';
+    metaRow.style.flexWrap = 'wrap';
+    metaRow.style.gap = '0.35rem';
 
     const dateSpan = document.createElement('span');
     dateSpan.className = 'tx-date';
+    dateSpan.style.color = 'var(--text-muted, #94A3B8)';
+    dateSpan.style.fontSize = '0.7rem';
     dateSpan.textContent = formatDate(date);
     metaRow.appendChild(dateSpan);
 
     const cropSpan = document.createElement('span');
     cropSpan.className = 'tx-crop';
+    cropSpan.style.color = 'var(--gold-3, #6b5a3e)';
+    cropSpan.style.fontSize = '0.7rem';
     cropSpan.textContent = `• ${cropLabel}`;
     metaRow.appendChild(cropSpan);
 
@@ -3633,6 +3693,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const right = document.createElement('div');
     right.className = 'tx-amount-group';
+    right.style.textAlign = 'right';
+    right.style.whiteSpace = 'nowrap';
 
     const formattedAmount = _fmtItemCurrency(item, rowConfig, amount);
     const amountParts = String(formattedAmount || '').split(' · ').map((part) => part.trim()).filter(Boolean);
@@ -3640,6 +3702,19 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const amountSpan = document.createElement('span');
     amountSpan.className = 'tx-amount';
+    amountSpan.style.fontFamily = "'Orbitron', sans-serif";
+    amountSpan.style.fontWeight = '700';
+    amountSpan.style.fontSize = '0.92rem';
+    amountSpan.style.lineHeight = '1.2';
+    if (txTypeClass === 'tx-pendiente') {
+        amountSpan.style.color = 'var(--color-warning, #F59E0B)';
+    } else if (txTypeClass === 'tx-pagado') {
+        amountSpan.style.color = 'var(--color-success, #10B981)';
+    } else if (txTypeClass === 'tx-gasto' || txTypeClass === 'tx-perdida') {
+        amountSpan.style.color = 'var(--color-error, #EF4444)';
+    } else {
+        amountSpan.style.color = 'var(--gold-4, #C8A752)';
+    }
     amountSpan.textContent = amountMain;
     markMoneyNode(amountSpan, amountSpan.textContent);
     right.appendChild(amountSpan);
@@ -3647,6 +3722,10 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     if (amountParts.length > 0) {
         const amountSub = document.createElement('div');
         amountSub.className = 'tx-amount-sub';
+        amountSub.style.marginTop = '0.1rem';
+        amountSub.style.fontSize = '0.7rem';
+        amountSub.style.fontWeight = '600';
+        amountSub.style.color = 'var(--text-muted, #94A3B8)';
         amountSub.textContent = amountParts.join(' · ');
         markMoneyNode(amountSub, amountSub.textContent);
         right.appendChild(amountSub);
@@ -3654,9 +3733,36 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const footer = document.createElement('div');
     footer.className = 'tx-footer';
+    footer.style.display = 'flex';
+    footer.style.alignItems = 'center';
+    footer.style.flexWrap = 'wrap';
+    footer.style.gap = '8px';
+    footer.style.marginTop = '4px';
 
     const statusBadge = document.createElement('span');
     statusBadge.className = `tx-status ${statusVariant}`;
+    statusBadge.style.display = 'inline-flex';
+    statusBadge.style.alignItems = 'center';
+    statusBadge.style.justifyContent = 'center';
+    statusBadge.style.padding = '3px 8px';
+    statusBadge.style.borderRadius = '9999px';
+    statusBadge.style.fontFamily = "'Orbitron', sans-serif";
+    statusBadge.style.fontSize = '0.55rem';
+    statusBadge.style.fontWeight = '700';
+    statusBadge.style.letterSpacing = '0.8px';
+    statusBadge.style.textTransform = 'uppercase';
+    statusBadge.style.border = '1px solid var(--border-neutral, rgba(255,255,255,0.08))';
+    if (statusVariant === 'pagado') {
+        statusBadge.style.color = 'var(--color-success, #10B981)';
+    } else if (statusVariant === 'perdida') {
+        statusBadge.style.color = 'var(--color-error, #EF4444)';
+    } else if (statusVariant === 'revertido') {
+        statusBadge.style.color = 'var(--text-muted, #94A3B8)';
+    } else if (statusVariant === 'transferido') {
+        statusBadge.style.color = 'var(--gold-4, #C8A752)';
+    } else {
+        statusBadge.style.color = 'var(--color-warning, #F59E0B)';
+    }
     statusBadge.textContent = statusText;
     footer.appendChild(statusBadge);
 
@@ -3779,9 +3885,19 @@ function renderHistoryRowFallback(item, config) {
 
     const row = document.createElement('div');
     row.className = 'facturero-item tx-card';
+    row.style.position = 'relative';
+    row.style.background = 'var(--bg-4, #1a1a1f)';
+    row.style.border = '1px solid var(--border-neutral, rgba(255,255,255,0.12))';
+    row.style.borderRadius = '12px';
+    row.style.padding = '14px 16px';
+    row.style.marginBottom = '10px';
 
     const layout = document.createElement('div');
     layout.className = 'tx-layout';
+    layout.style.display = 'grid';
+    layout.style.gridTemplateColumns = '1fr auto';
+    layout.style.gap = '8px';
+    layout.style.alignItems = 'start';
 
     const left = document.createElement('div');
     left.className = 'tx-body';
@@ -3789,11 +3905,16 @@ function renderHistoryRowFallback(item, config) {
 
     const conceptDiv = document.createElement('div');
     conceptDiv.className = 'tx-client';
+    conceptDiv.style.color = 'var(--text-primary, #ffffff)';
+    conceptDiv.style.fontWeight = '700';
+    conceptDiv.style.fontSize = '0.8rem';
     conceptDiv.textContent = concept;
     left.appendChild(conceptDiv);
 
     const dateDiv = document.createElement('div');
     dateDiv.className = 'tx-date';
+    dateDiv.style.color = 'var(--text-muted, #94A3B8)';
+    dateDiv.style.fontSize = '0.7rem';
     dateDiv.textContent = formatDate(date);
     left.appendChild(dateDiv);
 
@@ -3802,6 +3923,10 @@ function renderHistoryRowFallback(item, config) {
 
     const amountSpan = document.createElement('span');
     amountSpan.className = 'tx-amount';
+    amountSpan.style.fontFamily = "'Orbitron', sans-serif";
+    amountSpan.style.fontWeight = '700';
+    amountSpan.style.fontSize = '0.92rem';
+    amountSpan.style.color = 'var(--text-primary, #ffffff)';
     amountSpan.textContent = `$${amount.toFixed(2)}`;
     markMoneyNode(amountSpan, amountSpan.textContent);
     amountWrap.appendChild(amountSpan);
@@ -4286,6 +4411,9 @@ function renderHistoryList(tabName, config, items, showActions) {
     // Find or create list container
     let container = document.getElementById(config.listId);
     const parent = document.getElementById(config.containerId);
+    if (parent) {
+        parent.classList.add('agro-ops-v10');
+    }
 
     if (container) {
         container.classList.add('tx-list', 'agro-ops-v10');
