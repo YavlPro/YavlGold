@@ -4604,39 +4604,12 @@ async function launchAgroWizard(tabName, options = {}) {
 function createWizardButton(tabName) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'wizard-trigger-btn';
+    btn.className = 'wizard-trigger-btn btn btn-gold btn-sm';
     btn.replaceChildren();
     const plusIcon = document.createElement('i');
     plusIcon.className = 'fa fa-plus';
     btn.append(plusIcon, document.createTextNode(' Nuevo'));
     btn.title = 'Registro guiado';
-    btn.style.cssText = `
-        background: linear-gradient(135deg, rgba(200,167,82,0.2), rgba(200,167,82,0.1));
-        border: 1px solid rgba(200,167,82,0.5);
-        color: #C8A752;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        cursor: pointer;
-        font-family: inherit;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-left: auto;
-        margin-right: 10px;
-        font-weight: 600;
-        transition: all 0.2s;
-    `;
-    btn.onmouseover = () => {
-        btn.style.background = 'linear-gradient(135deg, rgba(200,167,82,0.3), rgba(200,167,82,0.15))';
-        btn.style.transform = 'translateY(-1px)';
-        btn.style.boxShadow = '0 2px 8px rgba(200,167,82,0.2)';
-    };
-    btn.onmouseout = () => {
-        btn.style.background = 'linear-gradient(135deg, rgba(200,167,82,0.2), rgba(200,167,82,0.1))';
-        btn.style.transform = 'translateY(0)';
-        btn.style.boxShadow = 'none';
-    };
     btn.onclick = (e) => {
         e.stopPropagation(); // Prevent accordion toggle
         e.preventDefault();
@@ -7922,7 +7895,7 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
     if (valueEl) {
         valueEl.style.color = net >= 0 ? 'var(--gold-light)' : 'var(--danger)';
         const breakdown = document.createElement('span');
-        breakdown.style.cssText = 'display:block;font-size:0.64rem;font-weight:500;color:rgba(255,255,255,0.62);margin-top:2px;line-height:1.2;';
+        breakdown.className = 'crop-meta-subline';
         const paidLabel = document.createElement('span');
         paidLabel.textContent = 'Pagados: ';
         const paidValue = document.createElement('span');
@@ -7935,7 +7908,7 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
         markMoneyNode(costValue, costValue.textContent);
         breakdown.append(paidLabel, paidValue, costLabel, costValue);
         const pendingLine = document.createElement('span');
-        pendingLine.style.cssText = 'display:block;font-size:0.64rem;font-weight:600;margin-top:2px;line-height:1.2;';
+        pendingLine.className = 'crop-meta-subline';
         pendingLine.style.color = potential >= 0 ? 'var(--gold-light)' : 'var(--danger)';
         const pendingLabel = document.createElement('span');
         pendingLabel.textContent = 'Fiados: ';
@@ -7952,7 +7925,8 @@ function createProfitMetaItem(incomeTotal, costTotal, pendingTotal = 0, missingR
         valueEl.appendChild(pendingLine);
         if (missing > 0) {
             const warningLine = document.createElement('span');
-            warningLine.style.cssText = 'display:block;font-size:0.62rem;font-weight:600;color:var(--danger);margin-top:2px;line-height:1.2;';
+            warningLine.className = 'crop-meta-subline is-muted';
+            warningLine.style.color = 'var(--danger)';
             warningLine.textContent = `⚠️ ${missing} movimiento${missing === 1 ? '' : 's'} sin tasa/moneda (no incluidos)`;
             valueEl.appendChild(warningLine);
         }
@@ -8487,26 +8461,22 @@ function dispatchCropsReady(snapshot) {
 function buildCropsStatusCard({ id, icon, title, subtitle, titleColor, titleWeight }) {
     const card = document.createElement('div');
     if (id) card.id = id;
-    card.className = 'card animate-in';
-    card.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 3rem;';
+    card.className = 'card animate-in empty-state';
+    card.style.gridColumn = '1 / -1';
 
     const iconWrap = document.createElement('div');
-    iconWrap.className = 'kpi-icon-wrapper';
-    iconWrap.style.cssText = 'margin: 0 auto 1rem;';
+    iconWrap.className = 'empty-state-icon';
     iconWrap.textContent = icon || '';
 
     const titleEl = document.createElement('p');
-    if (titleColor) titleEl.style.color = titleColor;
-    if (titleWeight) titleEl.style.fontWeight = titleWeight;
+    titleEl.className = 'empty-state-text';
     titleEl.textContent = title || '';
 
     card.append(iconWrap, titleEl);
 
     if (subtitle) {
         const subtitleEl = document.createElement('p');
-        subtitleEl.style.color = 'var(--text-muted)';
-        subtitleEl.style.fontSize = '0.9rem';
-        subtitleEl.style.marginTop = '0.5rem';
+        subtitleEl.className = 'empty-state-text crop-meta-subline is-muted';
         subtitleEl.textContent = subtitle;
         card.appendChild(subtitleEl);
     }
@@ -8551,6 +8521,12 @@ function renderEmptyCropsState(cropsGrid) {
         titleColor: 'var(--gold-primary)',
         titleWeight: '600'
     });
+    const ctaBtn = document.createElement('button');
+    ctaBtn.type = 'button';
+    ctaBtn.className = 'btn btn-gold';
+    ctaBtn.setAttribute('onclick', 'window.openCropModal()');
+    ctaBtn.textContent = '+ Nuevo Cultivo';
+    emptyCard.appendChild(ctaBtn);
     cropsGrid.appendChild(emptyCard);
 }
 
@@ -10402,34 +10378,80 @@ function scheduleOpsMovementSummaryRefresh() {
 }
 
 function buildOpsCultivoChip({ label, meta = '', cropId = null, selected = false, disabled = false }) {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'ops-cultivo-chip';
+    const chip = document.createElement('div');
+    chip.className = 'ops-cultivo-chip crop-option';
     if (selected) {
-        chip.classList.add('is-active');
+        chip.classList.add('is-active', 'selected');
     }
     if (disabled) {
-        chip.disabled = true;
+        chip.classList.add('is-disabled');
+        chip.setAttribute('aria-disabled', 'true');
+        chip.tabIndex = -1;
+    } else {
+        chip.setAttribute('aria-disabled', 'false');
+        chip.tabIndex = 0;
     }
     chip.dataset.cropId = normalizeCropId(cropId) || AGRO_GENERAL_VIEW_ID;
     chip.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    chip.setAttribute('role', 'button');
 
-    const labelEl = document.createElement('span');
-    labelEl.className = 'ops-cultivo-chip-name';
-    labelEl.textContent = label;
+    const labelText = String(label || '').trim();
+    const tokens = labelText.split(/\s+/).filter(Boolean);
+    const hasLeadingIcon = tokens.length > 0 && isCropEmojiToken(tokens[0]);
+    const iconText = hasLeadingIcon ? tokens.shift() : '🌱';
+    const nameText = tokens.join(' ').trim() || labelText || 'Cultivo';
+    const statusText = String(meta || 'Ciclo').trim() || 'Ciclo';
+    const normalizedStatus = statusText
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    let statusClass = 'finalizado';
+    if (normalizedStatus.includes('produccion') || normalizedStatus.includes('produc')) {
+        statusClass = 'produccion';
+    } else if (normalizedStatus.includes('siembra') || normalizedStatus.includes('sembr') || normalizedStatus.includes('creci')) {
+        statusClass = 'siembra';
+    } else if (normalizedStatus.includes('final') || normalizedStatus.includes('cosech') || normalizedStatus.includes('termin')) {
+        statusClass = 'finalizado';
+    }
 
-    const metaEl = document.createElement('span');
-    metaEl.className = 'ops-cultivo-chip-meta';
-    metaEl.textContent = meta;
+    const thumbEl = document.createElement('div');
+    thumbEl.className = 'crop-thumb';
+    thumbEl.textContent = iconText;
 
-    chip.append(labelEl, metaEl);
+    const cropMeta = document.createElement('div');
+    cropMeta.className = 'crop-meta';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'crop-meta-name';
+    labelEl.textContent = nameText;
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'crop-meta-sub';
+    metaEl.textContent = statusText;
+
+    cropMeta.append(labelEl, metaEl);
+
+    const statusEl = document.createElement('span');
+    statusEl.className = `crop-status ${statusClass}`;
+    statusEl.textContent = statusText;
+
+    chip.append(thumbEl, cropMeta, statusEl);
     return chip;
 }
 
 function buildOpsCultivosEmptyMessage(text) {
-    const empty = document.createElement('p');
-    empty.className = 'ops-cultivos-empty';
-    empty.textContent = text;
+    const empty = document.createElement('div');
+    empty.className = 'ops-cultivos-empty empty-state';
+
+    const icon = document.createElement('div');
+    icon.className = 'empty-state-icon';
+    icon.textContent = '🌱';
+
+    const message = document.createElement('p');
+    message.className = 'empty-state-text';
+    message.textContent = text;
+
+    empty.append(icon, message);
     return empty;
 }
 
@@ -10453,6 +10475,15 @@ function renderOpsCultivosPanel() {
     const { panel, activeRow, finishedWrap, finishedRow, finishedCount } = getOpsContextElements();
     if (!panel || !activeRow || !finishedWrap || !finishedRow) return;
     if (opsContextMode !== 'cultivos') return;
+
+    panel.classList.add('crop-selector');
+    panel.querySelector('.ops-cultivos-header')?.classList.add('crop-selector-header');
+    panel.querySelector('.ops-cultivos-title')?.classList.add('crop-selector-title');
+    panel.querySelector('.ops-cultivos-subtitle')?.classList.add('crop-meta-sub');
+    activeRow.classList.add('crop-selector-body');
+    finishedWrap.classList.add('crop-selector-footer');
+    finishedWrap.querySelector('.ops-cultivos-finished-summary')?.classList.add('link-text');
+    finishedRow.classList.add('crop-selector-body');
 
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
@@ -10504,15 +10535,29 @@ function bindOpsCultivosPanelEvents() {
     if (!panel || !activeRow || !finishedRow) return;
 
     opsCultivosPanelEventsBound = true;
+    const isChipDisabled = (chip) => {
+        if (!chip) return true;
+        return chip.classList.contains('is-disabled') || chip.getAttribute('aria-disabled') === 'true';
+    };
     const handleClick = (event) => {
         const chip = event.target.closest('.ops-cultivo-chip');
-        if (!chip || chip.disabled) return;
+        if (isChipDisabled(chip)) return;
+        const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
+        selectOpsCultivo(cropId);
+    };
+    const handleKeydown = (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (isChipDisabled(chip)) return;
+        event.preventDefault();
         const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
         selectOpsCultivo(cropId);
     };
 
     activeRow.addEventListener('click', handleClick);
     finishedRow.addEventListener('click', handleClick);
+    activeRow.addEventListener('keydown', handleKeydown);
+    finishedRow.addEventListener('keydown', handleKeydown);
 }
 
 function syncOpsCultivosPanelVisibility() {
@@ -10872,7 +10917,16 @@ function renderOpsRankingList(listEl, rows, buildItem, options = {}) {
         const emptyText = typeof options.emptyText === 'string' && options.emptyText.trim()
             ? options.emptyText
             : 'Sin datos en el rango seleccionado.';
-        empty.textContent = emptyText;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'empty-state';
+        const icon = document.createElement('div');
+        icon.className = 'empty-state-icon';
+        icon.textContent = '📭';
+        const message = document.createElement('p');
+        message.className = 'empty-state-text';
+        message.textContent = emptyText;
+        wrapper.append(icon, message);
+        empty.appendChild(wrapper);
         listEl.appendChild(empty);
         return;
     }
@@ -10887,28 +10941,28 @@ function renderOpsRankingList(listEl, rows, buildItem, options = {}) {
 
 function createOpsRankingItem({ index, name, value, meta, valueColor = '', buyerName = '', maskMetaMoney = false }) {
     const li = document.createElement('li');
-    li.className = 'ops-ranking-item';
+    li.className = 'ops-ranking-item summary-card';
 
     const row = document.createElement('div');
     row.className = 'ops-ranking-row';
 
     const positionEl = document.createElement('span');
-    positionEl.className = 'ops-ranking-position';
+    positionEl.className = 'ops-ranking-position summary-label';
     positionEl.textContent = `#${index + 1}`;
 
     const nameEl = document.createElement('span');
-    nameEl.className = 'ops-ranking-name';
+    nameEl.className = 'ops-ranking-name crop-meta-name';
     nameEl.textContent = name;
     markBuyerNameNode(nameEl, buyerName);
 
     const valueEl = document.createElement('span');
-    valueEl.className = 'ops-ranking-value';
+    valueEl.className = 'ops-ranking-value summary-value';
     valueEl.textContent = value;
     markMoneyNode(valueEl, value);
     if (valueColor) valueEl.style.color = valueColor;
 
     const metaEl = document.createElement('div');
-    metaEl.className = 'ops-ranking-meta';
+    metaEl.className = 'ops-ranking-meta summary-sub';
     metaEl.textContent = meta;
     if (maskMetaMoney) {
         markMoneyNode(metaEl, meta);
@@ -10924,7 +10978,9 @@ function syncOpsRankingsControlsUI() {
     if (rangeGroup) {
         rangeGroup.querySelectorAll('.ops-rankings-range-btn').forEach((btn) => {
             const active = normalizeOpsRankingsRange(btn.dataset.range) === opsRankingsState.range;
+            btn.classList.add('filter-chip');
             btn.classList.toggle('is-active', active);
+            btn.classList.toggle('active', active);
             btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
     }
@@ -10934,8 +10990,18 @@ function syncOpsRankingsControlsUI() {
 }
 
 function renderOpsRankings() {
-    const { panel, privacyHint, status, topClients, pendingClients, topCrops, topCropsTitle } = getOpsRankingsElements();
+    const { panel, rangeGroup, privacyHint, status, topClients, pendingClients, topCrops, topCropsTitle } = getOpsRankingsElements();
     if (!panel || !status || !topClients || !pendingClients || !topCrops) return;
+
+    panel.classList.add('content-section');
+    if (rangeGroup) {
+        rangeGroup.classList.add('toolbar-filters');
+        rangeGroup.querySelectorAll('.ops-rankings-range-btn').forEach((btn) => {
+            btn.classList.add('filter-chip');
+        });
+    }
+    privacyHint?.classList.add('section-note');
+    document.getElementById('ops-rankings-top-crops-note')?.classList.add('section-note');
 
     syncOpsRankingsControlsUI();
 
