@@ -4288,7 +4288,7 @@ function renderHistoryList(tabName, config, items, showActions) {
     const parent = document.getElementById(config.containerId);
 
     if (container) {
-        container.classList.add('tx-list');
+        container.classList.add('tx-list', 'agro-ops-v10');
     }
 
     if (!container) {
@@ -4297,7 +4297,7 @@ function renderHistoryList(tabName, config, items, showActions) {
         if (parent) {
             container = document.createElement('div');
             container.id = config.listId;
-            container.className = 'facturero-history-list tx-list';
+            container.className = 'facturero-history-list tx-list agro-ops-v10';
             container.style.cssText = 'margin-top: 1rem; max-height: 350px; overflow-y: auto;';
             parent.appendChild(container);
         }
