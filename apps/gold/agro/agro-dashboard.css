@@ -457,6 +457,90 @@
   margin: 0 0.8rem 0.8rem;
 }
 
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion {
+  position: relative;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  background: var(--bg-4);
+  overflow: hidden;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion:hover {
+  border-color: var(--border-gold);
+  box-shadow: var(--shadow-gold-sm);
+  transform: translateY(-1px);
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-3);
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-summary:hover {
+  background: color-mix(in srgb, var(--gold-4) 8%, var(--bg-3));
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-gold);
+  background: var(--gold-1);
+  color: var(--gold-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-title {
+  margin: 0;
+  flex: 1;
+  font-family: 'Orbitron', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-gold-prestige);
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-chevron {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion[open] .yg-accordion-chevron {
+  transform: rotate(180deg);
+  color: var(--gold-4);
+}
+
+.agro-dashboard-v10 #clima-weekly-host .yg-accordion-content {
+  border-top: 1px solid var(--border-neutral);
+  background: var(--bg-4);
+}
+
 @media (min-width: 769px) {
   .agro-dashboard-v10 .agro-dash-header {
     flex-direction: row;
