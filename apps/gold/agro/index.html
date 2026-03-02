@@ -1297,18 +1297,6 @@
             <div id="cyclesContainer" class="crops-grid"> <!-- Ciclos activos cargados dinámicamente --> </div>
         </section>
 
-        <!-- Footer -->
-        <footer id="agro-module-footer" class="footer animate-in delay-6">
-            <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • Módulo Agro • Desarrollado con 🌾
-                para agricultores </p>
-            <div class="footer-links">
-                <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
-                <span class="footer-link">Datos protegidos</span>
-            </div>
-            <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-build-date="2026-02-16">
-                Agro Build: V9.8 • dev • 2026-02-16
-            </div>
-        </footer>
     </div>
 
     <!-- Modal: Agenda Lunar 2026 (Split View) - DNA Visual V9.8 -->
@@ -1902,15 +1890,15 @@
     <!-- ═══════════════════════════════════════════════════════════════════════
          AGROREPO WIDGET ACCORDION (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
-    <section class="agro-repo-section animate-in delay-6" id="agro-repo-section" style="margin-top: 2rem;"
+    <section class="agro-repo-section agrorepo-section agro-ops-v10 animate-in delay-6" id="agro-repo-section" style="margin-top: 2rem;"
         data-agro-section="agroRepo">
         <details class="yg-accordion" id="yg-acc-agrorepo">
-            <summary class="yg-accordion-summary" aria-controls="agrorepo-content" aria-expanded="false">
+            <summary class="yg-accordion-summary agrorepo-header" aria-controls="agrorepo-content" aria-expanded="false">
                 <span class="yg-accordion-icon">🌾</span>
-                <span class="yg-accordion-title">AgroRepo (Bitácora)</span>
-                <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+                <span class="yg-accordion-title agrorepo-title">AgroRepo (Bitácora)</span>
+                <span class="yg-accordion-chevron agrorepo-toggle"><i class="fa-solid fa-chevron-down"></i></span>
             </summary>
-            <div class="yg-accordion-content" id="agrorepo-content">
+            <div class="yg-accordion-content agrorepo-body" id="agrorepo-content">
                 <div id="agro-widget-root">
                     <!-- Widget DOM will be injected here on first open -->
                     <div class="arw-loading">
@@ -1920,6 +1908,19 @@
             </div>
         </details>
     </section>
+
+    <!-- Footer -->
+    <footer id="agro-module-footer" class="footer animate-in delay-6">
+        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • Módulo Agro • Desarrollado con 🌾
+            para agricultores </p>
+        <div class="footer-links">
+            <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
+            <span class="footer-link">Datos protegidos</span>
+        </div>
+        <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-build-date="2026-02-16">
+            Agro Build: V9.8 • dev • 2026-02-16
+        </div>
+    </footer>
 
     <!-- AgroRepo Ultimate Template: NOT rendered until first accordion open -->
     <template id="agro-repo-template">

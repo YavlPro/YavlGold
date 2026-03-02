@@ -877,6 +877,22 @@
   overflow: hidden;
 }
 
+.agro-ops-v10#agro-repo-section .yg-accordion {
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  background: var(--bg-4);
+  overflow: hidden;
+}
+
+.agro-ops-v10#agro-repo-section .yg-accordion::before {
+  content: '';
+  display: block;
+  height: 2px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  animation: borderShimmer 3s linear infinite;
+}
+
 .agro-ops-v10 .agrorepo-header {
   display: flex;
   align-items: center;
@@ -913,12 +929,17 @@
   transition: transform 180ms ease;
 }
 
+.agro-ops-v10#agro-repo-section details[open] .agrorepo-toggle {
+  transform: rotate(180deg);
+}
+
 .agro-ops-v10 .agrorepo-toggle.open {
   transform: rotate(180deg);
 }
 
 .agro-ops-v10 .agrorepo-body {
   overflow: hidden;
+  background: var(--bg-4);
 }
 
 .agro-ops-v10 .agrorepo-body.is-open {

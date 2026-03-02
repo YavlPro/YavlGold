@@ -326,6 +326,7 @@ function applyAgroFocusMode(isOn) {
     }
 
     updateAgroToolsTitle(toolsSection, toolsBody);
+    moveFooterToEnd();
     console.info(`[AGRO] Focus mode ${isOn ? 'enabled' : 'disabled'}`);
 }
 
@@ -13165,7 +13166,7 @@ function moveFooterToEnd() {
     if (!footer) return;
 
     const moduleSections = Array.from(document.querySelectorAll(
-        'section[data-agro-section], section#agro-tools-section'
+        'section[data-agro-section], section#agro-tools-section, section#agro-repo-section'
     ));
     const lastModuleSection = moduleSections.length
         ? moduleSections[moduleSections.length - 1]
