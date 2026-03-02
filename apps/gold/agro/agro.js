@@ -3551,17 +3551,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const row = document.createElement('div');
     row.className = ['facturero-item', 'tx-card', txTypeClass, hasTransferMeta ? 'tx-transferencia' : ''].filter(Boolean).join(' ');
     row.style.position = 'relative';
-    row.style.background = 'var(--bg-4, #1a1a1f)';
-    row.style.border = '1px solid var(--border-neutral, rgba(255,255,255,0.12))';
-    row.style.borderRadius = '12px';
-    row.style.padding = '14px 16px';
-    row.style.marginBottom = '10px';
-    row.style.setProperty('display', 'block', 'important');
-    row.style.setProperty('height', 'auto', 'important');
-    row.style.setProperty('min-height', '96px', 'important');
-    row.style.setProperty('overflow', 'hidden', 'important');
-    row.style.setProperty('visibility', 'visible', 'important');
-    row.style.setProperty('line-height', '1.28', 'important');
+    row.style.minHeight = '96px';
+    row.style.lineHeight = '1.28';
     row.dataset.id = String(itemId || '');
     row.dataset.tab = String(itemTab || '');
     if (incomeOrLossReverted) {
@@ -3570,31 +3561,10 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const layout = document.createElement('div');
     layout.className = 'tx-layout';
-    layout.style.display = 'grid';
-    layout.style.gridTemplateColumns = '40px 1fr auto';
-    layout.style.gridTemplateRows = 'auto auto';
-    layout.style.gap = '4px 12px';
-    layout.style.alignItems = 'start';
-    layout.style.setProperty('display', 'grid', 'important');
-    layout.style.setProperty('grid-template-columns', '40px minmax(0, 1fr) auto', 'important');
-    layout.style.setProperty('grid-template-rows', 'auto auto', 'important');
-    layout.style.setProperty('gap', '6px 12px', 'important');
-    layout.style.setProperty('align-items', 'start', 'important');
-    layout.style.setProperty('min-height', '64px', 'important');
-    layout.style.setProperty('visibility', 'visible', 'important');
+    layout.style.minHeight = '64px';
 
     const avatar = document.createElement('div');
     avatar.className = 'tx-avatar';
-    avatar.style.width = '40px';
-    avatar.style.height = '40px';
-    avatar.style.borderRadius = '12px';
-    avatar.style.border = '1px solid var(--border-gold, rgba(200,167,82,0.25))';
-    avatar.style.background = 'var(--gold-1, #2a2218)';
-    avatar.style.display = 'flex';
-    avatar.style.alignItems = 'center';
-    avatar.style.justifyContent = 'center';
-    avatar.style.fontSize = '1.1rem';
-    avatar.style.color = 'var(--gold-5, #E8D48B)';
     if (isPending) {
         avatar.textContent = '💰';
     } else if (effectiveTabName === 'gastos') {
@@ -3613,26 +3583,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const left = document.createElement('div');
     left.className = 'tx-body';
-    left.style.minWidth = '0';
-    left.style.setProperty('display', 'block', 'important');
-    left.style.setProperty('grid-row', '1', 'important');
-    left.style.setProperty('grid-column', '2', 'important');
-    left.style.setProperty('visibility', 'visible', 'important');
-    left.style.setProperty('opacity', '1', 'important');
-    left.style.setProperty('overflow', 'visible', 'important');
 
     const conceptDiv = document.createElement('div');
     conceptDiv.className = 'tx-client';
-    conceptDiv.style.color = 'var(--text-primary, #ffffff)';
-    conceptDiv.style.fontFamily = "'Rajdhani', sans-serif";
-    conceptDiv.style.fontWeight = '700';
-    conceptDiv.style.fontSize = '0.8rem';
-    conceptDiv.style.whiteSpace = 'nowrap';
-    conceptDiv.style.overflow = 'hidden';
-    conceptDiv.style.textOverflow = 'ellipsis';
-    conceptDiv.style.setProperty('display', 'block', 'important');
-    conceptDiv.style.setProperty('visibility', 'visible', 'important');
-    conceptDiv.style.setProperty('opacity', '1', 'important');
     conceptDiv.textContent = displayConcept;
     left.appendChild(conceptDiv);
 
@@ -3764,13 +3717,6 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const right = document.createElement('div');
     right.className = 'tx-amount-group';
-    right.style.textAlign = 'right';
-    right.style.whiteSpace = 'nowrap';
-    right.style.setProperty('display', 'block', 'important');
-    right.style.setProperty('grid-row', '1', 'important');
-    right.style.setProperty('grid-column', '3', 'important');
-    right.style.setProperty('visibility', 'visible', 'important');
-    right.style.setProperty('opacity', '1', 'important');
 
     const formattedAmount = _fmtItemCurrency(item, rowConfig, amount);
     const amountParts = String(formattedAmount || '').split(' · ').map((part) => part.trim()).filter(Boolean);
@@ -3778,10 +3724,6 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const amountSpan = document.createElement('span');
     amountSpan.className = 'tx-amount';
-    amountSpan.style.fontFamily = "'Orbitron', sans-serif";
-    amountSpan.style.fontWeight = '700';
-    amountSpan.style.fontSize = '0.92rem';
-    amountSpan.style.lineHeight = '1.2';
     if (txTypeClass === 'tx-pendiente') {
         amountSpan.style.color = 'var(--color-warning, #F59E0B)';
     } else if (txTypeClass === 'tx-pagado') {
@@ -3792,9 +3734,6 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         amountSpan.style.color = 'var(--gold-4, #C8A752)';
     }
     amountSpan.textContent = amountMain;
-    amountSpan.style.setProperty('display', 'block', 'important');
-    amountSpan.style.setProperty('visibility', 'visible', 'important');
-    amountSpan.style.setProperty('opacity', '1', 'important');
     markMoneyNode(amountSpan, amountSpan.textContent);
     right.appendChild(amountSpan);
 
@@ -3812,57 +3751,22 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
     const footer = document.createElement('div');
     footer.className = 'tx-footer';
-    footer.style.display = 'flex';
-    footer.style.alignItems = 'center';
-    footer.style.flexWrap = 'wrap';
-    footer.style.gap = '8px';
-    footer.style.marginTop = '4px';
-    footer.style.setProperty('display', 'flex', 'important');
-    footer.style.setProperty('grid-row', '2', 'important');
-    footer.style.setProperty('grid-column', '2 / 4', 'important');
-    footer.style.setProperty('width', '100%', 'important');
-    footer.style.setProperty('visibility', 'visible', 'important');
+    const footerMeta = document.createElement('div');
+    footerMeta.className = 'tx-footer-meta';
 
     const statusBadge = document.createElement('span');
     statusBadge.className = `tx-status ${statusVariant}`;
-    statusBadge.style.display = 'inline-flex';
-    statusBadge.style.alignItems = 'center';
-    statusBadge.style.justifyContent = 'center';
-    statusBadge.style.padding = '3px 8px';
-    statusBadge.style.borderRadius = '9999px';
-    statusBadge.style.fontFamily = "'Orbitron', sans-serif";
-    statusBadge.style.fontSize = '0.55rem';
-    statusBadge.style.fontWeight = '700';
-    statusBadge.style.letterSpacing = '0.8px';
-    statusBadge.style.textTransform = 'uppercase';
-    statusBadge.style.border = '1px solid var(--border-neutral, rgba(255,255,255,0.08))';
-    if (statusVariant === 'pagado') {
-        statusBadge.style.color = 'var(--color-success, #10B981)';
-    } else if (statusVariant === 'perdida') {
-        statusBadge.style.color = 'var(--color-error, #EF4444)';
-    } else if (statusVariant === 'revertido') {
-        statusBadge.style.color = 'var(--text-muted, #94A3B8)';
-    } else if (statusVariant === 'transferido') {
-        statusBadge.style.color = 'var(--gold-4, #C8A752)';
-    } else {
-        statusBadge.style.color = 'var(--color-warning, #F59E0B)';
-    }
     statusBadge.textContent = statusText;
-    footer.appendChild(statusBadge);
+    footerMeta.appendChild(statusBadge);
 
     if (evidenceLink) {
-        footer.appendChild(evidenceLink);
+        footerMeta.appendChild(evidenceLink);
     }
+    footer.appendChild(footerMeta);
 
     if (showActions) {
         const actionsWrap = document.createElement('div');
         actionsWrap.className = 'tx-actions';
-        actionsWrap.style.setProperty('display', 'flex', 'important');
-        actionsWrap.style.setProperty('align-items', 'center', 'important');
-        actionsWrap.style.setProperty('flex-wrap', 'wrap', 'important');
-        actionsWrap.style.setProperty('justify-content', 'flex-end', 'important');
-        actionsWrap.style.setProperty('gap', '4px', 'important');
-        actionsWrap.style.setProperty('margin-left', 'auto', 'important');
 
         actionsWrap.appendChild(createFactureroActionButton({
             className: 'btn-edit-facturero',
@@ -3976,48 +3880,23 @@ function renderHistoryRowFallback(item, config) {
     const row = document.createElement('div');
     row.className = 'facturero-item tx-card';
     row.style.position = 'relative';
-    row.style.background = 'var(--bg-4, #1a1a1f)';
-    row.style.border = '1px solid var(--border-neutral, rgba(255,255,255,0.12))';
-    row.style.borderRadius = '12px';
-    row.style.padding = '14px 16px';
-    row.style.marginBottom = '10px';
-    row.style.setProperty('display', 'block', 'important');
-    row.style.setProperty('height', 'auto', 'important');
-    row.style.setProperty('min-height', '72px', 'important');
-    row.style.setProperty('overflow', 'hidden', 'important');
-    row.style.setProperty('visibility', 'visible', 'important');
+    row.style.minHeight = '72px';
 
     const layout = document.createElement('div');
     layout.className = 'tx-layout';
-    layout.style.display = 'grid';
-    layout.style.gridTemplateColumns = '1fr auto';
-    layout.style.gap = '8px';
-    layout.style.alignItems = 'start';
-    layout.style.setProperty('display', 'grid', 'important');
-    layout.style.setProperty('grid-template-columns', 'minmax(0, 1fr) auto', 'important');
-    layout.style.setProperty('gap', '8px', 'important');
-    layout.style.setProperty('align-items', 'start', 'important');
+    layout.style.gridTemplateColumns = 'minmax(0, 1fr) auto';
 
     const left = document.createElement('div');
     left.className = 'tx-body';
-    left.style.gridColumn = '1 / 3';
-    left.style.setProperty('display', 'block', 'important');
-    left.style.setProperty('visibility', 'visible', 'important');
+    left.style.gridColumn = '1 / -1';
 
     const conceptDiv = document.createElement('div');
     conceptDiv.className = 'tx-client';
-    conceptDiv.style.color = 'var(--text-primary, #ffffff)';
-    conceptDiv.style.fontWeight = '700';
-    conceptDiv.style.fontSize = '0.8rem';
-    conceptDiv.style.setProperty('display', 'block', 'important');
     conceptDiv.textContent = concept;
     left.appendChild(conceptDiv);
 
     const dateDiv = document.createElement('div');
     dateDiv.className = 'tx-date';
-    dateDiv.style.color = 'var(--text-muted, #94A3B8)';
-    dateDiv.style.fontSize = '0.7rem';
-    dateDiv.style.setProperty('display', 'block', 'important');
     dateDiv.textContent = formatDate(date);
     left.appendChild(dateDiv);
 
@@ -4026,11 +3905,7 @@ function renderHistoryRowFallback(item, config) {
 
     const amountSpan = document.createElement('span');
     amountSpan.className = 'tx-amount';
-    amountSpan.style.fontFamily = "'Orbitron', sans-serif";
-    amountSpan.style.fontWeight = '700';
-    amountSpan.style.fontSize = '0.92rem';
     amountSpan.style.color = 'var(--text-primary, #ffffff)';
-    amountSpan.style.setProperty('display', 'block', 'important');
     amountSpan.textContent = `$${amount.toFixed(2)}`;
     markMoneyNode(amountSpan, amountSpan.textContent);
     amountWrap.appendChild(amountSpan);
