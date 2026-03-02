@@ -249,6 +249,7 @@
   height: 34px;
   min-height: 34px;
   padding: 8px;
+  flex-shrink: 0;
 }
 
 /* §3 QUICK ACTIONS BAR */
@@ -1314,6 +1315,7 @@
   touch-action: manipulation;
   position: relative;
   z-index: 2;
+  overflow: visible;
 }
 
 .agro-ops-v10 .tx-actions .btn {
@@ -1445,13 +1447,19 @@
   }
 
   .agro-ops-v10 .tx-actions {
-    gap: 2px;
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 
   .agro-ops-v10 .tx-actions .btn-icon-only {
-    width: 28px;
-    height: 28px;
-    min-height: 28px;
+    width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    min-width: 32px !important;
+    flex-shrink: 0;
   }
 
   .agro-ops-v10 .tx-amount {

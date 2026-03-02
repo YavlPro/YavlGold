@@ -3835,11 +3835,18 @@ body.modal-open {
 
   .btn-edit-facturero,
   .btn-delete-facturero,
-  .btn-duplicate-facturero {
+  .btn-duplicate-facturero,
+  .btn-transfer-pending,
+  .btn-transfer-income,
+  .btn-transfer-loss,
+  .btn-move-general,
+  .btn-revert-income,
+  .btn-revert-loss {
     min-width: 36px !important;
     min-height: 36px !important;
     width: 36px !important;
     height: 36px !important;
+    flex-shrink: 0 !important;
   }
 }
 
