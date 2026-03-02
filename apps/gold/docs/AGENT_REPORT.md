@@ -10721,3 +10721,57 @@ Hallazgo raíz del lote actual:
   - abrir menú, ejecutar acción y confirmar cierre automático,
   - cerrar con click fuera, `Esc`, scroll y resize,
   - confirmar hit-target cómodo (>=44px).
+
+## 🆕 SESIÓN: GATE 0 — Menú de acciones inline dentro de tx-card (2026-03-02)
+
+### Diagnóstico
+- El enfoque flotante (`overlay + panel`) dejó dos síntomas reportados: trigger `⋮` no visible en móvil y layout desordenado en desktop por mezcla de reglas de visibilidad/flujo.
+- La UX final decidida exige que el menú viva dentro de cada `tx-card`, por lo que la dependencia del overlay introdujo complejidad innecesaria para este caso.
+- En CSS hay reglas de acciones repartidas entre bloques base/touch con comportamientos distintos, lo que puede ocultar trigger o romper orden del footer según cascada.
+
+### Plan
+- Revertir comportamiento a menú inline por card:
+  - mantener botones reales dentro de `tx-actions-btns`,
+  - trigger `⋮ Acciones` visible en móvil (`<=768px`) y toggle por clase `is-open`,
+  - mantener desktop con acciones inline visibles y trigger oculto.
+- Implementar estado simple de apertura/cierre en `agro.js` sin overlay:
+  - cerrar menú anterior al abrir uno nuevo,
+  - cerrar al click fuera y `Esc`,
+  - cerrar al ejecutar una acción.
+- Limpiar CSS para panel inline interno:
+  - sin `tx-actions-menu-*`,
+  - `tx-actions-btns` expandible dentro de card con `max-width: 100%` y sin desbordar documento,
+  - hit-target táctil mínimo 44px.
+
+### Riesgos / Mitigación
+- Riesgo: regresión de handlers al tocar estructura de acciones.
+  Mitigación: no duplicar ni recrear lógica de botones; solo toggle visual por clases.
+- Riesgo: overflow horizontal en móvil al abrir acciones.
+  Mitigación: panel inline con wrapping/overflow controlado dentro de `.tx-card`.
+- Riesgo: afectar desktop.
+  Mitigación: base desktop explícita (acciones inline) y ajustes móviles limitados a `@media (max-width:768px)` + touch.
+
+### Evidencia esperada
+- Móvil: se ve `⋮ Acciones` en cada card y abre un panel interno con acciones sin salir de la tarjeta.
+- Desktop: acciones inline ordenadas dentro de card, sin desbordes.
+- Build oficial en PASS.
+
+### Cierre breve
+- `apps/gold/agro/agro.js`: se eliminó la dependencia del overlay flotante y se dejó estado inline por card (`is-open`) con cierre por click fuera, `Escape`, alternancia del mismo trigger y cierre tras ejecutar acción.
+- `apps/gold/agro/agro-operations.css`: se removieron estilos `tx-actions-menu-*` y se definió panel interno en móvil dentro de `tx-card` (trigger visible + `tx-actions-btns` expandible), manteniendo desktop inline ordenado.
+- Se mantuvo reutilización de los botones/handlers existentes (sin cambios de negocio, sin duplicación de acciones).
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+### Pruebas manuales recomendadas
+- Móvil (375px y 412px):
+  - en cada card debe verse `⋮ Acciones`,
+  - tocar trigger: abre panel de acciones dentro de la misma card,
+  - tocar otra card: cierra anterior y abre la nueva,
+  - tocar fuera o `Esc`: cierra,
+  - ejecutar acción: se ejecuta normal y el panel cierra.
+- Desktop:
+  - acciones inline visibles, alineadas y contenidas en cada card,
+  - no aparece panel flotante/overlay,
+  - sin desborde horizontal del layout.
+- Touch:
+  - trigger y botones con hit-target mínimo 44px.
