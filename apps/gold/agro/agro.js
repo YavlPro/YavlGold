@@ -3862,8 +3862,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         footer.appendChild(actionsWrap);
     }
 
-    layout.append(avatar, left, right, footer);
-    row.appendChild(layout);
+    layout.append(avatar, left, right);
+    row.append(layout, footer);
     return row;
 }
 

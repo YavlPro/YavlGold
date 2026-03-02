@@ -1045,7 +1045,7 @@
   border: 1px solid var(--border-neutral);
   border-radius: var(--radius-md);
   padding: 14px 16px;
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 180ms ease, transform 180ms ease;
 }
 
@@ -1133,13 +1133,14 @@
 }
 
 .agro-ops-v10 .tx-footer {
-  grid-row: 2;
-  grid-column: 2 / 4;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
+  width: 100%;
+  overflow: visible;
 }
 
 .agro-ops-v10 .tx-footer-meta {
@@ -1148,6 +1149,7 @@
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 /* §15 TRANSACTION BODY DETAILS */
@@ -1306,12 +1308,22 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-left: 0;
+  margin-left: auto;
   justify-content: flex-end;
   flex-wrap: nowrap;
   touch-action: manipulation;
   position: relative;
   z-index: 2;
+}
+
+.agro-ops-v10 .tx-actions .btn {
+  opacity: 1 !important;
+}
+
+.agro-ops-v10 .tx-status.pendiente {
+  background: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  border-color: var(--border-gold);
+  color: var(--gold-5);
 }
 
 .agro-ops-v10 .tx-actions .btn-danger-hover:hover {
@@ -1367,9 +1379,9 @@
   }
 
   .agro-ops-v10 .tx-footer {
-    grid-column: 1 / -1;
     row-gap: 6px;
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .agro-ops-v10 .tx-avatar {
