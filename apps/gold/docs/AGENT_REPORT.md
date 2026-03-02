@@ -10830,3 +10830,30 @@ Hallazgo raíz del lote actual:
 - Limpieza de contención: se mantiene una única regla base de `overflow` por contenedor y la excepción de visibilidad solo con estado `is-actions-open`.
 - Ancla explícita del panel: en móvil, `.tx-actions` queda como contenedor relativo para posicionamiento absoluto de `tx-actions-btns`.
 - Fallback de borde superior: se agregó clase `open-down` (calculada en JS al abrir) para desplegar hacia abajo cuando el panel se recorta por arriba.
+
+## 🆕 SESIÓN: GATE 0 — Forense display none en trigger móvil (2026-03-02)
+
+### Diagnóstico
+- El forense de consola reporta `45` triggers presentes en DOM y `display: none`, por lo que el problema es de cascada CSS (no de render JS).
+- El patrón correcto debe tener una sola autoridad de visibilidad:
+  - desktop: trigger oculto / acciones inline,
+  - móvil por ancho: trigger visible / acciones colapsadas hasta `is-open`.
+- Dependencia de `pointer:coarse` para visibilidad puede fallar en Android; debe usarse solo para hit-target.
+
+### Plan
+- Ajustar `agro-operations.css` para que la visibilidad del trigger quede explícita y no ambigua:
+  - `@media (min-width: 769px)` -> trigger oculto con prioridad,
+  - `@media (max-width: 768px)` -> trigger visible con prioridad.
+- Mantener `@media (hover:none) and (pointer:coarse)` solo para dimensiones táctiles.
+- No tocar lógica JS de negocio.
+
+### Riesgos / Mitigación
+- Riesgo: regla vieja de `display:none` base gane por cascada.
+  Mitigación: mover control de `display` a media queries mutuamente excluyentes.
+- Riesgo: regresión desktop.
+  Mitigación: definir explícitamente `tx-actions-btns` visible inline en bloque desktop.
+
+### Evidencia esperada
+- En móvil (<=768): trigger visible siempre.
+- En desktop (>768): trigger oculto, acciones inline.
+- Build oficial en PASS.

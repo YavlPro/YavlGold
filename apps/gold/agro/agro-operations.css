@@ -1341,7 +1341,6 @@
 }
 
 .agro-ops-v10 .tx-actions-trigger {
-  display: none !important;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -1417,6 +1416,18 @@
   border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
   color: var(--color-success);
   background: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+
+@media (min-width: 769px) {
+  .agro-ops-v10 .tx-actions-trigger {
+    display: none !important;
+  }
+
+  .agro-ops-v10 .tx-actions > .tx-actions-btns {
+    display: flex !important;
+    gap: 4px;
+    align-items: center;
+  }
 }
 
 /* §20 TRANSACTION LIST CONTAINER (.tx-list) */
@@ -1561,7 +1572,7 @@
   }
 
   .agro-ops-v10 .tx-actions-trigger {
-    display: inline-flex !important;
+    display: flex !important;
     min-height: 36px;
     padding: 0 12px;
     border-radius: var(--radius-pill);
