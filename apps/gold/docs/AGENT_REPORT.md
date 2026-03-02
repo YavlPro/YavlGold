@@ -10589,3 +10589,35 @@ Hallazgo raíz del lote actual:
 
 - Comando: `pnpm build:gold`
 - Resultado: ✅ PASS.
+
+## 🆕 SESIÓN: GATE 0 — Contención móvil tx-card + kebab (2026-03-02)
+
+### Diagnóstico
+- En `apps/gold/agro/agro-operations.css` coexistían múltiples bloques `@media (max-width: 768px/480px)` sobre `.tx-footer`, `.tx-actions` y tamaños de botones, con duplicidad funcional y riesgo de contradicción de mantenimiento.
+- El bloque legacy responsive y el bloque `§19b` tocaban los mismos selectores con prioridades distintas, complicando asegurar contención estable del menú dentro de `.tx-card`.
+- Había riesgo de overflow horizontal en móvil por combinación de: metadatos largos, menú expandible y reglas dispersas de ancho/alineación de acciones.
+
+### Plan
+- Consolidar la responsabilidad del layout móvil facturero en el bloque `§19b` (fuente principal), retirando reglas duplicadas del responsive legacy para `.tx-footer/.tx-actions`.
+- Mantener estructura móvil estable: `meta arriba` + `acciones abajo`, kebab alineado a la derecha, y `tx-actions-btns` con `max-width` dinámico interno a tarjeta.
+- Añadir control de overflow y wrapping seguro en elementos de texto y contenedores de acciones.
+- Mantener hit-target táctil real de 44px en `@media (hover:none) and (pointer:coarse)`.
+
+### Riesgos / Mitigación
+- Riesgo: afectar desktop por cascada global.
+  Mitigación: limitar cambios a `@media` móvil/touch y no tocar reglas base desktop.
+- Riesgo: regresión de interacción kebab.
+  Mitigación: no tocar JS de negocio; solo layout/overflow/wrapping.
+- Riesgo: CSS inválido por llaves/propiedades sueltas durante limpieza.
+  Mitigación: edición acotada por bloques completos + build de verificación.
+
+### Evidencia esperada
+- Sin desbordes horizontales en `tx-card` móvil.
+- Menú kebab contenido dentro de tarjeta, con scroll horizontal interno si sobran acciones.
+- Trigger y botones cómodos al tacto (44px) en touch real.
+
+### Cierre breve
+- Limpieza aplicada en `agro-operations.css`: se removieron reglas móviles duplicadas/contradictorias de `tx-footer/tx-actions` en bloques legacy y se dejó `§19b` como bloque fuente para contención móvil.
+- Estructura final móvil estable: meta + acciones apiladas, kebab a la derecha, `tx-actions-btns` con `max-width` dinámico y scroll horizontal interno con scrollbar oculto.
+- Touch-first confirmado por CSS: trigger y botones con hit-target mínimo de 44px en `@media (hover:none) and (pointer:coarse)`.
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
