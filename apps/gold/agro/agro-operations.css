@@ -1383,7 +1383,7 @@
   .agro-ops-v10 .tx-footer {
     row-gap: 6px;
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
   .agro-ops-v10 .tx-avatar {
@@ -1396,9 +1396,16 @@
     margin-left: 0;
     justify-content: flex-start;
     flex-wrap: wrap;
+    flex-shrink: 0;
   }
 
-  .agro-ops-v10 .tx-actions .btn-icon-only {
+  .agro-ops-v10 .tx-actions .btn-icon-only,
+  .agro-ops-v10 .tx-actions [class*="btn-edit-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-delete-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-duplicate-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-transfer"],
+  .agro-ops-v10 .tx-actions [class*="btn-move-general"],
+  .agro-ops-v10 .tx-actions [class*="btn-revert"] {
     width: 34px;
     height: 34px;
     min-height: 34px;
@@ -1453,9 +1460,16 @@
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 4px;
+    flex-shrink: 0;
   }
 
-  .agro-ops-v10 .tx-actions .btn-icon-only {
+  .agro-ops-v10 .tx-actions .btn-icon-only,
+  .agro-ops-v10 .tx-actions [class*="btn-edit-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-delete-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-duplicate-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-transfer"],
+  .agro-ops-v10 .tx-actions [class*="btn-move-general"],
+  .agro-ops-v10 .tx-actions [class*="btn-revert"] {
     width: 32px !important;
     height: 32px !important;
     min-height: 32px !important;

@@ -3833,6 +3833,8 @@ body.modal-open {
     padding: 1rem !important;
   }
 
+  /* min-width/height: 44px = área táctil mínima iOS/Android.
+     No forzamos width/height para evitar conflicto con estilos inline del JS. */
   .btn-edit-facturero,
   .btn-delete-facturero,
   .btn-duplicate-facturero,
@@ -3842,10 +3844,8 @@ body.modal-open {
   .btn-move-general,
   .btn-revert-income,
   .btn-revert-loss {
-    min-width: 36px !important;
-    min-height: 36px !important;
-    width: 36px !important;
-    height: 36px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     flex-shrink: 0 !important;
   }
 }
