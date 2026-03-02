@@ -3483,6 +3483,18 @@ function openFactureroActionsMenu({ row, actionsWrap, actionsNode, triggerBtn, t
     });
 }
 
+function toggleFactureroActionsMenu(payload) {
+    const actionsWrap = payload?.actionsWrap;
+    if (!actionsWrap) return;
+    const state = FACTURERO_ACTIONS_MENU_STATE;
+    const isThisOpen = state.active?.actionsWrap === actionsWrap && actionsWrap.classList.contains('is-open');
+    if (isThisOpen) {
+        closeFactureroActionsMenu();
+        return;
+    }
+    openFactureroActionsMenu(payload);
+}
+
 function renderHistoryRow(tabName, item, config, options = {}) {
     const showActions = options.showActions !== false;
     const isOtrosView = tabName === 'otros';
@@ -3979,22 +3991,33 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             iconClass: 'fa fa-trash'
         }));
 
-        trigger.addEventListener('click', (e) => {
+        let lastPointerToggleTs = 0;
+        const handleTriggerToggle = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const state = FACTURERO_ACTIONS_MENU_STATE;
-            const isThisOpen = state.active?.actionsWrap === actionsWrap && actionsWrap.classList.contains('is-open');
-            if (isThisOpen) {
-                closeFactureroActionsMenu();
-                return;
-            }
-            openFactureroActionsMenu({
+            toggleFactureroActionsMenu({
                 row: row,
                 actionsWrap: actionsWrap,
                 actionsNode: btnsMenu,
                 triggerBtn: trigger,
                 triggerIcon: triggerIcon
             });
+        };
+
+        trigger.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            lastPointerToggleTs = Date.now();
+            handleTriggerToggle(e);
+        });
+
+        // Keyboard activation on button emits click (without pointerdown).
+        trigger.addEventListener('click', (e) => {
+            if (Date.now() - lastPointerToggleTs < 350) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            handleTriggerToggle(e);
         });
 
         actionsWrap.appendChild(trigger);

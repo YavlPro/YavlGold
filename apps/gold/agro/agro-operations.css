@@ -1374,7 +1374,8 @@
 }
 
 .agro-ops-v10 .tx-actions > .tx-actions-btns {
-  display: flex;
+  /* Hidden by default; opened via .is-open state */
+  display: none;
   align-items: center;
   gap: 4px;
   flex-wrap: nowrap;
@@ -1384,6 +1385,10 @@
   overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.agro-ops-v10 .tx-actions.is-open > .tx-actions-btns {
+  display: flex;
 }
 
 .agro-ops-v10 .tx-actions > .tx-actions-btns::-webkit-scrollbar {
