@@ -1319,6 +1319,7 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
+  flex: 0 0 auto;
   justify-content: flex-end;
   flex-wrap: nowrap;
   touch-action: manipulation;
@@ -1518,6 +1519,32 @@
 
 /* §19b Kebab Menu Compact (<=1024) */
 @media (max-width: 1024px) {
+  .agro-ops-v10 .tx-footer {
+    position: relative;
+    padding-right: 56px;
+    min-height: 44px;
+  }
+
+  .agro-ops-v10 .tx-footer-meta {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .agro-ops-v10 .tx-actions {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin-left: 0;
+    width: auto;
+    max-width: calc(100% - 4px);
+    min-width: 44px;
+    justify-content: flex-end;
+    align-items: flex-end;
+    flex-direction: row;
+    overflow: visible;
+    gap: 8px;
+  }
+
   .agro-ops-v10 .tx-actions-trigger {
     display: flex !important;
     min-height: 36px;
@@ -1536,8 +1563,8 @@
     position: absolute;
     right: 0;
     bottom: calc(100% + 8px);
-    width: min(280px, calc(100vw - 32px));
-    max-width: calc(100vw - 32px);
+    width: min(280px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
     align-items: stretch;
     padding: 8px;
     border-radius: var(--radius-md);
@@ -1590,6 +1617,8 @@
     align-items: stretch;
     row-gap: 8px;
     overflow: hidden;
+    padding-right: 56px;
+    min-height: 52px;
   }
 
   .agro-ops-v10 .tx-card.is-actions-open .tx-footer {
@@ -1602,16 +1631,11 @@
   }
 
   .agro-ops-v10 .tx-actions {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 0;
-    justify-content: flex-end;
-    align-self: stretch;
+    top: 0;
+    bottom: auto;
+    max-width: calc(100% - 4px);
     align-items: flex-end;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    overflow: hidden;
-    gap: 8px;
+    align-self: auto;
   }
 
   .agro-ops-v10 .tx-card.is-actions-open .tx-actions {
@@ -1619,8 +1643,8 @@
   }
 
   .agro-ops-v10 .tx-actions > .tx-actions-btns {
-    width: min(280px, 100%);
-    max-width: 100%;
+    width: min(280px, calc(100vw - 48px));
+    max-width: calc(100vw - 48px);
   }
 }
 

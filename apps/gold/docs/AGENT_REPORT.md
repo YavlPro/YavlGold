@@ -10899,3 +10899,39 @@ Hallazgo raíz del lote actual:
   - `<=1024`: solo reglas de acciones compactas (trigger/panel).
   - `<=768`: reglas de layout móvil real (`tx-footer`, wraps de metadata y estructura de acciones en columna).
 - Con esto, en 811px cambia solo el modo de acciones sin forzar layout móvil completo de `tx-card`.
+
+## 🆕 SESIÓN: GATE 0 — Anclaje interno de acciones en tx-card (2026-03-02)
+
+### Diagnóstico
+- El renderer principal de historial (`renderHistoryRow`) sí construye estructura estable: `.tx-actions` + `.tx-actions-trigger` + `.tx-actions-btns`.
+- `renderHistoryRowFallback` no renderiza acciones (esperado para fallback), por lo que no se toca negocio ni handlers.
+- El síntoma reportado (acciones “enterradas”/colapsadas en anchos medios) corresponde a layout: `.tx-actions` en flujo puede perder espacio visual dentro de `tx-footer` por combinación de wrap/overflow/anchos.
+
+### Plan
+- Ajustar solo `apps/gold/agro/agro-operations.css` para modo compacto `<=1024`:
+  - anclar `.tx-actions` dentro de cada `tx-card` (capa interna de la card),
+  - reservar espacio en footer para que meta/texto no tapen el trigger,
+  - mantener panel de acciones dentro del viewport sin desbordes horizontales.
+- Mantener desktop `>=1025` inline (sin tocar JS).
+
+### Riesgos / Mitigación
+- Riesgo: solape del trigger con metadatos en móvil.
+  Mitigación: reservar `padding-right` en `tx-footer` solo en modo compacto.
+- Riesgo: regresión visual en desktop.
+  Mitigación: no tocar reglas desktop inline (`>=1025`) fuera de refuerzo de contención.
+
+### Evidencia esperada
+- 375px y 811px: trigger visible y estable dentro de cada card.
+- Panel abre en la card sin empujar otras tarjetas ni generar overflow horizontal de página.
+- 1366px+: acciones inline visibles y ordenadas.
+
+### Cierre breve
+- Se aplicó anclaje interno de acciones en `<=1024` dentro de la propia `tx-card` (`tx-footer` reserva espacio y `.tx-actions` queda anclado a la derecha).
+- Se eliminó el punto frágil de colapso en móvil donde el panel heredaba `width: 100%` del wrapper y podía quedar prácticamente sin ancho.
+- Desktop `>=1025` se mantiene inline (sin cambios de lógica JS).
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+### Smoke tests recomendados
+- 375px: validar `⋮ Acciones` visible en cada card, abrir/cerrar panel, ejecutar acción.
+- 811px: validar que `⋮ Acciones` no colapsa ni se recorta en cards con texto largo.
+- 1366px+: validar acciones inline visibles, sin recorte en borde derecho.
