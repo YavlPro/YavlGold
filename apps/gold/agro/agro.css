@@ -3835,6 +3835,7 @@ body.modal-open {
 
   /* min-width/height: 44px = área táctil mínima iOS/Android.
      No forzamos width/height para evitar conflicto con estilos inline del JS. */
+  .tx-actions-trigger,
   .btn-edit-facturero,
   .btn-delete-facturero,
   .btn-duplicate-facturero,

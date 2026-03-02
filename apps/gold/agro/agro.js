@@ -3381,6 +3381,40 @@ function createFactureroActionButton({
     return btn;
 }
 
+const FACTURERO_ACTIONS_MENU_STATE = {
+    row: null,
+    wrap: null,
+    icon: null
+};
+
+function closeOpenFactureroActionsMenu() {
+    const wrap = FACTURERO_ACTIONS_MENU_STATE.wrap;
+    const icon = FACTURERO_ACTIONS_MENU_STATE.icon;
+
+    if (wrap && wrap.classList.contains('is-open')) {
+        wrap.classList.remove('is-open');
+    }
+
+    if (icon) {
+        icon.className = 'fa fa-ellipsis-vertical';
+    }
+
+    FACTURERO_ACTIONS_MENU_STATE.row = null;
+    FACTURERO_ACTIONS_MENU_STATE.wrap = null;
+    FACTURERO_ACTIONS_MENU_STATE.icon = null;
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && !window.__YG_FACTURERO_MENU_OUTSIDE_BOUND__) {
+    document.addEventListener('click', (event) => {
+        const openRow = FACTURERO_ACTIONS_MENU_STATE.row;
+        const openWrap = FACTURERO_ACTIONS_MENU_STATE.wrap;
+        if (!openRow || !openWrap) return;
+        if (openRow.contains(event.target)) return;
+        closeOpenFactureroActionsMenu();
+    }, true);
+    window.__YG_FACTURERO_MENU_OUTSIDE_BOUND__ = true;
+}
+
 function renderHistoryRow(tabName, item, config, options = {}) {
     const showActions = options.showActions !== false;
     const isOtrosView = tabName === 'otros';
@@ -3768,7 +3802,20 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         const actionsWrap = document.createElement('div');
         actionsWrap.className = 'tx-actions';
 
-        actionsWrap.appendChild(createFactureroActionButton({
+        // V9.9: Kebab trigger — visible solo en móvil (CSS lo controla en desktop)
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'tx-actions-trigger';
+        trigger.title = 'Acciones';
+        const triggerIcon = document.createElement('i');
+        triggerIcon.className = 'fa fa-ellipsis-vertical';
+        trigger.appendChild(triggerIcon);
+
+        // Contenedor de los botones (se colapsa en móvil)
+        const btnsMenu = document.createElement('div');
+        btnsMenu.className = 'tx-actions-btns';
+
+        btnsMenu.appendChild(createFactureroActionButton({
             className: 'btn-edit-facturero',
             tab: itemTab,
             id: itemId,
@@ -3778,7 +3825,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             iconClass: 'fa fa-pen'
         }));
 
-        actionsWrap.appendChild(createFactureroActionButton({
+        btnsMenu.appendChild(createFactureroActionButton({
             className: 'btn-duplicate-facturero',
             tab: itemTab,
             id: itemId,
@@ -3789,7 +3836,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         }));
 
         if (canMoveFromGeneral) {
-            actionsWrap.appendChild(createFactureroActionButton({
+            btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-move-general',
                 tab: itemTab,
                 id: itemId,
@@ -3801,7 +3848,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         }
 
         if (showTransferBtn) {
-            actionsWrap.appendChild(createFactureroActionButton({
+            btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-transfer-pending',
                 tab: effectiveTabName,
                 id: item.id,
@@ -3814,7 +3861,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         }
 
         if (!isOtrosView && isIncome) {
-            actionsWrap.appendChild(createFactureroActionButton({
+            btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-transfer-income',
                 tab: effectiveTabName,
                 id: item.id,
@@ -3826,7 +3873,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         }
 
         if (!isOtrosView && isLoss) {
-            actionsWrap.appendChild(createFactureroActionButton({
+            btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-transfer-loss',
                 tab: effectiveTabName,
                 id: item.id,
@@ -3838,7 +3885,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         }
 
         if (!isOtrosView && fromPending && !incomeOrLossReverted) {
-            actionsWrap.appendChild(createFactureroActionButton({
+            btnsMenu.appendChild(createFactureroActionButton({
                 className: isIncome ? 'btn-revert-income' : 'btn-revert-loss',
                 tab: effectiveTabName,
                 id: item.id,
@@ -3849,7 +3896,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             }));
         }
 
-        actionsWrap.appendChild(createFactureroActionButton({
+        btnsMenu.appendChild(createFactureroActionButton({
             className: 'btn-delete-facturero',
             tab: itemTab,
             id: itemId,
@@ -3859,6 +3906,48 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             iconClass: 'fa fa-trash'
         }));
 
+        const closeOwnMenu = () => {
+            if (!actionsWrap.classList.contains('is-open')) return;
+            actionsWrap.classList.remove('is-open');
+            triggerIcon.className = 'fa fa-ellipsis-vertical';
+            if (FACTURERO_ACTIONS_MENU_STATE.wrap === actionsWrap) {
+                FACTURERO_ACTIONS_MENU_STATE.row = null;
+                FACTURERO_ACTIONS_MENU_STATE.wrap = null;
+                FACTURERO_ACTIONS_MENU_STATE.icon = null;
+            }
+        };
+
+        const openOwnMenu = () => {
+            closeOpenFactureroActionsMenu();
+            actionsWrap.classList.add('is-open');
+            triggerIcon.className = 'fa fa-xmark';
+            FACTURERO_ACTIONS_MENU_STATE.row = row;
+            FACTURERO_ACTIONS_MENU_STATE.wrap = actionsWrap;
+            FACTURERO_ACTIONS_MENU_STATE.icon = triggerIcon;
+        };
+
+        // Toggle lógica del trigger
+        trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const isThisOpen = FACTURERO_ACTIONS_MENU_STATE.wrap === actionsWrap
+                && actionsWrap.classList.contains('is-open');
+            if (isThisOpen) {
+                closeOwnMenu();
+                return;
+            }
+            openOwnMenu();
+        });
+
+        // Cierre dentro de la tarjeta si se toca fuera del bloque de acciones
+        row.addEventListener('click', (e) => {
+            if (!actionsWrap.classList.contains('is-open')) return;
+            if (actionsWrap.contains(e.target)) return;
+            closeOwnMenu();
+        });
+
+        actionsWrap.appendChild(trigger);
+        actionsWrap.appendChild(btnsMenu);
         footer.appendChild(actionsWrap);
     }
 

@@ -33,6 +33,15 @@
   }
 }
 
+@keyframes spinOnce {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}
+
 .agro-ops-v10 {
   --gold-1: #2a2218;
   --gold-2: #3a3228;
@@ -1318,6 +1327,11 @@
   overflow: visible;
 }
 
+/* §19b Kebab trigger - hidden on desktop */
+.agro-ops-v10 .tx-actions-trigger {
+  display: none;
+}
+
 .agro-ops-v10 .tx-actions .btn {
   opacity: 1 !important;
 }
@@ -1479,6 +1493,102 @@
 
   .agro-ops-v10 .tx-amount {
     font-size: var(--text-sm);
+  }
+}
+
+/* §19b Kebab Menu Mobile */
+@media (max-width: 768px) {
+  .agro-ops-v10 .tx-footer {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .agro-ops-v10 .tx-actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .agro-ops-v10 .tx-actions-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--border-gold);
+    color: var(--gold-4);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 180ms ease, transform 180ms ease;
+    order: 999;
+  }
+
+  .agro-ops-v10 .tx-actions-trigger i {
+    transition: transform 180ms ease;
+  }
+
+  .agro-ops-v10 .tx-actions-trigger:hover,
+  .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger {
+    background: color-mix(in srgb, var(--gold-4) 12%, transparent);
+  }
+
+  .agro-ops-v10 .tx-actions-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-width 200ms ease, opacity 150ms ease;
+  }
+
+  .agro-ops-v10 .tx-actions.is-open .tx-actions-btns {
+    max-width: 220px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .agro-ops-v10 .tx-actions .btn-icon-only,
+  .agro-ops-v10 .tx-actions [class*="btn-edit-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-delete-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-duplicate-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-transfer"],
+  .agro-ops-v10 .tx-actions [class*="btn-move-general"],
+  .agro-ops-v10 .tx-actions [class*="btn-revert"] {
+    flex-shrink: 0;
+  }
+
+  .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger i {
+    animation: spinOnce 200ms ease forwards;
+  }
+}
+
+/* Touch-first hit targets */
+@media (hover: none) and (pointer: coarse) {
+  .agro-ops-v10 .tx-actions-trigger,
+  .agro-ops-v10 .tx-actions .btn-icon-only,
+  .agro-ops-v10 .tx-actions [class*="btn-edit-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-delete-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-duplicate-facturero"],
+  .agro-ops-v10 .tx-actions [class*="btn-transfer"],
+  .agro-ops-v10 .tx-actions [class*="btn-move-general"],
+  .agro-ops-v10 .tx-actions [class*="btn-revert"] {
+    min-width: 44px !important;
+    min-height: 44px !important;
+    width: auto !important;
+    height: auto !important;
+    flex: 0 0 auto;
+  }
+
+  .agro-ops-v10 .tx-actions i,
+  .agro-ops-v10 .tx-actions svg {
+    transform: scale(0.9);
+    transform-origin: center;
   }
 }
 
