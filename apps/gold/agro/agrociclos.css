@@ -75,6 +75,8 @@
   grid-template-columns: 1fr;
   gap: 0.75rem;
   width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
   grid-column: 1 / -1;
 }
 
@@ -217,11 +219,15 @@
 .agro-cycles .cycle-actions {
   display: flex;
   gap: 0.2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .agro-cycles .cycle-action {
   width: 26px;
   height: 26px;
+  min-width: 26px;
+  min-height: 26px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-neutral);
   background: var(--bg-4);
@@ -232,6 +238,12 @@
   justify-content: center;
   cursor: pointer;
   transition: all 180ms ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.agro-cycles .cycle-action.btn-delete-crop {
+  opacity: 1 !important;
 }
 
 .agro-cycles .cycle-action:hover {
@@ -499,6 +511,15 @@
 @media (min-width: 769px) {
   .agro-cycles .cycles-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .agro-cycles .cycle-action {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
   }
 }
 

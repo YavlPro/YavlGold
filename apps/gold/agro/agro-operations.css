@@ -1299,6 +1299,9 @@
   align-items: center;
   gap: 4px;
   margin-left: auto;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 2;
 }
 
 .agro-ops-v10 .tx-actions .btn-danger-hover:hover {
@@ -1355,11 +1358,25 @@
 
   .agro-ops-v10 .tx-footer {
     grid-column: 1 / -1;
+    row-gap: 6px;
   }
 
   .agro-ops-v10 .tx-avatar {
     width: 32px;
     height: 32px;
+  }
+
+  .agro-ops-v10 .tx-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .agro-ops-v10 .tx-actions .btn-icon-only {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
   }
 }
 

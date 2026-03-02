@@ -3398,7 +3398,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const evidenceUrl = item.evidence_url_resolved || '';
     const evidenceLink = createEvidenceLinkElement(evidenceUrl);
     const whoData = getWhoData(effectiveTabName, item, rawConcept);
-    const displayConcept = whoData.concept || rawConcept;
+    let displayConcept = whoData.concept || rawConcept;
     const sourceLabel = tabName === 'otros'
         ? String(item.source_label || AGROLOG_TAB_LABELS[effectiveTabName] || effectiveTabName || '')
         : '';
@@ -3412,6 +3412,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     const isPending = effectiveTabName === 'pendientes';
     const isIncome = effectiveTabName === 'ingresos';
     const isLoss = effectiveTabName === 'perdidas';
+    const isExpense = effectiveTabName === 'gastos';
+    const isTransferLike = effectiveTabName === 'transferencias' || effectiveTabName === 'donaciones';
 
     // V9.7: Transfer state tracking
     const transferred = isPending && isPendingTransferred(item);
@@ -3455,6 +3457,23 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         txTypeClass = 'tx-pagado';
     }
 
+    const normalizedConceptToken = String(displayConcept || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    if (isPending && (!normalizedConceptToken || /(pendiente|pending)/.test(normalizedConceptToken))) {
+        displayConcept = 'Fiado';
+    } else if (isIncome && /^(pagado|cobrado|liquidado)$/.test(normalizedConceptToken)) {
+        displayConcept = 'Pagado';
+    } else if (isExpense && /^gasto$/.test(normalizedConceptToken)) {
+        displayConcept = 'Gasto';
+    } else if (isLoss && /^(perdida|perdido|fallido|cancelado)$/.test(normalizedConceptToken)) {
+        displayConcept = 'Pérdida';
+    } else if (isTransferLike && /^(transferido|donacion|donacion|transferencia)$/.test(normalizedConceptToken)) {
+        displayConcept = 'Transferencia';
+    }
+
     const transferStateToken = String(item?.transfer_state || '').toLowerCase().trim();
     const hasTransferStateMeta = transferStateToken === 'transferred'
         || transferStateToken === 'reverted'
@@ -3472,7 +3491,37 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         || !!String(item?.origin_id || '').trim();
 
     let statusVariant = 'pendiente';
-    let statusText = 'Pendiente';
+    let statusText = 'Movimiento';
+    if (isPending) {
+        statusVariant = 'pendiente';
+        statusText = 'Fiado';
+    } else if (isIncome) {
+        statusVariant = 'pagado';
+        statusText = 'Pagado';
+    } else if (isExpense) {
+        statusVariant = 'perdida';
+        statusText = 'Gasto';
+    } else if (isLoss) {
+        statusVariant = 'perdida';
+        statusText = 'Pérdida';
+    } else if (isTransferLike) {
+        statusVariant = 'transferido';
+        statusText = 'Transferencia';
+    } else if (tabName === 'otros') {
+        if (txTypeClass === 'tx-pagado') {
+            statusVariant = 'pagado';
+            statusText = 'Pagado';
+        } else if (txTypeClass === 'tx-pendiente') {
+            statusVariant = 'pendiente';
+            statusText = 'Fiado';
+        } else if (txTypeClass === 'tx-perdida' || txTypeClass === 'tx-gasto') {
+            statusVariant = 'perdida';
+            statusText = txTypeClass === 'tx-gasto' ? 'Gasto' : 'Pérdida';
+        } else if (txTypeClass === 'tx-donacion') {
+            statusVariant = 'transferido';
+            statusText = 'Transferencia';
+        }
+    }
     if (pendingReverted || incomeOrLossReverted) {
         statusVariant = 'revertido';
         statusText = 'Revertido';
@@ -3488,15 +3537,15 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     } else if (isIncome) {
         statusVariant = 'pagado';
         statusText = 'Pagado';
-    } else if (effectiveTabName === 'transferencias' || effectiveTabName === 'donaciones') {
-        statusVariant = 'transferido';
-        statusText = 'Donación';
     } else if (txTypeClass === 'tx-pagado') {
         statusVariant = 'pagado';
         statusText = 'Pagado';
     } else if (txTypeClass === 'tx-perdida') {
         statusVariant = 'perdida';
         statusText = 'Pérdida';
+    }
+    if (statusVariant === 'pendiente') {
+        statusText = 'Fiado';
     }
 
     const row = document.createElement('div');
@@ -3510,7 +3559,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     row.style.setProperty('display', 'block', 'important');
     row.style.setProperty('height', 'auto', 'important');
     row.style.setProperty('min-height', '96px', 'important');
-    row.style.setProperty('overflow', 'visible', 'important');
+    row.style.setProperty('overflow', 'hidden', 'important');
     row.style.setProperty('visibility', 'visible', 'important');
     row.style.setProperty('line-height', '1.28', 'important');
     row.dataset.id = String(itemId || '');
@@ -3602,7 +3651,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         const whoIcon = whoMeta?.icon || '•';
 
         const whoPrefix = document.createElement('span');
-        whoPrefix.textContent = `• ${whoIcon} ${whoLabel}: `;
+        whoPrefix.textContent = `${whoIcon} ${whoLabel}: `;
 
         const whoName = document.createElement('span');
         whoName.textContent = whoData.who;
@@ -3771,6 +3820,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     footer.style.setProperty('display', 'flex', 'important');
     footer.style.setProperty('grid-row', '2', 'important');
     footer.style.setProperty('grid-column', '2 / 4', 'important');
+    footer.style.setProperty('width', '100%', 'important');
     footer.style.setProperty('visibility', 'visible', 'important');
 
     const statusBadge = document.createElement('span');
@@ -3809,6 +3859,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         actionsWrap.className = 'tx-actions';
         actionsWrap.style.setProperty('display', 'flex', 'important');
         actionsWrap.style.setProperty('align-items', 'center', 'important');
+        actionsWrap.style.setProperty('flex-wrap', 'wrap', 'important');
+        actionsWrap.style.setProperty('justify-content', 'flex-end', 'important');
         actionsWrap.style.setProperty('gap', '4px', 'important');
         actionsWrap.style.setProperty('margin-left', 'auto', 'important');
 
@@ -3932,7 +3984,7 @@ function renderHistoryRowFallback(item, config) {
     row.style.setProperty('display', 'block', 'important');
     row.style.setProperty('height', 'auto', 'important');
     row.style.setProperty('min-height', '72px', 'important');
-    row.style.setProperty('overflow', 'visible', 'important');
+    row.style.setProperty('overflow', 'hidden', 'important');
     row.style.setProperty('visibility', 'visible', 'important');
 
     const layout = document.createElement('div');
@@ -14069,15 +14121,13 @@ window.deleteCrop = deleteCrop;
             font-size: 1rem;
             line-height: 1;
             cursor: pointer;
-            opacity: 0;
-            transition: all 0.3s ease;
+            opacity: 1;
+            transition: all 180ms ease;
             z-index: 10;
+            touch-action: manipulation;
         }
         .crop-card {
             position: relative;
-        }
-        .crop-card:hover .btn-delete-crop {
-            opacity: 1;
         }
         .btn-delete-crop:hover {
             background: #f87171;
@@ -14090,12 +14140,9 @@ window.deleteCrop = deleteCrop;
             right: 0.75rem;
             display: flex;
             gap: 0.5rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 10;
-        }
-        .crop-card:hover .crop-card-actions {
             opacity: 1;
+            transition: opacity 180ms ease;
+            z-index: 10;
         }
         .btn-edit-crop {
             width: 28px;
@@ -14110,6 +14157,7 @@ window.deleteCrop = deleteCrop;
             display: flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
         }
         .btn-edit-crop:hover {
             background: #C8A752;
@@ -14129,11 +14177,26 @@ window.deleteCrop = deleteCrop;
             display: flex;
             align-items: center;
             justify-content: center;
+            touch-action: manipulation;
         }
         .btn-report-crop:hover {
             background: #60a5fa;
             color: #0a0a0a;
             transform: scale(1.1);
+        }
+        @media (hover: none), (pointer: coarse) {
+            .crop-card-actions {
+                position: static;
+                margin-top: 0.5rem;
+                justify-content: flex-end;
+                opacity: 1;
+            }
+            .btn-edit-crop,
+            .btn-delete-crop,
+            .btn-report-crop {
+                width: 34px;
+                height: 34px;
+            }
         }
     `;
     document.head.appendChild(styles);
