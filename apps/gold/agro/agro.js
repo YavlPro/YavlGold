@@ -13094,11 +13094,18 @@ function setupHeaderIdentity() {
 }
 
 function moveFooterToEnd() {
-    const footer = document.querySelector('footer, .footer, #footer');
+    const footer = document.getElementById('agro-module-footer')
+        || document.querySelector('.app-container > footer.footer');
     if (!footer) return;
 
-    const container = document.querySelector('#app') || document.body;
-    container.appendChild(footer);
+    const container = footer.closest('.app-container')
+        || document.querySelector('.app-container')
+        || document.querySelector('#app')
+        || document.body;
+
+    if (footer.parentElement !== container || footer !== container.lastElementChild) {
+        container.appendChild(footer);
+    }
     footer.style.marginTop = 'auto';
 }
 
