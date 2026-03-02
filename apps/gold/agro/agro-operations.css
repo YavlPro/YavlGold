@@ -1320,17 +1320,18 @@
   gap: 6px;
   margin-left: auto;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   touch-action: manipulation;
   position: relative;
   z-index: 2;
-  width: 100%;
+  width: auto;
   max-width: 100%;
-  overflow: hidden;
+  min-width: 0;
+  overflow: visible;
 }
 
 .agro-ops-v10 .tx-actions-trigger {
-  display: inline-flex;
+  display: none;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -1362,12 +1363,26 @@
   background: color-mix(in srgb, var(--gold-4) 12%, transparent);
 }
 
-.agro-ops-v10 .tx-actions-btns {
-  display: none !important;
+.agro-ops-v10 .tx-actions > .tx-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.agro-ops-v10 .tx-actions > .tx-actions-btns::-webkit-scrollbar {
+  display: none;
 }
 
 .agro-ops-v10 .tx-actions .btn {
   opacity: 1 !important;
+  flex-shrink: 0;
 }
 
 .agro-ops-v10 .tx-status.pendiente {
@@ -1583,6 +1598,19 @@
     word-break: break-word;
   }
 
+  .tx-actions-menu-panel {
+    max-width: min(92vw, 320px);
+  }
+}
+
+@media (max-width: 480px) {
+  .tx-actions-menu-panel {
+    max-width: calc(100vw - 20px);
+  }
+}
+
+/* Touch-first hit targets */
+@media (hover: none) and (pointer: coarse) {
   .agro-ops-v10 .tx-footer {
     flex-direction: column;
     align-items: stretch;
@@ -1601,17 +1629,17 @@
     margin-left: 0;
     justify-content: flex-end;
     align-self: flex-end;
-    flex-wrap: wrap;
-    gap: 6px;
-    overflow: hidden;
+    flex-wrap: nowrap;
+    overflow: visible;
   }
 
   .agro-ops-v10 .tx-actions-trigger {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    min-height: 34px;
-    padding: 0;
+    display: inline-flex !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
     border-radius: 50%;
   }
 
@@ -1619,38 +1647,12 @@
     display: none;
   }
 
-  .agro-ops-v10 .tx-actions .btn-icon-only,
-  .agro-ops-v10 .tx-actions [class*="btn-edit-facturero"],
-  .agro-ops-v10 .tx-actions [class*="btn-delete-facturero"],
-  .agro-ops-v10 .tx-actions [class*="btn-duplicate-facturero"],
-  .agro-ops-v10 .tx-actions [class*="btn-transfer"],
-  .agro-ops-v10 .tx-actions [class*="btn-move-general"],
-  .agro-ops-v10 .tx-actions [class*="btn-revert"] {
-    flex-shrink: 0;
+  .agro-ops-v10 .tx-actions > .tx-actions-btns {
+    display: none !important;
   }
 
   .agro-ops-v10 .tx-actions.is-open .tx-actions-trigger i {
     animation: spinOnce 200ms ease forwards;
-  }
-
-  .tx-actions-menu-panel {
-    max-width: min(92vw, 320px);
-  }
-}
-
-@media (max-width: 480px) {
-  .tx-actions-menu-panel {
-    max-width: calc(100vw - 20px);
-  }
-}
-
-/* Touch-first hit targets */
-@media (hover: none) and (pointer: coarse) {
-  .agro-ops-v10 .tx-actions-trigger {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
   }
 
   .tx-actions-menu-panel .tx-actions-btns .btn {

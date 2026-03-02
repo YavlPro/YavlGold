@@ -10677,3 +10677,47 @@ Hallazgo raíz del lote actual:
   - confirmar que el menú se cierra tras ejecutar cada acción.
 - Touch:
   - validar hit-target cómodo (>=44px) en trigger y opciones del menú en dispositivos táctiles.
+
+## 🆕 SESIÓN: GATE 0 — Conflicto Desktop inline vs Touch kebab (2026-03-02)
+
+### Diagnóstico
+- En `apps/gold/agro/agro-operations.css` el bloque base de `.tx-actions` quedó forzado a `width: 100%` + `overflow: hidden`, lo que rompe alineación natural en desktop y puede desordenar el footer de la card.
+- El mini-menú flotante dejó `display` del trigger y de `tx-actions-btns` pensado para un modo único, pero el objetivo UX real es dual: desktop inline / touch kebab.
+- Persisten reglas móviles por `max-width` y reglas touch por `pointer: coarse` tocando la misma zona del layout de acciones; esto abre puertas a cascada inesperada (trigger oculto o acciones fuera de flujo según contexto).
+
+### Plan
+- Consolidar reglas de acciones con una sola fuente de verdad:
+  - Base (desktop): acciones inline visibles, trigger oculto.
+  - Touch real (`hover:none` + `pointer:coarse`): trigger visible, acciones inline ocultas en card.
+- Quitar en base los forzados que causan desorden (`width:100%`, `overflow:hidden`) y restaurar layout inline estable dentro de `tx-footer`.
+- Mantener el panel flotante singleton sin tocar lógica de negocio en JS; revisar solo estructura de inserción para confirmar que trigger permanece dentro de `.tx-actions` en cada card.
+- Validar build y documentar smoke tests desktop/touch.
+
+### Riesgos / Mitigación
+- Riesgo: romper comportamiento del menú flotante al cambiar visibilidad de contenedores.
+  Mitigación: ocultar solo `tx-actions-btns` inline en touch con selector directo de hijo, dejando intacto el nodo cuando se mueve al panel.
+- Riesgo: regresión desktop por cascada previa.
+  Mitigación: simplificar a dos capas (base + touch) y eliminar contradicciones en selectores de acciones.
+
+### Evidencia esperada
+- Desktop: botones inline ordenados dentro de cada tx-card, sin desbordes.
+- Touch: solo `⋮` visible en la card; menú flotante abre/cierra correcto.
+- Sin CSS huérfano ni contradicción activa en reglas de acciones.
+
+### Cierre breve
+- `apps/gold/agro/agro-operations.css` quedó consolidado para acciones en dos capas:
+  - Base desktop: `.tx-actions-btns` visible inline y `.tx-actions-trigger` oculto.
+  - Touch real: `.tx-actions-trigger` visible y `.tx-actions-btns` inline oculto (se muestra en panel flotante al mover nodo).
+- Se retiró el forzado conflictivo de desktop (`.tx-actions` con `width: 100%`/`overflow: hidden`) y se restauró alineación estable dentro de la card.
+- Se confirmó estructura en `agro.js`: trigger insertado dentro de `.tx-actions` (contenido en `tx-footer` de cada `tx-card`), sin cambios de lógica de negocio.
+- Build oficial ejecutado: `pnpm build:gold` -> PASS.
+
+### Pruebas manuales recomendadas
+- Desktop (mouse/trackpad):
+  - abrir Fiados/Pagados/Pérdidas y validar acciones inline alineadas dentro de la card,
+  - confirmar que `⋮` no aparece en desktop y que no hay desborde horizontal.
+- Touch (iPhone SE 375px / Pixel 7 412px):
+  - validar que solo aparece `⋮` por card,
+  - abrir menú, ejecutar acción y confirmar cierre automático,
+  - cerrar con click fuera, `Esc`, scroll y resize,
+  - confirmar hit-target cómodo (>=44px).
