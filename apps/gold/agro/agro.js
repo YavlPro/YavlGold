@@ -3991,7 +3991,6 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             iconClass: 'fa fa-trash'
         }));
 
-        let lastPointerToggleTs = 0;
         const handleTriggerToggle = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -4006,17 +4005,20 @@ function renderHistoryRow(tabName, item, config, options = {}) {
 
         trigger.addEventListener('pointerdown', (e) => {
             if (e.button !== undefined && e.button !== 0) return;
-            lastPointerToggleTs = Date.now();
+            e.preventDefault();
+            e.stopPropagation();
             handleTriggerToggle(e);
         });
 
-        // Keyboard activation on button emits click (without pointerdown).
+        // Click handler only for keyboard activation (Enter/Space => detail === 0).
         trigger.addEventListener('click', (e) => {
-            if (Date.now() - lastPointerToggleTs < 350) {
+            if (e.detail !== 0) {
                 e.preventDefault();
                 e.stopPropagation();
                 return;
             }
+            e.preventDefault();
+            e.stopPropagation();
             handleTriggerToggle(e);
         });
 
