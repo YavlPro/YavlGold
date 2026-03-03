@@ -4946,7 +4946,18 @@ async function exportAgroLog(tabName) {
         if (error) { console.error('[AgroLog] fetch error:', error); alert('Error cargando datos.'); return; }
         const items = Array.isArray(data) ? data : [];
         if (items.length === 0) { alert('No hay registros para exportar.'); return; }
+        const usdField = 'monto_usd';
         const hasSplitInfo = items.some((item) => !!formatSplitMetaSummary(item, tabName, { mode: 'md' }));
+        const suspiciousUsdCount = items.reduce((acc, item) => (
+            acc + (
+                isPotentialUsdInflatedRecord({
+                    currency: item?.currency,
+                    amount: item?.[config.amountField],
+                    amountUsd: item?.[usdField]
+                }) ? 1 : 0
+            )
+        ), 0);
+        const hasSuspiciousUsdRows = suspiciousUsdCount > 0;
 
         // Build Markdown
         const tabLabel = AGROLOG_TAB_LABELS[tabName] || tabName;
@@ -4962,11 +4973,13 @@ async function exportAgroLog(tabName) {
         md += `> **Sistema:** YavlGold\n\n`;
 
         // Summary — always in USD
-        const usdField = 'monto_usd';
         const totalMontoUsd = items.reduce((s, it) => s + (Number(it[usdField]) || Number(it[config.amountField]) || 0), 0);
         md += `## 📊 Resumen\n`;
         md += `- **Total Registros:** ${items.length}\n`;
         md += `- **Monto Total (USD):** $${totalMontoUsd.toFixed(2)}\n\n`;
+        if (hasSuspiciousUsdRows) {
+            md += `- ⚠️ **Posible USD inflado:** ${suspiciousUsdCount} registro(s) con monto USD inusualmente alto.\n\n`;
+        }
         md += `---\n\n`;
 
         // Table header — build dynamic columns
@@ -4980,6 +4993,10 @@ async function exportAgroLog(tabName) {
         if (hasUnits) { header += ' | Cantidad'; separator += '|---------'; }
         header += ' | Moneda | Monto | USD | Evidencia';
         separator += '|------:|------:|----:|-----------';
+        if (hasSuspiciousUsdRows) {
+            header += ' | Alerta';
+            separator += '|-------';
+        }
         if (hasSplitInfo) {
             header += ' | Split';
             separator += '|------';
@@ -5000,6 +5017,11 @@ async function exportAgroLog(tabName) {
             const amount = Number(item[config.amountField] || 0).toFixed(2);
             const currency = item.currency || 'USD';
             const amtUsd = Number(item[usdField] || item[config.amountField] || 0).toFixed(2);
+            const suspiciousUsd = isPotentialUsdInflatedRecord({
+                currency,
+                amount: item?.[config.amountField],
+                amountUsd: item?.[usdField]
+            });
 
             // Units
             let unitText = '';
@@ -5022,6 +5044,9 @@ async function exportAgroLog(tabName) {
             if (whoLabel) row += ` | ${who || '-'}`;
             if (hasUnits) row += ` | ${unitText}`;
             row += ` | ${currency} | ${amount} | $${amtUsd} | ${evidenceText}`;
+            if (hasSuspiciousUsdRows) {
+                row += ` | ${suspiciousUsd ? '⚠️ posible USD inflado' : '-'}`;
+            }
             if (hasSplitInfo) row += ` | ${splitText}`;
             row += ' |';
             md += row + '\n';
@@ -5551,6 +5576,14 @@ async function saveEditModal() {
         const editCurrency = _editCurrency || 'USD';
         const editRate = _editExchangeRate || 1;
         const editMontoUsd = editCurrency === 'USD' ? editedMonto : convertToUSD(editedMonto, editCurrency, editRate);
+        if (!confirmHighUsdAmountGuardrail({
+            currency: editCurrency,
+            amount: editedMonto,
+            amountUsd: editMontoUsd,
+            contextLabel: 'esta edición'
+        })) {
+            return;
+        }
 
         const updateData = {
             [config.conceptField]: conceptForSave,
@@ -7862,6 +7895,40 @@ function normalizeMoneyCurrency(value) {
     if (token === 'COP' || token === 'COL' || token === 'PESO' || token === 'PESOS') return 'COP';
     if (SUPPORTED_CURRENCIES[token]) return token;
     return null;
+}
+
+const USD_INFLATION_GUARDRAIL_MIN = 1000;
+
+function isPotentialUsdInflatedRecord({ currency, amount, amountUsd }) {
+    const code = normalizeMoneyCurrency(currency) || String(currency || '').trim().toUpperCase();
+    if (code !== 'USD') return false;
+
+    const amountNum = toSafeLocaleNumber(amount);
+    if (amountNum === null || amountNum < USD_INFLATION_GUARDRAIL_MIN) return false;
+
+    const usdNum = toSafeLocaleNumber(amountUsd);
+    if (usdNum === null) return true;
+
+    const delta = Math.abs(usdNum - amountNum);
+    const epsilon = Math.max(0.01, Math.abs(amountNum) * 0.0001);
+    return delta <= epsilon;
+}
+
+function confirmHighUsdAmountGuardrail({ currency, amount, amountUsd, contextLabel = 'este registro' }) {
+    if (!isPotentialUsdInflatedRecord({ currency, amount, amountUsd })) return true;
+    if (typeof window === 'undefined' || typeof window.confirm !== 'function') return true;
+
+    const amountNum = toSafeLocaleNumber(amount) || 0;
+    const amountLabel = amountNum.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    return window.confirm(
+        `⚠️ Posible USD inflado\n` +
+        `Vas a guardar ${amountLabel} USD en ${contextLabel}.\n` +
+        `Si el monto real está en COP/VES, cambia la moneda antes de continuar.\n\n` +
+        `¿Confirmas que el monto está realmente en USD?`
+    );
 }
 
 function resolveMoneyAmountFromRow(row, amountFields = []) {

@@ -74,7 +74,40 @@ const UNIT_OPTIONS = [
 ];
 
 const DEFAULT_WIZARD_CURRENCY = 'COP';
+const USD_WIZARD_GUARDRAIL_MIN = 1000;
 const wizardMissingColumnsCache = new Map();
+
+function isPotentialInflatedUsdWizard(currency, amount, amountUsd) {
+    const code = String(currency || '').trim().toUpperCase();
+    if (code !== 'USD') return false;
+
+    const amountNum = Number(amount);
+    if (!Number.isFinite(amountNum) || amountNum < USD_WIZARD_GUARDRAIL_MIN) return false;
+
+    const usdNum = Number(amountUsd);
+    if (!Number.isFinite(usdNum)) return true;
+
+    const delta = Math.abs(usdNum - amountNum);
+    const epsilon = Math.max(0.01, Math.abs(amountNum) * 0.0001);
+    return delta <= epsilon;
+}
+
+function confirmWizardUsdGuardrail(currency, amount, amountUsd, contextLabel = 'este movimiento') {
+    if (!isPotentialInflatedUsdWizard(currency, amount, amountUsd)) return true;
+    if (typeof window === 'undefined' || typeof window.confirm !== 'function') return true;
+
+    const amountNum = Number(amount) || 0;
+    const amountLabel = amountNum.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+    return window.confirm(
+        `⚠️ Posible USD inflado\n` +
+        `Vas a registrar ${amountLabel} USD en ${contextLabel}.\n` +
+        `Si el monto real está en COP/VES, cambia la moneda antes de guardar.\n\n` +
+        `¿Confirmas que el monto está realmente en USD?`
+    );
+}
 
 function getWizardMissingColumns(tableName) {
     const key = String(tableName || '').trim();
@@ -1589,6 +1622,11 @@ export async function openAgroWizard(tabName, deps) {
                 : ((effectiveRate && effectiveRate > 0)
                     ? convertToUSD(montoNum, currencyCode, effectiveRate)
                     : null);
+            if (!confirmWizardUsdGuardrail(currencyCode, montoNum, effectiveUsd, meta.title || 'este movimiento')) {
+                btn.disabled = false;
+                btn.textContent = '✅ REGISTRAR';
+                return;
+            }
 
             const insertData = {
                 user_id: user.id,
