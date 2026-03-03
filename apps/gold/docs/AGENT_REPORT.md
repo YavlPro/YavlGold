@@ -11422,6 +11422,42 @@ pnpm build:gold
   - `pnpm build:gold`
   - Resultado: **PASS**
 
+## 🆕 SESIÓN: GATE 0 — Header Agro usa cliente Supabase canónico (2026-03-03)
+
+### Diagnóstico
+
+- Síntoma persistente: tras refresh, el header mostraba fallback (`Agricultor`) aunque `agro_farmer_profile.display_name` existiera.
+- Causa técnica:
+  - `resolveHeaderDisplayName()` dependía de `authClient?.supabase`.
+  - En runtime, ese objeto no estaba disponible de forma consistente, por lo que la consulta a `agro_farmer_profile` no corría y caía al fallback.
+
+### Plan aplicado
+
+1. Desacoplar `resolveHeaderDisplayName()` de `authClient?.supabase`.
+2. Resolver cliente Supabase desde fuente canónica del proyecto (`supabase-config`) con fallbacks seguros.
+3. Validar build.
+
+### Cambios implementados
+
+- Archivo: `apps/gold/agro/agro.js`
+  - Nuevo helper: `getAgroSupabaseClient()`
+    - prioridad: `import supabase` (canónico) -> `globalThis.AuthClient.supabase` -> `globalThis.supabase` -> import dinámico de `../assets/js/config/supabase-config.js`.
+  - `resolveHeaderDisplayName(user)` ahora usa `await getAgroSupabaseClient()` y consulta `agro_farmer_profile.display_name` sin depender de `window/AuthClient`.
+  - `applyHeaderIdentity()` actualizado para invocar `resolveHeaderDisplayName(user)` (sin segundo parámetro).
+
+### Comandos ejecutados
+
+```powershell
+rg -n "resolveHeaderDisplayName|getAgroSupabaseClient|applyHeaderIdentity" apps/gold/agro/agro.js
+pnpm build:gold
+```
+
+### Validación
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
+
 ## 🆕 SESIÓN: GATE 0 — KPIs simétricos en Dashboard Agro (2026-03-03)
 
 ### Diagnóstico

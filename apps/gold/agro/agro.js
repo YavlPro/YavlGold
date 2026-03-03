@@ -14110,9 +14110,25 @@ function renderHeaderAvatar(avatarEl, avatarUrl, altText) {
     img.src = safeUrl;
 }
 
-async function resolveHeaderDisplayName(user, authClient) {
+async function getAgroSupabaseClient() {
+    if (globalThis?.supabase?.from) return globalThis.supabase;
+    if (globalThis?.AuthClient?.supabase?.from) return globalThis.AuthClient.supabase;
+
+    try {
+        const mod = await import('../assets/js/config/supabase-config.js');
+        if (mod?.supabase?.from) return mod.supabase;
+        if (mod?.default?.from) return mod.default;
+        if (mod?.default?.supabase?.from) return mod.default.supabase;
+    } catch (_error) {
+        // Ignore dynamic import fallback failures.
+    }
+
+    return null;
+}
+
+async function resolveHeaderDisplayName(user) {
     const fallback = String(user?.user_metadata?.full_name || user?.email || 'Agricultor').trim() || 'Agricultor';
-    const supabaseClient = authClient?.supabase;
+    const supabaseClient = await getAgroSupabaseClient();
     if (!supabaseClient?.from || !user?.id) return fallback;
 
     try {
@@ -14143,7 +14159,7 @@ async function applyHeaderIdentity() {
     const user = await resolveAuthUser(authClient);
     if (!user) return;
 
-    const displayName = await resolveHeaderDisplayName(user, authClient);
+    const displayName = await resolveHeaderDisplayName(user);
     if (nameEl) {
         nameEl.textContent = displayName;
     }
