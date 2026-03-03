@@ -507,9 +507,37 @@
 }
 
 /* ==============================================
-   14. DESKTOP OVERRIDE - Kill inline buttons
-   Legacy agro-operations.css shows buttons inline
-   at >=1025px - force dropdown pattern everywhere
+   14. TRIGGER ANCHORING - Absolute on card
+   Takes trigger OUT of footer flow. Guaranteed
+   position at ALL breakpoints, ALL tabs.
+   ============================================== */
+.agro-ops-v10 .tx-card {
+  position: relative !important;
+  padding: 0.5rem 3rem 0.5rem 0.75rem !important;
+  margin-bottom: 0.25rem;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.agro-ops-v10 .tx-actions {
+  position: absolute !important;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  z-index: 10;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center;
+}
+
+/* Footer: only meta remains in flow */
+.agro-ops-v10 .tx-footer {
+  justify-content: flex-start !important;
+  flex-wrap: nowrap !important;
+  flex-direction: row !important;
+}
+
+/* ==============================================
+   15. KILL INLINE BUTTONS - Dropdown only
    ============================================== */
 .agro-ops-v10 .tx-actions > .tx-actions-btns {
   display: none !important;
@@ -546,14 +574,8 @@
 }
 
 /* ==============================================
-   15. COMPACT DENSITY - Reduce card size globally
+   16. COMPACT DENSITY
    ============================================== */
-.agro-ops-v10 .tx-card {
-  padding: 0.5rem 0.75rem !important;
-  margin-bottom: 0.25rem;
-  border-radius: var(--radius-sm, 8px);
-}
-
 .agro-ops-v10 .tx-layout {
   gap: 0.5rem;
   align-items: center;
@@ -602,7 +624,6 @@
   padding: 0.1rem 0.4rem;
 }
 
-/* Trigger: compact for desktop, touch override stays */
 .agro-ops-v10 .tx-actions-trigger {
   min-width: 34px;
   min-height: 34px;
@@ -613,7 +634,7 @@
 }
 
 /* ==============================================
-   16. DAY HEADERS - Clear separation from card dates
+   17. DAY HEADERS - Visual separation from card dates
    ============================================== */
 .agro-ops-v10 .facturero-day-header,
 .agro-ops-v10 .date-divider {
@@ -634,11 +655,15 @@
 }
 
 /* ==============================================
-   17. COMPACT RESPONSIVE OVERRIDES
+   18. RESPONSIVE
    ============================================== */
 @media (max-width: 768px) {
   .agro-ops-v10 .tx-card {
-    padding: 0.4rem 0.5rem !important;
+    padding: 0.4rem 2.75rem 0.4rem 0.5rem !important;
+  }
+
+  .agro-ops-v10 .tx-actions {
+    right: 0.35rem;
   }
 
   .agro-ops-v10 .tx-layout {
@@ -658,13 +683,6 @@
   .agro-ops-v10 .tx-amount {
     font-size: 0.75rem;
   }
-
-  .agro-ops-v10 .tx-actions-trigger {
-    min-width: 36px;
-    min-height: 36px;
-    width: 36px;
-    height: 36px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -673,7 +691,7 @@
   }
 
   .agro-ops-v10 .tx-card {
-    padding: 0.35rem 0.5rem !important;
+    padding: 0.35rem 2.75rem 0.35rem 0.5rem !important;
   }
 }
 
@@ -682,6 +700,10 @@
   .agro-ops-v10 .tx-actions-trigger {
     min-width: 44px !important;
     min-height: 44px !important;
+  }
+
+  .agro-ops-v10 .tx-card {
+    padding-right: 3.5rem !important;
   }
 
   .agro-ops-v10 .tx-actions-btns button {
