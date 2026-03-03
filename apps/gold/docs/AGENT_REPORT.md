@@ -11281,3 +11281,97 @@ Causa técnica más probable del “tap no llega” (con selectores exactos):
 - Build oficial ejecutado:
   - `pnpm build:gold`
   - Resultado: PASS
+
+## 🆕 SESIÓN: GATE 0 — Badge Auditoría USD + Compactación KPI Dashboard (2026-03-03)
+
+### Diagnóstico (pre-implementación)
+
+1) Facturero (anomalías USD):
+- No existe UI visible en `Centro de Operaciones` para consultar la vista `public.agro_usd_anomaly_audit`.
+- `agro.js` ya tiene guardrails de USD inflado y export warning, pero falta observabilidad operativa (badge + listado read-only).
+- Hook seguro detectado para refresco: `initFactureroHistories()` (tras log `V9.6.3`) y `refreshFactureroHistory(...)`.
+
+2) KPI Dashboard Agro (densidad):
+- Los cards KPI de agenda (`.agro-dash-card`) están en `apps/gold/agro/index.html` y sus estilos reales viven en `apps/gold/agro/agro-dashboard.css`.
+- La grilla `.agro-dash-grid` estira tarjetas y empuja los CTA al fondo visual, generando tarjetas más altas de lo deseado.
+
+3) Contexto MPA/Auth/Supabase (verificación rápida):
+- Entradas/routing MPA y wiring auth/supabase permanecen sin cambios funcionales para esta tarea.
+- El ajuste será no invasivo: UI read-only + CSS de densidad, sin tocar lógica core de movimientos.
+
+### Plan quirúrgico
+
+1. `apps/gold/agro/agro.js`
+- Agregar helpers de auditoría USD:
+  - `ensureUsdAuditUI()`
+  - `refreshUsdAuditBadge()`
+  - `openUsdAuditModal()`
+  - fetch count/list desde `agro_usd_anomaly_audit` (solo lectura).
+- Enganchar refresh del badge tras inicialización de historiales y en refresh de historial (con debounce).
+
+2. `apps/gold/agro/agro.css`
+- Agregar estilos del badge y modal de auditoría USD (scoped a finanzas/agro), sin alterar hooks de Facturero.
+
+3. `apps/gold/agro/agro-dashboard.css`
+- Compactar tarjetas KPI:
+  - reducir paddings/gaps/altura percibida,
+  - evitar estiramiento vertical de la grilla,
+  - subir visualmente los botones de acción sin romper mobile.
+
+4. Validación
+- Build oficial: `pnpm build:gold`.
+- QA manual: badge visible/actualizable, modal read-only, estados 0/warning/critical, KPI cards compactas.
+
+### Comandos de diagnóstico ejecutados
+
+```powershell
+git status --short --branch
+rg -n "V9\\.6\\.3|initFactureroHistories|refreshFactureroHistory|FACTURERO_CONFIG|tx-filter-bar" apps/gold/agro/agro.js
+rg -n "agro-dash-card|agro-dash-grid|agro-dash-card__footer|agro-dash-card__action" apps/gold/agro/index.html apps/gold/agro/agro-dashboard.css
+rg -n "financial-operations-header|financial-operations-actions|btn-privacy-toggle|ops-total-display" apps/gold/agro/agro.css
+Get-Content apps/gold/agro/agro.js / apps/gold/agro/index.html / apps/gold/agro/agro.css / apps/gold/agro/agro-dashboard.css (rangos relevantes)
+```
+
+### Resultado de implementación (aplicado)
+
+1) `apps/gold/agro/agro.js`
+- Se agrego panel de auditoria USD en Facturero (solo lectura):
+  - badge `#usd-audit-badge` dentro de `.financial-operations-actions`
+  - modal `#modal-usd-audit` con listado de anomalias
+  - helpers: `ensureUsdAuditUI`, `refreshUsdAuditBadge`, `openUsdAuditModal`, `fetchUsdAnomalyCount`, `fetchUsdAnomalyList`
+- Estado visual del badge:
+  - `is-ok` (0)
+  - `is-warning` (1-2)
+  - `is-critical` (>=3 o severity critical)
+  - `is-error` (fallo de consulta)
+- Hooks de refresco no invasivos:
+  - `initFactureroHistories()` -> `scheduleUsdAuditBadgeRefresh(0)`
+  - `refreshFactureroHistory(...).finally` -> `scheduleUsdAuditBadgeRefresh()`
+
+2) `apps/gold/agro/agro.css`
+- Estilos nuevos para:
+  - `.usd-audit-badge` + variantes de estado
+  - `.usd-audit-modal` (backdrop/dialog/header/content/footer)
+  - `.usd-audit-table`, `.usd-audit-severity`, estados vacio/error
+- Sin cambios en hooks de cards/acciones de Facturero.
+
+3) `apps/gold/agro/agro-dashboard.css`
+- Compactacion de KPI cards (`.agro-dash-card`):
+  - menor `gap` de grid, `align-items:start`
+  - menor padding en header/body/footer
+  - body no estirado (`flex: 0 0 auto`)
+  - CTA menos alto en desktop y full-width en mobile
+  - ajustes de `weather-temp` y `loc-btn` para densidad
+
+4) `apps/gold/vite.config.js`
+- Ajuste de build por limpieza legacy:
+  - removida entrada huérfana `creacion: 'creacion.html'`
+  - motivo: `creacion.html` fue eliminado y rompía `vite build`.
+
+### Validación final
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado final: **PASS**
+- Nota:
+  - La primera corrida fallo por entrada MPA huérfana (`creacion.html`), corregida en `vite.config.js`.

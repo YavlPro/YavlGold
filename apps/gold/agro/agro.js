@@ -79,6 +79,11 @@ const USE_V10_HISTORY = true;
 const AGRO_FOCUS_PRIMARY_KEYS = ['agenda', 'activeCrops', 'ops'];
 const AGRO_FOCUS_EXTRA_KEYS = ['lunar', 'markets', 'stats', 'roi', 'agroRepo'];
 const AGRO_SOCIAL_OPEN_BUTTON_ID = 'btn-open-agro-social';
+const USD_AUDIT_VIEW = 'agro_usd_anomaly_audit';
+const USD_AUDIT_LIMIT = 50;
+const USD_AUDIT_BADGE_ID = 'usd-audit-badge';
+const USD_AUDIT_MODAL_ID = 'modal-usd-audit';
+const USD_AUDIT_REFRESH_DEBOUNCE_MS = 420;
 const BUYER_PROFILE_CLICKABLE_SCOPE_SELECTOR = [
     '#recent-transactions-container',
     '#income-recent-container',
@@ -102,6 +107,10 @@ let agroFocusModeBound = false;
 let buyerProfileClickHandlersBound = false;
 let agroSocialButtonBound = false;
 const revertTransferInFlightLocks = new Set();
+let usdAuditRefreshTimer = null;
+let usdAuditRefreshInFlight = false;
+let usdAuditRefreshQueued = false;
+let usdAuditEscHandlerBound = false;
 
 function isCropEmojiToken(token) {
     const value = String(token || '').trim();
@@ -3111,6 +3120,351 @@ function applyHistoryFilter(parent, list) {
     });
 }
 
+function formatUsdAuditDate(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return 'N/D';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return formatDate(raw);
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return raw;
+    return parsed.toLocaleString('es-VE', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatUsdAuditSource(sourceTable) {
+    const raw = String(sourceTable || '').trim().toLowerCase();
+    if (!raw) return 'N/D';
+    const clean = raw.replace(/^agro_/, '');
+    const labelMap = {
+        income: 'Pagados',
+        pending: 'Fiados',
+        expenses: 'Gastos',
+        losses: 'Perdidas',
+        transfers: 'Donaciones'
+    };
+    return labelMap[clean] || clean;
+}
+
+function formatUsdAuditSeverity(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return 'warning';
+    if (raw === 'critical') return 'critical';
+    if (raw === 'warning') return 'warning';
+    return 'warning';
+}
+
+function formatUsdAuditAmount(value, currencyCode = 'USD') {
+    const amount = toSafeLocaleNumber(value);
+    if (amount === null) return 'N/D';
+    const code = normalizeMoneyCurrency(currencyCode) || 'USD';
+    if (code === 'COP' || code === 'VES') return formatMoneyByCode(amount, code);
+    return formatMoneyByCode(amount, 'USD');
+}
+
+function closeUsdAuditModal() {
+    const modal = document.getElementById(USD_AUDIT_MODAL_ID);
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function renderUsdAuditMessage(contentEl, message, options = {}) {
+    if (!contentEl) return;
+    const isError = options.isError === true;
+    contentEl.replaceChildren();
+    const box = document.createElement('div');
+    box.className = isError ? 'usd-audit-empty is-error' : 'usd-audit-empty';
+    box.textContent = message;
+    contentEl.appendChild(box);
+}
+
+function renderUsdAuditRows(contentEl, rows) {
+    if (!contentEl) return;
+    contentEl.replaceChildren();
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+        renderUsdAuditMessage(contentEl, 'No hay anomalias USD activas.');
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'usd-audit-table';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    ['Fecha', 'Concepto', 'Origen', 'Monto', 'USD', 'Severidad', 'Etiqueta'].forEach((label) => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+
+    const tbody = document.createElement('tbody');
+    rows.forEach((row) => {
+        const tr = document.createElement('tr');
+
+        const dateCell = document.createElement('td');
+        dateCell.textContent = formatUsdAuditDate(row?.fecha || row?.created_at);
+        tr.appendChild(dateCell);
+
+        const conceptCell = document.createElement('td');
+        conceptCell.textContent = String(row?.concepto || 'N/D');
+        tr.appendChild(conceptCell);
+
+        const sourceCell = document.createElement('td');
+        sourceCell.textContent = formatUsdAuditSource(row?.source_table);
+        tr.appendChild(sourceCell);
+
+        const amountCell = document.createElement('td');
+        amountCell.textContent = formatUsdAuditAmount(row?.monto, row?.currency);
+        tr.appendChild(amountCell);
+
+        const usdCell = document.createElement('td');
+        usdCell.textContent = formatUsdAuditAmount(row?.monto_usd, 'USD');
+        tr.appendChild(usdCell);
+
+        const severityCell = document.createElement('td');
+        const sev = formatUsdAuditSeverity(row?.severity);
+        const sevBadge = document.createElement('span');
+        sevBadge.className = `usd-audit-severity is-${sev}`;
+        sevBadge.textContent = sev === 'critical' ? 'CRITICAL' : 'WARNING';
+        severityCell.appendChild(sevBadge);
+        tr.appendChild(severityCell);
+
+        const labelCell = document.createElement('td');
+        labelCell.textContent = row?.probable_mislabel ? 'Probable mal etiqueta' : '-';
+        tr.appendChild(labelCell);
+
+        tbody.appendChild(tr);
+    });
+
+    table.append(thead, tbody);
+    contentEl.appendChild(table);
+}
+
+function paintUsdAuditBadgeState(badgeEl, state) {
+    if (!badgeEl) return;
+    badgeEl.classList.remove('is-loading', 'is-ok', 'is-warning', 'is-critical', 'is-error');
+
+    if (state === 'error') {
+        badgeEl.classList.add('is-error');
+        badgeEl.textContent = 'Anomalias USD: !';
+        badgeEl.title = 'No se pudo consultar la auditoria USD.';
+        return;
+    }
+
+    if (state === 'critical') {
+        badgeEl.classList.add('is-critical');
+        return;
+    }
+
+    if (state === 'warning') {
+        badgeEl.classList.add('is-warning');
+        return;
+    }
+
+    badgeEl.classList.add('is-ok');
+}
+
+function ensureUsdAuditUI() {
+    const actionsHost = document.querySelector('.financial-operations-actions');
+    if (!actionsHost) return null;
+
+    let badge = document.getElementById(USD_AUDIT_BADGE_ID);
+    if (!badge) {
+        badge = document.createElement('button');
+        badge.type = 'button';
+        badge.id = USD_AUDIT_BADGE_ID;
+        badge.className = 'btn-privacy-toggle usd-audit-badge is-loading';
+        badge.textContent = 'Anomalias USD: --';
+        badge.title = 'Abrir auditoria de anomalias USD';
+        badge.setAttribute('aria-haspopup', 'dialog');
+        badge.setAttribute('aria-controls', USD_AUDIT_MODAL_ID);
+        actionsHost.appendChild(badge);
+    }
+
+    let modal = document.getElementById(USD_AUDIT_MODAL_ID);
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = USD_AUDIT_MODAL_ID;
+        modal.className = 'usd-audit-modal';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML = `
+            <div class="usd-audit-modal__backdrop" data-usd-audit-close="1"></div>
+            <div class="usd-audit-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="usd-audit-title">
+                <header class="usd-audit-modal__header">
+                    <h3 class="usd-audit-modal__title" id="usd-audit-title">Anomalias USD</h3>
+                    <button type="button" class="usd-audit-modal__close" data-usd-audit-close="1" aria-label="Cerrar">x</button>
+                </header>
+                <p class="usd-audit-modal__meta" id="usd-audit-meta">Cargando auditoria...</p>
+                <div class="usd-audit-modal__content" id="usd-audit-content"></div>
+                <footer class="usd-audit-modal__footer">
+                    <button type="button" class="btn-privacy-toggle usd-audit-refresh-btn" id="usd-audit-refresh-btn">
+                        Actualizar
+                    </button>
+                </footer>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    if (badge.dataset.bound !== '1') {
+        badge.addEventListener('click', () => {
+            openUsdAuditModal();
+        });
+        badge.dataset.bound = '1';
+    }
+
+    if (modal.dataset.bound !== '1') {
+        modal.addEventListener('click', (event) => {
+            if (event.target.closest('[data-usd-audit-close="1"]')) {
+                closeUsdAuditModal();
+            }
+        });
+        const refreshBtn = modal.querySelector('#usd-audit-refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                openUsdAuditModal({ forceRefresh: true });
+            });
+        }
+        modal.dataset.bound = '1';
+    }
+
+    if (!usdAuditEscHandlerBound) {
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            const openModal = document.getElementById(USD_AUDIT_MODAL_ID);
+            if (!openModal || !openModal.classList.contains('is-open')) return;
+            event.preventDefault();
+            closeUsdAuditModal();
+        });
+        usdAuditEscHandlerBound = true;
+    }
+
+    const content = modal.querySelector('#usd-audit-content');
+    const meta = modal.querySelector('#usd-audit-meta');
+    return { badge, modal, content, meta };
+}
+
+async function fetchUsdAnomalyCount() {
+    const { count, error } = await supabase
+        .from(USD_AUDIT_VIEW)
+        .select('id', { count: 'exact', head: true });
+    if (error) throw error;
+    return Number(count || 0);
+}
+
+async function fetchUsdAnomalyCriticalCount() {
+    const { count, error } = await supabase
+        .from(USD_AUDIT_VIEW)
+        .select('id', { count: 'exact', head: true })
+        .eq('severity', 'critical');
+    if (error) throw error;
+    return Number(count || 0);
+}
+
+async function fetchUsdAnomalyList(limit = USD_AUDIT_LIMIT) {
+    const { data, error } = await supabase
+        .from(USD_AUDIT_VIEW)
+        .select('source_table,id,fecha,concepto,currency,monto,monto_usd,exchange_rate,severity,probable_mislabel,created_at')
+        .order('fecha', { ascending: false })
+        .limit(Math.max(1, Number(limit) || USD_AUDIT_LIMIT));
+    if (error) throw error;
+    return Array.isArray(data) ? data : [];
+}
+
+async function refreshUsdAuditBadge() {
+    const ui = ensureUsdAuditUI();
+    if (!ui?.badge) return;
+
+    const { badge } = ui;
+    if (usdAuditRefreshInFlight) {
+        usdAuditRefreshQueued = true;
+        return;
+    }
+
+    usdAuditRefreshInFlight = true;
+    badge.classList.add('is-loading');
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            badge.hidden = true;
+            return;
+        }
+        badge.hidden = false;
+
+        const [count, criticalCount] = await Promise.all([
+            fetchUsdAnomalyCount(),
+            fetchUsdAnomalyCriticalCount()
+        ]);
+
+        const safeCount = Number.isFinite(count) ? count : 0;
+        const safeCritical = Number.isFinite(criticalCount) ? criticalCount : 0;
+        badge.textContent = `Anomalias USD: ${safeCount}`;
+        badge.title = safeCount > 0
+            ? `Se detectaron ${safeCount} anomalias USD.`
+            : 'Sin anomalias USD activas.';
+
+        if (safeCritical > 0 || safeCount >= 3) {
+            paintUsdAuditBadgeState(badge, 'critical');
+        } else if (safeCount > 0) {
+            paintUsdAuditBadgeState(badge, 'warning');
+        } else {
+            paintUsdAuditBadgeState(badge, 'ok');
+        }
+    } catch (error) {
+        console.warn('[AGRO] USD audit badge refresh failed:', error?.message || error);
+        paintUsdAuditBadgeState(badge, 'error');
+    } finally {
+        badge.classList.remove('is-loading');
+        usdAuditRefreshInFlight = false;
+        if (usdAuditRefreshQueued) {
+            usdAuditRefreshQueued = false;
+            refreshUsdAuditBadge();
+        }
+    }
+}
+
+function scheduleUsdAuditBadgeRefresh(delayMs = USD_AUDIT_REFRESH_DEBOUNCE_MS) {
+    const delay = Number.isFinite(Number(delayMs)) ? Math.max(0, Number(delayMs)) : USD_AUDIT_REFRESH_DEBOUNCE_MS;
+    if (usdAuditRefreshTimer) {
+        clearTimeout(usdAuditRefreshTimer);
+    }
+    usdAuditRefreshTimer = setTimeout(() => {
+        usdAuditRefreshTimer = null;
+        refreshUsdAuditBadge();
+    }, delay);
+}
+
+async function openUsdAuditModal(options = {}) {
+    const ui = ensureUsdAuditUI();
+    if (!ui?.modal || !ui.content || !ui.meta) return;
+    const { modal, content, meta } = ui;
+    const forceRefresh = options?.forceRefresh === true;
+
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    meta.textContent = forceRefresh ? 'Actualizando auditoria...' : 'Cargando auditoria...';
+    renderUsdAuditMessage(content, 'Cargando movimientos...');
+
+    try {
+        const rows = await fetchUsdAnomalyList();
+        const criticalCount = rows.filter((row) => formatUsdAuditSeverity(row?.severity) === 'critical').length;
+        meta.textContent = `Registros detectados: ${rows.length} · Critical: ${criticalCount}`;
+        renderUsdAuditRows(content, rows);
+        scheduleUsdAuditBadgeRefresh(0);
+    } catch (error) {
+        console.warn('[AGRO] USD audit modal load failed:', error?.message || error);
+        meta.textContent = 'No se pudo cargar la auditoria.';
+        renderUsdAuditMessage(content, 'No se pudo cargar la auditoria USD.', { isError: true });
+    }
+}
+
 function toSafeLocaleNumber(value) {
     if (typeof value === 'number') {
         return Number.isFinite(value) ? value : null;
@@ -4667,6 +5021,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Exception in refreshFactureroHistory(${tabName}):`, err.message);
     } finally {
+        scheduleUsdAuditBadgeRefresh();
         scheduleOpsMovementSummaryRefresh();
     }
 }
@@ -7553,6 +7908,7 @@ async function initFactureroHistories() {
     }
     console.info('[AGRO] V9.6.3: All facturero histories initialized (including gastos+ingresos)');
     initHistoryFilters();
+    scheduleUsdAuditBadgeRefresh(0);
 }
 
 function refreshFactureroForSelectedCrop() {

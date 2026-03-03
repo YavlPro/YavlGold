@@ -2911,6 +2911,195 @@ body.modal-open {
   outline-offset: 2px;
 }
 
+.usd-audit-badge {
+  min-width: 144px;
+  justify-content: center;
+}
+
+.usd-audit-badge.is-loading {
+  opacity: 0.75;
+}
+
+.usd-audit-badge.is-ok {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(74, 222, 128, 0.12);
+  color: rgba(180, 255, 209, 0.95);
+}
+
+.usd-audit-badge.is-warning {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.14);
+  color: rgba(255, 226, 168, 0.95);
+}
+
+.usd-audit-badge.is-critical {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.14);
+  color: rgba(255, 186, 186, 0.95);
+}
+
+.usd-audit-badge.is-error {
+  border-color: rgba(248, 113, 113, 0.6);
+  background: rgba(248, 113, 113, 0.16);
+  color: rgba(255, 204, 204, 0.96);
+}
+
+.usd-audit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: none;
+}
+
+.usd-audit-modal.is-open {
+  display: block;
+}
+
+.usd-audit-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.usd-audit-modal__dialog {
+  position: relative;
+  width: min(920px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: 1rem auto;
+  border-radius: 14px;
+  border: 1px solid rgba(200, 167, 82, 0.35);
+  background: linear-gradient(180deg, rgba(17, 17, 21, 0.98), rgba(10, 10, 12, 0.98));
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45), 0 0 40px rgba(200, 167, 82, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.usd-audit-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+}
+
+.usd-audit-modal__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.86rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold-primary, #C8A752);
+}
+
+.usd-audit-modal__close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 8px;
+  background: rgba(200, 167, 82, 0.08);
+  color: #f8e6b7;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.usd-audit-modal__meta {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.usd-audit-modal__content {
+  overflow: auto;
+  padding: 0.85rem 1rem 1rem;
+  flex: 1;
+}
+
+.usd-audit-empty {
+  border: 1px dashed rgba(200, 167, 82, 0.25);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+}
+
+.usd-audit-empty.is-error {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: rgba(255, 188, 188, 0.95);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.usd-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+}
+
+.usd-audit-table th,
+.usd-audit-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.46rem 0.42rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.usd-audit-table th {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(200, 167, 82, 0.9);
+  background: rgba(200, 167, 82, 0.08);
+  position: sticky;
+  top: 0;
+}
+
+.usd-audit-severity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  border-radius: 999px;
+  border: 1px solid;
+  padding: 0.1rem 0.45rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.usd-audit-severity.is-warning {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.14);
+  color: rgba(255, 214, 137, 0.95);
+}
+
+.usd-audit-severity.is-critical {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.14);
+  color: rgba(255, 181, 181, 0.96);
+}
+
+.usd-audit-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.72rem 1rem 0.9rem;
+  border-top: 1px solid rgba(200, 167, 82, 0.18);
+}
+
+.usd-audit-refresh-btn {
+  min-width: 118px;
+}
+
 .buyer-name-masked {
   letter-spacing: 0.08em;
 }
@@ -3745,6 +3934,16 @@ body.modal-open {
 
   .btn-privacy-toggle {
     width: calc(50% - 0.25rem);
+  }
+
+  .usd-audit-modal__dialog {
+    width: calc(100vw - 0.8rem);
+    max-height: calc(100vh - 0.8rem);
+    margin: 0.4rem auto;
+  }
+
+  .usd-audit-table {
+    font-size: 0.72rem;
   }
 
   .facturero-history-list {
