@@ -11422,6 +11422,29 @@ pnpm build:gold
   - `pnpm build:gold`
   - Resultado: **PASS**
 
+## 🆕 SESIÓN: GATE 0 — Supabase estático para identidad header Agro (2026-03-03)
+
+### Diagnóstico
+
+- En producción Vite MPA, importar módulos por URL pública (`/assets/js/...`) puede fallar porque esos archivos se bundlean con hash.
+- Para identidad de header, el cliente Supabase debía depender de la fuente canónica estática del bundle y no de imports dinámicos por ruta ni de globals opcionales.
+
+### Ajuste aplicado
+
+- Archivo: `apps/gold/agro/agro.js`
+  - `getAgroSupabaseClient()` ahora prioriza:
+    1. `supabase` importado estáticamente en el módulo (`supabase-config.js`)
+    2. `globalThis.AuthClient.supabase`
+    3. `globalThis.supabase`
+  - Se removió el fallback de `import('../assets/js/config/supabase-config.js')`.
+  - Se expone `globalThis.__YG_AGRO_SUPABASE = supabase` para debug en consola (no funcional/core).
+
+### Validación
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
+
 ## 🆕 SESIÓN: GATE 0 — Header Agro usa cliente Supabase canónico (2026-03-03)
 
 ### Diagnóstico
@@ -11441,7 +11464,7 @@ pnpm build:gold
 
 - Archivo: `apps/gold/agro/agro.js`
   - Nuevo helper: `getAgroSupabaseClient()`
-    - prioridad: `import supabase` (canónico) -> `globalThis.AuthClient.supabase` -> `globalThis.supabase` -> import dinámico de `../assets/js/config/supabase-config.js`.
+    - prioridad: `import supabase` (canónico) -> `globalThis.AuthClient.supabase` -> `globalThis.supabase`.
   - `resolveHeaderDisplayName(user)` ahora usa `await getAgroSupabaseClient()` y consulta `agro_farmer_profile.display_name` sin depender de `window/AuthClient`.
   - `applyHeaderIdentity()` actualizado para invocar `resolveHeaderDisplayName(user)` (sin segundo parámetro).
 

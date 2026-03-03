@@ -99,6 +99,10 @@ const CROP_DISPLAY_FALLBACK_NAME = 'Cultivo';
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
 
+if (typeof globalThis !== 'undefined' && !globalThis.__YG_AGRO_SUPABASE) {
+    globalThis.__YG_AGRO_SUPABASE = supabase;
+}
+
 let selectedCropId = null;
 let editExchangeRates = { USD: 1, COP: null, VES: null };
 let syncAgendaCropsFn = null;
@@ -14111,19 +14115,9 @@ function renderHeaderAvatar(avatarEl, avatarUrl, altText) {
 }
 
 async function getAgroSupabaseClient() {
-    if (globalThis?.supabase?.from) return globalThis.supabase;
-    if (globalThis?.AuthClient?.supabase?.from) return globalThis.AuthClient.supabase;
-
-    try {
-        const mod = await import('../assets/js/config/supabase-config.js');
-        if (mod?.supabase?.from) return mod.supabase;
-        if (mod?.default?.from) return mod.default;
-        if (mod?.default?.supabase?.from) return mod.default.supabase;
-    } catch (_error) {
-        // Ignore dynamic import fallback failures.
-    }
-
-    return null;
+    if (supabase?.from) return supabase;
+    const s = globalThis?.AuthClient?.supabase || globalThis?.supabase;
+    return s?.from ? s : null;
 }
 
 async function resolveHeaderDisplayName(user) {
