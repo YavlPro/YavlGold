@@ -534,6 +534,7 @@
   justify-content: flex-start !important;
   flex-wrap: nowrap !important;
   flex-direction: row !important;
+  position: static !important;
 }
 
 /* ==============================================
