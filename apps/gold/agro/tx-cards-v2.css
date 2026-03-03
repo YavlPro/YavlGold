@@ -711,3 +711,85 @@
     min-height: 44px;
   }
 }
+
+/* ==============================================
+   19. HISTORY FILTER BAR - Transferred / Reverted
+   ============================================== */
+.tx-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-card, rgba(26, 26, 46, 0.95));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(200, 167, 82, 0.08);
+}
+
+.tx-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text-secondary, #a0a0b0);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tx-filter-chip:hover {
+  background: rgba(200, 167, 82, 0.08);
+  color: var(--gold-4, #C8A752);
+  border-color: rgba(200, 167, 82, 0.4);
+}
+
+.tx-filter-chip.active {
+  background: var(--gold-4, #C8A752);
+  color: var(--bg-primary, #0f0f1a);
+  border-color: var(--gold-4, #C8A752);
+}
+
+.tx-filter-chip .chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+  line-height: 1;
+}
+
+.tx-filter-chip.active .chip-count {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tx-filter-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-secondary, #a0a0b0);
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+@media (pointer: coarse) {
+  .tx-filter-chip {
+    padding: 0.35rem 0.75rem;
+    min-height: 36px;
+    font-size: 0.7rem;
+  }
+}

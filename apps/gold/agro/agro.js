@@ -2993,6 +2993,162 @@ function applyOtherTransferFilter(items) {
     });
 }
 
+/* ============================================
+   History Filters v1.0 - Transferred / Reverted
+   Call initHistoryFilters() after facturero
+   histories are loaded. Safe to re-call.
+   ============================================ */
+
+const FILTER_TABS = ['ingresos', 'pendientes'];
+
+function initHistoryFilters() {
+    FILTER_TABS.forEach((tabName) => {
+        const config = FACTURERO_CONFIG?.[tabName];
+        if (!config) return;
+
+        const panel = document.querySelector(`.tab-panel[data-tab="${tabName}"]`);
+        if (!panel) return;
+
+        const parent = document.getElementById(config.containerId) || panel;
+        const list = document.getElementById(config.listId) || parent.querySelector('.tx-list');
+        if (!list || !parent) return;
+
+        // Cleanup legacy pending filter UI; this flow uses chips instead.
+        if (tabName === 'pendientes') {
+            parent.querySelector('#pending-transfer-filter')?.remove();
+        }
+
+        let transferredCount = 0;
+        let revertedCount = 0;
+        list.querySelectorAll('.tx-card').forEach((card) => {
+            const badge = card.querySelector('.tx-status');
+            const txt = String(badge?.textContent || '').trim().toLowerCase();
+            if (txt.includes('revertido')) {
+                card.dataset.transferType = 'reverted';
+                revertedCount += 1;
+                return;
+            }
+            if (txt.includes('transferido')) {
+                card.dataset.transferType = 'transferred';
+                transferredCount += 1;
+                return;
+            }
+            delete card.dataset.transferType;
+        });
+
+        let bar = parent.querySelector('.tx-filter-bar');
+        let emptyMsg = parent.querySelector('.tx-filter-empty');
+
+        if (transferredCount === 0 && revertedCount === 0) {
+            if (bar) bar.remove();
+            if (emptyMsg) emptyMsg.remove();
+            delete parent.dataset.activeFilter;
+            return;
+        }
+
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.className = 'tx-filter-bar';
+            bar.innerHTML = `
+      <button class="tx-filter-chip" data-filter="transferred">
+        Transferidos <span class="chip-count">${transferredCount}</span>
+      </button>
+      <button class="tx-filter-chip" data-filter="reverted">
+        Revertidos <span class="chip-count">${revertedCount}</span>
+      </button>
+    `;
+            parent.prepend(bar);
+        } else {
+            const transferredCountEl = bar.querySelector('.tx-filter-chip[data-filter="transferred"] .chip-count');
+            if (transferredCountEl) transferredCountEl.textContent = String(transferredCount);
+            const revertedCountEl = bar.querySelector('.tx-filter-chip[data-filter="reverted"] .chip-count');
+            if (revertedCountEl) revertedCountEl.textContent = String(revertedCount);
+        }
+
+        bar.querySelectorAll('.tx-filter-chip').forEach((chip) => chip.classList.remove('active'));
+        if (parent.dataset.activeFilter) {
+            const activeChip = bar.querySelector(`.tx-filter-chip[data-filter="${parent.dataset.activeFilter}"]`);
+            if (activeChip) activeChip.classList.add('active');
+        }
+
+        if (bar.dataset.bound !== '1') {
+            bar.addEventListener('click', (e) => {
+                const chip = e.target.closest('.tx-filter-chip');
+                if (!chip) return;
+
+                const filter = chip.dataset.filter;
+                const wasActive = chip.classList.contains('active');
+
+                bar.querySelectorAll('.tx-filter-chip').forEach((c) => c.classList.remove('active'));
+
+                if (wasActive) {
+                    delete parent.dataset.activeFilter;
+                } else {
+                    chip.classList.add('active');
+                    parent.dataset.activeFilter = filter;
+                }
+
+                const currentList = document.getElementById(config.listId) || parent.querySelector('.tx-list');
+                applyHistoryFilter(parent, currentList);
+            });
+            bar.dataset.bound = '1';
+        }
+
+        applyHistoryFilter(parent, list);
+    });
+
+    console.info('[AGRO] History filters initialized');
+}
+
+function applyHistoryFilter(panel, list) {
+    if (!panel || !list) return;
+    const filter = panel.dataset.activeFilter;
+    let visibleCount = 0;
+
+    list.querySelectorAll('.tx-card').forEach((card) => {
+        if (!filter) {
+            card.style.display = '';
+            visibleCount += 1;
+            return;
+        }
+        const match = card.dataset.transferType === filter;
+        card.style.display = match ? '' : 'none';
+        if (match) visibleCount += 1;
+    });
+
+    list.querySelectorAll('.facturero-day-header, .date-divider').forEach((hdr) => {
+        if (!filter) {
+            hdr.style.display = '';
+            return;
+        }
+
+        let next = hdr.nextElementSibling;
+        let hasVisible = false;
+        while (next && !next.classList.contains('facturero-day-header') && !next.classList.contains('date-divider')) {
+            if (next.classList.contains('tx-card') && next.style.display !== 'none') {
+                hasVisible = true;
+                break;
+            }
+            next = next.nextElementSibling;
+        }
+        hdr.style.display = hasVisible ? '' : 'none';
+    });
+
+    let emptyMsg = panel.querySelector('.tx-filter-empty');
+    if (filter && visibleCount === 0) {
+        if (!emptyMsg) {
+            emptyMsg = document.createElement('div');
+            emptyMsg.className = 'tx-filter-empty';
+            panel.appendChild(emptyMsg);
+        }
+        const label = filter === 'transferred' ? 'transferidos' : 'revertidos';
+        emptyMsg.textContent = `No hay registros ${label} en este historial`;
+        emptyMsg.style.display = '';
+    } else if (emptyMsg) {
+        emptyMsg.style.display = 'none';
+    }
+}
+
 function toSafeLocaleNumber(value) {
     if (typeof value === 'number') {
         return Number.isFinite(value) ? value : null;
@@ -4518,6 +4674,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
             }
             renderHistoryList(tabName, config, otherItems, showActions);
             injectHistorySearchInput(tabName, config);
+            initHistoryFilters();
             return;
         }
 
@@ -4540,6 +4697,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
         }
         renderHistoryList(tabName, config, filteredItems, showActions);
         injectHistorySearchInput(tabName, config);
+        initHistoryFilters();
         if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias' || tabName === 'gastos' || tabName === 'ingresos') {
             syncFactureroNotifications(tabName, filteredItems);
         }
@@ -4590,28 +4748,25 @@ function renderHistoryList(tabName, config, items, showActions) {
     const isPendingTab = tabName === 'pendientes';
     const isOthersTab = tabName === 'otros';
     if (isPendingTab && parent) {
-        ensurePendingTransferFilterUI(parent, itemsWithCropNames);
+        // Legacy checkbox UI is replaced by chip filters.
+        parent.querySelector('#pending-transfer-filter')?.remove();
     }
     if (isOthersTab && parent) {
         ensureOtherTransferFilterUI(parent, itemsWithCropNames);
     }
 
-    const filteredItems = isPendingTab
-        ? applyPendingTransferFilter(itemsWithCropNames)
-        : (isOthersTab ? applyOtherTransferFilter(itemsWithCropNames) : itemsWithCropNames);
+    const filteredItems = isOthersTab ? applyOtherTransferFilter(itemsWithCropNames) : itemsWithCropNames;
 
     // V9.6.3: Ensure parent container is visible when items exist
     if (parent) {
-        const keepVisibleForTransferFilter = (isPendingTab || isOthersTab) && itemsWithCropNames.length > 0;
+        const keepVisibleForTransferFilter = isOthersTab && itemsWithCropNames.length > 0;
         parent.style.display = (filteredItems.length > 0 || keepVisibleForTransferFilter) ? 'block' : 'none';
     }
 
     if (filteredItems.length === 0) {
         const emptyMsg = document.createElement('p');
         emptyMsg.style.cssText = 'color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;';
-        if (isPendingTab && itemsWithCropNames.length > 0) {
-            emptyMsg.textContent = 'No hay fiados visibles. Activa "Ver transferidos" o "Ver revertidos" para mostrarlos.';
-        } else if (isOthersTab && itemsWithCropNames.length > 0) {
+        if (isOthersTab && itemsWithCropNames.length > 0) {
             emptyMsg.textContent = 'No hay movimientos visibles. Activa "Ver transferidos" o "Ver revertidos" para mostrarlos.';
         } else {
             emptyMsg.textContent = 'Sin registros recientes.';
@@ -7407,6 +7562,7 @@ async function initFactureroHistories() {
         await refreshFactureroHistory(tab);
     }
     console.info('[AGRO] V9.6.3: All facturero histories initialized (including gastos+ingresos)');
+    initHistoryFilters();
 }
 
 function refreshFactureroForSelectedCrop() {
