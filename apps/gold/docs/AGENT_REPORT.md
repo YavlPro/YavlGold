@@ -10935,3 +10935,349 @@ Hallazgo raíz del lote actual:
 - 375px: validar `⋮ Acciones` visible en cada card, abrir/cerrar panel, ejecutar acción.
 - 811px: validar que `⋮ Acciones` no colapsa ni se recorta en cards con texto largo.
 - 1366px+: validar acciones inline visibles, sin recorte en borde derecho.
+
+## 🆕 SESIÓN: GATE 0 — Paquete Opus-ready Historial Facturero (2026-03-03)
+
+### Diagnóstico (qué falla y dónde)
+
+- Síntoma reportado: el botón de acciones `⋮` (`.tx-actions-trigger`) no aparece en algunos contextos, o aparece comprimido/recortado, y en móvil hay taps que no abren panel.
+- Hallazgo clave de CSS:
+  - En desktop amplio, el trigger está oculto por diseño: `@media (min-width: 1025px) { .agro-ops-v10 .tx-actions-trigger { display: none !important; } }` (`apps/gold/agro/agro-operations.css:1427-1430`).
+  - En compacto (`<=1024`), el trigger/panel viven dentro de un bloque con contención agresiva: `.tx-footer { overflow: hidden; }` + `.tx-actions { position: absolute; ... overflow: visible/hidden según estado }` (`apps/gold/agro/agro-operations.css:1145-1154`, `1526-1551`, `1608-1648`).
+- Hallazgo de pseudo-elementos:
+  - Existe pseudo real con `content:''` en accordion de historial por herencia de `.agro-ops-v10 .yg-accordion::before` (`apps/gold/agro/agro-operations.css:897-904`).
+  - También existen pseudo decorativos en `.tx-card::before` y `.content-section::before` (`apps/gold/agro/agro-operations.css:595-606`, `1068-1076`), sin `pointer-events:none` explícito.
+- Hallazgo de arquitectura de render:
+  - El historial principal sí renderiza cards `tx-card` para tabs (`gastos`, `ingresos`, `pendientes`, `perdidas`, `transferencias`, `otros`) vía `renderHistoryRow`.
+  - Pero `ingresos` tiene además un renderer legacy (`loadIncomes` + `renderIncomeItem`) que repinta `#income-list` con `.income-item` (sin `tx-card`), generando doble camino de markup.
+
+### Plan de extracción aplicado
+
+1. Localizar renderer principal y fallback del historial (todas las tabs).
+2. Extraer estructura exacta de `tx-card`/footer/actions y confirmar jerarquía real.
+3. Mapear hooks JS (delegación, `closest`, `dataset`, estados de menú, tabs/accordion).
+4. Mapear CSS crítico en `agro-operations.css`, `agro.css` e inline de `index.html`.
+5. Revisar pseudo-elementos/stacking/overflow/pointer-events para causa probable de hit-test.
+6. Consolidar paquete Opus-ready en formato pegable.
+
+### Comandos/greps usados
+
+```powershell
+rg --files apps/gold | rg "AGENT_REPORT.md|agro\.js|agro-operations\.css|agro\.css|index\.html"
+rg -n "renderHistoryRow|renderHistoryList|renderFactureroHistory|tx-card|tx-actions-trigger|tx-actions-btns|facturero-history-list|tx-list" apps/gold/agro/agro.js
+rg -n "\.tx-card|\.tx-actions|\.tx-actions-trigger|\.tx-actions-btns|\.tx-list|\.facturero-history-list|financial-operations-card|finances-section" apps/gold/agro -g "*.css"
+rg -n "details\.yg-accordion|\.yg-accordion|yg-accordion-content|::before|::after" apps/gold -g "*.css" -g "*.html"
+rg -n "facturero-accordion|facturero-history-list|financial-tab-btn|tab-panel|tx-actions" apps/gold/agro/index.html
+rg -n "\.facturero-accordion|details\.yg-accordion|\.yg-accordion::before|\.tx-actions-trigger|\.tx-actions-btns|overflow|pointer-events|z-index|position" apps/gold/agro/agro.css
+rg -n "\.agro-ops-v10 \.yg-accordion|\.agro-ops-v10 \.tx-card|\.agro-ops-v10 \.tx-actions|\.agro-ops-v10 \.tx-actions-trigger|\.agro-ops-v10 \.tx-actions > \.tx-actions-btns|@media" apps/gold/agro/agro-operations.css
+rg -n "\bloadIncomes\(|\.income-item|renderIncomeItem|data-income-id" apps/gold/agro/agro.js
+```
+
+---
+
+## PAQUETE OPUS-READY (copiar/pegar)
+
+### 1) Resumen ejecutivo (1 párrafo)
+
+El historial Facturero tiene un renderer principal consistente (`tx-card`) pero está condicionado por breakpoints y contención CSS: en `>=1025px` el trigger `⋮` se oculta por diseño y en `<=1024px` se usa modo compacto absoluto con `overflow`/`z-index` sensibles; además existen pseudo-elementos reales (`.yg-accordion::before`, `.tx-card::before`, `.content-section::before`) sin `pointer-events:none` explícito. Esto, combinado con hit-area/tamaños en layouts densos y un segundo renderer legacy en `ingresos` (`.income-item`), explica la percepción de trigger ausente/aplastado y taps inconsistentes.
+
+### 2) Dónde se genera el HTML del historial
+
+- Renderer principal (cards de historial):
+  - Archivo: `apps/gold/agro/agro.js`
+  - Funciones:
+    - `renderHistoryRow(...)` (`3498+`)
+    - `renderHistoryList(...)` (`4554+`)
+    - `refreshFactureroHistory(...)` (`4498+`)
+- Renderer alterno legacy (solo ingresos):
+  - `renderIncomeItem(...)` (`9970+`)
+  - `loadIncomes(...)` (`10196+`)
+  - `initIncomeHistory()` llama `loadIncomes()` (`10475+`).
+
+Snippet A — estructura `tx-card` + footer/actions (extracto):
+
+```js
+// apps/gold/agro/agro.js:3665-4033 (extracto)
+const row = document.createElement('div');
+row.className = ['facturero-item', 'tx-card', txTypeClass, hasTransferMeta ? 'tx-transferencia' : ''].filter(Boolean).join(' ');
+row.dataset.id = String(itemId || '');
+row.dataset.tab = String(itemTab || '');
+
+const layout = document.createElement('div');
+layout.className = 'tx-layout';
+// ... avatar / tx-body / tx-amount-group ...
+
+const footer = document.createElement('div');
+footer.className = 'tx-footer';
+const footerMeta = document.createElement('div');
+footerMeta.className = 'tx-footer-meta';
+// ... tx-status / evidence link ...
+footer.appendChild(footerMeta);
+
+if (showActions) {
+  const actionsWrap = document.createElement('div');
+  actionsWrap.className = 'tx-actions';
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'tx-actions-trigger';
+  trigger.setAttribute('aria-expanded', 'false');
+  const triggerIcon = document.createElement('i');
+  triggerIcon.className = 'fa fa-ellipsis-vertical';
+  const triggerLabel = document.createElement('span');
+  triggerLabel.className = 'tx-actions-trigger-label';
+  triggerLabel.textContent = 'Acciones';
+  trigger.append(triggerIcon, triggerLabel);
+
+  const btnsMenu = document.createElement('div');
+  btnsMenu.className = 'tx-actions-btns';
+  btnsMenu.appendChild(createFactureroActionButton({ className: 'btn-edit-facturero', tab: itemTab, id: itemId, iconClass: 'fa fa-pen' }));
+  btnsMenu.appendChild(createFactureroActionButton({ className: 'btn-duplicate-facturero', tab: itemTab, id: itemId, iconClass: 'fa fa-copy' }));
+  // ... btn-move-general / btn-transfer-pending / btn-transfer-income / btn-transfer-loss / btn-revert-* ...
+  btnsMenu.appendChild(createFactureroActionButton({ className: 'btn-delete-facturero', tab: itemTab, id: itemId, iconClass: 'fa fa-trash' }));
+
+  trigger.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); handleTriggerToggle(e); });
+  trigger.addEventListener('click', (e) => {
+    if (e.detail !== 0) { e.preventDefault(); e.stopPropagation(); return; }
+    e.preventDefault(); e.stopPropagation(); handleTriggerToggle(e);
+  });
+
+  actionsWrap.appendChild(trigger);
+  actionsWrap.appendChild(btnsMenu);
+  footer.appendChild(actionsWrap);
+}
+
+layout.append(avatar, left, right);
+row.append(layout, footer);
+return row;
+```
+
+Snippet B — renderizado por tab a lista:
+
+```js
+// apps/gold/agro/agro.js:4554-4668 (extracto)
+function renderHistoryList(tabName, config, items, showActions) {
+  closeFactureroActionsMenu();
+  let container = document.getElementById(config.listId);
+  const parent = document.getElementById(config.containerId);
+  if (parent) parent.classList.add('agro-ops-v10');
+  if (container) container.classList.add('tx-list', 'agro-ops-v10');
+  if (!container && parent) {
+    container = document.createElement('div');
+    container.id = config.listId;
+    container.className = 'facturero-history-list tx-list agro-ops-v10';
+    parent.appendChild(container);
+  }
+  // ... agrupación por día ...
+  group.rows.forEach((item) => {
+    const rowEl = renderHistoryRow(tabName, item, config, { showActions });
+    if (rowEl) fragment.appendChild(rowEl);
+  });
+  container.replaceChildren(fragment);
+}
+```
+
+Snippet C — confirmación de jerarquía directa trigger/panel:
+
+```js
+// apps/gold/agro/agro.js:4025-4027
+actionsWrap.appendChild(trigger);
+actionsWrap.appendChild(btnsMenu);
+footer.appendChild(actionsWrap);
+```
+
+Confirmación solicitada: `.tx-actions-btns` es hijo directo de `.tx-actions` (sin wrapper intermedio).
+
+### 3) Árbol DOM de un tx-card
+
+```text
+section.finances-section.agro-ops-v10
+└─ div.card.financial-operations-card
+   └─ div.financial-tab-panels
+      └─ div.tab-panel[data-tab="<tab>"]
+         └─ details.yg-accordion.facturero-accordion[data-accordion-group="facturero"]
+            └─ div.yg-accordion-content#facturero-<tab>-history
+               └─ div#<containerId>.agro-ops-v10
+                  └─ div#<listId>.facturero-history-list.tx-list.agro-ops-v10
+                     ├─ div.facturero-day-header.date-divider
+                     └─ div.facturero-item.tx-card.tx-<tipo>[.tx-transferencia][data-tab][data-id]
+                        ├─ div.tx-layout
+                        │  ├─ div.tx-avatar
+                        │  ├─ div.tx-body
+                        │  │  ├─ div.tx-client
+                        │  │  ├─ div.tx-detail / .facturero-meta...
+                        │  │  └─ div.tx-date + span.tx-crop
+                        │  └─ div.tx-amount-group
+                        │     ├─ span.tx-amount
+                        │     └─ div.tx-amount-sub?
+                        └─ div.tx-footer
+                           ├─ div.tx-footer-meta
+                           │  ├─ span.tx-status.<pendiente|pagado|perdida|transferido|revertido>
+                           │  └─ a.tx-evidence?
+                           └─ div.tx-actions
+                              ├─ button.tx-actions-trigger[aria-expanded]
+                              │  ├─ i.fa-ellipsis-vertical|fa-xmark
+                              │  └─ span.tx-actions-trigger-label
+                              └─ div.tx-actions-btns
+                                 └─ button.btn-*(data-tab,data-id)
+```
+
+Nota de arquitectura: en `ingresos` existe ruta alternativa `.income-item[data-income-id]` por `loadIncomes()` que puede reemplazar `#income-list` fuera del árbol `tx-card`.
+
+### 4) Hooks NO negociables
+
+- Hooks de tabs/panel:
+  - `.financial-tab-btn[data-tab]` (`switchTab`, `initFinanceTabs`).
+  - `.finances-section .tab-panel[data-tab]` (`switchTab`, deep-link).
+- Hooks de accordion:
+  - `.yg-accordion`, `.yg-accordion-summary[aria-controls]`, `.yg-accordion-content`.
+  - `data-accordion-group="facturero"` para cierre por grupo en móvil.
+- Hooks de card/lista:
+  - `.facturero-item[data-tab][data-id]` (deep-link/lookup).
+  - `#<containerId>` / `#<listId>` de `FACTURERO_CONFIG`:
+    - gastos: `recent-transactions-container` / `expenses-list`
+    - ingresos: `income-recent-container` / `income-list`
+    - pendientes: `pending-history-container` / `pending-history-list`
+    - perdidas: `loss-history-container` / `loss-history-list`
+    - transferencias: `transfer-history-container` / `transfer-history-list`
+    - otros: `other-history-container` / `other-history-list`
+- Hooks del menú de acciones:
+  - `.tx-actions`, `.tx-actions-trigger`, `.tx-actions-btns`
+  - estados: `.is-open`, `.open-down`, `.is-actions-open`
+- Delegación de eventos CRUD/transfer/revert (document click + `closest()`):
+  - `.btn-edit-facturero`
+  - `.btn-delete-facturero`
+  - `.btn-duplicate-facturero`
+  - `.btn-move-general`
+  - `.btn-transfer-pending`
+  - `.btn-transfer-income`
+  - `.btn-transfer-loss`
+  - `.btn-revert-income`
+  - `.btn-revert-loss`
+- `dataset` obligatorio en botones de acción:
+  - `data-tab`, `data-id` (set en `createFactureroActionButton`).
+- Snippet de delegación:
+
+```js
+// apps/gold/agro/agro.js:7273-7398 (extracto)
+document.addEventListener('click', async (e) => {
+  const editBtn = e.target.closest('.btn-edit-facturero');
+  // ...
+  const transferBtn = e.target.closest('.btn-transfer-pending');
+  // ...
+  const revertIncomeBtn = e.target.closest('.btn-revert-income');
+  const revertLossBtn = e.target.closest('.btn-revert-loss');
+});
+```
+
+### 5) CSS del historial (cards + acciones)
+
+CSS crítico (`apps/gold/agro/agro-operations.css`):
+
+- Card/lista:
+  - `.agro-ops-v10 .tx-card` (`position:relative; overflow:hidden;`) `1052-1060`
+  - `.agro-ops-v10 .tx-card::before` (barra superior) `1068-1076`
+  - `.agro-ops-v10 .tx-list` `1440-1445`
+  - `.agro-ops-v10 .tx-footer` (`overflow:hidden`) `1145-1154`
+- Acciones:
+  - `.agro-ops-v10 .tx-actions` (`position:relative; z-index:2; overflow:hidden`) `1317-1332`
+  - `.agro-ops-v10 .tx-actions-trigger` `1344-1357`
+  - `.agro-ops-v10 .tx-actions > .tx-actions-btns` `1376-1388`
+  - `.agro-ops-v10 .tx-actions.is-open > .tx-actions-btns` `1390-1392`
+  - `.agro-ops-v10 .tx-card.is-actions-open ... { overflow: visible; }` `1338-1342`
+- Breakpoints:
+  - `>=1025`: trigger oculto, botones inline visibles `1427-1436`
+  - `<=1024`: modo compacto absoluto (`.tx-actions` absolute; panel overlay en grid) `1526-1605`
+  - `<=768`: layout móvil (footer en columna, ajustes de anclaje/overflow) `1608-1654`
+  - coarse pointer: hit targets mínimos 44px `1657-1669`
+
+Complementos (`apps/gold/agro/agro.css`):
+
+- `.facturero-history-list` con `max-height` y scroll touch `3446-3453` + overrides móviles `3750-3802`.
+- refuerzo táctil `.tx-actions-trigger`/botones `min-width/min-height:44px` en `max-width:600` `3831-3851`.
+
+### 6) CSS del accordion y overlays
+
+Reglas relevantes:
+
+- `apps/gold/agro/agro-operations.css`
+  - `.agro-ops-v10 .yg-accordion::before { content:''; display:block; height:2px; ... }` `897-904`
+  - `.agro-ops-v10 .content-section::before { content:''; position:absolute; ... z-index:0 }` `595-606`
+  - `.agro-ops-v10 .tx-card::before { content:''; position:absolute; ... }` `1068-1076`
+- `apps/gold/agro/index.html` (inline)
+  - `.card { overflow:hidden; position:relative; }` `318-328`
+  - `.card::before { content:''; position:absolute; ... }` `330-340`
+
+Causa técnica más probable del “tap no llega” (con selectores exactos):
+
+1. **Desaparición del trigger en desktop es explícita por CSS**:
+   - `.agro-ops-v10 .tx-actions-trigger { display:none !important; }` en `@media (min-width:1025)` (`agro-operations.css:1428-1430`).
+2. **En compacto/mobile, hay alta fragilidad por contención/stacking**:
+   - `.tx-footer { overflow:hidden; }` + `.tx-actions` absoluto con cambios de overflow según estado (`agro-operations.css:1145-1154`, `1526-1551`, `1608-1648`).
+   - Esto favorece clipping de hit-area y capas superpuestas.
+3. **Pseudo-elementos decorativos con `content:''` sin `pointer-events:none` explícito**:
+   - `.agro-ops-v10 .yg-accordion::before`
+   - `.agro-ops-v10 .content-section::before`
+   - `.agro-ops-v10 .tx-card::before`
+   - No son siempre el único culpable, pero son candidatos reales de interferencia en hit-testing.
+4. **Amplificador funcional (JS actual)**:
+   - El trigger abre en `pointerdown`; el `click` real (`detail !== 0`) se descarta (`agro.js:4013-4023`).
+   - Si el `pointerdown` no impacta el botón por solape/hit-miss, el tap no abre menú.
+
+### 7) Recomendaciones para rediseño (sin implementarlo)
+
+- Mantener intactos (NO tocar):
+  - Clases/ids/data attrs de hooks JS listados arriba.
+  - Estructura `.tx-actions > .tx-actions-btns` (hijo directo), estados `.is-open`, `.open-down`, `.is-actions-open`.
+  - Selectores de delegación `.btn-*`.
+- Restricciones UI para Opus:
+  - ADN V10.0: negro `#0a0a0a` + dorado `#C8A752`, Orbitron/Rajdhani.
+  - Reusar tokens existentes (no segunda paleta).
+  - Layout robusto 2 zonas: metadata + zona acciones con ancho reservado estable.
+  - Hit-area mínima trigger: 44x44 real en todos los breakpoints.
+  - Panel de acciones sin recorte (`overflow`) y con stacking explícito.
+  - Pseudo-elementos decorativos con `pointer-events:none`.
+- Riesgo a considerar en alcance:
+  - Si no se unifica/elimina renderer legacy `loadIncomes`, `Pagados` puede no seguir el mismo diseño `tx-card`.
+
+### Comandos ejecutados + rutas inspeccionadas
+
+- Comandos ejecutados: ver bloque “Comandos/greps usados” arriba + extracción por rangos con `Get-Content` para:
+  - `apps/gold/agro/agro.js`
+  - `apps/gold/agro/agro-operations.css`
+  - `apps/gold/agro/agro.css`
+  - `apps/gold/agro/index.html`
+  - `apps/gold/docs/AGENT_REPORT.md`
+- Rutas inspeccionadas:
+  - `apps/gold/agro/agro.js`
+  - `apps/gold/agro/agro-operations.css`
+  - `apps/gold/agro/agro.css`
+  - `apps/gold/agro/index.html`
+  - `apps/gold/docs/AGENT_REPORT.md`
+
+## 🆕 SESIÓN: Aplicación plan nuclear TX-CARDS V2 (2026-03-03)
+
+### Implementación aplicada
+
+- Sin tocar JS de Facturero.
+- Archivo nuevo:
+  - `apps/gold/agro/tx-cards-v2.css`
+  - Contiene overrides V2 scoped a `.agro-ops-v10` para:
+    - trigger `tx-actions-trigger` siempre visible,
+    - cadena `overflow: visible` en contenedores de historial/card/footer/actions,
+    - pseudo-elementos decorativos con `pointer-events: none`,
+    - panel de acciones flotante y sin recorte.
+- Enlace agregado:
+  - `apps/gold/agro/index.html`
+  - Se agrego `<link rel="stylesheet" href="./tx-cards-v2.css">` inmediatamente despues de `./agro-operations.css`.
+
+### Notas de alcance
+
+- No se comento ni elimino CSS legacy en `agro-operations.css` (intencional); V2 gana por cascada/specificity y `!important` en reglas criticas.
+- Se mantiene pendiente (como riesgo conocido) la ruta legacy de `ingresos` (`loadIncomes` -> `.income-item`) fuera del renderer `tx-card`.
+
+### Validacion
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado: PASS

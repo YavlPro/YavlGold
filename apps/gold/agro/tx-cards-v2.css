@@ -1,0 +1,507 @@
+/* ===========================================================
+   TX-CARDS V2 - Nuclear Redesign · Facturero History Cards
+   YavlGold V9.8 · ADN Visual V10.0
+
+   Load AFTER agro-operations.css
+   Scope: .agro-ops-v10
+
+   Fixes:
+   - Trigger always visible in all breakpoints
+   - overflow: visible in card -> footer -> actions chain
+   - Decorative pseudo-elements with pointer-events: none
+   - Floating actions panel without clipping
+   - Real touch hit-area 44x44+
+   - V10.0 visual DNA tokens
+   =========================================================== */
+
+/* ==============================================
+   0. PSEUDO-ELEMENT HIT-TEST FIX (GLOBAL)
+   ============================================== */
+.agro-ops-v10 .yg-accordion::before,
+.agro-ops-v10 .yg-accordion::after,
+.agro-ops-v10 .yg-accordion-summary::before,
+.agro-ops-v10 .yg-accordion-summary::after,
+.agro-ops-v10 .content-section::before,
+.agro-ops-v10 .content-section::after,
+.agro-ops-v10 .tx-card::before,
+.agro-ops-v10 .tx-card::after,
+.agro-ops-v10 .card::before,
+.agro-ops-v10 .card::after {
+  pointer-events: none !important;
+}
+
+/* ==============================================
+   1. ANCESTOR OVERFLOW CHAIN FIX
+   ============================================== */
+.agro-ops-v10.card.financial-operations-card,
+.agro-ops-v10 .card.financial-operations-card {
+  overflow: visible !important;
+}
+
+.agro-ops-v10 .financial-tab-panels,
+.agro-ops-v10 .tab-panel,
+.agro-ops-v10 .yg-accordion-content {
+  overflow: visible !important;
+}
+
+/* ==============================================
+   2. TX-CARD BASE
+   ============================================== */
+.agro-ops-v10 .tx-card {
+  position: relative;
+  overflow: visible !important;
+  background: var(--bg-3, #111113);
+  border: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 12px);
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  font-family: "Rajdhani", sans-serif;
+}
+
+.agro-ops-v10 .tx-card:hover {
+  border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
+  box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200, 167, 82, 0.1));
+}
+
+.agro-ops-v10 .tx-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(
+    --metallic-border,
+    linear-gradient(90deg, transparent, var(--gold-4, #c8a752), transparent)
+  );
+  border-radius: var(--radius-md, 12px) var(--radius-md, 12px) 0 0;
+  pointer-events: none !important;
+  z-index: 0;
+}
+
+.agro-ops-v10 .tx-card.is-actions-open {
+  overflow: visible !important;
+  z-index: 20;
+}
+
+/* ==============================================
+   3. TX-LAYOUT (avatar + body + amount)
+   ============================================== */
+.agro-ops-v10 .tx-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.agro-ops-v10 .tx-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: var(--bg-4, #1a1a1f);
+  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+}
+
+.agro-ops-v10 .tx-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.agro-ops-v10 .tx-client {
+  font-weight: 600;
+  font-size: var(--text-base, 0.92rem);
+  color: var(--text-primary, #fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agro-ops-v10 .tx-detail,
+.agro-ops-v10 .facturero-meta {
+  font-size: var(--text-sm, 0.8rem);
+  color: var(--text-secondary, #ccc);
+  margin-top: 0.15rem;
+}
+
+.agro-ops-v10 .tx-date {
+  font-size: var(--text-xs, 0.7rem);
+  color: var(--text-muted, #94a3b8);
+  margin-top: 0.25rem;
+}
+
+.agro-ops-v10 .tx-crop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--text-xs, 0.7rem);
+  color: var(--gold-4, #c8a752);
+  margin-left: 0.5rem;
+}
+
+.agro-ops-v10 .tx-amount-group {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.agro-ops-v10 .tx-amount {
+  display: block;
+  font-weight: 700;
+  font-size: var(--text-md, 1rem);
+  color: var(--gold-4, #c8a752);
+}
+
+.agro-ops-v10 .tx-amount-sub {
+  font-size: var(--text-xs, 0.7rem);
+  color: var(--text-muted, #94a3b8);
+}
+
+/* ==============================================
+   4. TX-FOOTER
+   ============================================== */
+.agro-ops-v10 .tx-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-neutral, rgba(255, 255, 255, 0.08));
+  overflow: visible !important;
+  position: relative;
+  z-index: 2;
+}
+
+.agro-ops-v10 .tx-footer-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==============================================
+   5. STATUS BADGES
+   ============================================== */
+.agro-ops-v10 .tx-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--text-xs, 0.7rem);
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-pill, 9999px);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.agro-ops-v10 .tx-status.pendiente {
+  color: var(--color-warning, #f59e0b);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.agro-ops-v10 .tx-status.pagado {
+  color: var(--color-success, #10b981);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.agro-ops-v10 .tx-status.perdida {
+  color: var(--color-error, #ef4444);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.agro-ops-v10 .tx-status.transferido {
+  color: var(--gold-5, #e8d48b);
+  background: rgba(200, 167, 82, 0.12);
+  border: 1px solid rgba(200, 167, 82, 0.2);
+}
+
+.agro-ops-v10 .tx-status.revertido {
+  color: var(--text-muted, #94a3b8);
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.agro-ops-v10 .tx-evidence {
+  font-size: var(--text-xs, 0.7rem);
+  color: var(--gold-4, #c8a752);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+
+.agro-ops-v10 .tx-evidence:hover {
+  opacity: 1;
+}
+
+/* ==============================================
+   6. TX-ACTIONS CONTAINER
+   ============================================== */
+.agro-ops-v10 .tx-actions {
+  position: relative !important;
+  flex-shrink: 0;
+  z-index: 5;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center;
+}
+
+/* ==============================================
+   7. TRIGGER - ALWAYS VISIBLE
+   ============================================== */
+.agro-ops-v10 .tx-actions-trigger {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--gold-4, #c8a752);
+  font-size: 1.1rem;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.agro-ops-v10 .tx-actions-trigger:hover,
+.agro-ops-v10 .tx-actions-trigger:focus-visible {
+  background: rgba(200, 167, 82, 0.12);
+  border-color: var(--gold-4, #c8a752);
+  color: var(--gold-5, #e8d48b);
+}
+
+.agro-ops-v10 .tx-actions-trigger:active {
+  background: rgba(200, 167, 82, 0.2);
+  transform: scale(0.95);
+}
+
+.agro-ops-v10 .tx-actions-trigger-label {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==============================================
+   8. ACTIONS PANEL (dropdown)
+   ============================================== */
+.agro-ops-v10 .tx-actions > .tx-actions-btns {
+  display: none;
+  position: absolute;
+  right: 0;
+  min-width: 180px;
+  max-width: 220px;
+  background: var(--bg-4, #1a1a1f);
+  border: 1px solid var(--border-gold, rgba(200, 167, 82, 0.25));
+  border-radius: var(--radius-md, 12px);
+  padding: 0.375rem;
+  z-index: 100;
+  box-shadow: var(--shadow-gold-md, 0 5px 20px rgba(200, 167, 82, 0.25));
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agro-ops-v10 .tx-actions.is-open.open-down > .tx-actions-btns {
+  display: flex;
+  top: calc(100% + 6px);
+  bottom: auto;
+}
+
+.agro-ops-v10 .tx-actions.is-open:not(.open-down) > .tx-actions-btns {
+  display: flex;
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
+.agro-ops-v10 .tx-actions-btns button {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  min-height: 40px;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--text-secondary, #ccc);
+  font-family: "Rajdhani", sans-serif;
+  font-size: var(--text-sm, 0.8rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.agro-ops-v10 .tx-actions-btns button:hover {
+  background: rgba(200, 167, 82, 0.12);
+  color: var(--gold-4, #c8a752);
+}
+
+.agro-ops-v10 .tx-actions-btns button i {
+  width: 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--gold-4, #c8a752);
+  opacity: 0.7;
+}
+
+.agro-ops-v10 .tx-actions-btns button:hover i {
+  opacity: 1;
+}
+
+.agro-ops-v10 .tx-actions-btns .btn-delete-facturero {
+  color: var(--color-error, #ef4444);
+}
+
+.agro-ops-v10 .tx-actions-btns .btn-delete-facturero:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--color-error, #ef4444);
+}
+
+.agro-ops-v10 .tx-actions-btns .btn-delete-facturero i {
+  color: var(--color-error, #ef4444);
+}
+
+/* ==============================================
+   9. TX-LIST + DAY HEADERS
+   ============================================== */
+.agro-ops-v10 .tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.agro-ops-v10 .facturero-day-header,
+.agro-ops-v10 .date-divider {
+  font-family: "Rajdhani", sans-serif;
+  font-size: var(--text-xs, 0.7rem);
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0 0.25rem;
+  margin-top: 0.5rem;
+}
+
+/* ==============================================
+   10. RESPONSIVE
+   ============================================== */
+@media (max-width: 1024px) {
+  .agro-ops-v10 .tx-card {
+    padding: 0.75rem;
+  }
+
+  .agro-ops-v10 .tx-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .agro-ops-v10 .tx-card {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .agro-ops-v10 .tx-layout {
+    gap: 0.5rem;
+  }
+
+  .agro-ops-v10 .tx-footer {
+    gap: 0.375rem;
+  }
+
+  .agro-ops-v10 .tx-amount {
+    font-size: var(--text-base, 0.92rem);
+  }
+
+  .agro-ops-v10 .tx-actions > .tx-actions-btns {
+    min-width: 170px;
+    right: -0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .agro-ops-v10 .tx-layout {
+    gap: 0.375rem;
+  }
+
+  .agro-ops-v10 .tx-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+
+  .agro-ops-v10 .tx-client {
+    font-size: var(--text-sm, 0.8rem);
+  }
+
+  .agro-ops-v10 .tx-amount {
+    font-size: var(--text-sm, 0.8rem);
+  }
+}
+
+/* ==============================================
+   11. TOUCH - coarse pointer
+   ============================================== */
+@media (pointer: coarse) {
+  .agro-ops-v10 .tx-actions-trigger {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .agro-ops-v10 .tx-actions-btns button {
+    min-height: 44px;
+    padding: 0.625rem 0.75rem;
+  }
+}
+
+/* ==============================================
+   12. ACCORDION PSEUDO FIX
+   ============================================== */
+.agro-ops-v10 details.yg-accordion::before,
+.agro-ops-v10 details.yg-accordion::after,
+.agro-ops-v10 .yg-accordion-summary::before,
+.agro-ops-v10 .yg-accordion-summary::after {
+  pointer-events: none !important;
+}
+
+/* ==============================================
+   13. prefers-reduced-motion
+   ============================================== */
+@media (prefers-reduced-motion: reduce) {
+  .agro-ops-v10 .tx-card,
+  .agro-ops-v10 .tx-actions-trigger,
+  .agro-ops-v10 .tx-actions-btns button {
+    transition: none !important;
+  }
+}
