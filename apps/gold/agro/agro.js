@@ -2994,12 +2994,12 @@ function applyOtherTransferFilter(items) {
 }
 
 /* ============================================
-   History Filters v1.0 - Transferred / Reverted
-   Call initHistoryFilters() after facturero
-   histories are loaded. Safe to re-call.
+   History Filters v1.1 - Toggle show/hide
+   Chips start ACTIVE (visible). Click = hide.
+   Works on ALL 6 tabs.
    ============================================ */
 
-const FILTER_TABS = ['ingresos', 'pendientes'];
+const FILTER_TABS = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros'];
 
 function initHistoryFilters() {
     FILTER_TABS.forEach((tabName) => {
@@ -3013,83 +3013,60 @@ function initHistoryFilters() {
         const list = document.getElementById(config.listId) || parent.querySelector('.tx-list');
         if (!list || !parent) return;
 
-        // Cleanup legacy pending filter UI; this flow uses chips instead.
-        if (tabName === 'pendientes') {
-            parent.querySelector('#pending-transfer-filter')?.remove();
-        }
-
-        let transferredCount = 0;
-        let revertedCount = 0;
+        // Mark cards
+        let tCount = 0, rCount = 0;
         list.querySelectorAll('.tx-card').forEach((card) => {
             const badge = card.querySelector('.tx-status');
             const txt = String(badge?.textContent || '').trim().toLowerCase();
             if (txt.includes('revertido')) {
                 card.dataset.transferType = 'reverted';
-                revertedCount += 1;
-                return;
-            }
-            if (txt.includes('transferido')) {
+                rCount++;
+            } else if (txt.includes('transferido')) {
                 card.dataset.transferType = 'transferred';
-                transferredCount += 1;
-                return;
+                tCount++;
+            } else {
+                delete card.dataset.transferType;
             }
-            delete card.dataset.transferType;
         });
 
         let bar = parent.querySelector('.tx-filter-bar');
-        let emptyMsg = parent.querySelector('.tx-filter-empty');
 
-        if (transferredCount === 0 && revertedCount === 0) {
+        // No items of either type -> remove bar
+        if (tCount === 0 && rCount === 0) {
             if (bar) bar.remove();
-            if (emptyMsg) emptyMsg.remove();
-            delete parent.dataset.activeFilter;
             return;
         }
 
         if (!bar) {
             bar = document.createElement('div');
             bar.className = 'tx-filter-bar';
-            bar.innerHTML = `
-      <button class="tx-filter-chip" data-filter="transferred">
-        Transferidos <span class="chip-count">${transferredCount}</span>
-      </button>
-      <button class="tx-filter-chip" data-filter="reverted">
-        Revertidos <span class="chip-count">${revertedCount}</span>
-      </button>
-    `;
             parent.prepend(bar);
-        } else {
-            const transferredCountEl = bar.querySelector('.tx-filter-chip[data-filter="transferred"] .chip-count');
-            if (transferredCountEl) transferredCountEl.textContent = String(transferredCount);
-            const revertedCountEl = bar.querySelector('.tx-filter-chip[data-filter="reverted"] .chip-count');
-            if (revertedCountEl) revertedCountEl.textContent = String(revertedCount);
         }
 
-        bar.querySelectorAll('.tx-filter-chip').forEach((chip) => chip.classList.remove('active'));
-        if (parent.dataset.activeFilter) {
-            const activeChip = bar.querySelector(`.tx-filter-chip[data-filter="${parent.dataset.activeFilter}"]`);
-            if (activeChip) activeChip.classList.add('active');
+        // Build chips (only for types that exist)
+        bar.innerHTML = '';
+        if (tCount > 0) {
+            bar.insertAdjacentHTML('beforeend',
+                `<button class="tx-filter-chip active" data-filter="transferred">
+                    🔀 Transferidos <span class="chip-count">${tCount}</span>
+                </button>`);
+        }
+        if (rCount > 0) {
+            bar.insertAdjacentHTML('beforeend',
+                `<button class="tx-filter-chip active" data-filter="reverted">
+                    ↩️ Revertidos <span class="chip-count">${rCount}</span>
+                </button>`);
         }
 
+        // Bind (once)
         if (bar.dataset.bound !== '1') {
             bar.addEventListener('click', (e) => {
                 const chip = e.target.closest('.tx-filter-chip');
                 if (!chip) return;
-
-                const filter = chip.dataset.filter;
-                const wasActive = chip.classList.contains('active');
-
-                bar.querySelectorAll('.tx-filter-chip').forEach((c) => c.classList.remove('active'));
-
-                if (wasActive) {
-                    delete parent.dataset.activeFilter;
-                } else {
-                    chip.classList.add('active');
-                    parent.dataset.activeFilter = filter;
-                }
-
-                const currentList = document.getElementById(config.listId) || parent.querySelector('.tx-list');
-                applyHistoryFilter(parent, currentList);
+                chip.classList.toggle('active');
+                const curList = document.getElementById(config.listId)
+                             || parent.querySelector('.tx-list');
+                applyHistoryFilter(parent, curList);
             });
             bar.dataset.bound = '1';
         }
@@ -3097,34 +3074,33 @@ function initHistoryFilters() {
         applyHistoryFilter(parent, list);
     });
 
-    console.info('[AGRO] History filters initialized');
+    console.info('[AGRO] ✅ History filters v1.1 initialized');
 }
 
-function applyHistoryFilter(panel, list) {
-    if (!panel || !list) return;
-    const filter = panel.dataset.activeFilter;
-    let visibleCount = 0;
+function applyHistoryFilter(parent, list) {
+    if (!parent || !list) return;
+
+    const bar = parent.querySelector('.tx-filter-bar');
+
+    // Active chip = that type is VISIBLE
+    const showTransferred = !bar?.querySelector('[data-filter="transferred"]')
+                         || !!bar.querySelector('[data-filter="transferred"].active');
+    const showReverted    = !bar?.querySelector('[data-filter="reverted"]')
+                         || !!bar.querySelector('[data-filter="reverted"].active');
 
     list.querySelectorAll('.tx-card').forEach((card) => {
-        if (!filter) {
-            card.style.display = '';
-            visibleCount += 1;
-            return;
-        }
-        const match = card.dataset.transferType === filter;
-        card.style.display = match ? '' : 'none';
-        if (match) visibleCount += 1;
+        const type = card.dataset.transferType;
+        if      (type === 'transferred' && !showTransferred) card.style.display = 'none';
+        else if (type === 'reverted'    && !showReverted)    card.style.display = 'none';
+        else                                                 card.style.display = '';
     });
 
+    // Hide empty day headers
     list.querySelectorAll('.facturero-day-header, .date-divider').forEach((hdr) => {
-        if (!filter) {
-            hdr.style.display = '';
-            return;
-        }
-
         let next = hdr.nextElementSibling;
         let hasVisible = false;
-        while (next && !next.classList.contains('facturero-day-header') && !next.classList.contains('date-divider')) {
+        while (next && !next.classList.contains('facturero-day-header')
+                    && !next.classList.contains('date-divider')) {
             if (next.classList.contains('tx-card') && next.style.display !== 'none') {
                 hasVisible = true;
                 break;
@@ -3133,20 +3109,6 @@ function applyHistoryFilter(panel, list) {
         }
         hdr.style.display = hasVisible ? '' : 'none';
     });
-
-    let emptyMsg = panel.querySelector('.tx-filter-empty');
-    if (filter && visibleCount === 0) {
-        if (!emptyMsg) {
-            emptyMsg = document.createElement('div');
-            emptyMsg.className = 'tx-filter-empty';
-            panel.appendChild(emptyMsg);
-        }
-        const label = filter === 'transferred' ? 'transferidos' : 'revertidos';
-        emptyMsg.textContent = `No hay registros ${label} en este historial`;
-        emptyMsg.style.display = '';
-    } else if (emptyMsg) {
-        emptyMsg.style.display = 'none';
-    }
 }
 
 function toSafeLocaleNumber(value) {
@@ -4752,25 +4714,20 @@ function renderHistoryList(tabName, config, items, showActions) {
         parent.querySelector('#pending-transfer-filter')?.remove();
     }
     if (isOthersTab && parent) {
-        ensureOtherTransferFilterUI(parent, itemsWithCropNames);
+        parent.querySelector('#other-transfer-filter')?.remove();
     }
 
-    const filteredItems = isOthersTab ? applyOtherTransferFilter(itemsWithCropNames) : itemsWithCropNames;
+    const filteredItems = itemsWithCropNames;
 
     // V9.6.3: Ensure parent container is visible when items exist
     if (parent) {
-        const keepVisibleForTransferFilter = isOthersTab && itemsWithCropNames.length > 0;
-        parent.style.display = (filteredItems.length > 0 || keepVisibleForTransferFilter) ? 'block' : 'none';
+        parent.style.display = filteredItems.length > 0 ? 'block' : 'none';
     }
 
     if (filteredItems.length === 0) {
         const emptyMsg = document.createElement('p');
         emptyMsg.style.cssText = 'color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 1rem;';
-        if (isOthersTab && itemsWithCropNames.length > 0) {
-            emptyMsg.textContent = 'No hay movimientos visibles. Activa "Ver transferidos" o "Ver revertidos" para mostrarlos.';
-        } else {
-            emptyMsg.textContent = 'Sin registros recientes.';
-        }
+        emptyMsg.textContent = 'Sin registros recientes.';
         container.replaceChildren(emptyMsg);
     } else {
         // V9.6.7: Group by day and render with headers
