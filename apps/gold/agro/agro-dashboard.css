@@ -574,6 +574,21 @@
 
   .agro-dashboard-v10 .agro-dash-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+  }
+
+  .agro-dashboard-v10 .agro-dash-card {
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .agro-dashboard-v10 .agro-dash-card__body {
+    flex: 1 1 auto;
+  }
+
+  .agro-dashboard-v10 .agro-dash-card__footer {
+    margin-top: auto;
   }
 }
 

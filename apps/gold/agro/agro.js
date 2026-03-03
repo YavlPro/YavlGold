@@ -66,6 +66,7 @@ const AGRO_GENERAL_VIEW_ID = '__general__';
 const AGRO_GENERAL_LABEL = '📋 General';
 const AGRO_GENERAL_SUBLABEL = 'Todos los movimientos';
 const AGRO_CROPS_REFRESH_EVENT = 'agro:crops:refresh';
+const AGRO_PROFILE_LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
@@ -14051,6 +14052,86 @@ async function resolveAuthUser(authClient) {
     return sessionUser || null;
 }
 
+function normalizeHeaderAvatarUrl(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+
+    if (/^data:image\/(?:png|jpeg|jpg|webp|gif|avif);base64,[a-z0-9+/=\s]+$/i.test(raw)) {
+        return raw.replace(/\s+/g, '');
+    }
+
+    try {
+        const parsed = new URL(raw);
+        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+            return parsed.toString();
+        }
+    } catch (_error) {
+        return '';
+    }
+
+    return '';
+}
+
+function readHeaderLocalAvatar(userId) {
+    const key = `${AGRO_PROFILE_LOCAL_AVATAR_KEY_PREFIX}${String(userId || '').trim()}`;
+    if (!key || key === AGRO_PROFILE_LOCAL_AVATAR_KEY_PREFIX) return '';
+    try {
+        return normalizeHeaderAvatarUrl(localStorage.getItem(key) || '');
+    } catch (_error) {
+        return '';
+    }
+}
+
+function renderHeaderAvatar(avatarEl, avatarUrl, altText) {
+    if (!avatarEl) return;
+
+    const safeUrl = normalizeHeaderAvatarUrl(avatarUrl);
+    if (!safeUrl) {
+        const img = avatarEl.querySelector('img');
+        if (img) img.remove();
+        avatarEl.textContent = '👨‍🌾';
+        avatarEl.style.overflow = '';
+        return;
+    }
+
+    let img = avatarEl.querySelector('img');
+    if (!img) {
+        avatarEl.textContent = '';
+        img = document.createElement('img');
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.borderRadius = '50%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        avatarEl.style.overflow = 'hidden';
+        avatarEl.appendChild(img);
+    }
+    img.alt = altText || 'Usuario';
+    img.src = safeUrl;
+}
+
+async function resolveHeaderDisplayName(user, authClient) {
+    const fallback = String(user?.user_metadata?.full_name || user?.email || 'Agricultor').trim() || 'Agricultor';
+    const supabaseClient = authClient?.supabase;
+    if (!supabaseClient?.from || !user?.id) return fallback;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('agro_farmer_profile')
+            .select('display_name')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        if (!error) {
+            const profileName = String(data?.display_name || '').trim();
+            if (profileName) return profileName;
+        }
+    } catch (_error) {
+        // Fallback to metadata/email.
+    }
+
+    return fallback;
+}
+
 async function applyHeaderIdentity() {
     const nameEl = document.querySelector('.user-profile .user-name');
     const avatarEl = document.querySelector('.user-profile .user-avatar');
@@ -14062,28 +14143,15 @@ async function applyHeaderIdentity() {
     const user = await resolveAuthUser(authClient);
     if (!user) return;
 
-    const displayName = user.user_metadata?.full_name || user.email || 'Agricultor';
+    const displayName = await resolveHeaderDisplayName(user, authClient);
     if (nameEl) {
         nameEl.textContent = displayName;
     }
 
-    const avatarUrl = user.user_metadata?.avatar_url;
-    if (avatarUrl && avatarEl) {
-        let img = avatarEl.querySelector('img');
-        if (!img) {
-            avatarEl.textContent = '';
-            img = document.createElement('img');
-            img.alt = displayName || 'Usuario';
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.borderRadius = '50%';
-            img.style.objectFit = 'cover';
-            img.style.display = 'block';
-            avatarEl.style.overflow = 'hidden';
-            avatarEl.appendChild(img);
-        }
-        img.src = avatarUrl;
-    }
+    const localAvatar = readHeaderLocalAvatar(user.id);
+    const metadataAvatar = normalizeHeaderAvatarUrl(user?.user_metadata?.avatar_url);
+    const avatarUrl = localAvatar || metadataAvatar;
+    renderHeaderAvatar(avatarEl, avatarUrl, displayName);
 }
 
 function setupHeaderIdentity() {

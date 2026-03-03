@@ -613,6 +613,7 @@ async function saveFarmerProfile(event) {
         }
 
         const metadataPatch = {};
+        let metadataSyncFailed = false;
         const nextDisplayName = resolveDisplayName(payload, user);
         const currentDisplayName = String(user?.user_metadata?.full_name || '').trim();
         if (nextDisplayName !== currentDisplayName) {
@@ -638,7 +639,11 @@ async function saveFarmerProfile(event) {
             }
         } else {
             nextAvatarUrl = inputAvatarUrl || '';
-            clearLocalAvatar(user.id);
+            if (nextAvatarUrl) {
+                writeLocalAvatar(user.id, nextAvatarUrl);
+            } else {
+                clearLocalAvatar(user.id);
+            }
             if (nextAvatarUrl !== currentMetadataAvatar) {
                 metadataPatch.avatar_url = nextAvatarUrl || null;
             }
@@ -648,8 +653,10 @@ async function saveFarmerProfile(event) {
             const { data: authData, error: authError } = await state.supabase.auth.updateUser({
                 data: metadataPatch
             });
-            if (authError) throw authError;
-            if (authData?.user) {
+            if (authError) {
+                metadataSyncFailed = true;
+                console.warn('[AGRO_PROFILE] auth metadata sync warning:', authError);
+            } else if (authData?.user) {
                 state.user = authData.user;
             }
         }
@@ -663,6 +670,8 @@ async function saveFarmerProfile(event) {
         fillPublicProfileForm(state.publicProfile, payload, state.user || user);
         if (publicProfileSkipped) {
             setProfileStatus('Perfil privado guardado. Falta migracion para perfil publico.', 'warn');
+        } else if (metadataSyncFailed) {
+            setProfileStatus('Perfil guardado. Aviso: no se pudo sincronizar metadata global.', 'warn');
         } else {
             const pubMsg = publicPayload.public_enabled ? 'ACTIVADO ✅' : 'DESACTIVADO 🔒';
             setProfileStatus(`Perfil guardado. Perfil público: ${pubMsg}`, 'ok');

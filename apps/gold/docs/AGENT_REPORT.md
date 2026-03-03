@@ -11375,3 +11375,93 @@ Get-Content apps/gold/agro/agro.js / apps/gold/agro/index.html / apps/gold/agro/
   - Resultado final: **PASS**
 - Nota:
   - La primera corrida fallo por entrada MPA huérfana (`creacion.html`), corregida en `vite.config.js`.
+
+## 🆕 SESIÓN: GATE 0 — Persistencia nombre/avatar en Perfil Agro (2026-03-03)
+
+### Diagnóstico (qué fallaba)
+
+- Síntoma reportado: el nombre/avatar del perfil en header Agro no persistía tras refrescar.
+- Causa raíz:
+  1) `applyHeaderIdentity()` en `apps/gold/agro/agro.js` leía solo `user.user_metadata` (full_name/avatar_url).
+  2) El nombre editable de Agro se guarda en `agro_farmer_profile.display_name`, por lo que al reload se pisaba con metadata/email.
+  3) Para avatar URL, si fallaba sync de metadata (`auth.updateUser`), no quedaba fallback local.
+
+### Plan aplicado
+
+1. Ajustar header identity para priorizar datos Agro.
+2. Reforzar guardado de avatar URL con fallback local y no abortar guardado si falla metadata sync.
+3. Ejecutar build oficial.
+
+### Cambios implementados
+
+1) `apps/gold/agro/agro.js`
+- Nuevo flujo de identidad del header:
+  - `resolveHeaderDisplayName(...)` ahora intenta `agro_farmer_profile.display_name` y cae a metadata/email.
+  - `readHeaderLocalAvatar(...)` usa `YG_AGRO_PROFILE_AVATAR_V1_<userId>`.
+  - `renderHeaderAvatar(...)` aplica avatar (URL/data image) o fallback emoji.
+- `applyHeaderIdentity()` quedó con prioridad:
+  - nombre: `agro_farmer_profile.display_name` -> metadata -> email
+  - avatar: localStorage -> metadata
+
+2) `apps/gold/agro/agroperfil.js`
+- En `saveFarmerProfile(...)`:
+  - Avatar URL ahora también se guarda en local fallback (`writeLocalAvatar`) para persistencia local robusta.
+  - Si `auth.updateUser({ data: metadataPatch })` falla, ya no rompe todo el guardado; se marca warning y se conserva el perfil privado guardado.
+
+### Comandos ejecutados
+
+```powershell
+rg -n "applyHeaderIdentity|user_metadata|full_name|avatar_url" apps/gold/agro/agro.js
+rg -n "saveFarmerProfile|writeLocalAvatar|auth.updateUser|metadata sync" apps/gold/agro/agroperfil.js
+pnpm build:gold
+```
+
+### Validación
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
+
+## 🆕 SESIÓN: GATE 0 — KPIs simétricos en Dashboard Agro (2026-03-03)
+
+### Diagnóstico
+
+- Solicitud UX: que `Clima local` y `Fase lunar` queden del mismo tamaño visual que `Mercados en vivo`.
+- Causa: en `apps/gold/agro/agro-dashboard.css` la grilla KPI estaba en modo compacto con `align-items:start` + cards sin estiramiento (`align-self:start`), lo que dejaba alturas distintas por contenido.
+
+### Plan aplicado
+
+1. Mantener el compacto actual, pero forzar simetría en desktop.
+2. Ajustar solo CSS de dashboard (`agro-dashboard.css`) sin tocar JS.
+3. Ejecutar build oficial.
+
+### Cambios implementados
+
+- Archivo: `apps/gold/agro/agro-dashboard.css`
+  - En `@media (min-width: 769px)`:
+    - `.agro-dash-grid`:
+      - `grid-auto-rows: 1fr`
+      - `align-items: stretch`
+    - `.agro-dash-card`:
+      - `height: 100%`
+      - `align-self: stretch`
+    - `.agro-dash-card__body`:
+      - `flex: 1 1 auto`
+    - `.agro-dash-card__footer`:
+      - `margin-top: auto`
+
+Resultado: las 3 tarjetas KPI del row desktop quedan con la misma altura (simétricas).
+
+### Comandos ejecutados
+
+```powershell
+Get-Content apps/gold/agro/agro-dashboard.css (rangos KPI)
+pnpm build:gold
+git status --short --branch
+```
+
+### Validación
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
