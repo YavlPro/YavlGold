@@ -1,5 +1,83 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — Hardening de identidad/contrato en Dashboard (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. `apps/gold/dashboard/index.html` mezcla contratos de identidad de módulos:
+   - la carga de `modules` no trae `slug/module_key`,
+   - `getModuleId()` cae a `id/title/name`,
+   - el render persiste favoritos con `mod.module_key || mod.slug || '#'`,
+   - `YG_ACTIVITY_V1` usa claves semánticas (`agro`, `academia`, `crypto`, etc.).
+   Resultado: favoritos e insights pueden divergir o colapsar a claves inválidas.
+2. `apps/gold/dashboard/index.html` no aplica `is_active` como gate real: hoy consulta módulos sin filtrar activos y el render no usa `is_active` para decidir navegabilidad.
+3. La tarjeta `Recomendado` en dashboard tiene sesgo implícito hacia Agro; no evalúa el catálogo activo completo de forma neutral.
+4. El dashboard principal es híbrido:
+   - `profiles`, `modules`, `user_favorites`, `notifications`, `announcements`, `feedback` salen de DB,
+   - `Continuar/Resumen/Recomendado` salen de `YG_ACTIVITY_V1` local,
+   - progreso académico real existe en `assets/js/academia.js` pero no participa todavía en el resumen principal.
+5. El logout móvil en `apps/gold/dashboard/index.html` usa limpieza nuclear (`localStorage.clear()` / `sessionStorage.clear()`), arrasando preferencias y caches no sensibles.
+
+### Alcance
+
+- Definir una identidad canónica única para módulos del dashboard y reutilizarla en render, favoritos y tracker.
+- Impedir persistencia de claves inválidas (`'#'` u otras no canónicas).
+- Aplicar `is_active` como gate real desde la carga del catálogo.
+- Hacer la tarjeta `Recomendado` neutral respecto al catálogo navegable.
+- Sustituir el logout móvil nuclear por limpieza selectiva.
+- Mantener MPA, Vanilla JS y el build oficial `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/dashboard/index.html`
+- `apps/gold/assets/js/modules/moduleManager.js`
+- `apps/gold/assets/js/utils/activityTracker.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- El punto más delicado es la compatibilidad con favoritos legacy (`suite`, `herramientas`, claves inválidas o no canónicas).
+- Filtrar por `is_active` puede ocultar tarjetas que hoy se veían por error si la data remota depende de ese bug.
+- Neutralizar recomendado puede cambiar la UX percibida si el producto esperaba priorizar Agro por defecto.
+
+### Estrategia de rollback
+
+1. Mantener helper de identidad y cambios de dashboard acotados a archivos específicos.
+2. Si una fase rompe UX, revertir solo esa fase sin deshacer el gate documental.
+3. No eliminar compatibilidad legacy sin dejar fallback explícito o descarte silencioso seguro.
+
+### Plan quirúrgico
+
+1. Introducir un resolver central de identidad canónica para módulos y usarlo en dashboard/favoritos/tracker.
+2. Bloquear persistencia de claves inválidas y deduplicar favoritos legacy a nivel de lectura/uso.
+3. Aplicar `is_active` en `loadModules()` y reforzar la defensa en render.
+4. Rehacer `Recomendado` para que use catálogo navegable completo, sin sesgo fijo a Agro.
+5. Reemplazar limpieza nuclear del logout móvil por limpieza selectiva.
+6. Ejecutar `pnpm build:gold` y registrar riesgos residuales.
+
+### Estado post-implementación
+
+- Se creó `apps/gold/assets/js/modules/moduleIdentity.js` como resolver central de identidad canónica para `agro`, `academia`, `social`, `tecnologia` y `crypto`, incluyendo compatibilidad legacy para alias como `suite`, `herramientas` y `tools`.
+- `apps/gold/dashboard/index.html` ahora normaliza el catálogo con esa identidad canónica, descarta módulos sin clave válida y deja `getModuleId()`, `getModuleRoute()` y el filtro de búsqueda alineados sobre la misma clave.
+- `apps/gold/assets/js/modules/moduleManager.js` dejó de persistir favoritos con claves inválidas; normaliza lecturas, deduplica favoritos legacy y elimina variantes antiguas de una misma clave al desfavoritar.
+- `apps/gold/assets/js/utils/activityTracker.js` ya canonicaliza `trackModuleEnter/Exit` para que `YG_ACTIVITY_V1` use las mismas claves que el dashboard.
+- `apps/gold/dashboard/index.html` filtra `modules` con `eq('is_active', true)` y además usa `isNavigableModule()` en render/recomendación para que módulos inactivos o no navegables no aparezcan como explorables.
+- La tarjeta `Recomendado` quedó neutral respecto al catálogo navegable completo; Agro ya no tiene prioridad silenciosa.
+- El logout móvil pasó de limpieza nuclear a `performDashboardLogout()`, que limpia estado de sesión y cachés acotados sin barrer preferencias globales inocentes.
+- El dashboard sigue siendo híbrido por diseño: `Continuar/Resumen/Recomendado` siguen saliendo de `YG_ACTIVITY_V1`, mientras favoritos/notificaciones siguen viniendo de DB. Esa frontera quedó documentada inline para evitar confusión de contrato.
+
+### Validación
+
+- `pnpm build:gold` ejecutado con resultado `OK` el `2026-03-05`.
+- El build pasó con `agent-guard: OK`, `agent-report-check: OK` y `vite build` exitoso.
+- Salida relevante: `dist/dashboard/index.html` quedó en `58.25 kB` (`12.28 kB gzip`).
+
+### Riesgos residuales
+
+- El resolver canónico cubre los módulos actuales del catálogo principal. Si se agrega un módulo nuevo en `modules` sin mapear su identidad/ruta, el dashboard lo descartará hasta incorporarlo explícitamente al helper.
+- Los favoritos legacy ya guardados con claves no reconocibles se ignoran silenciosamente; no rompen la UI, pero tampoco migran a una clave canónica si no existe una correspondencia segura.
+- El resumen principal sigue siendo local-first; integrar progreso académico real en dashboard sigue siendo una fase aparte.
+
 ## 🆕 SESIÓN: GATE 0 — Hardening de datos/auth en Agro (2026-03-05)
 
 ### Diagnóstico (tarea actual)

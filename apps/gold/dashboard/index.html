@@ -2027,6 +2027,20 @@
     import { ActivityTracker } from '../assets/js/utils/activityTracker.js';
     // ⭐ Import FavoritesManager for star toggle functionality
     import { FavoritesManager, StatsManager } from '../assets/js/modules/moduleManager.js';
+    import { getModuleLegacyKeys, getModuleRoute as resolveModuleRouteFromIdentity, isNavigableModule, normalizeDashboardModule, resolveCanonicalModuleKey } from '../assets/js/modules/moduleIdentity.js';
+
+    async function performDashboardLogout() {
+      sessionStorage.removeItem('yavl_dismissed_announcements');
+      window.FavoritesManager?.clearCache?.();
+
+      if (window.AuthClient?.logout) {
+        await window.AuthClient.logout();
+        return;
+      }
+
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    }
 
     async function initDashboard() {
       console.log('[Dashboard] Verificando sesión...');
@@ -2084,10 +2098,7 @@
         btn.style.display = 'inline-flex'; // Force visibility
         btn.onclick = async (e) => {
           e.preventDefault();
-          // Clear session-based storage before logout
-          sessionStorage.removeItem('yavl_dismissed_announcements');
-          await supabase.auth.signOut();
-          window.location.href = '/';
+          await performDashboardLogout();
         };
       });
 
@@ -2105,156 +2116,10 @@
     /**
      * Load modules from Supabase and render them dynamically
      */
-    function getModuleLegacyValues(mod) {
-      return [
-        mod?.slug,
-        mod?.module_key,
-        mod?.route,
-        mod?.path,
-        mod?.href,
-        mod?.name,
-        mod?.title
-      ].filter((value) => typeof value === 'string' && value.trim().length > 0);
-    }
-
-    function hasLegacySignal(mod, matcher) {
-      return getModuleLegacyValues(mod).some((value) => matcher(value.toLowerCase()));
-    }
-
-    function collectLegacyKeys(mod) {
-      const keys = [
-        ...(Array.isArray(mod?.legacy_keys) ? mod.legacy_keys : []),
-        typeof mod?.slug === 'string' ? mod.slug : null,
-        typeof mod?.module_key === 'string' ? mod.module_key : null
-      ].filter(Boolean);
-
-      return Array.from(new Set(keys));
-    }
-
-    function isLegacyToolsModule(mod) {
-      return hasLegacySignal(mod, (lower) => {
-        return lower.includes('herramientas') || lower.includes('tools');
-      });
-    }
-
-    function isLegacySuiteModule(mod) {
-      return hasLegacySignal(mod, (lower) => {
-        return lower.includes('/suite/') || /\bsuite\b/.test(lower);
-      });
-    }
-
-    function normalizeModuleKey(value) {
-      return String(value || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-    }
-
     function normalizeModules(modules) {
-      return (modules || []).map((mod) => {
-        let normalized = mod;
-
-        if (isLegacyToolsModule(normalized)) {
-          const legacyKeys = collectLegacyKeys(mod);
-
-          normalized = {
-            ...normalized,
-            title: 'Tecnología',
-            name: 'Tecnología',
-            slug: 'tecnologia',
-            module_key: 'tecnologia',
-            route: '/tecnologia/',
-            path: '/tecnologia/',
-            legacy_keys: legacyKeys
-          };
-        }
-
-        if (isLegacySuiteModule(normalized)) {
-          const legacyKeys = collectLegacyKeys(normalized);
-          normalized = {
-            ...normalized,
-            title: 'Crypto',
-            name: 'Crypto',
-            slug: 'crypto',
-            module_key: 'crypto',
-            route: '/crypto/',
-            path: '/crypto/',
-            icon: mod.icon || '₿',
-            description: 'Datos del mercado y tasas de cambio. Herramientas financieras en construcción.',
-            legacy_keys: legacyKeys
-          };
-        }
-
-        const key = String(
-          normalized?.slug || normalized?.module_key || normalized?.title || normalized?.name || ''
-        ).toLowerCase();
-        const keyNormalized = normalizeModuleKey(key);
-        const routeNormalized = normalizeModuleKey(
-          normalized?.route || normalized?.path || normalized?.href || ''
-        );
-
-        if (key.includes('agro')) {
-          normalized = {
-            ...normalized,
-            title: 'Agro',
-            name: 'Agro',
-            icon: normalized.icon || '🌾',
-            status: 'available',
-            description: 'Registra cultivos, controla gastos e ingresos en pesos y dólares, consulta el clima y planifica tu agenda agrícola.'
-          };
-        } else if (key.includes('academia')) {
-          normalized = {
-            ...normalized,
-            title: 'Academia',
-            name: 'Academia',
-            icon: normalized.icon || '🎓',
-            status: 'coming_soon',
-            description: 'Aprende sobre agricultura, finanzas y tecnología con contenido práctico.'
-          };
-        } else if (key.includes('social')) {
-          normalized = {
-            ...normalized,
-            title: 'Social',
-            name: 'Social',
-            icon: normalized.icon || '👥',
-            status: 'coming_soon',
-            description: 'Conecta con otros agricultores, comparte experiencias y aprende en comunidad.'
-          };
-        } else if (
-          keyNormalized.includes('tecnologia')
-          || routeNormalized.includes('/tecnologia')
-          || routeNormalized.includes('/herramientas')
-        ) {
-          normalized = {
-            ...normalized,
-            title: 'Tecnología',
-            name: 'Tecnología',
-            icon: normalized.icon || '🛠️',
-            status: 'unavailable',
-            force_disabled: true,
-            description: 'Herramientas inteligentes para optimizar tu trabajo en el campo.'
-          };
-        } else if (keyNormalized.includes('crypto') || routeNormalized.includes('/crypto')) {
-          normalized = {
-            ...normalized,
-            title: 'Crypto',
-            name: 'Crypto',
-            icon: normalized.icon || '📈',
-            status: 'unavailable',
-            force_disabled: true,
-            description: 'Datos del mercado y tasas de cambio. Herramientas financieras en construcción.'
-          };
-        }
-
-        if (!key.includes('agro') && normalized?.status === 'available') {
-          normalized = {
-            ...normalized,
-            status: 'coming_soon'
-          };
-        }
-
-        return normalized;
-      });
+      return (modules || [])
+        .map((mod) => normalizeDashboardModule(mod))
+        .filter((mod) => !!mod.canonical_key);
     }
 
     async function loadModules() {
@@ -2267,6 +2132,7 @@
         const { data: modules, error } = await supabase
           .from('modules')
           .select('id,title,description,thumbnail_url,route,is_active,is_locked,min_level,created_at')
+          .eq('is_active', true)
           .order('min_level', { ascending: true });
 
         if (error) {
@@ -2322,7 +2188,7 @@
     }
 
     function getModuleId(mod) {
-      return mod?.slug || mod?.module_key || mod?.id || mod?.title || mod?.name || null;
+      return mod?.canonical_key || resolveCanonicalModuleKey(mod) || null;
     }
 
     function getModuleTitle(mod) {
@@ -2330,18 +2196,13 @@
     }
 
     function getModuleRoute(mod) {
-      const slug = mod?.slug || mod?.module_key;
-      return mod?.route || mod?.path || (slug ? `/${slug}/` : '#');
-    }
-
-    function isModuleAgro(mod) {
-      const id = String(getModuleId(mod) || '').toLowerCase();
-      const route = String(getModuleRoute(mod) || '').toLowerCase();
-      return id.includes('agro') || route.includes('/agro');
+      return mod?.route || mod?.path || resolveModuleRouteFromIdentity(mod);
     }
 
     function getLegacyKeys(mod) {
-      return Array.isArray(mod?.legacy_keys) ? mod.legacy_keys : [];
+      return Array.isArray(mod?.legacy_keys) && mod.legacy_keys.length
+        ? mod.legacy_keys
+        : getModuleLegacyKeys(mod);
     }
 
     function getModuleVisitData(mod, visits) {
@@ -2382,7 +2243,7 @@
 
     function resolveRecommendedModule(modules, visits, excludeId, reasonPrefix = '') {
       const prefix = reasonPrefix ? `${reasonPrefix} · ` : '';
-      const list = (modules || []).filter(mod => getModuleId(mod));
+      const list = (modules || []).filter(mod => getModuleId(mod) && isNavigableModule(mod));
       const eligible = list.filter(mod => getModuleId(mod) !== excludeId);
       if (eligible.length === 0) return null;
 
@@ -2468,14 +2329,10 @@
     function updateRecommendCard(summary, modules) {
       const visits = summary?.visits || {};
       const continueData = resolveContinueModule(summary?.lastModule, modules);
-      const agroModules = (modules || []).filter(isModuleAgro);
-      const usingAgro = agroModules.length > 0;
-      const candidates = usingAgro ? agroModules : modules;
       const recommended = resolveRecommendedModule(
-        candidates,
+        modules,
         visits,
-        continueData?.id,
-        usingAgro ? 'Agro' : ''
+        continueData?.id
       );
 
       updateInsightCard('recommend', recommended ? {
@@ -2486,6 +2343,8 @@
     }
 
     async function updateDashboardInsights(modules, user) {
+      // Local-first today: activity/continue/recommended come from YG_ACTIVITY_V1.
+      // DB-backed counts stay in favorites/notifications until academic progress is integrated here.
       const summary = window.YGActivity?.getActivitySummary?.()
         || ActivityTracker?.getActivitySummary?.();
 
@@ -2506,12 +2365,8 @@
       if (!user?.id) return;
 
       try {
-        const [favoritesRes, unreadRes] = await Promise.all([
-          supabase
-            .from('user_favorites')
-            .select('module_key', { count: 'exact' })
-            .limit(1)
-            .eq('user_id', user.id),
+        const [favoritesSet, unreadRes] = await Promise.all([
+          window.FavoritesManager?.getUserFavorites?.() || Promise.resolve(new Set()),
           supabase
             .from('notifications')
             .select('id', { count: 'exact' })
@@ -2520,8 +2375,8 @@
             .eq('is_read', false)
         ]);
 
-        if (favoritesEl && !favoritesRes.error) {
-          favoritesEl.textContent = String(favoritesRes.count || 0);
+        if (favoritesEl) {
+          favoritesEl.textContent = String(favoritesSet?.size || 0);
         }
         if (unreadEl && !unreadRes.error) {
           unreadEl.textContent = String(unreadRes.count || 0);
@@ -2547,22 +2402,16 @@
         };
 
         const badge = badgeMap[mod.status] || badgeMap['development'];
-        const isDisabled = mod.is_locked || mod.status === 'coming_soon' || mod.status === 'unavailable' || mod.force_disabled === true;
+        const isDisabled = !isNavigableModule(mod);
         const icon = mod.icon || '📦';
         // FIX: Use mod.title (not mod.name)
         const title = (mod.title || mod.name || 'MÓDULO').toUpperCase();
         const description = mod.description || 'Descripción no disponible';
-        const slug = mod.slug || mod.module_key || '#';
-        const moduleKey = mod.module_key || mod.slug || '#';
-        // FIX: Use mod.route (the actual DB column), fallback to path then slug
-        const url = mod.route || mod.path || `/${slug}/`;
+        const moduleKey = getModuleId(mod) || '';
+        const url = getModuleRoute(mod);
 
         // ⭐ Star favorite state
-        const legacyKeys = Array.isArray(mod.legacy_keys) ? mod.legacy_keys : [];
-        const favoriteKey = userFavorites.has(moduleKey)
-          ? moduleKey
-          : (legacyKeys.find(key => userFavorites.has(key)) || moduleKey);
-        const isFavorite = userFavorites.has(favoriteKey);
+        const isFavorite = moduleKey ? userFavorites.has(moduleKey) : false;
         const starClass = isFavorite ? 'fa-solid' : 'fa-regular';
         const starColor = isFavorite ? 'color: #C8A752;' : '';
 
@@ -2579,7 +2428,11 @@
 
         // Button text
         const btnText = mod.title || mod.name || 'Módulo';
-        const disabledCtaText = mod.status === 'unavailable' ? 'NO DISPONIBLE' : 'No Disponible';
+        const disabledCtaText = mod.status === 'locked'
+          ? 'BLOQUEADO'
+          : mod.status === 'unavailable'
+            ? 'NO DISPONIBLE'
+            : 'No Disponible';
 
         // Build card
         if (isDisabled) {
@@ -2600,7 +2453,7 @@
 
         return `
           <div class="module-card" data-module="${moduleKey}">
-            <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${favoriteKey}', this.querySelector('i'))" title="Agregar a favoritos">
+            <button class="star-toggle" onclick="event.stopPropagation(); window.FavoritesManager?.toggleFavorite('${moduleKey}', this.querySelector('i'))" title="Agregar a favoritos">
               <i class="${starClass} fa-star" style="${starColor}"></i>
             </button>
             ${thumbnailHtml}
@@ -2650,8 +2503,8 @@
         filtered = filtered.filter(mod => {
           const title = (mod.title || mod.name || '').toLowerCase();
           const desc = (mod.description || '').toLowerCase();
-          const slug = (mod.slug || '').toLowerCase();
-          return title.includes(query) || desc.includes(query) || slug.includes(query);
+          const moduleKey = (getModuleId(mod) || '').toLowerCase();
+          return title.includes(query) || desc.includes(query) || moduleKey.includes(query);
         });
       }
 
@@ -2964,31 +2817,11 @@
     fab.addEventListener('click', async () => {
       try {
         fab.style.opacity = '0.5';
-
-        // Try graceful logout first
-        const module = await import('../assets/js/main.js');
-        const supabase = module.supabase;
-        if (!supabase) throw new Error("Supabase client not found");
-
-        await supabase.auth.signOut();
-        // Clear storage just in case
-        localStorage.clear();
-        window.location.href = '/';
+        await performDashboardLogout();
 
       } catch (err) {
-        console.error('Logout failed, forcing local cleanup:', err);
-
-        // --- NUCLEAR OPTION (Prevent Redirect Loop) ---
-        // Manually clear all Supabase tokens/data
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // Optional: Clear specific cookies if accessible via JS (usually httpOnly, but good practice to try)
-        document.cookie.split(";").forEach(function (c) {
-          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-        });
-
-        alert('Sesión cerrada (Modo Local).');
+        console.error('Logout failed:', err);
+        sessionStorage.removeItem('yavl_dismissed_announcements');
         window.location.href = '/';
       }
     });

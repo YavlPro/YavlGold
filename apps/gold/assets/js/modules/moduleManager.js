@@ -4,6 +4,7 @@
  */
 import { supabase } from '../config/supabase-config.js';
 import { logger } from '../utils/logger.js';
+import { normalizeFavoriteModuleKey } from './moduleIdentity.js';
 
 // 🗄️ CACHE CONFIG
 const CACHE_KEY = 'yavl_modules_v1';
@@ -116,6 +117,7 @@ export const ModuleManager = {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const FavoritesManager = {
     _cache: null,
+    _rawByCanonical: null,
 
     /**
      * Get all favorites for current user
@@ -142,7 +144,23 @@ export const FavoritesManager = {
                 return new Set();
             }
 
-            this._cache = new Set(data.map(f => f.module_key));
+            const normalizedFavorites = new Set();
+            const rawByCanonical = new Map();
+
+            (data || []).forEach((favorite) => {
+                const rawKey = String(favorite?.module_key || '').trim();
+                const canonicalKey = normalizeFavoriteModuleKey(rawKey);
+                if (!canonicalKey) return;
+
+                normalizedFavorites.add(canonicalKey);
+                if (!rawByCanonical.has(canonicalKey)) {
+                    rawByCanonical.set(canonicalKey, new Set());
+                }
+                rawByCanonical.get(canonicalKey).add(rawKey);
+            });
+
+            this._cache = normalizedFavorites;
+            this._rawByCanonical = rawByCanonical;
             logger.debug(`[FavoritesManager] ⭐ Loaded ${this._cache.size} favorites`);
             return this._cache;
         } catch (err) {
@@ -157,8 +175,10 @@ export const FavoritesManager = {
      * @returns {Promise<boolean>}
      */
     async isFavorite(moduleKey) {
+        const canonicalKey = normalizeFavoriteModuleKey(moduleKey);
+        if (!canonicalKey) return false;
         const favorites = await this.getUserFavorites();
-        return favorites.has(moduleKey);
+        return favorites.has(canonicalKey);
     },
 
     /**
@@ -169,6 +189,13 @@ export const FavoritesManager = {
      */
     async toggleFavorite(moduleKey, starElement) {
         try {
+            const canonicalKey = normalizeFavoriteModuleKey(moduleKey);
+            if (!canonicalKey) {
+                if (starElement) this._updateStarUI(starElement, false);
+                logger.warn('[FavoritesManager] Invalid module key, skipping favorite toggle');
+                return false;
+            }
+
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
                 logger.warn('[FavoritesManager] Must be logged in to favorite');
@@ -176,7 +203,7 @@ export const FavoritesManager = {
             }
 
             const favorites = await this.getUserFavorites();
-            const wasFavorite = favorites.has(moduleKey);
+            const wasFavorite = favorites.has(canonicalKey);
             const newState = !wasFavorite;
 
             // 🎯 OPTIMISTIC UI: Update immediately
@@ -189,7 +216,7 @@ export const FavoritesManager = {
                 // Add favorite
                 const { error } = await supabase
                     .from('user_favorites')
-                    .insert({ user_id: session.user.id, module_key: moduleKey });
+                    .insert({ user_id: session.user.id, module_key: canonicalKey });
 
                 if (error) {
                     // Revert on error
@@ -197,15 +224,21 @@ export const FavoritesManager = {
                     logger.error('[FavoritesManager] Failed to add:', error.message);
                     return wasFavorite;
                 }
-                favorites.add(moduleKey);
-                logger.success(`[FavoritesManager] ⭐ Added: ${moduleKey}`);
+                favorites.add(canonicalKey);
+                if (!(this._rawByCanonical instanceof Map)) {
+                    this._rawByCanonical = new Map();
+                }
+                this._rawByCanonical.set(canonicalKey, new Set([canonicalKey]));
+                logger.success(`[FavoritesManager] ⭐ Added: ${canonicalKey}`);
             } else {
                 // Remove favorite
+                const rawKeys = Array.from(this._rawByCanonical?.get(canonicalKey) || []);
+                const keysToDelete = Array.from(new Set([canonicalKey, ...rawKeys])).filter(Boolean);
                 const { error } = await supabase
                     .from('user_favorites')
                     .delete()
                     .eq('user_id', session.user.id)
-                    .eq('module_key', moduleKey);
+                    .in('module_key', keysToDelete);
 
                 if (error) {
                     // Revert on error
@@ -213,8 +246,9 @@ export const FavoritesManager = {
                     logger.error('[FavoritesManager] Failed to remove:', error.message);
                     return wasFavorite;
                 }
-                favorites.delete(moduleKey);
-                logger.success(`[FavoritesManager] ☆ Removed: ${moduleKey}`);
+                favorites.delete(canonicalKey);
+                this._rawByCanonical?.delete(canonicalKey);
+                logger.success(`[FavoritesManager] ☆ Removed: ${canonicalKey}`);
             }
 
             // Update stats
@@ -249,6 +283,7 @@ export const FavoritesManager = {
      */
     clearCache() {
         this._cache = null;
+        this._rawByCanonical = null;
     }
 };
 
@@ -294,16 +329,9 @@ export const StatsManager = {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return;
 
-            const { count, error } = await supabase
-                .from('user_favorites')
-                .select('module_key', { count: 'exact' })
-                .limit(1)
-                .eq('user_id', session.user.id);
-
-            if (!error) {
-                const el = document.getElementById('stat-stars') || document.querySelector('[data-stat="stars"]');
-                if (el) el.textContent = count || 0;
-            }
+            const favorites = await FavoritesManager.getUserFavorites();
+            const el = document.getElementById('stat-stars') || document.querySelector('[data-stat="stars"]');
+            if (el) el.textContent = favorites.size || 0;
         } catch (err) {
             logger.error('[StatsManager] Favorites count error:', err.message);
         }

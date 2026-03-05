@@ -2,6 +2,8 @@
  * YG Activity Tracker (local, lightweight)
  * Storage key: YG_ACTIVITY_V1
  */
+import { resolveCanonicalModuleKey } from '../modules/moduleIdentity.js';
+
 const STORAGE_KEY = 'YG_ACTIVITY_V1';
 const attachedModules = new Set();
 
@@ -31,12 +33,19 @@ function safeWrite(state) {
   }
 }
 
-function normalizeId(moduleId) {
-  return String(moduleId || '').trim();
+function normalizeId(moduleId, meta = {}) {
+  return resolveCanonicalModuleKey({
+    module_key: moduleId,
+    slug: moduleId,
+    route: meta.path || '',
+    path: meta.path || '',
+    title: meta.title || moduleId,
+    name: meta.title || moduleId
+  });
 }
 
 function trackModuleEnter(moduleId, meta = {}) {
-  const id = normalizeId(moduleId);
+  const id = normalizeId(moduleId, meta);
   if (!id) return null;
 
   const state = safeRead();
@@ -102,7 +111,7 @@ function getActivitySummary() {
 }
 
 function attachModuleTracking(moduleId, meta = {}) {
-  const id = normalizeId(moduleId);
+  const id = normalizeId(moduleId, meta);
   if (!id || attachedModules.has(id)) return;
 
   attachedModules.add(id);
