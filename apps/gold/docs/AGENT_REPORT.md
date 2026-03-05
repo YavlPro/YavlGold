@@ -11507,6 +11507,27 @@ pnpm build:gold
   - Se agrega separador sutil (`·`) antes de `.history-unit-totals` bajo `.tx-filter-bar.has-unit-divider`.
   - Sin cambios de paleta ni tokens fuera del ADN vigente.
 
+## 🆕 SESIÓN: GATE 0 — Pagados (finalizados) fuera de pipeline V10 (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+- El historial de `Pagados` tiene un flujo legacy adicional (`loadIncomes()` + `renderIncomeItem()` en `apps/gold/agro/agro.js`) que reescribe `#income-list`.
+- Ese flujo no pasaba completo por el pipeline de chips/totales (`facturero-item` + datasets de unidad + `initHistoryFilters`/`injectHistorySearchInput`), por lo que en ciertos contextos (ej. cultivo finalizado seleccionado) no aparecían chips de unidades.
+
+### Plan (tarea actual)
+
+1) `apps/gold/agro/agro.js`
+- Hacer compatible `renderIncomeItem()` con el pipeline de totales:
+  - agregar clase `.facturero-item`,
+  - exponer `dataset.unitType/unitQty/quantityKg`.
+- Al final de `loadIncomes()`:
+  - ejecutar `injectHistorySearchInput('ingresos', FACTURERO_CONFIG.ingresos)`,
+  - ejecutar `initHistoryFilters()` para recalcular barra/chips/totales sobre ese render legacy.
+
+2) Validación
+- Probar `Pagados` con cultivo finalizado seleccionado y confirmar chip `X sacos`/`Y kg`.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: GATE 0 — Supabase estático para identidad header Agro (2026-03-03)
 
 ### Diagnóstico

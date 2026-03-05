@@ -10668,9 +10668,23 @@ function renderIncomeItem(listEl, income, signedUrl) {
     if (!listEl || !income) return;
 
     const item = document.createElement('div');
-    item.className = 'income-item animate-in';
+    item.className = 'income-item facturero-item animate-in';
     item.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;';
     item.dataset.incomeId = income.id ? String(income.id) : '';
+    item.dataset.unitType = String(income?.unit_type ?? '');
+    item.dataset.unitQty = String(income?.unit_qty ?? '');
+    item.dataset.quantityKg = String(income?.quantity_kg ?? '');
+
+    const hiddenStatus = document.createElement('span');
+    hiddenStatus.className = 'tx-status';
+    hiddenStatus.style.display = 'none';
+    if (isIncomeOrLossReverted(income)) {
+        hiddenStatus.textContent = 'Revertido';
+    } else if (isFromPendingTransfer(income)) {
+        hiddenStatus.textContent = 'Transferido';
+    } else {
+        hiddenStatus.textContent = 'Pagado';
+    }
 
     const left = document.createElement('div');
     left.style.cssText = 'display: flex; align-items: center; gap: 1rem;';
@@ -10887,7 +10901,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     });
 
     actions.append(amount, editBtn, duplicateBtn, transferBtn, deleteBtn);
-    item.append(left, actions);
+    item.append(left, actions, hiddenStatus);
     listEl.appendChild(item);
 }
 
@@ -10994,6 +11008,9 @@ async function loadIncomes() {
             const signedUrl = signedUrlMap.get(income.id);
             renderIncomeItem(listEl, income, signedUrl);
         });
+
+        injectHistorySearchInput('ingresos', FACTURERO_CONFIG.ingresos);
+        initHistoryFilters();
     } catch (err) {
         console.error('[Agro] Error cargando ingresos:', err);
     }
