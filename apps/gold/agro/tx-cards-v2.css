@@ -778,6 +778,28 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
+.history-unit-totals {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.history-unit-total-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 14px;
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  background: rgba(200, 167, 82, 0.08);
+  color: var(--gold-4, #C8A752);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
 .tx-filter-empty {
   text-align: center;
   padding: 2rem 1rem;
@@ -791,5 +813,21 @@
     padding: 0.35rem 0.75rem;
     min-height: 36px;
     font-size: 0.7rem;
+  }
+
+  .history-unit-total-chip {
+    min-height: 30px;
+    padding: 0.25rem 0.65rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .tx-filter-bar {
+    flex-wrap: wrap;
+  }
+
+  .history-unit-totals {
+    margin-left: 0;
+    width: 100%;
   }
 }

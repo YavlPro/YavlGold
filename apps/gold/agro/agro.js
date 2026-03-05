@@ -3014,6 +3014,159 @@ function applyOtherTransferFilter(items) {
    ============================================ */
 
 const FILTER_TABS = ['gastos', 'ingresos', 'pendientes', 'perdidas', 'transferencias', 'otros'];
+const HISTORY_UNIT_TOTAL_ORDER = ['sacos', 'kilogramos', 'cestas'];
+const HISTORY_UNIT_TYPE_FIELDS = ['unit_type', 'unitType', 'unit', 'measure', 'measure_unit', 'unit_name'];
+const HISTORY_UNIT_QTY_FIELDS = ['unit_qty', 'unitQty', 'qty', 'quantity', 'units', 'amount_units'];
+const HISTORY_KG_QTY_FIELDS = ['quantity_kg', 'quantityKg', 'kg', 'kilogramos'];
+
+function normalizeFactureroSearchToken(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function readHistoryItemField(item, fields) {
+    if (!item || typeof item !== 'object' || !Array.isArray(fields)) return null;
+    for (const field of fields) {
+        const raw = item[field];
+        if (raw === undefined || raw === null) continue;
+        if (typeof raw === 'string' && raw.trim() === '') continue;
+        return raw;
+    }
+    return null;
+}
+
+function normalizeHistoryUnitKey(rawUnit) {
+    const value = normalizeFactureroSearchToken(rawUnit).trim();
+    if (!value) return '';
+    if (value === 'saco' || value === 'sacos') return 'sacos';
+    if (value === 'cesta' || value === 'cestas') return 'cestas';
+    if (
+        value === 'kg'
+        || value === 'kgs'
+        || value === 'kilogramo'
+        || value === 'kilogramos'
+        || value === 'kilogram'
+        || value === 'kilograms'
+    ) {
+        return 'kilogramos';
+    }
+    return '';
+}
+
+function computeUnitTotals(historyItems) {
+    const totals = {
+        sacos: 0,
+        kilogramos: 0,
+        cestas: 0
+    };
+    if (!Array.isArray(historyItems)) return totals;
+
+    historyItems.forEach((item) => {
+        const unitTypeRaw = readHistoryItemField(item, HISTORY_UNIT_TYPE_FIELDS);
+        const unitQtyRaw = readHistoryItemField(item, HISTORY_UNIT_QTY_FIELDS);
+        const kgQtyRaw = readHistoryItemField(item, HISTORY_KG_QTY_FIELDS);
+
+        const unitKey = normalizeHistoryUnitKey(unitTypeRaw);
+        const unitQty = toSafeLocaleNumber(unitQtyRaw);
+        const kgQty = toSafeLocaleNumber(kgQtyRaw);
+
+        if (unitKey && unitQty !== null && unitQty > 0) {
+            totals[unitKey] += unitQty;
+        }
+
+        const shouldAddKgFromDedicatedField = kgQty !== null
+            && kgQty > 0
+            && !unitKey;
+        if (shouldAddKgFromDedicatedField) {
+            totals.kilogramos += kgQty;
+        }
+    });
+
+    HISTORY_UNIT_TOTAL_ORDER.forEach((key) => {
+        const value = Number(totals[key] || 0);
+        totals[key] = Number.isFinite(value) ? roundNumeric(Math.max(value, 0), 3) : 0;
+    });
+
+    return totals;
+}
+
+function buildHistoryFilterChip({ filter, label, count }) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'tx-filter-chip active';
+    chip.dataset.filter = String(filter || '');
+
+    const text = document.createTextNode(`${label} `);
+    const countEl = document.createElement('span');
+    countEl.className = 'chip-count';
+    countEl.textContent = String(count || 0);
+
+    chip.append(text, countEl);
+    return chip;
+}
+
+function ensureHistoryUnitTotalsMount(bar) {
+    if (!bar) return null;
+    let mount = bar.querySelector('.history-unit-totals');
+    if (!mount) {
+        mount = document.createElement('div');
+        mount.className = 'history-unit-totals';
+        mount.setAttribute('aria-label', 'Totales de unidades visibles');
+        bar.appendChild(mount);
+    }
+    return mount;
+}
+
+function formatHistoryUnitTotalChipText(unitKey, totalValue) {
+    const value = Number(totalValue);
+    if (!Number.isFinite(value) || value <= 0) return '';
+    const qtyText = formatQuantityValue(value, isIntegerLike(value) ? 0 : 2);
+    if (unitKey === 'kilogramos') return `${qtyText} kg`;
+    if (unitKey === 'sacos') return `${qtyText} ${Math.abs(value - 1) < 1e-9 ? 'saco' : 'sacos'}`;
+    if (unitKey === 'cestas') return `${qtyText} ${Math.abs(value - 1) < 1e-9 ? 'cesta' : 'cestas'}`;
+    return `${qtyText} ${unitKey}`;
+}
+
+function getVisibleHistoryItemsForTotals(list) {
+    if (!list) return [];
+    return Array.from(list.querySelectorAll('.facturero-item'))
+        .filter((row) => row.style.display !== 'none')
+        .map((row) => ({
+            unit_type: row.dataset.unitType || '',
+            unit_qty: row.dataset.unitQty || '',
+            quantity_kg: row.dataset.quantityKg || ''
+        }));
+}
+
+function renderHistoryUnitTotals(parent, list) {
+    if (!parent || !list) return;
+    const bar = parent.querySelector('.tx-filter-bar');
+    if (!bar) return;
+
+    const mount = ensureHistoryUnitTotalsMount(bar);
+    if (!mount) return;
+
+    const totals = computeUnitTotals(getVisibleHistoryItemsForTotals(list));
+    mount.replaceChildren();
+
+    let hasContent = false;
+    HISTORY_UNIT_TOTAL_ORDER.forEach((unitKey) => {
+        const value = Number(totals[unitKey] || 0);
+        if (!Number.isFinite(value) || value <= 0) return;
+        const chipText = formatHistoryUnitTotalChipText(unitKey, value);
+        if (!chipText) return;
+
+        const chip = document.createElement('span');
+        chip.className = 'history-unit-total-chip';
+        chip.textContent = chipText;
+        mount.appendChild(chip);
+        hasContent = true;
+    });
+
+    mount.style.display = hasContent ? '' : 'none';
+}
 
 function initHistoryFilters() {
     FILTER_TABS.forEach((tabName) => {
@@ -3029,7 +3182,7 @@ function initHistoryFilters() {
 
         // Mark cards
         let tCount = 0, rCount = 0;
-        list.querySelectorAll('.tx-card').forEach((card) => {
+        list.querySelectorAll('.facturero-item').forEach((card) => {
             const badge = card.querySelector('.tx-status');
             const txt = String(badge?.textContent || '').trim().toLowerCase();
             if (txt.includes('revertido')) {
@@ -3048,6 +3201,7 @@ function initHistoryFilters() {
         // No items of either type -> remove bar
         if (tCount === 0 && rCount === 0) {
             if (bar) bar.remove();
+            applyHistoryFilter(parent, list);
             return;
         }
 
@@ -3058,18 +3212,20 @@ function initHistoryFilters() {
         }
 
         // Build chips (only for types that exist)
-        bar.innerHTML = '';
+        bar.replaceChildren();
         if (tCount > 0) {
-            bar.insertAdjacentHTML('beforeend',
-                `<button class="tx-filter-chip active" data-filter="transferred">
-                    🔀 Transferidos <span class="chip-count">${tCount}</span>
-                </button>`);
+            bar.appendChild(buildHistoryFilterChip({
+                filter: 'transferred',
+                label: '🔀 Transferidos',
+                count: tCount
+            }));
         }
         if (rCount > 0) {
-            bar.insertAdjacentHTML('beforeend',
-                `<button class="tx-filter-chip active" data-filter="reverted">
-                    ↩️ Revertidos <span class="chip-count">${rCount}</span>
-                </button>`);
+            bar.appendChild(buildHistoryFilterChip({
+                filter: 'reverted',
+                label: '↩️ Revertidos',
+                count: rCount
+            }));
         }
 
         // Bind (once)
@@ -3091,10 +3247,13 @@ function initHistoryFilters() {
     console.info('[AGRO] ✅ History filters v1.1 initialized');
 }
 
-function applyHistoryFilter(parent, list) {
-    if (!parent || !list) return;
+function applyHistoryFilter(parent, list, options = {}) {
+    if (!parent || !list) return 0;
 
     const bar = parent.querySelector('.tx-filter-bar');
+    const query = options.queryNormalized === true
+        ? String(options.query || '').trim()
+        : normalizeFactureroSearchToken(list.querySelector('.facturero-search-input')?.value || '').trim();
 
     // Active chip = that type is VISIBLE
     const showTransferred = !bar?.querySelector('[data-filter="transferred"]')
@@ -3102,11 +3261,17 @@ function applyHistoryFilter(parent, list) {
     const showReverted    = !bar?.querySelector('[data-filter="reverted"]')
                          || !!bar.querySelector('[data-filter="reverted"].active');
 
-    list.querySelectorAll('.tx-card').forEach((card) => {
+    let totalVisible = 0;
+    list.querySelectorAll('.facturero-item').forEach((card) => {
         const type = card.dataset.transferType;
-        if      (type === 'transferred' && !showTransferred) card.style.display = 'none';
-        else if (type === 'reverted'    && !showReverted)    card.style.display = 'none';
-        else                                                 card.style.display = '';
+        const passState = !(
+            (type === 'transferred' && !showTransferred)
+            || (type === 'reverted' && !showReverted)
+        );
+        const passSearch = !query || normalizeFactureroSearchToken(card.textContent || '').includes(query);
+        const isVisible = passState && passSearch;
+        card.style.display = isVisible ? '' : 'none';
+        if (isVisible) totalVisible++;
     });
 
     // Hide empty day headers
@@ -3115,7 +3280,7 @@ function applyHistoryFilter(parent, list) {
         let hasVisible = false;
         while (next && !next.classList.contains('facturero-day-header')
                     && !next.classList.contains('date-divider')) {
-            if (next.classList.contains('tx-card') && next.style.display !== 'none') {
+            if (next.classList.contains('facturero-item') && next.style.display !== 'none') {
                 hasVisible = true;
                 break;
             }
@@ -3123,6 +3288,9 @@ function applyHistoryFilter(parent, list) {
         }
         hdr.style.display = hasVisible ? '' : 'none';
     });
+
+    renderHistoryUnitTotals(parent, list);
+    return totalVisible;
 }
 
 function formatUsdAuditDate(value) {
@@ -4146,6 +4314,9 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     row.style.lineHeight = '1.28';
     row.dataset.id = String(itemId || '');
     row.dataset.tab = String(itemTab || '');
+    row.dataset.unitType = String(item?.unit_type ?? '');
+    row.dataset.unitQty = String(item?.unit_qty ?? '');
+    row.dataset.quantityKg = String(item?.quantity_kg ?? '');
     if (incomeOrLossReverted) {
         row.style.opacity = '0.5';
     }
@@ -4523,6 +4694,9 @@ function renderHistoryRowFallback(item, config) {
     row.className = 'facturero-item tx-card';
     row.style.position = 'relative';
     row.style.minHeight = '72px';
+    row.dataset.unitType = String(item?.unit_type ?? '');
+    row.dataset.unitQty = String(item?.unit_qty ?? '');
+    row.dataset.quantityKg = String(item?.quantity_kg ?? '');
 
     const layout = document.createElement('div');
     layout.className = 'tx-layout';
@@ -5143,13 +5317,12 @@ function renderHistoryList(tabName, config, items, showActions) {
 // V9.8: FACTURERO SEARCH FILTER (client-side)
 // ============================================================
 
-const _searchNormalize = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
 function injectHistorySearchInput(tabName, config) {
     const container = document.getElementById(config.listId);
     if (!container) return;
     const items = container.querySelectorAll('.facturero-item');
     if (items.length === 0) return;
+    const filterParent = document.getElementById(config.containerId) || container;
 
     const wrapper = document.createElement('div');
     wrapper.className = 'facturero-search-wrapper';
@@ -5172,25 +5345,10 @@ function injectHistorySearchInput(tabName, config) {
     if (exportDiv) { exportDiv.after(wrapper); } else { container.prepend(wrapper); }
 
     input.addEventListener('input', () => {
-        const query = _searchNormalize(input.value.trim());
-        const allItems = container.querySelectorAll('.facturero-item');
-        const dayHeaders = container.querySelectorAll('.facturero-day-header');
-        let totalVisible = 0;
-
-        allItems.forEach(item => {
-            const match = !query || _searchNormalize(item.textContent || '').includes(query);
-            item.style.display = match ? '' : 'none';
-            if (match) totalVisible++;
-        });
-
-        dayHeaders.forEach(header => {
-            let next = header.nextElementSibling;
-            let hasVisible = false;
-            while (next && !next.classList.contains('facturero-day-header') && !next.classList.contains('facturero-search-wrapper')) {
-                if (next.classList.contains('facturero-item') && next.style.display !== 'none') hasVisible = true;
-                next = next.nextElementSibling;
-            }
-            header.style.display = hasVisible ? '' : 'none';
+        const query = normalizeFactureroSearchToken(input.value.trim());
+        const totalVisible = applyHistoryFilter(filterParent, container, {
+            query,
+            queryNormalized: true
         });
 
         let noRes = container.querySelector('.facturero-no-results');

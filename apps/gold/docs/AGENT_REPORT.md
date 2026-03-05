@@ -11422,6 +11422,81 @@ pnpm build:gold
   - `pnpm build:gold`
   - Resultado: **PASS**
 
+## 🆕 SESIÓN: GATE 0 — Historial Agro Totales de Unidades (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1) Punto exacto del chip dinámico del Historial:
+- `apps/gold/agro/agro.js`:
+  - `initHistoryFilters()` construye/inserta la barra `.tx-filter-bar` dentro de cada contenedor de historial (`config.containerId`).
+  - El chip dinámico actual (`Transferidos (N)` / `Revertidos (N)`) se genera desde conteo de cards (`.tx-card`) por estado visual en `.tx-status`.
+
+2) Ciclo de render/filtro actual:
+- `refreshFactureroHistory(tabName)`:
+  - consulta datos por tab,
+  - `renderHistoryList(tabName, config, items, showActions)`,
+  - `injectHistorySearchInput(tabName, config)`,
+  - `initHistoryFilters()`.
+- `applyHistoryFilter(parent, list)` aplica visibilidad por chips Transferidos/Revertidos.
+- `injectHistorySearchInput(...)` aplica visibilidad por búsqueda sobre `.facturero-item`.
+
+3) Fuente de datos de unidades disponible:
+- `renderHistoryRow(...)` ya usa campos por item:
+  - `unit_type`,
+  - `unit_qty`,
+  - `quantity_kg`.
+- Helpers existentes:
+  - `formatUnitSummary(unit_type, unit_qty)`,
+  - `formatKgSummary(quantity_kg)`,
+  - `INCOME_UNIT_OPTIONS` (saco/cesta/kg).
+
+4) Estilos existentes para chips/barra:
+- `apps/gold/agro/tx-cards-v2.css`:
+  - `.tx-filter-bar`,
+  - `.tx-filter-chip`,
+  - `.chip-count`.
+- Base visual ya compatible con ADN negro+dorado y tokens actuales.
+
+### Plan (tarea actual)
+
+1) `apps/gold/agro/agro.js`
+- Añadir función pura de totales:
+  - `computeUnitTotals(historyItems)` con normalización:
+    - `saco/sacos -> sacos`,
+    - `kg/kilogramo/kilogramos -> kilogramos (display: kg)`,
+    - `cesta/cestas -> cestas`.
+- Añadir render seguro de chips de totales junto al chip dinámico:
+  - `ensureHistoryUnitTotalsMount(...)`,
+  - `renderHistoryUnitTotals(...)`.
+- Unificar cálculo sobre el set visible actual (tab + chips + búsqueda) y recalcular en:
+  - cambio de chips Transferidos/Revertidos,
+  - input de búsqueda,
+  - refresco/re-render de historial.
+- Evitar `innerHTML` nuevo para estos chips (DOM seguro con `createElement` + `textContent`).
+
+2) `apps/gold/agro/tx-cards-v2.css`
+- Agregar estilos mínimos para grupo de chips de unidades:
+  - tamaño menor al chip principal,
+  - mismo lenguaje visual/tokens existentes,
+  - sin introducir nueva paleta.
+
+3) QA manual + build
+- Verificar en tabs: Gastos, Pagados, Fiados, Pérdidas, Donaciones.
+- Casos:
+  - solo sacos,
+  - sacos + kg,
+  - sin unidades.
+- Validar que no se muestren unidades en cero/inexistentes.
+- Ejecutar `pnpm build:gold`.
+
+### Ajustes finos post-review (2026-03-05)
+
+- `apps/gold/agro/agro.js`:
+  - `computeUnitTotals(...)`: `quantity_kg` ahora suma a `kg` solo cuando el item no trae unidad explícita (`unit_type`), evitando doble lectura en sets mixtos.
+  - `applyHistoryFilter(...)` recibe `query` pre-normalizado desde `injectHistorySearchInput(...)` para evitar normalización duplicada por tecla.
+- Hardening UI:
+  - En el bloque de filtros/totales del historial no quedó `insertAdjacentHTML`; se mantiene render seguro por DOM API.
+
 ## 🆕 SESIÓN: GATE 0 — Supabase estático para identidad header Agro (2026-03-03)
 
 ### Diagnóstico
