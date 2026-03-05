@@ -3197,14 +3197,6 @@ function initHistoryFilters() {
         });
 
         let bar = parent.querySelector('.tx-filter-bar');
-
-        // No items of either type -> remove bar
-        if (tCount === 0 && rCount === 0) {
-            if (bar) bar.remove();
-            applyHistoryFilter(parent, list);
-            return;
-        }
-
         if (!bar) {
             bar = document.createElement('div');
             bar.className = 'tx-filter-bar';
@@ -3227,6 +3219,7 @@ function initHistoryFilters() {
                 count: rCount
             }));
         }
+        ensureHistoryUnitTotalsMount(bar);
 
         // Bind (once)
         if (bar.dataset.bound !== '1') {
@@ -3290,6 +3283,12 @@ function applyHistoryFilter(parent, list, options = {}) {
     });
 
     renderHistoryUnitTotals(parent, list);
+    if (bar) {
+        const hasFilterChips = !!bar.querySelector('.tx-filter-chip');
+        const hasUnitChips = !!bar.querySelector('.history-unit-total-chip');
+        bar.classList.toggle('has-unit-divider', hasFilterChips && hasUnitChips);
+        bar.style.display = (hasFilterChips || hasUnitChips) ? '' : 'none';
+    }
     return totalVisible;
 }
 

@@ -11494,8 +11494,18 @@ pnpm build:gold
 - `apps/gold/agro/agro.js`:
   - `computeUnitTotals(...)`: `quantity_kg` ahora suma a `kg` solo cuando el item no trae unidad explícita (`unit_type`), evitando doble lectura en sets mixtos.
   - `applyHistoryFilter(...)` recibe `query` pre-normalizado desde `injectHistorySearchInput(...)` para evitar normalización duplicada por tecla.
+  - `initHistoryFilters(...)`: la `.tx-filter-bar` ya no se elimina cuando `Transferidos/Revertidos = 0`; se conserva para permitir chips de unidades en tabs como `Pagados`.
+  - `applyHistoryFilter(...)`: la barra se auto-oculta solo si no hay ni chips de estado ni chips de unidades (evita espacios vacíos).
 - Hardening UI:
   - En el bloque de filtros/totales del historial no quedó `insertAdjacentHTML`; se mantiene render seguro por DOM API.
+
+### Micro-ajuste visual (2026-03-05)
+
+- `apps/gold/agro/agro.js`:
+  - Se agrega `bar.classList.toggle('has-unit-divider', hasFilterChips && hasUnitChips)` para mostrar separador solo cuando coexisten ambos grupos.
+- `apps/gold/agro/tx-cards-v2.css`:
+  - Se agrega separador sutil (`·`) antes de `.history-unit-totals` bajo `.tx-filter-bar.has-unit-divider`.
+  - Sin cambios de paleta ni tokens fuera del ADN vigente.
 
 ## 🆕 SESIÓN: GATE 0 — Supabase estático para identidad header Agro (2026-03-03)
 

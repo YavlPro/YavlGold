@@ -786,6 +786,12 @@
   flex-wrap: wrap;
 }
 
+.tx-filter-bar.has-unit-divider .history-unit-totals::before {
+  content: "·";
+  color: rgba(200, 167, 82, 0.55);
+  margin-right: 0.1rem;
+}
+
 .history-unit-total-chip {
   display: inline-flex;
   align-items: center;
