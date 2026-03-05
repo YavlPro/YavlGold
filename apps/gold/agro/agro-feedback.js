@@ -5,6 +5,7 @@ const FEEDBACK_QUEUE_KEY = 'YG_AGRO_FEEDBACK_QUEUE_V1';
 const FEEDBACK_QUEUE_LIMIT = 30;
 const FEEDBACK_HISTORY_LIMIT = 20;
 let feedbackFabButton = null;
+let feedbackInitialized = false;
 
 function safeTrim(value) {
   return String(value ?? '').trim();
@@ -598,8 +599,9 @@ function createModal() {
   return overlay;
 }
 
-function initAgroFeedback() {
-  if (document.querySelector('.agro-feedback-fab')) return;
+export function initAgroFeedback() {
+  if (feedbackInitialized || document.querySelector('.agro-feedback-fab')) return;
+  feedbackInitialized = true;
 
   const button = createFabButton();
   feedbackFabButton = button;
@@ -630,10 +632,4 @@ function initAgroFeedback() {
       updateFabQueueState();
     });
   });
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initAgroFeedback, { once: true });
-} else {
-  initAgroFeedback();
 }

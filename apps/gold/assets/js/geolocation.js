@@ -482,6 +482,26 @@
         return result;
     }
 
+    function getResolvedContext(options) {
+        options = options || {};
+        const ignoreManual = options.ignoreManual || false;
+        const preferredMode = getLocationPreference() === 'ip' ? 'ip' : 'gps';
+        const secondaryMode = preferredMode === 'ip' ? 'gps' : 'ip';
+
+        if (!ignoreManual) {
+            const manual = getManualLocation();
+            if (manual) return manual;
+        }
+
+        const preferredCache = getCachedCoords(preferredMode);
+        if (preferredCache) return preferredCache;
+
+        const secondaryCache = getCachedCoords(secondaryMode);
+        if (secondaryCache) return secondaryCache;
+
+        return Object.assign({}, FALLBACK_COORDS);
+    }
+
     function getDebugState() {
         if (!DEBUG_ENABLED) return { enabled: false };
         try {
@@ -512,6 +532,7 @@
         getBrowserCoords: getBrowserCoords,
         getIpCoords: getIpCoords,
         getCoordsSmart: getCoordsSmart,
+        getResolvedContext: getResolvedContext,
         // Debug (optional)
         getDebugState: getDebugState
     };

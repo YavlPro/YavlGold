@@ -5,6 +5,7 @@
  * V9.6.2: Consulta Supabase para cultivos si hay sesión
  */
 import supabase from '../assets/js/config/supabase-config.js';
+import { readBestAgroCrops } from '../assets/js/utils/agroCropsCache.js';
 
 // ============================================
 // STATE
@@ -738,20 +739,22 @@ async function generateSystemNotifications(reason = 'manual', snapshotOverride =
  * V9.6.2: Get crops from Supabase if session available, else fallback to localStorage
  */
 async function getCropsAsync() {
+    let scopedUserId = '';
     try {
         const sb = getSupabaseClient();
         if (!sb?.auth) {
-            const localCrops = getLocalCrops();
+            const localCrops = getLocalCrops('');
             logAlertsStatus(false, 'local', localCrops.length, 0);
             return localCrops;
         }
 
         const { session, attempts } = await waitForSession(sb);
         if (!session?.user) {
-            const localCrops = getLocalCrops();
+            const localCrops = getLocalCrops('');
             logAlertsStatus(false, 'local', localCrops.length, attempts);
             return localCrops;
         }
+        scopedUserId = session.user.id;
 
         // Query Supabase for crops (V9.6.5: removed harvest_date, column doesn't exist)
         let query = sb.from('agro_crops')
@@ -773,7 +776,7 @@ async function getCropsAsync() {
 
         if (error) {
             console.warn('[AGRO] V9.6.2: Supabase query error, fallback to local:', error.message);
-            const localCrops = getLocalCrops();
+            const localCrops = getLocalCrops(scopedUserId);
             logAlertsStatus(true, 'local', localCrops.length, attempts);
             return localCrops;
         }
@@ -782,16 +785,16 @@ async function getCropsAsync() {
         return data || [];
     } catch (e) {
         console.warn('[AGRO] V9.6.2: getCropsAsync exception, fallback to local:', e);
-        const localCrops = getLocalCrops();
+        const localCrops = getLocalCrops(scopedUserId);
         logAlertsStatus(false, 'local', localCrops.length, ALERTS_SESSION_MAX_ATTEMPTS);
         return localCrops;
     }
 }
 
-function getLocalCrops() {
-    try {
-        return JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-    } catch (e) { return []; }
+function getLocalCrops(userId) {
+    const scopedUserId = String(userId || '').trim();
+    if (!scopedUserId) return [];
+    return readBestAgroCrops(scopedUserId);
 }
 
 function checkCropAlerts(crop) {

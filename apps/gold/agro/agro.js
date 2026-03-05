@@ -16,6 +16,7 @@ import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
 import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
+import { clearLegacyAgroCropsCache, readAgroCropsCache, readBestAgroCrops, writeAgroCropsCache } from '../assets/js/utils/agroCropsCache.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
@@ -43,6 +44,7 @@ import {
 // ============================================================
 let currentEditId = null; // ID del cultivo en edición (null = nuevo)
 let cropsCache = [];      // Cache local de cultivos para edición
+let currentAgroUserId = '';
 let cropsStatus = 'idle';
 let cropsLoadSeq = 0;
 let cropsLoadInFlight = false;
@@ -105,6 +107,17 @@ const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
 
 if (typeof globalThis !== 'undefined' && !globalThis.__YG_AGRO_SUPABASE) {
     globalThis.__YG_AGRO_SUPABASE = supabase;
+}
+
+function setCurrentAgroUserId(userId) {
+    currentAgroUserId = normalizeCropId(userId);
+    if (typeof window !== 'undefined') {
+        window.YG_AGRO_CROPS_USER_ID = currentAgroUserId || '';
+    }
+}
+
+function readCurrentUserCropsCache() {
+    return readBestAgroCrops(currentAgroUserId);
 }
 
 let selectedCropId = null;
@@ -905,9 +918,14 @@ function computeCropProgress(crop, templateDurationDays) {
  */
 async function populateCropDropdowns() {
     try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = normalizeCropId(user?.id);
+        if (!userId) return;
+
         const { data: crops, error } = await supabase
             .from('agro_crops')
             .select('id, name, variety, icon')
+            .eq('user_id', userId)
             .is('deleted_at', null)
             .order('name');
 
@@ -5463,6 +5481,7 @@ async function exportAgroLog(tabName) {
                 .from('agro_crops')
                 .select('name, status')
                 .eq('id', selectedCropId)
+                .eq('user_id', user.id)
                 .single();
             if (cropData) {
                 cropLabel = cropData.name || 'Cultivo';
@@ -10138,12 +10157,18 @@ function setCropsStatus(nextStatus, meta = {}) {
     const snapshotSeq = Number.isFinite(meta.requestId)
         ? meta.requestId
         : (Number.isFinite(prevSnapshot?.seq) ? prevSnapshot.seq : 0);
+    const snapshotUserId = normalizeCropId(
+        meta.userId !== undefined && meta.userId !== null
+            ? meta.userId
+            : (currentAgroUserId || prevSnapshot?.userId || '')
+    );
     const snapshot = {
         status: cropsStatus,
         count: Number.isFinite(snapshotCount) ? snapshotCount : 0,
         crops: snapshotCrops,
         ts: Date.now(),
-        seq: snapshotSeq
+        seq: snapshotSeq,
+        userId: snapshotUserId
     };
 
     if (typeof window !== 'undefined') {
@@ -10153,6 +10178,7 @@ function setCropsStatus(nextStatus, meta = {}) {
             window.YG_AGRO_CROPS_COUNT = snapshot.count;
         }
         window.YG_AGRO_CROPS_UPDATED_AT = new Date(snapshot.ts).toISOString();
+        window.YG_AGRO_CROPS_USER_ID = snapshot.userId || '';
     }
 
     logAgroDebug('[AGRO] crops status', {
@@ -10720,7 +10746,7 @@ export async function loadCrops() {
     }
 
     cropsLoadInFlight = true;
-    setCropsStatus('loading', { requestId });
+    setCropsStatus('loading', { requestId, userId: currentAgroUserId });
     showCropsLoading(cropsGrid);
     logAgroDebug('[AGRO] loadCrops START', { ts: new Date().toISOString(), seq: requestId });
 
@@ -10748,26 +10774,27 @@ export async function loadCrops() {
             // 1. Intentar cargar desde Supabase
             const { data: userData } = await supabase.auth.getUser();
             currentUserId = normalizeCropId(userData?.user?.id);
+            setCurrentAgroUserId(currentUserId);
             if (currentUserId) {
                 const { data, error: sbError } = await supabase
                     .from('agro_crops')
                     .select('*')
+                    .eq('user_id', currentUserId)
                     .order('created_at', { ascending: false });
 
                 if (sbError) throw sbError;
                 crops = data || [];
+                writeAgroCropsCache(currentUserId, crops);
+                clearLegacyAgroCropsCache();
             } else {
-                // 2. Fallback: LocalStorage
-                source = 'local';
-                console.log('[Agro] Usuario no autenticado, usando LocalStorage');
-                crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+                source = 'session-missing';
+                crops = [];
             }
 
         } catch (err) {
-            console.warn('[Agro] Error Supabase, intentando LocalStorage:', err);
-            // Fallback en caso de error de conexión
-            source = 'local';
-            crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+            console.warn('[Agro] Error Supabase, intentando cache namespaced:', err);
+            source = 'cache';
+            crops = currentUserId ? readAgroCropsCache(currentUserId) : [];
             error = err;
         }
 
@@ -10843,7 +10870,7 @@ export async function loadCrops() {
             if (hadSelection) {
                 dispatchCropChanged();
             }
-            const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [] });
+            const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [], userId: currentUserId });
             dispatchCropsReady(snapshot);
             updateOpsMovementSummaryUI();
             scheduleOpsMovementSummaryRefresh();
@@ -10908,7 +10935,7 @@ export async function loadCrops() {
             finished: visibleFinishedCrops.length,
             auditOrphans: orphanFinishedCrops.length
         });
-        const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops });
+        const snapshot = setCropsStatus('ready', { count: crops.length, requestId, crops, userId: currentUserId });
         dispatchCropsReady(snapshot);
         updateOpsMovementSummaryUI();
         scheduleOpsMovementSummaryRefresh();
@@ -14084,15 +14111,11 @@ function stopAssistantTimers() {
 // V9.7: Build crops preamble for anti-hallucination
 function buildCropsPreamble() {
     let crops = [];
-    // Try cropsCache first, then localStorage
+    // Try cropsCache first, then the user-scoped cache
     if (Array.isArray(cropsCache) && cropsCache.length > 0) {
         crops = cropsCache;
     } else {
-        try {
-            crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-        } catch (e) {
-            crops = [];
-        }
+        crops = readCurrentUserCropsCache();
     }
 
     if (!Array.isArray(crops) || crops.length === 0) {
@@ -14376,14 +14399,7 @@ function getAssistantWeatherContext() {
 function getAssistantCropFocus(activeTab) {
     const crops = Array.isArray(cropsCache) && cropsCache.length
         ? cropsCache
-        : (() => {
-            try {
-                const local = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-                return Array.isArray(local) ? local : [];
-            } catch (_e) {
-                return [];
-            }
-        })();
+        : readCurrentUserCropsCache();
 
     let selectedCrop = null;
     if (activeTab) {
@@ -15475,8 +15491,10 @@ export async function saveCrop() {
 
     try {
         const { data: userData } = await supabase.auth.getUser();
+        const userId = normalizeCropId(userData?.user?.id);
+        setCurrentAgroUserId(userId);
 
-        if (userData?.user?.id) {
+        if (userId) {
             // --- MODO SUPABASE ---
             let result;
             if (currentEditId) {
@@ -15484,7 +15502,7 @@ export async function saveCrop() {
                 result = await supabase
                     .from('agro_crops')
                     .update(cropData)
-                    .eq('id', currentEditId)
+                    .match({ id: currentEditId, user_id: userId })
                     .select();
             } else {
                 // INSERT
@@ -15492,7 +15510,7 @@ export async function saveCrop() {
                     .from('agro_crops')
                     .insert([{
                         ...cropData,
-                        user_id: userData.user.id,
+                        user_id: userId,
                         status: effectiveStatus,
                         progress: 0
                     }])
@@ -15501,28 +15519,7 @@ export async function saveCrop() {
             if (result.error) throw result.error;
 
         } else {
-            // --- MODO LOCALSTORAGE ---
-            console.log('[Agro] Guardando en LocalStorage...');
-            let localCrops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-
-            if (currentEditId) {
-                // UPDATE
-                const index = localCrops.findIndex(c => c.id === currentEditId);
-                if (index !== -1) {
-                    localCrops[index] = { ...localCrops[index], ...cropData };
-                }
-            } else {
-                // INSERT
-                const newCrop = {
-                    id: crypto.randomUUID(),
-                    ...cropData,
-                    status: effectiveStatus,
-                    progress: 0,
-                    created_at: new Date().toISOString()
-                };
-                localCrops.push(newCrop);
-            }
-            localStorage.setItem('yavlgold_agro_crops', JSON.stringify(localCrops));
+            throw new Error('Sesión expirada.');
         }
 
         // Éxito
@@ -15573,16 +15570,18 @@ async function deleteCrop(id) {
 
     try {
         const { data: userData } = await supabase.auth.getUser();
+        const userId = normalizeCropId(userData?.user?.id);
+        setCurrentAgroUserId(userId);
 
-        if (userData?.user?.id) {
+        if (userId) {
             // Eliminar de Supabase
-            const { error } = await supabase.from('agro_crops').delete().eq('id', id);
+            const { error } = await supabase
+                .from('agro_crops')
+                .delete()
+                .match({ id, user_id: userId });
             if (error) throw error;
         } else {
-            // Eliminar de LocalStorage
-            let localCrops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-            localCrops = localCrops.filter(c => c.id !== id);
-            localStorage.setItem('yavlgold_agro_crops', JSON.stringify(localCrops));
+            throw new Error('Sesión expirada.');
         }
 
         console.log('[Agro] 🗑️ Cultivo eliminado:', id);

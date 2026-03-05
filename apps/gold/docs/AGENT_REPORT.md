@@ -1,5 +1,81 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — Hardening de datos/auth en Agro (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. `apps/gold/agro/agro.js` mantiene accesos a `agro_crops` sin scope completo por usuario:
+   - lectura principal en `loadCrops()` con `select('*')` sin `eq('user_id', currentUserId)`,
+   - mutaciones legacy por `id` solamente en `saveCrop()`/`deleteCrop()`.
+2. `apps/gold/agro/agro.js`, `apps/gold/agro/agro-notifications.js`, `apps/gold/agro/agro-planning.js` y `apps/gold/agro/agro-cart.js` todavía usan `localStorage['yavlgold_agro_crops']` como fallback global, lo que puede mezclar sesiones o revivir datos ajenos/viejos cuando Supabase falla.
+3. `apps/gold/agro/index.html` tiene guard/bootstrap inline, pero `apps/gold/agro/agro-feedback.js` se carga fuera de ese bootstrap y se auto-inicializa por su cuenta, lo que deja drift de auth e inicialización.
+4. `apps/gold/agro/dashboard.js` ya respeta la prioridad Manual > GPS > IP usando `apps/gold/assets/js/geolocation.js`, pero `apps/gold/agro/agro-market.js` resuelve moneda/región solo desde timezone del navegador; eso desalinea mercado respecto a la ubicación final elegida por el usuario.
+5. El build oficial compila (`pnpm build:gold`), pero eso no valida aislamiento por usuario ni coherencia de bootstrap/fallback.
+
+### Alcance
+
+- Blindar lecturas y mutaciones de `agro_crops` en el módulo Agro.
+- Retirar el fallback global ambiguo de cultivos y dejar cache namespaced por usuario solo donde aporte UX sin mezclar sesiones.
+- Centralizar la inicialización protegida por sesión para Agro y módulos dependientes.
+- Alinear el ticker/mercado con la misma decisión geográfica final usada por clima.
+- Mantener MPA, Vanilla JS y el flujo oficial `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-feedback.js`
+- `apps/gold/agro/agro-notifications.js`
+- `apps/gold/agro/agro-planning.js`
+- `apps/gold/agro/agro-cart.js`
+- `apps/gold/agro/agro-market.js`
+- `apps/gold/agro/dashboard.js`
+- `apps/gold/assets/js/geolocation.js`
+- `apps/gold/dashboard/auth-guard.js`
+
+### Riesgos
+
+- Al quitar el fallback global pueden aparecer estados vacíos que antes estaban “maquillados” con localStorage viejo.
+- Unificación de bootstrap puede revelar módulos que dependían de auto-init temprano.
+- Cambios de scope en `agro_crops` pueden dejar rutas legacy sin datos si estaban leyendo más de lo debido.
+
+### Estrategia de rollback
+
+1. Mantener los cambios acotados a archivos de Agro y reportarlos por fase.
+2. Si una fase rompe UX no crítica, revertir solo esa fase en el archivo afectado sin tocar hardening previo de `user_id`.
+3. No borrar código legado masivamente; aislarlo o dejarlo fuera del camino activo cuando sea posible.
+
+### Plan quirúrgico
+
+1. Corregir todas las lecturas/mutaciones de `agro_crops` para exigir `user_id` y reducir `select('*')` cuando sea razonable.
+2. Reemplazar `yavlgold_agro_crops` por un cache por usuario y bloquear lectura si no existe sesión válida.
+3. Mover módulos de Agro al mismo bootstrap protegido y evitar auto-init fuera de sesión.
+4. Introducir un resolver común de contexto geográfico para que clima y mercado usen la misma decisión final.
+5. Ejecutar `pnpm build:gold` y registrar smoke manual + riesgos residuales.
+
+### Estado post-implementación
+
+- `apps/gold/agro/agro.js` quedó endurecido para leer `agro_crops` con `eq('user_id', currentUserId)` y mutar con `match({ id, user_id })` en rutas legacy activas.
+- Se introdujo `apps/gold/assets/js/utils/agroCropsCache.js` para mover el cache de cultivos a un esquema namespaced por usuario (`yavlgold_agro_crops:<userId>`) y dejar la key global solo para limpieza/migración.
+- `apps/gold/agro/agro-notifications.js`, `apps/gold/agro/agro-planning.js` y `apps/gold/agro/agro-cart.js` ya no leen `yavlgold_agro_crops` global; consumen snapshot/cache scoped por sesión.
+- `apps/gold/assets/js/auth/session-guard.js`, `apps/gold/dashboard/auth-guard.js`, `apps/gold/agro/index.html` y `apps/gold/agro/agro-feedback.js` quedaron alineados sobre un bootstrap de sesión único, sin auto-init del feedback fuera del guard.
+- `apps/gold/assets/js/auth/authClient.js` y `apps/gold/assets/js/auth/session-guard.js` limpian explícitamente `window.__AGRO_CROPS_STATE` y `window.YG_AGRO_CROPS_USER_ID` al caer el guard o al cerrar sesión, reduciendo ambigüedad en misma pestaña.
+- `apps/gold/assets/js/geolocation.js`, `apps/gold/agro/dashboard.js` y `apps/gold/agro/agro-market.js` comparten ahora un contexto geográfico resuelto para que mercado siga la misma ubicación elegida por clima antes de caer al timezone.
+
+### Validación
+
+- Build oficial ejecutado: `pnpm build:gold`
+- Resultado: `OK` el 2026-03-05
+- Salida relevante:
+  - `dist/agro/index.html` → `143.71 kB`
+  - `dist/assets/agro-HpvaJEce.js` → `421.40 kB` (`119.37 kB gzip`)
+
+### Riesgos residuales
+
+- `loadCrops()` sigue usando `select('*')` porque el render de Agro consume muchas columnas del ciclo; reducirlo más requiere un barrido de campos efectivo para no romper cards/historial.
+- El cache namespaced es de apoyo para degradación controlada; si Supabase falla y no hay snapshot/cache del usuario, la UI ahora puede mostrarse vacía en vez de “inventar” datos cruzados. Eso es intencional.
+- El mercado ya sigue ubicación manual/cache resuelta, pero la inferencia de moneda para GPS puro aún depende de metadata disponible; si solo hay coordenadas sin región, cae al timezone como respaldo.
+
 ## 🆕 SESIÓN: GATE 0 — LOTE 2 Reversión parcial append-only (2026-02-27)
 
 ### 1) Mapa de puntos de entrada MPA y navegación actual

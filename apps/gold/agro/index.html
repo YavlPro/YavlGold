@@ -3029,13 +3029,12 @@
     </div>
 
     <script type="module">
-        import { supabase } from '../assets/js/config/supabase-config.js';
+        import { requireSession } from '../assets/js/auth/session-guard.js';
 
         async function bootstrapAgro() {
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (error || !session) {
-                    window.location.replace('/index.html#login');
+                const session = await requireSession();
+                if (!session) {
                     return;
                 }
 
@@ -3045,12 +3044,14 @@
                 await import('../assets/js/utils/activityTracker.js');
 
                 const [
+                    feedbackModule,
                     marketModule,
                     planningModule,
                     interactionsModule,
                     statsModule,
                     notificationsModule
                 ] = await Promise.all([
+                    import('./agro-feedback.js'),
                     import('./agro-market.js'),
                     import('./agro-planning.js'),
                     import('./agro-interactions.js'),
@@ -3067,6 +3068,7 @@
 
                 const initProtectedModules = () => {
                     window.YGActivity?.attachModuleTracking('agro', { title: 'Agro', path: '/agro/' });
+                    feedbackModule.initAgroFeedback?.();
                     marketModule.initMarketIntelligence();
                     marketModule.startTickerAutoRefresh();
                     planningModule.initPlanning();
@@ -3088,7 +3090,6 @@
 
         bootstrapAgro();
     </script>
-    <script type="module" src="./agro-feedback.js"></script>
 
     <!-- V9.8: Modal Edit Facturero -->
     <div id="modal-edit-facturero" class="modal" style="display: none;">

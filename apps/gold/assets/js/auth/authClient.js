@@ -3,6 +3,8 @@
  * Ruta: apps/gold/assets/js/auth/authClient.js
  */
 
+import { clearAgroRuntimeState } from '../utils/agroCropsCache.js';
+
 // 🚨 INYECCIÓN TEMPRANA: Detectar recovery ANTES de que Supabase despierte
 (function () {
     const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
@@ -293,6 +295,13 @@ const authClient = {
             const path = this._currentPath();
             console.log(`[AuthGuard] 🔔 Evento: ${event} (path: ${path})`);
 
+            if (event === 'SIGNED_OUT') {
+                this.currentSession = null;
+                clearAgroRuntimeState();
+                this.updateDashboardUI();
+                this.emitAuthChange('SIGNED_OUT');
+            }
+
             // SIGNED_OUT en área protegida -> Login
             if (event === "SIGNED_OUT" && this._isProtected(path)) {
                 if (!this._isRedirecting) {
@@ -426,8 +435,15 @@ const authClient = {
         }
     },
 
-    logout() {
-        if (this.supabase) this.supabase.auth.signOut();
+    async logout() {
+        clearAgroRuntimeState();
+        if (this.supabase) {
+            try {
+                await this.supabase.auth.signOut();
+            } catch (_err) {
+                // Ignore signOut transport errors and continue local cleanup.
+            }
+        }
         this.currentSession = null;
         this.updateDashboardUI();
         window.location.href = '/';

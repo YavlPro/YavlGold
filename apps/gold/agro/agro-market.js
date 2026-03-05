@@ -24,6 +24,7 @@ const MARKET_CONFIG = {
     cacheMaxAge: 60 * 60 * 1000, // 1 hora (cache stale pero usable)
     cacheKey: 'YG_AGRO_MARKET_V1'
 };
+const AGRO_LOCATION_UPDATED_EVENT = 'agro:location:updated';
 
 // ============================================================
 // SINGLETON GLOBAL (evitar doble polling)
@@ -160,43 +161,113 @@ async function fetchFiatRates() {
 // ============================================================
 // DETECCIÓN DE MONEDA LOCAL
 // ============================================================
-function detectUserCurrency(locationLabel) {
+function normalizeLocationText(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function formatMarketLocationLabel(location) {
+    const rawLabel = String(location?.label || '').trim();
+    if (!rawLabel) return '';
+    return rawLabel
+        .replace(/^ubicacion por ip:\s*/i, '')
+        .replace(/^gps no disponible\s*→\s*ip:\s*/i, '')
+        .replace(/^gps no disponible\s*->\s*ip:\s*/i, '')
+        .trim();
+}
+
+function updateMarketLocationLabel(locationLabel, label) {
+    if (!locationLabel) return;
+    locationLabel.replaceChildren();
+    const icon = document.createElement('i');
+    icon.className = 'fa-solid fa-location-dot';
+    icon.style.color = 'var(--gold-primary)';
+    locationLabel.append(icon, document.createTextNode(` ${label}`));
+}
+
+function inferCurrencyFromTimezone() {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let currency = 'USD';
-    let label = 'Global';
+    if (tz.includes('Caracas')) return { currency: 'VES', label: 'Venezuela 🇻🇪' };
+    if (tz.includes('Bogota')) return { currency: 'COP', label: 'Colombia 🇨🇴' };
+    if (tz.includes('Mexico')) return { currency: 'MXN', label: 'México 🇲🇽' };
+    if (tz.includes('Buenos_Aires')) return { currency: 'ARS', label: 'Argentina 🇦🇷' };
+    if (tz.includes('Lima')) return { currency: 'PEN', label: 'Perú 🇵🇪' };
+    if (tz.includes('Santiago')) return { currency: 'CLP', label: 'Chile 🇨🇱' };
+    if (tz.includes('Madrid') || tz.includes('Canary')) return { currency: 'EUR', label: 'España 🇪🇸' };
+    return { currency: 'USD', label: 'Global' };
+}
 
-    if (tz.includes('Caracas')) {
-        currency = 'VES';
-        label = 'Venezuela 🇻🇪';
-    } else if (tz.includes('Bogota')) {
-        currency = 'COP';
-        label = 'Colombia 🇨🇴';
-    } else if (tz.includes('Mexico')) {
-        currency = 'MXN';
-        label = 'M\u00e9xico 🇲🇽';
-    } else if (tz.includes('Buenos_Aires')) {
-        currency = 'ARS';
-        label = 'Argentina 🇦🇷';
-    } else if (tz.includes('Lima')) {
-        currency = 'PEN';
-        label = 'Per\u00fa 🇵🇪';
-    } else if (tz.includes('Santiago')) {
-        currency = 'CLP';
-        label = 'Chile 🇨🇱';
-    } else if (tz.includes('Madrid') || tz.includes('Canary')) {
-        currency = 'EUR';
-        label = 'Espa\u00f1a 🇪🇸';
+function inferCurrencyFromLocation(location) {
+    const haystack = normalizeLocationText([
+        location?.countryCode,
+        location?.country,
+        location?.admin1,
+        location?.region,
+        location?.city,
+        location?.label
+    ].filter(Boolean).join(' | '));
+
+    if (!haystack) return { currency: 'USD', label: 'Global' };
+    if (/(^|[^a-z])(ve|venezuela)([^a-z]|$)|caracas|tachira/.test(haystack)) {
+        return { currency: 'VES', label: formatMarketLocationLabel(location) || 'Venezuela 🇻🇪' };
+    }
+    if (/(^|[^a-z])(co|colombia)([^a-z]|$)|bogota|medellin|antioquia/.test(haystack)) {
+        return { currency: 'COP', label: formatMarketLocationLabel(location) || 'Colombia 🇨🇴' };
+    }
+    if (/(^|[^a-z])(mx|mexico)([^a-z]|$)|ciudad de mexico|guadalajara|monterrey/.test(haystack)) {
+        return { currency: 'MXN', label: formatMarketLocationLabel(location) || 'México 🇲🇽' };
+    }
+    if (/(^|[^a-z])(ar|argentina)([^a-z]|$)|buenos aires|cordoba/.test(haystack)) {
+        return { currency: 'ARS', label: formatMarketLocationLabel(location) || 'Argentina 🇦🇷' };
+    }
+    if (/(^|[^a-z])(pe|peru)([^a-z]|$)|lima|cusco/.test(haystack)) {
+        return { currency: 'PEN', label: formatMarketLocationLabel(location) || 'Perú 🇵🇪' };
+    }
+    if (/(^|[^a-z])(cl|chile)([^a-z]|$)|santiago/.test(haystack)) {
+        return { currency: 'CLP', label: formatMarketLocationLabel(location) || 'Chile 🇨🇱' };
+    }
+    if (/(^|[^a-z])(es|espana|spain)([^a-z]|$)|madrid|canarias|canary/.test(haystack)) {
+        return { currency: 'EUR', label: formatMarketLocationLabel(location) || 'España 🇪🇸' };
+    }
+    return { currency: 'USD', label: formatMarketLocationLabel(location) || 'Global' };
+}
+
+function resolveMarketLocationContext() {
+    if (typeof window === 'undefined') return null;
+    if (window.YGAgroLocationContext) return window.YGAgroLocationContext;
+    return window.YGGeolocation?.getResolvedContext?.() || null;
+}
+
+function detectUserCurrency(locationLabel) {
+    const resolvedLocation = resolveMarketLocationContext();
+    if (resolvedLocation) {
+        const inferred = inferCurrencyFromLocation(resolvedLocation);
+        const hasRegionMeta = !!(
+            resolvedLocation.country
+            || resolvedLocation.countryCode
+            || resolvedLocation.region
+            || resolvedLocation.admin1
+            || resolvedLocation.city
+        );
+        if (inferred.currency !== 'USD' || hasRegionMeta) {
+            updateMarketLocationLabel(locationLabel, inferred.label);
+            return inferred.currency;
+        }
+
+        const tzFallback = inferCurrencyFromTimezone();
+        updateMarketLocationLabel(
+            locationLabel,
+            formatMarketLocationLabel(resolvedLocation) || tzFallback.label
+        );
+        return tzFallback.currency;
     }
 
-    if (locationLabel) {
-        locationLabel.replaceChildren();
-        const icon = document.createElement('i');
-        icon.className = 'fa-solid fa-location-dot';
-        icon.style.color = 'var(--gold-primary)';
-        locationLabel.append(icon, document.createTextNode(` ${label}`));
-    }
-
-    return currency;
+    const fallback = inferCurrencyFromTimezone();
+    updateMarketLocationLabel(locationLabel, fallback.label);
+    return fallback.currency;
 }
 
 // ============================================================
@@ -382,6 +453,16 @@ function injectTickerStyles() {
 // INICIALIZACIÓN PRINCIPAL
 // ============================================================
 let marketInFlight = false;
+let marketLocationSyncBound = false;
+
+function bindMarketLocationSync() {
+    if (marketLocationSyncBound || typeof window === 'undefined') return;
+    marketLocationSyncBound = true;
+    window.addEventListener(AGRO_LOCATION_UPDATED_EVENT, () => {
+        if (!tickerState.inited) return;
+        fetchAndRenderMarket();
+    });
+}
 
 async function fetchAndRenderMarket() {
     const tickerTrack = document.getElementById('market-ticker-track');
@@ -455,6 +536,7 @@ async function fetchAndRenderMarket() {
 
 export async function initMarketIntelligence() {
     // Singleton: evitar doble inicialización
+    bindMarketLocationSync();
     if (tickerState.inited) {
         console.debug('[AGRO_MARKET] Ya inicializado (singleton)');
         // Pero sí actualizar la vista si hay datos en cache

@@ -41,6 +41,24 @@ const ICONS = {
 
 // Estado del clima
 let currentLocation = null;
+const AGRO_LOCATION_UPDATED_EVENT = 'agro:location:updated';
+
+function publishAgroLocationContext(location) {
+    if (typeof window === 'undefined' || !location) return;
+    const context = {
+        lat: Number(location.lat),
+        lon: Number(location.lon),
+        label: String(location.label || '').trim() || 'Ubicación',
+        source: String(location.source || '').trim() || 'fallback',
+        country: location.country || null,
+        countryCode: location.countryCode || null,
+        admin1: location.admin1 || null,
+        region: location.region || null,
+        city: location.city || null
+    };
+    window.YGAgroLocationContext = context;
+    window.dispatchEvent(new CustomEvent(AGRO_LOCATION_UPDATED_EVENT, { detail: context }));
+}
 function isGeoDebugEnabled() {
     if (typeof window === 'undefined') return false;
     if (new URLSearchParams(window.location.search).get('debug') === '1') return true;
@@ -190,6 +208,7 @@ async function initWeather() {
 
     try {
         currentLocation = await Geo.getCoordsSmart({ preferIp: preferIp });
+        publishAgroLocationContext(currentLocation);
         console.log('[Agro] Location:', currentLocation.source, '-', currentLocation.label);
         await fetchWeather();
         updateGeoDebugPanel();
@@ -383,6 +402,7 @@ async function switchLocationMode(mode) {
 
     try {
         currentLocation = await Geo.getCoordsSmart({ preferIp: mode === 'ip', forceRefresh: true });
+        publishAgroLocationContext(currentLocation);
         await fetchWeather();
         updateGeoDebugPanel();
         console.log('[Agro] Switched to', mode, ':', currentLocation.label);
@@ -411,6 +431,7 @@ async function clearManualAndRefresh() {
     try {
         const preference = Geo.getLocationPreference();
         currentLocation = await Geo.getCoordsSmart({ preferIp: preference === 'ip', forceRefresh: true });
+        publishAgroLocationContext(currentLocation);
         await fetchWeather();
     } catch (err) {
         console.error('[Agro] Clear manual error:', err);
@@ -626,9 +647,15 @@ async function selectManualLocation(location) {
         lat: location.lat,
         lon: location.lon,
         label: location.label,
-        source: 'manual'
+        source: 'manual',
+        country: location.country || null,
+        countryCode: location.countryCode || null,
+        admin1: location.admin1 || null,
+        region: location.region || null,
+        city: location.city || null
     };
 
+    publishAgroLocationContext(currentLocation);
     await fetchWeather();
     updateGeoDebugPanel();
     console.log('[Agro] Manual location set:', location.label);

@@ -4,6 +4,8 @@
  * Pronóstico extendido 7 días + Consejos Agronómicos Sincronizados con Cultivos
  */
 
+import { getAgroRuntimeUserId, readBestAgroCrops } from '../assets/js/utils/agroCropsCache.js';
+
 const FORECAST_API = 'https://api.open-meteo.com/v1/forecast';
 const DEFAULT_COORDS = { lat: 8.13, lon: -71.98 }; // La Grita, Táchira
 
@@ -75,7 +77,7 @@ function getPosition() {
 
 function getUserCrops() {
     try {
-        const crops = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
+        const crops = readBestAgroCrops(getAgroRuntimeUserId());
         return crops.map(c => c.name ? c.name.toLowerCase() : '');
     } catch (e) {
         console.warn('[AgroPlanning] Error leyendo cultivos:', e);

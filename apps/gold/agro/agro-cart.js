@@ -7,6 +7,7 @@
  */
 
 import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, formatCurrencyDisplay } from './agro-exchange.js';
+import { getAgroRuntimeUserId, readBestAgroCrops } from '../assets/js/utils/agroCropsCache.js';
 
 // ============================================================
 // STATE
@@ -78,18 +79,7 @@ export function updateCartCrops(crops) {
 }
 
 function getFallbackCrops() {
-    if (typeof window !== 'undefined' && Array.isArray(window.__AGRO_CROPS_STATE?.crops) && window.__AGRO_CROPS_STATE.crops.length) {
-        return window.__AGRO_CROPS_STATE.crops;
-    }
-
-    try {
-        const local = JSON.parse(localStorage.getItem('yavlgold_agro_crops') || '[]');
-        if (Array.isArray(local) && local.length) return local;
-    } catch (_err) {
-        // Ignore fallback parsing errors.
-    }
-
-    return [];
+    return readBestAgroCrops(getAgroRuntimeUserId());
 }
 
 function getAvailableCrops() {
