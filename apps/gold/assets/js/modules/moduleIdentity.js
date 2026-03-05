@@ -43,6 +43,8 @@ const RAW_ALIAS_TO_CANONICAL = new Map([
   ['suite', 'crypto']
 ]);
 
+const RELEASED_DASHBOARD_MODULES = new Set(['agro']);
+
 function normalizeText(value) {
   return String(value || '')
     .trim()
@@ -187,10 +189,13 @@ export function normalizeDashboardModule(moduleLike) {
   const route = getModuleRoute(moduleLike);
   const isActive = moduleLike?.is_active !== false;
   const isLocked = !!moduleLike?.is_locked;
+  const isReleased = RELEASED_DASHBOARD_MODULES.has(canonicalKey);
 
   let status = 'development';
   if (!canonicalKey || route === '#') {
     status = 'development';
+  } else if (!isReleased) {
+    status = 'unavailable';
   } else if (!isActive) {
     status = 'unavailable';
   } else if (isLocked) {
@@ -213,9 +218,13 @@ export function normalizeDashboardModule(moduleLike) {
     route,
     path: route,
     status,
-    force_disabled: !canonicalKey || route === '#' || !isActive || isLocked,
+    force_disabled: !canonicalKey || route === '#' || !isReleased || !isActive || isLocked,
     legacy_keys: getModuleLegacyKeys(moduleLike)
   };
+}
+
+export function canFavoriteModule(moduleLike) {
+  return isNavigableModule(moduleLike);
 }
 
 export function isNavigableModule(moduleLike) {
@@ -224,6 +233,7 @@ export function isNavigableModule(moduleLike) {
     mod?.canonical_key &&
     mod?.route &&
     mod.route !== '#' &&
+    RELEASED_DASHBOARD_MODULES.has(mod.canonical_key) &&
     mod.is_active !== false &&
     !mod.is_locked &&
     mod.force_disabled !== true &&

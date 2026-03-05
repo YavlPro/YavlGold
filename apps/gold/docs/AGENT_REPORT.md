@@ -61,10 +61,13 @@
 - `apps/gold/dashboard/index.html` ahora normaliza el catálogo con esa identidad canónica, descarta módulos sin clave válida y deja `getModuleId()`, `getModuleRoute()` y el filtro de búsqueda alineados sobre la misma clave.
 - `apps/gold/assets/js/modules/moduleManager.js` dejó de persistir favoritos con claves inválidas; normaliza lecturas, deduplica favoritos legacy y elimina variantes antiguas de una misma clave al desfavoritar.
 - `apps/gold/assets/js/utils/activityTracker.js` ya canonicaliza `trackModuleEnter/Exit` para que `YG_ACTIVITY_V1` use las mismas claves que el dashboard.
-- `apps/gold/dashboard/index.html` filtra `modules` con `eq('is_active', true)` y además usa `isNavigableModule()` en render/recomendación para que módulos inactivos o no navegables no aparezcan como explorables.
+- `apps/gold/dashboard/index.html` dejó de filtrar `modules` por `is_active` al cargar, y usa `normalizeDashboardModule()` / `isNavigableModule()` para mostrar el catálogo completo mientras solo los módulos liberados quedan explorables.
+- La política vigente de producto quedó explícita en el helper: solo `agro` se considera liberado/navegable en dashboard; `academia`, `social`, `tecnologia` y `crypto` se muestran como `NO DISPONIBLE` aunque existan como módulos inactivos o activos en DB.
 - La tarjeta `Recomendado` quedó neutral respecto al catálogo navegable completo; Agro ya no tiene prioridad silenciosa.
 - El logout móvil pasó de limpieza nuclear a `performDashboardLogout()`, que limpia estado de sesión y cachés acotados sin barrer preferencias globales inocentes.
 - El dashboard sigue siendo híbrido por diseño: `Continuar/Resumen/Recomendado` siguen saliendo de `YG_ACTIVITY_V1`, mientras favoritos/notificaciones siguen viniendo de DB. Esa frontera quedó documentada inline para evitar confusión de contrato.
+- `Continuar` y el resumen ya no reaniman rutas no liberadas desde `YG_ACTIVITY_V1`; si la última actividad es de un módulo no disponible, el CTA cae a estado vacío.
+- `apps/gold/assets/js/modules/moduleManager.js` ahora ignora favoritos legacy de módulos no liberados y bloquea nuevos favoritos fuera de los módulos navegables; en la política actual, eso deja favoritos solo para `Agro`.
 
 ### Validación
 
@@ -77,6 +80,14 @@
 - El resolver canónico cubre los módulos actuales del catálogo principal. Si se agrega un módulo nuevo en `modules` sin mapear su identidad/ruta, el dashboard lo descartará hasta incorporarlo explícitamente al helper.
 - Los favoritos legacy ya guardados con claves no reconocibles se ignoran silenciosamente; no rompen la UI, pero tampoco migran a una clave canónica si no existe una correspondencia segura.
 - El resumen principal sigue siendo local-first; integrar progreso académico real en dashboard sigue siendo una fase aparte.
+
+### Ajuste posterior de alcance
+
+- Se recibió un criterio de producto adicional: por ahora el dashboard debe dejar **solo Agro como módulo disponible/navegable**.
+- El resto del catálogo (`academia`, `social`, `tecnologia`, `crypto`) debe seguir visible si existe en `modules`, pero siempre como `NO DISPONIBLE`.
+- El tracker local y la tarjeta `Continuar` no deben reabrir módulos no liberados aunque existan visitas legacy en `YG_ACTIVITY_V1`.
+- Se ajustará además la carga del catálogo para no depender de `is_active = true`, de forma que los módulos no liberados sigan visibles aunque estén inactivos en DB.
+- Los favoritos del dashboard quedarán restringidos a módulos liberados; por ahora, eso significa `Agro` únicamente.
 
 ## 🆕 SESIÓN: GATE 0 — Hardening de datos/auth en Agro (2026-03-05)
 

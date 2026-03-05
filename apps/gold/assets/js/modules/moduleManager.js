@@ -4,7 +4,7 @@
  */
 import { supabase } from '../config/supabase-config.js';
 import { logger } from '../utils/logger.js';
-import { normalizeFavoriteModuleKey } from './moduleIdentity.js';
+import { canFavoriteModule, normalizeFavoriteModuleKey } from './moduleIdentity.js';
 
 // 🗄️ CACHE CONFIG
 const CACHE_KEY = 'yavl_modules_v1';
@@ -150,7 +150,7 @@ export const FavoritesManager = {
             (data || []).forEach((favorite) => {
                 const rawKey = String(favorite?.module_key || '').trim();
                 const canonicalKey = normalizeFavoriteModuleKey(rawKey);
-                if (!canonicalKey) return;
+                if (!canonicalKey || !canFavoriteModule(canonicalKey)) return;
 
                 normalizedFavorites.add(canonicalKey);
                 if (!rawByCanonical.has(canonicalKey)) {
@@ -190,9 +190,9 @@ export const FavoritesManager = {
     async toggleFavorite(moduleKey, starElement) {
         try {
             const canonicalKey = normalizeFavoriteModuleKey(moduleKey);
-            if (!canonicalKey) {
+            if (!canonicalKey || !canFavoriteModule(canonicalKey)) {
                 if (starElement) this._updateStarUI(starElement, false);
-                logger.warn('[FavoritesManager] Invalid module key, skipping favorite toggle');
+                logger.warn('[FavoritesManager] Module not eligible for favorites, skipping favorite toggle');
                 return false;
             }
 
