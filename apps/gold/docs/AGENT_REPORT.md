@@ -73,6 +73,8 @@
 - `apps/gold/dashboard/perfil.html` y `apps/gold/dashboard/configuracion.html` dejaron de cargar `../assets/js/auth.js`; ahora consumen `authClient.js` + `authUI.js` junto al guard de dashboard.
 - `apps/gold/assets/js/auth/authGuard.js` legacy quedó en modo compatibilidad: sigue vivo para páginas antiguas, pero ya escucha `auth:signed_in` / `auth:signed_out`.
 - `apps/gold/index.html` se alineó con la release policy actual: solo Agro queda presentado como acceso liberado; `Crypto` y `Herramientas` siguen visibles, pero ya no se ofrecen como clic directo desde home.
+- El CTA principal `Gestiona tu finca` en `apps/gold/index.html` ahora entra por `/index.html#login`, alineado con el mismo contrato de acceso usado por guards y rutas protegidas.
+- Con sesión ya iniciada, ese mismo CTA se intercepta en `apps/gold/assets/js/auth/authUI.js` y navega directo a `/agro/`, evitando abrir login innecesariamente.
 - El copy del `index` bajó tono donde sobreprometía (`mejor herramienta`, `tiempo real`) y se corrigió la navegación interna `#testimonios -> #beta`.
 - `apps/gold/package.json` dejó de describir el proyecto como academia de trading/crypto y se alineó con el producto actual.
 

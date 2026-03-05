@@ -48,6 +48,7 @@ const AuthUI = {
       // Botones
       loginBtn: document.getElementById('login-btn'),
       registerBtn: document.getElementById('register-btn'),
+      heroLoginCta: document.getElementById('hero-login-cta'),
       // FORMULARIOS SEPARADOS - IDs únicos
       loginForm: document.getElementById('login-form'),
       registerForm: document.getElementById('register-form'),
@@ -87,6 +88,11 @@ const AuthUI = {
     // Botones de la navbar para abrir modales
     this.elements.loginBtn?.addEventListener('click', (e) => { e.preventDefault(); this.showLoginModal(); });
     this.elements.registerBtn?.addEventListener('click', (e) => { e.preventDefault(); this.showRegisterModal(); });
+    this.elements.heroLoginCta?.addEventListener('click', (e) => {
+      if (!window.AuthClient?.isAuthenticated?.()) return;
+      e.preventDefault();
+      window.location.assign('/agro/');
+    });
 
     // Modales separados (dashboard/herramientas)
     this.elements.closeLoginModal?.addEventListener('click', () => this.hideLoginModal());
