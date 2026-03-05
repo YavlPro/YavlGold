@@ -1,5 +1,94 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — Policy de liberación y cierre de rutas legacy (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. El catálogo oficial vigente quedó definido así:
+   - `agro` = único módulo disponible
+   - `academia`, `social`, `tecnologia`, `crypto` = no disponibles
+2. La policy actual está partida entre superficies:
+   - landing y dashboard ya restringen o marcan disponibilidad de forma más estricta,
+   - pero las rutas directas `/academia/`, `/crypto/`, `/social/` y `/tecnologia/` siguen comportándose como páginas de módulo activas o con contratos distintos.
+3. `Herramientas` y `Suite` siguen apareciendo como drift legacy:
+   - `herramientas/*` redirige o conserva páginas viejas con guards/manual auth,
+   - `suite` sigue existiendo como alias conceptual hacia `crypto`,
+   - la landing todavía usa el nombre `Herramientas` y muestra módulos ajenos al catálogo oficial (`Ajedrez`, `Multimedia`).
+4. El contrato de acceso también está adelantado al catálogo:
+   - `apps/gold/assets/js/auth/authClient.js` sigue protegiendo `academia`, `crypto`, `tecnologia` y `herramientas` como si fueran módulos liberados,
+   - `apps/gold/vercel.json` aún deja abiertas superficies profundas de `academia` y `crypto`.
+5. `social/index.html` además rompe el patrón técnico/visual del proyecto porque mete Tailwind por CDN para una simple pantalla placeholder.
+
+### Alcance
+
+- Hacer que `academia`, `crypto`, `social` y `tecnologia` compartan un mismo contrato visual de `No disponible`.
+- Tratar `herramientas` y `suite` como drift legacy, redirigiéndolos a su canonical actual sin presentarlos como módulos independientes.
+- Alinear la landing pública con el catálogo oficial de cinco módulos, sin extras que parezcan módulos productivos.
+- Quitar de auth/routing la idea de que `academia`, `crypto`, `tecnologia` o `herramientas` sean áreas protegidas activas.
+- Mantener `agro` como único módulo liberado sin tocar su contrato ya endurecido.
+
+### Archivos candidatos
+
+- `apps/gold/index.html`
+- `apps/gold/academia/index.html`
+- `apps/gold/crypto/index.html`
+- `apps/gold/social/index.html`
+- `apps/gold/tecnologia/index.html`
+- `apps/gold/assets/js/auth/authClient.js`
+- `apps/gold/vercel.json`
+- `apps/gold/assets/css/module-unavailable.css`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Si alguna expectativa del equipo todavía asumía `crypto` o `academia` como beta navegable, este lote la cerrará de forma explícita.
+- Cambiar rewrites de subrutas puede afectar bookmarks viejos, aunque el objetivo es precisamente colapsarlos a una superficie coherente.
+- Quitar módulos de prefixes protegidos cambia el flujo: ya no pedirán login para mostrar su estado `No disponible`.
+
+### Estrategia de rollback
+
+1. Mantener el lote acotado a catálogo/rutas/auth gating, sin tocar Agro ni dashboard funcional.
+2. Si una página necesita volver a comportarse como beta activa, restaurar solo su entrypoint y su routing específico.
+3. Mantener alias legacy (`herramientas`, `suite`) redirigidos, no borrados, para no romper enlaces viejos de golpe.
+
+### Plan quirúrgico
+
+1. Crear un shell visual compartido para páginas `No disponible`.
+2. Convertir `academia`, `crypto`, `social` y `tecnologia` a esa misma superficie.
+3. Actualizar la landing para mostrar solo el catálogo oficial actual y renombrar `Herramientas -> Tecnología`.
+4. Sacar de `authClient` los módulos no liberados como áreas protegidas.
+5. Endurecer `vercel.json` para colapsar deep-links legacy hacia el placeholder del módulo correspondiente y agregar alias `suite`.
+6. Ejecutar `pnpm build:gold` y registrar validación/risgos residuales.
+
+### Estado post-implementación
+
+- `apps/gold/assets/css/module-unavailable.css` centraliza el shell visual de `No disponible` para módulos no liberados.
+- `apps/gold/academia/index.html`, `apps/gold/crypto/index.html`, `apps/gold/social/index.html` y `apps/gold/tecnologia/index.html` dejaron de comportarse como módulos activos y ahora muestran un mismo estado coherente: solo Agro está liberado.
+- `apps/gold/index.html` ya refleja el catálogo oficial actual sin extras que parecían módulos:
+  - `Crypto`, `Academia`, `Tecnología` y `Social` se muestran como `No disponible`,
+  - `Herramientas` fue absorbido por `Tecnología`,
+  - `Ajedrez` y `Multimedia` salieron del bloque principal de módulos oficiales.
+- `apps/gold/assets/js/auth/authClient.js` dejó de tratar `academia`, `crypto`, `tecnologia` y `herramientas` como prefixes protegidos; solo `dashboard` y `agro` siguen bajo ese gate global.
+- `apps/gold/vercel.json` ahora colapsa deep-links de `academia`, `crypto`, `social` y `tecnologia` hacia sus placeholders, y canonicaliza `suite -> /crypto` como alias legacy.
+
+### Validación
+
+- `pnpm build:gold` ejecutado con resultado `OK` el `2026-03-05`.
+- El build pasó con `agent-guard: OK`, `agent-report-check: OK`, `vite build` exitoso y `UTF-8 verification passed`.
+- Salida relevante:
+  - `dist/academia/index.html` `2.46 kB`
+  - `dist/crypto/index.html` `2.50 kB`
+  - `dist/social/index.html` `2.44 kB`
+  - `dist/tecnologia/index.html` `2.49 kB`
+  - `dist/index.html` `82.60 kB`
+  - `dist/assets/module-unavailable-*.css` `3.48 kB`
+
+### Riesgos residuales
+
+- `apps/gold/herramientas/index.html` sigue existiendo en el build porque Vite aún lo tiene como entrada MPA; la policy quedó cerrada por redirect hacia `tecnologia`, pero el archivo legacy no ha sido retirado del input todavía.
+- `apps/gold/dashboard/music.html` conserva identidad vieja de `Suite`/multimedia dentro del dashboard. Ya no forma parte del catálogo oficial de módulos, pero sigue siendo una superficie legacy a limpiar en otro lote.
+- Los archivos fuente legacy profundos de `academia/lecciones` y `herramientas/*.html` siguen en el repo; este lote cerró su exposición pública por routing/policy, no hizo poda física del legado.
+
 ## 🆕 SESIÓN: GATE 0 — Landing principal + contrato de autenticación (2026-03-05)
 
 ### Diagnóstico (tarea actual)

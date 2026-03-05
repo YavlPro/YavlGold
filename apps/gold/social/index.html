@@ -1,73 +1,52 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
-    <script type="module" src="../dashboard/auth-guard.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social - Comunidad YavlGold</title>
-    <link rel="icon" type="image/webp" href="/brand/logo.webp">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600&display=swap"
-        rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0a0a;
-            --gold-primary: #C8A752;
-            --text-primary: #e5e5e5;
-            --text-muted: #888;
-            --font-heading: 'Orbitron', sans-serif;
-            --font-body: 'Rajdhani', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: var(--font-body);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        h1 {
-            font-family: var(--font-heading);
-            background: linear-gradient(135deg, var(--gold-primary), var(--gold-primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .gold-btn {
-            border: 1px solid var(--gold-primary);
-            color: var(--gold-primary);
-            padding: 10px 30px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s;
-        }
-
-        .gold-btn:hover {
-            background: var(--gold-primary);
-            color: #000;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .subtitle {
-            color: var(--text-muted) !important;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social | YavlGold</title>
+  <meta name="description" content="Social no disponible por ahora en YavlGold. Agro es el unico modulo liberado hoy.">
+  <meta property="og:title" content="Social | YavlGold">
+  <meta property="og:description" content="Social no disponible por ahora en YavlGold.">
+  <link rel="icon" type="image/webp" href="/brand/logo.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/module-unavailable.css">
 </head>
 
-<body class="flex flex-col text-center">
-    <h1 class="text-6xl md:text-8xl font-bold mb-4 tracking-tighter">Social</h1>
-    <p class="subtitle text-xl mb-8 tracking-widest uppercase">Comunidad & Networking</p>
-    <button class="gold-btn">Próximamente</button>
-    <script type="module" src="../assets/js/utils/activityTracker.js"></script>
-    <script type="module">
-        window.YGActivity?.attachModuleTracking('social', { title: 'Social', path: '/social/' });
-    </script>
+<body class="module-unavailable-page">
+  <main class="module-unavailable-shell">
+    <section class="module-unavailable-card" aria-labelledby="module-title">
+      <img src="/brand/logo.webp" alt="YavlGold" class="module-unavailable-logo">
+      <div class="module-unavailable-kicker">
+        <span class="module-unavailable-kicker-dot" aria-hidden="true"></span>
+        No disponible
+      </div>
+      <h1 id="module-title" class="module-unavailable-title">Social</h1>
+      <p class="module-unavailable-copy">
+        La capa de comunidad y networking no esta abierta por ahora.
+        <span class="module-unavailable-highlight">El unico acceso liberado del ecosistema es Agro.</span>
+      </p>
+      <p class="module-unavailable-copy">
+        Esta ruta queda como placeholder oficial, sin frameworks extra ni contratos distintos al resto del catalogo.
+      </p>
+
+      <div class="module-unavailable-catalog">
+        <p class="module-unavailable-catalog-title">Catalogo oficial actual</p>
+        <ul class="module-unavailable-list">
+          <li>Agro: disponible</li>
+          <li>Academia, Social, Tecnologia y Crypto: no disponibles</li>
+        </ul>
+      </div>
+
+      <div class="module-unavailable-actions">
+        <a class="module-unavailable-btn module-unavailable-btn-primary" href="/agro/">Ir a Agro</a>
+        <a class="module-unavailable-btn module-unavailable-btn-secondary" href="/">Volver al inicio</a>
+      </div>
+    </section>
+  </main>
 </body>
 
 </html>
