@@ -11703,3 +11703,70 @@ git status --short --branch
 - Build oficial:
   - `pnpm build:gold`
   - Resultado: **PASS**
+
+## 🆕 SESIÓN: GATE 0 — Fix sub-conteo de sacos en Global de ciclos finalizados + refresh en vivo (2026-03-05)
+
+### Diagnóstico
+
+1. El bloque `Global — tipo de cultivo` en cards de ciclos ya suma por tipo, pero el agregado de unidades depende de `unitTotalsByCrop`.
+2. En algunos cultivos finalizados, `agro_income` no trae `unit_qty` completo y los sacos reales quedan en registros `agro_pending` ya transferidos, lo que puede subcontar cuando solo se consulta `pending != transferred`.
+3. `fetchUnitTotalsByCropIds` estaba restringido a columnas canónicas (`unit_type/unit_qty/quantity_kg`), dejando fuera filas legacy con nombres alternos de unidad/cantidad.
+4. El refresh de cards ya existe por eventos, pero falta preservar explícitamente acordeones `desglose` abiertos para UX de “tiempo real” sin cerrar contexto visual.
+
+### Plan quirúrgico
+
+1. `apps/gold/agro/agro.js` — unidades/global:
+   - usar `allCropIds` (activos + finalizados + perdidos) para queries de unidades.
+   - en `agro_pending`, hacer doble fetch de unidades:
+     - no transferidos
+     - transferidos
+   - construir `unitTotalsByCrop`:
+     - `base = merge(incomeUnits, lossUnits, pendingNotTransferred)`
+     - si `base(crop)` no tiene unidades y `pendingTransferred(crop)` sí tiene, sumar `pendingTransferred(crop)`.
+   - extender `fetchUnitTotalsByCropIds` con columnas candidatas legacy y leer con `readHistoryItemField(...)`.
+2. `apps/gold/agro/agro.js` — refresh en vivo:
+   - crear `scheduleCyclesRefresh()` debounced:
+     - snapshot de `details.desglose[open]` por `data-crop-id`
+     - ejecutar `loadCrops()`
+     - restaurar acordeones abiertos.
+   - usar `scheduleCyclesRefresh()` en el wiring de refresco de cards/eventos del facturero.
+3. QA:
+   - cultivo finalizado con múltiples ventas en sacos: total global correcto.
+   - alta/transferencia/edición: bloque global se actualiza sin recarga y manteniendo acordeón abierto.
+   - `pnpm build:gold`.
+
+### Implementación aplicada
+
+1. `apps/gold/agro/agro.js` — cálculo de unidades
+   - `loadCrops()` ahora usa `allCropIds` (todos los ciclos cargados) para consultas de unidades y montos.
+   - `agro_pending` ahora tiene doble fetch de unidades:
+     - `fetchPendingUnitTotalsByCropIds` (no transferidos)
+     - `fetchPendingTransferredUnitTotalsByCropIds` (transferidos)
+   - Se añadió merge con fallback selectivo:
+     - `base = merge(incomeUnits, lossUnits, pendingNotTransferred)`
+     - `mergeCycleUnitTotalsWithTransferredFallback(base, pendingTransferred)` suma transferidos solo cuando `base(crop)` no trae unidades > 0.
+   - Se evitó doble conteo de `kg` manteniendo regla: `quantity_kg` suma solo sin unidad explícita.
+
+2. `apps/gold/agro/agro.js` — compatibilidad legacy
+   - `fetchUnitTotalsByCropIds` ahora consulta candidatos legacy de columnas:
+     - tipo: `unit_type`, `unit`, `measure`, `measure_unit`, `unit_name`
+     - cantidad: `unit_qty`, `qty`, `quantity`, `units`, `amount_units`
+     - kg: `quantity_kg`, `kg`, `kilogramos`
+   - Lectura unificada con `readHistoryItemField(...)` + normalización existente.
+   - Se amplió retry por columnas faltantes en este fetch para soportar entornos legacy.
+
+3. `apps/gold/agro/agro.js` — refresh en tiempo real de agrociclos
+   - Nuevo flujo debounced:
+     - `scheduleCyclesRefresh()`
+     - snapshot de `details.desglose[open]` por `data-crop-id`
+     - `loadCrops()`
+     - restauración de acordeones abiertos.
+   - Wiring aplicado en eventos/operaciones de facturero:
+     - `data-refresh`, `agro:income:changed`, `agro:losses:changed`, `AGRO_CROPS_REFRESH_EVENT`
+     - y en rutas de transferencia/reversión donde ya se refrescaba historial.
+
+### Validación ejecutada
+
+- Build oficial:
+  - `pnpm build:gold`
+  - Resultado: **PASS**

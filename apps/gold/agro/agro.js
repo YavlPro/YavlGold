@@ -48,6 +48,9 @@ let cropsLoadInFlight = false;
 let cropsLoadQueued = false;
 let cropsLastCount = 0;
 let cropsRefreshThrottleTimer = null;
+let cyclesRefreshInFlight = false;
+let cyclesRefreshQueued = false;
+const cyclesOpenBreakdownSnapshot = new Set();
 let cropsRefreshEventsBound = false;
 const pendingTransferInFlightLocks = new Set();
 
@@ -2489,6 +2492,7 @@ async function handleRevertIncome(incomeId) {
             refreshFactureroHistory('otros'),
             typeof loadIncomes === 'function' ? loadIncomes() : Promise.resolve()
         ]);
+        scheduleCyclesRefresh(180);
         document.dispatchEvent(new CustomEvent('agro:income:changed'));
         document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
             detail: { source: 'revert-income', cropId: income?.crop_id || null }
@@ -2567,6 +2571,7 @@ async function handleRevertLoss(lossId) {
             refreshFactureroHistory('pendientes'),
             refreshFactureroHistory('otros')
         ]);
+        scheduleCyclesRefresh(180);
         document.dispatchEvent(new CustomEvent('agro:losses:changed'));
         document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
             detail: { source: 'revert-loss', cropId: loss?.crop_id || null }
@@ -5712,6 +5717,7 @@ async function refreshFactureroAfterChange(tabName) {
         || tabName === 'pendientes'
         || tabName === 'perdidas';
     if (impactsCropCards) {
+        scheduleCyclesRefresh(180);
         document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
             detail: { source: 'facturero', tab: tabName }
         }));
@@ -7244,6 +7250,7 @@ async function handlePendingTransfer(itemId) {
                     console.warn('[AGRO] Pending->Income refresh warning:', result.reason?.message || result.reason);
                 }
             });
+            scheduleCyclesRefresh(180);
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
             document.dispatchEvent(new CustomEvent(AGRO_CROPS_REFRESH_EVENT, {
                 detail: { source: 'pending_transfer', tab: 'ingresos' }
@@ -7395,6 +7402,7 @@ async function handlePendingTransfer(itemId) {
             }
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
+            scheduleCyclesRefresh(180);
             document.dispatchEvent(new CustomEvent('agro:losses:changed'));
         }
 
@@ -8086,23 +8094,76 @@ function refreshFactureroForSelectedCrop() {
     refreshOpsRankingsIfVisible();
 }
 
-function scheduleCropCardsRefresh(delayMs = 250) {
+function snapshotOpenCycleBreakdownCropIds() {
+    const openIds = new Set();
+    if (typeof document === 'undefined') return openIds;
+    document.querySelectorAll('.agro-cycles .cycle-card[data-crop-id] details.desglose[open]').forEach((detailsEl) => {
+        const cropId = normalizeCropId(detailsEl?.closest('.cycle-card')?.dataset?.cropId);
+        if (cropId) {
+            openIds.add(cropId);
+        }
+    });
+    return openIds;
+}
+
+function restoreOpenCycleBreakdowns(openCropIds) {
+    if (typeof document === 'undefined') return;
+    const ids = Array.isArray(openCropIds) ? openCropIds : [];
+    ids.forEach((rawId) => {
+        const cropId = normalizeCropId(rawId);
+        if (!cropId) return;
+        const detailsEl = document.querySelector(`.agro-cycles .cycle-card[data-crop-id="${cropId}"] details.desglose`);
+        if (detailsEl) {
+            detailsEl.open = true;
+        }
+    });
+}
+
+async function runCyclesRefreshNow() {
+    if (cyclesRefreshInFlight) {
+        cyclesRefreshQueued = true;
+        return;
+    }
+
+    cyclesRefreshInFlight = true;
+    const openCropIds = Array.from(cyclesOpenBreakdownSnapshot);
+    cyclesOpenBreakdownSnapshot.clear();
+
+    try {
+        await loadCrops();
+        restoreOpenCycleBreakdowns(openCropIds);
+    } catch (err) {
+        console.warn('[AGRO] cycle cards refresh failed:', err?.message || err);
+    } finally {
+        cyclesRefreshInFlight = false;
+        if (cyclesRefreshQueued) {
+            cyclesRefreshQueued = false;
+            scheduleCyclesRefresh(120);
+        }
+    }
+}
+
+function scheduleCyclesRefresh(delayMs = 250) {
+    const openSnapshot = snapshotOpenCycleBreakdownCropIds();
+    openSnapshot.forEach((cropId) => cyclesOpenBreakdownSnapshot.add(cropId));
     const wait = Number.isFinite(Number(delayMs)) ? Math.max(0, Number(delayMs)) : 250;
     if (cropsRefreshThrottleTimer) {
         clearTimeout(cropsRefreshThrottleTimer);
     }
     cropsRefreshThrottleTimer = setTimeout(() => {
         cropsRefreshThrottleTimer = null;
-        Promise.resolve(loadCrops()).catch((err) => {
-            console.warn('[AGRO] crop cards refresh failed:', err?.message || err);
-        });
+        runCyclesRefreshNow();
     }, wait);
+}
+
+function scheduleCropCardsRefresh(delayMs = 250) {
+    scheduleCyclesRefresh(delayMs);
 }
 
 function bindCropRefreshEvents() {
     if (cropsRefreshEventsBound || typeof document === 'undefined') return;
     cropsRefreshEventsBound = true;
-    const refreshHandler = () => scheduleCropCardsRefresh(250);
+    const refreshHandler = () => scheduleCyclesRefresh(250);
     document.addEventListener(AGRO_CROPS_REFRESH_EVENT, refreshHandler);
     document.addEventListener('agro:income:changed', refreshHandler);
     document.addEventListener('agro:losses:changed', refreshHandler);
@@ -8822,12 +8883,20 @@ function addCycleUnitTotals(target, source) {
     target.cestas += Number(source.cestas || 0);
 }
 
+const CYCLE_UNIT_TYPE_QUERY_FIELDS = ['unit_type', 'unit', 'measure', 'measure_unit', 'unit_name'];
+const CYCLE_UNIT_QTY_QUERY_FIELDS = ['unit_qty', 'qty', 'quantity', 'units', 'amount_units'];
+const CYCLE_UNIT_KG_QUERY_FIELDS = ['quantity_kg', 'kg', 'kilogramos'];
+
 function accumulateCycleUnitTotalsFromRow(target, row) {
     if (!target || typeof target !== 'object' || !row || typeof row !== 'object') return;
 
-    const unitKey = normalizeHistoryUnitKey(row?.unit_type);
-    const unitQty = toSafeLocaleNumber(row?.unit_qty);
-    const kgQty = toSafeLocaleNumber(row?.quantity_kg);
+    const unitTypeRaw = readHistoryItemField(row, HISTORY_UNIT_TYPE_FIELDS);
+    const unitQtyRaw = readHistoryItemField(row, HISTORY_UNIT_QTY_FIELDS);
+    const kgQtyRaw = readHistoryItemField(row, HISTORY_KG_QTY_FIELDS);
+
+    const unitKey = normalizeHistoryUnitKey(unitTypeRaw);
+    const unitQty = toSafeLocaleNumber(unitQtyRaw);
+    const kgQty = toSafeLocaleNumber(kgQtyRaw);
 
     if (unitKey && unitQty !== null && unitQty > 0) {
         target[unitKey] += unitQty;
@@ -8852,9 +8921,9 @@ async function fetchUnitTotalsByCropIds(tableName, userId, cropIds, options = {}
     const missingColumns = getTableMissingColumns(tableName);
     let selectFields = Array.from(new Set([
         'crop_id',
-        'unit_type',
-        'unit_qty',
-        'quantity_kg',
+        ...CYCLE_UNIT_TYPE_QUERY_FIELDS,
+        ...CYCLE_UNIT_QTY_QUERY_FIELDS,
+        ...CYCLE_UNIT_KG_QUERY_FIELDS,
         ...(Array.isArray(options.optionalFields) ? options.optionalFields : [])
     ].map((field) => String(field || '').trim()).filter((field) => field && !missingColumns.has(field))));
     let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
@@ -8863,11 +8932,11 @@ async function fetchUnitTotalsByCropIds(tableName, userId, cropIds, options = {}
     const rowFilters = (Array.isArray(options.rowFilters) ? options.rowFilters : [])
         .filter((filterFn) => typeof filterFn === 'function');
 
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let attempt = 0; attempt < 16; attempt += 1) {
         if (!selectFields.includes('crop_id')) break;
-        const hasAnyUnitField = selectFields.includes('unit_type')
-            || selectFields.includes('unit_qty')
-            || selectFields.includes('quantity_kg');
+        const hasAnyUnitField = CYCLE_UNIT_TYPE_QUERY_FIELDS.some((field) => selectFields.includes(field))
+            || CYCLE_UNIT_QTY_QUERY_FIELDS.some((field) => selectFields.includes(field))
+            || CYCLE_UNIT_KG_QUERY_FIELDS.some((field) => selectFields.includes(field));
         if (!hasAnyUnitField) return totalsByCrop;
 
         let query = supabase
@@ -8976,6 +9045,22 @@ async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
     });
 }
 
+async function fetchPendingTransferredUnitTotalsByCropIds(userId, cropIds, options = {}) {
+    const baseRowFilters = [
+        (row) => String(row?.transfer_state || '').trim().toLowerCase() === 'transferred'
+    ];
+    const extraRowFilters = Array.isArray(options.rowFilters)
+        ? options.rowFilters.filter((filterFn) => typeof filterFn === 'function')
+        : [];
+
+    return fetchUnitTotalsByCropIds('agro_pending', userId, cropIds, {
+        ...options,
+        optionalFields: ['deleted_at', 'transfer_state'],
+        nullFilters: ['deleted_at'],
+        rowFilters: [...baseRowFilters, ...extraRowFilters]
+    });
+}
+
 function mergeCycleUnitTotalsMaps(maps = []) {
     const merged = new Map();
     (Array.isArray(maps) ? maps : []).forEach((map) => {
@@ -8990,6 +9075,28 @@ function mergeCycleUnitTotalsMaps(maps = []) {
             }
         });
     });
+    return merged;
+}
+
+function mergeCycleUnitTotalsWithTransferredFallback(baseTotalsByCrop, pendingTransferredTotalsByCrop) {
+    const merged = mergeCycleUnitTotalsMaps([baseTotalsByCrop]);
+    if (!(pendingTransferredTotalsByCrop instanceof Map)) {
+        return merged;
+    }
+
+    pendingTransferredTotalsByCrop.forEach((pendingTotals, cropId) => {
+        const normalizedId = normalizeCropId(cropId);
+        if (!normalizedId) return;
+        const current = merged.get(normalizedId);
+        if (hasPositiveCycleUnitTotals(current)) return;
+
+        const fallbackTotals = createCycleUnitTotalsAccumulator();
+        addCycleUnitTotals(fallbackTotals, pendingTotals);
+        if (hasPositiveCycleUnitTotals(fallbackTotals)) {
+            merged.set(normalizedId, fallbackTotals);
+        }
+    });
+
     return merged;
 }
 
@@ -10506,26 +10613,40 @@ export async function loadCrops() {
         let unitTotalsByCrop = new Map();
         let missingRateCountsByCrop = new Map();
         if (source === 'supabase' && currentUserId && crops.length > 0) {
-            const cropIds = crops.map((crop) => crop?.id);
+            const allCropIds = crops.map((crop) => crop?.id);
             const totalsOptions = { missingRateCountsByCrop };
-            const [expenseTotals, incomeTotals, lossTotals, pendingTotals, incomeUnitTotals, lossUnitTotals, pendingUnitTotals] = await Promise.all([
-                fetchExpenseTotalsByCropIds(currentUserId, cropIds, totalsOptions),
-                fetchIncomeTotalsByCropIds(currentUserId, cropIds, totalsOptions),
-                fetchLossTotalsByCropIds(currentUserId, cropIds, totalsOptions),
-                fetchPendingTotalsByCropIds(currentUserId, cropIds, totalsOptions),
-                fetchIncomeUnitTotalsByCropIds(currentUserId, cropIds),
-                fetchLossUnitTotalsByCropIds(currentUserId, cropIds),
-                fetchPendingUnitTotalsByCropIds(currentUserId, cropIds)
+            const [
+                expenseTotals,
+                incomeTotals,
+                lossTotals,
+                pendingTotals,
+                incomeUnitTotals,
+                lossUnitTotals,
+                pendingUnitTotals,
+                pendingTransferredUnitTotals
+            ] = await Promise.all([
+                fetchExpenseTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
+                fetchIncomeTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
+                fetchLossTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
+                fetchPendingTotalsByCropIds(currentUserId, allCropIds, totalsOptions),
+                fetchIncomeUnitTotalsByCropIds(currentUserId, allCropIds),
+                fetchLossUnitTotalsByCropIds(currentUserId, allCropIds),
+                fetchPendingUnitTotalsByCropIds(currentUserId, allCropIds),
+                fetchPendingTransferredUnitTotalsByCropIds(currentUserId, allCropIds)
             ]);
             expenseTotalsByCrop = expenseTotals;
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
             pendingTotalsByCrop = pendingTotals;
-            unitTotalsByCrop = mergeCycleUnitTotalsMaps([
+            const baseUnitTotalsByCrop = mergeCycleUnitTotalsMaps([
                 incomeUnitTotals,
                 lossUnitTotals,
                 pendingUnitTotals
             ]);
+            unitTotalsByCrop = mergeCycleUnitTotalsWithTransferredFallback(
+                baseUnitTotalsByCrop,
+                pendingTransferredUnitTotals
+            );
             if (requestId !== cropsLoadSeq) return;
         }
 
@@ -11554,10 +11675,12 @@ function initIncomeHistory() {
     document.addEventListener('data-refresh', () => {
         loadIncomes();
         updateBalanceAndTopCategory();
+        scheduleCyclesRefresh(220);
     });
     document.addEventListener('agro:income:changed', () => {
         loadIncomes();
         updateBalanceAndTopCategory();
+        scheduleCyclesRefresh(220);
     });
 
     loadIncomes();
