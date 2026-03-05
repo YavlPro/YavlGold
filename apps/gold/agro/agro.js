@@ -8844,9 +8844,18 @@ async function fetchLossTotalsByCropIds(userId, cropIds, options = {}) {
     return new Map();
 }
 
+function getPendingTransferToken(row) {
+    return String(
+        row?.transfer_state
+        ?? row?.transfer_type
+        ?? row?.transferType
+        ?? ''
+    ).trim().toLowerCase();
+}
+
 async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
     const baseRowFilters = [
-        (row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred'
+        (row) => getPendingTransferToken(row) !== 'transferred'
     ];
     const extraRowFilters = Array.isArray(options.rowFilters)
         ? options.rowFilters.filter((filterFn) => typeof filterFn === 'function')
@@ -8855,7 +8864,7 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
     return fetchUsdTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
         amountFields: ['monto'],
-        optionalFields: ['deleted_at', 'transfer_state'],
+        optionalFields: ['deleted_at', 'transfer_state', 'transfer_type'],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
@@ -9031,7 +9040,7 @@ async function fetchLossUnitTotalsByCropIds(userId, cropIds, options = {}) {
 
 async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
     const baseRowFilters = [
-        (row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred'
+        (row) => getPendingTransferToken(row) !== 'transferred'
     ];
     const extraRowFilters = Array.isArray(options.rowFilters)
         ? options.rowFilters.filter((filterFn) => typeof filterFn === 'function')
@@ -9039,7 +9048,7 @@ async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
 
     return fetchUnitTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
-        optionalFields: ['deleted_at', 'transfer_state'],
+        optionalFields: ['deleted_at', 'transfer_state', 'transfer_type'],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
@@ -9047,7 +9056,7 @@ async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
 
 async function fetchPendingTransferredUnitTotalsByCropIds(userId, cropIds, options = {}) {
     const baseRowFilters = [
-        (row) => String(row?.transfer_state || '').trim().toLowerCase() === 'transferred'
+        (row) => getPendingTransferToken(row) === 'transferred'
     ];
     const extraRowFilters = Array.isArray(options.rowFilters)
         ? options.rowFilters.filter((filterFn) => typeof filterFn === 'function')
@@ -9055,7 +9064,7 @@ async function fetchPendingTransferredUnitTotalsByCropIds(userId, cropIds, optio
 
     return fetchUnitTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
-        optionalFields: ['deleted_at', 'transfer_state'],
+        optionalFields: ['deleted_at', 'transfer_state', 'transfer_type'],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
@@ -9078,7 +9087,7 @@ function mergeCycleUnitTotalsMaps(maps = []) {
     return merged;
 }
 
-function mergeCycleUnitTotalsWithTransferredFallback(baseTotalsByCrop, pendingTransferredTotalsByCrop) {
+function mergeCycleUnitTotalsPreferHigher(baseTotalsByCrop, pendingTransferredTotalsByCrop) {
     const merged = mergeCycleUnitTotalsMaps([baseTotalsByCrop]);
     if (!(pendingTransferredTotalsByCrop instanceof Map)) {
         return merged;
@@ -9087,13 +9096,16 @@ function mergeCycleUnitTotalsWithTransferredFallback(baseTotalsByCrop, pendingTr
     pendingTransferredTotalsByCrop.forEach((pendingTotals, cropId) => {
         const normalizedId = normalizeCropId(cropId);
         if (!normalizedId) return;
-        const current = merged.get(normalizedId);
-        if (hasPositiveCycleUnitTotals(current)) return;
+        const current = merged.get(normalizedId) || createCycleUnitTotalsAccumulator();
+        const pending = pendingTotals || createCycleUnitTotalsAccumulator();
 
-        const fallbackTotals = createCycleUnitTotalsAccumulator();
-        addCycleUnitTotals(fallbackTotals, pendingTotals);
-        if (hasPositiveCycleUnitTotals(fallbackTotals)) {
-            merged.set(normalizedId, fallbackTotals);
+        const next = createCycleUnitTotalsAccumulator();
+        next.sacos = Math.max(Number(current.sacos || 0), Number(pending.sacos || 0));
+        next.kilogramos = Math.max(Number(current.kilogramos || 0), Number(pending.kilogramos || 0));
+        next.cestas = Math.max(Number(current.cestas || 0), Number(pending.cestas || 0));
+
+        if (hasPositiveCycleUnitTotals(next)) {
+            merged.set(normalizedId, next);
         }
     });
 
@@ -10643,7 +10655,7 @@ export async function loadCrops() {
                 lossUnitTotals,
                 pendingUnitTotals
             ]);
-            unitTotalsByCrop = mergeCycleUnitTotalsWithTransferredFallback(
+            unitTotalsByCrop = mergeCycleUnitTotalsPreferHigher(
                 baseUnitTotalsByCrop,
                 pendingTransferredUnitTotals
             );

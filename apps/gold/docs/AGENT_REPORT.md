@@ -11720,9 +11720,10 @@ git status --short --branch
    - en `agro_pending`, hacer doble fetch de unidades:
      - no transferidos
      - transferidos
-   - construir `unitTotalsByCrop`:
+   - construir `unitTotalsByCrop` con merge por **MAX** por unidad:
      - `base = merge(incomeUnits, lossUnits, pendingNotTransferred)`
-     - si `base(crop)` no tiene unidades y `pendingTransferred(crop)` sí tiene, sumar `pendingTransferred(crop)`.
+     - `unitTotals(crop, unidad) = max(base, pendingTransferred)` para evitar sub-conteo sin duplicar.
+   - robustecer filtro de transferidos/no transferidos con `transfer_state` + `transfer_type`.
    - extender `fetchUnitTotalsByCropIds` con columnas candidatas legacy y leer con `readHistoryItemField(...)`.
 2. `apps/gold/agro/agro.js` — refresh en vivo:
    - crear `scheduleCyclesRefresh()` debounced:
@@ -11742,9 +11743,12 @@ git status --short --branch
    - `agro_pending` ahora tiene doble fetch de unidades:
      - `fetchPendingUnitTotalsByCropIds` (no transferidos)
      - `fetchPendingTransferredUnitTotalsByCropIds` (transferidos)
-   - Se añadió merge con fallback selectivo:
+   - Se añadió merge por **preferencia del mayor (MAX)** por unidad:
      - `base = merge(incomeUnits, lossUnits, pendingNotTransferred)`
-     - `mergeCycleUnitTotalsWithTransferredFallback(base, pendingTransferred)` suma transferidos solo cuando `base(crop)` no trae unidades > 0.
+     - `mergeCycleUnitTotalsPreferHigher(base, pendingTransferred)` toma `max(sacos/kg/cestas)` por cultivo.
+   - Filtro robusto de transferidos:
+     - helper `getPendingTransferToken(row)` lee `transfer_state` o `transfer_type`.
+     - aplicado en fetch de `pending` y `pendingTransferred`.
    - Se evitó doble conteo de `kg` manteniendo regla: `quantity_kg` suma solo sin unidad explícita.
 
 2. `apps/gold/agro/agro.js` — compatibilidad legacy
