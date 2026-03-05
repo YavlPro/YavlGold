@@ -8800,6 +8800,336 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
     });
 }
 
+function createCycleUnitTotalsAccumulator() {
+    return {
+        sacos: 0,
+        kilogramos: 0,
+        cestas: 0
+    };
+}
+
+function hasPositiveCycleUnitTotals(totals) {
+    if (!totals || typeof totals !== 'object') return false;
+    return Number(totals.sacos || 0) > 0
+        || Number(totals.kilogramos || 0) > 0
+        || Number(totals.cestas || 0) > 0;
+}
+
+function addCycleUnitTotals(target, source) {
+    if (!target || typeof target !== 'object' || !source || typeof source !== 'object') return;
+    target.sacos += Number(source.sacos || 0);
+    target.kilogramos += Number(source.kilogramos || 0);
+    target.cestas += Number(source.cestas || 0);
+}
+
+function accumulateCycleUnitTotalsFromRow(target, row) {
+    if (!target || typeof target !== 'object' || !row || typeof row !== 'object') return;
+
+    const unitKey = normalizeHistoryUnitKey(row?.unit_type);
+    const unitQty = toSafeLocaleNumber(row?.unit_qty);
+    const kgQty = toSafeLocaleNumber(row?.quantity_kg);
+
+    if (unitKey && unitQty !== null && unitQty > 0) {
+        target[unitKey] += unitQty;
+    }
+
+    const shouldAddKgFromDedicatedField = kgQty !== null
+        && kgQty > 0
+        && !unitKey;
+    if (shouldAddKgFromDedicatedField) {
+        target.kilogramos += kgQty;
+    }
+}
+
+async function fetchUnitTotalsByCropIds(tableName, userId, cropIds, options = {}) {
+    const totalsByCrop = new Map();
+    const normalizedUserId = normalizeCropId(userId);
+    const ids = Array.from(new Set((cropIds || [])
+        .map((id) => normalizeCropId(id))
+        .filter(Boolean)));
+    if (!normalizedUserId || ids.length === 0) return totalsByCrop;
+
+    const missingColumns = getTableMissingColumns(tableName);
+    let selectFields = Array.from(new Set([
+        'crop_id',
+        'unit_type',
+        'unit_qty',
+        'quantity_kg',
+        ...(Array.isArray(options.optionalFields) ? options.optionalFields : [])
+    ].map((field) => String(field || '').trim()).filter((field) => field && !missingColumns.has(field))));
+    let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
+        .map((field) => String(field || '').trim())
+        .filter((field) => field && !missingColumns.has(field))));
+    const rowFilters = (Array.isArray(options.rowFilters) ? options.rowFilters : [])
+        .filter((filterFn) => typeof filterFn === 'function');
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+        if (!selectFields.includes('crop_id')) break;
+        const hasAnyUnitField = selectFields.includes('unit_type')
+            || selectFields.includes('unit_qty')
+            || selectFields.includes('quantity_kg');
+        if (!hasAnyUnitField) return totalsByCrop;
+
+        let query = supabase
+            .from(tableName)
+            .select(selectFields.join(', '))
+            .eq('user_id', normalizedUserId)
+            .in('crop_id', ids);
+
+        nullFilters.forEach((field) => {
+            if (selectFields.includes(field)) {
+                query = query.is(field, null);
+            }
+        });
+
+        const { data, error } = await query;
+        if (!error) {
+            const rows = Array.isArray(data) ? data : [];
+            rows.forEach((row) => {
+                let passesFilters = true;
+                if (rowFilters.length > 0) {
+                    for (const filterFn of rowFilters) {
+                        try {
+                            if (!filterFn(row)) {
+                                passesFilters = false;
+                                break;
+                            }
+                        } catch (_filterError) {
+                            passesFilters = false;
+                            break;
+                        }
+                    }
+                }
+                if (!passesFilters) return;
+
+                const cropId = normalizeCropId(row?.crop_id);
+                if (!cropId) return;
+                const bucket = totalsByCrop.get(cropId) || createCycleUnitTotalsAccumulator();
+                accumulateCycleUnitTotalsFromRow(bucket, row);
+                if (hasPositiveCycleUnitTotals(bucket)) {
+                    totalsByCrop.set(cropId, bucket);
+                }
+            });
+            return totalsByCrop;
+        }
+
+        if (isMissingTableError(error, tableName)) {
+            return totalsByCrop;
+        }
+
+        let removedAny = false;
+        selectFields = selectFields.filter((field) => {
+            if (isMissingColumnError(error, field)) {
+                rememberMissingColumn(tableName, field);
+                removedAny = true;
+                return false;
+            }
+            return true;
+        });
+        if (removedAny) {
+            nullFilters = nullFilters.filter((field) => selectFields.includes(field));
+            continue;
+        }
+
+        console.warn(`[Agro] No se pudo calcular totales de unidades por cultivo en ${tableName}:`, error?.message || error);
+        return totalsByCrop;
+    }
+
+    return totalsByCrop;
+}
+
+async function fetchIncomeUnitTotalsByCropIds(userId, cropIds, options = {}) {
+    return fetchUnitTotalsByCropIds('agro_income', userId, cropIds, {
+        ...options,
+        optionalFields: ['deleted_at', 'reverted_at'],
+        nullFilters: ['deleted_at', 'reverted_at']
+    });
+}
+
+async function fetchLossUnitTotalsByCropIds(userId, cropIds, options = {}) {
+    const queryOptions = {
+        ...options,
+        optionalFields: ['deleted_at', 'reverted_at'],
+        nullFilters: ['deleted_at', 'reverted_at']
+    };
+    for (const tableName of LOSS_TABLE_CANDIDATES) {
+        const available = await isTableAvailable(tableName);
+        if (!available) continue;
+        return fetchUnitTotalsByCropIds(tableName, userId, cropIds, queryOptions);
+    }
+    return new Map();
+}
+
+async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
+    const baseRowFilters = [
+        (row) => String(row?.transfer_state || '').trim().toLowerCase() !== 'transferred'
+    ];
+    const extraRowFilters = Array.isArray(options.rowFilters)
+        ? options.rowFilters.filter((filterFn) => typeof filterFn === 'function')
+        : [];
+
+    return fetchUnitTotalsByCropIds('agro_pending', userId, cropIds, {
+        ...options,
+        optionalFields: ['deleted_at', 'transfer_state'],
+        nullFilters: ['deleted_at'],
+        rowFilters: [...baseRowFilters, ...extraRowFilters]
+    });
+}
+
+function mergeCycleUnitTotalsMaps(maps = []) {
+    const merged = new Map();
+    (Array.isArray(maps) ? maps : []).forEach((map) => {
+        if (!(map instanceof Map)) return;
+        map.forEach((totals, cropId) => {
+            const normalizedId = normalizeCropId(cropId);
+            if (!normalizedId) return;
+            const bucket = merged.get(normalizedId) || createCycleUnitTotalsAccumulator();
+            addCycleUnitTotals(bucket, totals);
+            if (hasPositiveCycleUnitTotals(bucket)) {
+                merged.set(normalizedId, bucket);
+            }
+        });
+    });
+    return merged;
+}
+
+function normalizeCropTypeLabel(value) {
+    const raw = String(value || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (!raw) return '';
+    const withoutNumericSuffix = raw.replace(/\s*[-#]?\s*\d+\s*$/u, '').trim();
+    return withoutNumericSuffix || raw;
+}
+
+function getCropTypeKeyFromCycle(crop, displayName = '') {
+    const stableCandidates = [
+        crop?.template_id,
+        crop?.crop_template_id,
+        crop?.crop_id,
+        crop?.crop_type,
+        crop?.template_key
+    ];
+    for (const candidate of stableCandidates) {
+        const token = normalizeFactureroSearchToken(candidate).trim();
+        if (token) {
+            return `type:${token}`;
+        }
+    }
+
+    const fallbackLabel = normalizeCropTypeLabel(displayName || crop?.name);
+    const fallbackToken = normalizeFactureroSearchToken(fallbackLabel).replace(/\s+/g, ' ').trim();
+    if (fallbackToken) {
+        return `name:${fallbackToken}`;
+    }
+    return 'name:cultivo';
+}
+
+function getCropTypeLabelFromCycle(crop, displayName = '') {
+    const directType = normalizeCropTypeLabel(crop?.crop_type);
+    if (directType) return directType;
+    const fallbackName = normalizeCropTypeLabel(displayName || crop?.name);
+    return fallbackName || CROP_DISPLAY_FALLBACK_NAME;
+}
+
+function buildCycleGlobalTotalsByCropType(crops, options = {}) {
+    const rows = Array.isArray(crops) ? crops : [];
+    if (!rows.length) return new Map();
+
+    const expenseTotalsByCrop = options.expenseTotalsByCrop instanceof Map ? options.expenseTotalsByCrop : null;
+    const incomeTotalsByCrop = options.incomeTotalsByCrop instanceof Map ? options.incomeTotalsByCrop : null;
+    const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
+    const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
+    const unitTotalsByCrop = options.unitTotalsByCrop instanceof Map ? options.unitTotalsByCrop : null;
+    const totalsByType = new Map();
+
+    rows.forEach((crop) => {
+        const displayCrop = getCropDisplayParts(crop);
+        const typeKey = getCropTypeKeyFromCycle(crop, displayCrop.name);
+        const typeLabel = getCropTypeLabelFromCycle(crop, displayCrop.name);
+        const normalizedCropId = normalizeCropId(crop?.id);
+
+        const investmentSnapshot = resolveCropInvestmentSnapshot(crop);
+        const baseInvestment = investmentSnapshot.usdEquiv;
+        const expenseInvestment = normalizedCropId && expenseTotalsByCrop
+            ? (Number(expenseTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const incomeTotal = normalizedCropId && incomeTotalsByCrop
+            ? (Number(incomeTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const lossesTotal = normalizedCropId && lossTotalsByCrop
+            ? (Number(lossTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+        const pendingTotal = normalizedCropId && pendingTotalsByCrop
+            ? (Number(pendingTotalsByCrop.get(normalizedCropId)) || 0)
+            : 0;
+
+        let bucket = totalsByType.get(typeKey);
+        if (!bucket) {
+            bucket = {
+                typeKey,
+                typeLabel,
+                cycleCount: 0,
+                baseInvestment: 0,
+                expenseInvestment: 0,
+                incomeTotal: 0,
+                lossesTotal: 0,
+                totalCosts: 0,
+                pendingTotal: 0,
+                unitTotals: createCycleUnitTotalsAccumulator()
+            };
+            totalsByType.set(typeKey, bucket);
+        }
+
+        bucket.cycleCount += 1;
+        bucket.baseInvestment += baseInvestment;
+        bucket.expenseInvestment += expenseInvestment;
+        bucket.incomeTotal += incomeTotal;
+        bucket.lossesTotal += lossesTotal;
+        bucket.totalCosts += baseInvestment + expenseInvestment + lossesTotal;
+        bucket.pendingTotal += pendingTotal;
+        if (normalizedCropId && unitTotalsByCrop) {
+            addCycleUnitTotals(bucket.unitTotals, unitTotalsByCrop.get(normalizedCropId));
+        }
+    });
+
+    return totalsByType;
+}
+
+function buildCycleGlobalBreakdown(crop, options = {}) {
+    const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map
+        ? options.globalTotalsByCropType
+        : null;
+    if (!globalTotalsByCropType || globalTotalsByCropType.size === 0) return null;
+
+    const displayName = String(options.displayName || '').trim();
+    const typeKey = getCropTypeKeyFromCycle(crop, displayName);
+    const bucket = globalTotalsByCropType.get(typeKey);
+    if (!bucket || Number(bucket.cycleCount || 0) <= 0) return null;
+
+    const unitTotals = bucket.unitTotals && typeof bucket.unitTotals === 'object'
+        ? bucket.unitTotals
+        : createCycleUnitTotalsAccumulator();
+    const unitChips = [];
+    HISTORY_UNIT_TOTAL_ORDER.forEach((unitKey) => {
+        const value = Number(unitTotals[unitKey] || 0);
+        if (!Number.isFinite(value) || value <= 0) return;
+        unitChips.push(formatHistoryUnitTotalChipText(unitKey, value));
+    });
+    const globalRates = resolveEffectiveUsdRates(null);
+
+    return {
+        typeLabel: bucket.typeLabel || getCropTypeLabelFromCycle(crop, displayName),
+        cycleCount: Number(bucket.cycleCount) || 0,
+        base: formatInvestmentTriplet(bucket.baseInvestment, globalRates),
+        gastos: formatCurrency(bucket.expenseInvestment),
+        pagados: formatCurrency(bucket.incomeTotal),
+        costos: formatCurrency(bucket.totalCosts),
+        fiados: formatCurrency(bucket.pendingTotal),
+        unitChips
+    };
+}
+
 const HARVEST_APPROX_TOOLTIP = 'Aprox.: La fecha estimada se calcula por duración promedio del cultivo. Puede variar según clima, manejo y condiciones reales.';
 
 function toPositiveRate(value) {
@@ -9331,6 +9661,7 @@ function buildActiveCycleCardsData(crops, options = {}) {
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
     const rows = Array.isArray(crops) ? crops : [];
 
     return rows.map((crop) => {
@@ -9390,6 +9721,10 @@ function buildActiveCycleCardsData(crops, options = {}) {
             inversionUSD: baseInvestment,
             rentabilidad: net,
             potencialNeto: potential,
+            globalBreakdown: buildCycleGlobalBreakdown(crop, {
+                globalTotalsByCropType,
+                displayName: displayCrop.name
+            }),
             desglose: {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
@@ -9408,6 +9743,7 @@ function buildFinishedCycleCardsData(crops, options = {}) {
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
     const groupType = String(options.groupType || '').toLowerCase().trim();
     const rows = Array.isArray(crops) ? crops : [];
 
@@ -9475,6 +9811,10 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             rentabilidad: finalNet,
             potencialNeto: finalNet,
             mode: 'finished',
+            globalBreakdown: buildCycleGlobalBreakdown(crop, {
+                globalTotalsByCropType,
+                displayName: displayCrop.name
+            }),
             desglose: {
                 base: baseTriplet,
                 gastos: formatCurrency(expenseInvestment),
@@ -9944,6 +10284,7 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
     const rows = Array.isArray(crops) ? crops : [];
 
     if (USE_V10_HISTORY) {
@@ -9953,6 +10294,7 @@ function renderCropCycleGroup(gridEl, crops, emptyText, options = {}) {
             lossTotalsByCrop,
             pendingTotalsByCrop,
             missingRateCountsByCrop,
+            globalTotalsByCropType,
             groupType: options.groupType
         });
         renderFinishedCycles(gridEl, cardsData, {
@@ -9995,6 +10337,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     const lossTotalsByCrop = options.lossTotalsByCrop instanceof Map ? options.lossTotalsByCrop : null;
     const pendingTotalsByCrop = options.pendingTotalsByCrop instanceof Map ? options.pendingTotalsByCrop : null;
     const missingRateCountsByCrop = options.missingRateCountsByCrop instanceof Map ? options.missingRateCountsByCrop : null;
+    const globalTotalsByCropType = options.globalTotalsByCropType instanceof Map ? options.globalTotalsByCropType : null;
 
     const closedCrops = Array.isArray(crops) ? crops : [];
     const { finished: finishedCrops, lost: lostCrops } = splitClosedCycleHistory(closedCrops);
@@ -10036,6 +10379,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         lossTotalsByCrop,
         pendingTotalsByCrop,
         missingRateCountsByCrop,
+        globalTotalsByCropType,
         groupType: 'finished'
     });
     renderCropCycleGroup(lostGridEl, lostCrops, 'Sin ciclos perdidos por ahora.', {
@@ -10044,6 +10388,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
         lossTotalsByCrop,
         pendingTotalsByCrop,
         missingRateCountsByCrop,
+        globalTotalsByCropType,
         groupType: 'lost'
     });
 
@@ -10158,20 +10503,29 @@ export async function loadCrops() {
         let incomeTotalsByCrop = new Map();
         let lossTotalsByCrop = new Map();
         let pendingTotalsByCrop = new Map();
+        let unitTotalsByCrop = new Map();
         let missingRateCountsByCrop = new Map();
         if (source === 'supabase' && currentUserId && crops.length > 0) {
             const cropIds = crops.map((crop) => crop?.id);
             const totalsOptions = { missingRateCountsByCrop };
-            const [expenseTotals, incomeTotals, lossTotals, pendingTotals] = await Promise.all([
+            const [expenseTotals, incomeTotals, lossTotals, pendingTotals, incomeUnitTotals, lossUnitTotals, pendingUnitTotals] = await Promise.all([
                 fetchExpenseTotalsByCropIds(currentUserId, cropIds, totalsOptions),
                 fetchIncomeTotalsByCropIds(currentUserId, cropIds, totalsOptions),
                 fetchLossTotalsByCropIds(currentUserId, cropIds, totalsOptions),
-                fetchPendingTotalsByCropIds(currentUserId, cropIds, totalsOptions)
+                fetchPendingTotalsByCropIds(currentUserId, cropIds, totalsOptions),
+                fetchIncomeUnitTotalsByCropIds(currentUserId, cropIds),
+                fetchLossUnitTotalsByCropIds(currentUserId, cropIds),
+                fetchPendingUnitTotalsByCropIds(currentUserId, cropIds)
             ]);
             expenseTotalsByCrop = expenseTotals;
             incomeTotalsByCrop = incomeTotals;
             lossTotalsByCrop = lossTotals;
             pendingTotalsByCrop = pendingTotals;
+            unitTotalsByCrop = mergeCycleUnitTotalsMaps([
+                incomeUnitTotals,
+                lossUnitTotals,
+                pendingUnitTotals
+            ]);
             if (requestId !== cropsLoadSeq) return;
         }
 
@@ -10202,6 +10556,13 @@ export async function loadCrops() {
         cropsCache = crops;
         syncLazyCropConsumers(cropsCache);
         const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(crops);
+        const globalTotalsByCropType = buildCycleGlobalTotalsByCropType(crops, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            unitTotalsByCrop
+        });
         const historyBuckets = await classifyCycleHistoryCrops(finishedCrops, { source });
         const visibleFinishedCrops = historyBuckets.valid;
         const orphanFinishedCrops = historyBuckets.orphan;
@@ -10218,7 +10579,8 @@ export async function loadCrops() {
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,
-            missingRateCountsByCrop
+            missingRateCountsByCrop,
+            globalTotalsByCropType
         });
         const emptyActiveText = visibleFinishedCrops.length > 0
             ? 'No hay ciclos activos por ahora.'
@@ -10232,7 +10594,8 @@ export async function loadCrops() {
             incomeTotalsByCrop,
             lossTotalsByCrop,
             pendingTotalsByCrop,
-            missingRateCountsByCrop
+            missingRateCountsByCrop,
+            globalTotalsByCropType
         });
         const prevSelected = selectedCropId;
         syncSelectedCropFromList(crops, { silent: true });

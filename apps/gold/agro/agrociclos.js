@@ -93,6 +93,58 @@ function buildActions(ciclo) {
   `;
 }
 
+function renderGlobalUnitChips(globalBreakdown) {
+  const chips = Array.isArray(globalBreakdown?.unitChips) ? globalBreakdown.unitChips : [];
+  if (!chips.length) return '';
+  return `
+    <div class="desglose-global-units">
+      ${chips.map((chipText) => `<span class="desglose-unit-chip">${escapeHtml(chipText)}</span>`).join('')}
+    </div>
+  `;
+}
+
+function renderGlobalBreakdown(ciclo) {
+  const globalBreakdown = ciclo?.globalBreakdown;
+  const cycleCount = Number(globalBreakdown?.cycleCount || 0);
+  if (!globalBreakdown || cycleCount <= 0) return '';
+
+  const cycleLabel = cycleCount === 1 ? 'ciclo' : 'ciclos';
+  const cropTypeLabel = String(globalBreakdown?.typeLabel || ciclo?.nombre || 'Cultivo');
+  const titleText = `Global — ${cropTypeLabel} (${cycleCount} ${cycleLabel})`;
+  const baseText = String(globalBreakdown?.base || 'N/D');
+  const gastosText = String(globalBreakdown?.gastos || 'N/D');
+  const pagadosText = String(globalBreakdown?.pagados || 'N/D');
+  const costosText = String(globalBreakdown?.costos || 'N/D');
+  const fiadosText = String(globalBreakdown?.fiados || 'N/D');
+
+  return `
+    <section class="desglose-global" data-global-breakdown="1">
+      <div class="desglose-global-title">${escapeHtml(titleText)}</div>
+      ${renderGlobalUnitChips(globalBreakdown)}
+      <div class="desglose-row">
+        <span>Base inversión multimoneda</span>
+        <span data-money="1" data-raw-money="${escapeAttr(baseText)}">${escapeHtml(baseText)}</span>
+      </div>
+      <div class="desglose-row">
+        <span>Gastos acumulados</span>
+        <span data-money="1" data-raw-money="${escapeAttr(gastosText)}">${escapeHtml(gastosText)}</span>
+      </div>
+      <div class="desglose-row">
+        <span>Pagados</span>
+        <span data-money="1" data-raw-money="${escapeAttr(pagadosText)}">${escapeHtml(pagadosText)}</span>
+      </div>
+      <div class="desglose-row">
+        <span>Costos</span>
+        <span data-money="1" data-raw-money="${escapeAttr(costosText)}">${escapeHtml(costosText)}</span>
+      </div>
+      <div class="desglose-row">
+        <span>Fiados</span>
+        <span data-money="1" data-raw-money="${escapeAttr(fiadosText)}">${escapeHtml(fiadosText)}</span>
+      </div>
+    </section>
+  `;
+}
+
 function renderCard(ciclo, index = 0) {
   const mode = String(ciclo?.mode || 'active').trim().toLowerCase() === 'finished'
     ? 'finished'
@@ -120,6 +172,7 @@ function renderCard(ciclo, index = 0) {
   const desgloseCostos = String(desglose.costos || 'N/D');
   const desgloseFiados = String(desglose.fiados || 'N/D');
   const desgloseCotizacion = String(desglose.cotizacion || 'N/D');
+  const globalBreakdownMarkup = renderGlobalBreakdown(ciclo);
 
   return `
     <article class="cycle-card crop-card" data-crop-id="${escapeAttr(dataId)}"${orphanData} style="animation-delay:${index * 70}ms;">
@@ -202,6 +255,7 @@ function renderCard(ciclo, index = 0) {
             <span>Fiados</span>
             <span data-money="1" data-raw-money="${escapeAttr(desgloseFiados)}">${escapeHtml(desgloseFiados)}</span>
           </div>
+          ${globalBreakdownMarkup}
           <div class="desglose-row cotizacion">
             <span>${escapeHtml(desgloseCotizacion)}</span>
           </div>

@@ -11630,3 +11630,76 @@ git status --short --branch
 - Build oficial ejecutado:
   - `pnpm build:gold`
   - Resultado: **PASS**
+
+## 🆕 SESIÓN: GATE 0 — Desglose financiero GLOBAL por tipo en cards de Ciclos (2026-03-05)
+
+### Diagnóstico
+
+1. El acordeón `Ver desglose financiero` se renderiza en `apps/gold/agro/agrociclos.js` dentro de `renderCard(ciclo, index)`, en el bloque `<details class="desglose">`.
+2. El contenido del desglose actual (`base`, `gastos`, `pagados`, `costos`, `fiados`, `cotizacion`) llega precomputado desde `apps/gold/agro/agro.js`:
+   - activos: `buildActiveCycleCardsData(...)`
+   - finalizados/perdidos: `buildFinishedCycleCardsData(...)`.
+3. El pipeline de render de cards parte en `loadCrops()`:
+   - obtiene `crops`,
+   - calcula mapas por `crop_id` (gastos/pagados/perdidas/fiados),
+   - renderiza activos con `initCiclos(...)`,
+   - renderiza historial (finalizados/perdidos) con `renderCropCycleHistory(...)` -> `renderCropCycleGroup(...)` -> `renderFinishedCycles(...)`.
+4. No existe hoy una agregación “global por tipo de cultivo” ni un bloque secundario dentro del acordeón para mostrar sumas entre ciclos del mismo tipo.
+5. Tampoco existe para cards una suma global de unidades (`sacos/kg/cestas`) por tipo de cultivo; solo hay utilidades de normalización/cómputo de unidades en historial facturero.
+
+### Plan quirúrgico
+
+1. `apps/gold/agro/agro.js`
+   - agregar helper de clave por tipo de cultivo (`getCropTypeKeyFromCycle`) con prioridad de campos estables (`template_id/crop_template_id/crop_id/crop_type/template_key`) y fallback por nombre normalizado sin sufijo numérico.
+   - agregar builder de agregados globales por tipo sobre el dataset ya cargado en `loadCrops()`:
+     - `cycleCount`
+     - sumas financieras (base/gastos/pagados/costos/fiados)
+     - sumas de unidades (`sacos/kilogramos/cestas`) por `crop_id` usando movimientos disponibles.
+   - inyectar `globalBreakdown` en cada card al construir activos/finalizados para que el renderer lo pinte.
+2. `apps/gold/agro/agrociclos.js`
+   - renderizar dentro de `desglose-body` un bloque adicional `Global — <Tipo> (N ciclos)` antes de la fila de cotización.
+   - incluir filas financieras globales y línea/chips de unidades solo cuando haya unidades > 0.
+3. `apps/gold/agro/agrociclos.css`
+   - estilos mínimos de bloque global reutilizando tokens existentes del archivo (`--gold-*`, `--bg-*`, `--border-*`, `--text-*`), sin paleta nueva.
+4. QA y validación
+   - probar dos cards del mismo cultivo con totales globales idénticos.
+   - probar cultivo distinto con global distinto.
+   - validar ocultamiento de unidades en 0.
+   - ejecutar `pnpm build:gold`.
+
+### Implementación aplicada
+
+1. `apps/gold/agro/agro.js`
+   - Se añadieron helpers para agregación global por tipo:
+     - `getCropTypeKeyFromCycle(...)`
+     - `getCropTypeLabelFromCycle(...)`
+     - `buildCycleGlobalTotalsByCropType(...)`
+     - `buildCycleGlobalBreakdown(...)`
+   - Se añadieron helpers de unidades por `crop_id`:
+     - `fetchUnitTotalsByCropIds(...)`
+     - wrappers `fetchIncomeUnitTotalsByCropIds`, `fetchLossUnitTotalsByCropIds`, `fetchPendingUnitTotalsByCropIds`
+     - merge `mergeCycleUnitTotalsMaps(...)`
+   - `loadCrops()` ahora calcula mapas de unidades (income/loss/pending), construye totales globales por tipo y los inyecta al render de activos/finalizados.
+   - `buildActiveCycleCardsData(...)` y `buildFinishedCycleCardsData(...)` ahora adjuntan `globalBreakdown` a cada card.
+   - Ajuste anti doble `kg`: `quantity_kg` suma solo cuando no existe `unit_type` explícita.
+
+2. `apps/gold/agro/agrociclos.js`
+   - Nuevo render de bloque global dentro del acordeón:
+     - `renderGlobalBreakdown(...)`
+     - `renderGlobalUnitChips(...)`
+   - Inserción del bloque `Global — <cultivo> (N ciclos)` dentro de `.desglose-body`, antes de `cotizacion`.
+   - Unidades solo visibles cuando existen (`unitChips.length > 0`).
+
+3. `apps/gold/agro/agrociclos.css`
+   - Estilos mínimos para:
+     - `.desglose-global`
+     - `.desglose-global-title`
+     - `.desglose-global-units`
+     - `.desglose-unit-chip`
+   - Reuso de tokens existentes (sin paleta nueva).
+
+### Validación ejecutada
+
+- Build oficial:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
