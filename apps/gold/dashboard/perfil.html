@@ -533,9 +533,9 @@
   </div>
 
   <!-- Scripts -->
-  <!-- Sistema de autenticación desde workspace package @yavl/auth -->
   <script type="module" src="./auth-guard.js"></script>
-  <script type="module" src="../assets/js/auth.js"></script>
+  <script type="module" src="../assets/js/auth/authClient.js"></script>
+  <script type="module" src="../assets/js/auth/authUI.js"></script>
 
   <script>
     console.log('[Perfil] 🎨 Página de perfil cargada');
@@ -545,6 +545,7 @@
     // Cargar datos del usuario
     async function loadUserProfile() {
       try {
+        await window.AuthClient?.init?.();
         const user = await window.AuthClient.getCurrentUser();
         if (!user) {
           window.location.href = '/index.html#login';

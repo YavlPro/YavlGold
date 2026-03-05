@@ -1,5 +1,96 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — Landing principal + contrato de autenticación (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. La entrada de login en la landing no consume explícitamente `#login` / `#signup` aunque los guards redirigen a `/index.html#login`:
+   - `apps/gold/assets/js/auth/session-guard.js` y `apps/gold/assets/js/auth/authClient.js` usan esa URL como destino de acceso,
+   - `apps/gold/index.html` y `apps/gold/assets/js/auth/authUI.js` abren el modal por click/llamada directa, no por hash de entrada.
+2. El modal de registro enlaza a `/terms.html` y `/privacy.html` desde `apps/gold/index.html`, pero `apps/gold/vite.config.js` no registra `terms.html` ni `privacy.html` en la build MPA actual; por eso no salen en `dist`.
+3. El sistema de autenticación sigue mezclando contrato nuevo y legacy:
+   - el cliente actual emite `auth:signed_in` / `auth:signed_out`,
+   - `apps/gold/assets/js/auth/authGuard.js` sigue escuchando `auth:login` / `auth:logout`,
+   - `apps/gold/dashboard/perfil.html` y `apps/gold/dashboard/configuracion.html` siguen cargando `../assets/js/auth.js` (bridge legacy) además del guard nuevo.
+4. La landing principal aún tiene desfase con la release policy vigente:
+   - `apps/gold/index.html` sigue haciendo clic directo a `./crypto/` y `./herramientas/`,
+   - el dashboard ya opera con solo `Agro` liberado.
+5. La navegación interna de la landing tiene un enlace roto: se usa `#testimonios` en navbar/footer, pero la sección real disponible es `#beta`.
+6. El tono del `index` no es humo total, pero sí mantiene algunas frases adelantadas respecto al estado real (`"la mejor herramienta"`, `"tiempo real"`, etc.).
+7. La identidad del proyecto aún arrastra metadatos viejos en `apps/gold/package.json` (`trading/crypto/academy`) que ya no representan el centro actual del producto.
+
+### Alcance
+
+- Hacer que `#login` / `#signup` / `#register` abran el modal auth de forma automática en la landing y respondan a `hashchange`.
+- Registrar `terms.html` y `privacy.html` en la build/routing MPA y corregir sus enlaces de navegación.
+- Reducir el drift auth legacy en páginas de dashboard que todavía cargan el bridge viejo sin necesidad.
+- Unificar el contrato de eventos de auth para que la capa legacy, mientras exista, reaccione a los eventos actuales.
+- Alinear la landing con la release policy actual: solo Agro como acceso liberado desde home, y copy más sobrio donde hoy sobrepromete.
+- Corregir anchors internos rotos y metadatos de identidad del proyecto.
+
+### Archivos candidatos
+
+- `apps/gold/index.html`
+- `apps/gold/assets/js/auth/authClient.js`
+- `apps/gold/assets/js/auth/authUI.js`
+- `apps/gold/assets/js/auth/authGuard.js`
+- `apps/gold/assets/js/auth/session-guard.js`
+- `apps/gold/dashboard/perfil.html`
+- `apps/gold/dashboard/configuracion.html`
+- `apps/gold/vite.config.js`
+- `apps/gold/vercel.json`
+- `apps/gold/terms.html`
+- `apps/gold/privacy.html`
+- `apps/gold/package.json`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Cambiar el contrato de redirección post-login puede introducir doble redirect o pérdida de `returnTo` si no se centraliza bien.
+- Retirar bridge legacy de páginas específicas de dashboard puede exponer dependencias ocultas si alguna usaba globals del bridge.
+- Al bajar el tono/click-through de la landing, puede cambiar la percepción comercial si el equipo esperaba promocionar módulos no liberados.
+
+### Estrategia de rollback
+
+1. Mantener los cambios del lote acotados a landing/auth/routing/legal.
+2. Centralizar la navegación post-login en una sola capa; si falla, revertir solo esa capa y no el resto del gate.
+3. Si una página aún necesita compatibilidad legacy, mantener fallback explícito en vez de borrar soporte sin reemplazo.
+
+### Plan quirúrgico
+
+1. Implementar soporte de hash auth (`#login/#signup`) en la landing y eliminar redirects post-login duplicados.
+2. Registrar `terms.html` y `privacy.html` en `vite.config.js` y `vercel.json`, y corregir links de regreso.
+3. Ajustar `authGuard.js` legacy para escuchar eventos auth actuales y quitar el bridge legacy de `perfil/configuracion` si no es necesario.
+4. Alinear `index.html` con la release policy actual y corregir anchors/copy sobreprometidos.
+5. Actualizar identidad de `package.json`.
+6. Ejecutar `pnpm build:gold` y registrar riesgos residuales.
+
+### Estado post-implementación
+
+- `apps/gold/assets/js/auth/authUI.js` ahora consume `#login`, `#signup` y `#register` al iniciar y en `hashchange`, sincronizando el modal auth con la URL.
+- `apps/gold/assets/js/auth/authClient.js`, `apps/gold/assets/js/auth/authUI.js` y el script inline de `apps/gold/index.html` dejaron de competir por la redirección post-login; el flujo principal quedó centralizado en el guard/cliente actual.
+- `apps/gold/vite.config.js` y `apps/gold/vercel.json` ya registran `terms.html` y `privacy.html`; `apps/gold/terms.html` y `apps/gold/privacy.html` corrigen el retorno al inicio con `/`.
+- `apps/gold/dashboard/perfil.html` y `apps/gold/dashboard/configuracion.html` dejaron de cargar `../assets/js/auth.js`; ahora consumen `authClient.js` + `authUI.js` junto al guard de dashboard.
+- `apps/gold/assets/js/auth/authGuard.js` legacy quedó en modo compatibilidad: sigue vivo para páginas antiguas, pero ya escucha `auth:signed_in` / `auth:signed_out`.
+- `apps/gold/index.html` se alineó con la release policy actual: solo Agro queda presentado como acceso liberado; `Crypto` y `Herramientas` siguen visibles, pero ya no se ofrecen como clic directo desde home.
+- El copy del `index` bajó tono donde sobreprometía (`mejor herramienta`, `tiempo real`) y se corrigió la navegación interna `#testimonios -> #beta`.
+- `apps/gold/package.json` dejó de describir el proyecto como academia de trading/crypto y se alineó con el producto actual.
+
+### Validación
+
+- `pnpm build:gold` ejecutado con resultado `OK` el `2026-03-05`.
+- El build pasó con `agent-guard: OK`, `agent-report-check: OK`, `vite build` exitoso y `UTF-8 verification passed`.
+- Salida relevante:
+  - `dist/index.html` `83.50 kB` (`16.66 kB gzip`)
+  - `dist/terms.html` `3.91 kB`
+  - `dist/privacy.html` `4.92 kB`
+
+### Riesgos residuales
+
+- El contrato auth quedó más limpio en landing/perfil/configuración, pero `apps/gold/assets/js/auth.js` y `authGuard.js` todavía existen porque otras páginas legacy (`academia`, `herramientas`, lecciones antiguas) siguen colgadas de ese bridge.
+- La landing ya no deep-linkea módulos no liberados, pero las rutas productivas `/crypto/` y `/herramientas/` continúan existiendo y protegidas; si la policy futura exige apagarlas por completo, eso sería otro lote.
+- La navbar móvil de la landing sigue mostrando botones de auth simples; la representación de sesión más rica quedó resuelta primero en la navegación principal del header.
+
 ## 🆕 SESIÓN: GATE 0 — Hardening de identidad/contrato en Dashboard (2026-03-05)
 
 ### Diagnóstico (tarea actual)

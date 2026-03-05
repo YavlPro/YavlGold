@@ -22,6 +22,8 @@ export default defineConfig({
         cookies: 'cookies.html',
         faq: 'faq.html',
         soporte: 'soporte.html',
+        terms: 'terms.html',
+        privacy: 'privacy.html',
         dashboard: 'dashboard/index.html',
         music: 'dashboard/music.html',
         perfil: 'dashboard/perfil.html',

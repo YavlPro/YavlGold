@@ -26,6 +26,10 @@
     { "source": "/dashboard/:path*", "destination": "/dashboard/:path*" },
     { "source": "/music", "destination": "/dashboard/music.html" },
     { "source": "/music/", "destination": "/dashboard/music.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/terms/", "destination": "/terms.html" },
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/privacy/", "destination": "/privacy.html" },
     { "source": "/tecnologia", "destination": "/tecnologia/index.html" },
     { "source": "/tecnologia/", "destination": "/tecnologia/index.html" },
     { "source": "/tecnologia/:path*", "destination": "/tecnologia/:path*" }

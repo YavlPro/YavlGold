@@ -141,8 +141,12 @@ const AuthGuard = {
       this.protectLinks();
       if (window.AuthClient?.isAuthenticated()) this.protectByRole();
     });
-    window.addEventListener('auth:login', () => { this.protectLinks(); this.protectByRole(); this.redirectAfterLogin(); });
-    window.addEventListener('auth:logout', () => { this.protectLinks(); if (this.isProtectedRoute()) setTimeout(() => (window.location.href = '/'), 500); });
+    const handleSignedIn = () => { this.protectLinks(); this.protectByRole(); this.redirectAfterLogin(); };
+    const handleSignedOut = () => { this.protectLinks(); if (this.isProtectedRoute()) setTimeout(() => (window.location.href = '/'), 500); };
+    window.addEventListener('auth:signed_in', handleSignedIn);
+    window.addEventListener('auth:signed_out', handleSignedOut);
+    window.addEventListener('auth:login', handleSignedIn);
+    window.addEventListener('auth:logout', handleSignedOut);
   },
 };
 

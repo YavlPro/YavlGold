@@ -19,6 +19,7 @@ const AuthUI = {
     this.attachEventListeners();
     this.setupPasswordToggles();
     this.updateUI();
+    this.syncAuthModalWithHash();
     console.log('[AuthUI] ✅ AuthUI v2.0 inicializado');
 
     // 🔑 RECEPTOR: Leer la "nota de la nevera" que dejó authClient
@@ -119,28 +120,19 @@ const AuthUI = {
       this.toggleRecoveryMode(true);
     });
 
+    window.addEventListener('hashchange', () => this.syncAuthModalWithHash());
+
     // Listen to auth events
     window.addEventListener('auth:signed_in', () => {
       console.log('[AuthUI] 🔔 Evento SIGNED_IN recibido');
       this.updateUI();
-      this.hideAuthModal();
+      this.hideAllAuthModals();
 
       // 🛑 NO redirigir si hay recovery pendiente
       if (sessionStorage.getItem('yavl_recovery_pending') === 'true') {
         console.log('[AuthUI] 🛑 Recovery pendiente. NO redirigir.');
         return;
       }
-
-      // SOLO redirigir si estamos en Login/Home, NO desde módulos
-      const currentPath = window.location.pathname;
-      const isLoginPage = currentPath === '/' ||
-        currentPath === '/index.html' ||
-        currentPath.endsWith('/gold/index.html');
-
-      if (isLoginPage) {
-        setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
-      }
-      // Si estamos en /academia, /crypto, /herramientas, /dashboard - NO hacer nada
     });
 
     window.addEventListener('auth:initial_session', () => {
@@ -162,6 +154,9 @@ const AuthUI = {
 
   // Cambiar entre tabs
   switchToLogin() {
+    if (this.elements.authModal) {
+      this.elements.authModal.dataset.mode = 'login';
+    }
     this.elements.loginTab?.classList.add('active');
     this.elements.registerTab?.classList.remove('active');
     this.elements.loginForm?.classList.add('active');
@@ -174,6 +169,9 @@ const AuthUI = {
   },
 
   switchToRegister() {
+    if (this.elements.authModal) {
+      this.elements.authModal.dataset.mode = 'signup';
+    }
     this.elements.registerTab?.classList.add('active');
     this.elements.loginTab?.classList.remove('active');
     this.elements.registerForm?.classList.add('active');
@@ -186,11 +184,12 @@ const AuthUI = {
   },
 
   // Mostrar modal principal (homepage)
-  showLoginModal() {
+  showLoginModal(options = {}) {
     // Sistema nuevo (loginModal separado - dashboard/herramientas)
     if (this.elements.loginModal) {
       this.elements.loginModal.style.display = 'flex';
       this.clearError('login');
+      if (!options.skipHashSync) this.writeAuthHash('login');
       setTimeout(() => this.elements.loginForm?.querySelector('input[name="email"]')?.focus(), 80);
       return;
     }
@@ -200,14 +199,16 @@ const AuthUI = {
       this.elements.authModal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       this.switchToLogin();
+      if (!options.skipHashSync) this.writeAuthHash('login');
     }
   },
 
-  showRegisterModal() {
+  showRegisterModal(options = {}) {
     // Sistema nuevo (registerModal separado - dashboard/herramientas)
     if (this.elements.registerModal) {
       this.elements.registerModal.style.display = 'flex';
       this.clearError('register');
+      if (!options.skipHashSync) this.writeAuthHash('signup');
       setTimeout(() => this.elements.registerForm?.querySelector('input[name="name"]')?.focus(), 80);
       return;
     }
@@ -217,6 +218,7 @@ const AuthUI = {
       this.elements.authModal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       this.switchToRegister();
+      if (!options.skipHashSync) this.writeAuthHash('signup');
     }
   },
 
@@ -229,7 +231,7 @@ const AuthUI = {
     }
   },
 
-  hideAuthModal() {
+  hideAuthModal(options = {}) {
     if (this.elements.authModal) {
       this.elements.authModal.classList.add('hidden');
       document.body.style.overflow = '';
@@ -238,30 +240,79 @@ const AuthUI = {
       this.elements.loginForm?.reset();
       this.elements.registerForm?.reset();
     }
+    if (!options.skipHashSync) this.clearAuthHash();
   },
 
-  hideLoginModal() {
+  hideLoginModal(options = {}) {
     // Sistema nuevo
     if (this.elements.loginModal) {
       this.elements.loginModal.style.display = 'none';
       this.clearError('login');
       this.elements.loginForm?.reset();
+      if (!options.skipHashSync) this.clearAuthHash();
       return;
     }
     // Homepage - usar hideAuthModal
-    this.hideAuthModal();
+    this.hideAuthModal(options);
   },
 
-  hideRegisterModal() {
+  hideRegisterModal(options = {}) {
     // Sistema nuevo
     if (this.elements.registerModal) {
       this.elements.registerModal.style.display = 'none';
       this.clearError('register');
       this.elements.registerForm?.reset();
+      if (!options.skipHashSync) this.clearAuthHash();
       return;
     }
     // Homepage - usar hideAuthModal
-    this.hideAuthModal();
+    this.hideAuthModal(options);
+  },
+
+  hideAllAuthModals(options = {}) {
+    this.hideAuthModal({ skipHashSync: true });
+    this.hideLoginModal({ skipHashSync: true });
+    this.hideRegisterModal({ skipHashSync: true });
+    if (!options.skipHashSync) this.clearAuthHash();
+  },
+
+  getAuthHashMode() {
+    const hash = String(window.location.hash || '').toLowerCase();
+    if (hash === '#login') return 'login';
+    if (hash === '#signup' || hash === '#register') return 'signup';
+    return '';
+  },
+
+  writeAuthHash(mode) {
+    if (typeof window === 'undefined') return;
+    const nextHash = mode === 'signup' ? '#signup' : '#login';
+    const url = new URL(window.location.href);
+    if (url.hash === nextHash) return;
+    url.hash = nextHash;
+    window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+  },
+
+  clearAuthHash() {
+    if (typeof window === 'undefined') return;
+    if (!this.getAuthHashMode()) return;
+    const url = new URL(window.location.href);
+    window.history.replaceState({}, document.title, `${url.pathname}${url.search}`);
+  },
+
+  syncAuthModalWithHash() {
+    const mode = this.getAuthHashMode();
+    if (!mode) {
+      if (!this.isRecoveryMode && !this.isUpdatePasswordMode) {
+        this.hideAllAuthModals({ skipHashSync: true });
+      }
+      return;
+    }
+
+    if (mode === 'signup') {
+      this.showRegisterModal({ skipHashSync: true });
+    } else {
+      this.showLoginModal({ skipHashSync: true });
+    }
   },
 
   toggleUserDropdown() {
@@ -448,11 +499,7 @@ const AuthUI = {
           if (res.success) {
             console.log('✅ [AuthUI] Login directo exitoso');
             this.showSuccess('¡Bienvenido de nuevo!');
-            this.hideAuthModal();
-            setTimeout(() => {
-              const pendingRecovery = sessionStorage.getItem('yavl_recovery_pending');
-              if (!pendingRecovery) window.location.href = '/dashboard/';
-            }, 800);
+            this.hideAllAuthModals();
           } else {
             throw new Error(res.error || 'Error al iniciar sesión');
           }

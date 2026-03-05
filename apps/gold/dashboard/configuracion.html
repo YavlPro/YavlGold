@@ -562,20 +562,12 @@
   </div>
 
   <!-- Scripts -->
-  <!-- Sistema de autenticación desde workspace package @yavl/auth -->
   <script type="module" src="./auth-guard.js"></script>
-  <script type="module" src="../assets/js/auth.js"></script>
+  <script type="module" src="../assets/js/auth/authClient.js"></script>
+  <script type="module" src="../assets/js/auth/authUI.js"></script>
 
   <script>
     console.log('[Configuración] ⚙️ Página de configuración cargada');
-
-    // Verificar autenticación
-    window.addEventListener('load', async () => {
-      const user = await window.AuthClient.getCurrentUser();
-      if (!user) {
-        window.location.href = '/index.html#login';
-      }
-    });
 
     // Toggle formulario de contraseña
     function togglePasswordForm() {

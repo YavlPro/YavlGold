@@ -17,6 +17,7 @@ import { clearAgroRuntimeState } from '../utils/agroCropsCache.js';
 })();
 
 const LOGIN_REDIRECT_URL = '/index.html#login';
+const DEFAULT_POST_LOGIN_URL = '/dashboard/';
 
 function normalizeAvatarLabel(value) {
     if (typeof value !== 'string') return 'Usuario';
@@ -234,6 +235,18 @@ const authClient = {
         return path === "/" || path === "/index.html";
     },
 
+    _consumeReturnTo() {
+        try {
+            const modern = sessionStorage.getItem("__returnTo");
+            const legacy = sessionStorage.getItem("gg:redirectAfterLogin");
+            sessionStorage.removeItem("__returnTo");
+            sessionStorage.removeItem("gg:redirectAfterLogin");
+            return modern || legacy || DEFAULT_POST_LOGIN_URL;
+        } catch (_err) {
+            return DEFAULT_POST_LOGIN_URL;
+        }
+    },
+
     async _enforceAuth() {
         // 🔒 REFUERZO DE TITANIO: Doble candado - Si hay bandera O hash de recovery, PARALIZAR
         const hasRecoveryFlag = sessionStorage.getItem('yavl_recovery_pending') === 'true';
@@ -271,9 +284,7 @@ const authClient = {
         if (this._isAuthEntry(path) && session && !isRecoveryFlow) {
             this._isRedirecting = true;
             this._processSession(session);
-            const returnTo = sessionStorage.getItem("__returnTo");
-            sessionStorage.removeItem("__returnTo");
-            const dest = returnTo || "/dashboard";
+            const dest = this._consumeReturnTo();
             console.log('[AuthGuard] REDIRECT ->', dest, '(already-logged-in)');
             window.location.replace(dest);
         }
@@ -424,11 +435,6 @@ const authClient = {
             }
 
             this._processSession(data.session);
-            if (!sessionStorage.getItem('yavl_recovery_pending')) {
-                setTimeout(() => { window.location.href = '/dashboard/'; }, 500);
-            } else {
-                console.log('[AuthClient] 🛑 Redirección al Dashboard bloqueada por Recovery');
-            }
             return { success: true, user: data.user };
         } catch (err) {
             return { success: false, error: 'Error de conexión' };
@@ -454,7 +460,7 @@ const authClient = {
 
     updateDashboardUI() {
         const user = this.currentSession?.user;
-        const authButtons = document.getElementById('auth-buttons');
+        const authButtons = document.getElementById('auth-buttons') || document.querySelector('.auth-buttons');
         const userMenu = document.getElementById('user-menu');
         const userMenuBtn = document.getElementById('user-menu-btn');
         const userNameDisplays = document.querySelectorAll('#user-name, .user-name-display');

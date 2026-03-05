@@ -1,7 +1,7 @@
 {
   "name": "@yavl/gold",
   "version": "9.8.0",
-  "description": "YavlGold - Academia de Trading y Criptomonedas",
+  "description": "YavlGold - Plataforma digital para gestionar finca, productividad y modulos del ecosistema",
   "private": true,
   "type": "module",
   "scripts": {
@@ -22,10 +22,11 @@
   },
   "keywords": [
     "yavl",
-    "trading",
-    "crypto",
-    "academy",
-    "education"
+    "agro",
+    "agricultura",
+    "finca",
+    "dashboard",
+    "productividad"
   ],
   "author": "YavlPro",
   "license": "MIT"

@@ -1346,13 +1346,31 @@
     <div class="nav-desktop">
       <a href="#inicio">Inicio</a>
       <a href="#modulos">Módulos</a>
-      <a href="#testimonios">Comunidad</a>
+      <a href="#beta">Comunidad</a>
     </div>
     <div class="nav-actions">
       <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
         aria-label="Cambiar entre modo claro y oscuro">🌙</button>
-      <button onclick="openAuthModal('login')" class="btn-premium btn-outline">ENTRAR</button>
-      <button onclick="openAuthModal('signup')" class="btn-premium btn-gold">REGISTRO</button>
+      <div id="auth-buttons" class="auth-buttons">
+        <button id="login-btn" class="btn-premium btn-outline" type="button">ENTRAR</button>
+        <button id="register-btn" class="btn-premium btn-gold" type="button">REGISTRO</button>
+      </div>
+      <div id="user-menu" class="user-menu" style="display: none;">
+        <button id="user-menu-btn" class="user-menu-btn" type="button">
+          <img src="" alt="" class="user-avatar-sm">
+          <span>Usuario</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div id="user-dropdown" class="user-dropdown" style="display: none;">
+          <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+          <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
+          <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
+          <hr>
+          <button id="logout-btn" class="logout-btn" type="button">
+            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+          </button>
+        </div>
+      </div>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
         <span></span>
         <span></span>
@@ -1366,11 +1384,11 @@
     <div class="nav-mobile-links">
       <a href="#inicio">🏠 Inicio</a>
       <a href="#modulos">📚 Módulos</a>
-      <a href="#testimonios">👥 Comunidad</a>
+      <a href="#beta">👥 Comunidad</a>
     </div>
     <div class="nav-mobile-actions">
-      <button onclick="openAuthModal('login')" class="btn-premium btn-outline">ENTRAR</button>
-      <button onclick="openAuthModal('signup')" class="btn-premium btn-gold">REGISTRO</button>
+      <button onclick="openAuthModal('login')" class="btn-premium btn-outline" type="button">ENTRAR</button>
+      <button onclick="openAuthModal('signup')" class="btn-premium btn-gold" type="button">REGISTRO</button>
     </div>
   </div>
 
@@ -1406,16 +1424,15 @@
           <div class="feature-icon">🌾</div>
           <h3 class="feature-title">Agricultura</h3>
           <p class="feature-description">Registra cultivos, controla gastos e ingresos en múltiples monedas, consulta el
-            clima y exporta informes. Con asistente IA incluido.</p>
+            clima y exporta informes. Con asistente agrícola integrado.</p>
         </div>
         <!-- Mercado Financiero -->
-        <div class="feature-card" onclick="window.location.href='./crypto/'" style="cursor: pointer;"
-          title="Ir al Mercado Financiero">
-          <span class="feature-status status-development">En Desarrollo</span>
+        <div class="feature-card">
+          <span class="feature-status status-coming">No disponible</span>
           <div class="feature-icon">📈</div>
           <h3 class="feature-title">Mercado Financiero</h3>
-          <p class="feature-description">Datos del mercado cripto y tasas de cambio en tiempo real. Pesos, dólares y
-            bolívares al instante.</p>
+          <p class="feature-description">Market data público con actualización periódica y tasas de cambio de
+            referencia. Módulo aún no liberado.</p>
         </div>
         <!-- Academia -->
         <div class="feature-card">
@@ -1442,13 +1459,12 @@
             campo.</p>
         </div>
         <!-- Herramientas -->
-        <div class="feature-card" onclick="window.location.href='./herramientas/'" style="cursor: pointer;"
-          title="Ir a Herramientas">
-          <span class="feature-status status-coming">Próximamente</span>
+        <div class="feature-card">
+          <span class="feature-status status-coming">No disponible</span>
           <div class="feature-icon">🛠️</div>
           <h3 class="feature-title">Herramientas</h3>
           <p class="feature-description">Calculadoras, conversores y utilidades prácticas para el día a día del
-            agricultor.</p>
+            agricultor. Módulo aún no liberado.</p>
         </div>
         <!-- Social -->
         <div class="feature-card">
@@ -1468,16 +1484,16 @@
       <h3
         style="font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--gold-principal); margin-bottom: 1rem;">
         🌱 Estamos creciendo contigo</h3>
-      <p class="section-subtitle" style="max-width: 600px; margin: 0 auto;">Estamos construyendo la mejor herramienta
-        para el agricultor. Desde el Táchira para el mundo.</p>
+      <p class="section-subtitle" style="max-width: 600px; margin: 0 auto;">Estamos construyendo una plataforma útil,
+        módulo por módulo, con foco real en el campo.</p>
     </div>
   </section>
 
   <!-- CTA Final Section / Roadmap -->
   <section class="cta-final" id="roadmap">
     <div class="cta-container">
-      <h2>🌾 Tu finca merece lo mejor 🌾</h2>
-      <p>Estamos construyendo la mejor herramienta para el agricultor. Únete a Telegram para recibir avances.</p>
+      <h2>🌾 YavlGold sigue creciendo 🌾</h2>
+      <p>Publicamos avances a medida que cada módulo queda realmente listo. Únete a Telegram para seguir el roadmap.</p>
       <a href="https://t.me/YavlEcosystem" target="_blank" class="btn-premium btn-gold btn-lg">Únete a la comunidad
         🌾</a>
     </div>
@@ -1492,7 +1508,7 @@
     <p class="footer-text">🌾 Desde el Táchira para el mundo 🌾</p>
     <div class="footer-links">
       <a href="#modulos">📚 Módulos</a>
-      <a href="#testimonios">👥 Comunidad</a>
+      <a href="#beta">👥 Comunidad</a>
       <a href="/dashboard/">🧭 Dashboard</a>
       <a href="mailto:soporte@yavlgold.com">💬 Contacto</a>
     </div>
@@ -1565,6 +1581,7 @@
       // Mostrar modal
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
+      modal.dataset.mode = (mode === 'signup' || mode === 'register') ? 'signup' : 'login';
 
       // Activar el tab y formulario correspondiente
       if (mode === 'signup' || mode === 'register') {
@@ -1601,6 +1618,9 @@
       if (modal) {
         modal.classList.add('hidden');
         document.body.style.overflow = '';
+        if (window.location.hash === '#login' || window.location.hash === '#signup' || window.location.hash === '#register') {
+          window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+        }
       }
     }
 
@@ -1844,9 +1864,9 @@
         <button type="submit" class="btn-premium btn-gold" style="width: 100%;">Crear Cuenta</button>
         <div
           style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-size: 0.9rem;">
-          Al registrarte, aceptas nuestros <a href="/terms.html" target="_blank"
+          Al registrarte, aceptas nuestros <a href="/terms" target="_blank"
             style="color: var(--gold-principal);">Términos y
-            Condiciones</a> y <a href="/privacy.html" target="_blank" style="color: var(--gold-principal);">Política de
+            Condiciones</a> y <a href="/privacy" target="_blank" style="color: var(--gold-principal);">Política de
             Privacidad</a>
         </div>
       </form>
@@ -2306,13 +2326,7 @@
         if (res.success) {
           console.log('[Auth] Login successful');
           window.AuthUI?.showSuccess('Bienvenido de nuevo!');
-          window.AuthUI?.hideAuthModal();
-
-          setTimeout(() => {
-            if (!sessionStorage.getItem('yavl_recovery_pending')) {
-              window.location.href = '/dashboard/';
-            }
-          }, 800);
+          window.AuthUI?.hideAllAuthModals?.();
         } else {
           console.error('[Auth] Login failed:', res.error);
           window.AuthUI?.showError('login', res.error || 'Error al iniciar sesion');
