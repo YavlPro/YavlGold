@@ -1,333 +1,50 @@
 # YavlGold Context for LLMs
-This file contains the technical architecture, constraints, and style guide for the YavlGold project. Use this context to generate code that complies with our strict Vanilla JS + Vite MPA architecture.
+This file contains the current product, architecture and routing policy for `apps/gold`.
 
 ---
-# FICHA TECNICA - YavlGold V9.8
+# YAVLGOLD V9.8 - CURRENT PROJECT STATE
+
+## 1. Product catalog
+- `Agro` is the only released module.
+- `Academia`, `Social`, `Tecnologia` and `Crypto` are official modules but currently unavailable.
+- `Herramientas` and `Suite` are legacy aliases, not official active modules.
+
+## 2. Architecture
+- Vanilla JavaScript only
+- Vite Multi-Page Application
+- Supabase for auth and data
+- Vercel for deploy and clean URLs
+
+## 3. Official routes
+- `/` landing
+- `/dashboard/` user dashboard
+- `/agro/` released module
+- `/academia/`, `/social/`, `/tecnologia/`, `/crypto/` unavailable placeholders
+
+## 4. Auth policy
+- Global protected areas: `/dashboard` and `/agro`
+- Landing auth entry uses `/index.html#login`
+- Unavailable modules should not behave like protected released products
+
+## 5. Visual policy
+- Main background: `#0a0a0a`
+- Gold accent: `#C8A752`
+- Headings: Orbitron
+- Body: Rajdhani
+- Do not introduce blue or purple as primary accent
+
+## 6. Build
+- Official validation command: `pnpm build:gold`
+- Equivalent app-local command: `pnpm -C apps/gold build`
+
+## 7. Repo hygiene
+- `docs/AGENT_REPORT.md` stores full historical diagnostics
+- `docs/AGENT_REPORT_ACTIVE.md` stores the short operational state
+- `docs/LEGACY_SURFACES.md` classifies orphan and legacy files
+
+## 8. Legacy note
+- Some HTML files remain in the repo for archive or redirect purposes
+- Not every HTML file in the tree is part of the official MPA input
+- Treat old `academia/lecciones`, `herramientas/*`, `crypto/index_old.html`, `profile/index.html` and roadmaps as legacy until explicitly reactivated
 
-**Fecha de Referencia:** 16/01/2026
-**Tipo de Proyecto:** Plataforma educativa, productiva y de servicios
-**Arquitectura:** Monorepo Turborepo
-
----
-
-## 1. DOMINIOS Y HOSTING
-
-### Dominios
-- **Principal:** yavlgold.com
-- **Secundario:** yavlgold.gold (redirige automaticamente al dominio principal)
-
-### Infraestructura
-- **Hosting:** Vercel
-- **Base de Datos:** Supabase (PostgreSQL)
-- **Autenticacion:** Supabase Auth
-- **Almacenamiento:** Supabase Storage
-
----
-
-## 2. STACK TECNOLOGICO
-
-### Frontend
-- **Lenguaje:** Vanilla JavaScript (ES6+ Modules)
-- **Build Tool:** Vite (Multi-Page Application)
-- **Arquitectura:** MPA (Multi-Page Application) - NO SPA
-- **Tipografias:**
-  - Titulos: Orbitron
-  - Cuerpo: Rajdhani
-
-### Backend/Servicios
-- **BaaS:** Supabase (Backend as a Service)
-- **APIs Externas:**
-  - Weather API (modulo Agro)
-  - Binance API (modulo Crypto - solo market data publica)
-
-### Gestion de Dependencias
-- **Package Manager:** pnpm
-- **Monorepo:** Turborepo
-
----
-
-## 3. ESTRUCTURA DEL PROYECTO
-
-### Aplicacion Principal
-
-apps/gold/
-|-- index.html              # Pagina principal (navbar/cards)
-|-- dashboard/              # Dashboard del usuario
-|   \-- index.html
-|-- agro/                   # Modulo Agro + Clima
-|   \-- index.html
-|-- crypto/                 # Modulo Crypto (en desarrollo)
-|   \-- index.html
-|-- assets/
-|   |-- js/
-|   |   |-- config/         # Configuracion Supabase
-|   |   |-- auth/           # Cliente de autenticacion
-|   |   |-- modules/        # Gestion de modulos
-|   |   \-- geolocation.js  # Logica de geolocalizacion
-|   \-- css/                # Estilos globales
-|-- vite.config.js          # Configuracion de entradas MPA
-\-- vercel.json             # Routing y clean URLs
-
-### Paquetes Compartidos
-
-packages/
-\-- themes/                 # Tokens de diseno compartidos
-
----
-
-## 4. MODULOS FUNCIONALES
-
-### 4.1 Dashboard
-**Ubicacion:** `apps/gold/dashboard/`
-
-**Funcionalidades:**
-- Resumen de actividad del usuario
-- "Continuar donde lo deje" (ultimo modulo visitado)
-- Recomendaciones personalizadas (sin IA, basadas en reglas)
-- Estadisticas de uso
-- Notificaciones y anuncios
-
-**Datos Utilizados:**
-- Perfiles de usuario
-- Modulos disponibles
-- Favoritos del usuario
-- Progreso academico
-- Notificaciones
-
-### 4.2 Agro + Clima
-**Ubicacion:** `apps/gold/agro/`
-
-**Funcionalidades:**
-- Informacion meteorologica en tiempo real
-- Geolocalizacion con prioridad: Manual > GPS > IP
-- Cache de ubicaciones
-- Dashboard agricola
-
-**Archivos Clave:**
-- `apps/gold/assets/js/geolocation.js` (logica de coords)
-- `apps/gold/agro/dashboard.js` (integracion clima)
-
-**LocalStorage Keys:**
-- `YG_MANUAL_LOCATION`
-- `yavlgold_gps_cache`
-- `yavlgold_ip_cache`
-- `yavlgold_location_pref`
-- `yavlgold_weather_*`
-
-### 4.3 Crypto
-**Ubicacion:** `apps/gold/crypto/`
-
-**Estado:** En desarrollo inicial (V1)
-
-**Funcionalidades Planeadas:**
-- Market data publica (Binance API)
-- Visualizacion de precios
-- Sin trading (solo informacion)
-
-**Restricciones:**
-- Solo endpoints publicos (no requieren autenticacion)
-- Sin manejo de fondos
-- Sin operaciones de trading
-
-### 4.4 Autenticacion
-**Archivos Clave:**
-- `apps/gold/assets/js/config/supabase-config.js`
-- `apps/gold/assets/js/auth/authClient.js`
-- `apps/gold/assets/js/auth/authUI.js`
-- `apps/gold/dashboard/auth-guard.js`
-
-**Caracteristicas:**
-- Autenticacion via Supabase Auth
-- Guards de ruta para paginas protegidas
-- Gestion de sesiones
-
----
-
-## 5. BASE DE DATOS (SUPABASE)
-
-### Tablas Principales
-
-#### Usuarios y Perfiles
-- `profiles` - Perfiles de usuario
-
-#### Contenido y Modulos
-- `modules` - Definicion de modulos educativos
-- `user_favorites` - Favoritos del usuario
-
-#### Progreso Academico
-- `user_lesson_progress` - Progreso en lecciones
-- `user_quiz_attempts` - Intentos de quizzes
-- `user_badges` - Insignias obtenidas
-
-#### Comunicacion
-- `notifications` - Notificaciones del usuario
-- `announcements` - Anuncios generales
-- `feedback` - Retroalimentacion de usuarios
-
-### Seguridad
-- Row Level Security (RLS) habilitado
-- Politicas de acceso por usuario
-- Consultas filtradas por `user_id`
-
----
-
-## 6. IDENTIDAD VISUAL
-
-### Paleta de Colores
-- **Fondo Principal:** `#0a0a0a` (negro profundo)
-- **Acento Dorado:** `#C8A752`
-- **Prohibido:** Azul/morado como acento principal
-
-### Tipografia
-- **Titulos:** Orbitron (futurista, tecnologica)
-- **Cuerpo:** Rajdhani (legible, moderna)
-
-### Animaciones
-- **Tipo:** Ligeras (opacity, transform)
-- **Duracion:** 120-220ms
-- **Accesibilidad:** Respeta `prefers-reduced-motion`
-
----
-
-## 7. REGLAS DE DESARROLLO
-
-### Restricciones Tecnicas
-- Vanilla JS puro (modulos ES6)
-- Vite MPA (HTML + `<script type="module">`)
-- Prohibido: React, Vue, Svelte, Angular, Next.js
-- No convertir a SPA
-
-### Performance
-- Optimizado para laptops con 8GB RAM
-- Evitar dependencias pesadas
-- Evitar charts complejos
-- Procesos ligeros (sin Docker innecesario)
-
-### Seguridad
-- NO exponer: `.env`, tokens, keys, service role, JWT
-- NO hardcodear secretos en frontend
-- Binance: solo market data publica (sin endpoints firmados)
-
-### Control de Versiones
-- NO ejecutar comandos git automaticamente
-- Sugerir comandos al final: `git status` -> `git add` -> `git commit` -> `git push`
-
----
-
-## 8. ROUTING Y BUILD
-
-### Multi-Page Application (MPA)
-- Cada pagina es un HTML independiente
-- Entradas definidas en `apps/gold/vite.config.js`
-- Clean URLs configuradas en `apps/gold/vercel.json`
-
-### Proceso de Build
-
-```bash
-# Desde la raiz del monorepo
-pnpm build:gold
-
-# Equivale a:
-pnpm -C apps/gold build
-```
-
-### Agregar Nueva Pagina
-
-1. Crear HTML en ubicacion apropiada
-2. Registrar entrada en `vite.config.js`
-3. Ajustar routing en `vercel.json` si necesario
-4. Mantener patron: HTML + JS modular
-
----
-
-## 9. FLUJO DE TRABAJO
-
-### Metodologia de Desarrollo
-
-1. **Diagnosticar primero, ejecutar despues**
-   - Generar "Reporte de Diagnostico" antes de editar
-   - Mapear puntos de entrada y navegacion
-   - Identificar archivos afectados
-   - Proponer plan quirurgico
-
-2. **Validacion Obligatoria**
-   - Ejecutar `pnpm build:gold` despues de cambios
-   - Reportar resultado (OK o error)
-   - Corregir hasta pasar build
-
-3. **Entregables por PR**
-   - Cambios por archivo (que y por que)
-   - Instrucciones de prueba manual
-   - Resultado del build
-   - Comandos git sugeridos
-
----
-
-## 10. OBJETIVOS POR MODULO
-
-### Dashboard
-- Conectar datos "desconectados"
-- "Continuar donde lo deje" funcional
-- Resumen con estadisticas reales o degradacion local
-- Recomendaciones basadas en reglas simples
-
-### Agro + Clima
-- Asegurar prioridad: Manual > GPS > IP
-- Debug no invasivo (activable con `?debug=1`)
-- Mantener comportamiento actual sin cambios
-
-### Crypto V1
-- Pagina operativa dentro de build MPA
-- Market data publica (REST o WebSocket)
-- UI consistente (negro + dorado)
-- Manejo elegante de errores
-- Sin dependencias pesadas
-
----
-
-## 11. REFERENCIAS INTERNAS
-
-### Archivos Clave
-
-- **Supabase Client:** `apps/gold/assets/js/config/supabase-config.js`
-- **Auth:** `apps/gold/assets/js/auth/authClient.js`
-- **Dashboard Guard:** `apps/gold/dashboard/auth-guard.js`
-- **Module Manager:** `apps/gold/assets/js/modules/moduleManager.js`
-- **Geolocalizacion:** `apps/gold/assets/js/geolocation.js`
-- **Weather:** `apps/gold/agro/dashboard.js`
-- **Build Config:** `apps/gold/vite.config.js`
-- **Routing:** `apps/gold/vercel.json`
-
----
-
-## 12. COMANDOS UTILES
-
-```bash
-# Instalar dependencias
-pnpm install
-
-# Build de produccion
-pnpm build:gold
-
-# Desarrollo local (si configurado)
-pnpm dev
-
-# Verificar estado
-git status
-```
-
----
-
-## NOTAS IMPORTANTES
-
-1. **Proyecto Inmutable:** Respetar arquitectura MPA existente
-2. **Sin Datos Sensibles:** Esta ficha NO contiene keys, tokens o credenciales
-3. **Contexto para Agentes:** Usar como referencia para entender estructura y reglas
-4. **Actualizacion:** Mantener sincronizada con cambios mayores del proyecto
-5. **Formato LLMs:** Mantener este archivo en UTF-8, multilinea y sin truncado
-
----
-
-**Version de Ficha:** 1.0
-**Ultima Actualizacion:** 15/02/2026
 # EOF — YavlGold llms.txt (do not truncate)

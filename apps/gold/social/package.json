@@ -1,7 +1,7 @@
 {
   "name": "@yavl/social",
   "version": "1.0.0",
-  "description": "YavlPro - Portfolio & Landing Page Cyberpunk",
+  "description": "YavlGold Social - modulo oficial no disponible en el release actual",
   "private": true,
   "type": "module",
   "dependencies": {
@@ -13,7 +13,7 @@
     "dev": "python3 -m http.server 8081",
     "preview": "python3 -m http.server 8081"
   },
-  "keywords": ["portfolio", "landing-page", "cyberpunk", "yavl"],
-  "author": "Yerikson Varela (YAVL Pro)",
+  "keywords": ["yavlgold", "social", "modulo", "legacy"],
+  "author": "Yerikson Varela",
   "license": "MIT"
 }

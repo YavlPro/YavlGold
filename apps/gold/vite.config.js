@@ -32,7 +32,6 @@ export default defineConfig({
         academia: 'academia/index.html',
         agro: 'agro/index.html',
         crypto: 'crypto/index.html',
-        herramientas: 'herramientas/index.html',
         tecnologia: 'tecnologia/index.html',
         social: 'social/index.html'
       },

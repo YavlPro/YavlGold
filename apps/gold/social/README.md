@@ -1,31 +1,18 @@
-# YavlPro Social
+# Social | YavlGold
 
-¡Bienvenido a YavlPro Social! 🚀
+`Social` es un módulo oficial del catálogo, pero hoy está `No disponible`.
 
-Este proyecto es una landing page moderna y dinámica para el portafolio de YavlPro, desarrollador venezolano enfocado en tecnología, blockchain y comunidad.
+## Estado
 
-## Características
-- Diseño cyber/neón con efectos visuales (Matrix Rain, scan lines, parallax)
-- Sección de proyectos destacados
-- Habilidades técnicas con barras de progreso animadas
-- Contacto directo a Telegram, X (Twitter) y YouTube
-- 100% responsive y optimizado para dispositivos móviles
+- No forma parte del release actual.
+- La ruta pública `/social/` muestra un placeholder oficial.
+- El código histórico del submódulo se conserva solo como referencia mínima.
 
-## Demo
-Puedes ver la página en vivo aquí:
-[https://yavlpro.github.io/YavlSocial/](https://yavlpro.github.io/YavlSocial/)
+## Política actual
 
-## Instalación
-1. Clona el repositorio:
-   ```sh
-   git clone https://github.com/YavlPro/YavlSocial.git
-   ```
-2. Abre el archivo `YavlPro Social.html` en tu navegador.
+- `Agro` es el único módulo liberado.
+- `Academia`, `Social`, `Tecnología` y `Crypto` permanecen fuera del release.
 
-## Licencia
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+## Nota de mantenimiento
 
-## Autor
-[YavlPro](https://github.com/YavlPro)
-
-¡Conecta, comparte y colabora!
+Este directorio ya no representa un proyecto independiente tipo `YavlPro Social`. Si en el futuro se reactiva, debe alinearse con el catálogo y la identidad vigente de YavlGold.

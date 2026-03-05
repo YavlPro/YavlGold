@@ -1,31 +1,18 @@
-# YavlMusic V2.0
+# Crypto | YavlGold
 
-Reproductor de música local, offline y visual, con estética cyberpunk.
+`Crypto` es un módulo oficial del catálogo, pero hoy está `No disponible`.
 
-## Características principales
-- Funciona completamente offline: tus archivos y datos se guardan en el navegador (IndexedDB).
-- Visualizador de audio, carátulas personalizadas y embebidas (ID3).
-- Organización por géneros, favoritos, búsqueda y filtros.
-- Exporta/importa tu biblioteca (géneros, favoritos, carátulas, ajustes) en JSON.
-- No depende de servidores externos ni de internet para reproducir tu música.
+## Estado
 
-## ¿Cómo usar?
-1. Abre `YavlMusicv2.html` en tu navegador favorito (Edge, Chrome, Firefox).
-2. Haz clic en "Añadir Archivos" o arrastra tus archivos MP3 a la ventana.
-3. Usa los controles para reproducir, pausar, cambiar de pista, marcar favoritos, cambiar géneros y modos de visualización.
-4. Exporta tu biblioteca para hacer backup y restaura con el botón Importar si cambias de navegador o PC.
+- La ruta `/crypto/` existe como placeholder oficial.
+- `Suite` se considera alias legacy y canonicaliza hacia `Crypto`.
+- Archivos históricos como `index_old.html` o `header.html` permanecen en el repo solo como legado pendiente de archivo o retiro.
 
-## Backup y restauración
-- **Exportar:** Guarda un archivo JSON con tus géneros, favoritos, carátulas y ajustes.
-- **Importar:** Restaura tu biblioteca desde ese archivo JSON (no incluye los archivos MP3, solo metadatos e imágenes).
+## Política actual
 
-## Notas
-- Si borras la caché o los datos del navegador, perderás la biblioteca local. Haz backup regularmente.
-- El reproductor no sube tus archivos a internet ni los comparte.
-- Puedes usarlo sin conexión a internet después de agregar tus archivos.
+- `Agro` es el único módulo liberado.
+- `Academia`, `Social`, `Tecnología` y `Crypto` no están liberados en la versión actual.
 
-## Licencia
-Este proyecto es libre para uso personal y educativo. Puedes modificarlo y compartirlo.
+## Nota de mantenimiento
 
----
-Creado por Yerikson Varela
+Si `Crypto` vuelve a activarse como módulo real, deberá hacerlo bajo el contrato actual del catálogo, sin revivir branding viejo como `YavlSuite`.

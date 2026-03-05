@@ -1,5 +1,102 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — Documentación y superficies huérfanas del repo (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. `apps/gold/README.md` sigue describiendo a YavlGold como academia de blockchain/DeFi/trading y repite bloques completos de contenido viejo.
+2. `apps/gold/public/llms.txt` conserva una ficha técnica atrasada respecto al catálogo actual y a la policy de release ya aplicada.
+3. Persisten documentos secundarios con branding o identidad vieja:
+   - `apps/gold/social/README.md` habla de `YavlPro Social`,
+   - `apps/gold/crypto/README.md` describe `YavlMusic V2.0`,
+   - `apps/gold/social/package.json` aún se presenta como portfolio independiente.
+4. `apps/gold/herramientas/index.html` sigue registrado como entrada MPA en `vite.config.js`, aunque el producto actual lo trata solo como alias legacy de `Tecnología`.
+5. `apps/gold/dashboard/music.html` sigue siendo una superficie protegida viva con branding `Suite`/`YavlMusic`, fuera del catálogo oficial actual.
+6. Hay HTMLs que no forman parte del input MPA oficial y hoy funcionan como huérfanos o legado no clasificado:
+   - `academia/lecciones/*`
+   - `herramientas/*.html`
+   - `crypto/index_old.html`
+   - `crypto/header.html`
+   - `profile/index.html`
+   - `roadmap.html`
+   - `public/agro/roadmap.html`
+7. `apps/gold/docs/AGENT_REPORT.md` ya quedó demasiado grande para seguir siendo el reporte operativo único; conviene preparar partición sin romper el build actual.
+
+### Alcance
+
+- Reescribir la documentación principal y secundaria para que cuente el producto actual.
+- Actualizar `llms.txt` al catálogo y routing reales.
+- Sacar `herramientas/index.html` del input MPA oficial.
+- Marcar `dashboard/music.html` explícitamente como utilidad legacy fuera del catálogo.
+- Crear un inventario claro de superficies legacy/huérfanas.
+- Preparar la partición de `AGENT_REPORT` sin romper el chequeo actual del build.
+
+### Archivos candidatos
+
+- `apps/gold/README.md`
+- `apps/gold/public/llms.txt`
+- `apps/gold/social/README.md`
+- `apps/gold/crypto/README.md`
+- `apps/gold/social/package.json`
+- `apps/gold/package.json`
+- `apps/gold/vite.config.js`
+- `apps/gold/dashboard/music.html`
+- `apps/gold/docs/LEGACY_SURFACES.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Reescribir documentación puede dejar fuera detalles históricos útiles si no se conserva alguna referencia de legado.
+- Sacar `herramientas/index.html` del input MPA elimina su artefacto en `dist`; esto es deseado, pero cambia el inventario de build.
+- Tocar `music.html` debe ser superficial para no romper una utilidad que todavía puede usarse internamente.
+
+### Estrategia de rollback
+
+1. Mantener el lote limitado a docs, metadata, routing MPA y copy visible de legacy.
+2. No borrar archivos históricos del repo en este lote; solo clasificar, retirar del build o reetiquetar.
+3. Si una utilidad legacy necesita conservar branding original, revertir solo esa página sin deshacer el resto del saneamiento documental.
+
+### Plan quirúrgico
+
+1. Reescribir `README.md` y `public/llms.txt` con el catálogo actual.
+2. Corregir READMEs/package metadata secundarios que aún arrastran branding viejo.
+3. Crear `docs/LEGACY_SURFACES.md` como inventario explícito.
+4. Crear `docs/AGENT_REPORT_ACTIVE.md` como preparación para la partición del reporte.
+5. Retirar `herramientas/index.html` del input MPA.
+6. Reetiquetar `dashboard/music.html` como utilidad legacy fuera del catálogo.
+7. Ejecutar `pnpm build:gold` y registrar estado final.
+
+### Estado post-implementación
+
+- `apps/gold/README.md` fue reescrito para reflejar el producto actual: Agro como único módulo liberado y el resto del catálogo como no disponible.
+- `apps/gold/public/llms.txt` quedó actualizado al estado real del proyecto y conserva el sentinel requerido por `check-llms`.
+- `apps/gold/social/README.md` y `apps/gold/crypto/README.md` dejaron de propagar branding viejo (`YavlPro Social`, `YavlMusic`) y ahora describen su estado real de módulo no liberado.
+- `apps/gold/social/package.json` y `apps/gold/package.json` se alinearon mejor con la identidad vigente.
+- `apps/gold/docs/LEGACY_SURFACES.md` clasifica superficies oficiales, legacy a archivar y legacy aún semi-vivo.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md` quedó creado como resumen operativo corto, preparando la partición futura sin romper el chequeo actual del build.
+- `apps/gold/vite.config.js` dejó de incluir `herramientas/index.html` como entrada MPA oficial.
+- `apps/gold/dashboard/music.html` sigue existiendo, pero su branding visible pasó a utilidad legacy fuera del catálogo oficial.
+
+### Validación
+
+- `pnpm build:gold` ejecutado con resultado `OK` el `2026-03-05`.
+- El build pasó con `agent-guard: OK`, `agent-report-check: OK`, `check-llms: OK` y `UTF-8 verification passed`.
+- Salida relevante:
+  - `dist/index.html` `82.50 kB`
+  - `dist/dashboard/music.html` `66.07 kB`
+  - `dist/academia/index.html` `2.46 kB`
+  - `dist/crypto/index.html` `2.50 kB`
+  - `dist/social/index.html` `2.44 kB`
+  - `dist/tecnologia/index.html` `2.49 kB`
+- Confirmación importante: `dist/herramientas/index.html` ya no forma parte de la salida MPA oficial.
+
+### Riesgos residuales
+
+- `apps/gold/dashboard/music.html` sigue siendo una utilidad legacy protegida; este lote la reetiquetó, pero no la retiró ni la reescribió.
+- Los archivos HTML fuente huérfanos (`academia/lecciones/*`, `herramientas/*.html`, `profile/index.html`, `roadmap.html`, `public/agro/roadmap.html`, `crypto/index_old.html`) siguen presentes en el repo; quedaron clasificados, no podados.
+- `agent-report-check.mjs` todavía valida `AGENT_REPORT.md`; la partición ya fue preparada, pero la migración completa del gate a `AGENT_REPORT_ACTIVE.md` sería otro lote.
+
 ## 🆕 SESIÓN: GATE 0 — Policy de liberación y cierre de rutas legacy (2026-03-05)
 
 ### Diagnóstico (tarea actual)
