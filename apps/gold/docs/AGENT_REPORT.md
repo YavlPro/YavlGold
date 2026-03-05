@@ -11704,6 +11704,55 @@ git status --short --branch
   - `pnpm build:gold`
   - Resultado: **PASS**
 
+## 🆕 SESIÓN: GATE 0 — Follow-up “1 saco” persistente en ciclo finalizado puntual (2026-03-05)
+
+### Diagnóstico
+
+1. El merge por MAX ya corrige casos base vs `pendingTransferred`, pero en este cultivo puntual el global sigue en `1 saco`.
+2. Señal de captura: `Global — batata (1 ciclo)` con montos correctos, por lo que falla solo la extracción de unidades para ese `crop_id`.
+3. Hipótesis fuerte: en ese flujo legacy, parte de las unidades está en `split_meta` o serializada en `concepto` (no en `unit_qty`/`quantity_kg`).
+4. El fetch de unidades ya contempla columnas legacy, pero `accumulateCycleUnitTotalsFromRow` aún prioriza campos directos y no usa fallback de `split_meta/concepto`.
+
+### Plan quirúrgico
+
+1. Endurecer `accumulateCycleUnitTotalsFromRow(...)`:
+   - fallback de unidad/cantidad desde `split_meta` (`qty_moved/qty_left/qty_total` + `unit_type`).
+   - fallback de unidad/kg desde parseo de `concepto` (`parseExpenseConceptUnitMeta`).
+2. Incluir `split_meta` y `concepto` en el select de `fetchUnitTotalsByCropIds` (con mismo mecanismo de columnas faltantes).
+3. Mantener anti-doble `kg` y merge MAX existente.
+4. Ejecutar `pnpm build:gold`.
+
+### Implementación aplicada
+
+1. `apps/gold/agro/agro.js` — extracción de unidades más robusta
+   - Se agregó `readHistoryItemFieldWithSource(...)` para distinguir lecturas canónicas vs legacy.
+   - `accumulateCycleUnitTotalsFromRow(...)` ahora usa precedencia estable:
+     - `unit_qty` canónico
+     - fallback `split_meta`
+     - fallback parseado de `concepto`
+     - y solo al final campos genéricos (`qty/quantity/units/amount_units`) cuando hay unidad resuelta.
+   - Se mantiene la regla anti-doble `kg` (solo suma `quantity_kg` cuando no existe unidad explícita).
+
+2. `apps/gold/agro/agro.js` — transferidos legacy en `agro_pending`
+   - `getPendingTransferToken(row)` ahora reconoce transferidos/revertidos también por metadata legacy:
+     - `transferred_at`, `transferred_income_id`, `transferred_to`, `transferred_to_id`
+     - `reverted_at`, `reverted_reason`
+   - `fetchPendingTotalsByCropIds`, `fetchPendingUnitTotalsByCropIds` y `fetchPendingTransferredUnitTotalsByCropIds`
+     amplían `optionalFields` para incluir esas columnas y no perder filas legacy en filtros de estado.
+
+3. `apps/gold/agro/agro.js` — parser legacy en concepto sin delimitador
+   - `parseExpenseConceptUnitMeta(...)` ahora detecta también patrones simples en texto libre:
+     - `X saco(s)`
+     - `X cesta(s)`
+     - `X kg`
+   - Esto cubre registros antiguos donde no existe formato `concepto · X sacos`.
+
+### Validación ejecutada
+
+- Build oficial:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
+
 ## 🆕 SESIÓN: GATE 0 — Fix sub-conteo de sacos en Global de ciclos finalizados + refresh en vivo (2026-03-05)
 
 ### Diagnóstico

@@ -1286,6 +1286,44 @@ function parseExpenseConceptUnitMeta(concept) {
 
     const parts = raw.split('·').map((part) => part.trim()).filter(Boolean);
     if (parts.length <= 1) {
+        const kgMatch = raw.match(/(-?\d+(?:[.,]\d+)?)\s*(kg|kgs|kilogramos?|kilograms?)\b/i);
+        if (kgMatch) {
+            const parsedKg = toSafeLocaleNumber(kgMatch[1]);
+            if (parsedKg !== null && parsedKg > 0) {
+                const conceptWithoutKg = raw
+                    .replace(kgMatch[0], ' ')
+                    .replace(/\s{2,}/g, ' ')
+                    .replace(/[|·,\-]\s*$/g, '')
+                    .trim();
+                return {
+                    concept: conceptWithoutKg || raw,
+                    unit_type: '',
+                    unit_qty: '',
+                    quantity_kg: formatUnitQty(parsedKg)
+                };
+            }
+        }
+
+        const unitMatch = raw.match(/(-?\d+(?:[.,]\d+)?)\s*(sacos?|cestas?)\b/i);
+        if (unitMatch) {
+            const parsedQty = toSafeLocaleNumber(unitMatch[1]);
+            if (parsedQty !== null && parsedQty > 0) {
+                const normalizedLabel = String(unitMatch[2] || '').trim().toLowerCase();
+                const unitType = normalizedLabel.startsWith('cesta') ? 'cesta' : 'saco';
+                const conceptWithoutUnit = raw
+                    .replace(unitMatch[0], ' ')
+                    .replace(/\s{2,}/g, ' ')
+                    .replace(/[|·,\-]\s*$/g, '')
+                    .trim();
+                return {
+                    concept: conceptWithoutUnit || raw,
+                    unit_type: unitType,
+                    unit_qty: formatUnitQty(parsedQty),
+                    quantity_kg: ''
+                };
+            }
+        }
+
         return { concept: raw, unit_type: '', unit_qty: '', quantity_kg: '' };
     }
 
@@ -3040,6 +3078,19 @@ function readHistoryItemField(item, fields) {
         return raw;
     }
     return null;
+}
+
+function readHistoryItemFieldWithSource(item, fields) {
+    if (!item || typeof item !== 'object' || !Array.isArray(fields)) {
+        return { field: '', value: null };
+    }
+    for (const field of fields) {
+        const raw = item[field];
+        if (raw === undefined || raw === null) continue;
+        if (typeof raw === 'string' && raw.trim() === '') continue;
+        return { field: String(field || ''), value: raw };
+    }
+    return { field: '', value: null };
 }
 
 function normalizeHistoryUnitKey(rawUnit) {
@@ -8845,12 +8896,28 @@ async function fetchLossTotalsByCropIds(userId, cropIds, options = {}) {
 }
 
 function getPendingTransferToken(row) {
-    return String(
+    const explicit = String(
         row?.transfer_state
         ?? row?.transfer_type
         ?? row?.transferType
         ?? ''
     ).trim().toLowerCase();
+
+    if (explicit === 'transferred') return 'transferred';
+    if (explicit === 'reverted' || explicit === 'reverted_to_pending') return 'reverted';
+
+    const hasRevertedMeta = !!(row?.reverted_at || row?.reverted_reason);
+    if (hasRevertedMeta) return 'reverted';
+
+    const hasTransferredMeta = !!(
+        row?.transferred_at
+        || row?.transferred_income_id
+        || row?.transferred_to_id
+        || String(row?.transferred_to || '').trim()
+    );
+    if (hasTransferredMeta) return 'transferred';
+
+    return explicit;
 }
 
 async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
@@ -8864,7 +8931,17 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
     return fetchUsdTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
         amountFields: ['monto'],
-        optionalFields: ['deleted_at', 'transfer_state', 'transfer_type'],
+        optionalFields: [
+            'deleted_at',
+            'transfer_state',
+            'transfer_type',
+            'transferred_at',
+            'transferred_income_id',
+            'transferred_to',
+            'transferred_to_id',
+            'reverted_at',
+            'reverted_reason'
+        ],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
@@ -8895,17 +8972,78 @@ function addCycleUnitTotals(target, source) {
 const CYCLE_UNIT_TYPE_QUERY_FIELDS = ['unit_type', 'unit', 'measure', 'measure_unit', 'unit_name'];
 const CYCLE_UNIT_QTY_QUERY_FIELDS = ['unit_qty', 'qty', 'quantity', 'units', 'amount_units'];
 const CYCLE_UNIT_KG_QUERY_FIELDS = ['quantity_kg', 'kg', 'kilogramos'];
+const CYCLE_UNIT_META_FALLBACK_FIELDS = ['split_meta', 'concepto'];
+
+function resolveSplitMetaUnitFallback(row) {
+    const meta = normalizeSplitMeta(row?.split_meta);
+    if (!meta) return { unitType: '', unitQty: null };
+
+    const unitType = String(meta.unit_type || '').trim().toLowerCase();
+    let unitQty = null;
+    if (meta.role === 'destination') {
+        unitQty = toSafeLocaleNumber(meta.qty_moved);
+    } else {
+        unitQty = toSafeLocaleNumber(meta.qty_left);
+    }
+    if (unitQty === null || unitQty <= 0) {
+        unitQty = toSafeLocaleNumber(meta.qty_total);
+    }
+
+    return {
+        unitType,
+        unitQty: unitQty !== null && unitQty > 0 ? unitQty : null
+    };
+}
+
+function resolveConceptUnitFallback(row) {
+    const parsed = parseExpenseConceptUnitMeta(row?.concepto || row?.concept || '');
+    return {
+        unitType: String(parsed?.unit_type || '').trim().toLowerCase(),
+        unitQty: toSafeLocaleNumber(parsed?.unit_qty),
+        kgQty: toSafeLocaleNumber(parsed?.quantity_kg)
+    };
+}
 
 function accumulateCycleUnitTotalsFromRow(target, row) {
     if (!target || typeof target !== 'object' || !row || typeof row !== 'object') return;
 
-    const unitTypeRaw = readHistoryItemField(row, HISTORY_UNIT_TYPE_FIELDS);
-    const unitQtyRaw = readHistoryItemField(row, HISTORY_UNIT_QTY_FIELDS);
-    const kgQtyRaw = readHistoryItemField(row, HISTORY_KG_QTY_FIELDS);
+    const unitTypeRawRead = readHistoryItemField(row, HISTORY_UNIT_TYPE_FIELDS);
+    const unitQtyStrictRead = readHistoryItemFieldWithSource(row, ['unit_qty', 'unitQty']);
+    const unitQtyLooseRead = readHistoryItemFieldWithSource(row, ['qty', 'quantity', 'units', 'amount_units']);
+    const kgQtyRead = readHistoryItemField(row, HISTORY_KG_QTY_FIELDS);
+
+    const fromSplitMeta = resolveSplitMetaUnitFallback(row);
+    const fromConcept = resolveConceptUnitFallback(row);
+
+    let unitTypeRaw = unitTypeRawRead;
+    if (String(unitTypeRaw || '').trim() === '') {
+        unitTypeRaw = fromSplitMeta.unitType || fromConcept.unitType || '';
+    }
+
+    const strictQty = toSafeLocaleNumber(unitQtyStrictRead.value);
+    const splitQty = toSafeLocaleNumber(fromSplitMeta.unitQty);
+    const conceptQty = toSafeLocaleNumber(fromConcept.unitQty);
+    const looseQty = toSafeLocaleNumber(unitQtyLooseRead.value);
+    let unitQty = strictQty;
+    if (!(unitQty !== null && unitQty > 0)) {
+        if (splitQty !== null && splitQty > 0) {
+            unitQty = splitQty;
+        } else if (conceptQty !== null && conceptQty > 0) {
+            unitQty = conceptQty;
+        } else if (String(unitTypeRaw || '').trim() !== '' && looseQty !== null && looseQty > 0) {
+            unitQty = looseQty;
+        }
+    }
+
+    let kgQty = toSafeLocaleNumber(kgQtyRead);
+    if (!(kgQty !== null && kgQty > 0)) {
+        const conceptKg = toSafeLocaleNumber(fromConcept.kgQty);
+        if (conceptKg !== null && conceptKg > 0) {
+            kgQty = conceptKg;
+        }
+    }
 
     const unitKey = normalizeHistoryUnitKey(unitTypeRaw);
-    const unitQty = toSafeLocaleNumber(unitQtyRaw);
-    const kgQty = toSafeLocaleNumber(kgQtyRaw);
 
     if (unitKey && unitQty !== null && unitQty > 0) {
         target[unitKey] += unitQty;
@@ -8933,6 +9071,7 @@ async function fetchUnitTotalsByCropIds(tableName, userId, cropIds, options = {}
         ...CYCLE_UNIT_TYPE_QUERY_FIELDS,
         ...CYCLE_UNIT_QTY_QUERY_FIELDS,
         ...CYCLE_UNIT_KG_QUERY_FIELDS,
+        ...CYCLE_UNIT_META_FALLBACK_FIELDS,
         ...(Array.isArray(options.optionalFields) ? options.optionalFields : [])
     ].map((field) => String(field || '').trim()).filter((field) => field && !missingColumns.has(field))));
     let nullFilters = Array.from(new Set((Array.isArray(options.nullFilters) ? options.nullFilters : [])
@@ -9048,7 +9187,17 @@ async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
 
     return fetchUnitTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
-        optionalFields: ['deleted_at', 'transfer_state', 'transfer_type'],
+        optionalFields: [
+            'deleted_at',
+            'transfer_state',
+            'transfer_type',
+            'transferred_at',
+            'transferred_income_id',
+            'transferred_to',
+            'transferred_to_id',
+            'reverted_at',
+            'reverted_reason'
+        ],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
@@ -9064,7 +9213,17 @@ async function fetchPendingTransferredUnitTotalsByCropIds(userId, cropIds, optio
 
     return fetchUnitTotalsByCropIds('agro_pending', userId, cropIds, {
         ...options,
-        optionalFields: ['deleted_at', 'transfer_state', 'transfer_type'],
+        optionalFields: [
+            'deleted_at',
+            'transfer_state',
+            'transfer_type',
+            'transferred_at',
+            'transferred_income_id',
+            'transferred_to',
+            'transferred_to_id',
+            'reverted_at',
+            'reverted_reason'
+        ],
         nullFilters: ['deleted_at'],
         rowFilters: [...baseRowFilters, ...extraRowFilters]
     });
