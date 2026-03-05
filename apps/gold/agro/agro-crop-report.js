@@ -5,6 +5,7 @@
  */
 
 import supabase from '../assets/js/config/supabase-config.js';
+import { computeUnitTotalsFromRows, formatUnitTotalsMarkdown } from './agro-unit-totals.js';
 
 // ============================================================
 // HELPERS (self-contained to avoid coupling with agro.js internals)
@@ -827,6 +828,33 @@ export async function exportCropReport(cropId, opts = {}) {
         md += `| Pérdidas | ${centsToStr(totalLossesCents)} |\n`;
         md += `| ROI | ${roiStr} |\n\n`;
         md += `> _Totales convertidos a USD \u00b7 Tasas al momento del registro_\n\n`;
+
+        const cycleBaseUnitTotals = computeUnitTotalsFromRows([
+            ...income,
+            ...expenses,
+            ...pendingActive,
+            ...losses,
+            ...transfers
+        ]);
+        const cyclePendingTransferredUnitTotals = computeUnitTotalsFromRows(pendingTransferred);
+        const cycleUnitTotals = {
+            sacos: Math.max(
+                Number(cycleBaseUnitTotals.sacos || 0),
+                Number(cyclePendingTransferredUnitTotals.sacos || 0)
+            ),
+            kilogramos: Math.max(
+                Number(cycleBaseUnitTotals.kilogramos || 0),
+                Number(cyclePendingTransferredUnitTotals.kilogramos || 0)
+            ),
+            cestas: Math.max(
+                Number(cycleBaseUnitTotals.cestas || 0),
+                Number(cyclePendingTransferredUnitTotals.cestas || 0)
+            )
+        };
+        const unitsMd = formatUnitTotalsMarkdown(cycleUnitTotals, { heading: '## 📦 Unidades' });
+        if (unitsMd) {
+            md += unitsMd;
+        }
         md += `---\n\n`;
 
         // Pagados

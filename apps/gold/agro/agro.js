@@ -15,6 +15,7 @@ import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
+import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
@@ -5552,6 +5553,11 @@ async function exportAgroLog(tabName) {
         md += `- **Monto Total (USD):** $${totalMontoUsd.toFixed(2)}\n\n`;
         if (hasSuspiciousUsdRows) {
             md += `- ⚠️ **Posible USD inflado:** ${suspiciousUsdCount} registro(s) con monto USD inusualmente alto.\n\n`;
+        }
+        const unitTotals = computeMdUnitTotalsFromRows(items);
+        const unitsMd = formatMdUnitTotalsMarkdown(unitTotals, { heading: '## 📦 Unidades' });
+        if (unitsMd) {
+            md += unitsMd;
         }
         md += `---\n\n`;
 

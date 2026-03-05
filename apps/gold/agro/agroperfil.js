@@ -6,6 +6,15 @@ import {
     readMoneyValuesHidden
 } from './agro-privacy.js';
 import { initAgroPublico, openPublicFarmerProfile } from './agropublico.js';
+import {
+    computeUnitTotalsByCropFromRows,
+    mergeUnitTotalsMaps,
+    mergeUnitTotalsPreferHigher,
+    sumUnitTotalsFromMap,
+    getPendingTransferToken,
+    formatUnitTotalsMarkdown,
+    createUnitTotalsAccumulator
+} from './agro-unit-totals.js';
 
 const PROFILE_MODAL_ID = 'modal-agro-profile';
 const PROFILE_FORM_ID = 'agro-profile-form';
@@ -22,6 +31,24 @@ const LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const MAX_LOCAL_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_AVATAR_EMOJI = '👨‍🌾';
 const SAFE_DATA_IMAGE_RE = /^data:(image\/(?:png|jpeg|jpg|webp|gif|avif));base64,([a-z0-9+/=\s]+)$/i;
+const PROFILE_UNIT_FETCH_FIELDS = [
+    'crop_id',
+    'unit_type',
+    'unit_qty',
+    'quantity_kg',
+    'split_meta',
+    'concepto',
+    'concept',
+    'transfer_state',
+    'transfer_type',
+    'transferred_at',
+    'transferred_income_id',
+    'transferred_to',
+    'transferred_to_id',
+    'reverted_at',
+    'reverted_reason',
+    'deleted_at'
+];
 
 const PROFILE_FIELD_IDS = [
     'display_name',
@@ -114,6 +141,134 @@ function normalizeMarkdownForExport(content) {
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
         .replace(/\n/g, '\r\n');
+}
+
+const profileUnitMissingColumnsByTable = new Map();
+
+function getProfileUnitMissingColumns(tableName) {
+    const key = String(tableName || '').trim().toLowerCase();
+    if (!key) return new Set();
+    if (!profileUnitMissingColumnsByTable.has(key)) {
+        profileUnitMissingColumnsByTable.set(key, new Set());
+    }
+    return profileUnitMissingColumnsByTable.get(key);
+}
+
+function rememberProfileUnitMissingColumn(tableName, column) {
+    const tableKey = String(tableName || '').trim().toLowerCase();
+    const columnKey = String(column || '').trim();
+    if (!tableKey || !columnKey) return;
+    const bucket = getProfileUnitMissingColumns(tableKey);
+    bucket.add(columnKey);
+}
+
+function isProfileUnitMissingColumnError(error, column) {
+    if (!error || !column) return false;
+    const code = String(error.code || '').toUpperCase();
+    const text = `${String(error.message || '').toLowerCase()} ${String(error.details || '').toLowerCase()}`;
+    const col = String(column || '').toLowerCase();
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('not found') || text.includes('could not find');
+    const mentionsColumn = text.includes(col) || text.includes(`"${col}"`) || text.includes(`'${col}'`);
+    if (code === '42703' || code === 'PGRST204') return hasMissingPhrase && mentionsColumn;
+    return hasMissingPhrase && mentionsColumn;
+}
+
+function isProfileUnitMissingTableError(error, tableName) {
+    if (!error) return false;
+    const code = String(error.code || '').toUpperCase();
+    const text = `${String(error.message || '').toLowerCase()} ${String(error.details || '').toLowerCase()}`;
+    const table = String(tableName || '').toLowerCase();
+    const hasMissingPhrase = text.includes('does not exist') || text.includes('not found') || text.includes('could not find');
+    const mentionsTable = !table || text.includes(table) || text.includes(`"${table}"`) || text.includes(`'${table}'`);
+    if (code === '42P01' || code === 'PGRST205' || code === 'PGRST204') return hasMissingPhrase && mentionsTable;
+    return hasMissingPhrase && mentionsTable;
+}
+
+async function fetchProfileUnitRows(tableName, userId, options = {}) {
+    const normalizedTable = String(tableName || '').trim();
+    const normalizedUserId = String(userId || '').trim();
+    if (!normalizedTable || !normalizedUserId || !state.supabase) return [];
+
+    const missingColumns = getProfileUnitMissingColumns(normalizedTable);
+    let selectFields = PROFILE_UNIT_FETCH_FIELDS.filter((field) => !missingColumns.has(field));
+    let nullFilters = ['deleted_at'];
+    if (options.excludeReverted) {
+        nullFilters.push('reverted_at');
+    }
+    nullFilters = nullFilters.filter((field) => selectFields.includes(field));
+
+    for (let attempt = 0; attempt < 16; attempt += 1) {
+        if (!selectFields.includes('crop_id')) return [];
+
+        let query = state.supabase
+            .from(normalizedTable)
+            .select(selectFields.join(', '))
+            .eq('user_id', normalizedUserId);
+
+        nullFilters.forEach((field) => {
+            if (selectFields.includes(field)) {
+                query = query.is(field, null);
+            }
+        });
+
+        const { data, error } = await query;
+        if (!error) {
+            return Array.isArray(data) ? data : [];
+        }
+
+        if (isProfileUnitMissingTableError(error, normalizedTable)) {
+            return [];
+        }
+
+        let removedAny = false;
+        selectFields = selectFields.filter((field) => {
+            if (isProfileUnitMissingColumnError(error, field)) {
+                rememberProfileUnitMissingColumn(normalizedTable, field);
+                removedAny = true;
+                return false;
+            }
+            return true;
+        });
+        if (removedAny) {
+            nullFilters = nullFilters.filter((field) => selectFields.includes(field));
+            continue;
+        }
+
+        console.warn(`[AGRO_PROFILE] unit rows fetch error (${normalizedTable}):`, error?.message || error);
+        return [];
+    }
+
+    return [];
+}
+
+async function computeProfileGlobalUnitTotals() {
+    const user = await resolveSessionUser();
+    if (!user?.id) return createUnitTotalsAccumulator();
+
+    const [incomeRows, expenseRows, pendingRows, lossRows, transferRows] = await Promise.all([
+        fetchProfileUnitRows('agro_income', user.id, { excludeReverted: true }),
+        fetchProfileUnitRows('agro_expenses', user.id),
+        fetchProfileUnitRows('agro_pending', user.id),
+        fetchProfileUnitRows('agro_losses', user.id, { excludeReverted: true }),
+        fetchProfileUnitRows('agro_transfers', user.id)
+    ]);
+
+    const pendingNotTransferred = pendingRows.filter((row) => getPendingTransferToken(row) !== 'transferred');
+    const pendingTransferred = pendingRows.filter((row) => getPendingTransferToken(row) === 'transferred');
+
+    const baseTotalsByCrop = mergeUnitTotalsMaps([
+        computeUnitTotalsByCropFromRows(incomeRows),
+        computeUnitTotalsByCropFromRows(expenseRows),
+        computeUnitTotalsByCropFromRows(lossRows),
+        computeUnitTotalsByCropFromRows(transferRows),
+        computeUnitTotalsByCropFromRows(pendingNotTransferred)
+    ]);
+    const mergedTotalsByCrop = mergeUnitTotalsPreferHigher(
+        baseTotalsByCrop,
+        computeUnitTotalsByCropFromRows(pendingTransferred)
+    );
+
+    return sumUnitTotalsFromMap(mergedTotalsByCrop);
 }
 
 function markMoneyNode(node, rawText) {
@@ -808,12 +963,13 @@ async function loadGlobalStats() {
     }
 }
 
-function buildProfileMarkdown() {
+function buildProfileMarkdown(options = {}) {
     const profileData = state.profile || {};
     const stats = state.stats || {};
     const cropStats = stats.crops || {};
     const moneyStats = stats.money || {};
     const usdAudit = stats.usdAudit || {};
+    const unitTotals = options?.unitTotals || createUnitTotalsAccumulator();
     const namesHidden = readBuyerNamesHidden();
     const moneyHidden = readMoneyValuesHidden();
 
@@ -898,9 +1054,14 @@ function buildProfileMarkdown() {
         `- Resultado actual (solo cobrados): ${safeMoney(currentResultUsd)}`,
         `- Resultado potencial (si cobras todos los fiados): ${safeMoney(potentialResultUsd)}`,
         `- Tasa de cobro: ${safePercent(collectionRate)}`,
-        '',
-        '## Top Compradores (Pagados)',
     ];
+
+    const unitsMd = formatUnitTotalsMarkdown(unitTotals, { heading: '## 📦 Unidades (Global)' }).trim();
+    if (unitsMd) {
+        lines.push('', unitsMd);
+    }
+
+    lines.push('', '## Top Compradores (Pagados)');
 
     const topBuyers = Array.isArray(stats.topBuyers) ? stats.topBuyers : [];
     if (!topBuyers.length) {
@@ -992,7 +1153,8 @@ async function exportProfileMarkdown() {
         if (!state.stats) {
             await loadGlobalStats();
         }
-        const md = buildProfileMarkdown();
+        const unitTotals = await computeProfileGlobalUnitTotals();
+        const md = buildProfileMarkdown({ unitTotals });
         downloadMarkdown(md);
         setProfileStatus('Informe exportado en Markdown.', 'ok');
     } catch (error) {

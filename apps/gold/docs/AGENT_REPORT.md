@@ -11823,3 +11823,75 @@ git status --short --branch
 - Build oficial:
   - `pnpm build:gold`
   - Resultado: **PASS**
+
+## 🆕 SESIÓN: GATE 0 — Unidades en exports Markdown (Historial + Ciclos + Perfil) (2026-03-05)
+
+### Diagnóstico
+
+1. Export MD de Historial se genera en `apps/gold/agro/agro.js` vía `exportAgroLog(tabName)`:
+   - dataset: `items` consultados por tabla/tab actual (`agro_expenses`, `agro_income`, `agro_pending`, `agro_losses`, `agro_transfers`) con filtros de cultivo y estado.
+   - hoy incluye `Cantidad` por fila (cuando aplica), pero no bloque agregado `## 📦 Unidades`.
+2. Export MD de Ciclos se genera en `apps/gold/agro/agro-crop-report.js` vía `exportCropReport(cropId)`:
+   - dataset: arrays por tab (`income`, `expenses`, `pending`, `losses`, `transfers`) + split `pendingActive/pendingTransferred`.
+   - hoy no existe bloque agregado de unidades del ciclo.
+3. Export MD de Perfil global se genera en `apps/gold/agro/agroperfil.js`:
+   - `exportProfileMarkdown()` usa `buildProfileMarkdown()` con `state.stats` de `getGlobalStats(...)`.
+   - hoy el reporte no incluye unidades globales y `getGlobalStats` no entrega agregado de unidades para MD.
+
+### Plan quirúrgico
+
+1. Crear helper común de unidades para MD en módulo dedicado:
+   - `computeUnitTotalsFromRows(rows)`
+   - `formatUnitTotalsMarkdown(totals, { heading })`
+   - soporte legacy (`unit/measure/qty/quantity/units` + `split_meta` + `concepto`) y anti doble kg.
+2. Historial MD (`exportAgroLog`):
+   - calcular totales de unidades sobre `items` (mismo dataset exportado).
+   - insertar bloque `## 📦 Unidades` después de `## 📊 Resumen` y antes del detalle/tablas.
+3. Ciclos MD (`exportCropReport`):
+   - calcular totales de unidades del ciclo a partir de los arrays reales (`income/expenses/pendingActive/pendingTransferred/losses/transfers`).
+   - insertar bloque `## 📦 Unidades` cerca del resumen financiero.
+4. Perfil global MD (`buildProfileMarkdown` + `exportProfileMarkdown`):
+   - calcular unidades globales en tiempo de export con dataset real del usuario.
+   - usar merge por cultivo con regla MAX para `pendingTransferred` (sin doble conteo).
+   - insertar bloque `## 📦 Unidades (Global)`.
+5. Validación:
+   - `pnpm build:gold`.
+
+### Implementación aplicada
+
+1. `apps/gold/agro/agro-unit-totals.js` (nuevo helper común)
+   - `computeUnitTotalsFromRows(rows)` con soporte:
+     - campos canónicos (`unit_type`, `unit_qty`, `quantity_kg`)
+     - legacy (`unit/measure/qty/quantity/units/amount_units`)
+     - fallback `split_meta` y `concepto/concept`
+   - regla anti doble kg: `quantity_kg` solo suma si no existe unidad explícita.
+   - `formatUnitTotalsMarkdown(totals, { heading })`:
+     - imprime solo unidades > 0
+     - orden estable: sacos → kg → cestas
+     - pluralización correcta.
+   - helpers adicionales para agregación por cultivo y merge MAX (`mergeUnitTotalsPreferHigher`) usados por perfil global.
+
+2. `apps/gold/agro/agro.js` — Export MD de Historial
+   - `exportAgroLog(tabName)` ahora:
+     - calcula unidades sobre el mismo `items` exportado
+     - inserta bloque `## 📦 Unidades` después de `## 📊 Resumen` y antes de detalle.
+
+3. `apps/gold/agro/agro-crop-report.js` — Export MD de Ciclos
+   - `exportCropReport(cropId)` ahora:
+     - calcula unidades del ciclo con arrays reales (`income/expenses/pendingActive/pendingTransferred/losses/transfers`)
+     - aplica merge MAX entre base y `pendingTransferred`
+     - inserta bloque `## 📦 Unidades` junto al resumen financiero.
+
+4. `apps/gold/agro/agroperfil.js` — Export MD Perfil Global
+   - se añadieron fetches de unidades por tabla con fallback por columnas faltantes.
+   - cálculo global:
+     - base por cultivo (`income + expenses + losses + transfers + pending no transferidos`)
+     - merge MAX con `pending transferidos`
+     - suma global final.
+   - `buildProfileMarkdown({ unitTotals })` renderiza `## 📦 Unidades (Global)` solo si hay valores > 0.
+
+### Validación ejecutada
+
+- Build oficial:
+  - `pnpm build:gold`
+  - Resultado: **PASS**
