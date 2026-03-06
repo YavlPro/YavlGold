@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=Orbitron:wght@400;700;900&family=Playfair+Display:wght@500;700&family=Rajdhani:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
 
   <!-- Font Awesome -->
@@ -1806,14 +1806,13 @@
           <span class="yg-about-initials" style="display: none;">YV</span>
         </div>
         <h2 class="yg-about-name">Yerikson Varela</h2>
-        <p class="yg-about-title">Founder & Lead Developer</p>
+        <p class="yg-about-title">Founder & Product Architect</p>
       </div>
 
       <!-- Bio Section -->
       <div class="yg-about-bio">
-        <p>Desarrollador Full Stack y Agricultor de La Grita, Táchira. Fusionando la tradición del campo con la potencia
-          de la Blockchain y la IA. Mi misión con YavlGold es empoderar la economía real mediante tecnología
-          descentralizada y datos precisos.</p>
+        <p>Agricultor y constructor de producto desde La Grita, Táchira. En YavlGold convierto la experiencia real del
+          campo en software útil, datos confiables y automatización aplicada a la economía real.</p>
       </div>
 
       <!-- Social Links -->
@@ -1834,16 +1833,36 @@
   <style>
     /* About Creator Modal Styles */
     .yg-about-creator-panel {
+      --about-champagne: #f3e7d3;
+      --about-cream: #e7ddc9;
+      --about-bronze: #c79a52;
+      --about-border-soft: rgba(200, 167, 82, 0.22);
+      --about-border-box: rgba(200, 167, 82, 0.1);
       position: relative;
       width: min(450px, 90vw);
-      background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%);
-      border: 1px solid rgba(200, 167, 82, 0.3);
-      border-radius: 24px;
-      padding: 3rem 2rem 2rem;
+      background:
+        radial-gradient(circle at top, rgba(200, 167, 82, 0.08), transparent 36%),
+        linear-gradient(180deg, rgba(12, 12, 12, 0.98) 0%, rgba(7, 7, 7, 0.98) 100%);
+      border: 1px solid var(--about-border-soft);
+      border-radius: 28px;
+      padding: 3rem 2rem 2.1rem;
       text-align: center;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(200, 167, 82, 0.1);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45), 0 0 30px rgba(200, 167, 82, 0.05);
       transform: translateY(20px) scale(0.98);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .yg-about-creator-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(135deg,
+          rgba(255, 255, 255, 0.03),
+          transparent 30%,
+          transparent 70%,
+          rgba(200, 167, 82, 0.03));
     }
 
     .yg-modal.active .yg-about-creator-panel {
@@ -1854,42 +1873,46 @@
       position: absolute;
       top: 16px;
       right: 16px;
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 1.2rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #d9d2c3;
+      font-size: 1.5rem;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 2;
     }
 
     .yg-about-close:hover {
-      background: var(--dorado-yavl, #C8A752);
-      color: #000;
-      transform: rotate(90deg);
+      border-color: rgba(200, 167, 82, 0.45);
+      color: var(--about-champagne);
+      transform: scale(1.05);
     }
 
     .yg-about-header {
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.55rem;
+      position: relative;
+      z-index: 1;
     }
 
-    /* YV Initials Avatar with breathe animation */
     .yg-about-avatar {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 1.5rem;
+      width: 122px;
+      height: 122px;
+      margin: 0 auto 1.35rem;
       border-radius: 50%;
       background: #0a0a0a;
-      border: 3px solid var(--dorado-yavl, #C8A752);
+      border: 3px solid rgba(200, 167, 82, 0.78);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 30px rgba(200, 167, 82, 0.3), inset 0 0 20px rgba(200, 167, 82, 0.1);
+      box-shadow:
+        0 0 0 4px rgba(200, 167, 82, 0.08),
+        0 0 28px rgba(200, 167, 82, 0.22);
       animation: aboutBreathe 4s ease-in-out infinite;
     }
 
@@ -1897,87 +1920,128 @@
 
       0%,
       100% {
-        box-shadow: 0 0 30px rgba(200, 167, 82, 0.3), inset 0 0 20px rgba(200, 167, 82, 0.1);
+        box-shadow:
+          0 0 0 4px rgba(200, 167, 82, 0.08),
+          0 0 28px rgba(200, 167, 82, 0.22);
         transform: scale(1);
       }
 
       50% {
-        box-shadow: 0 0 50px rgba(200, 167, 82, 0.5), inset 0 0 30px rgba(200, 167, 82, 0.2);
+        box-shadow:
+          0 0 0 4px rgba(200, 167, 82, 0.1),
+          0 0 36px rgba(200, 167, 82, 0.28);
         transform: scale(1.03);
       }
     }
 
     .yg-about-initials {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Playfair Display', serif;
       font-size: 2.5rem;
-      font-weight: 900;
-      color: var(--dorado-yavl, #C8A752);
-      letter-spacing: 2px;
+      font-weight: 700;
+      color: var(--about-champagne);
+      letter-spacing: 0.04em;
     }
 
     .yg-about-name {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.5rem;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 3.2vw, 2.9rem);
       font-weight: 700;
-      color: #fff;
-      margin-bottom: 0.5rem;
+      line-height: 1.08;
+      letter-spacing: 0.01em;
+      color: var(--about-champagne);
+      text-shadow: 0 0 18px rgba(200, 167, 82, 0.08);
+      margin-bottom: 0.45rem;
     }
 
     .yg-about-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      color: var(--dorado-yavl, #C8A752);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.92rem;
+      color: var(--about-bronze);
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
     }
 
     .yg-about-bio {
-      padding: 1.5rem;
+      padding: 1.45rem 1.35rem;
       background: rgba(255, 255, 255, 0.03);
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      margin-bottom: 1.5rem;
+      border-radius: 20px;
+      border: 1px solid var(--about-border-box);
+      margin-bottom: 1.7rem;
+      position: relative;
+      z-index: 1;
     }
 
     .yg-about-bio p {
-      font-family: 'Rajdhani', sans-serif;
+      font-family: 'Montserrat', sans-serif;
       font-size: 1rem;
-      color: rgba(255, 255, 255, 0.7);
-      line-height: 1.6;
+      color: var(--about-cream);
+      line-height: 1.9;
+      letter-spacing: 0.01em;
       margin: 0;
     }
 
     .yg-about-social {
       display: flex;
-      gap: 1rem;
+      gap: 0.9rem;
       justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
     }
 
     .yg-social-btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
+      justify-content: center;
+      gap: 0.6rem;
+      min-width: 132px;
+      padding: 0.92rem 1.2rem;
       background: transparent;
-      border: 1px solid rgba(200, 167, 82, 0.3);
-      border-radius: 50px;
-      color: rgba(255, 255, 255, 0.8);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
+      border: 1px solid rgba(200, 167, 82, 0.25);
+      border-radius: 999px;
+      color: #ddd4c3;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
     }
 
     .yg-social-btn:hover {
-      background: rgba(200, 167, 82, 0.15);
-      border-color: var(--dorado-yavl, #C8A752);
-      color: var(--dorado-yavl, #C8A752);
+      background: rgba(200, 167, 82, 0.05);
+      border-color: rgba(200, 167, 82, 0.5);
+      color: var(--about-champagne);
       transform: translateY(-2px);
     }
 
     .yg-social-btn i {
       font-size: 1.1rem;
+    }
+
+    @media (max-width: 600px) {
+      .yg-about-creator-panel {
+        padding: 2.3rem 1.3rem 1.5rem;
+        border-radius: 24px;
+      }
+
+      .yg-about-avatar {
+        width: 110px;
+        height: 110px;
+      }
+
+      .yg-about-bio p {
+        font-size: 0.97rem;
+        line-height: 1.8;
+      }
+
+      .yg-about-social {
+        flex-direction: column;
+      }
+
+      .yg-social-btn {
+        width: 100%;
+      }
     }
   </style>
 
