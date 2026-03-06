@@ -17,6 +17,7 @@ let lastExchangeStatus = {
     warning: '',
     fetchedAt: null
 };
+let lastFreshCacheLogKey = '';
 
 export const SUPPORTED_CURRENCIES = {
     USD: { symbol: '$', name: 'Dólar', flag: '💵', decimals: 2 },
@@ -108,7 +109,7 @@ export function clearAllOverrides() {
 // ============================================================
 
 async function fetchFromFrankfurter() {
-    const res = await fetchWithTimeout('https://api.frankfurter.app/latest?from=USD&to=COP,VES');
+    const res = await fetchWithTimeout('https://api.frankfurter.dev/v1/latest?base=USD&symbols=COP,VES');
     if (!res.ok) throw new Error(`Frankfurter ${res.status}`);
     const data = await res.json();
     return normalizeRates(data?.rates);
@@ -188,19 +189,20 @@ function readStaleCache(cached) {
  * Returns { USD: 1, COP: number|null, VES: number|null }
  */
 export async function fetchExchangeRates() {
-    // Try primary API
+    // Primary API for Agro currencies (COP/VES)
     try {
-        let rates = await fetchFromFrankfurter();
-        let source = 'api:frankfurter';
-        // Complete any missing rates from fallback provider
+        let rates = normalizeRates(await fetchFromErApi());
+        let source = 'api:erapi';
+
+        // Optional complement: only useful if we ever add supported ECB currencies.
         if (hasMissingRates(rates)) {
             try {
-                const fallback = await fetchFromErApi();
+                const fallback = await fetchFromFrankfurter();
                 rates = mergeMissingRates(rates, fallback);
-                source = 'api:frankfurter+erapi';
+                source = 'api:erapi+frankfurter';
             } catch (e) {
                 // Keep available rates from provider 1
-                console.warn('[EXCHANGE] ER-API complement failed:', e.message);
+                console.warn('[EXCHANGE] Frankfurter complement failed:', e.message);
             }
         }
         rates = normalizeRates(rates);
@@ -208,17 +210,17 @@ export async function fetchExchangeRates() {
         setExchangeStatus(source, '');
         return rates;
     } catch (e) {
-        console.warn('[EXCHANGE] Frankfurter failed:', e.message);
+        console.warn('[EXCHANGE] ER-API failed:', e.message);
     }
 
-    // Try fallback API
+    // Secondary fallback
     try {
-        const rates = normalizeRates(await fetchFromErApi());
-        setCachedRates(rates, 'api:erapi');
-        setExchangeStatus('api:erapi', '');
+        const rates = normalizeRates(await fetchFromFrankfurter());
+        setCachedRates(rates, 'api:frankfurter');
+        setExchangeStatus('api:frankfurter', '');
         return rates;
     } catch (e) {
-        console.warn('[EXCHANGE] ER-API failed:', e.message);
+        console.warn('[EXCHANGE] Frankfurter failed:', e.message);
     }
 
     // Use stale cache
@@ -282,7 +284,11 @@ export async function initExchangeRates() {
     const cached = getCachedRates();
     const freshRates = readFreshCache(cached);
     if (freshRates) {
-        console.info('[EXCHANGE] Using fresh cache');
+        const cacheLogKey = `${cached?.fetchedAt || 0}:${cached?.source || 'unknown'}`;
+        if (cacheLogKey !== lastFreshCacheLogKey) {
+            lastFreshCacheLogKey = cacheLogKey;
+            console.info('[EXCHANGE] Using fresh cache');
+        }
         return freshRates;
     }
     return fetchExchangeRates();

@@ -3082,6 +3082,7 @@ const HISTORY_UNIT_TOTAL_ORDER = ['sacos', 'kilogramos', 'cestas'];
 const HISTORY_UNIT_TYPE_FIELDS = ['unit_type', 'unitType', 'unit', 'measure', 'measure_unit', 'unit_name'];
 const HISTORY_UNIT_QTY_FIELDS = ['unit_qty', 'unitQty', 'qty', 'quantity', 'units', 'amount_units'];
 const HISTORY_KG_QTY_FIELDS = ['quantity_kg', 'quantityKg', 'kg', 'kilogramos'];
+let historyFiltersInitialized = false;
 
 function normalizeFactureroSearchToken(value) {
     return String(value || '')
@@ -3245,8 +3246,26 @@ function renderHistoryUnitTotals(parent, list) {
     mount.style.display = hasContent ? '' : 'none';
 }
 
-function initHistoryFilters() {
-    FILTER_TABS.forEach((tabName) => {
+function resolveHistoryFilterTabs(targetTabOrTabs = null) {
+    if (Array.isArray(targetTabOrTabs)) {
+        return targetTabOrTabs
+            .map((tabName) => String(tabName || '').trim().toLowerCase())
+            .filter((tabName, index, list) => FILTER_TABS.includes(tabName) && list.indexOf(tabName) === index);
+    }
+
+    if (typeof targetTabOrTabs === 'string') {
+        const tabName = String(targetTabOrTabs || '').trim().toLowerCase();
+        return FILTER_TABS.includes(tabName) ? [tabName] : [];
+    }
+
+    return [...FILTER_TABS];
+}
+
+function initHistoryFilters(targetTabOrTabs = null) {
+    const tabs = resolveHistoryFilterTabs(targetTabOrTabs);
+    if (tabs.length === 0) return;
+
+    tabs.forEach((tabName) => {
         const config = FACTURERO_CONFIG?.[tabName];
         if (!config) return;
 
@@ -3314,7 +3333,10 @@ function initHistoryFilters() {
         applyHistoryFilter(parent, list);
     });
 
-    console.info('[AGRO] ✅ History filters v1.1 initialized');
+    if (!historyFiltersInitialized) {
+        historyFiltersInitialized = true;
+        console.info('[AGRO] ✅ History filters v1.1 initialized');
+    }
 }
 
 function applyHistoryFilter(parent, list, options = {}) {
@@ -5250,7 +5272,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
             }
             renderHistoryList(tabName, config, otherItems, showActions);
             injectHistorySearchInput(tabName, config);
-            initHistoryFilters();
+            initHistoryFilters(tabName);
             return;
         }
 
@@ -5273,7 +5295,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
         }
         renderHistoryList(tabName, config, filteredItems, showActions);
         injectHistorySearchInput(tabName, config);
-        initHistoryFilters();
+        initHistoryFilters(tabName);
         if (tabName === 'pendientes' || tabName === 'perdidas' || tabName === 'transferencias' || tabName === 'gastos' || tabName === 'ingresos') {
             syncFactureroNotifications(tabName, filteredItems);
         }
@@ -5391,7 +5413,9 @@ function renderHistoryList(tabName, config, items, showActions) {
         container.replaceChildren(fragment);
     }
 
-    console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${filteredItems.length} items grouped by day`);
+    if (AGRO_DEBUG) {
+        console.info(`[AGRO] V9.6.7: Refreshed ${tabName} with ${filteredItems.length} items grouped by day`);
+    }
 }
 
 // ============================================================
@@ -8160,7 +8184,6 @@ async function initFactureroHistories() {
         await refreshFactureroHistory(tab);
     }
     console.info('[AGRO] V9.6.3: All facturero histories initialized (including gastos+ingresos)');
-    initHistoryFilters();
     scheduleUsdAuditBadgeRefresh(0);
 }
 
@@ -11705,7 +11728,7 @@ async function loadIncomes() {
         });
 
         injectHistorySearchInput('ingresos', FACTURERO_CONFIG.ingresos);
-        initHistoryFilters();
+        initHistoryFilters('ingresos');
     } catch (err) {
         console.error('[Agro] Error cargando ingresos:', err);
     }
