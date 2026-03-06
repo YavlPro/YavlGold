@@ -1,5 +1,107 @@
 ---
 
+## 🆕 SESIÓN: GATE 0 — Archivo y poda de HTML huérfanos (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. Existen HTML legacy que ya no participan del input MPA oficial ni del catálogo actual:
+   - `academia/lecciones/*`
+   - `crypto/index_old.html`
+   - `crypto/header.html`
+   - `profile/index.html`
+   - `roadmap.html`
+   - `public/agro/roadmap.html`
+   - `herramientas/*.html`
+2. El barrido final de referencias mostró que esos archivos ya no son consumidos por landing, dashboard, rutas oficiales ni rewrites productivos:
+   - las referencias encontradas son principalmente entre archivos legacy o dentro de documentación histórica,
+   - `agro/README.md` todavía menciona `roadmap.html`,
+   - `crypto/README.md` todavía habla de archivos legacy pendientes de archivo.
+3. `herramientas/index.html` ya había salido del input MPA oficial, por lo que también puede tratarse como superficie a archivar sin afectar la build actual.
+
+### Alcance
+
+- Mover HTML huérfanos a una carpeta de archivo explícita dentro del repo.
+- Preservar la historia del proyecto sin mantener esos archivos mezclados con superficies activas.
+- Actualizar documentación mínima para apuntar al archivo nuevo donde haga falta.
+- Validar que `pnpm build:gold` siga limpio y que ninguna ruta pública oficial dependa de esos HTML.
+
+### Archivos candidatos
+
+- `apps/gold/academia/lecciones/`
+- `apps/gold/crypto/index_old.html`
+- `apps/gold/crypto/header.html`
+- `apps/gold/herramientas/index.html`
+- `apps/gold/herramientas/herramientas.html`
+- `apps/gold/herramientas/calculadora.html`
+- `apps/gold/herramientas/conversor.html`
+- `apps/gold/herramientas/analisis.html`
+- `apps/gold/profile/index.html`
+- `apps/gold/roadmap.html`
+- `apps/gold/public/agro/roadmap.html`
+- `apps/gold/agro/README.md`
+- `apps/gold/crypto/README.md`
+- `apps/gold/docs/LEGACY_SURFACES.md`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Mover archivos históricos sin actualizar referencias documentales puede dejar notas rotas o desactualizadas.
+- Si existía alguna navegación manual no detectada hacia estos archivos en entornos no-Vercel, pasará a depender del archivo nuevo o dejará de ser accesible.
+- Mantenerlos como `.html` archivados significa que siguen presentes en el repo, aunque ya no mezclados con superficies activas.
+
+### Estrategia de rollback
+
+1. Preservar estructura y contenido moviendo archivos, no borrándolos.
+2. Mantener el archivo dentro de `apps/gold/archive/legacy-html/` para poder restaurar rutas si se necesita.
+3. Limitar cambios en docs a referencias mínimas y clasificación del legado.
+
+### Plan quirúrgico
+
+1. Crear árbol de archivo bajo `apps/gold/archive/legacy-html/`.
+2. Mover ahí los HTML huérfanos preservando su estructura relativa.
+3. Actualizar `LEGACY_SURFACES.md`, `agro/README.md` y `crypto/README.md`.
+4. Ejecutar `pnpm build:gold` y registrar validación final.
+
+### Estado post-implementación
+
+- Se creó `apps/gold/archive/legacy-html/` como archivo explícito de HTML históricos.
+- Se movieron al archivo:
+  - `academia/lecciones/*`
+  - `crypto/index_old.html`
+  - `crypto/header.html`
+  - `herramientas/index.html`
+  - `herramientas/herramientas.html`
+  - `herramientas/calculadora.html`
+  - `herramientas/conversor.html`
+  - `herramientas/analisis.html`
+  - `profile/index.html`
+  - `roadmap.html`
+  - `public/agro/roadmap.html`
+- `apps/gold/archive/legacy-html/README.md` documenta el propósito del archivo.
+- `apps/gold/docs/LEGACY_SURFACES.md` pasó de “clasificación” a inventario de legado ya archivado.
+- `apps/gold/agro/README.md` y `apps/gold/crypto/README.md` ya apuntan al archivo nuevo en vez de hablar de legado pendiente.
+- El barrido final de referencias dejó claro que ya no hay consumo activo de esos HTML desde producto/routing/build; las coincidencias restantes viven en docs históricas y en el propio archivo legacy.
+
+### Validación
+
+- `pnpm build:gold` ejecutado con resultado `OK` el `2026-03-05`.
+- El build pasó con `agent-guard: OK`, `agent-report-check: OK`, `check-llms: OK` y `UTF-8 verification passed`.
+- Salida relevante:
+  - `dist/index.html` `82.50 kB`
+  - `dist/dashboard/music.html` `66.07 kB`
+  - `dist/agro/index.html` `143.54 kB`
+  - `dist/academia/index.html` `2.46 kB`
+  - `dist/crypto/index.html` `2.50 kB`
+  - `dist/social/index.html` `2.44 kB`
+  - `dist/tecnologia/index.html` `2.49 kB`
+- Confirmación importante: los HTML archivados no reingresaron a la salida MPA oficial.
+
+### Riesgos residuales
+
+- `docs/AGENT_REPORT.md` y `docs/chronicles/*` siguen mencionando paths viejos porque son histórico; eso es esperado hasta que se haga una normalización documental más profunda.
+- `dashboard/music.html` sigue siendo la principal superficie legacy viva fuera del catálogo.
+- El siguiente lote natural ya sí es decidir `music` y, después de eso, recortar `auth.js` / `authGuard.js` legacy con mucha menos compatibilidad a sostener.
+
 ## 🆕 SESIÓN: GATE 0 — Documentación y superficies huérfanas del repo (2026-03-05)
 
 ### Diagnóstico (tarea actual)

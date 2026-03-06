@@ -37,6 +37,8 @@ apps/gold/
 |  |- AGENT_REPORT.md
 |  |- AGENT_REPORT_ACTIVE.md
 |  \- LEGACY_SURFACES.md
+|- archive/
+|  \- legacy-html/
 |- vite.config.js
 \- vercel.json
 ```
@@ -76,4 +78,4 @@ pnpm -C apps/gold build
 
 ## Nota sobre legado
 
-El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite`, `music` y otras superficies antiguas. No todos participan del build oficial ni del catálogo actual. El inventario vivo está en `docs/LEGACY_SURFACES.md`.
+El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite`, `music` y otras superficies antiguas. Los HTML huérfanos ya fueron movidos a `archive/legacy-html/`. El inventario vivo está en `docs/LEGACY_SURFACES.md`.

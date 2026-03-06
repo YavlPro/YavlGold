@@ -43,8 +43,8 @@ This file contains the current product, architecture and routing policy for `app
 - `docs/LEGACY_SURFACES.md` classifies orphan and legacy files
 
 ## 8. Legacy note
-- Some HTML files remain in the repo for archive or redirect purposes
+- Some HTML files remain in the repo only for archive or redirect purposes
 - Not every HTML file in the tree is part of the official MPA input
-- Treat old `academia/lecciones`, `herramientas/*`, `crypto/index_old.html`, `profile/index.html` and roadmaps as legacy until explicitly reactivated
+- Archived legacy HTML now lives under `apps/gold/archive/legacy-html/`
 
 # EOF — YavlGold llms.txt (do not truncate)

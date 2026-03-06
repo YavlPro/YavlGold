@@ -6,7 +6,7 @@
 
 - La ruta `/crypto/` existe como placeholder oficial.
 - `Suite` se considera alias legacy y canonicaliza hacia `Crypto`.
-- Archivos históricos como `index_old.html` o `header.html` permanecen en el repo solo como legado pendiente de archivo o retiro.
+- Archivos históricos como `index_old.html` o `header.html` fueron movidos a `archive/legacy-html/crypto/`.
 
 ## Política actual
 

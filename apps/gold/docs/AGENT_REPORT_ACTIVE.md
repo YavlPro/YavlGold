@@ -26,7 +26,7 @@ Resumen operativo actual de `apps/gold`.
 ## Deuda visible pendiente
 
 - `dashboard/music.html` sigue como utilidad legacy fuera del catálogo.
-- `herramientas/` conserva HTML históricos todavía presentes en el repo.
+- La carpeta `archive/legacy-html/` ya concentra los HTML históricos fuera de la superficie activa.
 - `AGENT_REPORT.md` sigue siendo el histórico completo y ya requiere partición definitiva.
 
 ## Documentos de apoyo

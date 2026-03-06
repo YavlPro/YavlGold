@@ -19,7 +19,7 @@ python3 -m http.server 8000
 ## Estructura
 - `YavlAgro.html`: Página principal.
 - `index.html`: Redirección a la principal (SEO y compatibilidad con GitHub Pages).
-- `roadmap.html`: Hoja de ruta estratégica del proyecto YavlAgro.
+- `archive/legacy-html/public/agro/roadmap.html`: hoja de ruta histórica archivada del proyecto YavlAgro.
 - `app.js`: Render opcional de productos (si se usa esta versión).
 - `Style.css`: Estilos (si se usa hoja separada).
 
@@ -32,9 +32,8 @@ El sitio está preparado para GitHub Pages:
 Todos los botones de WhatsApp apuntan a: `https://wa.me/584247394025`.
 
 ## Roadmap
-El proyecto incluye una hoja de ruta estratégica detallada que muestra la evolución de YavlAgro desde un proyecto agrícola local hasta un ecosistema agro-blockchain completo. Visita `roadmap.html` para ver:
+El proyecto conserva una hoja de ruta histórica que muestra la evolución original de YavlAgro desde un proyecto agrícola local hasta un ecosistema agro-blockchain completo. El documento fue archivado y ahora vive en `archive/legacy-html/public/agro/roadmap.html`:
 - Fase 1: Rebrand & Fundación Digital (Q1 2026)
 - Fase 2: E-commerce & Operaciones (Q2 2026)
 - Fase 3: Blockchain & Trazabilidad (Q3-Q4 2026)
 - Fase 4: Expansión & Ecosistema Completo (2027+)
-

@@ -27,27 +27,27 @@ Inventario operativo de superficies legacy, huérfanas o fuera del catálogo ofi
 - `faq.html`
 - `soporte.html`
 
-## Legacy a archivar
+## Legacy archivado
 
-- `academia/lecciones/`
-- `crypto/index_old.html`
-- `crypto/header.html`
-- `herramientas/herramientas.html`
-- `herramientas/calculadora.html`
-- `herramientas/conversor.html`
-- `herramientas/analisis.html`
-- `profile/index.html`
-- `roadmap.html`
-- `public/agro/roadmap.html`
+Estos archivos ya fueron movidos a `archive/legacy-html/`.
+
+- `archive/legacy-html/academia/lecciones/`
+- `archive/legacy-html/crypto/index_old.html`
+- `archive/legacy-html/crypto/header.html`
+- `archive/legacy-html/herramientas/index.html`
+- `archive/legacy-html/herramientas/herramientas.html`
+- `archive/legacy-html/herramientas/calculadora.html`
+- `archive/legacy-html/herramientas/conversor.html`
+- `archive/legacy-html/herramientas/analisis.html`
+- `archive/legacy-html/profile/index.html`
+- `archive/legacy-html/roadmap.html`
+- `archive/legacy-html/public/agro/roadmap.html`
 
 ## Legacy aún expuesto o semi-vivo
 
 - `dashboard/music.html`
   - utilidad legacy protegida dentro del dashboard
   - no forma parte del catálogo oficial de módulos
-- `herramientas/index.html`
-  - alias legacy hacia `Tecnología`
-  - debe salir del input MPA oficial
 
 ## Legacy nominal
 
@@ -59,4 +59,5 @@ Inventario operativo de superficies legacy, huérfanas o fuera del catálogo ofi
 
 - `Oficial vigente`: participa del producto actual y del routing oficial
 - `Legacy a archivar`: mantener solo por historia o referencia
+- `Legacy archivado`: ya fue retirado de la superficie activa y movido al archivo interno
 - `Legacy a retirar`: eliminar del build, rewrites o superficie pública cuando ya no haga falta compatibilidad
