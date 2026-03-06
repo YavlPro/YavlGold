@@ -1,3 +1,74 @@
+## 🆕 SESIÓN: GATE 0 — Vulnerabilidades y pin de Node (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. Las `2 high` reportadas por GitHub vienen de una sola dependencia transitiva:
+   - `apps/gold > rimraf@6.1.2 > glob@13.0.0 > minimatch@10.2.1`
+2. Los advisories encontrados son:
+   - `GHSA-7r86-cg39-jmmj` / `CVE-2026-27903`
+   - `GHSA-23c5-xmqv-rm74` / `CVE-2026-27904`
+3. Ambas vulnerabilidades quedan parchadas en `minimatch >= 10.2.3`, y la versión disponible actual es `10.2.4`.
+4. El impacto observado es de tooling/build, no de runtime del navegador:
+   - la ruta vulnerable entra por `rimraf` y `glob`,
+   - no aparece en el bundle productivo del frontend.
+5. El warning de Vercel sigue viniendo del `engines.node` demasiado abierto en la raíz:
+   - hoy está en `>=18.0.0`,
+   - eso permite que Vercel suba de major automáticamente.
+6. El entorno local actual está en `node v25.6.0`, pero el objetivo del pin es estabilizar deploy, no replicar la versión local exacta.
+
+### Alcance
+
+- Subir el override de `minimatch` a una versión parchada.
+- Regenerar lockfile con el mínimo cambio necesario.
+- Fijar una versión de Node estable en la raíz para Vercel.
+- Validar con `pnpm audit`, `pnpm build:gold` y el alias `pnpm build:v9`.
+
+### Archivos candidatos
+
+- `package.json`
+- `pnpm-lock.yaml`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Cambiar el override de `minimatch` puede afectar tooling que use globs en build, aunque la corrección es dentro de la misma línea mayor.
+- Fijar Node a una major concreta puede descubrir incompatibilidades locales si alguien venía usando una versión muy distinta sin darse cuenta.
+
+### Estrategia de rollback
+
+1. Mantener el cambio en overrides como actualización mínima, sin tocar el árbol de dependencias más de lo necesario.
+2. Pin de Node solo en la raíz, para estabilizar Vercel sin reconfigurar cada workspace.
+3. Si apareciera incompatibilidad, revertir el pin de Node y mantener al menos el parche de `minimatch`.
+
+### Plan quirúrgico
+
+1. Cambiar override de `minimatch` a `10.2.4`.
+2. Fijar `engines.node` en la raíz a una serie estable soportada por Vercel.
+3. Ejecutar `pnpm install` para refrescar lockfile.
+4. Validar con `pnpm audit`, `pnpm build:gold` y `pnpm build:v9`.
+
+### Estado post-implementación
+
+- `package.json` raíz ahora fija `engines.node` en `20.x`.
+- `package.json` raíz ahora fuerza `minimatch` a `10.2.4`.
+- `pnpm-lock.yaml` quedó actualizado con `minimatch@10.2.4`.
+- La actualización del lockfile fue mínima: override y resolución transitiva de `glob -> minimatch`.
+
+### Validación
+
+- `pnpm audit --audit-level high --json` -> `0 high`, `0 critical`
+- `pnpm build:gold` -> `OK`
+- `pnpm build:v9` -> `OK`
+- Nota de entorno local:
+  - como esta máquina corre `node v25.6.0`, `pnpm` muestra `Unsupported engine` al estar fijado `20.x`,
+  - esto no bloquea el build, pero sí deja explícito que el deploy objetivo queda estabilizado en Node 20.
+
+### Riesgo residual
+
+- El pin a `20.x` elimina la ambigüedad de Vercel, pero cualquier colaborador que siga en Node 25 verá el warning de engine hasta cambiar de versión local o ignorarlo conscientemente.
+
+---
+
 ## 🆕 SESIÓN: GATE 0 — Alineación de deploy raíz con build oficial (2026-03-05)
 
 ### Diagnóstico (tarea actual)

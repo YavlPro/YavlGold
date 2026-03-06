@@ -39,7 +39,7 @@
   "author": "YavlPro",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0",
+    "node": "20.x",
     "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@9.1.0",
@@ -58,7 +58,7 @@
   "pnpm": {
     "overrides": {
       "@isaacs/brace-expansion": "5.0.1",
-      "minimatch": "10.2.1",
+      "minimatch": "10.2.4",
       "rollup": "4.59.0"
     }
   },
