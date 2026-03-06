@@ -1,5 +1,6 @@
 /**
  * YAVLGOLD - AUTH GUARD v2.0.1
+ * ARCHIVADO el 2026-03-05 como parte del retiro del bridge auth legacy.
  */
 const AuthGuard = {
   protectedPaths: ['/tecnologia/', '/herramientas/', '/dashboard/', '/profile/', '/settings/'],

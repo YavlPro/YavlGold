@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm build:v9",
+  "buildCommand": "pnpm build:gold",
   "outputDirectory": "apps/gold/dist",
   "framework": null,
   "installCommand": "pnpm install",

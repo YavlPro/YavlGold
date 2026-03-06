@@ -12,6 +12,8 @@ Este directorio conserva HTML históricos que ya no forman parte de la superfici
 
 Nada dentro de este árbol debe considerarse producto activo a menos que se reactive explícitamente en un lote nuevo.
 
+Los HTML archivados se conservan como referencia histórica; no se garantiza que sigan ejecutándose de forma autónoma porque su bridge auth legacy también fue archivado fuera de la superficie activa.
+
 ## Relación con docs
 
 - inventario operativo: `docs/LEGACY_SURFACES.md`

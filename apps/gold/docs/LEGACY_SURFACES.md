@@ -42,12 +42,15 @@ Estos archivos ya fueron movidos a `archive/legacy-html/`.
 - `archive/legacy-html/profile/index.html`
 - `archive/legacy-html/roadmap.html`
 - `archive/legacy-html/public/agro/roadmap.html`
+- `archive/legacy-js/auth.js`
+- `archive/legacy-js/auth/authGuard.js`
 
-## Legacy aún expuesto o semi-vivo
+## Utilidades implementadas fuera del catálogo
 
 - `dashboard/music.html`
-  - utilidad legacy protegida dentro del dashboard
+  - utilidad viva e implementada
   - no forma parte del catálogo oficial de módulos
+  - requiere decisión de producto en un lote separado
 
 ## Legacy nominal
 

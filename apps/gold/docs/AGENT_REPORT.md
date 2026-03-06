@@ -1,4 +1,154 @@
+## 🆕 SESIÓN: GATE 0 — Alineación de deploy raíz con build oficial (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. El fallo de Vercel no viene del build oficial de `apps/gold`, sino del deploy raíz:
+   - `vercel.json` en la raíz usa `buildCommand: "pnpm build:v9"`.
+   - `package.json` raíz define `build:v9` como `vite build`.
+2. Ese flujo usa `vite.config.js` de la raíz, que sigue referenciando entradas archivadas:
+   - `apps/gold/profile/index.html`
+   - `apps/gold/roadmap.html`
+   - `apps/gold/herramientas/index.html`
+3. Esas superficies ya no forman parte del producto activo:
+   - `profile/index.html` y `roadmap.html` fueron archivados,
+   - `herramientas/index.html` salió del input MPA oficial.
+4. El build oficial vigente sí está sano:
+   - `pnpm build:gold` llama a `pnpm -C apps/gold build`,
+   - ese flujo usa `apps/gold/vite.config.js` y pasó correctamente.
+
+### Alcance
+
+- Alinear el deploy raíz con `pnpm build:gold`.
+- Evitar que `build:v9` siga dependiendo del `vite.config.js` raíz roto.
+- Limpiar el `vite.config.js` raíz para que no apunte a entradas archivadas si alguien lo usa manualmente.
+- Mantener `outputDirectory` en `apps/gold/dist`.
+
+### Archivos candidatos
+
+- `package.json`
+- `vercel.json`
+- `vite.config.js`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Cambiar `build:v9` puede afectar flujos manuales muy viejos, pero en este caso los alinea con el build oficial vigente.
+- Si algún entorno esperaba explícitamente el `vite.config.js` raíz con rutas antiguas, ese flujo ya estaba roto desde el archivo de superficies archivadas.
+
+### Estrategia de rollback
+
+1. Mantener el build oficial de `apps/gold` como fuente de verdad.
+2. Limpiar solo referencias muertas del `vite.config.js` raíz, sin introducir una arquitectura nueva.
+3. Si apareciera una dependencia externa del alias `build:v9`, este seguirá existiendo como alias compatible, pero delegando al build oficial.
+
+### Plan quirúrgico
+
+1. Cambiar `build:v9` para que delegue a `pnpm build:gold`.
+2. Cambiar `vercel.json` raíz para usar `pnpm build:gold`.
+3. Limpiar entradas archivadas del `vite.config.js` raíz.
+4. Ejecutar `pnpm build:v9` y `pnpm build:gold` para validar ambos caminos.
+
+### Estado post-implementación
+
+- `package.json` raíz ahora delega `build:v9` a `pnpm build:gold`.
+- `vercel.json` raíz ahora usa `buildCommand: "pnpm build:gold"`.
+- `vite.config.js` raíz dejó de referenciar:
+  - `apps/gold/profile/index.html`
+  - `apps/gold/roadmap.html`
+  - `apps/gold/herramientas/index.html`
+- `vite.config.js` raíz volvió a reflejar la superficie activa mínima del producto.
+
+### Validación
+
+- `pnpm build:gold` -> `OK`
+- `pnpm build:v9` -> `OK` (ahora actúa como alias del build oficial)
+- Nota de validación:
+  - una ejecución en paralelo de `build:v9` y `build:gold` generó un falso fallo por competir sobre `apps/gold/dist`,
+  - la validación correcta se repitió de forma secuencial y pasó en ambos casos.
+
+### Riesgo residual
+
+- `dev:v9` y `preview:v9` siguen existiendo por compatibilidad nominal, pero ahora delegan al flujo oficial de `apps/gold`.
+- El `vite.config.js` raíz ya no rompe deploy, aunque la fuente de verdad para el producto sigue siendo `apps/gold/vite.config.js`.
+
 ---
+
+## 🆕 SESIÓN: GATE 0 — Limpieza de auth legacy (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. `apps/gold/assets/js/auth.js` ya no tiene consumidores activos en el producto vigente:
+   - las únicas referencias actuales aparecen en documentación histórica y en HTML ya archivados bajo `archive/legacy-html/`.
+2. `apps/gold/assets/js/auth/authGuard.js` tampoco tiene consumidores activos directos:
+   - sólo lo importa `assets/js/auth.js`,
+   - una referencia adicional aparece en `archive/legacy-html/profile/index.html`.
+3. El producto activo ya funciona con:
+   - `assets/js/auth/authClient.js`
+   - `assets/js/auth/authUI.js`
+   - `assets/js/auth/session-guard.js`
+   - `dashboard/auth-guard.js`
+4. `dashboard/music.html` no es huérfano ni archivo a retirar en este lote:
+   - está implementado y vivo,
+   - pero no pertenece al catálogo oficial de módulos,
+   - debe reclasificarse como utilidad implementada fuera del catálogo, no como legacy huérfano.
+
+### Alcance
+
+- Archivar `assets/js/auth.js` y `assets/js/auth/authGuard.js` fuera de la superficie activa.
+- Mantener la auth vigente apoyada solo en el stack actual (`authClient`, `authUI`, `session-guard`, `dashboard/auth-guard`).
+- Corregir la clasificación documental de `dashboard/music.html`.
+- Dejar trazabilidad clara del retiro de compatibilidad legacy.
+
+### Archivos candidatos
+
+- `apps/gold/assets/js/auth.js`
+- `apps/gold/assets/js/auth/authGuard.js`
+- `apps/gold/archive/legacy-js/`
+- `apps/gold/docs/LEGACY_SURFACES.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/README.md`
+- `apps/gold/public/llms.txt`
+
+### Riesgos
+
+- Si existiera alguna página local/manual fuera del catálogo que todavía dependiera silenciosamente del bridge, dejará de funcionar con la ruta antigua.
+- Archivar el bridge sin mover el resto del producto no rompe build, pero sí cierra definitivamente una vía de compatibilidad implícita.
+
+### Estrategia de rollback
+
+1. Mover los archivos legacy a `archive/legacy-js/`, no borrarlos.
+2. Mantener documentación del destino nuevo para restaurarlos rápido si hiciera falta.
+3. No tocar la auth vigente usada por landing, dashboard y agro.
+
+### Plan quirúrgico
+
+1. Reclasificar `dashboard/music.html` como utilidad implementada fuera del catálogo.
+2. Crear `archive/legacy-js/` y mover ahí `auth.js` y `auth/authGuard.js`.
+3. Actualizar docs operativas y de legado para reflejar el retiro del bridge.
+4. Ejecutar `pnpm build:gold` y registrar validación final.
+
+### Estado post-implementación
+
+- `dashboard/music.html` quedó reclasificado como utilidad implementada fuera del catálogo oficial.
+- `apps/gold/assets/js/auth.js` salió de la superficie activa y fue movido a `apps/gold/archive/legacy-js/auth.js`.
+- `apps/gold/assets/js/auth/authGuard.js` salió de la superficie activa y fue movido a `apps/gold/archive/legacy-js/auth/authGuard.js`.
+- `apps/gold/archive/legacy-js/README.md` documenta el archivo JS histórico.
+- `docs/LEGACY_SURFACES.md` y `docs/AGENT_REPORT_ACTIVE.md` ya no cuentan el bridge auth como deuda viva expuesta.
+- El archivo HTML legacy ahora advierte que no se garantiza ejecución autónoma porque el bridge auth histórico también fue archivado.
+
+### Validación
+
+- Barrido de referencias activas:
+  - no quedaron consumidores vivos de `assets/js/auth.js` ni de `assets/js/auth/authGuard.js` fuera de documentación histórica y archivo legacy.
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - resultado: `OK`
+  - guardas: `agent-guard: OK`, `agent-report-check: OK`, `check-llms: OK`, `UTF-8 verification passed`
+
+### Riesgo residual
+
+- Los HTML archivados que antes apuntaban a `assets/js/auth.js` se conservan como referencia histórica y ya no deben considerarse ejecutables como superficie vigente.
 
 ## 🆕 SESIÓN: GATE 0 — Archivo y poda de HTML huérfanos (2026-03-05)
 

@@ -46,5 +46,7 @@ This file contains the current product, architecture and routing policy for `app
 - Some HTML files remain in the repo only for archive or redirect purposes
 - Not every HTML file in the tree is part of the official MPA input
 - Archived legacy HTML now lives under `apps/gold/archive/legacy-html/`
+- Archived legacy auth bridge now lives under `apps/gold/archive/legacy-js/`
+- `dashboard/music.html` is implemented but should be treated as a utility outside the official module catalog
 
 # EOF — YavlGold llms.txt (do not truncate)
