@@ -4,6 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            const path = window.location.pathname;
+            if (path === '/agro/index.html' || path === '/agro/index.html/') {
+                const suffix = `${window.location.search || ''}${window.location.hash || ''}`;
+                window.location.replace(`/agro/${suffix}`);
+            }
+        })();
+    </script>
     <title>YavlGold V9.8 - Módulo Agro</title>
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="apple-touch-icon" href="../assets/images/logo.webp"> <!-- Google Fonts -->

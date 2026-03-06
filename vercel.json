@@ -25,6 +25,16 @@
       "source": "/herramientas/:path*",
       "destination": "/tecnologia/:path*",
       "permanent": true
+    },
+    {
+      "source": "/agro/index.html",
+      "destination": "/agro",
+      "permanent": true
+    },
+    {
+      "source": "/agro/index.html/",
+      "destination": "/agro",
+      "permanent": true
     }
   ],
   "rewrites": [

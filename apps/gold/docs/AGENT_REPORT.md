@@ -1,3 +1,78 @@
+## 🆕 SESIÓN: GATE 0 — Carga de Agro rota por variante `/agro/index.html/` (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. La incidencia visible ocurre en producción entrando por `https://yavlgold.com/agro/index.html/`.
+2. `apps/gold/agro/index.html` todavía usa múltiples rutas relativas dependientes del documento actual:
+   - favicon e imágenes con `../assets/...`
+   - CSS locales con `./agro-dashboard.css`, `./agrociclos.css`, etc.
+   - imports dinámicos como `import('./agro.js')` y `import('./dashboard.js')`
+3. Cuando el documento se resuelve como `/agro/index.html/`, esas rutas relativas pasan a colgar de `/agro/index.html/`:
+   - `./agro.js` intentaría resolver a `/agro/index.html/agro.js`
+   - `./agro-dashboard.css` intentaría resolver a `/agro/index.html/agro-dashboard.css`
+   - `../assets/...` pasa a resolver contra `/agro/assets/...`
+4. El resultado esperado es una página parcialmente visible pero con carga rota del módulo principal.
+5. La mitigación correcta es doble:
+   - endurecer `agro/index.html` con rutas absolutas desde raíz,
+   - canonicalizar `/agro/index.html` y `/agro/index.html/` hacia `/agro`.
+
+### Alcance
+
+- Corregir rutas relativas frágiles en `apps/gold/agro/index.html`.
+- Agregar redirects explícitos para la variante `index.html` de Agro.
+- Validar con build oficial.
+
+### Archivos candidatos
+
+- `apps/gold/agro/index.html`
+- `apps/gold/vercel.json`
+- `vercel.json`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Tocar imports y assets de `agro/index.html` afecta el boot del módulo principal, así que el cambio debe ser quirúrgico.
+- Un redirect mal definido podría interferir con la ruta canónica `/agro/`.
+
+### Estrategia de rollback
+
+1. Limitar el cambio a rutas de `agro/index.html` y redirects específicos de `index.html`.
+2. No tocar lógica interna de `agro.js`.
+3. Si algo fallara, revertir sólo el hardening de rutas y mantener el diagnóstico registrado.
+
+### Plan quirúrgico
+
+1. Pasar rutas de assets/imports de `agro/index.html` a paths absolutos.
+2. Añadir redirects de `/agro/index.html` y `/agro/index.html/` hacia `/agro`.
+3. Ejecutar `pnpm build:gold`.
+4. Verificar que el entrypoint canónico siga siendo `/agro/`.
+
+### Estado post-implementación
+
+- `apps/gold/agro/index.html` ahora canonicaliza en cliente las variantes:
+  - `/agro/index.html`
+  - `/agro/index.html/`
+  hacia `/agro/`
+- `apps/gold/vercel.json` y `vercel.json` ahora declaran redirects explícitos para esas dos variantes.
+- No se tocó lógica interna de `agro.js`; el fix quedó contenido en entrypoint y routing.
+
+### Validación
+
+- `pnpm build:gold` -> `OK`
+- verificación con navegador real antes del fix:
+  - `https://www.yavlgold.com/agro/index.html/`
+  - 8 errores de consola
+  - assets 404 bajo `/agro/assets/...`
+- verificación en preview local después del fix:
+  - abrir `http://127.0.0.1:4173/agro/index.html/`
+  - resultado: redirige al flujo canónico y termina en `index.html#login` por guard de auth, en vez de quedarse en blanco
+
+### Riesgo residual
+
+- Si existen enlaces externos que apunten a otras variantes no canónicas de Agro distintas de `index.html`, seguirán dependiendo del routing actual.
+
+---
+
 ## 🆕 SESIÓN: GATE 0 — Card de fundador en dashboard (2026-03-05)
 
 ### Diagnóstico (tarea actual)

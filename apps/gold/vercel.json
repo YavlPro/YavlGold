@@ -5,7 +5,9 @@
     { "source": "/herramientas", "destination": "/tecnologia", "permanent": true },
     { "source": "/herramientas/:path*", "destination": "/tecnologia/:path*", "permanent": true },
     { "source": "/suite", "destination": "/crypto", "permanent": true },
-    { "source": "/suite/:path*", "destination": "/crypto", "permanent": true }
+    { "source": "/suite/:path*", "destination": "/crypto", "permanent": true },
+    { "source": "/agro/index.html", "destination": "/agro", "permanent": true },
+    { "source": "/agro/index.html/", "destination": "/agro", "permanent": true }
   ],
   "rewrites": [
     { "source": "/academia", "destination": "/academia/index.html" },
