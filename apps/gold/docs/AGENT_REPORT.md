@@ -1,3 +1,42 @@
+## 🆕 SESIÓN: GATE 0 — Artefactos `.playwright-cli` fuera del repo (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. Los archivos `.yml` y `.log` que quedaron como no rastreados provienen de `.playwright-cli/`.
+2. Esa carpeta la genera `playwright-cli` al abrir navegador y tomar snapshots/console logs.
+3. Hoy `.gitignore` no contempla `.playwright-cli/`, por eso los artefactos aparecen en `git status`.
+4. La solución correcta no es tocar código del producto:
+   - hay que ignorar la carpeta de artefactos,
+   - y limpiar la carpeta ya creada en el workspace.
+
+### Alcance
+
+- Ignorar `.playwright-cli/` a nivel raíz.
+- Ignorar también `output/playwright/` como carpeta recomendada para artefactos futuros.
+- Borrar los artefactos actuales del workspace.
+
+### Archivos candidatos
+
+- `.gitignore`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Riesgo funcional nulo; sólo afecta archivos temporales de depuración.
+
+### Estrategia de rollback
+
+1. Quitar las entradas de `.gitignore` si en algún momento quieres versionar artefactos de navegador.
+2. Los archivos borrados son temporales y se regeneran al volver a usar la herramienta.
+
+### Plan quirúrgico
+
+1. Agregar `.playwright-cli/` y `output/playwright/` a `.gitignore`.
+2. Borrar `.playwright-cli/` del workspace.
+3. Verificar que `git status` quede limpio de esos artefactos.
+
+---
+
 ## 🆕 SESIÓN: GATE 0 — Ajuste fino de bio del fundador (2026-03-05)
 
 ### Diagnóstico (tarea actual)

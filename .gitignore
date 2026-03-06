@@ -72,6 +72,8 @@ verify_restore.sh
 logs/
 *.log
 .devserver.*
+.playwright-cli/
+output/playwright/
 
 # Temporary files
 tmp/
