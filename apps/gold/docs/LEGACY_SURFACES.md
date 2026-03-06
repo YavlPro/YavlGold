@@ -45,12 +45,12 @@ Estos archivos ya fueron movidos a `archive/legacy-html/`.
 - `archive/legacy-js/auth.js`
 - `archive/legacy-js/auth/authGuard.js`
 
-## Utilidades implementadas fuera del catálogo
+## Utilidades internas fuera del catálogo de módulos
 
 - `dashboard/music.html`
-  - utilidad viva e implementada
+  - utilidad viva para usuario autenticado
+  - pertenece a la experiencia interna del dashboard
   - no forma parte del catálogo oficial de módulos
-  - requiere decisión de producto en un lote separado
 
 ## Legacy nominal
 

@@ -3,11 +3,13 @@ import path from 'path';
 
 const cwd = process.cwd();
 const reportCandidates = [
+  path.join(cwd, 'docs', 'AGENT_REPORT_ACTIVE.md'),
+  path.join(cwd, 'apps', 'gold', 'docs', 'AGENT_REPORT_ACTIVE.md'),
   path.join(cwd, 'docs', 'AGENT_REPORT.md'),
   path.join(cwd, 'apps', 'gold', 'docs', 'AGENT_REPORT.md')
 ];
 const reportPath = reportCandidates.find((p) => fs.existsSync(p));
-const errorMessage = 'Falta AGENT_REPORT.md con Diagn\u00f3stico y Plan';
+const errorMessage = 'Falta AGENT_REPORT_ACTIVE.md con Diagn\u00f3stico y Plan';
 const minLines = 30;
 
 if (!reportPath) {
@@ -30,4 +32,4 @@ if (!hasDiagnostico || !hasPlan || lineCount < minLines) {
   process.exit(1);
 }
 
-console.log('agent-report-check: OK');
+console.log(`agent-report-check: OK (${path.basename(reportPath)})`);

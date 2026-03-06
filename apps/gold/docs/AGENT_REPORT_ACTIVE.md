@@ -2,6 +2,14 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Diagnóstico operativo
+
+- `Agro` es el único módulo liberado del catálogo oficial.
+- `Academia`, `Social`, `Tecnología` y `Crypto` siguen oficiales pero no disponibles.
+- `dashboard/music.html` es una utilidad interna del dashboard; no es un módulo oficial ni una superficie legacy huérfana.
+- `archive/legacy-html/` y `archive/legacy-js/` concentran las superficies retiradas del producto activo.
+- `AGENT_REPORT.md` se conserva como histórico completo; este archivo es el reporte operativo corto.
+
 ## Producto vigente
 
 - `Agro` es el único módulo liberado.
@@ -25,12 +33,19 @@ Resumen operativo actual de `apps/gold`.
 
 ## Deuda visible pendiente
 
-- `dashboard/music.html` sigue como utilidad implementada fuera del catálogo oficial.
+- Decidir si `dashboard/music.html` se mantiene como utilidad interna permanente o si se mueve a una sección propia más adelante.
 - La carpeta `archive/legacy-html/` ya concentra los HTML históricos fuera de la superficie activa.
 - La carpeta `archive/legacy-js/` concentra el bridge auth legacy retirado del producto activo.
-- `AGENT_REPORT.md` sigue siendo el histórico completo y ya requiere partición definitiva.
+- El tooling raíz sigue en modo compatibilidad y podrá simplificarse en otro lote.
 
 ## Documentos de apoyo
 
-- Histórico completo: `docs/AGENT_REPORT.md`
+- Reporte histórico completo: `docs/AGENT_REPORT.md`
 - Inventario de legado: `docs/LEGACY_SURFACES.md`
+
+## Plan operativo
+
+1. Mantener `AGENT_REPORT_ACTIVE.md` como gate corto para build y trabajo diario.
+2. Usar `AGENT_REPORT.md` solo como histórico acumulado de sesiones y cierres.
+3. Tratar `music` como utilidad interna del dashboard mientras no cambie la decisión de producto.
+4. Dejar para lotes separados la simplificación final del tooling raíz y cualquier reubicación futura de `music`.

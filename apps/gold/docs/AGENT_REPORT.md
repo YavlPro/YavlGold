@@ -1,3 +1,75 @@
+## 🆕 SESIÓN: GATE 0 — Utilidad Music + reporte activo operativo (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. `dashboard/music.html` está implementado y protegido por auth, pero su copy visible aún lo presenta como `Legacy`:
+   - `<title>Biblioteca Local (Legacy) | YavlGold</title>`
+   - `docs/LEGACY_SURFACES.md` lo clasifica como utilidad implementada fuera del catálogo, no como utilidad interna del dashboard.
+2. El producto actual ya no necesita tratar `music` como superficie huérfana:
+   - sigue siendo una utilidad viva para usuario autenticado,
+   - no forma parte del catálogo oficial de módulos,
+   - pero sí pertenece a la experiencia interna del dashboard.
+3. `AGENT_REPORT_ACTIVE.md` ya existe como resumen corto, pero el build todavía valida `AGENT_REPORT.md`:
+   - `apps/gold/scripts/agent-report-check.mjs` busca únicamente `AGENT_REPORT.md`,
+   - `AGENT_REPORT_ACTIVE.md` aún no contiene estructura explícita de `Diagnóstico` y `Plan` para servir como gate operativo.
+4. El histórico grande sigue siendo útil, pero ya no conviene usarlo como fuente operativa principal para validación.
+
+### Alcance
+
+- Reetiquetar `music` como utilidad interna del dashboard.
+- Actualizar docs operativas para reflejar ese estatus.
+- Convertir `AGENT_REPORT_ACTIVE.md` en el reporte operativo validado por build.
+- Mantener `AGENT_REPORT.md` como histórico completo.
+
+### Archivos candidatos
+
+- `apps/gold/dashboard/music.html`
+- `apps/gold/docs/LEGACY_SURFACES.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/scripts/agent-report-check.mjs`
+- `apps/gold/README.md`
+- `apps/gold/public/llms.txt`
+
+### Riesgos
+
+- Cambiar el checker al reporte activo exige que ese archivo mantenga siempre `Diagnóstico` y `Plan` mínimos.
+- Reetiquetar `music` debe ser superficial para no tocar su implementación funcional.
+
+### Estrategia de rollback
+
+1. Mantener `AGENT_REPORT.md` intacto como histórico.
+2. Cambiar solo labels/documentación de `music`, no su lógica.
+3. Si el gate nuevo fallara, el checker puede volver a apuntar al histórico.
+
+### Plan quirúrgico
+
+1. Reetiquetar `music` como utilidad interna del dashboard en UI y docs.
+2. Reestructurar `AGENT_REPORT_ACTIVE.md` con `Diagnóstico` y `Plan` operativos.
+3. Cambiar `agent-report-check.mjs` para validar `AGENT_REPORT_ACTIVE.md` como fuente principal.
+4. Ejecutar `pnpm build:gold` para confirmar que el gate nuevo pasa.
+
+### Estado post-implementación
+
+- `dashboard/music.html` dejó de presentarse como `Legacy` y ahora se muestra como utilidad interna del dashboard.
+- `docs/LEGACY_SURFACES.md` ya clasifica `music` como utilidad interna fuera del catálogo de módulos, no como superficie huérfana.
+- `docs/AGENT_REPORT_ACTIVE.md` quedó convertido en reporte operativo corto con secciones explícitas de `Diagnóstico` y `Plan`.
+- `apps/gold/scripts/agent-report-check.mjs` ahora valida primero `AGENT_REPORT_ACTIVE.md`.
+- `README.md` y `public/llms.txt` ya reflejan que el reporte activo es la fuente corta de validación y que `music` es una utilidad interna.
+
+### Validación
+
+- `pnpm build:gold` -> `OK`
+- salida relevante del gate:
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+- `dist/dashboard/music.html` sigue construyéndose correctamente (`66.06 kB`)
+
+### Riesgo residual
+
+- `AGENT_REPORT.md` sigue creciendo como histórico; este lote solo cambió la fuente operativa del gate, no resolvió todavía una partición más profunda del histórico.
+
+---
+
 ## 🆕 SESIÓN: GATE 0 — Vulnerabilidades y pin de Node (2026-03-05)
 
 ### Diagnóstico (tarea actual)

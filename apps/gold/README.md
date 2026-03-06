@@ -65,8 +65,8 @@ pnpm -C apps/gold build
 
 ## Documentación operativa
 
+- `docs/AGENT_REPORT_ACTIVE.md`: reporte operativo actual y fuente corta para validación.
 - `docs/AGENT_REPORT.md`: histórico completo de diagnósticos y cierres.
-- `docs/AGENT_REPORT_ACTIVE.md`: resumen operativo actual, preparado para la partición futura.
 - `docs/LEGACY_SURFACES.md`: inventario de superficies legacy, huérfanas o candidatas a archivo.
 
 ## Política de desarrollo
@@ -79,4 +79,4 @@ pnpm -C apps/gold build
 
 ## Nota sobre legado
 
-El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite` y otras superficies antiguas. Los HTML huérfanos ya fueron movidos a `archive/legacy-html/` y el bridge auth histórico a `archive/legacy-js/`. `music` sigue vivo como utilidad separada del catálogo oficial. El inventario vivo está en `docs/LEGACY_SURFACES.md`.
+El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite` y otras superficies antiguas. Los HTML huérfanos ya fueron movidos a `archive/legacy-html/` y el bridge auth histórico a `archive/legacy-js/`. `music` sigue vivo como utilidad interna del dashboard, separada del catálogo oficial de módulos. El inventario vivo está en `docs/LEGACY_SURFACES.md`.
