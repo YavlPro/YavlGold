@@ -59,9 +59,21 @@
   font-family: "Rajdhani", sans-serif;
 }
 
+.agro-ops-v10 .tx-card[data-row-selectable="1"] {
+  cursor: pointer;
+}
+
 .agro-ops-v10 .tx-card:hover {
   border-color: var(--border-gold, rgba(200, 167, 82, 0.25));
   box-shadow: var(--shadow-gold-xs, 0 1px 6px rgba(200, 167, 82, 0.1));
+}
+
+.agro-ops-v10 .tx-card.is-selected {
+  border-color: rgba(200, 167, 82, 0.44);
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02)),
+    var(--bg-3, #111113);
+  box-shadow: 0 10px 22px rgba(200, 167, 82, 0.12);
 }
 
 .agro-ops-v10 .tx-card::before {
@@ -253,6 +265,19 @@
   overflow: visible !important;
   display: flex !important;
   align-items: center;
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: width 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+
+.agro-ops-v10 .tx-card.is-selected .tx-actions,
+.agro-ops-v10 .tx-card.is-actions-open .tx-actions {
+  width: auto;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 /* ==============================================

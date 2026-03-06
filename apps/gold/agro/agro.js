@@ -15,6 +15,8 @@ import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
+import { initAgroShell } from './agro-shell.js';
+import { initFactureroSelection } from './agro-selection.js';
 import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
 import { clearLegacyAgroCropsCache, readAgroCropsCache, readBestAgroCrops, writeAgroCropsCache } from '../assets/js/utils/agroCropsCache.js';
 import {
@@ -4391,6 +4393,11 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     row.dataset.unitType = String(item?.unit_type ?? '');
     row.dataset.unitQty = String(item?.unit_qty ?? '');
     row.dataset.quantityKg = String(item?.quantity_kg ?? '');
+    row.dataset.rowSelectable = showActions ? '1' : '0';
+    row.dataset.rowLabel = displayConcept;
+    row.tabIndex = showActions ? 0 : -1;
+    row.setAttribute('role', showActions ? 'button' : 'group');
+    row.setAttribute('aria-pressed', 'false');
     if (incomeOrLossReverted) {
         row.style.opacity = '0.5';
     }
@@ -13236,6 +13243,14 @@ function switchTab(tabName, options = {}) {
     writeStoredTab(tabName);
     handleOpsTabChanged(tabName);
     resetHistorySearch();
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('agro:finance-tab:changed', {
+            detail: {
+                tabName,
+                options
+            }
+        }));
+    }
 
     // Lazy-load Carrito module when tab is first activated
     if (tabName === 'carrito') {
@@ -15142,6 +15157,8 @@ export function initAgro() {
     console.info('[AGRO] V9.6: facturero who-field enabled');
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
     initAgroFocusMode(); // V9.8: Modo Enfoque (UI only)
+    initAgroShell();
+    initFactureroSelection();
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
     setTimeout(() => {

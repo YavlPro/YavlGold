@@ -1124,65 +1124,124 @@
         <div class="particle"></div>
         <div class="particle"></div>
     </div>
-    <div class="app-container"> <!-- Header -->
-        <header class="header animate-in" style="position: relative; z-index: 9999;">
-            <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;" title="Volver al Inicio">
-                <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
-                    class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span>
-            </a>
-            <nav class="header-nav" style="display: flex; gap: 0.5rem;">
-                <a href="/" class="nav-btn"
-                    style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 50px; color: #C8A752; text-decoration: none; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; transition: all 0.3s ease;"
-                    onmouseover="this.style.background='rgba(200, 167, 82, 0.2)'; this.style.borderColor='#C8A752';"
-                    onmouseout="this.style.background='rgba(200, 167, 82, 0.1)'; this.style.borderColor='rgba(200, 167, 82, 0.3)';">
-                    <span>🏠</span> Dashboard Principal
-                </a>
-            </nav>
-
-            <!-- Notification Center (Dashboard Style) -->
-            <div style="position: relative; margin-right: 1rem; z-index: 9999;">
-                <button id="notif-btn" class="notification-bell yg-glowpulse"
-                    style="width: 42px; height: 42px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: all 0.3s ease;"
-                    onmouseover="this.style.background='rgba(200, 167, 82, 0.2)'; this.style.borderColor='#C8A752'; this.style.boxShadow='0 0 15px rgba(200, 167, 82, 0.3)';"
-                    onmouseout="this.style.background='rgba(200, 167, 82, 0.1)'; this.style.borderColor='rgba(200, 167, 82, 0.3)'; this.style.boxShadow='none';"
-                    title="Centro de Alertas">
-                    <i class="fas fa-bell" style="font-size: 1.1rem; color: #C8A752;"></i>
-                    <span id="notif-badge"
-                        style="position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; display: none; animation: pulse 2s infinite; border: 2px solid #0a0a0a; box-shadow: 0 0 10px rgba(239,68,68,0.8);"></span>
-                </button>
-
-                <div id="notif-dropdown"
-                    style="position: absolute; right: 0; top: 100%; margin-top: 0.75rem; width: 320px; background: linear-gradient(135deg, #0a0a0a 0%, #050505 100%); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 12px; box-shadow: 0 0 40px rgba(200, 167, 82, 0.15); display: none; transform-origin: top right; z-index: 9999;">
-                    <div
-                        style="padding: 1rem; border-bottom: 1px solid rgba(200, 167, 82, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border-radius: 12px 12px 0 0;">
-                        <span
-                            style="font-size: 10px; font-weight: 700; color: var(--gold-primary, #C8A752); font-family: 'Orbitron', sans-serif; letter-spacing: 2px; text-transform: uppercase;">Centro
-                            de Alertas</span>
-                        <button id="mark-read-btn"
-                            style="font-size: 9px; color: #666; background: transparent; border: none; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; transition: color 0.2s;"
-                            onmouseover="this.style.color='#fff';" onmouseout="this.style.color='#666';">
-                            <i class="fa-solid fa-check-double"></i> Limpiar
-                        </button>
-                    </div>
-                    <ul id="notif-list"
-                        style="max-height: 256px; overflow-y: auto; padding: 4px; margin: 0; list-style: none;">
-                        <li
-                            style="padding: 1.5rem; text-align: center; font-size: 11px; color: #555; font-style: italic;">
-                            Cargando sistema...</li>
-                    </ul>
-                </div>
-
-
+    <button type="button" class="agro-shell-backdrop" id="agro-shell-backdrop" hidden aria-hidden="true"></button>
+    <aside class="agro-shell-sidebar" id="agro-shell-sidebar" aria-label="Navegación Agro" aria-hidden="true">
+        <div class="agro-shell-sidebar__inner">
+            <div class="agro-shell-sidebar__head">
+                <p class="agro-shell-sidebar__eyebrow">Agro Shell V10</p>
+                <h2 class="agro-shell-sidebar__title">Flujo guiado del agricultor</h2>
+                <p class="agro-shell-sidebar__copy">Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de Operaciones.</p>
             </div>
 
-            <button type="button" class="user-profile user-profile-btn" id="agro-profile-button"
-                aria-haspopup="dialog" aria-controls="modal-agro-profile" aria-expanded="false">
-                <div class="user-avatar">👨‍🌾</div>
-                <div class="user-info"> <span class="user-greeting">Bienvenido,</span> <span
-                        class="user-name">Agricultor</span> </div>
-            </button>
+            <div class="agro-shell-sidebar__group">
+                <p class="agro-shell-sidebar__label">Principal</p>
+                <button type="button" class="agro-shell-link" data-agro-view="dashboard">Dashboard Agro</button>
+                <button type="button" class="agro-shell-link" data-agro-view="cultivos">Cultivos activos</button>
+                <button type="button" class="agro-shell-link" data-agro-view="ciclos">Historial de ciclos</button>
+            </div>
+
+            <div class="agro-shell-sidebar__group">
+                <p class="agro-shell-sidebar__label">Operaciones</p>
+                <button type="button" class="agro-shell-link" data-agro-view="operaciones">Centro de operaciones</button>
+                <button type="button" class="agro-shell-link" data-agro-view="pagados">Pagados</button>
+                <button type="button" class="agro-shell-link" data-agro-view="fiados">Fiados</button>
+                <button type="button" class="agro-shell-link" data-agro-view="perdidas">Pérdidas</button>
+                <button type="button" class="agro-shell-link" data-agro-view="donaciones">Donaciones</button>
+                <button type="button" class="agro-shell-link" data-agro-view="otros">Otros</button>
+                <button type="button" class="agro-shell-link" data-agro-view="carrito">Carrito</button>
+                <button type="button" class="agro-shell-link" data-agro-view="rankings">Rankings</button>
+            </div>
+
+            <div class="agro-shell-sidebar__group">
+                <p class="agro-shell-sidebar__label">Herramientas</p>
+                <button type="button" class="agro-shell-link" data-agro-view="clima">Clima</button>
+                <button type="button" class="agro-shell-link" data-agro-view="agenda">Agenda</button>
+                <button type="button" class="agro-shell-link" data-agro-view="herramientas">Herramientas</button>
+                <button type="button" class="agro-shell-link" data-agro-view="agrorepo">Bitácora</button>
+            </div>
+
+            <div class="agro-shell-sidebar__group">
+                <p class="agro-shell-sidebar__label">Acciones</p>
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-crop">Nuevo cultivo</button>
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-record">Nuevo registro</button>
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="assistant">Asistente Agro</button>
+            </div>
+        </div>
+    </aside>
+
+    <div class="app-container"> <!-- Header -->
+        <header class="header animate-in agro-shell-header" style="position: relative; z-index: 9999;">
+            <div class="agro-shell-header__left">
+                <button type="button" class="agro-shell-toggle" id="agro-shell-toggle" aria-expanded="false"
+                    aria-controls="agro-shell-sidebar" aria-label="Abrir navegación Agro">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;" title="Volver al Inicio">
+                    <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
+                        class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span>
+                </a>
+            </div>
+
+            <div class="agro-shell-header__right">
+                <nav class="header-nav agro-shell-quicknav" style="display: flex; gap: 0.5rem;">
+                    <a href="/" class="nav-btn agro-header-link"
+                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 50px; color: #C8A752; text-decoration: none; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='rgba(200, 167, 82, 0.2)'; this.style.borderColor='#C8A752';"
+                        onmouseout="this.style.background='rgba(200, 167, 82, 0.1)'; this.style.borderColor='rgba(200, 167, 82, 0.3)';">
+                        <span>🏠</span> Dashboard Principal
+                    </a>
+                    <button type="button" class="nav-btn agro-header-link" data-agro-action="new-record">
+                        <span>✍️</span> Nuevo registro
+                    </button>
+                </nav>
+
+                <div class="agro-shell-header__utilities">
+                    <!-- Notification Center (Dashboard Style) -->
+                    <div class="agro-header-notifications" style="position: relative; margin-right: 1rem; z-index: 9999;">
+                        <button id="notif-btn" class="notification-bell yg-glowpulse"
+                            style="width: 42px; height: 42px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: all 0.3s ease;"
+                            onmouseover="this.style.background='rgba(200, 167, 82, 0.2)'; this.style.borderColor='#C8A752'; this.style.boxShadow='0 0 15px rgba(200, 167, 82, 0.3)';"
+                            onmouseout="this.style.background='rgba(200, 167, 82, 0.1)'; this.style.borderColor='rgba(200, 167, 82, 0.3)'; this.style.boxShadow='none';"
+                            title="Centro de Alertas">
+                            <i class="fas fa-bell" style="font-size: 1.1rem; color: #C8A752;"></i>
+                            <span id="notif-badge"
+                                style="position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; display: none; animation: pulse 2s infinite; border: 2px solid #0a0a0a; box-shadow: 0 0 10px rgba(239,68,68,0.8);"></span>
+                        </button>
+
+                        <div id="notif-dropdown"
+                            style="position: absolute; right: 0; top: 100%; margin-top: 0.75rem; width: 320px; background: linear-gradient(135deg, #0a0a0a 0%, #050505 100%); border: 1px solid rgba(200, 167, 82, 0.3); border-radius: 12px; box-shadow: 0 0 40px rgba(200, 167, 82, 0.15); display: none; transform-origin: top right; z-index: 9999;">
+                            <div
+                                style="padding: 1rem; border-bottom: 1px solid rgba(200, 167, 82, 0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border-radius: 12px 12px 0 0;">
+                                <span
+                                    style="font-size: 10px; font-weight: 700; color: var(--gold-primary, #C8A752); font-family: 'Orbitron', sans-serif; letter-spacing: 2px; text-transform: uppercase;">Centro
+                                    de Alertas</span>
+                                <button id="mark-read-btn"
+                                    style="font-size: 9px; color: #666; background: transparent; border: none; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; gap: 4px; transition: color 0.2s;"
+                                    onmouseover="this.style.color='#fff';" onmouseout="this.style.color='#666';">
+                                    <i class="fa-solid fa-check-double"></i> Limpiar
+                                </button>
+                            </div>
+                            <ul id="notif-list"
+                                style="max-height: 256px; overflow-y: auto; padding: 4px; margin: 0; list-style: none;">
+                                <li
+                                    style="padding: 1.5rem; text-align: center; font-size: 11px; color: #555; font-style: italic;">
+                                    Cargando sistema...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button type="button" class="user-profile user-profile-btn" id="agro-profile-button"
+                        aria-haspopup="dialog" aria-controls="modal-agro-profile" aria-expanded="false">
+                        <div class="user-avatar">👨‍🌾</div>
+                        <div class="user-info"> <span class="user-greeting">Bienvenido,</span> <span
+                                class="user-name">Agricultor</span> </div>
+                    </button>
+                </div>
+            </div>
         </header> <!-- KPIs Section -->
-        <section class="kpi-section agro-dashboard-v10" data-agro-section="agenda">
+        <section class="kpi-section agro-dashboard-v10" data-agro-section="agenda" data-agro-shell-region="dashboard">
             <div class="agro-dash-header section-header animate-in delay-1">
                 <h2 class="agro-dash-title section-title">
                     <span class="agro-dash-icon">📊</span> Dashboard Agro
@@ -1200,6 +1259,42 @@
             </div>
 
             <div class="agro-dash-separator" aria-hidden="true"></div>
+
+            <article class="agro-dash-guide card animate-in delay-2">
+                <div class="agro-dash-guide__content">
+                    <div>
+                        <p class="agro-dash-guide__eyebrow">Ruta sugerida</p>
+                        <h3 class="agro-dash-guide__title">Hoy empieza por el cultivo y termina en la decisión</h3>
+                        <p class="agro-dash-guide__copy">Crea o selecciona tu cultivo, registra el movimiento y luego valida clima, agenda y herramientas sin perder el contexto.</p>
+                    </div>
+                    <div class="agro-dash-guide__steps">
+                        <button type="button" class="agro-guide-step" data-agro-action="new-crop">
+                            <span class="agro-guide-step__index">1</span>
+                            <span class="agro-guide-step__text">Crear cultivo</span>
+                        </button>
+                        <button type="button" class="agro-guide-step" data-agro-view="cultivos">
+                            <span class="agro-guide-step__index">2</span>
+                            <span class="agro-guide-step__text">Seleccionar ciclo</span>
+                        </button>
+                        <button type="button" class="agro-guide-step" data-agro-action="new-record">
+                            <span class="agro-guide-step__index">3</span>
+                            <span class="agro-guide-step__text">Registrar movimiento</span>
+                        </button>
+                        <button type="button" class="agro-guide-step" data-agro-view="clima">
+                            <span class="agro-guide-step__index">4</span>
+                            <span class="agro-guide-step__text">Revisar clima</span>
+                        </button>
+                        <button type="button" class="agro-guide-step" data-agro-view="agenda">
+                            <span class="agro-guide-step__index">5</span>
+                            <span class="agro-guide-step__text">Abrir agenda</span>
+                        </button>
+                        <button type="button" class="agro-guide-step" data-agro-view="herramientas">
+                            <span class="agro-guide-step__index">6</span>
+                            <span class="agro-guide-step__text">Herramientas extra</span>
+                        </button>
+                    </div>
+                </div>
+            </article>
 
             <div class="kpi-grid agro-dash-grid">
                 <article class="card kpi-card agro-dash-card animate-in delay-2" data-widget="weather">
@@ -1291,7 +1386,7 @@
 
 
         <!-- Active Crops Section -->
-        <section class="crops-section agro-ops-v10" data-agro-section="activeCrops">
+        <section class="crops-section agro-ops-v10" data-agro-section="activeCrops" data-agro-shell-region="cultivos">
             <header class="module-header animate-in delay-3">
                 <div class="module-title-group">
                     <div class="module-icon">🌱</div>
@@ -1519,7 +1614,8 @@
     <!-- ============================================
          💰 SECCIÓN FINANZAS - Control de Gastos
          ============================================ -->
-    <section class="finances-section agro-ops-v10" style="margin-top: 2rem; margin-bottom: 2rem;" data-agro-section="ops">
+    <section class="finances-section agro-ops-v10" style="margin-top: 2rem; margin-bottom: 2rem;" data-agro-section="ops"
+        data-agro-shell-region="ops">
         <header class="module-header animate-in">
             <div class="module-title-group">
                 <div class="module-icon">💰</div>
@@ -1584,27 +1680,31 @@
                 </div>
                 <div class="ops-step-block" aria-label="Paso 2 Qué ver">
                     <p class="ops-step-label">PASO 2 · Qué ver</p>
+                    <p class="ops-step-helper">Abre una vista enfocada del facturero. Carrito y Rankings forman parte oficial del flujo.</p>
+                    <div class="financial-tabs" role="tablist" aria-label="Pestañas de finanzas agro">
+                        <button type="button" class="financial-tab-btn is-active" role="tab" id="tab-btn-gastos"
+                            aria-selected="true" aria-controls="tab-panel-gastos" data-tab="gastos">Gastos</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-ingresos" aria-selected="false"
+                            aria-controls="tab-panel-ingresos" data-tab="ingresos">Pagados</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-pendientes" aria-selected="false"
+                            aria-controls="tab-panel-pendientes" data-tab="pendientes">Fiados</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-perdidas" aria-selected="false"
+                            aria-controls="tab-panel-perdidas" data-tab="perdidas">P&eacute;rdidas</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-transferencias"
+                            aria-selected="false" aria-controls="tab-panel-transferencias"
+                            data-tab="transferencias">Donaciones</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-otros" aria-selected="false"
+                            aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito" aria-selected="false"
+                            aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2; Carrito</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-rankings" aria-selected="false"
+                            aria-controls="tab-panel-rankings" data-tab="rankings">&#x1F3C6; Rankings</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="financial-tabs" role="tablist" aria-label="Pestañas de finanzas agro">
-                <button type="button" class="financial-tab-btn is-active" role="tab" id="tab-btn-gastos"
-                    aria-selected="true" aria-controls="tab-panel-gastos" data-tab="gastos">Gastos</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-ingresos" aria-selected="false"
-                    aria-controls="tab-panel-ingresos" data-tab="ingresos">Pagados</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-pendientes" aria-selected="false"
-                    aria-controls="tab-panel-pendientes" data-tab="pendientes">Fiados</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-perdidas" aria-selected="false"
-                    aria-controls="tab-panel-perdidas" data-tab="perdidas">P&eacute;rdidas</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-transferencias"
-                    aria-selected="false" aria-controls="tab-panel-transferencias"
-                    data-tab="transferencias">Donaciones</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-otros" aria-selected="false"
-                    aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito" aria-selected="false"
-                    aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2; Carrito</button>
-                <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-rankings" aria-selected="false"
-                    aria-controls="tab-panel-rankings" data-tab="rankings">&#x1F3C6; Rankings</button>
+            <div class="ops-selection-status" id="ops-selection-status" aria-live="polite">
+                Selecciona un registro del historial para ver sus acciones disponibles.
             </div>
 
             <div class="financial-tab-panels">
@@ -1883,7 +1983,8 @@
         </div>
     </section>
 
-    <section class="agro-tools-section agro-ops-v10 animate-in delay-6" id="agro-tools-section" style="margin-top: 2rem;" hidden inert>
+    <section class="agro-tools-section agro-ops-v10 animate-in delay-6" id="agro-tools-section" style="margin-top: 2rem;"
+        data-agro-shell-region="herramientas" hidden inert>
         <details class="yg-accordion" id="yg-acc-tools">
             <summary class="yg-accordion-summary" aria-controls="agro-tools-content" aria-expanded="false">
                 <span class="yg-accordion-icon">🧰</span>
@@ -1891,7 +1992,44 @@
                 <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
             </summary>
             <div class="yg-accordion-content" id="agro-tools-content">
-                <div data-agro-tools-body></div>
+                <div class="agro-tools-grid" data-agro-tools-body>
+                    <article class="agro-tool-card" id="agro-tool-card-weather">
+                        <p class="agro-tool-card__eyebrow">Clima</p>
+                        <h3 class="agro-tool-card__title">Pronóstico semanal</h3>
+                        <p class="agro-tool-card__copy">Valida la humedad, la temperatura y la siguiente ventana útil antes de registrar decisiones.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="clima">Ir al clima</button>
+                    </article>
+                    <article class="agro-tool-card" id="agro-tool-card-agenda">
+                        <p class="agro-tool-card__eyebrow">Agenda</p>
+                        <h3 class="agro-tool-card__title">Agenda lunar</h3>
+                        <p class="agro-tool-card__copy">Abre el calendario agrícola y planifica tareas del día sin perder el contexto del cultivo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">Abrir agenda</button>
+                    </article>
+                    <article class="agro-tool-card">
+                        <p class="agro-tool-card__eyebrow">Asistencia</p>
+                        <h3 class="agro-tool-card__title">Asistente Agro</h3>
+                        <p class="agro-tool-card__copy">Consulta dudas rápidas, resuelve contexto de campo y mantén una bitácora más informada.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="assistant">Abrir asistente</button>
+                    </article>
+                    <article class="agro-tool-card">
+                        <p class="agro-tool-card__eyebrow">Cálculo</p>
+                        <h3 class="agro-tool-card__title">Calculadora ROI</h3>
+                        <p class="agro-tool-card__copy">Compara rentabilidad con menos ruido visual y con acceso directo a tu facturero.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="calculator">Abrir calculadora</button>
+                    </article>
+                    <article class="agro-tool-card">
+                        <p class="agro-tool-card__eyebrow">Social</p>
+                        <h3 class="agro-tool-card__title">Panel Agro Social</h3>
+                        <p class="agro-tool-card__copy">Ve compradores, señales compartidas y contexto relacional sin saturar Operaciones.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="social">Abrir social</button>
+                    </article>
+                    <article class="agro-tool-card">
+                        <p class="agro-tool-card__eyebrow">Bitácora</p>
+                        <h3 class="agro-tool-card__title">AgroRepo</h3>
+                        <p class="agro-tool-card__copy">Documenta hallazgos, notas y memoria operativa del campo como una vista oficial del módulo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="agrorepo">Abrir bitácora</button>
+                    </article>
+                </div>
             </div>
         </details>
     </section>
@@ -1900,8 +2038,8 @@
     <!-- ═══════════════════════════════════════════════════════════════════════
          AGROREPO WIDGET ACCORDION (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
-    <section class="agro-repo-section agrorepo-section agro-ops-v10 animate-in delay-6" id="agro-repo-section" style="margin-top: 2rem;"
-        data-agro-section="agroRepo">
+    <section class="agro-repo-section agrorepo-section agro-ops-v10 animate-in delay-6" id="agro-repo-section"
+        style="margin-top: 2rem;" data-agro-section="agroRepo" data-agro-shell-region="agrorepo">
         <details class="yg-accordion" id="yg-acc-agrorepo">
             <summary class="yg-accordion-summary agrorepo-header" aria-controls="agrorepo-content" aria-expanded="false">
                 <span class="yg-accordion-icon">🌾</span>

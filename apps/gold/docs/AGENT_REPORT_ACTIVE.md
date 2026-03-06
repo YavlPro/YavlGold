@@ -33,6 +33,9 @@ Resumen operativo actual de `apps/gold`.
 
 ## Deuda visible pendiente
 
+- Validar el shell Agro con una sesión real del usuario para confirmar persistencia, cierre del sidebar y navegación completa sobre datos productivos.
+- Verificar con datos reales la experiencia de selección contextual del facturero cuando existan historiales poblados.
+- Decidir si `clima` y `agenda` evolucionan luego a vistas dedicadas o permanecen como accesos guiados dentro del dashboard/herramientas.
 - Decidir si `dashboard/music.html` se mantiene como utilidad interna permanente o si se mueve a una sección propia más adelante.
 - La carpeta `archive/legacy-html/` ya concentra los HTML históricos fuera de la superficie activa.
 - La carpeta `archive/legacy-js/` concentra el bridge auth legacy retirado del producto activo.
@@ -47,5 +50,8 @@ Resumen operativo actual de `apps/gold`.
 
 1. Mantener `AGENT_REPORT_ACTIVE.md` como gate corto para build y trabajo diario.
 2. Usar `AGENT_REPORT.md` solo como histórico acumulado de sesiones y cierres.
-3. Tratar `music` como utilidad interna del dashboard mientras no cambie la decisión de producto.
-4. Dejar para lotes separados la simplificación final del tooling raíz y cualquier reubicación futura de `music`.
+3. Tratar el shell Agro V10 como base vigente: una vista macro activa, sidebar colapsable y `Paso 1 / Paso 2` preservados.
+4. Mantener `Carrito` y `Rankings` como vistas oficiales del facturero dentro de la shell nueva.
+5. Consolidar en próximos QA la selección contextual de registros con datos reales del usuario.
+6. Tratar `music` como utilidad interna del dashboard mientras no cambie la decisión de producto.
+7. Dejar para lotes separados la simplificación final del tooling raíz y cualquier reubicación futura de `music`.

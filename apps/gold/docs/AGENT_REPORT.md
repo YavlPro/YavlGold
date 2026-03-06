@@ -1,3 +1,303 @@
+## 🆕 SESIÓN: GATE 0 — Agro UX shell V10 + sidebar + vistas enfocadas (2026-03-06)
+
+### 1) Mapa de puntos de entrada MPA y navegación actual
+
+- `apps/gold/vite.config.js`
+  - `appType: 'mpa'`.
+  - Entradas activas: `index.html`, `dashboard/index.html`, `academia/index.html`, `agro/index.html`, `crypto/index.html`, `tecnologia/index.html`, `social/index.html` y auxiliares (`music`, `perfil`, `configuracion`, `cookies`, `faq`, `soporte`, `terms`, `privacy`).
+- `apps/gold/vercel.json`
+  - `cleanUrls: true`.
+  - Rewrites activos para `/agro -> /agro/index.html`, `/crypto -> /crypto/index.html`, `/dashboard -> /dashboard/index.html` y aliases legacy.
+  - Redirects legacy ya resuelven `/suite -> /crypto` y `/herramientas -> /tecnologia`.
+- `apps/gold/index.html`
+  - Landing principal con navbar, cards de módulos y auth modal en la misma página.
+  - CTA hero redirige a `/agro/` si hay sesión, o a `/index.html#login` si no.
+- `apps/gold/dashboard/index.html`
+  - Dashboard protegido con `dashboard/auth-guard.js`.
+  - Mantiene cards de módulos y no gobierna la navegación interna de Agro.
+- `apps/gold/agro/index.html`
+  - Es el entrypoint real del módulo Agro.
+  - Hoy renderiza dashboard, cultivos, Centro de Operaciones, herramientas y AgroRepo dentro de la misma vista larga.
+  - Ya existen `data-agro-section` y un `Modo Enfoque`, pero no hay una fuente de verdad explícita para una sola vista macro activa.
+
+### 2) Dónde se instancian datos/auth de Supabase
+
+- `apps/gold/assets/js/config/supabase-config.js`
+  - Fuente canónica del cliente Supabase (`createClient`) con `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+- `apps/gold/assets/js/auth/authClient.js`
+  - Orquesta sesión, recovery, `SIGNED_IN/SIGNED_OUT`, guard de rutas protegidas (`/dashboard`, `/agro`) y sincronización básica de UI.
+- `apps/gold/assets/js/auth/authUI.js`
+  - Conecta formularios, auth modal, recuperación de contraseña y actualización visual de usuario.
+- `apps/gold/dashboard/auth-guard.js`
+  - Guard ESM del dashboard antes de inicializar lógica sensible.
+- `apps/gold/agro/index.html`
+  - Usa `requireSession()` antes de importar `agro.js`, `geolocation.js`, `dashboard.js` y módulos protegidos.
+- `apps/gold/agro/agro.js`
+  - Importa el cliente canónico y concentra queries de Agro, estado del módulo, ciclos, operaciones, historiales y paneles auxiliares.
+
+### 3) Dashboard: qué consulta hoy y qué le falta
+
+- Dashboard global actual:
+  - usa `profiles` vía `ProfileManager`,
+  - usa `modules` para catálogo,
+  - usa `user_favorites` mediante `FavoritesManager`,
+  - usa `notifications` para no leídas,
+  - y actividad local mediante `assets/js/utils/activityTracker.js`.
+- Confirmado:
+  - `YG_ACTIVITY_V1` ya existe y expone `trackModuleEnter`, `trackModuleExit`, `getActivitySummary`.
+  - El dashboard ya resuelve “continuar” y “recomendado” desde actividad local.
+- Pendiente:
+  - no integra todavía progreso académico (`user_lesson_progress`, `user_quiz_attempts`, `user_badges`),
+  - no existe una vista transversal de actividad Agro dentro del dashboard global,
+  - y no hay todavía una navegación macro coherente dentro de Agro que convierta esos datos en flujo guiado.
+
+### 4) Clima/Agro: prioridad Manual > GPS > IP y llaves storage
+
+- `apps/gold/assets/js/geolocation.js`
+  - `getCoordsSmart()` ya respeta prioridad `Manual -> cache del modo -> GPS/IP -> fallback`.
+  - Llaves confirmadas:
+    - `YG_MANUAL_LOCATION`
+    - `yavlgold_gps_cache`
+    - `yavlgold_ip_cache`
+    - `yavlgold_location_pref`
+- `apps/gold/agro/dashboard.js`
+  - `initWeather()` usa `YGGeolocation.getCoordsSmart()`.
+  - `displayWeather()` refleja `manual`, `gps` o `ip` en UI.
+  - Debug no invasivo ya existe y se activa por `?debug=1` o `localStorage.YG_GEO_DEBUG = '1'`.
+  - Weather cache confirmada por prefijo:
+    - `yavlgold_weather_*`
+- Conclusión:
+  - La parte Manual > GPS > IP ya está resuelta.
+  - No es objetivo de este lote cambiar comportamiento funcional del clima; solo preservar la observabilidad existente.
+
+### 5) Crypto: estado real
+
+- `apps/gold/crypto/` ya existe como página MPA registrada en `vite.config.js`.
+- `apps/gold/crypto/index.html` hoy funciona como placeholder oficial “No disponible”.
+- `apps/gold/crypto/crypto.js` contiene una implementación de market data pública (Binance Vision + Fear & Greed), pero el placeholder actual no la consume.
+- Para este lote Agro:
+  - Crypto se mantiene fuera de alcance runtime.
+  - Su estado real es “ruta MPA oficial existente, experiencia pública todavía no liberada”.
+
+### Diagnóstico del problema actual
+
+1. `/agro` ya tiene mucha funcionalidad útil y estable: dashboard, clima, mercado, fase lunar, ciclos activos, historial de ciclos, Centro de Operaciones, herramientas y paneles auxiliares.
+2. El problema principal no es falta de funcionalidad sino exceso de simultaneidad visual:
+   - cards,
+   - chips,
+   - accordions,
+   - tabs,
+   - acciones,
+   - badges,
+   - glows,
+   - paneles largos en la misma pantalla.
+3. El Centro de Operaciones hoy mantiene valor mental real por `Paso 1: seleccionar cultivo` y `Paso 2: qué ver`, pero la implementación queda a medio camino:
+   - `Paso 1` sí existe y filtra,
+   - `Paso 2` no está representado con una navegación contextual visible y oficial,
+   - las tabs financieras absorben demasiada responsabilidad al mismo tiempo.
+4. En `agro.js` ya existe infraestructura útil para:
+   - tabs financieras,
+   - resumen de movimientos,
+   - panel de cultivos por contexto,
+   - Carrito lazy-load,
+   - Rankings lazy-load,
+   - Modo Enfoque.
+   Pero todavía no existe una capa de “shell” que gobierne una sola vista macro activa.
+5. Hay deuda técnica visible:
+   - `agro.js` concentra navegación, queries, render de historiales, selección de cultivo, rankings, USD audit, focus mode, modales, ciclos y asistentes.
+   - la coexistencia de `agro-operations.css`, `tx-cards-v2.css` y mucho estilo inline/legacy hace que el acabado visual siga siendo ruidoso.
+6. Carrito y Rankings ya son reales en el runtime:
+   - `tab-panel-carrito` existe,
+   - `tab-panel-rankings` existe,
+   - `agro-cart.js` y el bloque de rankings ya cargan bajo demanda.
+   El problema no es su existencia, sino que hoy viven enterrados dentro del mismo bloque saturado.
+7. Las cards de cultivos/ciclos actuales sí son una base valiosa:
+   - tienen identidad,
+   - tienen desglose financiero,
+   - ya resuelven progreso y estados.
+   El trabajo correcto es pulirlas, no rediseñarlas desde cero.
+
+### Por qué el Centro de Operaciones y la navegación actual tienen demasiada densidad visual
+
+- El usuario recibe a la vez dashboard, cultivos, historial, operaciones, herramientas y auxiliares en un scroll único.
+- Dentro del Centro de Operaciones compiten:
+  - encabezado,
+  - toggles de privacidad,
+  - social/calculadora/USD audit,
+  - selector de cultivo,
+  - tabs de categorías,
+  - formularios/accordions,
+  - historiales,
+  - menú de acciones por registro.
+- La consecuencia es fatiga visual, pérdida de jerarquía y menor claridad móvil.
+
+### Por qué conviene migrar a sidebar colapsable + vistas enfocadas + acciones contextuales
+
+- El sidebar resuelve la navegación macro del módulo sin convertir Agro en SPA ni romper el patrón MPA.
+- Una vista activa explícita permite mostrar una sola zona principal importante a la vez:
+  - dashboard,
+  - cultivos,
+  - historial de ciclos,
+  - operaciones,
+  - carrito,
+  - rankings,
+  - clima,
+  - agenda,
+  - herramientas.
+- Las acciones contextuales por selección reducen ruido permanente en cada registro y hacen que “editar / eliminar / transferir / cobrar / ver detalle” aparezcan solo cuando importan.
+- Esto baja saturación sin sacrificar lógica real ni throughput del facturero.
+
+### Por qué el sidebar debe coexistir con Paso 1 / Paso 2
+
+- `Paso 1 / Paso 2` ya expresa el modelo mental operativo del agricultor dentro del facturero.
+- El sidebar debe ordenar la navegación macro del módulo.
+- `Paso 1 / Paso 2` debe seguir gobernando la navegación micro dentro de Operaciones.
+- Reemplazarlo por completo rompería continuidad cognitiva y obligaría a reaprender un flujo que ya tiene valor.
+
+### Por qué Carrito y Rankings deben entrar al mapa oficial de vistas
+
+- Ya existen en runtime y tienen lógica propia.
+- Son oficiales para el flujo real del facturero:
+  - Carrito = planificación/insumos.
+  - Rankings = lectura rápida de compradores, fiados y cultivos.
+- Si siguen escondidos como tabs secundarias, el producto sigue sintiéndose como “todo visible a la vez” y no como un sistema guiado.
+
+### Riesgos técnicos de la migración
+
+- Riesgo de romper listeners o delegación en tabs/historial si se desmonta HTML existente de forma agresiva.
+- Riesgo de esconder accidentalmente paneles que hoy se inicializan por query selector o por lazy-load.
+- Riesgo de conflictos CSS entre `agro.css`, `agro-operations.css` y `tx-cards-v2.css`.
+- Riesgo de regresión móvil si el sidebar y las acciones contextuales compiten por z-index, scroll o focos.
+- Riesgo de incrementar la deuda del monolito si la navegación nueva se injerta directo dentro de `agro.js` sin extracción.
+
+### Riesgos técnicos del monolito actual
+
+- `agro.js` ya es demasiado ancho para seguir creciendo con más navegación y más UI state.
+- La ausencia de una fuente de verdad macro para la vista activa vuelve más costoso razonar sobre visibilidad, foco y scroll.
+- Hay features ya refactorizadas parcialmente (cart, agenda, clima layout, ciclos), pero la shell sigue centralizada y acoplada.
+
+### Estrategia de refactor incremental “touch-and-extract”
+
+- Regla: toda zona tocada de forma relevante debe intentar salir de `agro.js`.
+- Extracción mínima esperada en este lote:
+  - shell/navegación macro + sidebar,
+  - estado de vista activa,
+  - selección contextual de registros y toolbar contextual.
+- Se mantiene `agro.js` como orquestador para no romper contratos globales, pero las nuevas responsabilidades deben quedar encapsuladas.
+
+### Gating explícito
+
+1. Primero arquitectura UX y navegación.
+2. Luego refinamiento visual DNA 10.
+3. Luego QA móvil/manual.
+
+### Plan de implementación por fases
+
+#### Fase A — Shell y navegación macro
+
+- Añadir un sidebar colapsable accesible desde header con overlay móvil y estado accesible.
+- Introducir una sola fuente de verdad para la vista macro activa.
+- Persistir la vista activa en `localStorage` con fallback seguro.
+
+#### Fase B — Operaciones enfocadas sin romper flujo
+
+- Mantener `Paso 1: seleccionar cultivo`.
+- Convertir `Paso 2: qué ver` en chips/contextos visibles y oficiales.
+- Mapear esas selecciones a tabs reales existentes:
+  - Pagados,
+  - Fiados,
+  - Pérdidas,
+  - Donaciones,
+  - Otros,
+  - Carrito,
+  - Rankings,
+  - y fallback a Gastos.
+
+#### Fase C — Acciones contextuales y reducción de ruido
+
+- Cambiar el historial para que la card entre en estado seleccionado.
+- Mostrar toolbar contextual o acciones expandidas solo cuando hay selección.
+- Mantener compatibilidad con botones reales ya existentes para editar/duplicar/transferir/eliminar.
+
+#### Fase D — Pulido DNA 10
+
+- Bajar glow y contornos agresivos.
+- Reforzar superficies metálicas suaves, bordes finos y jerarquía tipográfica.
+- Conservar cards de ciclos y refinar su acabado sin reemplazar estructura.
+
+#### Fase E — Validación
+
+- QA manual móvil.
+- QA de navegación macro + micro.
+- `pnpm build:gold`.
+
+### Plan quirúrgico (archivos exactos)
+
+1. `apps/gold/docs/AGENT_REPORT.md`
+   - Registrar este gate, diagnóstico, riesgos y plan.
+2. `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+   - Reflejar el estado operativo actual del lote para el build gate.
+3. `apps/gold/agro/index.html`
+   - Insertar shell/sidebar.
+   - Dar anchors/atributos para vista activa.
+   - Hacer explícitos `Paso 2` y los destinos macro.
+4. `apps/gold/agro/agro.css`
+   - Refinar shell/header/sidebar y densidad visual general.
+   - Ajustar piezas del Centro de Operaciones y cards de ciclos sin reescribirlas.
+5. `apps/gold/agro/agro-operations.css`
+   - Afinar el bloque de operaciones para vistas enfocadas y menor ruido.
+6. `apps/gold/agro/tx-cards-v2.css`
+   - Reorientar acciones de historial hacia selección contextual sobria.
+7. `apps/gold/agro/agro.js`
+   - Integrar la shell nueva con el runtime existente.
+   - Reusar tabs, cultivos, carrito y rankings sin romper contratos.
+8. `apps/gold/agro/agro-shell.js` (nuevo, si la extracción se confirma limpia)
+   - Encapsular sidebar, vista activa y sincronización macro.
+9. `apps/gold/agro/agro-selection.js` (nuevo, si la extracción se confirma limpia)
+   - Encapsular selección contextual de registros y cierre/escape.
+
+### Criterio de éxito de este lote
+
+- Una sola vista macro activa clara.
+- Sidebar funcional y accesible.
+- `Paso 1 / Paso 2` preservados dentro de Operaciones.
+- Carrito y Rankings visibles como vistas oficiales.
+- Menos ruido visual y menos glow gritón.
+- Extracción incremental real desde `agro.js`.
+- Build oficial pasando.
+
+### Ejecución aplicada en este lote
+
+- `apps/gold/agro/index.html`
+  - Se añadió sidebar colapsable con grupos `Principal`, `Operaciones`, `Herramientas` y `Acciones`.
+  - Se incorporó una guía paso a paso en el dashboard para `crear cultivo -> seleccionar ciclo -> registrar movimiento -> revisar clima -> abrir agenda -> usar herramientas`.
+  - Se convirtió `Paso 2` en el punto oficial donde viven las tabs reales del facturero.
+  - Se añadió estado de ayuda para selección contextual de registros.
+  - `Herramientas` dejó de ser un bloque vacío y ahora expone cards operativas para clima, agenda, asistente, calculadora, social y AgroRepo.
+- `apps/gold/agro/agro-shell.js`
+  - Se extrajo la fuente de verdad `activeView`.
+  - La shell ahora persiste `YG_AGRO_ACTIVE_VIEW_V1`, sincroniza regiones visibles, navega a tabs reales y cierra el sidebar al completar una acción.
+- `apps/gold/agro/agro-selection.js`
+  - Se extrajo la selección contextual de filas del facturero.
+  - La intención es que la tarjeta se seleccione primero y recién entonces muestre acciones.
+- `apps/gold/agro/agro.js`
+  - Solo se añadió el puente mínimo para inicializar shell/selección, emitir `agro:finance-tab:changed` y marcar filas seleccionables.
+- `apps/gold/agro/agro.css`, `apps/gold/agro/tx-cards-v2.css`, `apps/gold/agro/agrociclos.css`
+  - Se redujo glow secundario, se reforzó tratamiento metálico suave y se bajó ruido en cards densas.
+  - Las acciones del historial pasan a vivir detrás de selección contextual.
+  - Las cards de ciclos se conservaron como base y solo se refinaron.
+
+### Validación del lote
+
+- Build oficial ejecutado:
+  - `pnpm build:gold`
+  - Resultado: `OK`
+- QA estructural en navegador:
+  - Con un bypass temporal solo dentro del navegador automatizado se verificó que `/agro` cargue el shell, muestre por defecto solo el dashboard y pueda abrir la vista de Operaciones con `Paso 1 / Paso 2`.
+  - Limitación: no hubo credenciales reales de sesión para validar el flujo completo autenticado contra datos reales del usuario.
+- Hallazgo corregido durante QA:
+  - El overlay del sidebar quedaba abierto después de seleccionar una vista; se corrigió para cerrarlo siempre tras elegir vista o acción.
+
 ## 🆕 SESIÓN: GATE 0 — Artefactos `.playwright-cli` fuera del repo (2026-03-05)
 
 ### Diagnóstico (tarea actual)
