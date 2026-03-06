@@ -1,3 +1,44 @@
+## 🆕 SESIÓN: GATE 0 — Ajuste fino de bio del fundador (2026-03-05)
+
+### Diagnóstico (tarea actual)
+
+1. La bio actual del modal del fundador en `apps/gold/dashboard/index.html` sigue sonando menos sobria de lo deseado:
+   - usa `constructor de producto`,
+   - mantiene `automatización aplicada a la economía real`.
+2. El usuario ya aprobó una redacción más sobria y natural:
+   - `Agricultor y desarrollador de La Grita, Táchira. Fundador de YavlGold, donde transformo la experiencia real del campo en software útil, datos confiables y automatización al servicio de la economía real.`
+3. El cambio requerido es solo textual:
+   - no afecta estructura,
+   - no afecta estilos,
+   - no afecta lógica del modal.
+
+### Alcance
+
+- Sustituir únicamente la bio del fundador en `dashboard/index.html`.
+- Registrar el cambio en este histórico.
+- Validar con `pnpm build:gold`.
+
+### Archivos candidatos
+
+- `apps/gold/dashboard/index.html`
+- `apps/gold/docs/AGENT_REPORT.md`
+
+### Riesgos
+
+- Riesgo funcional prácticamente nulo; el cambio es copy-only.
+
+### Estrategia de rollback
+
+1. Revertir solo el párrafo de la bio si no convence el tono final.
+
+### Plan quirúrgico
+
+1. Reemplazar la bio aprobada en `dashboard/index.html`.
+2. Ejecutar `pnpm build:gold`.
+3. Registrar resultado en `AGENT_REPORT.md`.
+
+---
+
 ## 🆕 SESIÓN: GATE 0 — Carga de Agro rota por variante `/agro/index.html/` (2026-03-05)
 
 ### Diagnóstico (tarea actual)
