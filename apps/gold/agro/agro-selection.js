@@ -17,7 +17,7 @@ function updateSelectionStatus(row) {
     const statusNode = getSelectionStatusNode();
     if (!statusNode) return;
     if (!row) {
-        statusNode.textContent = 'Selecciona un registro del historial para ver sus acciones disponibles.';
+        statusNode.textContent = 'Selecciona un movimiento del historial para ver sus acciones rápidas.';
         return;
     }
 

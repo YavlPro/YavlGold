@@ -2854,13 +2854,20 @@ body.modal-open {
 
 /* V9.6.5: Extra compact Facturero (Centro de Operaciones) */
 .financial-operations-card {
-  padding: 1.25rem;
-  gap: 1rem;
-  margin-top: 1rem;
+  padding: 1.05rem 1.1rem 1.15rem;
+  gap: 0.88rem;
+  margin-top: 0.85rem;
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+    rgba(8, 8, 8, 0.92);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.26),
+    0 0 28px rgba(200, 167, 82, 0.05);
 }
 
 .financial-operations-header {
-  gap: 0.25rem;
+  gap: 0.6rem;
 }
 
 .financial-operations-card .financial-operations-header {
@@ -2868,42 +2875,84 @@ body.modal-open {
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.8rem;
+}
+
+.financial-operations-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  max-width: 560px;
+}
+
+.financial-operations-kicker {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.68);
+}
+
+.financial-operations-toolbar {
+  margin-left: auto;
+  display: flex;
+  flex: 1 1 320px;
+  max-width: 430px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.38rem;
+}
+
+.financial-operations-toolbar-label {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.52);
 }
 
 .financial-operations-actions {
-  margin-left: auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.38rem;
+  margin-left: 0;
+  padding: 0.38rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .btn-privacy-toggle {
-  border: 1px solid rgba(200, 167, 82, 0.35);
-  background: rgba(200, 167, 82, 0.08);
-  color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.78);
   border-radius: 999px;
-  min-height: 38px;
-  padding: 0.45rem 0.95rem;
+  min-height: 34px;
+  padding: 0.34rem 0.72rem;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.22px;
   cursor: pointer;
   transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .btn-privacy-toggle:hover {
-  border-color: rgba(200, 167, 82, 0.55);
-  background: rgba(200, 167, 82, 0.14);
-  color: #fff3d0;
+  border-color: rgba(200, 167, 82, 0.38);
+  background: rgba(200, 167, 82, 0.08);
+  color: rgba(255, 243, 208, 0.92);
 }
 
 .btn-privacy-toggle[aria-pressed="true"] {
-  border-color: rgba(200, 167, 82, 0.7);
-  background: rgba(200, 167, 82, 0.2);
-  color: #fbe9ba;
+  border-color: rgba(200, 167, 82, 0.42);
+  background: rgba(200, 167, 82, 0.12);
+  color: rgba(251, 233, 186, 0.96);
 }
 
 .btn-privacy-toggle:focus-visible {
@@ -2912,8 +2961,10 @@ body.modal-open {
 }
 
 .usd-audit-badge {
-  min-width: 144px;
+  min-width: 0;
   justify-content: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
 }
 
 .usd-audit-badge.is-loading {
@@ -3109,41 +3160,85 @@ body.modal-open {
 }
 
 .financial-operations-title {
-  font-size: 0.85rem;
-  letter-spacing: 1.2px;
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.94rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .financial-operations-subtitle {
-  font-size: 0.78rem;
+  margin: 0;
+  max-width: 44ch;
+  font-size: 0.79rem;
+  line-height: 1.34;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .ops-total-display {
-  margin: 0.3rem 0 0;
+  margin: 0.18rem 0 0;
   font-family: 'Rajdhani', sans-serif;
-  font-size: 0.82rem;
-  color: rgba(248, 224, 160, 0.9);
+  font-size: 0.78rem;
+  color: rgba(229, 213, 160, 0.86);
   letter-spacing: 0.2px;
 }
 
 .ops-context-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 0.72rem;
+  align-items: start;
 }
 
 .ops-step-block {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.78rem 0.82rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+}
+
+.ops-step-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.ops-step-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
 }
 
 .ops-step-label {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.62rem;
-  letter-spacing: 1.1px;
-  color: rgba(200, 167, 82, 0.85);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: rgba(200, 167, 82, 0.76);
   text-transform: uppercase;
+}
+
+.ops-step-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ops-step-note {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.34;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .ops-context-tags {
@@ -3184,53 +3279,53 @@ body.modal-open {
 }
 
 .ops-cultivos-panel {
-  border: 1px solid rgba(200, 167, 82, 0.26);
-  border-radius: 14px;
-  padding: 0.75rem;
-  background: linear-gradient(180deg, rgba(200, 167, 82, 0.09), rgba(200, 167, 82, 0.02));
+  border: 1px solid rgba(229, 213, 160, 0.16);
+  border-radius: 16px;
+  padding: 0.66rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .ops-cultivos-header {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.12rem;
 }
 
 .ops-cultivos-title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.66rem;
-  letter-spacing: 1px;
-  color: rgba(248, 224, 160, 0.95);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: rgba(229, 213, 160, 0.76);
   text-transform: uppercase;
 }
 
 .ops-cultivos-subtitle {
   margin: 0;
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .ops-cultivos-chip-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.42rem;
   overflow-x: auto;
-  padding: 0.1rem 0 0.2rem;
+  padding: 0.05rem 0 0.12rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
 }
 
 .ops-cultivo-chip {
-  border: 1px solid rgba(200, 167, 82, 0.34);
-  background: rgba(14, 14, 14, 0.88);
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  background: rgba(12, 12, 12, 0.82);
   color: rgba(255, 255, 255, 0.86);
   border-radius: 999px;
-  min-height: 44px;
-  min-width: 132px;
-  padding: 0.45rem 0.8rem;
+  min-height: 42px;
+  min-width: 120px;
+  padding: 0.4rem 0.72rem;
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
@@ -3242,7 +3337,7 @@ body.modal-open {
 }
 
 .ops-cultivo-chip:hover {
-  border-color: rgba(200, 167, 82, 0.62);
+  border-color: rgba(200, 167, 82, 0.46);
   color: #fff;
 }
 
@@ -3250,7 +3345,7 @@ body.modal-open {
   color: #0a0a0a;
   border-color: transparent;
   background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c));
-  box-shadow: 0 8px 18px rgba(200, 167, 82, 0.26);
+  box-shadow: 0 6px 16px rgba(200, 167, 82, 0.16);
 }
 
 .ops-cultivo-chip[disabled] {
@@ -3260,85 +3355,86 @@ body.modal-open {
 
 .ops-cultivo-chip-name {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.05;
 }
 
 .ops-cultivo-chip-meta {
-  font-size: 0.66rem;
+  font-size: 0.63rem;
   font-weight: 600;
-  letter-spacing: 0.25px;
+  letter-spacing: 0.02em;
   opacity: 0.82;
 }
 
 .ops-cultivos-finished {
-  border: 1px solid rgba(200, 167, 82, 0.22);
-  border-radius: 12px;
-  background: rgba(12, 12, 12, 0.62);
-  padding: 0.62rem 0.72rem;
+  border: 1px solid rgba(229, 213, 160, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.018);
+  padding: 0.52rem 0.62rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.62rem;
 }
 
 .ops-cultivos-history-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.16rem;
+  gap: 0.1rem;
 }
 
 .ops-cultivos-history-title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.66rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(229, 213, 160, 0.82);
+  color: rgba(229, 213, 160, 0.72);
 }
 
 .ops-cultivos-history-subtitle {
   margin: 0;
-  font-size: 0.78rem;
-  line-height: 1.3;
-  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.74rem;
+  line-height: 1.24;
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .ops-cultivos-history-btn {
   cursor: pointer;
-  padding: 0.58rem 0.72rem;
+  padding: 0.5rem 0.66rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
-  min-height: 40px;
+  gap: 0.55rem;
+  min-height: 36px;
   min-width: fit-content;
-  border: 1px solid rgba(200, 167, 82, 0.28);
+  border: 1px solid rgba(200, 167, 82, 0.22);
   border-radius: 999px;
-  background: rgba(200, 167, 82, 0.08);
+  background: rgba(200, 167, 82, 0.05);
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.78);
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
 .ops-cultivos-history-btn:hover,
 .ops-cultivos-history-btn:focus-visible {
   transform: translateY(-1px);
-  border-color: rgba(229, 213, 160, 0.42);
-  background: rgba(200, 167, 82, 0.12);
-  color: #f3deb0;
+  border-color: rgba(229, 213, 160, 0.3);
+  background: rgba(200, 167, 82, 0.08);
+  color: rgba(243, 222, 176, 0.94);
 }
 
 .ops-cultivos-count {
   border: 1px solid rgba(200, 167, 82, 0.4);
   border-radius: 999px;
-  padding: 0.08rem 0.45rem;
-  font-size: 0.72rem;
-  color: rgba(248, 224, 160, 0.92);
+  padding: 0.06rem 0.42rem;
+  font-size: 0.68rem;
+  color: rgba(229, 213, 160, 0.88);
   font-weight: 700;
+  background: rgba(200, 167, 82, 0.06);
 }
 
 .ops-cultivos-empty {
@@ -3586,18 +3682,78 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 .financial-tabs {
-  gap: 0.45rem;
+  gap: 0.38rem;
   padding-bottom: 0.15rem;
 }
 
 .financial-tab-btn {
-  padding: 0.35rem 0.7rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.8px;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.09em;
 }
 
 .tab-panel {
   padding-top: 0.35rem;
+}
+
+.facturero-accordion {
+  margin-top: 0.45rem;
+}
+
+.facturero-accordion:first-child {
+  margin-top: 0;
+}
+
+.financial-operations-card .yg-accordion {
+  border-color: rgba(200, 167, 82, 0.18);
+  background: rgba(10, 10, 10, 0.92);
+}
+
+.financial-operations-card .yg-accordion::before {
+  opacity: 0.75;
+}
+
+.financial-operations-card .yg-accordion:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), 0 0 18px rgba(200, 167, 82, 0.06);
+}
+
+.financial-operations-card .yg-accordion-summary {
+  padding: 0.72rem 0.82rem;
+  gap: 0.58rem;
+}
+
+.financial-operations-card .yg-accordion-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.financial-operations-card .yg-accordion-title {
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+}
+
+.financial-operations-card .yg-accordion-content {
+  padding: 0.18rem 0.82rem 0.82rem;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.ops-wizard-note {
+  margin: 0.32rem 0 0.76rem;
+  padding: 0.72rem 0.82rem;
+  border: 1px dashed rgba(200, 167, 82, 0.24);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(200, 167, 82, 0.07), rgba(200, 167, 82, 0.03));
+}
+
+.ops-wizard-note__copy {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.ops-wizard-note__copy strong {
+  color: rgba(243, 222, 176, 0.92);
 }
 
 .financial-operations-card .facturero-grid {
@@ -3902,8 +4058,18 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
 @media (max-width: 768px) {
   .financial-operations-card {
-    padding: 1rem;
-    gap: 0.8rem;
+    padding: 0.92rem;
+    gap: 0.74rem;
+  }
+
+  .financial-operations-toolbar {
+    width: 100%;
+    max-width: none;
+    align-items: stretch;
+  }
+
+  .financial-operations-toolbar-label {
+    margin-left: 0.15rem;
   }
 
   .ops-context-tag {
@@ -3968,10 +4134,26 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
   .financial-operations-actions {
     width: 100%;
     margin-left: 0;
+    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .btn-privacy-toggle {
-    width: calc(50% - 0.25rem);
+    width: 100%;
+    justify-content: center;
+  }
+
+  .usd-audit-badge {
+    grid-column: 1 / -1;
+  }
+
+  .ops-context-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-step-block {
+    padding: 0.72rem;
   }
 
   .usd-audit-modal__dialog {
@@ -3995,6 +4177,14 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
     letter-spacing: 1px;
   }
 
+  .ops-step-title {
+    font-size: 0.74rem;
+  }
+
+  .ops-step-note {
+    font-size: 0.74rem;
+  }
+
   .ops-context-tag {
     min-height: 48px;
   }
@@ -4004,13 +4194,13 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
   }
 
   .ops-cultivos-panel {
-    padding: 0.68rem;
+    padding: 0.62rem;
   }
 
   .ops-cultivos-finished {
     flex-direction: column;
     align-items: stretch;
-    padding: 0.62rem;
+    padding: 0.56rem;
   }
 
   .ops-cultivos-history-btn {
@@ -4041,6 +4231,10 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
   .financial-operations-card .facturero-history-list {
     max-height: 220px !important;
+  }
+
+  .financial-operations-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -5771,18 +5965,19 @@ body.agro-view-dense::after {
 }
 
 .ops-step-helper {
-  font-size: 0.82rem;
+  font-size: 0.74rem;
 }
 
 .ops-selection-status {
-  margin-top: 0.9rem;
-  padding: 0.8rem 0.95rem;
-  border-radius: 16px;
-  border: 1px solid rgba(200, 167, 82, 0.16);
-  background: rgba(200, 167, 82, 0.05);
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.82rem;
+  margin-top: 0.72rem;
+  padding: 0.62rem 0.8rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(90deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02));
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.76rem;
   font-weight: 600;
+  line-height: 1.35;
 }
 
 .agro-tool-card {

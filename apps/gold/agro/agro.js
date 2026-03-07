@@ -3523,8 +3523,8 @@ function paintUsdAuditBadgeState(badgeEl, state) {
 
     if (state === 'error') {
         badgeEl.classList.add('is-error');
-        badgeEl.textContent = 'Anomalias USD: !';
-        badgeEl.title = 'No se pudo consultar la auditoria USD.';
+        badgeEl.textContent = 'Anomalías USD: !';
+        badgeEl.title = 'No se pudo consultar la auditoría USD.';
         return;
     }
 
@@ -3551,8 +3551,8 @@ function ensureUsdAuditUI() {
         badge.type = 'button';
         badge.id = USD_AUDIT_BADGE_ID;
         badge.className = 'btn-privacy-toggle usd-audit-badge is-loading';
-        badge.textContent = 'Anomalias USD: --';
-        badge.title = 'Abrir auditoria de anomalias USD';
+        badge.textContent = 'Anomalías USD: --';
+        badge.title = 'Abrir auditoría de anomalías USD';
         badge.setAttribute('aria-haspopup', 'dialog');
         badge.setAttribute('aria-controls', USD_AUDIT_MODAL_ID);
         actionsHost.appendChild(badge);
@@ -3568,10 +3568,10 @@ function ensureUsdAuditUI() {
             <div class="usd-audit-modal__backdrop" data-usd-audit-close="1"></div>
             <div class="usd-audit-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="usd-audit-title">
                 <header class="usd-audit-modal__header">
-                    <h3 class="usd-audit-modal__title" id="usd-audit-title">Anomalias USD</h3>
+                    <h3 class="usd-audit-modal__title" id="usd-audit-title">Anomalías USD</h3>
                     <button type="button" class="usd-audit-modal__close" data-usd-audit-close="1" aria-label="Cerrar">x</button>
                 </header>
-                <p class="usd-audit-modal__meta" id="usd-audit-meta">Cargando auditoria...</p>
+                <p class="usd-audit-modal__meta" id="usd-audit-meta">Cargando auditoría...</p>
                 <div class="usd-audit-modal__content" id="usd-audit-content"></div>
                 <footer class="usd-audit-modal__footer">
                     <button type="button" class="btn-privacy-toggle usd-audit-refresh-btn" id="usd-audit-refresh-btn">
@@ -3676,7 +3676,7 @@ async function refreshUsdAuditBadge() {
 
         const safeCount = Number.isFinite(count) ? count : 0;
         const safeCritical = Number.isFinite(criticalCount) ? criticalCount : 0;
-        badge.textContent = `Anomalias USD: ${safeCount}`;
+        badge.textContent = `Anomalías USD: ${safeCount}`;
         badge.title = safeCount > 0
             ? `Se detectaron ${safeCount} anomalias USD.`
             : 'Sin anomalias USD activas.';
@@ -3720,7 +3720,7 @@ async function openUsdAuditModal(options = {}) {
 
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
-    meta.textContent = forceRefresh ? 'Actualizando auditoria...' : 'Cargando auditoria...';
+    meta.textContent = forceRefresh ? 'Actualizando auditoría...' : 'Cargando auditoría...';
     renderUsdAuditMessage(content, 'Cargando movimientos...');
 
     try {
@@ -3731,8 +3731,8 @@ async function openUsdAuditModal(options = {}) {
         scheduleUsdAuditBadgeRefresh(0);
     } catch (error) {
         console.warn('[AGRO] USD audit modal load failed:', error?.message || error);
-        meta.textContent = 'No se pudo cargar la auditoria.';
-        renderUsdAuditMessage(content, 'No se pudo cargar la auditoria USD.', { isError: true });
+        meta.textContent = 'No se pudo cargar la auditoría.';
+        renderUsdAuditMessage(content, 'No se pudo cargar la auditoría USD.', { isError: true });
     }
 }
 

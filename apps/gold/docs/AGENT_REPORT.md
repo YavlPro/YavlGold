@@ -1,3 +1,58 @@
+## 🆕 SESIÓN: SUB-LOTE — Pulido de Centro de Operaciones Agro V1 (2026-03-07)
+
+### Diagnóstico del estado actual
+
+- `Centro de Operaciones` ya está funcional, estable y mejor ordenado que en iteraciones previas.
+- El problema ya no es de flujo ni de navegación:
+  - es de jerarquía visual,
+  - compactación,
+  - y acabado premium.
+- Hoy compiten dos cabeceras casi para la misma superficie:
+  - `Finanzas Agro`
+  - `Centro de Operaciones`
+- La barra de utilidades (`Ocultar nombres`, `Ocultar montos`, `Social`, `Calculadora`, `Anomalías USD`) todavía se lee como una fila algo flotante y con demasiado protagonismo para funciones secundarias.
+- `Paso 1` ya está bien resuelto conceptualmente, pero todavía conserva demasiado aire vacío y un CTA de ciclos cerrados correcto pero mejorable.
+- `Paso 2` es sólido, aunque el copy puede ser más corto y el estado contextual puede sentirse menos ancho y menos genérico.
+- Los accordions `Registrar ...` + `Historial` siguen siendo funcionales, pero todavía arrastran más peso de contenedor que de módulo premium.
+
+### Objetivo visual del sub-lote
+
+- Dejar una sola jerarquía fuerte en la apertura del bloque operativo.
+- Integrar mejor las utilidades al header sin que compitan con el flujo principal.
+- Compactar `Paso 1` y `Paso 2` sin perder claridad.
+- Refinar el acceso a `Ciclos cerrados` para que se sienta más navegación contextual que aviso.
+- Hacer que los accordions del facturero se lean más finos, más consistentes y más DNA 10.
+
+### Plan del ajuste
+
+1. Resolver `Finanzas Agro` vs `Centro de Operaciones` en una sola jerarquía visual.
+2. Reordenar header, copy y utilidades en una cabecera operativa más compacta.
+3. Pulir `Paso 1`:
+   - mejor densidad,
+   - mejor composición,
+   - CTA de `Ciclos cerrados` más elegante.
+4. Pulir `Paso 2`:
+   - copy más corto,
+   - chips mejor integrados,
+   - estado contextual más limpio.
+5. Refinar accordions `Registrar` + `Historial` y las notas del wizard sin tocar lógica del facturero.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-operations.css`
+- `apps/gold/agro/agro-selection.js`
+
+### Criterio de QA de este sub-lote
+
+- Verificar que `Centro de Operaciones` cargue como antes.
+- Verificar que la cabecera operativa se sienta más compacta y sin duplicidad de títulos.
+- Verificar que `Paso 1` y `Paso 2` sigan funcionando sin romper selección ni tabs.
+- Verificar que `Registrar` + `Historial` conserven comportamiento actual.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Separación Activos vs Historial de ciclos (2026-03-07)
 
 ### Diagnóstico del problema

@@ -1667,48 +1667,59 @@
             <div class="module-title-group">
                 <div class="module-icon">💰</div>
                 <div class="module-heading">
-                    <h2 class="module-title">Finanzas Agro</h2>
-                    <p class="module-subtitle">Control de gastos y registro de inversiones agrícolas</p>
+                    <p class="ops-module-eyebrow">Finanzas Agro</p>
+                    <h2 class="module-title">Centro de Operaciones</h2>
+                    <p class="module-subtitle">Movimientos, privacidad y vistas del facturero en una sola mesa operativa.</p>
                 </div>
             </div>
         </header>
 
         <div class="card financial-operations-card">
             <div class="financial-operations-header">
-                <div>
-                    <h3 class="financial-operations-title">Centro de Operaciones</h3>
-                    <p class="financial-operations-subtitle">Control unificado de movimientos sin scroll infinito.</p>
+                <div class="financial-operations-copy">
+                    <p class="financial-operations-kicker">Flujo operativo</p>
+                    <h3 class="financial-operations-title">Selecciona contexto y abre vista</h3>
+                    <p class="financial-operations-subtitle">Paso 1 filtra el cultivo. Paso 2 decide qué lectura abrir.</p>
                     <p class="ops-total-display" id="ops-total-display">Todos los movimientos (Total: 0)</p>
                 </div>
-                <div class="financial-operations-actions">
-                    <button type="button" class="btn-privacy-toggle" id="ops-buyer-privacy-toggle"
-                        data-buyer-privacy-control="toggle" aria-pressed="false"
-                        title="Ocultar o mostrar nombres de compradores">
-                        👁 Ocultar nombres
-                    </button>
-                    <button type="button" class="btn-privacy-toggle" id="ops-money-privacy-toggle"
-                        data-money-privacy-control="toggle" aria-pressed="false"
-                        title="Ocultar o mostrar montos financieros">
-                        💰 Ocultar montos
-                    </button>
-                    <button type="button" class="btn-privacy-toggle" id="btn-open-agro-social"
-                        title="Abrir panel social Agro">
-                        💬 Social
-                    </button>
-                    <button type="button" class="btn-privacy-toggle" id="btn-open-agro-calculator"
-                        title="Abrir calculadora ROI">
-                        🧮 Calculadora
-                    </button>
+                <div class="financial-operations-toolbar">
+                    <p class="financial-operations-toolbar-label">Utilidades</p>
+                    <div class="financial-operations-actions">
+                        <button type="button" class="btn-privacy-toggle" id="ops-buyer-privacy-toggle"
+                            data-buyer-privacy-control="toggle" aria-pressed="false"
+                            title="Ocultar o mostrar nombres de compradores">
+                            👁 Ocultar nombres
+                        </button>
+                        <button type="button" class="btn-privacy-toggle" id="ops-money-privacy-toggle"
+                            data-money-privacy-control="toggle" aria-pressed="false"
+                            title="Ocultar o mostrar montos financieros">
+                            💰 Ocultar montos
+                        </button>
+                        <button type="button" class="btn-privacy-toggle" id="btn-open-agro-social"
+                            title="Abrir panel social Agro">
+                            💬 Social
+                        </button>
+                        <button type="button" class="btn-privacy-toggle" id="btn-open-agro-calculator"
+                            title="Abrir calculadora ROI">
+                            🧮 Calculadora
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <div class="ops-context-steps" id="ops-context-steps">
-                <div class="ops-step-block" aria-label="Paso 1 Seleccionar cultivo">
-                    <p class="ops-step-label">PASO 1 · Seleccionar cultivo</p>
+                <div class="ops-step-block ops-step-block--selector" aria-label="Paso 1 Seleccionar cultivo">
+                    <div class="ops-step-head">
+                        <p class="ops-step-label">PASO 1 · Seleccionar cultivo</p>
+                        <div class="ops-step-copy">
+                            <p class="ops-step-title">Elegir contexto</p>
+                            <p class="ops-step-note">Vista general o un ciclo activo para enfocar el registro.</p>
+                        </div>
+                    </div>
                     <div class="ops-cultivos-panel" id="ops-cultivos-panel" hidden inert>
                         <div class="ops-cultivos-header">
                             <p class="ops-cultivos-title">Seleccionar cultivo</p>
-                            <p class="ops-cultivos-subtitle">Usa Vista General o filtra por ciclo.</p>
+                            <p class="ops-cultivos-subtitle">Usa Vista General o filtra por un activo en producción.</p>
                         </div>
                         <div class="ops-cultivos-chip-row" id="ops-cultivos-active-row" role="group"
                             aria-label="Cultivos activos y vista general"></div>
@@ -1720,15 +1731,20 @@
                             </div>
                             <button type="button" class="ops-cultivos-history-btn" id="ops-cultivos-history-btn"
                                 data-agro-view="ciclos">
-                                <span>Ir al historial de ciclos</span>
+                                <span>Abrir historial</span>
                                 <span class="ops-cultivos-count" id="ops-cultivos-finished-count">0</span>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="ops-step-block" aria-label="Paso 2 Qué ver">
-                    <p class="ops-step-label">PASO 2 · Qué ver</p>
-                    <p class="ops-step-helper">Abre una vista enfocada del facturero. Carrito y Rankings forman parte oficial del flujo.</p>
+                <div class="ops-step-block ops-step-block--viewer" aria-label="Paso 2 Qué ver">
+                    <div class="ops-step-head">
+                        <p class="ops-step-label">PASO 2 · Qué ver</p>
+                        <div class="ops-step-copy">
+                            <p class="ops-step-title">Abrir vista del facturero</p>
+                            <p class="ops-step-note ops-step-helper">Gastos, pagados, fiados, pérdidas, donaciones, otros, carrito y rankings.</p>
+                        </div>
+                    </div>
                     <div class="financial-tabs" role="tablist" aria-label="Pestañas de finanzas agro">
                         <button type="button" class="financial-tab-btn is-active" role="tab" id="tab-btn-gastos"
                             aria-selected="true" aria-controls="tab-panel-gastos" data-tab="gastos">Gastos</button>
@@ -1752,7 +1768,7 @@
             </div>
 
             <div class="ops-selection-status" id="ops-selection-status" aria-live="polite">
-                Selecciona un registro del historial para ver sus acciones disponibles.
+                Selecciona un movimiento del historial para ver sus acciones rápidas.
             </div>
 
             <div class="financial-tab-panels">
@@ -1766,9 +1782,8 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-gastos-form">
-                            <div
-                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
-                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                            <div class="ops-wizard-note">
+                                <p class="ops-wizard-note__copy">
                                     El registro de gastos ahora se hace con el wizard. Usa el bot&oacute;n
                                     <strong>Nuevo</strong> en el header.
                                 </p>
@@ -1805,9 +1820,8 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-ingresos-form">
-                            <div
-                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
-                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                            <div class="ops-wizard-note">
+                                <p class="ops-wizard-note__copy">
                                     El registro de ingresos se realiza con el wizard. Usa el bot&oacute;n
                                     <strong>Nuevo</strong> en el header.
                                 </p>
@@ -1845,9 +1859,8 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-pendientes-form">
-                            <div
-                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
-                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                            <div class="ops-wizard-note">
+                                <p class="ops-wizard-note__copy">
                                     El registro de fiados se hace con el wizard. Usa el bot&oacute;n
                                     <strong>Nuevo</strong> en el header.
                                 </p>
@@ -1877,9 +1890,8 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-perdidas-form">
-                            <div
-                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
-                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                            <div class="ops-wizard-note">
+                                <p class="ops-wizard-note__copy">
                                     El registro de p&eacute;rdidas se realiza con el wizard. Usa el bot&oacute;n
                                     <strong>Nuevo</strong> en el header.
                                 </p>
@@ -1909,9 +1921,8 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-transferencias-form">
-                            <div
-                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
-                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                            <div class="ops-wizard-note">
+                                <p class="ops-wizard-note__copy">
                                     El registro de donaciones se hace con el wizard. Usa el bot&oacute;n
                                     <strong>Nuevo</strong> en el header.
                                 </p>
@@ -1941,9 +1952,8 @@
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
                         </summary>
                         <div class="yg-accordion-content" id="facturero-otros-form">
-                            <div
-                                style="margin: 0.5rem 0 1rem; padding: 1rem; border: 1px dashed rgba(200,167,82,0.35); border-radius: 12px; background: rgba(200,167,82,0.08);">
-                                <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.85rem;">
+                            <div class="ops-wizard-note">
+                                <p class="ops-wizard-note__copy">
                                     El registro general se hace con el wizard. Usa el bot&oacute;n
                                     <strong>Nuevo</strong> en el header.
                                 </p>
