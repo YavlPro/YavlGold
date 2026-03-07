@@ -1,3 +1,65 @@
+## 🆕 SESIÓN: SUB-LOTE — Compactación vertical de Centro de Operaciones Agro V1 (2026-03-07)
+
+### Diagnóstico del problema
+
+- El bloque ya quedó mejor jerarquizado, pero todavía arrastra demasiado aire negro en la mitad superior.
+- El problema ya no es de orden:
+  - es de densidad útil,
+  - compactación vertical,
+  - y aprovechamiento del espacio.
+- La zona más afectada es la cabecera operativa:
+  - `Flujo operativo`
+  - título
+  - subtítulo
+  - total
+  - utilidades
+- `Paso 1` y `Paso 2` arrancan más abajo de lo necesario y eso alarga artificialmente la primera pantalla del centro operativo.
+- `Paso 2` todavía conserva demasiado vacío interno para el peso real de sus tabs.
+- Causa técnica encontrada:
+  - una parte del spacing “anterior” sigue definida en el `<style>` inline de `apps/gold/agro/index.html`,
+  - y está reinyectando paddings/gaps más altos sobre `financial-operations-card` y reglas relacionadas.
+- Hallazgo adicional en QA:
+  - varias reglas finas de `Paso 1 / Paso 2` estaban viviendo en `apps/gold/agro/agro.css`,
+  - pero `/agro/` no carga hoy esa hoja en `index.html`,
+  - así que el ajuste efectivo debe aterrizar en `apps/gold/agro/agro-operations.css` y en el `<style>` inline que sí forma parte de la página real.
+- Hallazgo de composición:
+  - el estado contextual de `Paso 2` estaba fuera del bloque derecho,
+  - así que la columna de tabs quedaba visualmente “cortada” arriba y dejaba un vacío negro interno innecesario.
+
+### Objetivo del ajuste
+
+- Reducir espacio vertical sobrante sin rediseñar la estructura.
+- Compactar la cabecera operativa.
+- Integrar mejor la caja de utilidades.
+- Subir `Paso 1` y `Paso 2`.
+- Reducir el aire negro sobrante en `Paso 2` y en el estado contextual.
+
+### Plan del ajuste
+
+1. Corregir spacing base heredado en `index.html`.
+2. Mover el paquete de compactación operativa al CSS realmente cargado por `/agro/`.
+3. Bajar padding/gap del header operativo y su toolbar.
+4. Compactar `Paso 1` y `Paso 2`:
+   - menos padding externo,
+   - menos gap,
+   - mejor proximidad al header.
+5. Reducir alto del estado contextual y el bloque de tabs sin cambiar su lógica.
+6. Reubicar el estado contextual dentro de `Paso 2` para que la columna derecha use mejor su altura en desktop.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-operations.css`
+
+### Criterio de QA de este sub-lote
+
+- Verificar que el header operativo ocupe menos alto visual.
+- Verificar que `Paso 1` y `Paso 2` arranquen más arriba.
+- Verificar que `Paso 2` y el estado contextual usen menos altura.
+- Verificar que móvil siga sin overflow horizontal.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Pulido de Centro de Operaciones Agro V1 (2026-03-07)
 
 ### Diagnóstico del estado actual

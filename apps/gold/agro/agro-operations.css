@@ -179,8 +179,8 @@
 }
 
 .finances-section.agro-ops-v10 .module-header {
-  padding: 0.72rem 0 0.82rem;
-  gap: 0.65rem;
+  padding: 0.56rem 0 0.62rem;
+  gap: 0.5rem;
 }
 
 .finances-section.agro-ops-v10 .module-title-group {
@@ -193,19 +193,19 @@
 }
 
 .finances-section.agro-ops-v10 .module-title {
-  font-size: clamp(1.16rem, 2.5vw, 1.42rem);
+  font-size: clamp(1.08rem, 2.4vw, 1.32rem);
 }
 
 .finances-section.agro-ops-v10 .module-subtitle {
-  max-width: 52ch;
+  max-width: 46ch;
 }
 
 .ops-module-eyebrow {
-  margin: 0 0 0.18rem;
+  margin: 0 0 0.1rem;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.58rem;
+  font-size: 0.54rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-gold-prestige);
   opacity: 0.7;
@@ -219,15 +219,526 @@
 
 @media (max-width: 768px) {
   .finances-section.agro-ops-v10 .module-header {
-    padding: 0.66rem 0 0.76rem;
+    padding: 0.52rem 0 0.58rem;
   }
 
   .finances-section.agro-ops-v10 .module-title {
-    font-size: clamp(1.04rem, 5vw, 1.26rem);
+    font-size: clamp(0.98rem, 4.8vw, 1.18rem);
   }
 
   .finances-section.agro-ops-v10 .module-subtitle {
     max-width: none;
+  }
+}
+
+/* §1.5 OPERATIONS CENTER COMPACT LAYOUT */
+.agro-ops-v10 .financial-operations-card {
+  margin-top: 0.58rem;
+  padding: 0.84rem 0.92rem 0.94rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.66rem;
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
+    rgba(8, 8, 8, 0.92);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.26),
+    0 0 28px rgba(200, 167, 82, 0.05);
+}
+
+.agro-ops-v10 .financial-operations-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.4rem 0.72rem;
+}
+
+.agro-ops-v10 .financial-operations-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-width: 500px;
+  min-width: 0;
+}
+
+.agro-ops-v10 .financial-operations-kicker {
+  margin: 0 0 0.04rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.62);
+}
+
+.agro-ops-v10 .financial-operations-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.agro-ops-v10 .financial-operations-subtitle {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 0.76rem;
+  line-height: 1.28;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.agro-ops-v10 .ops-total-display {
+  margin: 0.08rem 0 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.74rem;
+  color: rgba(229, 213, 160, 0.8);
+  letter-spacing: 0.2px;
+}
+
+.agro-ops-v10 .financial-operations-toolbar {
+  display: flex;
+  flex: 0 1 auto;
+  width: fit-content;
+  min-width: min(100%, 352px);
+  max-width: 380px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.18rem;
+  justify-self: end;
+}
+
+.agro-ops-v10 .financial-operations-toolbar-label {
+  margin: 0 0 0.04rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.46);
+}
+
+.agro-ops-v10 .financial-operations-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin-left: 0;
+  padding: 0.26rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.agro-ops-v10 .btn-privacy-toggle {
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  min-height: 31px;
+  padding: 0.24rem 0.62rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18px;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.agro-ops-v10 .btn-privacy-toggle:hover {
+  border-color: rgba(200, 167, 82, 0.38);
+  background: rgba(200, 167, 82, 0.08);
+  color: rgba(255, 243, 208, 0.92);
+}
+
+.agro-ops-v10 .btn-privacy-toggle[aria-pressed="true"] {
+  border-color: rgba(200, 167, 82, 0.42);
+  background: rgba(200, 167, 82, 0.12);
+  color: rgba(251, 233, 186, 0.96);
+}
+
+.agro-ops-v10 .btn-privacy-toggle:focus-visible {
+  outline: 2px solid rgba(200, 167, 82, 0.6);
+  outline-offset: 2px;
+}
+
+.agro-ops-v10 .usd-audit-badge {
+  min-width: 0;
+  justify-content: center;
+  font-size: 0.69rem;
+  letter-spacing: 0.02em;
+}
+
+.agro-ops-v10 .ops-context-steps {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 0.54rem;
+  align-items: start;
+}
+
+.agro-ops-v10 .ops-step-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  min-width: 0;
+  padding: 0.62rem 0.68rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+}
+
+.agro-ops-v10 .ops-step-block--viewer {
+  height: 100%;
+  justify-content: space-between;
+}
+
+.agro-ops-v10 .ops-step-head,
+.agro-ops-v10 .ops-step-copy,
+.agro-ops-v10 .ops-cultivos-header,
+.agro-ops-v10 .ops-cultivos-history-copy {
+  display: flex;
+  flex-direction: column;
+}
+
+.agro-ops-v10 .ops-step-head,
+.agro-ops-v10 .ops-cultivos-header,
+.agro-ops-v10 .ops-cultivos-history-copy {
+  gap: 0.12rem;
+}
+
+.agro-ops-v10 .ops-step-copy {
+  gap: 0.1rem;
+}
+
+.agro-ops-v10 .ops-step-label,
+.agro-ops-v10 .ops-cultivos-title,
+.agro-ops-v10 .ops-cultivos-history-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(200, 167, 82, 0.72);
+}
+
+.agro-ops-v10 .ops-step-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.agro-ops-v10 .ops-step-note {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.28;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.agro-ops-v10 .ops-step-helper {
+  font-size: 0.7rem;
+}
+
+.agro-ops-v10 .ops-cultivos-panel {
+  border: 1px solid rgba(229, 213, 160, 0.16);
+  border-radius: 14px;
+  padding: 0.54rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.agro-ops-v10 .ops-cultivos-subtitle,
+.agro-ops-v10 .ops-cultivos-history-subtitle {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.24;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.agro-ops-v10 .ops-cultivos-chip-row {
+  display: flex;
+  gap: 0.36rem;
+  overflow-x: auto;
+  padding: 0.02rem 0 0.08rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.agro-ops-v10 .ops-cultivo-chip {
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  background: rgba(12, 12, 12, 0.82);
+  color: rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  min-height: 39px;
+  min-width: 112px;
+  padding: 0.34rem 0.64rem;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.05rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.agro-ops-v10 .ops-cultivo-chip:hover {
+  border-color: rgba(200, 167, 82, 0.46);
+  color: #fff;
+}
+
+.agro-ops-v10 .ops-cultivo-chip.is-active {
+  color: #0a0a0a;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--gold-primary, #C8A752), var(--gold-dark, #9a7f3c));
+  box-shadow: 0 6px 16px rgba(200, 167, 82, 0.16);
+}
+
+.agro-ops-v10 .ops-cultivo-chip-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.agro-ops-v10 .ops-cultivo-chip-meta {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.82;
+}
+
+.agro-ops-v10 .ops-cultivos-finished {
+  border: 1px solid rgba(229, 213, 160, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.018);
+  padding: 0.42rem 0.54rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.agro-ops-v10 .ops-cultivos-history-btn {
+  cursor: pointer;
+  padding: 0.4rem 0.56rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.48rem;
+  min-height: 32px;
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  border-radius: 999px;
+  background: rgba(200, 167, 82, 0.05);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.78);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.agro-ops-v10 .ops-cultivos-history-btn:hover,
+.agro-ops-v10 .ops-cultivos-history-btn:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(229, 213, 160, 0.3);
+  background: rgba(200, 167, 82, 0.08);
+  color: rgba(243, 222, 176, 0.94);
+}
+
+.agro-ops-v10 .ops-cultivos-count {
+  border: 1px solid rgba(200, 167, 82, 0.4);
+  border-radius: 999px;
+  padding: 0.04rem 0.38rem;
+  font-size: 0.64rem;
+  color: rgba(229, 213, 160, 0.88);
+  font-weight: 700;
+  background: rgba(200, 167, 82, 0.06);
+}
+
+.agro-ops-v10 .financial-tabs {
+  gap: 0.28rem;
+  padding-bottom: 0.08rem;
+  margin-top: 0.08rem;
+}
+
+.agro-ops-v10 .financial-tab-btn {
+  padding: 0.28rem 0.54rem;
+  font-size: 0.61rem;
+  letter-spacing: 0.09em;
+}
+
+.agro-ops-v10 .ops-selection-status {
+  margin-top: 0.48rem;
+  min-height: 24px;
+  padding: 0.24rem 0.56rem;
+  border-radius: 12px;
+  border: 1px solid rgba(200, 167, 82, 0.12);
+  background: rgba(255, 255, 255, 0.018);
+  font-size: 0.71rem;
+  line-height: 1.26;
+  color: rgba(255, 255, 255, 0.64);
+}
+
+.agro-ops-v10 .tab-panel {
+  padding-top: 0.18rem;
+}
+
+.agro-ops-v10 .facturero-accordion {
+  margin-top: 0.45rem;
+}
+
+.agro-ops-v10 .facturero-accordion:first-child {
+  margin-top: 0;
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion {
+  border-color: rgba(200, 167, 82, 0.18);
+  background: rgba(10, 10, 10, 0.92);
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion::before {
+  opacity: 0.75;
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18), 0 0 18px rgba(200, 167, 82, 0.06);
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion-summary {
+  padding: 0.62rem 0.72rem;
+  gap: 0.5rem;
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.agro-ops-v10 .financial-operations-card .yg-accordion-content {
+  padding: 0.1rem 0.72rem 0.72rem;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.agro-ops-v10 .ops-wizard-note {
+  margin: 0.22rem 0 0.56rem;
+  padding: 0.58rem 0.68rem;
+  border: 1px dashed rgba(200, 167, 82, 0.24);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(200, 167, 82, 0.07), rgba(200, 167, 82, 0.03));
+}
+
+.agro-ops-v10 .ops-wizard-note__copy {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.74rem;
+  line-height: 1.34;
+}
+
+.agro-ops-v10 .ops-wizard-note__copy strong {
+  color: rgba(243, 222, 176, 0.92);
+}
+
+@media (max-width: 900px) {
+  .agro-ops-v10 .financial-operations-header {
+    grid-template-columns: 1fr;
+  }
+
+  .agro-ops-v10 .financial-operations-toolbar {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    align-items: stretch;
+    justify-self: stretch;
+  }
+
+  .agro-ops-v10 .financial-operations-actions {
+    justify-content: flex-start;
+  }
+
+  .agro-ops-v10 .ops-context-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .agro-ops-v10 .financial-operations-card {
+    padding: 0.76rem;
+    gap: 0.58rem;
+  }
+
+  .agro-ops-v10 .financial-operations-toolbar {
+    gap: 0.14rem;
+  }
+
+  .agro-ops-v10 .financial-operations-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.22rem;
+    gap: 0.24rem;
+  }
+
+  .agro-ops-v10 .btn-privacy-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .agro-ops-v10 .usd-audit-badge {
+    grid-column: 1 / -1;
+  }
+
+  .agro-ops-v10 .ops-step-block {
+    padding: 0.56rem 0.6rem;
+  }
+
+  .agro-ops-v10 .ops-step-block--viewer {
+    height: auto;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .agro-ops-v10 .ops-step-label,
+  .agro-ops-v10 .ops-cultivos-title,
+  .agro-ops-v10 .ops-cultivos-history-title {
+    font-size: 0.5rem;
+  }
+
+  .agro-ops-v10 .ops-step-title {
+    font-size: 0.7rem;
+  }
+
+  .agro-ops-v10 .ops-step-note {
+    font-size: 0.68rem;
+  }
+
+  .agro-ops-v10 .ops-cultivos-panel {
+    padding: 0.48rem;
+  }
+
+  .agro-ops-v10 .ops-cultivos-finished {
+    padding: 0.38rem 0.46rem;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .agro-ops-v10 .ops-cultivos-history-btn {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
