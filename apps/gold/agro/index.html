@@ -1435,8 +1435,11 @@
                 <div class="module-title-group">
                     <div class="module-icon">🌱</div>
                     <div class="module-heading">
-                        <h2 class="module-title">Active Crops</h2>
-                        <p class="module-subtitle">Gestión de ciclos productivos</p>
+                        <h2 class="module-title" id="crops-section-title" data-active-label="Cultivos activos"
+                            data-history-label="Historial de ciclos">Cultivos activos</h2>
+                        <p class="module-subtitle" id="crops-section-subtitle"
+                            data-active-copy="Gestión de ciclos en producción"
+                            data-history-copy="Finalizados, perdidos y auditoría de ciclos cerrados">Gestión de ciclos en producción</p>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -1710,16 +1713,17 @@
                         <div class="ops-cultivos-chip-row" id="ops-cultivos-active-row" role="group"
                             aria-label="Cultivos activos y vista general"></div>
 
-                        <details class="ops-cultivos-finished" id="ops-cultivos-finished">
-                            <summary class="ops-cultivos-finished-summary">
-                                <span>Ver historial de cultivos finalizados</span>
-                                <span class="ops-cultivos-count" id="ops-cultivos-finished-count">0</span>
-                            </summary>
-                            <div class="ops-cultivos-finished-body">
-                                <div class="ops-cultivos-chip-row" id="ops-cultivos-finished-row" role="group"
-                                    aria-label="Cultivos finalizados"></div>
+                        <div class="ops-cultivos-finished" id="ops-cultivos-finished">
+                            <div class="ops-cultivos-history-copy">
+                                <p class="ops-cultivos-history-title">Ciclos cerrados</p>
+                                <p class="ops-cultivos-history-subtitle" id="ops-cultivos-finished-note">Finalizados y perdidos viven en Historial de ciclos.</p>
                             </div>
-                        </details>
+                            <button type="button" class="ops-cultivos-history-btn" id="ops-cultivos-history-btn"
+                                data-agro-view="ciclos">
+                                <span>Ir al historial de ciclos</span>
+                                <span class="ops-cultivos-count" id="ops-cultivos-finished-count">0</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="ops-step-block" aria-label="Paso 2 Qué ver">

@@ -3276,26 +3276,60 @@ body.modal-open {
   border: 1px solid rgba(200, 167, 82, 0.22);
   border-radius: 12px;
   background: rgba(12, 12, 12, 0.62);
+  padding: 0.62rem 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.ops-cultivos-finished-summary {
-  list-style: none;
+.ops-cultivos-history-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.ops-cultivos-history-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.82);
+}
+
+.ops-cultivos-history-subtitle {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.ops-cultivos-history-btn {
   cursor: pointer;
   padding: 0.58rem 0.72rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
+  min-height: 40px;
+  min-width: fit-content;
+  border: 1px solid rgba(200, 167, 82, 0.28);
+  border-radius: 999px;
+  background: rgba(200, 167, 82, 0.08);
+  font-family: 'Orbitron', sans-serif;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.86);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
-.ops-cultivos-finished-summary::-webkit-details-marker {
-  display: none;
-}
-
-.ops-cultivos-finished[open] .ops-cultivos-finished-summary {
-  border-bottom: 1px solid rgba(200, 167, 82, 0.2);
+.ops-cultivos-history-btn:hover,
+.ops-cultivos-history-btn:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(229, 213, 160, 0.42);
+  background: rgba(200, 167, 82, 0.12);
+  color: #f3deb0;
 }
 
 .ops-cultivos-count {
@@ -3305,10 +3339,6 @@ body.modal-open {
   font-size: 0.72rem;
   color: rgba(248, 224, 160, 0.92);
   font-weight: 700;
-}
-
-.ops-cultivos-finished-body {
-  padding: 0.55rem 0.6rem 0.65rem;
 }
 
 .ops-cultivos-empty {
@@ -3327,6 +3357,14 @@ body.modal-open {
   line-height: 1.35;
   font-size: 0.78rem;
   color: rgba(255, 255, 255, 0.84);
+}
+
+body[data-agro-active-view='cultivos'] #crops-cycle-history-accordion {
+  display: none !important;
+}
+
+body[data-agro-active-view='ciclos'] #cyclesContainer {
+  display: none !important;
 }
 
 .ops-rankings-panel {
@@ -3969,9 +4007,14 @@ body.modal-open {
     padding: 0.68rem;
   }
 
-  .ops-cultivos-finished-summary {
-    min-height: 48px;
-    padding: 0.58rem 0.62rem;
+  .ops-cultivos-finished {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.62rem;
+  }
+
+  .ops-cultivos-history-btn {
+    width: 100%;
   }
 
   .ops-cultivo-chip {

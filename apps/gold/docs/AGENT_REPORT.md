@@ -1,3 +1,47 @@
+## 🆕 SESIÓN: SUB-LOTE — Separación Activos vs Historial de ciclos (2026-03-07)
+
+### Diagnóstico del problema
+
+- La navegación macro ya diferencia correctamente:
+  - `Cultivos activos`
+  - `Historial de ciclos`
+- Pero dentro del flujo de Operaciones todavía quedaba una incoherencia:
+  - en `Paso 1 · Seleccionar cultivo` se incrustaba un bloque `Ver historial de cultivos finalizados`.
+- Eso mezcla dos estados mentales distintos dentro de la misma superficie:
+  - selección de ciclos activos para operar,
+  - consulta de ciclos ya cerrados.
+
+### Regla de navegación que se fija
+
+- `Cultivos activos` debe mostrar solo ciclos activos.
+- `Historial de ciclos` debe ser la vista oficial para:
+  - finalizados
+  - perdidos
+  - auditoría de ciclos cerrados
+- Cualquier CTA dentro de la superficie de activos que apunte a ciclos cerrados debe redirigir a la vista macro `Historial de ciclos`, no mostrar cerrados inline.
+
+### Plan del ajuste
+
+1. Retirar el mini-historial inline de finalizados dentro del selector de cultivos de Operaciones.
+2. Reemplazarlo por un CTA claro:
+   - `Ir al historial de ciclos`
+3. Mantener el conteo como señal breve, pero mover la consulta real a la vista macro `Historial de ciclos`.
+4. Afinar el estado vacío de `Cultivos activos` para que oriente al historial cuando existan ciclos cerrados.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro.js`
+
+### Criterio de QA de este sub-lote
+
+- Verificar que `Paso 1` ya no despliegue cultivos finalizados inline.
+- Verificar que el CTA lleve a la vista macro `Historial de ciclos`.
+- Verificar que `Cultivos activos` siga mostrando solo activos.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Formalización de Agro V1 (2026-03-07)
 
 ### Diagnóstico del momento del módulo

@@ -11996,8 +11996,9 @@ function getOpsContextElements() {
         panel: document.getElementById('ops-cultivos-panel'),
         activeRow: document.getElementById('ops-cultivos-active-row'),
         finishedWrap: document.getElementById('ops-cultivos-finished'),
-        finishedRow: document.getElementById('ops-cultivos-finished-row'),
-        finishedCount: document.getElementById('ops-cultivos-finished-count')
+        finishedCount: document.getElementById('ops-cultivos-finished-count'),
+        finishedNote: document.getElementById('ops-cultivos-finished-note'),
+        historyButton: document.getElementById('ops-cultivos-history-btn')
     };
 }
 
@@ -12305,8 +12306,8 @@ function resolveOpsChipStatus(crop) {
 }
 
 function renderOpsCultivosPanel() {
-    const { panel, activeRow, finishedWrap, finishedRow, finishedCount } = getOpsContextElements();
-    if (!panel || !activeRow || !finishedWrap || !finishedRow) return;
+    const { panel, activeRow, finishedWrap, finishedCount, finishedNote, historyButton } = getOpsContextElements();
+    if (!panel || !activeRow || !finishedWrap || !finishedCount || !historyButton) return;
     if (opsContextMode !== 'cultivos') return;
 
     panel.classList.add('crop-selector');
@@ -12315,8 +12316,7 @@ function renderOpsCultivosPanel() {
     panel.querySelector('.ops-cultivos-subtitle')?.classList.add('crop-meta-sub');
     activeRow.classList.add('crop-selector-body');
     finishedWrap.classList.add('crop-selector-footer');
-    finishedWrap.querySelector('.ops-cultivos-finished-summary')?.classList.add('link-text');
-    finishedRow.classList.add('crop-selector-body');
+    historyButton.classList.add('link-text');
 
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
@@ -12340,32 +12340,25 @@ function renderOpsCultivosPanel() {
         activeRow.appendChild(buildOpsCultivosEmptyMessage('No hay ciclos activos.'));
     }
 
-    finishedRow.textContent = '';
-    if (finishedCount) {
-        finishedCount.textContent = String(finishedCrops.length);
-    }
+    finishedCount.textContent = String(finishedCrops.length);
+    historyButton.setAttribute(
+        'aria-label',
+        finishedCrops.length > 0
+            ? `Ir al historial de ciclos (${finishedCrops.length})`
+            : 'Ir al historial de ciclos'
+    );
 
-    if (finishedCrops.length === 0) {
-        finishedRow.appendChild(buildOpsCultivosEmptyMessage('Sin cultivos finalizados.'));
-    } else {
-        finishedCrops.forEach((crop) => {
-            const cropId = normalizeCropId(crop?.id);
-            if (!cropId) return;
-            const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌾' });
-            finishedRow.appendChild(buildOpsCultivoChip({
-                label: displayCrop.label,
-                meta: resolveOpsChipStatus(crop),
-                cropId,
-                selected: cropId === selectedId
-            }));
-        });
+    if (finishedNote) {
+        finishedNote.textContent = finishedCrops.length > 0
+            ? `${finishedCrops.length} ciclos cerrados viven en Historial de ciclos.`
+            : 'Finalizados y perdidos viven en Historial de ciclos.';
     }
 }
 
 function bindOpsCultivosPanelEvents() {
     if (opsCultivosPanelEventsBound) return;
-    const { panel, activeRow, finishedRow } = getOpsContextElements();
-    if (!panel || !activeRow || !finishedRow) return;
+    const { panel, activeRow } = getOpsContextElements();
+    if (!panel || !activeRow) return;
 
     opsCultivosPanelEventsBound = true;
     const isChipDisabled = (chip) => {
@@ -12388,19 +12381,14 @@ function bindOpsCultivosPanelEvents() {
     };
 
     activeRow.addEventListener('click', handleClick);
-    finishedRow.addEventListener('click', handleClick);
     activeRow.addEventListener('keydown', handleKeydown);
-    finishedRow.addEventListener('keydown', handleKeydown);
 }
 
 function syncOpsCultivosPanelVisibility() {
-    const { panel, finishedWrap } = getOpsContextElements();
+    const { panel } = getOpsContextElements();
     if (!panel) return;
     const showPanel = opsContextMode === 'cultivos';
     setElementHiddenInert(panel, !showPanel);
-    if (!showPanel && finishedWrap) {
-        finishedWrap.open = false;
-    }
 }
 
 function getCurrentFinanceTab() {

@@ -24,7 +24,7 @@ const CORE_OPERATIONS_TABS = new Set([
 const VIEW_CONFIG = Object.freeze({
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     cultivos: { region: 'cultivos', label: 'Cultivos activos', focusSelector: '[data-agro-shell-region="cultivos"]' },
-    ciclos: { region: 'cultivos', label: 'Historial de ciclos', focusSelector: '#crops-cycle-finished-section' },
+    ciclos: { region: 'cultivos', label: 'Historial de ciclos', focusSelector: '#crops-cycle-history-accordion' },
     operaciones: { region: 'ops', label: 'Centro de operaciones', resolveTab: resolveOperationsTab, dense: true },
     pagados: { region: 'ops', label: 'Pagados', tab: 'ingresos', dense: true },
     fiados: { region: 'ops', label: 'Fiados', tab: 'pendientes', dense: true },
@@ -114,6 +114,26 @@ function updateAccordionState(id, isOpen) {
     if (summary) {
         summary.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
+}
+
+function syncCultivosSubview(view) {
+    const isHistoryView = view === 'ciclos';
+    const title = document.getElementById('crops-section-title');
+    const subtitle = document.getElementById('crops-section-subtitle');
+
+    if (title) {
+        title.textContent = isHistoryView
+            ? (title.dataset.historyLabel || 'Historial de ciclos')
+            : (title.dataset.activeLabel || 'Cultivos activos');
+    }
+
+    if (subtitle) {
+        subtitle.textContent = isHistoryView
+            ? (subtitle.dataset.historyCopy || 'Finalizados, perdidos y auditoria de ciclos cerrados')
+            : (subtitle.dataset.activeCopy || 'Gestion de ciclos en produccion');
+    }
+
+    updateAccordionState('crops-cycle-history-accordion', isHistoryView);
 }
 
 function clickIfExists(selector) {
@@ -230,6 +250,8 @@ export function initAgroShell() {
         } else {
             updateAccordionState('yg-acc-agrorepo', false);
         }
+
+        syncCultivosSubview(view);
 
         const focusSelector = config.focusSelector || `[data-agro-shell-region="${config.region}"]`;
         focusTarget(focusSelector, options);
