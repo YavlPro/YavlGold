@@ -5442,6 +5442,24 @@ body.agro-view-dense::after {
   line-height: 1.42;
 }
 
+.agro-shell-sidebar__milestone {
+  margin: 0.1rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02)),
+    rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 0.82rem;
+  line-height: 1.34;
+}
+
+.agro-shell-sidebar__milestone strong {
+  color: #f3deb0;
+  font-weight: 700;
+}
+
 .agro-shell-sidebar__group {
   display: flex;
   flex-direction: column;

@@ -15820,17 +15820,24 @@ window.deleteCrop = deleteCrop;
         return new Date().toISOString().split('T')[0];
     }
 
+    function getAgroModuleRelease(marker) {
+        const dataRelease = marker?.dataset?.moduleRelease;
+        if (dataRelease) return dataRelease;
+        return 'Agro';
+    }
+
     function initBuildMarker() {
         const marker = document.getElementById('agro-build-marker');
         if (!marker) return;
 
         const version = getAgroBuildVersion(marker);
+        const moduleRelease = getAgroModuleRelease(marker);
         const hash = getAgroBuildHash();
         const date = getAgroBuildDate(marker);
 
-        marker.textContent = `Agro Build: ${version} • ${hash} • ${date}`;
+        marker.textContent = `${moduleRelease} • Build ${version} • ${hash} • ${date}`;
         marker.setAttribute('data-build-hash', hash);
-        console.info(`[AGRO] Build marker: ${version} ${hash} ${date}`);
+        console.info(`[AGRO] Build marker: ${moduleRelease} ${version} ${hash} ${date}`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {

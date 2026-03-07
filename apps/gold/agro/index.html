@@ -13,7 +13,7 @@
             }
         })();
     </script>
-    <title>YavlGold V9.8 - Módulo Agro</title>
+    <title>YavlGold V9.8 - Agro V1</title>
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="apple-touch-icon" href="../assets/images/logo.webp"> <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -236,6 +236,20 @@
             border-radius: var(--radius-pill);
             color: var(--gold-primary);
             margin-left: var(--spacing-xs);
+        }
+
+        .module-release-badge {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            padding: 0.2rem 0.55rem;
+            background: linear-gradient(135deg, rgba(107, 90, 62, 0.96), rgba(200, 167, 82, 0.96), rgba(232, 212, 139, 0.92));
+            border: 1px solid rgba(229, 213, 160, 0.22);
+            border-radius: var(--radius-pill);
+            color: #0a0a0a;
+            margin-left: 0.35rem;
+            box-shadow: 0 8px 18px rgba(200, 167, 82, 0.14);
         }
 
         .user-profile {
@@ -999,6 +1013,11 @@
             font-weight: 600;
         }
 
+        .footer-module-release {
+            color: #E5D5A0;
+            font-weight: 700;
+        }
+
         .footer-links {
             display: flex;
             justify-content: center;
@@ -1128,9 +1147,10 @@
     <aside class="agro-shell-sidebar" id="agro-shell-sidebar" aria-label="Navegación Agro" aria-hidden="true">
         <div class="agro-shell-sidebar__inner">
             <div class="agro-shell-sidebar__head">
-                <p class="agro-shell-sidebar__eyebrow">Agro Shell V10</p>
+                <p class="agro-shell-sidebar__eyebrow">Agro V1</p>
                 <h2 class="agro-shell-sidebar__title">Flujo guiado del agricultor</h2>
                 <p class="agro-shell-sidebar__copy">Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de Operaciones.</p>
+                <p class="agro-shell-sidebar__milestone"><strong>Baseline oficial:</strong> dashboard, cultivos, operaciones, carrito, rankings, clima, agenda y bitácora.</p>
             </div>
 
             <div class="agro-shell-sidebar__group">
@@ -1180,7 +1200,7 @@
                 </button>
                 <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;" title="Volver al Inicio">
                     <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
-                        class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span>
+                        class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span><span class="module-release-badge">Agro V1</span>
                 </a>
             </div>
 
@@ -2083,14 +2103,14 @@
 
     <!-- Footer -->
     <footer id="agro-module-footer" class="footer animate-in delay-6">
-        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • Módulo Agro • Desarrollado con 🌾
+        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • <span class="footer-module-release">Agro V1</span> • Base oficial del módulo • Desarrollado con 🌾
             para agricultores </p>
         <div class="footer-links">
             <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
             <span class="footer-link">Datos protegidos</span>
         </div>
-        <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-build-date="2026-02-16">
-            Agro Build: V9.8 • dev • 2026-02-16
+        <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-module-release="Agro V1" data-build-date="2026-02-16">
+            Agro V1 • Build V9.8 • dev • 2026-02-16
         </div>
     </footer>
 

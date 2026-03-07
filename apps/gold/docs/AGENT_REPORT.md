@@ -1,3 +1,84 @@
+## 🆕 SESIÓN: SUB-LOTE — Formalización de Agro V1 (2026-03-07)
+
+### Diagnóstico del momento del módulo
+
+- `YavlGold V9.8` sigue siendo la versión global correcta de la plataforma.
+- `Agro`, en cambio, ya alcanzó un nivel de coherencia suficiente para formalizarse como `Agro V1`.
+- El objetivo de este lote no es renombrar el repo ni alterar arquitectura:
+  - es fijar el hito,
+  - declarar el baseline,
+  - y reflejar esa madurez en la UI y metadata visibles.
+
+### Qué entra oficialmente en Agro V1
+
+- Dashboard Agro
+- Cultivos activos
+- Historial de ciclos
+- Centro de Operaciones
+- Vistas oficiales del flujo financiero:
+  - `Pagados`
+  - `Fiados`
+  - `Pérdidas`
+  - `Donaciones`
+  - `Otros`
+  - `Carrito`
+  - `Rankings`
+- Herramientas visibles del módulo:
+  - `Clima`
+  - `Agenda`
+  - `Herramientas`
+  - `Bitácora / AgroRepo`
+- Acciones visibles del flujo:
+  - `Nuevo cultivo`
+  - `Nuevo registro`
+  - `Asistente Agro`
+
+### Qué no forma parte del baseline Agro V1
+
+- Cambios de arquitectura global (`SPA`, `React`, `Tailwind`, etc.).
+- Nuevas superficies fuera de la navegación oficial actual.
+- Integraciones avanzadas futuras no visibles hoy como parte del flujo base.
+- Reescrituras de datos/auth/backend como parte del lanzamiento del módulo.
+- Funciones experimentales que no estén ancladas al shell, dashboard o vistas oficiales ya validadas.
+
+### Baseline UX que queda congelado como referencia
+
+- Shell nueva con una sola vista macro activa.
+- Sidebar colapsable con navegación oficial.
+- `Paso 1 / Paso 2` preservados dentro de Operaciones.
+- Dashboard Agro refinado:
+  - cabecera reforzada,
+  - guía compacta,
+  - trío operativo (`Clima`, `Mercados`, `Fase lunar`) equilibrado.
+- `Carrito` y `Rankings` integrados como vistas reales del flujo.
+
+### Plan del sub-lote
+
+1. Registrar formalmente `Agro V1` en documentación.
+2. Crear una nota de baseline del módulo en `docs/`.
+3. Ajustar nomenclatura visible en el módulo:
+   - título,
+   - badges,
+   - copy de shell,
+   - footer,
+   - build marker.
+4. Mantener intacto el versionado global `YavlGold V9.8`.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/docs/AGRO_V1_BASELINE.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro.js`
+
+### Criterio de QA de este sub-lote
+
+- Verificar que la UI muestre `Agro V1` sin reemplazar indebidamente `YavlGold V9.8`.
+- Verificar que el build marker siga funcionando.
+- Verificar que sidebar, header y footer mantengan coherencia visual.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Dashboard Agro · trío operativo (2026-03-07)
 
 ### Diagnóstico del trío actual
