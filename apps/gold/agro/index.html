@@ -1243,9 +1243,13 @@
         </header> <!-- KPIs Section -->
         <section class="kpi-section agro-dashboard-v10" data-agro-section="agenda" data-agro-shell-region="dashboard">
             <div class="agro-dash-header section-header animate-in delay-1">
-                <h2 class="agro-dash-title section-title">
-                    <span class="agro-dash-icon">📊</span> Dashboard Agro
-                </h2>
+                <div class="agro-dash-heading">
+                    <p class="agro-dash-kicker">Centro de control agrícola</p>
+                    <h2 class="agro-dash-title section-title">
+                        <span class="agro-dash-icon">📊</span> Dashboard Agro
+                    </h2>
+                    <p class="agro-dash-subtitle">Clima, mercado y fase lunar en una sola lectura para arrancar el día con mejor contexto.</p>
+                </div>
                 <div class="agro-dash-controls">
                     <button type="button" class="assistant-trigger agro-dash-toggle" id="agro-focus-toggle" aria-pressed="false">
                         <span class="toggle-label">Modo Enfoque</span>
@@ -1262,10 +1266,12 @@
 
             <article class="agro-dash-guide card animate-in delay-2">
                 <div class="agro-dash-guide__content">
-                    <div>
-                        <p class="agro-dash-guide__eyebrow">Ruta sugerida</p>
-                        <h3 class="agro-dash-guide__title">Hoy empieza por el cultivo y termina en la decisión</h3>
-                        <p class="agro-dash-guide__copy">Crea o selecciona tu cultivo, registra el movimiento y luego valida clima, agenda y herramientas sin perder el contexto.</p>
+                    <div class="agro-dash-guide__head">
+                        <div class="agro-dash-guide__copyblock">
+                            <p class="agro-dash-guide__eyebrow">Ruta sugerida</p>
+                            <h3 class="agro-dash-guide__title">Arranque rápido del día</h3>
+                        </div>
+                        <p class="agro-dash-guide__copy">Seis atajos breves para abrir cultivo, validar contexto y pasar a la acción sin salir del dashboard.</p>
                     </div>
                     <div class="agro-dash-guide__steps">
                         <button type="button" class="agro-guide-step" data-agro-action="new-crop">
@@ -1274,33 +1280,42 @@
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="cultivos">
                             <span class="agro-guide-step__index">2</span>
-                            <span class="agro-guide-step__text">Seleccionar ciclo</span>
+                            <span class="agro-guide-step__text">Elegir ciclo</span>
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-action="new-record">
                             <span class="agro-guide-step__index">3</span>
-                            <span class="agro-guide-step__text">Registrar movimiento</span>
+                            <span class="agro-guide-step__text">Nuevo registro</span>
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="clima">
                             <span class="agro-guide-step__index">4</span>
-                            <span class="agro-guide-step__text">Revisar clima</span>
+                            <span class="agro-guide-step__text">Ver clima</span>
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="agenda">
                             <span class="agro-guide-step__index">5</span>
-                            <span class="agro-guide-step__text">Abrir agenda</span>
+                            <span class="agro-guide-step__text">Agenda</span>
                         </button>
                         <button type="button" class="agro-guide-step" data-agro-view="herramientas">
                             <span class="agro-guide-step__index">6</span>
-                            <span class="agro-guide-step__text">Herramientas extra</span>
+                            <span class="agro-guide-step__text">Más herramientas</span>
                         </button>
                     </div>
                 </div>
             </article>
 
+            <div class="agro-dash-boardline animate-in delay-2">
+                <div class="agro-dash-boardline__titleblock">
+                    <p class="agro-dash-boardline__eyebrow">Pulso del día</p>
+                    <h3 class="agro-dash-boardline__title">Centro de lectura rápida</h3>
+                </div>
+                <p class="agro-dash-boardline__copy">Clima local, mercados y fase lunar alineados para decidir antes de entrar a Operaciones.</p>
+            </div>
+
             <div class="kpi-grid agro-dash-grid">
-                <article class="card kpi-card agro-dash-card animate-in delay-2" data-widget="weather">
+                <article class="card kpi-card agro-dash-card agro-dash-card--weather animate-in delay-2" data-widget="weather">
                     <header class="agro-dash-card__header">
                         <span class="agro-dash-card__icon">🌦️</span>
                         <span class="agro-dash-card__label">CLIMA LOCAL</span>
+                        <span class="agro-dash-card__sub">Pulso local</span>
                     </header>
                     <div class="agro-dash-card__body" id="weather-content">
                         <div class="agro-weather-main">
@@ -1323,7 +1338,7 @@
                     <div id="clima-weekly-host" class="clima-weekly-host is-collapsed" hidden></div>
                 </article>
 
-                <article class="card kpi-card agro-dash-card animate-in delay-3" data-widget="markets" data-agro-section="markets">
+                <article class="card kpi-card agro-dash-card agro-dash-card--markets animate-in delay-3" data-widget="markets" data-agro-section="markets">
                     <header class="agro-dash-card__header">
                         <span class="agro-dash-card__icon">📈</span>
                         <span class="agro-dash-card__label">MERCADOS EN VIVO</span>
@@ -1341,10 +1356,11 @@
                     </footer>
                 </article>
 
-                <article class="card kpi-card agro-dash-card animate-in delay-4" data-widget="lunar" data-agro-section="lunar">
+                <article class="card kpi-card agro-dash-card agro-dash-card--lunar animate-in delay-4" data-widget="lunar" data-agro-section="lunar">
                     <header class="agro-dash-card__header">
                         <span class="agro-dash-card__icon" id="moon-icon">🌕</span>
                         <span class="agro-dash-card__label">FASE LUNAR</span>
+                        <span class="agro-dash-card__sub">Ritmo natural</span>
                     </header>
                     <div class="agro-dash-card__body" id="moon-phase">
                         <div class="agro-lunar-icon">🌕</div>

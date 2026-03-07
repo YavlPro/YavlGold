@@ -1,3 +1,64 @@
+## 🆕 SESIÓN: SUB-LOTE — Dashboard Agro compacto + jerarquía premium (2026-03-07)
+
+### Diagnóstico del Dashboard Agro actual
+
+- El Dashboard Agro ya no está roto ni caótico.
+- La shell nueva resolvió navegación macro, orden y aislamiento entre vistas.
+- El problema actual es fino:
+  - jerarquía,
+  - densidad,
+  - balance entre cabecera, guía y widgets.
+- La guía “Ruta sugerida” sí aporta valor porque ordena el flujo del agricultor, pero quedó sobredimensionada:
+  - ocupa demasiada altura,
+  - hace que el dashboard arranque con tono de onboarding,
+  - y roba protagonismo al tablero operativo.
+- Los 3 widgets inferiores (`Clima local`, `Mercados en vivo`, `Fase lunar`) funcionan y ya están vivos con datos reales, pero todavía no se leen como un bloque cohesivo de control diario.
+- El dashboard hoy abre más como “panel de ayuda + 3 tarjetas” que como centro de control agrícola.
+
+### Por qué la guía está sobredimensionada
+
+- Tiene padding generoso y títulos relativamente grandes.
+- Los 6 pasos son útiles, pero su tratamiento actual se acerca más a tarjetas de acción que a una guía compacta.
+- La combinación `cabecera ligera + guía grande` desbalancea el arranque de sección.
+
+### Por qué los widgets necesitan más peso operativo
+
+- Son correctos individualmente, pero todavía no forman un trío fuerte de lectura rápida.
+- Falta una transición visual más clara entre la guía y el tablero de datos.
+- Clima, mercado y fase lunar necesitan sentirse como tres lecturas hermanas del mismo tablero.
+
+### Plan visual de compactación y jerarquía
+
+1. Reforzar la cabecera `Dashboard Agro` con una identidad más clara de sección.
+2. Compactar la guía:
+   - menos altura,
+   - menos padding,
+   - pasos más finos,
+   - copy más corto.
+3. Introducir una transición visual corta entre guía y widgets para que el trío inferior se lea como “pulso del día”.
+4. Equilibrar internamente los widgets con layout y ritmo más consistentes.
+5. Mantener DNA 10:
+   - metálico sobrio,
+   - menos glow,
+   - mejor contraste,
+   - más jerarquía tipográfica.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-dashboard.css`
+
+### Criterio de QA de este sub-lote
+
+- Verificación visual desktop del arranque del dashboard.
+- Verificación visual móvil de la guía compacta.
+- Confirmar que el sidebar y el shell siguen intactos.
+- Confirmar que el dashboard sigue cargando sin tocar la lógica de widgets.
+- Confirmar que `Clima local`, `Mercados en vivo` y `Fase lunar` mantienen su comportamiento.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: GATE 0 — Agro UX shell V10 + sidebar + vistas enfocadas (2026-03-06)
 
 ### 1) Mapa de puntos de entrada MPA y navegación actual
