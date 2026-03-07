@@ -1,3 +1,58 @@
+## 🆕 SESIÓN: SUB-LOTE — Dashboard Agro · trío operativo (2026-03-07)
+
+### Diagnóstico del trío actual
+
+- El dashboard general ya quedó bien encaminado y no requiere reescritura.
+- El punto fino ahora está en las tres cards operativas:
+  - `Clima local` es la más sólida y cerrada del conjunto.
+  - `Mercados en vivo` todavía se siente más rígida y más vacía en su cuerpo.
+  - `Fase lunar` es correcta, pero queda demasiado ligera frente a `Clima`.
+- El objetivo de este lote no es cambiar datos, proveedores o lógica, sino equilibrar el trío para que se lea como un tablero operativo coherente.
+
+### Problemas concretos detectados
+
+- `Mercados en vivo` hoy se apoya casi por completo en un ticker horizontal:
+  - eso deja poca sensación de módulo estructurado,
+  - y hace que la card se sienta más “contenedor de scroll” que “pieza operativa”.
+- `Fase lunar` tiene buena lectura, pero poca densidad informativa visual:
+  - necesita una presentación más contenida,
+  - más peso en el centro,
+  - y mejor relación entre fase y recomendación.
+- `Clima local` no está rota, pero conviene cerrar mejor sus microdetalles para que no se vea demasiado superior al resto solo por densidad.
+
+### Plan visual del sub-lote
+
+1. Mantener `Clima local` como referencia visual, pero pulir chips/meta/controles para que cierre de forma más limpia.
+2. Darle a `Mercados en vivo` una estructura interna más útil:
+   - lectura previa,
+   - escenario del ticker,
+   - nota operativa compacta.
+3. Darle a `Fase lunar` más presencia y jerarquía:
+   - centro visual mejor armado,
+   - separación más clara entre fase y consejo,
+   - mejor equilibrio interno.
+4. Mantener DNA 10:
+   - metálico sobrio,
+   - superficies oscuras limpias,
+   - bordes finos,
+   - sin glow excesivo,
+   - sin tocar lógica de negocio.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-dashboard.css`
+
+### Criterio de QA de este sub-lote
+
+- Verificación visual desktop del balance entre `Clima`, `Mercados` y `Fase lunar`.
+- Verificación visual móvil del trio y de sus CTAs.
+- Confirmar que `Mercados` sigue renderizando ticker y ubicación.
+- Confirmar que `Fase lunar` sigue renderizando fase y consejo.
+- Confirmar que `Clima` sigue mostrando temperatura, ubicación y controles.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Dashboard Agro compacto + jerarquía premium (2026-03-07)
 
 ### Diagnóstico del Dashboard Agro actual

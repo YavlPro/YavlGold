@@ -1317,7 +1317,7 @@
                         <span class="agro-dash-card__label">CLIMA LOCAL</span>
                         <span class="agro-dash-card__sub">Pulso local</span>
                     </header>
-                    <div class="agro-dash-card__body" id="weather-content">
+                    <div class="agro-dash-card__body agro-weather-body" id="weather-content">
                         <div class="agro-weather-main">
                             <span class="agro-weather-temp" id="weather-temp">--</span>
                         </div>
@@ -1344,10 +1344,18 @@
                         <span class="agro-dash-card__label">MERCADOS EN VIVO</span>
                         <span class="agro-dash-card__sub" id="market-location">Detectando...</span>
                     </header>
-                    <div class="agro-dash-card__body">
-                        <div id="market-ticker-track" class="agro-market-track animate-marquee">
-                            <span class="agro-ticker-item agro-ticker-meta">📡 Conectando satélites financieros...</span>
+                    <div class="agro-dash-card__body agro-market-body">
+                        <div class="agro-market-intro">
+                            <span class="agro-market-chip">Cripto</span>
+                            <span class="agro-market-chip">Divisas</span>
+                            <span class="agro-market-chip agro-market-chip--muted">Cache inteligente</span>
                         </div>
+                        <div class="agro-market-stage">
+                            <div id="market-ticker-track" class="agro-market-track animate-marquee">
+                                <span class="agro-ticker-item agro-ticker-meta">📡 Conectando satélites financieros...</span>
+                            </div>
+                        </div>
+                        <p class="agro-market-support">BTC, ETH, SOL, USDT y tipo de cambio local en lectura continua.</p>
                     </div>
                     <footer class="agro-dash-card__footer">
                         <button type="button" class="agro-dash-card__action" onclick="window.openMarketHub('crypto')">
@@ -1362,7 +1370,7 @@
                         <span class="agro-dash-card__label">FASE LUNAR</span>
                         <span class="agro-dash-card__sub">Ritmo natural</span>
                     </header>
-                    <div class="agro-dash-card__body" id="moon-phase">
+                    <div class="agro-dash-card__body agro-lunar-body" id="moon-phase">
                         <div class="agro-lunar-icon">🌕</div>
                         <div class="agro-lunar-phase">--</div>
                         <div class="agro-lunar-tip" id="moon-advice">Calculando...</div>

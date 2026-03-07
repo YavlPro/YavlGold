@@ -367,6 +367,16 @@
   box-shadow: var(--shadow-gold-sm);
 }
 
+.agro-dashboard-v10 .agro-weather-body,
+.agro-dashboard-v10 .agro-market-body,
+.agro-dashboard-v10 .agro-lunar-body {
+  flex: 1 1 auto;
+}
+
+.agro-dashboard-v10 .agro-weather-body {
+  gap: 0.58rem;
+}
+
 .agro-dashboard-v10 .agro-weather-main {
   display: flex;
   align-items: baseline;
@@ -388,6 +398,11 @@
   color: var(--text-gold-prestige);
 }
 
+.agro-dashboard-v10 .agro-weather-location-wrap {
+  display: flex;
+  align-items: flex-start;
+}
+
 .agro-dashboard-v10 .agro-weather-meta {
   display: flex;
   align-items: center;
@@ -396,13 +411,27 @@
 }
 
 .agro-dashboard-v10 .agro-weather-conditions {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.26rem 0.62rem;
+  border: 1px solid var(--border-neutral);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-2) 86%, var(--gold-1));
   font-family: 'Rajdhani', sans-serif;
   font-size: var(--text-xs);
   font-weight: 600;
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--text-muted) 86%, white 14%);
 }
 
 .agro-dashboard-v10 .agro-weather-humidity {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.26rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--border-gold) 75%, var(--border-neutral));
+  border-radius: 999px;
+  background: rgba(200, 167, 82, 0.06);
   font-family: 'Rajdhani', sans-serif;
   font-size: var(--text-sm);
   font-weight: 700;
@@ -412,12 +441,77 @@
 .agro-dashboard-v10 #location-controls {
   width: 100%;
   margin-top: 0.1rem !important;
+  padding-top: 0.15rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .agro-dashboard-v10 #location-controls .loc-btn {
+  min-height: 26px;
+  padding: 0.24rem 0.56rem;
+  font-size: 0.58rem;
+  font-family: 'Orbitron', sans-serif !important;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.64);
+  border-color: color-mix(in srgb, var(--border-gold) 70%, rgba(255, 255, 255, 0.08)) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.agro-dashboard-v10 #location-controls .loc-btn:hover,
+.agro-dashboard-v10 #location-controls .loc-btn.active {
+  color: var(--gold-5) !important;
+  background: rgba(200, 167, 82, 0.1) !important;
+}
+
+.agro-dashboard-v10 .agro-market-body {
+  justify-content: center;
+  gap: 0.7rem;
+}
+
+.agro-dashboard-v10 .agro-market-intro {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.agro-dashboard-v10 .agro-market-chip {
+  display: inline-flex;
+  align-items: center;
   min-height: 24px;
-  padding: 3px 7px;
-  font-size: 0.55rem;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 213, 160, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.82);
+}
+
+.agro-dashboard-v10 .agro-market-chip--muted {
+  color: rgba(255, 255, 255, 0.52);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.agro-dashboard-v10 .agro-market-stage {
+  position: relative;
+  overflow: hidden;
+  padding: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(200, 167, 82, 0.08), transparent 32%),
+    linear-gradient(180deg, rgba(9, 10, 12, 0.98), rgba(14, 14, 16, 0.96));
+}
+
+.agro-dashboard-v10 #market-location {
+  max-width: 46%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .agro-dashboard-v10 .agro-market-track {
@@ -431,6 +525,8 @@
   background: color-mix(in srgb, var(--bg-2) 92%, var(--gold-1));
   overflow: hidden;
   padding-left: 0.1rem;
+  width: max-content;
+  min-width: 100%;
 }
 
 .agro-dashboard-v10 .agro-ticker-item {
@@ -477,9 +573,55 @@
   color: var(--text-muted);
 }
 
+.agro-dashboard-v10 .agro-market-support {
+  margin: 0;
+  max-width: 19rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.agro-dashboard-v10 .agro-lunar-body {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 0.58rem;
+  text-align: center;
+  background:
+    radial-gradient(circle at center, rgba(200, 167, 82, 0.09), transparent 58%);
+}
+
+.agro-dashboard-v10 .agro-lunar-body::before {
+  content: 'Ciclo actual';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0.14rem 0.46rem;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 213, 160, 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.74);
+}
+
 .agro-dashboard-v10 .agro-lunar-icon {
   display: flex;
+  align-items: center;
   justify-content: center;
+  width: 4.1rem;
+  height: 4.1rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-gold) 82%, rgba(255, 255, 255, 0.08));
+  background:
+    radial-gradient(circle at 35% 35%, rgba(232, 212, 139, 0.18), rgba(200, 167, 82, 0.04) 50%, rgba(10, 10, 10, 0.94) 72%);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
   font-size: 1.7rem;
   animation: breathe 3s ease-in-out infinite;
 }
@@ -489,15 +631,33 @@
   font-family: 'Rajdhani', sans-serif;
   font-size: 1.16rem;
   font-weight: 700;
+  line-height: 1.1;
   color: var(--text-primary);
 }
 
 .agro-dashboard-v10 .agro-lunar-tip {
   text-align: center;
   font-family: 'Rajdhani', sans-serif;
+  max-width: 14rem;
+  padding: 0.64rem 0.72rem 0.68rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
   font-size: 0.84rem;
   font-weight: 600;
+  line-height: 1.28;
   color: var(--text-muted);
+}
+
+.agro-dashboard-v10 .agro-lunar-tip::before {
+  content: 'Labores sugeridas';
+  display: block;
+  margin-bottom: 0.22rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.72);
 }
 
 .agro-dashboard-v10 .clima-weekly-host {
