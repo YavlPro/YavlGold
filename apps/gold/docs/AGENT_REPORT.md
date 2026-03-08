@@ -1,3 +1,45 @@
+## 🆕 SESIÓN: HOTFIX — Búsqueda, filtros dinámicos y menú contextual en Pagados (2026-03-08)
+
+### Diagnóstico del problema
+
+- La vista dedicada de `Pagados` ya quedó funcional, pero aparecieron tres detalles finos en producción:
+  - la barra de búsqueda no tiene suficiente protagonismo visual dentro del header del historial,
+  - faltan filtros dinámicos para `Transferidos` / `Revertidos`,
+  - y el menú `⋮` del primer registro puede quedar solapado o mal contenido visualmente.
+- Hallazgo técnico:
+  - el historial dedicado ya tiene input de búsqueda en `index.html`, pero el layout del bloque superior lo empuja demasiado a la derecha y en móvil queda con poca presencia,
+  - `Pagados` dedicada hoy usa `incomeCache`, que excluye revertidos desde la consulta, así que no puede exponer un filtro real de `Revertidos`,
+  - el menú contextual depende de `position/overflow/z-index` y de la dirección `open-down`; el primer registro necesita mejor criterio de apertura + stacking.
+
+### Objetivo del hotfix
+
+- Hacer visible y clara la búsqueda del historial de `Pagados`.
+- Agregar filtros dinámicos de `Transferidos` y `Revertidos` que solo aparezcan cuando existan registros de ese tipo.
+- Corregir el solape visual del menú `⋮` en la primera card.
+- Verificar que la vista siga bien en móvil.
+
+### Plan del ajuste
+
+1. Reforzar el layout del header del historial de `Pagados` para que la búsqueda quede clara en desktop y móvil.
+2. Mantener una cache fuente dedicada de `Pagados` que permita filtrar `Revertidos` sin romper otros historiales.
+3. Añadir filtros dinámicos por estado (`transferidos` / `revertidos`) limitados a la vista dedicada.
+4. Ajustar stacking y dirección del menú contextual para el primer registro.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-operations.css`
+
+### Criterio de QA de este hotfix
+
+- Confirmar búsqueda visible y usable en desktop y móvil.
+- Confirmar que `Transferidos` / `Revertidos` solo aparecen si su conteo es mayor a cero.
+- Confirmar que el filtro cambia realmente las filas visibles.
+- Confirmar que el menú `⋮` del primer registro se abre completo y sin solape.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: HOTFIX — Toggle del sidebar interceptado por la shell (2026-03-08)
 
 ### Diagnóstico del problema

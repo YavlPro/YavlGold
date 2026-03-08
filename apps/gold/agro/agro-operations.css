@@ -749,26 +749,34 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   flex-direction: column;
   gap: 0.74rem;
   padding: 0.88rem 0.94rem;
+  overflow: visible;
 }
 
 .agro-ops-v10 .agro-pagados-history__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  align-items: end;
   gap: 0.8rem;
 }
 
 .agro-ops-v10 .agro-pagados-history__tools {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: flex-end;
+  gap: 0.48rem;
+  min-width: 0;
+  width: 100%;
+  max-width: 320px;
+  justify-self: end;
 }
 
 .agro-ops-v10 .agro-pagados-search {
   display: flex;
   flex-direction: column;
   gap: 0.16rem;
-  min-width: min(100%, 280px);
+  width: 100%;
+  min-width: 0;
 }
 
 .agro-ops-v10 .agro-pagados-search__label {
@@ -797,6 +805,45 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
 .agro-ops-v10 .agro-pagados-search__input:focus-visible {
   outline: 2px solid rgba(200, 167, 82, 0.44);
   outline-offset: 2px;
+}
+
+.agro-ops-v10 .agro-pagados-history__filters {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.agro-ops-v10 .agro-pagados-history__filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.agro-ops-v10 .agro-pagados-history__filter-chip:hover,
+.agro-ops-v10 .agro-pagados-history__filter-chip:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(200, 167, 82, 0.4);
+  color: #f3deb0;
+}
+
+.agro-ops-v10 .agro-pagados-history__filter-chip.is-active {
+  border-color: rgba(200, 167, 82, 0.56);
+  background: linear-gradient(135deg, rgba(200, 167, 82, 0.18), rgba(200, 167, 82, 0.08));
+  color: #f3deb0;
+  box-shadow: 0 8px 18px rgba(200, 167, 82, 0.12);
 }
 
 .agro-ops-v10 .agro-pagados-history__meta {
@@ -834,6 +881,8 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   flex-direction: column;
   gap: 0.6rem;
   min-height: 120px;
+  overflow: visible;
+  position: relative;
 }
 
 .agro-ops-v10 .agro-pagados-history__list.is-empty {
@@ -937,18 +986,30 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     grid-template-columns: 1fr;
   }
 
-  .agro-ops-v10 .agro-pagados-dedicated__hero,
-  .agro-ops-v10 .agro-pagados-history__head {
+  .agro-ops-v10 .agro-pagados-dedicated__hero {
     flex-direction: column;
+  }
+
+  .agro-ops-v10 .agro-pagados-history__head {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .agro-ops-v10 .agro-pagados-dedicated__steps {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .agro-ops-v10 .agro-pagados-search {
-    min-width: 0;
+  .agro-ops-v10 .agro-pagados-history__tools {
+    max-width: none;
+    justify-self: stretch;
+  }
+
+  .agro-ops-v10 .agro-pagados-search,
+  .agro-ops-v10 .agro-pagados-history__filters {
     width: 100%;
+  }
+
+  .agro-ops-v10 .agro-pagados-history__filters {
+    justify-content: flex-start;
   }
 }
 
@@ -1004,6 +1065,10 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     flex-direction: column;
     align-items: stretch;
     justify-content: stretch;
+  }
+
+  .agro-ops-v10 .agro-pagados-history__filter-chip {
+    width: 100%;
   }
 }
 
@@ -2481,6 +2546,32 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card.is-actions-open .tx-actions-trigger {
     display: inline-flex !important;
   }
+}
+
+body[data-agro-active-view='pagados'] .agro-pagados-history,
+body[data-agro-active-view='pagados'] .agro-pagados-history__list,
+body[data-agro-active-view='pagados'] #pagados-dedicated-list,
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card,
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-footer,
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-actions {
+  overflow: visible !important;
+}
+
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card {
+  position: relative;
+}
+
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card.is-selected,
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card.is-actions-open {
+  z-index: 24;
+}
+
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-actions {
+  z-index: 28;
+}
+
+body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-actions > .tx-actions-btns {
+  z-index: 32;
 }
 
 /* Layout móvil real */

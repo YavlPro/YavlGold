@@ -4164,13 +4164,20 @@ function ensureFactureroActionsMenuListeners() {
 function updateFactureroActionsMenuDirection(activeState) {
     const actionsWrap = activeState?.actionsWrap;
     const actionsNode = activeState?.actionsNode;
-    if (!actionsWrap || !actionsNode) return;
+    const triggerBtn = activeState?.triggerBtn;
+    if (!actionsWrap || !actionsNode || !triggerBtn) return;
     if (!actionsWrap.classList.contains('is-open')) return;
 
     actionsWrap.classList.remove('open-down');
     const viewportH = window.innerHeight || document.documentElement.clientHeight || 0;
     const panelRect = actionsNode.getBoundingClientRect();
-    if (panelRect.top < 8 && viewportH > 0) {
+    const triggerRect = triggerBtn.getBoundingClientRect();
+    const panelHeight = Math.max(panelRect.height, actionsNode.offsetHeight || 0);
+    const safeMargin = 12;
+    const availableAbove = Math.max(0, triggerRect.top - safeMargin);
+    const availableBelow = Math.max(0, viewportH - triggerRect.bottom - safeMargin);
+
+    if ((panelRect.top < 8 && viewportH > 0) || (availableAbove < panelHeight && availableBelow > availableAbove)) {
         actionsWrap.classList.add('open-down');
     }
 }
@@ -11726,10 +11733,6 @@ async function loadIncomes() {
             if (incomeDeletedAtSupported !== false && selectFields.includes('deleted_at')) {
                 query = query.is('deleted_at', null);
             }
-            if (incomeRevertedAtSupported !== false && selectFields.includes('reverted_at')) {
-                query = query.is('reverted_at', null);
-            }
-
             const result = await query;
             data = result.data;
             error = result.error;
@@ -11772,8 +11775,12 @@ async function loadIncomes() {
 
         if (error && !Array.isArray(data)) throw error;
 
+        pagadosDedicatedSourceCache = Array.isArray(data)
+            ? data.slice()
+            : [];
+
         incomeCache = Array.isArray(data)
-            ? data.filter((row) => !row?.reverted_at)
+            ? data.filter((row) => !isIncomeOrLossReverted(row))
             : [];
         try {
             syncFactureroNotifications('ingresos', incomeCache);
@@ -11784,7 +11791,7 @@ async function loadIncomes() {
         listEl.textContent = '';
         container.style.display = incomeCache.length ? 'block' : 'none';
 
-        const signedUrlMap = await buildIncomeSignedUrlMap(incomeCache);
+        const signedUrlMap = await buildIncomeSignedUrlMap(pagadosDedicatedSourceCache);
         pagadosDedicatedSignedUrlMap = signedUrlMap;
         incomeCache.forEach((income) => {
             const signedUrl = signedUrlMap.get(income.id);
@@ -11863,6 +11870,7 @@ const OPS_RANKINGS_BUYER_NAME_FIELDS = Object.freeze([
 ]);
 const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre', 'sin comprador']);
 const PAGADOS_VIEW_RENDERED_EVENT = 'agro:pagados:view-rendered';
+const PAGADOS_FILTER_STATES = new Set(['all', 'transferred', 'reverted']);
 
 let opsRankingsState = {
     range: OPS_RANKINGS_DEFAULT_RANGE,
@@ -11879,7 +11887,9 @@ let opsRankingsInFlight = null;
 let opsRankingsQueued = false;
 let opsRankingsDebugSampleLogged = false;
 let pagadosDedicatedSearchQuery = '';
+let pagadosDedicatedStateFilter = 'all';
 let pagadosDedicatedEventsBound = false;
+let pagadosDedicatedSourceCache = [];
 let pagadosDedicatedSignedUrlMap = new Map();
 
 function formatShortCurrency(value) {
@@ -12433,6 +12443,9 @@ function getPagadosDedicatedElements() {
         status: document.getElementById('pagados-dedicated-status'),
         countBadge: document.getElementById('pagados-dedicated-count-badge'),
         searchInput: document.getElementById('pagados-dedicated-search'),
+        filterBar: document.getElementById('pagados-dedicated-filters'),
+        transferredFilter: document.getElementById('pagados-dedicated-filter-transferred'),
+        revertedFilter: document.getElementById('pagados-dedicated-filter-reverted'),
         empty: document.getElementById('pagados-dedicated-empty'),
         list: document.getElementById('pagados-dedicated-list'),
         newTopButton: document.getElementById('btn-pagados-dedicated-new-top'),
@@ -12456,6 +12469,41 @@ function getPagadosDedicatedScopeLabel(cropId = selectedCropId) {
     return display.label || 'Cultivo';
 }
 
+function normalizePagadosDedicatedStateFilter(value) {
+    const token = String(value || '').trim().toLowerCase();
+    return PAGADOS_FILTER_STATES.has(token) ? token : 'all';
+}
+
+function getPagadosDedicatedStateLabel(filter) {
+    switch (normalizePagadosDedicatedStateFilter(filter)) {
+        case 'transferred':
+            return 'Transferidos';
+        case 'reverted':
+            return 'Revertidos';
+        default:
+            return 'Todos';
+    }
+}
+
+function getPagadosDedicatedStateToken(item) {
+    if (isIncomeOrLossReverted(item)) return 'reverted';
+    if (isFromPendingTransfer(item)) return 'transferred';
+    return 'direct';
+}
+
+function matchesPagadosDedicatedStateFilter(item, filter = pagadosDedicatedStateFilter) {
+    const token = normalizePagadosDedicatedStateFilter(filter);
+    if (token === 'all') return true;
+    return getPagadosDedicatedStateToken(item) === token;
+}
+
+function getPagadosDedicatedSourceRows() {
+    if (Array.isArray(pagadosDedicatedSourceCache) && pagadosDedicatedSourceCache.length > 0) {
+        return pagadosDedicatedSourceCache;
+    }
+    return Array.isArray(incomeCache) ? incomeCache : [];
+}
+
 function matchesPagadosDedicatedFilters(income, options = {}) {
     const hasCropOption = Object.prototype.hasOwnProperty.call(options, 'cropId');
     const cropId = hasCropOption
@@ -12469,7 +12517,18 @@ function matchesPagadosDedicatedFilters(income, options = {}) {
         return false;
     }
 
-    return matchesPagadosDedicatedQuery(income, searchQuery);
+    if (!matchesPagadosDedicatedQuery(income, searchQuery)) {
+        return false;
+    }
+
+    if (options.skipStateFilter === true) {
+        return true;
+    }
+
+    const stateFilter = Object.prototype.hasOwnProperty.call(options, 'stateFilter')
+        ? options.stateFilter
+        : pagadosDedicatedStateFilter;
+    return matchesPagadosDedicatedStateFilter(income, stateFilter);
 }
 
 function getPagadosDedicatedRows(items, options = {}) {
@@ -12482,13 +12541,32 @@ function getPagadosDedicatedViewState() {
     const scopeLabel = getPagadosDedicatedScopeLabel(cropId);
     const searchQuery = String(pagadosDedicatedSearchQuery || '');
     const normalizedSearch = normalizePagadosSearchQuery(searchQuery);
-    const rows = getPagadosDedicatedRows(incomeCache, { cropId, searchQuery });
+    const sourceRows = getPagadosDedicatedSourceRows();
+    const baseRows = getPagadosDedicatedRows(sourceRows, { cropId, searchQuery, skipStateFilter: true });
+    const transferredCount = baseRows.filter((item) => getPagadosDedicatedStateToken(item) === 'transferred').length;
+    const revertedCount = baseRows.filter((item) => getPagadosDedicatedStateToken(item) === 'reverted').length;
+
+    let stateFilter = normalizePagadosDedicatedStateFilter(pagadosDedicatedStateFilter);
+    if ((stateFilter === 'transferred' && transferredCount === 0)
+        || (stateFilter === 'reverted' && revertedCount === 0)) {
+        stateFilter = 'all';
+        pagadosDedicatedStateFilter = 'all';
+    }
+
+    const rows = getPagadosDedicatedRows(sourceRows, { cropId, searchQuery, stateFilter });
+    const hasDynamicFilters = transferredCount > 0 || revertedCount > 0;
 
     return {
         cropId,
         scopeLabel,
         searchQuery,
         hasSearch: !!normalizedSearch,
+        stateFilter,
+        stateFilterLabel: getPagadosDedicatedStateLabel(stateFilter),
+        transferredCount,
+        revertedCount,
+        hasDynamicFilters,
+        baseRows,
         rows,
         isGeneral: !cropId
     };
@@ -12533,6 +12611,28 @@ function renderPagadosDedicatedCropSelector() {
     }
 }
 
+function renderPagadosDedicatedStateFilters(context) {
+    const { filterBar, transferredFilter, revertedFilter } = getPagadosDedicatedElements();
+    if (!filterBar || !transferredFilter || !revertedFilter) return;
+
+    const hasTransferred = Number(context?.transferredCount || 0) > 0;
+    const hasReverted = Number(context?.revertedCount || 0) > 0;
+    const hasDynamicFilters = hasTransferred || hasReverted;
+
+    filterBar.hidden = !hasDynamicFilters;
+    filterBar.setAttribute('aria-hidden', hasDynamicFilters ? 'false' : 'true');
+
+    transferredFilter.hidden = !hasTransferred;
+    transferredFilter.textContent = `Transferidos (${context?.transferredCount || 0})`;
+    transferredFilter.classList.toggle('is-active', context?.stateFilter === 'transferred');
+    transferredFilter.setAttribute('aria-pressed', context?.stateFilter === 'transferred' ? 'true' : 'false');
+
+    revertedFilter.hidden = !hasReverted;
+    revertedFilter.textContent = `Revertidos (${context?.revertedCount || 0})`;
+    revertedFilter.classList.toggle('is-active', context?.stateFilter === 'reverted');
+    revertedFilter.setAttribute('aria-pressed', context?.stateFilter === 'reverted' ? 'true' : 'false');
+}
+
 function normalizePagadosSearchQuery(value) {
     return String(value || '')
         .normalize('NFD')
@@ -12564,6 +12664,7 @@ async function renderPagadosDedicatedView() {
 
     const context = getPagadosDedicatedViewState();
     renderPagadosDedicatedCropSelector();
+    renderPagadosDedicatedStateFilters(context);
     const filtered = context.rows;
 
     list.textContent = '';
@@ -12572,14 +12673,23 @@ async function renderPagadosDedicatedView() {
 
     const countLabel = `${filtered.length} pagado${filtered.length === 1 ? '' : 's'} visible${filtered.length === 1 ? '' : 's'}`;
     if (countBadge) {
-        countBadge.textContent = context.isGeneral
-            ? `${countLabel} · Vista general`
-            : `${countLabel} · ${context.scopeLabel}`;
+        const scopeToken = context.isGeneral ? 'Vista general' : context.scopeLabel;
+        countBadge.textContent = context.stateFilter === 'all'
+            ? `${countLabel} · ${scopeToken}`
+            : `${countLabel} · ${scopeToken} · ${context.stateFilterLabel}`;
     }
 
     if (status) {
         if (context.hasSearch && filtered.length === 0) {
             status.textContent = `Sin coincidencias para “${context.searchQuery}” dentro de ${context.scopeLabel}.`;
+        } else if (context.stateFilter === 'transferred') {
+            status.textContent = context.isGeneral
+                ? `Viendo solo pagados transferidos. Exportación y wizard respetan la búsqueda y el cultivo activo.`
+                : `Viendo solo pagados transferidos de ${context.scopeLabel}. Exportación y wizard respetan este filtro.`;
+        } else if (context.stateFilter === 'reverted') {
+            status.textContent = context.isGeneral
+                ? `Viendo solo pagados revertidos. Exportación y búsqueda quedan limitadas a ese estado visible.`
+                : `Viendo solo pagados revertidos de ${context.scopeLabel}. Exportación y búsqueda respetan este filtro.`;
         } else if (context.hasSearch) {
             status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada. Exportación y wizard respetan este alcance.`;
         } else if (context.isGeneral) {
@@ -12593,6 +12703,10 @@ async function renderPagadosDedicatedView() {
     if (emptyText) {
         emptyText.textContent = context.hasSearch
             ? `No hay pagados que coincidan con “${context.searchQuery}” en ${context.scopeLabel}.`
+            : context.stateFilter === 'transferred'
+                ? `No hay pagados transferidos en ${context.scopeLabel}.`
+                : context.stateFilter === 'reverted'
+                    ? `No hay pagados revertidos en ${context.scopeLabel}.`
             : `No hay pagados registrados en ${context.scopeLabel}.`;
     }
 
@@ -12609,7 +12723,14 @@ async function renderPagadosDedicatedView() {
 
 function bindPagadosDedicatedView() {
     if (pagadosDedicatedEventsBound) return;
-    const { cropRow, searchInput, newTopButton, newBottomButton, exportButton } = getPagadosDedicatedElements();
+    const {
+        cropRow,
+        searchInput,
+        filterBar,
+        newTopButton,
+        newBottomButton,
+        exportButton
+    } = getPagadosDedicatedElements();
     if (!cropRow || !searchInput || !newTopButton || !newBottomButton || !exportButton) return;
 
     pagadosDedicatedEventsBound = true;
@@ -12637,6 +12758,14 @@ function bindPagadosDedicatedView() {
         renderPagadosDedicatedView();
     });
 
+    filterBar?.addEventListener('click', (event) => {
+        const filterButton = event.target.closest('[data-pagados-filter]');
+        if (!filterButton || filterButton.hidden) return;
+        const nextFilter = normalizePagadosDedicatedStateFilter(filterButton.dataset.pagadosFilter);
+        pagadosDedicatedStateFilter = pagadosDedicatedStateFilter === nextFilter ? 'all' : nextFilter;
+        renderPagadosDedicatedView();
+    });
+
     const openPagadosWizard = () => {
         const context = getPagadosDedicatedViewState();
         setSelectedCropId(context.cropId);
@@ -12655,10 +12784,13 @@ function bindPagadosDedicatedView() {
         exportAgroLog('ingresos', {
             cropId: context.cropId,
             searchQuery: context.searchQuery,
-            scopeLabel: context.scopeLabel,
+            scopeLabel: context.stateFilter === 'all'
+                ? context.scopeLabel
+                : `${context.scopeLabel} · ${context.stateFilterLabel}`,
             filterFn: (item) => matchesPagadosDedicatedFilters(item, {
                 cropId: context.cropId,
-                searchQuery: context.searchQuery
+                searchQuery: context.searchQuery,
+                stateFilter: context.stateFilter
             })
         });
     });
