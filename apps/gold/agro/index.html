@@ -1734,6 +1734,8 @@
                     <h2 class="module-title ops-header-perdidas">Registro de Pérdidas</h2>
                     <h2 class="module-title ops-header-donaciones">Registro de Donaciones</h2>
                     <h2 class="module-title ops-header-otros">Otros Movimientos</h2>
+                    <h2 class="module-title ops-header-carrito">Carrito de Compras</h2>
+                    <h2 class="module-title ops-header-rankings">Rankings del Centro</h2>
                     <p class="module-subtitle ops-header-default">Movimientos, privacidad y vistas del facturero
                         en una sola mesa operativa.</p>
                     <p class="module-subtitle ops-header-pagados">Consulta cobros registrados, filtra por cultivo
@@ -1746,6 +1748,10 @@
                         entre ciclos, filtra por cultivo y mantén trazabilidad limpia.</p>
                     <p class="module-subtitle ops-header-otros">Movimientos transferidos desde otras categorías.
                         Vista consolidada con trazabilidad de origen.</p>
+                    <p class="module-subtitle ops-header-carrito">Gestiona tu lista de compras agro.
+                        Agrega insumos, revisa totales y exporta el pedido.</p>
+                    <p class="module-subtitle ops-header-rankings">Vista rápida de compras, pendientes
+                        e ingresos cobrados por cliente y cultivo.</p>
                 </div>
             </div>
         </header>
@@ -2591,6 +2597,23 @@
                             historial y exportaci&oacute;n abarcan todos los movimientos.</p>
                     </div>
                 </section>
+
+                <section class="agro-pagados-step agro-pagados-step--wizard" aria-label="Paso 2 Nuevo registro">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 2 &middot; Nuevo registro</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Registrar movimiento</h4>
+                            <p class="agro-pagados-step__note">Abre el asistente para crear un nuevo movimiento.
+                                Si hay cultivo seleccionado se asocia autom&aacute;ticamente.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__body">
+                        <button type="button" class="btn btn-gold agro-pagados-step__cta"
+                            id="btn-otros-dedicated-new-top">
+                            Nuevo registro
+                        </button>
+                    </div>
+                </section>
             </div>
 
             <section class="agro-pagados-history" id="otros-dedicated-history"
@@ -2628,9 +2651,42 @@
             </section>
 
             <div class="agro-pagados-dedicated__footer" id="otros-dedicated-footer">
+                <button type="button" class="btn btn-gold agro-pagados-footer__btn" id="btn-otros-dedicated-new-bottom">
+                    Nuevo registro
+                </button>
                 <button type="button" class="btn btn-outline agro-pagados-footer__btn" id="btn-otros-dedicated-export">
                     Exportar registros
                 </button>
+            </div>
+        </div>
+
+        <div class="agro-carrito-dedicated agro-pagados-dedicated" id="agro-carrito-dedicated"
+            aria-label="Vista dedicada de Carrito">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Carrito de Compras</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Gestiona tu lista de compras agro. Agrega insumos,
+                        revisa totales y exporta el pedido sin mezclar otros movimientos.</p>
+                </div>
+            </div>
+            <div id="carrito-dedicated-root" class="agro-carrito-dedicated__content">
+                <!-- agro-cart.js renders here when dedicated view is active -->
+            </div>
+        </div>
+
+        <div class="agro-rankings-dedicated agro-pagados-dedicated" id="agro-rankings-dedicated"
+            aria-label="Vista dedicada de Rankings">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Rankings del Centro</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Vista r&aacute;pida de compras, pendientes e ingresos
+                        cobrados por cliente y cultivo.</p>
+                </div>
+            </div>
+            <div id="rankings-dedicated-root" class="agro-rankings-dedicated__content">
+                <!-- rankings panel renders here when dedicated view is active -->
             </div>
         </div>
     </section>

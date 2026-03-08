@@ -2725,52 +2725,26 @@ function showTransferChoiceModal(options = {}) {
                 { value: 'losses', label: 'P\u00e9rdidas (Cancelado)' }
             ];
 
-        const variantMap = {
-            success: {
-                className: 'transfer-to-income',
-                color: '#4ade80',
-                border: 'rgba(74, 222, 128, 0.5)',
-                bg: 'rgba(74, 222, 128, 0.15)',
-                icon: 'fa-arrow-right'
-            },
-            danger: {
-                className: 'transfer-to-losses',
-                color: '#ef4444',
-                border: 'rgba(239, 68, 68, 0.5)',
-                bg: 'rgba(239, 68, 68, 0.15)',
-                icon: 'fa-times'
-            },
-            neutral: {
-                className: 'transfer-to-pendientes',
-                color: '#C8A752',
-                border: 'rgba(200, 167, 82, 0.5)',
-                bg: 'rgba(200, 167, 82, 0.15)',
-                icon: 'fa-clock'
-            }
+        const variantClassMap = {
+            success: 'transfer-to-income',
+            danger: 'transfer-to-losses',
+            neutral: 'transfer-to-neutral'
         };
-
-        const styleMap = {
-            income: {
-                className: 'transfer-to-income',
-                color: '#4ade80',
-                border: 'rgba(74, 222, 128, 0.5)',
-                bg: 'rgba(74, 222, 128, 0.15)',
-                icon: 'fa-arrow-right'
-            },
-            losses: {
-                className: 'transfer-to-losses',
-                color: '#ef4444',
-                border: 'rgba(239, 68, 68, 0.5)',
-                bg: 'rgba(239, 68, 68, 0.15)',
-                icon: 'fa-times'
-            },
-            pendientes: {
-                className: 'transfer-to-pendientes',
-                color: '#C8A752',
-                border: 'rgba(200, 167, 82, 0.5)',
-                bg: 'rgba(200, 167, 82, 0.15)',
-                icon: 'fa-clock'
-            }
+        const valueClassMap = {
+            income: 'transfer-to-income',
+            losses: 'transfer-to-losses',
+            gastos: 'transfer-to-neutral',
+            transferencias: 'transfer-to-neutral',
+            otros: 'transfer-to-neutral',
+            pendientes: 'transfer-to-neutral'
+        };
+        const defaultIconMap = {
+            income: 'fa-arrow-right',
+            losses: 'fa-times',
+            gastos: 'fa-receipt',
+            transferencias: 'fa-gift',
+            otros: 'fa-box',
+            pendientes: 'fa-clock'
         };
 
         const { overlay, body, footer } = buildTransferWizardShell({
@@ -2786,29 +2760,54 @@ function showTransferChoiceModal(options = {}) {
         body.appendChild(question);
 
         const actions = document.createElement('div');
-        actions.style.cssText = 'display: flex; flex-direction: column; gap: 0.75rem;';
+        actions.className = 'transfer-choices-grid';
 
+        let lastVariant = null;
         choices.forEach((choice) => {
             const key = choice.value;
             const variant = String(choice?.variant || '').trim().toLowerCase();
-            const style = styleMap[key] || variantMap[variant] || styleMap.pendientes;
-            const icon = choice.icon || style.icon;
+            const cssClass = valueClassMap[key] || variantClassMap[variant] || 'transfer-to-neutral';
+            const icon = choice.icon || defaultIconMap[key] || 'fa-exchange-alt';
+            const isDisabled = choice?.disabled === true;
+
+            if (lastVariant && lastVariant !== variant && (lastVariant === 'success' || lastVariant === 'danger') && variant === 'neutral') {
+                const divider = document.createElement('div');
+                divider.className = 'transfer-choices-divider';
+                actions.appendChild(divider);
+            }
+            lastVariant = variant;
 
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = `transfer-choice-btn ${style.className}`;
+            btn.className = `transfer-choice-btn ${cssClass}`;
             btn.dataset.choice = key;
-            const isDisabled = choice?.disabled === true;
-            btn.style.cssText = `background: ${style.bg}; border: 1px solid ${style.border}; color: ${style.color}; padding: 0.75rem 1rem; border-radius: 8px; cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; font-size: 0.9rem;`;
             if (isDisabled) {
                 btn.disabled = true;
                 btn.classList.add('is-disabled');
                 btn.setAttribute('aria-disabled', 'true');
             }
 
+            const iconBox = document.createElement('span');
+            iconBox.className = 'transfer-choice-icon';
             const iconEl = document.createElement('i');
             iconEl.className = `fa ${icon}`;
-            btn.append(iconEl, document.createTextNode(` ${choice.label}`));
+            iconBox.appendChild(iconEl);
+
+            const textWrap = document.createElement('span');
+            textWrap.className = 'transfer-choice-text';
+            const labelEl = document.createElement('span');
+            labelEl.className = 'transfer-choice-label';
+            labelEl.textContent = choice.label;
+            textWrap.appendChild(labelEl);
+
+            if (choice.desc) {
+                const descEl = document.createElement('span');
+                descEl.className = 'transfer-choice-desc';
+                descEl.textContent = choice.desc;
+                textWrap.appendChild(descEl);
+            }
+
+            btn.append(iconBox, textWrap);
             actions.appendChild(btn);
         });
         body.appendChild(actions);
@@ -7067,12 +7066,12 @@ async function handlePendingTransfer(itemId) {
         stepLabel: 'Destino',
         question: '¿A qué historial deseas transferir?',
         choices: [
-            { value: 'income', label: 'Pagados', variant: 'success' },
-            { value: 'losses', label: 'Pérdidas (Cancelado)', variant: 'danger' },
-            { value: 'gastos', label: 'Gastos', variant: 'neutral' },
-            { value: 'transferencias', label: 'Donaciones', variant: 'neutral' },
-            { value: 'otros', label: 'Otros', variant: 'neutral' },
-            { value: 'pendientes', label: 'Fiados', variant: 'neutral', disabled: true }
+            { value: 'income', label: 'Pagados', desc: 'Registrar como cobro realizado', variant: 'success' },
+            { value: 'losses', label: 'Pérdidas (Cancelado)', desc: 'Marcar como pérdida o cancelación', variant: 'danger' },
+            { value: 'gastos', label: 'Gastos', desc: 'Reclasificar como gasto operativo', variant: 'neutral' },
+            { value: 'transferencias', label: 'Donaciones', desc: 'Mover a donaciones o transferencias', variant: 'neutral' },
+            { value: 'otros', label: 'Otros', desc: 'Movimiento general sin categoría', variant: 'neutral' },
+            { value: 'pendientes', label: 'Fiados', desc: 'Ya está en fiados', variant: 'neutral', disabled: true }
         ]
     });
     if (!destination) return; // User cancelled
@@ -13973,6 +13972,8 @@ function getOtrosDedicatedElements() {
         empty: document.getElementById('otros-dedicated-empty'),
         selection: document.getElementById('otros-dedicated-selection-status'),
         list: document.getElementById('otros-dedicated-list'),
+        newTopButton: document.getElementById('btn-otros-dedicated-new-top'),
+        newBottomButton: document.getElementById('btn-otros-dedicated-new-bottom'),
         exportButton: document.getElementById('btn-otros-dedicated-export'),
         footer: document.getElementById('otros-dedicated-footer')
     };
@@ -14184,6 +14185,8 @@ function bindOtrosDedicatedView() {
     const {
         cropRow,
         searchInput,
+        newTopButton,
+        newBottomButton,
         exportButton
     } = getOtrosDedicatedElements();
     if (!cropRow || !searchInput || !exportButton) return;
@@ -14213,6 +14216,19 @@ function bindOtrosDedicatedView() {
         renderOtrosDedicatedView();
     });
 
+    const openOtrosWizard = () => {
+        const context = getOtrosDedicatedViewState();
+        if (context.cropId) setSelectedCropId(context.cropId);
+        if (typeof window.launchAgroWizard === 'function') {
+            window.launchAgroWizard('otros', {
+                initialCropId: context.cropId || null
+            });
+        }
+    };
+
+    if (newTopButton) newTopButton.addEventListener('click', openOtrosWizard);
+    if (newBottomButton) newBottomButton.addEventListener('click', openOtrosWizard);
+
     exportButton.addEventListener('click', () => {
         const context = getOtrosDedicatedViewState();
         setSelectedCropId(context.cropId);
@@ -14237,6 +14253,85 @@ function bindOtrosDedicatedView() {
 function initOtrosDedicatedView() {
     bindOtrosDedicatedView();
     renderOtrosDedicatedView();
+}
+
+// ============================================================
+// V9.8: CARRITO DEDICATED VIEW (reparent pattern)
+// ============================================================
+
+let carritoDedicatedEventsBound = false;
+
+function syncCarritoDedicatedView() {
+    const dedicatedRoot = document.getElementById('carrito-dedicated-root');
+    const cartNode = document.getElementById('agro-cart-root');
+    if (!dedicatedRoot || !cartNode) return;
+
+    const activeView = String(document.body.dataset.agroActiveView || '').trim();
+    if (activeView === 'carrito') {
+        if (cartNode.parentElement !== dedicatedRoot) {
+            dedicatedRoot.appendChild(cartNode);
+        }
+        initCartTabLazy();
+    } else {
+        const tabPanel = document.getElementById('tab-panel-carrito');
+        if (tabPanel && cartNode.parentElement !== tabPanel) {
+            tabPanel.appendChild(cartNode);
+        }
+    }
+}
+
+function bindCarritoDedicatedView() {
+    if (carritoDedicatedEventsBound) return;
+    carritoDedicatedEventsBound = true;
+
+    window.addEventListener('agro:shell:view-changed', syncCarritoDedicatedView);
+    document.addEventListener('data-refresh', syncCarritoDedicatedView);
+}
+
+function initCarritoDedicatedView() {
+    bindCarritoDedicatedView();
+    syncCarritoDedicatedView();
+}
+
+// ============================================================
+// V9.8: RANKINGS DEDICATED VIEW (reparent pattern)
+// ============================================================
+
+let rankingsDedicatedEventsBound = false;
+
+function syncRankingsDedicatedView() {
+    const dedicatedRoot = document.getElementById('rankings-dedicated-root');
+    const rankingsNode = document.getElementById('ops-rankings-panel');
+    if (!dedicatedRoot || !rankingsNode) return;
+
+    const activeView = String(document.body.dataset.agroActiveView || '').trim();
+    if (activeView === 'rankings') {
+        if (rankingsNode.parentElement !== dedicatedRoot) {
+            dedicatedRoot.appendChild(rankingsNode);
+        }
+        initOpsRankingsPanel();
+        refreshOpsRankings().catch((err) => {
+            console.warn('[AGRO] Rankings dedicated refresh failed:', err?.message || err);
+        });
+    } else {
+        const tabPanel = document.getElementById('tab-panel-rankings');
+        if (tabPanel && rankingsNode.parentElement !== tabPanel) {
+            tabPanel.appendChild(rankingsNode);
+        }
+    }
+}
+
+function bindRankingsDedicatedView() {
+    if (rankingsDedicatedEventsBound) return;
+    rankingsDedicatedEventsBound = true;
+
+    window.addEventListener('agro:shell:view-changed', syncRankingsDedicatedView);
+    document.addEventListener('data-refresh', syncRankingsDedicatedView);
+}
+
+function initRankingsDedicatedView() {
+    bindRankingsDedicatedView();
+    syncRankingsDedicatedView();
 }
 
 function bindOpsCultivosPanelEvents() {
@@ -17031,6 +17126,8 @@ export function initAgro() {
     initPerdidasDedicatedView();
     initDonacionesDedicatedView();
     initOtrosDedicatedView();
+    initCarritoDedicatedView();
+    initRankingsDedicatedView();
     initFactureroSelection();
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();

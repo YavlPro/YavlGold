@@ -276,6 +276,32 @@ body[data-agro-active-view='otros'] .ops-header-otros {
   display: block;
 }
 
+/* Header swap: Carrito view */
+.ops-header-carrito {
+  display: none;
+}
+
+body[data-agro-active-view='carrito'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='carrito'] .ops-header-carrito {
+  display: block;
+}
+
+/* Header swap: Rankings view */
+.ops-header-rankings {
+  display: none;
+}
+
+body[data-agro-active-view='rankings'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='rankings'] .ops-header-rankings {
+  display: block;
+}
+
 .agro-ops-v10 .header-actions {
   display: flex;
   align-items: center;
@@ -667,7 +693,7 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .financial-operations-card {
   display: none;
 }
 
-body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated:not(.agro-fiados-dedicated) {
+body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated:not(.agro-fiados-dedicated):not(.agro-perdidas-dedicated):not(.agro-donaciones-dedicated):not(.agro-otros-dedicated):not(.agro-carrito-dedicated):not(.agro-rankings-dedicated) {
   display: flex;
 }
 
@@ -700,6 +726,22 @@ body[data-agro-active-view='otros'] .agro-ops-v10 .financial-operations-card {
 }
 
 body[data-agro-active-view='otros'] .agro-ops-v10 .agro-otros-dedicated {
+  display: flex;
+}
+
+body[data-agro-active-view='carrito'] .agro-ops-v10 .financial-operations-card {
+  display: none;
+}
+
+body[data-agro-active-view='carrito'] .agro-ops-v10 .agro-carrito-dedicated {
+  display: flex;
+}
+
+body[data-agro-active-view='rankings'] .agro-ops-v10 .financial-operations-card {
+  display: none;
+}
+
+body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   display: flex;
 }
 

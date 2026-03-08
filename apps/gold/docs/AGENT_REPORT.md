@@ -1,3 +1,45 @@
+## 🆕 ADDENDUM: Otros CTA + Carrito dedicado + Rankings dedicado (2026-03-08)
+
+### Correcciones
+
+**1. Otros — Nuevo registro CTA**
+- `index.html`: agregado Paso 2 "Nuevo registro" con `btn-otros-dedicated-new-top` + `btn-otros-dedicated-new-bottom` en el footer.
+- `agro.js`: `getOtrosDedicatedElements` ahora incluye `newTopButton` y `newBottomButton`. `bindOtrosDedicatedView` wires `openOtrosWizard` que lanza `launchAgroWizard('otros', { initialCropId })`. Si hay cultivo seleccionado se contextualiza; si es Vista General, `initialCropId` es `null`.
+
+**2. Carrito — Vista dedicada (reparent pattern)**
+- `agro-shell.js`: `focusSelector: '#agro-carrito-dedicated'`
+- `index.html`: header swap (`ops-header-carrito` title + subtitle) + `#agro-carrito-dedicated` con hero y `#carrito-dedicated-root`
+- `agro-operations.css`: header swap CSS + CdO hide + dedicated show rules
+- `agro.js`: `syncCarritoDedicatedView` reparenta `#agro-cart-root` del tab panel al dedicated container cuando `activeView === 'carrito'`, y lo devuelve al tab panel cuando no. Trigger `initCartTabLazy()` al activar. `bindCarritoDedicatedView` + `initCarritoDedicatedView` wired en `initAgro`.
+
+**3. Rankings — Vista dedicada (reparent pattern)**
+- `agro-shell.js`: `focusSelector: '#agro-rankings-dedicated'`
+- `index.html`: header swap (`ops-header-rankings` title + subtitle) + `#agro-rankings-dedicated` con hero y `#rankings-dedicated-root`
+- `agro-operations.css`: header swap CSS + CdO hide + dedicated show rules
+- `agro.js`: `syncRankingsDedicatedView` reparenta `#ops-rankings-panel` del tab panel al dedicated container cuando `activeView === 'rankings'`, y lo devuelve al tab panel cuando no. Trigger `initOpsRankingsPanel()` + `refreshOpsRankings()` al activar. `bindRankingsDedicatedView` + `initRankingsDedicatedView` wired en `initAgro`.
+
+### Patrón reparent (Carrito/Rankings)
+A diferencia de Pérdidas/Donaciones/Otros que tienen render propio con caches y filtros, Carrito y Rankings ya tienen módulos self-contained (`agro-cart.js` lazy-loaded, `renderOpsRankings()` inline). En lugar de duplicar lógica, se usa **reparenting DOM**: mover el nodo raíz existente entre el tab panel y el dedicated container según la vista activa.
+
+### Build
+✅ `pnpm build:gold` exitoso (3.37s)
+
+### QA adicional
+- [ ] Otros: existe botón "Nuevo registro" (top + bottom)
+- [ ] Otros: crear movimiento desde Vista General (sin cropId)
+- [ ] Otros: crear movimiento con cultivo seleccionado (con cropId)
+- [ ] Carrito: abrir vista → CdO oculto, header "Carrito de Compras"
+- [ ] Carrito: contenido del carrito visible dentro de superficie dedicada
+- [ ] Carrito: funcionalidad del carrito intacta (agregar, eliminar, totales)
+- [ ] Rankings: abrir vista → CdO oculto, header "Rankings del Centro"
+- [ ] Rankings: panel de rankings visible con filtros de rango y privacidad
+- [ ] Rankings: funcionalidad intacta (range, export, hide names)
+- [ ] Header swap se restaura correctamente al volver a CdO
+- [ ] Navegación ida/vuelta sin listeners duplicados
+- [ ] `pnpm build:gold` ✅
+
+---
+
 ## 🆕 SESIÓN: Vistas dedicadas Pérdidas, Donaciones y Otros (2026-03-08)
 
 ### Diagnóstico
