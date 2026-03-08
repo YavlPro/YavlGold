@@ -13744,6 +13744,62 @@ git status --short --branch
   - `pnpm build:gold`
   - Resultado: **PASS**
 
+## 🆕 SESIÓN: GATE 0 — Footer global intercalado dentro de Pagados dedicada (2026-03-08)
+
+### Diagnóstico
+
+1. La vista dedicada de `Pagados` en `apps/gold/agro/index.html` ya tiene contenedor propio:
+   - hero,
+   - pasos 1/2,
+   - historial exclusivo,
+   - footer interno de `Pagados`,
+   - y el footer global del módulo queda después en el HTML fuente.
+2. El historial dedicado en `apps/gold/agro/agro.js` ya renderiza agrupado por fecha y dentro de `#pagados-dedicated-list`, así que los registros no se están “escapando” del listado por sí mismos.
+3. La evidencia en navegador confirmó que el footer global seguía apareciendo intercalado porque el runtime seguía ejecutando `moveFooterToEnd()`:
+   - reparentaba `#agro-module-footer`,
+   - primero hacia `.app-container`,
+   - y luego hacia `body`,
+   - pero seguía siendo una solución frágil basada en recolocación dinámica.
+4. Problema confirmado:
+   - el bug real no era el agrupado ni el CSS fino;
+   - el bug era que el footer global se seguía moviendo con JS aun cuando su posición estructural en el HTML ya era la correcta.
+5. Hallazgo de validación en navegador:
+   - el footer interno de `Pagados` sí estaba recibiendo `hidden` desde JS cuando no había filas visibles,
+   - pero `apps/gold/agro/agro-operations.css` le seguía forzando `display: flex`,
+   - así que había una segunda colisión local de visibilidad dentro de `Pagados` que también debía corregirse.
+
+### Causa raíz probable
+
+- `moveFooterToEnd()` intentaba corregir layout por runtime, pero `Pagados` dedicada ya vive en un flujo estructural válido.
+- Al reparentar el footer global, la página podía quedar en estados transitorios o inconsistentes respecto al orden real del módulo, especialmente al entrar en vistas dedicadas como `Pagados`.
+- En otras palabras: el parche estaba actuando sobre el síntoma visual, no sobre la estructura correcta del documento.
+
+### Por qué el parche anterior no fue suficiente
+
+- El parche anterior mejoró agrupación, render condicional y estado del historial dedicado, pero dejó viva la estrategia de “mover footer” con JS.
+- Mientras esa estrategia existiera, el footer global podía volver a salir del orden fuente correcto.
+- Por eso el historial ya se veía más limpio, pero el footer global seguía pudiendo intercalarse dentro del flujo visual de `Pagados`.
+
+### Plan de corrección
+
+1. Retirar el efecto de `moveFooterToEnd()` del flujo de `Agro`.
+2. Dejar que el footer global respete el orden estructural original de `apps/gold/agro/index.html`.
+3. Mantener `Pagados` dedicada renderizando todo su historial agrupado dentro de `#pagados-dedicated-list` y su footer interno después del historial.
+4. Hacer que los nodos de `Pagados` con atributo `hidden` respeten `display: none` incluso cuando exista CSS de layout local.
+5. No tocar otros historiales ni el facturero general.
+6. Validar en navegador:
+   - `Pagados` desde sidebar,
+   - historial completo antes del footer interno,
+   - footer global después de toda la vista,
+   - sin registros debajo del footer global.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/index.html` solo si hiciera falta ajuste mínimo de estructura/ids
+- `apps/gold/agro/agro-operations.css` para alinear visibilidad semántica (`hidden`) con el layout real de `Pagados`, no para maquillar el bug
+
 ## 🆕 SESIÓN: GATE 0 — Follow-up “1 saco” persistente en ciclo finalizado puntual (2026-03-05)
 
 ### Diagnóstico

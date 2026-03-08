@@ -897,6 +897,11 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   display: none;
 }
 
+.agro-ops-v10 .agro-pagados-dedicated [hidden],
+.agro-ops-v10 .agro-pagados-history [hidden] {
+  display: none !important;
+}
+
 .agro-ops-v10 .agro-pagados-dedicated__footer {
   display: flex;
   align-items: center;

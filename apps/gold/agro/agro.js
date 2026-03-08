@@ -359,7 +359,6 @@ function applyAgroFocusMode(isOn) {
     }
 
     updateAgroToolsTitle(toolsSection, toolsBody);
-    moveFooterToEnd();
     console.info(`[AGRO] Focus mode ${isOn ? 'enabled' : 'disabled'}`);
 }
 
@@ -15557,33 +15556,6 @@ function setupHeaderIdentity() {
     window.addEventListener('auth:ui:updated', applyHeaderIdentity);
 }
 
-function moveFooterToEnd() {
-    const footer = document.getElementById('agro-module-footer')
-        || document.querySelector('.app-container > footer.footer');
-    if (!footer) return;
-
-    const root = document.body;
-    if (!root) return;
-
-    const topLevelModuleSections = Array.from(root.querySelectorAll(
-        ':scope > section[data-agro-section], :scope > section[data-agro-shell-region], :scope > section#agro-tools-section, :scope > section#agro-repo-section'
-    ));
-    const lastTopLevelSection = topLevelModuleSections.length
-        ? topLevelModuleSections[topLevelModuleSections.length - 1]
-        : null;
-
-    if (lastTopLevelSection) {
-        const nextSibling = lastTopLevelSection.nextSibling;
-        if (footer.parentNode !== root || footer.previousSibling !== lastTopLevelSection) {
-            root.insertBefore(footer, nextSibling);
-        }
-    } else if (footer.parentElement !== root || footer !== root.lastElementChild) {
-        root.appendChild(footer);
-    }
-
-    footer.style.marginTop = 'auto';
-}
-
 function injectAgroMobilePatches() {
     if (document.getElementById('agro-mobile-patches')) return;
 
@@ -15680,9 +15652,6 @@ export function initAgro() {
     initFactureroSelection();
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
-    setTimeout(() => {
-        moveFooterToEnd();
-    }, 100);
 
     // Habilitar Enter en inputs para calcular
     document.querySelectorAll('.styled-input').forEach(input => {
