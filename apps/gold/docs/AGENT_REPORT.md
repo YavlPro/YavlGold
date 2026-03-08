@@ -1,3 +1,92 @@
+## 🆕 SESIÓN: HOTFIX — Toggle del sidebar interceptado por la shell (2026-03-08)
+
+### Diagnóstico del problema
+
+- Tras cortar el bucle de recarga de `Pagados`, apareció un segundo bug real en QA browser:
+  - el botón de las tres rayas abre el sidebar,
+  - pero al intentar cerrarlo, el click queda interceptado por el propio `aside` abierto.
+- Reproducción observada con Playwright:
+  - `#agro-shell-toggle` cambia `aria-expanded="true"`,
+  - `#agro-shell-sidebar` entra en pantalla,
+  - pero `document.elementFromPoint(...)` sobre el centro del toggle devuelve un nodo dentro del sidebar, no el botón.
+- Resultado visible:
+  - el usuario percibe que la hamburguesa “se dañó”,
+  - la shell solo puede cerrarse por backdrop/flujo secundario.
+
+### Objetivo del hotfix
+
+- Mantener el toggle siempre clickable incluso con el sidebar abierto.
+- No rediseñar la shell ni cambiar su flujo.
+- Corregir solo la jerarquía visual/capa del header.
+
+### Plan del ajuste
+
+1. Reforzar la stacking context del header del shell.
+2. Dar `position` y `z-index` explícitos al toggle para dejarlo por encima del `aside`.
+3. Añadir fallback de hitbox en la shell para que, si el `aside` intercepta el target DOM, la zona real de la hamburguesa igual cierre el sidebar.
+4. Volver a validar apertura/cierre en navegador real.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agro-shell.js`
+
+### Criterio de QA de este hotfix
+
+- Abrir el sidebar desde la hamburguesa.
+- Confirmar que la misma hamburguesa puede cerrarlo.
+- Confirmar que el resto de links del sidebar siguen clicables.
+- Ejecutar `pnpm build:gold`.
+
+### Nota de implementación
+
+- El primer fallback de hitbox introdujo una regresión: el mismo click que abría la hamburguesa también llegaba al listener global de `document` y la cerraba al instante.
+- El ajuste final debe ignorar solo ese click de apertura y conservar el cierre por hitbox cuando el sidebar ya está abierto y el `aside` intercepta el target real.
+
+## 🆕 SESIÓN: HOTFIX — Bucle de recarga en Pagados dedicada (2026-03-08)
+
+### Diagnóstico del problema
+
+- Tras subir `Pagados` dedicada, el entorno real empezó a mostrar:
+  - imposibilidad de fijar el cultivo activo,
+  - fallo aparente del botón contextual `⋮`,
+  - y spam continuo de `loadCrops()` / `cultivos cargados` en consola.
+- La causa raíz no está en Supabase ni en el selector de cultivos en sí, sino en un loop de eventos:
+  - `loadIncomes()` llama `renderPagadosDedicatedView()`,
+  - `renderPagadosDedicatedView()` dispara `data-refresh`,
+  - `data-refresh` vuelve a llamar `loadIncomes()` y además agenda refresh de ciclos,
+  - eso vuelve a renderizar `Pagados`, limpia selección y deja la UI inestable.
+- Efecto visible:
+  - el filtro de cultivo no logra asentarse,
+  - la selección de card se pierde,
+  - `⋮` aparece roto porque la card deja de quedar seleccionada.
+
+### Objetivo del hotfix
+
+- Cortar el bucle de recarga sin tocar otros historiales.
+- Mantener la limpieza de selección contextual en `Pagados` dedicada.
+- Restaurar selección de cultivo y menú `⋮`.
+
+### Plan del ajuste
+
+1. Reemplazar el uso de `data-refresh` dentro de `renderPagadosDedicatedView()` por un evento dedicado de `Pagados`.
+2. Hacer que `agro-selection.js` limpie selección también con ese evento dedicado.
+3. No tocar listeners globales de `data-refresh` que sí usa el resto del facturero.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-selection.js`
+
+### Criterio de QA de este hotfix
+
+- Confirmar que deja de repetirse `cultivos cargados` en bucle.
+- Confirmar que el selector de cultivo en `Pagados` vuelve a responder.
+- Confirmar que la selección de card se mantiene y `⋮` puede mostrarse.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Acciones móviles en Pagados dedicada (2026-03-08)
 
 ### Diagnóstico del problema

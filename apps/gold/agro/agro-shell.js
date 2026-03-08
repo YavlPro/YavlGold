@@ -182,8 +182,21 @@ export function initAgroShell() {
 
     let activeView = readStoredView();
     let sidebarOpen = false;
+    let ignoreToggleHitClose = false;
 
     const topLevelRegions = Array.from(document.querySelectorAll('[data-agro-shell-region]'));
+    const isPointerInsideToggle = (event) => {
+        if (!toggle || typeof event?.clientX !== 'number' || typeof event?.clientY !== 'number') {
+            return false;
+        }
+
+        const rect = toggle.getBoundingClientRect();
+        return event.clientX >= rect.left
+            && event.clientX <= rect.right
+            && event.clientY >= rect.top
+            && event.clientY <= rect.bottom;
+    };
+
     const closeSidebar = () => {
         sidebarOpen = false;
         document.body.classList.remove('agro-shell-open');
@@ -284,6 +297,11 @@ export function initAgroShell() {
         } else {
             openSidebar();
         }
+
+        ignoreToggleHitClose = true;
+        window.requestAnimationFrame(() => {
+            ignoreToggleHitClose = false;
+        });
     });
 
     backdrop.addEventListener('click', closeSidebar);
@@ -295,6 +313,13 @@ export function initAgroShell() {
     });
 
     document.addEventListener('click', (event) => {
+        if (!ignoreToggleHitClose && sidebarOpen && isPointerInsideToggle(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeSidebar();
+            return;
+        }
+
         const actionButton = event.target.closest('[data-agro-action]');
         if (actionButton) {
             const didRun = runAction(actionButton.dataset.agroAction);

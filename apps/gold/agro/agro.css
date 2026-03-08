@@ -5796,6 +5796,9 @@ body.agro-view-dense::after {
 }
 
 .agro-shell-header {
+  position: relative;
+  z-index: 160;
+  isolation: isolate;
   gap: 0.9rem;
 }
 
@@ -5814,6 +5817,8 @@ body.agro-view-dense::after {
 }
 
 .agro-shell-toggle {
+  position: relative;
+  z-index: 170;
   width: 46px;
   height: 46px;
   display: inline-flex;

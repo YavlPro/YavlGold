@@ -11862,6 +11862,7 @@ const OPS_RANKINGS_BUYER_NAME_FIELDS = Object.freeze([
     'label'
 ]);
 const OPS_RANKINGS_MISSING_NAME_TOKENS = new Set(['', 'sin nombre', 'sin comprador']);
+const PAGADOS_VIEW_RENDERED_EVENT = 'agro:pagados:view-rendered';
 
 let opsRankingsState = {
     range: OPS_RANKINGS_DEFAULT_RANGE,
@@ -12603,7 +12604,7 @@ async function renderPagadosDedicatedView() {
         renderPagadosDedicatedItem(list, income, signedUrlMap.get(income.id));
     });
 
-    document.dispatchEvent(new CustomEvent('data-refresh'));
+    document.dispatchEvent(new CustomEvent(PAGADOS_VIEW_RENDERED_EVENT));
 }
 
 function bindPagadosDedicatedView() {

@@ -1,5 +1,6 @@
 const ROW_SELECTOR = '.tx-card[data-row-selectable="1"]';
 const INTERACTIVE_SELECTOR = 'button, a, input, select, textarea, summary, [role="button"], [contenteditable="true"]';
+const PAGADOS_VIEW_RENDERED_EVENT = 'agro:pagados:view-rendered';
 
 function getSelectionStatusNode() {
     if (typeof document !== 'undefined' && document.body?.dataset?.agroActiveView === 'pagados') {
@@ -94,6 +95,7 @@ export function initFactureroSelection() {
     window.addEventListener('agro:finance-tab:changed', clearSelection);
     window.addEventListener('agro:crop:changed', clearSelection);
     document.addEventListener('data-refresh', clearSelection);
+    document.addEventListener(PAGADOS_VIEW_RENDERED_EVENT, clearSelection);
 
     updateSelectionStatus(null);
 
