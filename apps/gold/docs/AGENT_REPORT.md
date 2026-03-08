@@ -1,43 +1,61 @@
-## 🆕 SESIÓN: UI — Header swap Pagados + DNA V10 polish (2026-03-08)
+## 🆕 SESIÓN: UI — Jerarquía visual Pagados + DNA V10 (2026-03-08)
+
+### Problema
+La vista Pagados tenía diseño genérico: 4 cajas idénticas (hero, paso 1, paso 2, historial) con mismo borde/fondo/sombra. "Registro de Pagados" aparecía duplicado (header macro + hero). No había jerarquía visual.
 
 ### Cambios realizados
 
-**Header macro contextual** (CSS-only, sin JS):
-- Agregados `.ops-header-default` y `.ops-header-pagados` al HTML del module-header.
-- En vista Pagados: título cambia de "Centro de Operaciones" → **"Registro de Pagados"**, subtítulo contextualizado.
-- Eyebrow "Finanzas Agro" se mantiene como contexto superior.
-- Swap vía `body[data-agro-active-view='pagados']` — cero lógica JS.
+**1. Header macro contextual** (CSS-only):
+- Swap CSS vía `body[data-agro-active-view='pagados']`: "Centro de Operaciones" ↔ "Registro de Pagados"
+- Eyebrow "Finanzas Agro" se mantiene
 
-**DNA V10 refinamientos** (solo CSS):
-- **Hero**: gold accent line top (`::before` gradient), título con `background-clip: text` gradient blanco→dorado, padding superior refinado.
-- **Eyebrows**: color cambiado de `rgba(229,213,160,0.72)` → `rgba(200,167,82,0.72)` (acento dorado directo).
-- **Steps**: `transition` de border/shadow + hover state con glow sutil dorado.
-- **Footer**: gap ampliado, padding-top, `.btn-gold` con `box-shadow` dorado.
+**2. Hero → eliminado visualmente** (flat status bar):
+- `.agro-pagados-dedicated__copy` → `display: none` (elimina título/subtítulo duplicados)
+- Hero pierde card look: `border: none; background: transparent; box-shadow: none`
+- Solo muestra el badge de conteo alineado a la derecha
+- Resultado: cero redundancia textual
 
-**Mobile QA** (≤900px y ≤768px):
-- Badge `align-self: stretch` + `text-align: center` para no apretar título.
-- Crop chips: `scrollbar-width: none` + `-webkit-scrollbar: display: none` para scroll limpio.
-- Footer: `gap: 0.44rem` en column layout.
-- `overflow-x: hidden` en `.agro-pagados-dedicated` para prevenir scroll horizontal.
+**3. Steps → tratamiento ligero**:
+- Border más tenue (`rgba(200,167,82,0.13)`)
+- Radius reducido (`14px` vs `18px`)
+- Sombra más ligera (`0 4px 14px`)
+- Padding compacto (`0.62rem 0.72rem`)
+- Notas con peso visual reducido (`0.68rem`, `opacity 0.48`)
+- Hover sutil con glow dorado
+
+**4. History → sección premium** (ancla visual):
+- Border reforzado (`rgba(200,167,82,0.26)`)
+- Sombra premium (`0 12px 36px`, glow dorado)
+- Gold accent line `::before` gradient en top
+- Padding superior ampliado (`1rem`)
+
+**5. Badge mejorado**:
+- Background gradient dorado
+- Box-shadow sutil dorado
+- Separado de `history__scope` para estilos independientes
+
+**6. Mobile** (≤900px / ≤768px):
+- Badge full-width centrado
+- Crop chips scrollbar oculta
+- Steps/history padding compacto (`0.68rem`)
+- Footer column con gap refinado
+- `overflow-x: hidden` en dedicated container
 
 ### Archivos modificados
+- `apps/gold/agro/index.html` — Header swap HTML
+- `apps/gold/agro/agro-operations.css` — Jerarquía visual completa
 
-- `apps/gold/agro/index.html` — Header swap HTML (2 h2 + 2 p con clases toggle)
-- `apps/gold/agro/agro-operations.css` — Header swap CSS + DNA V10 polish + mobile fixes
-
-**Build**: ✅ `pnpm build:gold` exitoso (3.68s)
+**Build**: ✅ `pnpm build:gold` exitoso (3.15s)
 
 ### QA
-
-- [ ] Vista Pagados muestra "Registro de Pagados" en header macro
-- [ ] Vista Operaciones muestra "Centro de Operaciones" en header macro
-- [ ] Hero tiene gold accent line arriba
-- [ ] Título hero tiene gradient blanco→dorado
-- [ ] Steps tienen hover sutil
-- [ ] Badge no aprieta título en móvil
-- [ ] Chips de cultivo scroll limpio sin scrollbar
-- [ ] Botones footer full-width en móvil
-- [ ] No hay overflow horizontal en móvil
+- [ ] Header macro cambia según vista (Operaciones vs Pagados)
+- [ ] Hero ya no muestra título/subtítulo duplicados
+- [ ] Solo badge visible como status bar
+- [ ] Steps visualmente más ligeros que History
+- [ ] History tiene accent line dorada y sombra premium
+- [ ] Badge centrado en móvil
+- [ ] No hay overflow horizontal
+- [ ] Chips de cultivo scroll limpio
 
 ---
 

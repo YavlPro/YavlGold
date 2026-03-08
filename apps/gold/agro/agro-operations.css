@@ -619,7 +619,7 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   display: flex;
 }
 
-.agro-ops-v10 .agro-pagados-dedicated__hero,
+/* ── Shared card base (steps + history only) ── */
 .agro-ops-v10 .agro-pagados-history,
 .agro-ops-v10 .agro-pagados-step {
   border: 1px solid rgba(200, 167, 82, 0.2);
@@ -631,45 +631,61 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
+/* ── Hero → flat status bar ── */
 .agro-ops-v10 .agro-pagados-dedicated__hero {
-  position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.agro-ops-v10 .agro-pagados-dedicated__hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.5), transparent);
-  opacity: 0.8;
+.agro-ops-v10 .agro-pagados-dedicated__copy {
+  display: none;
+}
+
+/* ── Steps: lighter, compact ── */
+.agro-ops-v10 .agro-pagados-step {
+  border-color: rgba(200, 167, 82, 0.13);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent),
+    rgba(10, 10, 10, 0.88);
 }
 
 .agro-ops-v10 .agro-pagados-step:hover {
-  border-color: rgba(200, 167, 82, 0.34);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26), 0 0 28px rgba(200, 167, 82, 0.07);
+  border-color: rgba(200, 167, 82, 0.28);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22), 0 0 18px rgba(200, 167, 82, 0.05);
 }
 
-.agro-ops-v10 .agro-pagados-dedicated__hero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding: 1rem 0.94rem 0.88rem;
+/* ── History: premium card ── */
+.agro-ops-v10 .agro-pagados-history {
+  border-color: rgba(200, 167, 82, 0.26);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28), 0 0 28px rgba(200, 167, 82, 0.06);
+  overflow: visible;
 }
 
-.agro-ops-v10 .agro-pagados-dedicated__copy,
+.agro-ops-v10 .agro-pagados-history::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.5), transparent);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
 .agro-ops-v10 .agro-pagados-step__head,
 .agro-ops-v10 .agro-pagados-step__copy {
   display: flex;
   flex-direction: column;
-}
-
-.agro-ops-v10 .agro-pagados-dedicated__copy {
-  gap: 0.12rem;
-  min-width: 0;
 }
 
 .agro-ops-v10 .agro-pagados-dedicated__eyebrow,
@@ -713,7 +729,21 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   color: rgba(255, 255, 255, 0.62);
 }
 
-.agro-ops-v10 .agro-pagados-dedicated__badge,
+.agro-ops-v10 .agro-pagados-dedicated__badge {
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  border-radius: 999px;
+  padding: 0.32rem 0.72rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: rgba(243, 222, 176, 0.92);
+  background: linear-gradient(135deg, rgba(200, 167, 82, 0.1), rgba(200, 167, 82, 0.04));
+  max-width: 100%;
+  line-height: 1.35;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgba(200, 167, 82, 0.08);
+}
+
 .agro-ops-v10 .agro-pagados-history__scope {
   align-self: flex-start;
   border: 1px solid rgba(200, 167, 82, 0.24);
@@ -739,8 +769,8 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
 .agro-ops-v10 .agro-pagados-step {
   display: flex;
   flex-direction: column;
-  gap: 0.52rem;
-  padding: 0.76rem 0.82rem;
+  gap: 0.42rem;
+  padding: 0.62rem 0.72rem;
   min-width: 0;
 }
 
@@ -763,13 +793,18 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
 .agro-ops-v10 .agro-pagados-step__action {
   display: flex;
   flex-direction: column;
-  gap: 0.48rem;
+  gap: 0.38rem;
   min-width: 0;
 }
 
 .agro-ops-v10 .agro-pagados-step__action {
   justify-content: center;
   min-height: 100%;
+}
+
+.agro-ops-v10 .agro-pagados-step__note {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.48);
 }
 
 .agro-ops-v10 .agro-pagados-step__primary {
@@ -790,8 +825,7 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   display: flex;
   flex-direction: column;
   gap: 0.74rem;
-  padding: 0.88rem 0.94rem;
-  overflow: visible;
+  padding: 1rem 1rem 0.88rem;
   position: relative;
   isolation: isolate;
   z-index: 0;
@@ -1050,13 +1084,9 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     grid-template-columns: 1fr;
   }
 
-  .agro-ops-v10 .agro-pagados-dedicated__hero {
-    flex-direction: column;
-  }
-
   .agro-ops-v10 .agro-pagados-dedicated__badge {
-    align-self: stretch;
     text-align: center;
+    width: 100%;
   }
 
   .agro-ops-v10 .agro-pagados-history__head {
@@ -1127,10 +1157,9 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     justify-content: flex-start;
   }
 
-  .agro-ops-v10 .agro-pagados-dedicated__hero,
   .agro-ops-v10 .agro-pagados-history,
   .agro-ops-v10 .agro-pagados-step {
-    padding: 0.76rem;
+    padding: 0.68rem;
   }
 
   .agro-ops-v10 .agro-pagados-step__primary,
