@@ -1457,8 +1457,8 @@
                         <div class="agro-lunar-tip" id="moon-advice">Calculando...</div>
                     </div>
                     <footer class="agro-dash-card__footer">
-                        <button type="button" class="agro-dash-card__action" onclick="window.openAgroAgenda()">
-                            CENTRO DE AGENDA
+                        <button type="button" class="agro-dash-card__action" data-agro-view="agenda">
+                            VER AGENDA COMPLETA
                         </button>
                     </footer>
                 </article>
@@ -1487,8 +1487,14 @@
             </div>
         </section>
 
-
-
+        <!-- ============================================
+             📅 SECCIÓN AGENDA — Vista dedicada completa
+             ============================================ -->
+        <section class="agro-agenda-region" data-agro-shell-region="agenda" hidden inert>
+            <div id="agro-agenda-inline-root" class="agro-agenda-inline-root">
+                <!-- agro-agenda.js renders here when agenda view is active -->
+            </div>
+        </section>
 
         <!-- Active Crops Section -->
         <section class="crops-section agro-ops-v10" data-agro-section="activeCrops" data-agro-shell-region="cultivos">
@@ -2839,8 +2845,10 @@
         <details class="yg-accordion" id="yg-acc-agrorepo">
             <summary class="yg-accordion-summary agrorepo-header" aria-controls="agrorepo-content"
                 aria-expanded="false">
-                <span class="yg-accordion-icon">🌾</span>
-                <span class="yg-accordion-title agrorepo-title">AgroRepo (Bitácora)</span>
+                <span class="yg-accordion-icon agrorepo-icon-box">🌾</span>
+                <span class="yg-accordion-title agrorepo-title">AgroRepo
+                    <small class="agrorepo-subtitle">Bitácora oficial de eventos</small>
+                </span>
                 <span class="yg-accordion-chevron agrorepo-toggle"><i class="fa-solid fa-chevron-down"></i></span>
             </summary>
             <div class="yg-accordion-content agrorepo-body" id="agrorepo-content">

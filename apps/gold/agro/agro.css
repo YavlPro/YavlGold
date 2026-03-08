@@ -3465,13 +3465,14 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 .ops-rankings-panel {
-  border: 1px solid rgba(200, 167, 82, 0.26);
-  border-radius: 14px;
-  padding: 0.9rem;
-  background: linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.02));
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  border-radius: 18px;
+  padding: 1.1rem;
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.06) 0%, rgba(200, 167, 82, 0.015) 40%, rgba(8, 8, 8, 0.95) 100%);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.9rem;
 }
 
 .ops-rankings-header {
@@ -3484,16 +3485,17 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 .ops-rankings-title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 1px;
-  color: rgba(248, 224, 160, 0.95);
+  font-size: 0.95rem;
+  letter-spacing: 1.2px;
+  color: #fff;
   text-transform: uppercase;
 }
 
 .ops-rankings-subtitle {
-  margin: 0.22rem 0 0;
+  margin: 0.3rem 0 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.35;
 }
 
 .ops-rankings-export-btn {
@@ -3585,25 +3587,35 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
 .ops-rankings-grid {
   display: grid;
-  gap: 0.65rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .ops-ranking-card {
-  border: 1px solid rgba(200, 167, 82, 0.24);
-  border-radius: 12px;
-  background: rgba(10, 10, 10, 0.78);
-  padding: 0.65rem 0.72rem;
-  min-height: 190px;
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.005) 100%),
+    rgba(8, 8, 8, 0.92);
+  padding: 0.85rem 0.9rem;
+  min-height: 200px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.ops-ranking-card:hover {
+  border-color: rgba(200, 167, 82, 0.35);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25), 0 0 12px rgba(200, 167, 82, 0.04);
 }
 
 .ops-ranking-card h5 {
-  margin: 0 0 0.5rem;
-  font-size: 0.74rem;
-  letter-spacing: 0.6px;
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: rgba(248, 224, 160, 0.92);
+  color: #C8A752;
   font-family: 'Orbitron', sans-serif;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.12);
 }
 
 .ops-ranking-list {
@@ -3612,17 +3624,40 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.42rem;
+  gap: 0.5rem;
 }
 
 .ops-ranking-item {
-  border: 1px solid rgba(200, 167, 82, 0.2);
-  border-radius: 10px;
-  padding: 0.45rem 0.55rem;
-  background: rgba(15, 15, 15, 0.84);
+  border: 1px solid rgba(200, 167, 82, 0.15);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+  background: rgba(15, 15, 15, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 0.12rem;
+  gap: 0.15rem;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.ops-ranking-item:first-child {
+  border-color: rgba(200, 167, 82, 0.35);
+  background:
+    linear-gradient(135deg, rgba(200, 167, 82, 0.1) 0%, rgba(200, 167, 82, 0.03) 100%),
+    rgba(12, 12, 12, 0.85);
+}
+
+.ops-ranking-item:first-child .ops-ranking-position {
+  color: #C8A752;
+  font-size: 0.82rem;
+}
+
+.ops-ranking-item:first-child .ops-ranking-name {
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+.ops-ranking-item:first-child .ops-ranking-value {
+  color: #e8d48b;
+  font-size: 0.92rem;
 }
 
 .ops-ranking-row {
@@ -3633,15 +3668,16 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 .ops-ranking-position {
-  color: rgba(248, 224, 160, 0.9);
+  color: rgba(200, 167, 82, 0.7);
   font-size: 0.72rem;
   font-weight: 700;
-  min-width: 22px;
+  min-width: 24px;
+  font-family: 'Orbitron', sans-serif;
 }
 
 .ops-ranking-name {
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.82rem;
   font-weight: 700;
   flex: 1;
   white-space: nowrap;
@@ -3651,35 +3687,39 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
 .ops-ranking-value {
   color: #C8A752;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.3px;
 }
 
 .ops-ranking-meta {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.48);
   font-size: 0.68rem;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .ops-ranking-empty {
   margin: 0;
-  border: 1px dashed rgba(200, 167, 82, 0.22);
-  border-radius: 10px;
-  padding: 0.65rem;
+  border: 1px dashed rgba(200, 167, 82, 0.18);
+  border-radius: 12px;
+  padding: 1.2rem 0.8rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  background: rgba(200, 167, 82, 0.02);
 }
 
 .ops-rankings-note {
-  margin-top: 10px;
-  padding: 8px 12px;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.75rem;
   border-radius: 10px;
-  background: rgba(200, 167, 82, 0.07);
-  color: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(200, 167, 82, 0.18);
-  font-size: 0.72rem;
-  line-height: 1.35;
+  background: rgba(200, 167, 82, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(200, 167, 82, 0.12);
+  font-size: 0.7rem;
+  line-height: 1.4;
 }
 
 .financial-tabs {

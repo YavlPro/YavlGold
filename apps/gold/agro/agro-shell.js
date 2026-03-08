@@ -34,7 +34,7 @@ const VIEW_CONFIG = Object.freeze({
     carrito: { region: 'ops', label: 'Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
     clima: { region: 'dashboard', label: 'Clima', focusSelector: '[data-widget="weather"]' },
-    agenda: { region: 'dashboard', label: 'Agenda', focusSelector: '[data-widget="lunar"]' },
+    agenda: { region: 'agenda', label: 'Agenda', focusSelector: '[data-agro-shell-region="agenda"]' },
     herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },
     agrorepo: { region: 'agrorepo', label: 'Bitacora', focusSelector: '#agro-repo-section', dense: true }
 });
@@ -272,7 +272,7 @@ export function initAgroShell() {
         focusTarget(focusSelector, options);
 
         if (view === 'agenda' && typeof window.openAgroAgenda === 'function') {
-            window.openAgroAgenda();
+            window.openAgroAgenda({ inline: true });
         }
     };
 

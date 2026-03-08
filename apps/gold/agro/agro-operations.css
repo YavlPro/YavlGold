@@ -2215,8 +2215,8 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px 18px;
   background: var(--bg-3);
   cursor: pointer;
   transition: background-color 180ms ease;
@@ -2226,15 +2226,39 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   background: color-mix(in srgb, var(--gold-4) 8%, var(--bg-3));
 }
 
-.agro-ops-v10 .agrorepo-title {
-  margin: 0;
+.agro-ops-v10 .agrorepo-icon-box {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(200, 167, 82, 0.1);
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.agro-ops-v10 .agrorepo-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-family: 'Orbitron', sans-serif;
   font-size: var(--text-sm);
   font-weight: 700;
   color: var(--text-gold-prestige);
+  flex: 1;
+}
+
+.agro-ops-v10 .agrorepo-subtitle {
+  display: block;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.3px;
+  text-transform: none;
 }
 
 .agro-ops-v10 .agrorepo-title i {

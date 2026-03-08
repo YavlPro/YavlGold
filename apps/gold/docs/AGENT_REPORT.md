@@ -1,3 +1,88 @@
+## 🆕 SESIÓN: Dashboard/Clima/Agenda/Rankings/AgroRepo restructure (2026-03-08)
+
+### Diagnóstico
+
+**1. Dashboard Agro** (`index.html` L1316-1488)
+- Región: `data-agro-shell-region="dashboard"`. Contiene: header + "Ruta sugerida" (6 quick steps) + "Pulso del día" (3 cards: Clima, Mercados, Fase Lunar).
+- Cards de Clima y Lunar son resumen + CTA al modal/vista completa.
+- **Problema**: Clima y Agenda en sidebar apuntan a `region: 'dashboard'` con focusSelector a widgets. No son vistas independientes.
+
+**2. Clima**
+- `VIEW_CONFIG.clima = { region: 'dashboard', focusSelector: '[data-widget="weather"]' }` → solo scroll a card dentro de dashboard.
+- No existe vista dedicada completa. El "Ver pronóstico" toggle muestra un accordion inline.
+- **Acción**: Mejorar CTAs del dashboard, pero vista completa dedicada queda como deuda (requiere nuevo HTML region + weather render refactor).
+
+**3. Agenda** (`agro-agenda.js`, 1402 líneas)
+- Lazy-loaded via `window.openAgroAgenda()`. Crea overlay modal dinámico (`modal-agro-agenda`).
+- `VIEW_CONFIG.agenda = { region: 'dashboard', focusSelector: '[data-widget="lunar"]' }` → muestra dashboard y luego abre modal.
+- El modal se construye 100% por JS: header + weather bar + moon rec + calendar grid + day detail + activities list + create form.
+- Max-width 680px, se siente como popup, no herramienta oficial.
+- **Acción**: Convertir de modal overlay a superficie dedicada dentro del shell. Crear HTML region, modificar `openAgendaModal()` para renderizar en container en vez de fixed overlay.
+
+**4. Rankings** (`agro.css` L3467-3683, `index.html` L2078-2132)
+- Panel con header, toolbar (range buttons + privacy), 3 ranking cards (Top Clientes, Fiados por Cliente, Top Cultivos).
+- **Problemas visuales** (confirmados en screenshot): flat, sin jerarquía, colores apagados uniformes, #1 y #5 se ven igual, no hay diferenciación visual entre posiciones, falta vida y contraste.
+- **Acción**: Redesign CSS completo — mejor spacing, color hierarchy para top items, gold gradient para #1, mejor contraste cards, empty states más cuidados.
+
+**5. AgroRepo** (`index.html` L2831+, lazy-loaded template)
+- Accordion dentro de `agro-repo-section`. Al abrir, instancia template con sidebar + modals + content.
+- CSS propio (prefijo `arw-`).
+- **Problema**: Se siente como widget secundario, no herramienta oficial. El accordion wrapper reduce su presencia.
+- **Acción**: Mejorar header visual del accordion, agregar icon-box al summary.
+
+### Plan quirúrgico
+1. Rankings: CSS visual redesign (top position gold accents, better cards, spacing)
+2. Agenda: convert from modal to dedicated shell region
+3. Dashboard: update CTA labels, ensure clarity
+4. AgroRepo: improve accordion visual identity
+5. Build + QA
+
+### Riesgos
+- Agenda conversion es el cambio más grande: requiere modificar `agro-agenda.js` render target
+- Clima vista dedicada completa queda como deuda técnica
+
+### Cambios realizados
+
+**1. Rankings CSS visual redesign** (`agro.css` L3467-3723)
+- Panel: better border-radius (18px), improved gradient background
+- Title: white instead of muted gold, larger font (0.95rem)
+- Cards: glassmorphism background, hover state with box-shadow, border-bottom under h5
+- Grid: wider min column (240px)
+- **First-place items**: gold gradient background, larger position/name/value text, gold border
+- Position numbers: Orbitron font
+- Values: Rajdhani font for numeric feel
+- Empty states: better padding, subtle background
+- Note boxes: refined spacing and opacity
+
+**2. Agenda: modal → dedicated shell region**
+- `agro-shell.js`: VIEW_CONFIG.agenda changed from `region: 'dashboard'` to `region: 'agenda'`
+- `agro-shell.js`: applyViewEffects passes `{ inline: true }` when agenda view activates
+- `index.html`: new `<section data-agro-shell-region="agenda">` with `#agro-agenda-inline-root` container
+- `agro-agenda.js`: added `_inlineMode`, `_activeContainer`, `_activeInline` state vars
+- `agro-agenda.js`: `openAgendaModal()` renders into inline root when inline mode, falls back to overlay modal
+- `agro-agenda.js`: `renderAgendaContent()` accepts container+isInline args, defaults to active refs
+- `agro-agenda.js`: all recursive render/listener calls pass inline context through
+- `agro-agenda.js`: new `.aga-inline` CSS: full-width, no max-width, larger cells (52px), better body layout
+- `agro.js`: `window.openAgroAgenda(opts)` forwards `inline` option
+- Dashboard Luna card: CTA changed from `onclick="window.openAgroAgenda()"` to `data-agro-view="agenda"` ("VER AGENDA COMPLETA")
+
+**3. Dashboard CTA updates** (`index.html`)
+- Luna card footer: navigates to agenda dedicated view via shell routing instead of opening modal
+
+**4. AgroRepo visual identity** (`index.html`, `agro-operations.css`)
+- Accordion summary: icon wrapped in `.agrorepo-icon-box` (36px, gold tinted box)
+- Title: now flex-column with `<small class="agrorepo-subtitle">Bitácora oficial de eventos</small>`
+- CSS: `.agrorepo-icon-box` styling, `.agrorepo-subtitle` with Rajdhani font, `.agrorepo-title` as flex column
+
+### Deuda técnica
+- **Clima vista dedicada**: sidebar "Clima" still scrolls to weather widget within dashboard. Full dedicated view requires new HTML region + weather render refactor.
+- **Agenda modal legacy HTML**: `#modal-lunar` in index.html (L1517-1569) is legacy dead code, can be removed in future cleanup.
+
+### Build
+- `pnpm build:gold` → ✅ OK (exit 0)
+
+---
+
 ## 🆕 SESIÓN: Reestructuración navegación + toggles globales + Herramientas redesign (2026-03-08)
 
 ### Diagnóstico

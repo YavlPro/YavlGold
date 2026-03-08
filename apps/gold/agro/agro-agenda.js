@@ -47,6 +47,9 @@ let _currentYear = new Date().getFullYear();
 let _selectedDate = new Date().toISOString().split('T')[0];
 let _agendaItems = []; // items for current month view
 let _listenerAC = null;
+let _inlineMode = false;
+let _activeContainer = null;
+let _activeInline = false;
 const CROP_EMOJI_TOKEN_RE = /[\p{Extended_Pictographic}\p{Regional_Indicator}]/u;
 const CROP_TEXT_TOKEN_RE = /[\p{L}\p{N}]/u;
 
@@ -82,13 +85,16 @@ function getCropDisplayLabel(crop, fallbackIcon = '🌱', fallbackName = 'Cultiv
  * @param {object} deps - { supabase, cropsCache }
  */
 export async function initAgroAgenda(deps) {
+    const inline = deps?.inline === true;
     if (_initialized) {
+        _inlineMode = inline;
         openAgendaModal();
         return;
     }
     _supabase = deps.supabase;
     _cropsCache = deps.cropsCache || [];
     _initialized = true;
+    _inlineMode = inline;
 
     injectAgendaStyles();
     await loadMonthItems(_currentYear, _currentMonth);
@@ -297,6 +303,16 @@ function getWeatherFromDOM() {
 // ============================================================
 
 function openAgendaModal() {
+    if (_inlineMode) {
+        const inlineRoot = document.getElementById('agro-agenda-inline-root');
+        if (inlineRoot) {
+            _activeContainer = inlineRoot;
+            _activeInline = true;
+            renderAgendaContent(inlineRoot, true);
+            attachAgendaListeners(inlineRoot, true);
+            return;
+        }
+    }
     let modal = document.getElementById('modal-agro-agenda');
     if (!modal) {
         modal = document.createElement('div');
@@ -306,8 +322,10 @@ function openAgendaModal() {
     }
     modal.style.display = 'flex';
     modal.classList.remove('hidden');
-    renderAgendaContent();
-    attachAgendaListeners(modal);
+    _activeContainer = modal;
+    _activeInline = false;
+    renderAgendaContent(modal, false);
+    attachAgendaListeners(modal, false);
 }
 
 function closeAgendaModal() {
@@ -318,9 +336,10 @@ function closeAgendaModal() {
     }
 }
 
-function renderAgendaContent() {
-    const modal = document.getElementById('modal-agro-agenda');
+function renderAgendaContent(container, isInline) {
+    const modal = container || _activeContainer || document.getElementById('modal-agro-agenda');
     if (!modal) return;
+    const inlineLayout = isInline != null ? isInline === true : _activeInline;
 
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
@@ -351,7 +370,7 @@ function renderAgendaContent() {
     modal.replaceChildren();
 
     const card = document.createElement('div');
-    card.className = 'aga-modal';
+    card.className = inlineLayout ? 'aga-modal aga-inline' : 'aga-modal';
 
     const header = document.createElement('div');
     header.className = 'aga-header';
@@ -370,15 +389,18 @@ function renderAgendaContent() {
     monthLabel.className = 'aga-month-label';
     monthLabel.textContent = `${MONTHS_ES[_currentMonth]} ${_currentYear}`;
 
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'aga-close-btn';
-    closeBtn.dataset.action = 'close-agenda';
-    const closeIcon = document.createElement('i');
-    closeIcon.className = 'fa-solid fa-xmark';
-    closeBtn.appendChild(closeIcon);
-
-    headerRight.append(monthLabel, closeBtn);
+    if (!inlineLayout) {
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'aga-close-btn';
+        closeBtn.dataset.action = 'close-agenda';
+        const closeIcon = document.createElement('i');
+        closeIcon.className = 'fa-solid fa-xmark';
+        closeBtn.appendChild(closeIcon);
+        headerRight.append(monthLabel, closeBtn);
+    } else {
+        headerRight.append(monthLabel);
+    }
     headerTop.append(title, headerRight);
     header.appendChild(headerTop);
 
@@ -802,14 +824,16 @@ function openCreateModal() {
 // EVENT DELEGATION
 // ============================================================
 
-function attachAgendaListeners(modal) {
+function attachAgendaListeners(container, isInline) {
     if (_listenerAC) _listenerAC.abort();
     _listenerAC = new AbortController();
     const signal = _listenerAC.signal;
+    const modal = container;
+    const inlineCtx = isInline === true;
 
     modal.addEventListener('click', async (e) => {
-        // Close on overlay click
-        if (e.target === modal) { closeAgendaModal(); return; }
+        // Close on overlay click (modal only)
+        if (!inlineCtx && e.target === modal) { closeAgendaModal(); return; }
 
         const actionEl = e.target.closest('[data-action]');
         if (!actionEl) {
@@ -817,8 +841,8 @@ function attachAgendaListeners(modal) {
             const dayCell = e.target.closest('.aga-day-cell:not(.aga-empty)');
             if (dayCell && dayCell.dataset.date) {
                 _selectedDate = dayCell.dataset.date;
-                renderAgendaContent();
-                attachAgendaListeners(modal);
+                renderAgendaContent(modal, inlineCtx);
+                attachAgendaListeners(modal, inlineCtx);
             }
             return;
         }
@@ -831,10 +855,9 @@ function attachAgendaListeners(modal) {
             _currentMonth--;
             if (_currentMonth < 0) { _currentMonth = 11; _currentYear--; }
             await loadMonthItems(_currentYear, _currentMonth);
-            // Select first day of new month
             _selectedDate = `${_currentYear}-${String(_currentMonth + 1).padStart(2, '0')}-01`;
-            renderAgendaContent();
-            attachAgendaListeners(modal);
+            renderAgendaContent(modal, inlineCtx);
+            attachAgendaListeners(modal, inlineCtx);
             return;
         }
 
@@ -843,8 +866,8 @@ function attachAgendaListeners(modal) {
             if (_currentMonth > 11) { _currentMonth = 0; _currentYear++; }
             await loadMonthItems(_currentYear, _currentMonth);
             _selectedDate = `${_currentYear}-${String(_currentMonth + 1).padStart(2, '0')}-01`;
-            renderAgendaContent();
-            attachAgendaListeners(modal);
+            renderAgendaContent(modal, inlineCtx);
+            attachAgendaListeners(modal, inlineCtx);
             return;
         }
 
@@ -853,14 +876,14 @@ function attachAgendaListeners(modal) {
         if (action === 'toggle-complete') {
             const itemId = actionEl.dataset.itemId;
             if (itemId) await toggleAgendaComplete(itemId);
-            attachAgendaListeners(modal);
+            attachAgendaListeners(modal, inlineCtx);
             return;
         }
 
         if (action === 'delete-item') {
             const itemId = actionEl.dataset.itemId;
             if (itemId) await deleteAgendaItem(itemId);
-            attachAgendaListeners(modal);
+            attachAgendaListeners(modal, inlineCtx);
             return;
         }
     }, { signal });
@@ -1389,9 +1412,77 @@ function injectAgendaStyles() {
             font-family: inherit;
         }
 
+        /* Inline layout (dedicated view region) */
+        .aga-inline {
+            max-width: 100%;
+            max-height: none;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            background: transparent;
+        }
+        .aga-inline .aga-header {
+            padding: 1.2rem 0.5rem 1rem;
+            border-bottom: 1px solid rgba(200,167,82,0.12);
+            border-radius: 18px 18px 0 0;
+            background:
+                linear-gradient(180deg, rgba(200,167,82,0.06) 0%, transparent 100%),
+                rgba(8,8,8,0.92);
+            border: 1px solid rgba(200,167,82,0.15);
+            border-bottom: none;
+        }
+        .aga-inline .aga-title {
+            font-size: 1.2rem;
+        }
+        .aga-inline .aga-month-label {
+            font-size: 0.8rem;
+        }
+        .aga-inline .aga-body {
+            border: 1px solid rgba(200,167,82,0.12);
+            border-top: none;
+            border-radius: 0 0 18px 18px;
+            background: rgba(8,8,8,0.92);
+            min-height: 400px;
+        }
+        @media (min-width: 700px) {
+            .aga-inline .aga-body {
+                flex-direction: row;
+            }
+            .aga-inline .aga-calendar-section {
+                flex: 1.3;
+            }
+            .aga-inline .aga-day-detail {
+                width: 320px;
+                flex-shrink: 0;
+            }
+        }
+        .aga-inline .aga-day-cell {
+            min-height: 52px;
+            min-width: 52px;
+        }
+        .aga-inline .aga-day-num {
+            font-size: 1rem;
+        }
+        .aga-inline .aga-nav-label {
+            font-size: 1rem;
+        }
+        .aga-inline .aga-day-detail {
+            padding: 20px;
+        }
+        .aga-inline .aga-day-title {
+            font-size: 1rem;
+        }
+        .aga-inline .aga-activities-list {
+            max-height: 400px;
+        }
+
+        .agro-agenda-inline-root {
+            margin-top: 2rem;
+        }
+
         /* Mobile responsive */
         @media (max-width: 599px) {
-            .aga-modal { max-height: 95vh; border-radius: 12px; }
+            .aga-modal:not(.aga-inline) { max-height: 95vh; border-radius: 12px; }
             .aga-day-cell { min-height: 40px; min-width: 40px; }
             .aga-day-num { font-size: 0.8rem; }
             .aga-day-detail { border-top: 1px solid rgba(200,167,82,0.1); }
