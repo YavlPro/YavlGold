@@ -31,6 +31,11 @@
     <link rel="stylesheet" href="./agro-operations.css">
     <link rel="stylesheet" href="./tx-cards-v2.css">
     <style>
+        /* ============================================ SHELL BOOTSTRAP: prevent flash of inactive regions ============================================ */
+        body:not(.agro-shell-ready) [data-agro-shell-region]:not([data-agro-shell-region="dashboard"]) {
+            display: none !important;
+        }
+
         /* ============================================ CSS RESET & CUSTOM PROPERTIES ============================================ */
         *,
         *::before,
@@ -1150,42 +1155,82 @@
             <div class="agro-shell-sidebar__head">
                 <p class="agro-shell-sidebar__eyebrow">Agro V1</p>
                 <h2 class="agro-shell-sidebar__title">Flujo guiado del agricultor</h2>
-                <p class="agro-shell-sidebar__copy">Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de Operaciones.</p>
-                <p class="agro-shell-sidebar__milestone"><strong>Baseline oficial:</strong> dashboard, cultivos, operaciones, carrito, rankings, clima, agenda y bitácora.</p>
+                <p class="agro-shell-sidebar__copy">Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de
+                    Operaciones.</p>
+                <p class="agro-shell-sidebar__milestone"><strong>Baseline oficial:</strong> dashboard, cultivos,
+                    operaciones, carrito, rankings, clima, agenda y bitácora.</p>
             </div>
 
             <div class="agro-shell-sidebar__group">
-                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon" aria-hidden="true">🌾</span><span>Principal</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="dashboard"><span class="agro-shell-link__icon" aria-hidden="true">🏠</span><span class="agro-shell-link__label">Dashboard Agro</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="cultivos"><span class="agro-shell-link__icon" aria-hidden="true">🌱</span><span class="agro-shell-link__label">Cultivos activos</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="ciclos"><span class="agro-shell-link__icon" aria-hidden="true">🗂</span><span class="agro-shell-link__label">Historial de ciclos</span></button>
+                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
+                        aria-hidden="true">🌾</span><span>Principal</span></p>
+                <button type="button" class="agro-shell-link" data-agro-view="dashboard"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🏠</span><span
+                        class="agro-shell-link__label">Dashboard Agro</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="cultivos"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🌱</span><span
+                        class="agro-shell-link__label">Cultivos activos</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="ciclos"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🗂</span><span
+                        class="agro-shell-link__label">Historial de ciclos</span></button>
             </div>
 
             <div class="agro-shell-sidebar__group">
-                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon" aria-hidden="true">🧾</span><span>Operaciones</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="operaciones"><span class="agro-shell-link__icon" aria-hidden="true">⚙️</span><span class="agro-shell-link__label">Centro de operaciones</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="pagados"><span class="agro-shell-link__icon" aria-hidden="true">💰</span><span class="agro-shell-link__label">Pagados</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="fiados"><span class="agro-shell-link__icon" aria-hidden="true">📒</span><span class="agro-shell-link__label">Fiados</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="perdidas"><span class="agro-shell-link__icon" aria-hidden="true">⚠️</span><span class="agro-shell-link__label">Pérdidas</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="donaciones"><span class="agro-shell-link__icon" aria-hidden="true">🎁</span><span class="agro-shell-link__label">Donaciones</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="otros"><span class="agro-shell-link__icon" aria-hidden="true">📦</span><span class="agro-shell-link__label">Otros</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="carrito"><span class="agro-shell-link__icon" aria-hidden="true">🛒</span><span class="agro-shell-link__label">Carrito</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="rankings"><span class="agro-shell-link__icon" aria-hidden="true">🏆</span><span class="agro-shell-link__label">Rankings</span></button>
+                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
+                        aria-hidden="true">🧾</span><span>Operaciones</span></p>
+                <button type="button" class="agro-shell-link" data-agro-view="operaciones"><span
+                        class="agro-shell-link__icon" aria-hidden="true">⚙️</span><span
+                        class="agro-shell-link__label">Centro de operaciones</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="pagados"><span
+                        class="agro-shell-link__icon" aria-hidden="true">💰</span><span
+                        class="agro-shell-link__label">Pagados</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="fiados"><span
+                        class="agro-shell-link__icon" aria-hidden="true">📒</span><span
+                        class="agro-shell-link__label">Fiados</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="perdidas"><span
+                        class="agro-shell-link__icon" aria-hidden="true">⚠️</span><span
+                        class="agro-shell-link__label">Pérdidas</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="donaciones"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🎁</span><span
+                        class="agro-shell-link__label">Donaciones</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="otros"><span class="agro-shell-link__icon"
+                        aria-hidden="true">📦</span><span class="agro-shell-link__label">Otros</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="carrito"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🛒</span><span
+                        class="agro-shell-link__label">Carrito</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="rankings"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🏆</span><span
+                        class="agro-shell-link__label">Rankings</span></button>
             </div>
 
             <div class="agro-shell-sidebar__group">
-                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon" aria-hidden="true">🛠</span><span>Herramientas</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="clima"><span class="agro-shell-link__icon" aria-hidden="true">☁️</span><span class="agro-shell-link__label">Clima</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="agenda"><span class="agro-shell-link__icon" aria-hidden="true">🗓</span><span class="agro-shell-link__label">Agenda</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="herramientas"><span class="agro-shell-link__icon" aria-hidden="true">🧰</span><span class="agro-shell-link__label">Herramientas</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="agrorepo"><span class="agro-shell-link__icon" aria-hidden="true">📜</span><span class="agro-shell-link__label">Bitácora</span></button>
+                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
+                        aria-hidden="true">🛠</span><span>Herramientas</span></p>
+                <button type="button" class="agro-shell-link" data-agro-view="clima"><span class="agro-shell-link__icon"
+                        aria-hidden="true">☁️</span><span class="agro-shell-link__label">Clima</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="agenda"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🗓</span><span
+                        class="agro-shell-link__label">Agenda</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="herramientas"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🧰</span><span
+                        class="agro-shell-link__label">Herramientas</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="agrorepo"><span
+                        class="agro-shell-link__icon" aria-hidden="true">📜</span><span
+                        class="agro-shell-link__label">Bitácora</span></button>
             </div>
 
             <div class="agro-shell-sidebar__group">
-                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon" aria-hidden="true">⚡</span><span>Acciones</span></p>
-                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-crop"><span class="agro-shell-link__icon" aria-hidden="true">➕</span><span class="agro-shell-link__label">Nuevo cultivo</span></button>
-                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-record"><span class="agro-shell-link__icon" aria-hidden="true">✍️</span><span class="agro-shell-link__label">Nuevo registro</span></button>
-                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="assistant"><span class="agro-shell-link__icon" aria-hidden="true">🤖</span><span class="agro-shell-link__label">Asistente Agro</span></button>
+                <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
+                        aria-hidden="true">⚡</span><span>Acciones</span></p>
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="new-crop"><span
+                        class="agro-shell-link__icon" aria-hidden="true">➕</span><span
+                        class="agro-shell-link__label">Nuevo cultivo</span></button>
+                <button type="button" class="agro-shell-link agro-shell-link--action"
+                    data-agro-action="new-record"><span class="agro-shell-link__icon" aria-hidden="true">✍️</span><span
+                        class="agro-shell-link__label">Nuevo registro</span></button>
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="assistant"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🤖</span><span
+                        class="agro-shell-link__label">Asistente Agro</span></button>
             </div>
         </div>
     </aside>
@@ -1199,9 +1244,11 @@
                     <span></span>
                     <span></span>
                 </button>
-                <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;" title="Volver al Inicio">
+                <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;"
+                    title="Volver al Inicio">
                     <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
-                        class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span><span class="module-release-badge">Agro V1</span>
+                        class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span><span
+                        class="module-release-badge">Agro V1</span>
                 </a>
             </div>
 
@@ -1220,7 +1267,8 @@
 
                 <div class="agro-shell-header__utilities">
                     <!-- Notification Center (Dashboard Style) -->
-                    <div class="agro-header-notifications" style="position: relative; margin-right: 1rem; z-index: 9999;">
+                    <div class="agro-header-notifications"
+                        style="position: relative; margin-right: 1rem; z-index: 9999;">
                         <button id="notif-btn" class="notification-bell yg-glowpulse"
                             style="width: 42px; height: 42px; border-radius: 50%; background: rgba(200, 167, 82, 0.1); border: 1px solid rgba(200, 167, 82, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: all 0.3s ease;"
                             onmouseover="this.style.background='rgba(200, 167, 82, 0.2)'; this.style.borderColor='#C8A752'; this.style.boxShadow='0 0 15px rgba(200, 167, 82, 0.3)';"
@@ -1269,10 +1317,12 @@
                     <h2 class="agro-dash-title section-title">
                         <span class="agro-dash-icon">📊</span> Dashboard Agro
                     </h2>
-                    <p class="agro-dash-subtitle">Clima, mercado y fase lunar en una sola lectura para arrancar el día con mejor contexto.</p>
+                    <p class="agro-dash-subtitle">Clima, mercado y fase lunar en una sola lectura para arrancar el día
+                        con mejor contexto.</p>
                 </div>
                 <div class="agro-dash-controls">
-                    <button type="button" class="assistant-trigger agro-dash-toggle" id="agro-focus-toggle" aria-pressed="false">
+                    <button type="button" class="assistant-trigger agro-dash-toggle" id="agro-focus-toggle"
+                        aria-pressed="false">
                         <span class="toggle-label">Modo Enfoque</span>
                         <span class="toggle-switch" aria-hidden="true"></span>
                     </button>
@@ -1292,7 +1342,8 @@
                             <p class="agro-dash-guide__eyebrow">Ruta sugerida</p>
                             <h3 class="agro-dash-guide__title">Arranque rápido del día</h3>
                         </div>
-                        <p class="agro-dash-guide__copy">Seis atajos breves para abrir cultivo, validar contexto y pasar a la acción sin salir del dashboard.</p>
+                        <p class="agro-dash-guide__copy">Seis atajos breves para abrir cultivo, validar contexto y pasar
+                            a la acción sin salir del dashboard.</p>
                     </div>
                     <div class="agro-dash-guide__steps">
                         <button type="button" class="agro-guide-step" data-agro-action="new-crop">
@@ -1328,11 +1379,13 @@
                     <p class="agro-dash-boardline__eyebrow">Pulso del día</p>
                     <h3 class="agro-dash-boardline__title">Centro de lectura rápida</h3>
                 </div>
-                <p class="agro-dash-boardline__copy">Clima local, mercados y fase lunar alineados para decidir antes de entrar a Operaciones.</p>
+                <p class="agro-dash-boardline__copy">Clima local, mercados y fase lunar alineados para decidir antes de
+                    entrar a Operaciones.</p>
             </div>
 
             <div class="kpi-grid agro-dash-grid">
-                <article class="card kpi-card agro-dash-card agro-dash-card--weather animate-in delay-2" data-widget="weather">
+                <article class="card kpi-card agro-dash-card agro-dash-card--weather animate-in delay-2"
+                    data-widget="weather">
                     <header class="agro-dash-card__header">
                         <span class="agro-dash-card__icon">🌦️</span>
                         <span class="agro-dash-card__label">CLIMA LOCAL</span>
@@ -1351,15 +1404,16 @@
                         </div>
                     </div>
                     <footer class="agro-dash-card__footer">
-                        <button type="button" class="agro-dash-card__action clima-weekly-toggle" id="btn-toggle-weekly-forecast"
-                            aria-expanded="false" aria-controls="clima-weekly-host">
+                        <button type="button" class="agro-dash-card__action clima-weekly-toggle"
+                            id="btn-toggle-weekly-forecast" aria-expanded="false" aria-controls="clima-weekly-host">
                             📅 Ver pronóstico
                         </button>
                     </footer>
                     <div id="clima-weekly-host" class="clima-weekly-host is-collapsed" hidden></div>
                 </article>
 
-                <article class="card kpi-card agro-dash-card agro-dash-card--markets animate-in delay-3" data-widget="markets" data-agro-section="markets">
+                <article class="card kpi-card agro-dash-card agro-dash-card--markets animate-in delay-3"
+                    data-widget="markets" data-agro-section="markets">
                     <header class="agro-dash-card__header">
                         <span class="agro-dash-card__icon">📈</span>
                         <span class="agro-dash-card__label">MERCADOS EN VIVO</span>
@@ -1373,10 +1427,12 @@
                         </div>
                         <div class="agro-market-stage">
                             <div id="market-ticker-track" class="agro-market-track animate-marquee">
-                                <span class="agro-ticker-item agro-ticker-meta">📡 Conectando satélites financieros...</span>
+                                <span class="agro-ticker-item agro-ticker-meta">📡 Conectando satélites
+                                    financieros...</span>
                             </div>
                         </div>
-                        <p class="agro-market-support">BTC, ETH, SOL, USDT y tipo de cambio local en lectura continua.</p>
+                        <p class="agro-market-support">BTC, ETH, SOL, USDT y tipo de cambio local en lectura continua.
+                        </p>
                     </div>
                     <footer class="agro-dash-card__footer">
                         <button type="button" class="agro-dash-card__action" onclick="window.openMarketHub('crypto')">
@@ -1385,7 +1441,8 @@
                     </footer>
                 </article>
 
-                <article class="card kpi-card agro-dash-card agro-dash-card--lunar animate-in delay-4" data-widget="lunar" data-agro-section="lunar">
+                <article class="card kpi-card agro-dash-card agro-dash-card--lunar animate-in delay-4"
+                    data-widget="lunar" data-agro-section="lunar">
                     <header class="agro-dash-card__header">
                         <span class="agro-dash-card__icon" id="moon-icon">🌕</span>
                         <span class="agro-dash-card__label">FASE LUNAR</span>
@@ -1440,11 +1497,13 @@
                             data-history-label="Historial de ciclos">Cultivos activos</h2>
                         <p class="module-subtitle" id="crops-section-subtitle"
                             data-active-copy="Gestión de ciclos en producción"
-                            data-history-copy="Finalizados, perdidos y auditoría de ciclos cerrados">Gestión de ciclos en producción</p>
+                            data-history-copy="Finalizados, perdidos y auditoría de ciclos cerrados">Gestión de ciclos
+                            en producción</p>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-gold" id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo Cultivo</button>
+                    <button class="btn btn-gold" id="btn-new-crop" onclick="window.openCropModal()">+ Nuevo
+                        Cultivo</button>
                 </div>
             </header>
             <div id="cyclesContainer" class="crops-grid"> <!-- Ciclos activos cargados dinámicamente --> </div>
@@ -1662,15 +1721,16 @@
     <!-- ============================================
          💰 SECCIÓN FINANZAS - Control de Gastos
          ============================================ -->
-    <section class="finances-section agro-ops-v10" style="margin-top: 2rem; margin-bottom: 2rem;" data-agro-section="ops"
-        data-agro-shell-region="ops">
+    <section class="finances-section agro-ops-v10" style="margin-top: 2rem; margin-bottom: 2rem;"
+        data-agro-section="ops" data-agro-shell-region="ops">
         <header class="module-header animate-in">
             <div class="module-title-group">
                 <div class="module-icon">💰</div>
                 <div class="module-heading">
                     <p class="ops-module-eyebrow">Finanzas Agro</p>
                     <h2 class="module-title">Centro de Operaciones</h2>
-                    <p class="module-subtitle">Movimientos, privacidad y vistas del facturero en una sola mesa operativa.</p>
+                    <p class="module-subtitle">Movimientos, privacidad y vistas del facturero en una sola mesa
+                        operativa.</p>
                 </div>
             </div>
         </header>
@@ -1680,7 +1740,8 @@
                 <div class="financial-operations-copy">
                     <p class="financial-operations-kicker">Flujo operativo</p>
                     <h3 class="financial-operations-title">Selecciona contexto y abre vista</h3>
-                    <p class="financial-operations-subtitle">Paso 1 filtra el cultivo. Paso 2 decide qué lectura abrir.</p>
+                    <p class="financial-operations-subtitle">Paso 1 filtra el cultivo. Paso 2 decide qué lectura abrir.
+                    </p>
                     <p class="ops-total-display" id="ops-total-display">Todos los movimientos (Total: 0)</p>
                 </div>
                 <div class="financial-operations-toolbar">
@@ -1728,7 +1789,8 @@
                         <div class="ops-cultivos-finished" id="ops-cultivos-finished">
                             <div class="ops-cultivos-history-copy">
                                 <p class="ops-cultivos-history-title">Ciclos cerrados</p>
-                                <p class="ops-cultivos-history-subtitle" id="ops-cultivos-finished-note">Finalizados y perdidos viven en Historial de ciclos.</p>
+                                <p class="ops-cultivos-history-subtitle" id="ops-cultivos-finished-note">Finalizados y
+                                    perdidos viven en Historial de ciclos.</p>
                             </div>
                             <button type="button" class="ops-cultivos-history-btn" id="ops-cultivos-history-btn"
                                 data-agro-view="ciclos">
@@ -1743,27 +1805,33 @@
                         <p class="ops-step-label">PASO 2 · Qué ver</p>
                         <div class="ops-step-copy">
                             <p class="ops-step-title">Abrir vista del facturero</p>
-                            <p class="ops-step-note ops-step-helper">Gastos, pagados, fiados, pérdidas, donaciones, otros, carrito y rankings.</p>
+                            <p class="ops-step-note ops-step-helper">Gastos, pagados, fiados, pérdidas, donaciones,
+                                otros, carrito y rankings.</p>
                         </div>
                     </div>
                     <div class="financial-tabs" role="tablist" aria-label="Pestañas de finanzas agro">
                         <button type="button" class="financial-tab-btn is-active" role="tab" id="tab-btn-gastos"
                             aria-selected="true" aria-controls="tab-panel-gastos" data-tab="gastos">Gastos</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-ingresos" aria-selected="false"
-                            aria-controls="tab-panel-ingresos" data-tab="ingresos">Pagados</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-pendientes" aria-selected="false"
-                            aria-controls="tab-panel-pendientes" data-tab="pendientes">Fiados</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-perdidas" aria-selected="false"
-                            aria-controls="tab-panel-perdidas" data-tab="perdidas">P&eacute;rdidas</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-ingresos"
+                            aria-selected="false" aria-controls="tab-panel-ingresos"
+                            data-tab="ingresos">Pagados</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-pendientes"
+                            aria-selected="false" aria-controls="tab-panel-pendientes"
+                            data-tab="pendientes">Fiados</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-perdidas"
+                            aria-selected="false" aria-controls="tab-panel-perdidas"
+                            data-tab="perdidas">P&eacute;rdidas</button>
                         <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-transferencias"
                             aria-selected="false" aria-controls="tab-panel-transferencias"
                             data-tab="transferencias">Donaciones</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-otros" aria-selected="false"
-                            aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito" aria-selected="false"
-                            aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2; Carrito</button>
-                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-rankings" aria-selected="false"
-                            aria-controls="tab-panel-rankings" data-tab="rankings">&#x1F3C6; Rankings</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-otros"
+                            aria-selected="false" aria-controls="tab-panel-otros" data-tab="otros">Otros</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-carrito"
+                            aria-selected="false" aria-controls="tab-panel-carrito" data-tab="carrito">&#x1F6D2;
+                            Carrito</button>
+                        <button type="button" class="financial-tab-btn" role="tab" id="tab-btn-rankings"
+                            aria-selected="false" aria-controls="tab-panel-rankings" data-tab="rankings">&#x1F3C6;
+                            Rankings</button>
                     </div>
                     <div class="ops-selection-status" id="ops-selection-status" aria-live="polite">
                         Selecciona un movimiento del historial para ver sus acciones rápidas.
@@ -1942,11 +2010,10 @@
                     </details>
                 </div>
 
-                <div class="tab-panel is-hidden" id="tab-panel-otros" role="tabpanel"
-                    aria-labelledby="tab-btn-otros" aria-hidden="true" data-tab="otros">
+                <div class="tab-panel is-hidden" id="tab-panel-otros" role="tabpanel" aria-labelledby="tab-btn-otros"
+                    aria-hidden="true" data-tab="otros">
                     <details class="yg-accordion facturero-accordion" data-accordion-group="facturero" open>
-                        <summary class="yg-accordion-summary" aria-controls="facturero-otros-form"
-                            aria-expanded="true">
+                        <summary class="yg-accordion-summary" aria-controls="facturero-otros-form" aria-expanded="true">
                             <span class="yg-accordion-icon"><i class="fa-solid fa-layer-group"></i></span>
                             <span class="yg-accordion-title">Registrar movimiento (General)</span>
                             <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
@@ -1988,7 +2055,8 @@
                         <div class="ops-rankings-header">
                             <div>
                                 <h4 class="ops-rankings-title">Rankings del Centro</h4>
-                                <p class="ops-rankings-subtitle">Vista rápida de compras, pendientes e ingresos cobrados.</p>
+                                <p class="ops-rankings-subtitle">Vista rápida de compras, pendientes e ingresos
+                                    cobrados.</p>
                             </div>
                             <button type="button" class="ops-rankings-export-btn" id="ops-rankings-export-btn">
                                 <i class="fa-solid fa-file-export" aria-hidden="true"></i>
@@ -2000,7 +2068,8 @@
                             <div class="ops-rankings-range" id="ops-rankings-range" role="group"
                                 aria-label="Filtro de rango rankings">
                                 <button type="button" class="ops-rankings-range-btn" data-range="30d">30d</button>
-                                <button type="button" class="ops-rankings-range-btn is-active" data-range="90d">90d</button>
+                                <button type="button" class="ops-rankings-range-btn is-active"
+                                    data-range="90d">90d</button>
                                 <button type="button" class="ops-rankings-range-btn" data-range="6m">6m</button>
                                 <button type="button" class="ops-rankings-range-btn" data-range="12m">12m</button>
                                 <button type="button" class="ops-rankings-range-btn" data-range="all">Todo</button>
@@ -2031,7 +2100,8 @@
 
                             <article class="ops-ranking-card">
                                 <h5 id="ops-rankings-top-crops-title">Top Cultivos (Pagados)</h5>
-                                <p class="ops-rankings-note" id="ops-rankings-top-crops-note">Nota: No incluye inversión base ni fiados. Ver card del cultivo para rentabilidad completa.</p>
+                                <p class="ops-rankings-note" id="ops-rankings-top-crops-note">Nota: No incluye inversión
+                                    base ni fiados. Ver card del cultivo para rentabilidad completa.</p>
                                 <ol id="ops-rankings-top-crops" class="ops-ranking-list"></ol>
                             </article>
                         </div>
@@ -2045,9 +2115,11 @@
                 <div class="agro-pagados-dedicated__copy">
                     <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
                     <h3 class="agro-pagados-dedicated__title">Registro de Pagados</h3>
-                    <p class="agro-pagados-dedicated__subtitle">Consulta cobros registrados, filtra por cultivo y abre el flujo pagado sin mezclar otros movimientos.</p>
+                    <p class="agro-pagados-dedicated__subtitle">Consulta cobros registrados, filtra por cultivo y abre
+                        el flujo pagado sin mezclar otros movimientos.</p>
                 </div>
-                <div class="agro-pagados-dedicated__badge" id="pagados-dedicated-count-badge" hidden>0 pagados visibles</div>
+                <div class="agro-pagados-dedicated__badge" id="pagados-dedicated-count-badge" hidden>0 pagados visibles
+                </div>
             </div>
 
             <div class="agro-pagados-dedicated__steps">
@@ -2056,13 +2128,15 @@
                         <p class="agro-pagados-step__label">Paso 1 · Seleccionar cultivo</p>
                         <div class="agro-pagados-step__copy">
                             <h4 class="agro-pagados-step__title">Filtrar contexto de cobro</h4>
-                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo específico para aislar únicamente los pagados de ese ciclo.</p>
+                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo específico para
+                                aislar únicamente los pagados de ese ciclo.</p>
                         </div>
                     </div>
                     <div class="agro-pagados-step__body">
                         <div class="agro-pagados-crop-row" id="pagados-dedicated-crop-row" role="group"
                             aria-label="Filtro de cultivo para Pagados"></div>
-                        <p class="agro-pagados-crop-hint" id="pagados-dedicated-scope-copy">Vista general activa: historial, nuevo registro y exportación abarcan todos los pagados.</p>
+                        <p class="agro-pagados-crop-hint" id="pagados-dedicated-scope-copy">Vista general activa:
+                            historial, nuevo registro y exportación abarcan todos los pagados.</p>
                     </div>
                 </section>
 
@@ -2071,24 +2145,29 @@
                         <p class="agro-pagados-step__label">Paso 2 · Crear registro pagado</p>
                         <div class="agro-pagados-step__copy">
                             <h4 class="agro-pagados-step__title">Abrir flujo de pagados</h4>
-                            <p class="agro-pagados-step__note">Entra directo al wizard de cobros para registrar un pagado sin pasar por tabs ni otros historiales.</p>
+                            <p class="agro-pagados-step__note">Entra directo al wizard de cobros para registrar un
+                                pagado sin pasar por tabs ni otros historiales.</p>
                         </div>
                     </div>
                     <div class="agro-pagados-step__action">
-                        <button type="button" class="btn btn-gold agro-pagados-step__primary" id="btn-pagados-dedicated-new-top">
+                        <button type="button" class="btn btn-gold agro-pagados-step__primary"
+                            id="btn-pagados-dedicated-new-top">
                             + Nuevo registro pagado
                         </button>
-                        <p class="agro-pagados-step__microcopy">Abre el flujo de <strong>Pagados</strong> con el cultivo activo de esta vista.</p>
+                        <p class="agro-pagados-step__microcopy">Abre el flujo de <strong>Pagados</strong> con el cultivo
+                            activo de esta vista.</p>
                     </div>
                 </section>
             </div>
 
-            <section class="agro-pagados-history" id="pagados-dedicated-history" aria-label="Historial exclusivo de Pagados">
+            <section class="agro-pagados-history" id="pagados-dedicated-history"
+                aria-label="Historial exclusivo de Pagados">
                 <div class="agro-pagados-history__head">
                     <div>
                         <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
                         <h4 class="agro-pagados-history__title">Historial de pagados</h4>
-                        <p class="agro-pagados-history__subtitle">Búsqueda, filtro y exportación limitados únicamente a movimientos cobrados.</p>
+                        <p class="agro-pagados-history__subtitle">Búsqueda, filtro y exportación limitados únicamente a
+                            movimientos cobrados.</p>
                     </div>
                     <div class="agro-pagados-history__tools">
                         <label class="agro-pagados-search" for="pagados-dedicated-search">
@@ -2096,13 +2175,16 @@
                             <input type="search" id="pagados-dedicated-search" class="agro-pagados-search__input"
                                 placeholder="Concepto, comprador o cultivo">
                         </label>
-                        <div class="agro-pagados-history__filters" id="pagados-dedicated-filters" hidden aria-hidden="true">
-                            <button type="button" class="agro-pagados-history__filter-chip" id="pagados-dedicated-filter-transferred"
-                                data-pagados-filter="transferred" aria-pressed="false">
+                        <div class="agro-pagados-history__filters" id="pagados-dedicated-filters" hidden
+                            aria-hidden="true">
+                            <button type="button" class="agro-pagados-history__filter-chip"
+                                id="pagados-dedicated-filter-transferred" data-pagados-filter="transferred"
+                                aria-pressed="false">
                                 Transferidos
                             </button>
-                            <button type="button" class="agro-pagados-history__filter-chip" id="pagados-dedicated-filter-reverted"
-                                data-pagados-filter="reverted" aria-pressed="false">
+                            <button type="button" class="agro-pagados-history__filter-chip"
+                                id="pagados-dedicated-filter-reverted" data-pagados-filter="reverted"
+                                aria-pressed="false">
                                 Revertidos
                             </button>
                         </div>
@@ -2110,8 +2192,10 @@
                 </div>
 
                 <div class="agro-pagados-history__meta">
-                    <p class="agro-pagados-history__scope" id="pagados-dedicated-scope-pill">Scope activo: Vista general</p>
-                    <p class="agro-pagados-history__status" id="pagados-dedicated-status">Viendo todos los pagados. Exportación y wizard quedan en Vista general.</p>
+                    <p class="agro-pagados-history__scope" id="pagados-dedicated-scope-pill">Scope activo: Vista general
+                    </p>
+                    <p class="agro-pagados-history__status" id="pagados-dedicated-status">Viendo todos los pagados.
+                        Exportación y wizard quedan en Vista general.</p>
                 </div>
                 <p class="agro-pagados-history__selection" id="pagados-dedicated-selection-status" aria-live="polite">
                     Selecciona un pagado para ver Editar, Transferir o Eliminar.
@@ -2126,18 +2210,20 @@
             </section>
 
             <div class="agro-pagados-dedicated__footer" id="pagados-dedicated-footer">
-                <button type="button" class="btn btn-gold agro-pagados-footer__btn" id="btn-pagados-dedicated-new-bottom">
+                <button type="button" class="btn btn-gold agro-pagados-footer__btn"
+                    id="btn-pagados-dedicated-new-bottom">
                     + Nuevo registro pagado
                 </button>
-                <button type="button" class="btn btn-outline agro-pagados-footer__btn" id="btn-pagados-dedicated-export">
+                <button type="button" class="btn btn-outline agro-pagados-footer__btn"
+                    id="btn-pagados-dedicated-export">
                     Exportar registros
                 </button>
             </div>
         </div>
     </section>
 
-    <section class="agro-tools-section agro-ops-v10 animate-in delay-6" id="agro-tools-section" style="margin-top: 2rem;"
-        data-agro-shell-region="herramientas" hidden inert>
+    <section class="agro-tools-section agro-ops-v10 animate-in delay-6" id="agro-tools-section"
+        style="margin-top: 2rem;" data-agro-shell-region="herramientas" hidden inert>
         <details class="yg-accordion" id="yg-acc-tools">
             <summary class="yg-accordion-summary" aria-controls="agro-tools-content" aria-expanded="false">
                 <span class="yg-accordion-icon">🧰</span>
@@ -2149,38 +2235,49 @@
                     <article class="agro-tool-card" id="agro-tool-card-weather">
                         <p class="agro-tool-card__eyebrow">Clima</p>
                         <h3 class="agro-tool-card__title">Pronóstico semanal</h3>
-                        <p class="agro-tool-card__copy">Valida la humedad, la temperatura y la siguiente ventana útil antes de registrar decisiones.</p>
+                        <p class="agro-tool-card__copy">Valida la humedad, la temperatura y la siguiente ventana útil
+                            antes de registrar decisiones.</p>
                         <button type="button" class="agro-tool-card__action" data-agro-view="clima">Ir al clima</button>
                     </article>
                     <article class="agro-tool-card" id="agro-tool-card-agenda">
                         <p class="agro-tool-card__eyebrow">Agenda</p>
                         <h3 class="agro-tool-card__title">Agenda lunar</h3>
-                        <p class="agro-tool-card__copy">Abre el calendario agrícola y planifica tareas del día sin perder el contexto del cultivo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">Abrir agenda</button>
+                        <p class="agro-tool-card__copy">Abre el calendario agrícola y planifica tareas del día sin
+                            perder el contexto del cultivo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">Abrir
+                            agenda</button>
                     </article>
                     <article class="agro-tool-card">
                         <p class="agro-tool-card__eyebrow">Asistencia</p>
                         <h3 class="agro-tool-card__title">Asistente Agro</h3>
-                        <p class="agro-tool-card__copy">Consulta dudas rápidas, resuelve contexto de campo y mantén una bitácora más informada.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="assistant">Abrir asistente</button>
+                        <p class="agro-tool-card__copy">Consulta dudas rápidas, resuelve contexto de campo y mantén una
+                            bitácora más informada.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="assistant">Abrir
+                            asistente</button>
                     </article>
                     <article class="agro-tool-card">
                         <p class="agro-tool-card__eyebrow">Cálculo</p>
                         <h3 class="agro-tool-card__title">Calculadora ROI</h3>
-                        <p class="agro-tool-card__copy">Compara rentabilidad con menos ruido visual y con acceso directo a tu facturero.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="calculator">Abrir calculadora</button>
+                        <p class="agro-tool-card__copy">Compara rentabilidad con menos ruido visual y con acceso directo
+                            a tu facturero.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="calculator">Abrir
+                            calculadora</button>
                     </article>
                     <article class="agro-tool-card">
                         <p class="agro-tool-card__eyebrow">Social</p>
                         <h3 class="agro-tool-card__title">Panel Agro Social</h3>
-                        <p class="agro-tool-card__copy">Ve compradores, señales compartidas y contexto relacional sin saturar Operaciones.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="social">Abrir social</button>
+                        <p class="agro-tool-card__copy">Ve compradores, señales compartidas y contexto relacional sin
+                            saturar Operaciones.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="social">Abrir
+                            social</button>
                     </article>
                     <article class="agro-tool-card">
                         <p class="agro-tool-card__eyebrow">Bitácora</p>
                         <h3 class="agro-tool-card__title">AgroRepo</h3>
-                        <p class="agro-tool-card__copy">Documenta hallazgos, notas y memoria operativa del campo como una vista oficial del módulo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agrorepo">Abrir bitácora</button>
+                        <p class="agro-tool-card__copy">Documenta hallazgos, notas y memoria operativa del campo como
+                            una vista oficial del módulo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="agrorepo">Abrir
+                            bitácora</button>
                     </article>
                 </div>
             </div>
@@ -2192,9 +2289,10 @@
          AGROREPO WIDGET ACCORDION (Lazy Load)
          ═══════════════════════════════════════════════════════════════════════ -->
     <section class="agro-repo-section agrorepo-section agro-ops-v10 animate-in delay-6" id="agro-repo-section"
-        style="margin-top: 2rem;" data-agro-section="agroRepo" data-agro-shell-region="agrorepo">
+        style="margin-top: 2rem;" data-agro-section="agroRepo" data-agro-shell-region="agrorepo" hidden inert>
         <details class="yg-accordion" id="yg-acc-agrorepo">
-            <summary class="yg-accordion-summary agrorepo-header" aria-controls="agrorepo-content" aria-expanded="false">
+            <summary class="yg-accordion-summary agrorepo-header" aria-controls="agrorepo-content"
+                aria-expanded="false">
                 <span class="yg-accordion-icon">🌾</span>
                 <span class="yg-accordion-title agrorepo-title">AgroRepo (Bitácora)</span>
                 <span class="yg-accordion-chevron agrorepo-toggle"><i class="fa-solid fa-chevron-down"></i></span>
@@ -2212,13 +2310,15 @@
 
     <!-- Footer -->
     <footer id="agro-module-footer" class="footer animate-in delay-6">
-        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • <span class="footer-module-release">Agro V1</span> • Base oficial del módulo • Desarrollado con 🌾
+        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • <span class="footer-module-release">Agro
+                V1</span> • Base oficial del módulo • Desarrollado con 🌾
             para agricultores </p>
         <div class="footer-links">
             <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
             <span class="footer-link">Datos protegidos</span>
         </div>
-        <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-module-release="Agro V1" data-build-date="2026-02-16">
+        <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-module-release="Agro V1"
+            data-build-date="2026-02-16">
             Agro V1 • Build V9.8 • dev • 2026-02-16
         </div>
     </footer>
@@ -2901,7 +3001,8 @@
                     <h4 class="agro-profile-section-title">Tus datos opcionales</h4>
                     <form id="agro-profile-form" class="agro-profile-form">
                         <div class="agro-profile-avatar-editor">
-                            <div class="agro-profile-avatar-preview" id="agro-profile-avatar-preview" aria-hidden="true">
+                            <div class="agro-profile-avatar-preview" id="agro-profile-avatar-preview"
+                                aria-hidden="true">
                                 👨‍🌾
                             </div>
                             <div class="agro-profile-avatar-controls">
@@ -2915,7 +3016,8 @@
                                         Subir foto
                                     </label>
                                     <input type="file" id="agro-profile-avatar-file" accept="image/*" hidden>
-                                    <button type="button" class="agro-profile-avatar-clear-btn" id="agro-profile-avatar-clear">
+                                    <button type="button" class="agro-profile-avatar-clear-btn"
+                                        id="agro-profile-avatar-clear">
                                         Quitar foto
                                     </button>
                                 </div>
@@ -2982,27 +3084,29 @@
 
                             <label class="agro-profile-field">
                                 <span>Nombre público</span>
-                                <input type="text" id="agro-profile-public-display_name" class="styled-input" maxlength="120"
-                                    placeholder="Tu nombre en el perfil público">
+                                <input type="text" id="agro-profile-public-display_name" class="styled-input"
+                                    maxlength="120" placeholder="Tu nombre en el perfil público">
                             </label>
                             <label class="agro-profile-field">
                                 <span>Avatar público (URL)</span>
-                                <input type="url" id="agro-profile-public-avatar_url" class="styled-input" maxlength="600"
-                                    placeholder="https://.../avatar-publico.jpg">
+                                <input type="url" id="agro-profile-public-avatar_url" class="styled-input"
+                                    maxlength="600" placeholder="https://.../avatar-publico.jpg">
                             </label>
                             <label class="agro-profile-field">
                                 <span>Ubicación pública</span>
-                                <input type="text" id="agro-profile-public-location_text" class="styled-input" maxlength="180"
-                                    placeholder="Ciudad, estado o zona agrícola">
+                                <input type="text" id="agro-profile-public-location_text" class="styled-input"
+                                    maxlength="180" placeholder="Ciudad, estado o zona agrícola">
                             </label>
                             <div class="agro-profile-inline-fields">
                                 <label class="agro-profile-field">
                                     <span>WhatsApp público</span>
-                                    <input type="text" id="agro-profile-public-whatsapp" class="styled-input" maxlength="40">
+                                    <input type="text" id="agro-profile-public-whatsapp" class="styled-input"
+                                        maxlength="40">
                                 </label>
                                 <label class="agro-profile-field">
                                     <span>Instagram público</span>
-                                    <input type="text" id="agro-profile-public-instagram" class="styled-input" maxlength="80">
+                                    <input type="text" id="agro-profile-public-instagram" class="styled-input"
+                                        maxlength="80">
                                 </label>
                             </div>
                             <label class="agro-profile-field">
@@ -3163,17 +3267,20 @@
 
     <div id="modal-agro-public-profile" class="agro-public-modal" aria-hidden="true">
         <div class="agro-public-backdrop" data-agro-public-close></div>
-        <div class="agro-public-panel" role="dialog" aria-modal="true" aria-labelledby="agro-public-title" tabindex="-1">
+        <div class="agro-public-panel" role="dialog" aria-modal="true" aria-labelledby="agro-public-title"
+            tabindex="-1">
             <header class="agro-public-header">
                 <div class="agro-public-header-main">
                     <div id="agro-public-avatar" class="agro-public-avatar" aria-hidden="true">👨‍🌾</div>
                     <div>
                         <p class="agro-public-eyebrow">Perfil Público</p>
                         <h3 id="agro-public-title" class="agro-public-title">Perfil Público de Agricultor</h3>
-                        <span id="agro-public-visibility" class="agro-public-visibility" data-state="private">PRIVADO</span>
+                        <span id="agro-public-visibility" class="agro-public-visibility"
+                            data-state="private">PRIVADO</span>
                     </div>
                 </div>
-                <button type="button" class="agro-public-close" data-agro-public-close aria-label="Cerrar perfil público">
+                <button type="button" class="agro-public-close" data-agro-public-close
+                    aria-label="Cerrar perfil público">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
             </header>
@@ -3211,7 +3318,8 @@
 
     <div id="modal-agro-social" class="agro-social-modal" aria-hidden="true">
         <div class="agro-social-backdrop" data-agro-social-close></div>
-        <div class="agro-social-panel" role="dialog" aria-modal="true" aria-labelledby="agro-social-title" tabindex="-1">
+        <div class="agro-social-panel" role="dialog" aria-modal="true" aria-labelledby="agro-social-title"
+            tabindex="-1">
             <header class="agro-social-header">
                 <div>
                     <p class="agro-social-eyebrow">Social v1</p>

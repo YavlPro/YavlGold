@@ -1,3 +1,62 @@
+## 🆕 SESIÓN: FIX ESTRUCTURAL — Footer global y secciones intermedias (2026-03-08)
+
+### Diagnóstico estructural completo
+
+**Síntoma**: El footer global (`#agro-module-footer`) y/o secciones no activas aparecen intercaladas en la vista Pagados.
+
+**Mapa DOM verificado** (finances-section → footer global):
+```
+<section.finances-section data-agro-shell-region="ops">        ← L1665
+  ├── module-header (siempre visible en vista ops)
+  ├── financial-operations-card (HIDDEN por CSS cuando pagados)
+  └── #agro-pagados-dedicated (VISIBLE por CSS cuando pagados)
+        ├── hero → steps → history → pagados-dedicated-list
+        └── pagados-dedicated-footer (botones new/export)
+</section>                                                      ← L2137
+<section#agro-tools-section hidden inert>                       ← L2139 ✅
+<section#agro-repo-section>                                     ← L2194 ❌ SIN hidden inert
+<footer#agro-module-footer>                                     ← L2214
+```
+
+**Causa raíz**: `#agro-repo-section` NO tenía `hidden inert` por defecto en HTML. Dependía exclusivamente de `initAgroShell()` → `syncRegions()` para ocultarse. Entre el parse del HTML y la ejecución del shell en DOMContentLoaded, esta sección era visible, causando contenido intermedio entre `finances-section` y el footer global.
+
+**Verificaciones realizadas**:
+1. **Rows** → `renderPagadosDedicatedGroupedRows` append a `#pagados-dedicated-list` ✅ correcto
+2. **Nodo exacto** → `document.getElementById('pagados-dedicated-list')` dentro de `#pagados-dedicated-history` ✅
+3. **JS reparenting** → No hay código que mueva `#agro-module-footer`. Focus Mode opera sobre `[data-agro-section]` (footer no lo tiene) ✅
+4. **CSS override de [hidden]** → Ninguna regla CSS establece `display` en `#agro-repo-section` ni `.agrorepo-section` ✅
+
+### Solución aplicada (estructural, sin parches visuales)
+
+1. **`index.html` L2194**: Agregado `hidden inert` a `#agro-repo-section` — misma protección que ya tenía `#agro-tools-section`.
+2. **`index.html` L34-37**: Agregada regla CSS bootstrap inline en `<head>`:
+   ```css
+   body:not(.agro-shell-ready) [data-agro-shell-region]:not([data-agro-shell-region="dashboard"]) {
+       display: none !important;
+   }
+   ```
+   Oculta TODAS las regiones no-default antes de que el shell inicialice. Dashboard (vista default) permanece visible.
+3. **`agro-shell.js` L351**: Agregado `document.body.classList.add('agro-shell-ready')` después de `setActiveView()` en `initAgroShell()`. Desactiva la regla bootstrap una vez que el shell ha configurado las regiones.
+
+**Lo que NO se hizo (por diseño)**:
+- No se movió `#agro-module-footer` dentro de `#agro-pagados-dedicated`
+- No se usó z-index/contain/clear como solución raíz
+- No se reparenteó el footer con JS
+- `agro-operations.css` no fue modificado (los z-index originales quedaron intactos)
+
+**Build**: ✅ `pnpm build:gold` exitoso (2.85s)
+
+### Criterio de QA
+
+- [ ] Vista Pagados abre desde sidebar correctamente
+- [ ] Entre Pagados y footer global NO aparece AgroRepo ni herramientas
+- [ ] Footer global aparece solo después de toda la vista activa
+- [ ] Cambiar vista (dashboard → pagados → cultivos) no produce flash
+- [ ] Focus Mode ON/OFF no rompe la ocultación
+- [ ] `pnpm build:gold` pasa
+
+---
+
 ## 🆕 SESIÓN: HOTFIX — Footer solapado y filtros de transferidos en Pagados (2026-03-08)
 
 ### Diagnóstico del problema

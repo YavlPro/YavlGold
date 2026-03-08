@@ -348,6 +348,7 @@ export function initAgroShell() {
     sidebar.setAttribute('inert', '');
     closeSidebar();
     setActiveView(activeView, { scroll: false, syncTab: true });
+    document.body.classList.add('agro-shell-ready');
 
     return {
         getActiveView: () => activeView,
