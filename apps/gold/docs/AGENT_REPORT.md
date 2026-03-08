@@ -1,3 +1,57 @@
+## 🆕 SESIÓN: FIX — Filtros Fiados/Pagados dedicados + race condition (2026-03-08)
+
+### Diagnóstico
+
+**Bug 1 — Fiados dedicados: transferred/reverted visibles por defecto**
+- Root cause: usaba filtro exclusivo (`'all'`/`'transferred'`/`'reverted'`) copiado de Pagados. `'all'` mostraba TODO incluyendo transferidos y revertidos. Al desactivar el filtro, volvía a `'all'` = todo visible.
+- En CdO, `applyPendingTransferFilter` oculta transferred/reverted por defecto (opt-in con checkbox/chip). La vista dedicada no replicaba esta lógica.
+
+**Bug 2 — Pagados dedicados: reverted records visibles en default**
+- `matchesPagadosDedicatedStateFilter` con `'all'` retornaba `true` para todos, incluyendo reverted (income revertida a pending, ya no es pagado válido).
+- `pagadosDedicatedSourceCache` incluye ALL records; `incomeCache` ya filtra reverted (línea 11782).
+
+**Bug 3 — Race condition: historial desaparece al cambiar cultivo**
+- `agro:crop:changed` dispara simultáneamente `refreshFactureroForSelectedCrop()` (async DB fetch) y `renderFiadosDedicatedView()`.
+- El render lee `pendingCache` stale (del cultivo anterior) antes de que el fetch complete.
+
+**Verificación CdO tabs (Pérdidas, Donaciones, Otros)**
+- Usan `initHistoryFilters` + `applyHistoryFilter` con chips toggle. Default: transferred/reverted ocultos. Sin bugs.
+
+### Correcciones
+
+**1. Fiados: modelo toggle** (`agro.js`):
+- Reemplazado `fiadosDedicatedStateFilter` (string) por `fiadosDedicatedShowTransferred` + `fiadosDedicatedShowReverted` (booleans, default `false`)
+- Eliminados: `normalizeFiadosDedicatedStateFilter`, `getFiadosDedicatedStateLabel`, `getFiadosDedicatedStateToken`, `matchesFiadosDedicatedStateFilter`, `FIADOS_FILTER_STATES`
+- Nuevo: `fiadosDedicatedPassesToggle()` — usa `isPendingTransferred()` / `isPendingReverted()` existentes
+- Chip click ahora togglea boolean en lugar de ciclar entre estados exclusivos
+- Default: solo fiados activos visibles. Chips "Ver transferidos (N)" / "Ver revertidos (N)" opt-in
+
+**2. Pagados: excluir reverted de default** (`agro.js`):
+- `matchesPagadosDedicatedStateFilter`: `'all'` ahora retorna `false` para reverted (`getPagadosDedicatedStateToken(item) !== 'reverted'`)
+- Chip "Revertidos" sigue disponible para ver exclusivamente los revertidos
+
+**3. Race condition: evento post-fetch** (`agro.js`):
+- `refreshFactureroHistory('pendientes')`: dispatch `agro:pending:refreshed` después de `pendingCache = filteredItems`
+- `bindFiadosDedicatedView`: listener en `agro:pending:refreshed` → `renderFiadosDedicatedView()`
+- Garantiza re-render con datos frescos después de que el fetch complete
+
+### Archivos modificados
+- `apps/gold/agro/agro.js` — Rewrite filtros fiados, fix pagados reverted, evento pending:refreshed
+
+**Build**: ✅ `pnpm build:gold` exitoso (3.15s)
+
+### QA
+- [ ] Fiados dedicado: default muestra solo activos (no transferred/reverted)
+- [ ] Fiados: "Ver transferidos" ON → muestra activos + transferidos. OFF → vuelve a solo activos
+- [ ] Fiados: "Ver revertidos" ON/OFF funciona igual
+- [ ] Fiados: cambiar cultivo → historial se actualiza sin desaparecer
+- [ ] Pagados dedicado: default no muestra reverted
+- [ ] Pagados: chip "Revertidos" muestra exclusivamente revertidos
+- [ ] CdO Pérdidas/Donaciones/Otros: sin cambios, filtros chip funcionan correctamente
+- [ ] Header macro se restaura correctamente al volver a CdO
+
+---
+
 ## 🆕 SESIÓN: Vista dedicada Fiados — Agro V1 (2026-03-08)
 
 ### Objetivo

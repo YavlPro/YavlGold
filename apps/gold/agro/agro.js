@@ -5305,6 +5305,7 @@ async function refreshFactureroHistory(tabName, options = {}) {
         const filteredItems = filterFactureroBySelectedCrop(enrichedItems);
         if (tabName === 'pendientes') {
             pendingCache = filteredItems;
+            document.dispatchEvent(new CustomEvent('agro:pending:refreshed'));
         }
         if (tabName === 'gastos') {
             expenseCache = filteredItems;
@@ -11891,7 +11892,8 @@ let pagadosDedicatedEventsBound = false;
 let pagadosDedicatedSourceCache = [];
 let pagadosDedicatedSignedUrlMap = new Map();
 let fiadosDedicatedSearchQuery = '';
-let fiadosDedicatedStateFilter = 'all';
+let fiadosDedicatedShowTransferred = false;
+let fiadosDedicatedShowReverted = false;
 let fiadosDedicatedEventsBound = false;
 
 function formatShortCurrency(value) {
@@ -12498,7 +12500,9 @@ function getPagadosDedicatedStateToken(item) {
 
 function matchesPagadosDedicatedStateFilter(item, filter = pagadosDedicatedStateFilter) {
     const token = normalizePagadosDedicatedStateFilter(filter);
-    if (token === 'all') return true;
+    if (token === 'all') {
+        return getPagadosDedicatedStateToken(item) !== 'reverted';
+    }
     return getPagadosDedicatedStateToken(item) === token;
 }
 
@@ -12869,7 +12873,6 @@ function initPagadosDedicatedView() {
 // ============================================================
 
 const FIADOS_VIEW_RENDERED_EVENT = 'agro:fiados:view-rendered';
-const FIADOS_FILTER_STATES = new Set(['all', 'transferred', 'reverted']);
 
 function getFiadosDedicatedElements() {
     return {
@@ -12904,32 +12907,6 @@ function getFiadosDedicatedScopeLabel(cropId = selectedCropId) {
     return display.label || 'Cultivo';
 }
 
-function normalizeFiadosDedicatedStateFilter(value) {
-    const token = String(value || '').trim().toLowerCase();
-    return FIADOS_FILTER_STATES.has(token) ? token : 'all';
-}
-
-function getFiadosDedicatedStateLabel(filter) {
-    switch (normalizeFiadosDedicatedStateFilter(filter)) {
-        case 'transferred': return 'Transferidos';
-        case 'reverted': return 'Revertidos';
-        default: return 'Todos';
-    }
-}
-
-function getFiadosDedicatedStateToken(item) {
-    const transferState = String(item?.transfer_state || '').trim().toLowerCase();
-    if (transferState === 'transferred') return 'transferred';
-    if (transferState === 'reverted' || item?.reverted_at) return 'reverted';
-    return 'active';
-}
-
-function matchesFiadosDedicatedStateFilter(item, filter = fiadosDedicatedStateFilter) {
-    const token = normalizeFiadosDedicatedStateFilter(filter);
-    if (token === 'all') return true;
-    return getFiadosDedicatedStateToken(item) === token;
-}
-
 function getFiadosDedicatedSourceRows() {
     return Array.isArray(pendingCache) ? pendingCache : [];
 }
@@ -12956,6 +12933,18 @@ function matchesFiadosDedicatedQuery(pending, query) {
     return normalizeFiadosSearchQuery(haystack).includes(token);
 }
 
+function fiadosDedicatedPassesToggle(item, options = {}) {
+    const showTransferred = Object.prototype.hasOwnProperty.call(options, 'showTransferred')
+        ? options.showTransferred
+        : fiadosDedicatedShowTransferred;
+    const showReverted = Object.prototype.hasOwnProperty.call(options, 'showReverted')
+        ? options.showReverted
+        : fiadosDedicatedShowReverted;
+    if (isPendingReverted(item)) return showReverted;
+    if (isPendingTransferred(item)) return showTransferred;
+    return true;
+}
+
 function matchesFiadosDedicatedFilters(pending, options = {}) {
     const hasCropOption = Object.prototype.hasOwnProperty.call(options, 'cropId');
     const cropId = hasCropOption
@@ -12967,12 +12956,8 @@ function matchesFiadosDedicatedFilters(pending, options = {}) {
 
     if (cropId && normalizeCropId(pending?.crop_id) !== cropId) return false;
     if (!matchesFiadosDedicatedQuery(pending, searchQuery)) return false;
-    if (options.skipStateFilter === true) return true;
-
-    const stateFilter = Object.prototype.hasOwnProperty.call(options, 'stateFilter')
-        ? options.stateFilter
-        : fiadosDedicatedStateFilter;
-    return matchesFiadosDedicatedStateFilter(pending, stateFilter);
+    if (options.skipToggle === true) return true;
+    return fiadosDedicatedPassesToggle(pending, options);
 }
 
 function getFiadosDedicatedRows(items, options = {}) {
@@ -12986,18 +12971,20 @@ function getFiadosDedicatedViewState() {
     const searchQuery = String(fiadosDedicatedSearchQuery || '');
     const normalizedSearch = normalizeFiadosSearchQuery(searchQuery);
     const sourceRows = getFiadosDedicatedSourceRows();
-    const baseRows = getFiadosDedicatedRows(sourceRows, { cropId, searchQuery, skipStateFilter: true });
-    const transferredCount = baseRows.filter((item) => getFiadosDedicatedStateToken(item) === 'transferred').length;
-    const revertedCount = baseRows.filter((item) => getFiadosDedicatedStateToken(item) === 'reverted').length;
 
-    let stateFilter = normalizeFiadosDedicatedStateFilter(fiadosDedicatedStateFilter);
-    if ((stateFilter === 'transferred' && transferredCount === 0)
-        || (stateFilter === 'reverted' && revertedCount === 0)) {
-        stateFilter = 'all';
-        fiadosDedicatedStateFilter = 'all';
-    }
+    const allMatchingRows = getFiadosDedicatedRows(sourceRows, { cropId, searchQuery, skipToggle: true });
+    const transferredCount = allMatchingRows.filter((item) => isPendingTransferred(item)).length;
+    const revertedCount = allMatchingRows.filter((item) => isPendingReverted(item)).length;
+    const activeCount = allMatchingRows.length - transferredCount - revertedCount;
 
-    const rows = getFiadosDedicatedRows(sourceRows, { cropId, searchQuery, stateFilter });
+    const rows = getFiadosDedicatedRows(sourceRows, {
+        cropId,
+        searchQuery,
+        showTransferred: fiadosDedicatedShowTransferred,
+        showReverted: fiadosDedicatedShowReverted
+    });
+
+    const hasActiveFilters = fiadosDedicatedShowTransferred || fiadosDedicatedShowReverted;
     const hasDynamicFilters = transferredCount > 0 || revertedCount > 0;
 
     return {
@@ -13005,12 +12992,14 @@ function getFiadosDedicatedViewState() {
         scopeLabel,
         searchQuery,
         hasSearch: !!normalizedSearch,
-        stateFilter,
-        stateFilterLabel: getFiadosDedicatedStateLabel(stateFilter),
+        showTransferred: fiadosDedicatedShowTransferred,
+        showReverted: fiadosDedicatedShowReverted,
+        hasActiveFilters,
         transferredCount,
         revertedCount,
+        activeCount,
         hasDynamicFilters,
-        baseRows,
+        allMatchingRows,
         rows,
         isGeneral: !cropId
     };
@@ -13064,14 +13053,14 @@ function renderFiadosDedicatedStateFilters(context) {
     filterBar.setAttribute('aria-hidden', hasDynamicFilters ? 'false' : 'true');
 
     transferredFilter.hidden = !hasTransferred;
-    transferredFilter.textContent = `Transferidos (${context?.transferredCount || 0})`;
-    transferredFilter.classList.toggle('is-active', context?.stateFilter === 'transferred');
-    transferredFilter.setAttribute('aria-pressed', context?.stateFilter === 'transferred' ? 'true' : 'false');
+    transferredFilter.textContent = `Ver transferidos (${context?.transferredCount || 0})`;
+    transferredFilter.classList.toggle('is-active', !!context?.showTransferred);
+    transferredFilter.setAttribute('aria-pressed', context?.showTransferred ? 'true' : 'false');
 
     revertedFilter.hidden = !hasReverted;
-    revertedFilter.textContent = `Revertidos (${context?.revertedCount || 0})`;
-    revertedFilter.classList.toggle('is-active', context?.stateFilter === 'reverted');
-    revertedFilter.setAttribute('aria-pressed', context?.stateFilter === 'reverted' ? 'true' : 'false');
+    revertedFilter.textContent = `Ver revertidos (${context?.revertedCount || 0})`;
+    revertedFilter.classList.toggle('is-active', !!context?.showReverted);
+    revertedFilter.setAttribute('aria-pressed', context?.showReverted ? 'true' : 'false');
 }
 
 function setFiadosDedicatedVisibility(element, shouldShow) {
@@ -13124,7 +13113,7 @@ async function renderFiadosDedicatedView() {
     renderFiadosDedicatedCropSelector();
     renderFiadosDedicatedStateFilters(context);
     const filtered = context.rows;
-    const hasRowsInScope = context.baseRows.length > 0;
+    const hasRowsInScope = context.allMatchingRows.length > 0;
     const hasVisibleRows = filtered.length > 0;
     const showHistory = hasRowsInScope || context.hasSearch;
 
@@ -13143,28 +13132,25 @@ async function renderFiadosDedicatedView() {
     const countLabel = `${filtered.length} fiado${filtered.length === 1 ? '' : 's'} visible${filtered.length === 1 ? '' : 's'}`;
     if (countBadge && hasVisibleRows) {
         const scopeToken = context.isGeneral ? 'Vista general' : context.scopeLabel;
-        countBadge.textContent = context.stateFilter === 'all'
-            ? `${countLabel} · ${scopeToken}`
-            : `${countLabel} · ${scopeToken} · ${context.stateFilterLabel}`;
+        const parts = [countLabel, scopeToken];
+        if (context.showTransferred) parts.push('+ transferidos');
+        if (context.showReverted) parts.push('+ revertidos');
+        countBadge.textContent = parts.join(' · ');
     }
 
     if (status) {
         if (context.hasSearch && filtered.length === 0) {
             status.textContent = `Sin coincidencias para "${context.searchQuery}" dentro de ${context.scopeLabel}.`;
-        } else if (context.stateFilter === 'transferred') {
-            status.textContent = context.isGeneral
-                ? `Viendo solo fiados transferidos. Exportación y wizard respetan la búsqueda y el cultivo activo.`
-                : `Viendo solo fiados transferidos de ${context.scopeLabel}. Exportación y wizard respetan este filtro.`;
-        } else if (context.stateFilter === 'reverted') {
-            status.textContent = context.isGeneral
-                ? `Viendo solo fiados revertidos. Exportación y búsqueda quedan limitadas a ese estado visible.`
-                : `Viendo solo fiados revertidos de ${context.scopeLabel}. Exportación y búsqueda respetan este filtro.`;
         } else if (context.hasSearch) {
-            status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada. Exportación y wizard respetan este alcance.`;
+            status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada.`;
         } else if (context.isGeneral) {
-            status.textContent = 'Viendo todos los fiados. Exportación y wizard quedan en Vista general.';
+            status.textContent = context.showTransferred || context.showReverted
+                ? `Fiados activos${context.showTransferred ? ' + transferidos' : ''}${context.showReverted ? ' + revertidos' : ''} en Vista general.`
+                : 'Fiados activos en Vista general. Transferidos y revertidos ocultos.';
         } else {
-            status.textContent = `Viendo solo fiados de ${context.scopeLabel}. Exportación y wizard usarán este cultivo.`;
+            status.textContent = context.showTransferred || context.showReverted
+                ? `Fiados activos${context.showTransferred ? ' + transferidos' : ''}${context.showReverted ? ' + revertidos' : ''} de ${context.scopeLabel}.`
+                : `Fiados activos de ${context.scopeLabel}. Transferidos y revertidos ocultos.`;
         }
     }
 
@@ -13172,11 +13158,7 @@ async function renderFiadosDedicatedView() {
     if (emptyText) {
         emptyText.textContent = context.hasSearch
             ? `No hay fiados que coincidan con "${context.searchQuery}" en ${context.scopeLabel}.`
-            : context.stateFilter === 'transferred'
-                ? `No hay fiados transferidos en ${context.scopeLabel}.`
-                : context.stateFilter === 'reverted'
-                    ? `No hay fiados revertidos en ${context.scopeLabel}.`
-                    : `No hay fiados registrados en ${context.scopeLabel}.`;
+            : `No hay fiados activos en ${context.scopeLabel}.`;
     }
 
     if (hasVisibleRows) {
@@ -13226,8 +13208,12 @@ function bindFiadosDedicatedView() {
     filterBar?.addEventListener('click', (event) => {
         const filterButton = event.target.closest('[data-fiados-filter]');
         if (!filterButton || filterButton.hidden) return;
-        const nextFilter = normalizeFiadosDedicatedStateFilter(filterButton.dataset.fiadosFilter);
-        fiadosDedicatedStateFilter = fiadosDedicatedStateFilter === nextFilter ? 'all' : nextFilter;
+        const filterType = filterButton.dataset.fiadosFilter;
+        if (filterType === 'transferred') {
+            fiadosDedicatedShowTransferred = !fiadosDedicatedShowTransferred;
+        } else if (filterType === 'reverted') {
+            fiadosDedicatedShowReverted = !fiadosDedicatedShowReverted;
+        }
         renderFiadosDedicatedView();
     });
 
@@ -13249,13 +13235,12 @@ function bindFiadosDedicatedView() {
         exportAgroLog('pendientes', {
             cropId: context.cropId,
             searchQuery: context.searchQuery,
-            scopeLabel: context.stateFilter === 'all'
-                ? context.scopeLabel
-                : `${context.scopeLabel} · ${context.stateFilterLabel}`,
+            scopeLabel: context.scopeLabel,
             filterFn: (item) => matchesFiadosDedicatedFilters(item, {
                 cropId: context.cropId,
                 searchQuery: context.searchQuery,
-                stateFilter: context.stateFilter
+                showTransferred: context.showTransferred,
+                showReverted: context.showReverted
             })
         });
     });
@@ -13265,6 +13250,7 @@ function bindFiadosDedicatedView() {
     window.addEventListener(AGRO_CROPS_READY_EVENT, renderFiadosDedicatedView);
     document.addEventListener('data-refresh', renderFiadosDedicatedView);
     document.addEventListener('agro:income:changed', renderFiadosDedicatedView);
+    document.addEventListener('agro:pending:refreshed', renderFiadosDedicatedView);
 }
 
 function initFiadosDedicatedView() {
