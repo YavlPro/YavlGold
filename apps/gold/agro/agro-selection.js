@@ -2,6 +2,10 @@ const ROW_SELECTOR = '.tx-card[data-row-selectable="1"]';
 const INTERACTIVE_SELECTOR = 'button, a, input, select, textarea, summary, [role="button"], [contenteditable="true"]';
 
 function getSelectionStatusNode() {
+    if (typeof document !== 'undefined' && document.body?.dataset?.agroActiveView === 'pagados') {
+        return document.getElementById('pagados-dedicated-selection-status')
+            || document.getElementById('ops-selection-status');
+    }
     return document.getElementById('ops-selection-status');
 }
 
@@ -16,13 +20,18 @@ function getRowLabel(row) {
 function updateSelectionStatus(row) {
     const statusNode = getSelectionStatusNode();
     if (!statusNode) return;
+    const isPagadosDedicated = statusNode.id === 'pagados-dedicated-selection-status';
     if (!row) {
-        statusNode.textContent = 'Selecciona un movimiento del historial para ver sus acciones rápidas.';
+        statusNode.textContent = isPagadosDedicated
+            ? 'Selecciona un pagado para ver Editar, Transferir o Eliminar.'
+            : 'Selecciona un movimiento del historial para ver sus acciones rápidas.';
         return;
     }
 
     const label = getRowLabel(row) || 'Registro';
-    statusNode.textContent = `${label} seleccionado. Acciones disponibles en esta tarjeta.`;
+    statusNode.textContent = isPagadosDedicated
+        ? `${label} seleccionado. Toca ⋮ para Editar, Transferir o Eliminar.`
+        : `${label} seleccionado. Acciones disponibles en esta tarjeta.`;
 }
 
 function markRowSelected(row, selected) {

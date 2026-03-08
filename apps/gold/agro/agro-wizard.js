@@ -655,7 +655,7 @@ export function ensureAgroWizardStyles() {
 
 /**
  * @param {string} tabName - 'pendientes' | 'ingresos' | 'gastos' | 'perdidas' | 'transferencias'
- * @param {object} deps - { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho, forcedCropId, lockCropSelection, refreshAlsoTabs, prefill }
+ * @param {object} deps - { supabase, cropsCache, selectedCropId, refreshFactureroHistory, loadIncomes, getTodayLocalISO, buildConceptWithWho, forcedCropId, initialCropId, lockCropSelection, refreshAlsoTabs, prefill }
  */
 export async function openAgroWizard(tabName, deps) {
     const meta = WIZARD_TAB_META[tabName];
@@ -671,15 +671,21 @@ export async function openAgroWizard(tabName, deps) {
         buildConceptWithWho
     } = deps;
     const hasForcedCropProp = Object.prototype.hasOwnProperty.call(deps || {}, 'forcedCropId');
+    const hasInitialCropProp = Object.prototype.hasOwnProperty.call(deps || {}, 'initialCropId');
     // Treat crop as "forced" only when caller explicitly locks crop selection.
     const lockCropSelection = hasForcedCropProp && deps?.lockCropSelection === true;
     const forcedCropId = lockCropSelection ? normalizeWizardCropId(deps.forcedCropId) : null;
+    const explicitInitialCropId = hasInitialCropProp ? normalizeWizardCropId(deps.initialCropId) : null;
     const normalizedSelectedCropId = lockCropSelection ? null : normalizeWizardCropId(selectedCropId);
+    const hasExplicitInitialCropInCache = !!(explicitInitialCropId && Array.isArray(cropsCache)
+        && cropsCache.some((crop) => String(crop.id) === String(explicitInitialCropId)));
     const hasSelectedCropInCache = !!(normalizedSelectedCropId && Array.isArray(cropsCache)
         && cropsCache.some((crop) => String(crop.id) === String(normalizedSelectedCropId)));
     const initialCropId = lockCropSelection
         ? forcedCropId
-        : (hasSelectedCropInCache ? normalizedSelectedCropId : null);
+        : (hasExplicitInitialCropInCache
+            ? explicitInitialCropId
+            : (hasSelectedCropInCache ? normalizedSelectedCropId : null));
     const refreshAlsoTabs = Array.isArray(deps?.refreshAlsoTabs)
         ? deps.refreshAlsoTabs.filter(Boolean).map((tab) => String(tab))
         : [];

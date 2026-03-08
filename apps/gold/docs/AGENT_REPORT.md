@@ -1,3 +1,158 @@
+## 🆕 SESIÓN: SUB-LOTE — Acciones móviles en Pagados dedicada (2026-03-08)
+
+### Diagnóstico del problema
+
+- La vista dedicada de `Pagados` ya quedó funcional en contexto de cultivo, pero el cierre UX móvil todavía está incompleto.
+- Hallazgos concretos:
+  - el footer dedicado sí tiene `+ Nuevo registro pagado` y `Exportar registros`, pero en móvil la composición final no siempre deja `Exportar` claramente visible en el viewport útil;
+  - las cards de pagados reutilizan el renderer base del facturero (`renderHistoryRow(...)` / `renderIncomeItem(...)`), así que hoy arrastran acciones inline generales;
+  - ya existe un patrón base de acciones `tx-actions` + trigger `⋮` + panel contextual y también existe selección contextual global en `agro-selection.js`, pero `Pagados` dedicada no lo está aprovechando como modo “solo al seleccionar”;
+  - la acción `Eliminar` existe en el renderer base del facturero, pero no está integrada como parte del cierre UX contextual esperado para `Pagados` móvil;
+  - conviene resolverlo por gating visual y wiring de selección, no con un segundo sistema de acciones.
+
+### Objetivo del sub-lote
+
+- Hacer visible `Exportar registros` en móvil dentro del footer dedicado.
+- Convertir las cards de `Pagados` dedicada en selección contextual limpia.
+- Mostrar `⋮` solo cuando una card esté seleccionada.
+- Reutilizar el menú contextual existente para `Editar`, `Transferir` y `Eliminar`.
+- Mantener la vista dedicada sobria y mobile-first.
+
+### Plan del ajuste
+
+1. Reforzar el footer dedicado en móvil para apilar `Nuevo` + `Exportar` en stack vertical completo.
+2. Marcar el historial dedicado de `Pagados` como contexto móvil con acciones solo por selección.
+3. Reutilizar `tx-actions`/`tx-actions-trigger`/`tx-actions-btns` del renderer base.
+4. Reutilizar la selección contextual existente para activar visualmente la card.
+5. Añadir gating visual/CSS para que en `Pagados` dedicada:
+   - sin selección, el `⋮` no se vea,
+   - con selección, aparezca el trigger,
+   - y el menú abra `Editar`, `Transferir`, `Eliminar`.
+6. Mantener contratos actuales de negocio sin tocar otros historiales.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-selection.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-operations.css`
+
+### Criterio de QA de este sub-lote
+
+- Verificar en móvil que `Exportar registros` quede visible al final de la vista.
+- Seleccionar un pagado y comprobar que aparezca `⋮`.
+- Abrir `⋮` y comprobar `Editar / Transferir / Eliminar`.
+- Validar que sin selección no se vea el menú.
+- Validar que no se mezclen otros historiales.
+- Ejecutar `pnpm build:gold`.
+
+## 🆕 SESIÓN: SUB-LOTE — Contexto real de cultivo en Pagados dedicada (2026-03-08)
+
+### Diagnóstico del problema
+
+- La vista dedicada de `Pagados` ya existe y la shell la abre correctamente, pero el contexto real de cultivo todavía no está completamente cerrado.
+- Hallazgos concretos:
+  - el selector de cultivo sí cambia `selectedCropId`, pero el render dedicado hoy solo aplica búsqueda sobre `incomeCache`; no filtra explícitamente por `crop_id` dentro de la propia vista;
+  - el CTA `+ Nuevo registro pagado` depende de `launchAgroWizard('ingresos')` usando `selectedCropId` implícito, sin fijar antes el contexto exacto de la vista dedicada;
+  - `Exportar registros` depende de `exportAgroLog('ingresos')` con el mismo supuesto implícito, así que puede exportar desde un scope general si el contexto no quedó bien sincronizado;
+  - el copy actual indica `Vista general` o `Cultivo filtrado`, pero todavía no deja lo bastante claro qué cultivo está activo y qué registros exactos se están viendo/exportando.
+- Restricción importante:
+  - conviene resolver esto reutilizando `selectedCropId`, `incomeCache`, `launchAgroWizard(...)` y `exportAgroLog(...)`,
+  - sin tocar otros historiales ni abrir backend nuevo.
+
+### Objetivo del sub-lote
+
+- Asegurar que `Pagados` dedicada funcione con contexto persistente de cultivo.
+- Garantizar que selector, historial, wizard y exportación consuman el mismo scope real.
+- Hacer visible en la UI si se está en `Vista general` o en un cultivo específico.
+
+### Plan del ajuste
+
+1. Crear un helper único para resolver el contexto dedicado de `Pagados`:
+   - `cropId` activo
+   - label visible
+   - búsqueda actual
+   - lista realmente visible
+2. Hacer que el historial dedicado renderice desde ese helper, no solo desde búsqueda.
+3. Hacer que `+ Nuevo registro pagado` sincronice el contexto activo antes de abrir el wizard.
+4. Extender `exportAgroLog(...)` con opciones mínimas para que la exportación dedicada respete el crop activo y, si aplica, la búsqueda visible.
+5. Reforzar badge/copy/estado de la vista para que el alcance quede explícito.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-wizard.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-operations.css`
+
+### Criterio de QA de este sub-lote
+
+- Seleccionar `Vista general` y confirmar historial + export de todos los pagados.
+- Seleccionar cultivo A y confirmar historial + export solo de ese cultivo.
+- Seleccionar cultivo B y confirmar historial + export solo de ese cultivo.
+- Abrir `+ Nuevo registro pagado` en general y con cultivo específico.
+- Confirmar que el wizard hereda el cultivo activo de la vista dedicada.
+- Ejecutar `pnpm build:gold`.
+
+## 🆕 SESIÓN: SUB-LOTE — Vista dedicada de Pagados en Agro V1 (2026-03-08)
+
+### Diagnóstico del estado actual
+
+- `Pagados` ya existe como `activeView` oficial en la shell (`data-agro-view="pagados"`), pero hoy solo redirige a la región `ops` y fuerza la tab `ingresos`.
+- El resultado actual no es una vista dedicada:
+  - sigue colgando del facturero general,
+  - sigue compartiendo superficie con tabs y estructuras de otros historiales,
+  - y no se siente como una pantalla exclusiva de movimientos cobrados.
+- La lógica base reutilizable ya existe y conviene preservarla:
+  - `switchTab('ingresos')`
+  - `launchAgroWizard('ingresos')`
+  - `incomeCache`
+  - `loadIncomes()`
+  - `renderIncomeItem(...)`
+  - `exportAgroLog('ingresos')`
+  - selección global de cultivo vía `selectedCropId`.
+- Restricción técnica importante:
+  - no conviene duplicar ni romper los otros historiales,
+  - así que la solución debe aislar `Pagados` en la UI, no reescribir el facturero completo.
+
+### Objetivo del sub-lote
+
+- Crear una vista exclusiva para `Pagados` desde el sidebar.
+- Mantener el header normal del módulo Agro V1.
+- Mostrar una superficie ampliada y dedicada dentro del cuerpo principal:
+  - `Registro de Pagados`
+  - Paso 1: seleccionar cultivo
+  - Paso 2: crear registro pagado
+  - historial exclusivo de pagados
+  - búsqueda/filtros/export aplicados solo a pagados.
+
+### Plan del ajuste
+
+1. Mantener `pagados` como `activeView` en la shell sin tocar el header global.
+2. Crear dentro de la región `ops` una superficie dedicada visible solo cuando `body[data-agro-active-view="pagados"]`.
+3. Reutilizar selección de cultivo existente para `Vista general` o cultivo específico.
+4. Renderizar un historial exclusivo desde `incomeCache` usando `renderIncomeItem(...)`, sin mezclar otros tabs.
+5. Crear búsqueda y controles propios de la vista dedicada, conectados solo a `ingresos`.
+6. Reutilizar `launchAgroWizard('ingresos')` y `exportAgroLog('ingresos')` para el CTA final.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-operations.css`
+- `apps/gold/agro/agro.js`
+
+### Criterio de QA de este sub-lote
+
+- Verificar que `Pagados` desde el sidebar abra una vista dedicada y no el panel general mezclado.
+- Verificar que solo se vea historial de `ingresos/pagados`.
+- Verificar que el botón `+ Nuevo registro pagado` abra el wizard de `ingresos`.
+- Verificar que `Exportar registros` exporte solo `ingresos`.
+- Verificar que desktop y móvil mantengan layout correcto.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: SUB-LOTE — Compactación vertical de Centro de Operaciones Agro V1 (2026-03-07)
 
 ### Diagnóstico del problema

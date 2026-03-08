@@ -4240,6 +4240,10 @@ function toggleFactureroActionsMenu(payload) {
 
 function renderHistoryRow(tabName, item, config, options = {}) {
     const showActions = options.showActions !== false;
+    const allowedActions = options.allowedActions instanceof Set
+        ? options.allowedActions
+        : null;
+    const canUseAction = (actionName) => !allowedActions || allowedActions.has(actionName);
     const isOtrosView = tabName === 'otros';
     const sourceTab = tabName === 'otros' ? String(item?.source_tab || '').trim() : '';
     const effectiveTabName = (tabName === 'otros' && FACTURERO_CONFIG[sourceTab]) ? sourceTab : tabName;
@@ -4651,27 +4655,31 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         const btnsMenu = document.createElement('div');
         btnsMenu.className = 'tx-actions-btns';
 
-        btnsMenu.appendChild(createFactureroActionButton({
-            className: 'btn-edit-facturero',
-            tab: itemTab,
-            id: itemId,
-            title: 'Editar',
-            borderColor: 'rgba(96,165,250,0.3)',
-            color: '#60a5fa',
-            iconClass: 'fa fa-pen'
-        }));
+        if (canUseAction('edit')) {
+            btnsMenu.appendChild(createFactureroActionButton({
+                className: 'btn-edit-facturero',
+                tab: itemTab,
+                id: itemId,
+                title: 'Editar',
+                borderColor: 'rgba(96,165,250,0.3)',
+                color: '#60a5fa',
+                iconClass: 'fa fa-pen'
+            }));
+        }
 
-        btnsMenu.appendChild(createFactureroActionButton({
-            className: 'btn-duplicate-facturero',
-            tab: itemTab,
-            id: itemId,
-            title: 'Duplicar a otro cultivo',
-            borderColor: 'rgba(200,167,82,0.35)',
-            color: '#C8A752',
-            iconClass: 'fa fa-copy'
-        }));
+        if (canUseAction('duplicate')) {
+            btnsMenu.appendChild(createFactureroActionButton({
+                className: 'btn-duplicate-facturero',
+                tab: itemTab,
+                id: itemId,
+                title: 'Duplicar a otro cultivo',
+                borderColor: 'rgba(200,167,82,0.35)',
+                color: '#C8A752',
+                iconClass: 'fa fa-copy'
+            }));
+        }
 
-        if (canMoveFromGeneral) {
+        if (canMoveFromGeneral && canUseAction('move-general')) {
             btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-move-general',
                 tab: itemTab,
@@ -4683,7 +4691,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             }));
         }
 
-        if (showTransferBtn) {
+        if (showTransferBtn && canUseAction('transfer')) {
             btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-transfer-pending',
                 tab: effectiveTabName,
@@ -4696,7 +4704,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             }));
         }
 
-        if (!isOtrosView && isIncome) {
+        if (!isOtrosView && isIncome && canUseAction('transfer')) {
             btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-transfer-income',
                 tab: effectiveTabName,
@@ -4708,7 +4716,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             }));
         }
 
-        if (!isOtrosView && isLoss) {
+        if (!isOtrosView && isLoss && canUseAction('transfer')) {
             btnsMenu.appendChild(createFactureroActionButton({
                 className: 'btn-transfer-loss',
                 tab: effectiveTabName,
@@ -4720,7 +4728,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             }));
         }
 
-        if (!isOtrosView && fromPending && !incomeOrLossReverted) {
+        if (!isOtrosView && fromPending && !incomeOrLossReverted && canUseAction('revert')) {
             btnsMenu.appendChild(createFactureroActionButton({
                 className: isIncome ? 'btn-revert-income' : 'btn-revert-loss',
                 tab: effectiveTabName,
@@ -4732,15 +4740,17 @@ function renderHistoryRow(tabName, item, config, options = {}) {
             }));
         }
 
-        btnsMenu.appendChild(createFactureroActionButton({
-            className: 'btn-delete-facturero',
-            tab: itemTab,
-            id: itemId,
-            title: 'Eliminar',
-            borderColor: 'rgba(239,68,68,0.3)',
-            color: '#ef4444',
-            iconClass: 'fa fa-trash'
-        }));
+        if (canUseAction('delete')) {
+            btnsMenu.appendChild(createFactureroActionButton({
+                className: 'btn-delete-facturero',
+                tab: itemTab,
+                id: itemId,
+                title: 'Eliminar',
+                borderColor: 'rgba(239,68,68,0.3)',
+                color: '#ef4444',
+                iconClass: 'fa fa-trash'
+            }));
+        }
 
         const handleTriggerToggle = (e) => {
             e.preventDefault();
@@ -5491,13 +5501,23 @@ const AGROLOG_TAB_LABELS = {
     otros: 'Otros'
 };
 
-async function exportAgroLog(tabName) {
+async function exportAgroLog(tabName, options = {}) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) return;
     if (!config.table) {
         alert('La exportación no está disponible para esta vista.');
         return;
     }
+
+    const exportOptions = options && typeof options === 'object' ? options : {};
+    const hasCropOverride = Object.prototype.hasOwnProperty.call(exportOptions, 'cropId');
+    const contextCropId = hasCropOverride
+        ? normalizeCropId(exportOptions.cropId)
+        : selectedCropId;
+    const rawSearchQuery = String(exportOptions.searchQuery || '').trim();
+    const normalizedSearchQuery = normalizePagadosSearchQuery(rawSearchQuery);
+    const filterFn = typeof exportOptions.filterFn === 'function' ? exportOptions.filterFn : null;
+    const explicitScopeLabel = String(exportOptions.scopeLabel || '').trim();
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -5507,11 +5527,11 @@ async function exportAgroLog(tabName) {
         let cropLabel = 'Vista General — Todos los cultivos + sin cultivo';
         let cropStatus = '';
         let filenameCrop = 'General';
-        if (selectedCropId) {
+        if (contextCropId) {
             const { data: cropData } = await supabase
                 .from('agro_crops')
                 .select('name, status')
-                .eq('id', selectedCropId)
+                .eq('id', contextCropId)
                 .eq('user_id', user.id)
                 .single();
             if (cropData) {
@@ -5531,7 +5551,7 @@ async function exportAgroLog(tabName) {
                 .eq('user_id', user.id)
                 .order(config.dateField || 'fecha', { ascending: false })
                 .order('created_at', { ascending: false });
-            if (selectedCropId) query = query.eq('crop_id', selectedCropId);
+            if (contextCropId) query = query.eq('crop_id', contextCropId);
             if (config.supportsDeletedAt) query = query.is('deleted_at', null);
             if (tabName === 'pendientes' && isFactureroOptionalFieldEnabled('pendientes', 'transfer_state')) {
                 query = query.neq('transfer_state', 'transferred');
@@ -5568,8 +5588,23 @@ async function exportAgroLog(tabName) {
         } while (retries < 3);
 
         if (error) { console.error('[AgroLog] fetch error:', error); alert('Error cargando datos.'); return; }
-        const items = Array.isArray(data) ? data : [];
-        if (items.length === 0) { alert('No hay registros para exportar.'); return; }
+        let items = Array.isArray(data) ? data : [];
+        if (filterFn) {
+            items = items.filter((item) => {
+                try {
+                    return filterFn(item);
+                } catch (filterError) {
+                    console.warn('[AgroLog] filterFn error:', filterError?.message || filterError);
+                    return false;
+                }
+            });
+        }
+        if (items.length === 0) {
+            alert(filterFn || normalizedSearchQuery
+                ? 'No hay registros visibles para exportar con este filtro.'
+                : 'No hay registros para exportar.');
+            return;
+        }
         const usdField = 'monto_usd';
         const hasSplitInfo = items.some((item) => !!formatSplitMetaSummary(item, tabName, { mode: 'md' }));
         const suspiciousUsdCount = items.reduce((acc, item) => (
@@ -5589,10 +5624,17 @@ async function exportAgroLog(tabName) {
         const dateStr = now.toISOString().split('T')[0];
         const timeStr = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
         const statusSuffix = cropStatus ? ` (${cropStatus})` : '';
+        const exportScopeLabel = explicitScopeLabel || cropLabel;
 
         let md = `# 🌾 AgroLog: ${cropLabel}\n`;
         md += `> **Reporte:** ${tabLabel}\n`;
         md += `> **Cultivo:** ${cropLabel}${statusSuffix}\n`;
+        if (explicitScopeLabel || normalizedSearchQuery) {
+            md += `> **Filtro visible:** ${exportScopeLabel}\n`;
+        }
+        if (normalizedSearchQuery) {
+            md += `> **Búsqueda:** ${rawSearchQuery}\n`;
+        }
         md += `> **Fecha:** ${dateStr} ${timeStr}\n`;
         md += `> **Sistema:** YavlGold\n\n`;
 
@@ -5697,7 +5739,7 @@ async function exportAgroLog(tabName) {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        console.info(`[AgroLog] Exported ${items.length} ${tabName} items for ${cropLabel}`);
+        console.info(`[AgroLog] Exported ${items.length} ${tabName} items for ${exportScopeLabel}`);
     } catch (err) {
         console.error('[AgroLog] Export error:', err);
         alert('Error al exportar: ' + (err.message || err));
@@ -5722,6 +5764,7 @@ async function launchAgroWizard(tabName, options = {}) {
     const wizardOptions = options && typeof options === 'object' ? options : {};
     let targetTab = tabName;
     let forcedCropId;
+    let initialCropId;
     let lockCropSelection = false;
     const refreshAlsoTabs = [];
 
@@ -5736,6 +5779,9 @@ async function launchAgroWizard(tabName, options = {}) {
 
     if (Object.prototype.hasOwnProperty.call(wizardOptions, 'forcedCropId')) {
         forcedCropId = normalizeCropId(wizardOptions.forcedCropId);
+    }
+    if (Object.prototype.hasOwnProperty.call(wizardOptions, 'initialCropId')) {
+        initialCropId = normalizeCropId(wizardOptions.initialCropId);
     }
     if (Object.prototype.hasOwnProperty.call(wizardOptions, 'lockCropSelection')) {
         lockCropSelection = wizardOptions.lockCropSelection === true;
@@ -5759,6 +5805,7 @@ async function launchAgroWizard(tabName, options = {}) {
         getTodayLocalISO: typeof getTodayLocalISO === 'function' ? getTodayLocalISO : null,
         buildConceptWithWho,
         forcedCropId,
+        initialCropId,
         lockCropSelection,
         refreshAlsoTabs,
         prefill
@@ -11623,6 +11670,22 @@ function renderIncomeItem(listEl, income, signedUrl) {
     listEl.appendChild(item);
 }
 
+function renderPagadosDedicatedItem(listEl, income, signedUrl) {
+    if (!listEl || !income) return;
+    const item = {
+        ...income,
+        evidence_url_resolved: signedUrl || income?.evidence_url_resolved || ''
+    };
+    const row = renderHistoryRow('ingresos', item, FACTURERO_CONFIG.ingresos, {
+        showActions: true,
+        allowedActions: new Set(['edit', 'transfer', 'delete'])
+    });
+    if (!row) return;
+    row.classList.add('pagados-dedicated-row');
+    row.dataset.pagadosDedicatedRow = '1';
+    listEl.appendChild(row);
+}
+
 async function loadIncomes() {
     const listEl = document.getElementById('income-list');
     const container = document.getElementById('income-recent-container');
@@ -11722,6 +11785,7 @@ async function loadIncomes() {
         container.style.display = incomeCache.length ? 'block' : 'none';
 
         const signedUrlMap = await buildIncomeSignedUrlMap(incomeCache);
+        pagadosDedicatedSignedUrlMap = signedUrlMap;
         incomeCache.forEach((income) => {
             const signedUrl = signedUrlMap.get(income.id);
             renderIncomeItem(listEl, income, signedUrl);
@@ -11729,6 +11793,7 @@ async function loadIncomes() {
 
         injectHistorySearchInput('ingresos', FACTURERO_CONFIG.ingresos);
         initHistoryFilters('ingresos');
+        renderPagadosDedicatedView();
     } catch (err) {
         console.error('[Agro] Error cargando ingresos:', err);
     }
@@ -11812,6 +11877,9 @@ let opsRankingsInitBound = false;
 let opsRankingsInFlight = null;
 let opsRankingsQueued = false;
 let opsRankingsDebugSampleLogged = false;
+let pagadosDedicatedSearchQuery = '';
+let pagadosDedicatedEventsBound = false;
+let pagadosDedicatedSignedUrlMap = new Map();
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -12353,6 +12421,255 @@ function renderOpsCultivosPanel() {
             ? `${finishedCrops.length} ciclos cerrados viven en Historial de ciclos.`
             : 'Finalizados y perdidos viven en Historial de ciclos.';
     }
+}
+
+function getPagadosDedicatedElements() {
+    return {
+        view: document.getElementById('agro-pagados-dedicated'),
+        cropRow: document.getElementById('pagados-dedicated-crop-row'),
+        scopeCopy: document.getElementById('pagados-dedicated-scope-copy'),
+        scopePill: document.getElementById('pagados-dedicated-scope-pill'),
+        status: document.getElementById('pagados-dedicated-status'),
+        countBadge: document.getElementById('pagados-dedicated-count-badge'),
+        searchInput: document.getElementById('pagados-dedicated-search'),
+        empty: document.getElementById('pagados-dedicated-empty'),
+        list: document.getElementById('pagados-dedicated-list'),
+        newTopButton: document.getElementById('btn-pagados-dedicated-new-top'),
+        newBottomButton: document.getElementById('btn-pagados-dedicated-new-bottom'),
+        exportButton: document.getElementById('btn-pagados-dedicated-export')
+    };
+}
+
+function getPagadosDedicatedScopeLabel(cropId = selectedCropId) {
+    const activeCropId = normalizeCropId(cropId);
+    if (!activeCropId) {
+        return 'Vista general';
+    }
+    const selected = Array.isArray(cropsCache)
+        ? cropsCache.find((crop) => normalizeCropId(crop?.id) === activeCropId)
+        : null;
+    if (!selected) {
+        return 'Cultivo filtrado';
+    }
+    const display = getCropDisplayParts(selected, { fallbackIcon: '🌱' });
+    return display.label || 'Cultivo';
+}
+
+function matchesPagadosDedicatedFilters(income, options = {}) {
+    const hasCropOption = Object.prototype.hasOwnProperty.call(options, 'cropId');
+    const cropId = hasCropOption
+        ? normalizeCropId(options.cropId)
+        : normalizeCropId(selectedCropId);
+    const searchQuery = Object.prototype.hasOwnProperty.call(options, 'searchQuery')
+        ? options.searchQuery
+        : pagadosDedicatedSearchQuery;
+
+    if (cropId && normalizeCropId(income?.crop_id) !== cropId) {
+        return false;
+    }
+
+    return matchesPagadosDedicatedQuery(income, searchQuery);
+}
+
+function getPagadosDedicatedRows(items, options = {}) {
+    const rows = Array.isArray(items) ? items : [];
+    return rows.filter((income) => matchesPagadosDedicatedFilters(income, options));
+}
+
+function getPagadosDedicatedViewState() {
+    const cropId = normalizeCropId(selectedCropId);
+    const scopeLabel = getPagadosDedicatedScopeLabel(cropId);
+    const searchQuery = String(pagadosDedicatedSearchQuery || '');
+    const normalizedSearch = normalizePagadosSearchQuery(searchQuery);
+    const rows = getPagadosDedicatedRows(incomeCache, { cropId, searchQuery });
+
+    return {
+        cropId,
+        scopeLabel,
+        searchQuery,
+        hasSearch: !!normalizedSearch,
+        rows,
+        isGeneral: !cropId
+    };
+}
+
+function renderPagadosDedicatedCropSelector() {
+    const { cropRow, scopeCopy, scopePill } = getPagadosDedicatedElements();
+    if (!cropRow) return;
+
+    cropRow.textContent = '';
+    const { cropId: selectedId, scopeLabel } = getPagadosDedicatedViewState();
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
+    const allCrops = [...activeCrops, ...finishedCrops];
+
+    cropRow.appendChild(buildOpsCultivoChip({
+        label: '🌾 Vista general',
+        meta: 'Todos los cultivos',
+        cropId: null,
+        selected: !selectedId
+    }));
+
+    allCrops.forEach((crop) => {
+        const cropId = normalizeCropId(crop?.id);
+        if (!cropId) return;
+        const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱' });
+        cropRow.appendChild(buildOpsCultivoChip({
+            label: displayCrop.label,
+            meta: resolveOpsChipStatus(crop),
+            cropId,
+            selected: cropId === selectedId
+        }));
+    });
+
+    if (scopeCopy) {
+        scopeCopy.textContent = selectedId
+            ? `${scopeLabel} activo: el historial, el nuevo registro y la exportación se limitan a este cultivo.`
+            : 'Vista general activa: historial, nuevo registro y exportación abarcan todos los pagados.';
+    }
+    if (scopePill) {
+        scopePill.textContent = `Scope activo: ${scopeLabel}`;
+    }
+}
+
+function normalizePagadosSearchQuery(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function matchesPagadosDedicatedQuery(income, query) {
+    const token = normalizePagadosSearchQuery(query);
+    if (!token) return true;
+    const whoData = getWhoData('ingresos', income, income?.concepto || '');
+    const haystack = [
+        income?.concepto,
+        whoData?.who,
+        resolveRecordCropLabel(income),
+        income?.categoria,
+        income?.fecha
+    ]
+        .filter(Boolean)
+        .join(' ');
+
+    return normalizePagadosSearchQuery(haystack).includes(token);
+}
+
+async function renderPagadosDedicatedView() {
+    const { view, list, empty, status, countBadge } = getPagadosDedicatedElements();
+    if (!view || !list || !empty) return;
+
+    const context = getPagadosDedicatedViewState();
+    renderPagadosDedicatedCropSelector();
+    const filtered = context.rows;
+
+    list.textContent = '';
+    list.classList.toggle('is-empty', filtered.length === 0);
+    empty.classList.toggle('is-visible', filtered.length === 0);
+
+    const countLabel = `${filtered.length} pagado${filtered.length === 1 ? '' : 's'} visible${filtered.length === 1 ? '' : 's'}`;
+    if (countBadge) {
+        countBadge.textContent = context.isGeneral
+            ? `${countLabel} · Vista general`
+            : `${countLabel} · ${context.scopeLabel}`;
+    }
+
+    if (status) {
+        if (context.hasSearch && filtered.length === 0) {
+            status.textContent = `Sin coincidencias para “${context.searchQuery}” dentro de ${context.scopeLabel}.`;
+        } else if (context.hasSearch) {
+            status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada. Exportación y wizard respetan este alcance.`;
+        } else if (context.isGeneral) {
+            status.textContent = 'Viendo todos los pagados. Exportación y wizard quedan en Vista general.';
+        } else {
+            status.textContent = `Viendo solo pagados de ${context.scopeLabel}. Exportación y wizard usarán este cultivo.`;
+        }
+    }
+
+    const emptyText = empty.querySelector('.empty-state-text');
+    if (emptyText) {
+        emptyText.textContent = context.hasSearch
+            ? `No hay pagados que coincidan con “${context.searchQuery}” en ${context.scopeLabel}.`
+            : `No hay pagados registrados en ${context.scopeLabel}.`;
+    }
+
+    const signedUrlMap = pagadosDedicatedSignedUrlMap instanceof Map
+        ? pagadosDedicatedSignedUrlMap
+        : new Map();
+
+    filtered.forEach((income) => {
+        renderPagadosDedicatedItem(list, income, signedUrlMap.get(income.id));
+    });
+
+    document.dispatchEvent(new CustomEvent('data-refresh'));
+}
+
+function bindPagadosDedicatedView() {
+    if (pagadosDedicatedEventsBound) return;
+    const { cropRow, searchInput, newTopButton, newBottomButton, exportButton } = getPagadosDedicatedElements();
+    if (!cropRow || !searchInput || !newTopButton || !newBottomButton || !exportButton) return;
+
+    pagadosDedicatedEventsBound = true;
+
+    const handleCropSelection = (event) => {
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        if (chip.classList.contains('is-disabled') || chip.getAttribute('aria-disabled') === 'true') return;
+        const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
+        setSelectedCropId(cropId);
+        renderPagadosDedicatedView();
+    };
+
+    cropRow.addEventListener('click', handleCropSelection);
+    cropRow.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        event.preventDefault();
+        handleCropSelection(event);
+    });
+
+    searchInput.addEventListener('input', () => {
+        pagadosDedicatedSearchQuery = searchInput.value || '';
+        renderPagadosDedicatedView();
+    });
+
+    const openPagadosWizard = () => {
+        const context = getPagadosDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        if (typeof window.launchAgroWizard === 'function') {
+            window.launchAgroWizard('ingresos', {
+                initialCropId: context.cropId
+            });
+        }
+    };
+
+    newTopButton.addEventListener('click', openPagadosWizard);
+    newBottomButton.addEventListener('click', openPagadosWizard);
+    exportButton.addEventListener('click', () => {
+        const context = getPagadosDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        exportAgroLog('ingresos', {
+            cropId: context.cropId,
+            searchQuery: context.searchQuery,
+            scopeLabel: context.scopeLabel,
+            filterFn: (item) => matchesPagadosDedicatedFilters(item, {
+                cropId: context.cropId,
+                searchQuery: context.searchQuery
+            })
+        });
+    });
+
+    window.addEventListener('agro:shell:view-changed', renderPagadosDedicatedView);
+    window.addEventListener('agro:crop:changed', renderPagadosDedicatedView);
+    window.addEventListener(AGRO_CROPS_READY_EVENT, renderPagadosDedicatedView);
+}
+
+function initPagadosDedicatedView() {
+    bindPagadosDedicatedView();
+    renderPagadosDedicatedView();
 }
 
 function bindOpsCultivosPanelEvents() {
@@ -15169,6 +15486,7 @@ export function initAgro() {
     initFactureroHistories(); // V9.5.1: Cargar historiales al init
     initAgroFocusMode(); // V9.8: Modo Enfoque (UI only)
     initAgroShell();
+    initPagadosDedicatedView();
     initFactureroSelection();
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();

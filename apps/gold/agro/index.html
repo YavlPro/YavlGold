@@ -2039,6 +2039,91 @@
                 </div>
             </div>
         </div>
+
+        <div class="agro-pagados-dedicated" id="agro-pagados-dedicated" aria-label="Vista dedicada de Pagados">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Registro de Pagados</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Consulta cobros registrados, filtra por cultivo y abre el flujo pagado sin mezclar otros movimientos.</p>
+                </div>
+                <div class="agro-pagados-dedicated__badge" id="pagados-dedicated-count-badge">0 pagados visibles</div>
+            </div>
+
+            <div class="agro-pagados-dedicated__steps">
+                <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 1 · Seleccionar cultivo</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Filtrar contexto de cobro</h4>
+                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo específico para aislar únicamente los pagados de ese ciclo.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__body">
+                        <div class="agro-pagados-crop-row" id="pagados-dedicated-crop-row" role="group"
+                            aria-label="Filtro de cultivo para Pagados"></div>
+                        <p class="agro-pagados-crop-hint" id="pagados-dedicated-scope-copy">Vista general activa: historial, nuevo registro y exportación abarcan todos los pagados.</p>
+                    </div>
+                </section>
+
+                <section class="agro-pagados-step agro-pagados-step--create" aria-label="Paso 2 Crear registro pagado">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 2 · Crear registro pagado</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Abrir flujo de pagados</h4>
+                            <p class="agro-pagados-step__note">Entra directo al wizard de cobros para registrar un pagado sin pasar por tabs ni otros historiales.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__action">
+                        <button type="button" class="btn btn-gold agro-pagados-step__primary" id="btn-pagados-dedicated-new-top">
+                            + Nuevo registro pagado
+                        </button>
+                        <p class="agro-pagados-step__microcopy">Abre el flujo de <strong>Pagados</strong> con el cultivo activo de esta vista.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="agro-pagados-history" aria-label="Historial exclusivo de Pagados">
+                <div class="agro-pagados-history__head">
+                    <div>
+                        <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
+                        <h4 class="agro-pagados-history__title">Historial de pagados</h4>
+                        <p class="agro-pagados-history__subtitle">Búsqueda, filtro y exportación limitados únicamente a movimientos cobrados.</p>
+                    </div>
+                    <div class="agro-pagados-history__tools">
+                        <label class="agro-pagados-search" for="pagados-dedicated-search">
+                            <span class="agro-pagados-search__label">Buscar</span>
+                            <input type="search" id="pagados-dedicated-search" class="agro-pagados-search__input"
+                                placeholder="Concepto, comprador o cultivo">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="agro-pagados-history__meta">
+                    <p class="agro-pagados-history__scope" id="pagados-dedicated-scope-pill">Scope activo: Vista general</p>
+                    <p class="agro-pagados-history__status" id="pagados-dedicated-status">Viendo todos los pagados. Exportación y wizard quedan en Vista general.</p>
+                </div>
+                <p class="agro-pagados-history__selection" id="pagados-dedicated-selection-status" aria-live="polite">
+                    Selecciona un pagado para ver Editar, Transferir o Eliminar.
+                </p>
+
+                <div class="agro-pagados-history__empty" id="pagados-dedicated-empty">
+                    <div class="empty-state-icon">💰</div>
+                    <p class="empty-state-text">No hay pagados registrados para este filtro.</p>
+                </div>
+
+                <div class="agro-pagados-history__list facturero-history-list" id="pagados-dedicated-list"></div>
+            </section>
+
+            <div class="agro-pagados-dedicated__footer">
+                <button type="button" class="btn btn-gold agro-pagados-footer__btn" id="btn-pagados-dedicated-new-bottom">
+                    + Nuevo registro pagado
+                </button>
+                <button type="button" class="btn btn-outline agro-pagados-footer__btn" id="btn-pagados-dedicated-export">
+                    Exportar registros
+                </button>
+            </div>
+        </div>
     </section>
 
     <section class="agro-tools-section agro-ops-v10 animate-in delay-6" id="agro-tools-section" style="margin-top: 2rem;"
