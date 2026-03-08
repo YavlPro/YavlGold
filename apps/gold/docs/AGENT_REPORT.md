@@ -1,3 +1,34 @@
+## 🆕 SESIÓN: HOTFIX — Footer solapado y filtros de transferidos en Pagados (2026-03-08)
+
+### Diagnóstico del problema
+
+- Después del ajuste visual anterior, el historial dedicado de `Pagados` quedó con una cadena de `overflow/z-index` demasiado agresiva y algunas cards empezaron a pintarse por encima del footer global del módulo.
+- Además, el filtro dinámico de `Transferidos` no aparece aunque sí existan registros, porque la consulta de `loadIncomes()` no trae hoy `origin_table`, `origin_id` ni `transfer_state`, que son justamente los campos que usa `isFromPendingTransfer(...)`.
+
+### Objetivo del hotfix
+
+- Encapsular el stacking del historial de `Pagados` para que no vuelva a tapar el footer.
+- Corregir la detección real de `Transferidos` sin tocar otros historiales.
+
+### Plan del ajuste
+
+1. Crear un stacking context local en la vista/listado de `Pagados` para que las cards no escapen visualmente hacia el footer.
+2. Reforzar el footer global con capa propia y fondo limpio.
+3. Extender los campos de `AGRO_INCOME_LIST_COLUMNS` con la metadata mínima necesaria para detectar `Transferidos/Revertidos`.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-operations.css`
+
+### Criterio de QA de este hotfix
+
+- Confirmar que el footer vuelve a quedar al final, sin cards encima.
+- Confirmar que `Transferidos` aparece si su conteo es mayor a cero.
+- Confirmar que sigue oculto si su conteo es cero.
+- Ejecutar `pnpm build:gold`.
+
 ## 🆕 SESIÓN: HOTFIX — Búsqueda, filtros dinámicos y menú contextual en Pagados (2026-03-08)
 
 ### Diagnóstico del problema

@@ -593,6 +593,9 @@
   flex-direction: column;
   gap: 0.82rem;
   margin-top: 0.58rem;
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
 }
 
 body[data-agro-active-view='pagados'] .agro-ops-v10 .financial-operations-card {
@@ -750,6 +753,9 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   gap: 0.74rem;
   padding: 0.88rem 0.94rem;
   overflow: visible;
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
 }
 
 .agro-ops-v10 .agro-pagados-history__head {
@@ -883,6 +889,8 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   min-height: 120px;
   overflow: visible;
   position: relative;
+  isolation: isolate;
+  z-index: 0;
 }
 
 .agro-ops-v10 .agro-pagados-history__list.is-empty {
@@ -895,6 +903,8 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   justify-content: flex-end;
   gap: 0.46rem;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 .agro-ops-v10 .agro-pagados-footer__btn {
@@ -2548,30 +2558,34 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   }
 }
 
-body[data-agro-active-view='pagados'] .agro-pagados-history,
-body[data-agro-active-view='pagados'] .agro-pagados-history__list,
-body[data-agro-active-view='pagados'] #pagados-dedicated-list,
-body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card,
-body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-footer,
-body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-actions {
-  overflow: visible !important;
+body[data-agro-active-view='pagados'] #pagados-dedicated-list {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
 }
 
 body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card {
   position: relative;
+  z-index: 0;
 }
 
 body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card.is-selected,
 body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-card.is-actions-open {
-  z-index: 24;
+  z-index: 6;
 }
 
 body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-actions {
-  z-index: 28;
+  z-index: 8;
 }
 
 body[data-agro-active-view='pagados'] #pagados-dedicated-list .tx-actions > .tx-actions-btns {
-  z-index: 32;
+  z-index: 10;
+}
+
+body[data-agro-active-view='pagados'] #agro-module-footer {
+  position: relative;
+  z-index: 1;
+  background: #0a0a0a;
 }
 
 /* Layout móvil real */
