@@ -211,6 +211,19 @@
   opacity: 0.7;
 }
 
+/* Header swap: Pagados view */
+.ops-header-pagados {
+  display: none;
+}
+
+body[data-agro-active-view='pagados'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='pagados'] .ops-header-pagados {
+  display: block;
+}
+
 .agro-ops-v10 .header-actions {
   display: flex;
   align-items: center;
@@ -615,6 +628,28 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)),
     rgba(8, 8, 8, 0.92);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22), 0 0 22px rgba(200, 167, 82, 0.04);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.agro-ops-v10 .agro-pagados-dedicated__hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.agro-ops-v10 .agro-pagados-dedicated__hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200, 167, 82, 0.5), transparent);
+  opacity: 0.8;
+}
+
+.agro-ops-v10 .agro-pagados-step:hover {
+  border-color: rgba(200, 167, 82, 0.34);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26), 0 0 28px rgba(200, 167, 82, 0.07);
 }
 
 .agro-ops-v10 .agro-pagados-dedicated__hero {
@@ -622,7 +657,7 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.8rem;
-  padding: 0.88rem 0.94rem;
+  padding: 1rem 0.94rem 0.88rem;
 }
 
 .agro-ops-v10 .agro-pagados-dedicated__copy,
@@ -645,7 +680,7 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   font-size: 0.55rem;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: rgba(229, 213, 160, 0.72);
+  color: rgba(200, 167, 82, 0.72);
 }
 
 .agro-ops-v10 .agro-pagados-dedicated__title,
@@ -659,6 +694,10 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
 
 .agro-ops-v10 .agro-pagados-dedicated__title {
   font-size: clamp(1rem, 2vw, 1.22rem);
+  background: linear-gradient(135deg, #fff 0%, rgba(200, 167, 82, 0.85) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .agro-ops-v10 .agro-pagados-dedicated__subtitle,
@@ -911,14 +950,19 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.46rem;
+  gap: 0.56rem;
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
+  padding-top: 0.32rem;
 }
 
 .agro-ops-v10 .agro-pagados-footer__btn {
   min-width: 198px;
+}
+
+.agro-ops-v10 .agro-pagados-footer__btn.btn-gold {
+  box-shadow: 0 4px 14px rgba(200, 167, 82, 0.18);
 }
 
 .agro-ops-v10 .tab-panel {
@@ -1010,6 +1054,11 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     flex-direction: column;
   }
 
+  .agro-ops-v10 .agro-pagados-dedicated__badge {
+    align-self: stretch;
+    text-align: center;
+  }
+
   .agro-ops-v10 .agro-pagados-history__head {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1030,6 +1079,15 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
 
   .agro-ops-v10 .agro-pagados-history__filters {
     justify-content: flex-start;
+  }
+
+  .agro-ops-v10 .agro-pagados-crop-row {
+    padding-bottom: 0.24rem;
+    scrollbar-width: none;
+  }
+
+  .agro-ops-v10 .agro-pagados-crop-row::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -1085,10 +1143,15 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
     flex-direction: column;
     align-items: stretch;
     justify-content: stretch;
+    gap: 0.44rem;
   }
 
   .agro-ops-v10 .agro-pagados-history__filter-chip {
     width: 100%;
+  }
+
+  .agro-ops-v10 .agro-pagados-dedicated {
+    overflow-x: hidden;
   }
 }
 

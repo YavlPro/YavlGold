@@ -1,3 +1,46 @@
+## 🆕 SESIÓN: UI — Header swap Pagados + DNA V10 polish (2026-03-08)
+
+### Cambios realizados
+
+**Header macro contextual** (CSS-only, sin JS):
+- Agregados `.ops-header-default` y `.ops-header-pagados` al HTML del module-header.
+- En vista Pagados: título cambia de "Centro de Operaciones" → **"Registro de Pagados"**, subtítulo contextualizado.
+- Eyebrow "Finanzas Agro" se mantiene como contexto superior.
+- Swap vía `body[data-agro-active-view='pagados']` — cero lógica JS.
+
+**DNA V10 refinamientos** (solo CSS):
+- **Hero**: gold accent line top (`::before` gradient), título con `background-clip: text` gradient blanco→dorado, padding superior refinado.
+- **Eyebrows**: color cambiado de `rgba(229,213,160,0.72)` → `rgba(200,167,82,0.72)` (acento dorado directo).
+- **Steps**: `transition` de border/shadow + hover state con glow sutil dorado.
+- **Footer**: gap ampliado, padding-top, `.btn-gold` con `box-shadow` dorado.
+
+**Mobile QA** (≤900px y ≤768px):
+- Badge `align-self: stretch` + `text-align: center` para no apretar título.
+- Crop chips: `scrollbar-width: none` + `-webkit-scrollbar: display: none` para scroll limpio.
+- Footer: `gap: 0.44rem` en column layout.
+- `overflow-x: hidden` en `.agro-pagados-dedicated` para prevenir scroll horizontal.
+
+### Archivos modificados
+
+- `apps/gold/agro/index.html` — Header swap HTML (2 h2 + 2 p con clases toggle)
+- `apps/gold/agro/agro-operations.css` — Header swap CSS + DNA V10 polish + mobile fixes
+
+**Build**: ✅ `pnpm build:gold` exitoso (3.68s)
+
+### QA
+
+- [ ] Vista Pagados muestra "Registro de Pagados" en header macro
+- [ ] Vista Operaciones muestra "Centro de Operaciones" en header macro
+- [ ] Hero tiene gold accent line arriba
+- [ ] Título hero tiene gradient blanco→dorado
+- [ ] Steps tienen hover sutil
+- [ ] Badge no aprieta título en móvil
+- [ ] Chips de cultivo scroll limpio sin scrollbar
+- [ ] Botones footer full-width en móvil
+- [ ] No hay overflow horizontal en móvil
+
+---
+
 ## 🆕 SESIÓN: FIX ESTRUCTURAL — Footer global y secciones intermedias (2026-03-08)
 
 ### Diagnóstico estructural completo
