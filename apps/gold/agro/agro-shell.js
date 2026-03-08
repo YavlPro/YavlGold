@@ -25,7 +25,7 @@ const VIEW_CONFIG = Object.freeze({
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     cultivos: { region: 'cultivos', label: 'Cultivos activos', focusSelector: '[data-agro-shell-region="cultivos"]' },
     ciclos: { region: 'cultivos', label: 'Historial de ciclos', focusSelector: '#crops-cycle-history-accordion' },
-    operaciones: { region: 'ops', label: 'Centro de operaciones', resolveTab: resolveOperationsTab, dense: true },
+    operaciones: { region: 'ops', label: 'Operaciones', resolveTab: resolveOperationsTab, dense: true },
     pagados: { region: 'ops', label: 'Pagados', tab: 'ingresos', focusSelector: '#agro-pagados-dedicated', dense: true },
     fiados: { region: 'ops', label: 'Fiados', tab: 'pendientes', focusSelector: '#agro-fiados-dedicated', dense: true },
     perdidas: { region: 'ops', label: 'Perdidas', tab: 'perdidas', focusSelector: '#agro-perdidas-dedicated', dense: true },
@@ -146,6 +146,8 @@ function clickIfExists(selector) {
 function runAction(action) {
     const token = String(action || '').trim().toLowerCase();
     switch (token) {
+        case 'profile':
+            return clickIfExists('#agro-profile-button');
         case 'new-crop':
             if (typeof window.openCropModal === 'function') {
                 window.openCropModal();

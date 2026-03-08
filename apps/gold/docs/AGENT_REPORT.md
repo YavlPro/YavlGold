@@ -1,3 +1,95 @@
+## 🆕 SESIÓN: Reestructuración navegación + toggles globales + Herramientas redesign (2026-03-08)
+
+### Diagnóstico
+
+**1. Sidebar actual** (`index.html` L1153-1236)
+- Grupos: Principal (Dashboard, Cultivos, Ciclos) → Operaciones (CdO, Pagados, Fiados, Pérdidas, Donaciones, Otros, Carrito, Rankings) → Herramientas (Clima, Agenda, Herramientas, Bitácora) → Acciones (Nuevo cultivo, Nuevo registro, Asistente)
+- No existe "Perfil" como primera opción. El perfil es un modal (`modal-agro-profile`) activado por `#agro-profile-button`.
+- "Centro de operaciones" aparece como primer item en el grupo Operaciones.
+
+**2. Centro de Operaciones — identidad visual**
+- Header swap: `ops-header-default` muestra "Centro de Operaciones" cuando `data-agro-active-view` no es una vista dedicada.
+- `VIEW_CONFIG.operaciones` no tiene `focusSelector`; simplemente muestra el `financial-operations-card` (el macro-shell con tabs).
+- Las vistas dedicadas (pagados, fiados, etc.) ocultan `financial-operations-card` y muestran su propia superficie. Pero "operaciones" sigue siendo el contenedor visual principal.
+- **Acción**: Renombrar "Centro de Operaciones" a "Operaciones" en sidebar y header. Mantener como vista que muestra los tabs del facturero con selección de cultivo + vista.
+
+**3. Toggles globales `Ocultar nombres` / `Ocultar montos`**
+- Fuente de verdad: `agro-privacy.js` → localStorage keys `YG_HIDE_BUYER_NAMES` y `YG_HIDE_MONEY_VALUES`.
+- Controles HTML: solo existen dentro de `financial-operations-card` (L1771-1779) y un checkbox de nombres en rankings (L2098-2102).
+- Sistema auto-bind: cualquier elemento con `data-buyer-privacy-control="toggle"` o `data-money-privacy-control="toggle"` se auto-bindea vía `initBuyerPrivacy()` + MutationObserver.
+- **Causa raíz**: las vistas dedicadas (pagados, fiados, pérdidas, donaciones, otros) NO tienen controles de privacidad en su HTML. Cuando están activas, `financial-operations-card` está oculto → toggles invisibles.
+- **Fix**: Agregar un bloque compacto de toggles de privacidad en cada vista dedicada hero. Reutilizar los data-attributes existentes para auto-bind.
+
+**4. Herramientas** (`index.html` L2694-2753)
+- Accordion con 6 `agro-tool-card` en grid 2×1.
+- Cards planas: eyebrow + title + copy + CTA button. Sin iconos visuales grandes, sin jerarquía clara, sensación de texto plano.
+- **Fix**: Agregar icono grande a cada card, mejorar padding/spacing, refinar copy.
+
+**5. Ciclos activos**
+- `VIEW_CONFIG.cultivos` ya tiene `region: 'cultivos'` y `focusSelector`. Es una región top-level independiente, no dentro del CdO shell. ✅ Ya funciona como vista individual.
+
+**6. Rankings**
+- Ya tiene `focusSelector: '#agro-rankings-dedicated'` y vista dedicada con reparent pattern (sesión anterior). ✅
+
+### Plan quirúrgico
+1. Sidebar: añadir "Perfil" como primera opción (action: abre modal existente), renombrar "Centro de operaciones" → "Operaciones"
+2. Header: renombrar "Centro de Operaciones" → "Operaciones" en `ops-header-default`
+3. Toggles: crear bloque `.agro-privacy-strip` reutilizable, insertarlo en cada vista dedicada hero
+4. CSS para `.agro-privacy-strip`
+5. Herramientas: agregar iconos grandes a cada card, mejorar CSS
+6. Build + QA
+
+### Riesgos
+- Agregar controles de privacidad en dedicated views podría crear listeners duplicados → mitigado por `boundControls` WeakSet en `agro-privacy.js`
+- Reparentar nodos de rankings/carrito ya probado en sesión anterior
+
+### Cambios aplicados
+
+**1. Sidebar (`index.html` L1164-1186)**
+- Agregado "Perfil de usuario" como primera opción del grupo Principal (action: abre modal existente `#agro-profile-button`)
+- Renombrado "Centro de operaciones" → "Operaciones"
+
+**2. agro-shell.js**
+- Agregado case `'profile'` en `runAction()` → `clickIfExists('#agro-profile-button')`
+- Renombrado `VIEW_CONFIG.operaciones.label` → `'Operaciones'`
+
+**3. Header swap (`index.html` L1734)**
+- `ops-header-default` cambiado de "Centro de Operaciones" a "Operaciones"
+
+**4. Toggles globales — HTML (`index.html`)**
+- Insertado `.agro-privacy-strip` en hero de 7 vistas dedicadas: Pagados, Fiados, Pérdidas, Donaciones, Otros, Carrito, Rankings
+- Cada strip tiene 2 botones: `data-buyer-privacy-control="toggle"` y `data-money-privacy-control="toggle"`
+- Auto-bind garantizado por `agro-privacy.js` MutationObserver + WeakSet
+
+**5. Toggles globales — CSS (`agro-operations.css`)**
+- Nueva clase `.agro-privacy-strip` con layout flex, estilo compacto, responsive
+- `.btn-privacy-toggle` dentro del strip con hover y `aria-pressed` states
+- Mobile breakpoint (480px) con flex-wrap
+
+**6. Herramientas — HTML (`index.html` L2755-2822)**
+- Cada `agro-tool-card` ahora tiene `.agro-tool-card__icon-box` con icono FontAwesome
+- Copy refinado para cada card (más conciso, más útil)
+- Botones CTA con icono `fa-arrow-right` + texto de acción
+
+**7. Herramientas — CSS (`agro.css`)**
+- `.agro-tool-card`: border mejorado, hover con box-shadow, transition
+- `.agro-tool-card__icon-box`: 42×42px, dorado tintado, border-radius 12px
+
+### QA manual
+- Sidebar: Perfil de usuario abre modal existente ✅
+- Sidebar: "Operaciones" sin "Centro de" ✅
+- Header: "Operaciones" en ops-header-default ✅
+- Toggles visibles en 7 vistas dedicadas ✅
+- Herramientas: 6 cards con icono, copy mejorado, CTA con flecha ✅
+- Build: `pnpm build:gold` OK (3.62s) ✅
+
+### Deuda residual
+- Ciclos activos: ya es vista independiente (region: cultivos), no necesitó cambios
+- Rankings: ya tenía vista dedicada de sesión anterior
+- Toggles dentro de Operaciones (CdO shell): siguen existiendo en `financial-operations-card` — redundante pero no conflicta
+
+---
+
 ## 🆕 ADDENDUM: Otros CTA + Carrito dedicado + Rankings dedicado (2026-03-08)
 
 ### Correcciones

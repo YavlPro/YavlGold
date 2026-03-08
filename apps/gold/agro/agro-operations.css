@@ -745,6 +745,64 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   display: flex;
 }
 
+/* ── Privacy toggles strip (dedicated views) ── */
+.agro-privacy-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 0.5rem;
+}
+
+.agro-privacy-strip__label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  margin-right: 0.25rem;
+}
+
+.agro-privacy-strip .btn-privacy-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  background: rgba(200, 167, 82, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+  white-space: nowrap;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.agro-privacy-strip .btn-privacy-toggle:hover {
+  border-color: rgba(200, 167, 82, 0.5);
+  background: rgba(200, 167, 82, 0.12);
+  color: #e8d48b;
+}
+
+.agro-privacy-strip .btn-privacy-toggle[aria-pressed="true"] {
+  background: rgba(200, 167, 82, 0.15);
+  border-color: rgba(200, 167, 82, 0.4);
+  color: #C8A752;
+}
+
+@media (max-width: 480px) {
+  .agro-privacy-strip {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+}
+
 /* ── Shared card base (steps + history only) ── */
 .agro-ops-v10 .agro-pagados-history,
 .agro-ops-v10 .agro-pagados-step {

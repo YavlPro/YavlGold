@@ -6114,14 +6114,35 @@ body.agro-view-dense::after {
 .agro-tool-card {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.6rem;
   min-height: 100%;
-  padding: 1rem;
+  padding: 1.25rem 1.15rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(200, 167, 82, 0.12);
   background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.05), rgba(200, 167, 82, 0.01)),
+    linear-gradient(180deg, rgba(200, 167, 82, 0.06), rgba(200, 167, 82, 0.01)),
     rgba(8, 8, 8, 0.92);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.agro-tool-card:hover {
+  border-color: rgba(200, 167, 82, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), 0 0 14px rgba(200, 167, 82, 0.04);
+}
+
+.agro-tool-card__icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(200, 167, 82, 0.1);
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  color: #C8A752;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-bottom: 0.15rem;
 }
 
 .agro-tools-grid {

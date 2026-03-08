@@ -1164,6 +1164,9 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
                         aria-hidden="true">🌾</span><span>Principal</span></p>
+                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="profile"><span
+                        class="agro-shell-link__icon" aria-hidden="true">👤</span><span
+                        class="agro-shell-link__label">Perfil de usuario</span></button>
                 <button type="button" class="agro-shell-link" data-agro-view="dashboard"><span
                         class="agro-shell-link__icon" aria-hidden="true">🏠</span><span
                         class="agro-shell-link__label">Dashboard Agro</span></button>
@@ -1180,7 +1183,7 @@
                         aria-hidden="true">🧾</span><span>Operaciones</span></p>
                 <button type="button" class="agro-shell-link" data-agro-view="operaciones"><span
                         class="agro-shell-link__icon" aria-hidden="true">⚙️</span><span
-                        class="agro-shell-link__label">Centro de operaciones</span></button>
+                        class="agro-shell-link__label">Operaciones</span></button>
                 <button type="button" class="agro-shell-link" data-agro-view="pagados"><span
                         class="agro-shell-link__icon" aria-hidden="true">💰</span><span
                         class="agro-shell-link__label">Pagados</span></button>
@@ -1728,7 +1731,7 @@
                 <div class="module-icon">💰</div>
                 <div class="module-heading">
                     <p class="ops-module-eyebrow">Finanzas Agro</p>
-                    <h2 class="module-title ops-header-default">Centro de Operaciones</h2>
+                    <h2 class="module-title ops-header-default">Operaciones</h2>
                     <h2 class="module-title ops-header-pagados">Registro de Pagados</h2>
                     <h2 class="module-title ops-header-fiados">Registro de Fiados</h2>
                     <h2 class="module-title ops-header-perdidas">Registro de Pérdidas</h2>
@@ -2141,6 +2144,13 @@
                 </div>
                 <div class="agro-pagados-dedicated__badge" id="pagados-dedicated-count-badge" hidden>0 pagados visibles
                 </div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
+                </div>
             </div>
 
             <div class="agro-pagados-dedicated__steps">
@@ -2252,6 +2262,13 @@
                         registra fiados sin mezclar otros movimientos.</p>
                 </div>
                 <div class="agro-pagados-dedicated__badge" id="fiados-dedicated-count-badge" hidden>0 fiados visibles
+                </div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
                 </div>
             </div>
 
@@ -2366,6 +2383,13 @@
                 </div>
                 <div class="agro-pagados-dedicated__badge" id="perdidas-dedicated-count-badge" hidden>0 pérdidas
                     visibles</div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
+                </div>
             </div>
 
             <div class="agro-pagados-dedicated__steps">
@@ -2477,6 +2501,13 @@
                 </div>
                 <div class="agro-pagados-dedicated__badge" id="donaciones-dedicated-count-badge" hidden>0
                     donaciones visibles</div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
+                </div>
             </div>
 
             <div class="agro-pagados-dedicated__steps">
@@ -2578,6 +2609,13 @@
                 </div>
                 <div class="agro-pagados-dedicated__badge" id="otros-dedicated-count-badge" hidden>0 movimientos
                     visibles</div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
+                </div>
             </div>
 
             <div class="agro-pagados-dedicated__steps">
@@ -2669,6 +2707,13 @@
                     <p class="agro-pagados-dedicated__subtitle">Gestiona tu lista de compras agro. Agrega insumos,
                         revisa totales y exporta el pedido sin mezclar otros movimientos.</p>
                 </div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
+                </div>
             </div>
             <div id="carrito-dedicated-root" class="agro-carrito-dedicated__content">
                 <!-- agro-cart.js renders here when dedicated view is active -->
@@ -2683,6 +2728,13 @@
                     <h3 class="agro-pagados-dedicated__title">Rankings del Centro</h3>
                     <p class="agro-pagados-dedicated__subtitle">Vista r&aacute;pida de compras, pendientes e ingresos
                         cobrados por cliente y cultivo.</p>
+                </div>
+                <div class="agro-privacy-strip">
+                    <span class="agro-privacy-strip__label">Privacidad</span>
+                    <button type="button" class="btn-privacy-toggle" data-buyer-privacy-control="toggle"
+                        aria-pressed="false">👁 Ocultar nombres</button>
+                    <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
+                        aria-pressed="false">💰 Ocultar montos</button>
                 </div>
             </div>
             <div id="rankings-dedicated-root" class="agro-rankings-dedicated__content">
@@ -2702,51 +2754,76 @@
             <div class="yg-accordion-content" id="agro-tools-content">
                 <div class="agro-tools-grid" data-agro-tools-body>
                     <article class="agro-tool-card" id="agro-tool-card-weather">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
+                        </div>
                         <p class="agro-tool-card__eyebrow">Clima</p>
                         <h3 class="agro-tool-card__title">Pronóstico semanal</h3>
-                        <p class="agro-tool-card__copy">Valida la humedad, la temperatura y la siguiente ventana útil
-                            antes de registrar decisiones.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="clima">Ir al clima</button>
+                        <p class="agro-tool-card__copy">Humedad, temperatura y ventanas de trabajo antes de tomar
+                            decisiones en campo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="clima">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver clima
+                        </button>
                     </article>
                     <article class="agro-tool-card" id="agro-tool-card-agenda">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+                        </div>
                         <p class="agro-tool-card__eyebrow">Agenda</p>
-                        <h3 class="agro-tool-card__title">Agenda lunar</h3>
-                        <p class="agro-tool-card__copy">Abre el calendario agrícola y planifica tareas del día sin
-                            perder el contexto del cultivo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">Abrir
-                            agenda</button>
+                        <h3 class="agro-tool-card__title">Calendario lunar</h3>
+                        <p class="agro-tool-card__copy">Planifica siembras y tareas del día con contexto lunar y ciclo
+                            activo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="agenda">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir agenda
+                        </button>
                     </article>
                     <article class="agro-tool-card">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-robot" aria-hidden="true"></i>
+                        </div>
                         <p class="agro-tool-card__eyebrow">Asistencia</p>
                         <h3 class="agro-tool-card__title">Asistente Agro</h3>
-                        <p class="agro-tool-card__copy">Consulta dudas rápidas, resuelve contexto de campo y mantén una
-                            bitácora más informada.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="assistant">Abrir
-                            asistente</button>
+                        <p class="agro-tool-card__copy">Resuelve dudas de campo, contexto de cultivo y complementa tu
+                            bitácora con IA.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="assistant">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Consultar
+                        </button>
                     </article>
                     <article class="agro-tool-card">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-calculator" aria-hidden="true"></i>
+                        </div>
                         <p class="agro-tool-card__eyebrow">Cálculo</p>
                         <h3 class="agro-tool-card__title">Calculadora ROI</h3>
-                        <p class="agro-tool-card__copy">Compara rentabilidad con menos ruido visual y con acceso directo
-                            a tu facturero.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="calculator">Abrir
-                            calculadora</button>
+                        <p class="agro-tool-card__copy">Compara rentabilidad por cultivo con datos directos del
+                            facturero.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="calculator">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Calcular
+                        </button>
                     </article>
                     <article class="agro-tool-card">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-users" aria-hidden="true"></i>
+                        </div>
                         <p class="agro-tool-card__eyebrow">Social</p>
                         <h3 class="agro-tool-card__title">Panel Agro Social</h3>
-                        <p class="agro-tool-card__copy">Ve compradores, señales compartidas y contexto relacional sin
-                            saturar Operaciones.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="social">Abrir
-                            social</button>
+                        <p class="agro-tool-card__copy">Compradores, relaciones comerciales y contexto relacional en un
+                            solo lugar.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-action="social">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Ver social
+                        </button>
                     </article>
                     <article class="agro-tool-card">
+                        <div class="agro-tool-card__icon-box">
+                            <i class="fa-solid fa-book" aria-hidden="true"></i>
+                        </div>
                         <p class="agro-tool-card__eyebrow">Bitácora</p>
                         <h3 class="agro-tool-card__title">AgroRepo</h3>
-                        <p class="agro-tool-card__copy">Documenta hallazgos, notas y memoria operativa del campo como
-                            una vista oficial del módulo.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-view="agrorepo">Abrir
-                            bitácora</button>
+                        <p class="agro-tool-card__copy">Documenta hallazgos, notas y memoria operativa como registro
+                            oficial del módulo.</p>
+                        <button type="button" class="agro-tool-card__action" data-agro-view="agrorepo">
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Abrir bitácora
+                        </button>
                     </article>
                 </div>
             </div>
