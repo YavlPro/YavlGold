@@ -3465,14 +3465,15 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 .ops-rankings-panel {
-  border: 1px solid rgba(200, 167, 82, 0.2);
-  border-radius: 18px;
-  padding: 1.1rem;
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  border-radius: 20px;
+  padding: 1.4rem;
   background:
-    linear-gradient(180deg, rgba(200, 167, 82, 0.06) 0%, rgba(200, 167, 82, 0.015) 40%, rgba(8, 8, 8, 0.95) 100%);
+    linear-gradient(180deg, rgba(200, 167, 82, 0.07) 0%, rgba(200, 167, 82, 0.02) 35%, rgba(6, 6, 6, 0.97) 100%);
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1.1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(200, 167, 82, 0.03);
 }
 
 .ops-rankings-header {
@@ -3485,17 +3486,19 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 .ops-rankings-title {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.95rem;
-  letter-spacing: 1.2px;
+  font-size: 1rem;
+  letter-spacing: 1.5px;
   color: #fff;
   text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(200, 167, 82, 0.12);
 }
 
 .ops-rankings-subtitle {
   margin: 0.3rem 0 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.4;
+  font-family: 'Rajdhani', sans-serif;
 }
 
 .ops-rankings-export-btn {
@@ -3587,35 +3590,35 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
 .ops-rankings-grid {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .ops-ranking-card {
-  border: 1px solid rgba(200, 167, 82, 0.18);
+  border: 1px solid rgba(200, 167, 82, 0.2);
   border-radius: 16px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.005) 100%),
-    rgba(8, 8, 8, 0.92);
-  padding: 0.85rem 0.9rem;
-  min-height: 200px;
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+    linear-gradient(180deg, rgba(200, 167, 82, 0.04) 0%, rgba(200, 167, 82, 0.01) 40%, rgba(10, 10, 10, 0.95) 100%);
+  padding: 1rem 1rem;
+  min-height: 220px;
+  transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
 }
 
 .ops-ranking-card:hover {
-  border-color: rgba(200, 167, 82, 0.35);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25), 0 0 12px rgba(200, 167, 82, 0.04);
+  border-color: rgba(200, 167, 82, 0.45);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 20px rgba(200, 167, 82, 0.06);
+  transform: translateY(-1px);
 }
 
 .ops-ranking-card h5 {
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.75rem;
   font-size: 0.72rem;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   color: #C8A752;
   font-family: 'Orbitron', sans-serif;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(200, 167, 82, 0.12);
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(200, 167, 82, 0.18);
 }
 
 .ops-ranking-list {
@@ -3628,36 +3631,77 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 .ops-ranking-item {
-  border: 1px solid rgba(200, 167, 82, 0.15);
+  border: 1px solid rgba(200, 167, 82, 0.12);
   border-radius: 12px;
-  padding: 0.55rem 0.65rem;
-  background: rgba(15, 15, 15, 0.7);
+  padding: 0.6rem 0.75rem;
+  background: rgba(15, 15, 15, 0.65);
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  transition: border-color 160ms ease, background 160ms ease;
+  gap: 0.2rem;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
 }
 
+.ops-ranking-item:hover {
+  border-color: rgba(200, 167, 82, 0.25);
+  background: rgba(200, 167, 82, 0.03);
+}
+
+/* #1 — Gold champion */
 .ops-ranking-item:first-child {
-  border-color: rgba(200, 167, 82, 0.35);
+  border-color: rgba(200, 167, 82, 0.5);
   background:
-    linear-gradient(135deg, rgba(200, 167, 82, 0.1) 0%, rgba(200, 167, 82, 0.03) 100%),
-    rgba(12, 12, 12, 0.85);
+    linear-gradient(135deg, rgba(200, 167, 82, 0.14) 0%, rgba(200, 167, 82, 0.04) 100%),
+    rgba(10, 10, 10, 0.9);
+  box-shadow: 0 2px 12px rgba(200, 167, 82, 0.08);
 }
 
 .ops-ranking-item:first-child .ops-ranking-position {
   color: #C8A752;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  text-shadow: 0 0 8px rgba(200, 167, 82, 0.3);
 }
 
 .ops-ranking-item:first-child .ops-ranking-name {
   color: #fff;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .ops-ranking-item:first-child .ops-ranking-value {
   color: #e8d48b;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  text-shadow: 0 0 6px rgba(200, 167, 82, 0.15);
+}
+
+/* #2 — Silver accent */
+.ops-ranking-item:nth-child(2) {
+  border-color: rgba(192, 192, 210, 0.2);
+  background:
+    linear-gradient(135deg, rgba(192, 192, 210, 0.06) 0%, transparent 100%),
+    rgba(12, 12, 12, 0.85);
+}
+
+.ops-ranking-item:nth-child(2) .ops-ranking-position {
+  color: rgba(210, 210, 225, 0.85);
+}
+
+.ops-ranking-item:nth-child(2) .ops-ranking-value {
+  color: rgba(210, 210, 225, 0.9);
+}
+
+/* #3 — Bronze accent */
+.ops-ranking-item:nth-child(3) {
+  border-color: rgba(180, 130, 80, 0.2);
+  background:
+    linear-gradient(135deg, rgba(180, 130, 80, 0.06) 0%, transparent 100%),
+    rgba(12, 12, 12, 0.85);
+}
+
+.ops-ranking-item:nth-child(3) .ops-ranking-position {
+  color: rgba(200, 155, 100, 0.85);
+}
+
+.ops-ranking-item:nth-child(3) .ops-ranking-value {
+  color: rgba(200, 155, 100, 0.9);
 }
 
 .ops-ranking-row {
@@ -3668,29 +3712,31 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 .ops-ranking-position {
-  color: rgba(200, 167, 82, 0.7);
-  font-size: 0.72rem;
+  color: rgba(200, 167, 82, 0.65);
+  font-size: 0.74rem;
   font-weight: 700;
-  min-width: 24px;
+  min-width: 26px;
   font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.3px;
 }
 
 .ops-ranking-name {
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.84rem;
   font-weight: 700;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: 'Rajdhani', sans-serif;
 }
 
 .ops-ranking-value {
   color: #C8A752;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
   font-family: 'Rajdhani', sans-serif;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .ops-ranking-meta {
@@ -3701,25 +3747,27 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
 .ops-ranking-empty {
   margin: 0;
-  border: 1px dashed rgba(200, 167, 82, 0.18);
+  border: 1px dashed rgba(200, 167, 82, 0.15);
   border-radius: 12px;
-  padding: 1.2rem 0.8rem;
+  padding: 1.5rem 1rem;
   text-align: center;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.76rem;
   line-height: 1.5;
   background: rgba(200, 167, 82, 0.02);
+  font-family: 'Rajdhani', sans-serif;
 }
 
 .ops-rankings-note {
-  margin-top: 0.5rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 10px;
-  background: rgba(200, 167, 82, 0.05);
-  color: rgba(255, 255, 255, 0.6);
+  margin-top: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(200, 167, 82, 0.04);
+  color: rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(200, 167, 82, 0.12);
-  font-size: 0.7rem;
-  line-height: 1.4;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  font-family: 'Rajdhani', sans-serif;
 }
 
 .financial-tabs {
@@ -4707,8 +4755,8 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
   --arw-shadow-gold: 0 0 30px rgba(212,175,55,0.15);
   --arw-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --arw-font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  --arw-sidebar-width: 280px;
-  --arw-header-height: 56px;
+  --arw-sidebar-width: 240px;
+  --arw-header-height: 52px;
   --arw-transition-fast: 0.15s ease;
   --arw-transition-normal: 0.25s ease;
   --arw-radius-sm: 8px;
@@ -4719,29 +4767,31 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 /* Container Layout */
 #agro-widget-root .arw-app-container {
   display: flex;
-  height: 600px;
-  max-height: 80vh;
+  height: 750px;
+  max-height: 88vh;
   overflow: hidden;
   position: relative;
   background: var(--arw-bg-primary);
-  border-radius: var(--arw-radius-lg);
+  border-radius: 18px;
   border: 1px solid var(--arw-border-gold);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.35), 0 0 60px rgba(212,175,55,0.03);
 }
 
 /* Sidebar Styles */
 #agro-widget-root .arw-sidebar {
   width: var(--arw-sidebar-width);
-  background: linear-gradient(180deg, rgba(15,18,25,0.95), rgba(10,14,20,0.9));
-  border-right: 1px solid var(--arw-border-subtle);
+  background:
+    linear-gradient(180deg, rgba(15,18,25,0.97), rgba(8,10,16,0.95));
+  border-right: 1px solid rgba(200,167,82,0.08);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   transition: transform var(--arw-transition-normal);
-  box-shadow: var(--arw-shadow-lg);
+  box-shadow: 2px 0 16px rgba(0,0,0,0.3);
 }
 
 #agro-widget-root .arw-sidebar-header {
-  padding: 18px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--arw-border-gold);
   background: linear-gradient(180deg, rgba(212,175,55,0.06), transparent);
 }
@@ -4784,7 +4834,7 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 }
 
 #agro-widget-root .arw-sidebar-actions {
-  padding: 14px 18px;
+  padding: 12px 16px;
 }
 
 #agro-widget-root .arw-btn-new-bitacora {
@@ -4914,12 +4964,12 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 
 #agro-widget-root .arw-main-header {
   height: var(--arw-header-height);
-  padding: 0 18px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--arw-border-subtle);
-  background: linear-gradient(180deg, rgba(15,18,25,0.9), rgba(10,14,20,0.8));
+  border-bottom: 1px solid rgba(200,167,82,0.1);
+  background: linear-gradient(180deg, rgba(15,18,25,0.92), rgba(10,14,20,0.85));
 }
 
 #agro-widget-root .arw-header-left {
@@ -4987,7 +5037,7 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
 #agro-widget-root .arw-content-area {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 28px 32px;
 }
 
 /* Welcome Screen */

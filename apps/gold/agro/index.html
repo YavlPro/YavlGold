@@ -1181,9 +1181,6 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
                         aria-hidden="true">🧾</span><span>Operaciones</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="operaciones"><span
-                        class="agro-shell-link__icon" aria-hidden="true">⚙️</span><span
-                        class="agro-shell-link__label">Operaciones</span></button>
                 <button type="button" class="agro-shell-link" data-agro-view="pagados"><span
                         class="agro-shell-link__icon" aria-hidden="true">💰</span><span
                         class="agro-shell-link__label">Pagados</span></button>
@@ -1210,7 +1207,7 @@
                 <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
                         aria-hidden="true">🛠</span><span>Herramientas</span></p>
                 <button type="button" class="agro-shell-link" data-agro-view="clima"><span class="agro-shell-link__icon"
-                        aria-hidden="true">☁️</span><span class="agro-shell-link__label">Clima</span></button>
+                        aria-hidden="true">☁️</span><span class="agro-shell-link__label">Clima Agro</span></button>
                 <button type="button" class="agro-shell-link" data-agro-view="agenda"><span
                         class="agro-shell-link__icon" aria-hidden="true">🗓</span><span
                         class="agro-shell-link__label">Agenda</span></button>
@@ -1484,6 +1481,15 @@
                         </div>
                     </div>
                 </details>
+            </div>
+        </section>
+
+        <!-- ============================================
+             ☁️ SECCIÓN CLIMA AGRO — Vista dedicada completa
+             ============================================ -->
+        <section class="agro-clima-region" data-agro-shell-region="clima" hidden inert>
+            <div id="agro-clima-root" class="agro-clima-root">
+                <!-- agro-clima.js renders here when clima view is active -->
             </div>
         </section>
 
@@ -3075,7 +3081,7 @@
 
                     <!-- Preview Panel (Right Side Stats) -->
                     <aside class="arw-preview-panel" id="arw-previewPanel"
-                        style="display:none;width:280px;background:var(--arw-bg-secondary);border-left:1px solid var(--arw-border-subtle);overflow-y:auto;flex-shrink:0;">
+                        style="display:none;width:260px;background:var(--arw-bg-secondary);border-left:1px solid rgba(200,167,82,0.1);overflow-y:auto;flex-shrink:0;">
                         <div class="arw-preview-header"
                             style="padding:16px 18px;border-bottom:1px solid var(--arw-border-subtle);background:rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--arw-text-primary);">
                             <span>📊</span> Resumen de Bitácora

@@ -33,7 +33,7 @@ const VIEW_CONFIG = Object.freeze({
     otros: { region: 'ops', label: 'Otros', tab: 'otros', focusSelector: '#agro-otros-dedicated', dense: true },
     carrito: { region: 'ops', label: 'Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
-    clima: { region: 'dashboard', label: 'Clima', focusSelector: '[data-widget="weather"]' },
+    clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     agenda: { region: 'agenda', label: 'Agenda', focusSelector: '[data-agro-shell-region="agenda"]' },
     herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },
     agrorepo: { region: 'agrorepo', label: 'Bitacora', focusSelector: '#agro-repo-section', dense: true }
@@ -270,6 +270,10 @@ export function initAgroShell() {
 
         const focusSelector = config.focusSelector || `[data-agro-shell-region="${config.region}"]`;
         focusTarget(focusSelector, options);
+
+        if (view === 'clima' && typeof window.openAgroClima === 'function') {
+            window.openAgroClima({ inline: true });
+        }
 
         if (view === 'agenda' && typeof window.openAgroAgenda === 'function') {
             window.openAgroAgenda({ inline: true });

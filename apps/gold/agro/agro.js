@@ -15257,6 +15257,18 @@ function switchTab(tabName, options = {}) {
     return true;
 }
 
+// V9.8: Clima Agro lazy-loader
+let _climaModuleLoaded = false;
+window.openAgroClima = async function (opts) {
+    try {
+        const { initAgroClima } = await import('./agro-clima.js');
+        await initAgroClima({ inline: opts?.inline === true, forceRefresh: !_climaModuleLoaded });
+        _climaModuleLoaded = true;
+    } catch (err) {
+        console.error('[AGRO] Failed to load clima module:', err);
+    }
+};
+
 // V9.8: Agro Agenda lazy-loader
 let _agendaModuleLoaded = false;
 window.openAgroAgenda = async function (opts) {

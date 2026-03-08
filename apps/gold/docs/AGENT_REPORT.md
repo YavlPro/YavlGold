@@ -1,3 +1,107 @@
+## 🆕 SESIÓN: Clima Agro dedicado + Rankings + AgroRepo + Sidebar cleanup (2026-03-08b)
+
+### Diagnóstico
+
+**1. Clima** (`dashboard.js` 885 líneas, `agroclima-layout.js` 95 líneas, `agro-planning.js` 414 líneas)
+- Clima ya está SEPARADO de `agro.js` → vive en `dashboard.js`.
+- `dashboard.js`: `initWeather()`, `fetchWeather()`, `displayWeather()`, location controls, search modal, geo debug.
+- `agroclima-layout.js`: toggle del pronóstico semanal inline dentro del weather card.
+- `agro-planning.js`: pronóstico 7 días con consejos agronómicos.
+- **Shell config**: `clima: { region: 'dashboard', focusSelector: '[data-widget="weather"]' }` → solo scroll al card de clima dentro de dashboard. NO es vista dedicada.
+- **Dashboard integration**: Weather card (temp, location, humidity, conditions) + CTA "📅 Ver pronóstico" abre accordion inline.
+- **Problema raíz**: No existe región shell `data-agro-shell-region="clima"`. Sidebar "Clima" muestra el dashboard entero y scrollea al widget. No hay pantalla "Clima Agro" completa.
+
+**2. Sidebar** (`index.html` L1153-1239)
+- "Operaciones" (`data-agro-view="operaciones"`) aparece como primer item del grupo Operaciones. En la UI se ve como "Centro de Operaciones" con fondo dorado (screenshot). Contradice la arquitectura de vistas dedicadas (Pagados, Fiados, etc. ya existen como entradas propias).
+- **Acción**: Eliminar esa entrada. Los sub-items (Pagados, Fiados, etc.) son suficientes.
+
+**3. Rankings** (`agro.css` L3467-3723)
+- Paneles con bordes/fondos dark opacos, poca jerarquía visual.
+- #1 items tienen gold sutil pero insuficiente.
+- Screenshot confirma: se ve plano, muerto, sin contraste contra el fondo.
+- **Acción**: Redesign CSS — más contraste, color metálico vivo, top items con mayor presencia, cards con profundidad.
+
+**4. AgroRepo** (`agro.css` L4680-5450, template en `index.html` L2880+)
+- `.arw-app-container { height: 600px; max-height: 80vh }` — muy rígido, se siente pequeño.
+- Sidebar interna 280px, preview panel 280px, content area comprimida.
+- Screenshot confirma: layout estrecho, falta aire, premium insuficiente.
+- **Acción**: Ampliar height, dar más espacio al content area, mejorar bordes/fondos/espaciado.
+
+### Plan quirúrgico
+1. Sidebar: eliminar "Operaciones" entry
+2. Clima Agro: crear región shell dedicada + módulo `agro-clima.js` con vista completa inline
+3. Rankings: CSS redesign profundo
+4. AgroRepo: CSS improvements (height, width, air)
+5. Build + QA
+
+### Archivos a tocar
+- `index.html` — sidebar, nueva región clima, AgroRepo HTML tweaks
+- `agro-shell.js` — VIEW_CONFIG.clima → region propia, applyViewEffects
+- `agro-clima.js` **(nuevo)** — módulo lazy-loaded para vista Clima Agro
+- `agro.css` — Rankings CSS, AgroRepo CSS
+- `agro-operations.css` — AgroRepo header tweaks si aplica
+- `AGENT_REPORT.md`
+
+### Riesgos
+- Clima Agro necesita reusar datos de `dashboard.js` (currentLocation, fetchWeather). Se resuelve leyendo `window.YGAgroLocationContext` o fallback a `window.YGGeolocation`.
+- Rankings CSS debe no romper layout existente de tabs/operaciones.
+- AgroRepo height change podría afectar scroll en mobile.
+
+### Implementación completada
+
+**1. Sidebar** (`index.html`)
+- Eliminada entrada "Operaciones" (`data-agro-view="operaciones"`).
+- Renombrada "Clima" → "Clima Agro" en sidebar.
+
+**2. Clima Agro** (nuevo módulo)
+- `agro-clima.js` **(nuevo, ~380 líneas)**: módulo ES lazy-loaded con `export initAgroClima()`.
+  - Fetch propio a Open-Meteo con datos extendidos (current + daily 7d + UV + viento + presión).
+  - Vista completa: condiciones actuales, 6 métricas detalle, consejo agrícola contextual, pronóstico 7 días.
+  - Modal de cambio de ubicación propio (independiente de dashboard.js).
+  - CSS inline inyectado (prefijo `clima-*`), responsive.
+- `index.html`: nueva región `data-agro-shell-region="clima"` con `#agro-clima-root`.
+- `agro-shell.js`: `VIEW_CONFIG.clima` → `{ region: 'clima', label: 'Clima Agro' }` + lazy-load en `applyViewEffects`.
+- `agro.js`: `window.openAgroClima` lazy-loader registrado.
+
+**3. Rankings** (`agro.css`)
+- Panel: más padding, shadow exterior, borde más definido.
+- Cards: gradient gold sutil, hover con translateY + shadow, bordes más cálidos.
+- Top 1 (Gold): border más vivo, background gradient gold, text-shadow dorado.
+- Top 2 (Silver): borde/fondo plata, valores en tono plateado.
+- Top 3 (Bronze): borde/fondo bronce, valores en tono cobre.
+- Items restantes: hover state mejorado.
+- Typography: Rajdhani en names, values, notes. Orbitron en positions.
+
+**4. AgroRepo** (`agro.css` + `index.html`)
+- Container: 600px → 750px height, 80vh → 88vh max-height, border-radius 18px, box-shadow premium.
+- Sidebar: 280px → 240px, padding reducido, borde gold sutil.
+- Content area: padding 24px → 28px 32px.
+- Preview panel: 280px → 260px, borde gold sutil.
+- Header: borde gold sutil, padding ajustado.
+
+### Build
+- `pnpm build:gold` → ✅ OK (3.47s)
+- 132 modules (nuevo: agro-clima)
+- `agro-clima-B9Msfm7h.js`: 25.01 kB (nuevo chunk)
+- `agro-oQ5RZmip.css`: 106.44 kB (+1 KB)
+- UTF-8 check: ✅
+
+### QA manual
+1. Dashboard Agro: confirmar que sigue siendo resumen, no pseudo-clima
+2. Sidebar: confirmar que "Operaciones" ya no aparece, "Clima Agro" visible
+3. Clima Agro: click sidebar → vista dedicada con datos reales, pronóstico, consejos
+4. Clima Agro: botón "Cambiar" → modal ubicación funcional
+5. Clima Agro: botón "Actualizar" → recarga datos
+6. Rankings: verificar top 1 gold, top 2 silver, top 3 bronze, hover states
+7. AgroRepo: confirmar que el contenedor es más alto y espacioso
+8. Mobile: verificar forecast grid 4 columnas, clima current apilado
+
+### Deuda residual
+- `dashboard.js` sigue teniendo la lógica de clima del dashboard card. OK — son dos contextos diferentes (resumen vs. vista completa).
+- `operaciones` view sigue en VIEW_CONFIG pero sin sidebar entry. Podría limpiarse en una futura sesión si se confirma que nadie lo usa por URL directa.
+
+---
+
 ## 🆕 SESIÓN: Dashboard/Clima/Agenda/Rankings/AgroRepo restructure (2026-03-08)
 
 ### Diagnóstico
