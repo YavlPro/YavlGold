@@ -27,7 +27,7 @@ const VIEW_CONFIG = Object.freeze({
     ciclos: { region: 'cultivos', label: 'Historial de ciclos', focusSelector: '#crops-cycle-history-accordion' },
     operaciones: { region: 'ops', label: 'Centro de operaciones', resolveTab: resolveOperationsTab, dense: true },
     pagados: { region: 'ops', label: 'Pagados', tab: 'ingresos', focusSelector: '#agro-pagados-dedicated', dense: true },
-    fiados: { region: 'ops', label: 'Fiados', tab: 'pendientes', dense: true },
+    fiados: { region: 'ops', label: 'Fiados', tab: 'pendientes', focusSelector: '#agro-fiados-dedicated', dense: true },
     perdidas: { region: 'ops', label: 'Perdidas', tab: 'perdidas', dense: true },
     donaciones: { region: 'ops', label: 'Donaciones', tab: 'transferencias', dense: true },
     otros: { region: 'ops', label: 'Otros', tab: 'otros', dense: true },

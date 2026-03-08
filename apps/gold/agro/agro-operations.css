@@ -224,6 +224,19 @@ body[data-agro-active-view='pagados'] .ops-header-pagados {
   display: block;
 }
 
+/* Header swap: Fiados view */
+.ops-header-fiados {
+  display: none;
+}
+
+body[data-agro-active-view='fiados'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='fiados'] .ops-header-fiados {
+  display: block;
+}
+
 .agro-ops-v10 .header-actions {
   display: flex;
   align-items: center;
@@ -615,7 +628,15 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .financial-operations-card {
   display: none;
 }
 
-body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
+body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated:not(.agro-fiados-dedicated) {
+  display: flex;
+}
+
+body[data-agro-active-view='fiados'] .agro-ops-v10 .financial-operations-card {
+  display: none;
+}
+
+body[data-agro-active-view='fiados'] .agro-ops-v10 .agro-fiados-dedicated {
   display: flex;
 }
 
@@ -966,7 +987,8 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   z-index: 0;
 }
 
-#pagados-dedicated-list.facturero-history-list {
+#pagados-dedicated-list.facturero-history-list,
+#fiados-dedicated-list.facturero-history-list {
   max-height: none !important;
   overflow-y: visible !important;
 }

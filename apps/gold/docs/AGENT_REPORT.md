@@ -1,3 +1,72 @@
+## 🆕 SESIÓN: Vista dedicada Fiados — Agro V1 (2026-03-08)
+
+### Objetivo
+Implementar vista dedicada exclusiva para Fiados (cuentas pendientes) replicando la arquitectura de la vista dedicada de Pagados: superficie propia, sin mezclar otros historiales ni tabs del Centro de Operaciones.
+
+### Cambios realizados
+
+**1. Shell** (`agro-shell.js`):
+- Agregado `focusSelector: '#agro-fiados-dedicated'` a `VIEW_CONFIG.fiados`
+
+**2. HTML** (`index.html`):
+- Header swap: `h2.ops-header-fiados` ("Registro de Fiados") + `p.ops-header-fiados` (subtítulo)
+- Sección `#agro-fiados-dedicated` completa:
+  - Hero con badge de conteo
+  - Paso 1: Selector de cultivo (`#fiados-dedicated-crop-row`)
+  - Paso 2: Botón wizard ("+ Nuevo registro fiado")
+  - Historial exclusivo con búsqueda, filtros transferidos/revertidos, lista agrupada por día
+  - Footer interno: nuevo registro + exportar
+
+**3. CSS** (`agro-operations.css`):
+- Header swap fiados: `.ops-header-fiados` hidden por defecto, visible con `body[data-agro-active-view='fiados']`
+- Visibilidad: `financial-operations-card` oculta + `agro-fiados-dedicated` visible cuando `activeView=fiados`
+- Selector pagados refinado a `:not(.agro-fiados-dedicated)` para evitar conflicto
+- `#fiados-dedicated-list` overflow fix (match pagados)
+- Reutiliza todas las clases `.agro-pagados-*` existentes (zero CSS nuevo para layout)
+
+**4. JS** (`agro.js`):
+- State vars: `fiadosDedicatedSearchQuery`, `fiadosDedicatedStateFilter`, `fiadosDedicatedEventsBound`
+- `getFiadosDedicatedElements()` — DOM refs para fiados dedicated
+- `getFiadosDedicatedScopeLabel()`, `normalizeFiadosDedicatedStateFilter()`, `getFiadosDedicatedStateLabel()`
+- `getFiadosDedicatedStateToken()` — detecta transferred/reverted via `transfer_state` y `reverted_at`
+- `matchesFiadosDedicatedQuery()` — búsqueda por concepto, cliente, cultivo, fecha
+- `matchesFiadosDedicatedFilters()`, `getFiadosDedicatedRows()`, `getFiadosDedicatedViewState()`
+- `renderFiadosDedicatedCropSelector()` — chips de cultivo con Vista general
+- `renderFiadosDedicatedStateFilters()` — chips transferred/reverted dinámicos
+- `renderFiadosDedicatedItem()` — usa `renderHistoryRow('pendientes', ...)` con actions edit/transfer/delete
+- `renderFiadosDedicatedGroupedRows()` — agrupación por día descendente
+- `renderFiadosDedicatedView()` — render principal completo
+- `bindFiadosDedicatedView()` — eventos: crop selection, search, filter chips, wizard, export
+- `initFiadosDedicatedView()` — wired en main init después de `initPagadosDedicatedView()`
+- Event listeners: `agro:shell:view-changed`, `agro:crop:changed`, `AGRO_CROPS_READY_EVENT`, `data-refresh`, `agro:income:changed`
+- Datasource: `pendingCache` (via `FACTURERO_CONFIG.pendientes`)
+- Wizard: `launchAgroWizard('pendientes', ...)`
+- Export: `exportAgroLog('pendientes', ...)`
+
+### Archivos modificados
+- `apps/gold/agro/agro-shell.js` — focusSelector fiados
+- `apps/gold/agro/index.html` — header swap + sección dedicada fiados
+- `apps/gold/agro/agro-operations.css` — header swap CSS + visibilidad toggle + overflow fix
+- `apps/gold/agro/agro.js` — state vars + funciones dedicadas fiados + init
+
+**Build**: ✅ `pnpm build:gold` exitoso (3.57s)
+
+### QA
+- [ ] Sidebar → Fiados → muestra sección dedicada, oculta Centro de Operaciones
+- [ ] Header macro cambia a "Registro de Fiados" con subtítulo correcto
+- [ ] Selector cultivo funciona (Vista general + chips por cultivo)
+- [ ] Botón "Nuevo registro fiado" abre wizard de pendientes
+- [ ] Historial muestra solo fiados agrupados por fecha descendente
+- [ ] Búsqueda filtra por concepto/cliente/cultivo
+- [ ] Filtros transferidos/revertidos aparecen dinámicamente
+- [ ] Badge muestra conteo correcto
+- [ ] Exportar genera markdown de fiados
+- [ ] Vista Pagados NO se rompe
+- [ ] Centro de Operaciones NO se rompe
+- [ ] Mobile: layout responsive correcto
+
+---
+
 ## 🆕 SESIÓN: UI — Jerarquía visual Pagados + DNA V10 (2026-03-08)
 
 ### Problema

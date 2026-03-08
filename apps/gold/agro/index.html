@@ -1730,10 +1730,13 @@
                     <p class="ops-module-eyebrow">Finanzas Agro</p>
                     <h2 class="module-title ops-header-default">Centro de Operaciones</h2>
                     <h2 class="module-title ops-header-pagados">Registro de Pagados</h2>
+                    <h2 class="module-title ops-header-fiados">Registro de Fiados</h2>
                     <p class="module-subtitle ops-header-default">Movimientos, privacidad y vistas del facturero
                         en una sola mesa operativa.</p>
                     <p class="module-subtitle ops-header-pagados">Consulta cobros registrados, filtra por cultivo
                         y abre el flujo pagado sin mezclar otros movimientos.</p>
+                    <p class="module-subtitle ops-header-fiados">Gestiona cuentas pendientes, filtra por cultivo
+                        y registra fiados sin mezclar otros movimientos.</p>
                 </div>
             </div>
         </header>
@@ -2219,6 +2222,119 @@
                 </button>
                 <button type="button" class="btn btn-outline agro-pagados-footer__btn"
                     id="btn-pagados-dedicated-export">
+                    Exportar registros
+                </button>
+            </div>
+        </div>
+
+        <div class="agro-fiados-dedicated agro-pagados-dedicated" id="agro-fiados-dedicated"
+            aria-label="Vista dedicada de Fiados">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Registro de Fiados</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Gestiona cuentas pendientes, filtra por cultivo y
+                        registra fiados sin mezclar otros movimientos.</p>
+                </div>
+                <div class="agro-pagados-dedicated__badge" id="fiados-dedicated-count-badge" hidden>0 fiados visibles
+                </div>
+            </div>
+
+            <div class="agro-pagados-dedicated__steps">
+                <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 1 &middot; Seleccionar cultivo</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Filtrar contexto de deuda</h4>
+                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo espec&iacute;fico
+                                para
+                                aislar &uacute;nicamente los fiados de ese ciclo.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__body">
+                        <div class="agro-pagados-crop-row" id="fiados-dedicated-crop-row" role="group"
+                            aria-label="Filtro de cultivo para Fiados"></div>
+                        <p class="agro-pagados-crop-hint" id="fiados-dedicated-scope-copy">Vista general activa:
+                            historial, nuevo registro y exportaci&oacute;n abarcan todos los fiados.</p>
+                    </div>
+                </section>
+
+                <section class="agro-pagados-step agro-pagados-step--create" aria-label="Paso 2 Crear registro fiado">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 2 &middot; Crear registro fiado</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Abrir flujo de fiados</h4>
+                            <p class="agro-pagados-step__note">Entra directo al wizard para registrar un fiado sin
+                                pasar por tabs ni otros historiales.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__action">
+                        <button type="button" class="btn btn-gold agro-pagados-step__primary"
+                            id="btn-fiados-dedicated-new-top">
+                            + Nuevo registro fiado
+                        </button>
+                        <p class="agro-pagados-step__microcopy">Abre el flujo de <strong>Fiados</strong> con el cultivo
+                            activo de esta vista.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="agro-pagados-history" id="fiados-dedicated-history"
+                aria-label="Historial exclusivo de Fiados">
+                <div class="agro-pagados-history__head">
+                    <div>
+                        <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
+                        <h4 class="agro-pagados-history__title">Historial de fiados</h4>
+                        <p class="agro-pagados-history__subtitle">B&uacute;squeda, filtro y exportaci&oacute;n limitados
+                            &uacute;nicamente a
+                            cuentas pendientes.</p>
+                    </div>
+                    <div class="agro-pagados-history__tools">
+                        <label class="agro-pagados-search" for="fiados-dedicated-search">
+                            <span class="agro-pagados-search__label">Buscar</span>
+                            <input type="search" id="fiados-dedicated-search" class="agro-pagados-search__input"
+                                placeholder="Concepto, cliente o cultivo">
+                        </label>
+                        <div class="agro-pagados-history__filters" id="fiados-dedicated-filters" hidden
+                            aria-hidden="true">
+                            <button type="button" class="agro-pagados-history__filter-chip"
+                                id="fiados-dedicated-filter-transferred" data-fiados-filter="transferred"
+                                aria-pressed="false">
+                                Transferidos
+                            </button>
+                            <button type="button" class="agro-pagados-history__filter-chip"
+                                id="fiados-dedicated-filter-reverted" data-fiados-filter="reverted"
+                                aria-pressed="false">
+                                Revertidos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="agro-pagados-history__meta">
+                    <p class="agro-pagados-history__scope" id="fiados-dedicated-scope-pill">Scope activo: Vista general
+                    </p>
+                    <p class="agro-pagados-history__status" id="fiados-dedicated-status">Viendo todos los fiados.
+                        Exportaci&oacute;n y wizard quedan en Vista general.</p>
+                </div>
+                <p class="agro-pagados-history__selection" id="fiados-dedicated-selection-status" aria-live="polite">
+                    Selecciona un fiado para ver Editar, Transferir o Eliminar.
+                </p>
+
+                <div class="agro-pagados-history__empty" id="fiados-dedicated-empty">
+                    <div class="empty-state-icon">📋</div>
+                    <p class="empty-state-text">No hay fiados registrados para este filtro.</p>
+                </div>
+
+                <div class="agro-pagados-history__list facturero-history-list" id="fiados-dedicated-list"></div>
+            </section>
+
+            <div class="agro-pagados-dedicated__footer" id="fiados-dedicated-footer">
+                <button type="button" class="btn btn-gold agro-pagados-footer__btn"
+                    id="btn-fiados-dedicated-new-bottom">
+                    + Nuevo registro fiado
+                </button>
+                <button type="button" class="btn btn-outline agro-pagados-footer__btn" id="btn-fiados-dedicated-export">
                     Exportar registros
                 </button>
             </div>
