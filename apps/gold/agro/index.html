@@ -1731,12 +1731,21 @@
                     <h2 class="module-title ops-header-default">Centro de Operaciones</h2>
                     <h2 class="module-title ops-header-pagados">Registro de Pagados</h2>
                     <h2 class="module-title ops-header-fiados">Registro de Fiados</h2>
+                    <h2 class="module-title ops-header-perdidas">Registro de Pérdidas</h2>
+                    <h2 class="module-title ops-header-donaciones">Registro de Donaciones</h2>
+                    <h2 class="module-title ops-header-otros">Otros Movimientos</h2>
                     <p class="module-subtitle ops-header-default">Movimientos, privacidad y vistas del facturero
                         en una sola mesa operativa.</p>
                     <p class="module-subtitle ops-header-pagados">Consulta cobros registrados, filtra por cultivo
                         y abre el flujo pagado sin mezclar otros movimientos.</p>
                     <p class="module-subtitle ops-header-fiados">Gestiona cuentas pendientes, filtra por cultivo
                         y registra fiados sin mezclar otros movimientos.</p>
+                    <p class="module-subtitle ops-header-perdidas">Registra y consulta pérdidas del ciclo
+                        productivo, filtra por cultivo y exporta sin mezclar otros movimientos.</p>
+                    <p class="module-subtitle ops-header-donaciones">Gestiona transferencias y donaciones
+                        entre ciclos, filtra por cultivo y mantén trazabilidad limpia.</p>
+                    <p class="module-subtitle ops-header-otros">Movimientos transferidos desde otras categorías.
+                        Vista consolidada con trazabilidad de origen.</p>
                 </div>
             </div>
         </header>
@@ -2335,6 +2344,291 @@
                     + Nuevo registro fiado
                 </button>
                 <button type="button" class="btn btn-outline agro-pagados-footer__btn" id="btn-fiados-dedicated-export">
+                    Exportar registros
+                </button>
+            </div>
+        </div>
+
+        <div class="agro-perdidas-dedicated agro-pagados-dedicated" id="agro-perdidas-dedicated"
+            aria-label="Vista dedicada de Pérdidas">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Registro de Pérdidas</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Registra y consulta pérdidas del ciclo productivo,
+                        filtra por cultivo y exporta sin mezclar otros movimientos.</p>
+                </div>
+                <div class="agro-pagados-dedicated__badge" id="perdidas-dedicated-count-badge" hidden>0 pérdidas
+                    visibles</div>
+            </div>
+
+            <div class="agro-pagados-dedicated__steps">
+                <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 1 &middot; Seleccionar cultivo</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Filtrar contexto de pérdida</h4>
+                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo
+                                espec&iacute;fico para aislar &uacute;nicamente las pérdidas de ese ciclo.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__body">
+                        <div class="agro-pagados-crop-row" id="perdidas-dedicated-crop-row" role="group"
+                            aria-label="Filtro de cultivo para Pérdidas"></div>
+                        <p class="agro-pagados-crop-hint" id="perdidas-dedicated-scope-copy">Vista general activa:
+                            historial, nuevo registro y exportaci&oacute;n abarcan todas las pérdidas.</p>
+                    </div>
+                </section>
+
+                <section class="agro-pagados-step agro-pagados-step--create"
+                    aria-label="Paso 2 Crear registro de pérdida">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 2 &middot; Crear registro de pérdida</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Abrir flujo de pérdidas</h4>
+                            <p class="agro-pagados-step__note">Entra directo al wizard para registrar una pérdida
+                                sin pasar por tabs ni otros historiales.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__action">
+                        <button type="button" class="btn btn-gold agro-pagados-step__primary"
+                            id="btn-perdidas-dedicated-new-top">
+                            + Nueva pérdida
+                        </button>
+                        <p class="agro-pagados-step__microcopy">Abre el flujo de <strong>Pérdidas</strong> con el
+                            cultivo activo de esta vista.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="agro-pagados-history" id="perdidas-dedicated-history"
+                aria-label="Historial exclusivo de Pérdidas">
+                <div class="agro-pagados-history__head">
+                    <div>
+                        <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
+                        <h4 class="agro-pagados-history__title">Historial de pérdidas</h4>
+                        <p class="agro-pagados-history__subtitle">B&uacute;squeda, filtro y exportaci&oacute;n
+                            limitados &uacute;nicamente a pérdidas registradas.</p>
+                    </div>
+                    <div class="agro-pagados-history__tools">
+                        <label class="agro-pagados-search" for="perdidas-dedicated-search">
+                            <span class="agro-pagados-search__label">Buscar</span>
+                            <input type="search" id="perdidas-dedicated-search" class="agro-pagados-search__input"
+                                placeholder="Concepto, causa o cultivo">
+                        </label>
+                        <div class="agro-pagados-history__filters" id="perdidas-dedicated-filters" hidden
+                            aria-hidden="true">
+                            <button type="button" class="agro-pagados-history__filter-chip"
+                                id="perdidas-dedicated-filter-transferred" data-perdidas-filter="transferred"
+                                aria-pressed="false">
+                                Transferidos
+                            </button>
+                            <button type="button" class="agro-pagados-history__filter-chip"
+                                id="perdidas-dedicated-filter-reverted" data-perdidas-filter="reverted"
+                                aria-pressed="false">
+                                Revertidos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="agro-pagados-history__meta">
+                    <p class="agro-pagados-history__status" id="perdidas-dedicated-status">Viendo todas las
+                        pérdidas.</p>
+                </div>
+                <p class="agro-pagados-history__selection" id="perdidas-dedicated-selection-status" aria-live="polite">
+                    Selecciona una pérdida para ver Editar o Eliminar.
+                </p>
+
+                <div class="agro-pagados-history__empty" id="perdidas-dedicated-empty">
+                    <div class="empty-state-icon">⚠️</div>
+                    <p class="empty-state-text">No hay pérdidas registradas para este filtro.</p>
+                </div>
+
+                <div class="agro-pagados-history__list facturero-history-list" id="perdidas-dedicated-list"></div>
+            </section>
+
+            <div class="agro-pagados-dedicated__footer" id="perdidas-dedicated-footer">
+                <button type="button" class="btn btn-gold agro-pagados-footer__btn"
+                    id="btn-perdidas-dedicated-new-bottom">
+                    + Nueva pérdida
+                </button>
+                <button type="button" class="btn btn-outline agro-pagados-footer__btn"
+                    id="btn-perdidas-dedicated-export">
+                    Exportar registros
+                </button>
+            </div>
+        </div>
+
+        <div class="agro-donaciones-dedicated agro-pagados-dedicated" id="agro-donaciones-dedicated"
+            aria-label="Vista dedicada de Donaciones">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Registro de Donaciones</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Gestiona transferencias y donaciones entre ciclos,
+                        filtra por cultivo y mantén trazabilidad limpia.</p>
+                </div>
+                <div class="agro-pagados-dedicated__badge" id="donaciones-dedicated-count-badge" hidden>0
+                    donaciones visibles</div>
+            </div>
+
+            <div class="agro-pagados-dedicated__steps">
+                <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 1 &middot; Seleccionar cultivo</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Filtrar contexto de donación</h4>
+                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo
+                                espec&iacute;fico para aislar &uacute;nicamente las donaciones de ese ciclo.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__body">
+                        <div class="agro-pagados-crop-row" id="donaciones-dedicated-crop-row" role="group"
+                            aria-label="Filtro de cultivo para Donaciones"></div>
+                        <p class="agro-pagados-crop-hint" id="donaciones-dedicated-scope-copy">Vista general
+                            activa: historial, nuevo registro y exportaci&oacute;n abarcan todas las donaciones.</p>
+                    </div>
+                </section>
+
+                <section class="agro-pagados-step agro-pagados-step--create"
+                    aria-label="Paso 2 Crear registro de donación">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 2 &middot; Crear registro de donación</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Abrir flujo de donaciones</h4>
+                            <p class="agro-pagados-step__note">Entra directo al wizard para registrar una donación
+                                sin pasar por tabs ni otros historiales.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__action">
+                        <button type="button" class="btn btn-gold agro-pagados-step__primary"
+                            id="btn-donaciones-dedicated-new-top">
+                            + Nueva donación
+                        </button>
+                        <p class="agro-pagados-step__microcopy">Abre el flujo de
+                            <strong>Donaciones</strong> con el cultivo activo de esta vista.
+                        </p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="agro-pagados-history" id="donaciones-dedicated-history"
+                aria-label="Historial exclusivo de Donaciones">
+                <div class="agro-pagados-history__head">
+                    <div>
+                        <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
+                        <h4 class="agro-pagados-history__title">Historial de donaciones</h4>
+                        <p class="agro-pagados-history__subtitle">B&uacute;squeda, filtro y exportaci&oacute;n
+                            limitados &uacute;nicamente a donaciones registradas.</p>
+                    </div>
+                    <div class="agro-pagados-history__tools">
+                        <label class="agro-pagados-search" for="donaciones-dedicated-search">
+                            <span class="agro-pagados-search__label">Buscar</span>
+                            <input type="search" id="donaciones-dedicated-search" class="agro-pagados-search__input"
+                                placeholder="Concepto, destino o cultivo">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="agro-pagados-history__meta">
+                    <p class="agro-pagados-history__status" id="donaciones-dedicated-status">Viendo todas las
+                        donaciones.</p>
+                </div>
+                <p class="agro-pagados-history__selection" id="donaciones-dedicated-selection-status"
+                    aria-live="polite">
+                    Selecciona una donación para ver Editar o Eliminar.
+                </p>
+
+                <div class="agro-pagados-history__empty" id="donaciones-dedicated-empty">
+                    <div class="empty-state-icon">🎁</div>
+                    <p class="empty-state-text">No hay donaciones registradas para este filtro.</p>
+                </div>
+
+                <div class="agro-pagados-history__list facturero-history-list" id="donaciones-dedicated-list">
+                </div>
+            </section>
+
+            <div class="agro-pagados-dedicated__footer" id="donaciones-dedicated-footer">
+                <button type="button" class="btn btn-gold agro-pagados-footer__btn"
+                    id="btn-donaciones-dedicated-new-bottom">
+                    + Nueva donación
+                </button>
+                <button type="button" class="btn btn-outline agro-pagados-footer__btn"
+                    id="btn-donaciones-dedicated-export">
+                    Exportar registros
+                </button>
+            </div>
+        </div>
+
+        <div class="agro-otros-dedicated agro-pagados-dedicated" id="agro-otros-dedicated"
+            aria-label="Vista dedicada de Otros">
+            <div class="agro-pagados-dedicated__hero">
+                <div class="agro-pagados-dedicated__copy">
+                    <p class="agro-pagados-dedicated__eyebrow">Vista dedicada</p>
+                    <h3 class="agro-pagados-dedicated__title">Otros Movimientos</h3>
+                    <p class="agro-pagados-dedicated__subtitle">Movimientos transferidos desde otras categorías.
+                        Vista consolidada con trazabilidad de origen.</p>
+                </div>
+                <div class="agro-pagados-dedicated__badge" id="otros-dedicated-count-badge" hidden>0 movimientos
+                    visibles</div>
+            </div>
+
+            <div class="agro-pagados-dedicated__steps">
+                <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
+                    <div class="agro-pagados-step__head">
+                        <p class="agro-pagados-step__label">Paso 1 &middot; Seleccionar cultivo</p>
+                        <div class="agro-pagados-step__copy">
+                            <h4 class="agro-pagados-step__title">Filtrar contexto</h4>
+                            <p class="agro-pagados-step__note">Usa Vista general o elige un cultivo
+                                espec&iacute;fico para aislar &uacute;nicamente los movimientos de ese ciclo.</p>
+                        </div>
+                    </div>
+                    <div class="agro-pagados-step__body">
+                        <div class="agro-pagados-crop-row" id="otros-dedicated-crop-row" role="group"
+                            aria-label="Filtro de cultivo para Otros"></div>
+                        <p class="agro-pagados-crop-hint" id="otros-dedicated-scope-copy">Vista general activa:
+                            historial y exportaci&oacute;n abarcan todos los movimientos.</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="agro-pagados-history" id="otros-dedicated-history"
+                aria-label="Historial exclusivo de Otros">
+                <div class="agro-pagados-history__head">
+                    <div>
+                        <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
+                        <h4 class="agro-pagados-history__title">Otros movimientos</h4>
+                        <p class="agro-pagados-history__subtitle">Movimientos transferidos desde gastos, pagados,
+                            fiados, pérdidas y donaciones.</p>
+                    </div>
+                    <div class="agro-pagados-history__tools">
+                        <label class="agro-pagados-search" for="otros-dedicated-search">
+                            <span class="agro-pagados-search__label">Buscar</span>
+                            <input type="search" id="otros-dedicated-search" class="agro-pagados-search__input"
+                                placeholder="Concepto, origen o cultivo">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="agro-pagados-history__meta">
+                    <p class="agro-pagados-history__status" id="otros-dedicated-status">Viendo todos los
+                        movimientos.</p>
+                </div>
+                <p class="agro-pagados-history__selection" id="otros-dedicated-selection-status" aria-live="polite">
+                    Selecciona un movimiento para ver detalles.
+                </p>
+
+                <div class="agro-pagados-history__empty" id="otros-dedicated-empty">
+                    <div class="empty-state-icon">📦</div>
+                    <p class="empty-state-text">No hay movimientos registrados para este filtro.</p>
+                </div>
+
+                <div class="agro-pagados-history__list facturero-history-list" id="otros-dedicated-list"></div>
+            </section>
+
+            <div class="agro-pagados-dedicated__footer" id="otros-dedicated-footer">
+                <button type="button" class="btn btn-outline agro-pagados-footer__btn" id="btn-otros-dedicated-export">
                     Exportar registros
                 </button>
             </div>

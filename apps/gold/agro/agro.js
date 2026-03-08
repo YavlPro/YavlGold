@@ -5310,6 +5310,18 @@ async function refreshFactureroHistory(tabName, options = {}) {
         if (tabName === 'gastos') {
             expenseCache = filteredItems;
         }
+        if (tabName === 'perdidas') {
+            lossCache = filteredItems;
+            document.dispatchEvent(new CustomEvent('agro:losses:refreshed'));
+        }
+        if (tabName === 'transferencias') {
+            transferCache = filteredItems;
+            document.dispatchEvent(new CustomEvent('agro:transfers:refreshed'));
+        }
+        if (tabName === 'otros') {
+            otherDedicatedCache = filteredItems;
+            document.dispatchEvent(new CustomEvent('agro:others:refreshed'));
+        }
         renderHistoryList(tabName, config, filteredItems, showActions);
         injectHistorySearchInput(tabName, config);
         initHistoryFilters(tabName);
@@ -11895,6 +11907,17 @@ let fiadosDedicatedSearchQuery = '';
 let fiadosDedicatedShowTransferred = false;
 let fiadosDedicatedShowReverted = false;
 let fiadosDedicatedEventsBound = false;
+let lossCache = [];
+let perdidasDedicatedSearchQuery = '';
+let perdidasDedicatedShowTransferred = false;
+let perdidasDedicatedShowReverted = false;
+let perdidasDedicatedEventsBound = false;
+let transferCache = [];
+let donacionesDedicatedSearchQuery = '';
+let donacionesDedicatedEventsBound = false;
+let otherDedicatedCache = [];
+let otrosDedicatedSearchQuery = '';
+let otrosDedicatedEventsBound = false;
 
 function formatShortCurrency(value) {
     const number = Number(value);
@@ -13256,6 +13279,964 @@ function bindFiadosDedicatedView() {
 function initFiadosDedicatedView() {
     bindFiadosDedicatedView();
     renderFiadosDedicatedView();
+}
+
+// ============================================================
+// V9.8: PÉRDIDAS DEDICATED VIEW
+// ============================================================
+
+function getPerdidasDedicatedElements() {
+    return {
+        view: document.getElementById('agro-perdidas-dedicated'),
+        history: document.getElementById('perdidas-dedicated-history'),
+        cropRow: document.getElementById('perdidas-dedicated-crop-row'),
+        scopeCopy: document.getElementById('perdidas-dedicated-scope-copy'),
+        status: document.getElementById('perdidas-dedicated-status'),
+        countBadge: document.getElementById('perdidas-dedicated-count-badge'),
+        searchInput: document.getElementById('perdidas-dedicated-search'),
+        filterBar: document.getElementById('perdidas-dedicated-filters'),
+        transferredFilter: document.getElementById('perdidas-dedicated-filter-transferred'),
+        revertedFilter: document.getElementById('perdidas-dedicated-filter-reverted'),
+        empty: document.getElementById('perdidas-dedicated-empty'),
+        selection: document.getElementById('perdidas-dedicated-selection-status'),
+        list: document.getElementById('perdidas-dedicated-list'),
+        newTopButton: document.getElementById('btn-perdidas-dedicated-new-top'),
+        newBottomButton: document.getElementById('btn-perdidas-dedicated-new-bottom'),
+        exportButton: document.getElementById('btn-perdidas-dedicated-export'),
+        footer: document.getElementById('perdidas-dedicated-footer')
+    };
+}
+
+function getPerdidasDedicatedScopeLabel(cropId = selectedCropId) {
+    const activeCropId = normalizeCropId(cropId);
+    if (!activeCropId) return 'Vista general';
+    const selected = Array.isArray(cropsCache)
+        ? cropsCache.find((crop) => normalizeCropId(crop?.id) === activeCropId)
+        : null;
+    if (!selected) return 'Cultivo filtrado';
+    const display = getCropDisplayParts(selected, { fallbackIcon: '🌱' });
+    return display.label || 'Cultivo';
+}
+
+function getPerdidasDedicatedSourceRows() {
+    return Array.isArray(lossCache) ? lossCache : [];
+}
+
+function normalizePerdidasSearchQuery(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function matchesPerdidasDedicatedQuery(item, query) {
+    const token = normalizePerdidasSearchQuery(query);
+    if (!token) return true;
+    const haystack = [
+        item?.concepto,
+        item?.descripcion,
+        item?.causa,
+        resolveRecordCropLabel(item),
+        item?.fecha
+    ]
+        .filter(Boolean)
+        .join(' ');
+    return normalizePerdidasSearchQuery(haystack).includes(token);
+}
+
+function perdidasDedicatedPassesToggle(item, options = {}) {
+    const showTransferred = Object.prototype.hasOwnProperty.call(options, 'showTransferred')
+        ? options.showTransferred
+        : perdidasDedicatedShowTransferred;
+    const showReverted = Object.prototype.hasOwnProperty.call(options, 'showReverted')
+        ? options.showReverted
+        : perdidasDedicatedShowReverted;
+    if (isIncomeOrLossReverted(item)) return showReverted;
+    if (isFromPendingTransfer(item)) return showTransferred;
+    return true;
+}
+
+function matchesPerdidasDedicatedFilters(item, options = {}) {
+    const hasCropOption = Object.prototype.hasOwnProperty.call(options, 'cropId');
+    const cropId = hasCropOption
+        ? normalizeCropId(options.cropId)
+        : normalizeCropId(selectedCropId);
+    const searchQuery = Object.prototype.hasOwnProperty.call(options, 'searchQuery')
+        ? options.searchQuery
+        : perdidasDedicatedSearchQuery;
+
+    if (cropId && normalizeCropId(item?.crop_id) !== cropId) return false;
+    if (!matchesPerdidasDedicatedQuery(item, searchQuery)) return false;
+    if (options.skipToggle === true) return true;
+    return perdidasDedicatedPassesToggle(item, options);
+}
+
+function getPerdidasDedicatedRows(items, options = {}) {
+    const rows = Array.isArray(items) ? items : [];
+    return rows.filter((item) => matchesPerdidasDedicatedFilters(item, options));
+}
+
+function getPerdidasDedicatedViewState() {
+    const cropId = normalizeCropId(selectedCropId);
+    const scopeLabel = getPerdidasDedicatedScopeLabel(cropId);
+    const searchQuery = String(perdidasDedicatedSearchQuery || '');
+    const normalizedSearch = normalizePerdidasSearchQuery(searchQuery);
+    const sourceRows = getPerdidasDedicatedSourceRows();
+
+    const allMatchingRows = getPerdidasDedicatedRows(sourceRows, { cropId, searchQuery, skipToggle: true });
+    const transferredCount = allMatchingRows.filter((item) => isFromPendingTransfer(item)).length;
+    const revertedCount = allMatchingRows.filter((item) => isIncomeOrLossReverted(item)).length;
+    const activeCount = allMatchingRows.length - transferredCount - revertedCount;
+
+    const rows = getPerdidasDedicatedRows(sourceRows, {
+        cropId,
+        searchQuery,
+        showTransferred: perdidasDedicatedShowTransferred,
+        showReverted: perdidasDedicatedShowReverted
+    });
+
+    const hasActiveFilters = perdidasDedicatedShowTransferred || perdidasDedicatedShowReverted;
+    const hasDynamicFilters = transferredCount > 0 || revertedCount > 0;
+
+    return {
+        cropId,
+        scopeLabel,
+        searchQuery,
+        hasSearch: !!normalizedSearch,
+        showTransferred: perdidasDedicatedShowTransferred,
+        showReverted: perdidasDedicatedShowReverted,
+        hasActiveFilters,
+        transferredCount,
+        revertedCount,
+        activeCount,
+        hasDynamicFilters,
+        allMatchingRows,
+        rows,
+        isGeneral: !cropId
+    };
+}
+
+function renderPerdidasDedicatedCropSelector() {
+    const { cropRow, scopeCopy } = getPerdidasDedicatedElements();
+    if (!cropRow) return;
+
+    cropRow.textContent = '';
+    const { cropId: selectedId, scopeLabel } = getPerdidasDedicatedViewState();
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
+    const allCrops = [...activeCrops, ...finishedCrops];
+
+    cropRow.appendChild(buildOpsCultivoChip({
+        label: '🌾 Vista general',
+        meta: 'Todos los cultivos',
+        cropId: null,
+        selected: !selectedId
+    }));
+
+    allCrops.forEach((crop) => {
+        const cropId = normalizeCropId(crop?.id);
+        if (!cropId) return;
+        const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱' });
+        cropRow.appendChild(buildOpsCultivoChip({
+            label: displayCrop.label,
+            meta: resolveOpsChipStatus(crop),
+            cropId,
+            selected: cropId === selectedId
+        }));
+    });
+
+    if (scopeCopy) {
+        scopeCopy.textContent = selectedId
+            ? `${scopeLabel} activo: el historial, el nuevo registro y la exportación se limitan a este cultivo.`
+            : 'Vista general activa: historial, nuevo registro y exportación abarcan todas las pérdidas.';
+    }
+}
+
+function renderPerdidasDedicatedStateFilters(context) {
+    const { filterBar, transferredFilter, revertedFilter } = getPerdidasDedicatedElements();
+    if (!filterBar || !transferredFilter || !revertedFilter) return;
+
+    const hasTransferred = Number(context?.transferredCount || 0) > 0;
+    const hasReverted = Number(context?.revertedCount || 0) > 0;
+    const hasDynamicFilters = hasTransferred || hasReverted;
+
+    filterBar.hidden = !hasDynamicFilters;
+    filterBar.setAttribute('aria-hidden', hasDynamicFilters ? 'false' : 'true');
+
+    transferredFilter.hidden = !hasTransferred;
+    transferredFilter.textContent = `Ver transferidos (${context?.transferredCount || 0})`;
+    transferredFilter.classList.toggle('is-active', !!context?.showTransferred);
+    transferredFilter.setAttribute('aria-pressed', context?.showTransferred ? 'true' : 'false');
+
+    revertedFilter.hidden = !hasReverted;
+    revertedFilter.textContent = `Ver revertidos (${context?.revertedCount || 0})`;
+    revertedFilter.classList.toggle('is-active', !!context?.showReverted);
+    revertedFilter.setAttribute('aria-pressed', context?.showReverted ? 'true' : 'false');
+}
+
+function renderPerdidasDedicatedItem(listEl, item) {
+    if (!listEl || !item) return;
+    const row = renderHistoryRow('perdidas', item, FACTURERO_CONFIG.perdidas, {
+        showActions: true,
+        allowedActions: new Set(['edit', 'delete'])
+    });
+    if (!row) return;
+    row.classList.add('perdidas-dedicated-row');
+    row.dataset.perdidasDedicatedRow = '1';
+    listEl.appendChild(row);
+}
+
+function renderPerdidasDedicatedGroupedRows(listEl, rows) {
+    if (!listEl) return;
+    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.perdidas?.dateField || 'fecha');
+    const fragment = document.createDocumentFragment();
+    groups.forEach((group) => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'facturero-day-header date-divider';
+        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
+        fragment.appendChild(dayHeader);
+        (group?.rows || []).forEach((item) => {
+            renderPerdidasDedicatedItem(fragment, item);
+        });
+    });
+    listEl.appendChild(fragment);
+}
+
+function setPerdidasDedicatedVisibility(element, shouldShow) {
+    if (!element) return;
+    element.hidden = !shouldShow;
+    if (shouldShow) {
+        element.removeAttribute('aria-hidden');
+    } else {
+        element.setAttribute('aria-hidden', 'true');
+    }
+}
+
+async function renderPerdidasDedicatedView() {
+    const { view, history, list, empty, status, countBadge, selection, footer, exportButton } = getPerdidasDedicatedElements();
+    if (!view || !list || !empty) return;
+
+    const context = getPerdidasDedicatedViewState();
+    renderPerdidasDedicatedCropSelector();
+    renderPerdidasDedicatedStateFilters(context);
+    const filtered = context.rows;
+    const hasRowsInScope = context.allMatchingRows.length > 0;
+    const hasVisibleRows = filtered.length > 0;
+    const showHistory = hasRowsInScope || context.hasSearch;
+
+    list.textContent = '';
+    list.classList.toggle('is-empty', !hasVisibleRows);
+    empty.classList.remove('is-visible');
+    empty.hidden = true;
+    empty.setAttribute('aria-hidden', 'true');
+
+    setPerdidasDedicatedVisibility(history, showHistory);
+    setPerdidasDedicatedVisibility(countBadge, hasVisibleRows);
+    setPerdidasDedicatedVisibility(selection, hasVisibleRows);
+    setPerdidasDedicatedVisibility(footer, hasVisibleRows);
+    setPerdidasDedicatedVisibility(exportButton, hasVisibleRows);
+
+    const countLabel = `${filtered.length} pérdida${filtered.length === 1 ? '' : 's'} visible${filtered.length === 1 ? '' : 's'}`;
+    if (countBadge && hasVisibleRows) {
+        const scopeToken = context.isGeneral ? 'Vista general' : context.scopeLabel;
+        const parts = [countLabel, scopeToken];
+        if (context.showTransferred) parts.push('+ transferidos');
+        if (context.showReverted) parts.push('+ revertidos');
+        countBadge.textContent = parts.join(' · ');
+    }
+
+    if (status) {
+        if (context.hasSearch && filtered.length === 0) {
+            status.textContent = `Sin coincidencias para "${context.searchQuery}" dentro de ${context.scopeLabel}.`;
+        } else if (context.hasSearch) {
+            status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada.`;
+        } else if (context.isGeneral) {
+            status.textContent = 'Viendo todas las pérdidas en Vista general.';
+        } else {
+            status.textContent = `Viendo pérdidas de ${context.scopeLabel}.`;
+        }
+    }
+
+    const emptyText = empty.querySelector('.empty-state-text');
+    if (emptyText) {
+        emptyText.textContent = context.hasSearch
+            ? `No hay pérdidas que coincidan con "${context.searchQuery}" en ${context.scopeLabel}.`
+            : `No hay pérdidas registradas en ${context.scopeLabel}.`;
+    }
+
+    if (hasVisibleRows) {
+        renderPerdidasDedicatedGroupedRows(list, filtered);
+    }
+}
+
+function bindPerdidasDedicatedView() {
+    if (perdidasDedicatedEventsBound) return;
+    const {
+        cropRow,
+        searchInput,
+        filterBar,
+        newTopButton,
+        newBottomButton,
+        exportButton
+    } = getPerdidasDedicatedElements();
+    if (!cropRow || !searchInput || !newTopButton || !newBottomButton || !exportButton) return;
+
+    perdidasDedicatedEventsBound = true;
+
+    const handleCropSelection = (event) => {
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        if (chip.classList.contains('is-disabled') || chip.getAttribute('aria-disabled') === 'true') return;
+        const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
+        setSelectedCropId(cropId);
+        renderPerdidasDedicatedView();
+    };
+
+    cropRow.addEventListener('click', handleCropSelection);
+    cropRow.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        event.preventDefault();
+        handleCropSelection(event);
+    });
+
+    searchInput.addEventListener('input', () => {
+        perdidasDedicatedSearchQuery = searchInput.value || '';
+        renderPerdidasDedicatedView();
+    });
+
+    filterBar?.addEventListener('click', (event) => {
+        const filterButton = event.target.closest('[data-perdidas-filter]');
+        if (!filterButton || filterButton.hidden) return;
+        const filterType = filterButton.dataset.perdidasFilter;
+        if (filterType === 'transferred') {
+            perdidasDedicatedShowTransferred = !perdidasDedicatedShowTransferred;
+        } else if (filterType === 'reverted') {
+            perdidasDedicatedShowReverted = !perdidasDedicatedShowReverted;
+        }
+        renderPerdidasDedicatedView();
+    });
+
+    const openPerdidasWizard = () => {
+        const context = getPerdidasDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        if (typeof window.launchAgroWizard === 'function') {
+            window.launchAgroWizard('perdidas', {
+                initialCropId: context.cropId
+            });
+        }
+    };
+
+    newTopButton.addEventListener('click', openPerdidasWizard);
+    newBottomButton.addEventListener('click', openPerdidasWizard);
+    exportButton.addEventListener('click', () => {
+        const context = getPerdidasDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        exportAgroLog('perdidas', {
+            cropId: context.cropId,
+            searchQuery: context.searchQuery,
+            scopeLabel: context.scopeLabel,
+            filterFn: (item) => matchesPerdidasDedicatedFilters(item, {
+                cropId: context.cropId,
+                searchQuery: context.searchQuery,
+                showTransferred: context.showTransferred,
+                showReverted: context.showReverted
+            })
+        });
+    });
+
+    window.addEventListener('agro:shell:view-changed', renderPerdidasDedicatedView);
+    window.addEventListener('agro:crop:changed', renderPerdidasDedicatedView);
+    window.addEventListener(AGRO_CROPS_READY_EVENT, renderPerdidasDedicatedView);
+    document.addEventListener('data-refresh', renderPerdidasDedicatedView);
+    document.addEventListener('agro:losses:refreshed', renderPerdidasDedicatedView);
+}
+
+function initPerdidasDedicatedView() {
+    bindPerdidasDedicatedView();
+    renderPerdidasDedicatedView();
+}
+
+// ============================================================
+// V9.8: DONACIONES DEDICATED VIEW
+// ============================================================
+
+function getDonacionesDedicatedElements() {
+    return {
+        view: document.getElementById('agro-donaciones-dedicated'),
+        history: document.getElementById('donaciones-dedicated-history'),
+        cropRow: document.getElementById('donaciones-dedicated-crop-row'),
+        scopeCopy: document.getElementById('donaciones-dedicated-scope-copy'),
+        status: document.getElementById('donaciones-dedicated-status'),
+        countBadge: document.getElementById('donaciones-dedicated-count-badge'),
+        searchInput: document.getElementById('donaciones-dedicated-search'),
+        empty: document.getElementById('donaciones-dedicated-empty'),
+        selection: document.getElementById('donaciones-dedicated-selection-status'),
+        list: document.getElementById('donaciones-dedicated-list'),
+        newTopButton: document.getElementById('btn-donaciones-dedicated-new-top'),
+        newBottomButton: document.getElementById('btn-donaciones-dedicated-new-bottom'),
+        exportButton: document.getElementById('btn-donaciones-dedicated-export'),
+        footer: document.getElementById('donaciones-dedicated-footer')
+    };
+}
+
+function getDonacionesDedicatedScopeLabel(cropId = selectedCropId) {
+    const activeCropId = normalizeCropId(cropId);
+    if (!activeCropId) return 'Vista general';
+    const selected = Array.isArray(cropsCache)
+        ? cropsCache.find((crop) => normalizeCropId(crop?.id) === activeCropId)
+        : null;
+    if (!selected) return 'Cultivo filtrado';
+    const display = getCropDisplayParts(selected, { fallbackIcon: '🌱' });
+    return display.label || 'Cultivo';
+}
+
+function getDonacionesDedicatedSourceRows() {
+    return Array.isArray(transferCache) ? transferCache : [];
+}
+
+function normalizeDonacionesSearchQuery(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function matchesDonacionesDedicatedQuery(item, query) {
+    const token = normalizeDonacionesSearchQuery(query);
+    if (!token) return true;
+    const haystack = [
+        item?.concepto,
+        item?.descripcion,
+        item?.destino,
+        resolveRecordCropLabel(item),
+        item?.fecha
+    ]
+        .filter(Boolean)
+        .join(' ');
+    return normalizeDonacionesSearchQuery(haystack).includes(token);
+}
+
+function matchesDonacionesDedicatedFilters(item, options = {}) {
+    const hasCropOption = Object.prototype.hasOwnProperty.call(options, 'cropId');
+    const cropId = hasCropOption
+        ? normalizeCropId(options.cropId)
+        : normalizeCropId(selectedCropId);
+    const searchQuery = Object.prototype.hasOwnProperty.call(options, 'searchQuery')
+        ? options.searchQuery
+        : donacionesDedicatedSearchQuery;
+
+    if (cropId && normalizeCropId(item?.crop_id) !== cropId) return false;
+    if (!matchesDonacionesDedicatedQuery(item, searchQuery)) return false;
+    return true;
+}
+
+function getDonacionesDedicatedRows(items, options = {}) {
+    const rows = Array.isArray(items) ? items : [];
+    return rows.filter((item) => matchesDonacionesDedicatedFilters(item, options));
+}
+
+function getDonacionesDedicatedViewState() {
+    const cropId = normalizeCropId(selectedCropId);
+    const scopeLabel = getDonacionesDedicatedScopeLabel(cropId);
+    const searchQuery = String(donacionesDedicatedSearchQuery || '');
+    const normalizedSearch = normalizeDonacionesSearchQuery(searchQuery);
+    const sourceRows = getDonacionesDedicatedSourceRows();
+    const rows = getDonacionesDedicatedRows(sourceRows, { cropId, searchQuery });
+
+    return {
+        cropId,
+        scopeLabel,
+        searchQuery,
+        hasSearch: !!normalizedSearch,
+        rows,
+        isGeneral: !cropId
+    };
+}
+
+function renderDonacionesDedicatedCropSelector() {
+    const { cropRow, scopeCopy } = getDonacionesDedicatedElements();
+    if (!cropRow) return;
+
+    cropRow.textContent = '';
+    const { cropId: selectedId, scopeLabel } = getDonacionesDedicatedViewState();
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
+    const allCrops = [...activeCrops, ...finishedCrops];
+
+    cropRow.appendChild(buildOpsCultivoChip({
+        label: '🌾 Vista general',
+        meta: 'Todos los cultivos',
+        cropId: null,
+        selected: !selectedId
+    }));
+
+    allCrops.forEach((crop) => {
+        const cropId = normalizeCropId(crop?.id);
+        if (!cropId) return;
+        const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱' });
+        cropRow.appendChild(buildOpsCultivoChip({
+            label: displayCrop.label,
+            meta: resolveOpsChipStatus(crop),
+            cropId,
+            selected: cropId === selectedId
+        }));
+    });
+
+    if (scopeCopy) {
+        scopeCopy.textContent = selectedId
+            ? `${scopeLabel} activo: el historial, el nuevo registro y la exportación se limitan a este cultivo.`
+            : 'Vista general activa: historial, nuevo registro y exportación abarcan todas las donaciones.';
+    }
+}
+
+function renderDonacionesDedicatedItem(listEl, item) {
+    if (!listEl || !item) return;
+    const row = renderHistoryRow('transferencias', item, FACTURERO_CONFIG.transferencias, {
+        showActions: true,
+        allowedActions: new Set(['edit', 'delete'])
+    });
+    if (!row) return;
+    row.classList.add('donaciones-dedicated-row');
+    row.dataset.donacionesDedicatedRow = '1';
+    listEl.appendChild(row);
+}
+
+function renderDonacionesDedicatedGroupedRows(listEl, rows) {
+    if (!listEl) return;
+    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.transferencias?.dateField || 'fecha');
+    const fragment = document.createDocumentFragment();
+    groups.forEach((group) => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'facturero-day-header date-divider';
+        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
+        fragment.appendChild(dayHeader);
+        (group?.rows || []).forEach((item) => {
+            renderDonacionesDedicatedItem(fragment, item);
+        });
+    });
+    listEl.appendChild(fragment);
+}
+
+function setDonacionesDedicatedVisibility(element, shouldShow) {
+    if (!element) return;
+    element.hidden = !shouldShow;
+    if (shouldShow) {
+        element.removeAttribute('aria-hidden');
+    } else {
+        element.setAttribute('aria-hidden', 'true');
+    }
+}
+
+async function renderDonacionesDedicatedView() {
+    const { view, history, list, empty, status, countBadge, selection, footer, exportButton } = getDonacionesDedicatedElements();
+    if (!view || !list || !empty) return;
+
+    const context = getDonacionesDedicatedViewState();
+    renderDonacionesDedicatedCropSelector();
+    const filtered = context.rows;
+    const hasVisibleRows = filtered.length > 0;
+    const showHistory = hasVisibleRows || context.hasSearch;
+
+    list.textContent = '';
+    list.classList.toggle('is-empty', !hasVisibleRows);
+    empty.classList.remove('is-visible');
+    empty.hidden = true;
+    empty.setAttribute('aria-hidden', 'true');
+
+    setDonacionesDedicatedVisibility(history, showHistory);
+    setDonacionesDedicatedVisibility(countBadge, hasVisibleRows);
+    setDonacionesDedicatedVisibility(selection, hasVisibleRows);
+    setDonacionesDedicatedVisibility(footer, hasVisibleRows);
+    setDonacionesDedicatedVisibility(exportButton, hasVisibleRows);
+
+    const countLabel = `${filtered.length} donación${filtered.length === 1 ? '' : 'es'} visible${filtered.length === 1 ? '' : 's'}`;
+    if (countBadge && hasVisibleRows) {
+        const scopeToken = context.isGeneral ? 'Vista general' : context.scopeLabel;
+        countBadge.textContent = `${countLabel} · ${scopeToken}`;
+    }
+
+    if (status) {
+        if (context.hasSearch && filtered.length === 0) {
+            status.textContent = `Sin coincidencias para "${context.searchQuery}" dentro de ${context.scopeLabel}.`;
+        } else if (context.hasSearch) {
+            status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada.`;
+        } else if (context.isGeneral) {
+            status.textContent = 'Viendo todas las donaciones en Vista general.';
+        } else {
+            status.textContent = `Viendo donaciones de ${context.scopeLabel}.`;
+        }
+    }
+
+    const emptyText = empty.querySelector('.empty-state-text');
+    if (emptyText) {
+        emptyText.textContent = context.hasSearch
+            ? `No hay donaciones que coincidan con "${context.searchQuery}" en ${context.scopeLabel}.`
+            : `No hay donaciones registradas en ${context.scopeLabel}.`;
+    }
+
+    if (hasVisibleRows) {
+        renderDonacionesDedicatedGroupedRows(list, filtered);
+    }
+}
+
+function bindDonacionesDedicatedView() {
+    if (donacionesDedicatedEventsBound) return;
+    const {
+        cropRow,
+        searchInput,
+        newTopButton,
+        newBottomButton,
+        exportButton
+    } = getDonacionesDedicatedElements();
+    if (!cropRow || !searchInput || !newTopButton || !newBottomButton || !exportButton) return;
+
+    donacionesDedicatedEventsBound = true;
+
+    const handleCropSelection = (event) => {
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        if (chip.classList.contains('is-disabled') || chip.getAttribute('aria-disabled') === 'true') return;
+        const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
+        setSelectedCropId(cropId);
+        renderDonacionesDedicatedView();
+    };
+
+    cropRow.addEventListener('click', handleCropSelection);
+    cropRow.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        event.preventDefault();
+        handleCropSelection(event);
+    });
+
+    searchInput.addEventListener('input', () => {
+        donacionesDedicatedSearchQuery = searchInput.value || '';
+        renderDonacionesDedicatedView();
+    });
+
+    const openDonacionesWizard = () => {
+        const context = getDonacionesDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        if (typeof window.launchAgroWizard === 'function') {
+            window.launchAgroWizard('transferencias', {
+                initialCropId: context.cropId
+            });
+        }
+    };
+
+    newTopButton.addEventListener('click', openDonacionesWizard);
+    newBottomButton.addEventListener('click', openDonacionesWizard);
+    exportButton.addEventListener('click', () => {
+        const context = getDonacionesDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        exportAgroLog('transferencias', {
+            cropId: context.cropId,
+            searchQuery: context.searchQuery,
+            scopeLabel: context.scopeLabel,
+            filterFn: (item) => matchesDonacionesDedicatedFilters(item, {
+                cropId: context.cropId,
+                searchQuery: context.searchQuery
+            })
+        });
+    });
+
+    window.addEventListener('agro:shell:view-changed', renderDonacionesDedicatedView);
+    window.addEventListener('agro:crop:changed', renderDonacionesDedicatedView);
+    window.addEventListener(AGRO_CROPS_READY_EVENT, renderDonacionesDedicatedView);
+    document.addEventListener('data-refresh', renderDonacionesDedicatedView);
+    document.addEventListener('agro:transfers:refreshed', renderDonacionesDedicatedView);
+}
+
+function initDonacionesDedicatedView() {
+    bindDonacionesDedicatedView();
+    renderDonacionesDedicatedView();
+}
+
+// ============================================================
+// V9.8: OTROS DEDICATED VIEW
+// ============================================================
+
+function getOtrosDedicatedElements() {
+    return {
+        view: document.getElementById('agro-otros-dedicated'),
+        history: document.getElementById('otros-dedicated-history'),
+        cropRow: document.getElementById('otros-dedicated-crop-row'),
+        scopeCopy: document.getElementById('otros-dedicated-scope-copy'),
+        status: document.getElementById('otros-dedicated-status'),
+        countBadge: document.getElementById('otros-dedicated-count-badge'),
+        searchInput: document.getElementById('otros-dedicated-search'),
+        empty: document.getElementById('otros-dedicated-empty'),
+        selection: document.getElementById('otros-dedicated-selection-status'),
+        list: document.getElementById('otros-dedicated-list'),
+        exportButton: document.getElementById('btn-otros-dedicated-export'),
+        footer: document.getElementById('otros-dedicated-footer')
+    };
+}
+
+function getOtrosDedicatedScopeLabel(cropId = selectedCropId) {
+    const activeCropId = normalizeCropId(cropId);
+    if (!activeCropId) return 'Vista general';
+    const selected = Array.isArray(cropsCache)
+        ? cropsCache.find((crop) => normalizeCropId(crop?.id) === activeCropId)
+        : null;
+    if (!selected) return 'Cultivo filtrado';
+    const display = getCropDisplayParts(selected, { fallbackIcon: '🌱' });
+    return display.label || 'Cultivo';
+}
+
+function getOtrosDedicatedSourceRows() {
+    return Array.isArray(otherDedicatedCache) ? otherDedicatedCache : [];
+}
+
+function normalizeOtrosSearchQuery(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function matchesOtrosDedicatedQuery(item, query) {
+    const token = normalizeOtrosSearchQuery(query);
+    if (!token) return true;
+    const haystack = [
+        item?.concepto,
+        item?.descripcion,
+        item?.source_tab,
+        resolveRecordCropLabel(item),
+        item?.fecha
+    ]
+        .filter(Boolean)
+        .join(' ');
+    return normalizeOtrosSearchQuery(haystack).includes(token);
+}
+
+function matchesOtrosDedicatedFilters(item, options = {}) {
+    const hasCropOption = Object.prototype.hasOwnProperty.call(options, 'cropId');
+    const cropId = hasCropOption
+        ? normalizeCropId(options.cropId)
+        : normalizeCropId(selectedCropId);
+    const searchQuery = Object.prototype.hasOwnProperty.call(options, 'searchQuery')
+        ? options.searchQuery
+        : otrosDedicatedSearchQuery;
+
+    if (cropId && normalizeCropId(item?.crop_id) !== cropId) return false;
+    if (!matchesOtrosDedicatedQuery(item, searchQuery)) return false;
+    return true;
+}
+
+function getOtrosDedicatedRows(items, options = {}) {
+    const rows = Array.isArray(items) ? items : [];
+    return rows.filter((item) => matchesOtrosDedicatedFilters(item, options));
+}
+
+function getOtrosDedicatedViewState() {
+    const cropId = normalizeCropId(selectedCropId);
+    const scopeLabel = getOtrosDedicatedScopeLabel(cropId);
+    const searchQuery = String(otrosDedicatedSearchQuery || '');
+    const normalizedSearch = normalizeOtrosSearchQuery(searchQuery);
+    const sourceRows = getOtrosDedicatedSourceRows();
+    const rows = getOtrosDedicatedRows(sourceRows, { cropId, searchQuery });
+
+    return {
+        cropId,
+        scopeLabel,
+        searchQuery,
+        hasSearch: !!normalizedSearch,
+        rows,
+        isGeneral: !cropId
+    };
+}
+
+function renderOtrosDedicatedCropSelector() {
+    const { cropRow, scopeCopy } = getOtrosDedicatedElements();
+    if (!cropRow) return;
+
+    cropRow.textContent = '';
+    const { cropId: selectedId, scopeLabel } = getOtrosDedicatedViewState();
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
+    const allCrops = [...activeCrops, ...finishedCrops];
+
+    cropRow.appendChild(buildOpsCultivoChip({
+        label: '🌾 Vista general',
+        meta: 'Todos los cultivos',
+        cropId: null,
+        selected: !selectedId
+    }));
+
+    allCrops.forEach((crop) => {
+        const cropId = normalizeCropId(crop?.id);
+        if (!cropId) return;
+        const displayCrop = getCropDisplayParts(crop, { fallbackIcon: '🌱' });
+        cropRow.appendChild(buildOpsCultivoChip({
+            label: displayCrop.label,
+            meta: resolveOpsChipStatus(crop),
+            cropId,
+            selected: cropId === selectedId
+        }));
+    });
+
+    if (scopeCopy) {
+        scopeCopy.textContent = selectedId
+            ? `${scopeLabel} activo: el historial y la exportación se limitan a este cultivo.`
+            : 'Vista general activa: historial y exportación abarcan todos los movimientos.';
+    }
+}
+
+function renderOtrosDedicatedItem(listEl, item) {
+    if (!listEl || !item) return;
+    const row = renderHistoryRow('otros', item, FACTURERO_CONFIG.otros, {
+        showActions: true,
+        allowedActions: new Set(['delete'])
+    });
+    if (!row) return;
+    row.classList.add('otros-dedicated-row');
+    row.dataset.otrosDedicatedRow = '1';
+    listEl.appendChild(row);
+}
+
+function renderOtrosDedicatedGroupedRows(listEl, rows) {
+    if (!listEl) return;
+    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.otros?.dateField || 'fecha');
+    const fragment = document.createDocumentFragment();
+    groups.forEach((group) => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'facturero-day-header date-divider';
+        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
+        fragment.appendChild(dayHeader);
+        (group?.rows || []).forEach((item) => {
+            renderOtrosDedicatedItem(fragment, item);
+        });
+    });
+    listEl.appendChild(fragment);
+}
+
+function setOtrosDedicatedVisibility(element, shouldShow) {
+    if (!element) return;
+    element.hidden = !shouldShow;
+    if (shouldShow) {
+        element.removeAttribute('aria-hidden');
+    } else {
+        element.setAttribute('aria-hidden', 'true');
+    }
+}
+
+async function renderOtrosDedicatedView() {
+    const { view, history, list, empty, status, countBadge, selection, footer, exportButton } = getOtrosDedicatedElements();
+    if (!view || !list || !empty) return;
+
+    const context = getOtrosDedicatedViewState();
+    renderOtrosDedicatedCropSelector();
+    const filtered = context.rows;
+    const hasVisibleRows = filtered.length > 0;
+    const showHistory = hasVisibleRows || context.hasSearch;
+
+    list.textContent = '';
+    list.classList.toggle('is-empty', !hasVisibleRows);
+    empty.classList.remove('is-visible');
+    empty.hidden = true;
+    empty.setAttribute('aria-hidden', 'true');
+
+    setOtrosDedicatedVisibility(history, showHistory);
+    setOtrosDedicatedVisibility(countBadge, hasVisibleRows);
+    setOtrosDedicatedVisibility(selection, hasVisibleRows);
+    setOtrosDedicatedVisibility(footer, hasVisibleRows);
+    setOtrosDedicatedVisibility(exportButton, hasVisibleRows);
+
+    const countLabel = `${filtered.length} movimiento${filtered.length === 1 ? '' : 's'} visible${filtered.length === 1 ? '' : 's'}`;
+    if (countBadge && hasVisibleRows) {
+        const scopeToken = context.isGeneral ? 'Vista general' : context.scopeLabel;
+        countBadge.textContent = `${countLabel} · ${scopeToken}`;
+    }
+
+    if (status) {
+        if (context.hasSearch && filtered.length === 0) {
+            status.textContent = `Sin coincidencias para "${context.searchQuery}" dentro de ${context.scopeLabel}.`;
+        } else if (context.hasSearch) {
+            status.textContent = `Viendo ${countLabel} en ${context.scopeLabel} con búsqueda aplicada.`;
+        } else if (context.isGeneral) {
+            status.textContent = 'Viendo todos los movimientos en Vista general.';
+        } else {
+            status.textContent = `Viendo movimientos de ${context.scopeLabel}.`;
+        }
+    }
+
+    const emptyText = empty.querySelector('.empty-state-text');
+    if (emptyText) {
+        emptyText.textContent = context.hasSearch
+            ? `No hay movimientos que coincidan con "${context.searchQuery}" en ${context.scopeLabel}.`
+            : `No hay movimientos registrados en ${context.scopeLabel}.`;
+    }
+
+    if (hasVisibleRows) {
+        renderOtrosDedicatedGroupedRows(list, filtered);
+    }
+}
+
+function bindOtrosDedicatedView() {
+    if (otrosDedicatedEventsBound) return;
+    const {
+        cropRow,
+        searchInput,
+        exportButton
+    } = getOtrosDedicatedElements();
+    if (!cropRow || !searchInput || !exportButton) return;
+
+    otrosDedicatedEventsBound = true;
+
+    const handleCropSelection = (event) => {
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        if (chip.classList.contains('is-disabled') || chip.getAttribute('aria-disabled') === 'true') return;
+        const cropId = chip.dataset.cropId === AGRO_GENERAL_VIEW_ID ? null : chip.dataset.cropId;
+        setSelectedCropId(cropId);
+        renderOtrosDedicatedView();
+    };
+
+    cropRow.addEventListener('click', handleCropSelection);
+    cropRow.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const chip = event.target.closest('.ops-cultivo-chip');
+        if (!chip) return;
+        event.preventDefault();
+        handleCropSelection(event);
+    });
+
+    searchInput.addEventListener('input', () => {
+        otrosDedicatedSearchQuery = searchInput.value || '';
+        renderOtrosDedicatedView();
+    });
+
+    exportButton.addEventListener('click', () => {
+        const context = getOtrosDedicatedViewState();
+        setSelectedCropId(context.cropId);
+        exportAgroLog('otros', {
+            cropId: context.cropId,
+            searchQuery: context.searchQuery,
+            scopeLabel: context.scopeLabel,
+            filterFn: (item) => matchesOtrosDedicatedFilters(item, {
+                cropId: context.cropId,
+                searchQuery: context.searchQuery
+            })
+        });
+    });
+
+    window.addEventListener('agro:shell:view-changed', renderOtrosDedicatedView);
+    window.addEventListener('agro:crop:changed', renderOtrosDedicatedView);
+    window.addEventListener(AGRO_CROPS_READY_EVENT, renderOtrosDedicatedView);
+    document.addEventListener('data-refresh', renderOtrosDedicatedView);
+    document.addEventListener('agro:others:refreshed', renderOtrosDedicatedView);
+}
+
+function initOtrosDedicatedView() {
+    bindOtrosDedicatedView();
+    renderOtrosDedicatedView();
 }
 
 function bindOpsCultivosPanelEvents() {
@@ -16047,6 +17028,9 @@ export function initAgro() {
     initAgroShell();
     initPagadosDedicatedView();
     initFiadosDedicatedView();
+    initPerdidasDedicatedView();
+    initDonacionesDedicatedView();
+    initOtrosDedicatedView();
     initFactureroSelection();
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();

@@ -1,3 +1,126 @@
+## 🆕 SESIÓN: Vistas dedicadas Pérdidas, Donaciones y Otros (2026-03-08)
+
+### Diagnóstico
+
+**¿Por qué Pérdidas/Donaciones/Otros siguen atrapados dentro del CdO?**
+- Pagados y Fiados fueron migrados a superficies dedicadas: al activar esas vistas, CSS oculta `financial-operations-card`, hace header swap contextual y muestra un `<div>` dedicado con hero, crop selector, search, filters, history list y footer.
+- Pérdidas (`perdidas`), Donaciones (`donaciones`) y Otros (`otros`) nunca se migraron. `VIEW_CONFIG` los declara con `tab:` pero sin `focusSelector`. No tienen HTML dedicado, no tienen CSS de header swap ni visibility rules, y no tienen JS de render/bind/init dedicado.
+- Resultado: al abrir "Pérdidas" el shell solo activa el tab `perdidas` dentro del `financial-operations-card`. El usuario ve "Centro de Operaciones" como título y toda la maqueta base del facturero, inconsistente con Pagados/Fiados.
+
+**Estado actual por capa:**
+
+| Capa | Pagados/Fiados | Pérdidas/Donaciones/Otros |
+|------|---------------|--------------------------|
+| `VIEW_CONFIG` | `focusSelector` → `#agro-X-dedicated` | Sin `focusSelector` |
+| Header swap | CSS: `.ops-header-pagados`/`.ops-header-fiados` + body attr rules | Sin header swap |
+| CdO hide | CSS: `body[data-agro-active-view='X'] .financial-operations-card { display: none }` | Sin regla → CdO siempre visible |
+| HTML | Sección dedicada `#agro-X-dedicated` con hero/steps/history/footer | Solo tab panel embebido en CdO |
+| JS | `getElements`, `render`, `bind`, `init`, caches, eventos | Solo `refreshFactureroHistory(tab)` genérico |
+
+**Caches disponibles:**
+- `pendingCache` → fiados ✅
+- `expenseCache` → gastos ✅
+- `incomeCache` / `pagadosDedicatedSourceCache` → pagados ✅
+- Pérdidas: sin cache dedicado (fetch on-the-fly via `refreshFactureroHistory('perdidas')`)
+- Donaciones (transferencias): sin cache dedicado
+- Otros: composite, sin cache dedicado
+
+**Datos por tab:**
+- `perdidas` → `agro_losses`, optional fields: `transfer_state`, `reverted_at`, `reverted_reason`
+- `transferencias` (donaciones) → `agro_transfers`, sin optional transfer fields
+- `otros` → composite (no table), usa `fetchOtherGeneralRecords` + `fetchOtherTransferredRows`
+
+### Plan quirúrgico
+
+1. **agro-shell.js**: Agregar `focusSelector` a `perdidas`, `donaciones`, `otros`
+2. **index.html**: Header swap elements (3 títulos + 3 subtítulos) + 3 secciones dedicadas HTML
+3. **agro-operations.css**: Header swap CSS + visibility rules (hide CdO, show dedicated) para 3 vistas
+4. **agro.js**: Para cada vista — state vars, getElements, sourceRows, search, filters, render, bind, init, cache events. Simplificación vs Pagados: Donaciones y Otros NO tienen transfer_state filters. Pérdidas SÍ tiene (optional).
+5. Wire init functions into main init after `initFiadosDedicatedView()`
+6. Build + QA
+
+### Archivos a tocar
+- `apps/gold/agro/agro-shell.js` — focusSelector × 3
+- `apps/gold/agro/index.html` — header swap × 3 + secciones dedicadas × 3
+- `apps/gold/agro/agro-operations.css` — header swap CSS × 3 + visibility × 3 + base styles
+- `apps/gold/agro/agro.js` — dedicated view functions × 3 + caches + init wiring
+- `apps/gold/docs/AGENT_REPORT.md` — esta entrada
+
+### Riesgos
+- **Otros es composite**: no tiene tabla directa. Necesita cache propio que se alimente de `refreshFactureroHistory('otros')`.
+- **Pérdidas usa `fetchAgroLosses`**: función especial con retry para `deleted_at`. El cache debe respetar este flujo.
+- **Double render**: los event listeners de `agro:crop:changed` disparan tanto el refresh del facturero como el render dedicado. Mismo patrón de `agro:pending:refreshed` se necesita para losses/transfers/others.
+- **Donaciones = transferencias**: el tab se llama `transferencias` pero la vista se llama `donaciones`. Mapeo cuidadoso.
+
+### Implementación
+
+**1. agro-shell.js** — 3 líneas cambiadas:
+- `perdidas`: agregado `focusSelector: '#agro-perdidas-dedicated'`
+- `donaciones`: agregado `focusSelector: '#agro-donaciones-dedicated'`
+- `otros`: agregado `focusSelector: '#agro-otros-dedicated'`
+
+**2. index.html** — ~300 líneas agregadas:
+- Header swap: 3 títulos (`ops-header-perdidas/donaciones/otros`) + 3 subtítulos contextuales
+- `#agro-perdidas-dedicated`: hero + crop selector + wizard CTA + history (search, filters transferred/reverted, list, empty, footer con export)
+- `#agro-donaciones-dedicated`: hero + crop selector + wizard CTA + history (search, list, empty, footer con export). Sin filters de transfer_state (donaciones no tienen ese campo).
+- `#agro-otros-dedicated`: hero + crop selector + history (search, list, empty, footer con export). Sin wizard CTA (otros son composite, no se crean directo). Sin filters.
+
+**3. agro-operations.css** — ~40 líneas agregadas:
+- Header swap CSS × 3 vistas (`.ops-header-X { display: none }` + `body[data-agro-active-view='X'] .ops-header-default { display: none }` + show rule)
+- CdO hide × 3 (`body[data-agro-active-view='X'] .financial-operations-card { display: none }`)
+- Dedicated show × 3 (`body[data-agro-active-view='X'] .agro-X-dedicated { display: flex }`)
+
+**4. agro.js** — ~960 líneas agregadas:
+- **Caches**: `lossCache`, `transferCache`, `otherDedicatedCache` (3 vars)
+- **State vars**: search queries, toggle flags, eventsBound guards (11 vars)
+- **Refresh events**: `agro:losses:refreshed`, `agro:transfers:refreshed`, `agro:others:refreshed` dispatched in `refreshFactureroHistory`
+- **Pérdidas dedicado**: `getPerdidasDedicatedElements`, `getPerdidasDedicatedScopeLabel`, `getPerdidasDedicatedSourceRows`, `normalizePerdidasSearchQuery`, `matchesPerdidasDedicatedQuery`, `perdidasDedicatedPassesToggle`, `matchesPerdidasDedicatedFilters`, `getPerdidasDedicatedRows`, `getPerdidasDedicatedViewState`, `renderPerdidasDedicatedCropSelector`, `renderPerdidasDedicatedStateFilters`, `renderPerdidasDedicatedItem`, `renderPerdidasDedicatedGroupedRows`, `setPerdidasDedicatedVisibility`, `renderPerdidasDedicatedView`, `bindPerdidasDedicatedView`, `initPerdidasDedicatedView`
+- **Donaciones dedicado**: misma arquitectura sin filters (donaciones no tienen transfer_state). Tab interno = `transferencias`.
+- **Otros dedicado**: misma arquitectura sin wizard CTA ni filters. Cache = `otherDedicatedCache`. `renderHistoryRow('otros', ...)`.
+- **Init wiring**: `initPerdidasDedicatedView()`, `initDonacionesDedicatedView()`, `initOtrosDedicatedView()` after `initFiadosDedicatedView()` in main init.
+
+### Patrón reutilizado de Pagados/Fiados
+- `getXElements()` → DOM refs centralizadas
+- `getXScopeLabel()` → label dinámico por cultivo seleccionado
+- `getXSourceRows()` → lectura del cache local
+- `normalizeXSearchQuery()` → NFD + lowercase + trim
+- `matchesXQuery()` → búsqueda en haystack de campos
+- `matchesXFilters()` → crop + search + toggle (si aplica)
+- `getXViewState()` → context object con todas las flags
+- `renderXCropSelector()` → chips con `buildOpsCultivoChip`
+- `renderXStateFilters()` → chips de transferred/reverted (solo Pérdidas)
+- `renderXDedicatedView()` → render principal con empty state, count badge, status text
+- `bindXDedicatedView()` → event listeners con guard `eventsBound`
+- `initXDedicatedView()` → bind + render inicial
+- Eventos: `agro:shell:view-changed`, `agro:crop:changed`, `AGRO_CROPS_READY_EVENT`, `data-refresh`, `agro:X:refreshed`
+
+### Build
+✅ `pnpm build:gold` exitoso (3.30s)
+
+### QA
+- [ ] Pérdidas: abrir vista → CdO oculto, header "Registro de Pérdidas"
+- [ ] Pérdidas: superficie dedicada con hero, crop selector, wizard, historial
+- [ ] Pérdidas: búsqueda filtra correctamente
+- [ ] Pérdidas: filtros transferred/reverted (opt-in toggle)
+- [ ] Pérdidas: cambio de cultivo actualiza historial
+- [ ] Pérdidas: estado vacío correcto
+- [ ] Donaciones: abrir vista → CdO oculto, header "Registro de Donaciones"
+- [ ] Donaciones: superficie dedicada con hero, crop selector, wizard, historial
+- [ ] Donaciones: búsqueda filtra correctamente
+- [ ] Donaciones: cambio de cultivo actualiza historial
+- [ ] Donaciones: estado vacío correcto
+- [ ] Otros: abrir vista → CdO oculto, header "Otros Movimientos"
+- [ ] Otros: superficie dedicada con hero, crop selector, historial (sin wizard CTA)
+- [ ] Otros: búsqueda filtra correctamente
+- [ ] Otros: cambio de cultivo actualiza historial
+- [ ] Otros: estado vacío correcto
+- [ ] Navegación ida/vuelta entre todas las vistas dedicadas
+- [ ] Header swap se restaura correctamente al volver a CdO
+- [ ] Sin listeners duplicados ni double renders
+- [ ] `pnpm build:gold` ✅
+
+---
+
 ## 🆕 SESIÓN: FIX — Filtros Fiados/Pagados dedicados + race condition (2026-03-08)
 
 ### Diagnóstico

@@ -237,6 +237,45 @@ body[data-agro-active-view='fiados'] .ops-header-fiados {
   display: block;
 }
 
+/* Header swap: Pérdidas view */
+.ops-header-perdidas {
+  display: none;
+}
+
+body[data-agro-active-view='perdidas'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='perdidas'] .ops-header-perdidas {
+  display: block;
+}
+
+/* Header swap: Donaciones view */
+.ops-header-donaciones {
+  display: none;
+}
+
+body[data-agro-active-view='donaciones'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='donaciones'] .ops-header-donaciones {
+  display: block;
+}
+
+/* Header swap: Otros view */
+.ops-header-otros {
+  display: none;
+}
+
+body[data-agro-active-view='otros'] .ops-header-default {
+  display: none;
+}
+
+body[data-agro-active-view='otros'] .ops-header-otros {
+  display: block;
+}
+
 .agro-ops-v10 .header-actions {
   display: flex;
   align-items: center;
@@ -637,6 +676,30 @@ body[data-agro-active-view='fiados'] .agro-ops-v10 .financial-operations-card {
 }
 
 body[data-agro-active-view='fiados'] .agro-ops-v10 .agro-fiados-dedicated {
+  display: flex;
+}
+
+body[data-agro-active-view='perdidas'] .agro-ops-v10 .financial-operations-card {
+  display: none;
+}
+
+body[data-agro-active-view='perdidas'] .agro-ops-v10 .agro-perdidas-dedicated {
+  display: flex;
+}
+
+body[data-agro-active-view='donaciones'] .agro-ops-v10 .financial-operations-card {
+  display: none;
+}
+
+body[data-agro-active-view='donaciones'] .agro-ops-v10 .agro-donaciones-dedicated {
+  display: flex;
+}
+
+body[data-agro-active-view='otros'] .agro-ops-v10 .financial-operations-card {
+  display: none;
+}
+
+body[data-agro-active-view='otros'] .agro-ops-v10 .agro-otros-dedicated {
   display: flex;
 }
 
