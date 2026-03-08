@@ -12437,6 +12437,7 @@ function renderOpsCultivosPanel() {
 function getPagadosDedicatedElements() {
     return {
         view: document.getElementById('agro-pagados-dedicated'),
+        history: document.getElementById('pagados-dedicated-history'),
         cropRow: document.getElementById('pagados-dedicated-crop-row'),
         scopeCopy: document.getElementById('pagados-dedicated-scope-copy'),
         scopePill: document.getElementById('pagados-dedicated-scope-pill'),
@@ -12447,10 +12448,12 @@ function getPagadosDedicatedElements() {
         transferredFilter: document.getElementById('pagados-dedicated-filter-transferred'),
         revertedFilter: document.getElementById('pagados-dedicated-filter-reverted'),
         empty: document.getElementById('pagados-dedicated-empty'),
+        selection: document.getElementById('pagados-dedicated-selection-status'),
         list: document.getElementById('pagados-dedicated-list'),
         newTopButton: document.getElementById('btn-pagados-dedicated-new-top'),
         newBottomButton: document.getElementById('btn-pagados-dedicated-new-bottom'),
-        exportButton: document.getElementById('btn-pagados-dedicated-export')
+        exportButton: document.getElementById('btn-pagados-dedicated-export'),
+        footer: document.getElementById('pagados-dedicated-footer')
     };
 }
 
@@ -12641,6 +12644,49 @@ function normalizePagadosSearchQuery(value) {
         .trim();
 }
 
+function setPagadosDedicatedVisibility(element, shouldShow) {
+    if (!element) return;
+    element.hidden = !shouldShow;
+    if (shouldShow) {
+        element.removeAttribute('aria-hidden');
+    } else {
+        element.setAttribute('aria-hidden', 'true');
+    }
+}
+
+function formatPagadosDedicatedDayLabel(dayKey) {
+    if (dayKey === 'unknown') return 'Sin fecha';
+    const [yyyy, mm, dd] = String(dayKey || '').split('-').map(Number);
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    if (!Number.isFinite(yyyy) || !Number.isFinite(mm) || !Number.isFinite(dd) || !monthNames[mm - 1]) {
+        return 'Sin fecha';
+    }
+    return `${dd} ${monthNames[mm - 1]} ${yyyy}`;
+}
+
+function renderPagadosDedicatedGroupedRows(listEl, rows, signedUrlMap = new Map()) {
+    if (!listEl) return;
+
+    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.ingresos?.dateField || 'fecha');
+    const fragment = document.createDocumentFragment();
+
+    groups.forEach((group) => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'facturero-day-header date-divider';
+        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
+        fragment.appendChild(dayHeader);
+
+        (group?.rows || []).forEach((income) => {
+            const signedUrl = signedUrlMap instanceof Map
+                ? signedUrlMap.get(income?.id)
+                : undefined;
+            renderPagadosDedicatedItem(fragment, income, signedUrl);
+        });
+    });
+
+    listEl.appendChild(fragment);
+}
+
 function matchesPagadosDedicatedQuery(income, query) {
     const token = normalizePagadosSearchQuery(query);
     if (!token) return true;
@@ -12659,20 +12705,31 @@ function matchesPagadosDedicatedQuery(income, query) {
 }
 
 async function renderPagadosDedicatedView() {
-    const { view, list, empty, status, countBadge } = getPagadosDedicatedElements();
+    const { view, history, list, empty, status, countBadge, selection, footer, exportButton } = getPagadosDedicatedElements();
     if (!view || !list || !empty) return;
 
     const context = getPagadosDedicatedViewState();
     renderPagadosDedicatedCropSelector();
     renderPagadosDedicatedStateFilters(context);
     const filtered = context.rows;
+    const hasRowsInScope = context.baseRows.length > 0;
+    const hasVisibleRows = filtered.length > 0;
+    const showHistory = hasRowsInScope || context.hasSearch;
 
     list.textContent = '';
-    list.classList.toggle('is-empty', filtered.length === 0);
-    empty.classList.toggle('is-visible', filtered.length === 0);
+    list.classList.toggle('is-empty', !hasVisibleRows);
+    empty.classList.remove('is-visible');
+    empty.hidden = true;
+    empty.setAttribute('aria-hidden', 'true');
+
+    setPagadosDedicatedVisibility(history, showHistory);
+    setPagadosDedicatedVisibility(countBadge, hasVisibleRows);
+    setPagadosDedicatedVisibility(selection, hasVisibleRows);
+    setPagadosDedicatedVisibility(footer, hasVisibleRows);
+    setPagadosDedicatedVisibility(exportButton, hasVisibleRows);
 
     const countLabel = `${filtered.length} pagado${filtered.length === 1 ? '' : 's'} visible${filtered.length === 1 ? '' : 's'}`;
-    if (countBadge) {
+    if (countBadge && hasVisibleRows) {
         const scopeToken = context.isGeneral ? 'Vista general' : context.scopeLabel;
         countBadge.textContent = context.stateFilter === 'all'
             ? `${countLabel} · ${scopeToken}`
@@ -12714,9 +12771,9 @@ async function renderPagadosDedicatedView() {
         ? pagadosDedicatedSignedUrlMap
         : new Map();
 
-    filtered.forEach((income) => {
-        renderPagadosDedicatedItem(list, income, signedUrlMap.get(income.id));
-    });
+    if (hasVisibleRows) {
+        renderPagadosDedicatedGroupedRows(list, filtered, signedUrlMap);
+    }
 
     document.dispatchEvent(new CustomEvent(PAGADOS_VIEW_RENDERED_EVENT));
 }
@@ -15505,11 +15562,11 @@ function moveFooterToEnd() {
         || document.querySelector('.app-container > footer.footer');
     if (!footer) return;
 
-    const body = document.body;
-    if (!body) return;
+    const root = document.body;
+    if (!root) return;
 
-    const topLevelModuleSections = Array.from(body.querySelectorAll(
-        ':scope > section[data-agro-section], :scope > section#agro-tools-section, :scope > section#agro-repo-section'
+    const topLevelModuleSections = Array.from(root.querySelectorAll(
+        ':scope > section[data-agro-section], :scope > section[data-agro-shell-region], :scope > section#agro-tools-section, :scope > section#agro-repo-section'
     ));
     const lastTopLevelSection = topLevelModuleSections.length
         ? topLevelModuleSections[topLevelModuleSections.length - 1]
@@ -15517,11 +15574,11 @@ function moveFooterToEnd() {
 
     if (lastTopLevelSection) {
         const nextSibling = lastTopLevelSection.nextSibling;
-        if (footer.parentNode !== body || footer.previousSibling !== lastTopLevelSection) {
-            body.insertBefore(footer, nextSibling);
+        if (footer.parentNode !== root || footer.previousSibling !== lastTopLevelSection) {
+            root.insertBefore(footer, nextSibling);
         }
-    } else if (footer.parentElement !== body || footer !== body.lastElementChild) {
-        body.appendChild(footer);
+    } else if (footer.parentElement !== root || footer !== root.lastElementChild) {
+        root.appendChild(footer);
     }
 
     footer.style.marginTop = 'auto';

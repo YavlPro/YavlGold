@@ -2047,7 +2047,7 @@
                     <h3 class="agro-pagados-dedicated__title">Registro de Pagados</h3>
                     <p class="agro-pagados-dedicated__subtitle">Consulta cobros registrados, filtra por cultivo y abre el flujo pagado sin mezclar otros movimientos.</p>
                 </div>
-                <div class="agro-pagados-dedicated__badge" id="pagados-dedicated-count-badge">0 pagados visibles</div>
+                <div class="agro-pagados-dedicated__badge" id="pagados-dedicated-count-badge" hidden>0 pagados visibles</div>
             </div>
 
             <div class="agro-pagados-dedicated__steps">
@@ -2083,7 +2083,7 @@
                 </section>
             </div>
 
-            <section class="agro-pagados-history" aria-label="Historial exclusivo de Pagados">
+            <section class="agro-pagados-history" id="pagados-dedicated-history" aria-label="Historial exclusivo de Pagados">
                 <div class="agro-pagados-history__head">
                     <div>
                         <p class="agro-pagados-history__eyebrow">Historial exclusivo</p>
@@ -2125,7 +2125,7 @@
                 <div class="agro-pagados-history__list facturero-history-list" id="pagados-dedicated-list"></div>
             </section>
 
-            <div class="agro-pagados-dedicated__footer">
+            <div class="agro-pagados-dedicated__footer" id="pagados-dedicated-footer">
                 <button type="button" class="btn btn-gold agro-pagados-footer__btn" id="btn-pagados-dedicated-new-bottom">
                     + Nuevo registro pagado
                 </button>
