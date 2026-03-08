@@ -893,6 +893,11 @@ body[data-agro-active-view='pagados'] .agro-ops-v10 .agro-pagados-dedicated {
   z-index: 0;
 }
 
+#pagados-dedicated-list.facturero-history-list {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+
 .agro-ops-v10 .agro-pagados-history__list.is-empty {
   display: none;
 }

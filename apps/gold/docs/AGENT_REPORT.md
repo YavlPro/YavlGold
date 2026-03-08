@@ -18,33 +18,52 @@
 <footer#agro-module-footer>                                     ← L2214
 ```
 
-**Causa raíz**: `#agro-repo-section` NO tenía `hidden inert` por defecto en HTML. Dependía exclusivamente de `initAgroShell()` → `syncRegions()` para ocultarse. Entre el parse del HTML y la ejecución del shell en DOMContentLoaded, esta sección era visible, causando contenido intermedio entre `finances-section` y el footer global.
+**Causa raíz REAL** (encontrada en segundo diagnóstico):
 
-**Verificaciones realizadas**:
-1. **Rows** → `renderPagadosDedicatedGroupedRows` append a `#pagados-dedicated-list` ✅ correcto
-2. **Nodo exacto** → `document.getElementById('pagados-dedicated-list')` dentro de `#pagados-dedicated-history` ✅
-3. **JS reparenting** → No hay código que mueva `#agro-module-footer`. Focus Mode opera sobre `[data-agro-section]` (footer no lo tiene) ✅
-4. **CSS override de [hidden]** → Ninguna regla CSS establece `display` en `#agro-repo-section` ni `.agrorepo-section` ✅
+`#pagados-dedicated-list` tiene dos clases: `agro-pagados-history__list` y `facturero-history-list`.
+En `agro.css:3830`, la regla genérica `.facturero-history-list` aplica:
+```css
+.facturero-history-list {
+  max-height: 300px !important;
+  overflow-y: auto;
+}
+```
+Esta regla `!important` **corta** el historial dedicado de Pagados a 300px. El contenido que no cabe desborda visualmente (`overflow: visible` de la regla en `agro-operations.css` sin `!important` pierde), pero los footers se posicionan después del contenedor de 300px — no después del contenido real. Resultado: cards aparecen debajo de ambos footers.
 
-### Solución aplicada (estructural, sin parches visuales)
+Media queries agravan el problema en móvil:
+- `@media (max-width: 480px)` → `max-height: 240px !important`
+- `@media (max-width: 320px)` → `.financial-operations-card .facturero-history-list` → `220px !important`
 
-1. **`index.html` L2194**: Agregado `hidden inert` a `#agro-repo-section` — misma protección que ya tenía `#agro-tools-section`.
-2. **`index.html` L34-37**: Agregada regla CSS bootstrap inline en `<head>`:
+**Causa secundaria** (también corregida): `#agro-repo-section` no tenía `hidden inert` por defecto, causando sección visible entre finances-section y footer antes de que el shell inicializara.
+
+### Solución aplicada
+
+1. **`agro-operations.css`** — Anulación específica para el dedicated list:
+   ```css
+   #pagados-dedicated-list.facturero-history-list {
+     max-height: none !important;
+     overflow-y: visible !important;
+   }
+   ```
+   Usa selector de ID + clase para máxima especificidad. El `!important` anula la regla genérica de `agro.css`. Solo afecta al historial dedicado de Pagados, no a los historiales de tabs.
+
+2. **`index.html`**: Agregado `hidden inert` a `#agro-repo-section`.
+
+3. **`index.html` `<head>`**: Regla CSS bootstrap para evitar flash de regiones antes de shell init:
    ```css
    body:not(.agro-shell-ready) [data-agro-shell-region]:not([data-agro-shell-region="dashboard"]) {
        display: none !important;
    }
    ```
-   Oculta TODAS las regiones no-default antes de que el shell inicialice. Dashboard (vista default) permanece visible.
-3. **`agro-shell.js` L351**: Agregado `document.body.classList.add('agro-shell-ready')` después de `setActiveView()` en `initAgroShell()`. Desactiva la regla bootstrap una vez que el shell ha configurado las regiones.
+
+4. **`agro-shell.js`**: `document.body.classList.add('agro-shell-ready')` después de `setActiveView()`.
 
 **Lo que NO se hizo (por diseño)**:
 - No se movió `#agro-module-footer` dentro de `#agro-pagados-dedicated`
 - No se usó z-index/contain/clear como solución raíz
 - No se reparenteó el footer con JS
-- `agro-operations.css` no fue modificado (los z-index originales quedaron intactos)
 
-**Build**: ✅ `pnpm build:gold` exitoso (2.85s)
+**Build**: ✅ `pnpm build:gold` exitoso (2.45s)
 
 ### Criterio de QA
 
