@@ -7,6 +7,7 @@ import '../css/style.css';
 import '../css/unificacion.css';
 import '../css/dashboard.css';
 import '../css/mobile-optimizations.css';
+import '../css/landing-v10.css';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 🔐 YAVLGOLD V9.4 - CONFIGURACIÓN DE SUPABASE

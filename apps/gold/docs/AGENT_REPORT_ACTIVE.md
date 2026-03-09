@@ -55,3 +55,32 @@ Resumen operativo actual de `apps/gold`.
 5. Consolidar en próximos QA la selección contextual de registros con datos reales del usuario.
 6. Tratar `music` como utilidad interna del dashboard mientras no cambie la decisión de producto.
 7. Dejar para lotes separados la simplificación final del tooling raíz y cualquier reubicación futura de `music`.
+
+---
+
+## Landing V10 Redesign — Diagnóstico (2026-03-09)
+
+### Estado actual
+- Landing V9.8: hero centrado con "Y" gigante texto, cards planas, sin emblema 3D
+- Auth modal funcional pero visualmente básico
+- CSS inline en index.html (~1300 líneas)
+
+### Referencia V10
+- Hero con 3D emblem flotante + contenido lado a lado
+- Glass cards, metallic gradients, 5-tone system
+- Scroll reveal, ghost emojis, Playfair Display accent
+- Footer 3-column grid
+
+### Plan aplicado
+1. Crear `assets/css/landing-v10.css` (CSS aislado V10)
+2. Reescribir HTML de landing con V10 design + 3D emblem con logo real
+3. Preservar todos IDs/clases funcionales del auth modal
+4. Agregar import en main.js
+5. Validar build
+
+### IDs funcionales preservados
+auth-modal, auth-modal-close, login-tab, register-tab, login-form, register-form,
+login-email, login-password, register-name, register-email, register-password,
+auth-error, auth-success, forgot-password-link, hcaptcha-login, hcaptcha-register,
+remember-me, hero-login-cta, login-btn, register-btn, user-menu, user-menu-btn,
+user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loadingScreen, logoLink

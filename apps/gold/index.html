@@ -4,1596 +4,339 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>YavlGold V9.8 | Tu Finca Digital</title>
+  <title>YavlGold | Plataforma Agrícola Digital</title>
   <meta name="description"
-    content="Gestiona tus cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes. La plataforma del agricultor moderno.">
+    content="YavlGold es la plataforma agrícola moderna: gestiona cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima en tiempo real y exporta informes desde cualquier dispositivo.">
   <meta name="keywords"
     content="Agricultura, Cultivos, Cosecha, Clima, Finca, Gastos, Ingresos, Ventas, YavlGold, Venezuela, Campo, Agricultor">
   <meta name="author" content="YavlGold Team">
   <link rel="canonical" href="https://www.yavlgold.com/">
-
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.yavlgold.com/">
-  <meta property="og:title" content="YavlGold V9.8 | Tu Finca Digital">
+  <meta property="og:title" content="YavlGold | Plataforma Agrícola Digital">
   <meta property="og:description"
-    content="Gestiona tus cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes.">
-  <meta property="og:image" content="https://www.yavlgold.com/assets/images/og-image.png?v=20260116">
+    content="YavlGold es la plataforma agrícola moderna: gestiona cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes.">
+  <meta property="og:image" content="https://www.yavlgold.com/assets/images/og-image.png?v=20260309">
   <meta property="og:locale" content="es_VE">
-
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="YavlGold V9.8 | Tu Finca Digital">
+  <meta name="twitter:title" content="YavlGold | Plataforma Agrícola Digital">
   <meta name="twitter:description"
-    content="Gestiona tus cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes.">
+    content="YavlGold es la plataforma agrícola moderna: gestiona cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes.">
   <meta name="twitter:url" content="https://www.yavlgold.com/">
-  <meta name="twitter:image" content="https://www.yavlgold.com/assets/images/og-image.png?v=20260116">
+  <meta name="twitter:image" content="https://www.yavlgold.com/assets/images/og-image.png?v=20260309">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-google.png">
   <link rel="apple-touch-icon" sizes="192x192" href="/favicon-google.png">
-
   <meta name="theme-color" content="#C8A752">
-
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/site.webmanifest">
-  <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-
-  <!-- Font Awesome para iconos ojo contraseña -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link
-    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap"
     rel="stylesheet">
-  <!-- hCaptcha Script -->
   <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
-
-  <!-- JSON-LD Schema for SEO -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "YavlGold",
-    "url": "https://www.yavlgold.com",
-    "logo": "https://www.yavlgold.com/assets/images/logo.webp",
-    "description": "Gestiona tus cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes."
-  }
+  {"@context":"https://schema.org","@type":"Organization","name":"YavlGold","url":"https://www.yavlgold.com","logo":"https://www.yavlgold.com/assets/images/logo.webp","description":"YavlGold es la plataforma agrícola moderna: gestiona cultivos, controla gastos e ingresos en múltiples monedas, consulta el clima y exporta informes."}
   </script>
-  <style>
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🎨 VARIABLES CSS - YAVLGOLD V9.8 OFFICIAL */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    :root {
-      /* 🎨 PALETA DORADA PREMIUM - BRANDING */
-      --gold-principal: #C8A752;
-      --gold-light: #E4D08E;
-      --gold-dark: #9D8040;
-      /* ⚡ PALETA DORADA VIBRANTE - CTAs & ACCIONES */
-      --gold-vibrante: #D4AF37;
-      --gold-vibrante-light: #E8C65A;
-      --gold-vibrante-dark: #B8941F;
-      /* 🖤 Paleta Negro */
-      --black: #0a0a0a;
-      --gray-darkest: #1a1a1a;
-      --gray-dark: #2a2a2a;
-      --gray-medium: #3a3a3a;
-      /* ✨ Sombras Premium */
-      --shadow-gold-sm: 0 2px 10px rgba(200, 167, 82, 0.2);
-      --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.3);
-      --shadow-gold-lg: 0 10px 40px rgba(200, 167, 82, 0.4);
-      --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.5);
-      --shadow-vibrante-sm: 0 2px 10px rgba(212, 175, 55, 0.2);
-      --shadow-vibrante-md: 0 5px 20px rgba(212, 175, 55, 0.3);
-      --shadow-vibrante-lg: 0 10px 40px rgba(212, 175, 55, 0.4);
-      --shadow-vibrante-xl: 0 20px 60px rgba(212, 175, 55, 0.5);
-      /* 🎨 Colores Tema */
-      --bg-primary: #0a0a0a;
-      --bg-secondary: #1a1a1a;
-      --text-primary: #ffffff;
-      --text-secondary: #cccccc;
-      --border-color: #2a2a2a;
-      /* Landing surfaces */
-      --landing-page-bg: var(--bg-primary);
-      --landing-hero-bg: var(--bg-primary);
-      --landing-hero-overlay: none;
-      --landing-section-bg: var(--bg-primary);
-      --landing-section-alt-bg: var(--bg-secondary);
-      --landing-overlay-bg: var(--bg-primary);
-      --landing-hero-glow: radial-gradient(circle, rgba(200, 167, 82, 0.15) 0%, transparent 70%);
-      --landing-hero-glow-opacity: 1;
-      --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.2) 0%, transparent 70%);
-    }
-
-    html.light-mode,
-    body.light-mode {
-      --bg-primary: #ffffff;
-      --bg-secondary: #f8f9fa;
-      --text-primary: #0a0a0a;
-      --text-secondary: #666666;
-      --black: #0a0a0a;
-      --gray-darkest: #f0f0f0;
-      --gray-dark: #e0e0e0;
-      --gray-medium: #d0d0d0;
-      --border-color: #e0e0e0;
-      --shadow-gold-sm: 0 2px 10px rgba(200, 167, 82, 0.15);
-      --shadow-gold-md: 0 5px 20px rgba(200, 167, 82, 0.25);
-      --shadow-gold-lg: 0 10px 40px rgba(200, 167, 82, 0.35);
-      --shadow-gold-xl: 0 20px 60px rgba(200, 167, 82, 0.45);
-      --landing-page-bg: var(--bg-primary);
-      --landing-hero-bg: var(--bg-primary);
-      --landing-hero-overlay: radial-gradient(circle at 50% 35%, rgba(200, 167, 82, 0.08) 0%, transparent 65%);
-      --landing-section-bg: var(--bg-primary);
-      --landing-section-alt-bg: var(--bg-secondary);
-      --landing-overlay-bg: var(--bg-secondary);
-      --landing-hero-glow: radial-gradient(circle, rgba(200, 167, 82, 0.12) 0%, transparent 70%);
-      --landing-hero-glow-opacity: 0.6;
-      --landing-cta-glow: radial-gradient(circle, rgba(200, 167, 82, 0.18) 0%, transparent 70%);
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🏗️ BASE STYLES */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-      background: var(--landing-page-bg);
-      color: var(--text-primary);
-      min-height: 100%;
-    }
-
-    body {
-      font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--landing-page-bg);
-      color: var(--text-primary);
-      overflow-x: hidden;
-      min-height: 100%;
-      transition: background-color 0.5s ease, color 0.5s ease;
-      opacity: 0;
-      animation: fadeIn 0.5s ease forwards;
-    }
-
-    body.landing-page {
-      background-color: var(--landing-page-bg);
-    }
-
-    body.landing-page.light-mode {
-      background-color: var(--landing-page-bg) !important;
-      background-image: none !important;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-
-    h1,
-    h2,
-    h3 {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🎬 ANIMACIONES */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    @keyframes breathe {
-
-      0%,
-      100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.4));
-      }
-
-      50% {
-        transform: scale(1.08);
-        filter: drop-shadow(0 0 50px rgba(200, 167, 82, 0.8));
-      }
-    }
-
-    .breathing-effect {
-      animation: breathe 4s ease-in-out infinite;
-    }
-
-    @keyframes textGlow {
-
-      0%,
-      100% {
-        text-shadow: 0 0 10px rgba(200, 167, 82, 0.5), 0 0 20px rgba(200, 167, 82, 0.3), 0 0 30px rgba(200, 167, 82, 0.2);
-      }
-
-      50% {
-        text-shadow: 0 0 20px rgba(200, 167, 82, 0.8), 0 0 40px rgba(200, 167, 82, 0.6), 0 0 60px rgba(200, 167, 82, 0.4);
-      }
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        transform: scale(1, 1);
-      }
-
-      50% {
-        transform: scale(1.05, 1.05);
-      }
-    }
-
-    @keyframes bounce {
-
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-10px);
-      }
-    }
-
-    @keyframes shimmer {
-      0% {
-        background-position: -1000px 0;
-      }
-
-      100% {
-        background-position: 1000px 0;
-      }
-    }
-
-    @keyframes float {
-
-      0%,
-      100% {
-        transform: translateY(0px);
-      }
-
-      50% {
-        transform: translateY(-20px);
-      }
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🎯 HEADER & NAVIGATION */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: var(--bg-secondary);
-      backdrop-filter: blur(20px);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 1000;
-      box-shadow: 0 2px 30px rgba(0, 0, 0, 0.2);
-      border-bottom: 1px solid var(--border-color);
-      transition: all 0.3s ease;
-    }
-
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      cursor: pointer;
-    }
-
-    .logo-y {
-      font-size: 48px;
-      font-weight: 900;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      transform: rotate(30deg);
-      display: inline-block;
-      animation: breathe 4s ease-in-out infinite;
-      will-change: transform, filter;
-    }
-
-    /* Nuevo: logo basado en imagen oficial */
-    .logo-img {
-      width: 48px;
-      height: 48px;
-      object-fit: cover;
-      border-radius: 50%;
-      /* Header usa PNG sin rotación */
-      transform: none;
-      box-shadow: var(--shadow-gold-sm);
-    }
-
-    .logo-main {
-      width: 48px;
-      height: 48px;
-      display: inline-block;
-      filter: drop-shadow(0 0 20px rgba(200, 167, 82, 0.5));
-      animation: breathe 4s ease-in-out infinite;
-    }
-
-    .logo-text {
-      font-size: 1.5rem;
-      font-weight: 700;
-      font-family: 'Rajdhani', sans-serif;
-      color: var(--text-primary);
-      transition: color 0.3s ease;
-    }
-
-    .logo-text span {
-      color: var(--gold-principal);
-      animation: textGlow 3s ease-in-out infinite;
-    }
-
-    .nav-desktop {
-      display: flex;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    .nav-desktop a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-weight: 600;
-      font-family: 'Rajdhani', sans-serif;
-      transition: all 0.3s;
-      position: relative;
-      padding: 0.5rem 0;
-    }
-
-    .nav-desktop a::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal));
-      transition: width 0.3s;
-    }
-
-    .nav-desktop a:hover {
-      color: var(--gold-principal);
-    }
-
-    .nav-desktop a:hover::after {
-      width: 100%;
-    }
-
-    .nav-actions {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    .theme-toggle {
-      background: var(--gray-dark);
-      border: 2px solid var(--gray-medium);
-      color: var(--gold-principal);
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 1.4rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.4s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .theme-toggle:hover {
-      background: var(--gold-dark);
-      border-color: var(--gold-principal);
-      transform: rotate(180deg) scale(1.1);
-      box-shadow: var(--shadow-gold-md);
-    }
-
-    .btn-premium {
-      padding: 14px 32px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-family: 'Rajdhani', sans-serif;
-      transition: all 0.4s ease;
-      text-transform: uppercase;
-      font-size: 0.9rem;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-premium::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .btn-premium:hover::before {
-      width: 300px;
-      height: 300px;
-    }
-
-    .btn-gold {
-      background: linear-gradient(135deg, var(--gold-vibrante-dark) 0%, var(--gold-vibrante) 100%);
-      color: var(--black);
-      box-shadow: var(--shadow-vibrante-md);
-    }
-
-    .btn-gold:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-vibrante-xl);
-    }
-
-    .btn-outline {
-      background: transparent;
-      border: 2px solid var(--gold-principal);
-      color: var(--gold-principal);
-    }
-
-    .btn-outline:hover {
-      background: var(--gold-principal);
-      color: var(--black);
-      transform: translateY(-4px);
-    }
-
-    .btn-lg {
-      padding: 18px 48px;
-      font-size: 1.1rem;
-    }
-
-    .hamburger {
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      gap: 6px;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 10px;
-      z-index: 1002;
-      position: relative;
-      width: 50px;
-      height: 50px;
-    }
-
-    .hamburger span {
-      display: block;
-      width: 30px;
-      height: 3px;
-      background: var(--gold-principal);
-      border-radius: 3px;
-      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      box-shadow: 0 0 10px rgba(200, 167, 82, 0.3);
-    }
-
-    .hamburger:hover span {
-      background: var(--gold-light);
-      box-shadow: 0 0 20px rgba(200, 167, 82, 0.6);
-    }
-
-    .hamburger.active span:nth-child(1) {
-      transform: rotate(45deg) translate(8px, 8px);
-    }
-
-    .hamburger.active span:nth-child(2) {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-
-    .hamburger.active span:nth-child(3) {
-      transform: rotate(-45deg) translate(8px, -8px);
-    }
-
-    .nav-mobile {
-      position: fixed;
-      top: 0;
-      right: -100%;
-      width: 100%;
-      max-width: 380px;
-      height: 100vh;
-      background: var(--bg-secondary);
-      padding: 6rem 2rem 2rem 2rem;
-      transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
-      z-index: 1001;
-      overflow-y: auto;
-      border-left: 3px solid var(--gold-principal);
-    }
-
-    .nav-mobile.active {
-      right: 0;
-    }
-
-    .nav-mobile-links {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      margin-bottom: 3rem;
-    }
-
-    .nav-mobile-links a {
-      color: var(--text-primary);
-      text-decoration: none;
-      font-size: 1.3rem;
-      font-weight: 600;
-      font-family: 'Rajdhani', sans-serif;
-      padding: 1.2rem 1.5rem;
-      border-radius: 12px;
-      border-left: 4px solid transparent;
-      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      background: var(--bg-primary);
-    }
-
-    .nav-mobile-links a:hover {
-      border-left-color: var(--gold-principal);
-      background: var(--gray-dark);
-      transform: translateX(10px);
-      box-shadow: var(--shadow-gold-sm);
-      color: var(--gold-principal);
-    }
-
-    .nav-mobile-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .nav-mobile-actions .btn-premium {
-      width: 100%;
-      text-align: center;
-    }
-
-    body.landing-page .mobile-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100vh;
-      background: var(--landing-overlay-bg);
-      backdrop-filter: blur(5px);
-      z-index: 1000;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.4s ease;
-    }
-
-    body.landing-page .mobile-overlay.active {
-      opacity: 0.8;
-      visibility: visible;
-    }
-
-    /* Theme coverage patch (landing only) */
-    body.landing-page.light-mode .mobile-overlay {
-      background: var(--landing-overlay-bg);
-    }
-
-    body.landing-page.light-mode .mobile-overlay.active {
-      opacity: 0.8;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 👑 HERO SECTION */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 8rem 2rem 2rem 2rem;
-      background-color: var(--landing-hero-bg);
-      background-image: var(--landing-hero-overlay);
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-position: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 1000px;
-      height: 1000px;
-      background: var(--landing-hero-glow);
-      opacity: var(--landing-hero-glow-opacity);
-      animation: pulse 6s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    body.landing-page.light-mode .hero {
-      background-color: var(--landing-hero-bg) !important;
-      background-image: var(--landing-hero-overlay) !important;
-    }
-
-    body.landing-page.light-mode .hero::after {
-      opacity: 0.015;
-    }
-
-    .hero::after {
-      content: '🚧';
-      position: absolute;
-      font-size: 200px;
-      opacity: 0.03;
-      top: 20%;
-      right: 10%;
-      animation: float 6s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      max-width: 1000px;
-    }
-
-    .hero-logo {
-      font-size: 200px;
-      font-weight: 900;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      transform: rotate(30deg);
-      display: inline-block;
-      animation: breathe 4s ease-in-out infinite;
-      margin-bottom: 1rem;
-      will-change: transform, filter;
-    }
-
-    .hero h1 {
-      font-size: 4.5rem;
-      font-weight: 900;
-      font-family: 'Orbitron', sans-serif;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: textGlow 3s ease-in-out infinite;
-    }
-
-    .hero-subtitle {
-      font-size: 1.6rem;
-      font-family: 'Rajdhani', sans-serif;
-      color: var(--text-secondary);
-      margin-bottom: 1.5rem;
-      font-weight: 600;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.5rem 1.2rem;
-      border-radius: 50px;
-      font-weight: 700;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      margin: 0.3rem;
-    }
-
-    .version-badge {
-      background: linear-gradient(135deg, var(--gold-vibrante-dark), var(--gold-vibrante));
-      color: var(--black);
-      padding: 0.8rem 2rem;
-      font-size: 0.9rem;
-      box-shadow: var(--shadow-vibrante-md);
-      animation: bounce 2s ease-in-out infinite;
-    }
-
-    .badge-construction {
-      background: linear-gradient(135deg, #f39c12, #e67e22);
-      color: white;
-      box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
-    }
-
-    .badge-unique {
-      background: linear-gradient(135deg, var(--gold-light), var(--gold-principal));
-      color: white;
-      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
-    }
-
-    .badge-premium {
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
-      color: var(--black);
-      box-shadow: var(--shadow-gold-sm);
-    }
-
-    .hero-badges {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 2.5rem;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🌟 FEATURES SECTION */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .features {
-      padding: 6rem 2rem;
-      background: var(--landing-section-alt-bg);
-      position: relative;
-    }
-
-    .features-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: 3.5rem;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
-
-    .section-title::after {
-      content: '🎓';
-      display: block;
-      font-size: 2rem;
-      margin-top: 0.5rem;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .section-subtitle {
-      text-align: center;
-      font-size: 1.3rem;
-      font-family: 'Rajdhani', sans-serif;
-      color: var(--text-secondary);
-      margin-bottom: 4rem;
-      font-weight: 600;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2.5rem;
-    }
-
-    .feature-card {
-      background: var(--bg-primary);
-      border: 2px solid var(--border-color);
-      border-radius: 24px;
-      padding: 2.5rem;
-      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      position: relative;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 5px;
-      background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
-      background-size: 200% 100%;
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.5s ease;
-    }
-
-    .feature-card::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 100px;
-      height: 100px;
-      background: radial-gradient(circle, rgba(200, 167, 82, 0.1) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-12px) scale(1.02);
-      border-color: var(--gold-principal);
-      box-shadow: var(--shadow-gold-xl);
-    }
-
-    .feature-card:hover::before {
-      transform: scaleX(1);
-      animation: shimmer 2s linear infinite;
-    }
-
-    .feature-card:hover::after {
-      opacity: 1;
-    }
-
-    .feature-status {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 0.4rem 1rem;
-      border-radius: 50px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      font-family: 'Rajdhani', sans-serif;
-      text-transform: uppercase;
-    }
-
-    .status-development {
-      background: linear-gradient(135deg, var(--gold-principal), var(--gold-dark));
-      color: white;
-      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
-    }
-
-    .status-coming {
-      background: linear-gradient(135deg, var(--gold-light), var(--gold-principal));
-      color: white;
-      box-shadow: 0 4px 15px rgba(200, 167, 82, 0.3);
-    }
-
-    .status-star {
-      background: linear-gradient(135deg, var(--gold-vibrante-dark), var(--gold-vibrante));
-      color: var(--black);
-      box-shadow: var(--shadow-vibrante-sm);
-    }
-
-    .feature-icon {
-      font-size: 3.5rem;
-      margin-bottom: 1.5rem;
-      display: inline-block;
-      animation: float 4s ease-in-out infinite;
-    }
-
-    .feature-title {
-      font-size: 1.6rem;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      color: var(--gold-principal);
-      text-shadow: 0 0 20px rgba(200, 167, 82, 0.2);
-    }
-
-    .feature-description {
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      line-height: 1.8;
-      font-size: 1.05rem;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 💬 TESTIMONIALS SECTION */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .testimonials {
-      padding: 6rem 2rem;
-      background: var(--landing-section-bg);
-      position: relative;
-    }
-
-    .testimonials-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .testimonials-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2.5rem;
-      margin-top: 3rem;
-    }
-
-    .testimonial-card {
-      background: var(--bg-secondary);
-      border: 2px solid var(--border-color);
-      border-radius: 24px;
-      padding: 2.5rem;
-      transition: all 0.4s ease;
-      position: relative;
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    .testimonial-card::before {
-      content: '"';
-      position: absolute;
-      top: 20px;
-      left: 25px;
-      font-size: 80px;
-      color: var(--gold-principal);
-      opacity: 0.2;
-      font-family: Georgia, serif;
-      line-height: 1;
-    }
-
-    .testimonial-card:hover {
-      transform: translateY(-10px);
-      border-color: var(--gold-principal);
-      box-shadow: var(--shadow-gold-lg);
-    }
-
-    .testimonial-content {
-      position: relative;
-      z-index: 1;
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.1rem;
-      line-height: 1.8;
-      margin-bottom: 2rem;
-    }
-
-    .testimonial-author {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .testimonial-avatar {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      font-weight: 900;
-      color: var(--black);
-      font-family: 'Orbitron', sans-serif;
-    }
-
-    .testimonial-info h4 {
-      color: var(--gold-principal);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1rem;
-      margin-bottom: 0.3rem;
-    }
-
-    .testimonial-info p {
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.95rem;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 🎯 CTA FINAL SECTION */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .cta-final {
-      padding: 6rem 2rem;
-      background: var(--landing-section-alt-bg);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .cta-final::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 800px;
-      height: 800px;
-      background: var(--landing-cta-glow);
-      animation: pulse 6s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    .cta-container {
-      max-width: 800px;
-      margin: 0 auto;
-      text-align: center;
-      background: var(--bg-primary);
-      padding: 4rem 3rem;
-      border-radius: 30px;
-      border: 2px solid var(--gold-principal);
-      box-shadow: var(--shadow-gold-xl);
-      position: relative;
-      z-index: 1;
-    }
-
-    .cta-container h2 {
-      font-size: 3rem;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1.5rem;
-    }
-
-    .cta-container p {
-      font-size: 1.4rem;
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      margin-bottom: 2.5rem;
-      font-weight: 600;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 📊 FOOTER */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    .footer {
-      background: var(--landing-section-bg);
-      padding: 4rem 2rem;
-      text-align: center;
-      border-top: 1px solid var(--border-color);
-    }
-
-    .footer-logo {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-
-      /* LIMPIEZA TOTAL DEL MARCO */
-      background: transparent !important;
-      box-shadow: none !important;
-      border: none !important;
-      outline: none !important;
-      filter: none !important;
-
-      padding: 0;
-      margin: 1.5rem auto;
-
-      animation: breathe 4s ease-in-out infinite;
-    }
-
-    .footer-logo::before,
-    .footer-logo::after {
-      content: none !important;
-      display: none !important;
-    }
-
-    .footer-logo img {
-      background: transparent;
-      box-shadow: none;
-      filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.35));
-      max-width: 72px;
-      max-height: 72px;
-    }
-
-    .footer-text {
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      margin-bottom: 2rem;
-      font-size: 1.1rem;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 2.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 2rem;
-    }
-
-    .footer-links a {
-      color: var(--gold-principal);
-      font-family: 'Rajdhani', sans-serif;
-      text-decoration: none;
-      transition: all 0.3s;
-      font-weight: 600;
-      position: relative;
-    }
-
-    .footer-links a::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: var(--gold-principal);
-      transition: width 0.3s;
-    }
-
-    .footer-links a:hover {
-      color: var(--gold-light);
-      text-shadow: 0 0 10px rgba(200, 167, 82, 0.5);
-    }
-
-    .footer-links a:hover::after {
-      width: 100%;
-    }
-
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    /* 📱 RESPONSIVE */
-    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-    @media (max-width: 968px) {
-      .nav-desktop {
-        display: none;
-      }
-
-      .hamburger {
-        display: flex;
-      }
-
-      .nav-actions .btn-premium {
-        display: none;
-      }
-
-      .hero-logo {
-        font-size: 140px;
-      }
-
-      .hero h1 {
-        font-size: 3rem;
-      }
-
-      .section-title {
-        font-size: 2.5rem;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .hero-logo {
-        font-size: 120px;
-      }
-
-      .hero h1 {
-        font-size: 2.5rem;
-      }
-
-      .hero-subtitle {
-        font-size: 1.3rem;
-      }
-
-      .section-title {
-        font-size: 2rem;
-      }
-
-      .features-grid,
-      .testimonials-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .cta-container h2 {
-        font-size: 2.2rem;
-      }
-
-      .cta-container p {
-        font-size: 1.2rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .navbar {
-        padding: 1rem;
-      }
-
-      .logo-y {
-        font-size: 36px;
-      }
-
-      .logo-text {
-        font-size: 1.2rem;
-      }
-
-      .hero-logo {
-        font-size: 90px;
-      }
-
-      .hero h1 {
-        font-size: 2rem;
-      }
-
-      .hero-subtitle {
-        font-size: 1.1rem;
-      }
-
-      .version-badge {
-        font-size: 0.85rem;
-        padding: 0.6rem 1.5rem;
-      }
-
-      .hero-actions {
-        flex-direction: column;
-        width: 100%;
-      }
-
-      .btn-premium {
-        width: 100%;
-      }
-
-      .section-title {
-        font-size: 1.8rem;
-      }
-
-      .feature-icon {
-        font-size: 2.5rem;
-      }
-
-      .nav-mobile {
-        max-width: 100%;
-      }
-
-      .cta-container {
-        padding: 3rem 2rem;
-      }
-
-      .cta-container h2 {
-        font-size: 1.8rem;
-      }
-    }
-
-    /* Loading Screen */
-    .loading-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, var(--landing-page-bg) 0%, var(--landing-section-alt-bg) 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease-out;
-    }
-
-    .loading-screen.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .loading-logo {
-      font-size: 120px;
-      font-weight: 900;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-principal) 50%, var(--gold-light) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      transform: rotate(30deg);
-      display: inline-block;
-      animation: breathe 4s ease-in-out infinite;
-      margin-bottom: 20px;
-    }
-
-    .loading-text {
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.5rem;
-      margin-bottom: 30px;
-      font-weight: 600;
-    }
-
-    .loading-bar {
-      width: 300px;
-      height: 4px;
-      background: rgba(200, 167, 82, 0.2);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    .loading-progress {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
-      animation: loadingProgress 2s ease-in-out infinite;
-    }
-
-    @keyframes loadingProgress {
-      0% {
-        width: 0%;
-      }
-
-      50% {
-        width: 70%;
-      }
-
-      100% {
-        width: 100%;
-      }
-    }
-  </style>
 </head>
 
 <body class="landing-page">
   <!-- Loading Screen -->
   <div class="loading-screen" id="loadingScreen">
-    <img src="./assets/images/logo.svg" alt="YavlGold" width="120" height="120" class="logo-main breathing-effect" />
-    <div class="loading-text">Cargando YavlGold V9.8...</div>
+    <img src="/brand/logo.webp" alt="YavlGold" width="120" height="120" class="loading-logo-img" />
+    <div class="loading-text">YavlGold</div>
+    <div class="loading-subtitle">Preparando tu experiencia agrícola</div>
     <div class="loading-bar">
       <div class="loading-progress"></div>
     </div>
   </div>
-
-  <!-- Overlay Mobile -->
   <div class="mobile-overlay" id="mobileOverlay"></div>
 
-  <!-- Navigation -->
-  <nav class="navbar" role="navigation" aria-label="Navegación principal">
-    <div class="logo-container" id="logoLink">
-      <img src="./assets/images/logo.webp" alt="YavlGold logo" class="logo-img" width="48" height="48" />
-      <div class="logo-text">Yavl<span>Gold</span> V9.8</div>
+  <!-- NAVBAR V10 -->
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Navegación principal">
+    <div class="nav-brand" id="logoLink">
+      <div class="nav-logo-icon"><img src="/brand/logo.webp" alt="YavlGold" width="38" height="38" /></div>
+      <div>
+        <div class="nav-brand-text v10-text-metallic">YavlGold</div>
+        <div class="nav-version">TU FINCA DIGITAL</div>
+      </div>
     </div>
-    <div class="nav-desktop">
+    <div class="nav-links">
       <a href="#inicio">Inicio</a>
       <a href="#modulos">Módulos</a>
-      <a href="#beta">Comunidad</a>
+      <a href="#comunidad">Comunidad</a>
     </div>
     <div class="nav-actions">
       <button class="theme-toggle" id="themeToggle" title="Cambiar tema"
         aria-label="Cambiar entre modo claro y oscuro">🌙</button>
       <div id="auth-buttons" class="auth-buttons">
-        <button id="login-btn" class="btn-premium btn-outline" type="button">ENTRAR</button>
-        <button id="register-btn" class="btn-premium btn-gold" type="button">REGISTRO</button>
+        <button id="login-btn" class="btn-nav btn-nav-outline" type="button">ENTRAR</button>
+        <button id="register-btn" class="btn-nav btn-nav-filled" type="button">REGISTRO</button>
       </div>
       <div id="user-menu" class="user-menu" style="display: none;">
         <button id="user-menu-btn" class="user-menu-btn" type="button">
-          <img src="" alt="" class="user-avatar-sm">
-          <span>Usuario</span>
-          <i class="fas fa-chevron-down"></i>
+          <img src="" alt="" class="user-avatar-sm"><span>Usuario</span><i class="fas fa-chevron-down"></i>
         </button>
         <div id="user-dropdown" class="user-dropdown" style="display: none;">
           <a href="/dashboard/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
           <a href="/dashboard/perfil.html"><i class="fas fa-user"></i> Mi Perfil</a>
           <a href="/dashboard/configuracion.html"><i class="fas fa-cog"></i> Configuración</a>
           <hr>
-          <button id="logout-btn" class="logout-btn" type="button">
-            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-          </button>
+          <button id="logout-btn" class="logout-btn" type="button"><i class="fas fa-sign-out-alt"></i> Cerrar
+            Sesión</button>
         </div>
       </div>
       <button class="hamburger" id="hamburger" aria-label="Abrir menú de navegación" aria-expanded="false">
-        <span></span>
-        <span></span>
-        <span></span>
+        <span></span><span></span><span></span>
       </button>
     </div>
   </nav>
 
   <!-- Mobile Navigation -->
   <div class="nav-mobile" id="navMobile" role="navigation" aria-label="Navegación móvil">
-    <div class="nav-mobile-links">
-      <a href="#inicio">🏠 Inicio</a>
-      <a href="#modulos">📚 Módulos</a>
-      <a href="#beta">👥 Comunidad</a>
-    </div>
+    <a href="#inicio">Inicio</a>
+    <a href="#modulos">Módulos</a>
+    <a href="#comunidad">Comunidad</a>
     <div class="nav-mobile-actions">
-      <button onclick="openAuthModal('login')" class="btn-premium btn-outline" type="button">ENTRAR</button>
-      <button onclick="openAuthModal('signup')" class="btn-premium btn-gold" type="button">REGISTRO</button>
+      <button onclick="openAuthModal('login')" class="btn-nav btn-nav-outline" type="button">ENTRAR</button>
+      <button onclick="openAuthModal('signup')" class="btn-nav btn-nav-filled" type="button">REGISTRO</button>
     </div>
   </div>
 
-  <!-- Hero Section -->
-  <section class="hero" id="inicio">
-    <div class="hero-content">
-      <div class="hero-logo" aria-hidden="true">Y</div>
-      <h1>🌾 YAVLGOLD V9.8 🌾</h1>
-      <p class="hero-subtitle">Gestiona tus cultivos, controla tus ventas, consulta el clima — todo en un solo lugar</p>
-      <div class="hero-badges">
-        <span class="version-badge">V9.8 - 2026</span>
-        <span class="badge badge-construction">En desarrollo activo</span>
-        <span class="badge badge-unique">Pesos · Dólares · Bolívares</span>
-        <span class="badge badge-premium">Acceso gratuito</span>
+  <!-- HERO V10 -->
+  <section class="v10-hero v10-ghost-emoji" id="inicio">
+    <div class="hero-grid"></div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          <span class="hero-badge-text">Plataforma Activa · Acceso Gratuito</span>
+        </div>
+        <h1 class="hero-title v10-text-metallic">Tu finca merece<br>tecnología premium</h1>
+        <p class="hero-desc">Gestiona cultivos, controla ventas en múltiples monedas, consulta el clima — diseñado para
+          el agricultor real, desde el Táchira para el mundo.</p>
+        <div class="hero-cta">
+          <a id="hero-login-cta" href="/index.html#login" class="btn-v10 btn-v10-gold">Gestiona tu finca</a>
+          <button onclick="openAuthModal('signup')" class="btn-v10 btn-v10-outline">Crear cuenta gratis</button>
+        </div>
       </div>
-      <div class="hero-actions">
-        <a id="hero-login-cta" href="/index.html#login" class="btn-premium btn-gold btn-lg">Gestiona tu finca</a>
-        <button onclick="openAuthModal('signup')" class="btn-premium btn-outline btn-lg">Crear cuenta gratis</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Features Section -->
-  <section class="features" id="modulos">
-    <div class="features-container">
-      <h2 class="section-title">Modulos Oficiales</h2>
-      <p class="section-subtitle">Hoy Agro esta liberado. Academia, Social, Tecnologia y Crypto siguen fuera del release actual.</p>
-      <div class="features-grid">
-        <!-- Agricultura - Producto Estrella -->
-        <div class="feature-card" onclick="window.location.href='./agro/'" style="cursor: pointer;"
-          title="Ir al módulo Agro">
-          <span class="feature-status status-star">⭐ Disponible</span>
-          <div class="feature-icon">🌾</div>
-          <h3 class="feature-title">Agricultura</h3>
-          <p class="feature-description">Registra cultivos, controla gastos e ingresos en múltiples monedas, consulta el
-            clima y exporta informes. Con asistente agrícola integrado.</p>
-        </div>
-        <!-- Mercado Financiero -->
-        <div class="feature-card">
-          <span class="feature-status status-coming">No disponible</span>
-          <div class="feature-icon">📈</div>
-          <h3 class="feature-title">Crypto</h3>
-          <p class="feature-description">Market data público con actualización periódica y tasas de cambio de
-            referencia. Módulo aún no liberado.</p>
-        </div>
-        <!-- Academia -->
-        <div class="feature-card">
-          <span class="feature-status status-coming">No disponible</span>
-          <div class="feature-icon">🎓</div>
-          <h3 class="feature-title">Academia</h3>
-          <p class="feature-description">Aprende sobre agricultura, finanzas y tecnología con contenido práctico para el
-            campo.</p>
-        </div>
-        <!-- Tecnologia -->
-        <div class="feature-card">
-          <span class="feature-status status-coming">No disponible</span>
-          <div class="feature-icon">🛠️</div>
-          <h3 class="feature-title">Tecnología</h3>
-          <p class="feature-description">Calculadoras, conversores y utilidades prácticas para el día a día del
-            agricultor. Módulo aún no liberado.</p>
-        </div>
-        <!-- Social -->
-        <div class="feature-card">
-          <span class="feature-status status-coming">No disponible</span>
-          <div class="feature-icon">👥</div>
-          <h3 class="feature-title">Social</h3>
-          <p class="feature-description">Conecta con otros agricultores, comparte experiencias y aprende de la comunidad
-            del campo.</p>
+      <div class="hero-visual">
+        <div class="logo-emblem" id="logoEmblem">
+          <div class="emblem-outer"></div>
+          <div class="emblem-inner">
+            <img src="/brand/logo.webp" alt="YavlGold" class="emblem-logo-img" />
+            <span class="emblem-sub">YavlGold</span>
+          </div>
         </div>
       </div>
     </div>
+    <button class="hero-scroll" onclick="document.getElementById('modulos').scrollIntoView({behavior:'smooth'})">
+      <span class="hero-scroll-label">Explorar</span>
+      <span class="hero-scroll-arrow">↓</span>
+    </button>
+  </section>
+  <div class="v10-gold-divider"></div>
+
+  <!-- MODULES V10 -->
+  <section class="v10-section v10-modules-section v10-ghost-emoji" id="modulos">
+    <div class="v10-section-inner">
+      <div class="v10-section-header v10-reveal">
+        <div class="v10-section-tag">Ecosistema de Módulos</div>
+        <h2 class="v10-section-title v10-text-metallic">Módulos Oficiales</h2>
+        <div class="v10-gold-line"></div>
+        <p class="v10-section-desc">Agro está liberado. Academia, Social, Tecnología y Crypto siguen en desarrollo
+          activo.</p>
+      </div>
+      <div class="v10-modules-grid">
+        <div class="v10-glass-card v10-module-card v10-reveal" onclick="window.location.href='./agro/'"
+          style="cursor:pointer">
+          <div class="module-top"><span class="module-icon">🌾</span><span class="v10-status v10-status-available"><span
+                class="v10-status-dot"></span> Disponible</span></div>
+          <div class="module-title">Agricultura</div>
+          <div class="module-desc">Registra cultivos, controla gastos e ingresos en COP/USD/VES, consulta el clima y
+            exporta informes.</div>
+          <span class="module-link">Ir al módulo →</span>
+        </div>
+        <div class="v10-glass-card v10-module-card v10-reveal">
+          <div class="module-top"><span class="module-icon">📈</span><span class="v10-status v10-status-dev"><span
+                class="v10-status-dot"></span> En Desarrollo</span></div>
+          <div class="module-title">Mercado Cripto</div>
+          <div class="module-desc">Market data público de Binance API con actualización en tiempo real. Sin trading,
+            solo información.</div>
+          <span class="module-link">Próximamente</span>
+        </div>
+        <div class="v10-glass-card v10-module-card v10-reveal">
+          <div class="module-top"><span class="module-icon">🎓</span><span class="v10-status v10-status-soon"><span
+                class="v10-status-dot"></span> Próximamente</span></div>
+          <div class="module-title">Academia</div>
+          <div class="module-desc">Aprende sobre agricultura, finanzas y tecnología con contenido práctico para el
+            campo.</div>
+          <span class="module-link">Próximamente</span>
+        </div>
+        <div class="v10-glass-card v10-module-card v10-reveal">
+          <div class="module-top"><span class="module-icon">🛠️</span><span class="v10-status v10-status-soon"><span
+                class="v10-status-dot"></span> Próximamente</span></div>
+          <div class="module-title">Tecnología</div>
+          <div class="module-desc">Calculadoras, conversores y utilidades prácticas para el día a día del agricultor.
+          </div>
+          <span class="module-link">Próximamente</span>
+        </div>
+        <div class="v10-glass-card v10-module-card v10-reveal">
+          <div class="module-top"><span class="module-icon">👥</span><span class="v10-status v10-status-soon"><span
+                class="v10-status-dot"></span> Próximamente</span></div>
+          <div class="module-title">Social</div>
+          <div class="module-desc">Conecta con otros agricultores, comparte experiencias y aprende de la comunidad del
+            campo.</div>
+          <span class="module-link">Próximamente</span>
+        </div>
+        <div class="v10-glass-card v10-module-card v10-reveal" onclick="window.location.href='/dashboard/'"
+          style="cursor:pointer">
+          <div class="module-top"><span class="module-icon">📊</span><span class="v10-status v10-status-available"><span
+                class="v10-status-dot"></span> Disponible</span></div>
+          <div class="module-title">Dashboard</div>
+          <div class="module-desc">Centro de control con resumen de actividad, recomendaciones y notificaciones del
+            sistema.</div>
+          <span class="module-link">Ir al dashboard →</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="v10-gold-divider"></div>
+
+  <!-- VALUE PROPOSITION V10 -->
+  <section class="v10-section v10-value-section">
+    <div class="v10-section-inner">
+      <div class="v10-section-header v10-reveal">
+        <div class="v10-section-tag">¿Por qué YavlGold?</div>
+        <h2 class="v10-section-title v10-text-metallic">Diseñado para el campo real</h2>
+        <div class="v10-gold-line"></div>
+      </div>
+      <div class="v10-value-grid">
+        <div class="v10-glass-card v10-value-card v10-reveal"><span class="v10-value-icon">🌾</span>
+          <div class="v10-value-title">Agrícola de verdad</div>
+          <div class="v10-value-desc">Cultivos, clima, gastos en múltiples monedas. Pensado para quien trabaja la tierra
+            todos los días.</div>
+        </div>
+        <div class="v10-glass-card v10-value-card v10-reveal"><span class="v10-value-icon">⚡</span>
+          <div class="v10-value-title">Ligero y rápido</div>
+          <div class="v10-value-desc">Vanilla JS + Vite. Sin frameworks pesados. Funciona fluido incluso en equipos con
+            recursos limitados.</div>
+        </div>
+        <div class="v10-glass-card v10-value-card v10-reveal"><span class="v10-value-icon">🔒</span>
+          <div class="v10-value-title">Tus datos, seguros</div>
+          <div class="v10-value-desc">Supabase con Row Level Security. Sin acceso a datos ajenos, sin secretos en el
+            frontend.</div>
+        </div>
+        <div class="v10-glass-card v10-value-card v10-reveal"><span class="v10-value-icon">💰</span>
+          <div class="v10-value-title">Multi-moneda</div>
+          <div class="v10-value-desc">Registra en Pesos, Dólares o Bolívares. Controla gastos e ingresos como lo
+            necesites.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="v10-gold-divider"></div>
+
+  <!-- DNA SECTION V10 -->
+  <section class="v10-section v10-dna-section">
+    <div class="v10-section-inner">
+      <div class="v10-reveal">
+        <span class="v10-growing-icon">🌱</span>
+        <p class="v10-growing-desc">"Construimos la mejor herramienta para el agricultor, paso a paso. Desde el Táchira
+          para el mundo, con las manos en la tierra y los ojos en el futuro."</p>
+      </div>
+      <div class="v10-dna-quote v10-reveal">
+        <p>En el campo, el diseño no es decoración — es la arquitectura de la confianza. Cada herramienta debe ser tan
+          robusta como la tierra que trabajas, y tan elegante como la cosecha que sueñas.</p>
+        <cite>— Filosofía YavlGold</cite>
+      </div>
+    </div>
+  </section>
+  <div class="v10-gold-divider"></div>
+
+  <!-- CTA V10 -->
+  <section class="v10-section v10-cta-section v10-ghost-emoji" id="comunidad">
+    <div class="v10-cta-inner v10-reveal">
+      <h2 class="v10-cta-title v10-text-metallic">Únete a la comunidad agrícola</h2>
+      <p class="v10-cta-desc">Únete a la comunidad. Publicamos avances a medida que cada módulo queda listo. Programado
+        con Vanilla JS y Vite para máximo rendimiento.</p>
+      <a href="https://t.me/YavlEcosystem" target="_blank" rel="noopener noreferrer" class="btn-v10 btn-v10-gold"><i
+          class="fab fa-telegram"></i> Comunidad en Telegram</a>
+    </div>
   </section>
 
-  <!-- Beta CTA Section (testimonials removed) -->
-  <section class="testimonials" id="beta">
-    <div class="testimonials-container" style="text-align: center; padding: 4rem 2rem;">
-      <h3
-        style="font-family: 'Orbitron', sans-serif; font-size: 2rem; color: var(--gold-principal); margin-bottom: 1rem;">
-        🌱 Estamos creciendo contigo</h3>
-      <p class="section-subtitle" style="max-width: 600px; margin: 0 auto;">Estamos construyendo una plataforma útil,
-        módulo por módulo, con foco real en el campo.</p>
+  <!-- FOOTER V10 -->
+  <footer class="v10-footer">
+    <div class="v10-footer-inner">
+      <div>
+        <div class="v10-footer-brand v10-font-orbitron v10-text-metallic">YavlGold</div>
+        <p class="v10-footer-desc">Plataforma integral para el agricultor moderno. Gestiona cultivos, clima y finanzas
+          en un solo lugar.</p>
+        <p class="v10-footer-origin">🌾 Desde La Grita, Táchira para el mundo 🌾</p>
+      </div>
+      <div class="v10-footer-col">
+        <h4>Plataforma</h4><a href="#modulos">Módulos</a><a href="/dashboard/">Dashboard</a><a
+          href="#comunidad">Comunidad</a><a href="mailto:soporte@yavlgold.com">Contacto</a>
+      </div>
+      <div class="v10-footer-col">
+        <h4>Tecnología</h4><span>Vanilla JS (ES6+)</span><span>Vite MPA</span><span>Supabase
+          (PostgreSQL)</span><span>Vercel Hosting</span><span>Turborepo Monorepo</span>
+      </div>
     </div>
-  </section>
-
-  <!-- CTA Final Section / Roadmap -->
-  <section class="cta-final" id="roadmap">
-    <div class="cta-container">
-      <h2>🌾 YavlGold sigue creciendo 🌾</h2>
-      <p>Publicamos avances a medida que cada módulo queda realmente listo. Únete a Telegram para seguir el roadmap.</p>
-      <a href="https://t.me/YavlEcosystem" target="_blank" class="btn-premium btn-gold btn-lg">Únete a la comunidad
-        🌾</a>
+    <div class="v10-footer-bottom">
+      <p class="v10-footer-copy">© <span id="footer-year">2026</span> YavlGold · Open Source (MIT) · <span
+          style="color:var(--v10-gold-4)">Hecho con el campo en mente</span></p>
+      <p class="v10-footer-dev">Developed by Yerikson Varela</p>
     </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-logo" aria-hidden="true">
-      <img src="./assets/images/logo.svg" alt="YavlGold" width="80" height="80" class="logo-main breathing-effect" />
-    </div>
-    <p class="footer-text">YavlGold V9.8 — Plataforma para el agricultor moderno</p>
-    <p class="footer-text">🌾 Desde el Táchira para el mundo 🌾</p>
-    <div class="footer-links">
-      <a href="#modulos">📚 Módulos</a>
-      <a href="#beta">👥 Comunidad</a>
-      <a href="/dashboard/">🧭 Dashboard</a>
-      <a href="mailto:soporte@yavlgold.com">💬 Contacto</a>
-    </div>
-    <div class="flex justify-center gap-6 text-sm text-gray-500 mb-4"
-      style="display: flex; justify-content: center; gap: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
-      <span>© 2026 YavlGold · Datos protegidos · Open Source (MIT)</span>
-      <a href="https://t.me/YavlPro" target="_blank"
-        style="color: var(--text-secondary); text-decoration: none; transition: color 0.3s;"
-        onmouseover="this.style.color='var(--gold-principal)'"
-        onmouseout="this.style.color='var(--text-secondary)'">Soporte</a>
-    </div>
-    <p class="footer-text" style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">
-      © 2026 YavlGold V9.8 · Open Source (MIT License) | Hecho con el campo en mente.
-    </p>
-    <p class="footer-text" style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.6;">
-      Developed by Yerikson Varela.
-    </p>
   </footer>
 
-  <!-- NoScript Fallback -->
   <noscript>
     <style>
-      .feature-card,
-      .testimonial-card {
+      .v10-glass-card,
+      .v10-reveal {
         opacity: 1 !important;
-        transform: none !important;
+        transform: none !important
       }
 
       body {
-        opacity: 1 !important;
+        opacity: 1 !important
       }
     </style>
     <div
-      style="padding: 20px; background: #C8A752; color: #0a0a0a; text-align: center; font-family: 'Rajdhani', sans-serif; font-weight: 700;">
-      ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold V9.8
-    </div>
+      style="padding:20px;background:#C8A752;color:#0a0a0a;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700">
+      ⚠️ Por favor habilita JavaScript para una experiencia completa de YavlGold</div>
   </noscript>
 
-  <!-- JavaScript Completo -->
+  <!-- Inline Scripts -->
   <script>
     'use strict';
-    console.log('🌾 YavlGold V9.8 - Tu Finca Digital');
+    console.log('%c🌾 YavlGold — Tu Finca Digital', 'background:#0a0a0a;color:#C8A752;font-family:monospace;font-size:14px;padding:8px 16px;border:1px solid #C8A752;border-radius:4px');
 
-    // Añadir clase para la animación breathing
-    const style = document.createElement('style');
-    style.textContent = `
-      .animate-breathing {
-        animation: breathe 3s ease-in-out infinite;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Función global para abrir modal de autenticación con sistema de TABS
     function openAuthModal(mode) {
-      // Intentar usar AuthUI si está disponible (más robusto)
-      if (window.AuthUI && typeof window.AuthUI.openAuthModal === 'function') {
-        window.AuthUI.openAuthModal(mode);
-        return;
-      }
-
-      // Fallback: manipulación directa del DOM
+      if (window.AuthUI && typeof window.AuthUI.openAuthModal === 'function') { window.AuthUI.openAuthModal(mode); return; }
       const modal = document.getElementById('auth-modal');
       const loginTab = document.getElementById('login-tab');
       const registerTab = document.getElementById('register-tab');
       const loginForm = document.getElementById('login-form');
       const registerForm = document.getElementById('register-form');
-
       if (!modal) return;
-
-      // Mostrar modal
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden';
       modal.dataset.mode = (mode === 'signup' || mode === 'register') ? 'signup' : 'login';
-
-      // Activar el tab y formulario correspondiente
       if (mode === 'signup' || mode === 'register') {
-        // Activar tab de registro
-        registerTab?.classList.add('active');
-        loginTab?.classList.remove('active');
-        // Mostrar formulario de registro
-        registerForm.style.display = 'block';
-        registerForm?.classList.add('active');
-        loginForm.style.display = 'none';
-        loginForm?.classList.remove('active');
-        // Focus en primer input
-        setTimeout(() => {
-          registerForm?.querySelector('#register-name')?.focus();
-        }, 100);
+        registerTab?.classList.add('active'); loginTab?.classList.remove('active');
+        registerForm.style.display = 'block'; registerForm?.classList.add('active');
+        loginForm.style.display = 'none'; loginForm?.classList.remove('active');
+        setTimeout(() => { registerForm?.querySelector('#register-name')?.focus(); }, 100);
       } else {
-        // Activar tab de login (por defecto)
-        loginTab?.classList.add('active');
-        registerTab?.classList.remove('active');
-        // Mostrar formulario de login
-        loginForm.style.display = 'block';
-        loginForm?.classList.add('active');
-        registerForm.style.display = 'none';
-        registerForm?.classList.remove('active');
-        // Focus en primer input
-        setTimeout(() => {
-          loginForm?.querySelector('#login-email')?.focus();
-        }, 100);
+        loginTab?.classList.add('active'); registerTab?.classList.remove('active');
+        loginForm.style.display = 'block'; loginForm?.classList.add('active');
+        registerForm.style.display = 'none'; registerForm?.classList.remove('active');
+        setTimeout(() => { loginForm?.querySelector('#login-email')?.focus(); }, 100);
       }
     }
 
@@ -1609,7 +352,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Elementos del DOM
       const themeToggle = document.getElementById('themeToggle');
       const hamburger = document.getElementById('hamburger');
       const navMobile = document.getElementById('navMobile');
@@ -1617,7 +359,6 @@
       const logoLink = document.getElementById('logoLink');
       const loadingScreen = document.getElementById('loadingScreen');
 
-      // Función para establecer el tema inicial
       function setInitialTheme() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         const isLightMode = savedTheme === 'light';
@@ -1625,151 +366,85 @@
         document.documentElement.classList.toggle('light-mode', isLightMode);
         themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
       }
-
-      // Función para cambiar el tema
       function toggleTheme() {
         const isLightMode = document.body.classList.toggle('light-mode');
         document.documentElement.classList.toggle('light-mode', isLightMode);
         localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
         themeToggle.textContent = isLightMode ? '☀️' : '🌙';
-        console.log(`🎨 Tema cambiado a: ${isLightMode ? 'light' : 'dark'}`);
       }
-
-      // Función para mostrar el menú móvil
       function showMobileMenu() {
-        navMobile.classList.add('active');
-        mobileOverlay.classList.add('active');
-        hamburger.classList.add('active');
-        hamburger.setAttribute('aria-expanded', 'true');
-        document.body.style.overflow = 'hidden'; // Prevenir scroll en el body
+        navMobile.classList.add('active'); mobileOverlay.classList.add('active');
+        hamburger.classList.add('active'); hamburger.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
       }
-
-      // Función para ocultar el menú móvil
       function hideMobileMenu() {
-        navMobile.classList.remove('active');
-        mobileOverlay.classList.remove('active');
-        hamburger.classList.remove('active');
-        hamburger.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = ''; // Restaurar scroll
+        navMobile.classList.remove('active'); mobileOverlay.classList.remove('active');
+        hamburger.classList.remove('active'); hamburger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
       }
-
-      // Función para scroll suave
       function smoothScroll(targetId) {
-        const targetElement = document.getElementById(targetId.substring(1)); // Remover el #
-        if (targetElement) {
-          window.scrollTo({
-            top: targetElement.offsetTop - 100, // Ajuste para el navbar fijo
-            behavior: 'smooth'
-          });
-        }
+        const el = document.getElementById(targetId.substring(1));
+        if (el) window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
       }
 
-      // Función para animar elementos al hacer scroll
-      function setupScrollAnimations() {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.style.opacity = '1';
-              entry.target.style.transform = 'translateY(0)';
-              entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-            }
-          });
-        }, {
-          threshold: 0.1,
-          rootMargin: '0px 0px -50px 0px'
-        });
+      // Navbar scroll effect
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => { navbar?.classList.toggle('scrolled', window.scrollY > 50); });
 
-        // Observar todas las tarjetas de características y testimonios
-        document.querySelectorAll('.feature-card, .testimonial-card').forEach(card => {
-          observer.observe(card);
+      // V10 Scroll reveal
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => entry.target.classList.add('visible'), index * 80);
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+      document.querySelectorAll('.v10-reveal').forEach(el => revealObserver.observe(el));
+
+      // 3D Emblem parallax (desktop only)
+      const emblem = document.getElementById('logoEmblem');
+      if (emblem && window.innerWidth > 768) {
+        document.addEventListener('mousemove', (e) => {
+          const xPos = (e.clientX / window.innerWidth - 0.5) * 2;
+          const yPos = (e.clientY / window.innerHeight - 0.5) * 2;
+          emblem.style.animation = 'none';
+          emblem.style.transform = `rotateX(${-yPos * 10}deg) rotateY(${xPos * 10}deg)`;
+        });
+        document.addEventListener('mouseleave', () => {
+          emblem.style.animation = 'v10-emblemFloat 8s ease-in-out infinite';
+          emblem.style.transform = '';
         });
       }
 
-      // Función para ocultar el loading screen
       function hideLoadingScreen() {
         loadingScreen.classList.add('hidden');
-        setTimeout(() => {
-          loadingScreen.remove();
-        }, 500);
+        setTimeout(() => { loadingScreen.remove(); }, 500);
       }
 
-      // Inicializar
       function init() {
-        console.log('🚀 Iniciando YavlGold V9.8...');
-
-        // Establecer tema inicial
         setInitialTheme();
-        console.log('✅ Tema inicial configurado');
-
-        // Configurar eventos de toggle de tema
         themeToggle.addEventListener('click', toggleTheme);
-        console.log('✅ Toggle de tema configurado');
-
-        // Configurar eventos de menú móvil
         hamburger.addEventListener('click', showMobileMenu);
         mobileOverlay.addEventListener('click', hideMobileMenu);
         logoLink.addEventListener('click', hideMobileMenu);
-        console.log('✅ Navegación móvil configurada');
-
-        // Configurar scroll suave para enlaces
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
           anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            const targetId = this.getAttribute('href');
-
-            // Ocultar menú móvil si está abierto
-            if (navMobile.classList.contains('active')) {
-              hideMobileMenu();
-            }
-
-            // Scroll suave
-            smoothScroll(targetId);
+            if (navMobile.classList.contains('active')) hideMobileMenu();
+            smoothScroll(this.getAttribute('href'));
           });
         });
-        console.log('✅ Scroll suave configurado');
-
-        // Configurar animaciones al hacer scroll
-        setupScrollAnimations();
-        console.log('✅ Animaciones de scroll configuradas');
-
-        // Ocultar loading screen después de un breve retraso
         setTimeout(hideLoadingScreen, 1500);
-        console.log('✅ Loading screen programado');
-
-        console.log('✅ YavlGold V9.8 inicializado completamente');
       }
-
-      // Ejecutar la inicialización
       init();
 
-      // Configurar modal de autenticación
+      // Auth modal events
       const authModalClose = document.getElementById('auth-modal-close');
       const authModalOverlay = document.querySelector('.auth-modal-overlay');
-      const authModalToggle = document.getElementById('auth-modal-toggle-mode');
-
-      if (authModalClose) {
-        authModalClose.addEventListener('click', closeAuthModal);
-      }
-
-      if (authModalOverlay) {
-        authModalOverlay.addEventListener('click', closeAuthModal);
-      }
-
-      if (authModalToggle) {
-        authModalToggle.addEventListener('click', (e) => {
-          e.preventDefault();
-          const modal = document.getElementById('auth-modal');
-          const currentMode = modal.dataset.mode || 'login';
-          openAuthModal(currentMode === 'login' ? 'signup' : 'login');
-        });
-      }
-
-      // Cerrar modal con Escape
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          closeAuthModal();
-        }
-      });
+      if (authModalClose) authModalClose.addEventListener('click', closeAuthModal);
+      if (authModalOverlay) authModalOverlay.addEventListener('click', closeAuthModal);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAuthModal(); });
     });
   </script>
 
@@ -1778,28 +453,16 @@
     <div class="auth-modal-overlay"></div>
     <div class="auth-modal-container">
       <button id="auth-modal-close" class="auth-modal-close" aria-label="Cerrar modal">✕</button>
-      <div class="auth-logo-box" style="text-align: center; margin-bottom: 1.5rem;">
-        <img src="/brand/logo.webp" alt="YavlGold" width="80" height="80" class="animate-breathing"
-          style="border-radius: 50%; box-shadow: var(--shadow-gold-md);" />
+      <div class="auth-logo-box">
+        <img src="/brand/logo.webp" alt="YavlGold" width="72" height="72" />
       </div>
-
-      <!-- Tabs de Navegación -->
-      <div class="auth-tabs"
-        style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid var(--border-color);">
-        <button type="button" id="login-tab" class="auth-tab active"
-          style="flex: 1; padding: 1rem; background: transparent; border: none; color: var(--gold-principal); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.1rem; cursor: pointer; border-bottom: 3px solid var(--gold-principal); transition: all 0.3s ease;">
-          Iniciar Sesión
-        </button>
-        <button type="button" id="register-tab" class="auth-tab"
-          style="flex: 1; padding: 1rem; background: transparent; border: none; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 1.1rem; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
-          Registro
-        </button>
+      <div class="auth-tabs">
+        <button type="button" id="login-tab" class="auth-tab active">Iniciar Sesión</button>
+        <button type="button" id="register-tab" class="auth-tab">Registro</button>
       </div>
-
       <div id="auth-error" class="hidden auth-error-message" style="display: none;"></div>
       <div id="auth-success" class="hidden auth-success-message" style="display: none;"></div>
-
-      <!-- FORMULARIO DE LOGIN -->
+      <!-- LOGIN FORM -->
       <form id="login-form" class="auth-form-container active">
         <div class="form-group">
           <label for="login-email">Correo electrónico</label>
@@ -1813,19 +476,17 @@
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
-        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
-          <input type="checkbox" id="remember-me" name="remember" style="width: auto; margin: 0;">
-          <label for="remember-me" style="margin: 0; cursor: pointer; user-select: none;">Recordarme</label>
+        <div class="form-group" style="display:flex;align-items:center;gap:0.5rem;">
+          <input type="checkbox" id="remember-me" name="remember" style="width:auto;margin:0;">
+          <label for="remember-me" style="margin:0;cursor:pointer;user-select:none;">Recordarme</label>
         </div>
-        <!-- hCaptcha Widget (INVISIBLE MODE - Rendered via JS) -->
         <div id="hcaptcha-login"></div>
-        <button type="submit" class="btn-premium btn-gold" style="width: 100%;">Entrar</button>
+        <button type="submit" class="btn-premium btn-gold" style="width:100%">Entrar</button>
         <div class="forgot-password-container">
           <a href="#" id="forgot-password-link" class="forgot-password-link">¿Olvidaste tu contraseña?</a>
         </div>
       </form>
-
-      <!-- FORMULARIO DE REGISTRO -->
+      <!-- REGISTER FORM -->
       <form id="register-form" class="auth-form-container" style="display: none;">
         <div class="form-group">
           <label for="register-name">Nombre completo</label>
@@ -1843,366 +504,23 @@
             <span class="password-toggle"><i class="fas fa-eye"></i></span>
           </div>
         </div>
-        <!-- hCaptcha Widget (INVISIBLE MODE - Rendered via JS) -->
         <div id="hcaptcha-register"></div>
-        <button type="submit" class="btn-premium btn-gold" style="width: 100%;">Crear Cuenta</button>
+        <button type="submit" class="btn-premium btn-gold" style="width:100%">Crear Cuenta</button>
         <div
-          style="margin-top: 1rem; text-align: center; color: var(--text-secondary); font-family: 'Rajdhani', sans-serif; font-size: 0.9rem;">
-          Al registrarte, aceptas nuestros <a href="/terms" target="_blank"
-            style="color: var(--gold-principal);">Términos y
-            Condiciones</a> y <a href="/privacy" target="_blank" style="color: var(--gold-principal);">Política de
+          style="margin-top:1rem;text-align:center;color:var(--v10-text-muted);font-family:var(--v10-font-body);font-size:0.9rem;">
+          Al registrarte, aceptas nuestros <a href="/terms" target="_blank" style="color:var(--v10-gold-4)">Términos y
+            Condiciones</a> y <a href="/privacy" target="_blank" style="color:var(--v10-gold-4)">Política de
             Privacidad</a>
         </div>
       </form>
     </div>
   </div>
 
-  <style>
-    /* Auth Modal Styles */
-    #auth-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      animation: fadeIn 0.3s ease;
-    }
-
-    #auth-modal.hidden {
-      display: none;
-    }
-
-    /* Auth Tabs */
-    .auth-tab {
-      position: relative;
-    }
-
-    .auth-tab:hover {
-      color: var(--gold-light);
-    }
-
-    .auth-tab.active {
-      color: var(--gold-principal) !important;
-      border-bottom-color: var(--gold-principal) !important;
-    }
-
-    /* Auth Forms Container */
-    .auth-form-container {
-      display: none;
-    }
-
-    .auth-form-container.active {
-      display: block;
-    }
-
-    body.landing-page .auth-modal-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--landing-overlay-bg);
-      opacity: 0.85;
-      backdrop-filter: blur(10px);
-    }
-
-    body.landing-page.light-mode .auth-modal-overlay {
-      background: var(--landing-overlay-bg);
-    }
-
-    .auth-modal-container {
-      position: relative;
-      background: var(--bg-secondary);
-      padding: 40px;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 480px;
-      max-height: 90vh;
-      overflow-y: auto;
-      margin: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--gold-principal);
-      animation: slideUp 0.3s ease;
-    }
-
-    /* Logo Box - Center on all screen sizes */
-    .auth-logo-box {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-    }
-
-    .auth-logo-box img {
-      display: block;
-      margin: 0 auto;
-    }
-
-
-    /* 📱 Ajuste Móvil Logo */
-    @media (max-width: 768px) {
-      .auth-logo-box {
-        margin-bottom: 0.5rem !important;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-      }
-
-      .auth-logo-box img {
-        width: 60px !important;
-        height: 60px !important;
-      }
-
-      .auth-modal-container {
-        padding: 20px;
-        /* Reducir padding también para ganar espacio */
-      }
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .auth-modal-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 28px;
-      cursor: pointer;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.3s ease;
-    }
-
-    .auth-modal-close:hover {
-      background: var(--gray-dark);
-      color: var(--gold-principal);
-      transform: rotate(90deg);
-    }
-
-    #auth-modal-title {
-      font-size: 2rem;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 900;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, var(--gold-dark), var(--gold-principal), var(--gold-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-align: center;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid var(--border-color);
-      border-radius: 10px;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .form-group input:focus {
-      outline: none;
-      border-color: var(--gold-principal);
-      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.1);
-    }
-
-    .auth-switch {
-      margin-top: 20px;
-      text-align: center;
-      color: var(--text-secondary);
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.95rem;
-    }
-
-    .auth-switch a {
-      color: var(--gold-principal);
-      text-decoration: none;
-      font-weight: 700;
-      transition: all 0.3s ease;
-    }
-
-    .auth-switch a:hover {
-      color: var(--gold-light);
-      text-decoration: underline;
-    }
-
-    .auth-error-message {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid #ef4444;
-      color: #ef4444;
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      text-align: center;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    .auth-success-message {
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid #22c55e;
-      color: #22c55e;
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      text-align: center;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 600;
-    }
-
-    .forgot-password-container {
-      margin-top: 12px;
-      text-align: center;
-    }
-
-    .forgot-password-link {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.9rem;
-      transition: all 0.3s ease;
-    }
-
-    .forgot-password-link:hover {
-      color: var(--gold-principal);
-      text-decoration: underline;
-    }
-
-    .back-to-login-container {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .back-to-login-link {
-      color: var(--gold-principal);
-      text-decoration: none;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.3s ease;
-    }
-
-    .back-to-login-link:hover {
-      color: var(--gold-light);
-      transform: translateX(-3px);
-    }
-
-    /* Toggle contraseña */
-    .input-group {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .input-group input {
-      flex: 1;
-      padding-right: 45px;
-    }
-
-    .password-toggle {
-      position: absolute;
-      right: 12px;
-      cursor: pointer;
-      color: var(--text-secondary);
-      transition: color 0.3s ease;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      height: 100%;
-      padding: 0 8px;
-    }
-
-    .password-toggle:hover {
-      color: var(--gold-principal);
-    }
-
-    .password-toggle i {
-      font-size: 1.1rem;
-    }
-
-    @media (max-width: 768px) {
-      #auth-modal {
-        height: 100dvh;
-        height: -webkit-fill-available;
-        padding: 16px;
-        overflow-y: auto;
-      }
-
-      .auth-modal-container {
-        padding: 28px 24px;
-        max-height: calc(100dvh - 40px);
-        overflow-y: auto;
-      }
-
-      .form-group input {
-        font-size: 16px;
-        /* Previene zoom en iOS */
-      }
-    }
-
-    @media (max-width: 480px) {
-      .auth-modal-container {
-        padding: 24px 20px;
-        margin: 10px;
-        border-radius: 16px;
-        max-width: calc(100% - 20px);
-        max-height: calc(100dvh - 60px);
-      }
-
-      #auth-modal-title {
-        font-size: 1.5rem;
-      }
-    }
-  </style>
-
-  <!-- SDK de Supabase (CDN) - DEBE cargar primero -->
+  <!-- SDK de Supabase (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <!-- Pipeline de Autenticación -->
   <script type="module" src="./assets/js/auth/authClient.js"></script>
   <script type="module" src="./assets/js/auth/authUI.js"></script>
-
   <!-- Entrypoint Principal -->
   <script type="module" src="./assets/js/main.js"></script>
 
@@ -2211,143 +529,87 @@
 
   <!-- hCaptcha Invisible Mode - Global Callbacks -->
   <script>
-    // Widget IDs
     let loginCaptchaWidgetId = null;
     let registerCaptchaWidgetId = null;
-
-    // Pending form data (stored when user clicks submit, before captcha completes)
     window._pendingLogin = null;
     window._pendingRegister = null;
 
-    // Called when hCaptcha SDK loads
     function onHCaptchaLoad() {
       console.log('[hCaptcha] SDK loaded, rendering invisible widgets...');
-
-      // Render login captcha
       const loginContainer = document.getElementById('hcaptcha-login');
       if (loginContainer) {
         loginCaptchaWidgetId = hcaptcha.render('hcaptcha-login', {
-          sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6',
-          size: 'invisible',
-          theme: 'dark',
-          callback: 'onLoginCaptchaSuccess'
+          sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6', size: 'invisible', theme: 'dark', callback: 'onLoginCaptchaSuccess'
         });
-        console.log('[hCaptcha] Login widget rendered, ID:', loginCaptchaWidgetId);
       }
-
-      // Render register captcha
       const registerContainer = document.getElementById('hcaptcha-register');
       if (registerContainer) {
         registerCaptchaWidgetId = hcaptcha.render('hcaptcha-register', {
-          sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6',
-          size: 'invisible',
-          theme: 'dark',
-          callback: 'onRegisterCaptchaSuccess'
+          sitekey: '22069708-c388-4a48-b054-fc12c4ee0ab6', size: 'invisible', theme: 'dark', callback: 'onRegisterCaptchaSuccess'
         });
-        console.log('[hCaptcha] Register widget rendered, ID:', registerCaptchaWidgetId);
       }
     }
 
-    // Called when login captcha is solved
     function onLoginCaptchaSuccess(token) {
-      console.log('[hCaptcha] Login captcha solved, proceeding with auth...');
-
       if (window._pendingLogin) {
         const { email, password, btn, originalText } = window._pendingLogin;
         window._pendingLogin = null;
-
-        // Now actually do the login
         doActualLogin(email, password, token, btn, originalText);
       }
     }
-
-    // Called when register captcha is solved
     function onRegisterCaptchaSuccess(token) {
-      console.log('[hCaptcha] Register captcha solved, proceeding with registration...');
-
       if (window._pendingRegister) {
         const { name, email, password, btn, originalText } = window._pendingRegister;
         window._pendingRegister = null;
-
-        // Now actually do the registration
         doActualRegister(name, email, password, token, btn, originalText);
       }
     }
 
-    // Execute login captcha programmatically
     window.executeLoginCaptcha = function (email, password, btn, originalText) {
       window._pendingLogin = { email, password, btn, originalText };
-
-      if (loginCaptchaWidgetId !== null) {
-        hcaptcha.execute(loginCaptchaWidgetId);
-      } else {
-        console.error('[hCaptcha] Login widget not ready');
-        if (btn) { btn.disabled = false; btn.textContent = originalText; }
-      }
+      if (loginCaptchaWidgetId !== null) { hcaptcha.execute(loginCaptchaWidgetId); }
+      else { console.error('[hCaptcha] Login widget not ready'); if (btn) { btn.disabled = false; btn.textContent = originalText; } }
     };
-
-    // Execute register captcha programmatically
     window.executeRegisterCaptcha = function (name, email, password, btn, originalText) {
       window._pendingRegister = { name, email, password, btn, originalText };
-
-      if (registerCaptchaWidgetId !== null) {
-        hcaptcha.execute(registerCaptchaWidgetId);
-      } else {
-        console.error('[hCaptcha] Register widget not ready');
-        if (btn) { btn.disabled = false; btn.textContent = originalText; }
-      }
+      if (registerCaptchaWidgetId !== null) { hcaptcha.execute(registerCaptchaWidgetId); }
+      else { console.error('[hCaptcha] Register widget not ready'); if (btn) { btn.disabled = false; btn.textContent = originalText; } }
     };
 
-    // Actual login function (called after captcha success)
     async function doActualLogin(email, password, captchaToken, btn, originalText) {
       try {
-        if (!window.AuthClient) {
-          throw new Error('AuthClient no disponible');
-        }
-
+        if (!window.AuthClient) throw new Error('AuthClient no disponible');
         const res = await window.AuthClient.loginWithToken(email, password, captchaToken);
-
         if (res.success) {
-          console.log('[Auth] Login successful');
           window.AuthUI?.showSuccess('Bienvenido de nuevo!');
           window.AuthUI?.hideAllAuthModals?.();
         } else {
-          console.error('[Auth] Login failed:', res.error);
           window.AuthUI?.showError('login', res.error || 'Error al iniciar sesion');
           hcaptcha.reset(loginCaptchaWidgetId);
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
       } catch (err) {
-        console.error('[Auth] Login error:', err);
         window.AuthUI?.showError('login', err.message || 'Error inesperado');
         hcaptcha.reset(loginCaptchaWidgetId);
         if (btn) { btn.disabled = false; btn.textContent = originalText; }
       }
     }
 
-    // Actual register function (called after captcha success)
     async function doActualRegister(name, email, password, captchaToken, btn, originalText) {
       try {
-        if (!window.AuthClient) {
-          throw new Error('AuthClient no disponible');
-        }
-
+        if (!window.AuthClient) throw new Error('AuthClient no disponible');
         const res = await window.AuthClient.registerWithToken(email, password, name, captchaToken);
-
         if (res.success) {
-          console.log('[Auth] Registration successful');
           window.AuthUI?.showSuccess('Cuenta creada! Revisa tu email.');
           document.getElementById('register-form')?.reset();
           setTimeout(() => window.AuthUI?.switchToLogin(), 2000);
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         } else {
-          console.error('[Auth] Registration failed:', res.error);
           window.AuthUI?.showError('register', res.error || 'Error al registrarse');
           hcaptcha.reset(registerCaptchaWidgetId);
           if (btn) { btn.disabled = false; btn.textContent = originalText; }
         }
       } catch (err) {
-        console.error('[Auth] Register error:', err);
         window.AuthUI?.showError('register', err.message || 'Error inesperado');
         hcaptcha.reset(registerCaptchaWidgetId);
         if (btn) { btn.disabled = false; btn.textContent = originalText; }
