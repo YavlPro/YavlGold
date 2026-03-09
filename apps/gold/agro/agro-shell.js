@@ -37,7 +37,8 @@ const VIEW_CONFIG = Object.freeze({
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     agenda: { region: 'agenda', label: 'Agenda', focusSelector: '[data-agro-shell-region="agenda"]' },
     herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },
-    agrorepo: { region: 'agrorepo', label: 'Bitacora', focusSelector: '#agro-repo-section', dense: true }
+    agrorepo: { region: 'agrorepo', label: 'Bitacora', focusSelector: '#agro-repo-section', dense: true },
+    asistente: { region: 'asistente', label: 'Asistente IA', focusSelector: '[data-agro-shell-region="asistente"]' }
 });
 
 function resolveOperationsTab() {
@@ -162,7 +163,7 @@ function runAction(action) {
             }
             return false;
         case 'assistant':
-            return clickIfExists('#btn-open-agro-assistant');
+            return false;
         case 'social':
             return clickIfExists('#btn-open-agro-social');
         case 'calculator':
@@ -274,6 +275,10 @@ export function initAgroShell() {
 
         if (view === 'perfil' && typeof window.syncPerfilViewFromProfile === 'function') {
             window.syncPerfilViewFromProfile();
+        }
+
+        if (view === 'asistente' && typeof window.openAgroAssistantInline === 'function') {
+            window.openAgroAssistantInline();
         }
 
         if (view === 'ciclos' && typeof window.loadAgroGlobalStats === 'function') {

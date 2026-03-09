@@ -13,7 +13,7 @@
             }
         })();
     </script>
-    <title>YavlGold V9.8 - Agro V1</title>
+    <title>YavlGold - Agro V1</title>
     <link rel="icon" type="image/webp" href="../assets/images/logo.webp">
     <link rel="apple-touch-icon" href="../assets/images/logo.webp"> <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1217,6 +1217,9 @@
                 <button type="button" class="agro-shell-link" data-agro-view="agrorepo"><span
                         class="agro-shell-link__icon" aria-hidden="true">📜</span><span
                         class="agro-shell-link__label">Bitácora</span></button>
+                <button type="button" class="agro-shell-link" data-agro-view="asistente"><span
+                        class="agro-shell-link__icon" aria-hidden="true">🤖</span><span
+                        class="agro-shell-link__label">Asistente IA</span></button>
             </div>
 
             <div class="agro-shell-sidebar__group">
@@ -1228,9 +1231,6 @@
                 <button type="button" class="agro-shell-link agro-shell-link--action"
                     data-agro-action="new-record"><span class="agro-shell-link__icon" aria-hidden="true">✍️</span><span
                         class="agro-shell-link__label">Nuevo registro</span></button>
-                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="assistant"><span
-                        class="agro-shell-link__icon" aria-hidden="true">🤖</span><span
-                        class="agro-shell-link__label">Asistente Agro</span></button>
             </div>
         </div>
     </aside>
@@ -1247,8 +1247,7 @@
                 <a href="/" class="logo-container" style="text-decoration: none; cursor: pointer;"
                     title="Volver al Inicio">
                     <img src="../assets/images/logo.webp" alt="YavlGold" class="logo-img"> <span
-                        class="logo-text">YavlGold</span> <span class="version-badge">V9.8</span><span
-                        class="module-release-badge">Agro V1</span>
+                        class="logo-text">YavlGold</span> <span class="module-release-badge">Agro V1</span>
                 </a>
             </div>
 
@@ -1539,8 +1538,8 @@
                         <span class="toggle-switch" aria-hidden="true"></span>
                     </button>
                     <button type="button" class="assistant-trigger agro-dash-btn-assistant" id="btn-open-agro-assistant"
-                        data-agro-section="assistant">
-                        Asistente Agro
+                        data-agro-view="asistente">
+                        Asistente IA
                     </button>
                 </div>
             </div>
@@ -3074,10 +3073,10 @@
                             <i class="fa-solid fa-robot" aria-hidden="true"></i>
                         </div>
                         <p class="agro-tool-card__eyebrow">Asistencia</p>
-                        <h3 class="agro-tool-card__title">Asistente Agro</h3>
+                        <h3 class="agro-tool-card__title">Asistente IA</h3>
                         <p class="agro-tool-card__copy">Resuelve dudas de campo, contexto de cultivo y complementa tu
                             bitácora con IA.</p>
-                        <button type="button" class="agro-tool-card__action" data-agro-action="assistant">
+                        <button type="button" class="agro-tool-card__action" data-agro-view="asistente">
                             <i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Consultar
                         </button>
                     </article>
@@ -3150,16 +3149,16 @@
 
     <!-- Footer -->
     <footer id="agro-module-footer" class="footer animate-in delay-6">
-        <p class="footer-text"> <span class="highlight">YavlGold</span> V9.8 • <span class="footer-module-release">Agro
+        <p class="footer-text"> <span class="highlight">YavlGold</span> • <span class="footer-module-release">Agro
                 V1</span> • Base oficial del módulo • Desarrollado con 🌾
             para agricultores </p>
         <div class="footer-links">
             <a href="https://t.me/YavlPro" target="_blank" class="footer-link">Soporte</a>
             <span class="footer-link">Datos protegidos</span>
         </div>
-        <div class="footer-build" id="agro-build-marker" data-build-version="V9.8" data-module-release="Agro V1"
-            data-build-date="2026-02-16">
-            Agro V1 • Build V9.8 • dev • 2026-02-16
+        <div class="footer-build" id="agro-build-marker" data-build-version="V1" data-module-release="Agro V1"
+            data-build-date="2026-03-08">
+            Agro V1 • 2026-03-08
         </div>
     </footer>
 
@@ -4180,97 +4179,100 @@
         </div>
     </div>
 
-    <!-- V9.8: Asistente Agro (IA real) -->
-    <div id="modal-agro-assistant" class="modal" aria-hidden="true">
-        <div class="assistant-backdrop" data-close="true"></div>
-        <div class="modal-content agro-assistant assistant-sheet" role="dialog" aria-modal="true"
-            aria-labelledby="agro-assistant-title" tabindex="-1">
-            <div class="assistant-shell" id="assistant-shell">
-                <aside class="assistant-sidebar" id="assistant-sidebar" aria-label="Historial de conversaciones">
-                    <div class="assistant-sidebar-header">
-                        <div class="assistant-sidebar-title">Historial</div>
-                        <button type="button" class="assistant-new-thread" id="assistant-new-thread">Nuevo chat</button>
-                    </div>
-                    <div class="assistant-thread-list" id="assistant-thread-list"></div>
-                </aside>
-
-                <div class="assistant-drawer-overlay" id="assistant-drawer-overlay" data-drawer-close="true"></div>
-
-                <div class="assistant-main">
-                    <div class="assistant-topbar">
-                        <button type="button" class="assistant-drawer-toggle" id="assistant-drawer-toggle"
-                            aria-label="Abrir historial">
-                            <span aria-hidden="true">&#9776;</span>
-                        </button>
-                        <div class="assistant-title-group">
-                            <div class="assistant-title-row">
-                                <h3 id="agro-assistant-title">Agro Assistant Agent</h3>
-                                <span class="assistant-status" id="assistant-status">En linea</span>
-                            </div>
-                            <p class="assistant-subtitle">Chat real con Gemini Flash (AI Studio)</p>
+    <!-- Asistente IA — Vista dedicada inline -->
+    <section class="asistente-dedicado" data-agro-shell-region="asistente" hidden inert>
+        <div id="modal-agro-assistant" class="agro-assistant-inline">
+            <div class="modal-content agro-assistant assistant-sheet">
+                <div class="assistant-shell" id="assistant-shell">
+                    <aside class="assistant-sidebar" id="assistant-sidebar" aria-label="Historial de conversaciones">
+                        <div class="assistant-sidebar-header">
+                            <div class="assistant-sidebar-title">Historial</div>
+                            <button type="button" class="assistant-new-thread" id="assistant-new-thread">Nuevo
+                                chat</button>
                         </div>
-                        <div class="assistant-topbar-actions">
-                            <button type="button" class="btn-delete-thread" id="btn-assistant-delete-thread"
-                                aria-label="Eliminar conversacion" title="Eliminar conversacion">
-                                &#128465;
-                            </button>
-                            <button type="button" class="btn-close" id="btn-close-agro-assistant"
-                                aria-label="Cerrar asistente">
-                                &times;
-                            </button>
-                        </div>
-                    </div>
+                        <div class="assistant-thread-list" id="assistant-thread-list"></div>
+                    </aside>
 
-                    <div class="assistant-content">
-                        <div class="assistant-scroll" id="assistant-scroll">
-                            <div class="assistant-guide" id="assistant-guide">
-                                <div class="assistant-guide-header">
-                                    <div class="assistant-guide-title">Guia de uso importante</div>
-                                    <button type="button" class="assistant-guide-toggle" id="assistant-guide-toggle"
-                                        aria-expanded="true" aria-controls="assistant-guide-list">
-                                        &#8505; Ver guia
-                                    </button>
+                    <div class="assistant-drawer-overlay" id="assistant-drawer-overlay" data-drawer-close="true"></div>
+
+                    <div class="assistant-main">
+                        <div class="assistant-topbar">
+                            <button type="button" class="assistant-drawer-toggle" id="assistant-drawer-toggle"
+                                aria-label="Abrir historial">
+                                <span aria-hidden="true">&#9776;</span>
+                            </button>
+                            <div class="assistant-title-group">
+                                <div class="assistant-title-row">
+                                    <h3 id="agro-assistant-title">Asistente de Campo</h3>
+                                    <span class="assistant-status" id="assistant-status">En linea</span>
                                 </div>
-                                <ul id="assistant-guide-list">
-                                    <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
-                                    <li>Espera unos segundos entre mensajes (evita spamear).</li>
-                                    <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
-                                    <li>No recargues 10 veces: no aumenta cupo.</li>
-                                    <li>Para mas capacidad: activar facturacion en Google AI Studio.</li>
-                                </ul>
+                                <p class="assistant-subtitle">Inteligencia artificial para tu actividad agrícola</p>
                             </div>
-
-                            <div class="assistant-history" id="assistant-history" aria-live="polite"></div>
-                            <div class="assistant-typing" id="assistant-typing" aria-hidden="true">
-                                <span class="typing-dot"></span>
-                                <span class="typing-dot"></span>
-                                <span class="typing-dot"></span>
-                                <span class="typing-label">Pensando...</span>
+                            <div class="assistant-topbar-actions">
+                                <button type="button" class="btn-delete-thread" id="btn-assistant-delete-thread"
+                                    aria-label="Eliminar conversacion" title="Eliminar conversacion">
+                                    &#128465;
+                                </button>
+                                <button type="button" class="btn-close" id="btn-close-agro-assistant"
+                                    aria-label="Volver al dashboard" title="Volver al dashboard"
+                                    data-agro-view="dashboard">
+                                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                </button>
                             </div>
                         </div>
 
-                        <div class="assistant-controls">
-                            <div class="assistant-mode-hint" id="assistant-mode-hint">
-                                Modo eficiente: 1 mensaje (5-8 lineas). Espera 8-12s entre envios. Si aparece
-                                "limite alcanzado", espera 60-120s.
+                        <div class="assistant-content">
+                            <div class="assistant-scroll" id="assistant-scroll">
+                                <div class="assistant-guide" id="assistant-guide">
+                                    <div class="assistant-guide-header">
+                                        <div class="assistant-guide-title"><i class="fa-solid fa-circle-info"
+                                                aria-hidden="true"></i> Guia de uso</div>
+                                        <button type="button" class="assistant-guide-toggle" id="assistant-guide-toggle"
+                                            aria-expanded="true" aria-controls="assistant-guide-list">
+                                            &#8505; Ver guia
+                                        </button>
+                                    </div>
+                                    <ul id="assistant-guide-list">
+                                        <li>Agrupa tus dudas en 1 solo mensaje (max 5-8 lineas).</li>
+                                        <li>Espera unos segundos entre mensajes (evita spamear).</li>
+                                        <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
+                                        <li>No recargues 10 veces: no aumenta cupo.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="assistant-history" id="assistant-history" aria-live="polite"></div>
+                                <div class="assistant-typing" id="assistant-typing" aria-hidden="true">
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-label">Pensando...</span>
+                                </div>
                             </div>
-                            <button type="button" class="assistant-new-messages" id="assistant-new-messages">
-                                Nuevos mensajes
-                            </button>
-                            <textarea id="agro-assistant-input" class="styled-input" rows="3"
-                                placeholder="Escribe tu consulta (max 5-8 lineas)..."></textarea>
-                            <div class="assistant-actions">
-                                <button type="button" class="btn" id="btn-assistant-template">Copiar plantilla</button>
-                                <button type="button" class="btn btn-primary" id="btn-assistant-send">Enviar</button>
+
+                            <div class="assistant-controls">
+                                <div class="assistant-mode-hint" id="assistant-mode-hint">
+                                    1 mensaje (5-8 lineas). Espera 8-12s entre envios.
+                                </div>
+                                <button type="button" class="assistant-new-messages" id="assistant-new-messages">
+                                    Nuevos mensajes
+                                </button>
+                                <textarea id="agro-assistant-input" class="styled-input" rows="3"
+                                    placeholder="Escribe tu consulta sobre cultivos, plagas, riego, clima..."></textarea>
+                                <div class="assistant-actions">
+                                    <button type="button" class="btn" id="btn-assistant-template">Copiar
+                                        plantilla</button>
+                                    <button type="button" class="btn btn-primary"
+                                        id="btn-assistant-send">Enviar</button>
+                                </div>
+                                <div class="assistant-cooldown" id="assistant-cooldown"></div>
                             </div>
-                            <div class="assistant-cooldown" id="assistant-cooldown"></div>
                         </div>
                     </div>
                 </div>
+                <div class="assistant-toast" id="assistant-toast" role="status" aria-live="polite"></div>
             </div>
-            <div class="assistant-toast" id="assistant-toast" role="status" aria-live="polite"></div>
         </div>
-    </div>
+    </section>
 </body>
 
 </html>

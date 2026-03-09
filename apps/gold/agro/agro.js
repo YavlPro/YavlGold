@@ -16071,7 +16071,7 @@ function updateAssistantCooldownUI() {
         const seconds = Math.ceil(remaining / 1000);
         if (mode === 'lock') {
             sendBtn.textContent = `Espera ${seconds}s`;
-            cooldownEl.textContent = `Limite AI Studio: espera ${seconds}s`;
+            cooldownEl.textContent = `Limite IA: espera ${seconds}s`;
         } else {
             sendBtn.textContent = `Espera ${seconds}s`;
             cooldownEl.textContent = `Espera ${seconds}s (modo eficiente)`;
@@ -16225,7 +16225,7 @@ async function processAssistantQueue() {
                 const backoffSec = Math.ceil(backoffMs / 1000);
                 assistantRuntime.backoffSeconds = backoffSec;
 
-                showAssistantToast(`Limite AI Studio. Espera ${backoffSec}s`);
+                showAssistantToast(`Limite IA. Espera ${backoffSec}s`);
                 addAssistantMessage({
                     role: 'system',
                     text: `Limite de consultas alcanzado. Tu mensaje esta en cola y se enviara automaticamente en ${backoffSec}s.`
@@ -16534,13 +16534,10 @@ function syncAssistantGuideLayout({ messagesCount = 0, forceCollapse = false } =
 function openAgroAssistant() {
     const modal = document.getElementById('modal-agro-assistant');
     if (!modal) {
-        console.warn('[AGRO] V9.5.7: assistant modal not found');
+        console.warn('[AGRO] assistant element not found');
         return;
     }
     try {
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
         hydrateAssistantState();
         renderThreadList();
         renderAssistantHistory();
@@ -16554,20 +16551,16 @@ function openAgroAssistant() {
         const input = document.getElementById('agro-assistant-input');
         requestAnimationFrame(() => input?.focus({ preventScroll: true }));
     } catch (err) {
-        console.warn('[AGRO] V9.5.7: assistant open failed', err?.message || err);
-        closeAgroAssistant();
+        console.warn('[AGRO] assistant open failed', err?.message || err);
     }
 }
 
 function closeAgroAssistant() {
-    const modal = document.getElementById('modal-agro-assistant');
-    if (modal) {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-    }
-    document.body.classList.remove('modal-open');
     setAssistantDrawerOpen(false);
-    stopAssistantTimers(); // V9.7: Clean up timers on close
+    stopAssistantTimers();
+    window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+        detail: { view: 'dashboard', scroll: true }
+    }));
 }
 
 function getAssistantErrorMessage(error) {
@@ -16603,7 +16596,7 @@ function getAssistantErrorMessage(error) {
 
     // Errores específicos reportados por backend
     if (detail.includes('empty_prompt')) return 'Por favor escribe tu consulta.';
-    if (detail.includes('missing_gemini_key')) return 'Sistema en mantenimiento (API Key).';
+    if (detail.includes('missing_gemini_key')) return 'Sistema en mantenimiento.';
     if (detail.includes('ai_error')) return 'La IA no pudo procesar tu solicitud. Intenta reformularla.';
 
     // Fallback genérico pero amigable
@@ -16689,7 +16682,6 @@ function initAgroAssistantModal() {
 
     if (!modal) return;
 
-    openBtn?.addEventListener('click', openAgroAssistant);
     closeBtn?.addEventListener('click', closeAgroAssistant);
     newThreadBtn?.addEventListener('click', createNewThreadAndActivate);
     drawerToggle?.addEventListener('click', () => setAssistantDrawerOpen(true));
@@ -16746,7 +16738,9 @@ function initAgroAssistantModal() {
         }
     });
 
-    console.info('[AGRO] V9.7: assistant modal with queue/anti-429 wired');
+    window.openAgroAssistantInline = openAgroAssistant;
+
+    console.info('[AGRO] assistant with queue/anti-429 wired');
 }
 
 function getTopIncomeCategoryFromCache(days = 365) {
