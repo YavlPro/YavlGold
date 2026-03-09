@@ -21,6 +21,7 @@ const PROFILE_FORM_ID = 'agro-profile-form';
 const PROFILE_STATUS_ID = 'agro-profile-status';
 const PROFILE_UPDATED_ID = 'agro-profile-stats-updated';
 const PROFILE_EXPORT_BUTTON_ID = 'btn-export-agro-profile-md';
+const GLOBAL_STATS_STATUS_ID = 'agro-global-stats-status';
 const PROFILE_SAVE_BUTTON_ID = 'btn-save-agro-profile';
 const PROFILE_AVATAR_PREVIEW_ID = 'agro-profile-avatar-preview';
 const PROFILE_AVATAR_URL_ID = 'agro-profile-avatar_url';
@@ -106,6 +107,13 @@ const state = {
 
 function setProfileStatus(message = '', level = 'muted') {
     const statusEl = document.getElementById(PROFILE_STATUS_ID);
+    if (!statusEl) return;
+    statusEl.textContent = String(message || '');
+    statusEl.dataset.level = String(level || 'muted');
+}
+
+function setGlobalStatsStatus(message = '', level = 'muted') {
+    const statusEl = document.getElementById(GLOBAL_STATS_STATUS_ID);
     if (!statusEl) return;
     statusEl.textContent = String(message || '');
     statusEl.dataset.level = String(level || 'muted');
@@ -924,7 +932,7 @@ function renderTopList(listId, items, fallbackLabel, options = {}) {
 
 async function loadGlobalStats() {
     state.loadingStats = true;
-    setProfileStatus('Actualizando resumen global...', 'muted');
+    setGlobalStatsStatus('Actualizando resumen global...', 'muted');
 
     try {
         const user = await resolveSessionUser();
@@ -945,19 +953,19 @@ async function loadGlobalStats() {
         setStatsUpdatedAt(stats.updatedAt);
 
         if (Array.isArray(stats.warnings) && stats.warnings.length) {
-            setProfileStatus(`Perfil listo con avisos: ${stats.warnings[0]}`, 'warn');
+            setGlobalStatsStatus(`Resumen listo con avisos: ${stats.warnings[0]}`, 'warn');
         } else {
-            setProfileStatus('Perfil listo.', 'ok');
+            setGlobalStatsStatus('Resumen actualizado.', 'ok');
         }
 
-        const modal = getProfileModal();
-        if (modal) {
-            applyBuyerPrivacy(modal);
-            applyMoneyPrivacy(modal);
+        const statsPanel = document.getElementById('agro-global-stats-panel');
+        if (statsPanel) {
+            applyBuyerPrivacy(statsPanel);
+            applyMoneyPrivacy(statsPanel);
         }
     } catch (error) {
         console.error('[AGRO_PROFILE] load stats error:', error);
-        setProfileStatus('No se pudo cargar el resumen global.', 'error');
+        setGlobalStatsStatus('No se pudo cargar el resumen global.', 'error');
     } finally {
         state.loadingStats = false;
     }
@@ -1171,10 +1179,7 @@ async function openAndRefreshProfile(triggerElement = null) {
     }
     openProfileModal();
     await loadFarmerProfile();
-    await Promise.all([
-        loadGlobalStats(),
-        loadPublicProfile()
-    ]);
+    await loadPublicProfile();
 }
 
 function bindOpenButtons() {
@@ -1332,5 +1337,14 @@ export function initAgroPerfil({ supabase } = {}) {
 
     setButtonsExpanded(false);
     setStatsUpdatedAt(null);
-    setProfileStatus('Abre tu perfil para cargar datos globales.', 'muted');
+    setProfileStatus('Abre tu perfil para editar tus datos.', 'muted');
+
+    window.loadAgroGlobalStats = function () {
+        return loadGlobalStats().catch((err) => {
+            console.error('[AGRO_PROFILE] loadGlobalStats via window error:', err);
+        });
+    };
+    window.exportAgroGlobalMd = function () {
+        return exportProfileMarkdown();
+    };
 }

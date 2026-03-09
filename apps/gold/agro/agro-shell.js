@@ -271,6 +271,10 @@ export function initAgroShell() {
         const focusSelector = config.focusSelector || `[data-agro-shell-region="${config.region}"]`;
         focusTarget(focusSelector, options);
 
+        if (view === 'ciclos' && typeof window.loadAgroGlobalStats === 'function') {
+            window.loadAgroGlobalStats();
+        }
+
         if (view === 'clima' && typeof window.openAgroClima === 'function') {
             window.openAgroClima({ inline: true });
         }

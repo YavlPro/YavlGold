@@ -1,3 +1,98 @@
+## 🆕 SESIÓN: Separar Perfil Agricultor de Analítica Global (2026-03-08c)
+
+### Diagnóstico
+
+**1. Perfil modal** (`index.html` L3544-3765, `agroperfil.js` 1337 líneas)
+- Modal `#modal-agro-profile` tiene DOS secciones:
+  - "Tus datos opcionales" (L3560-3680): avatar, nombre, finca, ubicación, teléfono, whatsapp, instagram, facebook, bio, perfil público. **CORRECTO — datos de identidad.**
+  - "Resumen global" (L3682-3756): Activos/Finalizados/Perdidos/Total, Ingresos/Gastos/Fiados/Pérdidas/Donaciones/Inversión/Costos/Rentabilidad, Top Compradores, Top Cultivos, Exportar MD. **INCORRECTO — analítica de negocio mezclada con perfil.**
+- `openAndRefreshProfile()` (L1168) llama `loadGlobalStats()` junto con `loadFarmerProfile()`.
+- `loadGlobalStats()` (L925) usa `getGlobalStats()` de `agroestadistica.js`, luego renderiza en DOM por IDs fijos.
+- `exportProfileMarkdown()` (L1150) genera informe MD con datos de perfil + stats.
+- `buildProfileMarkdown()` (L966) mezcla datos de agricultor con stats financieras en un solo MD.
+
+**2. Historial de ciclos** (vista `ciclos` en shell)
+- Comparte región `cultivos` con Cultivos activos.
+- CSS toggle: `body[data-agro-active-view='cultivos'] #crops-cycle-history-accordion { display: none }` y viceversa.
+- Actualmente NO tiene panel de estadísticas globales.
+- **Destino ideal** para el bloque de stats + export MD.
+
+**3. `agroestadistica.js`** (553 líneas)
+- `getGlobalStats()` exportado — función pura que recibe supabase + userId y retorna stats.
+- `formatUsd()` exportado — helper de formato.
+- Estos exports se reusan sin cambios.
+
+### Causa raíz
+El modal de perfil se diseñó como "hub" que mezcla identidad del usuario con analítica financiera global. Esto viola separación de responsabilidades UX.
+
+### Plan quirúrgico
+1. `index.html`: Eliminar sección "Resumen global" del modal de perfil (L3682-3756)
+2. `index.html`: Agregar panel `#agro-global-stats-panel` dentro de la sección `cultivos`, visible solo en vista `ciclos`
+3. `agro.css`: Agregar regla `body[data-agro-active-view='cultivos'] #agro-global-stats-panel { display: none !important; }`
+4. `agroperfil.js`: Remover `loadGlobalStats()` de `openAndRefreshProfile()`, exponer `loadGlobalStats` y `exportProfileMarkdown` via window
+5. `agro-shell.js`: Trigger `window.loadAgroGlobalStats()` al navegar a `ciclos`
+6. `agroperfil.js`: Ajustar status messages de `loadGlobalStats` para escribir a un status element en el nuevo panel (no al modal)
+7. `buildProfileMarkdown`: Separar datos de agricultor del informe global (el MD de stats ya no necesita datos de perfil)
+
+### Archivos a tocar
+- `index.html` — mover HTML de stats
+- `agroperfil.js` — desacoplar stats del modal, exponer via window
+- `agro.css` — visibility toggle para stats panel
+- `agro-shell.js` — trigger stats en vista ciclos
+- `AGENT_REPORT.md`
+
+### Riesgos
+- IDs de stats (`agro-profile-crops-active`, etc.) deben mantener su nombre para no romper renderers existentes.
+- `buildProfileMarkdown` mezcla datos de perfil con stats — separar sección de perfil del MD.
+- `setProfileStatus` escribe al modal — `loadGlobalStats` necesita escribir a un status diferente cuando se llama desde ciclos.
+
+### Implementación completada
+
+**1. `index.html`**
+- Eliminada sección "Resumen global" completa del modal de perfil (crops grid, money grid, top buyers/crops, export button).
+- Añadido `#agro-global-stats-panel` dentro de sección `cultivos` (visible solo en vista `ciclos`).
+- Panel incluye: crops grid (4 cards), money grid (8 rows), top grid (2 cards), export button, status element.
+- Footer del perfil actualizado: "Perfil listo." en vez de "Abre tu perfil para cargar datos globales."
+
+**2. `agroperfil.js`**
+- Nueva constante `GLOBAL_STATS_STATUS_ID = 'agro-global-stats-status'`.
+- Nueva función `setGlobalStatsStatus()` que escribe al status element del panel de stats (no al modal).
+- `loadGlobalStats()`: ahora usa `setGlobalStatsStatus()` en vez de `setProfileStatus()`, y aplica privacy al `#agro-global-stats-panel` en vez del modal.
+- `openAndRefreshProfile()`: ya no llama `loadGlobalStats()` — solo carga perfil + perfil público.
+- `initAgroPerfil()`: expone `window.loadAgroGlobalStats` y `window.exportAgroGlobalMd` para acceso externo.
+- Initial status del modal cambiado a "Abre tu perfil para editar tus datos."
+
+**3. `agro.css`**
+- Regla: `body[data-agro-active-view='cultivos'] #agro-global-stats-panel { display: none !important; }`.
+- Nuevos estilos: `.agro-global-stats-panel`, `.agro-global-stats-head`, `.agro-global-stats-title`, `.agro-global-stats-subtitle`, `.agro-global-stats-updated`, `.agro-global-stats-crops-grid`, `.agro-global-stats-actions`, `.agro-global-stats-status`.
+- ADN V10.0: Orbitron en título, Rajdhani en subtítulos/status, gradiente gold sutil, border-radius 18px.
+
+**4. `agro-shell.js`**
+- En `applyViewEffects`: cuando `view === 'ciclos'`, llama `window.loadAgroGlobalStats()`.
+
+### Build
+- `pnpm build:gold` → ✅ OK (3.55s)
+- 132 modules (sin cambio)
+- `agro-DYjgXAtQ.css`: 107.67 kB (+1.2 KB — nuevos estilos stats panel)
+- `agro-7XmJHH-Q.js`: 450.84 kB (+0.46 KB — setGlobalStatsStatus + window exports)
+- UTF-8 check: ✅
+
+### QA manual
+1. **Perfil Agricultor**: abrir modal → solo datos de identidad (avatar, nombre, finca, ubicación, contacto, bio, perfil público). NO debe mostrar stats financieras, ni top compradores/cultivos, ni export MD.
+2. **Historial de ciclos**: click sidebar → panel "Resumen Global" visible debajo de los ciclos, con crops grid, money grid, top lists, export button.
+3. **Cultivos activos**: click sidebar → panel de stats NO visible (hidden via CSS).
+4. **Stats load**: al navegar a Historial de ciclos, stats se cargan automáticamente (ver status "Resumen actualizado.").
+5. **Export MD**: botón "Exportar Informe Global (MD)" funcional desde Historial de ciclos.
+6. **Pagados/Fiados/Pérdidas/Donaciones/Otros/Carrito/Rankings**: confirmar que sus stats individuales no fueron afectadas.
+7. **Privacy**: confirmar que buyer/money privacy se aplica al panel de stats.
+
+### Stats individuales por vista (no modificadas)
+- Cada vista (Pagados, Fiados, Pérdidas, Donaciones, Otros, Carrito, Rankings) tiene su propio sistema de stats independiente.
+- IDs globales (`agro-profile-crops-*`, `agro-profile-money-*`, `agro-profile-top-*`) solo existen ahora en el panel de Historial de ciclos.
+- Ningún renderer de vista individual referencia estos IDs.
+
+---
+
 ## 🆕 SESIÓN: Clima Agro dedicado + Rankings + AgroRepo + Sidebar cleanup (2026-03-08b)
 
 ### Diagnóstico
