@@ -322,9 +322,19 @@ function setButtonsExpanded(expanded) {
     });
 }
 
+function isPerfilViewInline() {
+    return document.body.dataset.agroActiveView === 'perfil';
+}
+
 function openProfileModal() {
     const modal = getProfileModal();
     if (!modal) return;
+
+    if (modal.closest('.perfil-dedicado')) {
+        modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('agro-profile-open');
@@ -1210,10 +1220,10 @@ function bindOpenButtons() {
     state.openButtons.forEach((button) => {
         button.addEventListener('click', (event) => {
             event.preventDefault();
-            openAndRefreshProfile(event.currentTarget).catch((error) => {
-                console.error('[AGRO_PROFILE] open profile error:', error);
-                setProfileStatus('No se pudo abrir el perfil.', 'error');
-            });
+            event.stopPropagation();
+            window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
+                detail: { view: 'perfil', scroll: true }
+            }));
         });
     });
 }
@@ -1359,10 +1369,16 @@ export function initAgroPerfil({ supabase } = {}) {
 
     setButtonsExpanded(false);
     setStatsUpdatedAt(null);
-    setProfileStatus('Abre tu perfil para editar tus datos.', 'muted');
+    setProfileStatus('', 'muted');
 
     bindGlobalStatsToggle();
     bindPerfilEditButton();
+
+    loadFarmerProfile().then(() => {
+        loadPublicProfile().catch(() => { });
+    }).catch((err) => {
+        console.warn('[AGRO_PROFILE] early profile load:', err);
+    });
 
     window.loadAgroGlobalStats = function () {
         return loadGlobalStats().catch((err) => {
@@ -1381,8 +1397,14 @@ function bindPerfilEditButton() {
     const editBtn = document.getElementById('perfil-edit-btn');
     if (!editBtn) return;
     editBtn.addEventListener('click', () => {
-        const profileBtn = document.getElementById('agro-profile-button');
-        if (profileBtn) profileBtn.click();
+        const formSection = document.getElementById('modal-agro-profile');
+        if (formSection) {
+            formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const firstInput = formSection.querySelector('input:not([hidden])');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus({ preventScroll: true }), 350);
+            }
+        }
     });
 }
 

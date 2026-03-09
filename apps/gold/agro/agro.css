@@ -6677,6 +6677,76 @@ body.agro-view-dense::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   PERFIL INLINE FORM — Modal reusado como formulario embebido
+   ═══════════════════════════════════════════════════════════ */
+
+.perfil-dedicado #modal-agro-profile {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  display: block;
+  padding: 0;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-backdrop {
+  display: none;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-panel {
+  position: static;
+  width: 100%;
+  max-height: none;
+  background: transparent;
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  border-radius: 18px;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-header {
+  display: none;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-body {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  padding: 1rem;
+  overflow: visible;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-section {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-section-title {
+  margin: 0 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-section-title i {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-footer {
+  padding: 0.6rem 1rem;
+  border-top: 1px solid rgba(200, 167, 82, 0.12);
+}
+
+.perfil-dedicado #modal-agro-profile .agro-profile-status {
+  font-size: 0.75rem;
+}
+
+body.agro-profile-open[data-agro-active-view="perfil"] {
+  overflow: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════
    DASHBOARD NAV CARDS — Accesos rápidos compactos
    ═══════════════════════════════════════════════════════════ */
 

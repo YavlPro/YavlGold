@@ -1322,8 +1322,7 @@
                     <h2 class="perfil-hero__name" id="perfil-view-name">Agricultor</h2>
                     <p class="perfil-hero__email" id="perfil-view-email"></p>
                 </div>
-                <button type="button" class="perfil-hero__edit-btn" id="perfil-edit-btn" aria-haspopup="dialog"
-                    aria-controls="modal-agro-profile">
+                <button type="button" class="perfil-hero__edit-btn" id="perfil-edit-btn">
                     <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Editar Perfil
                 </button>
             </div>
@@ -1364,6 +1363,149 @@
             <div class="perfil-bio-section" id="perfil-view-bio-section" hidden>
                 <h4 class="perfil-bio__label"><i class="fa-solid fa-quote-left" aria-hidden="true"></i> Biografía</h4>
                 <p class="perfil-bio__text" id="perfil-view-bio"></p>
+            </div>
+
+            <!-- Formulario de perfil INLINE (reusa #modal-agro-profile para compatibilidad JS/CSS) -->
+            <div id="modal-agro-profile" class="agro-profile-modal perfil-inline-form" aria-hidden="false">
+                <div class="agro-profile-panel" tabindex="-1">
+                    <div class="agro-profile-body">
+                        <section class="agro-profile-section">
+                            <h4 class="agro-profile-section-title"><i class="fa-solid fa-pen-to-square"
+                                    aria-hidden="true"></i> Editar mis datos</h4>
+                            <form id="agro-profile-form" class="agro-profile-form">
+                                <div class="agro-profile-avatar-editor">
+                                    <div class="agro-profile-avatar-preview" id="agro-profile-avatar-preview"
+                                        aria-hidden="true">
+                                        👨‍🌾
+                                    </div>
+                                    <div class="agro-profile-avatar-controls">
+                                        <label class="agro-profile-field">
+                                            <span>Avatar (URL)</span>
+                                            <input type="url" id="agro-profile-avatar_url" class="styled-input"
+                                                maxlength="600" placeholder="https://.../avatar.jpg">
+                                        </label>
+                                        <div class="agro-profile-avatar-actions">
+                                            <label class="agro-profile-avatar-upload-btn"
+                                                for="agro-profile-avatar-file">
+                                                Subir foto
+                                            </label>
+                                            <input type="file" id="agro-profile-avatar-file" accept="image/*" hidden>
+                                            <button type="button" class="agro-profile-avatar-clear-btn"
+                                                id="agro-profile-avatar-clear">
+                                                Quitar foto
+                                            </button>
+                                        </div>
+                                        <p class="agro-profile-avatar-hint">
+                                            Puedes usar URL pública o subir foto local para este dispositivo.
+                                        </p>
+                                    </div>
+                                </div>
+                                <label class="agro-profile-field">
+                                    <span>Nombre visible</span>
+                                    <input type="text" id="agro-profile-display_name" class="styled-input"
+                                        maxlength="120" autocomplete="name">
+                                </label>
+                                <label class="agro-profile-field">
+                                    <span>Finca</span>
+                                    <input type="text" id="agro-profile-farm_name" class="styled-input" maxlength="120">
+                                </label>
+                                <label class="agro-profile-field">
+                                    <span>Ubicación</span>
+                                    <input type="text" id="agro-profile-location_text" class="styled-input"
+                                        maxlength="180">
+                                </label>
+                                <div class="agro-profile-inline-fields">
+                                    <label class="agro-profile-field">
+                                        <span>Teléfono</span>
+                                        <input type="text" id="agro-profile-phone" class="styled-input" maxlength="40">
+                                    </label>
+                                    <label class="agro-profile-field">
+                                        <span>WhatsApp</span>
+                                        <input type="text" id="agro-profile-whatsapp" class="styled-input"
+                                            maxlength="40">
+                                    </label>
+                                </div>
+                                <div class="agro-profile-inline-fields">
+                                    <label class="agro-profile-field">
+                                        <span>Instagram</span>
+                                        <input type="text" id="agro-profile-instagram" class="styled-input"
+                                            maxlength="80">
+                                    </label>
+                                    <label class="agro-profile-field">
+                                        <span>Facebook</span>
+                                        <input type="text" id="agro-profile-facebook" class="styled-input"
+                                            maxlength="80">
+                                    </label>
+                                </div>
+                                <label class="agro-profile-field">
+                                    <span>Biografía</span>
+                                    <textarea id="agro-profile-notes" class="styled-input" rows="4" maxlength="800"
+                                        placeholder="Cuéntanos sobre tu enfoque agrícola"></textarea>
+                                </label>
+
+                                <section class="agro-profile-public-box">
+                                    <header class="agro-profile-public-head">
+                                        <div>
+                                            <h5>Perfil público (opt-in)</h5>
+                                            <p>Activa esta opción para mostrar tu perfil en Social.</p>
+                                        </div>
+                                        <button type="button" id="btn-open-agro-public-profile"
+                                            class="agro-profile-public-preview-btn">
+                                            Ver Perfil Público
+                                        </button>
+                                    </header>
+
+                                    <label class="agro-profile-public-toggle">
+                                        <input type="checkbox" id="agro-profile-public_enabled">
+                                        Publicar perfil (visible para otros usuarios de Agro)
+                                    </label>
+
+                                    <label class="agro-profile-field">
+                                        <span>Nombre público</span>
+                                        <input type="text" id="agro-profile-public-display_name" class="styled-input"
+                                            maxlength="120" placeholder="Tu nombre en el perfil público">
+                                    </label>
+                                    <label class="agro-profile-field">
+                                        <span>Avatar público (URL)</span>
+                                        <input type="url" id="agro-profile-public-avatar_url" class="styled-input"
+                                            maxlength="600" placeholder="https://.../avatar-publico.jpg">
+                                    </label>
+                                    <label class="agro-profile-field">
+                                        <span>Ubicación pública</span>
+                                        <input type="text" id="agro-profile-public-location_text" class="styled-input"
+                                            maxlength="180" placeholder="Ciudad, estado o zona agrícola">
+                                    </label>
+                                    <div class="agro-profile-inline-fields">
+                                        <label class="agro-profile-field">
+                                            <span>WhatsApp público</span>
+                                            <input type="text" id="agro-profile-public-whatsapp" class="styled-input"
+                                                maxlength="40">
+                                        </label>
+                                        <label class="agro-profile-field">
+                                            <span>Instagram público</span>
+                                            <input type="text" id="agro-profile-public-instagram" class="styled-input"
+                                                maxlength="80">
+                                        </label>
+                                    </div>
+                                    <label class="agro-profile-field">
+                                        <span>Bio pública</span>
+                                        <textarea id="agro-profile-public-bio" class="styled-input" rows="3"
+                                            maxlength="800"
+                                            placeholder="Presentación breve para otros agricultores"></textarea>
+                                    </label>
+                                </section>
+                                <button type="submit" id="btn-save-agro-profile" class="btn btn-primary">Guardar
+                                    Perfil</button>
+                            </form>
+                        </section>
+                    </div>
+
+                    <footer class="agro-profile-footer">
+                        <p id="agro-profile-status" class="agro-profile-status" data-level="muted">
+                            Perfil listo.
+                        </p>
+                    </footer>
+                </div>
             </div>
 
             <div class="perfil-actions">
@@ -3678,155 +3820,7 @@
 
     </script>
 
-    <!-- V9.8: Perfil Agricultor (hub de resumen global) -->
-    <div id="modal-agro-profile" class="agro-profile-modal" aria-hidden="true">
-        <div class="agro-profile-backdrop" data-agro-profile-close></div>
-        <div class="agro-profile-panel" role="dialog" aria-modal="true" aria-labelledby="agro-profile-title"
-            tabindex="-1">
-            <header class="agro-profile-header">
-                <div>
-                    <p class="agro-profile-eyebrow">Perfil Agricultor</p>
-                    <h3 class="agro-profile-title" id="agro-profile-title">Bienvenido, Agricultor</h3>
-                </div>
-                <button type="button" class="agro-profile-close" aria-label="Cerrar perfil agricultor"
-                    data-agro-profile-close>
-                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                </button>
-            </header>
-
-            <div class="agro-profile-body">
-                <section class="agro-profile-section">
-                    <h4 class="agro-profile-section-title">Tus datos opcionales</h4>
-                    <form id="agro-profile-form" class="agro-profile-form">
-                        <div class="agro-profile-avatar-editor">
-                            <div class="agro-profile-avatar-preview" id="agro-profile-avatar-preview"
-                                aria-hidden="true">
-                                👨‍🌾
-                            </div>
-                            <div class="agro-profile-avatar-controls">
-                                <label class="agro-profile-field">
-                                    <span>Avatar (URL)</span>
-                                    <input type="url" id="agro-profile-avatar_url" class="styled-input" maxlength="600"
-                                        placeholder="https://.../avatar.jpg">
-                                </label>
-                                <div class="agro-profile-avatar-actions">
-                                    <label class="agro-profile-avatar-upload-btn" for="agro-profile-avatar-file">
-                                        Subir foto
-                                    </label>
-                                    <input type="file" id="agro-profile-avatar-file" accept="image/*" hidden>
-                                    <button type="button" class="agro-profile-avatar-clear-btn"
-                                        id="agro-profile-avatar-clear">
-                                        Quitar foto
-                                    </button>
-                                </div>
-                                <p class="agro-profile-avatar-hint">
-                                    Puedes usar URL pública o subir foto local para este dispositivo.
-                                </p>
-                            </div>
-                        </div>
-                        <label class="agro-profile-field">
-                            <span>Nombre visible</span>
-                            <input type="text" id="agro-profile-display_name" class="styled-input" maxlength="120"
-                                autocomplete="name">
-                        </label>
-                        <label class="agro-profile-field">
-                            <span>Finca</span>
-                            <input type="text" id="agro-profile-farm_name" class="styled-input" maxlength="120">
-                        </label>
-                        <label class="agro-profile-field">
-                            <span>Ubicación</span>
-                            <input type="text" id="agro-profile-location_text" class="styled-input" maxlength="180">
-                        </label>
-                        <div class="agro-profile-inline-fields">
-                            <label class="agro-profile-field">
-                                <span>Teléfono</span>
-                                <input type="text" id="agro-profile-phone" class="styled-input" maxlength="40">
-                            </label>
-                            <label class="agro-profile-field">
-                                <span>WhatsApp</span>
-                                <input type="text" id="agro-profile-whatsapp" class="styled-input" maxlength="40">
-                            </label>
-                        </div>
-                        <div class="agro-profile-inline-fields">
-                            <label class="agro-profile-field">
-                                <span>Instagram</span>
-                                <input type="text" id="agro-profile-instagram" class="styled-input" maxlength="80">
-                            </label>
-                            <label class="agro-profile-field">
-                                <span>Facebook</span>
-                                <input type="text" id="agro-profile-facebook" class="styled-input" maxlength="80">
-                            </label>
-                        </div>
-                        <label class="agro-profile-field">
-                            <span>Biografía</span>
-                            <textarea id="agro-profile-notes" class="styled-input" rows="4" maxlength="800"
-                                placeholder="Cuéntanos sobre tu enfoque agrícola"></textarea>
-                        </label>
-
-                        <section class="agro-profile-public-box">
-                            <header class="agro-profile-public-head">
-                                <div>
-                                    <h5>Perfil público (opt-in)</h5>
-                                    <p>Activa esta opción para mostrar tu perfil en Social.</p>
-                                </div>
-                                <button type="button" id="btn-open-agro-public-profile"
-                                    class="agro-profile-public-preview-btn">
-                                    Ver Perfil Público
-                                </button>
-                            </header>
-
-                            <label class="agro-profile-public-toggle">
-                                <input type="checkbox" id="agro-profile-public_enabled">
-                                Publicar perfil (visible para otros usuarios de Agro)
-                            </label>
-
-                            <label class="agro-profile-field">
-                                <span>Nombre público</span>
-                                <input type="text" id="agro-profile-public-display_name" class="styled-input"
-                                    maxlength="120" placeholder="Tu nombre en el perfil público">
-                            </label>
-                            <label class="agro-profile-field">
-                                <span>Avatar público (URL)</span>
-                                <input type="url" id="agro-profile-public-avatar_url" class="styled-input"
-                                    maxlength="600" placeholder="https://.../avatar-publico.jpg">
-                            </label>
-                            <label class="agro-profile-field">
-                                <span>Ubicación pública</span>
-                                <input type="text" id="agro-profile-public-location_text" class="styled-input"
-                                    maxlength="180" placeholder="Ciudad, estado o zona agrícola">
-                            </label>
-                            <div class="agro-profile-inline-fields">
-                                <label class="agro-profile-field">
-                                    <span>WhatsApp público</span>
-                                    <input type="text" id="agro-profile-public-whatsapp" class="styled-input"
-                                        maxlength="40">
-                                </label>
-                                <label class="agro-profile-field">
-                                    <span>Instagram público</span>
-                                    <input type="text" id="agro-profile-public-instagram" class="styled-input"
-                                        maxlength="80">
-                                </label>
-                            </div>
-                            <label class="agro-profile-field">
-                                <span>Bio pública</span>
-                                <textarea id="agro-profile-public-bio" class="styled-input" rows="3" maxlength="800"
-                                    placeholder="Presentación breve para otros agricultores"></textarea>
-                            </label>
-                        </section>
-                        <button type="submit" id="btn-save-agro-profile" class="btn btn-primary">Guardar Perfil</button>
-                    </form>
-                </section>
-
-                <!-- Resumen global MOVED to Historial de ciclos (agro-global-stats-panel) -->
-            </div>
-
-            <footer class="agro-profile-footer">
-                <p id="agro-profile-status" class="agro-profile-status" data-level="muted">
-                    Perfil listo.
-                </p>
-            </footer>
-        </div>
-    </div>
+    <!-- modal-agro-profile moved inline to .perfil-dedicado section -->
 
     <div id="modal-agro-buyer" class="agro-buyer-modal" aria-hidden="true">
         <div class="agro-buyer-backdrop" data-agro-buyer-close></div>
