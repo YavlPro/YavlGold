@@ -1164,9 +1164,9 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
                         aria-hidden="true">🌾</span><span>Principal</span></p>
-                <button type="button" class="agro-shell-link agro-shell-link--action" data-agro-action="profile"><span
+                <button type="button" class="agro-shell-link" data-agro-view="perfil"><span
                         class="agro-shell-link__icon" aria-hidden="true">👤</span><span
-                        class="agro-shell-link__label">Perfil de usuario</span></button>
+                        class="agro-shell-link__label">Mi Perfil</span></button>
                 <button type="button" class="agro-shell-link" data-agro-view="dashboard"><span
                         class="agro-shell-link__icon" aria-hidden="true">🏠</span><span
                         class="agro-shell-link__label">Dashboard Agro</span></button>
@@ -1309,7 +1309,77 @@
                     </button>
                 </div>
             </div>
-        </header> <!-- KPIs Section -->
+        </header>
+
+        <!-- ============================================
+             👤 SECCIÓN PERFIL — Vista dedicada del agricultor
+             ============================================ -->
+        <section class="perfil-dedicado" data-agro-shell-region="perfil" hidden inert>
+            <div class="perfil-hero">
+                <div class="perfil-hero__avatar" id="perfil-view-avatar">👨‍🌾</div>
+                <div class="perfil-hero__info">
+                    <p class="perfil-hero__greeting" id="perfil-view-greeting">Bienvenido, Agricultor</p>
+                    <h2 class="perfil-hero__name" id="perfil-view-name">Agricultor</h2>
+                    <p class="perfil-hero__email" id="perfil-view-email"></p>
+                </div>
+                <button type="button" class="perfil-hero__edit-btn" id="perfil-edit-btn" aria-haspopup="dialog"
+                    aria-controls="modal-agro-profile">
+                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Editar Perfil
+                </button>
+            </div>
+
+            <div class="perfil-grid">
+                <article class="perfil-card">
+                    <div class="perfil-card__icon"><i class="fa-solid fa-tractor" aria-hidden="true"></i></div>
+                    <h4 class="perfil-card__label">Finca</h4>
+                    <p class="perfil-card__value" id="perfil-view-farm">Sin definir</p>
+                </article>
+                <article class="perfil-card">
+                    <div class="perfil-card__icon"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></div>
+                    <h4 class="perfil-card__label">Ubicación</h4>
+                    <p class="perfil-card__value" id="perfil-view-location">Sin definir</p>
+                </article>
+                <article class="perfil-card">
+                    <div class="perfil-card__icon"><i class="fa-solid fa-phone" aria-hidden="true"></i></div>
+                    <h4 class="perfil-card__label">Teléfono</h4>
+                    <p class="perfil-card__value" id="perfil-view-phone">Sin definir</p>
+                </article>
+                <article class="perfil-card">
+                    <div class="perfil-card__icon"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i></div>
+                    <h4 class="perfil-card__label">WhatsApp</h4>
+                    <p class="perfil-card__value" id="perfil-view-whatsapp">Sin definir</p>
+                </article>
+                <article class="perfil-card">
+                    <div class="perfil-card__icon"><i class="fa-brands fa-instagram" aria-hidden="true"></i></div>
+                    <h4 class="perfil-card__label">Instagram</h4>
+                    <p class="perfil-card__value" id="perfil-view-instagram">Sin definir</p>
+                </article>
+                <article class="perfil-card">
+                    <div class="perfil-card__icon"><i class="fa-brands fa-facebook" aria-hidden="true"></i></div>
+                    <h4 class="perfil-card__label">Facebook</h4>
+                    <p class="perfil-card__value" id="perfil-view-facebook">Sin definir</p>
+                </article>
+            </div>
+
+            <div class="perfil-bio-section" id="perfil-view-bio-section" hidden>
+                <h4 class="perfil-bio__label"><i class="fa-solid fa-quote-left" aria-hidden="true"></i> Biografía</h4>
+                <p class="perfil-bio__text" id="perfil-view-bio"></p>
+            </div>
+
+            <div class="perfil-actions">
+                <button type="button" class="perfil-action-btn" data-agro-view="dashboard">
+                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i> Dashboard
+                </button>
+                <button type="button" class="perfil-action-btn" data-agro-view="cultivos">
+                    <i class="fa-solid fa-seedling" aria-hidden="true"></i> Mis Cultivos
+                </button>
+                <button type="button" class="perfil-action-btn" data-agro-view="ciclos">
+                    <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> Historial
+                </button>
+            </div>
+        </section>
+
+        <!-- KPIs Section -->
         <section class="kpi-section agro-dashboard-v10" data-agro-section="agenda" data-agro-shell-region="dashboard">
             <div class="agro-dash-header section-header animate-in delay-1">
                 <div class="agro-dash-heading">
@@ -1377,110 +1447,58 @@
             <div class="agro-dash-boardline animate-in delay-2">
                 <div class="agro-dash-boardline__titleblock">
                     <p class="agro-dash-boardline__eyebrow">Pulso del día</p>
-                    <h3 class="agro-dash-boardline__title">Centro de lectura rápida</h3>
+                    <h3 class="agro-dash-boardline__title">Resumen rápido</h3>
                 </div>
-                <p class="agro-dash-boardline__copy">Clima local, mercados y fase lunar alineados para decidir antes de
-                    entrar a Operaciones.</p>
+                <p class="agro-dash-boardline__copy">Consulta las páginas dedicadas para información completa.</p>
             </div>
 
-            <div class="kpi-grid agro-dash-grid">
-                <article class="card kpi-card agro-dash-card agro-dash-card--weather animate-in delay-2"
-                    data-widget="weather">
-                    <header class="agro-dash-card__header">
-                        <span class="agro-dash-card__icon">🌦️</span>
-                        <span class="agro-dash-card__label">CLIMA LOCAL</span>
-                        <span class="agro-dash-card__sub">Pulso local</span>
-                    </header>
-                    <div class="agro-dash-card__body agro-weather-body" id="weather-content">
-                        <div class="agro-weather-main">
-                            <span class="agro-weather-temp" id="weather-temp">--</span>
-                        </div>
-                        <div class="agro-weather-location-wrap">
-                            <span class="agro-weather-location" id="weather-desc">📍 Buscando ubicación...</span>
-                        </div>
-                        <div class="agro-weather-meta kpi-secondary">
-                            <span class="agro-weather-conditions" id="weather-conditions">--</span>
-                            <span class="agro-weather-humidity" id="weather-humidity">💧 --%</span>
-                        </div>
+            <div class="dash-nav-grid animate-in delay-2">
+                <button type="button" class="dash-nav-card" data-agro-view="clima">
+                    <span class="dash-nav-card__icon">🌦️</span>
+                    <div class="dash-nav-card__body">
+                        <strong class="dash-nav-card__title">Clima Local</strong>
+                        <span class="dash-nav-card__summary" id="weather-temp">--</span>
+                        <span class="dash-nav-card__hint" id="weather-desc">Cargando...</span>
                     </div>
-                    <footer class="agro-dash-card__footer">
-                        <button type="button" class="agro-dash-card__action clima-weekly-toggle"
-                            id="btn-toggle-weekly-forecast" aria-expanded="false" aria-controls="clima-weekly-host">
-                            📅 Ver pronóstico
-                        </button>
-                    </footer>
-                    <div id="clima-weekly-host" class="clima-weekly-host is-collapsed" hidden></div>
-                </article>
+                    <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
+                            aria-hidden="true"></i></span>
+                </button>
 
-                <article class="card kpi-card agro-dash-card agro-dash-card--markets animate-in delay-3"
-                    data-widget="markets" data-agro-section="markets">
-                    <header class="agro-dash-card__header">
-                        <span class="agro-dash-card__icon">📈</span>
-                        <span class="agro-dash-card__label">MERCADOS EN VIVO</span>
-                        <span class="agro-dash-card__sub" id="market-location">Detectando...</span>
-                    </header>
-                    <div class="agro-dash-card__body agro-market-body">
-                        <div class="agro-market-intro">
-                            <span class="agro-market-chip">Cripto</span>
-                            <span class="agro-market-chip">Divisas</span>
-                            <span class="agro-market-chip agro-market-chip--muted">Cache inteligente</span>
-                        </div>
-                        <div class="agro-market-stage">
-                            <div id="market-ticker-track" class="agro-market-track animate-marquee">
-                                <span class="agro-ticker-item agro-ticker-meta">📡 Conectando satélites
-                                    financieros...</span>
-                            </div>
-                        </div>
-                        <p class="agro-market-support">BTC, ETH, SOL, USDT y tipo de cambio local en lectura continua.
-                        </p>
+                <button type="button" class="dash-nav-card" onclick="window.openMarketHub?.('crypto')">
+                    <span class="dash-nav-card__icon">📈</span>
+                    <div class="dash-nav-card__body">
+                        <strong class="dash-nav-card__title">Mercados</strong>
+                        <span class="dash-nav-card__summary" id="market-location">Detectando...</span>
+                        <span class="dash-nav-card__hint">Cripto y divisas en vivo</span>
                     </div>
-                    <footer class="agro-dash-card__footer">
-                        <button type="button" class="agro-dash-card__action" onclick="window.openMarketHub('crypto')">
-                            CENTRO FINANCIERO
-                        </button>
-                    </footer>
-                </article>
+                    <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
+                            aria-hidden="true"></i></span>
+                </button>
 
-                <article class="card kpi-card agro-dash-card agro-dash-card--lunar animate-in delay-4"
-                    data-widget="lunar" data-agro-section="lunar">
-                    <header class="agro-dash-card__header">
-                        <span class="agro-dash-card__icon" id="moon-icon">🌕</span>
-                        <span class="agro-dash-card__label">FASE LUNAR</span>
-                        <span class="agro-dash-card__sub">Ritmo natural</span>
-                    </header>
-                    <div class="agro-dash-card__body agro-lunar-body" id="moon-phase">
-                        <div class="agro-lunar-icon">🌕</div>
-                        <div class="agro-lunar-phase">--</div>
-                        <div class="agro-lunar-tip" id="moon-advice">Calculando...</div>
+                <button type="button" class="dash-nav-card" data-agro-view="agenda">
+                    <span class="dash-nav-card__icon" id="moon-icon">🌕</span>
+                    <div class="dash-nav-card__body">
+                        <strong class="dash-nav-card__title">Agenda y Fase Lunar</strong>
+                        <span class="dash-nav-card__summary" id="moon-advice">Calculando...</span>
+                        <span class="dash-nav-card__hint">Planificación y ritmo natural</span>
                     </div>
-                    <footer class="agro-dash-card__footer">
-                        <button type="button" class="agro-dash-card__action" data-agro-view="agenda">
-                            VER AGENDA COMPLETA
-                        </button>
-                    </footer>
-                </article>
+                    <span class="dash-nav-card__arrow"><i class="fa-solid fa-chevron-right"
+                            aria-hidden="true"></i></span>
+                </button>
             </div>
 
-
-            <div id="weekly-forecast-staging" hidden aria-hidden="true">
-                <details class="yg-accordion" id="yg-acc-weekly" open>
-                    <summary class="yg-accordion-summary">
-                        <span class="yg-accordion-icon"><i class="fa-solid fa-calendar-week"></i></span>
-                        <span class="yg-accordion-title">Proyección Semanal</span>
-                        <span class="yg-accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
-                    </summary>
-                    <div class="yg-accordion-content">
-                        <div class="card planning-panel animate-in delay-5" style="margin-top: 0; padding: 1.5rem;">
-                            <div id="forecast-container"
-                                style="display: flex; justify-content: space-between; align-items: flex-end; height: 140px; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 12px;">
-                                <div
-                                    style="width: 100%; display: flex; align-items: center; justify-content: center; color: #666; font-size: 0.8rem;">
-                                    <span style="animation: pulse 1.5s infinite;">🛰️ Calculando meteorología...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </details>
+            <!-- Hidden containers for JS compatibility -->
+            <div hidden aria-hidden="true">
+                <span id="weather-conditions"></span>
+                <span id="weather-humidity"></span>
+                <div id="moon-phase">
+                    <div class="agro-lunar-phase"></div>
+                </div>
+                <div id="market-ticker-track"></div>
+                <div id="clima-weekly-host"></div>
+                <div id="weekly-forecast-staging">
+                    <div id="forecast-container"></div>
+                </div>
             </div>
         </section>
 

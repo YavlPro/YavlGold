@@ -22,6 +22,7 @@ const CORE_OPERATIONS_TABS = new Set([
 ]);
 
 const VIEW_CONFIG = Object.freeze({
+    perfil: { region: 'perfil', label: 'Mi Perfil', focusSelector: '[data-agro-shell-region="perfil"]' },
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
     cultivos: { region: 'cultivos', label: 'Cultivos activos', focusSelector: '[data-agro-shell-region="cultivos"]' },
     ciclos: { region: 'cultivos', label: 'Historial de ciclos', focusSelector: '#crops-cycle-history-accordion' },
@@ -270,6 +271,10 @@ export function initAgroShell() {
 
         const focusSelector = config.focusSelector || `[data-agro-shell-region="${config.region}"]`;
         focusTarget(focusSelector, options);
+
+        if (view === 'perfil' && typeof window.syncPerfilViewFromProfile === 'function') {
+            window.syncPerfilViewFromProfile();
+        }
 
         if (view === 'ciclos' && typeof window.loadAgroGlobalStats === 'function') {
             window.loadAgroGlobalStats();

@@ -706,6 +706,7 @@ async function loadFarmerProfile() {
         fillProfileForm(data || {}, user);
         syncAvatarFormFromUser(user, data || {});
         updateProfileHeaderName(data || {}, user);
+        syncPerfilDedicatedView();
         fillPublicProfileForm(state.publicProfile || {}, data || {}, user);
         setProfileStatus('Perfil listo.', 'ok');
     } catch (error) {
@@ -830,6 +831,7 @@ async function saveFarmerProfile(event) {
         state.avatarDraftMode = 'none';
         state.avatarDraftValue = '';
         updateProfileHeaderName(payload, user);
+        syncPerfilDedicatedView();
         fillPublicProfileForm(state.publicProfile, payload, state.user || user);
         if (publicProfileSkipped) {
             setProfileStatus('Perfil privado guardado. Falta migracion para perfil publico.', 'warn');
@@ -1360,6 +1362,7 @@ export function initAgroPerfil({ supabase } = {}) {
     setProfileStatus('Abre tu perfil para editar tus datos.', 'muted');
 
     bindGlobalStatsToggle();
+    bindPerfilEditButton();
 
     window.loadAgroGlobalStats = function () {
         return loadGlobalStats().catch((err) => {
@@ -1369,4 +1372,58 @@ export function initAgroPerfil({ supabase } = {}) {
     window.exportAgroGlobalMd = function () {
         return exportProfileMarkdown();
     };
+    window.syncPerfilViewFromProfile = function () {
+        syncPerfilDedicatedView();
+    };
+}
+
+function bindPerfilEditButton() {
+    const editBtn = document.getElementById('perfil-edit-btn');
+    if (!editBtn) return;
+    editBtn.addEventListener('click', () => {
+        const profileBtn = document.getElementById('agro-profile-button');
+        if (profileBtn) profileBtn.click();
+    });
+}
+
+function syncPerfilDedicatedView() {
+    const profile = state.profile || {};
+    const user = state.user || null;
+
+    const fieldMap = {
+        'perfil-view-farm': profile.farm_name,
+        'perfil-view-location': profile.location_text,
+        'perfil-view-phone': profile.phone,
+        'perfil-view-whatsapp': profile.whatsapp,
+        'perfil-view-instagram': profile.instagram,
+        'perfil-view-facebook': profile.facebook
+    };
+
+    Object.entries(fieldMap).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const safe = String(value || '').trim();
+        el.textContent = safe || 'Sin definir';
+        el.classList.toggle('perfil-card__value--empty', !safe);
+    });
+
+    const bioSection = document.getElementById('perfil-view-bio-section');
+    const bioText = document.getElementById('perfil-view-bio');
+    const bio = String(profile.notes || '').trim();
+    if (bioSection) {
+        bioSection.hidden = !bio;
+    }
+    if (bioText) {
+        bioText.textContent = bio;
+    }
+
+    const displayName = resolveDisplayName(profile, user);
+    const nameEl = document.getElementById('perfil-view-name');
+    if (nameEl) nameEl.textContent = displayName || 'Agricultor';
+
+    const greetingEl = document.getElementById('perfil-view-greeting');
+    if (greetingEl) greetingEl.textContent = `Bienvenido, ${displayName || 'Agricultor'}`;
+
+    const emailEl = document.getElementById('perfil-view-email');
+    if (emailEl) emailEl.textContent = user?.email || '';
 }

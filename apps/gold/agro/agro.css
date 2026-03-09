@@ -6409,6 +6409,365 @@ body.agro-view-dense::after {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   PERFIL DEDICADO — Vista completa del agricultor
+   ADN Visual 10: #0a0a0a fondo, #C8A752 acento dorado
+   ═══════════════════════════════════════════════════════════ */
+
+.perfil-dedicado {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.perfil-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  border: 1px solid rgba(200, 167, 82, 0.3);
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(200, 167, 82, 0.1) 0%, rgba(200, 167, 82, 0.02) 50%, rgba(10, 10, 10, 0.96) 100%);
+}
+
+.perfil-hero__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(200, 167, 82, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  flex-shrink: 0;
+  background: rgba(200, 167, 82, 0.08);
+  overflow: hidden;
+}
+
+.perfil-hero__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.perfil-hero__greeting {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
+}
+
+.perfil-hero__name {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.25rem;
+  color: #fff;
+  letter-spacing: 1px;
+  line-height: 1.2;
+}
+
+.perfil-hero__email {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(200, 167, 82, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.perfil-hero__edit-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  border: 1px solid rgba(200, 167, 82, 0.45);
+  border-radius: 12px;
+  background: rgba(200, 167, 82, 0.1);
+  color: #C8A752;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.perfil-hero__edit-btn:hover {
+  background: rgba(200, 167, 82, 0.2);
+  border-color: rgba(200, 167, 82, 0.7);
+  transform: translateY(-1px);
+}
+
+.perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+.perfil-card {
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  border-radius: 16px;
+  padding: 1rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.05) 0%, rgba(10, 10, 10, 0.92) 100%);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.perfil-card:hover {
+  border-color: rgba(200, 167, 82, 0.4);
+  transform: translateY(-2px);
+}
+
+.perfil-card__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(200, 167, 82, 0.18), rgba(200, 167, 82, 0.06));
+  color: #C8A752;
+  font-size: 0.95rem;
+}
+
+.perfil-card__label {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.perfil-card__value {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  word-break: break-word;
+}
+
+.perfil-bio-section {
+  border: 1px solid rgba(200, 167, 82, 0.15);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  background: rgba(200, 167, 82, 0.03);
+}
+
+.perfil-bio__label {
+  margin: 0 0 0.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #C8A752;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.perfil-bio__label i {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.perfil-bio__text {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.perfil-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.perfil-action-btn {
+  flex: 1;
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(200, 167, 82, 0.25);
+  border-radius: 14px;
+  background: rgba(200, 167, 82, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.perfil-action-btn:hover {
+  background: rgba(200, 167, 82, 0.14);
+  border-color: rgba(200, 167, 82, 0.5);
+  color: #C8A752;
+}
+
+.perfil-action-btn i {
+  font-size: 0.85rem;
+  color: #C8A752;
+}
+
+@media (max-width: 768px) {
+  .perfil-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.2rem;
+  }
+
+  .perfil-hero__edit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .perfil-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .perfil-dedicado {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .perfil-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .perfil-hero__name {
+    font-size: 1.05rem;
+  }
+
+  .perfil-hero__avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.8rem;
+  }
+
+  .perfil-actions {
+    flex-direction: column;
+  }
+
+  .perfil-action-btn {
+    min-width: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD NAV CARDS — Accesos rápidos compactos
+   ═══════════════════════════════════════════════════════════ */
+
+.dash-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.dash-nav-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(200, 167, 82, 0.2);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(200, 167, 82, 0.06) 0%, rgba(10, 10, 10, 0.94) 100%);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.dash-nav-card:hover {
+  border-color: rgba(200, 167, 82, 0.5);
+  background:
+    linear-gradient(135deg, rgba(200, 167, 82, 0.12) 0%, rgba(10, 10, 10, 0.94) 100%);
+  transform: translateY(-2px);
+}
+
+.dash-nav-card__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dash-nav-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.dash-nav-card__title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #C8A752;
+}
+
+.dash-nav-card__summary {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-nav-card__hint {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-nav-card__arrow {
+  flex-shrink: 0;
+  color: rgba(200, 167, 82, 0.5);
+  font-size: 0.7rem;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.dash-nav-card:hover .dash-nav-card__arrow {
+  color: #C8A752;
+  transform: translateX(2px);
+}
+
+@media (max-width: 768px) {
+  .dash-nav-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    GLOBAL STATS TOGGLE PANEL — "Mis Estadísticas Globales"
    ADN Visual 10: #0a0a0a fondo, #C8A752 acento dorado
    ═══════════════════════════════════════════════════════════ */

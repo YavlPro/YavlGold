@@ -75,6 +75,7 @@ const AGRO_GENERAL_LABEL = '📋 General';
 const AGRO_GENERAL_SUBLABEL = 'Todos los movimientos';
 const AGRO_CROPS_REFRESH_EVENT = 'agro:crops:refresh';
 const AGRO_PROFILE_LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
+const AGRO_PROFILE_DISPLAY_NAME_KEY = 'YG_AGRO_DISPLAY_NAME_V1';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
 const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
@@ -16990,6 +16991,23 @@ async function getAgroSupabaseClient() {
     return s?.from ? s : null;
 }
 
+function readCachedDisplayName() {
+    try {
+        return String(localStorage.getItem(AGRO_PROFILE_DISPLAY_NAME_KEY) || '').trim();
+    } catch (_e) {
+        return '';
+    }
+}
+
+function writeCachedDisplayName(name) {
+    try {
+        const safe = String(name || '').trim();
+        if (safe && safe !== 'Agricultor') {
+            localStorage.setItem(AGRO_PROFILE_DISPLAY_NAME_KEY, safe);
+        }
+    } catch (_e) { /* ignore */ }
+}
+
 async function resolveHeaderDisplayName(user) {
     const fallback = String(user?.user_metadata?.full_name || user?.email || 'Agricultor').trim() || 'Agricultor';
     const supabaseClient = await getAgroSupabaseClient();
@@ -17003,19 +17021,70 @@ async function resolveHeaderDisplayName(user) {
             .maybeSingle();
         if (!error) {
             const profileName = String(data?.display_name || '').trim();
-            if (profileName) return profileName;
+            if (profileName) {
+                writeCachedDisplayName(profileName);
+                return profileName;
+            }
         }
     } catch (_error) {
         // Fallback to metadata/email.
     }
 
+    if (fallback && fallback !== 'Agricultor') {
+        writeCachedDisplayName(fallback);
+    }
     return fallback;
+}
+
+function syncPerfilViewIdentity(displayName, user) {
+    const perfilName = document.getElementById('perfil-view-name');
+    if (perfilName) perfilName.textContent = displayName || 'Agricultor';
+
+    const perfilEmail = document.getElementById('perfil-view-email');
+    if (perfilEmail) perfilEmail.textContent = user?.email || '';
+
+    const perfilGreeting = document.getElementById('perfil-view-greeting');
+    if (perfilGreeting) perfilGreeting.textContent = `Bienvenido, ${displayName || 'Agricultor'}`;
+}
+
+function syncPerfilViewAvatar(avatarUrl, altText) {
+    const container = document.getElementById('perfil-view-avatar');
+    if (!container) return;
+
+    const safeUrl = normalizeHeaderAvatarUrl(avatarUrl);
+    if (!safeUrl) {
+        const img = container.querySelector('img');
+        if (img) img.remove();
+        container.textContent = '👨‍🌾';
+        container.style.overflow = '';
+        return;
+    }
+
+    let img = container.querySelector('img');
+    if (!img) {
+        container.textContent = '';
+        img = document.createElement('img');
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.borderRadius = '50%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        container.style.overflow = 'hidden';
+        container.appendChild(img);
+    }
+    img.alt = altText || 'Usuario';
+    img.src = safeUrl;
 }
 
 async function applyHeaderIdentity() {
     const nameEl = document.querySelector('.user-profile .user-name');
     const avatarEl = document.querySelector('.user-profile .user-avatar');
     if (!nameEl && !avatarEl) return;
+
+    const cached = readCachedDisplayName();
+    if (cached && nameEl && nameEl.textContent === 'Agricultor') {
+        nameEl.textContent = cached;
+    }
 
     const authClient = await waitForAuthClient();
     if (!authClient) return;
@@ -17028,10 +17097,13 @@ async function applyHeaderIdentity() {
         nameEl.textContent = displayName;
     }
 
+    syncPerfilViewIdentity(displayName, user);
+
     const localAvatar = readHeaderLocalAvatar(user.id);
     const metadataAvatar = normalizeHeaderAvatarUrl(user?.user_metadata?.avatar_url);
     const avatarUrl = localAvatar || metadataAvatar;
     renderHeaderAvatar(avatarEl, avatarUrl, displayName);
+    syncPerfilViewAvatar(avatarUrl, displayName);
 }
 
 function setupHeaderIdentity() {
