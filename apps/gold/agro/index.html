@@ -1527,87 +1527,120 @@
                  📊 RESUMEN GLOBAL — visible solo en vista "ciclos"
                  ═══════════════════════════════════════════════════ -->
             <div id="agro-global-stats-panel" class="agro-global-stats-panel">
-                <header class="agro-global-stats-head">
-                    <div>
-                        <h3 class="agro-global-stats-title">Resumen Global</h3>
-                        <p class="agro-global-stats-subtitle">Consolidado histórico de todos los ciclos y movimientos.
-                        </p>
-                    </div>
-                    <p class="agro-global-stats-updated" id="agro-profile-stats-updated">Actualizado: N/D</p>
-                </header>
+                <button type="button" id="btn-toggle-global-stats" class="gstats-toggle-btn">
+                    <span class="gstats-toggle-icon"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i></span>
+                    <span class="gstats-toggle-text">
+                        <strong class="gstats-toggle-label">Mis Estadísticas Globales</strong>
+                        <span class="gstats-toggle-hint">Consolidado histórico de todos los ciclos y movimientos</span>
+                    </span>
+                    <span class="gstats-toggle-chevron"><i class="fa-solid fa-chevron-down"
+                            aria-hidden="true"></i></span>
+                </button>
 
-                <div class="agro-global-stats-crops-grid">
-                    <article class="agro-profile-stat-card">
-                        <span class="agro-profile-stat-label">Activos</span>
-                        <strong class="agro-profile-stat-value" id="agro-profile-crops-active">0</strong>
-                    </article>
-                    <article class="agro-profile-stat-card">
-                        <span class="agro-profile-stat-label">Finalizados</span>
-                        <strong class="agro-profile-stat-value" id="agro-profile-crops-finalized">0</strong>
-                    </article>
-                    <article class="agro-profile-stat-card">
-                        <span class="agro-profile-stat-label">Perdidos</span>
-                        <strong class="agro-profile-stat-value" id="agro-profile-crops-lost">0</strong>
-                    </article>
-                    <article class="agro-profile-stat-card">
-                        <span class="agro-profile-stat-label">Total cultivos</span>
-                        <strong class="agro-profile-stat-value" id="agro-profile-crops-total">0</strong>
-                    </article>
+                <div id="agro-global-stats-body" class="gstats-body" hidden>
+                    <header class="gstats-head">
+                        <p class="gstats-updated" id="agro-profile-stats-updated">Actualizado: N/D</p>
+                    </header>
+
+                    <div class="gstats-crops-grid">
+                        <article class="gstats-crop-card gstats-crop-card--active">
+                            <span class="gstats-crop-icon">🌱</span>
+                            <strong class="gstats-crop-value" id="agro-profile-crops-active">0</strong>
+                            <span class="gstats-crop-label">Activos</span>
+                        </article>
+                        <article class="gstats-crop-card gstats-crop-card--done">
+                            <span class="gstats-crop-icon">✅</span>
+                            <strong class="gstats-crop-value" id="agro-profile-crops-finalized">0</strong>
+                            <span class="gstats-crop-label">Finalizados</span>
+                        </article>
+                        <article class="gstats-crop-card gstats-crop-card--lost">
+                            <span class="gstats-crop-icon">⚠️</span>
+                            <strong class="gstats-crop-value" id="agro-profile-crops-lost">0</strong>
+                            <span class="gstats-crop-label">Perdidos</span>
+                        </article>
+                        <article class="gstats-crop-card gstats-crop-card--total">
+                            <span class="gstats-crop-icon">📊</span>
+                            <strong class="gstats-crop-value" id="agro-profile-crops-total">0</strong>
+                            <span class="gstats-crop-label">Total</span>
+                        </article>
+                    </div>
+
+                    <div class="gstats-finance">
+                        <h4 class="gstats-section-title"><i class="fa-solid fa-coins" aria-hidden="true"></i> Resumen
+                            Financiero</h4>
+                        <div class="gstats-money-grid">
+                            <div class="gstats-money-row gstats-money-row--income">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Ingresos cobrados</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-income"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row gstats-money-row--expense">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Gastos</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-expenses"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row gstats-money-row--pending">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Fiados</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-pending"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row gstats-money-row--loss">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Pérdidas</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-losses"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Donaciones</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-transfers"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Inversión base</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-investment"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row gstats-money-row--cost">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Costos totales</span>
+                                <strong class="gstats-money-value" id="agro-profile-money-cost"
+                                    data-money="1">$0.00</strong>
+                            </div>
+                            <div class="gstats-money-row gstats-money-row--profit">
+                                <span class="gstats-money-dot"></span>
+                                <span class="gstats-money-label">Rentabilidad</span>
+                                <strong class="gstats-money-value gstats-money-value--highlight"
+                                    id="agro-profile-money-profit" data-money="1">$0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gstats-tops">
+                        <div class="gstats-top-card">
+                            <h5 class="gstats-top-title"><i class="fa-solid fa-users" aria-hidden="true"></i> Top
+                                Compradores (Pagados)</h5>
+                            <ol id="agro-profile-top-buyers" class="agro-profile-top-list"></ol>
+                        </div>
+                        <div class="gstats-top-card">
+                            <h5 class="gstats-top-title"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Top
+                                Cultivos (Pagados)</h5>
+                            <ol id="agro-profile-top-crops" class="agro-profile-top-list"></ol>
+                        </div>
+                    </div>
+
+                    <div class="gstats-actions">
+                        <button type="button" id="btn-export-agro-profile-md" class="gstats-export-btn">
+                            <i class="fa-solid fa-file-export" aria-hidden="true"></i> Exportar Informe Global (MD)
+                        </button>
+                    </div>
+
+                    <p id="agro-global-stats-status" class="agro-global-stats-status" data-level="muted"></p>
                 </div>
-
-                <div class="agro-profile-money-grid">
-                    <div class="agro-profile-money-row">
-                        <span>Ingresos cobrados</span>
-                        <strong id="agro-profile-money-income" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Gastos</span>
-                        <strong id="agro-profile-money-expenses" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Fiados</span>
-                        <strong id="agro-profile-money-pending" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Pérdidas</span>
-                        <strong id="agro-profile-money-losses" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Donaciones</span>
-                        <strong id="agro-profile-money-transfers" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Inversión base</span>
-                        <strong id="agro-profile-money-investment" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Costos totales</span>
-                        <strong id="agro-profile-money-cost" data-money="1">$0.00</strong>
-                    </div>
-                    <div class="agro-profile-money-row">
-                        <span>Rentabilidad</span>
-                        <strong id="agro-profile-money-profit" data-money="1">$0.00</strong>
-                    </div>
-                </div>
-
-                <div class="agro-profile-top-grid">
-                    <article class="agro-profile-top-card">
-                        <h5>Top Compradores (Pagados)</h5>
-                        <ol id="agro-profile-top-buyers" class="agro-profile-top-list"></ol>
-                    </article>
-                    <article class="agro-profile-top-card">
-                        <h5>Top Cultivos (Pagados)</h5>
-                        <ol id="agro-profile-top-crops" class="agro-profile-top-list"></ol>
-                    </article>
-                </div>
-
-                <div class="agro-global-stats-actions">
-                    <button type="button" id="btn-export-agro-profile-md" class="agro-profile-export-btn">
-                        📄 Exportar Informe Global (MD)
-                    </button>
-                </div>
-
-                <p id="agro-global-stats-status" class="agro-global-stats-status" data-level="muted"></p>
             </div>
         </section>
 

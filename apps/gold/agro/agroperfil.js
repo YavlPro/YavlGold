@@ -930,6 +930,26 @@ function renderTopList(listId, items, fallbackLabel, options = {}) {
     });
 }
 
+function bindGlobalStatsToggle() {
+    const toggleBtn = document.getElementById('btn-toggle-global-stats');
+    if (!toggleBtn) return;
+
+    toggleBtn.addEventListener('click', () => {
+        const panel = document.getElementById('agro-global-stats-panel');
+        const body = document.getElementById('agro-global-stats-body');
+        if (!panel || !body) return;
+
+        const isExpanded = panel.classList.contains('is-expanded');
+        if (isExpanded) {
+            panel.classList.remove('is-expanded');
+            body.hidden = true;
+        } else {
+            panel.classList.add('is-expanded');
+            body.hidden = false;
+        }
+    });
+}
+
 async function loadGlobalStats() {
     state.loadingStats = true;
     setGlobalStatsStatus('Actualizando resumen global...', 'muted');
@@ -1338,6 +1358,8 @@ export function initAgroPerfil({ supabase } = {}) {
     setButtonsExpanded(false);
     setStatsUpdatedAt(null);
     setProfileStatus('Abre tu perfil para editar tus datos.', 'muted');
+
+    bindGlobalStatsToggle();
 
     window.loadAgroGlobalStats = function () {
         return loadGlobalStats().catch((err) => {
