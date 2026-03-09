@@ -4197,26 +4197,28 @@
 
                     <div class="assistant-main">
                         <div class="assistant-topbar">
-                            <button type="button" class="assistant-drawer-toggle" id="assistant-drawer-toggle"
-                                aria-label="Abrir historial">
-                                <span aria-hidden="true">&#9776;</span>
+                            <button type="button" class="assistant-topbar-icon" id="assistant-drawer-toggle"
+                                aria-label="Historial" title="Historial">
+                                <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
                             </button>
                             <div class="assistant-title-group">
                                 <div class="assistant-title-row">
-                                    <h3 id="agro-assistant-title">Asistente de Campo</h3>
+                                    <span class="assistant-title-icon" aria-hidden="true"><i
+                                            class="fa-solid fa-seedling"></i></span>
+                                    <h3 id="agro-assistant-title">Asistente Agro</h3>
                                     <span class="assistant-status" id="assistant-status">En linea</span>
                                 </div>
-                                <p class="assistant-subtitle">Inteligencia artificial para tu actividad agrícola</p>
+                                <p class="assistant-subtitle">IA de campo para cultivos, plagas, riego y clima</p>
                             </div>
                             <div class="assistant-topbar-actions">
-                                <button type="button" class="btn-delete-thread" id="btn-assistant-delete-thread"
+                                <button type="button" class="assistant-topbar-icon" id="btn-assistant-delete-thread"
                                     aria-label="Eliminar conversacion" title="Eliminar conversacion">
-                                    &#128465;
+                                    <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="btn-close" id="btn-close-agro-assistant"
+                                <button type="button" class="assistant-topbar-icon" id="btn-close-agro-assistant"
                                     aria-label="Volver al dashboard" title="Volver al dashboard"
                                     data-agro-view="dashboard">
-                                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -4265,6 +4267,11 @@
                                         id="btn-assistant-send">Enviar</button>
                                 </div>
                                 <div class="assistant-cooldown" id="assistant-cooldown"></div>
+                                <div class="assistant-footer-brand">
+                                    <span class="assistant-footer-logo"><i class="fa-solid fa-seedling"
+                                            aria-hidden="true"></i></span>
+                                    <span class="assistant-footer-text">YavlGold &bull; Agro V1</span>
+                                </div>
                             </div>
                         </div>
                     </div>

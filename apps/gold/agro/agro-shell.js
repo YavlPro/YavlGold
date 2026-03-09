@@ -237,6 +237,8 @@ export function initAgroShell() {
         });
     };
 
+    const FULLSCREEN_REGIONS = new Set(['asistente', 'perfil']);
+
     const syncRegions = (regionName) => {
         topLevelRegions.forEach((section) => {
             const isVisible = section.dataset.agroShellRegion === regionName;
@@ -244,6 +246,10 @@ export function initAgroShell() {
             section.classList.toggle('is-shell-hidden', !isVisible);
             setElementHiddenInert(section, !isVisible);
         });
+        const footer = document.getElementById('agro-module-footer');
+        if (footer) {
+            footer.hidden = FULLSCREEN_REGIONS.has(regionName);
+        }
     };
 
     const applyViewEffects = (view, options = {}) => {
