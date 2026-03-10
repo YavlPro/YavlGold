@@ -103,3 +103,20 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
   - `.ghost-bg` → opacity 0.012, duración 16s
   - Nada desactivado, todo suavizado
 - **`index.html`**: módulos no disponibles cambiados de `v10-status-dev`/`v10-status-soon` + "En Desarrollo"/"Próximamente" a `v10-status-soon` + "No Disponible". Agro y Dashboard mantienen "Disponible". Descripción de sección actualizada.
+
+---
+
+## Dashboard + Agro mobile bugfix (2026-03-10)
+
+### Diagnóstico
+1. **Dashboard responsive roto en móvil**: stats grid (`auto-fit, minmax(180px)`) dejaba 3er card sola; topbar icons overflow; insight cards sin ajuste de padding/font; spacing excesivo.
+2. **Botón "Ir al módulo" invisible**: `dashboard.css` (via main.js) aplica `background: var(--gradient-gold)` y `box-shadow` a `.insight-action`. Luego `dashboard-v1.css` sobreescribe `color` a `var(--gold-principal)` pero NO el background → texto dorado sobre fondo dorado = invisible.
+3. **Campana/notificaciones Agro cortada en móvil**: dropdown inline `width: 320px; position: absolute; right: 0` desborda viewport en pantallas < 375px.
+
+### Cambios aplicados
+- **`assets/css/dashboard-v1.css`**:
+  - `.insight-action`: añadido `background: transparent; box-shadow: none` explícitos (+ hover, focus-visible, disabled)
+  - `@media 768px`: stats 3-col, topbar compacto (34px icons, gap 2px), insight cards padding/font reducidos, hero compacto, modules 1-col, quote/footer ajustados
+  - `@media 480px`: stats 3-col mantenido con padding mínimo, topbar 32px icons, hero title 1.1rem
+- **`dashboard/index.html`**: inline `<style>` de `.insight-action` actualizado con `background: transparent; box-shadow: none` (belt-and-suspenders)
+- **`agro/agro-dashboard.css`**: `@media 768px` → `#notif-dropdown` constrainido a `min(320px, calc(100vw - 24px))`, right ajustado, max-height 70vh con overflow-y auto

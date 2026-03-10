@@ -508,16 +508,28 @@ ul { list-style: none; }
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-gold);
+  background: transparent;
   color: var(--gold-principal);
   font-size: var(--text-sm);
   font-weight: 600;
   transition: all 180ms ease;
   text-decoration: none;
+  box-shadow: none;
 }
-.insight-action:hover { background: rgba(200,167,82,0.08); }
+.insight-action:hover {
+  background: rgba(200,167,82,0.10);
+  box-shadow: none;
+}
+.insight-action:focus-visible {
+  outline: 2px solid var(--gold-principal);
+  outline-offset: 2px;
+  box-shadow: none;
+}
 .insight-action.disabled {
   pointer-events: none;
   opacity: 0.4;
+  background: transparent;
+  box-shadow: none;
 }
 .summary-list {
   list-style: none;
@@ -1653,29 +1665,51 @@ body > header,
 }
 
 @media (max-width: 768px) {
-  .topbar { height: 56px; padding: 0 16px; }
+  .topbar { height: 56px; padding: 0 12px; }
   .topbar-brand { font-size: var(--text-base); }
+  .topbar-right { gap: 2px; }
+  .topbar-icon-btn { width: 34px; height: 34px; font-size: var(--text-sm); }
+  .topbar-left .logo-icon { width: 32px; height: 32px; }
+  .topbar-left .logo-text h1 { font-size: var(--text-base); letter-spacing: 1px; }
+  .topbar-left .logo-text span { font-size: 0.55rem; }
 
-  .hero-welcome { padding: 24px 0 16px; }
+  .hero-welcome { padding: 20px 0 12px; }
   .hero-inner { flex-direction: column; }
-  .hero-content { flex-direction: column; text-align: center; }
-  .hero-title { font-size: clamp(1.3rem, 5vw, 1.8rem); }
-  .hero-subtitle { margin: 0 auto; }
+  .hero-content { flex-direction: column; text-align: center; gap: 12px; }
+  .hero-avatar { width: 56px; height: 56px; }
+  .hero-title { font-size: clamp(1.2rem, 5vw, 1.6rem); }
+  .hero-subtitle { margin: 0 auto; font-size: var(--text-sm); }
 
-  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .kpi-card { padding: 16px; }
+  .stats-section { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-card { padding: 12px 8px; }
+  .stat-number { font-size: var(--text-lg); }
+  .stat-label { font-size: 0.6rem; }
+
+  .insights-section { gap: 10px; margin-bottom: 16px; }
+  .insight-card { padding: 14px; }
+  .insight-title { font-size: var(--text-xs); margin-bottom: 6px; }
+  .insight-name { font-size: var(--text-sm); }
+  .insight-meta { font-size: var(--text-xs); margin-bottom: 8px; }
+  .insight-action { padding: 5px 12px; font-size: var(--text-xs); }
+
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-card { padding: 14px; }
   .kpi-value { font-size: var(--text-xl); }
 
-  .modules-grid { grid-template-columns: 1fr; }
-  .module-card { padding: 20px; }
+  .modules-grid { grid-template-columns: 1fr; gap: 12px; }
+  .module-card { padding: 16px; }
+  .module-icon { width: 40px; height: 40px; font-size: var(--text-md); }
 
-  .quote-card { padding: 24px 20px; }
-  .quote-text { font-size: var(--text-lg); }
+  .quote-section { padding: 16px 0 24px; }
+  .quote-card { padding: 20px 16px; }
+  .quote-text { font-size: var(--text-md); }
 
   .footer-bottom { flex-direction: column; text-align: center; }
 
-  .dashboard-main { padding: 0 16px 32px; }
-  .dashboard-container { padding: 0 16px 32px; }
+  .dashboard-main { padding: 0 12px 24px; }
+  .dashboard-container { padding: 0 12px 24px; }
+
+  .divider { margin: 4px 0; }
 
   .header {
     flex-direction: row;
@@ -1684,8 +1718,7 @@ body > header,
     justify-content: center;
   }
 
-  .welcome-section h2 { font-size: 1.5rem; }
-  .stats-section { grid-template-columns: 1fr 1fr; }
+  .welcome-section h2 { font-size: 1.3rem; }
 
   /* Profile modal mobile */
   .yg-modal {
@@ -1763,9 +1796,17 @@ body > header,
 }
 
 @media (max-width: 480px) {
-  .dashboard-main { padding: 0 12px 24px; }
+  .dashboard-main { padding: 0 10px 20px; }
+  .dashboard-container { padding: 0 10px 20px; }
+  .topbar { padding: 0 10px; }
+  .topbar-icon-btn { width: 32px; height: 32px; }
   .kpi-grid { grid-template-columns: 1fr; }
+  .stats-section { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .stat-card { padding: 10px 6px; }
+  .stat-number { font-size: var(--text-md); }
+  .stat-label { font-size: 0.55rem; letter-spacing: 0.5px; }
   .modules-header { flex-direction: column; align-items: flex-start; gap: 4px; }
   .footer-legal { flex-direction: column; gap: 8px; }
-  .hero-avatar { width: 56px; height: 56px; }
+  .hero-avatar { width: 48px; height: 48px; }
+  .hero-title { font-size: 1.1rem; }
 }
