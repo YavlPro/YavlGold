@@ -818,9 +818,12 @@
   /* Notification dropdown: constrain to viewport on mobile */
   #notif-dropdown {
     width: min(320px, calc(100vw - 24px)) !important;
-    right: -60px !important;
+    max-width: calc(100vw - 24px) !important;
+    left: auto !important;
+    right: 0 !important;
     max-height: 70vh !important;
     overflow-y: auto !important;
+    box-sizing: border-box;
   }
   .agro-header-notifications {
     position: relative !important;

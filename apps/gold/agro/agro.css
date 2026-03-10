@@ -6381,7 +6381,17 @@ body.agro-view-dense::after {
     border-radius: 12px;
   }
 
+  .agro-shell-header__utilities {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .agro-shell-header__utilities .user-profile-btn {
+    order: 1;
+  }
+
   .agro-header-notifications {
+    order: 2;
     margin-right: 0 !important;
   }
 
