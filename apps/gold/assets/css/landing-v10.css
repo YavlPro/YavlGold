@@ -1057,3 +1057,32 @@ body.landing-page .forgot-password-link:hover { color: var(--v10-gold-4); }
   }
   body.landing-page .form-group input { font-size: 16px; }
 }
+
+/* ============================================
+   V10 MOBILE ANIMATION SLOWDOWN
+   Reduce animation intensity on mobile to
+   save battery/CPU on low-end devices.
+   ============================================ */
+@media (max-width: 768px) {
+  body.landing-page .v10-text-metallic {
+    animation-duration: 12s;
+  }
+  body.landing-page .hero-emblem {
+    animation-duration: 10s;
+  }
+  body.landing-page .hero-title,
+  body.landing-page .hero-desc,
+  body.landing-page .hero-cta {
+    animation-duration: 0.4s;
+  }
+  body.landing-page .v10-module-card,
+  body.landing-page .v10-value-card,
+  body.landing-page .v10-cta-section,
+  body.landing-page .v10-footer {
+    animation-duration: 0.8s;
+  }
+  body.landing-page .ghost-bg {
+    opacity: 0.015;
+    animation-duration: 12s;
+  }
+}

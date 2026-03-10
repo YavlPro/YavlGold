@@ -1543,6 +1543,7 @@
       font-weight: 700;
     }
   </style>
+  <link rel="stylesheet" href="/assets/css/dashboard-v1.css">
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1565,69 +1566,65 @@
   <!-- 📦 CONTENEDOR PRINCIPAL -->
   <div class="dashboard-container">
 
-    <!-- 🔝 HEADER -->
-    <header class="header">
-      <div class="logo-section">
-        <div class="logo-icon">
-          <img src="/brand/logo.webp" alt="YavlGold">
+    <!-- 🔝 TOPBAR V10 -->
+    <nav class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-left">
+          <a href="/" class="logo-section" style="text-decoration:none;">
+            <div class="logo-icon"><img src="/brand/logo.webp" alt="YavlGold"></div>
+            <div class="logo-text">
+              <h1>YAVLGOLD</h1>
+              <span>Dashboard V1</span>
+            </div>
+          </a>
         </div>
-        <div class="logo-text">
-          <h1>MI FINCA</h1>
-          <span>Panel de Control V9.8</span>
+        <div class="topbar-center">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="moduleSearch" placeholder="Buscar módulos..." autocomplete="off">
+          </div>
         </div>
-      </div>
-
-      <!-- 🔔 Notification Bell -->
-      <button id="notification-bell" class="btn-notification notification-bell" title="Notificaciones">
-        <i class="fas fa-bell"></i>
-        <span id="notification-badge" class="notification-badge yg-glowpulse" style="display: none;">0</span>
-      </button>
-
-      <!-- 📝 Feedback Button -->
-      <button id="feedback-btn" class="btn-feedback feedback-btn" title="Enviar Feedback">
-        <i class="fas fa-comment-dots"></i>
-      </button>
-
-      <!-- 🎵 Music / Zen Mode Button -->
-      <a href="/dashboard/music.html" class="btn-settings" title="Modo Zen / Música"
-        style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1rem;">
-        <i class="fa-solid fa-music" style="color: #C8A752;"></i>
-        <span>Música</span>
-      </a>
-
-      <!-- ⚙️ Botón Ajustes -->
-      <button id="settings-btn" class="btn-settings" title="Ajustes de Perfil" style="display: none;">
-        <i class="fas fa-cog"></i>
-        <span>Ajustes</span>
-      </button>
-
-      <!-- 👤 Botón Sobre el Creador -->
-      <button id="about-creator-btn" class="btn-settings" title="Sobre el Creador">
-        <i class="fas fa-user-astronaut" style="color: #C8A752;"></i>
-        <span>Creador</span>
-      </button>
-
-      <!-- 🔴 ZONA SAGRADA: Botón Cerrar Sesión -->
-      <button id="logout-btn-nav" class="btn-logout" style="display: none;">
-        <span>Cerrar Sesión</span>
-        <i class="fas fa-sign-out-alt"></i>
-      </button>
-    </header>
-
-    <!-- 👋 BIENVENIDA -->
-    <section class="welcome-section">
-      <div class="welcome-header">
-        <div class="yg-bg-emoji yg-float" aria-hidden="true">🏡</div>
-        <img id="header-avatar" class="header-avatar" src="/assets/images/logo.webp" alt="Avatar"
-          onerror="this.src='/assets/images/logo.webp'">
-        <div class="welcome-text">
-          <h2>Bienvenido, <span class="glow-gold" id="user-name-display">Usuario</span></h2>
-          <p>Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.</p>
+        <div class="topbar-right">
+          <button id="notification-bell" class="topbar-icon-btn btn-notification notification-bell"
+            title="Notificaciones">
+            <i class="fas fa-bell"></i>
+            <span id="notification-badge" class="notification-badge notif-dot yg-glowpulse"
+              style="display: none;">0</span>
+          </button>
+          <button id="feedback-btn" class="topbar-icon-btn btn-feedback feedback-btn" title="Feedback">
+            <i class="fas fa-comment-dots"></i>
+          </button>
+          <a href="/dashboard/music.html" class="topbar-icon-btn" title="Música">
+            <i class="fa-solid fa-music"></i>
+          </a>
+          <button id="about-creator-btn" class="topbar-icon-btn" title="Sobre el Creador">
+            <i class="fas fa-user-astronaut"></i>
+          </button>
+          <button id="settings-btn" class="topbar-icon-btn btn-settings" title="Ajustes" style="display: none;">
+            <i class="fas fa-cog"></i>
+          </button>
+          <!-- 🔴 ZONA SAGRADA: Botón Cerrar Sesión -->
+          <button id="logout-btn-nav" class="topbar-icon-btn btn-logout" style="display: none;">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
         </div>
       </div>
-      <div class="welcome-divider"></div>
-      <p>Explora las herramientas disponibles para tu finca.</p>
+    </nav>
+
+    <!-- 👋 HERO WELCOME V10 -->
+    <section class="hero-welcome">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <img id="header-avatar" class="hero-avatar" src="/assets/images/logo.webp" alt="Avatar"
+            onerror="this.src='/assets/images/logo.webp'">
+          <div>
+            <h1 class="hero-title text-metallic">Bienvenido, <span id="user-name-display">Usuario</span></h1>
+            <p class="hero-subtitle">Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.</p>
+          </div>
+        </div>
+      </div>
     </section>
+    <hr class="divider">
 
     <!-- 📊 ESTADÍSTICAS RÁPIDAS (Dynamic) -->
     <section class="stats-section">
@@ -1672,12 +1669,7 @@
       </div>
     </section>
 
-    <div class="module-toolbar">
-      <div class="search-container">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="moduleSearch" placeholder="Buscar módulo..." autocomplete="off">
-      </div>
-    </div>
+    <!-- Search moved to topbar -->
 
     <!-- 🃏 GRID DE MÓDULOS (DINÁMICO) -->
     <section id="modules-grid" class="modules-grid">
@@ -1688,12 +1680,29 @@
       </div>
     </section>
 
-    <!-- 📌 FOOTER (Dynamic Version) -->
-    <footer id="app-footer"
-      style="text-align: center; padding: 2rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
-      <p>© <span id="footer-year">2026</span> YavlGold · Open Source (MIT License)</p>
-      <p style="margin-top: 0.5rem; color: var(--dorado-yavl);">Versión <span id="footer-version">9.8.0</span> · Tu
-        Finca Digital — <a href="/" style="color: var(--dorado-yavl); text-decoration: none;">Volver al Inicio</a></p>
+    <!-- � QUOTE V10 -->
+    <section class="quote-section">
+      <div class="quote-card">
+        <p class="quote-text">"Tu finca merece tecnología de primera. YavlGold nace del campo, para el campo."</p>
+        <span class="quote-attr">— Filosofía YavlGold</span>
+      </div>
+    </section>
+
+    <!-- 📌 FOOTER V10 -->
+    <footer class="dashboard-footer" id="app-footer">
+      <div class="footer-inner">
+        <div class="footer-bottom">
+          <div class="footer-brand">
+            <img src="/brand/logo.webp" alt="YG" class="footer-logo-img">
+            <span class="footer-brand-name">YavlGold</span>
+          </div>
+          <span class="footer-copy">© <span id="footer-year">2026</span> YavlGold · Open Source (MIT License)</span>
+          <div class="footer-legal">
+            <span>Versión <span id="footer-version">1.0</span></span>
+            <a href="/">Volver al Inicio</a>
+          </div>
+        </div>
+      </div>
     </footer>
 
   </div>
@@ -2464,11 +2473,11 @@
       const html = modules.map(mod => {
         // Determine badge class and text based on status
         const badgeMap = {
-          'available': { class: 'badge-estrella', text: '✅ DISPONIBLE', icon: '' },
-          'active': { class: 'badge-activo', text: '● ACTIVO', icon: '' },
-          'development': { class: 'badge-desarrollo', text: '🔧 EN DESARROLLO', icon: '' },
-          'coming_soon': { class: 'badge-proximo', text: '🔮 PRÓXIMAMENTE', icon: '' },
-          'locked': { class: 'badge-locked', text: '🔒 BLOQUEADO', icon: '' },
+          'available': { class: 'badge-estrella', text: 'DISPONIBLE', icon: '' },
+          'active': { class: 'badge-activo', text: 'ACTIVO', icon: '' },
+          'development': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' },
+          'coming_soon': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' },
+          'locked': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' },
           'unavailable': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' }
         };
 
@@ -2499,11 +2508,7 @@
 
         // Button text
         const btnText = mod.title || mod.name || 'Módulo';
-        const disabledCtaText = mod.status === 'locked'
-          ? 'BLOQUEADO'
-          : mod.status === 'unavailable'
-            ? 'NO DISPONIBLE'
-            : 'No Disponible';
+        const disabledCtaText = 'NO DISPONIBLE';
 
         // Build card
         if (isDisabled) {
