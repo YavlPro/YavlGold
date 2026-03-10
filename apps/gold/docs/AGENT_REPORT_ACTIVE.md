@@ -84,3 +84,22 @@ login-email, login-password, register-name, register-email, register-password,
 auth-error, auth-success, forgot-password-link, hcaptcha-login, hcaptcha-register,
 remember-me, hero-login-cta, login-btn, register-btn, user-menu, user-menu-btn,
 user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loadingScreen, logoLink
+
+---
+
+## Landing micro-ajuste final (2026-03-09)
+
+### Diagnóstico
+1. **Animaciones móviles**: selector `.hero-emblem` era incorrecto (correcto: `.logo-emblem`), el slowdown del emblema nunca se aplicó. Además, solo se modificaba `animation-duration` sin reducir amplitud de rotación/traslación.
+2. **Estados de módulos**: Crypto tenía "En Desarrollo", Academia/Tecnología/Social/Crypto tenían "Próximamente" en badge y link. Textos prohibidos por política de producto.
+
+### Cambios aplicados
+- **`assets/css/landing-v10.css`**: reescrito bloque `@media (max-width: 768px)` mobile animation slowdown:
+  - Nuevos keyframes `v10-emblemFloat-m` (rotación ±1.5deg, translateY -3px vs -12px desktop) y `v10-float-m` (bob -3px)
+  - `.logo-emblem` → animación 14s con amplitud reducida
+  - `.emblem-outer::after` sheen → 10s
+  - `.v10-text-metallic` → 16s
+  - `.hero-scroll-arrow` → float suave 3s
+  - `.ghost-bg` → opacity 0.012, duración 16s
+  - Nada desactivado, todo suavizado
+- **`index.html`**: módulos no disponibles cambiados de `v10-status-dev`/`v10-status-soon` + "En Desarrollo"/"Próximamente" a `v10-status-soon` + "No Disponible". Agro y Dashboard mantienen "Disponible". Descripción de sección actualizada.

@@ -1060,29 +1060,60 @@ body.landing-page .forgot-password-link:hover { color: var(--v10-gold-4); }
 
 /* ============================================
    V10 MOBILE ANIMATION SLOWDOWN
-   Reduce animation intensity on mobile to
-   save battery/CPU on low-end devices.
+   "Respira sumergido" — más lento, menor amplitud,
+   más suave, elegante y premium en móvil.
+   Nada se apaga, todo se suaviza.
    ============================================ */
 @media (max-width: 768px) {
-  body.landing-page .v10-text-metallic {
-    animation-duration: 12s;
+  /* --- Reduced-amplitude keyframes for mobile --- */
+  @keyframes v10-emblemFloat-m {
+    0%, 100% { transform: rotateX(1.5deg) rotateY(-1.5deg) translateY(0px); }
+    50%      { transform: rotateX(-1deg) rotateY(2deg) translateY(-3px); }
   }
-  body.landing-page .hero-emblem {
+  @keyframes v10-float-m {
+    0%, 100% { transform: translateY(0px); }
+    50%      { transform: translateY(-3px); }
+  }
+
+  /* --- 3D Emblem: slow, minimal sway --- */
+  body.landing-page .logo-emblem {
+    animation: v10-emblemFloat-m 14s ease-in-out infinite;
+  }
+
+  /* Logo sheen: barely perceptible sweep */
+  body.landing-page .emblem-outer::after {
     animation-duration: 10s;
   }
+
+  /* Metallic text shift: glacial pace */
+  body.landing-page .v10-text-metallic {
+    animation-duration: 16s;
+  }
+
+  /* Hero entry animations: gentle fade-in */
   body.landing-page .hero-title,
   body.landing-page .hero-desc,
-  body.landing-page .hero-cta {
-    animation-duration: 0.4s;
+  body.landing-page .hero-cta,
+  body.landing-page .hero-visual {
+    animation-duration: 0.6s;
   }
+
+  /* Scroll arrow: gentle bob */
+  body.landing-page .hero-scroll-arrow {
+    animation: v10-float-m 3s ease-in-out infinite;
+  }
+
+  /* Cards & sections: softer entry */
   body.landing-page .v10-module-card,
   body.landing-page .v10-value-card,
   body.landing-page .v10-cta-section,
   body.landing-page .v10-footer {
     animation-duration: 0.8s;
   }
+
+  /* Ghost backgrounds: whisper presence */
   body.landing-page .ghost-bg {
-    opacity: 0.015;
-    animation-duration: 12s;
+    opacity: 0.012;
+    animation-duration: 16s;
   }
 }
