@@ -192,3 +192,69 @@ No se planean cambios en:
 - Mantener visible y funcional `#mobile-logout-fab` en móvil.
 - Mantener `#logout-btn-nav` intacto en desktop.
 - No tocar `performDashboardLogout()`, `AuthClient.logout()` ni handlers existentes.
+
+## Diagnóstico adicional: Fiados -> Pagados parcial queda pegado en móvil
+
+### Flujo localizado
+
+- `apps/gold/agro/agro.js`
+  - `handlePendingTransfer(itemId)` abre el flujo desde el historial de Fiados.
+  - `openTransferMetaModal(options)` construye y controla el modal/paso donde se captura:
+    - `#pending-transfer-qty-total`
+    - `#pending-transfer-qty`
+    - `#pending-transfer-total`
+  - `computePendingSplitDraft(pending, destination, decision)` valida la cantidad, calcula transferido vs remanente y recalcula montos.
+  - Persistencia parcial:
+    - inserta destino en `agro_income` o `agro_losses`
+    - actualiza origen en `agro_pending`
+    - conserva trazabilidad en `split_from_id` y `split_meta`
+- `apps/gold/agro/agro-operations.css`
+  - solo afecta layout visual del historial; no es donde está el bug funcional principal.
+
+### Hallazgo real
+
+- El modal sí soporta split parcial y la lógica de cálculo/persistencia ya contempla:
+  - cantidad total
+  - cantidad transferida
+  - remanente
+  - `split_meta` de origen y destino
+- El problema está en la UX del input `#pending-transfer-qty`:
+  - `openTransferMetaModal()` enlaza `qtyInput` a `updateSplitPreview()` tanto en `input` como en `blur`.
+  - dentro de `updateSplitPreview()` se hace esto en cada pulsación:
+    - lee `qtyInput.value`
+    - si queda vacío o inválido momentáneamente, lo sustituye por el total
+    - luego vuelve a escribir `qtyInput.value = formatQuantityValue(...)`
+- En móvil, cuando el usuario intenta borrar el valor por defecto para reemplazarlo, existe un estado transitorio vacío.
+  - Ese estado dispara `input`
+  - el preview lo “corrige” de inmediato
+  - el campo se vuelve a llenar antes de que el usuario termine de escribir
+- Resultado práctico:
+  - el valor por defecto se siente pegado
+  - el usuario termina pudiendo transferir solo el mínimo visible o todo
+  - no logra una edición parcial limpia como `4` sobre `10`
+
+### Causa raíz exacta
+
+- La sanitización del campo de cantidad ocurre demasiado pronto.
+- El modal normaliza y reinyecta el valor del input durante el evento `input`, en vez de permitir edición transitoria y sanitizar recién al confirmar o al perder foco.
+- El split parcial y la persistencia no aparecen como origen del bug; el problema nace en la capa de captura del valor.
+
+### Plan de fix
+
+- Tocar `apps/gold/agro/agro.js`.
+- Separar dos comportamientos del modal:
+  - en `input`: actualizar preview sin reescribir agresivamente `#pending-transfer-qty`
+  - en `blur` o confirmación: sanitizar/clamp final a rango válido
+- Mantener intacta `computePendingSplitDraft()` salvo que la validación final requiera un ajuste mínimo.
+- Verificar con QA en navegador:
+  - 10 -> 4 -> 6
+  - 10 -> 1
+  - 10 -> 10
+  - inválidos: vacío, 0, mayor al total
+
+### Archivos a tocar
+
+- `AGENT_REPORT_ACTIVE.md`
+  - registrar diagnóstico, causa raíz y plan antes de editar
+- `apps/gold/agro/agro.js`
+  - corregir la edición del input parcial y mantener preview + confirmación coherentes

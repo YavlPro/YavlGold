@@ -6897,14 +6897,51 @@ function openTransferMetaModal(options = {}) {
         const previewMove = modal.querySelector('#pending-transfer-preview-move');
         const previewLeft = modal.querySelector('#pending-transfer-preview-left');
 
-        const updateSplitPreview = () => {
-            if (!splitOptions?.enabled || !previewMove || !previewLeft) return;
-            const qtyTotalFixed = toSafeLocaleNumber(splitOptions.qtyTotal);
+        const resolveQtyTotalDraft = () => {
+            const qtyTotalFixed = toSafeLocaleNumber(splitOptions?.qtyTotal);
             const qtyTotalDraft = toSafeLocaleNumber(qtyTotalInput?.value);
-            const usesEditableQtyTotal = splitOptions.forceQtyTotalInput === true || splitOptions.requireQtyTotal === true;
+            const usesEditableQtyTotal = splitOptions?.forceQtyTotalInput === true || splitOptions?.requireQtyTotal === true;
             const qtyTotalRaw = usesEditableQtyTotal
                 ? (qtyTotalDraft !== null ? qtyTotalDraft : qtyTotalFixed)
                 : (qtyTotalFixed !== null ? qtyTotalFixed : qtyTotalDraft);
+            const qtyPrecision = qtyTotalRaw !== null && isIntegerLike(qtyTotalRaw) ? 0 : 2;
+            return { qtyTotalRaw, qtyPrecision };
+        };
+
+        const resolveQtyMoveDraft = (qtyTotalRaw, qtyPrecision, options = {}) => {
+            if (!qtyInput) {
+                return {
+                    valid: qtyTotalRaw !== null && qtyTotalRaw >= 1,
+                    empty: false,
+                    qtyMove: qtyTotalRaw
+                };
+            }
+
+            const rawValue = Object.prototype.hasOwnProperty.call(options, 'rawValue')
+                ? options.rawValue
+                : qtyInput.value;
+            const rawText = String(rawValue ?? '').trim();
+
+            if (!rawText) {
+                return { valid: false, empty: true, qtyMove: null };
+            }
+
+            const parsed = toSafeLocaleNumber(rawText);
+            if (parsed === null) {
+                return { valid: false, empty: false, qtyMove: null };
+            }
+
+            const normalized = qtyPrecision === 0 ? Math.round(parsed) : roundNumeric(parsed, 2);
+            if (!(normalized >= 1) || normalized > qtyTotalRaw) {
+                return { valid: false, empty: false, qtyMove: normalized };
+            }
+
+            return { valid: true, empty: false, qtyMove: normalized };
+        };
+
+        const updateSplitPreview = () => {
+            if (!splitOptions?.enabled || !previewMove || !previewLeft) return;
+            const { qtyTotalRaw, qtyPrecision } = resolveQtyTotalDraft();
             if (qtyTotalRaw === null || qtyTotalRaw < 1) {
                 previewMove.textContent = 'Define la cantidad total fiada para calcular la transferencia por cantidad.';
                 previewLeft.textContent = '';
@@ -6916,17 +6953,24 @@ function openTransferMetaModal(options = {}) {
                 qtyLabel.textContent = `${splitOptions.quantityLabel || 'Cantidad a transferir'} (de ${qtyTotalText})`;
             }
 
-            const qtyPrecision = isIntegerLike(qtyTotalRaw) ? 0 : 2;
             if (qtyInput) {
                 qtyInput.max = String(qtyPrecision === 0 ? Math.round(qtyTotalRaw) : roundNumeric(qtyTotalRaw, 2));
                 qtyInput.step = qtyPrecision === 0 ? '1' : '0.01';
             }
-            // V9.8.1: Si qtyTotal=1, no hay input de cantidad; asumir transfer total
-            let qtyMove = qtyInput ? toSafeLocaleNumber(qtyInput.value) : qtyTotalRaw;
-            if (qtyMove === null) qtyMove = qtyTotalRaw;
-            qtyMove = qtyPrecision === 0 ? Math.round(qtyMove) : roundNumeric(qtyMove, 2);
-            qtyMove = Math.max(1, Math.min(qtyTotalRaw, qtyMove));
-            if (qtyInput) {
+
+            const qtyState = resolveQtyMoveDraft(qtyTotalRaw, qtyPrecision);
+            if (!qtyState.valid) {
+                const allowedRange = formatSplitQuantity(qtyTotalRaw, splitOptions.unitType);
+                const originLabel = splitOptions.originLabel || 'Fiados';
+                previewMove.textContent = qtyState.empty
+                    ? 'Ingresa la cantidad a transferir.'
+                    : `La cantidad a transferir debe estar entre 1 y ${allowedRange}.`;
+                previewLeft.textContent = `En ${originLabel} hay ${allowedRange} disponibles.`;
+                return;
+            }
+
+            const qtyMove = qtyState.qtyMove;
+            if (qtyInput && document.activeElement !== qtyInput) {
                 qtyInput.value = formatQuantityValue(qtyMove, qtyPrecision);
             }
 
@@ -7022,6 +7066,22 @@ function openTransferMetaModal(options = {}) {
                     const parsedQtyTotal = toSafeLocaleNumber(qtyTotal);
                     if (parsedQtyTotal === null || parsedQtyTotal < 1) {
                         notifyFacturero('⚠️ Ingresa la cantidad total fiada para continuar.', 'warning');
+                        return;
+                    }
+                }
+                if (splitOptions?.enabled) {
+                    const { qtyTotalRaw, qtyPrecision } = resolveQtyTotalDraft();
+                    const qtyState = resolveQtyMoveDraft(qtyTotalRaw, qtyPrecision, { rawValue: quantity });
+                    if (!qtyState.valid) {
+                        const allowedRange = qtyTotalRaw !== null && qtyTotalRaw >= 1
+                            ? formatSplitQuantity(qtyTotalRaw, splitOptions.unitType)
+                            : 'el total disponible';
+                        notifyFacturero(
+                            qtyState.empty
+                                ? '⚠️ Ingresa la cantidad a transferir.'
+                                : `⚠️ La cantidad a transferir debe estar entre 1 y ${allowedRange}.`,
+                            'warning'
+                        );
                         return;
                     }
                 }
