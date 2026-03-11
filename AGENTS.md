@@ -108,6 +108,15 @@
   - Ajustar clean URLs/routing en `apps/gold/vercel.json` si aplica
 - Mantener patrón actual: HTML por página + JS modular.
 
+### 3.1 Regla de modularidad para `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro.js` debe tratarse como monolito legacy a reducir, no como destino para nuevas features.
+- Si se va a tocar una función existente y es razonablemente seguro extraer/refactorizar, se debe preferir esa refactorización.
+- Si la refactorización es de alto riesgo o puede romper demasiado flujo crítico, se permite modificar la parte necesaria dentro del monolito.
+- Si la necesidad es una **feature nueva**, no debe agregarse dentro de `agro.js`; debe salir en un archivo JS nuevo y dedicado.
+- `agro.js` debe quedar como orquestación, integración, bootstrap y compatibilidad, no como lugar de crecimiento continuo.
+- Prioridad técnica recomendada: refactorizar el monolito de manera incremental y segura, mientras toda capacidad nueva nace fuera de él.
+- Ejemplo: si nace un wizard nuevo de perfil/onboarding, debe vivir en algo como `apps/gold/agro/agroperfil-wizard.js`, no dentro de `apps/gold/agro/agro.js`.
+
 ---
 
 ## 4) Objetivos por módulo (lo que SÍ debemos hacer)
