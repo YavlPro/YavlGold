@@ -138,3 +138,57 @@ No se planean cambios en:
 - JS funcional de módulos
 - CTA “Ir al módulo”
 - Routing/build MPA
+
+## Diagnóstico adicional: logout duplicado en móvil del dashboard
+
+### Instancias localizadas
+
+- `apps/gold/dashboard/index.html`
+  - `#logout-btn-nav`
+    - Vive dentro de `.topbar-right`.
+    - Tiene clase `.btn-logout`.
+    - `initDashboard()` lo toma dentro de `document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout')`, lo fuerza a `display: inline-flex` y le asigna `performDashboardLogout()`.
+  - `#mobile-logout-fab`
+    - Vive fuera de la topbar.
+    - Tiene clase `.mobile-logout-btn`.
+    - Su script dedicado lo muestra cuando `window.innerWidth <= 991` y le asigna también `performDashboardLogout()`.
+- `apps/gold/assets/css/dashboard-v1.css`
+  - Define la apariencia de `#logout-btn-nav` y `.mobile-logout-btn`.
+  - Solo oculta `.mobile-logout-btn` en desktop (`min-width: 992px`).
+  - No hay regla móvil equivalente para ocultar `#logout-btn-nav`.
+
+### Hallazgo real
+
+- En móvil quedan visibles dos botones funcionales distintos:
+  - el logout de topbar `#logout-btn-nav`
+  - el FAB móvil `#mobile-logout-fab`
+- El duplicado no viene de auth ni de un handler repetido sobre el mismo nodo.
+- El duplicado aparece porque:
+  - el FAB se enciende explícitamente para móvil
+  - el botón de topbar también se fuerza visible por JS sin excepción para móvil
+
+### Instancia correcta vs instancia sobrante
+
+- Instancia correcta en móvil:
+  - `#mobile-logout-fab`
+  - Está diseñado explícitamente para `<=991px`.
+  - Ya ejecuta `performDashboardLogout()` sin depender de auth nueva ni de cambios funcionales.
+- Instancia sobrante/duplicada en móvil:
+  - `#logout-btn-nav`
+  - Debe seguir existiendo para desktop, pero en móvil sobra visualmente porque compite con el FAB.
+
+### Causa raíz
+
+- La capa responsive actual nunca resolvió la convivencia entre dos variantes visuales de logout:
+  - variante desktop: botón en topbar
+  - variante móvil: FAB flotante
+- Como `initDashboard()` fuerza `#logout-btn-nav` a visible y no existe una regla CSS móvil más fuerte para esconderlo, ambas variantes quedan activas al mismo tiempo en móvil.
+- El fix correcto es de visibilidad responsiva, no de lógica de logout.
+
+### Plan quirúrgico de fix
+
+- Tocar solo `apps/gold/assets/css/dashboard-v1.css`.
+- Agregar una regla móvil explícita para ocultar `#logout-btn-nav` en `<=991px`, con prioridad suficiente para prevalecer sobre el `style.display = 'inline-flex'` del init.
+- Mantener visible y funcional `#mobile-logout-fab` en móvil.
+- Mantener `#logout-btn-nav` intacto en desktop.
+- No tocar `performDashboardLogout()`, `AuthClient.logout()` ni handlers existentes.

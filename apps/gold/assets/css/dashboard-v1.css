@@ -1092,6 +1092,9 @@ ul { list-style: none; }
 @media (min-width: 992px) {
   .mobile-logout-btn { display: none !important; }
 }
+@media (max-width: 991px) {
+  #logout-btn-nav { display: none !important; }
+}
 /* 🔴 FIN ZONA SAGRADA LOGOUT */
 
 /* ═══════════════════════════════════════════════════
