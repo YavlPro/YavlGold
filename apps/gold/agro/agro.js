@@ -19,6 +19,7 @@ import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
 import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
 import { clearLegacyAgroCropsCache, readAgroCropsCache, readBestAgroCrops, writeAgroCropsCache } from '../assets/js/utils/agroCropsCache.js';
+import uxMessages from '../assets/js/ui/uxMessages.js';
 import {
     BUYER_PRIVACY_CHANGE_EVENT,
     BUYER_PRIVACY_MASK,
@@ -2524,7 +2525,7 @@ async function handleRevertIncome(incomeId) {
 
     revertTransferInFlightLocks.add(lockKey);
     try {
-        notifyFacturero('Actualizando historial...', 'info');
+        notifyFacturero(uxMessages.copy.historyRefreshing());
         const result = await executeCompensationRevertToPending({
             sourceTable: 'agro_income',
             sourceTab: 'ingresos',
@@ -2540,9 +2541,13 @@ async function handleRevertIncome(incomeId) {
         }
 
         if (result.partial) {
-            notifyFacturero(`✅ Devueltos ${result.movedQtyLabel} a Fiados. Quedan ${result.leftQtyLabel} en Pagados.`, 'success');
+            notifyFacturero(uxMessages.copy.revertCompleted({
+                detail: `Volvieron ${result.movedQtyLabel} a Fiados. Quedan ${result.leftQtyLabel} en Pagados.`
+            }));
         } else {
-            notifyFacturero('✅ Pagado devuelto a Fiados.', 'success');
+            notifyFacturero(uxMessages.copy.revertCompleted({
+                detail: 'El pagado volvió a Fiados.'
+            }));
         }
 
         await Promise.allSettled([
@@ -2604,7 +2609,7 @@ async function handleRevertLoss(lossId) {
 
     revertTransferInFlightLocks.add(lockKey);
     try {
-        notifyFacturero('Actualizando historial...', 'info');
+        notifyFacturero(uxMessages.copy.historyRefreshing());
         const result = await executeCompensationRevertToPending({
             sourceTable: 'agro_losses',
             sourceTab: 'perdidas',
@@ -2620,9 +2625,13 @@ async function handleRevertLoss(lossId) {
         }
 
         if (result.partial) {
-            notifyFacturero(`✅ Devueltos ${result.movedQtyLabel} a Fiados. Quedan ${result.leftQtyLabel} en Pérdidas.`, 'success');
+            notifyFacturero(uxMessages.copy.revertCompleted({
+                detail: `Volvieron ${result.movedQtyLabel} a Fiados. Quedan ${result.leftQtyLabel} en Pérdidas.`
+            }));
         } else {
-            notifyFacturero('✅ Pérdida devuelta a Fiados.', 'success');
+            notifyFacturero(uxMessages.copy.revertCompleted({
+                detail: 'La pérdida volvió a Fiados.'
+            }));
         }
 
         await Promise.allSettled([
@@ -5951,6 +5960,7 @@ async function deleteFactureroItem(tabName, itemId) {
             console.info(`[AGRO] V9.5.1: Deleted ${tabName} item ${itemId}`);
             await refreshFactureroAfterChange(tabName);
             document.dispatchEvent(new CustomEvent('data-refresh'));
+            notifyFacturero(uxMessages.copy.movementDeleted());
         }
 
     } catch (err) {
@@ -6403,7 +6413,9 @@ async function saveEditModal() {
                         applyMoneyPrivacy(document);
                     }
                     await updateStats();
-                    notifyFacturero('✅ Ajuste aplicado como devolución parcial append-only.', 'success');
+                    notifyFacturero(uxMessages.copy.revertCompleted({
+                        detail: 'El ajuste quedó aplicado como devolución parcial.'
+                    }));
                     return;
                 }
             }
@@ -6454,6 +6466,7 @@ async function saveEditModal() {
         closeEditModal();
         await refreshFactureroAfterChange(tabName);
         document.dispatchEvent(new CustomEvent('data-refresh'));
+        notifyFacturero(uxMessages.copy.movementUpdated());
 
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Save error:`, err.message);
@@ -6524,7 +6537,7 @@ async function duplicateFactureroItem(tabName, itemId) {
         console.info(`[AGRO] V9.5.1: Duplicated ${tabName} item ${itemId}`);
         await refreshFactureroAfterChange(tabName);
         document.dispatchEvent(new CustomEvent('data-refresh'));
-        alert('✅ Registro duplicado');
+        notifyFacturero(uxMessages.copy.movementDuplicated());
 
     } catch (err) {
         console.error(`[AGRO] V9.5.1: Duplicate error:`, err.message);
@@ -6622,7 +6635,7 @@ async function handleMoveGeneralRecord(sourceTab, itemId) {
             moved_at: new Date().toISOString()
         });
 
-        notifyFacturero(`✅ Registro movido a ${targetCrop.name}.`, 'success');
+        notifyFacturero(uxMessages.copy.movementMoved(`Ahora está en ${targetCrop.name}.`));
         await refreshFactureroHistory(sourceTab);
         await refreshFactureroHistory('otros');
         if (normalizeCropId(selectedCropId) === normalizeCropId(targetCrop.id)) {
@@ -6638,7 +6651,7 @@ function notifyFacturero(message, type = 'info') {
     if (typeof showEvidenceToast === 'function') {
         showEvidenceToast(message, type);
     } else {
-        alert(message);
+        alert(typeof message === 'string' ? message : (message?.title || message?.message || ''));
     }
 }
 
@@ -7467,11 +7480,15 @@ async function handlePendingTransfer(itemId) {
             }
 
             if (isPartialSplit) {
-                notifyFacturero(`✅ Transferido parcial a Pagados: ${splitMovedLabel}. Quedan ${splitLeftLabel} en Fiados.`, 'success');
+                notifyFacturero(uxMessages.copy.transferCompleted({
+                    detail: `Se movieron ${splitMovedLabel} a Pagados. Quedan ${splitLeftLabel} en Fiados.`
+                }));
             } else {
-                notifyFacturero('✅ Fiado transferido a Pagados.', 'success');
+                notifyFacturero(uxMessages.copy.transferCompleted({
+                    detail: 'El fiado pasó a Pagados.'
+                }));
             }
-            notifyFacturero('Actualizando historial...', 'info');
+            notifyFacturero(uxMessages.copy.historyRefreshing());
             const refreshResults = await Promise.allSettled([
                 refreshFactureroHistory('pendientes'),
                 refreshFactureroHistory('ingresos'),
@@ -7629,9 +7646,13 @@ async function handlePendingTransfer(itemId) {
             }
 
             if (isPartialSplit) {
-                notifyFacturero(`✅ Transferido parcial a Pérdidas: ${splitMovedLabel}. Quedan ${splitLeftLabel} en Fiados.`, 'success');
+                notifyFacturero(uxMessages.copy.transferCompleted({
+                    detail: `Se movieron ${splitMovedLabel} a Pérdidas. Quedan ${splitLeftLabel} en Fiados.`
+                }));
             } else {
-                notifyFacturero('✅ Fiado transferido a Pérdidas (Cancelado).', 'success');
+                notifyFacturero(uxMessages.copy.transferCompleted({
+                    detail: 'El fiado pasó a Pérdidas.'
+                }));
             }
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
@@ -7817,7 +7838,9 @@ async function handleIncomeTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Pagado transferido a Fiados.', 'success');
+            notifyFacturero(uxMessages.copy.transferCompleted({
+                detail: 'El pagado pasó a Fiados.'
+            }));
             await refreshFactureroHistory('pendientes');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
         }
@@ -7872,7 +7895,9 @@ async function handleIncomeTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Pagado transferido a Pérdidas.', 'success');
+            notifyFacturero(uxMessages.copy.transferCompleted({
+                detail: 'El pagado pasó a Pérdidas.'
+            }));
             await refreshFactureroHistory('perdidas');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
         }
@@ -7962,7 +7987,9 @@ async function handleLossTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Pérdida transferida a Fiados.', 'success');
+            notifyFacturero(uxMessages.copy.transferCompleted({
+                detail: 'La pérdida pasó a Fiados.'
+            }));
             await refreshFactureroHistory('pendientes');
             await refreshFactureroHistory('perdidas');
         }
@@ -8045,7 +8072,9 @@ async function handleLossTransfer(itemId) {
                 throw new Error('Transferencia cancelada: no se pudo borrar el registro original (permisos/RLS).');
             }
 
-            notifyFacturero('✅ Pérdida transferida a Pagados.', 'success');
+            notifyFacturero(uxMessages.copy.transferCompleted({
+                detail: 'La pérdida pasó a Pagados.'
+            }));
             await refreshFactureroHistory('perdidas');
             document.dispatchEvent(new CustomEvent('agro:income:changed'));
         }
@@ -12035,9 +12064,13 @@ function showEvidenceToast(message, type = 'info') {
         return;
     }
 
+    const fallbackMessage = typeof message === 'string'
+        ? message
+        : (message?.title || message?.message || '');
+
     const toast = document.createElement('div');
     toast.className = 'agro-evidence-toast';
-    toast.textContent = message;
+    toast.textContent = fallbackMessage;
 
     const colors = {
         success: { bg: 'rgba(74, 222, 128, 0.15)', border: 'rgba(74, 222, 128, 0.4)', color: '#4ade80' },

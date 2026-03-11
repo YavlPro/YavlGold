@@ -596,6 +596,7 @@
       // Mostrar mensaje de éxito
       const successMsg = document.getElementById('success-msg');
       successMsg.style.display = 'block';
+      window.YGUXMessages?.success(window.YGUXMessages.copy.settingsSaved());
       setTimeout(() => {
         successMsg.style.display = 'none';
       }, 3000);
@@ -610,17 +611,26 @@
       const confirmPassword = document.getElementById('confirm-password').value;
 
       if (!currentPassword || !newPassword || !confirmPassword) {
-        alert('Por favor completa todos los campos');
+        window.YGUXMessages?.warning({
+          title: 'Completa los campos para continuar.',
+          message: 'Necesitamos la contraseña actual y la nueva clave.'
+        });
         return;
       }
 
       if (newPassword !== confirmPassword) {
-        alert('Las contraseñas no coinciden');
+        window.YGUXMessages?.warning({
+          title: 'Las contraseñas no coinciden.',
+          message: 'Revísalas y vuelve a intentarlo.'
+        });
         return;
       }
 
       if (newPassword.length < 8) {
-        alert('La contraseña debe tener al menos 8 caracteres');
+        window.YGUXMessages?.warning({
+          title: 'La contraseña aún es muy corta.',
+          message: 'Usa al menos 8 caracteres.'
+        });
         return;
       }
 
@@ -631,7 +641,7 @@
 
         if (error) throw error;
 
-        alert('✅ Contraseña actualizada correctamente');
+        window.YGUXMessages?.success(window.YGUXMessages.copy.passwordUpdated());
 
         // Limpiar formulario
         document.getElementById('current-password').value = '';
@@ -641,13 +651,19 @@
 
       } catch (error) {
         console.error('[Configuración] Error al cambiar contraseña:', error);
-        alert('❌ Error al cambiar contraseña: ' + error.message);
+        window.YGUXMessages?.error({
+          title: 'No pudimos actualizar tu contraseña.',
+          message: error.message || 'Intenta de nuevo en un momento.'
+        });
       }
     }
 
     // Configurar 2FA (placeholder)
     function setup2FA() {
-      alert('🚧 Configuración de 2FA próximamente.\n\nEsta función estará disponible en una próxima actualización.');
+      window.YGUXMessages?.info({
+        title: 'La verificación en dos pasos llegará pronto.',
+        message: 'La activaremos en una próxima actualización.'
+      });
     }
 
     function restorePreferences() {

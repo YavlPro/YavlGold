@@ -3736,7 +3736,13 @@
                     }
 
                     if (updateError) throw updateError;
-                    alert('Cultivo actualizado.');
+                    if (window.YGUXMessages?.success) {
+                        window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: false }));
+                    } else if (window.showToast) {
+                        window.showToast('Cambios guardados en el cultivo.', 'success');
+                    } else {
+                        alert('Cambios guardados en el cultivo.');
+                    }
                 } else {
                     let insertPayload = {
                         user_id: user.id,
@@ -3780,7 +3786,13 @@
 
                     if (insertError) throw insertError;
                     insertedId = Array.isArray(insertRows) ? insertRows[0]?.id : insertRows?.id;
-                    alert('Siembra registrada.');
+                    if (window.YGUXMessages?.success) {
+                        window.YGUXMessages.success(window.YGUXMessages.copy.cropSaved({ created: true }));
+                    } else if (window.showToast) {
+                        window.showToast('Cultivo creado correctamente.', 'success');
+                    } else {
+                        alert('Cultivo creado correctamente.');
+                    }
                 }
 
                 if (insertedId && Number.isFinite(templateDuration) && templateDuration > 0) {

@@ -4,6 +4,7 @@
  */
 
 import { clearAgroRuntimeState } from '../utils/agroCropsCache.js';
+import uxMessages from '../ui/uxMessages.js';
 
 // 🚨 INYECCIÓN TEMPRANA: Detectar recovery ANTES de que Supabase despierte
 (function () {
@@ -452,6 +453,7 @@ const authClient = {
         }
         this.currentSession = null;
         this.updateDashboardUI();
+        uxMessages.queueFlash(uxMessages.copy.logoutSuccess());
         window.location.href = '/';
     },
 

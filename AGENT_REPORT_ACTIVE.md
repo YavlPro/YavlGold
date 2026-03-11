@@ -403,3 +403,76 @@ No se planean cambios en:
   - el FAB de feedback ahora se oculta mientras haya shell/drawer o modal principal abierto.
   - con eso deja de montarse sobre el modal de `Nuevo Cultivo` y no reordena la lógica del feedback.
 - No se tocaron queries, payloads, fallback de compatibilidad, ni la lógica funcional del guardado de cultivos.
+
+## Diagnóstico inicial: sistema unificado de mensajes UX / toasts / popups
+
+### Puntos actuales de feedback detectados
+
+- `apps/gold/assets/js/auth/authUI.js`
+  - tiene `showToast()`, `showSuccess()` y `showError()`, con toast propio inline y copy mezclado entre cálido y técnico.
+- `apps/gold/assets/js/main.js`
+  - mantiene un `showGoldToast()` legacy solo para verificación/redirección.
+- `apps/gold/agro/agro.js`
+  - tiene `showEvidenceToast()` + `notifyFacturero()`.
+  - además conserva muchos `alert()` directos para editar, eliminar, duplicar, exportar y errores de sesión.
+- `apps/gold/agro/agro-wizard.js`
+  - muestra éxito embebido dentro del wizard con copy propio (`✅ Fiado registrado`, etc.).
+- `apps/gold/agro/index.html`
+  - `window.saveCrop` usa `alert()` para create/edit y fallback de validación.
+- `apps/gold/agro/agroperfil.js`
+  - usa `setProfileStatus()` como feedback inline del panel, sin toast unificado.
+- `apps/gold/agro/agro-feedback.js`
+  - usa `status.textContent` en modal de feedback, sin helper global.
+- `apps/gold/assets/js/components/feedbackManager.js`
+  - tiene `_showToast()` propio con estilo separado.
+- `apps/gold/dashboard/index.html`
+  - usa `showStatus()` local para ajustes/perfil del modal.
+  - el logout se ejecuta vía `performDashboardLogout()` sin flash message persistente entre rutas.
+- `apps/gold/dashboard/perfil.html` y `apps/gold/dashboard/configuracion.html`
+  - siguen mostrando banners locales y `alert()` legacy.
+
+### Inconsistencias de tono y UX
+
+- Hay mezcla de:
+  - `alert()` técnico/frío
+  - toast dorado legacy
+  - toast Agro oscuro
+  - status inline
+  - éxito embebido en wizard
+- El copy no es consistente:
+  - mensajes correctos pero fríos (`Perfil listo.`, `Actualizando historial...`)
+  - mensajes técnicos visibles (`Faltan columnas...`, `Sesión expirada...`)
+  - mensajes con prefijos crudos `✅` / `⚠️` / `❌`
+  - mensajes demasiado secos o administrativos (`Error al guardar`, `Ya transferido`)
+- No existe hoy un mecanismo central para:
+  - mensajes cross-page después de redirect (`login`, `logout`, `welcome back`)
+  - normalizar tono por tipo (`success`, `info`, `warning`, `error`, `redirect`, `farewell`)
+  - mantener el mismo look en homepage, dashboard y Agro.
+
+### Plan de implementación
+
+- Crear helper global reutilizable en frontend:
+  - stack de toasts premium
+  - variantes `success`, `info`, `warning`, `error`, `redirect`, `welcome`, `farewell`
+  - soporte de `flash` via `sessionStorage` para mensajes tras redirección
+  - alias compatible para `window.showToast`
+- Reencaminar wrappers existentes sin romper flujos:
+  - `AuthUI.showToast()`
+  - `showGoldToast()` legacy
+  - `showEvidenceToast()`
+  - `_showToast()` de feedback global
+- Aplicar copy cálido en flujos clave:
+  - login
+  - registro
+  - logout
+  - verificación/redirección
+  - perfil dashboard
+  - perfil Agro
+  - crear/editar cultivo
+  - crear movimiento Facturero
+  - transferencias y reversiones
+  - feedback enviado/encolado
+- Mantener feedback inline donde aporta contexto:
+  - `setProfileStatus()` en Agro
+  - success step del wizard
+  - pero complementarlo con el helper global en éxitos importantes.

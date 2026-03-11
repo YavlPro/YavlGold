@@ -211,6 +211,7 @@ const ProfileManager = {
       .maybeSingle();
 
     let data, error;
+    let wasCreated = false;
 
     if (!existingProfile) {
       // CREATE: Profile doesn't exist, insert with userId
@@ -223,6 +224,7 @@ const ProfileManager = {
         .single();
       data = result.data;
       error = result.error;
+      wasCreated = true;
     } else {
       // UPDATE: Profile exists, update normally
       const result = await this.supabase
@@ -247,7 +249,7 @@ const ProfileManager = {
         // Note: authClient auto-saves on state changes
       }
 
-      return { success: true, profile: data };
+      return { success: true, profile: data, wasCreated };
     } catch (error) {
       logger.error('[ProfileManager] Error al actualizar perfil:', error.message);
       return { success: false, error: error.message };

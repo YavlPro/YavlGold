@@ -6,6 +6,7 @@ import {
     readMoneyValuesHidden
 } from './agro-privacy.js';
 import { initAgroPublico, openPublicFarmerProfile } from './agropublico.js';
+import uxMessages from '../assets/js/ui/uxMessages.js';
 import {
     computeUnitTotalsByCropFromRows,
     mergeUnitTotalsMaps,
@@ -734,6 +735,7 @@ async function saveFarmerProfile(event) {
     state.loadingProfile = true;
     setSaveButtonBusy(true);
     setProfileStatus('Guardando perfil...', 'muted');
+    const hadPersistedProfile = !!state.profile?.user_id;
 
     try {
         const user = await resolveSessionUser();
@@ -851,9 +853,14 @@ async function saveFarmerProfile(event) {
             const pubMsg = publicPayload.public_enabled ? 'ACTIVADO ✅' : 'DESACTIVADO 🔒';
             setProfileStatus(`Perfil guardado. Perfil público: ${pubMsg}`, 'ok');
         }
+        uxMessages.success(uxMessages.copy.profileSaved({ created: !hadPersistedProfile }));
     } catch (error) {
         console.error('[AGRO_PROFILE] save profile error:', error);
         setProfileStatus('No se pudo guardar el perfil.', 'error');
+        uxMessages.error({
+            title: 'No pudimos guardar tu perfil.',
+            message: error.message || 'Intenta de nuevo en un momento.'
+        });
     } finally {
         state.loadingProfile = false;
         setSaveButtonBusy(false);
@@ -1303,6 +1310,7 @@ function bindFormHandlers() {
                 updateProfileAvatarPreview(dataUrl, state.profile || {}, state.user);
                 updateProfileHeaderAvatar(dataUrl, state.profile || {}, state.user);
                 setProfileStatus('Foto local cargada. Guarda para aplicar el cambio.', 'ok');
+                uxMessages.info(uxMessages.copy.profilePhotoReady());
             };
             reader.onerror = () => {
                 setProfileStatus('No se pudo leer la imagen seleccionada.', 'error');

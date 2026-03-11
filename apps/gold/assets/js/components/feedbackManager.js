@@ -4,6 +4,7 @@
  */
 import { supabase } from '../config/supabase-config.js';
 import { logger } from '../utils/logger.js';
+import uxMessages from '../ui/uxMessages.js';
 
 export const FeedbackManager = {
     _initialized: false,
@@ -116,7 +117,10 @@ export const FeedbackManager = {
         const type = typeInput ? typeInput.value : 'other';
 
         if (!message) {
-            this._showToast('⚠️ Por favor escribe un mensaje', 'warning');
+            this._showToast({
+                title: 'Escribe un mensaje para continuar.',
+                message: 'Necesitamos un poco más de contexto.'
+            }, 'warning');
             return;
         }
 
@@ -127,7 +131,10 @@ export const FeedbackManager = {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
-                this._showToast('⚠️ Debes iniciar sesión', 'warning');
+                this._showToast({
+                    title: 'Necesitas iniciar sesión.',
+                    message: 'Así podremos asociar tu feedback a tu cuenta.'
+                }, 'warning');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Enviar Feedback';
                 return;
@@ -145,7 +152,10 @@ export const FeedbackManager = {
 
             if (error) {
                 logger.error('[FeedbackManager] Submit error:', error.message);
-                this._showToast('❌ Error al enviar. Intenta de nuevo.', 'error');
+                this._showToast({
+                    title: 'No pudimos enviar tu feedback.',
+                    message: 'Intenta de nuevo en un momento.'
+                }, 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Enviar Feedback';
                 return;
@@ -153,14 +163,17 @@ export const FeedbackManager = {
 
             // Success
             logger.success('[FeedbackManager] ✅ Feedback submitted');
-            this._showToast('🎉 ¡Gracias por tu feedback!', 'success');
+            this._showToast(uxMessages.copy.feedbackSent(), 'success');
 
             // Close modal
             document.getElementById('feedback-modal')?.remove();
 
         } catch (err) {
             logger.error('[FeedbackManager] Unexpected error:', err.message);
-            this._showToast('❌ Error inesperado', 'error');
+            this._showToast({
+                title: 'Ocurrió un error inesperado.',
+                message: 'Intenta de nuevo en un momento.'
+            }, 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Enviar Feedback';
         }
@@ -171,31 +184,7 @@ export const FeedbackManager = {
      * @private
      */
     _showToast(message, type = 'info') {
-        const colors = {
-            'info': '#C8A752',
-            'success': '#4CAF50',
-            'warning': '#FF9800',
-            'error': '#F44336'
-        };
-
-        const toast = document.createElement('div');
-        toast.className = 'feedback-toast';
-        toast.textContent = message;
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(10, 10, 10, 0.95);
-            color: ${colors[type] || colors.info};
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: 1px solid ${colors[type] || colors.info};
-            font-family: 'Rajdhani', sans-serif;
-            z-index: 10002;
-            animation: slideInRight 0.3s ease;
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3500);
+        uxMessages.show(message, type);
     },
 
     /**

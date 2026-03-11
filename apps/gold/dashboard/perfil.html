@@ -639,6 +639,7 @@
         // Mostrar mensaje de éxito
         const successMsg = document.getElementById('success-msg');
         successMsg.style.display = 'block';
+        window.YGUXMessages?.success(window.YGUXMessages.copy.profileSaved({ created: false }));
         setTimeout(() => {
           successMsg.style.display = 'none';
         }, 3000);
@@ -651,6 +652,10 @@
         const errorMsg = document.getElementById('error-msg');
         document.getElementById('error-text').textContent = error.message || 'Error al actualizar perfil';
         errorMsg.style.display = 'block';
+        window.YGUXMessages?.error({
+          title: 'No pudimos guardar tu perfil.',
+          message: error.message || 'Intenta de nuevo en un momento.'
+        });
         setTimeout(() => {
           errorMsg.style.display = 'none';
         }, 5000);
@@ -671,7 +676,10 @@
         if (confirmation === 'ELIMINAR') {
           deleteAccount();
         } else {
-          alert('Cancelado. Tu cuenta está segura.');
+          window.YGUXMessages?.info({
+            title: 'Acción cancelada.',
+            message: 'Tu cuenta sigue segura.'
+          });
         }
       }
     }
@@ -679,10 +687,16 @@
     async function deleteAccount() {
       try {
         // Aquí iría la lógica de eliminación de cuenta
-        alert('Funcionalidad de eliminación de cuenta en desarrollo.');
+        window.YGUXMessages?.info({
+          title: 'Esta función llegará pronto.',
+          message: 'La eliminación de cuenta aún está en desarrollo.'
+        });
       } catch (error) {
         console.error('[Perfil] Error al eliminar cuenta:', error);
-        alert('Error al eliminar cuenta. Por favor contacta soporte.');
+        window.YGUXMessages?.error({
+          title: 'No pudimos completar la solicitud.',
+          message: 'Por favor contacta soporte.'
+        });
       }
     }
 

@@ -1,5 +1,6 @@
 // YAVLGOLD - AUTH UI v2.0.1
 import logo3D from '../../images/logo.webp';
+import uxMessages from '../ui/uxMessages.js';
 
 function getSafeAvatarUrl(user) {
   if (user?.avatar) return user.avatar;
@@ -403,7 +404,7 @@ const AuthUI = {
           const res = await window.AuthClient.resetPassword(email);
 
           if (res.success) {
-            this.showSuccess('¡Enlace enviado! Revisa tu correo.');
+            this.showSuccess(uxMessages.copy.resetLinkSent());
             // Volver al login después de un momento
             setTimeout(() => this.toggleRecoveryMode(false), 3000);
           } else {
@@ -448,7 +449,7 @@ const AuthUI = {
 
           if (error) throw error;
 
-          this.showSuccess('Contraseña Actualizada Correctamente');
+          this.showSuccess(uxMessages.copy.passwordUpdated());
 
           // 🧽 AHORA SÍ: Borrar la nota porque el cambio fue exitoso
           sessionStorage.removeItem('yavl_recovery_pending');
@@ -504,7 +505,7 @@ const AuthUI = {
 
           if (res.success) {
             console.log('✅ [AuthUI] Login directo exitoso');
-            this.showSuccess('¡Bienvenido de nuevo!');
+            uxMessages.queueFlash(uxMessages.copy.welcomeBack());
             this.hideAllAuthModals();
           } else {
             throw new Error(res.error || 'Error al iniciar sesión');
@@ -596,7 +597,7 @@ const AuthUI = {
 
           if (res.success) {
             console.log('✅ [AuthUI] Registro exitoso');
-            this.showSuccess('¡Cuenta creada! Revisa tu email para confirmar.');
+            this.showSuccess(uxMessages.copy.registerSuccess());
             newRegisterForm.reset();
             setTimeout(() => this.switchToLogin(), 2000);
             if (btn) { btn.disabled = false; btn.textContent = originalText; }
@@ -636,13 +637,7 @@ const AuthUI = {
     console.log('[AuthUI] 👋 Cerrando sesión...');
     if (confirm('¿Estás seguro de cerrar sesión?')) {
       window.AuthClient.logout();
-      this.showSuccess('Sesión cerrada correctamente');
       if (this.elements.userDropdown) this.elements.userDropdown.style.display = 'none';
-
-      // Redirigir a la página principal después de cerrar sesión
-      setTimeout(() => {
-        window.location.href = '/index.html';
-      }, 1000);
     }
   },
 
@@ -674,36 +669,7 @@ const AuthUI = {
   showSuccess(message) { this.showToast(message, 'success'); },
 
   showToast(message, type = 'success') {
-    let toast = document.getElementById('auth-toast');
-    if (!toast) {
-      toast = document.createElement('div'); toast.id = 'auth-toast'; document.body.appendChild(toast);
-    }
-    const style = type === 'success'
-      ? { bg: 'linear-gradient(135deg,#C8A752,#C8A752)', color: '#0B0C0F', icon: 'fa-check-circle' }
-      : { bg: 'linear-gradient(135deg,#ff6b6b,#ff5252)', color: '#fff', icon: 'fa-exclamation-circle' };
-
-    toast.style.cssText = `
-      position: fixed; top: 90px; right: 20px;
-      background: ${style.bg}; color: ${style.color};
-      padding: 16px 24px; border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,.3); font-weight: 600; font-size: 15px;
-      z-index: 10000; opacity: 0; transform: translateX(400px);
-      transition: all .3s cubic-bezier(.68,-.55,.265,1.55);
-      display: flex; align-items: center; gap: 12px; max-width: 350px;
-    `;
-    // XSS Prevention: Use DOM methods instead of innerHTML for message
-    toast.innerHTML = '';
-    const icon = document.createElement('i');
-    icon.className = `fas ${style.icon}`;
-    const span = document.createElement('span');
-    span.textContent = message; // textContent = safe from XSS
-    toast.appendChild(icon);
-    toast.appendChild(span);
-    setTimeout(() => { toast.style.opacity = '1'; toast.style.transform = 'translateX(0)'; }, 10);
-    setTimeout(() => {
-      toast.style.opacity = '0'; toast.style.transform = 'translateX(400px)';
-      setTimeout(() => { toast.remove?.(); }, 300);
-    }, 3500);
+    return uxMessages.show(message, type);
   },
 
   setupPasswordToggles() {

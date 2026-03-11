@@ -5,6 +5,7 @@
  */
 
 import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
+import uxMessages from '../assets/js/ui/uxMessages.js';
 
 // ============================================================
 // TAB METADATA
@@ -19,7 +20,7 @@ const WIZARD_TAB_META = {
         hasWho: true,
         hasUnits: true,
         table: 'agro_pending',
-        successMsg: '✅ Fiado registrado'
+        successMsg: uxMessages.copy.movementCreated('fiado')
     },
     ingresos: {
         title: 'Registrar Ingreso',
@@ -30,7 +31,7 @@ const WIZARD_TAB_META = {
         hasWho: true,
         hasUnits: true,
         table: 'agro_income',
-        successMsg: '✅ Ingreso registrado'
+        successMsg: uxMessages.copy.movementCreated('ingreso')
     },
     gastos: {
         title: 'Registrar Gasto',
@@ -41,7 +42,7 @@ const WIZARD_TAB_META = {
         hasWho: false,
         hasUnits: false,
         table: 'agro_expenses',
-        successMsg: '✅ Gasto registrado'
+        successMsg: uxMessages.copy.movementCreated('gasto')
     },
     perdidas: {
         title: 'Registrar Pérdida',
@@ -52,7 +53,7 @@ const WIZARD_TAB_META = {
         hasWho: true,
         hasUnits: true,
         table: 'agro_losses',
-        successMsg: '✅ Pérdida registrada'
+        successMsg: uxMessages.copy.movementCreated('pérdida')
     },
     transferencias: {
         title: 'Registrar Donación',
@@ -63,7 +64,7 @@ const WIZARD_TAB_META = {
         hasWho: true,
         hasUnits: true,
         table: 'agro_transfers',
-        successMsg: '✅ Donación registrada'
+        successMsg: uxMessages.copy.movementCreated('donación')
     }
 };
 
@@ -619,6 +620,12 @@ function injectWizardStyles() {
             color: #C8A752;
             font-size: 1.1rem;
             font-weight: 600;
+        }
+        .wiz-success-detail {
+            margin: 0.5rem 0 0;
+            color: rgba(255,255,255,0.72);
+            font-size: 0.95rem;
+            line-height: 1.4;
         }
 
         /* Mobile responsive */
@@ -1763,7 +1770,11 @@ export async function openAgroWizard(tabName, deps) {
                 }
 
                 createdOperatingExpense = true;
-                successMessage = '✅ Donación y gasto operativo registrados';
+                successMessage = {
+                    type: 'success',
+                    title: 'Donación y gasto operativo registrados.',
+                    message: 'Ambos movimientos ya quedaron reflejados en el historial.'
+                };
             } else {
                 const optionalFieldsByTab = {
                     ingresos: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state'],
@@ -1793,8 +1804,17 @@ export async function openAgroWizard(tabName, deps) {
                 successIcon.textContent = '✅';
                 const successText = document.createElement('div');
                 successText.className = 'wiz-success-text';
-                successText.textContent = successMessage;
+                const successPayload = typeof successMessage === 'string'
+                    ? { title: successMessage, message: '' }
+                    : (successMessage || {});
+                successText.textContent = successPayload.title || 'Movimiento registrado correctamente.';
                 success.append(successIcon, successText);
+                if (successPayload.message) {
+                    const successDetail = document.createElement('p');
+                    successDetail.className = 'wiz-success-detail';
+                    successDetail.textContent = successPayload.message;
+                    success.appendChild(successDetail);
+                }
                 body.appendChild(success);
             }
             if (footer) footer.style.display = 'none';

@@ -1,4 +1,5 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
+import uxMessages from '../assets/js/ui/uxMessages.js';
 
 const FEEDBACK_VERSION = 'V9.8';
 const FEEDBACK_QUEUE_KEY = 'YG_AGRO_FEEDBACK_QUEUE_V1';
@@ -514,10 +515,17 @@ function createModal() {
 
       if (remaining <= 0) {
         status.textContent = sentCount > 0
-          ? '✅ Cola reenviada.'
+          ? 'La cola se envió correctamente.'
           : 'No había elementos pendientes.';
+        if (sentCount > 0) {
+          uxMessages.success(uxMessages.copy.feedbackSent());
+        }
       } else {
         status.textContent = `Se reenviaron ${sentCount}. Pendientes: ${remaining}.`;
+        uxMessages.info({
+          title: 'Parte de la cola ya salió.',
+          message: `Quedan ${remaining} mensaje(s) pendientes por enviar.`
+        });
       }
 
       if (historyDetails.open) {
@@ -565,6 +573,7 @@ function createModal() {
         updateFabQueueState();
         refreshRetryButton();
         status.textContent = 'Guardado en cola. Inicia sesión para enviarlo.';
+        uxMessages.info(uxMessages.copy.feedbackQueued());
         sendBtn.disabled = false;
         cancelBtn.disabled = false;
         return;
@@ -576,7 +585,8 @@ function createModal() {
       const { error } = await insertFeedback(userId, payload);
       if (error) throw error;
 
-      status.textContent = '✅ Enviado. Gracias.';
+      status.textContent = 'Mensaje enviado correctamente. Gracias por compartirlo.';
+      uxMessages.success(uxMessages.copy.feedbackSent());
       message.value = '';
 
       if (historyDetails.open) {
@@ -590,6 +600,7 @@ function createModal() {
       status.textContent = isAgroFeedbackUnavailableError(err)
         ? 'Feedback no disponible (migración pendiente). Guardado en cola local.'
         : 'Guardado en cola por red/error. Se enviará después.';
+      uxMessages.info(uxMessages.copy.feedbackQueued());
       sendBtn.disabled = false;
       cancelBtn.disabled = false;
     }

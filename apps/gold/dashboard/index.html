@@ -2750,7 +2750,7 @@
 
       } catch (err) {
         console.error('[Settings] Error cargando perfil:', err);
-        showStatus('Error cargando perfil', 'error');
+        showStatus('No pudimos cargar tu perfil. Intenta de nuevo.', 'error');
       }
     }
 
@@ -2764,12 +2764,12 @@
       // Validate type
       const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        showStatus('Tipo de archivo no válido', 'error');
+        showStatus('Selecciona una imagen válida para continuar.', 'error');
         return;
       }
       // Validate size
       if (file.size > 2 * 1024 * 1024) {
-        showStatus('Archivo muy grande (max 2MB)', 'error');
+        showStatus('La imagen supera el límite de 2MB.', 'error');
         return;
       }
 
@@ -2781,7 +2781,7 @@
       reader.readAsDataURL(file);
 
       pendingAvatarFile = file;
-      showStatus('Foto lista para subir', 'success');
+      showStatus(window.YGUXMessages?.copy.profilePhotoReady?.() || 'Foto lista para guardar.', 'success');
     });
 
     // ========================================
@@ -2799,6 +2799,8 @@
         if (!ready) {
           throw new Error('Sistema de perfiles no disponible. Recarga la página.');
         }
+
+        let profileSaveResult = null;
 
         // 1. Upload avatar if pending
         if (pendingAvatarFile) {
@@ -2818,13 +2820,17 @@
         if (bioVal) updates.bio = bioVal;
 
         if (Object.keys(updates).length > 0) {
-          const updateResult = await window.ProfileManager.updateProfile(currentUserId, updates);
-          if (!updateResult.success) {
-            throw new Error(updateResult.error);
+          profileSaveResult = await window.ProfileManager.updateProfile(currentUserId, updates);
+          if (!profileSaveResult.success) {
+            throw new Error(profileSaveResult.error);
           }
         }
 
-        showStatus('¡Cambios guardados!', 'success');
+        showStatus(
+          window.YGUXMessages?.copy.profileSaved?.({ created: profileSaveResult?.wasCreated === true })
+            || 'Perfil actualizado con éxito.',
+          'success'
+        );
 
         // Update dashboard UI reactively
         const nameDisplay = document.getElementById('user-name-display');
@@ -2844,7 +2850,7 @@
 
       } catch (err) {
         console.error('[Settings] Error guardando:', err);
-        showStatus(err.message || 'Error al guardar', 'error');
+        showStatus(err.message || 'No pudimos guardar tu perfil.', 'error');
       } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<span>Guardar Cambios</span>';
@@ -2855,8 +2861,14 @@
     // 🔧 UTILITIES
     // ========================================
     function showStatus(message, type) {
-      statusDiv.textContent = message;
+      const normalizedMessage = typeof message === 'string'
+        ? message
+        : (message?.title || message?.message || '');
+      statusDiv.textContent = normalizedMessage;
       statusDiv.className = `settings-status ${type}`;
+      if (window.YGUXMessages?.show) {
+        window.YGUXMessages.show(message, type);
+      }
     }
 
     // Event Listeners

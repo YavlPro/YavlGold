@@ -579,7 +579,7 @@
         if (!window.AuthClient) throw new Error('AuthClient no disponible');
         const res = await window.AuthClient.loginWithToken(email, password, captchaToken);
         if (res.success) {
-          window.AuthUI?.showSuccess('Bienvenido de nuevo!');
+          window.YGUXMessages?.queueFlash(window.YGUXMessages.copy.welcomeBack());
           window.AuthUI?.hideAllAuthModals?.();
         } else {
           window.AuthUI?.showError('login', res.error || 'Error al iniciar sesion');
@@ -598,7 +598,7 @@
         if (!window.AuthClient) throw new Error('AuthClient no disponible');
         const res = await window.AuthClient.registerWithToken(email, password, name, captchaToken);
         if (res.success) {
-          window.AuthUI?.showSuccess('Cuenta creada! Revisa tu email.');
+          window.AuthUI?.showSuccess(window.YGUXMessages?.copy.registerSuccess?.() || 'Cuenta registrada con éxito. Revisa tu correo para confirmar el acceso.');
           document.getElementById('register-form')?.reset();
           setTimeout(() => window.AuthUI?.switchToLogin(), 2000);
           if (btn) { btn.disabled = false; btn.textContent = originalText; }

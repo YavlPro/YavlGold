@@ -13,6 +13,7 @@ import '../css/landing-v10.css';
 // 🔐 YAVLGOLD V9.4 - CONFIGURACIÓN DE SUPABASE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 import { supabase } from './config/supabase-config.js';
+import uxMessages from './ui/uxMessages.js';
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 📊 YAVLGOLD V9.4 - SISTEMA DE AUDITORÍA
@@ -91,7 +92,7 @@ window.addEventListener('load', async () => {
             // 🛑 NO redirigir si hay recovery pendiente
             if (!sessionStorage.getItem('yavl_recovery_pending')) {
               // 3. Feedback Visual (Toast Dorado Premium)
-              showGoldToast('Cuenta Verificada con Éxito');
+              uxMessages.redirect(uxMessages.copy.accountVerified());
 
               // 4. Limpieza de URL
               const cleanUrl = window.location.origin + window.location.pathname + window.location.search;
@@ -118,68 +119,6 @@ window.addEventListener('load', async () => {
   }
 });
 
-/**
- * Muestra una notificación Toast estilo Gold V9.4
- * @param {string} message
- */
-function showGoldToast(message) {
-  // Crear contenedor si no existe
-  let container = document.getElementById('gold-toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'gold-toast-container';
-    container.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    `;
-    document.body.appendChild(container);
-  }
-
-  // Crear Elemento Toast
-  const toast = document.createElement('div');
-  toast.innerText = message;
-  toast.style.cssText = `
-    background: rgba(10, 10, 10, 0.95);
-    color: #D4AF37;
-    border: 1px solid #D4AF37;
-    border-left: 4px solid #D4AF37;
-    padding: 16px 24px;
-    border-radius: 8px;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 600;
-    font-size: 1.1rem;
-    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
-    min-width: 300px;
-    opacity: 0;
-    transform: translateX(100%);
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    display: flex;
-    align-items: center;
-  `;
-
-  // Icono
-  const icon = document.createElement('span');
-  icon.innerHTML = '✅ ';
-  icon.style.marginRight = '10px';
-  toast.prepend(icon);
-
-  container.appendChild(toast);
-
-  // Animación Entrada
-  requestAnimationFrame(() => {
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateX(0)';
-  });
-
-  // Animación Salida
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    setTimeout(() => toast.remove(), 500);
-  }, 4000);
-}
+window.showGoldToast = (message) => {
+  uxMessages.success({ title: message });
+};
