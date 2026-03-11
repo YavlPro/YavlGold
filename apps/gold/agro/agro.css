@@ -5616,6 +5616,16 @@ body[data-agro-active-view='ciclos'] #cyclesContainer {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42), 0 0 20px rgba(200, 167, 82, 0.25);
 }
 
+/* Keep the feedback FAB out of modal and shell stacks on mobile/desktop. */
+body.agro-shell-open .agro-feedback-fab,
+.modal-overlay.active ~ .agro-feedback-fab,
+#modal-agro-profile.is-open ~ .agro-feedback-fab,
+#modal-agro-assistant.is-open ~ .agro-feedback-fab {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
 .agro-feedback-overlay {
   position: fixed;
   inset: 0;

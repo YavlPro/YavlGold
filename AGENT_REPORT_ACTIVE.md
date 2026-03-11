@@ -336,6 +336,27 @@ No se planean cambios en:
 - Solo si el bug visual queda confirmado y la causa se mantiene clara:
   - aplicar fix quirúrgico.
 
+### Mapa de lógica compartida
+
+- `openTransferMetaModal()` es el modal base de cantidad/preview para flujos con split parcial.
+- `openRevertToPendingWizard()` reutiliza ese modal en devoluciones parciales hacia Fiados.
+- `handleIncomeTransfer()` y `handleLossTransfer()` abren caminos distintos según tabla origen/destino:
+  - Pagados -> Pérdidas y Pérdidas -> Pagados no pasan por el split parcial base.
+  - devoluciones desde Pagados/Pérdidas hacia Fiados sí pasan por el modal compartido.
+- Donaciones y Otros usan vistas dedicadas con matrices de acciones más cortas y no comparten el wizard de split parcial.
+- `window.saveCrop` en `apps/gold/agro/index.html` concentra create/edit/fallback seguro de cultivos.
+
+### Criterios de severidad
+
+- Alta:
+  - corrupción visible de datos, pérdida de trazabilidad, imposibilidad de completar flujo crítico o desborde/ocultamiento severo en móvil.
+- Media:
+  - flujo completa pero con UX engañosa, preview incoherente, warning visible innecesario o acción aparentemente rota sin pérdida de datos.
+- Baja:
+  - deuda técnica, ruido de consola, superficies incompletas pero intencionales o fricción menor sin impacto en resultado final.
+- Informativa:
+  - comportamiento intencional, no reproducido o pendiente de schema/migración sin fix frontend seguro.
+
 ### Confirmación tras QA
 
 - Historiales:
@@ -350,6 +371,14 @@ No se planean cambios en:
     - aun así el UI muestra:
       - `Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.`
   - Eso confirma que el bug visual no es de emoji/render, sino de un warning visible que hoy se dispara en un camino exitoso.
+- QA visual móvil del shell real:
+  - el header, la campana y el drawer móvil cargan sin clipping en el shell compilado.
+  - se confirmó un bug visual adicional:
+    - el FAB de feedback invade el modal de `Nuevo Cultivo` en móvil.
+    - la causa raíz es de stacking/jerarquía visual:
+      - `.agro-feedback-fab` usa `position: fixed` + `z-index: 9999`
+      - `.modal-overlay` del cultivo también usa `z-index: 9999`
+      - al quedar en el mismo plano y con el FAB inyectado al final del `body`, el botón termina pintándose sobre el modal.
 
 ### Plan de fix confirmado
 
@@ -358,6 +387,11 @@ No se planean cambios en:
 - Cambiar únicamente la notificación visible del fallback exitoso:
   - modo normal: `console.warn`, sin mensaje raro al usuario
   - modo debug (`?debug=1`): conservar aviso visible si hace falta diagnóstico
+- Tocar `apps/gold/agro/agro.css`.
+- Ocultar el FAB de feedback únicamente cuando una capa modal/shell esté abierta en móvil/desktop:
+  - sin tocar lógica del feedback
+  - sin tocar el CRUD de cultivos
+  - sin alterar el estado normal del FAB cuando no hay overlays activos
 
 ### Fix aplicado
 
@@ -365,4 +399,7 @@ No se planean cambios en:
   - se agregó `notifyOptionalCropColumnsFallback()`.
   - el fallback exitoso de create/edit ya no muestra un warning raro al usuario en modo normal.
   - el warning queda en `console.warn` y solo se vuelve visible con `?debug=1`.
+- `apps/gold/agro/agro.css`
+  - el FAB de feedback ahora se oculta mientras haya shell/drawer o modal principal abierto.
+  - con eso deja de montarse sobre el modal de `Nuevo Cultivo` y no reordena la lógica del feedback.
 - No se tocaron queries, payloads, fallback de compatibilidad, ni la lógica funcional del guardado de cultivos.
