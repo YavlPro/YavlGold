@@ -258,3 +258,111 @@ No se planean cambios en:
   - registrar diagnóstico, causa raíz y plan antes de editar
 - `apps/gold/agro/agro.js`
   - corregir la edición del input parcial y mantener preview + confirmación coherentes
+
+## Diagnóstico inicial: auditoría de historiales Facturero + bug visual de cultivos
+
+### Áreas reales a revisar
+
+- `apps/gold/agro/agro.js`
+  - `renderHistoryRow(tabName, item, config, options)` define qué acciones existen de verdad por historial.
+  - `setupFactureroCrudListeners()` conecta edición, borrado, duplicado, transferencia y reversión.
+  - `editFactureroItem()` + `openFactureroEditModal()` + `saveEditModal()` controlan el flujo de edición.
+  - `handleIncomeTransfer()` y `handleLossTransfer()` son los flujos equivalentes para Pagados y Pérdidas.
+  - vistas dedicadas:
+    - Donaciones: `renderDonacionesDedicatedItem()` permite `edit` + `delete`.
+    - Otros: `renderOtrosDedicatedItem()` permite solo `delete`.
+- `apps/gold/agro/index.html`
+  - contiene el modal de crear/editar cultivo (`#modal-new-crop`) y el submit real vía `window.saveCrop`.
+  - el mensaje sospechoso aparece en el fallback de guardado de cultivos cuando faltan columnas opcionales en `agro_crops`.
+
+### Hallazgos iniciales por código
+
+- Pagados:
+  - tiene edición.
+  - tiene transferencia (`.btn-transfer-income`) hacia Fiados o Pérdidas.
+  - si viene de Fiados, también tiene reversión (`.btn-revert-income`).
+- Pérdidas:
+  - tiene edición.
+  - tiene transferencia (`.btn-transfer-loss`) hacia Fiados o Pagados.
+  - si viene de Fiados, también tiene reversión (`.btn-revert-loss`).
+- Donaciones / Transferencias:
+  - en la vista dedicada solo expone `edit` y `delete`.
+  - no aparece flujo de transferencia/reversión equivalente al de Fiados/Pagados/Pérdidas.
+- Otros:
+  - en la vista dedicada solo expone `delete`.
+  - no hay edición ni transferencia/reversión desde esa vista.
+- Bug tipo Fiados:
+  - por lectura de código, el input parcial “pegado” estaba concentrado en `openTransferMetaModal()` con `splitOptions`.
+  - ese mismo modal se reutiliza en:
+    - Fiados -> Pagados
+    - Fiados -> Pérdidas
+    - Pérdidas -> Pagados
+  - Pagados -> Fiados no usa split; crea registro directo o revierte.
+  - Donaciones y Otros no usan este modal de split parcial para sus acciones actuales.
+
+### Hipótesis iniciales
+
+- Historiales:
+  - Pagados y Pérdidas probablemente no comparten exactamente el bug de Fiados en todos sus caminos, pero sí comparten el mismo modal base en al menos un flujo, así que requieren QA real.
+  - Donaciones y Otros no parecen compartir el bug del input pegado porque no exponen ese paso de cantidad parcial.
+  - Otros puede presentar inconsistencia funcional aparente si el usuario espera editar o transferir desde la vista dedicada, porque el código solo deja borrar.
+- Cultivos:
+  - la causa más probable del “mensaje raro” no es encoding ni emojis como tal.
+  - la pista fuerte es este mensaje visible:
+    - `Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.`
+  - hoy se muestra incluso cuando el guardado termina funcionando por fallback.
+  - eso calza con el síntoma reportado: aparece un mensaje raro relacionado con columnas, luego el flujo sigue normal.
+
+### Plan de QA
+
+- Facturero en navegador:
+  - validar en viewport móvil y desktop los historiales:
+    - Pagados
+    - Pérdidas
+    - Donaciones
+    - Otros
+  - comprobar:
+    - acciones visibles vs acciones realmente operativas
+    - edición
+    - transferencia
+    - reversión
+    - comportamiento de inputs en móvil
+    - consistencia preview / confirmación / resultado
+- Cultivos en navegador:
+  - abrir modal nuevo cultivo.
+  - abrir modal editar cultivo.
+  - reproducir guardado con fallback de columnas opcionales.
+  - inspeccionar consola + mensaje visible.
+- Solo si el bug visual queda confirmado y la causa se mantiene clara:
+  - aplicar fix quirúrgico.
+
+### Confirmación tras QA
+
+- Historiales:
+  - Pagados y Pérdidas no reabren el bug del valor pegado en los flujos parciales compartidos.
+  - En ambos casos, al borrar el valor por defecto del input de cantidad, el campo queda vacío y permite escribir `4` sin reinyectar `1`; el preview queda consistente con `10 -> 4 -> 6`.
+  - Donaciones no comparte el flujo de split parcial; su vista dedicada expone `edit` + `delete`.
+  - Otros no comparte el flujo de split parcial; su vista dedicada expone solo `delete`.
+- Cultivos:
+  - Se reprodujo el mensaje raro en create/edit con un fallback de schema:
+    - primero falla `insert/update` por columna opcional faltante (`status_mode`/relacionadas),
+    - luego el retry sin columnas opcionales sí guarda correctamente,
+    - aun así el UI muestra:
+      - `Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.`
+  - Eso confirma que el bug visual no es de emoji/render, sino de un warning visible que hoy se dispara en un camino exitoso.
+
+### Plan de fix confirmado
+
+- Tocar `apps/gold/agro/index.html`.
+- Mantener intacto el fallback funcional de guardado.
+- Cambiar únicamente la notificación visible del fallback exitoso:
+  - modo normal: `console.warn`, sin mensaje raro al usuario
+  - modo debug (`?debug=1`): conservar aviso visible si hace falta diagnóstico
+
+### Fix aplicado
+
+- `apps/gold/agro/index.html`
+  - se agregó `notifyOptionalCropColumnsFallback()`.
+  - el fallback exitoso de create/edit ya no muestra un warning raro al usuario en modo normal.
+  - el warning queda en `console.warn` y solo se vuelve visible con `?debug=1`.
+- No se tocaron queries, payloads, fallback de compatibilidad, ni la lógica funcional del guardado de cultivos.

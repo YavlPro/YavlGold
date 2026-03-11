@@ -3539,6 +3539,13 @@
                     alert('⚠️ ' + msg);
                 }
             };
+            const notifyOptionalCropColumnsFallback = () => {
+                const msg = 'Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Se guardó con compatibilidad heredada.';
+                console.warn('[AGRO][CROPS] Optional agro_crops columns missing; saved using legacy fallback.');
+                if (new URLSearchParams(window.location.search).get('debug') === '1') {
+                    showValidationError(msg);
+                }
+            };
             const normalizeCycleStatus = (value) => {
                 const token = String(value || '')
                     .trim()
@@ -3725,7 +3732,7 @@
                     }
 
                     if (usedFallbackColumns) {
-                        showValidationError('Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.');
+                        notifyOptionalCropColumnsFallback();
                     }
 
                     if (updateError) throw updateError;
@@ -3768,7 +3775,7 @@
                     }
 
                     if (usedFallbackColumns) {
-                        showValidationError('Faltan columnas opcionales en agro_crops (override o inversión multimoneda). Ejecuta las migraciones para habilitarlas.');
+                        notifyOptionalCropColumnsFallback();
                     }
 
                     if (insertError) throw insertError;
