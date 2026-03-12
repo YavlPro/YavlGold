@@ -16761,11 +16761,45 @@ function getAssistantContext() {
     const context = {
         date: new Date().toISOString(),
         app: 'YavlGold Agro',
-        version: 'V9.5.6'
+        version: 'V1'
     };
     const activeTab = readStoredTab?.() || document.querySelector('.financial-tab-btn.is-active')?.dataset?.tab;
     if (activeTab) {
         context.tab = activeTab;
+    }
+
+    // User profile from agroperfil.js bridge
+    const profile = window._agroProfileData;
+    if (profile && (profile.display_name || profile.farm_name || profile.location_text)) {
+        context.user_profile = {};
+        if (profile.display_name) context.user_profile.name = profile.display_name;
+        if (profile.farm_name) context.user_profile.farm = profile.farm_name;
+        if (profile.location_text) context.user_profile.location = profile.location_text;
+    }
+
+    // IA context from agro-ia-wizard.js bridge (experience, goals, onboarding)
+    const ia = window._agroIAContext;
+    if (ia) {
+        if (ia.experience_level) {
+            context.user_profile = context.user_profile || {};
+            context.user_profile.experience = ia.experience_level;
+        }
+        if (ia.farm_type) {
+            context.user_profile = context.user_profile || {};
+            context.user_profile.farm_type = ia.farm_type;
+        }
+        if (Array.isArray(ia.assistant_goals) && ia.assistant_goals.length > 0) {
+            context.user_profile = context.user_profile || {};
+            context.user_profile.goals = ia.assistant_goals;
+        }
+        if (ia.agro_relation) {
+            context.user_profile = context.user_profile || {};
+            context.user_profile.role = ia.agro_relation;
+        }
+        if (ia.main_activity) {
+            context.user_profile = context.user_profile || {};
+            context.user_profile.focus = ia.main_activity;
+        }
     }
 
     const location = getAssistantLocationContext();

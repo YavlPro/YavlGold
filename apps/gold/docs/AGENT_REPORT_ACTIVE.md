@@ -485,3 +485,176 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
   - cronicas;
   - migraciones;
   - y algunos comentarios tecnicos internos del monolito Agro que no afectan producto ni documentacion activa.
+
+---
+
+## Wiring perfil de usuario al contexto IA del asistente (2026-03-13)
+
+### Diagnostico
+
+- El asistente IA de Agro (`agro-assistant` edge function) recibe contexto del cliente via `getAssistantContext()` y `buildCropsPreamble()`.
+- **Datos que SI recibia**: fecha, version app, tab activo, geolocalizacion, clima, cultivo enfocado, conteo de cultivos, lista de cultivos con status.
+- **Datos que NO recibia**: nombre del usuario, nombre de finca, ubicacion del perfil, relacion con agro, actividad principal.
+- **Causa raiz**: `agroperfil.js` cargaba el perfil desde `agro_farmer_profile` en `state.profile` pero **no exponia los datos via bridge `window._agroXxx`** (requerido por AGENTS.md §3.3). El monolito `agro.js` no tenia forma de leer datos del perfil.
+- **Version obsoleta**: `getAssistantContext()` reportaba `version: 'V9.5.6'` en vez de `V1`.
+
+### Infraestructura existente (no usada por IA)
+
+| Tabla | Campos relevantes | Cargada por |
+| --- | --- | --- |
+| `agro_farmer_profile` | display_name, farm_name, location_text | `agroperfil.js` |
+| `user_onboarding_context` | agro_relation, main_activity, entry_preference | `onboardingManager.js` (solo dashboard) |
+| `profiles` | username, avatar_url | dashboard |
+
+### Cambios aplicados
+
+#### `agro/agroperfil.js`
+- **Nueva funcion `syncProfileBridge()`** (L944-951): expone `window._agroProfileData` con `display_name`, `farm_name`, `location_text`.
+- **`loadFarmerProfile()`** (L789): llama `syncProfileBridge()` tras carga exitosa.
+- **`applySavedProfileState()`** (L941): llama `syncProfileBridge()` tras guardar perfil.
+
+#### `agro/agro.js`
+- **`getAssistantContext()`** (L16760-16801):
+  - Version corregida: `V9.5.6` -> `V1`.
+  - Nuevo bloque (L16771-16778): lee `window._agroProfileData` y agrega `context.user_profile` con `name`, `farm`, `location` si existen.
+
+### Resultado
+
+El contexto JSON enviado al edge function ahora incluye:
+```json
+{
+  "date": "...",
+  "app": "YavlGold Agro",
+  "version": "V1",
+  "tab": "gastos",
+  "user_profile": {
+    "name": "Juan Perez",
+    "farm": "Finca La Esperanza",
+    "location": "Merida, Venezuela"
+  },
+  "location_real": { "lat": ..., "lon": ... },
+  "weather_now": { "summary": "...", "temp_c": 28 },
+  "crop_focus": { "name": "Batata", "status": "activo", ... },
+  "stats": { "crops_count": 3 }
+}
+```
+
+### Build
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK` (137 modules)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### QA sugerido
+1. Iniciar sesion en Agro -> verificar que `window._agroProfileData` existe en consola con datos del perfil.
+2. Abrir asistente IA -> enviar un mensaje -> verificar en logs del edge function que `context.user_profile` llega con datos.
+3. Editar perfil (nombre/finca) -> verificar que `window._agroProfileData` se actualiza sin recargar pagina.
+4. Si el perfil esta vacio, verificar que `user_profile` no aparece en el contexto (graceful fallback).
+
+### Deuda pendiente (sesion anterior)
+- ~~Onboarding context no se carga en Agro~~ -> **Resuelto** en sesion 2026-03-13b.
+- ~~No existe concepto de experiencia ni detalles de finca~~ -> **Resuelto** en sesion 2026-03-13b.
+
+---
+
+## Wizard IA + cierre onboarding para contexto del asistente (2026-03-13b)
+
+### Objetivo
+
+Cerrar el punto 2 del plan maestro: el asistente IA debe conocer al agricultor (experiencia, tipo de finca, expectativas, relacion con agro, actividad principal). La sesion anterior construyo el puente basico (nombre, finca, ubicacion). Esta sesion cierra el flujo completo.
+
+### Cambios aplicados
+
+#### 1. Migracion Supabase
+
+**`20260313170000_add_ia_context_to_farmer_profile.sql`** (aplicada en produccion)
+
+Nuevas columnas en `agro_farmer_profile`:
+- `experience_level TEXT` — principiante / intermedio / experto
+- `farm_type TEXT` — campo_abierto / invernadero / mixto / urbano
+- `assistant_goals JSONB DEFAULT '[]'` — array con metas IA (cultivos, finanzas, plagas, clima, mercado)
+
+#### 2. Nuevo modulo: `agro/agro-ia-wizard.js`
+
+Modulo independiente (AGENTS.md §3.1) con:
+- **Wizard guiado de 2 pasos**:
+  - Paso 1: Experiencia (principiante/intermedio/experto) + tipo de finca (opcional)
+  - Paso 2: Metas del asistente (multi-select: cultivos, finanzas, plagas, clima, mercado)
+- **`initIAContext()`**: carga silenciosa de onboarding context + profile IA fields al bootstrap de Agro
+- **`syncIAContextBridge()`**: expone `window._agroIAContext` con experience_level, farm_type, assistant_goals, agro_relation, main_activity, onboarding_completed
+- **`openIAWizard()`**: abre el wizard modal, puede re-abrirse sin params si ya fue inicializado
+- **`isIAContextComplete()`**: verifica si el usuario ya configuro su contexto IA
+- CSS inyectado dinamicamente, 100% ADN Visual V10 (tokens, tipografia, breakpoints, prefers-reduced-motion)
+
+#### 3. Actualizaciones a archivos existentes
+
+**`agro/agroperfil.js`**:
+- `PRIVATE_PROFILE_COLUMNS`: agregados `experience_level,farm_type,assistant_goals`
+
+**`agro/agro.js` → `getAssistantContext()`**:
+- Lee `window._agroIAContext` y agrega al contexto: `experience`, `farm_type`, `goals`, `role` (agro_relation), `focus` (main_activity)
+
+**`agro/index.html`**:
+- Bootstrap: carga no-bloqueante de `agro-ia-wizard.js` + llamada a `initIAContext()`
+- Boton "Configurar asistente" dentro de la guia del asistente IA (`.assistant-configure-btn`)
+
+### Resultado
+
+El contexto JSON completo enviado al edge function ahora puede incluir:
+```json
+{
+  "date": "...",
+  "app": "YavlGold Agro",
+  "version": "V1",
+  "tab": "gastos",
+  "user_profile": {
+    "name": "Juan Perez",
+    "farm": "Finca La Esperanza",
+    "location": "Merida, Venezuela",
+    "experience": "intermedio",
+    "farm_type": "campo_abierto",
+    "goals": ["cultivos", "finanzas", "clima"],
+    "role": "producer",
+    "focus": "cultivation"
+  },
+  "location_real": { "lat": 8.59, "lon": -71.15 },
+  "weather_now": { "summary": "Parcialmente nublado", "temp_c": 28 },
+  "crop_focus": { "name": "Batata", "status": "activo", "day_x": 45, "day_total": 120 },
+  "stats": { "crops_count": 3 }
+}
+```
+
+### Flujo completo del agricultor
+
+1. **Onboarding** (dashboard): nombre, relacion agro, actividad, preferencia de entrada -> `user_onboarding_context`
+2. **Perfil** (agro): nombre, finca, ubicacion, contacto -> `agro_farmer_profile`
+3. **Wizard IA** (asistente): experiencia, tipo finca, metas -> `agro_farmer_profile` (columnas nuevas)
+4. **Bootstrap Agro**: carga silenciosa de ambas tablas -> `window._agroIAContext` + `window._agroProfileData`
+5. **Asistente IA**: `getAssistantContext()` lee ambos bridges -> contexto completo al edge function
+6. **Re-configuracion**: boton "Configurar asistente" en la guia del asistente permite re-abrir wizard
+
+### Build
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (138 modules, nuevo chunk `agro-ia-wizard-BmBsNqKo.js` 15.21 kB)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### QA sugerido
+1. Abrir Agro -> verificar en consola que `window._agroIAContext` existe con datos de onboarding
+2. Abrir asistente -> click en "Configurar asistente" -> completar wizard (2 pasos)
+3. Verificar que `window._agroIAContext` se actualiza con experience_level y assistant_goals
+4. Enviar mensaje al asistente -> verificar en edge function logs que `context.user_profile` incluye experience, goals, role, focus
+5. Recargar pagina -> verificar que wizard data persiste (cargada desde DB)
+6. Probar wizard con perfil vacio (usuario nuevo) -> verificar graceful fallback
+
+### Estado del plan maestro
+
+| Punto | Estado | Nota |
+| --- | --- | --- |
+| 1. Correccion visual V10 | Hecho | Sesiones anteriores |
+| 2. Onboarding/wizard perfil para IA | **Hecho** | Wizard + bridges + onboarding context integrado |
+| 3. Siguiente punto del plan | Pendiente | Segun roadmap |

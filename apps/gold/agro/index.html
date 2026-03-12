@@ -4149,6 +4149,12 @@
                 // Papelera module (non-blocking)
                 import('./agro-trash.js').catch(err => console.warn('[AGRO] Trash module load error:', err.message));
 
+                // IA context module (non-blocking) — loads onboarding + profile context for assistant
+                import('./agro-ia-wizard.js').then(async (mod) => {
+                    const { supabase: sb } = await import('../assets/js/config/supabase-config.js');
+                    mod.initIAContext({ supabase: sb, userId: session.user?.id });
+                }).catch(err => console.warn('[AGRO] IA wizard module load error:', err.message));
+
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {
                     const summary = await statsModule.computeAgroFinanceSummaryV1();
@@ -4305,6 +4311,10 @@
                                         <li>Si te sale "Limite alcanzado", espera y vuelve a intentar.</li>
                                         <li>No recargues 10 veces: no aumenta cupo.</li>
                                     </ul>
+                                    <button type="button" class="assistant-configure-btn" id="btn-configure-ia"
+                                        onclick="window.openAgroIAWizard?.()">
+                                        <i class="fa-solid fa-sliders" aria-hidden="true"></i> Configurar asistente
+                                    </button>
                                 </div>
 
                                 <div class="assistant-history" id="assistant-history" aria-live="polite"></div>

@@ -65,7 +65,7 @@ const PROFILE_FIELD_IDS = [
     'notes'
 ];
 
-const PRIVATE_PROFILE_COLUMNS = 'user_id,display_name,farm_name,location_text,phone,whatsapp,instagram,facebook,notes,created_at,updated_at';
+const PRIVATE_PROFILE_COLUMNS = 'user_id,display_name,farm_name,location_text,phone,whatsapp,instagram,facebook,notes,experience_level,farm_type,assistant_goals,created_at,updated_at';
 const PUBLIC_PROFILE_COLUMNS = 'user_id,public_enabled,display_name,avatar_url,bio,location_text,whatsapp,instagram,created_at,updated_at';
 
 const PUBLIC_PROFILE_FIELD_IDS = [
@@ -786,6 +786,7 @@ async function loadFarmerProfile() {
         syncPerfilDedicatedView();
         fillPublicProfileForm(state.publicProfile || {}, data || {}, user);
         setProfileStatus('Perfil listo.', 'ok');
+        syncProfileBridge();
     } catch (error) {
         console.error('[AGRO_PROFILE] load profile error:', error);
         setProfileStatus('No se pudo cargar el perfil.', 'error');
@@ -937,6 +938,17 @@ function applySavedProfileState({ privateProfile, publicProfile = state.publicPr
     syncProfileEditEntrySummary(state.profile || {}, state.user);
     syncPerfilDedicatedView();
     fillPublicProfileForm(state.publicProfile || {}, state.profile || {}, state.user);
+    syncProfileBridge();
+}
+
+function syncProfileBridge() {
+    const p = state.profile || {};
+    const u = state.user || null;
+    window._agroProfileData = {
+        display_name: p.display_name || u?.user_metadata?.display_name || '',
+        farm_name: p.farm_name || '',
+        location_text: p.location_text || ''
+    };
 }
 
 async function saveProfileEditFlow(wizardData = {}, options = {}) {
