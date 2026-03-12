@@ -2,6 +2,44 @@
 
 Resumen operativo actual de `apps/gold`.
 
+## Sesión activa: política de reportes + limpieza Playwright (2026-03-12)
+
+### Diagnóstico
+
+- La fuente operativa activa ya existe en `apps/gold/docs/AGENT_REPORT_ACTIVE.md`, pero el repo todavía arrastra ruido documental:
+  - existe otro `AGENT_REPORT_ACTIVE.md` en la raíz;
+  - `AGENT.md` y `AGENTS.md` no son idénticos, así que hoy hay doble instrucción;
+  - `apps/gold/scripts/agent-report-check.mjs` todavía acepta fallback al reporte legacy.
+- Eso deja tres focos de confusión:
+  - un agente puede abrir el archivo activo equivocado;
+  - otro agente puede obedecer `AGENT.md` aunque `README.md` ya manda leer `AGENTS.md`;
+  - el build todavía tolera crecer `AGENT_REPORT.md`, aunque operativamente ya no debería ser la fuente viva.
+- QA navegador:
+  - la sesión Playwright de esta ronda dejó artefactos temporales en `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1773327549863`;
+  - esos temporales se pudieron borrar solo después de cerrar la sesión del navegador, así que la limpieza debe quedar como regla operativa explícita al final de cada bloque de prueba.
+
+### Plan
+
+1. Declarar `apps/gold/docs/AGENT_REPORT_ACTIVE.md` como única fuente de verdad activa.
+2. Declarar `apps/gold/docs/AGENT_REPORT.md` como archivo legacy/histórico que no debe seguir creciendo salvo migración o consulta histórica.
+3. Dejar `AGENTS.md` como instrucción canónica del repo.
+4. Convertir `AGENT.md` en alias/puente de compatibilidad que apunte a `AGENTS.md` para evitar drift.
+5. Convertir el `AGENT_REPORT_ACTIVE.md` de raíz en archivo puente hacia `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+6. Ajustar `apps/gold/scripts/agent-report-check.mjs` para validar solo el reporte activo, no el legacy.
+7. Documentar higiene de QA navegador: cerrar Playwright y borrar la carpeta temporal de la sesión al final de cada sección de prueba.
+
+### Cierre
+
+- Política acordada:
+  - activa: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - legacy: `apps/gold/docs/AGENT_REPORT.md`
+  - canon de instrucciones: `AGENTS.md`
+  - alias de compatibilidad: `AGENT.md`
+- Temporales de esta sesión Playwright:
+  - carpeta detectada: `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1773327549863`
+  - resultado final: eliminada tras cerrar el navegador de pruebas
+- Esta decisión limpia el flujo para Codex y futuros agentes sin perder histórico.
+
 ## Diagnóstico operativo
 
 - `Agro` es el único módulo liberado del catálogo oficial.
@@ -197,3 +235,65 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
 4. Click en "🗑️ Papelera" en barra de tabs → modal con registros eliminados últimos 30 días
 5. Click "Restaurar" en papelera → registro vuelve a su vista original
 6. Verificar que estadísticas y exportes no se rompen
+
+---
+
+## Auditoría documental canónica + policy Playwright (2026-03-12)
+
+### Diagnóstico
+
+- `AGENTS.md` existe y ya actúa como archivo canónico de instrucciones.
+- El repo todavía mantiene residuos de la política anterior que vuelven a abrir ambigüedad:
+  - `AGENT.md` sigue existiendo en la raíz, aunque la decisión nueva dice que no debe existir ni competir;
+  - `apps/gold/scripts/agent-report-check.mjs` todavía usa una resolución flexible con múltiples candidatos para `AGENT_REPORT_ACTIVE.md`, en vez de validar una sola ruta activa;
+  - `apps/gold/public/llms.txt`, `apps/gold/README.md` y `apps/gold/archive/legacy-html/README.md` siguen usando referencias genéricas `docs/...` o copy no suficientemente explícito para el flujo canónico;
+  - `AGENTS.md` todavía no declara de forma explícita tres decisiones nuevas:
+    - `AGENT.md` eliminado por diseño;
+    - `global_rules.md` como copia operativa no canónica;
+    - limpieza obligatoria de Playwright por bloque de QA;
+  - el propio `apps/gold/docs/AGENT_REPORT_ACTIVE.md` conserva una sesión previa donde `AGENT.md` aparece como alias de compatibilidad temporal.
+- `apps/gold/docs/AGENT_REPORT.md` sigue siendo un histórico grande con referencias antiguas. No debe tocarse en este lote para no hacerlo crecer más.
+- `AGENT_REPORT_ACTIVE.md` en raíz puede seguir existiendo solo como puntero de compatibilidad, pero ningún script/check activo debe tratarlo como fuente primaria.
+
+### Causa raíz de la ambigüedad previa
+
+- La ambigüedad nació por acumulación de compatibilidades temporales:
+  - se mantuvo `AGENT.md` como puente;
+  - el check documental aceptó varias rutas en vez de una ruta activa única;
+  - algunos docs y prompts internos quedaron apuntando a rutas cortas/genéricas;
+  - la policy de higiene Playwright se aplicó en la práctica, pero no quedó consolidada como regla operativa única.
+
+### Plan quirúrgico
+
+1. Eliminar `AGENT.md`.
+2. Endurecer `apps/gold/scripts/agent-report-check.mjs` para validar solo `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+3. Actualizar `AGENTS.md` para declarar explícitamente:
+   - `AGENTS.md` como única instrucción canónica;
+   - `AGENT.md` como archivo eliminado/no recreable;
+   - `apps/gold/docs/AGENT_REPORT_ACTIVE.md` como única fuente activa;
+   - `apps/gold/docs/AGENT_REPORT.md` como legacy/histórico;
+   - `global_rules.md` como copia operativa no canónica;
+   - limpieza Playwright obligatoria por bloque.
+4. Corregir referencias operativas en:
+   - `apps/gold/public/llms.txt`
+   - `apps/gold/README.md`
+   - `apps/gold/archive/legacy-html/README.md`
+5. Mantener `apps/gold/docs/AGENT_REPORT.md` intacto como histórico.
+6. Validar con `pnpm build:gold`.
+
+### Archivos a tocar
+
+- `AGENTS.md`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/scripts/agent-report-check.mjs`
+- `apps/gold/public/llms.txt`
+- `apps/gold/README.md`
+- `apps/gold/archive/legacy-html/README.md`
+- `AGENT.md` (eliminar)
+
+### Riesgos
+
+- Bajo:
+  - quedarán referencias antiguas dentro de `apps/gold/docs/AGENT_REPORT.md` y `apps/gold/docs/chronicles/*`, pero solo como histórico legacy.
+- Bajo:
+  - endurecer `agent-report-check.mjs` elimina fallback documental y hará fallar más rápido cualquier flujo que no use la ruta activa correcta, que es el comportamiento deseado.
