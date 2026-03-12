@@ -1624,7 +1624,7 @@
             onerror="this.src='/assets/images/logo.webp'">
           <div>
             <h1 class="hero-title text-metallic">Bienvenido, <span id="user-name-display">Usuario</span></h1>
-            <p class="hero-subtitle">Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.</p>
+            <p id="hero-subtitle" class="hero-subtitle">Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.</p>
           </div>
         </div>
       </div>
@@ -2106,6 +2106,8 @@
     // ⭐ Import FavoritesManager for star toggle functionality
     import { FavoritesManager, StatsManager } from '../assets/js/modules/moduleManager.js';
     import { getModuleLegacyKeys, getModuleRoute as resolveModuleRouteFromIdentity, isNavigableModule, normalizeDashboardModule, resolveCanonicalModuleKey } from '../assets/js/modules/moduleIdentity.js';
+    import { OnboardingManager, buildOnboardingHeroSubtitle } from '../assets/js/profile/onboardingManager.js';
+    import { openOnboardingWizard } from '../assets/js/profile/onboardingWizard.js';
 
     async function performDashboardLogout() {
       sessionStorage.removeItem('yavl_dismissed_announcements');
@@ -2138,36 +2140,23 @@
       const emailName = user.email.split('@')[0];
       const nameDisplay = document.getElementById('user-name-display');
       const headerAvatar = document.getElementById('header-avatar');
+      const heroSubtitle = document.getElementById('hero-subtitle');
       const settingsBtn = document.getElementById('settings-btn');
 
       // Show settings button
       if (settingsBtn) settingsBtn.style.display = 'inline-flex';
 
-      // 3. Load Profile from DB for avatar and username
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('username, avatar_url')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        if (!profileError && profile) {
-          // Update username if available
-          if (nameDisplay) {
-            nameDisplay.textContent = profile.username || emailName;
-          }
-          // Update avatar if available
-          if (headerAvatar && profile.avatar_url) {
-            headerAvatar.src = profile.avatar_url;
-          }
-        } else {
-          // Fallback to email name
-          if (nameDisplay) nameDisplay.textContent = emailName;
-        }
-      } catch (err) {
-        console.warn('[Dashboard] No se pudo cargar perfil:', err.message);
-        if (nameDisplay) nameDisplay.textContent = emailName;
-      }
+      // 3. Load profile snapshot, apply fallback identity and run onboarding gate
+      const profile = await loadProfileSnapshot(user.id);
+      applyDashboardIdentity({ profile, emailName, nameDisplay, headerAvatar, heroSubtitle });
+      const onboardingContext = await runOnboardingGate({
+        user,
+        profile,
+        emailName,
+        nameDisplay,
+        headerAvatar,
+        heroSubtitle
+      });
 
       // 4. Activate Logout Buttons (Nav & Mobile) - EXCLUDE .btn-settings
       const logoutButtons = document.querySelectorAll('#logout-btn-nav, #dropdown-logout-btn, .btn-logout');
@@ -2182,13 +2171,77 @@
 
       // 5. Load Modules from Database
       const modules = await loadModules();
-      await updateDashboardInsights(modules, user);
+      await updateDashboardInsights(modules, user, onboardingContext);
 
       // 6. Initialize Notifications, Feedback, Announcements & Admin Systems
       NotificationsManager.init();
       FeedbackManager.init();
       AnnouncementManager.init();
       AdminManager.init(); // Will only show crown button if user is admin
+    }
+
+    async function loadProfileSnapshot(userId) {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('[Dashboard] No se pudo cargar perfil:', error.message);
+          return null;
+        }
+
+        return profile || null;
+      } catch (error) {
+        console.warn('[Dashboard] No se pudo cargar perfil:', error.message);
+        return null;
+      }
+    }
+
+    function applyDashboardIdentity({ profile, onboardingContext, emailName, nameDisplay, headerAvatar, heroSubtitle }) {
+      if (nameDisplay) {
+        nameDisplay.textContent = onboardingContext?.displayName || profile?.username || emailName;
+      }
+
+      if (headerAvatar && profile?.avatar_url) {
+        headerAvatar.src = profile.avatar_url;
+      }
+
+      if (heroSubtitle) {
+        heroSubtitle.textContent = buildOnboardingHeroSubtitle(onboardingContext);
+      }
+    }
+
+    async function runOnboardingGate({ user, profile, emailName, nameDisplay, headerAvatar, heroSubtitle }) {
+      const onboardingResult = await OnboardingManager.getOnboardingContext(user.id);
+      let onboardingContext = onboardingResult?.context || null;
+
+      if (!onboardingContext?.onboardingCompleted) {
+        const wizardResult = await openOnboardingWizard({
+          initialData: {
+            ...onboardingContext,
+            displayName: onboardingContext?.displayName || profile?.username || emailName
+          },
+          draftKey: `YG_ONBOARDING_DRAFT_V1:${user.id}`,
+          onSubmit: (payload) => OnboardingManager.saveOnboardingContext(payload, user.id),
+          onRequestLogout: performDashboardLogout
+        });
+
+        onboardingContext = wizardResult?.context || onboardingContext;
+      }
+
+      applyDashboardIdentity({
+        profile,
+        onboardingContext,
+        emailName,
+        nameDisplay,
+        headerAvatar,
+        heroSubtitle
+      });
+
+      return onboardingContext;
     }
 
     /**
@@ -2358,6 +2411,38 @@
       };
     }
 
+    function resolveOnboardingPreferredModule(modules, onboardingContext) {
+      const preferredKeysByEntry = {
+        agro_dashboard: ['agro'],
+        agro_operations: ['agro'],
+        agro_reports: ['agro'],
+        learning_path: ['academia', 'agro']
+      };
+
+      const preferredKeys = preferredKeysByEntry[onboardingContext?.entryPreference] || [];
+
+      for (const preferredKey of preferredKeys) {
+        const match = (modules || []).find((mod) => {
+          const moduleId = getModuleId(mod);
+          const moduleRoute = getModuleRoute(mod) || '';
+          return moduleId === preferredKey
+            || getLegacyKeys(mod).includes(preferredKey)
+            || moduleRoute.includes(`/${preferredKey}`);
+        });
+
+        if (match && isNavigableModule(match)) {
+          return {
+            id: getModuleId(match),
+            title: getModuleTitle(match),
+            path: getModuleRoute(match),
+            reason: 'según tu entrada inicial'
+          };
+        }
+      }
+
+      return null;
+    }
+
     function updateInsightCard(prefix, data, fallbackTitle, fallbackMeta) {
       const titleEl = document.getElementById(`${prefix}-title`);
       const metaEl = document.getElementById(`${prefix}-meta`);
@@ -2411,10 +2496,13 @@
       if (lastEl) lastEl.textContent = lastData?.title || '-';
     }
 
-    function updateRecommendCard(summary, modules) {
+    function updateRecommendCard(summary, modules, onboardingContext) {
       const visits = summary?.visits || {};
       const continueData = resolveContinueModule(summary?.lastModule, modules);
-      const recommended = resolveRecommendedModule(
+      const preferredModule = !summary?.visitedCount
+        ? resolveOnboardingPreferredModule(modules, onboardingContext)
+        : null;
+      const recommended = preferredModule || resolveRecommendedModule(
         modules,
         visits,
         continueData?.id
@@ -2427,7 +2515,7 @@
       } : null, 'Sin datos', 'Sin sugerencias');
     }
 
-    async function updateDashboardInsights(modules, user) {
+    async function updateDashboardInsights(modules, user, onboardingContext) {
       // Local-first today: activity/continue/recommended come from YG_ACTIVITY_V1.
       // DB-backed counts stay in favorites/notifications until academic progress is integrated here.
       const summary = window.YGActivity?.getActivitySummary?.()
@@ -2435,13 +2523,15 @@
 
       if (!summary) {
         setInsightsEmptyState();
+        updateRecommendCard(null, modules, onboardingContext);
       } else if (!summary.visitedCount) {
         setInsightsEmptyState();
         updateSummaryCard(summary, modules);
+        updateRecommendCard(summary, modules, onboardingContext);
       } else {
         updateContinueCard(summary.lastModule, modules);
         updateSummaryCard(summary, modules);
-        updateRecommendCard(summary, modules);
+        updateRecommendCard(summary, modules, onboardingContext);
       }
 
       const favoritesEl = document.getElementById('summary-favorites');

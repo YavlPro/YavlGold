@@ -1,3 +1,132 @@
+## 🆕 SESIÓN: Fase 1 Onboarding contextual en dashboard autenticado (2026-03-11)
+
+### Diagnóstico de la fase
+
+**1. El hueco real no está en `agro.js` ni en nuevos wizard operativos**
+- Agro ya tiene wizard reutilizable y varios flujos guiados productivos.
+- El frente nuevo real es el wizard de creación de perfil/onboarding contextual.
+- La regla arquitectónica vigente del repo prohíbe seguir agregando features nuevas al monolito `apps/gold/agro/agro.js`.
+
+**2. El mejor punto de inserción es el dashboard autenticado**
+- `authClient.js` ya redirige por defecto a `/dashboard/` tras login.
+- `dashboard/auth-guard.js` ya bloquea acceso sin sesión.
+- El gate de onboarding puede resolverse dentro de `dashboard/index.html` sin abrir loops de login/home si se ejecuta después del guard y antes de cargar completamente la experiencia normal.
+
+**3. `profiles` hoy cubre identidad base, no contexto onboarding**
+- `profileManager.js` solo trabaja `username`, `avatar_url` y `bio`.
+- El contexto contextual/agro-específico no debe mezclarse en `profiles` salvo identidad estrictamente necesaria.
+- La persistencia del onboarding debe vivir en una tabla complementaria por `user_id`, con RLS.
+
+**4. La señal útil mínima debe verse en dashboard**
+- El dashboard hoy personaliza nombre/avatar desde `profiles`.
+- Esta fase debe permitir consumir al menos una señal del onboarding guardado, por ejemplo `display_name`, `entry_preference` o `agro_relation`, sin acoplar el flujo a `agro.js`.
+
+### Alcance exacto
+
+**Sí entra en esta fase**
+- Crear migración nueva para contexto onboarding por `user_id`.
+- Crear `onboardingManager` dedicado para leer/escribir contexto.
+- Crear wizard nuevo en archivo separado, progresivo y mobile-first.
+- Montar gate de primer acceso en `dashboard/index.html`.
+- Mostrar al menos una señal útil del contexto guardado en dashboard.
+
+**No entra en esta fase**
+- Nuevos wizard operativos del facturero.
+- Crecimiento funcional dentro de `apps/gold/agro/agro.js`.
+- Crypto V1, offline real, light mode, rediseño de exportaciones.
+- Reescritura de auth central salvo que el gate en dashboard falle.
+
+### Riesgos
+
+- El script inline principal de `dashboard/index.html` concentra la carga del dashboard; el gate debe insertarse sin romper módulos, notificaciones ni listeners existentes.
+- El onboarding puede convivir con usuarios que no tengan fila aún en la nueva tabla; el manager debe tolerar ausencia de datos sin romper la UI.
+- `display_name` del onboarding no debe forzar la semántica/validación única de `profiles.username`.
+- El wizard debe sobrevivir refresh parcial del usuario sin volver inconsistente el estado ni generar loops.
+- Cualquier cambio a auth compartido es de alto riesgo; se evita salvo necesidad demostrada.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/supabase/migrations/<timestamp>_create_user_onboarding_context.sql`
+- `apps/gold/assets/js/profile/onboardingManager.js`
+- `apps/gold/assets/js/profile/onboardingWizard.js`
+- `apps/gold/dashboard/index.html`
+
+### Plan de implementación
+
+1. Crear tabla complementaria `user_onboarding_context` con `user_id`, `display_name`, `agro_relation`, `farm_name`, `main_activity`, `entry_preference`, `onboarding_completed`, `created_at`, `updated_at`, índices y políticas RLS.
+2. Implementar `onboardingManager` con API mínima `hasCompletedOnboarding()`, `getOnboardingContext()` y `saveOnboardingContext()`, usando Supabase y manejo fail-safe.
+3. Implementar `onboardingWizard` como módulo separado, con UI guiada paso a paso, validación por bloque, resumen final y draft local tolerante a refresh.
+4. Integrar el gate dentro de `initDashboard()` para mostrar el wizard antes de cargar módulos/insights cuando el usuario autenticado aún no haya completado onboarding.
+5. Personalizar al menos una señal del dashboard con el contexto guardado, manteniendo el onboarding fuera de `agro.js` y evitando cambios en `authClient.js` salvo bloqueo real.
+6. Validar con `pnpm build:gold` y documentar resultado.
+
+### Implementación completada
+
+**1. Migración nueva**
+- Creada `apps/gold/supabase/migrations/20260311113000_create_user_onboarding_context.sql`.
+- Tabla nueva: `public.user_onboarding_context`.
+- Campos: `user_id`, `display_name`, `agro_relation`, `farm_name`, `main_activity`, `entry_preference`, `onboarding_completed`, timestamps.
+- Incluye `updated_at` trigger y políticas RLS por usuario.
+
+**2. Manager dedicado**
+- Creado `apps/gold/assets/js/profile/onboardingManager.js`.
+- Expone `getOnboardingContext()`, `hasCompletedOnboarding()` y `saveOnboardingContext()`.
+- Mantiene el contexto onboarding separado de `profiles`.
+- Expone también catálogos/opciones y helper `buildOnboardingHeroSubtitle()` para consumo de UI.
+
+**3. Wizard nuevo fuera de `agro.js`**
+- Creado `apps/gold/assets/js/profile/onboardingWizard.js`.
+- UX guiada por 5 pasos:
+  1. nombre visible
+  2. relación con Agro
+  3. contexto base / actividad principal
+  4. preferencia de entrada
+  5. resumen y confirmación
+- Incluye draft local versionado por usuario para tolerar refresh.
+- Bloquea la experiencia hasta completar o cerrar sesión, evitando usar `agro.js` como destino de crecimiento.
+
+**4. Gate en dashboard**
+- `apps/gold/dashboard/index.html` ahora:
+  - carga snapshot básico de `profiles`;
+  - consulta `OnboardingManager`;
+  - abre el wizard si `onboarding_completed` es falso;
+  - solo después carga módulos e insights.
+- El héroe consume `display_name` y personaliza subtítulo según `entry_preference`/`agro_relation`.
+- La tarjeta “Recomendado” usa `entry_preference` como señal útil cuando todavía no existe actividad local.
+
+### Build
+
+- `pnpm build:gold` → OK
+- Guard rails del repo:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### QA manual
+
+- Validación manual autenticada completa pendiente de aplicar la migración en el entorno Supabase correspondiente y usar una sesión real.
+- Validación técnica local completada:
+  - el build del monorepo pasó;
+  - los imports del dashboard resolvieron;
+  - el wizard quedó empaquetado sin tocar `apps/gold/agro/agro.js`.
+
+### QA browser completado
+
+- Se aplicó la migración `20260311113000_create_user_onboarding_context.sql` en el proyecto Supabase remoto de prueba para dejar el modelo listo.
+- El login/signup end-to-end contra auth real quedó bloqueado por captcha obligatorio del proveedor en entorno local; por eso el QA funcional de UI se cerró con sesión/backend simulados dentro del navegador, usando el código real del dashboard y del wizard.
+- Casos validados en browser:
+  - usuario sin onboarding entra a `/dashboard/` y ve el wizard;
+  - refresh intermedio conserva el draft local y reabre en el paso correcto;
+  - guardado final persiste contexto, cierra el wizard y personaliza héroe + recomendado;
+  - usuario ya onboarded vuelve a entrar y no ve el wizard;
+  - logout devuelve a home sin loop;
+  - viewport móvil angosto carga el flujo.
+- Hallazgo corregido durante QA:
+  - en viewports bajos el `Paso 2` podía quedar parcialmente superpuesto por el layout interno del wizard y un click normal no entraba en las tarjetas de selección;
+  - se ajustó `onboardingWizard.js` para permitir scroll vertical del overlay y soltar la altura mínima rígida del shell en `max-width: 900px` o `max-height: 820px`.
+
 ## 🆕 SESIÓN: Separar Perfil Agricultor de Analítica Global (2026-03-08c)
 
 ### Diagnóstico
