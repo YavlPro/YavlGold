@@ -1,3 +1,146 @@
+## 🆕 SESIÓN: Fase 1B Wizard de edición de perfil Agro (2026-03-11)
+
+### Diagnóstico de la fase
+
+**1. La deuda abierta ya no es onboarding, sino edición posterior**
+- El wizard de primer acceso ya quedó resuelto fuera de `agro.js`.
+- La experiencia inconsistente ahora está en `Editar mis datos`, que sigue siendo un formulario largo dentro de Agro.
+- El problema UX real es que el primer acceso es guiado y la edición posterior no.
+
+**2. El punto correcto a intervenir es el perfil Agro dedicado**
+- La UX visible del editor vive en `apps/gold/agro/index.html`.
+- La orquestación actual de lectura/guardado vive en `apps/gold/agro/agroperfil.js`.
+- Esta fase no debe mezclar `dashboard/index.html`, `dashboard/perfil.html` ni `dashboard/configuracion.html`.
+
+**3. El modelo ya está separado**
+- `agro_farmer_profile` guarda el perfil privado Agro.
+- `agro_public_profiles` guarda el bloque público opt-in.
+- `user_onboarding_context` es la fuente correcta para `agro_relation` y `entry_preference`; no deben duplicarse en `agro_farmer_profile`.
+
+**4. Riesgo principal**
+- `saveFarmerProfile()` mezcla UI, persistencia privada, persistencia pública, sync de metadata y refresh visual.
+- Si se monta el wizard sin partir primero esa función, se suma otra capa de complejidad encima de `agroperfil.js`.
+
+### Alcance exacto
+
+**Sí entra en V1B core**
+- Reemplazar la experiencia visible de edición larga por un wizard guiado.
+- Precargar datos existentes del perfil privado Agro.
+- Guardar `display_name`, `farm_name`, `location_text`, `phone`, `whatsapp`, `instagram`, `facebook`, `notes`.
+- Incluir avatar dentro del flujo y mantener sync visual del perfil dedicado.
+- Mantener `agroperfil.js` como orquestador de datos y persistencia.
+
+**No entra en V1B core**
+- Rehacer el onboarding del dashboard.
+- Meter lógica nueva en `apps/gold/agro/agro.js`.
+- Convertir perfil público en wizard en este primer corte.
+- Integrar `agro_relation` y `entry_preference` si meten ruido en el lote inicial.
+- Tocar otras superficies de perfil fuera de Agro.
+
+### Riesgos
+
+- El formulario inline actual expone IDs que `agroperfil.js` todavía usa; la transición debe mantener compatibilidad mientras se migra la UX.
+- El manejo de avatar ya tiene estado propio y no se puede degradar.
+- La vista dedicada del perfil y el chip del header deben seguir sincronizados después de guardar.
+- Si entra el perfil público en este mismo lote, el alcance se infla demasiado.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agroperfil.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/assets/js/profile/profileEditWizard.js`
+
+### Plan de implementación
+
+1. Refactorizar `agroperfil.js` para separar prefill, payload, persistencia privada, sync de metadata y aplicación del estado guardado.
+2. Crear `profileEditWizard.js` como módulo UI puro, sin acceso directo a Supabase.
+3. Integrar el wizard con prefill desde `agro_farmer_profile` y guardado vía `agroperfil.js`.
+4. Cambiar `Editar mis datos` para abrir el wizard, manteniendo el formulario legacy fuera de la UX principal.
+5. Validar sync visual del perfil dedicado después del guardado.
+6. Ejecutar QA desktop + móvil y `pnpm build:gold`.
+
+### Implementación completada
+
+**1. Refactor seguro de `agroperfil.js`**
+- Se partió la preparación y persistencia del perfil privado sin mover la feature a `agro.js`.
+- Nuevos helpers del flujo:
+  - `buildPrivateProfilePrefill(...)`
+  - `buildPrivateProfilePayload(...)`
+  - `savePrivateFarmerProfile(...)`
+  - `syncProfileAuthMetadata(...)`
+  - `applySavedProfileState(...)`
+  - `saveProfileEditFlow(...)`
+- `saveFarmerProfile(...)` quedó como compatibilidad del editor legacy y delega en el flujo nuevo.
+- `bindPerfilEditButton()` ahora abre el wizard guiado en lugar de hacer scroll al formulario largo.
+
+**2. Wizard nuevo fuera del monolito**
+- Creado `apps/gold/assets/js/profile/profileEditWizard.js`.
+- El módulo es solo UI/flujo:
+  - sin acceso directo a Supabase;
+  - con pasos cortos;
+  - validación por bloque;
+  - resumen final antes de guardar;
+  - draft local por usuario para tolerar refresh.
+- Campos cubiertos en V1B core:
+  - `display_name`
+  - avatar
+  - `farm_name`
+  - `location_text`
+  - `notes`
+  - `phone`
+  - `whatsapp`
+  - `instagram`
+  - `facebook`
+
+**3. Cambio de UX visible en Agro**
+- `apps/gold/agro/index.html` ahora muestra una entrada guiada para `Editar mis datos`.
+- El formulario largo legacy no se eliminó de golpe:
+  - quedó dentro de un bloque de fallback temporal;
+  - se mantiene para compatibilidad mientras se estabiliza la migración UX.
+- Se añadieron chips/resumen visibles para reflejar nombre, finca, ubicación y contacto antes de abrir el wizard.
+
+**4. Estilos dedicados**
+- `apps/gold/agro/agro.css` recibió estilos ligeros para:
+  - la entrada del wizard,
+  - los chips resumen,
+  - la zona de acciones,
+  - el fallback legacy,
+  - y comportamiento responsive móvil.
+
+### QA browser ejecutado
+
+- Se levantó `apps/gold` en local y se probó `/agro/` con navegador automatizado.
+- Como el auth real en local está condicionado por captcha del proveedor, el flujo se validó con sesión/backend simulados en browser, pero usando el código real del módulo Agro y del wizard.
+- Casos verificados:
+  - el perfil existente carga datos precargados en la entrada visible y dentro del wizard;
+  - el usuario puede avanzar y retroceder sin perder cambios;
+  - refresh a mitad del flujo conserva draft y paso actual;
+  - el resumen final refleja exactamente los datos editados;
+  - guardar actualiza el estado persistido, limpia el draft y refresca la vista dedicada del perfil;
+  - reabrir el wizard después de guardar muestra el nuevo estado guardado;
+  - en móvil angosto (`390x844`) el overlay permanece usable y sin clipping relevante.
+
+### Hallazgo corregido durante QA
+
+- El wizard re-renderizaba demasiado en cambios de texto y eso elevaba el riesgo de fricción en inputs.
+- Se ajustó `profileEditWizard.js` para que los cambios normales de campos actualicen estado sin reconstruir toda la UI en cada pulsación; el re-render completo queda reservado para cambios que sí alteran estructura visual.
+
+### Decisión explícita de alcance
+
+- **Sí quedó dentro del lote:** perfil privado Agro + avatar + sync visual.
+- **Quedó fuera a propósito:** wizard del perfil público y edición de `agro_relation` / `entry_preference`.
+- Esa capa queda para una subfase posterior y evita duplicar contexto que ya vive en onboarding.
+
+### Build
+
+- `pnpm build:gold` → OK
+- Guard rails del repo:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
 ## 🆕 SESIÓN: Fase 1 Onboarding contextual en dashboard autenticado (2026-03-11)
 
 ### Diagnóstico de la fase

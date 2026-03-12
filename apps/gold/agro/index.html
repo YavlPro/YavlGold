@@ -1321,7 +1321,7 @@
                     <h2 class="perfil-hero__name" id="perfil-view-name">Agricultor</h2>
                     <p class="perfil-hero__email" id="perfil-view-email"></p>
                 </div>
-                <button type="button" class="perfil-hero__edit-btn" id="perfil-edit-btn">
+                <button type="button" class="perfil-hero__edit-btn" id="perfil-edit-btn" data-profile-edit-trigger>
                     <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Editar Perfil
                 </button>
             </div>
@@ -1371,7 +1371,40 @@
                         <section class="agro-profile-section">
                             <h4 class="agro-profile-section-title"><i class="fa-solid fa-pen-to-square"
                                     aria-hidden="true"></i> Editar mis datos</h4>
-                            <form id="agro-profile-form" class="agro-profile-form">
+                            <div class="agro-profile-wizard-entry">
+                                <p class="agro-profile-wizard-copy">
+                                    Ahora puedes editar tu perfil en pasos cortos, con datos precargados y un
+                                    resumen final antes de guardar.
+                                </p>
+                                <div class="agro-profile-wizard-summary">
+                                    <article class="agro-profile-wizard-chip">
+                                        <span>Nombre</span>
+                                        <strong id="agro-profile-edit-summary-name">Agricultor</strong>
+                                    </article>
+                                    <article class="agro-profile-wizard-chip">
+                                        <span>Finca</span>
+                                        <strong id="agro-profile-edit-summary-farm">Sin definir</strong>
+                                    </article>
+                                    <article class="agro-profile-wizard-chip">
+                                        <span>Ubicación</span>
+                                        <strong id="agro-profile-edit-summary-location">Sin definir</strong>
+                                    </article>
+                                    <article class="agro-profile-wizard-chip">
+                                        <span>Contacto</span>
+                                        <strong id="agro-profile-edit-summary-contact">Sin definir</strong>
+                                    </article>
+                                </div>
+                                <div class="agro-profile-wizard-actions">
+                                    <button type="button" id="btn-open-profile-edit-wizard" class="btn btn-primary"
+                                        data-profile-edit-trigger>
+                                        Abrir editor guiado
+                                    </button>
+                                </div>
+                            </div>
+
+                            <details class="agro-profile-legacy-fallback">
+                                <summary>Usar editor clásico temporal</summary>
+                                <form id="agro-profile-form" class="agro-profile-form">
                                 <div class="agro-profile-avatar-editor">
                                     <div class="agro-profile-avatar-preview" id="agro-profile-avatar-preview"
                                         aria-hidden="true">
@@ -1495,7 +1528,8 @@
                                 </section>
                                 <button type="submit" id="btn-save-agro-profile" class="btn btn-primary">Guardar
                                     Perfil</button>
-                            </form>
+                                </form>
+                            </details>
                         </section>
                     </div>
 

@@ -6,6 +6,7 @@ import {
     readMoneyValuesHidden
 } from './agro-privacy.js';
 import { initAgroPublico, openPublicFarmerProfile } from './agropublico.js';
+import { openProfileEditWizard } from '../assets/js/profile/profileEditWizard.js';
 import uxMessages from '../assets/js/ui/uxMessages.js';
 import {
     computeUnitTotalsByCropFromRows,
@@ -24,6 +25,7 @@ const PROFILE_UPDATED_ID = 'agro-profile-stats-updated';
 const PROFILE_EXPORT_BUTTON_ID = 'btn-export-agro-profile-md';
 const GLOBAL_STATS_STATUS_ID = 'agro-global-stats-status';
 const PROFILE_SAVE_BUTTON_ID = 'btn-save-agro-profile';
+const PROFILE_WIZARD_TRIGGER_ID = 'btn-open-profile-edit-wizard';
 const PROFILE_AVATAR_PREVIEW_ID = 'agro-profile-avatar-preview';
 const PROFILE_AVATAR_URL_ID = 'agro-profile-avatar_url';
 const PROFILE_AVATAR_FILE_ID = 'agro-profile-avatar-file';
@@ -62,6 +64,9 @@ const PROFILE_FIELD_IDS = [
     'facebook',
     'notes'
 ];
+
+const PRIVATE_PROFILE_COLUMNS = 'user_id,display_name,farm_name,location_text,phone,whatsapp,instagram,facebook,notes,created_at,updated_at';
+const PUBLIC_PROFILE_COLUMNS = 'user_id,public_enabled,display_name,avatar_url,bio,location_text,whatsapp,instagram,created_at,updated_at';
 
 const PUBLIC_PROFILE_FIELD_IDS = [
     'display_name',
@@ -580,29 +585,72 @@ function updateProfileHeaderName(profile = {}, user = null) {
     updateProfileHeaderAvatar(avatarUrl, profile, user);
 }
 
+function readProfileLikeField(source = {}, ...keys) {
+    for (const key of keys) {
+        if (source?.[key] !== undefined && source?.[key] !== null) {
+            return String(source[key]).trim();
+        }
+    }
+    return '';
+}
+
+function buildPrivateProfilePrefill(profile = {}, user = null) {
+    return {
+        userId: String(user?.id || '').trim(),
+        email: String(user?.email || '').trim(),
+        displayName: resolveDisplayName(profile, user),
+        farmName: readProfileLikeField(profile, 'farm_name', 'farmName'),
+        locationText: readProfileLikeField(profile, 'location_text', 'locationText'),
+        phone: readProfileLikeField(profile, 'phone'),
+        whatsapp: readProfileLikeField(profile, 'whatsapp'),
+        instagram: readProfileLikeField(profile, 'instagram'),
+        facebook: readProfileLikeField(profile, 'facebook'),
+        notes: readProfileLikeField(profile, 'notes'),
+        avatarUrl: state.currentAvatarUrl || resolveEffectiveAvatarUrl(user)
+    };
+}
+
+function buildPrivateProfilePayload(source = {}) {
+    return {
+        display_name: readProfileLikeField(source, 'display_name', 'displayName'),
+        farm_name: readProfileLikeField(source, 'farm_name', 'farmName'),
+        location_text: readProfileLikeField(source, 'location_text', 'locationText'),
+        phone: readProfileLikeField(source, 'phone'),
+        whatsapp: readProfileLikeField(source, 'whatsapp'),
+        instagram: readProfileLikeField(source, 'instagram'),
+        facebook: readProfileLikeField(source, 'facebook'),
+        notes: readProfileLikeField(source, 'notes')
+    };
+}
+
 function fillProfileForm(profile = {}, user = null) {
-    const displayNameFallback = resolveDisplayName(profile, user);
+    const prefill = buildPrivateProfilePrefill(profile, user);
+    const valueMap = {
+        display_name: prefill.displayName,
+        farm_name: prefill.farmName,
+        location_text: prefill.locationText,
+        phone: prefill.phone,
+        whatsapp: prefill.whatsapp,
+        instagram: prefill.instagram,
+        facebook: prefill.facebook,
+        notes: prefill.notes
+    };
 
     PROFILE_FIELD_IDS.forEach((fieldName) => {
         const input = document.getElementById(`agro-profile-${fieldName}`);
         if (!input) return;
-        const nextValue = profile?.[fieldName];
-        if (fieldName === 'display_name') {
-            input.value = String(nextValue || displayNameFallback || '').trim();
-            return;
-        }
-        input.value = String(nextValue || '').trim();
+        input.value = valueMap[fieldName] || '';
     });
 }
 
 function readProfileForm() {
-    const payload = {};
+    const rawData = {};
     PROFILE_FIELD_IDS.forEach((fieldName) => {
         const input = document.getElementById(`agro-profile-${fieldName}`);
         if (!input) return;
-        payload[fieldName] = String(input.value || '').trim();
+        rawData[fieldName] = String(input.value || '').trim();
     });
-    return payload;
+    return buildPrivateProfilePayload(rawData);
 }
 
 function fillPublicProfileForm(publicProfile = {}, privateProfile = {}, user = null) {
@@ -658,6 +706,23 @@ function readPublicProfileForm(privateProfileData = {}, user = null) {
     return payload;
 }
 
+function syncProfileEditEntrySummary(profile = {}, user = null) {
+    const summary = buildPrivateProfilePrefill(profile, user);
+    const summaryMap = {
+        'agro-profile-edit-summary-name': summary.displayName,
+        'agro-profile-edit-summary-farm': summary.farmName,
+        'agro-profile-edit-summary-location': summary.locationText,
+        'agro-profile-edit-summary-contact': summary.whatsapp || summary.phone
+    };
+
+    Object.entries(summaryMap).forEach(([id, value]) => {
+        const node = document.getElementById(id);
+        if (!node) return;
+        node.textContent = String(value || '').trim() || 'Sin definir';
+        node.classList.toggle('is-empty', !String(value || '').trim());
+    });
+}
+
 function isMissingPublicProfileTableError(error) {
     const code = String(error?.code || '').toUpperCase();
     const text = `${String(error?.message || '')} ${String(error?.details || '')}`.toLowerCase();
@@ -680,7 +745,7 @@ async function loadPublicProfile() {
 
         const { data, error } = await state.supabase
             .from('agro_public_profiles')
-            .select('user_id,public_enabled,display_name,avatar_url,bio,location_text,whatsapp,instagram,created_at,updated_at')
+            .select(PUBLIC_PROFILE_COLUMNS)
             .eq('user_id', user.id)
             .maybeSingle();
 
@@ -707,7 +772,7 @@ async function loadFarmerProfile() {
 
         const { data, error } = await state.supabase
             .from('agro_farmer_profile')
-            .select('user_id,display_name,farm_name,location_text,phone,whatsapp,instagram,facebook,notes,created_at,updated_at')
+            .select(PRIVATE_PROFILE_COLUMNS)
             .eq('user_id', user.id)
             .maybeSingle();
 
@@ -717,6 +782,7 @@ async function loadFarmerProfile() {
         fillProfileForm(data || {}, user);
         syncAvatarFormFromUser(user, data || {});
         updateProfileHeaderName(data || {}, user);
+        syncProfileEditEntrySummary(data || {}, user);
         syncPerfilDedicatedView();
         fillPublicProfileForm(state.publicProfile || {}, data || {}, user);
         setProfileStatus('Perfil listo.', 'ok');
@@ -728,14 +794,162 @@ async function loadFarmerProfile() {
     }
 }
 
-async function saveFarmerProfile(event) {
-    event?.preventDefault();
-    if (state.loadingProfile) return;
+async function savePrivateFarmerProfile(userId, profilePayload) {
+    const payload = {
+        user_id: userId,
+        ...buildPrivateProfilePayload(profilePayload),
+        updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await state.supabase
+        .from('agro_farmer_profile')
+        .upsert(payload, { onConflict: 'user_id' })
+        .select(PRIVATE_PROFILE_COLUMNS)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data || payload;
+}
+
+async function savePublicFarmerProfile(userId, publicProfileData = {}, privateProfileData = {}, user = null) {
+    const publicPayload = {
+        user_id: userId,
+        public_enabled: !!publicProfileData.public_enabled,
+        display_name: String(publicProfileData.display_name || '').trim() || null,
+        avatar_url: normalizeAvatarUrl(publicProfileData.avatar_url) || null,
+        bio: String(publicProfileData.bio || '').trim() || null,
+        location_text: String(publicProfileData.location_text || '').trim() || null,
+        whatsapp: String(publicProfileData.whatsapp || '').trim() || null,
+        instagram: String(publicProfileData.instagram || '').trim() || null,
+        updated_at: new Date().toISOString()
+    };
+
+    if (!publicPayload.display_name) {
+        publicPayload.display_name = resolveDisplayName(privateProfileData, user);
+    }
+
+    const { data, error } = await state.supabase
+        .from('agro_public_profiles')
+        .upsert(publicPayload, { onConflict: 'user_id' })
+        .select(PUBLIC_PROFILE_COLUMNS)
+        .maybeSingle();
+
+    if (error) {
+        if (isMissingPublicProfileTableError(error)) {
+            return {
+                skipped: true,
+                data: publicPayload
+            };
+        }
+        throw error;
+    }
+
+    return {
+        skipped: false,
+        data: data || publicPayload
+    };
+}
+
+function readLegacyAvatarState() {
+    const avatarInput = document.getElementById(PROFILE_AVATAR_URL_ID);
+    return {
+        mode: state.avatarDraftMode || 'none',
+        value: state.avatarDraftMode === 'none'
+            ? normalizeAvatarUrl(avatarInput?.value) || ''
+            : state.avatarDraftValue || ''
+    };
+}
+
+async function syncProfileAuthMetadata(user, privateProfileData = {}, avatarState = {}) {
+    const nextUserId = String(user?.id || '').trim();
+    const currentMetadataAvatar = normalizeAvatarUrl(user?.user_metadata?.avatar_url);
+    const metadataPatch = {};
+    let metadataSyncFailed = false;
+    let nextUser = user || null;
+
+    const nextDisplayName = resolveDisplayName(privateProfileData, user);
+    const currentDisplayName = String(user?.user_metadata?.full_name || '').trim();
+    if (nextDisplayName !== currentDisplayName) {
+        metadataPatch.full_name = nextDisplayName;
+    }
+
+    const normalizedAvatarMode = String(avatarState?.mode || 'none').trim() || 'none';
+    const normalizedAvatarValue = normalizeAvatarUrl(avatarState?.value) || '';
+    let nextAvatarUrl = state.currentAvatarUrl || resolveEffectiveAvatarUrl(user);
+
+    if (normalizedAvatarMode === 'local') {
+        nextAvatarUrl = normalizedAvatarValue;
+        if (normalizedAvatarValue) {
+            writeLocalAvatar(nextUserId, normalizedAvatarValue);
+        }
+        if (currentMetadataAvatar) {
+            metadataPatch.avatar_url = null;
+        }
+    } else if (normalizedAvatarMode === 'clear') {
+        nextAvatarUrl = '';
+        clearLocalAvatar(nextUserId);
+        if (currentMetadataAvatar) {
+            metadataPatch.avatar_url = null;
+        }
+    } else if (normalizedAvatarMode === 'url') {
+        nextAvatarUrl = normalizedAvatarValue;
+        if (normalizedAvatarValue) {
+            writeLocalAvatar(nextUserId, normalizedAvatarValue);
+        } else {
+            clearLocalAvatar(nextUserId);
+        }
+        if (normalizedAvatarValue !== currentMetadataAvatar) {
+            metadataPatch.avatar_url = normalizedAvatarValue || null;
+        }
+    }
+
+    if (Object.keys(metadataPatch).length > 0) {
+        const { data: authData, error: authError } = await state.supabase.auth.updateUser({
+            data: metadataPatch
+        });
+
+        if (authError) {
+            metadataSyncFailed = true;
+            console.warn('[AGRO_PROFILE] auth metadata sync warning:', authError);
+        } else if (authData?.user) {
+            nextUser = authData.user;
+        }
+    }
+
+    return {
+        user: nextUser,
+        avatarUrl: nextAvatarUrl,
+        metadataSyncFailed
+    };
+}
+
+function applySavedProfileState({ privateProfile, publicProfile = state.publicProfile, user = null, avatarUrl = '' } = {}) {
+    state.profile = privateProfile || null;
+    state.publicProfile = publicProfile || null;
+    state.user = user || state.user;
+    state.avatarDraftMode = 'none';
+    state.avatarDraftValue = '';
+    state.currentAvatarUrl = avatarUrl || resolveEffectiveAvatarUrl(state.user);
+
+    fillProfileForm(state.profile || {}, state.user);
+    syncAvatarFormFromUser(state.user, state.profile || {});
+    updateProfileHeaderName(state.profile || {}, state.user);
+    syncProfileEditEntrySummary(state.profile || {}, state.user);
+    syncPerfilDedicatedView();
+    fillPublicProfileForm(state.publicProfile || {}, state.profile || {}, state.user);
+}
+
+async function saveProfileEditFlow(wizardData = {}, options = {}) {
+    if (state.loadingProfile) {
+        throw new Error('Ya estamos guardando tu perfil. Espera un momento.');
+    }
+
+    const { persistPublicProfile = false, publicProfileData = null } = options;
+    const hadPersistedProfile = !!state.profile?.user_id;
 
     state.loadingProfile = true;
     setSaveButtonBusy(true);
     setProfileStatus('Guardando perfil...', 'muted');
-    const hadPersistedProfile = !!state.profile?.user_id;
 
     try {
         const user = await resolveSessionUser();
@@ -743,117 +957,46 @@ async function saveFarmerProfile(event) {
             throw new Error('Sesión no disponible.');
         }
 
-        const formData = readProfileForm();
-        const payload = {
-            user_id: user.id,
-            ...formData,
-            updated_at: new Date().toISOString()
+        const privatePayload = buildPrivateProfilePayload(wizardData);
+        const privateProfile = await savePrivateFarmerProfile(user.id, privatePayload);
+
+        let publicProfileResult = {
+            skipped: false,
+            data: state.publicProfile
         };
 
-        const { error } = await state.supabase
-            .from('agro_farmer_profile')
-            .upsert(payload, { onConflict: 'user_id' });
-
-        if (error) throw error;
-
-        const publicFormData = readPublicProfileForm(payload, user);
-        const publicPayload = {
-            user_id: user.id,
-            public_enabled: !!publicFormData.public_enabled,
-            display_name: String(publicFormData.display_name || '').trim() || null,
-            avatar_url: normalizeAvatarUrl(publicFormData.avatar_url) || null,
-            bio: String(publicFormData.bio || '').trim() || null,
-            location_text: String(publicFormData.location_text || '').trim() || null,
-            whatsapp: String(publicFormData.whatsapp || '').trim() || null,
-            instagram: String(publicFormData.instagram || '').trim() || null,
-            updated_at: new Date().toISOString()
-        };
-
-        let publicProfileSkipped = false;
-        let publicData = null;
-        const { data: publicDataRes, error: publicError } = await state.supabase
-            .from('agro_public_profiles')
-            .upsert(publicPayload, { onConflict: 'user_id' })
-            .select('user_id,public_enabled,display_name,avatar_url,bio,location_text,whatsapp,instagram,created_at,updated_at')
-            .maybeSingle();
-
-        if (publicError) {
-            if (isMissingPublicProfileTableError(publicError)) {
-                console.warn('[AGRO_PROFILE] agro_public_profiles no disponible. Se conserva guardado privado.');
-                publicProfileSkipped = true;
-            } else {
-                throw publicError;
-            }
-        } else {
-            publicData = publicDataRes || null;
+        if (persistPublicProfile && publicProfileData) {
+            publicProfileResult = await savePublicFarmerProfile(user.id, publicProfileData, privateProfile, user);
         }
 
-        const metadataPatch = {};
-        let metadataSyncFailed = false;
-        const nextDisplayName = resolveDisplayName(payload, user);
-        const currentDisplayName = String(user?.user_metadata?.full_name || '').trim();
-        if (nextDisplayName !== currentDisplayName) {
-            metadataPatch.full_name = nextDisplayName;
-        }
+        const avatarState = wizardData?.avatarState || readLegacyAvatarState();
+        const metadataResult = await syncProfileAuthMetadata(user, privateProfile, avatarState);
 
-        const avatarInput = document.getElementById(PROFILE_AVATAR_URL_ID);
-        const inputAvatarUrl = normalizeAvatarUrl(avatarInput?.value);
-        const currentMetadataAvatar = normalizeAvatarUrl(user?.user_metadata?.avatar_url);
+        applySavedProfileState({
+            privateProfile,
+            publicProfile: publicProfileResult.data,
+            user: metadataResult.user,
+            avatarUrl: metadataResult.avatarUrl
+        });
 
-        let nextAvatarUrl = '';
-        if (state.avatarDraftMode === 'local' && state.avatarDraftValue) {
-            nextAvatarUrl = state.avatarDraftValue;
-            writeLocalAvatar(user.id, state.avatarDraftValue);
-            if (currentMetadataAvatar) {
-                metadataPatch.avatar_url = null;
-            }
-        } else if (state.avatarDraftMode === 'clear') {
-            nextAvatarUrl = '';
-            clearLocalAvatar(user.id);
-            if (currentMetadataAvatar) {
-                metadataPatch.avatar_url = null;
-            }
-        } else {
-            nextAvatarUrl = inputAvatarUrl || '';
-            if (nextAvatarUrl) {
-                writeLocalAvatar(user.id, nextAvatarUrl);
-            } else {
-                clearLocalAvatar(user.id);
-            }
-            if (nextAvatarUrl !== currentMetadataAvatar) {
-                metadataPatch.avatar_url = nextAvatarUrl || null;
-            }
-        }
-
-        if (Object.keys(metadataPatch).length > 0) {
-            const { data: authData, error: authError } = await state.supabase.auth.updateUser({
-                data: metadataPatch
-            });
-            if (authError) {
-                metadataSyncFailed = true;
-                console.warn('[AGRO_PROFILE] auth metadata sync warning:', authError);
-            } else if (authData?.user) {
-                state.user = authData.user;
-            }
-        }
-
-        state.profile = payload;
-        state.publicProfile = publicData || publicPayload;
-        state.currentAvatarUrl = nextAvatarUrl;
-        state.avatarDraftMode = 'none';
-        state.avatarDraftValue = '';
-        updateProfileHeaderName(payload, user);
-        syncPerfilDedicatedView();
-        fillPublicProfileForm(state.publicProfile, payload, state.user || user);
-        if (publicProfileSkipped) {
+        if (publicProfileResult.skipped) {
             setProfileStatus('Perfil privado guardado. Falta migracion para perfil publico.', 'warn');
-        } else if (metadataSyncFailed) {
+        } else if (metadataResult.metadataSyncFailed) {
             setProfileStatus('Perfil guardado. Aviso: no se pudo sincronizar metadata global.', 'warn');
         } else {
-            const pubMsg = publicPayload.public_enabled ? 'ACTIVADO ✅' : 'DESACTIVADO 🔒';
-            setProfileStatus(`Perfil guardado. Perfil público: ${pubMsg}`, 'ok');
+            setProfileStatus('Perfil guardado.', 'ok');
         }
+
         uxMessages.success(uxMessages.copy.profileSaved({ created: !hadPersistedProfile }));
+
+        return {
+            privateProfile,
+            publicProfile: publicProfileResult.data,
+            user: metadataResult.user,
+            avatarUrl: metadataResult.avatarUrl,
+            metadataSyncFailed: metadataResult.metadataSyncFailed,
+            publicProfileSkipped: publicProfileResult.skipped
+        };
     } catch (error) {
         console.error('[AGRO_PROFILE] save profile error:', error);
         setProfileStatus('No se pudo guardar el perfil.', 'error');
@@ -861,9 +1004,29 @@ async function saveFarmerProfile(event) {
             title: 'No pudimos guardar tu perfil.',
             message: error.message || 'Intenta de nuevo en un momento.'
         });
+        throw error;
     } finally {
         state.loadingProfile = false;
         setSaveButtonBusy(false);
+    }
+}
+
+async function saveFarmerProfile(event) {
+    event?.preventDefault();
+
+    const legacyProfileData = readProfileForm();
+    const legacyPublicData = readPublicProfileForm(legacyProfileData, state.user);
+
+    try {
+        await saveProfileEditFlow({
+            ...legacyProfileData,
+            avatarState: readLegacyAvatarState()
+        }, {
+            persistPublicProfile: true,
+            publicProfileData: legacyPublicData
+        });
+    } catch (_) {
+        // saveProfileEditFlow ya publica estado + toast
     }
 }
 
@@ -1221,6 +1384,34 @@ async function openAndRefreshProfile(triggerElement = null) {
     await loadPublicProfile();
 }
 
+async function openProfileEditFlow(triggerElement = null) {
+    if (triggerElement instanceof HTMLElement) {
+        state.lastFocusedTrigger = triggerElement;
+    }
+
+    try {
+        const user = await resolveSessionUser();
+        if (!state.profile && !state.loadingProfile) {
+            await loadFarmerProfile();
+        }
+
+        const initialData = buildPrivateProfilePrefill(state.profile || {}, user);
+        await openProfileEditWizard({
+            initialData,
+            onSave: async (wizardData) => {
+                return await saveProfileEditFlow(wizardData);
+            }
+        });
+    } catch (error) {
+        console.error('[AGRO_PROFILE] open profile wizard error:', error);
+        setProfileStatus('No se pudo abrir el editor guiado.', 'error');
+        uxMessages.error({
+            title: 'No pudimos abrir el editor guiado.',
+            message: error.message || 'Intenta de nuevo en un momento.'
+        });
+    }
+}
+
 function bindOpenButtons() {
     const profileButton = document.getElementById('agro-profile-button');
     state.openButtons = [profileButton].filter(Boolean);
@@ -1398,21 +1589,16 @@ export function initAgroPerfil({ supabase } = {}) {
     };
     window.syncPerfilViewFromProfile = function () {
         syncPerfilDedicatedView();
+        syncProfileEditEntrySummary(state.profile || {}, state.user);
     };
 }
 
 function bindPerfilEditButton() {
-    const editBtn = document.getElementById('perfil-edit-btn');
-    if (!editBtn) return;
-    editBtn.addEventListener('click', () => {
-        const formSection = document.getElementById('modal-agro-profile');
-        if (formSection) {
-            formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            const firstInput = formSection.querySelector('input:not([hidden])');
-            if (firstInput) {
-                setTimeout(() => firstInput.focus({ preventScroll: true }), 350);
-            }
-        }
+    document.querySelectorAll('[data-profile-edit-trigger]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            openProfileEditFlow(button);
+        });
     });
 }
 
