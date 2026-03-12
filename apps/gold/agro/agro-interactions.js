@@ -148,7 +148,7 @@ function saveTask() {
     const btn = document.getElementById('agenda-add-btn');
     if (btn) {
         btn.style.background = '#4ade80';
-        setTimeout(() => { btn.style.background = 'var(--gold-primary, #C8A752)'; }, 300);
+        setTimeout(() => { btn.style.background = 'var(--v10-gold-4, #C8A752)'; }, 300);
     }
 }
 
@@ -233,7 +233,7 @@ function renderAgendaPanel(dateStr) {
             tasksHtml += `
                 <div style="background: rgba(255,255,255,0.03); padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; justify-content: space-between; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(200,167,82,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'">
                     <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--gold-primary, #C8A752); flex-shrink: 0;"></div>
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--v10-gold-4, #C8A752); flex-shrink: 0;"></div>
                         <span style="color: #ccc; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(task)}</span>
                     </div>
                     <button onclick="window.deleteTask('${dateStr}', ${index})"
@@ -250,7 +250,7 @@ function renderAgendaPanel(dateStr) {
 
     panel.innerHTML = `
         <div style="animation: fadeIn 0.3s ease;">
-            <div style="font-size: 10px; color: var(--gold-primary, #C8A752); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">PROGRAMACIÓN</div>
+            <div style="font-size: 10px; color: var(--v10-gold-4, #C8A752); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">PROGRAMACIÓN</div>
             <h2 style="font-size: 1.2rem; color: #fff; font-family: 'Orbitron', sans-serif; margin: 0 0 6px 0; text-transform: capitalize; line-height: 1.3;">${humanDate}</h2>
             <div style="font-size: 12px; color: #888; margin-bottom: 20px;">${phaseInfo.icon} ${phaseInfo.name}</div>
 
@@ -263,13 +263,13 @@ function renderAgendaPanel(dateStr) {
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="agenda-note-input" placeholder="Ej: Comprar fertilizante..."
                         style="flex: 1; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fff; outline: none; transition: border-color 0.2s; font-family: 'Rajdhani', sans-serif;"
-                        onfocus="this.style.borderColor='var(--gold-primary, #C8A752)'"
+                        onfocus="this.style.borderColor='var(--v10-gold-4, #C8A752)'"
                         onblur="this.style.borderColor='rgba(255,255,255,0.15)'"
                         onkeypress="if(event.key === 'Enter') window.saveTask()">
                     <button id="agenda-add-btn" onclick="window.saveTask()"
-                        style="background: var(--gold-primary, #C8A752); color: #000; border: none; padding: 0 14px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                        style="background: var(--v10-gold-4, #C8A752); color: #000; border: none; padding: 0 14px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
                         onmouseover="this.style.background='#d4b866'"
-                        onmouseout="this.style.background='var(--gold-primary, #C8A752)'">
+                        onmouseout="this.style.background='var(--v10-gold-4, #C8A752)'">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
@@ -318,7 +318,7 @@ function switchMarketTab(tab) {
 
     if (!btnCrypto || !btnFiat || !viewCrypto || !viewFiat) return;
 
-    const activeStyle = 'flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(255,255,255,0.03); border: none; border-bottom: 2px solid var(--gold-primary, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;';
+    const activeStyle = 'flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: rgba(255,255,255,0.03); border: none; border-bottom: 2px solid var(--v10-gold-4, #C8A752); color: #fff; cursor: pointer; transition: all 0.2s;';
     const inactiveStyle = 'flex: 1; padding: 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #666; cursor: pointer; transition: all 0.2s;';
 
     if (tab === 'crypto') {
@@ -426,7 +426,7 @@ function renderCacheBadge(container, ageMinutes) {
     if (!container) return;
     const ageText = ageMinutes <= 0 ? 'ahora' : `hace ${ageMinutes} min`;
     const badge = `
-        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 12px; border-radius: 999px; border: 1px solid rgba(200,167,82,0.35); color: var(--gold-primary, #C8A752); font-size: 0.75rem; background: rgba(200,167,82,0.08);">
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; margin-bottom: 12px; border-radius: 999px; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); font-size: 0.75rem; background: rgba(200,167,82,0.08);">
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>Ultimo dato (${ageText})</span>
         </div>
@@ -488,7 +488,7 @@ function renderUnifiedList(items, container) {
                     </div>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-family: 'Courier New', monospace; color: #C8A752; font-size: 1rem; font-weight: 700;">${item.price}</div>
+                    <div style="font-family: 'Courier New', monospace; color: var(--v10-gold-4, #C8A752); font-size: 1rem; font-weight: 700;">${item.price}</div>
                     ${changeHtml}
                 </div>
             </div>
@@ -803,24 +803,24 @@ function injectLunarStyles() {
             background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(10, 10, 10, 0.95));
             border-radius: 12px;
             padding: 12px;
-            border: 1px solid rgba(200, 167, 82, 0.15);
-            box-shadow: 0 0 20px rgba(200, 167, 82, 0.03);
+            border: 1px solid var(--v10-border-prestige, rgba(229,213,160,0.18));
+            box-shadow: 0 0 20px rgba(200,167,82,0.03);
             transition: all 0.3s;
         }
 
         .lunar-month:hover {
-            border-color: rgba(200, 167, 82, 0.3);
-            box-shadow: 0 0 30px rgba(200, 167, 82, 0.08);
+            border-color: var(--v10-border-gold, rgba(200,167,82,0.25));
+            box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
         }
 
         .month-title {
             text-align: center;
-            color: var(--gold-primary, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
             font-weight: 700;
             font-size: 0.9rem;
             margin-bottom: 8px;
             padding-bottom: 8px;
-            border-bottom: 1px solid rgba(200, 167, 82, 0.15);
+            border-bottom: 1px solid var(--v10-border-prestige, rgba(229,213,160,0.18));
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -854,29 +854,29 @@ function injectLunarStyles() {
         }
 
         .day-cell:hover:not(.empty) {
-            background: rgba(200, 167, 82, 0.15);
+            background: rgba(200,167,82,0.15);
             color: #fff;
-            border-color: rgba(200, 167, 82, 0.3);
+            border-color: var(--v10-border-gold, rgba(200,167,82,0.25));
         }
 
         /* Día seleccionado - DNA Visual V9.4 */
         .day-cell.selected {
-            background: rgba(200, 167, 82, 0.2);
-            border: 2px solid #C8A752 !important;
+            background: rgba(200,167,82,0.2);
+            border: 2px solid var(--v10-gold-4, #C8A752) !important;
             color: #fff;
             font-weight: 700;
-            box-shadow: 0 0 15px rgba(200, 167, 82, 0.4), inset 0 0 10px rgba(200, 167, 82, 0.1);
+            box-shadow: var(--v10-shadow-gold-md, 0 5px 20px rgba(200,167,82,0.25)), inset 0 0 10px rgba(200,167,82,0.1);
         }
 
         .day-cell.today {
-            background: var(--gold-primary, #C8A752);
+            background: var(--v10-gold-4, #C8A752);
             color: #000;
             font-weight: 700;
-            box-shadow: 0 0 12px rgba(200, 167, 82, 0.5);
+            box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
         }
 
         .day-cell.today.selected {
-            box-shadow: 0 0 20px rgba(200, 167, 82, 0.7), 0 0 30px rgba(200, 167, 82, 0.4);
+            box-shadow: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
         }
 
         .day-cell.has-tasks::after {
@@ -944,7 +944,7 @@ function injectLunarStyles() {
             text-align: right;
             padding: 12px 16px;
             font-family: 'Courier New', monospace;
-            color: var(--gold-primary, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
             font-size: 0.9rem;
             font-weight: 700;
         }

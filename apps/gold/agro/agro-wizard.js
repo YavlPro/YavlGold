@@ -286,16 +286,16 @@ function injectWizardStyles() {
         @keyframes wizFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .agro-wizard-card {
-            background: #0d0d0d;
-            border: 1px solid rgba(200,167,82,0.3);
-            border-radius: 20px;
+            background: var(--v10-bg-2, #0B0C0F);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            border-radius: var(--radius-xl, 24px);
             width: 100%;
             max-width: 480px;
             max-height: 95vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 0 60px rgba(200,167,82,0.08);
+            box-shadow: var(--v10-shadow-gold-md, 0 5px 20px rgba(200,167,82,0.25));
         }
 
         /* Progress bar */
@@ -308,9 +308,15 @@ function injectWizardStyles() {
         }
         .agro-wizard-progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #C8A752, #e6c566);
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
+            animation: wizMetallicShift 3s linear infinite;
             transition: width 0.4s ease;
             border-radius: 4px;
+        }
+        @keyframes wizMetallicShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
 
         /* Header */
@@ -320,14 +326,19 @@ function injectWizardStyles() {
             flex-shrink: 0;
         }
         .agro-wizard-header h3 {
-            color: #C8A752;
             font-family: 'Orbitron', sans-serif;
             font-size: 1rem;
             margin: 0 0 0.25rem;
-            font-weight: 600;
+            font-weight: 900;
+            background: var(--v10-metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: wizMetallicShift 5s linear infinite;
         }
         .agro-wizard-header .wiz-subtitle {
-            color: rgba(255,255,255,0.5);
+            color: var(--v10-text-muted, #94A3B8);
             font-size: 0.8rem;
             margin: 0;
         }
@@ -367,9 +378,9 @@ function injectWizardStyles() {
             gap: 0.75rem;
         }
         .wiz-crop-btn {
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(200,167,82,0.2);
-            border-radius: 12px;
+            background: var(--v10-bg-4, #1a1a1f);
+            border: 1px solid var(--v10-border-neutral, rgba(255,255,255,0.08));
+            border-radius: var(--radius-md, 12px);
             padding: 1rem 0.75rem;
             cursor: pointer;
             text-align: center;
@@ -383,13 +394,13 @@ function injectWizardStyles() {
         }
         .wiz-crop-btn:hover, .wiz-crop-btn:focus {
             background: rgba(200,167,82,0.12);
-            border-color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
             transform: scale(1.03);
         }
         .wiz-crop-btn.selected {
             background: rgba(200,167,82,0.18);
-            border-color: #C8A752;
-            box-shadow: 0 0 20px rgba(200,167,82,0.15);
+            border-color: var(--v10-gold-4, #C8A752);
+            box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
         }
         .wiz-crop-btn .wiz-crop-icon { font-size: 1.6rem; }
         .wiz-crop-btn .wiz-crop-name {
@@ -408,7 +419,7 @@ function injectWizardStyles() {
         }
         .wiz-label {
             display: block;
-            color: rgba(255,255,255,0.6);
+            color: var(--v10-text-muted, #94A3B8);
             font-size: 0.8rem;
             margin-bottom: 0.4rem;
             font-weight: 500;
@@ -416,9 +427,9 @@ function injectWizardStyles() {
         .wiz-input {
             width: 100%;
             background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(200,167,82,0.25);
-            border-radius: 10px;
-            color: #fff;
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            border-radius: var(--radius-sm, 8px);
+            color: var(--v10-text-primary, #ffffff);
             padding: 0.75rem 1rem;
             font-size: 1rem;
             font-family: inherit;
@@ -427,8 +438,8 @@ function injectWizardStyles() {
             box-sizing: border-box;
         }
         .wiz-input:focus {
-            border-color: #C8A752;
-            box-shadow: 0 0 12px rgba(200,167,82,0.15);
+            border-color: var(--v10-gold-4, #C8A752);
+            box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
         }
         .wiz-input-amount {
             font-size: 1.5rem !important;
@@ -448,7 +459,7 @@ function injectWizardStyles() {
         .wiz-switch-row input[type="checkbox"] {
             width: 18px;
             height: 18px;
-            accent-color: #C8A752;
+            accent-color: var(--v10-gold-4, #C8A752);
             cursor: pointer;
             flex-shrink: 0;
         }
@@ -468,8 +479,8 @@ function injectWizardStyles() {
         }
         .wiz-unit-btn {
             background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(200,167,82,0.2);
-            border-radius: 10px;
+            border: 1px solid var(--v10-border-neutral, rgba(255,255,255,0.08));
+            border-radius: var(--radius-sm, 8px);
             padding: 0.6rem;
             min-height: 52px;
             cursor: pointer;
@@ -481,10 +492,10 @@ function injectWizardStyles() {
             justify-content: center;
             gap: 0.2rem;
         }
-        .wiz-unit-btn:hover { border-color: rgba(200,167,82,0.5); }
+        .wiz-unit-btn:hover { border-color: var(--v10-border-gold, rgba(200,167,82,0.25)); }
         .wiz-unit-btn.selected {
             background: rgba(200,167,82,0.15);
-            border-color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
         }
         .wiz-unit-btn .wiz-unit-icon { font-size: 1.2rem; }
         .wiz-unit-btn .wiz-unit-label {
@@ -506,7 +517,7 @@ function injectWizardStyles() {
             border-radius: 21px;
             background: rgba(200,167,82,0.12);
             border: 1px solid rgba(200,167,82,0.4);
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             font-size: 1.4rem;
             cursor: pointer;
             display: flex;
@@ -516,7 +527,7 @@ function injectWizardStyles() {
         }
         .wiz-stepper-btn:active { transform: scale(0.92); }
         .wiz-stepper-value {
-            color: #fff;
+            color: var(--v10-text-primary, #ffffff);
             font-size: 2rem;
             font-weight: 700;
             min-width: 60px;
@@ -527,8 +538,8 @@ function injectWizardStyles() {
         /* Summary ticket */
         .wiz-ticket {
             background: rgba(200,167,82,0.06);
-            border: 1px solid rgba(200,167,82,0.2);
-            border-radius: 14px;
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            border-radius: var(--radius-lg, 16px);
             padding: 1.25rem;
         }
         .wiz-ticket-row {
@@ -540,11 +551,11 @@ function injectWizardStyles() {
         }
         .wiz-ticket-row:last-child { border-bottom: none; }
         .wiz-ticket-label {
-            color: rgba(255,255,255,0.5);
+            color: var(--v10-text-muted, #94A3B8);
             font-size: 0.82rem;
         }
         .wiz-ticket-value {
-            color: #fff;
+            color: var(--v10-text-primary, #ffffff);
             font-size: 0.9rem;
             font-weight: 500;
             text-align: right;
@@ -552,10 +563,15 @@ function injectWizardStyles() {
             word-break: break-word;
         }
         .wiz-ticket-total {
-            color: #C8A752;
             font-size: 1.4rem;
-            font-weight: 700;
+            font-weight: 900;
             font-family: 'Orbitron', monospace;
+            background: var(--v10-metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: wizMetallicShift 5s linear infinite;
         }
 
         /* Footer buttons */
@@ -588,9 +604,12 @@ function injectWizardStyles() {
         }
         .wiz-btn-back:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
         .wiz-btn-next {
-            background: linear-gradient(135deg, #C8A752, #a8893f);
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
+            animation: wizMetallicShift 5s linear infinite;
             border: none;
-            color: #000;
+            color: var(--v10-bg-1, #0a0a0a);
+            font-weight: 900;
         }
         .wiz-btn-next:hover { filter: brightness(1.1); transform: translateY(-1px); }
         .wiz-btn-next:disabled {
@@ -600,10 +619,13 @@ function injectWizardStyles() {
             filter: none;
         }
         .wiz-btn-submit {
-            background: linear-gradient(135deg, #C8A752, #e6c566);
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
+            animation: wizMetallicShift 5s linear infinite;
             border: none;
-            color: #000;
+            color: var(--v10-bg-1, #0a0a0a);
             font-size: 1rem;
+            font-weight: 900;
         }
         .wiz-btn-submit:disabled {
             opacity: 0.4;
@@ -617,13 +639,19 @@ function injectWizardStyles() {
         }
         .wiz-success-icon { font-size: 3rem; margin-bottom: 0.75rem; }
         .wiz-success-text {
-            color: #C8A752;
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 900;
+            font-family: 'Orbitron', sans-serif;
+            background: var(--v10-metallic-text, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: wizMetallicShift 5s linear infinite;
         }
         .wiz-success-detail {
             margin: 0.5rem 0 0;
-            color: rgba(255,255,255,0.72);
+            color: var(--v10-text-secondary, #cccccc);
             font-size: 0.95rem;
             line-height: 1.4;
         }
@@ -643,7 +671,7 @@ function injectWizardStyles() {
                 padding: 0.75rem 1rem 1rem;
                 position: sticky;
                 bottom: 0;
-                background: #0d0d0d;
+                background: var(--v10-bg-2, #0B0C0F);
             }
             .wiz-input-amount { font-size: 1.5rem !important; }
             .wiz-crops-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
@@ -1197,7 +1225,7 @@ export async function openAgroWizard(tabName, deps) {
             preview.id = 'wiz-conversion-preview';
             preview.style.cssText = 'text-align:center;margin-top:0.5rem;';
             const previewTop = document.createElement('div');
-            previewTop.style.cssText = 'color:#C8A752;font-size:0.9rem;';
+            previewTop.style.cssText = 'color:var(--v10-gold-4, #C8A752);font-size:0.9rem;';
             previewTop.textContent = `≈ $${usdEquiv} USD`;
             const previewBottom = document.createElement('div');
             previewBottom.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.75rem;';
@@ -1226,7 +1254,7 @@ export async function openAgroWizard(tabName, deps) {
                 const clearBtn = document.createElement('button');
                 clearBtn.type = 'button';
                 clearBtn.id = 'wiz-clear-override';
-                clearBtn.style.cssText = 'background:transparent;border:none;color:#C8A752;font-size:0.75rem;cursor:pointer;margin-top:4px;';
+                clearBtn.style.cssText = 'background:transparent;border:none;color:var(--v10-gold-4, #C8A752);font-size:0.75rem;cursor:pointer;margin-top:4px;';
                 clearBtn.textContent = '↻ Usar tasa del mercado';
                 rateField.appendChild(clearBtn);
             }
@@ -1557,7 +1585,7 @@ export async function openAgroWizard(tabName, deps) {
         const usd = rate > 0 ? (monto / rate).toFixed(2) : '—';
         preview.replaceChildren();
         const main = document.createElement('div');
-        main.style.cssText = 'color:#C8A752;font-size:0.9rem;';
+        main.style.cssText = 'color:var(--v10-gold-4, #C8A752);font-size:0.9rem;';
         main.textContent = `≈ $${usd} USD`;
         const sub = document.createElement('div');
         sub.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.75rem;';

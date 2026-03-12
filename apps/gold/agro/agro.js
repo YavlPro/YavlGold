@@ -1098,7 +1098,7 @@ const FACTURERO_EVIDENCE_FIELDS = {
     transferencias: ['evidence_url'] // soporte_url not in DB
 };
 
-const EVIDENCE_LINK_STYLE = 'color: var(--gold-primary); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;';
+const EVIDENCE_LINK_STYLE = 'color: var(--v10-gold-4, #C8A752); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;';
 const EVIDENCE_LINK_LABEL = 'Ver recibo';
 const evidenceSignedUrlCache = new Map();
 let pendingCache = [];
@@ -4615,7 +4615,7 @@ function renderHistoryRow(tabName, item, config, options = {}) {
     } else if (txTypeClass === 'tx-gasto' || txTypeClass === 'tx-perdida') {
         amountSpan.style.color = 'var(--color-error, #EF4444)';
     } else {
-        amountSpan.style.color = 'var(--gold-4, #C8A752)';
+        amountSpan.style.color = 'var(--v10-gold-4, #C8A752)';
     }
     amountSpan.textContent = amountMain;
     markMoneyNode(amountSpan, amountSpan.textContent);
@@ -4688,8 +4688,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 tab: itemTab,
                 id: itemId,
                 title: 'Duplicar a otro cultivo',
-                borderColor: 'rgba(200,167,82,0.35)',
-                color: '#C8A752',
+                borderColor: 'rgba(200,167,82,0.25)',
+                color: 'var(--v10-gold-4, #C8A752)',
                 iconClass: 'fa fa-copy'
             }));
         }
@@ -4700,8 +4700,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 tab: itemTab,
                 id: itemId,
                 title: 'Mover a cultivo',
-                borderColor: 'rgba(200,167,82,0.5)',
-                color: '#C8A752',
+                borderColor: 'rgba(200,167,82,0.25)',
+                color: 'var(--v10-gold-4, #C8A752)',
                 iconClass: 'fa fa-arrow-right-long'
             }));
         }
@@ -4712,8 +4712,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 tab: effectiveTabName,
                 id: item.id,
                 title: transferTitle,
-                borderColor: 'rgba(200,167,82,0.5)',
-                color: '#C8A752',
+                borderColor: 'rgba(200,167,82,0.25)',
+                color: 'var(--v10-gold-4, #C8A752)',
                 iconClass: 'fa fa-arrow-right-long',
                 disabled: transferDisabled
             }));
@@ -4725,8 +4725,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 tab: effectiveTabName,
                 id: item.id,
                 title: 'Transferir pagado',
-                borderColor: 'rgba(200,167,82,0.5)',
-                color: '#C8A752',
+                borderColor: 'rgba(200,167,82,0.25)',
+                color: 'var(--v10-gold-4, #C8A752)',
                 iconClass: 'fa fa-arrow-right-long'
             }));
         }
@@ -4737,8 +4737,8 @@ function renderHistoryRow(tabName, item, config, options = {}) {
                 tab: effectiveTabName,
                 id: item.id,
                 title: 'Transferir pérdida',
-                borderColor: 'rgba(200,167,82,0.5)',
-                color: '#C8A752',
+                borderColor: 'rgba(200,167,82,0.25)',
+                color: 'var(--v10-gold-4, #C8A752)',
                 iconClass: 'fa fa-arrow-right-long'
             }));
         }
@@ -5419,7 +5419,7 @@ function renderHistoryList(tabName, config, items, showActions) {
             const exportBtn = document.createElement('button');
             exportBtn.type = 'button';
             exportBtn.title = 'Exportar historial Markdown';
-            exportBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200,167,82,0.6); color: #C8A752; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;';
+            exportBtn.style.cssText = 'background: transparent; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 4px;';
             exportBtn.addEventListener('click', () => exportAgroLog(tabName));
 
             const icon = document.createElement('i');
@@ -5474,7 +5474,7 @@ function injectHistorySearchInput(tabName, config) {
     input.type = 'text';
     input.className = 'facturero-search-input';
     input.placeholder = '\uD83D\uDD0D Buscar por nombre, cultivo o monto...';
-    input.style.cssText = "width:100%;min-height:48px;background:#0B0C0F;border:1px solid #C8A752;border-radius:8px;padding:10px 14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;box-sizing:border-box;outline:none;";
+    input.style.cssText = "width:100%;min-height:48px;background:var(--v10-bg-2, #0B0C0F);border:1px solid var(--v10-gold-4, #C8A752);border-radius:8px;padding:10px 14px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;box-sizing:border-box;outline:none;";
     input.style.setProperty('--placeholder-color', '#888');
     input.addEventListener('focus', () => {
         input.style.boxShadow = '0 0 8px rgba(200,167,82,0.3)';
@@ -6132,7 +6132,7 @@ function _setupEditCurrencySelector(currency, rate) {
         btn.dataset.currency = code;
         btn.style.cssText = `
             background: ${code === currency ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)'};
-            border: 1px solid ${code === currency ? '#C8A752' : 'rgba(200,167,82,0.2)'};
+            border: 1px solid ${code === currency ? 'var(--v10-gold-4, #C8A752)' : 'rgba(200,167,82,0.2)'};
             border-radius: 10px;
             padding: 0.5rem;
             cursor: pointer;
@@ -6164,7 +6164,7 @@ function _setupEditCurrencySelector(currency, rate) {
             container.querySelectorAll('button').forEach(b => {
                 const sel = b.dataset.currency === code;
                 b.style.background = sel ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)';
-                b.style.borderColor = sel ? '#C8A752' : 'rgba(200,167,82,0.2)';
+                b.style.borderColor = sel ? 'var(--v10-gold-4, #C8A752)' : 'rgba(200,167,82,0.2)';
             });
             _updateEditRateUI();
         });
@@ -6228,7 +6228,7 @@ function _updateEditConversionPreview() {
     const usd = rate > 0 ? (monto / rate).toFixed(2) : '\u2014';
     preview.replaceChildren();
     const amount = document.createElement('span');
-    amount.style.color = '#C8A752';
+    amount.style.color = 'var(--v10-gold-4, #C8A752)';
     amount.textContent = `\u2248 $${usd} USD`;
     const detail = document.createElement('span');
     detail.style.cssText = 'color:rgba(255,255,255,0.4);font-size:0.75rem;';
@@ -10449,7 +10449,7 @@ function renderEmptyCropsState(cropsGrid) {
         icon: '🌱',
         title: 'No tienes cultivos activos aún',
         subtitle: 'Haz clic en "+ Nuevo Cultivo" para agregar tu primer cultivo',
-        titleColor: 'var(--gold-primary)',
+        titleColor: 'var(--v10-gold-4, #C8A752)',
         titleWeight: '600'
     });
     const ctaBtn = document.createElement('button');
@@ -10469,7 +10469,7 @@ function buildNoActiveCropsCard(finishedCount = 0) {
         subtitle: finishedCount > 0
             ? `Revisa Historial de ciclos (${finishedCount}) para ver cultivos terminados`
             : 'Crea un nuevo cultivo para iniciar un ciclo',
-        titleColor: 'var(--gold-primary)',
+        titleColor: 'var(--v10-gold-4, #C8A752)',
         titleWeight: '600'
     });
 }
@@ -11168,7 +11168,7 @@ function initRoiCurrencySelector() {
         btn.dataset.currency = code;
         btn.style.cssText = `
             background: ${code === 'USD' ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)'};
-            border: 1px solid ${code === 'USD' ? '#C8A752' : 'rgba(200,167,82,0.2)'};
+            border: 1px solid ${code === 'USD' ? 'var(--v10-gold-4, #C8A752)' : 'rgba(200,167,82,0.2)'};
             border-radius: 8px;
             padding: 0.35rem 0.75rem;
             cursor: pointer;
@@ -11192,7 +11192,7 @@ function initRoiCurrencySelector() {
             container.querySelectorAll('button').forEach(b => {
                 const sel = b.dataset.currency === code;
                 b.style.background = sel ? 'rgba(200,167,82,0.15)' : 'rgba(255,255,255,0.04)';
-                b.style.borderColor = sel ? '#C8A752' : 'rgba(200,167,82,0.2)';
+                b.style.borderColor = sel ? 'var(--v10-gold-4, #C8A752)' : 'rgba(200,167,82,0.2)';
             });
             if (_roiLastCalc) _updateRoiDisplay();
         });
@@ -11323,11 +11323,11 @@ function injectRoiClearButton(calcBtn) {
     clearBtn.type = 'button';
     clearBtn.className = 'btn';
     clearBtn.textContent = 'LIMPIAR';
-    clearBtn.style.cssText = "margin-left: 0.75rem; background: transparent; border: 1px solid rgba(200, 167, 82, 0.4); color: #C8A752; padding: 0.75rem 1.5rem; border-radius: 50px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;";
+    clearBtn.style.cssText = "margin-left: 0.75rem; background: transparent; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); padding: 0.75rem 1.5rem; border-radius: 50px; font-family: 'Rajdhani', sans-serif; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;";
 
     clearBtn.addEventListener('mouseenter', () => {
         clearBtn.style.background = 'rgba(200, 167, 82, 0.12)';
-        clearBtn.style.borderColor = '#C8A752';
+        clearBtn.style.borderColor = 'var(--v10-gold-4, #C8A752)';
     });
     clearBtn.addEventListener('mouseleave', () => {
         clearBtn.style.background = 'transparent';
@@ -11600,7 +11600,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     const dateStr = document.createElement('span');
     dateStr.textContent = formatDate(income.fecha);
     const cropLabel = document.createElement('span');
-    cropLabel.style.color = 'var(--gold-primary)';
+    cropLabel.style.color = 'var(--v10-gold-4, #C8A752)';
     cropLabel.textContent = resolveRecordCropLabel(income);
     meta.append(category, dateStr, cropLabel);
 
@@ -11672,7 +11672,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     duplicateBtn.dataset.tab = 'ingresos';
     duplicateBtn.dataset.id = income.id ? String(income.id) : '';
     duplicateBtn.title = 'Duplicar a otro cultivo';
-    duplicateBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200, 167, 82, 0.35); color: #C8A752; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+    duplicateBtn.style.cssText = 'background: transparent; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
 
     const duplicateIcon = document.createElement('i');
     duplicateIcon.className = 'fa-solid fa-copy';
@@ -11685,7 +11685,7 @@ function renderIncomeItem(listEl, income, signedUrl) {
     transferBtn.dataset.tab = 'ingresos';
     transferBtn.dataset.id = income.id ? String(income.id) : '';
     transferBtn.title = 'Transferir pagado';
-    transferBtn.style.cssText = 'background: transparent; border: 1px solid rgba(200, 167, 82, 0.45); color: #C8A752; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
+    transferBtn.style.cssText = 'background: transparent; border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); color: var(--v10-gold-4, #C8A752); width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;';
 
     const transferIcon = document.createElement('i');
     transferIcon.className = 'fa-solid fa-arrow-right-long';
@@ -12074,7 +12074,7 @@ function showEvidenceToast(message, type = 'info') {
 
     const colors = {
         success: { bg: 'rgba(74, 222, 128, 0.15)', border: 'rgba(74, 222, 128, 0.4)', color: '#4ade80' },
-        warning: { bg: 'rgba(200, 167, 82, 0.15)', border: 'rgba(200, 167, 82, 0.4)', color: '#C8A752' },
+        warning: { bg: 'rgba(200, 167, 82, 0.15)', border: 'rgba(200, 167, 82, 0.4)', color: 'var(--v10-gold-4, #C8A752)' },
         info: { bg: 'rgba(255, 255, 255, 0.1)', border: 'rgba(255, 255, 255, 0.2)', color: '#fff' }
     };
     const c = colors[type] || colors.info;
@@ -17383,7 +17383,7 @@ function injectModalStyles() {
             font-family: 'Orbitron', sans-serif;
             font-weight: 700;
             font-size: 1.25rem;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
         }
         .modal-close {
             background: none;

@@ -943,8 +943,8 @@ export function updateUIFromSummary(summary) {
         } else {
             const isPositive = summary.roiValue >= 0;
             roiBadge.textContent = `ROI: ${isPositive ? '+' : ''}${summary.roiDisplay}`;
-            roiBadge.style.color = isPositive ? '#C8A752' : '#f87171';
-            roiBadge.style.borderColor = isPositive ? 'rgba(200, 167, 82, 0.3)' : 'rgba(248, 113, 113, 0.3)';
+            roiBadge.style.color = isPositive ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
+            roiBadge.style.borderColor = isPositive ? 'rgba(200,167,82,0.25)' : 'rgba(248, 113, 113, 0.3)';
             roiBadge.style.background = isPositive ? 'rgba(200, 167, 82, 0.1)' : 'rgba(248, 113, 113, 0.1)';
         }
     }
@@ -974,7 +974,7 @@ export function updateUIFromSummary(summary) {
     const summaryProfit = document.getElementById('summary-profit');
     if (summaryProfit) {
         summaryProfit.textContent = formatK(summary.profitNet);
-        summaryProfit.style.color = summary.profitNet >= 0 ? '#C8A752' : '#f87171';
+        summaryProfit.style.color = summary.profitNet >= 0 ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
     }
 
     const summaryMargin = document.getElementById('summary-margin');
@@ -985,7 +985,7 @@ export function updateUIFromSummary(summary) {
         } else {
             const marginPct = ((summary.profitNet / summary.incomeTotal) * 100).toFixed(1);
             summaryMargin.textContent = marginPct + '%';
-            summaryMargin.style.color = parseFloat(marginPct) >= 0 ? '#C8A752' : '#f87171';
+            summaryMargin.style.color = parseFloat(marginPct) >= 0 ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
         }
     }
 
@@ -1144,13 +1144,13 @@ function updateSummaryPanel(revenue, investment, profit, margin, roi) {
     const profitEl = document.getElementById('summary-profit');
     if (profitEl) {
         profitEl.textContent = formatK(profit);
-        profitEl.style.color = profit >= 0 ? '#C8A752' : '#f87171';
+        profitEl.style.color = profit >= 0 ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
     }
 
     const marginEl = document.getElementById('summary-margin');
     if (marginEl) {
         marginEl.textContent = `${margin}%`;
-        marginEl.style.color = margin >= 0 ? '#C8A752' : '#f87171';
+        marginEl.style.color = margin >= 0 ? 'var(--v10-gold-4, #C8A752)' : '#f87171';
     }
 }
 

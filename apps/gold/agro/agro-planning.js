@@ -224,21 +224,21 @@ function generateSmartAdvice(data, isToday) {
 
     // Regla: Tomate/Papa + Lluvia = HONGOS (Tizón)
     if (data.rain > 5 && userCrops.some(c => c.includes('tomate') || c.includes('papa'))) {
-        text = `🍅 <strong class="text-red-400">ALERTA FUNGOSA:</strong> La humedad (${data.rain.toFixed(1)}mm) crea condiciones para <strong>Tizón</strong> en tus <span style="color: #C8A752;">Tomates/Papas</span>. <strong style="color: #ef4444;">Aplicar fungicida preventivo AHORA.</strong>`;
+        text = `🍅 <strong class="text-red-400">ALERTA FUNGOSA:</strong> La humedad (${data.rain.toFixed(1)}mm) crea condiciones para <strong>Tizón</strong> en tus <span style="color: var(--v10-gold-4, #C8A752);">Tomates/Papas</span>. <strong style="color: #ef4444;">Aplicar fungicida preventivo AHORA.</strong>`;
         tags = ['💊 Fungicida', '🍅 Solanáceas'];
         type = 'danger';
     }
 
     // Regla: Maíz/Plátano + Viento = CAÍDA (Acame)
     if (data.wind > 20 && userCrops.some(c => c.includes('maiz') || c.includes('maíz') || c.includes('platano') || c.includes('plátano') || c.includes('cambur'))) {
-        text = `🌽 <strong class="text-orange-400">ALERTA DE VIENTO:</strong> Ráfagas de <strong>${Math.round(data.wind)} km/h</strong>. Riesgo de <strong>acame</strong> en tus <span style="color: #C8A752;">Maíz/Plátano</span>. Revisar tutores y barreras.`;
+        text = `🌽 <strong class="text-orange-400">ALERTA DE VIENTO:</strong> Ráfagas de <strong>${Math.round(data.wind)} km/h</strong>. Riesgo de <strong>acame</strong> en tus <span style="color: var(--v10-gold-4, #C8A752);">Maíz/Plátano</span>. Revisar tutores y barreras.`;
         tags = ['💨 Viento', '⚠️ Acame'];
         type = 'warning';
     }
 
     // Regla: Hortalizas + Calor = Estrés Hídrico
     if (data.tempMax > 30 && userCrops.some(c => c.includes('lechuga') || c.includes('cilantro') || c.includes('espinaca'))) {
-        text = `🥬 <strong class="text-orange-400">ALERTA HORTALIZA:</strong> <strong>${Math.round(data.tempMax)}°C</strong> es crítico para <span style="color: #C8A752;">Lechuga/Cilantro</span>. <span style="color: #4ade80;">Aumentar riego 2x</span> y activar malla sombra.`;
+        text = `🥬 <strong class="text-orange-400">ALERTA HORTALIZA:</strong> <strong>${Math.round(data.tempMax)}°C</strong> es crítico para <span style="color: var(--v10-gold-4, #C8A752);">Lechuga/Cilantro</span>. <span style="color: #4ade80;">Aumentar riego 2x</span> y activar malla sombra.`;
         tags = ['💧 Riego Extra', '🏕️ Sombra'];
         type = 'warning';
     }
@@ -347,7 +347,7 @@ function injectForecastStyles() {
 
         .forecast-day.today .day-name,
         .forecast-day.selected .day-name {
-            color: var(--gold-primary, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
         }
 
         .day-icon {
@@ -395,7 +395,7 @@ function injectForecastStyles() {
             color: #aaa;
         }
 
-        .text-gold { color: var(--gold-primary, #C8A752); }
+        .text-gold { color: var(--v10-gold-4, #C8A752); }
         .text-red-500 { color: #ef4444; }
         .text-orange-400 { color: #fb923c; }
         .text-green-400 { color: #4ade80; }

@@ -1544,7 +1544,7 @@ function renderNotifications() {
     if (activeNotifications.length > 0) {
         list.appendChild(createSectionHeader(
             `Nuevas (${activeNotifications.length})`,
-            'padding: 6px 12px; font-size: 9px; color: #C8A752; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid rgba(200,167,82,0.2);'
+            'padding: 6px 12px; font-size: 9px; color: var(--v10-gold-4, #C8A752); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; border-bottom: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));'
         ));
         activeNotifications.forEach((n) => list.appendChild(renderNotificationItem(n)));
     }
@@ -1604,7 +1604,7 @@ function renderNotificationItem(n, isRead = false) {
 
     if (showChip) {
         const chip = document.createElement('div');
-        chip.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; font-size: 8px; font-weight: 700; color: #C8A752; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(200,167,82,0.12); border: 1px solid rgba(200,167,82,0.35); border-radius: 999px; padding: 2px 6px; margin-bottom: 6px;';
+        chip.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; font-size: 8px; font-weight: 700; color: var(--v10-gold-4, #C8A752); text-transform: uppercase; letter-spacing: 0.5px; background: rgba(200,167,82,0.12); border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25)); border-radius: 999px; padding: 2px 6px; margin-bottom: 6px;';
         chip.textContent = chipLabel;
         content.appendChild(chip);
     }
@@ -1631,8 +1631,8 @@ function renderNotificationItem(n, isRead = false) {
         markBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
         markBtn.style.cssText = [
             'background: rgba(200,167,82,0.12)',
-            'border: 1px solid rgba(200,167,82,0.35)',
-            'color: #C8A752',
+            'border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25))',
+            'color: var(--v10-gold-4, #C8A752)',
             'width: 20px',
             'height: 20px',
             'border-radius: 6px',
@@ -1672,9 +1672,9 @@ function renderNotificationItem(n, isRead = false) {
             'font-weight: 600',
             'padding: 4px 8px',
             'border-radius: 8px',
-            'border: 1px solid rgba(200,167,82,0.35)',
+            'border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25))',
             'background: rgba(200,167,82,0.12)',
-            'color: #C8A752',
+            'color: var(--v10-gold-4, #C8A752)',
             'cursor: pointer'
         ].join('; ');
         cta.addEventListener('click', (e) => {

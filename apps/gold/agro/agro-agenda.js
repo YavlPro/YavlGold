@@ -931,20 +931,20 @@ function injectAgendaStyles() {
         @keyframes agaFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .aga-modal {
-            background: #0a0a0a;
-            border: 1px solid rgba(200,167,82,0.3);
-            border-radius: 16px;
+            background: var(--v10-bg-2, #0B0C0F);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            border-radius: var(--radius-xl, 24px);
             width: 100%;
             max-width: 680px;
             max-height: 92vh;
             overflow-y: auto;
-            box-shadow: 0 20px 80px rgba(0,0,0,0.6), 0 0 40px rgba(200,167,82,0.1);
+            box-shadow: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
         }
 
         /* Header */
         .aga-header {
             padding: 16px 20px 12px;
-            border-bottom: 1px solid rgba(200,167,82,0.15);
+            border-bottom: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
             background: linear-gradient(180deg, rgba(200,167,82,0.05) 0%, transparent 100%);
         }
         .aga-header-top {
@@ -969,7 +969,7 @@ function injectAgendaStyles() {
         .aga-month-label {
             font-family: 'Orbitron', sans-serif;
             font-size: 0.7rem;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             letter-spacing: 1px;
             text-transform: uppercase;
         }
@@ -977,8 +977,8 @@ function injectAgendaStyles() {
             width: 32px; height: 32px;
             border-radius: 50%;
             background: rgba(200,167,82,0.1);
-            border: 1px solid rgba(200,167,82,0.3);
-            color: #C8A752;
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            color: var(--v10-gold-4, #C8A752);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -988,7 +988,7 @@ function injectAgendaStyles() {
         }
         .aga-close-btn:hover {
             background: rgba(200,167,82,0.25);
-            border-color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
         }
 
         /* Weather bar */
@@ -1007,10 +1007,10 @@ function injectAgendaStyles() {
         }
         .aga-moon-rec {
             font-size: 0.75rem;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             padding: 6px 10px;
             background: rgba(200,167,82,0.08);
-            border-radius: 8px;
+            border-radius: var(--radius-sm, 8px);
             margin-top: 6px;
         }
 
@@ -1026,7 +1026,7 @@ function injectAgendaStyles() {
             }
             .aga-calendar-section {
                 flex: 1;
-                border-right: 1px solid rgba(200,167,82,0.1);
+                border-right: 1px solid var(--v10-border-neutral, rgba(255,255,255,0.08));
             }
             .aga-day-detail {
                 width: 260px;
@@ -1044,9 +1044,9 @@ function injectAgendaStyles() {
         .aga-nav-btn {
             width: 36px; height: 36px;
             border-radius: 50%;
-            border: 1px solid rgba(200,167,82,0.3);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
             background: transparent;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             cursor: pointer;
             font-size: 0.8rem;
             transition: all 0.15s;
@@ -1111,22 +1111,22 @@ function injectAgendaStyles() {
         .aga-dot {
             width: 5px; height: 5px;
             border-radius: 50%;
-            background: #C8A752;
+            background: var(--v10-gold-4, #C8A752);
             position: absolute;
             bottom: 3px;
         }
 
         /* Today */
         .aga-day-cell.aga-today {
-            background: linear-gradient(135deg, #C8A752, #a08a3a);
-            box-shadow: 0 0 12px rgba(200,167,82,0.3);
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
         }
         .aga-day-cell.aga-today .aga-day-num {
-            color: #0a0a0a;
+            color: var(--v10-bg-1, #0a0a0a);
             font-weight: 800;
         }
         .aga-day-cell.aga-today .aga-moon-icon { opacity: 0.8; }
-        .aga-day-cell.aga-today .aga-dot { background: #0a0a0a; }
+        .aga-day-cell.aga-today .aga-dot { background: var(--v10-bg-1, #0a0a0a); }
 
         /* Selected */
         .aga-day-cell.aga-selected:not(.aga-today) {
@@ -1200,7 +1200,7 @@ function injectAgendaStyles() {
             width: 36px; height: 36px;
             border: none;
             background: transparent;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             font-size: 1.2rem;
             cursor: pointer;
             flex-shrink: 0;
@@ -1246,9 +1246,9 @@ function injectAgendaStyles() {
             width: 100%;
             padding: 10px;
             border-radius: 10px;
-            border: 1px dashed rgba(200,167,82,0.4);
+            border: 1px dashed var(--v10-border-gold, rgba(200,167,82,0.25));
             background: transparent;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             font-size: 0.82rem;
             font-weight: 700;
             font-family: inherit;
@@ -1257,7 +1257,7 @@ function injectAgendaStyles() {
         }
         .aga-add-btn:hover {
             background: rgba(200,167,82,0.08);
-            border-color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
         }
 
         /* Create overlay */
@@ -1275,9 +1275,9 @@ function injectAgendaStyles() {
             animation: agaFadeIn 0.15s ease;
         }
         .aga-create-modal {
-            background: #111;
-            border: 1px solid rgba(200,167,82,0.25);
-            border-radius: 16px;
+            background: var(--v10-bg-2, #0B0C0F);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            border-radius: var(--radius-xl, 24px);
             padding: 20px;
             width: 100%;
             max-width: 420px;
@@ -1338,13 +1338,13 @@ function injectAgendaStyles() {
             min-height: 44px;
         }
         .aga-type-pill:hover {
-            border-color: rgba(200,167,82,0.4);
-            color: #C8A752;
+            border-color: var(--v10-border-gold, rgba(200,167,82,0.25));
+            color: var(--v10-gold-4, #C8A752);
         }
         .aga-type-pill.is-active {
             background: rgba(200,167,82,0.15);
-            border-color: #C8A752;
-            color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
             font-weight: 600;
         }
 
@@ -1368,8 +1368,8 @@ function injectAgendaStyles() {
         }
         .aga-recur-pill.is-active {
             background: rgba(200,167,82,0.12);
-            border-color: #C8A752;
-            color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
         }
 
         /* Create row */
@@ -1390,8 +1390,8 @@ function injectAgendaStyles() {
             padding: 10px 16px;
             border-radius: 10px;
             border: none;
-            background: linear-gradient(135deg, #C8A752, #a08a3a);
-            color: #0a0a0a;
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            color: var(--v10-bg-1, #0a0a0a);
             font-weight: 700;
             font-size: 0.85rem;
             cursor: pointer;

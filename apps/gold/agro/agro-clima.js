@@ -363,10 +363,10 @@ function injectClimaStyles() {
         }
         .clima-btn-location,
         .clima-btn-refresh {
-            border: 1px solid rgba(200,167,82,0.35);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
             background: rgba(200,167,82,0.08);
-            color: #C8A752;
-            border-radius: 10px;
+            color: var(--v10-gold-4, #C8A752);
+            border-radius: var(--radius-sm, 8px);
             padding: 0.4rem 0.7rem;
             font-size: 0.72rem;
             font-weight: 700;
@@ -378,7 +378,7 @@ function injectClimaStyles() {
         .clima-btn-location:hover,
         .clima-btn-refresh:hover {
             background: rgba(200,167,82,0.18);
-            border-color: rgba(200,167,82,0.6);
+            border-color: var(--v10-gold-4, #C8A752);
         }
         .clima-view__body {
             display: flex;
@@ -453,7 +453,7 @@ function injectClimaStyles() {
         .clima-detail__value {
             font-size: 0.95rem;
             font-weight: 700;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             font-family: 'Rajdhani', sans-serif;
         }
 
@@ -469,7 +469,7 @@ function injectClimaStyles() {
             font-family: 'Orbitron', sans-serif;
             font-size: 0.78rem;
             letter-spacing: 1px;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             text-transform: uppercase;
         }
         .clima-advice__list {
@@ -507,7 +507,7 @@ function injectClimaStyles() {
             font-family: 'Orbitron', sans-serif;
             font-size: 0.78rem;
             letter-spacing: 1px;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             text-transform: uppercase;
         }
         .clima-forecast__grid {
@@ -545,7 +545,7 @@ function injectClimaStyles() {
             text-transform: uppercase;
         }
         .clima-forecast-day.is-today .clima-forecast-day__name {
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
         }
         .clima-forecast-day__date {
             font-size: 0.6rem;
@@ -633,13 +633,13 @@ function injectClimaStyles() {
             padding: 1rem;
         }
         .clima-loc-modal__box {
-            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
-            border: 1px solid rgba(200,167,82,0.3);
-            border-radius: 16px;
+            background: var(--v10-bg-2, #0B0C0F);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+            border-radius: var(--radius-xl, 24px);
             padding: 1.2rem;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 0 50px rgba(200,167,82,0.1);
+            box-shadow: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
         }
         .clima-loc-modal__header {
             display: flex;
@@ -651,7 +651,7 @@ function injectClimaStyles() {
             margin: 0;
             font-family: 'Orbitron', sans-serif;
             font-size: 0.78rem;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             letter-spacing: 1px;
         }
         .clima-loc-modal__close {
@@ -675,8 +675,8 @@ function injectClimaStyles() {
             box-sizing: border-box;
         }
         .clima-loc-modal__input:focus {
-            border-color: #C8A752;
-            box-shadow: 0 0 0 2px rgba(200,167,82,0.15);
+            border-color: var(--v10-gold-4, #C8A752);
+            box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
         }
         .clima-loc-modal__results {
             margin-top: 0.7rem;

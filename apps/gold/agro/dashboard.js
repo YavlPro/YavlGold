@@ -126,7 +126,7 @@ function initGeoDebugPanel() {
         'right: 16px',
         'z-index: 9999',
         'background: rgba(10, 10, 10, 0.9)',
-        'border: 1px solid rgba(200, 167, 82, 0.4)',
+        'border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25))',
         'border-radius: 10px',
         'padding: 12px',
         'font-family: Rajdhani, sans-serif',
@@ -175,7 +175,7 @@ function updateGeoDebugPanel() {
         : (Number.isFinite(lastLat) && Number.isFinite(lastLon) ? `${lastLat.toFixed(4)}, ${lastLon.toFixed(4)}` : '-');
 
     geoDebugPanel.innerHTML = `
-        <div style="color:#C8A752; font-weight:700; margin-bottom:6px;">Geo Debug</div>
+        <div style="color:var(--v10-gold-4, #C8A752); font-weight:700; margin-bottom:6px;">Geo Debug</div>
         <div><strong>source:</strong> ${source}</div>
         <div><strong>label:</strong> ${label}</div>
         <div><strong>coords:</strong> ${coords}</div>
@@ -256,7 +256,7 @@ function initLocationControls() {
         `;
     } else {
         toggleRow.innerHTML = `
-            <span style="font-size: 9px; color: #C8A752; padding: 4px 8px; background: rgba(200, 167, 82, 0.15); border-radius: 12px;">
+            <span style="font-size: 9px; color: var(--v10-gold-4, #C8A752); padding: 4px 8px; background: rgba(200,167,82,0.15); border-radius: 12px;">
                 ${ICONS.manual} Manual
             </span>
             <button id="btn-manual-mode" class="loc-btn" title="Cambiar ubicacion">
@@ -279,7 +279,7 @@ function initLocationControls() {
                 font-size: 9px;
                 padding: 4px 8px;
                 border-radius: 12px;
-                border: 1px solid rgba(200, 167, 82, 0.3);
+                border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
                 background: transparent;
                 color: #666;
                 cursor: pointer;
@@ -287,12 +287,12 @@ function initLocationControls() {
                 font-family: inherit;
             }
             .loc-btn:hover {
-                background: rgba(200, 167, 82, 0.1);
-                color: #C8A752;
+                background: rgba(200,167,82,0.1);
+                color: var(--v10-gold-4, #C8A752);
             }
             .loc-btn.active {
-                background: rgba(200, 167, 82, 0.2);
-                color: #C8A752;
+                background: rgba(200,167,82,0.2);
+                color: var(--v10-gold-4, #C8A752);
             }
             #location-search-modal {
                 position: fixed;
@@ -306,19 +306,19 @@ function initLocationControls() {
                 padding: 20px;
             }
             #location-search-box {
-                background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
-                border: 1px solid rgba(200, 167, 82, 0.3);
-                border-radius: 16px;
+                background: var(--v10-bg-2, #0B0C0F);
+                border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
+                border-radius: var(--radius-xl, 24px);
                 padding: 24px;
                 width: 100%;
                 max-width: 400px;
-                box-shadow: 0 0 60px rgba(200, 167, 82, 0.15);
+                box-shadow: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
             }
             #location-search-input {
                 width: 100%;
                 padding: 12px 16px;
                 background: rgba(0,0,0,0.5);
-                border: 1px solid rgba(200, 167, 82, 0.3);
+                border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
                 border-radius: 8px;
                 color: #fff;
                 font-size: 14px;
@@ -326,8 +326,8 @@ function initLocationControls() {
                 outline: none;
             }
             #location-search-input:focus {
-                border-color: #C8A752;
-                box-shadow: 0 0 0 2px rgba(200, 167, 82, 0.2);
+                border-color: var(--v10-gold-4, #C8A752);
+                box-shadow: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
             }
             #location-search-input::placeholder {
                 color: #666;
@@ -345,8 +345,8 @@ function initLocationControls() {
                 border: 1px solid transparent;
             }
             .location-result-item:hover {
-                background: rgba(200, 167, 82, 0.1);
-                border-color: rgba(200, 167, 82, 0.3);
+                background: rgba(200,167,82,0.1);
+                border-color: var(--v10-border-gold, rgba(200,167,82,0.25));
             }
             .location-result-name {
                 color: #fff;
@@ -408,7 +408,7 @@ async function switchLocationMode(mode) {
         console.log('[Agro] Switched to', mode, ':', currentLocation.label);
     } catch (err) {
         console.error('[Agro] Mode switch error:', err);
-    if (descEl) descEl.textContent = `${ICONS.warning} Error`;
+        if (descEl) descEl.textContent = `${ICONS.warning} Error`;
     }
 }
 
@@ -454,7 +454,7 @@ function openLocationSelector() {
     header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;';
 
     const title = document.createElement('h3');
-    title.style.cssText = "margin: 0; color: #C8A752; font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px;";
+    title.style.cssText = "margin: 0; color: var(--v10-gold-4, #C8A752); font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 1px;";
     title.textContent = 'SELECCIONAR UBICACION';
 
     const closeBtn = document.createElement('button');

@@ -957,7 +957,7 @@ export function injectCartStyles() {
             flex: 0 0 auto;
             padding: 0.4rem 0.75rem;
             border-radius: 20px;
-            border: 1px solid rgba(200,167,82,0.3);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
             background: rgba(200,167,82,0.08);
             color: rgba(255,255,255,0.7);
             font-size: 0.75rem;
@@ -969,14 +969,14 @@ export function injectCartStyles() {
         .agro-cart-chip:hover { border-color: rgba(200,167,82,0.5); }
         .agro-cart-chip.is-active {
             background: linear-gradient(135deg, rgba(200,167,82,0.25), rgba(200,167,82,0.12));
-            border-color: #C8A752;
-            color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
             font-weight: 600;
         }
         .agro-cart-chip.is-done { opacity: 0.5; }
         .agro-cart-chip-new {
             border-style: dashed;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
         }
 
         .agro-cart-detail { }
@@ -992,9 +992,9 @@ export function injectCartStyles() {
         .agro-cart-icon-btn {
             width: 32px; height: 32px;
             border-radius: 50%;
-            border: 1px solid rgba(200,167,82,0.3);
+            border: 1px solid var(--v10-border-gold, rgba(200,167,82,0.25));
             background: transparent;
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -1009,8 +1009,8 @@ export function injectCartStyles() {
         /* Summary */
         .agro-cart-summary {
             background: rgba(200,167,82,0.06);
-            border: 1px solid rgba(200,167,82,0.15);
-            border-radius: 12px;
+            border: 1px solid var(--v10-border-prestige, rgba(229,213,160,0.18));
+            border-radius: var(--radius-md, 12px);
             padding: 0.75rem;
             margin-bottom: 0.75rem;
         }
@@ -1023,7 +1023,8 @@ export function injectCartStyles() {
         }
         .agro-cart-progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #C8A752, #e0c068);
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            background-size: 200% 100%;
             border-radius: 3px;
             transition: width 0.3s ease;
         }
@@ -1080,8 +1081,8 @@ export function injectCartStyles() {
             transition: all 0.15s;
         }
         .agro-cart-checkbox:checked + .agro-cart-checkbox-custom {
-            background: #C8A752;
-            border-color: #C8A752;
+            background: var(--v10-gold-4, #C8A752);
+            border-color: var(--v10-gold-4, #C8A752);
         }
         .agro-cart-checkbox:checked + .agro-cart-checkbox-custom::after {
             content: '✓';
@@ -1104,7 +1105,7 @@ export function injectCartStyles() {
             font-size: 0.7rem;
         }
         .agro-cart-item-price {
-            color: #C8A752;
+            color: var(--v10-gold-4, #C8A752);
             font-size: 0.8rem;
             font-weight: 600;
             white-space: nowrap;
@@ -1182,16 +1183,16 @@ export function injectCartStyles() {
         }
         .agro-cart-cur-btn.is-active {
             background: rgba(200,167,82,0.15);
-            border-color: #C8A752;
-            color: #C8A752;
+            border-color: var(--v10-gold-4, #C8A752);
+            color: var(--v10-gold-4, #C8A752);
         }
 
         .agro-cart-btn-primary {
             padding: 0.6rem 1.2rem;
             border-radius: 10px;
             border: none;
-            background: linear-gradient(135deg, #C8A752, #a08a3a);
-            color: #0a0a0a;
+            background: var(--v10-metallic-btn, linear-gradient(135deg, #6b5a3e, #C8A752, #E8D48B, #C8A752, #6b5a3e));
+            color: var(--v10-bg-1, #0a0a0a);
             font-weight: 700;
             font-size: 0.85rem;
             cursor: pointer;
