@@ -154,9 +154,7 @@ function validatePayload(payload) {
     return 'Selecciona cómo te relacionas con Agro.';
   }
 
-  if (!payload.main_activity) {
-    return 'Selecciona la actividad principal que más te interesa.';
-  }
+  // main_activity is optional — users can skip this step
 
   if (!payload.entry_preference) {
     return 'Selecciona cómo prefieres empezar.';

@@ -879,9 +879,7 @@ function validateStep(state, step) {
     return 'Selecciona cómo te relacionas con Agro.';
   }
 
-  if (step === 2 && !state.mainActivity) {
-    return 'Selecciona la actividad que más te interesa por ahora.';
-  }
+  // mainActivity is optional — users can skip step 2 entirely
 
   if (step === 3 && !state.entryPreference) {
     return 'Elige cómo quieres arrancar cuando entres al dashboard.';
