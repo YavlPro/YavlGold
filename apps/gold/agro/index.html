@@ -1181,20 +1181,67 @@
             <div class="agro-shell-sidebar__group">
                 <p class="agro-shell-sidebar__label"><span class="agro-shell-sidebar__label-icon"
                         aria-hidden="true">🧾</span><span>Operaciones</span></p>
-                <button type="button" class="agro-shell-link" data-agro-view="pagados"><span
-                        class="agro-shell-link__icon" aria-hidden="true">💰</span><span
-                        class="agro-shell-link__label">Pagados</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="fiados"><span
-                        class="agro-shell-link__icon" aria-hidden="true">📒</span><span
-                        class="agro-shell-link__label">Fiados</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="perdidas"><span
-                        class="agro-shell-link__icon" aria-hidden="true">⚠️</span><span
-                        class="agro-shell-link__label">Pérdidas</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="donaciones"><span
-                        class="agro-shell-link__icon" aria-hidden="true">🎁</span><span
-                        class="agro-shell-link__label">Donaciones</span></button>
-                <button type="button" class="agro-shell-link" data-agro-view="otros"><span class="agro-shell-link__icon"
-                        aria-hidden="true">📦</span><span class="agro-shell-link__label">Otros</span></button>
+
+                <div class="agro-shell-nav-item" data-agro-nav-parent="pagados">
+                    <button type="button" class="agro-shell-link" data-agro-view="pagados"><span
+                            class="agro-shell-link__icon" aria-hidden="true">💰</span><span
+                            class="agro-shell-link__label">Pagados</span></button>
+                    <div class="agro-shell-subnav">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="pagados"
+                            data-agro-subview="historial">Historial</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="pagados"
+                            data-agro-subview="stats">Estadísticas</button>
+                    </div>
+                </div>
+
+                <div class="agro-shell-nav-item" data-agro-nav-parent="fiados">
+                    <button type="button" class="agro-shell-link" data-agro-view="fiados"><span
+                            class="agro-shell-link__icon" aria-hidden="true">📒</span><span
+                            class="agro-shell-link__label">Fiados</span></button>
+                    <div class="agro-shell-subnav">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="fiados"
+                            data-agro-subview="historial">Historial</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="fiados"
+                            data-agro-subview="stats">Estadísticas</button>
+                    </div>
+                </div>
+
+                <div class="agro-shell-nav-item" data-agro-nav-parent="perdidas">
+                    <button type="button" class="agro-shell-link" data-agro-view="perdidas"><span
+                            class="agro-shell-link__icon" aria-hidden="true">⚠️</span><span
+                            class="agro-shell-link__label">Pérdidas</span></button>
+                    <div class="agro-shell-subnav">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="perdidas"
+                            data-agro-subview="historial">Historial</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="perdidas"
+                            data-agro-subview="stats">Estadísticas</button>
+                    </div>
+                </div>
+
+                <div class="agro-shell-nav-item" data-agro-nav-parent="donaciones">
+                    <button type="button" class="agro-shell-link" data-agro-view="donaciones"><span
+                            class="agro-shell-link__icon" aria-hidden="true">🎁</span><span
+                            class="agro-shell-link__label">Donaciones</span></button>
+                    <div class="agro-shell-subnav">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="donaciones"
+                            data-agro-subview="historial">Historial</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="donaciones"
+                            data-agro-subview="stats">Estadísticas</button>
+                    </div>
+                </div>
+
+                <div class="agro-shell-nav-item" data-agro-nav-parent="otros">
+                    <button type="button" class="agro-shell-link" data-agro-view="otros"><span
+                            class="agro-shell-link__icon" aria-hidden="true">📦</span><span
+                            class="agro-shell-link__label">Otros</span></button>
+                    <div class="agro-shell-subnav">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="otros"
+                            data-agro-subview="historial">Historial</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="otros"
+                            data-agro-subview="stats">Estadísticas</button>
+                    </div>
+                </div>
+
                 <button type="button" class="agro-shell-link" data-agro-view="carrito"><span
                         class="agro-shell-link__icon" aria-hidden="true">🛒</span><span
                         class="agro-shell-link__label">Carrito</span></button>
@@ -1834,6 +1881,10 @@
                     <div class="gstats-actions">
                         <button type="button" id="btn-export-agro-profile-md" class="gstats-export-btn">
                             <i class="fa-solid fa-file-export" aria-hidden="true"></i> Exportar Informe Global (MD)
+                        </button>
+                        <button type="button" id="btn-export-stats-report"
+                            class="gstats-export-btn gstats-export-btn--detail">
+                            <i class="fa-solid fa-chart-bar" aria-hidden="true"></i> Reporte Detallado por Cultivo (MD)
                         </button>
                     </div>
 
@@ -2487,6 +2538,23 @@
                 </div>
             </div>
 
+            <div class="agro-dedicated-stats" id="pagados-dedicated-stats" hidden>
+                <div class="agro-dedicated-stats__grid">
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="pagados-stats-total">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Total cobrado (USD)</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="pagados-stats-count">0</span>
+                        <span class="agro-dedicated-stats__label">Registros</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="pagados-stats-avg">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Promedio por registro</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="agro-pagados-dedicated__steps">
                 <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
                     <div class="agro-pagados-step__head">
@@ -2603,6 +2671,23 @@
                         aria-pressed="false">👁 Ocultar nombres</button>
                     <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
                         aria-pressed="false">💰 Ocultar montos</button>
+                </div>
+            </div>
+
+            <div class="agro-dedicated-stats" id="fiados-dedicated-stats" hidden>
+                <div class="agro-dedicated-stats__grid">
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="fiados-stats-total">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Total fiado (USD)</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="fiados-stats-count">0</span>
+                        <span class="agro-dedicated-stats__label">Registros</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="fiados-stats-avg">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Promedio por registro</span>
+                    </div>
                 </div>
             </div>
 
@@ -2726,6 +2811,23 @@
                 </div>
             </div>
 
+            <div class="agro-dedicated-stats" id="perdidas-dedicated-stats" hidden>
+                <div class="agro-dedicated-stats__grid">
+                    <div class="agro-dedicated-stats__card agro-dedicated-stats__card--loss">
+                        <span class="agro-dedicated-stats__value" id="perdidas-stats-total">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Total perdido (USD)</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="perdidas-stats-count">0</span>
+                        <span class="agro-dedicated-stats__label">Registros</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="perdidas-stats-avg">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Promedio por registro</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="agro-pagados-dedicated__steps">
                 <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
                     <div class="agro-pagados-step__head">
@@ -2844,6 +2946,23 @@
                 </div>
             </div>
 
+            <div class="agro-dedicated-stats" id="donaciones-dedicated-stats" hidden>
+                <div class="agro-dedicated-stats__grid">
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="donaciones-stats-total">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Total donado (USD)</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="donaciones-stats-count">0</span>
+                        <span class="agro-dedicated-stats__label">Registros</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="donaciones-stats-avg">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Promedio por registro</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="agro-pagados-dedicated__steps">
                 <section class="agro-pagados-step agro-pagados-step--selector" aria-label="Paso 1 Seleccionar cultivo">
                     <div class="agro-pagados-step__head">
@@ -2949,6 +3068,23 @@
                         aria-pressed="false">👁 Ocultar nombres</button>
                     <button type="button" class="btn-privacy-toggle" data-money-privacy-control="toggle"
                         aria-pressed="false">💰 Ocultar montos</button>
+                </div>
+            </div>
+
+            <div class="agro-dedicated-stats" id="otros-dedicated-stats" hidden>
+                <div class="agro-dedicated-stats__grid">
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="otros-stats-total">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Total otros (USD)</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="otros-stats-count">0</span>
+                        <span class="agro-dedicated-stats__label">Registros</span>
+                    </div>
+                    <div class="agro-dedicated-stats__card">
+                        <span class="agro-dedicated-stats__value" id="otros-stats-avg">$0.00</span>
+                        <span class="agro-dedicated-stats__label">Promedio por registro</span>
+                    </div>
                 </div>
             </div>
 
@@ -4161,10 +4297,24 @@
                     mod.initIAContext({ supabase: sb, userId: session.user?.id });
                 }).catch(err => console.warn('[AGRO] IA wizard module load error:', err.message));
 
+                // Wire comprehensive stats report export button (non-blocking)
+                import('./agro-stats-report.js').then((mod) => {
+                    const btn = document.getElementById('btn-export-stats-report');
+                    if (btn && typeof mod.exportStatsReport === 'function') {
+                        btn.addEventListener('click', () => mod.exportStatsReport());
+                    }
+                }).catch(err => console.warn('[AGRO] Stats report module load error:', err.message));
+
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {
                     const summary = await statsModule.computeAgroFinanceSummaryV1();
-                    if (summary) statsModule.updateUIFromSummary(summary);
+                    if (summary) {
+                        statsModule.updateUIFromSummary(summary);
+                        window.__YG_AGRO_LAST_SUMMARY__ = summary;
+                        if (typeof window._updateDedicatedViewStats === 'function') {
+                            window._updateDedicatedViewStats(summary);
+                        }
+                    }
                     return summary;
                 };
 

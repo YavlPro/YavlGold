@@ -796,5 +796,253 @@ Cada tipo tiene icono, label y color. Los reportes ahora guardan `entryType` jun
 | 1. Blindar facturero y transferencias | Muy avanzado | Hecho en sesiones anteriores, pendiente validacion manual final |
 | 2. Cerrar onboarding/wizard de perfil para IA | **Hecho** | Wizard + bridges + contexto completo |
 | 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edicion, filtros, IA bridge, UX operativa |
-| 4. Estadisticas individuales y exportes por seccion | Pendiente | Siguiente bloque |
+| 4. Estadisticas individuales y exportes por seccion | **En progreso** | Auditoria completa, implementacion iniciada |
 | 5. QA integral final | Pendiente | Despues de punto 4 |
+
+---
+
+## Sesion: Punto 4 — Estadisticas individuales y exportes por seccion (2026-07-15)
+
+### Diagnostico
+
+#### Arquitectura actual de estadisticas
+
+| Ubicacion | Que muestra | Fuente | Export |
+|---|---|---|---|
+| Gastos tab (ops) | KPI cards + charts + summary panel | `agro-stats.js` computeAgroFinanceSummaryV1 | Ninguno per-tab |
+| Global Stats Panel (dentro de Cultivos) | Crop counts + finanzas + tops | `agroperfil.js` loadGlobalStats | exportProfileMarkdown |
+| Rankings tab | Top clientes, pendientes, cultivos | `agro.js` Rankings | exportOpsRankingsMarkdown |
+| Vistas dedicadas (pagados/fiados/perdidas/donaciones/otros) | **Solo historial** — sin stats | N/A | exportAgroLog(tabName) |
+| AgroRepo | Timeline + stats bitacora | localStorage | exportMarkdown |
+| agro-stats-report.js | Reporte global comprehensivo (per-crop, buyers, projections) | Fetches propios | exportStatsReport — **HUERFANO, nunca wired** |
+
+#### Hallazgos criticos
+
+1. **exportStatsReport esta huerfano**: exportado en agro-stats-report.js pero nunca importado ni wired a ningun boton
+2. **Dos exports globales compitiendo**: agroperfil.js y agro-stats-report.js generan contenido distinto de fuentes distintas
+3. **Vistas dedicadas sin stats individuales**: solo tienen historial + export, sin resumen (total, conteo, promedio)
+4. **Solo el tab Gastos tiene charts/KPIs**: los demas tabs no tienen nada comparable
+5. **Navegacion plana**: sin submenus historial/estadisticas dentro de secciones
+
+#### Causa raiz
+
+La arquitectura de stats crecio organicamente:
+- Fase 1: KPIs basicos en ops/gastos
+- Fase 2: Global stats panel en cultivos (agroperfil.js)
+- Fase 3: Vistas dedicadas con export pero sin stats
+- Fase 4: agro-stats-report.js creado pero nunca wired
+
+Resultado: responsabilidades mezcladas, codigo huerfano, stats faltantes per-view, navegacion sin claridad.
+
+### Plan quirurgico
+
+1. **Stats cards per-view**: Agregar mini-panel de stats a cada vista dedicada (pagados, fiados, perdidas, donaciones) con total USD, conteo de registros, promedio por registro — usando datos de computeAgroFinanceSummaryV1 ya en memoria
+2. **Wire exportStatsReport**: Conectar el export comprehensivo como boton en Historial de ciclos
+3. **Sub-nav toggle**: Agregar toggle Historial|Estadisticas en pagados y fiados (las dos con mayor valor analitico)
+4. **Mantener global stats en ciclos**: Ya esta correcto para la intencion del usuario
+
+### Archivos a modificar
+
+| Archivo | Cambio |
+|---|---|
+| `agro/index.html` | Stats cards en vistas dedicadas, boton export en ciclos, sub-nav toggle |
+| `agro/agro.js` | Wire stats cards con datos de summary, import exportStatsReport, sub-nav logic |
+| `agro/agro-stats.js` | Exponer datos per-view desde summary existente |
+| `agro/agro.css` | Estilos para stats cards y sub-nav toggle |
+
+### Riesgos
+
+- Stats cards deben usar la misma fuente (computeAgroFinanceSummaryV1) para no duplicar datos
+- Sub-nav no debe romper el flow existente de historial + wizard
+- Export comprehensivo ya existe y funciona; solo falta wiring
+
+### Cambios aplicados
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `agro/index.html` | Stats cards HTML en 5 vistas dedicadas (pagados, fiados, perdidas, donaciones, otros) | +80 lineas |
+| `agro/index.html` | Boton "Reporte Detallado por Cultivo (MD)" en global stats panel (ciclos) | +3 lineas |
+| `agro/index.html` | Wire `exportStatsReport` via lazy import de `agro-stats-report.js` | +7 lineas |
+| `agro/index.html` | Cache summary en `window.__YG_AGRO_LAST_SUMMARY__` + call `_updateDedicatedViewStats` | +5 lineas |
+| `agro/agro.js` | `DEDICATED_STATS_CONFIG`, `formatDedicatedStatsCurrency`, `updateDedicatedViewStats` + `window._updateDedicatedViewStats` bridge | +46 lineas |
+| `agro/agro.js` | Init call to populate stats from cached summary on app boot | +3 lineas |
+| `agro/agro-operations.css` | Estilos `.agro-dedicated-stats`, `.agro-dedicated-stats__grid`, `__card`, `__value`, `__label`, `__card--loss` | +42 lineas |
+| `agro/agro-operations.css` | Responsive: stats grid 1-col en <=900px | +4 lineas |
+| `agro/agro.css` | `gstats-actions` flex-wrap + gap, `.gstats-export-btn--detail` variant styles | +14 lineas |
+
+### Lo que NO se toco (preservado)
+
+- `agroperfil.js` — `exportProfileMarkdown()` sigue intacto como export global de perfil
+- `agro-stats-report.js` — `exportStatsReport()` sin cambios, solo wired
+- `agrorepo.js` — `exportMarkdown()` intacto
+- `agro.js` — `exportAgroLog()` per-tab intacto, `exportOpsRankingsMarkdown()` intacto
+- Todos los dedicated views: wizard, history, search, filters, footer — intactos
+- Sidebar navigation — sin cambios
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (139 modules)
+  - `agro-ChBOwmcZ.js`: 502.17 kB (monolito, sin cambios significativos de tamanio)
+  - `agro-stats-report-DiGbiiMZ.js`: 14.67 kB (ahora wired)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### QA sugerido
+
+1. Navegar a Pagados -> verificar que aparecen stats cards (Total cobrado, Registros, Promedio) si hay datos
+2. Navegar a Fiados -> verificar stats cards con total fiado
+3. Navegar a Perdidas -> verificar stats cards con estilo rojo en total
+4. Navegar a Donaciones -> verificar stats cards
+5. Navegar a Otros -> verificar stats cards (pueden estar ocultas si no hay datos)
+6. Verificar que stats cards se ocultan cuando no hay datos (`hidden` attribute)
+7. Navegar a Historial de ciclos -> abrir "Mis Estadisticas Globales" -> verificar dos botones de export
+8. Click "Exportar Informe Global (MD)" -> verificar que descarga perfil MD (comportamiento existente)
+9. Click "Reporte Detallado por Cultivo (MD)" -> verificar que descarga reporte comprehensivo con per-crop breakdown
+10. Hacer un nuevo registro de pago -> verificar que stats cards se actualizan automaticamente
+11. Probar en mobile (<=480px) -> verificar que stats grid cambia a 1 columna
+12. Verificar que los dos botones de export en global stats se acomodan con flex-wrap en mobile
+
+### Deuda residual
+
+- **Sub-nav toggle**: Historial|Estadisticas toggle en pagados/fiados queda pendiente. Requiere mas UX design (donde exactamente va, que muestra la vista de "estadisticas" per-view — solo las cards o tambien graficos). Se puede implementar en una sesion posterior si el usuario lo prioriza.
+- **Otros dedicated stats**: `otros` no tiene `summaryKey` porque `computeAgroFinanceSummaryV1` no calcula un total dedicado para "otros" (usa tabla `agro_others` que no existe en el summary). Si se necesita, hay que agregar una query adicional en `agro-stats.js`.
+
+### Estado del plan maestro
+
+| Punto | Estado | Nota |
+| --- | --- | --- |
+| 1. Blindar facturero y transferencias | Muy avanzado | Hecho en sesiones anteriores |
+| 2. Cerrar onboarding/wizard de perfil para IA | **Hecho** | Wizard + bridges + contexto completo |
+| 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edicion, filtros, IA bridge |
+| 4. Estadisticas individuales y exportes por seccion | **Avanzado** | Stats cards per-view + wiring exportStatsReport. Pendiente: sub-nav toggle, stats "otros" |
+| 5. QA integral final | Pendiente | Despues de cerrar punto 4 |
+
+---
+
+## Sesion: Punto 4 cierre — Submenu sidebar + Otros completo (2026-03-12)
+
+### Diagnostico
+
+#### Sidebar actual
+
+- Navegacion plana: botones `data-agro-view` sin jerarquia
+- `agro-shell.js` maneja vistas con `setActiveView()` + `syncViewButtons()`
+- No existe patron de sub-items/sub-links
+- Grupo "Operaciones" tiene 7 links planos: pagados, fiados, perdidas, donaciones, otros, carrito, rankings
+
+#### Por que "Otros" no tiene estadisticas
+
+- `FACTURERO_CONFIG.otros` tiene `table: null` y `compositeOnly: true`
+- "Otros" es una vista compuesta: agrega registros de TODAS las tablas donde `crop_id IS NULL`
+- `computeAgroFinanceSummaryV1()` NO computa un total para "otros"
+- `DEDICATED_STATS_CONFIG` tiene `{ prefix: 'otros', summaryKey: null, countKey: null }` — stats cards siempre ocultas
+- Los rows ya existen en memoria dentro del summary (incomeRows, pendingRows, etc.) pero no se filtran por crop_id null
+
+#### Causa raiz
+
+1. "Otros" nunca fue integrado en la fuente estadistica porque no tiene tabla propia
+2. El sidebar fue disenado plano sin anticipar la necesidad de Historial vs Estadisticas
+3. No hay mecanismo de "subview" en el shell — solo vistas de primer nivel
+
+### Plan quirurgico
+
+1. **agro-stats.js**: Computar `othersTotal` + `othersCount` filtrando rows existentes por `crop_id IS NULL` (sin query adicional)
+2. **agro.js**: Actualizar `DEDICATED_STATS_CONFIG` para 'otros' con los nuevos keys
+3. **index.html**: Agregar sub-links (Historial|Estadisticas) en sidebar bajo cada seccion de operaciones relevante
+4. **agro-shell.js**: Agregar manejo de subview (`data-agro-subview`) minimal al sistema existente
+5. **agro.css**: Estilos para sub-links del sidebar
+6. **agro-operations.css**: Visibilidad condicional por subview (historial vs stats)
+
+### Archivos a modificar
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-stats.js` | Computar othersTotal/othersCount desde rows existentes |
+| `agro/agro.js` | Actualizar DEDICATED_STATS_CONFIG para otros |
+| `agro/index.html` | Sub-links sidebar, reestructurar para subview toggle |
+| `agro/agro-shell.js` | Subview management minimal |
+| `agro/agro.css` | Estilos sub-links sidebar |
+| `agro/agro-operations.css` | Visibilidad contenido por subview |
+
+### Riesgos
+
+- Sub-nav no debe romper el click flow existente del sidebar
+- "Otros" stats son derivadas (crop_id null), no de tabla propia — coherentes pero indirectas
+- El subview toggle debe resetearse al cambiar de vista principal
+
+### Cambios aplicados
+
+| Archivo | Cambio | Lineas |
+|---|---|---|
+| `agro/agro-stats.js` | Exponer `expenseRows` fuera del try, computar `othersTotal`/`othersCount` filtrando rows por `crop_id IS NULL`, agregar a summary y movementCounts | ~20 lineas |
+| `agro/agro.js` | Actualizar `DEDICATED_STATS_CONFIG` para 'otros': `summaryKey: 'othersTotal'`, `countKey: 'others'` | 1 linea |
+| `agro/index.html` | Reestructurar sidebar Operaciones: 5 secciones (pagados, fiados, perdidas, donaciones, otros) con sub-links Historial + Estadisticas. Carrito y Rankings sin sub-nav | ~50 lineas |
+| `agro/agro-shell.js` | `VIEWS_WITH_SUBNAV` set, `activeSubview` state, `syncSubnav()` para show/hide sub-links y sync active state, subview en `setActiveView()`, subview attr en body, pass subview en click handler | ~30 lineas |
+| `agro/agro.css` | Estilos `.agro-shell-nav-item`, `.agro-shell-subnav`, `.agro-shell-sublink`, hover/active states | ~42 lineas |
+| `agro/agro-operations.css` | Reglas de visibilidad por subview: en stats mode ocultar steps/history/footer, force-show stats cards | ~14 lineas |
+
+### Lo que NO se toco (preservado)
+
+- `agroperfil.js` — `exportProfileMarkdown()` intacto
+- `agro-stats-report.js` — `exportStatsReport()` intacto, wired desde sesion anterior
+- `agrorepo.js` — `exportMarkdown()` intacto
+- `agro.js` — `exportAgroLog()` per-tab intacto, `exportOpsRankingsMarkdown()` intacto, dedicated view init functions intactas
+- Global stats panel en Historial de ciclos — intacto
+- Dashboard stats — intacto
+- Todas las tablas Supabase — sin cambios DDL
+
+### Build
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (139 modules)
+  - `agro-fpFQZ5bs.js`: 502.84 kB (monolito)
+  - `agro-stats-DcOUhLkH.js`: 21.23 kB (con othersTotal computation)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Comportamiento esperado
+
+#### Sidebar
+
+- Pagados, Fiados, Perdidas, Donaciones, Otros: cada uno muestra sub-links "Historial" y "Estadisticas" cuando la seccion esta activa
+- Carrito y Rankings: sin sub-nav (no tienen dos lecturas valiosas)
+- Click en link principal → vista en modo historial (default)
+- Click en "Historial" sub-link → modo historial explicitamente
+- Click en "Estadisticas" sub-link → modo stats (oculta wizard/history/footer, muestra stats cards)
+- Cambio de seccion → resetea a historial automaticamente
+
+#### Estadisticas "Otros"
+
+- `computeAgroFinanceSummaryV1` ahora computa `othersTotal` y `movementCounts.others`
+- "Otros" = suma de records con `crop_id IS NULL` de: gastos, ingresos, pendientes, perdidas, transferencias
+- Stats cards de Otros muestran: Total otros (USD), Registros, Promedio por registro
+- Datos coherentes con la vista operativa de Otros (misma definicion: registros sin cultivo asignado)
+
+### QA sugerido
+
+1. **Sidebar sub-nav**: Click Pagados → verificar sub-links Historial|Estadisticas visibles
+2. **Sub-nav active state**: Click "Estadisticas" → verificar highlight dorado en sublink
+3. **Stats mode**: En Pagados > Estadisticas → verificar que se oculta wizard/history/footer y se muestran stats cards
+4. **Historial mode**: En Pagados > Historial → verificar que se muestra wizard/history/footer normalmente
+5. **Reset al cambiar vista**: Estar en Pagados > Estadisticas → click Fiados → verificar que Fiados abre en Historial
+6. **Click link principal**: Estar en Pagados > Estadisticas → click "Pagados" principal → verificar reset a Historial
+7. **Otros stats**: Navegar a Otros > Estadisticas → verificar que stats cards muestran datos reales si hay registros sin cultivo
+8. **Carrito/Rankings**: Verificar que NO tienen sub-links (sin sub-nav)
+9. **Mobile**: Verificar sub-links en viewport <=480px (sidebar responsive)
+10. **Historial de ciclos**: Verificar que analytics global sigue intacta
+11. **Exportes**: Verificar que los botones de export siguen funcionales en modo historial
+
+### Estado del plan maestro (actualizado)
+
+| Punto | Estado | Nota |
+| --- | --- | --- |
+| 1. Blindar facturero y transferencias | Muy avanzado | Hecho en sesiones anteriores |
+| 2. Cerrar onboarding/wizard de perfil para IA | **Hecho** | Wizard + bridges + contexto completo |
+| 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edicion, filtros, IA bridge |
+| 4. Estadisticas individuales y exportes por seccion | **Hecho** | Stats cards per-view, wiring exportStatsReport, sub-nav Historial/Estadisticas, Otros integrado en fuente estadistica |
+| 5. QA integral final | Pendiente | Proximo paso natural |

@@ -620,6 +620,7 @@ export async function computeAgroFinanceSummaryV1() {
 
         // 1) Expenses REALES (filtrar deleted_at IS NULL)
         let expenseTotal = 0;
+        let expenseRows = [];
         const costByCategory = {};
         try {
             const expenseColumns = ['id', 'user_id', 'amount', 'monto_usd', 'currency', 'category', 'crop_id', 'date', 'created_at'];
@@ -631,10 +632,10 @@ export async function computeAgroFinanceSummaryV1() {
             if (result?.error) {
                 console.warn('[AGRO_STATS] Error fetching expenses:', result.error);
             }
-            const expenses = filterRowsByRange(result?.data, 'date', startDate, endDate)
+            expenseRows = filterRowsByRange(result?.data, 'date', startDate, endDate)
                 .filter(matchesStatsCrop);
-            if (expenses) {
-                expenses.forEach(e => {
+            if (expenseRows) {
+                expenseRows.forEach(e => {
                     const amt = parseFloat(e.monto_usd) || parseFloat(e.amount) || 0;
                     expenseTotal += amt;
                     const cat = e.category || 'Otros';
@@ -794,11 +795,28 @@ export async function computeAgroFinanceSummaryV1() {
             transfers: computeUnitTotals(transfersRows, statsCropId)
         };
 
+        // 7) "Otros" = records without crop assignment (crop_id IS NULL) across all tables
+        const isNoCrop = (row) => !row?.crop_id;
+        const othersAmtExpense = (r) => parseFloat(r?.monto_usd) || parseFloat(r?.amount) || 0;
+        const othersAmtStd = (r) => parseFloat(r?.monto_usd) || parseFloat(r?.monto) || 0;
+        const othersExpenseRows = Array.isArray(expenseRows) ? expenseRows.filter(isNoCrop) : [];
+        const othersIncomeRows = Array.isArray(incomeRows) ? incomeRows.filter(isNoCrop) : [];
+        const othersPendingRows = Array.isArray(pendingRows) ? pendingRows.filter(isNoCrop) : [];
+        const othersLossesRows = Array.isArray(lossesRows) ? lossesRows.filter(isNoCrop) : [];
+        const othersTransfersRows = Array.isArray(transfersRows) ? transfersRows.filter(isNoCrop) : [];
+        const othersCount = othersExpenseRows.length + othersIncomeRows.length + othersPendingRows.length + othersLossesRows.length + othersTransfersRows.length;
+        const othersTotal = othersExpenseRows.reduce((s, r) => s + othersAmtExpense(r), 0)
+            + othersIncomeRows.reduce((s, r) => s + othersAmtStd(r), 0)
+            + othersPendingRows.reduce((s, r) => s + othersAmtStd(r), 0)
+            + othersLossesRows.reduce((s, r) => s + othersAmtStd(r), 0)
+            + othersTransfersRows.reduce((s, r) => s + othersAmtStd(r), 0);
+
         const movementCounts = {
             income: Array.isArray(incomeRows) ? incomeRows.length : 0,
             pending: Array.isArray(pendingRows) ? pendingRows.length : 0,
             losses: Array.isArray(lossesRows) ? lossesRows.length : 0,
-            transfers: Array.isArray(transfersRows) ? transfersRows.length : 0
+            transfers: Array.isArray(transfersRows) ? transfersRows.length : 0,
+            others: othersCount
         };
 
         const cropExtremes = computeCropExtremes(cropsRows);
@@ -811,6 +829,7 @@ export async function computeAgroFinanceSummaryV1() {
             pendingTotal,
             lossesTotal,
             transfersTotal,
+            othersTotal,
             costTotal,
             cropsInvestmentTotal,
             // V9.5: revenueProjectedTotal ELIMINADO
@@ -823,7 +842,7 @@ export async function computeAgroFinanceSummaryV1() {
             movementCounts,
             cropExtremes,
             topSellingCrop,
-            hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0 || pendingTotal > 0 || lossesTotal > 0 || transfersTotal > 0,
+            hasData: expenseTotal > 0 || incomeTotal > 0 || cropsInvestmentTotal > 0 || pendingTotal > 0 || lossesTotal > 0 || transfersTotal > 0 || othersTotal > 0,
             updatedAtISO: new Date().toISOString(),
             dateRange: { startDate, endDate }
         };

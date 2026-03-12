@@ -14556,6 +14556,52 @@ function initOtrosDedicatedView() {
 }
 
 // ============================================================
+// PER-VIEW DEDICATED STATS CARDS
+// ============================================================
+
+const DEDICATED_STATS_CONFIG = [
+    { prefix: 'pagados', summaryKey: 'incomeTotal', countKey: 'income' },
+    { prefix: 'fiados', summaryKey: 'pendingTotal', countKey: 'pending' },
+    { prefix: 'perdidas', summaryKey: 'lossesTotal', countKey: 'losses' },
+    { prefix: 'donaciones', summaryKey: 'transfersTotal', countKey: 'transfers' },
+    { prefix: 'otros', summaryKey: 'othersTotal', countKey: 'others' }
+];
+
+function formatDedicatedStatsCurrency(num) {
+    const safe = Number(num);
+    if (!Number.isFinite(safe) || safe === 0) return '$0.00';
+    return '$' + safe.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function updateDedicatedViewStats(summary) {
+    if (!summary) return;
+    const counts = summary.movementCounts || {};
+
+    DEDICATED_STATS_CONFIG.forEach(({ prefix, summaryKey, countKey }) => {
+        const container = document.getElementById(`${prefix}-dedicated-stats`);
+        if (!container) return;
+
+        const total = summaryKey ? (Number(summary[summaryKey]) || 0) : 0;
+        const count = countKey ? (Number(counts[countKey]) || 0) : 0;
+        const avg = count > 0 ? total / count : 0;
+        const hasData = total > 0 || count > 0;
+
+        container.hidden = !hasData;
+
+        const totalEl = document.getElementById(`${prefix}-stats-total`);
+        if (totalEl) totalEl.textContent = formatDedicatedStatsCurrency(total);
+
+        const countEl = document.getElementById(`${prefix}-stats-count`);
+        if (countEl) countEl.textContent = String(count);
+
+        const avgEl = document.getElementById(`${prefix}-stats-avg`);
+        if (avgEl) avgEl.textContent = formatDedicatedStatsCurrency(avg);
+    });
+}
+
+window._updateDedicatedViewStats = updateDedicatedViewStats;
+
+// ============================================================
 // V9.8: CARRITO DEDICATED VIEW (reparent pattern)
 // ============================================================
 
@@ -17552,6 +17598,11 @@ export function initAgro() {
     initFactureroSelection();
     injectAgroMobilePatches();
     updateBalanceAndTopCategory();
+
+    // Populate per-view stats cards from any cached summary
+    if (window.__YG_AGRO_LAST_SUMMARY__) {
+        updateDedicatedViewStats(window.__YG_AGRO_LAST_SUMMARY__);
+    }
 
     // Habilitar Enter en inputs para calcular
     document.querySelectorAll('.styled-input').forEach(input => {

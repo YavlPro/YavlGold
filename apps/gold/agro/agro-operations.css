@@ -1185,6 +1185,64 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   box-shadow: 0 4px 14px rgba(200, 167, 82, 0.18);
 }
 
+/* ── Per-view dedicated stats cards ── */
+.agro-ops-v10 .agro-dedicated-stats {
+  padding: 0.52rem 0;
+}
+
+.agro-ops-v10 .agro-dedicated-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.52rem;
+}
+
+.agro-ops-v10 .agro-dedicated-stats__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  padding: 0.62rem 0.42rem;
+  border: 1px solid rgba(200, 167, 82, 0.16);
+  border-radius: 8px;
+  background: rgba(200, 167, 82, 0.04);
+}
+
+.agro-ops-v10 .agro-dedicated-stats__value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(0.92rem, 1.8vw, 1.12rem);
+  font-weight: 700;
+  color: var(--v10-gold-4, #C8A752);
+  letter-spacing: 0.02em;
+}
+
+.agro-ops-v10 .agro-dedicated-stats__card--loss .agro-dedicated-stats__value {
+  color: #EF4444;
+}
+
+.agro-ops-v10 .agro-dedicated-stats__label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.52);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+/* ── Subview toggle: stats vs historial ── */
+body[data-agro-subview="stats"] .agro-pagados-dedicated__steps,
+body[data-agro-subview="stats"] .agro-pagados-history,
+body[data-agro-subview="stats"] .agro-pagados-dedicated__footer {
+  display: none !important;
+}
+
+body[data-agro-subview="stats"] .agro-dedicated-stats {
+  display: block !important;
+}
+
+body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
+  display: block !important;
+}
+
 .agro-ops-v10 .tab-panel {
   padding-top: 0.18rem;
 }
@@ -1267,6 +1325,10 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   }
 
   .agro-ops-v10 .ops-context-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .agro-ops-v10 .agro-dedicated-stats__grid {
     grid-template-columns: 1fr;
   }
 

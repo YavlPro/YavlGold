@@ -21,6 +21,8 @@ const CORE_OPERATIONS_TABS = new Set([
     'otros'
 ]);
 
+const VIEWS_WITH_SUBNAV = new Set(['pagados', 'fiados', 'perdidas', 'donaciones', 'otros']);
+
 const VIEW_CONFIG = Object.freeze({
     perfil: { region: 'perfil', label: 'Mi Perfil', focusSelector: '[data-agro-shell-region="perfil"]' },
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
@@ -221,12 +223,33 @@ export function initAgroShell() {
         backdrop.setAttribute('aria-hidden', 'false');
     };
 
+    let activeSubview = 'historial';
+
+    const syncSubnav = () => {
+        document.querySelectorAll('.agro-shell-subnav').forEach((nav) => {
+            const parent = nav.closest('[data-agro-nav-parent]');
+            const parentView = parent?.dataset?.agroNavParent || '';
+            const isVisible = parentView === activeView;
+            nav.style.display = isVisible ? 'flex' : 'none';
+        });
+
+        document.querySelectorAll('.agro-shell-sublink').forEach((btn) => {
+            const btnView = normalizeView(btn.dataset.agroView);
+            const btnSub = btn.dataset.agroSubview || 'historial';
+            const isActive = btnView === activeView && btnSub === activeSubview;
+            btn.classList.toggle('is-active', isActive);
+        });
+
+        document.body.dataset.agroSubview = VIEWS_WITH_SUBNAV.has(activeView) ? activeSubview : '';
+    };
+
     const syncViewButtons = () => {
         const config = VIEW_CONFIG[activeView] || VIEW_CONFIG[AGRO_DEFAULT_VIEW];
         document.body.dataset.agroActiveView = activeView;
         document.body.classList.toggle('agro-view-dense', config?.dense === true);
 
         document.querySelectorAll('[data-agro-view]').forEach((button) => {
+            if (button.classList.contains('agro-shell-sublink')) return;
             const isActive = normalizeView(button.dataset.agroView) === activeView;
             button.classList.toggle('is-active', isActive);
             if (isActive) {
@@ -235,6 +258,8 @@ export function initAgroShell() {
                 button.removeAttribute('aria-current');
             }
         });
+
+        syncSubnav();
     };
 
     const FULLSCREEN_REGIONS = new Set(['asistente', 'perfil']);
@@ -304,6 +329,11 @@ export function initAgroShell() {
         const view = normalizeView(nextView);
         const config = VIEW_CONFIG[view] || VIEW_CONFIG[AGRO_DEFAULT_VIEW];
         activeView = view;
+        if (VIEWS_WITH_SUBNAV.has(view)) {
+            activeSubview = options.subview || 'historial';
+        } else {
+            activeSubview = 'historial';
+        }
         writeStoredView(view);
         syncRegions(config.region);
         syncViewButtons();
@@ -312,7 +342,8 @@ export function initAgroShell() {
             detail: {
                 view,
                 region: config.region,
-                label: config.label
+                label: config.label,
+                subview: activeSubview
             }
         }));
     };
@@ -357,7 +388,8 @@ export function initAgroShell() {
         const viewButton = event.target.closest('[data-agro-view]');
         if (!viewButton) return;
         const nextView = normalizeView(viewButton.dataset.agroView);
-        setActiveView(nextView, { scroll: true });
+        const subviewAttr = viewButton.dataset.agroSubview || null;
+        setActiveView(nextView, { scroll: true, subview: subviewAttr });
         closeSidebar();
     });
 
