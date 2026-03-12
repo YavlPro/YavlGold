@@ -16,6 +16,6 @@ Los HTML archivados se conservan como referencia histórica; no se garantiza que
 
 ## Relación con docs
 
-- inventario operativo: `docs/LEGACY_SURFACES.md`
-- estado corto del repo: `docs/AGENT_REPORT_ACTIVE.md`
-- histórico completo: `docs/AGENT_REPORT.md`
+- inventario operativo: `apps/gold/docs/LEGACY_SURFACES.md`
+- fuente activa del repo: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- histórico completo legacy: `apps/gold/docs/AGENT_REPORT.md`

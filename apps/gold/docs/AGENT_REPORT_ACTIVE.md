@@ -8,11 +8,11 @@ Resumen operativo actual de `apps/gold`.
 
 - La fuente operativa activa ya existe en `apps/gold/docs/AGENT_REPORT_ACTIVE.md`, pero el repo todavía arrastra ruido documental:
   - existe otro `AGENT_REPORT_ACTIVE.md` en la raíz;
-  - `AGENT.md` y `AGENTS.md` no son idénticos, así que hoy hay doble instrucción;
-  - `apps/gold/scripts/agent-report-check.mjs` todavía acepta fallback al reporte legacy.
+  - existía `AGENT.md` como segunda superficie de instrucciones;
+  - `apps/gold/scripts/agent-report-check.mjs` todavía aceptaba fallback al reporte legacy.
 - Eso deja tres focos de confusión:
   - un agente puede abrir el archivo activo equivocado;
-  - otro agente puede obedecer `AGENT.md` aunque `README.md` ya manda leer `AGENTS.md`;
+  - otro agente podía obedecer `AGENT.md` aunque `README.md` ya mandaba leer `AGENTS.md`;
   - el build todavía tolera crecer `AGENT_REPORT.md`, aunque operativamente ya no debería ser la fuente viva.
 - QA navegador:
   - la sesión Playwright de esta ronda dejó artefactos temporales en `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1773327549863`;
@@ -23,7 +23,7 @@ Resumen operativo actual de `apps/gold`.
 1. Declarar `apps/gold/docs/AGENT_REPORT_ACTIVE.md` como única fuente de verdad activa.
 2. Declarar `apps/gold/docs/AGENT_REPORT.md` como archivo legacy/histórico que no debe seguir creciendo salvo migración o consulta histórica.
 3. Dejar `AGENTS.md` como instrucción canónica del repo.
-4. Convertir `AGENT.md` en alias/puente de compatibilidad que apunte a `AGENTS.md` para evitar drift.
+4. Eliminar `AGENT.md` para evitar drift y ambigüedad documental.
 5. Convertir el `AGENT_REPORT_ACTIVE.md` de raíz en archivo puente hacia `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
 6. Ajustar `apps/gold/scripts/agent-report-check.mjs` para validar solo el reporte activo, no el legacy.
 7. Documentar higiene de QA navegador: cerrar Playwright y borrar la carpeta temporal de la sesión al final de cada sección de prueba.
@@ -34,7 +34,7 @@ Resumen operativo actual de `apps/gold`.
   - activa: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
   - legacy: `apps/gold/docs/AGENT_REPORT.md`
   - canon de instrucciones: `AGENTS.md`
-  - alias de compatibilidad: `AGENT.md`
+  - `AGENT.md` eliminado para evitar ambigüedad
 - Temporales de esta sesión Playwright:
   - carpeta detectada: `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1773327549863`
   - resultado final: eliminada tras cerrar el navegador de pruebas
@@ -81,13 +81,13 @@ Resumen operativo actual de `apps/gold`.
 
 ## Documentos de apoyo
 
-- Reporte histórico completo: `docs/AGENT_REPORT.md`
-- Inventario de legado: `docs/LEGACY_SURFACES.md`
+- Reporte histórico completo: `apps/gold/docs/AGENT_REPORT.md`
+- Inventario de legado: `apps/gold/docs/LEGACY_SURFACES.md`
 
 ## Plan operativo
 
-1. Mantener `AGENT_REPORT_ACTIVE.md` como gate corto para build y trabajo diario.
-2. Usar `AGENT_REPORT.md` solo como histórico acumulado de sesiones y cierres.
+1. Mantener `apps/gold/docs/AGENT_REPORT_ACTIVE.md` como gate corto para build y trabajo diario.
+2. Usar `apps/gold/docs/AGENT_REPORT.md` solo como histórico acumulado de sesiones y cierres.
 3. Tratar el shell Agro V10 como base vigente: una vista macro activa, sidebar colapsable y `Paso 1 / Paso 2` preservados.
 4. Mantener `Carrito` y `Rankings` como vistas oficiales del facturero dentro de la shell nueva.
 5. Consolidar en próximos QA la selección contextual de registros con datos reales del usuario.
@@ -289,6 +289,7 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
 - `apps/gold/public/llms.txt`
 - `apps/gold/README.md`
 - `apps/gold/archive/legacy-html/README.md`
+- `FICHA_TECNICA.md`
 - `AGENT.md` (eliminar)
 
 ### Riesgos
@@ -297,3 +298,57 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
   - quedarán referencias antiguas dentro de `apps/gold/docs/AGENT_REPORT.md` y `apps/gold/docs/chronicles/*`, pero solo como histórico legacy.
 - Bajo:
   - endurecer `agent-report-check.mjs` elimina fallback documental y hará fallar más rápido cualquier flujo que no use la ruta activa correcta, que es el comportamiento deseado.
+
+### Cambios aplicados
+
+- `AGENT.md`
+  - eliminado del repo para evitar que compita con `AGENTS.md`.
+- `AGENTS.md`
+  - se declaró explícitamente la jerarquía canónica:
+    - `AGENTS.md` único archivo de instrucciones;
+    - `AGENT.md` no recreable;
+    - `apps/gold/docs/AGENT_REPORT_ACTIVE.md` única fuente activa;
+    - `apps/gold/docs/AGENT_REPORT.md` legacy;
+    - `AGENT_REPORT_ACTIVE.md` raíz como puntero;
+    - `global_rules.md` no canónico;
+    - limpieza Playwright obligatoria por bloque.
+- `apps/gold/scripts/agent-report-check.mjs`
+  - se eliminó la resolución múltiple de candidatos;
+  - ahora valida una sola ruta activa: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`;
+  - la ruta se resuelve desde la ubicación del script, no desde fallbacks por `cwd`.
+- `apps/gold/public/llms.txt`
+  - se alineó el contexto LLM con la policy nueva;
+  - se eliminó cualquier ambigüedad sobre `AGENT.md`, legacy report y `global_rules.md`.
+- `apps/gold/README.md`
+  - se ajustaron las referencias documentales al path explícito `apps/gold/docs/...`.
+- `apps/gold/archive/legacy-html/README.md`
+  - se alinearon referencias a la fuente activa y al histórico legacy.
+- `FICHA_TECNICA.md`
+  - se corrigió la descripción del pipeline para que `agent-report-check.mjs` apunte explícitamente a `apps/gold/docs/AGENT_REPORT_ACTIVE.md`.
+
+### Validación
+
+- Auditoría posterior:
+  - `AGENTS.md` sigue presente como archivo canónico.
+  - `AGENT.md` ya no existe en disco.
+  - `agent-report-check.mjs` ya no tiene fallback al reporte legacy.
+  - `AGENT_REPORT_ACTIVE.md` en raíz quedó fuera del flujo activo y no participa en el check del build.
+- Build:
+  - `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Check documental directo:
+  - `node apps/gold/scripts/agent-report-check.mjs` -> OK
+  - `git diff --check` -> OK en los archivos tocados
+
+### Cierre
+
+- La jerarquía documental operativa quedó reducida a un flujo único:
+  - instrucciones: `AGENTS.md`
+  - reporte activo: `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - histórico: `apps/gold/docs/AGENT_REPORT.md`
+- La compatibilidad innecesaria que reabría ambigüedad se eliminó.
+- La policy Playwright quedó documentada en el lugar correcto: `AGENTS.md`.

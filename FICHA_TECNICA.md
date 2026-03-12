@@ -284,7 +284,7 @@ pnpm -C apps/gold build
 
 ### Pipeline de build
 1. `agent-guard.mjs` — bloquea dependencias prohibidas (React, Vue, Svelte, Angular, Next, Nuxt, Astro)
-2. `agent-report-check.mjs` — valida que `AGENT_REPORT_ACTIVE.md` exista
+2. `agent-report-check.mjs` — valida que exista `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
 3. `vite build` — build de producción MPA
 4. `check-llms.mjs` — valida `llms.txt` en dist
 5. `check-dist-utf8.mjs` — verifica encoding UTF-8 en HTML de salida

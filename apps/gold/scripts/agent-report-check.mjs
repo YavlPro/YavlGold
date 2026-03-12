@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const cwd = process.cwd();
-const reportPath = path.join(cwd, 'docs', 'AGENT_REPORT_ACTIVE.md');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(scriptDir, '..');
+const reportPath = path.join(projectRoot, 'docs', 'AGENT_REPORT_ACTIVE.md');
 const errorMessage = 'Falta la fuente activa apps/gold/docs/AGENT_REPORT_ACTIVE.md con Diagnostico y Plan';
 const minLines = 30;
 
