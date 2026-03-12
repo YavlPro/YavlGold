@@ -3313,28 +3313,29 @@
                         <!-- Welcome Screen -->
                         <div class="arw-welcome-screen" id="arw-welcomeScreen">
                             <div class="arw-welcome-icon">🌾</div>
-                            <h2 class="arw-welcome-title">Bienvenido a <strong>AgroRepo</strong></h2>
+                            <h2 class="arw-welcome-title">Tu <strong>Bitacora Operativa</strong></h2>
                             <p class="arw-welcome-subtitle">
-                                Tu bitácora digital de cultivos para La Grita, Táchira.
-                                Registra, organiza y exporta el historial de tus siembras.<br>
-                                <strong style="color:var(--arw-gold-primary);">100% Offline · 100% Tuyo · Cero
-                                    Dependencias</strong>
+                                Registra observaciones, decisiones, problemas y aprendizajes de tu trabajo diario.<br>
+                                Todo queda como memoria util para ti y para el asistente IA.
                             </p>
                             <div class="arw-features-grid">
                                 <div class="arw-feature-card">
-                                    <div class="arw-feature-icon">📴</div>
-                                    <div class="arw-feature-title">Sin Internet</div>
-                                    <div class="arw-feature-text">Funciona 100% offline. Datos en tu laptop.</div>
+                                    <div class="arw-feature-icon">👁️</div>
+                                    <div class="arw-feature-title">Observaciones</div>
+                                    <div class="arw-feature-text">Lo que ves en campo: estado del cultivo, clima, suelo.
+                                    </div>
                                 </div>
                                 <div class="arw-feature-card">
                                     <div class="arw-feature-icon">⚡</div>
-                                    <div class="arw-feature-title">Ultra Rápido</div>
-                                    <div class="arw-feature-text">Respuesta en &lt;1ms. Sin servidores lentos.</div>
+                                    <div class="arw-feature-title">Decisiones</div>
+                                    <div class="arw-feature-text">Que hiciste y por que. Registro de acciones reales.
+                                    </div>
                                 </div>
                                 <div class="arw-feature-card">
-                                    <div class="arw-feature-icon">🔒</div>
-                                    <div class="arw-feature-title">100% Privado</div>
-                                    <div class="arw-feature-text">Tus datos de cultivo son solo tuyos.</div>
+                                    <div class="arw-feature-icon">💡</div>
+                                    <div class="arw-feature-title">Aprendizajes</div>
+                                    <div class="arw-feature-text">Lo que funciono, lo que no. Memoria que crece contigo.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3345,8 +3346,10 @@
                                 <label class="arw-input-label" style="display:flex;align-items:center;gap:8px;">
                                     <span class="arw-pulse-dot"
                                         style="width:8px;height:8px;background:var(--arw-success);border-radius:50%;animation:arw-pulse 2s infinite;"></span>
-                                    Nuevo Reporte de Campo
+                                    Nuevo Registro
                                 </label>
+                                <div id="arw-entryTypeSelector"
+                                    style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
                                 <textarea class="arw-input-field" id="arw-reportContent"
                                     placeholder="Escribe tu reporte... Soporta **Markdown**. Ej: Hoy apliqué **abono orgánico** a las 6AM.&#10;- Lote Norte: 2kg/ha&#10;- Lote Sur: 1.5kg/ha"></textarea>
 
@@ -3385,9 +3388,12 @@
                             <div class="arw-commits-container" id="arw-commitsContainer">
                                 <div class="arw-commits-header">
                                     <div class="arw-commits-title">
-                                        📜 Historial de Reportes
+                                        📜 Historial
                                         <span class="arw-commits-count" id="arw-commitsCount">0</span>
                                     </div>
+                                </div>
+                                <div id="arw-filterBar"
+                                    style="display:none;align-items:center;justify-content:space-between;padding:6px 12px;margin-bottom:8px;background:rgba(200,167,82,0.06);border:1px solid var(--arw-border-gold);border-radius:6px;">
                                 </div>
                                 <div class="arw-commits-timeline" id="arw-commitsTimeline">
                                     <div class="arw-empty-state">

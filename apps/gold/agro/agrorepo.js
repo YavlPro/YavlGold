@@ -34,12 +34,22 @@ const TAG_CONFIG = {
     clima: { icon: '🌦️', label: 'Clima' },
     general: { icon: '📋', label: 'General' }
 };
+const ENTRY_TYPE_CONFIG = {
+    observacion: { icon: '👁️', label: 'Observacion', color: 'var(--arw-gold-primary, #C8A752)' },
+    decision: { icon: '⚡', label: 'Decision', color: 'var(--arw-success, #10B981)' },
+    problema: { icon: '⚠️', label: 'Problema', color: 'var(--arw-warning, #F59E0B)' },
+    aprendizaje: { icon: '💡', label: 'Aprendizaje', color: 'var(--arw-text-secondary, #ccc)' },
+    evento: { icon: '📌', label: 'Evento', color: 'var(--arw-gold-muted, #a08732)' }
+};
 
 // State
 const state = {
     bitacoras: [],
     activeBitacoraId: null,
     selectedTags: [],
+    selectedEntryType: 'observacion',
+    filterTag: null,
+    editingReportId: null,
     lastSaved: null
 };
 
@@ -220,7 +230,7 @@ function commitReport() {
     const textarea = $('arw-reportContent');
     const text = textarea?.value?.trim();
     if (!state.activeBitacoraId) {
-        showToast('⚠️ Selecciona una bitácora primero', 'warning');
+        showToast('⚠️ Selecciona una bitacora primero', 'warning');
         return;
     }
     if (!text) {
@@ -230,23 +240,89 @@ function commitReport() {
     }
     const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
     if (!bitacora) return;
-    const report = {
-        id: generateId(),
-        hash: generateHash(),
-        content: text,
-        tags: [...state.selectedTags],
-        createdAt: new Date().toISOString()
-    };
-    if (report.tags.length === 0) report.tags.push('general');
-    bitacora.reports.unshift(report);
+
+    // Edit mode: update existing report
+    if (state.editingReportId) {
+        const existing = bitacora.reports.find(r => r.id === state.editingReportId);
+        if (existing) {
+            existing.content = text;
+            existing.tags = [...state.selectedTags];
+            existing.entryType = state.selectedEntryType || 'observacion';
+            existing.updatedAt = new Date().toISOString();
+        }
+        state.editingReportId = null;
+        const submitBtn = $('arw-submitBtn');
+        if (submitBtn) submitBtn.innerHTML = '&#10003; Registrar Reporte';
+    } else {
+        const report = {
+            id: generateId(),
+            hash: generateHash(),
+            content: text,
+            tags: [...state.selectedTags],
+            entryType: state.selectedEntryType || 'observacion',
+            createdAt: new Date().toISOString()
+        };
+        if (report.tags.length === 0) report.tags.push('general');
+        bitacora.reports.unshift(report);
+    }
+
     if (textarea) textarea.value = '';
     state.selectedTags = [];
-    root?.querySelectorAll('.arw-tag-btn.selected')?.forEach(b => b.classList.remove('selected'));
+    state.selectedEntryType = 'observacion';
+    root?.querySelectorAll('.arw-tag-btn.selected')?.forEach(b => {
+        b.classList.remove('selected');
+        b.style.background = 'var(--arw-bg-tertiary)';
+        b.style.borderColor = 'var(--arw-border-subtle)';
+        b.style.color = 'var(--arw-text-secondary)';
+    });
+    renderEntryTypeSelector();
     persist();
+    syncRepoBridge();
     renderTimeline();
     renderPreview();
     renderBitacoraList();
-    showToast(`✅ Reporte registrado · <strong style="font-family:monospace;color:var(--arw-gold-muted)">#${report.hash}</strong>`, 'success');
+    if (!state.editingReportId) {
+        const last = bitacora.reports[0];
+        showToast(`&#10003; Reporte registrado · <strong style="font-family:monospace;color:var(--arw-gold-muted)">#${last?.hash || ''}</strong>`, 'success');
+    } else {
+        showToast('&#10003; Reporte actualizado', 'success');
+    }
+}
+
+function editReport(reportId) {
+    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
+    if (!bitacora) return;
+    const r = bitacora.reports.find(x => x.id === reportId);
+    if (!r) return;
+    const textarea = $('arw-reportContent');
+    if (textarea) {
+        textarea.value = r.content;
+        textarea.focus();
+    }
+    state.editingReportId = reportId;
+    state.selectedTags = [...(r.tags || [])];
+    state.selectedEntryType = r.entryType || 'observacion';
+    // Update tag visual state
+    root?.querySelectorAll('.arw-tag-btn')?.forEach(btn => {
+        const tag = btn.dataset.tag;
+        if (state.selectedTags.includes(tag)) {
+            btn.classList.add('selected');
+            btn.style.background = 'rgba(212,175,55,0.2)';
+            btn.style.borderColor = 'var(--arw-gold-primary)';
+            btn.style.color = 'var(--arw-gold-bright)';
+        } else {
+            btn.classList.remove('selected');
+            btn.style.background = 'var(--arw-bg-tertiary)';
+            btn.style.borderColor = 'var(--arw-border-subtle)';
+            btn.style.color = 'var(--arw-text-secondary)';
+        }
+    });
+    renderEntryTypeSelector();
+    const submitBtn = $('arw-submitBtn');
+    if (submitBtn) submitBtn.innerHTML = '&#9998; Actualizar Reporte';
+    // Scroll to top of editor
+    const editorPanel = $('arw-editorPanel');
+    if (editorPanel) editorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function deleteReport(reportId) {
@@ -267,7 +343,8 @@ function copyReport(reportId) {
     if (!bitacora) return;
     const r = bitacora.reports.find(x => x.id === reportId);
     if (!r) return;
-    const text = `[#${r.hash}] ${formatDate(r.createdAt)}\nTags: ${r.tags.join(', ')}\n\n${r.content}`;
+    const typeCfg = ENTRY_TYPE_CONFIG[r.entryType] || ENTRY_TYPE_CONFIG.observacion;
+    const text = `[#${r.hash}] ${typeCfg.label} · ${formatDate(r.createdAt)}\nTags: ${r.tags.join(', ')}\n\n${r.content}`;
     navigator.clipboard.writeText(text).then(() => {
         showToast('📋 Reporte copiado al portapapeles', 'success');
     }).catch(() => {
@@ -294,6 +371,76 @@ function toggleTag(btn) {
         btn.style.borderColor = 'var(--arw-border-subtle)';
         btn.style.color = 'var(--arw-text-secondary)';
     }
+}
+
+// ─── ENTRY TYPE SELECTOR ─────────────────────────────
+function renderEntryTypeSelector() {
+    const container = $('arw-entryTypeSelector');
+    if (!container) return;
+    container.replaceChildren();
+    Object.entries(ENTRY_TYPE_CONFIG).forEach(([key, cfg]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'arw-entry-type-btn' + (state.selectedEntryType === key ? ' arw-entry-type-btn--active' : '');
+        btn.dataset.entryType = key;
+        btn.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:${state.selectedEntryType === key ? 'rgba(200,167,82,0.15)' : 'var(--arw-bg-tertiary)'};border:1px solid ${state.selectedEntryType === key ? cfg.color : 'var(--arw-border-subtle)'};border-radius:6px;font-size:11px;cursor:pointer;color:${state.selectedEntryType === key ? cfg.color : 'var(--arw-text-muted)'};transition:all 0.15s ease;font-family:inherit;`;
+        btn.innerHTML = `<span>${cfg.icon}</span><span>${cfg.label}</span>`;
+        btn.addEventListener('click', () => {
+            state.selectedEntryType = key;
+            renderEntryTypeSelector();
+        });
+        container.appendChild(btn);
+    });
+}
+
+// ─── TAG FILTER ──────────────────────────────────────
+function setTagFilter(tag) {
+    state.filterTag = state.filterTag === tag ? null : tag;
+    renderTimeline();
+    renderFilterBar();
+}
+
+function renderFilterBar() {
+    const bar = $('arw-filterBar');
+    if (!bar) return;
+    if (!state.filterTag) {
+        bar.style.display = 'none';
+        return;
+    }
+    bar.style.display = 'flex';
+    const cfg = TAG_CONFIG[state.filterTag];
+    bar.innerHTML = `<span style="font-size:0.78rem;color:var(--arw-text-muted);">Filtrando por: <strong style="color:var(--arw-gold-primary)">${cfg ? cfg.icon + ' ' + cfg.label : state.filterTag}</strong></span><button type="button" style="background:none;border:none;color:var(--arw-text-muted);cursor:pointer;font-size:14px;padding:2px 6px;" title="Quitar filtro">&times;</button>`;
+    bar.querySelector('button')?.addEventListener('click', () => {
+        state.filterTag = null;
+        renderTimeline();
+        renderFilterBar();
+    });
+}
+
+// ─── IA BRIDGE ───────────────────────────────────────
+function syncRepoBridge() {
+    const allReports = [];
+    state.bitacoras.forEach(b => {
+        (b.reports || []).slice(0, 5).forEach(r => {
+            allReports.push({
+                bitacora: b.name,
+                type: r.entryType || 'observacion',
+                tags: r.tags || [],
+                content: (r.content || '').slice(0, 200),
+                date: r.createdAt
+            });
+        });
+    });
+    // Sort by date desc, limit to 15 most recent across all bitacoras
+    allReports.sort((a, b) => new Date(b.date) - new Date(a.date));
+    window._agroRepoContext = {
+        bitacoras_count: state.bitacoras.length,
+        total_reports: state.bitacoras.reduce((s, b) => s + (b.reports?.length || 0), 0),
+        recent_entries: allReports.slice(0, 15),
+        active_bitacora: state.activeBitacoraId
+            ? state.bitacoras.find(b => b.id === state.activeBitacoraId)?.name || null
+            : null
+    };
 }
 
 // ─── RENDERING ───────────────────────────────────────
@@ -398,13 +545,17 @@ function showEditor() {
         rootEl.textContent = 'AgroRepo';
         const sep = document.createElement('span');
         sep.style.cssText = 'color:var(--arw-text-muted);margin:0 8px;';
-        sep.textContent = '›';
+        sep.textContent = '\u203a';
         const current = document.createElement('span');
         current.className = 'arw-breadcrumb-current';
         current.style.color = 'var(--arw-gold-primary)';
         current.textContent = `${bitacora.icon} ${bitacora.name}`;
         breadcrumb.append(rootEl, sep, current);
     }
+    state.filterTag = null;
+    state.editingReportId = null;
+    renderEntryTypeSelector();
+    renderFilterBar();
     renderTimeline();
     renderPreview();
 }
@@ -419,49 +570,74 @@ function renderTimeline() {
         container.replaceChildren();
         const emptyState = document.createElement('div');
         emptyState.className = 'arw-empty-state';
-
         const icon = document.createElement('div');
         icon.className = 'arw-empty-state-icon';
-        icon.textContent = '📋';
+        icon.textContent = '\ud83d\udcdd';
         const title = document.createElement('div');
         title.className = 'arw-empty-state-title';
-        title.textContent = 'Sin reportes aún';
+        title.textContent = 'Sin registros aun';
         const text = document.createElement('div');
         text.className = 'arw-empty-state-text';
-        text.textContent = 'Escribe tu primer reporte de campo arriba';
-
+        text.textContent = 'Registra tu primera observacion, decision o hallazgo arriba.';
         emptyState.append(icon, title, text);
         container.appendChild(emptyState);
         return;
     }
+
+    // Apply tag filter
+    let reports = bitacora.reports;
+    if (state.filterTag) {
+        reports = reports.filter(r => Array.isArray(r.tags) && r.tags.includes(state.filterTag));
+    }
+
     container.replaceChildren();
+
+    if (reports.length === 0 && state.filterTag) {
+        const noMatch = document.createElement('div');
+        noMatch.style.cssText = 'text-align:center;padding:24px;color:var(--arw-text-muted);font-size:0.82rem;';
+        noMatch.textContent = 'Sin registros con este filtro.';
+        container.appendChild(noMatch);
+        return;
+    }
+
     const timeline = document.createElement('div');
     timeline.className = 'arw-commit-timeline';
     timeline.style.cssText = 'position:relative;padding-left:20px;';
 
-    bitacora.reports.forEach((r) => {
+    reports.forEach((r) => {
+        const entryTypeCfg = ENTRY_TYPE_CONFIG[r.entryType] || ENTRY_TYPE_CONFIG.observacion;
         const entry = document.createElement('div');
         entry.className = 'arw-commit-entry';
         entry.style.cssText = 'position:relative;padding:14px;background:var(--arw-bg-tertiary);border-radius:var(--arw-radius-md);margin-bottom:12px;border:1px solid var(--arw-border-subtle);';
 
         const dot = document.createElement('div');
-        dot.style.cssText = 'position:absolute;left:-26px;top:18px;width:12px;height:12px;background:var(--arw-gold-primary);border-radius:50%;border:2px solid var(--arw-bg-primary);';
+        dot.style.cssText = `position:absolute;left:-26px;top:18px;width:12px;height:12px;background:${entryTypeCfg.color};border-radius:50%;border:2px solid var(--arw-bg-primary);`;
 
         const header = document.createElement('div');
-        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;';
+        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;';
+
+        const headerLeft = document.createElement('div');
+        headerLeft.style.cssText = 'display:flex;align-items:center;gap:8px;';
+
+        const typeBadge = document.createElement('span');
+        typeBadge.style.cssText = `font-size:10px;padding:2px 8px;background:rgba(200,167,82,0.08);border:1px solid ${entryTypeCfg.color};border-radius:4px;color:${entryTypeCfg.color};display:inline-flex;align-items:center;gap:3px;`;
+        typeBadge.innerHTML = `<span>${entryTypeCfg.icon}</span><span>${entryTypeCfg.label}</span>`;
 
         const hash = document.createElement('span');
         hash.style.cssText = 'font-family:monospace;font-size:11px;color:var(--arw-gold-muted);background:var(--arw-bg-elevated);padding:2px 8px;border-radius:4px;';
         hash.textContent = `#${r.hash}`;
 
+        headerLeft.append(typeBadge, hash);
+
         const createdAt = document.createElement('span');
         createdAt.style.cssText = 'font-size:10px;color:var(--arw-text-muted);';
         createdAt.textContent = formatDate(r.createdAt);
-        header.append(hash, createdAt);
+        if (r.updatedAt) createdAt.textContent += ' (editado)';
+        header.append(headerLeft, createdAt);
 
         const content = document.createElement('div');
         content.style.cssText = 'font-size:13px;color:var(--arw-text-primary);line-height:1.6;margin-bottom:10px;white-space:pre-wrap;';
-        content.textContent = String(r.content || '');
+        content.innerHTML = renderMarkdown(String(r.content || ''));
 
         entry.append(dot, header, content);
 
@@ -469,9 +645,11 @@ function renderTimeline() {
             const tagsWrap = document.createElement('div');
             tagsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;';
             r.tags.forEach((t) => {
-                const tag = document.createElement('span');
-                tag.style.cssText = 'font-size:10px;padding:3px 8px;background:rgba(212,175,55,0.1);border:1px solid var(--arw-border-gold);border-radius:12px;color:var(--arw-gold-muted);';
+                const tag = document.createElement('button');
+                tag.type = 'button';
+                tag.style.cssText = 'font-size:10px;padding:3px 8px;background:rgba(212,175,55,0.1);border:1px solid var(--arw-border-gold);border-radius:12px;color:var(--arw-gold-muted);cursor:pointer;font-family:inherit;transition:background 0.15s ease;';
                 tag.textContent = getTagLabel(t);
+                tag.addEventListener('click', () => setTagFilter(t));
                 tagsWrap.appendChild(tag);
             });
             entry.appendChild(tagsWrap);
@@ -480,24 +658,33 @@ function renderTimeline() {
         const actions = document.createElement('div');
         actions.style.cssText = 'display:flex;gap:8px;';
 
+        const editBtn = document.createElement('button');
+        editBtn.className = 'arw-action-edit';
+        editBtn.dataset.edit = r.id;
+        editBtn.style.cssText = 'background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
+        editBtn.textContent = '\u270e Editar';
+
         const copyBtn = document.createElement('button');
         copyBtn.className = 'arw-action-copy';
         copyBtn.dataset.copy = r.id;
         copyBtn.style.cssText = 'background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
-        copyBtn.textContent = '📋 Copiar';
+        copyBtn.textContent = '\ud83d\udccb Copiar';
 
         const delBtn = document.createElement('button');
         delBtn.className = 'arw-action-del';
         delBtn.dataset.del = r.id;
         delBtn.style.cssText = 'background:none;border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
-        delBtn.textContent = '🗑️ Eliminar';
+        delBtn.textContent = '\ud83d\uddd1\ufe0f Eliminar';
 
-        actions.append(copyBtn, delBtn);
+        actions.append(editBtn, copyBtn, delBtn);
         entry.appendChild(actions);
         timeline.appendChild(entry);
     });
 
     container.appendChild(timeline);
+    container.querySelectorAll('.arw-action-edit').forEach(btn => {
+        btn.addEventListener('click', () => editReport(btn.dataset.edit));
+    });
     container.querySelectorAll('.arw-action-copy').forEach(btn => {
         btn.addEventListener('click', () => copyReport(btn.dataset.copy));
     });
@@ -618,7 +805,8 @@ async function exportMarkdown() {
         md += `## ${b.icon} ${b.name}\n`;
         md += `*Creada: ${formatDate(b.createdAt)} · ${b.reports.length} reportes*\n\n`;
         b.reports.forEach(r => {
-            md += `### \`#${r.hash}\` — ${formatDate(r.createdAt)}\n`;
+            const typeCfg = ENTRY_TYPE_CONFIG[r.entryType] || ENTRY_TYPE_CONFIG.observacion;
+            md += `### \`#${r.hash}\` ${typeCfg.icon} ${typeCfg.label} — ${formatDate(r.createdAt)}\n`;
             if (r.tags?.length) md += `**Tags:** ${r.tags.join(', ')}\n\n`;
             md += `${r.content}\n\n---\n\n`;
         });
@@ -742,7 +930,9 @@ function initWidget() {
     root.replaceChildren();
     root.appendChild(template.content.cloneNode(true));
     loadState();
+    syncRepoBridge();
     bindEvents();
+    renderEntryTypeSelector();
     renderBitacoraList();
     updateStats();
     if (state.activeBitacoraId) {

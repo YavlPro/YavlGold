@@ -16822,6 +16822,16 @@ function getAssistantContext() {
         context.stats = { crops_count: cropsCount };
     }
 
+    // AgroRepo memory bridge (bitacora entries for IA continuity)
+    const repo = window._agroRepoContext;
+    if (repo && repo.total_reports > 0) {
+        context.repo_memory = {
+            bitacoras: repo.bitacoras_count,
+            total_entries: repo.total_reports,
+            recent: (repo.recent_entries || []).slice(0, 8)
+        };
+    }
+
     return context;
 }
 

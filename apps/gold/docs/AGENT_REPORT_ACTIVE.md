@@ -658,3 +658,143 @@ El contexto JSON completo enviado al edge function ahora puede incluir:
 | 1. Correccion visual V10 | Hecho | Sesiones anteriores |
 | 2. Onboarding/wizard perfil para IA | **Hecho** | Wizard + bridges + onboarding context integrado |
 | 3. Siguiente punto del plan | Pendiente | Segun roadmap |
+
+---
+
+## Fortalecer AgroRepo como memoria operativa real (2026-03-13c)
+
+### Diagnostico
+
+AgroRepo existia como modulo extraido (`agrorepo.js`, 788 lineas) con:
+- **Fortalezas**: modular, lazy-loaded via accordion, sidebar + editor + timeline + preview panel, export JSON/MD/save, import JSON, tag system (7 tags), delete modal, keyboard shortcuts, mobile sidebar
+- **Persistencia**: LocalStorage solamente (`agrorepo_ultimate_v2`)
+- **Modelo de datos**: bitacoras (name, icon, reports[]), reports (id, hash, content, tags, createdAt)
+
+### Causa raiz — por que no funcionaba como memoria operativa
+
+1. **Sin tipos de entrada**: todo era "reporte" generico. No se podia distinguir una observacion de una decision, un problema de un aprendizaje. Sin estructura semantica, la memoria no tiene jerarquia ni contexto.
+2. **Sin edicion**: se podia crear y eliminar reportes, pero NO editarlos. Imposible corregir o enriquecer registros existentes.
+3. **Sin filtrado**: tags existian pero solo como decoracion visual. No se podia filtrar el timeline por tag. Recuperar contexto util era imposible sin leer todo.
+4. **Markdown no renderizado**: `renderMarkdown()` existia como funcion pero el timeline usaba `textContent` (texto plano). El formateo no se veia.
+5. **Sin bridge IA**: AgroRepo era completamente invisible para el asistente IA. Cero continuidad entre bitacora y conversacion con IA.
+6. **Welcome screen marketing**: decia "100% Offline, Ultra Rapido, 100% Privado" — copy de producto, no guia operativa. Ademas tenia "La Grita, Tachira" hardcodeado.
+7. **Empty states genericos**: no guiaban al usuario a registrar informacion util.
+
+### Plan quirurgico
+
+Cambios enfocados en valor operativo real, sin reescribir el modulo:
+
+1. Agregar tipos de entrada semanticos
+2. Habilitar edicion de reportes
+3. Implementar filtrado por tags en timeline
+4. Activar renderMarkdown en timeline
+5. Crear bridge IA (`window._agroRepoContext`)
+6. Conectar bridge a `getAssistantContext()` en agro.js
+7. Reescribir welcome/empty states con copy operativo
+
+### Cambios aplicados
+
+#### `agrorepo.js` — Modulo principal
+
+**Nuevo: ENTRY_TYPE_CONFIG** (5 tipos semanticos)
+- `observacion` — lo que se ve en campo
+- `decision` — acciones tomadas y por que
+- `problema` — issues detectados
+- `aprendizaje` — lecciones aprendidas
+- `evento` — hitos y momentos relevantes
+
+Cada tipo tiene icono, label y color. Los reportes ahora guardan `entryType` junto con content/tags.
+
+**Nuevo: renderEntryTypeSelector()** — selector visual de tipo de entrada en el editor, renderizado dinamicamente con estado activo visual.
+
+**Nuevo: editReport()** — carga un reporte existente al editor (content, tags, entryType), cambia el boton submit a "Actualizar Reporte", permite editar y guardar con `updatedAt` timestamp.
+
+**Nuevo: setTagFilter() + renderFilterBar()** — click en un tag del timeline filtra por ese tag. Barra de filtro activo con boton para quitar. Toggle: click mismo tag quita filtro.
+
+**Nuevo: syncRepoBridge()** — expone `window._agroRepoContext` con:
+```json
+{
+  "bitacoras_count": 3,
+  "total_reports": 12,
+  "recent_entries": [
+    { "bitacora": "Tomate", "type": "observacion", "tags": ["riego","clima"], "content": "...", "date": "..." }
+  ],
+  "active_bitacora": "Tomate"
+}
+```
+
+**Mejorado: commitReport()** — ahora captura `entryType`, soporta modo edicion (actualiza reporte existente vs crear nuevo), resetea estado de edicion al terminar.
+
+**Mejorado: renderTimeline()** — entry type badge con color por tipo, renderMarkdown activado (bold, italic, code, bullet points), tags clickeables para filtrar, boton "Editar" en cada entrada, indicador "(editado)" si tiene `updatedAt`, dot color segun tipo de entrada.
+
+**Mejorado: copyReport() + exportMarkdown()** — incluyen tipo de entrada en output.
+
+#### `agro/index.html` — Template HTML
+
+- **Welcome screen**: reescrita como "Tu Bitacora Operativa" con 3 cards operativas (Observaciones, Decisiones, Aprendizajes) en vez de marketing (Offline, Rapido, Privado)
+- **Editor**: agregado `div#arw-entryTypeSelector` para selector de tipo de entrada
+- **Timeline**: agregado `div#arw-filterBar` para barra de filtro activo
+- **Labels**: "Nuevo Reporte de Campo" -> "Nuevo Registro", "Historial de Reportes" -> "Historial"
+
+#### `agro/agro.js` — getAssistantContext()
+
+- Lee `window._agroRepoContext` y agrega `context.repo_memory` con bitacoras count, total entries, y hasta 8 entradas recientes (truncadas a 200 chars)
+
+### Archivos modificados
+
+| Archivo | Cambios |
+| --- | --- |
+| `agro/agrorepo.js` | +180 lineas netas — entry types, edit, filter, IA bridge, timeline mejorado |
+| `agro/index.html` | ~30 lineas — welcome operativa, entry type selector, filter bar |
+| `agro/agro.js` | +10 lineas — repo_memory en getAssistantContext() |
+| `docs/AGENT_REPORT_ACTIVE.md` | Este reporte |
+
+### Lo que NO se toco (preservado)
+
+- Export JSON / Import JSON / Save to file — intactos
+- Export Markdown — mejorado con tipos, no roto
+- Sidebar + bitacora list — intactos
+- Preview panel (stats, tag distribution) — intacto
+- Delete modal — intacto
+- Keyboard shortcuts — intactos
+- Mobile sidebar — intacto
+- Persistencia localStorage — intacta (backward compatible: reportes viejos sin `entryType` default a `observacion`)
+
+### Build
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (138 modules)
+  - `agrorepo-DxHo1H7m.js`: 24.05 kB (antes 18.30 kB, +31%)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### QA sugerido
+
+1. Abrir Agro -> navegar a Bitacora -> verificar welcome operativa (Observaciones/Decisiones/Aprendizajes)
+2. Crear bitacora -> verificar selector de tipo de entrada (5 botones)
+3. Seleccionar tipo "Decision" -> escribir reporte -> registrar -> verificar badge verde "Decision" en timeline
+4. Click en tag en timeline -> verificar que filtra correctamente + barra de filtro activo aparece
+5. Click "Editar" en una entrada -> verificar que carga content, tags y tipo en el editor + boton cambia a "Actualizar"
+6. Guardar edicion -> verificar "(editado)" en timestamp
+7. Verificar `window._agroRepoContext` en consola despues de registrar entrada
+8. Enviar mensaje al asistente -> verificar que `context.repo_memory` aparece con entradas recientes
+9. Export Markdown -> verificar que incluye tipo de entrada en cada reporte
+10. Probar en mobile (<=480px) -> verificar que entry type selector y filter bar no rompen layout
+11. Verificar backward compatibility: reportes viejos sin `entryType` deben mostrar como "Observacion"
+
+### Deuda residual
+
+- **Supabase persistence**: AgroRepo sigue en localStorage. Migrar a Supabase permitiria: cross-device, backup en nube, queries SQL. Esto es un cambio mayor que requiere migracion DDL + rewrite de persistence layer.
+- **Busqueda full-text**: no implementada. Con pocos registros no es critico, pero seria util con volumen.
+- **Vinculacion a cultivos reales**: bitacoras se nombran como cultivos pero no estan vinculadas a `agro_crops`. Vincularlas permitiria al IA cruzar datos de bitacora con estado real del cultivo.
+
+### Estado del plan maestro
+
+| Punto | Estado | Nota |
+| --- | --- | --- |
+| 1. Blindar facturero y transferencias | Muy avanzado | Hecho en sesiones anteriores, pendiente validacion manual final |
+| 2. Cerrar onboarding/wizard de perfil para IA | **Hecho** | Wizard + bridges + contexto completo |
+| 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edicion, filtros, IA bridge, UX operativa |
+| 4. Estadisticas individuales y exportes por seccion | Pendiente | Siguiente bloque |
+| 5. QA integral final | Pendiente | Despues de punto 4 |
