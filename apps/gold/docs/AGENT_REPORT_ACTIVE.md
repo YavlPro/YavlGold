@@ -1046,3 +1046,58 @@ Resultado: responsabilidades mezcladas, codigo huerfano, stats faltantes per-vie
 | 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edicion, filtros, IA bridge |
 | 4. Estadisticas individuales y exportes por seccion | **Hecho** | Stats cards per-view, wiring exportStatsReport, sub-nav Historial/Estadisticas, Otros integrado en fuente estadistica |
 | 5. QA integral final | Pendiente | Proximo paso natural |
+
+---
+
+## Sesion: Bugfix sidebar sub-nav — padre=toggle, hijos=nav (2026-03-12)
+
+### Diagnostico
+
+#### Bug 1: Padre navega en vez de toggle
+
+- Los botones padre tenian `data-agro-view="pagados"` (mismo atributo que los hijos)
+- El click handler en `agro-shell.js` captura TODO `[data-agro-view]` sin distinguir padre de hijo
+- Resultado: click en padre → `setActiveView()` + `closeSidebar()` — navega y cierra
+
+#### Bug 2: Stats cae en historial
+
+- Click en sublink "Estadisticas" → `setActiveView('pagados', {subview:'stats'})` ✓
+- Pero `applyViewEffects` llama `switchTab('ingresos')` internamente
+- `switchTab` dispara `agro:finance-tab:changed` → el listener llama `setActiveView('pagados', {syncTab:false})` SIN subview
+- `activeSubview = options.subview || 'historial'` = `'historial'` — se resetea
+
+### Causa raiz
+
+1. Padre e hijos compartian el mismo mecanismo de click (`data-agro-view`)
+2. El evento `agro:finance-tab:changed` no preservaba el subview activo
+
+### Cambios aplicados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/index.html` | Reemplazar `data-agro-view` por `data-agro-nav-toggle` en los 5 botones padre (pagados, fiados, perdidas, donaciones, otros) |
+| `agro/agro-shell.js` | (1) Agregar `expandedNavParent` state para toggle accordion (2) Handler `data-agro-nav-toggle` antes de `data-agro-view` — solo toggle, no navega, no cierra sidebar (3) `syncSubnav` usa `expandedNavParent` para visibilidad, y sincroniza active state de toggle buttons (4) `openSidebar` auto-expande subnav de la vista activa (5) `agro:finance-tab:changed` preserva `activeSubview` |
+
+### Comportamiento final
+
+- **Click padre** → solo expande/colapsa subnav (accordion). No navega. No cierra sidebar.
+- **Click padre otra vez** → colapsa subnav
+- **Click "Historial"** → navega a subview historial, cierra sidebar
+- **Click "Estadisticas"** → navega a subview stats, cierra sidebar. No se resetea por switchTab.
+- **Abrir sidebar** → auto-expande subnav de la seccion activa
+- **Carrito/Rankings** → sin cambio, siguen como links directos
+
+### Build
+
+- `pnpm build:gold` → **OK** (agent-guard OK, vite OK, UTF-8 OK)
+
+### QA sugerido
+
+1. Click Pagados → verificar que solo expande subnav, no navega
+2. Click Pagados otra vez → verificar que colapsa
+3. Click Historial → verificar navegacion a pagados historial + sidebar cierra
+4. Click Estadisticas → verificar navegacion a pagados stats + stats cards visibles + wizard/history ocultos
+5. Abrir sidebar estando en Pagados → verificar auto-expand del subnav
+6. Cambiar a Fiados > Estadisticas → verificar que stats mode se mantiene
+7. Verificar las 5 secciones (pagados, fiados, perdidas, donaciones, otros)
+8. Verificar carrito y rankings siguen como links directos

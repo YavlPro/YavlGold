@@ -221,15 +221,20 @@ export function initAgroShell() {
         sidebar.removeAttribute('inert');
         backdrop.hidden = false;
         backdrop.setAttribute('aria-hidden', 'false');
+        if (VIEWS_WITH_SUBNAV.has(activeView)) {
+            expandedNavParent = activeView;
+        }
+        syncSubnav();
     };
 
     let activeSubview = 'historial';
+    let expandedNavParent = null;
 
     const syncSubnav = () => {
         document.querySelectorAll('.agro-shell-subnav').forEach((nav) => {
             const parent = nav.closest('[data-agro-nav-parent]');
             const parentView = parent?.dataset?.agroNavParent || '';
-            const isVisible = parentView === activeView;
+            const isVisible = parentView === expandedNavParent;
             nav.style.display = isVisible ? 'flex' : 'none';
         });
 
@@ -238,6 +243,17 @@ export function initAgroShell() {
             const btnSub = btn.dataset.agroSubview || 'historial';
             const isActive = btnView === activeView && btnSub === activeSubview;
             btn.classList.toggle('is-active', isActive);
+        });
+
+        document.querySelectorAll('[data-agro-nav-toggle]').forEach((btn) => {
+            const toggleView = normalizeView(btn.dataset.agroNavToggle);
+            const isActive = toggleView === activeView;
+            btn.classList.toggle('is-active', isActive);
+            if (isActive) {
+                btn.setAttribute('aria-current', 'page');
+            } else {
+                btn.removeAttribute('aria-current');
+            }
         });
 
         document.body.dataset.agroSubview = VIEWS_WITH_SUBNAV.has(activeView) ? activeSubview : '';
@@ -385,6 +401,14 @@ export function initAgroShell() {
             }
         }
 
+        const navToggle = event.target.closest('[data-agro-nav-toggle]');
+        if (navToggle) {
+            const toggleTarget = normalizeView(navToggle.dataset.agroNavToggle);
+            expandedNavParent = expandedNavParent === toggleTarget ? null : toggleTarget;
+            syncSubnav();
+            return;
+        }
+
         const viewButton = event.target.closest('[data-agro-view]');
         if (!viewButton) return;
         const nextView = normalizeView(viewButton.dataset.agroView);
@@ -395,7 +419,7 @@ export function initAgroShell() {
 
     window.addEventListener('agro:finance-tab:changed', (event) => {
         const nextView = mapTabToView(event.detail?.tabName);
-        setActiveView(nextView, { scroll: false, syncTab: false });
+        setActiveView(nextView, { scroll: false, syncTab: false, subview: activeSubview });
     });
 
     window.addEventListener('agro:shell:set-view', (event) => {
