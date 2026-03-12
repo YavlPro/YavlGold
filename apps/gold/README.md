@@ -65,9 +65,9 @@ pnpm -C apps/gold build
 
 ## Documentación operativa
 
-- `docs/AGENT_REPORT_ACTIVE.md`: reporte operativo actual y fuente corta para validación.
-- `docs/AGENT_REPORT.md`: histórico completo de diagnósticos y cierres.
-- `docs/LEGACY_SURFACES.md`: inventario de superficies legacy, huérfanas o candidatas a archivo.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: fuente de verdad activa y reporte operativo vigente.
+- `apps/gold/docs/AGENT_REPORT.md`: archivo legacy/histórico; no debe seguir creciendo salvo migración o consulta histórica.
+- `apps/gold/docs/LEGACY_SURFACES.md`: inventario de superficies legacy, huérfanas o candidatas a archivo.
 
 ## Política de desarrollo
 

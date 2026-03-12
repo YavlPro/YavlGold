@@ -2,17 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 const cwd = process.cwd();
-const reportCandidates = [
-  path.join(cwd, 'docs', 'AGENT_REPORT_ACTIVE.md'),
-  path.join(cwd, 'apps', 'gold', 'docs', 'AGENT_REPORT_ACTIVE.md'),
-  path.join(cwd, 'docs', 'AGENT_REPORT.md'),
-  path.join(cwd, 'apps', 'gold', 'docs', 'AGENT_REPORT.md')
-];
-const reportPath = reportCandidates.find((p) => fs.existsSync(p));
-const errorMessage = 'Falta AGENT_REPORT_ACTIVE.md con Diagn\u00f3stico y Plan';
+const reportPath = path.join(cwd, 'docs', 'AGENT_REPORT_ACTIVE.md');
+const errorMessage = 'Falta la fuente activa apps/gold/docs/AGENT_REPORT_ACTIVE.md con Diagnostico y Plan';
 const minLines = 30;
 
-if (!reportPath) {
+if (!fs.existsSync(reportPath)) {
   console.error(errorMessage);
   process.exit(1);
 }

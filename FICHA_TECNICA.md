@@ -1,8 +1,11 @@
 # FICHA TÉCNICA - YavlGold V9.8
 
-**Fecha de Referencia:** 16/01/2026
-**Tipo de Proyecto:** Plataforma educativa, productiva y de servicios
+**Fecha de Referencia:** 12/03/2026
+**Tipo de Proyecto:** Plataforma productiva, educativa y de servicios para el agro
 **Arquitectura:** Monorepo Turborepo
+**Instrucciones para agentes:** `AGENTS.md` (raíz del repo)
+**Sistema de diseño:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (inmutable)
+**LLMs context:** `public/llms.txt` (servido en producción)
 
 ---
 
@@ -27,8 +30,10 @@
 - **Build Tool:** Vite (Multi-Page Application)
 - **Arquitectura:** MPA (Multi-Page Application) - NO SPA
 - **Tipografías:**
-  - Títulos: Orbitron
-  - Cuerpo: Rajdhani
+  - Títulos/branding: Orbitron
+  - Cuerpo/UI: Rajdhani
+  - Citas/prestige: Playfair Display
+- **Iconos:** Font Awesome 6.5
 
 ### Backend/Servicios
 - **BaaS:** Supabase (Backend as a Service)
@@ -92,18 +97,50 @@ packages/
 - Progreso académico
 - Notificaciones
 
-### 4.2 Agro + Clima
+### 4.2 Agro (módulo liberado)
 **Ubicación:** `apps/gold/agro/`
 
 **Funcionalidades:**
-- Información meteorológica en tiempo real
+- Facturero financiero: gastos, ingresos (pagados), fiados, pérdidas, donaciones, otros
+- Gestión de cultivos con ciclos productivos
+- Dashboard agrícola con clima en tiempo real
+- Rankings y estadísticas financieras
+- Carrito de compras con lista de insumos
+- Planificación y agenda agrícola
+- Inteligencia de mercado
+- Feedback y encuestas
+- Interacciones sociales
+- Notificaciones
+- Papelera de eliminados (soft-delete con restore)
 - Geolocalización con prioridad: Manual > GPS > IP
-- Caché de ubicaciones
-- Dashboard agrícola
 
-**Archivos Clave:**
-- `apps/gold/assets/js/geolocation.js` (lógica de coords)
-- `apps/gold/agro/dashboard.js` (integración clima)
+**Módulos JS (carga dinámica):**
+```
+agro.js              — monolito principal (facturero, CRUD, historial)
+agro-agenda.js       — agenda agrícola
+agro-cart.js         — carrito de insumos
+agro-clima.js        — integración meteorológica
+agro-crop-report.js  — reportes por cultivo
+agro-exchange.js     — tasas de cambio
+agro-feedback.js     — feedback y encuestas
+agro-interactions.js — interacciones
+agro-market.js       — inteligencia de mercado
+agro-notifications.js — notificaciones
+agro-planning.js     — planificación
+agro-privacy.js      — privacidad de datos
+agro-selection.js    — selección de cultivos
+agro-shell.js        — shell UI
+agro-stats.js        — estadísticas financieras
+agro-stats-report.js — reportes estadísticos
+agro-trash.js        — papelera de eliminados
+agro-unit-totals.js  — totales por unidad
+agro-wizard.js       — wizard de configuración
+```
+
+**Archivos CSS:**
+- `agro.css` — estilos principales + papelera + undo toast
+- `agro-dashboard.css` — dashboard
+- `agro-operations.css` — operaciones financieras
 
 **LocalStorage Keys:**
 - `YG_MANUAL_LOCATION`
@@ -148,8 +185,19 @@ packages/
 #### Usuarios y Perfiles
 - `profiles` - Perfiles de usuario
 
+#### Agro — Facturero
+- `agro_expenses` - Gastos (con `deleted_at` soft-delete)
+- `agro_incomes` - Ingresos/Pagados (con `deleted_at`)
+- `agro_pending` - Fiados/Pendientes (con `deleted_at`)
+- `agro_losses` - Pérdidas (con `deleted_at`)
+- `agro_transfers` - Donaciones/Transferencias (con `deleted_at`)
+
+#### Agro — Cultivos
+- `agro_crops` - Cultivos activos
+- `agro_crop_cycles` - Ciclos productivos
+
 #### Contenido y Módulos
-- `modules` - Definición de módulos educativos
+- `modules` - Definición de módulos
 - `user_favorites` - Favoritos del usuario
 
 #### Progreso Académico
@@ -166,6 +214,8 @@ packages/
 - Row Level Security (RLS) habilitado
 - Políticas de acceso por usuario
 - Consultas filtradas por `user_id`
+- Soft-delete con `deleted_at` timestamp como patrón estándar
+- Monedas soportadas: COP, USD, VES
 
 ---
 
@@ -232,6 +282,13 @@ pnpm build:gold
 pnpm -C apps/gold build
 ```
 
+### Pipeline de build
+1. `agent-guard.mjs` — bloquea dependencias prohibidas (React, Vue, Svelte, Angular, Next, Nuxt, Astro)
+2. `agent-report-check.mjs` — valida que `AGENT_REPORT_ACTIVE.md` exista
+3. `vite build` — build de producción MPA
+4. `check-llms.mjs` — valida `llms.txt` en dist
+5. `check-dist-utf8.mjs` — verifica encoding UTF-8 en HTML de salida
+
 ### Agregar Nueva Página
 1. Crear HTML en ubicación apropiada
 2. Registrar entrada en `vite.config.js`
@@ -287,6 +344,10 @@ pnpm -C apps/gold build
 ## 11. REFERENCIAS INTERNAS
 
 ### Archivos Clave
+- **Instrucciones agentes:** `AGENTS.md` (raíz)
+- **ADN Visual:** `apps/gold/docs/ADN-VISUAL-V10.0.md`
+- **Reporte operativo:** `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- **LLMs context:** `apps/gold/public/llms.txt`
 - **Supabase Client:** `apps/gold/assets/js/config/supabase-config.js`
 - **Auth:** `apps/gold/assets/js/auth/authClient.js`
 - **Dashboard Guard:** `apps/gold/dashboard/auth-guard.js`
@@ -295,6 +356,7 @@ pnpm -C apps/gold build
 - **Weather:** `apps/gold/agro/dashboard.js`
 - **Build Config:** `apps/gold/vite.config.js`
 - **Routing:** `apps/gold/vercel.json`
+- **Agent Guard:** `apps/gold/scripts/agent-guard.mjs`
 
 ---
 
@@ -325,5 +387,5 @@ git status
 
 ---
 
-**Versión de Ficha:** 1.1
-**Última Actualización:** 19/02/2026
+**Versión de Ficha:** 1.2
+**Última Actualización:** 12/03/2026
