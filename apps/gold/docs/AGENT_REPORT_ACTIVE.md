@@ -120,3 +120,80 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
   - `@media 480px`: stats 3-col mantenido con padding mínimo, topbar 32px icons, hero title 1.1rem
 - **`dashboard/index.html`**: inline `<style>` de `.insight-action` actualizado con `background: transparent; box-shadow: none` (belt-and-suspenders)
 - **`agro/agro-dashboard.css`**: `@media 768px` → `#notif-dropdown` constrainido a `min(320px, calc(100vw - 24px))`, right ajustado, max-height 70vh con overflow-y auto
+
+---
+
+## Facturero: Revertir a Fiado + Papelera de eliminados (2026-03-12)
+
+### Diagnóstico
+
+#### A) "Revertir a fiado" ausente en Pagados
+- **Causa raíz**: `renderPagadosDedicatedItem()` (agro.js:11805) usa `allowedActions: new Set(['edit', 'transfer', 'delete'])`. Falta `'revert'`.
+- La lógica de reversión **ya existe completa**: `handleRevertIncome()`, `handleRevertLoss()`, `executeCompensationRevertToPending()`, `openRevertToPendingWizard()`, event handlers para `.btn-revert-income` / `.btn-revert-loss`.
+- El botón se renderiza en `renderHistoryRow()` (agro.js:4752) condicionado a `canUseAction('revert')` + `fromPending` + `!incomeOrLossReverted`.
+- **Pérdidas** (agro.js:13657) también carece de `'revert'` en su `allowedActions`.
+- **Fix**: agregar `'revert'` al Set en ambas vistas dedicadas. Cero lógica nueva requerida.
+
+#### B) Borrado irreversible / sin restauración
+- **Causa raíz**: `deleteFactureroItem()` (agro.js:5919) ya hace soft-delete (`deleted_at = timestamp`) con fallback a hard-delete si la columna no existe. Todas las tablas tienen `supportsDeletedAt: true`.
+- Las queries filtran `.is('deleted_at', null)` para ocultar registros eliminados.
+- **No existe UI para ver ni restaurar registros soft-deleted.**
+- **Fix**: (1) función `restoreFactureroItem()`, (2) toast con "Deshacer" inmediato post-delete, (3) modal Papelera para ver/restaurar eliminados.
+
+### Archivos a tocar
+- `agro/agro.js` — agregar 'revert' a allowedActions, agregar `restoreFactureroItem()`, mejorar toast de delete
+- `agro/agro-trash.js` — **nuevo** — modal Papelera (fetch deleted, restore, UI)
+- `agro/index.html` — import de agro-trash.js, botón Papelera en facturero
+- `agro/agro.css` — estilos del toast undo (mínimo)
+
+### Riesgos
+- Si la columna `deleted_at` no existe en alguna tabla, el restore fallará silenciosamente (mismo riesgo que el soft-delete actual, ya mitigado con fallback).
+- El revert solo aplica a registros que vinieron de Fiados (`origin_table = 'agro_pending'`). Registros creados directamente en Pagados no muestran botón de revert (correcto por diseño).
+- La papelera solo muestra registros soft-deleted (últimos 30 días). Registros hard-deleted no son recuperables.
+
+### Plan quirúrgico
+1. Agregar `'revert'` a `allowedActions` en `renderPagadosDedicatedItem` y `renderPerdidasDedicatedItem`
+2. Agregar `restoreFactureroItem(tabName, itemId)` en agro.js
+3. Mejorar `deleteFactureroItem()` con toast undo de 8s
+4. Crear `agro-trash.js` con modal Papelera
+5. Wiring: botón Papelera en facturero + import en bootstrap
+6. Build validation
+
+### Cambios aplicados
+
+#### `agro/agro.js`
+- **L11805**: `allowedActions` de Pagados: `['edit', 'transfer', 'delete']` → `['edit', 'transfer', 'revert', 'delete']`
+- **L13657**: `allowedActions` de Pérdidas: `['edit', 'delete']` → `['edit', 'revert', 'delete']`
+- **`deleteFactureroItem()`**: ahora trackea `wasSoftDelete` y muestra `showUndoDeleteToast()` con botón "Deshacer" (8s) en vez del toast simple
+- **`showUndoDeleteToast()`**: nueva — toast con botón "Deshacer" que llama `restoreFactureroItem()` y refresca vistas
+- **`restoreFactureroItem()`**: nueva — `update({ deleted_at: null })` por tabla + id + user_id
+- **`fetchDeletedFactureroItems()`**: nueva — fetch records con `deleted_at IS NOT NULL` últimos 30 días
+- **`window._agroTrash`**: expone API para módulo externo
+
+#### `agro/agro-trash.js` (NUEVO)
+- Módulo independiente (AGENTS.md §3.1)
+- `openTrashModal()` — modal papelera con registros eliminados agrupados por fecha
+- Fetch paralelo de todas las tablas con `deleted_at`
+- Botón "Restaurar" por registro con feedback visual
+- Cierre por overlay click, Escape, o botón ×
+- Expone `window.openAgroTrashModal` para inline
+
+#### `agro/agro.css`
+- `.agro-undo-toast` + `.agro-undo-toast-btn` — toast undo DNA V10
+- `.agro-trash-overlay/modal/header/body/item/restore-btn` — papelera modal DNA V10
+- `prefers-reduced-motion` — cubre ambos nuevos componentes
+
+#### `agro/index.html`
+- Botón "🗑️ Papelera" añadido al final de la barra de pestañas del facturero
+- `import('./agro-trash.js')` no-bloqueante en bootstrap
+
+### Build
+- `pnpm build:gold` → ✅ OK (137 modules, agro-trash chunk 4.06 kB)
+
+### QA manual sugerido
+1. Ir a Pagados → abrir acciones de un registro que vino de Fiados → debe aparecer "Devolver a Fiados"
+2. Ir a Pérdidas → mismo test para pérdidas originadas en Fiados
+3. Eliminar cualquier registro → toast con botón "Deshacer" durante 8s → click restaura el registro
+4. Click en "🗑️ Papelera" en barra de tabs → modal con registros eliminados últimos 30 días
+5. Click "Restaurar" en papelera → registro vuelve a su vista original
+6. Verificar que estadísticas y exportes no se rompen

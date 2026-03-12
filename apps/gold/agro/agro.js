@@ -5930,6 +5930,7 @@ async function deleteFactureroItem(tabName, itemId) {
         }
 
         let success = false;
+        let wasSoftDelete = false;
 
         if (config.supportsDeletedAt) {
             // Soft delete
@@ -5947,6 +5948,7 @@ async function deleteFactureroItem(tabName, itemId) {
                 }
             } else {
                 success = true;
+                wasSoftDelete = true;
             }
         }
 
@@ -5963,10 +5965,14 @@ async function deleteFactureroItem(tabName, itemId) {
         }
 
         if (success) {
-            console.info(`[AGRO] V9.5.1: Deleted ${tabName} item ${itemId}`);
+            console.info(`[AGRO] V9.5.1: Deleted ${tabName} item ${itemId} (soft: ${wasSoftDelete})`);
             await refreshFactureroAfterChange(tabName);
             document.dispatchEvent(new CustomEvent('data-refresh'));
-            notifyFacturero(uxMessages.copy.movementDeleted());
+            if (wasSoftDelete) {
+                showUndoDeleteToast(tabName, itemId, user.id);
+            } else {
+                notifyFacturero(uxMessages.copy.movementDeleted());
+            }
         }
 
     } catch (err) {
@@ -5974,6 +5980,116 @@ async function deleteFactureroItem(tabName, itemId) {
         alert(`Error al eliminar: ${err.message}`);
     }
 }
+
+function showUndoDeleteToast(tabName, itemId, userId) {
+    const existing = document.getElementById('agro-undo-delete-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'agro-undo-delete-toast';
+    toast.className = 'agro-undo-toast';
+
+    const msg = document.createElement('span');
+    msg.textContent = 'Registro eliminado.';
+
+    const undoBtn = document.createElement('button');
+    undoBtn.type = 'button';
+    undoBtn.className = 'agro-undo-toast-btn';
+    undoBtn.textContent = 'Deshacer';
+
+    let dismissed = false;
+    const dismiss = () => {
+        if (dismissed) return;
+        dismissed = true;
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    };
+
+    undoBtn.addEventListener('click', async () => {
+        if (dismissed) return;
+        dismissed = true;
+        undoBtn.disabled = true;
+        undoBtn.textContent = 'Restaurando...';
+        const ok = await restoreFactureroItem(tabName, itemId, userId);
+        if (ok) {
+            msg.textContent = 'Registro restaurado.';
+            undoBtn.remove();
+            await refreshFactureroAfterChange(tabName);
+            document.dispatchEvent(new CustomEvent('data-refresh'));
+        } else {
+            msg.textContent = 'No se pudo restaurar.';
+            undoBtn.remove();
+        }
+        setTimeout(dismiss, 1500);
+    });
+
+    toast.append(msg, undoBtn);
+    document.body.appendChild(toast);
+    setTimeout(dismiss, 8000);
+}
+
+async function restoreFactureroItem(tabName, itemId, userId) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config?.table || !itemId) return false;
+
+    try {
+        const uid = userId || (await supabase.auth.getUser())?.data?.user?.id;
+        if (!uid) return false;
+
+        const { error } = await supabase
+            .from(config.table)
+            .update({ deleted_at: null })
+            .eq('id', itemId)
+            .eq('user_id', uid);
+
+        if (error) {
+            console.error(`[AGRO] Restore error (${tabName}):`, error.message);
+            return false;
+        }
+        console.info(`[AGRO] Restored ${tabName} item ${itemId}`);
+        return true;
+    } catch (err) {
+        console.error(`[AGRO] Restore exception (${tabName}):`, err.message);
+        return false;
+    }
+}
+
+async function fetchDeletedFactureroItems(tabName, userId, limit = 50) {
+    const config = FACTURERO_CONFIG[tabName];
+    if (!config?.table || !config.supportsDeletedAt) return [];
+
+    try {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 30);
+
+        const { data, error } = await supabase
+            .from(config.table)
+            .select('id, ' + (config.conceptField || 'concepto') + ', ' + (config.amountField || 'monto') + ', ' + (config.dateField || 'fecha') + ', deleted_at, crop_id')
+            .eq('user_id', userId)
+            .not('deleted_at', 'is', null)
+            .gte('deleted_at', cutoff.toISOString())
+            .order('deleted_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.warn(`[AGRO] fetchDeleted (${tabName}):`, error.message);
+            return [];
+        }
+        return (data || []).map(row => ({ ...row, _tab: tabName, _table: config.table }));
+    } catch (err) {
+        console.warn(`[AGRO] fetchDeleted exception (${tabName}):`, err.message);
+        return [];
+    }
+}
+
+window._agroTrash = {
+    restoreFactureroItem,
+    fetchDeletedFactureroItems,
+    refreshFactureroAfterChange,
+    FACTURERO_CONFIG,
+    notifyFacturero
+};
 
 async function editFactureroItem(tabName, itemId) {
     const config = FACTURERO_CONFIG[tabName];
@@ -11802,7 +11918,7 @@ function renderPagadosDedicatedItem(listEl, income, signedUrl) {
     };
     const row = renderHistoryRow('ingresos', item, FACTURERO_CONFIG.ingresos, {
         showActions: true,
-        allowedActions: new Set(['edit', 'transfer', 'delete'])
+        allowedActions: new Set(['edit', 'transfer', 'revert', 'delete'])
     });
     if (!row) return;
     row.classList.add('pagados-dedicated-row');
@@ -13654,7 +13770,7 @@ function renderPerdidasDedicatedItem(listEl, item) {
     if (!listEl || !item) return;
     const row = renderHistoryRow('perdidas', item, FACTURERO_CONFIG.perdidas, {
         showActions: true,
-        allowedActions: new Set(['edit', 'delete'])
+        allowedActions: new Set(['edit', 'revert', 'delete'])
     });
     if (!row) return;
     row.classList.add('perdidas-dedicated-row');
