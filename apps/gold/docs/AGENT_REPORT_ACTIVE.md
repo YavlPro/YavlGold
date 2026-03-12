@@ -1235,3 +1235,91 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 | 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edición, filtros, IA bridge |
 | 4. Estadísticas individuales y exportes por sección | **Muy avanzado** | Nuevo módulo con fetch independiente, KPIs USD/Bs, rangos temporales, charts, insights, export MD. Pendiente: QA integral con datos reales, ajustes finos de insights según feedback, posible columna `comprador` si se agrega al schema |
 | 5. QA integral final | Pendiente | Próximo paso natural |
+
+---
+
+## Sesion: Bugfix layout charts de estadisticas por seccion (2026-03-12)
+
+### Diagnostico
+
+- El estiramiento vertical no nace de la data ni de los filtros; nace de la arquitectura visual del panel de charts.
+- `apps/gold/agro/agro-section-stats.js` crea cada grafico insertando el `<canvas>` directamente dentro de `.agro-ss-chart-card`, sin wrapper intermedio con altura controlada.
+- `apps/gold/agro/agro-section-stats.js` configura Chart.js con `responsive: true` y `maintainAspectRatio: false`.
+- `apps/gold/agro/agro-operations.css` define `.agro-ss-charts` como grid y deja `.agro-ss-chart-card` con `min-height`, pero no con una altura util explicita para el viewport del chart, ni con `align-items: start` para cortar el estiramiento entre cards de una misma fila.
+- Resultado: el grid estira las cards al alto de la mas grande y el canvas responsive termina expandiendose verticalmente dentro de un contenedor sin altura acotada.
+- En desktop el problema se amplifica cuando varias charts comparten la misma fila.
+- En mobile la falta de un viewport dedicado deja el alto dependiente del flujo del contenido, no de una proporción estable del panel.
+
+### Causa raiz
+
+- Combinacion exacta de tres factores:
+  1. `maintainAspectRatio: false` en Chart.js
+  2. ausencia de wrapper `position: relative` + altura controlada para el chart
+  3. cards dentro de un grid que permite stretch por fila
+- El canvas no tiene un "chart viewport" propio; por eso toma la altura disponible de una card que puede crecer por layout, no por diseño.
+
+### Plan quirurgico
+
+1. Encapsular cada `canvas` en un wrapper dedicado de chart con altura consistente por token/layout.
+2. Ajustar CSS del grid y de la card para evitar stretch vertical no deseado entre cards.
+3. Mantener `responsive: true` y `maintainAspectRatio: false`, pero ahora apoyados en un contenedor con altura real.
+4. Afinar el comportamiento responsive desktop/mobile sin introducir alturas magicas desconectadas entre vistas.
+5. Verificar que el rerender por cambio de rango temporal siga destruyendo/recreando charts sin romper filtros, insights ni export MD.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-section-stats.js`
+- `apps/gold/agro/agro-operations.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Si la altura del viewport queda demasiado baja, la lectura de labels/legend puede degradarse en desktop.
+- Si la altura queda demasiado alta, el problema visual persiste aunque de forma menor.
+- Cualquier ajuste debe respetar el rerender de Chart.js al cambiar rango temporal para no dejar instancias o tamaños stale.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-section-stats.js`
+  - `L411-L422`: cada chart ahora se renderiza mediante `createChartCard(...)` en vez de montar el `canvas` directo en la card.
+  - `L461-L478`: nuevo wrapper `.agro-ss-chart-card__viewport` para dar un viewport real al chart.
+  - `L745-L750`: `showLoading()` destruye instancias previas antes de reemplazar el DOM, para mantener estable el rerender por rango temporal.
+- `apps/gold/agro/agro-operations.css`
+  - `L1189-L1192`: variables compartidas `--agro-ss-chart-height` y `--agro-ss-chart-height-mobile`.
+  - `L1321-L1362`: grid de charts con `align-items: start`, cards en columna y viewport dedicado con `canvas` al `100%` del alto/ancho.
+  - `L1591-L1658`: overrides responsive para mantener una altura controlada y consistente en tablet/mobile.
+- No se tocaron queries, filtros temporales, insights, export MD ni wiring de datos; el fix es de contencion visual y ciclo de rerender.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (140 modules)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- `git diff --check` en archivos tocados -> OK
+
+### Validacion y QA
+
+- Validacion tecnica completada:
+  - el layout ahora tiene viewport dedicado para charts;
+  - el grid ya no debe estirar cards por fila;
+  - el canvas queda atado a una altura consistente controlada por CSS variable;
+  - el rerender al cambiar rango destruye charts previos antes del loading.
+- QA browser intentada sobre preview local:
+  - preview levantado en `http://localhost:4173/`;
+  - navegacion a `/agro/` redirige a `/index.html#login` sin sesion activa de Supabase;
+  - por esa razon no fue posible ejecutar dentro de esta sesion la verificacion funcional completa en Fiados/Pagados con datos reales.
+- Higiene QA:
+  - navegador Playwright cerrado;
+  - carpeta temporal Playwright `1773358761516` eliminada;
+  - preview local detenido al finalizar.
+
+### QA sugerido
+
+1. Entrar con sesion real a `Fiados > Estadisticas` y confirmar que cada chart queda contenido en su panel, sin crecimiento vertical excesivo.
+2. Cambiar `7 dias / 30 dias / 90 dias / Ano / Todo` y verificar que el alto de las cards se mantiene estable durante el rerender.
+3. Repetir en `Pagados`, `Perdidas`, `Donaciones` y `Otros`.
+4. Validar desktop (>900px), tablet (<=900px) y mobile (<=480px).
+5. Confirmar que insights y export MD siguen saliendo con el mismo contenido esperado.

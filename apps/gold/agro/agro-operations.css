@@ -1188,6 +1188,8 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 /* ── Per-view dedicated stats cards ── */
 .agro-ops-v10 .agro-dedicated-stats {
   padding: 0.52rem 0;
+  --agro-ss-chart-height: clamp(15rem, 26vw, 18rem);
+  --agro-ss-chart-height-mobile: clamp(13.5rem, 52vw, 15.5rem);
 }
 
 .agro-ops-v10 .agro-dedicated-stats__grid {
@@ -1319,16 +1321,21 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 .agro-ss-charts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
   gap: 0.9rem;
   margin-bottom: 1.1rem;
 }
 
 .agro-ss-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
   background: rgba(10, 10, 10, 0.6);
   border: 1px solid rgba(200, 167, 82, 0.12);
   border-radius: 12px;
   padding: 0.8rem;
-  min-height: 240px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .agro-ss-chart-card__title {
@@ -1338,7 +1345,20 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin: 0 0 0.5rem;
+  margin: 0;
+}
+
+.agro-ss-chart-card__viewport {
+  position: relative;
+  width: 100%;
+  block-size: var(--agro-ss-chart-height);
+  min-height: 0;
+}
+
+.agro-ss-chart-card__viewport canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .agro-ss-insights {
@@ -1567,6 +1587,10 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 @media (max-width: 768px) {
+  .agro-ops-v10 .agro-dedicated-stats {
+    --agro-ss-chart-height: clamp(14rem, 48vw, 16rem);
+  }
+
   .agro-ops-v10 .financial-operations-card {
     padding: 0.76rem;
     gap: 0.58rem;
@@ -1626,6 +1650,12 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
   .agro-ops-v10 .agro-pagados-dedicated {
     overflow-x: hidden;
+  }
+}
+
+@media (max-width: 480px) {
+  .agro-ops-v10 .agro-dedicated-stats {
+    --agro-ss-chart-height: var(--agro-ss-chart-height-mobile);
   }
 }
 

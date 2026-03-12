@@ -408,39 +408,18 @@ function renderPanel(sectionKey, stats) {
     let hasCharts = false;
 
     if (stats.sortedMonths.length > 1) {
-        const card = document.createElement('div');
-        card.className = 'agro-ss-chart-card';
-        card.innerHTML = '<h5 class="agro-ss-chart-card__title">' + cfg.labelTotal + ' por periodo</h5>';
-        const canvas = document.createElement('canvas');
-        canvas.id = sectionKey + '-ss-chart-time';
-        canvas.height = 220;
-        card.appendChild(canvas);
-        chartsGrid.appendChild(card);
+        chartsGrid.appendChild(createChartCard(cfg.labelTotal + ' por periodo', sectionKey + '-ss-chart-time'));
         hasCharts = true;
     }
 
     if (stats.topCrops.length > 1) {
-        const card = document.createElement('div');
-        card.className = 'agro-ss-chart-card';
-        card.innerHTML = '<h5 class="agro-ss-chart-card__title">Por cultivo</h5>';
-        const canvas = document.createElement('canvas');
-        canvas.id = sectionKey + '-ss-chart-crop';
-        canvas.height = 220;
-        card.appendChild(canvas);
-        chartsGrid.appendChild(card);
+        chartsGrid.appendChild(createChartCard('Por cultivo', sectionKey + '-ss-chart-crop'));
         hasCharts = true;
     }
 
     if (stats.topWho.length > 1) {
         const whoLabel = cfg.labelWho ? ('Por ' + cfg.labelWho.toLowerCase()) : 'Por origen';
-        const card = document.createElement('div');
-        card.className = 'agro-ss-chart-card';
-        card.innerHTML = '<h5 class="agro-ss-chart-card__title">' + whoLabel + '</h5>';
-        const canvas = document.createElement('canvas');
-        canvas.id = sectionKey + '-ss-chart-who';
-        canvas.height = 220;
-        card.appendChild(canvas);
-        chartsGrid.appendChild(card);
+        chartsGrid.appendChild(createChartCard(whoLabel, sectionKey + '-ss-chart-who'));
         hasCharts = true;
     }
 
@@ -477,6 +456,26 @@ function renderPanel(sectionKey, stats) {
 
 function kpiCard(value, label) {
     return '<div class="agro-ss-kpi"><span class="agro-ss-kpi__value">' + value + '</span><span class="agro-ss-kpi__label">' + label + '</span></div>';
+}
+
+function createChartCard(title, canvasId) {
+    const card = document.createElement('div');
+    card.className = 'agro-ss-chart-card';
+
+    const heading = document.createElement('h5');
+    heading.className = 'agro-ss-chart-card__title';
+    heading.textContent = title;
+
+    const viewport = document.createElement('div');
+    viewport.className = 'agro-ss-chart-card__viewport';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = canvasId;
+    viewport.appendChild(canvas);
+
+    card.appendChild(heading);
+    card.appendChild(viewport);
+    return card;
 }
 
 function buildRangeBar(sectionKey, activeRange) {
@@ -746,6 +745,7 @@ const prefersReducedMotion = typeof window !== 'undefined'
 function showLoading(sectionKey) {
     const container = document.getElementById(sectionKey + '-dedicated-stats');
     if (!container) return;
+    destroySectionCharts(sectionKey);
     container.hidden = false;
     container.innerHTML = '<div class="agro-ss-loading"><span class="agro-ss-loading__spinner"></span><p class="agro-ss-loading__text">Cargando estadisticas...</p></div>';
 }
