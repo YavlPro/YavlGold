@@ -1,5 +1,5 @@
 /**
- * YavlGold V9.8 — Agro Cart (Carrito de Compras Agrícola)
+ * YavlGold V1 — Agro Cart (Carrito de Compras Agrícola)
  * Lista de compras con presupuesto, vinculada a cultivos.
  * Items comprados se convierten en gastos del facturero.
  *

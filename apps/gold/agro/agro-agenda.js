@@ -1,5 +1,5 @@
 /**
- * YavlGold V9.8 — Agro Agenda (Centro de Agenda Agrícola)
+ * YavlGold V1 — Agro Agenda (Centro de Agenda Agrícola)
  * Fusiona: Calendario Lunar + Clima + Actividades programadas
  * Reemplaza el calendario lunar antiguo como vista principal.
  *

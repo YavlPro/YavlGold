@@ -8,6 +8,8 @@ Documento completo del sistema de diseño. Referencia visual inmutable e inmutab
 ## Inmutable V10.0
 
 - Estado: `ACTIVO`
+- Release activo del producto: `V1`
+- Contexto historico de formalizacion: `V9.8`
 - Stack visual: `Vanilla JS + Vite MPA`
 - Paleta: `5-Tone Metallic`
 - Ghost system: `10 Ghost Emojis`
@@ -27,11 +29,13 @@ Documento completo del sistema de diseño. Referencia visual inmutable e inmutab
 
 ## 🧬 DNA del Proyecto
 
-**YavlGold V9.8 — Misión, No Negociables, Stack y Filosofía**
+**YavlGold — Mision, No Negociables, Stack y Filosofia**
 
 | Campo | Valor |
 | --- | --- |
-| Proyecto | YavlGold V9.8 |
+| Proyecto | YavlGold |
+| Release visible actual | V1 |
+| Contexto historico de formalizacion | V9.8 |
 | DNA Version | V10.0 — Inmutable |
 | Estado | ACTIVO |
 | Autor | Yerikson Varela |
@@ -546,4 +550,4 @@ Fuente de inspiración: `review-submitted-code.zip`
 **Tu finca merece tecnología de primera. YavlGold nace del campo, para el campo.**  
 — Filosofía YavlGold
 
-© 2026 YavlGold V9.8 · ADN Visual Inmutable V10.0 · Open Source (MIT License)
+© 2026 YavlGold · Release activo V1 · ADN Visual Inmutable V10.0 · Open Source (MIT License)

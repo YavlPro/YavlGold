@@ -352,3 +352,136 @@ user-dropdown, logout-btn, themeToggle, hamburger, navMobile, mobileOverlay, loa
   - histórico: `apps/gold/docs/AGENT_REPORT.md`
 - La compatibilidad innecesaria que reabría ambigüedad se eliminó.
 - La policy Playwright quedó documentada en el lugar correcto: `AGENTS.md`.
+
+---
+
+## Auditoría de versionado activo V1 vs histórico V9.8 (2026-03-12)
+
+### Diagnóstico
+
+- El repo ya usa `Agro V1` en superficies activas del módulo, pero todavía mantiene múltiples referencias a `YavlGold V9.8` en documentación vigente y páginas visibles.
+- El ruido no está concentrado en un solo archivo:
+  - docs activas: `README.md`, `FICHA_TECNICA.md`, `apps/gold/public/llms.txt`, `apps/gold/docs/AGRO_V1_BASELINE.md`;
+  - docs visuales/canónicas: `apps/gold/docs/ADN-VISUAL-V10.0.md`;
+  - páginas visibles del producto: `apps/gold/dashboard/index.html`, `apps/gold/faq.html`, `apps/gold/cookies.html`, `apps/gold/soporte.html`.
+- A la vez, existen referencias a `V9.8` que sí son históricas o técnicas y no deben borrarse ciegamente:
+  - reportes legacy y crónicas;
+  - migraciones SQL;
+  - comentarios internos y marcadores de iteraciones previas en CSS/JS, siempre que no vendan el estado actual al usuario.
+
+### Causa raíz
+
+- La versión `V9.8` quedó incrustada en tres capas distintas durante una etapa anterior:
+  - branding documental de producto;
+  - copy visible en páginas estáticas auxiliares;
+  - metadatos y comentarios de implementación.
+- Después nació `Agro V1`, pero la normalización se hizo por partes:
+  - el módulo Agro sí migró a `V1`;
+  - varias páginas y docs operativas siguieron describiendo a `V9.8` como presente;
+  - el ADN Visual `V10.0` mezcló versión del sistema visual con la versión histórica del producto, lo que hoy genera ambigüedad.
+
+### Criterio de clasificación
+
+- `Activa/canónica -> actualizar a V1`
+  - instrucciones, README, ficha técnica, llms, docs operativas vigentes, baseline activo y copy visible del producto.
+- `Histórica/cronológica -> conservar V9.8`
+  - crónicas, changelogs, reportes legacy, migraciones y archivos archivados que describen un hecho real pasado.
+- `Ambigua/confusa -> reescribir`
+  - cualquier documento activo que mezcle `V10.0` visual con `V9.8` de producto sin aclarar que `V10.0` es la versión del DNA y `V1` es la versión vigente visible del producto.
+
+### Plan quirúrgico
+
+1. Inventariar referencias activas a `V9.8` y separar las históricas.
+2. Actualizar a `V1` la documentación canónica y operativa vigente.
+3. Reescribir docs ambiguas para dejar explícito:
+   - `V1` = estado activo visible del producto;
+   - `V9.8` = etapa histórica cuando aplique;
+   - `V10.0` = versión del sistema visual, no del release visible.
+4. Corregir labels/meta visibles del producto que todavía venden `V9.8` como actual.
+5. Reauditar con búsquedas, correr checks documentales y `pnpm build:gold`.
+
+### Archivos a tocar
+
+- `README.md`
+- `FICHA_TECNICA.md`
+- `apps/gold/public/llms.txt`
+- `apps/gold/docs/AGRO_V1_BASELINE.md`
+- `apps/gold/docs/ADN-VISUAL-V10.0.md` (solo si hace falta aclarar el contexto activo sin alterar reglas del DNA)
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/dashboard/index.html`
+- `apps/gold/faq.html`
+- `apps/gold/cookies.html`
+- `apps/gold/soporte.html`
+
+### Riesgos
+
+- Bajo:
+  - una limpieza demasiado agresiva puede falsificar historia real en docs o archivos que sí son históricos.
+- Bajo:
+  - `apps/gold/docs/ADN-VISUAL-V10.0.md` es fuente visual inmutable; cualquier ajuste debe limitarse a aclarar contexto documental y no a cambiar reglas del sistema visual.
+- Bajo:
+  - pueden quedar comentarios técnicos internos con `V9.8` en CSS/JS; si no afectan documentación activa ni copy visible, se tratarán como deuda menor fuera de este lote.
+
+### Inventario clasificado
+
+- `Activa/canónica -> corregida a V1`
+  - `AGENTS.md`
+  - `README.md`
+  - `FICHA_TECNICA.md`
+  - `apps/gold/README.md`
+  - `apps/gold/public/llms.txt`
+  - `apps/gold/docs/AGRO_V1_BASELINE.md`
+  - `apps/gold/dashboard/index.html`
+  - `apps/gold/faq.html`
+  - `apps/gold/cookies.html`
+  - `apps/gold/soporte.html`
+- `Ambigua/confusa -> reescrita`
+  - `apps/gold/docs/ADN-VISUAL-V10.0.md`
+    - se mantuvo `V10.0` como version del DNA;
+    - se explicitó `V1` como release activo visible;
+    - `V9.8` quedó solo como contexto historico de formalizacion.
+- `Historica/cronologica -> conservada`
+  - `apps/gold/docs/AGENT_REPORT.md`
+  - `apps/gold/docs/chronicles/*`
+  - `apps/gold/archive/*`
+  - `apps/gold/supabase/migrations/*`
+
+### Cambios aplicados
+
+- Documentacion canónica:
+  - `AGENTS.md` ahora fija `V1` como release visible activa y relega `V9.8` a contexto historico.
+  - `README.md`, `FICHA_TECNICA.md`, `apps/gold/README.md` y `apps/gold/public/llms.txt` quedaron alineados con `V1`.
+- Documentacion de producto:
+  - `apps/gold/docs/AGRO_V1_BASELINE.md` dejó de decir que la plataforma seguia en `V9.8`.
+  - `apps/gold/docs/ADN-VISUAL-V10.0.md` se aclaró sin tocar sus reglas visuales: `V10.0` = DNA, `V1` = release activa, `V9.8` = contexto historico.
+- Copy visible:
+  - `apps/gold/dashboard/index.html` actualizó meta y copy embebido relevante.
+  - `apps/gold/faq.html`, `apps/gold/cookies.html` y `apps/gold/soporte.html` dejaron de vender `V9.8` como estado actual y corrigieron contexto de catalogo.
+- Marcadores tecnicos visibles para dev:
+  - se normalizaron encabezados/logs puntuales en `apps/gold/assets/js/auth/authClient.js`, `apps/gold/agro/agro-agenda.js`, `apps/gold/agro/agro-cart.js`, `apps/gold/agro/agro-exchange.js`, `apps/gold/agro/tx-cards-v2.css` y el log operativo de `apps/gold/agro/agro.js`.
+
+### Validacion
+
+- Reauditoria activa:
+  - en los archivos canónicos y visibles tocados, `V9.8` solo permanece cuando el propio texto lo marca como historico.
+- Checks:
+  - `node apps/gold/scripts/agent-report-check.mjs` -> OK
+  - `git diff --check` -> OK sin errores de whitespace; solo warnings de CRLF/LF en archivos ya existentes
+- Build:
+  - `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Cierre
+
+- El estado documental activo del repo queda consolidado en `V1`.
+- `V9.8` ya no aparece como version vigente en docs canónicas ni en copy visible corregido.
+- `V9.8` sobrevive solo donde corresponde:
+  - contexto historico explicado;
+  - reportes legacy;
+  - cronicas;
+  - migraciones;
+  - y algunos comentarios tecnicos internos del monolito Agro que no afectan producto ni documentacion activa.

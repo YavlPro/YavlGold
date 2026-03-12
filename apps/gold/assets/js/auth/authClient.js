@@ -1,5 +1,5 @@
 /**
- * YavlGold - Cliente Auth (V9.8 - "Bala de Plata")
+ * YavlGold - Cliente Auth (V1 - "Bala de Plata")
  * Ruta: apps/gold/assets/js/auth/authClient.js
  */
 
@@ -59,7 +59,7 @@ const authClient = {
     _clientReady: false,
 
     async init() {
-        console.log('[AuthClient] 🚀 Inicializando V9.8 (Explicit Exchange)...');
+        console.log('[AuthClient] 🚀 Inicializando V1 (Explicit Exchange)...');
         if (this._initPromise) return this._initPromise;
         this._initPromise = this._doInit();
         return this._initPromise;

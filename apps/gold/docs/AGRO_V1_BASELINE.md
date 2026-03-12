@@ -1,17 +1,16 @@
 # Agro V1 Baseline
 
 Estado: `ACTIVO`
-Plataforma: `YavlGold V9.8`
+Plataforma: `YavlGold V1`
 Modulo: `Agro V1`
 Fecha: `2026-03-07`
 
 ## Proposito
 
-Este documento fija la primera base formal de `Agro V1` como modulo real de YavlGold.
+Este documento fija la primera base formal de `Agro V1` como modulo real dentro del release activo de YavlGold.
 
-No redefine la version global de la plataforma.
-`YavlGold V9.8` sigue siendo la version del producto general.
-`Agro V1` identifica la primera version seria, usable y oficialmente consolidada del modulo Agro.
+`YavlGold V1` es la version visible vigente del producto.
+`Agro V1` identifica la baseline funcional, usable y oficialmente consolidada del modulo Agro dentro de esa release.
 
 ## Incluye
 
@@ -64,4 +63,4 @@ Desde este punto, Agro evoluciona sobre esta base.
 Eso no congela el modulo para siempre, pero si define una referencia estable:
 - lo nuevo debe extender `Agro V1`,
 - no deshacer su jerarquia base,
-- y no romper la distincion entre version global de plataforma y version del modulo.
+- y no confundir la release activa del producto con el alcance funcional del modulo.

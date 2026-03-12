@@ -1,5 +1,5 @@
 /**
- * YavlGold V9.8 — Agro Exchange Rate Service
+ * YavlGold V1 — Agro Exchange Rate Service
  * Multi-currency support: USD (base), COP, VES
  *
  * Priority: Manual override > API cache > API fetch > Stale cache

@@ -11257,7 +11257,7 @@ export async function loadCrops() {
         updateOpsMovementSummaryUI();
         scheduleOpsMovementSummaryRefresh();
 
-        console.info(`[AGRO] V9.8: active cycles ${activeCrops.length}, finished cycles ${visibleFinishedCrops.length}, audit cycles ${orphanFinishedCrops.length} (total ${crops.length})`);
+        console.info(`[AGRO] V1: active cycles ${activeCrops.length}, finished cycles ${visibleFinishedCrops.length}, audit cycles ${orphanFinishedCrops.length} (total ${crops.length})`);
 
         // Animar progress bars
         setTimeout(() => {

@@ -1,6 +1,8 @@
 # AGENTS.md — Instrucciones Canónicas para Agentes IA
 
 Fuente única de verdad para cualquier agente (Cascade, Codex, Copilot, etc.) que trabaje en este repo.
+Release visible activa del producto: `V1`.
+Las referencias a `V9.8` solo se conservan cuando están marcadas como históricas o cronológicas.
 
 ---
 

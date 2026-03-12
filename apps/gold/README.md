@@ -1,6 +1,7 @@
 # YavlGold
 
 Plataforma digital construida como MPA con Vite, Vanilla JS y Supabase.
+Release visible activo: `V1`.
 
 ## Estado actual del catálogo
 
@@ -79,4 +80,4 @@ pnpm -C apps/gold build
 
 ## Nota sobre legado
 
-El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite` y otras superficies antiguas. Los HTML huérfanos ya fueron movidos a `archive/legacy-html/` y el bridge auth histórico a `archive/legacy-js/`. `music` sigue vivo como utilidad interna del dashboard, separada del catálogo oficial de módulos. El inventario vivo está en `docs/LEGACY_SURFACES.md`.
+El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite` y otras superficies antiguas. Los HTML huérfanos ya fueron movidos a `archive/legacy-html/` y el bridge auth histórico a `archive/legacy-js/`. `music` sigue vivo como utilidad interna del dashboard, separada del catálogo oficial de módulos. El inventario vivo está en `apps/gold/docs/LEGACY_SURFACES.md`.

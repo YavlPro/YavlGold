@@ -1,11 +1,12 @@
-# FICHA TÉCNICA - YavlGold V9.8
+# FICHA TÉCNICA - YavlGold V1
 
 **Fecha de Referencia:** 12/03/2026
-**Tipo de Proyecto:** Plataforma productiva, educativa y de servicios para el agro
+**Tipo de Proyecto:** Plataforma digital multimodulo con Agro V1 liberado
 **Arquitectura:** Monorepo Turborepo
+**Release activo visible:** `V1`
 **Instrucciones para agentes:** `AGENTS.md` (raíz del repo)
 **Sistema de diseño:** `apps/gold/docs/ADN-VISUAL-V10.0.md` (inmutable)
-**LLMs context:** `public/llms.txt` (servido en producción)
+**LLMs context:** `apps/gold/public/llms.txt` (servido en producción)
 
 ---
 
@@ -152,7 +153,7 @@ agro-wizard.js       — wizard de configuración
 ### 4.3 Crypto
 **Ubicación:** `apps/gold/crypto/`
 
-**Estado:** En desarrollo inicial (V1)
+**Estado:** No disponible en el catálogo actual (base V1)
 
 **Funcionalidades Planeadas:**
 - Market data pública (Binance API)
