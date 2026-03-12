@@ -27,30 +27,75 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
+    /* ── DNA V10 Tokens (local fallbacks) ── */
+    .yg-onboarding-layer {
+      --ob-gold-1: var(--v10-gold-1, #2a2218);
+      --ob-gold-2: var(--v10-gold-2, #3a3228);
+      --ob-gold-3: var(--v10-gold-3, #6b5a3e);
+      --ob-gold-4: var(--v10-gold-4, #C8A752);
+      --ob-gold-5: var(--v10-gold-5, #E8D48B);
+      --ob-gold-prestige: var(--v10-gold-prestige, #E5D5A0);
+      --ob-bg-0: var(--v10-bg-0, #050505);
+      --ob-bg-1: var(--v10-bg-1, #0a0a0a);
+      --ob-bg-2: var(--v10-bg-2, #0B0C0F);
+      --ob-bg-3: var(--v10-bg-3, #111113);
+      --ob-bg-4: var(--v10-bg-4, #1a1a1f);
+      --ob-text-primary: var(--v10-text-primary, #ffffff);
+      --ob-text-secondary: var(--v10-text-secondary, #cccccc);
+      --ob-text-muted: var(--v10-text-muted, #94A3B8);
+      --ob-border-neutral: var(--v10-border-neutral, rgba(255,255,255,0.08));
+      --ob-border-gold: var(--v10-border-gold, rgba(200,167,82,0.25));
+      --ob-border-prestige: var(--v10-border-prestige, rgba(229,213,160,0.18));
+      --ob-shadow-gold-sm: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
+      --ob-shadow-gold-md: var(--v10-shadow-gold-md, 0 5px 20px rgba(200,167,82,0.25));
+      --ob-shadow-gold-lg: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
+      --ob-shadow-metallic: var(--v10-shadow-metallic, 0 4px 20px rgba(200,167,82,0.30), 0 0 40px rgba(200,167,82,0.08));
+      --ob-glass-bg: var(--v10-glass-bg, rgba(17, 17, 17, 0.85));
+      --ob-metallic-linear: linear-gradient(135deg, var(--ob-gold-2), var(--ob-gold-4), var(--ob-gold-5), var(--ob-gold-4));
+      --ob-metallic-text: linear-gradient(135deg, var(--ob-gold-5), var(--ob-gold-4), var(--ob-gold-3), var(--ob-gold-4), var(--ob-gold-5));
+      --ob-metallic-btn: linear-gradient(135deg, var(--ob-gold-3), var(--ob-gold-4) 40%, var(--ob-gold-5) 60%, var(--ob-gold-4));
+      --ob-metallic-border: linear-gradient(90deg, transparent, var(--ob-gold-4), transparent);
+      --ob-metallic-conic: conic-gradient(from 0deg, var(--ob-gold-2), var(--ob-gold-3), var(--ob-gold-4), var(--ob-gold-5), var(--ob-gold-4), var(--ob-gold-3), var(--ob-gold-2));
+    }
+
+    /* ── DNA V10 Keyframes ── */
     @keyframes yg-onb-fadeIn {
       from { opacity: 0; }
       to   { opacity: 1; }
     }
 
     @keyframes yg-onb-slideUp {
-      from { opacity: 0; transform: translateY(12px); }
+      from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes yg-onb-scaleIn {
-      from { opacity: 0; transform: scale(0.97); }
+      from { opacity: 0; transform: scale(0.96); }
       to   { opacity: 1; transform: scale(1); }
     }
 
-    @keyframes yg-onb-barPulse {
-      0%, 100% { box-shadow: 0 0 0 rgba(200, 167, 82, 0); }
-      50%      { box-shadow: 0 0 10px rgba(200, 167, 82, 0.3); }
+    @keyframes yg-onb-metallicShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
+    @keyframes yg-onb-borderShimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes yg-onb-pulseGlow {
+      0%, 100% { box-shadow: 0 0 8px rgba(200,167,82,0.08); }
+      50%      { box-shadow: 0 0 22px rgba(200,167,82,0.22); }
+    }
+
+    /* ── Lock ── */
     .yg-onboarding-lock {
       overflow: hidden;
     }
 
+    /* ── Layer (backdrop) ── */
     .yg-onboarding-layer {
       position: fixed;
       inset: 0;
@@ -61,14 +106,15 @@ function ensureStyles() {
       justify-content: center;
       overflow-y: auto;
       background:
-        radial-gradient(circle at 15% 10%, rgba(200, 167, 82, 0.14), transparent 32%),
-        radial-gradient(circle at 85% 90%, rgba(200, 167, 82, 0.10), transparent 28%),
-        rgba(10, 10, 10, 0.94);
-      backdrop-filter: blur(22px);
-      -webkit-backdrop-filter: blur(22px);
-      animation: yg-onb-fadeIn 200ms ease both;
+        radial-gradient(circle at 15% 10%, rgba(200,167,82,0.12), transparent 32%),
+        radial-gradient(circle at 85% 90%, rgba(200,167,82,0.08), transparent 28%),
+        var(--ob-bg-0);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      animation: yg-onb-fadeIn 220ms ease both;
     }
 
+    /* ── Shell ── */
     .yg-onboarding-shell {
       width: min(1080px, 100%);
       min-height: min(740px, calc(100vh - 40px));
@@ -76,29 +122,42 @@ function ensureStyles() {
       grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
       gap: 18px;
       align-items: stretch;
-      animation: yg-onb-scaleIn 200ms ease both;
+      animation: yg-onb-scaleIn 220ms ease both;
     }
 
+    /* ── Panels (side + card) ── */
     .yg-onboarding-side,
     .yg-onboarding-card {
-      border: 1px solid rgba(200, 167, 82, 0.16);
-      border-radius: 28px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
-        var(--bg-primary, #0a0a0a);
-      box-shadow:
-        0 24px 64px rgba(0, 0, 0, 0.36),
-        0 0 0 1px rgba(200, 167, 82, 0.06);
+      border: 1px solid var(--ob-border-gold);
+      border-radius: var(--radius-xl, 24px);
+      background: var(--ob-glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--ob-shadow-gold-md);
+      position: relative;
+      overflow: hidden;
     }
 
+    .yg-onboarding-side::before,
+    .yg-onboarding-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--ob-metallic-border);
+      background-size: 200% 100%;
+      animation: yg-onb-borderShimmer 3s linear infinite;
+    }
+
+    /* ── Side panel ── */
     .yg-onboarding-side {
       padding: 28px 26px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      overflow: hidden;
-      position: relative;
-      animation: yg-onb-slideUp 200ms ease both;
+      animation: yg-onb-slideUp 220ms ease both;
       animation-delay: 60ms;
     }
 
@@ -109,37 +168,46 @@ function ensureStyles() {
       width: 200px;
       height: 200px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(200, 167, 82, 0.20), transparent 65%);
+      background: radial-gradient(circle, rgba(200,167,82,0.14), transparent 65%);
       pointer-events: none;
     }
 
+    /* ── Eyebrow badge ── */
     .yg-onboarding-eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 8px 14px;
-      border-radius: 999px;
-      background: rgba(200, 167, 82, 0.10);
-      color: var(--primary-light, #E5C158);
-      font: 600 0.84rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
-      letter-spacing: 0.09em;
+      border-radius: var(--radius-pill, 9999px);
+      background: rgba(200,167,82,0.10);
+      border: 1px solid var(--ob-border-prestige);
+      color: var(--ob-gold-prestige);
+      font: 700 0.84rem/1 'Rajdhani', sans-serif;
+      letter-spacing: 0.10em;
       text-transform: uppercase;
       width: fit-content;
     }
 
+    /* ── Side heading (metallic text §3) ── */
     .yg-onboarding-side h2 {
       margin: 18px 0 10px;
-      color: #fff4dc;
-      font: 700 clamp(1.8rem, 3.8vw, 2.5rem)/1.06 var(--font-display, 'Orbitron'), sans-serif;
+      font: 900 clamp(1.8rem, 3.8vw, 2.5rem)/1.06 'Orbitron', sans-serif;
       text-wrap: balance;
+      background: var(--ob-metallic-text);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: yg-onb-metallicShift 6s ease-in-out infinite;
     }
 
     .yg-onboarding-side p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.72);
-      font: 500 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-secondary);
+      font: 500 1rem/1.55 'Rajdhani', sans-serif;
     }
 
+    /* ── Progress ── */
     .yg-onboarding-progress-wrap {
       margin-top: 26px;
     }
@@ -149,26 +217,28 @@ function ensureStyles() {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
-      color: rgba(255, 255, 255, 0.8);
-      font: 600 0.92rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-secondary);
+      font: 600 0.92rem/1 'Rajdhani', sans-serif;
     }
 
     .yg-onboarding-progress-track {
       width: 100%;
       height: 10px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.07);
+      border-radius: var(--radius-pill, 9999px);
+      background: rgba(255,255,255,0.06);
       overflow: hidden;
     }
 
     .yg-onboarding-progress-bar {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 55%, #f5deb3);
-      transition: width 180ms ease;
-      animation: yg-onb-barPulse 2.4s ease-in-out infinite;
+      background: var(--ob-metallic-linear);
+      background-size: 200% 100%;
+      transition: width 200ms ease;
+      animation: yg-onb-metallicShift 3s ease-in-out infinite;
     }
 
+    /* ── Step list ── */
     .yg-onboarding-step-list {
       display: grid;
       gap: 10px;
@@ -183,21 +253,21 @@ function ensureStyles() {
       gap: 12px;
       align-items: center;
       padding: 13px 15px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.025);
+      border-radius: var(--radius-lg, 16px);
+      background: rgba(255,255,255,0.02);
       border: 1px solid transparent;
       transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
     .yg-onboarding-step-item.is-active {
-      border-color: rgba(200, 167, 82, 0.5);
-      background: rgba(200, 167, 82, 0.10);
+      border-color: var(--ob-border-gold);
+      background: rgba(200,167,82,0.08);
       transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(200, 167, 82, 0.08);
+      box-shadow: var(--ob-shadow-gold-sm);
     }
 
     .yg-onboarding-step-item.is-complete {
-      border-color: rgba(200, 167, 82, 0.24);
+      border-color: var(--ob-border-prestige);
     }
 
     .yg-onboarding-step-index {
@@ -206,36 +276,39 @@ function ensureStyles() {
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: rgba(255, 255, 255, 0.07);
-      color: #ffffff;
-      font: 700 0.94rem/1 var(--font-display, 'Orbitron'), sans-serif;
-      transition: background 180ms ease, color 180ms ease;
+      background: var(--ob-bg-4);
+      border: 1px solid var(--ob-border-neutral);
+      color: var(--ob-text-muted);
+      font: 700 0.94rem/1 'Orbitron', sans-serif;
+      transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
     }
 
     .yg-onboarding-step-item.is-active .yg-onboarding-step-index,
     .yg-onboarding-step-item.is-complete .yg-onboarding-step-index {
-      background: linear-gradient(135deg, var(--primary-dark, #8e7433), var(--primary, #c8a752));
-      color: #111;
+      background: var(--ob-metallic-conic);
+      border-color: var(--ob-gold-4);
+      color: var(--ob-bg-2);
     }
 
     .yg-onboarding-step-title {
       display: block;
       margin-bottom: 3px;
-      color: #f7f4ec;
-      font: 700 1rem/1.12 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-gold-prestige);
+      font: 700 1rem/1.12 'Rajdhani', sans-serif;
     }
 
     .yg-onboarding-step-desc {
-      color: rgba(255, 255, 255, 0.62);
-      font: 500 0.93rem/1.35 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-muted);
+      font: 500 0.93rem/1.35 'Rajdhani', sans-serif;
     }
 
+    /* ── Card (main content) ── */
     .yg-onboarding-card {
       padding: 30px;
       display: flex;
       flex-direction: column;
       min-height: 0;
-      animation: yg-onb-slideUp 200ms ease both;
+      animation: yg-onb-slideUp 220ms ease both;
       animation-delay: 100ms;
     }
 
@@ -245,25 +318,31 @@ function ensureStyles() {
 
     .yg-onboarding-kicker {
       margin: 0 0 8px;
-      color: var(--primary, #c8a752);
-      font: 600 0.88rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
-      letter-spacing: 0.09em;
+      color: var(--ob-gold-4);
+      font: 700 0.88rem/1 'Rajdhani', sans-serif;
+      letter-spacing: 0.10em;
       text-transform: uppercase;
     }
 
     .yg-onboarding-card h3 {
       margin: 0 0 8px;
-      color: #fffaf0;
-      font: 700 clamp(1.5rem, 2.8vw, 2.1rem)/1.08 var(--font-display, 'Orbitron'), sans-serif;
+      font: 900 clamp(1.5rem, 2.8vw, 2.1rem)/1.08 'Orbitron', sans-serif;
       text-wrap: balance;
+      background: var(--ob-metallic-text);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: yg-onb-metallicShift 6s ease-in-out infinite;
     }
 
     .yg-onboarding-card p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.70);
-      font: 500 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-secondary);
+      font: 500 1rem/1.55 'Rajdhani', sans-serif;
     }
 
+    /* ── Form structure ── */
     .yg-onboarding-form {
       display: flex;
       flex-direction: column;
@@ -276,7 +355,7 @@ function ensureStyles() {
       min-height: 0;
       overflow: auto;
       padding-right: 4px;
-      animation: yg-onb-slideUp 180ms ease both;
+      animation: yg-onb-slideUp 200ms ease both;
     }
 
     .yg-onboarding-stack {
@@ -291,38 +370,41 @@ function ensureStyles() {
 
     .yg-onboarding-field label,
     .yg-onboarding-label {
-      color: rgba(255, 255, 255, 0.9);
-      font: 700 0.96rem/1.1 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-primary);
+      font: 700 0.96rem/1.1 'Rajdhani', sans-serif;
     }
 
+    /* ── Input ── */
     .yg-onboarding-input {
       width: 100%;
       padding: 16px 18px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      background: rgba(255, 255, 255, 0.03);
-      color: #fff;
-      font: 600 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      border-radius: var(--radius-lg, 16px);
+      border: 1px solid var(--ob-border-neutral);
+      background: var(--ob-bg-4);
+      color: var(--ob-text-primary);
+      font: 600 1rem/1.2 'Rajdhani', sans-serif;
       transition: border-color 180ms ease, transform 160ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
     .yg-onboarding-input:focus {
       outline: none;
-      border-color: rgba(200, 167, 82, 0.72);
-      background: rgba(255, 255, 255, 0.045);
+      border-color: var(--ob-gold-4);
+      background: var(--ob-bg-3);
       transform: translateY(-1px);
-      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.10);
+      box-shadow: 0 0 0 3px rgba(200,167,82,0.12), var(--ob-shadow-gold-sm);
     }
 
+    /* ── Help box ── */
     .yg-onboarding-help {
       padding: 14px 18px;
-      border-radius: 18px;
-      background: rgba(200, 167, 82, 0.06);
-      border: 1px solid rgba(200, 167, 82, 0.13);
-      color: #f3e4ba;
-      font: 600 0.96rem/1.48 var(--font-heading, 'Rajdhani'), sans-serif;
+      border-radius: var(--radius-lg, 16px);
+      border: 1px solid var(--ob-border-prestige);
+      background: rgba(200,167,82,0.05);
+      color: var(--ob-gold-prestige);
+      font: 600 0.96rem/1.48 'Rajdhani', sans-serif;
     }
 
+    /* ── Option grid ── */
     .yg-onboarding-option-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -333,10 +415,10 @@ function ensureStyles() {
       width: 100%;
       text-align: left;
       padding: 18px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      background: rgba(255, 255, 255, 0.025);
-      color: #fff;
+      border-radius: var(--radius-xl, 24px);
+      border: 1px solid var(--ob-border-neutral);
+      background: var(--ob-bg-4);
+      color: var(--ob-text-primary);
       cursor: pointer;
       transition: transform 160ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
@@ -345,34 +427,31 @@ function ensureStyles() {
     .yg-onboarding-option:focus-visible {
       outline: none;
       transform: translateY(-2px);
-      border-color: rgba(200, 167, 82, 0.50);
-      background: rgba(200, 167, 82, 0.04);
-      box-shadow:
-        0 14px 28px rgba(0, 0, 0, 0.22),
-        0 0 18px rgba(200, 167, 82, 0.06);
+      border-color: var(--ob-border-gold);
+      background: rgba(200,167,82,0.04);
+      box-shadow: var(--ob-shadow-gold-sm);
     }
 
     .yg-onboarding-option.is-selected {
-      border-color: rgba(200, 167, 82, 0.72);
-      background: linear-gradient(180deg, rgba(200, 167, 82, 0.14), rgba(255, 255, 255, 0.03));
-      box-shadow:
-        0 16px 30px rgba(0, 0, 0, 0.24),
-        0 0 24px rgba(200, 167, 82, 0.10);
+      border-color: var(--ob-gold-4);
+      background: linear-gradient(180deg, rgba(200,167,82,0.12), var(--ob-bg-4));
+      box-shadow: var(--ob-shadow-gold-md);
     }
 
     .yg-onboarding-option-title {
       display: block;
       margin-bottom: 6px;
-      color: #fffaf0;
-      font: 700 1.02rem/1.12 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-gold-prestige);
+      font: 700 1.02rem/1.12 'Rajdhani', sans-serif;
     }
 
     .yg-onboarding-option-desc {
       display: block;
-      color: rgba(255, 255, 255, 0.65);
-      font: 500 0.94rem/1.38 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-muted);
+      font: 500 0.94rem/1.38 'Rajdhani', sans-serif;
     }
 
+    /* ── Summary ── */
     .yg-onboarding-summary {
       display: grid;
       gap: 12px;
@@ -383,30 +462,31 @@ function ensureStyles() {
       justify-content: space-between;
       gap: 18px;
       padding: 14px 18px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md, 12px);
+      border: 1px solid var(--ob-border-neutral);
+      background: var(--ob-bg-4);
       transition: border-color 160ms ease, background 160ms ease;
     }
 
     .yg-onboarding-summary-row:hover {
-      border-color: rgba(200, 167, 82, 0.16);
-      background: rgba(255, 255, 255, 0.035);
+      border-color: var(--ob-border-prestige);
+      background: rgba(200,167,82,0.04);
     }
 
     .yg-onboarding-summary-label {
-      color: rgba(255, 255, 255, 0.62);
-      font: 600 0.92rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-muted);
+      font: 700 0.92rem/1.2 'Rajdhani', sans-serif;
       text-transform: uppercase;
-      letter-spacing: 0.07em;
+      letter-spacing: 0.08em;
     }
 
     .yg-onboarding-summary-value {
-      color: #fff;
-      font: 700 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-gold-prestige);
+      font: 700 1rem/1.2 'Rajdhani', sans-serif;
       text-align: right;
     }
 
+    /* ── Footer ── */
     .yg-onboarding-footer {
       display: flex;
       align-items: center;
@@ -414,21 +494,21 @@ function ensureStyles() {
       gap: 16px;
       padding-top: 20px;
       margin-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.07);
+      border-top: 1px solid var(--ob-border-neutral);
     }
 
     .yg-onboarding-status {
       min-height: 24px;
-      color: rgba(255, 255, 255, 0.70);
-      font: 600 0.96rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      color: var(--ob-text-secondary);
+      font: 700 0.96rem/1.2 'Rajdhani', sans-serif;
     }
 
     .yg-onboarding-status.is-error {
-      color: var(--danger, #ffb59f);
+      color: var(--color-error, #EF4444);
     }
 
     .yg-onboarding-status.is-loading {
-      color: #f5deb3;
+      color: var(--ob-gold-5);
     }
 
     .yg-onboarding-actions {
@@ -438,12 +518,13 @@ function ensureStyles() {
       gap: 10px;
     }
 
+    /* ── Buttons ── */
     .yg-onboarding-btn {
       border: 0;
-      border-radius: 999px;
+      border-radius: var(--radius-pill, 9999px);
       padding: 13px 22px;
       cursor: pointer;
-      font: 700 0.96rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+      font: 700 0.96rem/1 'Rajdhani', sans-serif;
       letter-spacing: 0.03em;
       transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease, background 160ms ease;
     }
@@ -465,40 +546,45 @@ function ensureStyles() {
     }
 
     .yg-onboarding-btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
+      background: var(--ob-bg-4);
+      color: var(--ob-text-primary);
+      border: 1px solid var(--ob-border-neutral);
     }
 
     .yg-onboarding-btn-secondary:hover,
     .yg-onboarding-btn-secondary:focus-visible {
-      background: rgba(255, 255, 255, 0.13);
+      border-color: var(--ob-border-prestige);
+      background: rgba(255,255,255,0.06);
     }
 
     .yg-onboarding-btn-ghost {
       background: transparent;
-      color: rgba(255, 255, 255, 0.72);
-      border: 1px solid rgba(255, 255, 255, 0.10);
+      color: var(--ob-text-secondary);
+      border: 1px solid var(--ob-border-neutral);
     }
 
     .yg-onboarding-btn-ghost:hover,
     .yg-onboarding-btn-ghost:focus-visible {
-      border-color: rgba(255, 255, 255, 0.20);
-      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--ob-border-gold);
+      color: var(--ob-gold-5);
+      background: rgba(200,167,82,0.04);
     }
 
     .yg-onboarding-btn-primary {
-      background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 52%, #f4ddb1);
-      color: #121212;
-      box-shadow: 0 12px 24px rgba(200, 167, 82, 0.18);
+      background: var(--ob-metallic-btn);
+      background-size: 200% 100%;
+      color: var(--ob-bg-2);
+      font-weight: 900;
+      box-shadow: var(--ob-shadow-gold-sm);
+      animation: yg-onb-metallicShift 5s ease-in-out infinite;
     }
 
     .yg-onboarding-btn-primary:hover,
     .yg-onboarding-btn-primary:focus-visible {
-      box-shadow:
-        0 16px 32px rgba(200, 167, 82, 0.24),
-        0 0 20px rgba(200, 167, 82, 0.12);
+      box-shadow: var(--ob-shadow-gold-md);
     }
 
+    /* ── Responsive ── */
     @media (max-width: 900px), (max-height: 820px) {
       .yg-onboarding-layer {
         padding: 12px;
@@ -518,7 +604,7 @@ function ensureStyles() {
 
       .yg-onboarding-side,
       .yg-onboarding-card {
-        border-radius: 24px;
+        border-radius: var(--radius-xl, 24px);
       }
 
       .yg-onboarding-side h2 {
@@ -538,7 +624,7 @@ function ensureStyles() {
       .yg-onboarding-side,
       .yg-onboarding-card {
         padding: 20px 18px;
-        border-radius: 22px;
+        border-radius: var(--radius-xl, 24px);
       }
 
       .yg-onboarding-option-grid {
@@ -586,7 +672,7 @@ function ensureStyles() {
       .yg-onboarding-side,
       .yg-onboarding-card {
         padding: 16px 14px;
-        border-radius: 18px;
+        border-radius: var(--radius-lg, 16px);
       }
 
       .yg-onboarding-side h2 {
@@ -607,9 +693,16 @@ function ensureStyles() {
         animation: none !important;
       }
 
-      .yg-onboarding-progress-bar {
+      .yg-onboarding-progress-bar,
+      .yg-onboarding-side h2,
+      .yg-onboarding-card h3,
+      .yg-onboarding-btn-primary {
         animation: none !important;
-        transition: none !important;
+      }
+
+      .yg-onboarding-side::before,
+      .yg-onboarding-card::before {
+        animation: none !important;
       }
 
       .yg-onboarding-option,
@@ -617,7 +710,8 @@ function ensureStyles() {
       .yg-onboarding-btn,
       .yg-onboarding-input,
       .yg-onboarding-summary-row,
-      .yg-onboarding-step-index {
+      .yg-onboarding-step-index,
+      .yg-onboarding-progress-bar {
         transition: none !important;
       }
     }

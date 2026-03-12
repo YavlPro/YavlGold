@@ -6,44 +6,89 @@ const STEP_COUNT = 4;
 let activeWizard = null;
 
 function escapeHtml(value) {
-    return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function ensureStyles() {
-    if (document.getElementById(STYLE_ID)) return;
+  if (document.getElementById(STYLE_ID)) return;
 
-    const style = document.createElement('style');
-    style.id = STYLE_ID;
-    style.textContent = `
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+      /* ── DNA V10 Tokens (local fallbacks) ── */
+      .yg-profile-edit-layer {
+        --pe-gold-1: var(--v10-gold-1, #2a2218);
+        --pe-gold-2: var(--v10-gold-2, #3a3228);
+        --pe-gold-3: var(--v10-gold-3, #6b5a3e);
+        --pe-gold-4: var(--v10-gold-4, #C8A752);
+        --pe-gold-5: var(--v10-gold-5, #E8D48B);
+        --pe-gold-prestige: var(--v10-gold-prestige, #E5D5A0);
+        --pe-bg-0: var(--v10-bg-0, #050505);
+        --pe-bg-1: var(--v10-bg-1, #0a0a0a);
+        --pe-bg-2: var(--v10-bg-2, #0B0C0F);
+        --pe-bg-3: var(--v10-bg-3, #111113);
+        --pe-bg-4: var(--v10-bg-4, #1a1a1f);
+        --pe-text-primary: var(--v10-text-primary, #ffffff);
+        --pe-text-secondary: var(--v10-text-secondary, #cccccc);
+        --pe-text-muted: var(--v10-text-muted, #94A3B8);
+        --pe-border-neutral: var(--v10-border-neutral, rgba(255,255,255,0.08));
+        --pe-border-gold: var(--v10-border-gold, rgba(200,167,82,0.25));
+        --pe-border-prestige: var(--v10-border-prestige, rgba(229,213,160,0.18));
+        --pe-shadow-gold-sm: var(--v10-shadow-gold-sm, 0 2px 10px rgba(200,167,82,0.15));
+        --pe-shadow-gold-md: var(--v10-shadow-gold-md, 0 5px 20px rgba(200,167,82,0.25));
+        --pe-shadow-gold-lg: var(--v10-shadow-gold-lg, 0 10px 40px rgba(200,167,82,0.35));
+        --pe-shadow-metallic: var(--v10-shadow-metallic, 0 4px 20px rgba(200,167,82,0.30), 0 0 40px rgba(200,167,82,0.08));
+        --pe-glass-bg: var(--v10-glass-bg, rgba(17, 17, 17, 0.85));
+        --pe-metallic-linear: linear-gradient(135deg, var(--pe-gold-2), var(--pe-gold-4), var(--pe-gold-5), var(--pe-gold-4));
+        --pe-metallic-text: linear-gradient(135deg, var(--pe-gold-5), var(--pe-gold-4), var(--pe-gold-3), var(--pe-gold-4), var(--pe-gold-5));
+        --pe-metallic-btn: linear-gradient(135deg, var(--pe-gold-3), var(--pe-gold-4) 40%, var(--pe-gold-5) 60%, var(--pe-gold-4));
+        --pe-metallic-border: linear-gradient(90deg, transparent, var(--pe-gold-4), transparent);
+        --pe-metallic-conic: conic-gradient(from 0deg, var(--pe-gold-2), var(--pe-gold-3), var(--pe-gold-4), var(--pe-gold-5), var(--pe-gold-4), var(--pe-gold-3), var(--pe-gold-2));
+      }
+
+      /* ── DNA V10 Keyframes ── */
       @keyframes yg-pe-fadeIn {
         from { opacity: 0; }
         to   { opacity: 1; }
       }
 
       @keyframes yg-pe-slideUp {
-        from { opacity: 0; transform: translateY(12px); }
+        from { opacity: 0; transform: translateY(20px); }
         to   { opacity: 1; transform: translateY(0); }
       }
 
       @keyframes yg-pe-scaleIn {
-        from { opacity: 0; transform: scale(0.97); }
+        from { opacity: 0; transform: scale(0.96); }
         to   { opacity: 1; transform: scale(1); }
       }
 
-      @keyframes yg-pe-barPulse {
-        0%, 100% { box-shadow: 0 0 0 rgba(200, 167, 82, 0); }
-        50%      { box-shadow: 0 0 10px rgba(200, 167, 82, 0.28); }
+      @keyframes yg-pe-metallicShift {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
       }
 
+      @keyframes yg-pe-borderShimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+
+      @keyframes yg-pe-pulseGlow {
+        0%, 100% { box-shadow: 0 0 8px rgba(200,167,82,0.08); }
+        50%      { box-shadow: 0 0 22px rgba(200,167,82,0.22); }
+      }
+
+      /* ── Lock ── */
       .yg-profile-edit-lock {
         overflow: hidden;
       }
 
+      /* ── Layer (backdrop) ── */
       .yg-profile-edit-layer {
         position: fixed;
         inset: 0;
@@ -54,14 +99,15 @@ function ensureStyles() {
         justify-content: center;
         overflow-y: auto;
         background:
-          radial-gradient(circle at 15% 10%, rgba(200, 167, 82, 0.15), transparent 30%),
-          radial-gradient(circle at 85% 90%, rgba(200, 167, 82, 0.10), transparent 26%),
-          rgba(10, 10, 10, 0.93);
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
-        animation: yg-pe-fadeIn 200ms ease both;
+          radial-gradient(circle at 15% 10%, rgba(200,167,82,0.12), transparent 32%),
+          radial-gradient(circle at 85% 90%, rgba(200,167,82,0.08), transparent 28%),
+          var(--pe-bg-0);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        animation: yg-pe-fadeIn 220ms ease both;
       }
 
+      /* ── Shell ── */
       .yg-profile-edit-shell {
         width: min(1020px, 100%);
         min-height: min(760px, calc(100vh - 36px));
@@ -69,56 +115,91 @@ function ensureStyles() {
         grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
         gap: 18px;
         margin: auto 0;
-        animation: yg-pe-scaleIn 200ms ease both;
+        animation: yg-pe-scaleIn 220ms ease both;
       }
 
+      /* ── Panels (side + card) ── */
       .yg-profile-edit-side,
       .yg-profile-edit-card {
-        border: 1px solid rgba(200, 167, 82, 0.16);
-        border-radius: 28px;
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
-          var(--bg-primary, #0a0a0a);
-        box-shadow:
-          0 24px 64px rgba(0, 0, 0, 0.34),
-          0 0 0 1px rgba(200, 167, 82, 0.06);
+        border: 1px solid var(--pe-border-gold);
+        border-radius: var(--radius-xl, 24px);
+        background: var(--pe-glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: var(--pe-shadow-gold-md);
+        position: relative;
+        overflow: hidden;
       }
 
+      .yg-profile-edit-side::before,
+      .yg-profile-edit-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--pe-metallic-border);
+        background-size: 200% 100%;
+        animation: yg-pe-borderShimmer 3s linear infinite;
+      }
+
+      /* ── Side panel ── */
       .yg-profile-edit-side {
-        padding: 26px 24px;
+        padding: 28px 24px;
         display: flex;
         flex-direction: column;
         gap: 18px;
-        animation: yg-pe-slideUp 200ms ease both;
+        animation: yg-pe-slideUp 220ms ease both;
         animation-delay: 60ms;
       }
 
+      .yg-profile-edit-side::after {
+        content: '';
+        position: absolute;
+        inset: auto -50px -50px auto;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(200,167,82,0.14), transparent 65%);
+        pointer-events: none;
+      }
+
+      /* ── Eyebrow badge ── */
       .yg-profile-edit-eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 8px;
         width: fit-content;
         padding: 8px 14px;
-        border-radius: 999px;
-        background: rgba(200, 167, 82, 0.10);
-        color: var(--primary-light, #E5C158);
-        font: 700 0.84rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
-        letter-spacing: 0.09em;
+        border-radius: var(--radius-pill, 9999px);
+        background: rgba(200,167,82,0.10);
+        border: 1px solid var(--pe-border-prestige);
+        color: var(--pe-gold-prestige);
+        font: 700 0.84rem/1 'Rajdhani', sans-serif;
+        letter-spacing: 0.10em;
         text-transform: uppercase;
       }
 
+      /* ── Side heading (metallic text §3) ── */
       .yg-profile-edit-side h2 {
         margin: 0;
-        color: #fff4dc;
-        font: 700 clamp(1.65rem, 3vw, 2.3rem)/1.08 var(--font-display, 'Orbitron'), sans-serif;
+        font: 900 clamp(1.65rem, 3vw, 2.3rem)/1.08 'Orbitron', sans-serif;
+        background: var(--pe-metallic-text);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: yg-pe-metallicShift 6s ease-in-out infinite;
       }
 
       .yg-profile-edit-side p {
         margin: 0;
-        color: rgba(255, 255, 255, 0.72);
-        font: 600 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-text-secondary);
+        font: 600 1rem/1.55 'Rajdhani', sans-serif;
       }
 
+      /* ── Progress ── */
       .yg-profile-edit-progress {
         display: grid;
         gap: 10px;
@@ -128,26 +209,28 @@ function ensureStyles() {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        color: rgba(255, 255, 255, 0.78);
-        font: 700 0.9rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-text-secondary);
+        font: 700 0.9rem/1 'Rajdhani', sans-serif;
       }
 
       .yg-profile-edit-track {
         width: 100%;
         height: 10px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.07);
+        border-radius: var(--radius-pill, 9999px);
+        background: rgba(255,255,255,0.06);
         overflow: hidden;
       }
 
       .yg-profile-edit-bar {
         height: 100%;
         border-radius: inherit;
-        background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 50%, #f5deb3);
-        transition: width 180ms ease;
-        animation: yg-pe-barPulse 2.4s ease-in-out infinite;
+        background: var(--pe-metallic-linear);
+        background-size: 200% 100%;
+        transition: width 200ms ease;
+        animation: yg-pe-metallicShift 3s ease-in-out infinite;
       }
 
+      /* ── Step list ── */
       .yg-profile-edit-step-list {
         display: grid;
         gap: 10px;
@@ -162,20 +245,20 @@ function ensureStyles() {
         gap: 12px;
         align-items: center;
         padding: 13px 15px;
-        border-radius: 18px;
+        border-radius: var(--radius-lg, 16px);
         border: 1px solid transparent;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(255,255,255,0.02);
         transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
       }
 
       .yg-profile-edit-step.is-active {
-        border-color: rgba(200, 167, 82, 0.50);
-        background: rgba(200, 167, 82, 0.09);
-        box-shadow: 0 4px 16px rgba(200, 167, 82, 0.08);
+        border-color: var(--pe-border-gold);
+        background: rgba(200,167,82,0.08);
+        box-shadow: var(--pe-shadow-gold-sm);
       }
 
       .yg-profile-edit-step.is-complete {
-        border-color: rgba(200, 167, 82, 0.22);
+        border-color: var(--pe-border-prestige);
       }
 
       .yg-profile-edit-step-index {
@@ -184,36 +267,39 @@ function ensureStyles() {
         display: grid;
         place-items: center;
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.07);
-        color: #fff;
-        font: 700 0.94rem/1 var(--font-display, 'Orbitron'), sans-serif;
-        transition: background 180ms ease, color 180ms ease;
+        background: var(--pe-bg-4);
+        border: 1px solid var(--pe-border-neutral);
+        color: var(--pe-text-muted);
+        font: 700 0.94rem/1 'Orbitron', sans-serif;
+        transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
       }
 
       .yg-profile-edit-step.is-active .yg-profile-edit-step-index,
       .yg-profile-edit-step.is-complete .yg-profile-edit-step-index {
-        background: linear-gradient(135deg, var(--primary-dark, #8e7433), var(--primary, #c8a752));
-        color: #111;
+        background: var(--pe-metallic-conic);
+        border-color: var(--pe-gold-4);
+        color: var(--pe-bg-2);
       }
 
       .yg-profile-edit-step-title {
         display: block;
         margin-bottom: 3px;
-        color: #fff7e8;
-        font: 700 1rem/1.12 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-gold-prestige);
+        font: 700 1rem/1.12 'Rajdhani', sans-serif;
       }
 
       .yg-profile-edit-step-desc {
-        color: rgba(255, 255, 255, 0.64);
-        font: 500 0.92rem/1.35 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-text-muted);
+        font: 500 0.92rem/1.35 'Rajdhani', sans-serif;
       }
 
+      /* ── Card (main content) ── */
       .yg-profile-edit-card {
-        padding: 28px;
+        padding: 30px;
         display: flex;
         flex-direction: column;
         min-height: 0;
-        animation: yg-pe-slideUp 200ms ease both;
+        animation: yg-pe-slideUp 220ms ease both;
         animation-delay: 100ms;
       }
 
@@ -223,24 +309,30 @@ function ensureStyles() {
 
       .yg-profile-edit-kicker {
         margin: 0 0 8px;
-        color: var(--primary, #c8a752);
-        font: 700 0.84rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
-        letter-spacing: 0.09em;
+        color: var(--pe-gold-4);
+        font: 700 0.84rem/1 'Rajdhani', sans-serif;
+        letter-spacing: 0.10em;
         text-transform: uppercase;
       }
 
       .yg-profile-edit-card h3 {
         margin: 0 0 10px;
-        color: #fff7e5;
-        font: 700 clamp(1.4rem, 2.8vw, 1.95rem)/1.08 var(--font-display, 'Orbitron'), sans-serif;
+        font: 900 clamp(1.4rem, 2.8vw, 1.95rem)/1.08 'Orbitron', sans-serif;
+        background: var(--pe-metallic-text);
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: yg-pe-metallicShift 6s ease-in-out infinite;
       }
 
       .yg-profile-edit-card p {
         margin: 0;
-        color: rgba(255, 255, 255, 0.70);
-        font: 600 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-text-secondary);
+        font: 600 1rem/1.55 'Rajdhani', sans-serif;
       }
 
+      /* ── Form structure ── */
       .yg-profile-edit-form {
         display: flex;
         flex-direction: column;
@@ -253,7 +345,7 @@ function ensureStyles() {
         min-height: 0;
         overflow: auto;
         padding-right: 4px;
-        animation: yg-pe-slideUp 180ms ease both;
+        animation: yg-pe-slideUp 200ms ease both;
       }
 
       .yg-profile-edit-stack {
@@ -268,18 +360,19 @@ function ensureStyles() {
 
       .yg-profile-edit-field span,
       .yg-profile-edit-label {
-        color: rgba(255, 255, 255, 0.90);
-        font: 700 0.96rem/1.1 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-text-primary);
+        font: 700 0.96rem/1.1 'Rajdhani', sans-serif;
       }
 
+      /* ── Inputs ── */
       .yg-profile-edit-input,
       .yg-profile-edit-textarea {
         width: 100%;
-        border-radius: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        background: rgba(255, 255, 255, 0.03);
-        color: #fff;
-        font: 600 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+        border-radius: var(--radius-lg, 16px);
+        border: 1px solid var(--pe-border-neutral);
+        background: var(--pe-bg-4);
+        color: var(--pe-text-primary);
+        font: 600 1rem/1.2 'Rajdhani', sans-serif;
         transition: border-color 180ms ease, transform 160ms ease, background 180ms ease, box-shadow 180ms ease;
       }
 
@@ -296,59 +389,63 @@ function ensureStyles() {
       .yg-profile-edit-input:focus,
       .yg-profile-edit-textarea:focus {
         outline: none;
-        border-color: rgba(200, 167, 82, 0.72);
-        background: rgba(255, 255, 255, 0.045);
+        border-color: var(--pe-gold-4);
+        background: var(--pe-bg-3);
         transform: translateY(-1px);
-        box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.10);
+        box-shadow: 0 0 0 3px rgba(200,167,82,0.12), var(--pe-shadow-gold-sm);
       }
 
+      /* ── Help box ── */
       .yg-profile-edit-help {
         padding: 14px 18px;
-        border-radius: 18px;
-        border: 1px solid rgba(200, 167, 82, 0.13);
-        background: rgba(200, 167, 82, 0.06);
-        color: #f3e4ba;
-        font: 700 0.94rem/1.48 var(--font-heading, 'Rajdhani'), sans-serif;
+        border-radius: var(--radius-lg, 16px);
+        border: 1px solid var(--pe-border-prestige);
+        background: rgba(200,167,82,0.05);
+        color: var(--pe-gold-prestige);
+        font: 700 0.94rem/1.48 'Rajdhani', sans-serif;
       }
 
+      /* ── Inline fields ── */
       .yg-profile-edit-inline {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 14px;
       }
 
+      /* ── Avatar ── */
       .yg-profile-edit-avatar {
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         gap: 16px;
         padding: 18px;
-        border-radius: 22px;
-        border: 1px solid rgba(200, 167, 82, 0.16);
-        background: rgba(200, 167, 82, 0.04);
-        transition: border-color 180ms ease;
+        border-radius: var(--radius-xl, 24px);
+        border: 1px solid var(--pe-border-gold);
+        background: rgba(200,167,82,0.04);
+        transition: border-color 180ms ease, box-shadow 180ms ease;
       }
 
       .yg-profile-edit-avatar:hover {
-        border-color: rgba(200, 167, 82, 0.26);
+        border-color: rgba(200,167,82,0.40);
+        box-shadow: var(--pe-shadow-gold-sm);
       }
 
       .yg-profile-edit-avatar-preview {
         width: 92px;
         height: 92px;
-        border-radius: 24px;
-        border: 1px solid rgba(200, 167, 82, 0.30);
-        background: rgba(200, 167, 82, 0.08);
+        border-radius: var(--radius-xl, 24px);
+        border: 2px solid var(--pe-gold-3);
+        background: var(--pe-metallic-conic);
         display: grid;
         place-items: center;
-        color: var(--primary, #c8a752);
-        font: 700 1.8rem/1 var(--font-display, 'Orbitron'), sans-serif;
+        color: var(--pe-bg-2);
+        font: 700 1.8rem/1 'Orbitron', sans-serif;
         overflow: hidden;
         transition: border-color 180ms ease, box-shadow 180ms ease;
       }
 
       .yg-profile-edit-avatar-preview:hover {
-        border-color: rgba(200, 167, 82, 0.48);
-        box-shadow: 0 0 16px rgba(200, 167, 82, 0.10);
+        border-color: var(--pe-gold-4);
+        box-shadow: var(--pe-shadow-gold-sm);
       }
 
       .yg-profile-edit-avatar-preview img {
@@ -380,6 +477,7 @@ function ensureStyles() {
         border: 0;
       }
 
+      /* ── Summary ── */
       .yg-profile-edit-summary {
         display: grid;
         gap: 12px;
@@ -390,30 +488,31 @@ function ensureStyles() {
         justify-content: space-between;
         gap: 18px;
         padding: 14px 18px;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        background: rgba(255, 255, 255, 0.025);
+        border-radius: var(--radius-md, 12px);
+        border: 1px solid var(--pe-border-neutral);
+        background: var(--pe-bg-4);
         transition: border-color 160ms ease, background 160ms ease;
       }
 
       .yg-profile-edit-summary-row:hover {
-        border-color: rgba(200, 167, 82, 0.16);
-        background: rgba(255, 255, 255, 0.035);
+        border-color: var(--pe-border-prestige);
+        background: rgba(200,167,82,0.04);
       }
 
       .yg-profile-edit-summary-label {
-        color: rgba(255, 255, 255, 0.62);
-        font: 700 0.88rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
-        letter-spacing: 0.07em;
+        color: var(--pe-text-muted);
+        font: 700 0.88rem/1.2 'Rajdhani', sans-serif;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
       }
 
       .yg-profile-edit-summary-value {
-        color: #fff;
+        color: var(--pe-gold-prestige);
         text-align: right;
-        font: 700 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+        font: 700 1rem/1.2 'Rajdhani', sans-serif;
       }
 
+      /* ── Footer ── */
       .yg-profile-edit-footer {
         display: flex;
         align-items: center;
@@ -421,21 +520,21 @@ function ensureStyles() {
         gap: 16px;
         padding-top: 18px;
         margin-top: 18px;
-        border-top: 1px solid rgba(255, 255, 255, 0.07);
+        border-top: 1px solid var(--pe-border-neutral);
       }
 
       .yg-profile-edit-status {
         min-height: 24px;
-        color: rgba(255, 255, 255, 0.70);
-        font: 700 0.96rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+        color: var(--pe-text-secondary);
+        font: 700 0.96rem/1.2 'Rajdhani', sans-serif;
       }
 
       .yg-profile-edit-status.is-error {
-        color: var(--danger, #ffb59f);
+        color: var(--color-error, #EF4444);
       }
 
       .yg-profile-edit-status.is-loading {
-        color: #f5deb3;
+        color: var(--pe-gold-5);
       }
 
       .yg-profile-edit-actions {
@@ -445,12 +544,13 @@ function ensureStyles() {
         gap: 10px;
       }
 
+      /* ── Buttons ── */
       .yg-profile-edit-btn {
         border: 0;
-        border-radius: 999px;
+        border-radius: var(--radius-pill, 9999px);
         padding: 13px 22px;
         cursor: pointer;
-        font: 700 0.96rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+        font: 700 0.96rem/1 'Rajdhani', sans-serif;
         letter-spacing: 0.03em;
         transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease, background 160ms ease;
       }
@@ -472,40 +572,45 @@ function ensureStyles() {
       }
 
       .yg-profile-edit-btn-secondary {
-        background: rgba(255, 255, 255, 0.08);
-        color: #fff;
+        background: var(--pe-bg-4);
+        color: var(--pe-text-primary);
+        border: 1px solid var(--pe-border-neutral);
       }
 
       .yg-profile-edit-btn-secondary:hover,
       .yg-profile-edit-btn-secondary:focus-visible {
-        background: rgba(255, 255, 255, 0.13);
+        border-color: var(--pe-border-prestige);
+        background: rgba(255,255,255,0.06);
       }
 
       .yg-profile-edit-btn-ghost {
         background: transparent;
-        color: rgba(255, 255, 255, 0.72);
-        border: 1px solid rgba(255, 255, 255, 0.10);
+        color: var(--pe-text-secondary);
+        border: 1px solid var(--pe-border-neutral);
       }
 
       .yg-profile-edit-btn-ghost:hover,
       .yg-profile-edit-btn-ghost:focus-visible {
-        border-color: rgba(255, 255, 255, 0.20);
-        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--pe-border-gold);
+        color: var(--pe-gold-5);
+        background: rgba(200,167,82,0.04);
       }
 
       .yg-profile-edit-btn-primary {
-        background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 50%, #f4ddb1);
-        color: #121212;
-        box-shadow: 0 12px 24px rgba(200, 167, 82, 0.18);
+        background: var(--pe-metallic-btn);
+        background-size: 200% 100%;
+        color: var(--pe-bg-2);
+        font-weight: 900;
+        box-shadow: var(--pe-shadow-gold-sm);
+        animation: yg-pe-metallicShift 5s ease-in-out infinite;
       }
 
       .yg-profile-edit-btn-primary:hover,
       .yg-profile-edit-btn-primary:focus-visible {
-        box-shadow:
-          0 16px 32px rgba(200, 167, 82, 0.24),
-          0 0 20px rgba(200, 167, 82, 0.12);
+        box-shadow: var(--pe-shadow-gold-md);
       }
 
+      /* ── Responsive ── */
       @media (max-width: 900px), (max-height: 820px) {
         .yg-profile-edit-layer {
           padding: 12px;
@@ -540,7 +645,7 @@ function ensureStyles() {
         .yg-profile-edit-side,
         .yg-profile-edit-card {
           padding: 20px 18px;
-          border-radius: 22px;
+          border-radius: var(--radius-xl, 24px);
         }
 
         .yg-profile-edit-inline,
@@ -596,7 +701,7 @@ function ensureStyles() {
         .yg-profile-edit-side,
         .yg-profile-edit-card {
           padding: 16px 14px;
-          border-radius: 18px;
+          border-radius: var(--radius-lg, 16px);
         }
 
         .yg-profile-edit-side h2 {
@@ -617,11 +722,19 @@ function ensureStyles() {
           animation: none !important;
         }
 
-        .yg-profile-edit-bar {
+        .yg-profile-edit-bar,
+        .yg-profile-edit-side h2,
+        .yg-profile-edit-card h3,
+        .yg-profile-edit-btn-primary {
           animation: none !important;
-          transition: none !important;
         }
 
+        .yg-profile-edit-side::before,
+        .yg-profile-edit-card::before {
+          animation: none !important;
+        }
+
+        .yg-profile-edit-bar,
         .yg-profile-edit-btn,
         .yg-profile-edit-input,
         .yg-profile-edit-textarea,
@@ -635,156 +748,156 @@ function ensureStyles() {
       }
     `;
 
-    document.head.append(style);
+  document.head.append(style);
 }
 
 function getStorage() {
-    try {
-        return window.localStorage;
-    } catch (_) {
-        return null;
-    }
+  try {
+    return window.localStorage;
+  } catch (_) {
+    return null;
+  }
 }
 
 function readDraft(draftKey) {
-    const storage = getStorage();
-    if (!storage) return null;
-    try {
-        const raw = storage.getItem(draftKey);
-        return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-        return null;
-    }
+  const storage = getStorage();
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(draftKey);
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function writeDraft(draftKey, payload) {
-    const storage = getStorage();
-    if (!storage) return;
-    try {
-        storage.setItem(draftKey, JSON.stringify(payload));
-    } catch (_) {
-        // ignore local draft failures
-    }
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.setItem(draftKey, JSON.stringify(payload));
+  } catch (_) {
+    // ignore local draft failures
+  }
 }
 
 function clearDraft(draftKey) {
-    const storage = getStorage();
-    if (!storage) return;
-    try {
-        storage.removeItem(draftKey);
-    } catch (_) {
-        // ignore local draft failures
-    }
+  const storage = getStorage();
+  if (!storage) return;
+  try {
+    storage.removeItem(draftKey);
+  } catch (_) {
+    // ignore local draft failures
+  }
 }
 
 function normalizeText(value) {
-    return String(value || '').trim();
+  return String(value || '').trim();
 }
 
 function buildDraftKey(initialData = {}) {
-    const userId = normalizeText(initialData.userId);
-    return userId ? `${DEFAULT_DRAFT_KEY}:${userId}` : DEFAULT_DRAFT_KEY;
+  const userId = normalizeText(initialData.userId);
+  return userId ? `${DEFAULT_DRAFT_KEY}:${userId}` : DEFAULT_DRAFT_KEY;
 }
 
 function buildInitialState(initialData = {}, draftData = null) {
-    const initialAvatarUrl = normalizeText(initialData.avatarUrl);
-    const hasLocalAvatar = initialAvatarUrl.startsWith('data:image/');
-    const baseState = {
-        step: 0,
-        isSubmitting: false,
-        status: '',
-        statusLevel: 'muted',
-        displayName: normalizeText(initialData.displayName || initialData.email || 'Agricultor'),
-        farmName: normalizeText(initialData.farmName),
-        locationText: normalizeText(initialData.locationText),
-        notes: normalizeText(initialData.notes),
-        phone: normalizeText(initialData.phone),
-        whatsapp: normalizeText(initialData.whatsapp),
-        instagram: normalizeText(initialData.instagram),
-        facebook: normalizeText(initialData.facebook),
-        avatarMode: 'none',
-        avatarValue: initialAvatarUrl,
-        avatarPreviewUrl: initialAvatarUrl,
-        avatarUrlInput: hasLocalAvatar ? '' : initialAvatarUrl,
-        email: normalizeText(initialData.email),
-        userId: normalizeText(initialData.userId)
-    };
+  const initialAvatarUrl = normalizeText(initialData.avatarUrl);
+  const hasLocalAvatar = initialAvatarUrl.startsWith('data:image/');
+  const baseState = {
+    step: 0,
+    isSubmitting: false,
+    status: '',
+    statusLevel: 'muted',
+    displayName: normalizeText(initialData.displayName || initialData.email || 'Agricultor'),
+    farmName: normalizeText(initialData.farmName),
+    locationText: normalizeText(initialData.locationText),
+    notes: normalizeText(initialData.notes),
+    phone: normalizeText(initialData.phone),
+    whatsapp: normalizeText(initialData.whatsapp),
+    instagram: normalizeText(initialData.instagram),
+    facebook: normalizeText(initialData.facebook),
+    avatarMode: 'none',
+    avatarValue: initialAvatarUrl,
+    avatarPreviewUrl: initialAvatarUrl,
+    avatarUrlInput: hasLocalAvatar ? '' : initialAvatarUrl,
+    email: normalizeText(initialData.email),
+    userId: normalizeText(initialData.userId)
+  };
 
-    if (!draftData) return baseState;
+  if (!draftData) return baseState;
 
-    return {
-        ...baseState,
-        ...draftData,
-        step: Number.isInteger(draftData.step) ? Math.max(0, Math.min(STEP_COUNT - 1, draftData.step)) : 0,
-        isSubmitting: false,
-        status: '',
-        statusLevel: 'muted'
-    };
+  return {
+    ...baseState,
+    ...draftData,
+    step: Number.isInteger(draftData.step) ? Math.max(0, Math.min(STEP_COUNT - 1, draftData.step)) : 0,
+    isSubmitting: false,
+    status: '',
+    statusLevel: 'muted'
+  };
 }
 
 function serializeDraft(state) {
-    return {
-        step: state.step,
-        displayName: state.displayName,
-        farmName: state.farmName,
-        locationText: state.locationText,
-        notes: state.notes,
-        phone: state.phone,
-        whatsapp: state.whatsapp,
-        instagram: state.instagram,
-        facebook: state.facebook,
-        avatarMode: state.avatarMode,
-        avatarValue: state.avatarValue,
-        avatarPreviewUrl: state.avatarPreviewUrl,
-        avatarUrlInput: state.avatarUrlInput
-    };
+  return {
+    step: state.step,
+    displayName: state.displayName,
+    farmName: state.farmName,
+    locationText: state.locationText,
+    notes: state.notes,
+    phone: state.phone,
+    whatsapp: state.whatsapp,
+    instagram: state.instagram,
+    facebook: state.facebook,
+    avatarMode: state.avatarMode,
+    avatarValue: state.avatarValue,
+    avatarPreviewUrl: state.avatarPreviewUrl,
+    avatarUrlInput: state.avatarUrlInput
+  };
 }
 
 function resolveAvatarMarkup(state) {
-    const previewUrl = normalizeText(state.avatarPreviewUrl);
-    if (!previewUrl) {
-        const initials = normalizeText(state.displayName || state.email || 'AG')
-            .split(/\s+/)
-            .slice(0, 2)
-            .map((chunk) => chunk.charAt(0))
-            .join('')
-            .toUpperCase() || 'AG';
-        return `<span>${escapeHtml(initials)}</span>`;
-    }
-    return `<img src="${escapeHtml(previewUrl)}" alt="${escapeHtml(state.displayName || 'Avatar')}">`;
+  const previewUrl = normalizeText(state.avatarPreviewUrl);
+  if (!previewUrl) {
+    const initials = normalizeText(state.displayName || state.email || 'AG')
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((chunk) => chunk.charAt(0))
+      .join('')
+      .toUpperCase() || 'AG';
+    return `<span>${escapeHtml(initials)}</span>`;
+  }
+  return `<img src="${escapeHtml(previewUrl)}" alt="${escapeHtml(state.displayName || 'Avatar')}">`;
 }
 
 function getStepMeta(step) {
-    const steps = [
-        { kicker: 'Paso 1', title: 'Tu identidad visible', description: 'Ajusta el nombre con el que te recibimos y la imagen que representa tu perfil.', helper: 'Empieza por cómo quieres verte dentro de Agro.', sidebarTitle: 'Identidad', sidebarDescription: 'Nombre visible y avatar.' },
-        { kicker: 'Paso 2', title: 'Tu contexto base', description: 'Organiza la información que más ayuda a reconocer tu operación agrícola.', helper: 'Solo los datos que dan contexto real a tu perfil.', sidebarTitle: 'Contexto', sidebarDescription: 'Finca, ubicación y biografía corta.' },
-        { kicker: 'Paso 3', title: 'Tu contacto operativo', description: 'Agrupa los medios por donde más te ubican dentro y fuera de tu operación.', helper: 'Todo por bloques, sin volver a la pantalla larga de antes.', sidebarTitle: 'Contacto', sidebarDescription: 'Teléfono y redes opcionales.' },
-        { kicker: 'Paso 4', title: 'Revisión final', description: 'Confirma que el perfil quedó claro antes de guardarlo.', helper: 'Revisa y guarda cuando todo se sienta correcto.', sidebarTitle: 'Resumen', sidebarDescription: 'Revisión rápida antes de aplicar cambios.' }
-    ];
-    return steps[step] || steps[0];
+  const steps = [
+    { kicker: 'Paso 1', title: 'Tu identidad visible', description: 'Ajusta el nombre con el que te recibimos y la imagen que representa tu perfil.', helper: 'Empieza por cómo quieres verte dentro de Agro.', sidebarTitle: 'Identidad', sidebarDescription: 'Nombre visible y avatar.' },
+    { kicker: 'Paso 2', title: 'Tu contexto base', description: 'Organiza la información que más ayuda a reconocer tu operación agrícola.', helper: 'Solo los datos que dan contexto real a tu perfil.', sidebarTitle: 'Contexto', sidebarDescription: 'Finca, ubicación y biografía corta.' },
+    { kicker: 'Paso 3', title: 'Tu contacto operativo', description: 'Agrupa los medios por donde más te ubican dentro y fuera de tu operación.', helper: 'Todo por bloques, sin volver a la pantalla larga de antes.', sidebarTitle: 'Contacto', sidebarDescription: 'Teléfono y redes opcionales.' },
+    { kicker: 'Paso 4', title: 'Revisión final', description: 'Confirma que el perfil quedó claro antes de guardarlo.', helper: 'Revisa y guarda cuando todo se sienta correcto.', sidebarTitle: 'Resumen', sidebarDescription: 'Revisión rápida antes de aplicar cambios.' }
+  ];
+  return steps[step] || steps[0];
 }
 
 function validateStep(state) {
-    if (state.step === 0 && normalizeText(state.displayName).length < 2) {
-        return 'Indica cómo quieres que te llamemos dentro de Agro.';
-    }
-    return '';
+  if (state.step === 0 && normalizeText(state.displayName).length < 2) {
+    return 'Indica cómo quieres que te llamemos dentro de Agro.';
+  }
+  return '';
 }
 
 function buildSummaryRows(state) {
-    const rows = [
-        ['Nombre visible', state.displayName],
-        ['Avatar', state.avatarPreviewUrl ? 'Configurado' : 'Sin foto'],
-        ['Finca', state.farmName],
-        ['Ubicación', state.locationText],
-        ['Biografía', state.notes],
-        ['Teléfono', state.phone],
-        ['WhatsApp', state.whatsapp],
-        ['Instagram', state.instagram],
-        ['Facebook', state.facebook]
-    ];
+  const rows = [
+    ['Nombre visible', state.displayName],
+    ['Avatar', state.avatarPreviewUrl ? 'Configurado' : 'Sin foto'],
+    ['Finca', state.farmName],
+    ['Ubicación', state.locationText],
+    ['Biografía', state.notes],
+    ['Teléfono', state.phone],
+    ['WhatsApp', state.whatsapp],
+    ['Instagram', state.instagram],
+    ['Facebook', state.facebook]
+  ];
 
-    return rows.map(([label, value]) => `
+  return rows.map(([label, value]) => `
       <div class="yg-profile-edit-summary-row">
         <span class="yg-profile-edit-summary-label">${escapeHtml(label)}</span>
         <span class="yg-profile-edit-summary-value">${escapeHtml(normalizeText(value) || 'Sin definir')}</span>
@@ -793,8 +906,8 @@ function buildSummaryRows(state) {
 }
 
 function renderStepBody(state) {
-    if (state.step === 0) {
-        return `
+  if (state.step === 0) {
+    return `
           <div class="yg-profile-edit-stack">
             <div class="yg-profile-edit-avatar">
               <div class="yg-profile-edit-avatar-preview">${resolveAvatarMarkup(state)}</div>
@@ -817,10 +930,10 @@ function renderStepBody(state) {
             </label>
           </div>
         `;
-    }
+  }
 
-    if (state.step === 1) {
-        return `
+  if (state.step === 1) {
+    return `
           <div class="yg-profile-edit-stack">
             <label class="yg-profile-edit-field">
               <span>Finca</span>
@@ -836,10 +949,10 @@ function renderStepBody(state) {
             </label>
           </div>
         `;
-    }
+  }
 
-    if (state.step === 2) {
-        return `
+  if (state.step === 2) {
+    return `
           <div class="yg-profile-edit-stack">
             <div class="yg-profile-edit-inline">
               <label class="yg-profile-edit-field">
@@ -864,9 +977,9 @@ function renderStepBody(state) {
             <div class="yg-profile-edit-help">Todo este bloque es opcional. La idea es que puedas guardar por partes, no que vuelvas a completar una lista larga.</div>
           </div>
         `;
-    }
+  }
 
-    return `
+  return `
       <div class="yg-profile-edit-stack">
         <div class="yg-profile-edit-help">Revisa este resumen antes de guardar. Si algo no te convence, puedes volver un paso y corregirlo sin perder cambios.</div>
         <div class="yg-profile-edit-summary">${buildSummaryRows(state)}</div>
@@ -875,11 +988,11 @@ function renderStepBody(state) {
 }
 
 function render(root, state) {
-    const stepMeta = getStepMeta(state.step);
-    const progress = `${Math.round(((state.step + 1) / STEP_COUNT) * 100)}%`;
-    const statusClass = ['yg-profile-edit-status', state.statusLevel === 'error' ? 'is-error' : '', state.statusLevel === 'loading' ? 'is-loading' : ''].filter(Boolean).join(' ');
+  const stepMeta = getStepMeta(state.step);
+  const progress = `${Math.round(((state.step + 1) / STEP_COUNT) * 100)}%`;
+  const statusClass = ['yg-profile-edit-status', state.statusLevel === 'error' ? 'is-error' : '', state.statusLevel === 'loading' ? 'is-loading' : ''].filter(Boolean).join(' ');
 
-    root.innerHTML = `
+  root.innerHTML = `
       <div class="yg-profile-edit-shell" role="dialog" aria-modal="true" aria-labelledby="yg-profile-edit-title">
         <aside class="yg-profile-edit-side">
           <div class="yg-profile-edit-eyebrow">Editor guiado</div>
@@ -896,9 +1009,9 @@ function render(root, state) {
           </div>
           <ul class="yg-profile-edit-step-list">
             ${Array.from({ length: STEP_COUNT }).map((_, index) => {
-        const itemMeta = getStepMeta(index);
-        const stateClass = index === state.step ? 'is-active' : index < state.step ? 'is-complete' : '';
-        return `
+    const itemMeta = getStepMeta(index);
+    const stateClass = index === state.step ? 'is-active' : index < state.step ? 'is-complete' : '';
+    return `
                   <li class="yg-profile-edit-step ${stateClass}">
                     <span class="yg-profile-edit-step-index">${index + 1}</span>
                     <div>
@@ -907,7 +1020,7 @@ function render(root, state) {
                     </div>
                   </li>
                 `;
-    }).join('')}
+  }).join('')}
           </ul>
           <p>${escapeHtml(stepMeta.helper)}</p>
         </aside>
@@ -936,167 +1049,167 @@ function render(root, state) {
 }
 
 function getFocusableControl(root) {
-    return root.querySelector('[data-autofocus]') || root.querySelector('input, textarea, button');
+  return root.querySelector('[data-autofocus]') || root.querySelector('input, textarea, button');
 }
 
 export function openProfileEditWizard({ initialData = {}, onSave } = {}) {
-    if (typeof onSave !== 'function') {
-        throw new Error('openProfileEditWizard requiere onSave.');
+  if (typeof onSave !== 'function') {
+    throw new Error('openProfileEditWizard requiere onSave.');
+  }
+
+  if (activeWizard?.close) {
+    activeWizard.close({ status: 'replaced' });
+  }
+
+  ensureStyles();
+
+  const draftKey = buildDraftKey(initialData);
+  const state = buildInitialState(initialData, readDraft(draftKey));
+  let root = null;
+  let resolvePromise = null;
+  let previousBodyOverflow = '';
+
+  const persistDraft = () => writeDraft(draftKey, serializeDraft(state));
+  const rerender = () => {
+    if (!root) return;
+    render(root, state);
+    const focusTarget = getFocusableControl(root);
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+      requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
+    }
+  };
+  const updateState = (partial = {}, { persist = true, rerenderUi = true } = {}) => {
+    Object.assign(state, partial);
+    if (persist) persistDraft();
+    if (rerenderUi) rerender();
+  };
+  const cleanup = (payload = { status: 'cancelled' }) => {
+    if (!root) return;
+    root.remove();
+    root = null;
+    document.body.classList.remove('yg-profile-edit-lock');
+    document.body.style.overflow = previousBodyOverflow;
+    if (resolvePromise) resolvePromise(payload);
+    activeWizard = null;
+  };
+
+  const handleAvatarUpload = (fileInput) => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (!String(file.type || '').startsWith('image/')) {
+      updateState({ status: 'Selecciona un archivo de imagen válido.', statusLevel: 'error' }, { persist: false });
+      fileInput.value = '';
+      return;
+    }
+    if (file.size > MAX_LOCAL_AVATAR_SIZE_BYTES) {
+      updateState({ status: 'La imagen es muy grande. Máximo permitido: 2MB.', statusLevel: 'error' }, { persist: false });
+      fileInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = normalizeText(reader.result);
+      updateState({ avatarMode: 'local', avatarValue: dataUrl, avatarPreviewUrl: dataUrl, avatarUrlInput: '', status: 'Foto local lista. Se aplicará cuando guardes.', statusLevel: 'muted' });
+    };
+    reader.onerror = () => updateState({ status: 'No se pudo leer la imagen seleccionada.', statusLevel: 'error' }, { persist: false });
+    reader.readAsDataURL(file);
+  };
+
+  root = document.createElement('div');
+  root.className = 'yg-profile-edit-layer';
+  previousBodyOverflow = document.body.style.overflow;
+  document.body.classList.add('yg-profile-edit-lock');
+  document.body.style.overflow = 'hidden';
+  document.body.append(root);
+  rerender();
+
+  root.addEventListener('input', (event) => {
+    const field = event.target?.dataset?.field;
+    if (!field) return;
+    if (field === 'avatarUrlInput') {
+      const nextValue = normalizeText(event.target.value);
+      updateState({ avatarMode: 'url', avatarValue: nextValue, avatarPreviewUrl: nextValue, avatarUrlInput: nextValue });
+      return;
+    }
+    updateState({ [field]: event.target.value }, { rerenderUi: false });
+  });
+
+  root.addEventListener('change', (event) => {
+    if (event.target?.matches('[data-avatar-upload]')) {
+      handleAvatarUpload(event.target);
+    }
+  });
+
+  root.addEventListener('click', (event) => {
+    const action = event.target?.dataset?.action;
+    if (!action) return;
+    if (action === 'close') {
+      cleanup({ status: 'cancelled' });
+      return;
+    }
+    if (action === 'back') {
+      updateState({ step: Math.max(0, state.step - 1), status: '', statusLevel: 'muted' });
+      return;
+    }
+    if (action === 'clear-avatar') {
+      updateState({ avatarMode: 'clear', avatarValue: '', avatarPreviewUrl: '', avatarUrlInput: '', status: 'Avatar limpiado. Puedes dejarlo así o cargar otra imagen.', statusLevel: 'muted' });
+    }
+  });
+
+  root.addEventListener('submit', async (event) => {
+    const form = root.querySelector('[data-profile-edit-form]');
+    if (event.target !== form) return;
+    event.preventDefault();
+
+    const validationError = validateStep(state);
+    if (validationError) {
+      updateState({ status: validationError, statusLevel: 'error' }, { persist: false });
+      return;
     }
 
-    if (activeWizard?.close) {
-        activeWizard.close({ status: 'replaced' });
+    if (state.step < STEP_COUNT - 1) {
+      updateState({ step: state.step + 1, status: '', statusLevel: 'muted' });
+      return;
     }
 
-    ensureStyles();
-
-    const draftKey = buildDraftKey(initialData);
-    const state = buildInitialState(initialData, readDraft(draftKey));
-    let root = null;
-    let resolvePromise = null;
-    let previousBodyOverflow = '';
-
-    const persistDraft = () => writeDraft(draftKey, serializeDraft(state));
-    const rerender = () => {
-        if (!root) return;
-        render(root, state);
-        const focusTarget = getFocusableControl(root);
-        if (focusTarget && typeof focusTarget.focus === 'function') {
-            requestAnimationFrame(() => focusTarget.focus({ preventScroll: true }));
-        }
-    };
-    const updateState = (partial = {}, { persist = true, rerenderUi = true } = {}) => {
-        Object.assign(state, partial);
-        if (persist) persistDraft();
-        if (rerenderUi) rerender();
-    };
-    const cleanup = (payload = { status: 'cancelled' }) => {
-        if (!root) return;
-        root.remove();
-        root = null;
-        document.body.classList.remove('yg-profile-edit-lock');
-        document.body.style.overflow = previousBodyOverflow;
-        if (resolvePromise) resolvePromise(payload);
-        activeWizard = null;
-    };
-
-    const handleAvatarUpload = (fileInput) => {
-        const file = fileInput.files?.[0];
-        if (!file) return;
-        if (!String(file.type || '').startsWith('image/')) {
-            updateState({ status: 'Selecciona un archivo de imagen válido.', statusLevel: 'error' }, { persist: false });
-            fileInput.value = '';
-            return;
-        }
-        if (file.size > MAX_LOCAL_AVATAR_SIZE_BYTES) {
-            updateState({ status: 'La imagen es muy grande. Máximo permitido: 2MB.', statusLevel: 'error' }, { persist: false });
-            fileInput.value = '';
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => {
-            const dataUrl = normalizeText(reader.result);
-            updateState({ avatarMode: 'local', avatarValue: dataUrl, avatarPreviewUrl: dataUrl, avatarUrlInput: '', status: 'Foto local lista. Se aplicará cuando guardes.', statusLevel: 'muted' });
-        };
-        reader.onerror = () => updateState({ status: 'No se pudo leer la imagen seleccionada.', statusLevel: 'error' }, { persist: false });
-        reader.readAsDataURL(file);
-    };
-
-    root = document.createElement('div');
-    root.className = 'yg-profile-edit-layer';
-    previousBodyOverflow = document.body.style.overflow;
-    document.body.classList.add('yg-profile-edit-lock');
-    document.body.style.overflow = 'hidden';
-    document.body.append(root);
+    Object.assign(state, { isSubmitting: true, status: 'Guardando perfil...', statusLevel: 'loading' });
     rerender();
 
-    root.addEventListener('input', (event) => {
-        const field = event.target?.dataset?.field;
-        if (!field) return;
-        if (field === 'avatarUrlInput') {
-            const nextValue = normalizeText(event.target.value);
-            updateState({ avatarMode: 'url', avatarValue: nextValue, avatarPreviewUrl: nextValue, avatarUrlInput: nextValue });
-            return;
+    try {
+      const result = await onSave({
+        displayName: normalizeText(state.displayName),
+        farmName: normalizeText(state.farmName),
+        locationText: normalizeText(state.locationText),
+        notes: normalizeText(state.notes),
+        phone: normalizeText(state.phone),
+        whatsapp: normalizeText(state.whatsapp),
+        instagram: normalizeText(state.instagram),
+        facebook: normalizeText(state.facebook),
+        avatarState: {
+          mode: state.avatarMode,
+          value: state.avatarMode === 'none' ? normalizeText(state.avatarPreviewUrl) : normalizeText(state.avatarValue)
         }
-        updateState({ [field]: event.target.value }, { rerenderUi: false });
-    });
+      });
+      clearDraft(draftKey);
+      cleanup({ status: 'saved', result });
+    } catch (error) {
+      Object.assign(state, { isSubmitting: false, status: error?.message || 'No se pudo guardar el perfil.', statusLevel: 'error' });
+      rerender();
+    }
+  });
 
-    root.addEventListener('change', (event) => {
-        if (event.target?.matches('[data-avatar-upload]')) {
-            handleAvatarUpload(event.target);
-        }
-    });
+  const promise = new Promise((resolve) => {
+    resolvePromise = resolve;
+  });
 
-    root.addEventListener('click', (event) => {
-        const action = event.target?.dataset?.action;
-        if (!action) return;
-        if (action === 'close') {
-            cleanup({ status: 'cancelled' });
-            return;
-        }
-        if (action === 'back') {
-            updateState({ step: Math.max(0, state.step - 1), status: '', statusLevel: 'muted' });
-            return;
-        }
-        if (action === 'clear-avatar') {
-            updateState({ avatarMode: 'clear', avatarValue: '', avatarPreviewUrl: '', avatarUrlInput: '', status: 'Avatar limpiado. Puedes dejarlo así o cargar otra imagen.', statusLevel: 'muted' });
-        }
-    });
-
-    root.addEventListener('submit', async (event) => {
-        const form = root.querySelector('[data-profile-edit-form]');
-        if (event.target !== form) return;
-        event.preventDefault();
-
-        const validationError = validateStep(state);
-        if (validationError) {
-            updateState({ status: validationError, statusLevel: 'error' }, { persist: false });
-            return;
-        }
-
-        if (state.step < STEP_COUNT - 1) {
-            updateState({ step: state.step + 1, status: '', statusLevel: 'muted' });
-            return;
-        }
-
-        Object.assign(state, { isSubmitting: true, status: 'Guardando perfil...', statusLevel: 'loading' });
-        rerender();
-
-        try {
-            const result = await onSave({
-                displayName: normalizeText(state.displayName),
-                farmName: normalizeText(state.farmName),
-                locationText: normalizeText(state.locationText),
-                notes: normalizeText(state.notes),
-                phone: normalizeText(state.phone),
-                whatsapp: normalizeText(state.whatsapp),
-                instagram: normalizeText(state.instagram),
-                facebook: normalizeText(state.facebook),
-                avatarState: {
-                    mode: state.avatarMode,
-                    value: state.avatarMode === 'none' ? normalizeText(state.avatarPreviewUrl) : normalizeText(state.avatarValue)
-                }
-            });
-            clearDraft(draftKey);
-            cleanup({ status: 'saved', result });
-        } catch (error) {
-            Object.assign(state, { isSubmitting: false, status: error?.message || 'No se pudo guardar el perfil.', statusLevel: 'error' });
-            rerender();
-        }
-    });
-
-    const promise = new Promise((resolve) => {
-        resolvePromise = resolve;
-    });
-
-    activeWizard = { promise, close: cleanup };
-    return promise;
+  activeWizard = { promise, close: cleanup };
+  return promise;
 }
 
 window.ProfileEditWizard = {
-    open: openProfileEditWizard
+  open: openProfileEditWizard
 };
 
 export default {
-    openProfileEditWizard
+  openProfileEditWizard
 };
