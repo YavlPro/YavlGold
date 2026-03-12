@@ -1,3 +1,126 @@
+## 🆕 SESIÓN: Fix selector de cultivos en Pagados + transferencia decimal Agro (2026-03-12)
+
+### Diagnóstico
+
+**1. Bug visual del selector de cultivo en Pagados**
+- La card del selector se construye en `apps/gold/agro/agro.js` vía `buildOpsCultivoChip(...)`.
+- Esa misma card combina simultáneamente las clases `ops-cultivo-chip` y `crop-option`.
+- En `apps/gold/agro/agro-operations.css`, ambas clases definen layouts distintos y parcialmente incompatibles:
+  - `ops-cultivo-chip` impone un chip compacto tipo pill con `flex-direction: column`, `white-space: nowrap` y tamaño mínimo corto.
+  - `crop-option` asume una card horizontal con thumbnail + meta + badge.
+- El resultado es una colisión de layout: nombres largos, badge y meta compiten dentro de una misma card sin ancho acotado ni reglas consistentes de truncado para el contenedor final.
+- Efecto visible: una o más cards crecen demasiado, invaden el flujo horizontal y dejan texto/badge fuera del contenedor visual esperado.
+
+**2. Causa del retraso perceptible en cultivos/ciclos del selector**
+- `initPagadosDedicatedView()` se ejecuta enseguida, pero el selector depende de `cropsCache`.
+- `loadCrops()` sí llena `cropsCache` relativamente temprano, pero la UI dedicada no se vuelve a renderizar hasta `AGRO_CROPS_READY_EVENT`.
+- Ese evento se dispara al final del pipeline completo de `loadCrops()`, después de:
+  - cargar plantillas,
+  - inicializar tasas,
+  - consultar `agro_crops`,
+  - calcular múltiples totales por cultivo,
+  - clasificar historial,
+  - renderizar cards de ciclos.
+- Resultado: el selector de Pagados espera innecesariamente a trabajo pesado que no necesita para pintar sus chips/cards.
+- Además, el selector dedicado hoy no muestra estado de carga propio; por eso la demora se percibe como “vacío” y no como trabajo en curso.
+
+**3. Bug decimal en transferencia**
+- El flujo decimal vive principalmente en `apps/gold/agro/agro.js`:
+  - `buildTransferMetaModal(...)`
+  - `openTransferMetaModal(...)`
+  - `computePendingSplitDraft(...)`
+  - reutilización en devoluciones compensatorias/reversiones.
+- La lógica actual trata cantidades menores a `1` como inválidas aunque sean correctas para agricultura:
+  - `qtyTotalInitial` cae a `1` si el total configurado es `< 1`
+  - `min = '1'` en inputs de cantidad
+  - validaciones con `>= 1`, `> 1`, `< 1`
+  - mensajes y clamps que fuerzan el rango mínimo a `1`
+- Síntoma directo:
+  - un fiado de `0.5 sacos` entra al modal y se normaliza visualmente a `1`
+  - la validación impide transferir parciales decimales reales
+  - el resumen y la persistencia heredan esa cantidad ya forzada
+
+### Causa raíz
+
+**Bug visual**
+- Colisión entre estilos de chip compacto (`ops-cultivo-chip`) y card horizontal (`crop-option`) sobre el mismo nodo, sin ancho consistente ni truncado integral.
+- Rerender tardío del selector dedicado porque depende de un evento emitido al final de `loadCrops()` en vez de reaccionar cuando `cropsCache` ya está listo.
+
+**Bug decimal**
+- El flujo de transferencia fue implementado bajo el supuesto de cantidades enteras mínimas (`1`) y no de cantidades positivas (`> 0`).
+- Ese supuesto está duplicado en inputs, clamps, previews, validación y draft de transferencia.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT.md`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-operations.css`
+
+### Riesgos
+
+- `buildOpsCultivoChip(...)` se reutiliza en Pagados, Fiados, Pérdidas, Donaciones, Otros y panel general; el ajuste visual debe ser compatible con todos esos contextos.
+- Cambiar el mínimo de transferencia de `1` a decimal positivo afecta tanto transferencias desde Fiados como devoluciones compensatorias; hay que mantener compatibilidad con enteros.
+- No se debe romper el historial existente ni la semántica de `split_meta` para transferencias parciales ya guardadas.
+- La mejora perceptual de carga no debe duplicar renders pesados ni disparar refreshes de historiales fuera de tiempo.
+
+### Plan quirúrgico
+
+1. Corregir la card del selector en `agro-operations.css` para que tenga layout consistente, ancho acotado, `min-width: 0`, truncado real y badge estable.
+2. Añadir estado de carga ligero/skeleton para los selectores dedicados y rerender temprano cuando `cropsCache` ya exista, sin esperar a todo `loadCrops()`.
+3. Reemplazar el supuesto “mínimo = 1” por “mínimo positivo según precisión” en modal, preview y validaciones del split.
+4. Ajustar `computePendingSplitDraft(...)` para aceptar `0.5`, `0.25`, etc., preservando enteros y decimales de extremo a extremo.
+5. Verificar que input, resumen, persistencia (`unit_qty`, `split_meta`) e historial mantengan el decimal sin redondearlo a entero.
+6. Ejecutar `pnpm build:gold` y cerrar esta sección con resultado y QA manual.
+
+### Implementación completada
+
+**1. Selector de cultivo estable**
+- `apps/gold/agro/agro-operations.css` ahora fuerza una geometría única para `.ops-cultivo-chip.crop-option`.
+- La card quedó con layout horizontal estable, ancho acotado, `min-width: 0`, texto truncable y badge contenido.
+- Esto elimina la colisión visual entre el estilo tipo pill y el estilo tipo card sobre el mismo nodo.
+
+**2. Mejor percepción de carga**
+- `apps/gold/agro/agro.js` ahora muestra skeletons de selector mientras `cropsCache` todavía no está listo.
+- Se añadió rerender temprano de selectores cuando `cropsCache` ya fue hidratado, sin esperar a que termine todo el pipeline pesado de `loadCrops()`.
+- El ajuste cubre el panel general y las vistas dedicadas reutilizadas por Pagados/Fiados/Pérdidas/Donaciones/Otros.
+
+**3. Flujo decimal corregido**
+- `apps/gold/agro/agro.js` reemplaza el supuesto “mínimo = 1” por “mínimo positivo según precisión”:
+  - `1` para cantidades enteras
+  - `0.01` para cantidades decimales
+- Se corrigieron:
+  - defaults del modal,
+  - atributos `min`,
+  - clamps,
+  - preview,
+  - validación,
+  - draft de split,
+  - y detección de cuándo pedir cantidad total.
+- Resultado esperado:
+  - `0.5` ya no se convierte a `1`
+  - `0.5`, `0.25`, etc. se conservan en input, resumen y persistencia
+  - cantidades enteras siguen funcionando igual
+
+### Build
+
+- Comando ejecutado: `pnpm build:gold`
+- Resultado: **OK**
+- Guard rails:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### QA manual
+
+- Validación técnica ejecutada:
+  - build oficial completo del módulo `apps/gold`
+  - revisión de los puntos de coerción decimal en modal + split + persistencia
+  - revisión del layout final del selector y del estado de carga
+- Pendiente de validar con sesión/datos reales del usuario:
+  - selector de Pagados con nombres largos en navegador autenticado
+  - transferencia real de `0.5` y parcial decimal end-to-end sobre datos del entorno
+
 ## 🆕 SESIÓN: Fase 1B Wizard de edición de perfil Agro (2026-03-11)
 
 ### Diagnóstico de la fase

@@ -2094,7 +2094,7 @@ async function openRevertToPendingWizard(sourceTab, sourceRow) {
     const splitDraftBase = computePendingSplitDraft(sourceRow, 'income');
     const splitUnitType = String(splitDraftBase.unitType || sourceQtyResolved.unitType || sourceRow?.unit_type || 'unidad').trim().toLowerCase();
     const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? sourceQtyResolved.qtyTotal);
-    const needsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
+    const needsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal <= 0);
 
     const whoData = getWhoData(sourceTab, sourceRow, sourceRow?.concepto || '');
     const detailRows = [
@@ -3784,6 +3784,10 @@ function formatQuantityValue(value, precision = 2) {
     return cleaned === '' ? '0' : cleaned;
 }
 
+function getSplitQuantityFloor(precision = 2) {
+    return precision === 0 ? 1 : 0.01;
+}
+
 function getUnitOptionByType(unitType) {
     const key = String(unitType || '').trim().toLowerCase();
     if (!key) return null;
@@ -3943,8 +3947,9 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
         ? (isIntegerLike(qtyRaw) ? Math.round(qtyRaw) : roundNumeric(qtyRaw, 2))
         : null;
     const sourceAmount = toSafeLocaleNumber(pending?.monto) ?? 0;
-    // V9.8.1: qtyRaw >= 1 para incluir "1 saco" y mostrar cantidad siempre que exista
-    const splitEnabled = !!unitType && normalizedQtyRaw !== null && normalizedQtyRaw >= 1;
+    const normalizedQtyPrecision = normalizedQtyRaw !== null && isIntegerLike(normalizedQtyRaw) ? 0 : 2;
+    const minTransferQty = getSplitQuantityFloor(normalizedQtyPrecision);
+    const splitEnabled = !!unitType && normalizedQtyRaw !== null && normalizedQtyRaw >= minTransferQty;
 
     const base = {
         enabled: splitEnabled,
@@ -3952,7 +3957,7 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
         qtyTotal: splitEnabled ? normalizedQtyRaw : null,
         qtyTransfer: splitEnabled ? normalizedQtyRaw : null,
         qtyLeft: 0,
-        qtyPrecision: splitEnabled && isIntegerLike(normalizedQtyRaw) ? 0 : 2,
+        qtyPrecision: splitEnabled ? normalizedQtyPrecision : 2,
         unitPriceOriginal: splitEnabled && normalizedQtyRaw > 0 ? (sourceAmount / normalizedQtyRaw) : null,
         unitPriceTransfer: null,
         transferAmount: sourceAmount,
@@ -3976,13 +3981,14 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
     const qtyTotal = base.qtyPrecision === 0
         ? Math.round(base.qtyTotal)
         : roundNumeric(base.qtyTotal, 2);
+    const minimumTransferQty = getSplitQuantityFloor(base.qtyPrecision);
 
     let qtyTransfer = toSafeLocaleNumber(decision?.quantity);
     if (qtyTransfer === null) qtyTransfer = qtyTotal;
     qtyTransfer = base.qtyPrecision === 0 ? Math.round(qtyTransfer) : roundNumeric(qtyTransfer, 2);
 
-    if (qtyTransfer < 1 || qtyTransfer > qtyTotal) {
-        base.error = `La cantidad a transferir debe estar entre 1 y ${formatQuantityValue(qtyTotal, base.qtyPrecision)}.`;
+    if (qtyTransfer < minimumTransferQty || qtyTransfer > qtyTotal) {
+        base.error = `La cantidad a transferir debe estar entre ${formatQuantityValue(minimumTransferQty, base.qtyPrecision)} y ${formatQuantityValue(qtyTotal, base.qtyPrecision)}.`;
         return base;
     }
 
@@ -6759,11 +6765,12 @@ function buildTransferMetaModal(options = {}) {
         const configuredQtyTotal = toSafeLocaleNumber(splitOptions.qtyTotal);
         const forceQtyTotalInput = splitOptions.forceQtyTotalInput === true;
         const forceTransferQtyInput = splitOptions.forceTransferQtyInput === true;
-        const needsQtyTotalInput = (splitOptions.requireQtyTotal === true && configuredQtyTotal === null) || forceQtyTotalInput;
-        const qtyTotalInitial = configuredQtyTotal !== null && configuredQtyTotal >= 1 ? configuredQtyTotal : 1;
         const effectiveQtyTotal = configuredQtyTotal;
         const qtyPrecision = effectiveQtyTotal !== null && isIntegerLike(effectiveQtyTotal) ? 0 : 2;
         const qtyStep = qtyPrecision === 0 ? '1' : '0.01';
+        const minQtyValue = getSplitQuantityFloor(qtyPrecision);
+        const needsQtyTotalInput = (splitOptions.requireQtyTotal === true && configuredQtyTotal === null) || forceQtyTotalInput;
+        const qtyTotalInitial = configuredQtyTotal !== null && configuredQtyTotal >= minQtyValue ? configuredQtyTotal : minQtyValue;
         const unitOption = getUnitOptionByType(splitOptions.unitType);
         const unitLabelPlural = unitOption?.plural || 'unidades';
 
@@ -6778,7 +6785,7 @@ function buildTransferMetaModal(options = {}) {
             qtyTotalInput.type = 'number';
             qtyTotalInput.id = 'pending-transfer-qty-total';
             qtyTotalInput.className = 'styled-input';
-            qtyTotalInput.min = '1';
+            qtyTotalInput.min = String(minQtyValue);
             qtyTotalInput.step = qtyStep;
             qtyTotalInput.style.paddingLeft = '1rem';
             qtyTotalInput.placeholder = 'Ej: 10';
@@ -6787,7 +6794,7 @@ function buildTransferMetaModal(options = {}) {
             content.appendChild(qtyTotalGroup);
         }
 
-        const canChooseQuantity = effectiveQtyTotal !== null && effectiveQtyTotal > 1;
+        const canChooseQuantity = effectiveQtyTotal !== null && effectiveQtyTotal > minQtyValue;
         const shouldRenderQuantityInput = forceTransferQtyInput || canChooseQuantity || needsQtyTotalInput;
         if (shouldRenderQuantityInput) {
             let defaultQty = toSafeLocaleNumber(splitOptions.defaultQty);
@@ -6809,10 +6816,10 @@ function buildTransferMetaModal(options = {}) {
             qtyInput.type = 'number';
             qtyInput.id = 'pending-transfer-qty';
             qtyInput.className = 'styled-input';
-            qtyInput.min = '1';
+            qtyInput.min = String(minQtyValue);
             if (effectiveQtyTotal !== null) {
                 const clampedDefaultQty = Math.max(
-                    1,
+                    minQtyValue,
                     Math.min(
                         effectiveQtyTotal,
                         qtyPrecision === 0 ? Math.round(defaultQty ?? effectiveQtyTotal) : roundNumeric(defaultQty ?? effectiveQtyTotal, 2)
@@ -6922,9 +6929,10 @@ function openTransferMetaModal(options = {}) {
         };
 
         const resolveQtyMoveDraft = (qtyTotalRaw, qtyPrecision, options = {}) => {
+            const minQty = getSplitQuantityFloor(qtyPrecision);
             if (!qtyInput) {
                 return {
-                    valid: qtyTotalRaw !== null && qtyTotalRaw >= 1,
+                    valid: qtyTotalRaw !== null && qtyTotalRaw >= minQty,
                     empty: false,
                     qtyMove: qtyTotalRaw
                 };
@@ -6945,7 +6953,7 @@ function openTransferMetaModal(options = {}) {
             }
 
             const normalized = qtyPrecision === 0 ? Math.round(parsed) : roundNumeric(parsed, 2);
-            if (!(normalized >= 1) || normalized > qtyTotalRaw) {
+            if (!(normalized >= minQty) || normalized > qtyTotalRaw) {
                 return { valid: false, empty: false, qtyMove: normalized };
             }
 
@@ -6955,7 +6963,8 @@ function openTransferMetaModal(options = {}) {
         const updateSplitPreview = () => {
             if (!splitOptions?.enabled || !previewMove || !previewLeft) return;
             const { qtyTotalRaw, qtyPrecision } = resolveQtyTotalDraft();
-            if (qtyTotalRaw === null || qtyTotalRaw < 1) {
+            const minQty = getSplitQuantityFloor(qtyPrecision);
+            if (qtyTotalRaw === null || qtyTotalRaw < minQty) {
                 previewMove.textContent = 'Define la cantidad total fiada para calcular la transferencia por cantidad.';
                 previewLeft.textContent = '';
                 return;
@@ -6974,10 +6983,11 @@ function openTransferMetaModal(options = {}) {
             const qtyState = resolveQtyMoveDraft(qtyTotalRaw, qtyPrecision);
             if (!qtyState.valid) {
                 const allowedRange = formatSplitQuantity(qtyTotalRaw, splitOptions.unitType);
+                const minQtyText = formatQuantityValue(minQty, qtyPrecision);
                 const originLabel = splitOptions.originLabel || 'Fiados';
                 previewMove.textContent = qtyState.empty
                     ? 'Ingresa la cantidad a transferir.'
-                    : `La cantidad a transferir debe estar entre 1 y ${allowedRange}.`;
+                    : `La cantidad a transferir debe estar entre ${minQtyText} y ${allowedRange}.`;
                 previewLeft.textContent = `En ${originLabel} hay ${allowedRange} disponibles.`;
                 return;
             }
@@ -7077,7 +7087,9 @@ function openTransferMetaModal(options = {}) {
                 const transferTotal = modal.querySelector('#pending-transfer-total')?.value || null;
                 if (splitOptions?.requireQtyTotal || splitOptions?.forceQtyTotalInput) {
                     const parsedQtyTotal = toSafeLocaleNumber(qtyTotal);
-                    if (parsedQtyTotal === null || parsedQtyTotal < 1) {
+                    const qtyPrecision = parsedQtyTotal !== null && isIntegerLike(parsedQtyTotal) ? 0 : 2;
+                    const minQty = getSplitQuantityFloor(qtyPrecision);
+                    if (parsedQtyTotal === null || parsedQtyTotal < minQty) {
                         notifyFacturero('⚠️ Ingresa la cantidad total fiada para continuar.', 'warning');
                         return;
                     }
@@ -7086,13 +7098,14 @@ function openTransferMetaModal(options = {}) {
                     const { qtyTotalRaw, qtyPrecision } = resolveQtyTotalDraft();
                     const qtyState = resolveQtyMoveDraft(qtyTotalRaw, qtyPrecision, { rawValue: quantity });
                     if (!qtyState.valid) {
-                        const allowedRange = qtyTotalRaw !== null && qtyTotalRaw >= 1
+                        const minQtyText = formatQuantityValue(getSplitQuantityFloor(qtyPrecision), qtyPrecision);
+                        const allowedRange = qtyTotalRaw !== null && qtyTotalRaw >= getSplitQuantityFloor(qtyPrecision)
                             ? formatSplitQuantity(qtyTotalRaw, splitOptions.unitType)
                             : 'el total disponible';
                         notifyFacturero(
                             qtyState.empty
                                 ? '⚠️ Ingresa la cantidad a transferir.'
-                                : `⚠️ La cantidad a transferir debe estar entre 1 y ${allowedRange}.`,
+                                : `⚠️ La cantidad a transferir debe estar entre ${minQtyText} y ${allowedRange}.`,
                             'warning'
                         );
                         return;
@@ -7164,7 +7177,7 @@ async function handlePendingTransfer(itemId) {
     })();
     const splitUnitType = String(splitDraftBase.unitType || pendingQtyResolved.unitType || pending.unit_type || 'unidad').trim().toLowerCase();
     const splitQtyTotal = toSafeLocaleNumber(splitDraftBase.qtyTotal ?? pendingQtyResolved.qtyTotal);
-    const needsQtyTotalInput = destination === 'income' && !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
+    const needsQtyTotalInput = destination === 'income' && !!splitUnitType && (splitQtyTotal === null || splitQtyTotal <= 0);
     let splitConfig = null;
     if (destination === 'income') {
         splitConfig = {
@@ -7187,7 +7200,7 @@ async function handlePendingTransfer(itemId) {
             sourceAmount: toSafeLocaleNumber(pending?.monto)
         };
     } else if (destination === 'losses') {
-        const lossesNeedsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal < 1);
+        const lossesNeedsQtyTotalInput = !!splitUnitType && (splitQtyTotal === null || splitQtyTotal <= 0);
         splitConfig = {
             enabled: true,
             qtyTotal: splitQtyTotal,
@@ -7276,7 +7289,7 @@ async function handlePendingTransfer(itemId) {
             });
         }
     } else {
-        // V9.8.1: Mostrar cantidad aunque splitEnabled=false (sin unit_type o qty < 1)
+        // Mantener visibilidad de cantidad incluso si no se pudo activar el split por falta de unidad o total util.
         const fallbackQty = resolvePendingQuantity(pending);
         if (fallbackQty.hasQty) {
             summaryRows.push({
@@ -11052,10 +11065,11 @@ export async function loadCrops() {
             logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             const hadSelection = !!selectedCropId;
             setSelectedCropId(null, { silent: true });
+            const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [], userId: currentUserId });
+            refreshAvailableCropSelectors();
             if (hadSelection) {
                 dispatchCropChanged();
             }
-            const snapshot = setCropsStatus('ready', { count: 0, requestId, crops: [], userId: currentUserId });
             dispatchCropsReady(snapshot);
             updateOpsMovementSummaryUI();
             scheduleOpsMovementSummaryRefresh();
@@ -11065,6 +11079,10 @@ export async function loadCrops() {
         // Guardar en cache para edición
         cropsCache = crops;
         syncLazyCropConsumers(cropsCache);
+        const previousSelectedCropId = selectedCropId;
+        syncSelectedCropFromList(crops, { silent: true });
+        const selectedCropChangedAfterFetch = previousSelectedCropId !== selectedCropId;
+        refreshAvailableCropSelectors();
         const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(crops);
         const globalTotalsByCropType = buildCycleGlobalTotalsByCropType(crops, {
             expenseTotalsByCrop,
@@ -11107,9 +11125,7 @@ export async function loadCrops() {
             missingRateCountsByCrop,
             globalTotalsByCropType
         });
-        const prevSelected = selectedCropId;
-        syncSelectedCropFromList(crops, { silent: true });
-        if (prevSelected !== selectedCropId) {
+        if (selectedCropChangedAfterFetch) {
             dispatchCropChanged();
         }
         logAgroDebug('[AGRO] renderCrops END', {
@@ -12488,6 +12504,49 @@ function buildOpsCultivosEmptyMessage(text) {
     return empty;
 }
 
+function buildOpsCultivoLoadingChip(index = 0) {
+    const chip = buildOpsCultivoChip({
+        label: '🌱 Cargando cultivo',
+        meta: 'Sincronizando',
+        cropId: `__loading__${index}`,
+        disabled: true
+    });
+    chip.classList.add('ops-cultivo-chip--skeleton');
+    chip.setAttribute('aria-hidden', 'true');
+    return chip;
+}
+
+function shouldShowCropSelectorLoadingState() {
+    const rows = Array.isArray(cropsCache) ? cropsCache : [];
+    if (rows.length > 0) return false;
+    const snapshot = getCropsSnapshot();
+    const statusToken = String(snapshot?.status || cropsStatus || '').trim().toLowerCase();
+    return statusToken === 'loading' || (cropsLoadInFlight && statusToken !== 'ready');
+}
+
+function renderDedicatedCropSelectorLoadingState({ cropRow, scopeCopy = null, scopePill = null } = {}) {
+    if (!cropRow) return;
+    cropRow.textContent = '';
+    for (let index = 0; index < 3; index += 1) {
+        cropRow.appendChild(buildOpsCultivoLoadingChip(index));
+    }
+    if (scopeCopy) {
+        scopeCopy.textContent = 'Cargando cultivos y ciclos para este selector...';
+    }
+    if (scopePill) {
+        scopePill.textContent = 'Scope activo: cargando cultivos';
+    }
+}
+
+function refreshAvailableCropSelectors() {
+    renderOpsCultivosPanel();
+    renderPagadosDedicatedCropSelector();
+    renderFiadosDedicatedCropSelector();
+    renderPerdidasDedicatedCropSelector();
+    renderDonacionesDedicatedCropSelector();
+    renderOtrosDedicatedCropSelector();
+}
+
 function selectOpsCultivo(cropId) {
     const normalized = normalizeCropId(cropId);
     const changed = setSelectedCropId(normalized);
@@ -12522,6 +12581,17 @@ function renderOpsCultivosPanel() {
     const selectedId = normalizeCropId(selectedCropId);
 
     activeRow.textContent = '';
+
+    if (shouldShowCropSelectorLoadingState()) {
+        for (let index = 0; index < 3; index += 1) {
+            activeRow.appendChild(buildOpsCultivoLoadingChip(index));
+        }
+        finishedCount.textContent = '0';
+        if (finishedNote) {
+            finishedNote.textContent = 'Cargando ciclos...';
+        }
+        return;
+    }
 
     activeCrops.forEach((crop) => {
         const cropId = normalizeCropId(crop?.id);
@@ -12702,6 +12772,10 @@ function renderPagadosDedicatedCropSelector() {
     if (!cropRow) return;
 
     cropRow.textContent = '';
+    if (shouldShowCropSelectorLoadingState()) {
+        renderDedicatedCropSelectorLoadingState({ cropRow, scopeCopy, scopePill });
+        return;
+    }
     const { cropId: selectedId, scopeLabel } = getPagadosDedicatedViewState();
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
@@ -13126,6 +13200,10 @@ function renderFiadosDedicatedCropSelector() {
     if (!cropRow) return;
 
     cropRow.textContent = '';
+    if (shouldShowCropSelectorLoadingState()) {
+        renderDedicatedCropSelectorLoadingState({ cropRow, scopeCopy });
+        return;
+    }
     const { cropId: selectedId, scopeLabel } = getFiadosDedicatedViewState();
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
@@ -13515,6 +13593,10 @@ function renderPerdidasDedicatedCropSelector() {
     if (!cropRow) return;
 
     cropRow.textContent = '';
+    if (shouldShowCropSelectorLoadingState()) {
+        renderDedicatedCropSelectorLoadingState({ cropRow, scopeCopy });
+        return;
+    }
     const { cropId: selectedId, scopeLabel } = getPerdidasDedicatedViewState();
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
@@ -13855,6 +13937,10 @@ function renderDonacionesDedicatedCropSelector() {
     if (!cropRow) return;
 
     cropRow.textContent = '';
+    if (shouldShowCropSelectorLoadingState()) {
+        renderDedicatedCropSelectorLoadingState({ cropRow, scopeCopy });
+        return;
+    }
     const { cropId: selectedId, scopeLabel } = getDonacionesDedicatedViewState();
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);
@@ -14153,6 +14239,10 @@ function renderOtrosDedicatedCropSelector() {
     if (!cropRow) return;
 
     cropRow.textContent = '';
+    if (shouldShowCropSelectorLoadingState()) {
+        renderDedicatedCropSelectorLoadingState({ cropRow, scopeCopy });
+        return;
+    }
     const { cropId: selectedId, scopeLabel } = getOtrosDedicatedViewState();
     const rows = Array.isArray(cropsCache) ? cropsCache : [];
     const { active: activeCrops, finished: finishedCrops } = splitCropsByCycle(rows);

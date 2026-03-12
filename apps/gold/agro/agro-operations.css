@@ -999,6 +999,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
 .agro-ops-v10 .agro-pagados-crop-row {
   display: flex;
   gap: 0.38rem;
+  align-items: stretch;
   overflow-x: auto;
   padding: 0.04rem 0 0.08rem;
   -webkit-overflow-scrolling: touch;
@@ -1630,6 +1631,120 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   width: 3px;
   border-radius: var(--radius-pill);
   background: var(--gold-4);
+}
+
+.agro-ops-v10 .ops-cultivos-chip-row,
+.agro-ops-v10 .agro-pagados-crop-row {
+  scroll-padding-inline: 0.18rem;
+}
+
+.agro-ops-v10 .ops-cultivo-chip.crop-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.72rem;
+  flex: 0 0 min(18.25rem, calc(100vw - 2.75rem));
+  width: min(18.25rem, calc(100vw - 2.75rem));
+  min-width: 0;
+  min-height: 72px;
+  padding: 0.72rem 0.82rem;
+  border-radius: 18px;
+  white-space: normal;
+  overflow: hidden;
+}
+
+.agro-ops-v10 .ops-cultivo-chip.crop-option .crop-thumb {
+  flex: 0 0 44px;
+}
+
+.agro-ops-v10 .ops-cultivo-chip.crop-option .crop-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.agro-ops-v10 .ops-cultivo-chip.crop-option .crop-meta-name,
+.agro-ops-v10 .ops-cultivo-chip.crop-option .crop-meta-sub {
+  max-width: 100%;
+}
+
+.agro-ops-v10 .ops-cultivo-chip.crop-option .crop-status {
+  flex: 0 0 auto;
+  min-width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton {
+  pointer-events: none;
+  user-select: none;
+  border-style: dashed;
+  border-color: rgba(200, 167, 82, 0.18);
+  background:
+    linear-gradient(135deg, rgba(200, 167, 82, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(10, 10, 10, 0.9);
+  box-shadow: none;
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-thumb,
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-name,
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-sub,
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-status {
+  animation: agro-selector-pulse 1.2s ease-in-out infinite;
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-thumb {
+  color: transparent;
+  background: rgba(200, 167, 82, 0.14);
+  border-color: rgba(200, 167, 82, 0.18);
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-name,
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-sub,
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-status {
+  color: transparent;
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-name {
+  width: 100%;
+  min-height: 0.9rem;
+  border-radius: 999px;
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-sub {
+  width: 62%;
+  min-height: 0.72rem;
+  border-radius: 999px;
+}
+
+.agro-ops-v10 .ops-cultivo-chip--skeleton .crop-status {
+  min-width: 5.8rem;
+  min-height: 1.35rem;
+  border-radius: 999px;
+}
+
+@keyframes agro-selector-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-ops-v10 .ops-cultivo-chip--skeleton .crop-thumb,
+  .agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-name,
+  .agro-ops-v10 .ops-cultivo-chip--skeleton .crop-meta-sub,
+  .agro-ops-v10 .ops-cultivo-chip--skeleton .crop-status {
+    animation: none;
+  }
 }
 
 .agro-ops-v10 .crop-thumb {
