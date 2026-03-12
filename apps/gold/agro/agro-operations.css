@@ -1243,6 +1243,203 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
   display: block !important;
 }
 
+/* ── Section Stats Panels ── */
+
+.agro-ss-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.agro-ss-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.9rem 0.6rem;
+  background: rgba(200, 167, 82, 0.06);
+  border: 1px solid rgba(200, 167, 82, 0.15);
+  border-radius: 12px;
+}
+
+.agro-ss-kpi__value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--v10-gold-4, #C8A752);
+  letter-spacing: 0.02em;
+}
+
+.agro-ss-kpi__label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.52);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.agro-ss-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+  margin-bottom: 1.1rem;
+  padding: 0.32rem;
+  background: rgba(10, 10, 10, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.agro-ss-range__btn {
+  padding: 0.36rem 0.72rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.agro-ss-range__btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.agro-ss-range__btn.is-active {
+  color: var(--v10-gold-4, #C8A752);
+  background: rgba(200, 167, 82, 0.1);
+  border-color: rgba(200, 167, 82, 0.3);
+}
+
+.agro-ss-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.1rem;
+}
+
+.agro-ss-chart-card {
+  background: rgba(10, 10, 10, 0.6);
+  border: 1px solid rgba(200, 167, 82, 0.12);
+  border-radius: 12px;
+  padding: 0.8rem;
+  min-height: 240px;
+}
+
+.agro-ss-chart-card__title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.5rem;
+}
+
+.agro-ss-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1.1rem;
+  padding: 0.8rem;
+  background: rgba(200, 167, 82, 0.04);
+  border: 1px solid rgba(200, 167, 82, 0.1);
+  border-radius: 12px;
+}
+
+.agro-ss-insight {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+  margin: 0;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.agro-ss-insight::before {
+  content: '\2022';
+  position: absolute;
+  left: 0;
+  color: var(--v10-gold-4, #C8A752);
+}
+
+.agro-ss-export {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.agro-ss-export__btn {
+  font-size: 0.82rem;
+  padding: 0.5rem 1.2rem;
+}
+
+.agro-ss-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.agro-ss-empty__text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+.agro-ss-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2.5rem 1rem;
+}
+
+.agro-ss-loading__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(200, 167, 82, 0.15);
+  border-top-color: var(--v10-gold-4, #C8A752);
+  border-radius: 50%;
+  animation: agro-ss-spin 0.7s linear infinite;
+}
+
+@keyframes agro-ss-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agro-ss-loading__spinner {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+.agro-ss-loading__text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .agro-ss-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .agro-ss-charts {
+    grid-template-columns: 1fr;
+  }
+  .agro-ss-kpi__value {
+    font-size: 1rem;
+  }
+}
+
 .agro-ops-v10 .tab-panel {
   padding-top: 0.18rem;
 }

@@ -1101,3 +1101,137 @@ Resultado: responsabilidades mezcladas, codigo huerfano, stats faltantes per-vie
 6. Cambiar a Fiados > Estadisticas → verificar que stats mode se mantiene
 7. Verificar las 5 secciones (pagados, fiados, perdidas, donaciones, otros)
 8. Verificar carrito y rankings siguen como links directos
+
+---
+
+## Sesion: Rediseño estadísticas por sección (2026-03-12)
+
+### Diagnostico
+
+#### Por que las stats cards muestran cero
+
+1. Las stats cards dependen de `window.__YG_AGRO_LAST_SUMMARY__` — un summary GLOBAL cacheado
+2. Este summary solo se computa cuando el usuario visita "Historial de ciclos" (trigger: `loadAgroGlobalStats`)
+3. Si el usuario va directo a Pagados > Estadísticas sin pasar por ciclos → summary es null → cards en $0.00
+4. Aun cuando el summary existe, usa `getStatsCropFilter()` y `getStatsDateRange()` GLOBALES que pueden no coincidir con el scope de la vista dedicada
+5. Los historiales usan `incomeCache` / `pendingCache` (fetch independiente del facturero), pero las stats cards usan otra fuente
+
+#### Otras deficiencias
+
+- Solo 3 cards simples (total, count, avg) — sin profundidad
+- Sin USD/Bs breakdown (`currency` y `monto` existen pero no se usan)
+- Sin rango temporal en stats (7d, 30d, 90d, año, todo)
+- Sin gráficos (Chart.js ya está cargado pero no se usa aquí)
+- Sin insights trazables (top cultivo, top comprador, mejor período)
+- Sin export MD por sección
+
+#### Causa raiz
+
+Las stats cards son parásitas del summary global en vez de computar sus propios datos por sección. Esto crea una desconexión fundamental: el historial muestra datos reales y las stats muestran cero o datos filtrados por un scope diferente.
+
+### Plan quirurgico
+
+1. Crear `agro-section-stats.js` — módulo nuevo que:
+   - Fetch data por sección directamente de Supabase (independiente del global)
+   - Computa stats completas: USD, Bs, COP, por cultivo, por comprador/cliente, temporal
+   - Renderiza panel rico dentro de los containers existentes (`*-dedicated-stats`)
+   - Charts con Chart.js (timeline + por cultivo)
+   - Insights trazables
+   - Export MD por sección
+   - Selector de rango temporal
+2. CSS en `agro-operations.css` — estilos para el panel stats
+3. Wire en `index.html` bootstrap — import dinámico del módulo
+4. El viejo `updateDedicatedViewStats()` en agro.js queda como fallback sin tocar
+
+### Archivos
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-section-stats.js` | NUEVO — módulo completo de stats por sección |
+| `agro/agro-operations.css` | Estilos para panel stats rico |
+| `agro/index.html` | Wire del módulo en bootstrap |
+| `docs/AGENT_REPORT_ACTIVE.md` | Diagnóstico + cierre |
+
+### Riesgos
+
+- Queries Supabase adicionales por sección (mitigado: solo se ejecutan al navegar a stats)
+- Column `cliente` en agro_pending puede no existir en todos los tenants (manejar gracefully)
+- Chart.js ya cargado globalmente — reutilizar sin conflicto
+
+### Implementacion
+
+#### Bug stats=0 corregido
+
+El nuevo módulo `agro-section-stats.js` fetch data directamente de Supabase por sección, independiente del summary global. Esto elimina la dependencia de `window.__YG_AGRO_LAST_SUMMARY__` y garantiza que las stats siempre reflejen los datos reales de cada tabla.
+
+#### Nuevo módulo: agro-section-stats.js (~820 líneas)
+
+| Feature | Descripción |
+|---|---|
+| Fetch independiente | Cada sección query su propia tabla de Supabase (no depende del global) |
+| USD + Bs + COP | Breakdown por moneda usando `currency` y `monto`/`monto_usd` |
+| Rango temporal | Selector 7d / 30d / 90d / Año / Todo — filtra por fecha |
+| KPI cards | Total USD, Total Bs (si hay), Total COP (si hay), Movimientos, Promedio |
+| Chart timeline | Bar chart de montos por mes (Chart.js) |
+| Chart por cultivo | Doughnut chart de distribución por cultivo |
+| Chart por comprador/cliente | Horizontal bar chart top 8 |
+| Insights trazables | Mejor período, top cultivo, top comprador/cliente, pendiente total (fiados) |
+| Export MD | Genera y descarga archivo .md con KPIs, breakdown temporal, por cultivo, por comprador |
+| Loading state | Spinner mientras fetch data |
+| Error handling | Fallback graceful si columna `cliente` no existe |
+| reduced-motion | Charts desactivan animación si `prefers-reduced-motion: reduce` |
+| Otros (composite) | Agrega rows sin crop_id de las 5 tablas |
+
+#### Secciones implementadas
+
+| Sección | Tabla | KPIs | Charts | Insights | Export MD |
+|---|---|---|---|---|---|
+| Pagados | agro_income | Total cobrado USD/Bs, mov, promedio | Timeline, por cultivo, por comprador | Mejor mes, top cultivo, top comprador | Si |
+| Fiados | agro_pending | Total pendiente USD/Bs, mov, promedio | Timeline, por cultivo, por cliente | Mayor deuda, top cliente, pendiente total | Si |
+| Pérdidas | agro_losses | Total perdido USD/Bs, mov, promedio | Timeline, por cultivo, por causa | Peor mes, top cultivo, causa principal | Si |
+| Donaciones | agro_transfers | Total donado USD/Bs, mov, promedio | Timeline, por cultivo, por beneficiario | Mejor mes, top cultivo | Si |
+| Otros | composite (5 tablas, crop_id NULL) | Total USD/Bs, mov, promedio | Timeline, por origen | Período más activo | Si |
+
+#### CSS (agro-operations.css)
+
+Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons), chart cards (dark bg, gold border), insights (bullets dorados), export button, loading spinner, empty state. Mobile breakpoint 480px.
+
+#### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `agro/agro-section-stats.js` | **NUEVO** — módulo completo 820 líneas |
+| `agro/agro-operations.css` | +200 líneas — estilos panel stats + loading |
+| `agro/index.html` | +6 líneas — import dinámico del módulo en bootstrap |
+| `docs/AGENT_REPORT_ACTIVE.md` | Diagnóstico + cierre |
+
+### Build
+
+- `pnpm build:gold` → **OK** (agent-guard OK, vite OK, UTF-8 OK)
+- Bundle: `agro-section-stats-Df2D7ykT.js` 15.24 kB (5.26 kB gzip)
+
+### QA sugerido
+
+1. Navegar a Pagados > Estadísticas → verificar que carga datos reales (no cero)
+2. Verificar KPIs muestran USD y Bs si hay registros en VES
+3. Cambiar rango temporal (7d, 30d, 90d, Año, Todo) → verificar actualización
+4. Verificar gráfico timeline muestra barras por mes
+5. Verificar gráfico por cultivo muestra doughnut
+6. Verificar insights son trazables a los datos
+7. Click "Exportar estadísticas" → verificar descarga .md con contenido correcto
+8. Repetir para Fiados, Pérdidas, Donaciones, Otros
+9. Fiados: verificar que muestra panel de cuentas por cobrar (pendiente, clientes, deuda)
+10. Otros: verificar que agrega registros sin cultivo de todas las tablas
+11. Verificar mobile (≤480px) — KPIs en 2 columnas, charts en 1 columna
+12. Verificar que Historial de ciclos (analítica global) sigue funcionando sin cambios
+13. Verificar que historial por sección no se afectó (subview toggle sigue OK)
+
+### Estado del plan maestro (actualizado)
+
+| Punto | Estado | Nota |
+| --- | --- | --- |
+| 1. Blindar facturero y transferencias | Muy avanzado | Hecho en sesiones anteriores |
+| 2. Cerrar onboarding/wizard de perfil para IA | **Hecho** | Wizard + bridges + contexto completo |
+| 3. Fortalecer AgroRepo como memoria operativa | **Hecho** | Tipos, edición, filtros, IA bridge |
+| 4. Estadísticas individuales y exportes por sección | **Muy avanzado** | Nuevo módulo con fetch independiente, KPIs USD/Bs, rangos temporales, charts, insights, export MD. Pendiente: QA integral con datos reales, ajustes finos de insights según feedback, posible columna `comprador` si se agrega al schema |
+| 5. QA integral final | Pendiente | Próximo paso natural |

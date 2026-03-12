@@ -4305,6 +4305,13 @@
                     }
                 }).catch(err => console.warn('[AGRO] Stats report module load error:', err.message));
 
+                // Per-section stats panels (non-blocking)
+                import('./agro-section-stats.js').then((mod) => {
+                    if (typeof mod.initSectionStats === 'function') {
+                        mod.initSectionStats();
+                    }
+                }).catch(err => console.warn('[AGRO] Section stats module load error:', err.message));
+
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {
                     const summary = await statsModule.computeAgroFinanceSummaryV1();
