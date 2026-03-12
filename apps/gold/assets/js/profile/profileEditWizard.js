@@ -20,67 +20,619 @@ function ensureStyles() {
     const style = document.createElement('style');
     style.id = STYLE_ID;
     style.textContent = `
-      .yg-profile-edit-lock{overflow:hidden}
-      .yg-profile-edit-layer{position:fixed;inset:0;z-index:10040;padding:18px;display:flex;align-items:center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at top left,rgba(200,167,82,.18),transparent 26%),radial-gradient(circle at bottom right,rgba(200,167,82,.12),transparent 24%),rgba(10,10,10,.9);backdrop-filter:blur(18px)}
-      .yg-profile-edit-shell{width:min(1020px,100%);min-height:min(760px,calc(100vh - 36px));display:grid;grid-template-columns:minmax(280px,330px) minmax(0,1fr);gap:18px;margin:auto 0}
-      .yg-profile-edit-side,.yg-profile-edit-card{border:1px solid rgba(200,167,82,.18);border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02)),rgba(12,12,12,.96);box-shadow:0 24px 64px rgba(0,0,0,.3)}
-      .yg-profile-edit-side{padding:24px;display:flex;flex-direction:column;gap:18px}
-      .yg-profile-edit-eyebrow{display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:8px 12px;border-radius:999px;background:rgba(200,167,82,.12);color:#f1ddb0;font:700 .84rem/1 'Rajdhani',sans-serif;letter-spacing:.08em;text-transform:uppercase}
-      .yg-profile-edit-side h2{margin:0;color:#fff4dc;font:700 clamp(1.7rem,3vw,2.4rem)/1.08 'Orbitron',sans-serif}
-      .yg-profile-edit-side p{margin:0;color:rgba(255,255,255,.74);font:600 1rem/1.55 'Rajdhani',sans-serif}
-      .yg-profile-edit-progress{display:grid;gap:10px}
-      .yg-profile-edit-progress-meta{display:flex;align-items:center;justify-content:space-between;color:rgba(255,255,255,.78);font:700 .9rem/1 'Rajdhani',sans-serif}
-      .yg-profile-edit-track{width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
-      .yg-profile-edit-bar{height:100%;border-radius:inherit;background:linear-gradient(90deg,#8e7433,#c8a752 50%,#f5deb3);transition:width 180ms ease}
-      .yg-profile-edit-step-list{display:grid;gap:10px;list-style:none;margin:0;padding:0}
-      .yg-profile-edit-step{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;padding:12px 14px;border-radius:18px;border:1px solid transparent;background:rgba(255,255,255,.03)}
-      .yg-profile-edit-step.is-active{border-color:rgba(200,167,82,.44);background:rgba(200,167,82,.08)}
-      .yg-profile-edit-step.is-complete{border-color:rgba(200,167,82,.2)}
-      .yg-profile-edit-step-index{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.08);color:#fff;font:700 .94rem/1 'Orbitron',sans-serif}
-      .yg-profile-edit-step.is-active .yg-profile-edit-step-index,.yg-profile-edit-step.is-complete .yg-profile-edit-step-index{background:linear-gradient(135deg,#8e7433,#c8a752);color:#111}
-      .yg-profile-edit-step-title{display:block;margin-bottom:4px;color:#fff7e8;font:700 1rem/1.1 'Rajdhani',sans-serif}
-      .yg-profile-edit-step-desc{color:rgba(255,255,255,.66);font:500 .92rem/1.35 'Rajdhani',sans-serif}
-      .yg-profile-edit-card{padding:28px;display:flex;flex-direction:column;min-height:0}
-      .yg-profile-edit-card header{margin-bottom:18px}
-      .yg-profile-edit-kicker{margin:0 0 8px;color:#c8a752;font:700 .84rem/1 'Rajdhani',sans-serif;letter-spacing:.08em;text-transform:uppercase}
-      .yg-profile-edit-card h3{margin:0 0 10px;color:#fff7e5;font:700 clamp(1.45rem,2.8vw,2rem)/1.08 'Orbitron',sans-serif}
-      .yg-profile-edit-card p{margin:0;color:rgba(255,255,255,.72);font:600 1rem/1.55 'Rajdhani',sans-serif}
-      .yg-profile-edit-form{display:flex;flex-direction:column;flex:1;min-height:0}
-      .yg-profile-edit-body{flex:1;min-height:0;overflow:auto;padding-right:4px}
-      .yg-profile-edit-stack{display:grid;gap:18px}
-      .yg-profile-edit-field{display:grid;gap:10px}
-      .yg-profile-edit-field span,.yg-profile-edit-label{color:rgba(255,255,255,.92);font:700 .96rem/1.1 'Rajdhani',sans-serif}
-      .yg-profile-edit-input,.yg-profile-edit-textarea{width:100%;border-radius:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#fff;font:600 1rem/1.2 'Rajdhani',sans-serif;transition:border-color 180ms ease,transform 180ms ease,background 180ms ease}
-      .yg-profile-edit-input{padding:15px 16px}
-      .yg-profile-edit-textarea{min-height:140px;padding:14px 16px;resize:vertical}
-      .yg-profile-edit-input:focus,.yg-profile-edit-textarea:focus{outline:none;border-color:rgba(200,167,82,.72);background:rgba(255,255,255,.05);transform:translateY(-1px)}
-      .yg-profile-edit-help{padding:14px 16px;border-radius:18px;border:1px solid rgba(200,167,82,.14);background:rgba(200,167,82,.07);color:#f3e4ba;font:700 .94rem/1.45 'Rajdhani',sans-serif}
-      .yg-profile-edit-inline{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-      .yg-profile-edit-avatar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;padding:16px;border-radius:22px;border:1px solid rgba(200,167,82,.16);background:rgba(200,167,82,.04)}
-      .yg-profile-edit-avatar-preview{width:88px;height:88px;border-radius:24px;border:1px solid rgba(200,167,82,.3);background:rgba(200,167,82,.1);display:grid;place-items:center;color:#c8a752;font:700 1.8rem/1 'Orbitron',sans-serif;overflow:hidden}
-      .yg-profile-edit-avatar-preview img{width:100%;height:100%;object-fit:cover;display:block}
-      .yg-profile-edit-avatar-meta{display:grid;gap:12px}
-      .yg-profile-edit-avatar-actions{display:flex;flex-wrap:wrap;gap:10px}
-      .yg-profile-edit-avatar-file{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);border:0}
-      .yg-profile-edit-summary{display:grid;gap:12px}
-      .yg-profile-edit-summary-row{display:flex;justify-content:space-between;gap:18px;padding:14px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)}
-      .yg-profile-edit-summary-label{color:rgba(255,255,255,.64);font:700 .88rem/1.2 'Rajdhani',sans-serif;letter-spacing:.06em;text-transform:uppercase}
-      .yg-profile-edit-summary-value{color:#fff;text-align:right;font:700 1rem/1.2 'Rajdhani',sans-serif}
-      .yg-profile-edit-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;margin-top:18px;border-top:1px solid rgba(255,255,255,.08)}
-      .yg-profile-edit-status{min-height:24px;color:rgba(255,255,255,.72);font:700 .96rem/1.2 'Rajdhani',sans-serif}
-      .yg-profile-edit-status.is-error{color:#ffb59f}
-      .yg-profile-edit-status.is-loading{color:#f5deb3}
-      .yg-profile-edit-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
-      .yg-profile-edit-btn{border:0;border-radius:999px;padding:12px 18px;cursor:pointer;transition:transform 160ms ease,opacity 160ms ease,box-shadow 160ms ease,background 160ms ease;font:700 .96rem/1 'Rajdhani',sans-serif;letter-spacing:.03em}
-      .yg-profile-edit-btn:hover,.yg-profile-edit-btn:focus-visible{outline:none;transform:translateY(-1px)}
-      .yg-profile-edit-btn:disabled{opacity:.6;cursor:wait;transform:none}
-      .yg-profile-edit-btn-secondary{background:rgba(255,255,255,.08);color:#fff}
-      .yg-profile-edit-btn-ghost{background:transparent;color:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.12)}
-      .yg-profile-edit-btn-primary{background:linear-gradient(90deg,#8e7433,#c8a752 50%,#f4ddb1);color:#121212;box-shadow:0 16px 28px rgba(200,167,82,.18)}
-      @media (max-width:900px),(max-height:820px){.yg-profile-edit-layer{padding:12px;align-items:center}.yg-profile-edit-shell{min-height:auto;margin-block:auto}}
-      @media (max-width:900px){.yg-profile-edit-shell{grid-template-columns:1fr}}
-      @media (max-width:640px){.yg-profile-edit-side,.yg-profile-edit-card{padding:20px;border-radius:24px}.yg-profile-edit-inline,.yg-profile-edit-avatar{grid-template-columns:1fr}.yg-profile-edit-summary-row,.yg-profile-edit-footer{flex-direction:column;align-items:stretch}.yg-profile-edit-summary-value{text-align:left}.yg-profile-edit-actions{justify-content:stretch}.yg-profile-edit-btn{width:100%}}
-      @media (prefers-reduced-motion:reduce){.yg-profile-edit-bar,.yg-profile-edit-btn,.yg-profile-edit-input,.yg-profile-edit-textarea{transition:none!important}}
+      @keyframes yg-pe-fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+
+      @keyframes yg-pe-slideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes yg-pe-scaleIn {
+        from { opacity: 0; transform: scale(0.97); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+
+      @keyframes yg-pe-barPulse {
+        0%, 100% { box-shadow: 0 0 0 rgba(200, 167, 82, 0); }
+        50%      { box-shadow: 0 0 10px rgba(200, 167, 82, 0.28); }
+      }
+
+      .yg-profile-edit-lock {
+        overflow: hidden;
+      }
+
+      .yg-profile-edit-layer {
+        position: fixed;
+        inset: 0;
+        z-index: var(--z-modal, 1050);
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-y: auto;
+        background:
+          radial-gradient(circle at 15% 10%, rgba(200, 167, 82, 0.15), transparent 30%),
+          radial-gradient(circle at 85% 90%, rgba(200, 167, 82, 0.10), transparent 26%),
+          rgba(10, 10, 10, 0.93);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+        animation: yg-pe-fadeIn 200ms ease both;
+      }
+
+      .yg-profile-edit-shell {
+        width: min(1020px, 100%);
+        min-height: min(760px, calc(100vh - 36px));
+        display: grid;
+        grid-template-columns: minmax(280px, 330px) minmax(0, 1fr);
+        gap: 18px;
+        margin: auto 0;
+        animation: yg-pe-scaleIn 200ms ease both;
+      }
+
+      .yg-profile-edit-side,
+      .yg-profile-edit-card {
+        border: 1px solid rgba(200, 167, 82, 0.16);
+        border-radius: 28px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+          var(--bg-primary, #0a0a0a);
+        box-shadow:
+          0 24px 64px rgba(0, 0, 0, 0.34),
+          0 0 0 1px rgba(200, 167, 82, 0.06);
+      }
+
+      .yg-profile-edit-side {
+        padding: 26px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        animation: yg-pe-slideUp 200ms ease both;
+        animation-delay: 60ms;
+      }
+
+      .yg-profile-edit-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: fit-content;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(200, 167, 82, 0.10);
+        color: var(--primary-light, #E5C158);
+        font: 700 0.84rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .yg-profile-edit-side h2 {
+        margin: 0;
+        color: #fff4dc;
+        font: 700 clamp(1.65rem, 3vw, 2.3rem)/1.08 var(--font-display, 'Orbitron'), sans-serif;
+      }
+
+      .yg-profile-edit-side p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72);
+        font: 600 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-progress {
+        display: grid;
+        gap: 10px;
+      }
+
+      .yg-profile-edit-progress-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(255, 255, 255, 0.78);
+        font: 700 0.9rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-track {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.07);
+        overflow: hidden;
+      }
+
+      .yg-profile-edit-bar {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 50%, #f5deb3);
+        transition: width 180ms ease;
+        animation: yg-pe-barPulse 2.4s ease-in-out infinite;
+      }
+
+      .yg-profile-edit-step-list {
+        display: grid;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .yg-profile-edit-step {
+        display: grid;
+        grid-template-columns: 38px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        padding: 13px 15px;
+        border-radius: 18px;
+        border: 1px solid transparent;
+        background: rgba(255, 255, 255, 0.025);
+        transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+      }
+
+      .yg-profile-edit-step.is-active {
+        border-color: rgba(200, 167, 82, 0.50);
+        background: rgba(200, 167, 82, 0.09);
+        box-shadow: 0 4px 16px rgba(200, 167, 82, 0.08);
+      }
+
+      .yg-profile-edit-step.is-complete {
+        border-color: rgba(200, 167, 82, 0.22);
+      }
+
+      .yg-profile-edit-step-index {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.07);
+        color: #fff;
+        font: 700 0.94rem/1 var(--font-display, 'Orbitron'), sans-serif;
+        transition: background 180ms ease, color 180ms ease;
+      }
+
+      .yg-profile-edit-step.is-active .yg-profile-edit-step-index,
+      .yg-profile-edit-step.is-complete .yg-profile-edit-step-index {
+        background: linear-gradient(135deg, var(--primary-dark, #8e7433), var(--primary, #c8a752));
+        color: #111;
+      }
+
+      .yg-profile-edit-step-title {
+        display: block;
+        margin-bottom: 3px;
+        color: #fff7e8;
+        font: 700 1rem/1.12 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-step-desc {
+        color: rgba(255, 255, 255, 0.64);
+        font: 500 0.92rem/1.35 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-card {
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        animation: yg-pe-slideUp 200ms ease both;
+        animation-delay: 100ms;
+      }
+
+      .yg-profile-edit-card header {
+        margin-bottom: 20px;
+      }
+
+      .yg-profile-edit-kicker {
+        margin: 0 0 8px;
+        color: var(--primary, #c8a752);
+        font: 700 0.84rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+      }
+
+      .yg-profile-edit-card h3 {
+        margin: 0 0 10px;
+        color: #fff7e5;
+        font: 700 clamp(1.4rem, 2.8vw, 1.95rem)/1.08 var(--font-display, 'Orbitron'), sans-serif;
+      }
+
+      .yg-profile-edit-card p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.70);
+        font: 600 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .yg-profile-edit-body {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        padding-right: 4px;
+        animation: yg-pe-slideUp 180ms ease both;
+      }
+
+      .yg-profile-edit-stack {
+        display: grid;
+        gap: 18px;
+      }
+
+      .yg-profile-edit-field {
+        display: grid;
+        gap: 10px;
+      }
+
+      .yg-profile-edit-field span,
+      .yg-profile-edit-label {
+        color: rgba(255, 255, 255, 0.90);
+        font: 700 0.96rem/1.1 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-input,
+      .yg-profile-edit-textarea {
+        width: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.03);
+        color: #fff;
+        font: 600 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+        transition: border-color 180ms ease, transform 160ms ease, background 180ms ease, box-shadow 180ms ease;
+      }
+
+      .yg-profile-edit-input {
+        padding: 16px 18px;
+      }
+
+      .yg-profile-edit-textarea {
+        min-height: 140px;
+        padding: 14px 18px;
+        resize: vertical;
+      }
+
+      .yg-profile-edit-input:focus,
+      .yg-profile-edit-textarea:focus {
+        outline: none;
+        border-color: rgba(200, 167, 82, 0.72);
+        background: rgba(255, 255, 255, 0.045);
+        transform: translateY(-1px);
+        box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.10);
+      }
+
+      .yg-profile-edit-help {
+        padding: 14px 18px;
+        border-radius: 18px;
+        border: 1px solid rgba(200, 167, 82, 0.13);
+        background: rgba(200, 167, 82, 0.06);
+        color: #f3e4ba;
+        font: 700 0.94rem/1.48 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-inline {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .yg-profile-edit-avatar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 16px;
+        padding: 18px;
+        border-radius: 22px;
+        border: 1px solid rgba(200, 167, 82, 0.16);
+        background: rgba(200, 167, 82, 0.04);
+        transition: border-color 180ms ease;
+      }
+
+      .yg-profile-edit-avatar:hover {
+        border-color: rgba(200, 167, 82, 0.26);
+      }
+
+      .yg-profile-edit-avatar-preview {
+        width: 92px;
+        height: 92px;
+        border-radius: 24px;
+        border: 1px solid rgba(200, 167, 82, 0.30);
+        background: rgba(200, 167, 82, 0.08);
+        display: grid;
+        place-items: center;
+        color: var(--primary, #c8a752);
+        font: 700 1.8rem/1 var(--font-display, 'Orbitron'), sans-serif;
+        overflow: hidden;
+        transition: border-color 180ms ease, box-shadow 180ms ease;
+      }
+
+      .yg-profile-edit-avatar-preview:hover {
+        border-color: rgba(200, 167, 82, 0.48);
+        box-shadow: 0 0 16px rgba(200, 167, 82, 0.10);
+      }
+
+      .yg-profile-edit-avatar-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .yg-profile-edit-avatar-meta {
+        display: grid;
+        gap: 12px;
+      }
+
+      .yg-profile-edit-avatar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .yg-profile-edit-avatar-file {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+
+      .yg-profile-edit-summary {
+        display: grid;
+        gap: 12px;
+      }
+
+      .yg-profile-edit-summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.025);
+        transition: border-color 160ms ease, background 160ms ease;
+      }
+
+      .yg-profile-edit-summary-row:hover {
+        border-color: rgba(200, 167, 82, 0.16);
+        background: rgba(255, 255, 255, 0.035);
+      }
+
+      .yg-profile-edit-summary-label {
+        color: rgba(255, 255, 255, 0.62);
+        font: 700 0.88rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .yg-profile-edit-summary-value {
+        color: #fff;
+        text-align: right;
+        font: 700 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-top: 18px;
+        margin-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .yg-profile-edit-status {
+        min-height: 24px;
+        color: rgba(255, 255, 255, 0.70);
+        font: 700 0.96rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      }
+
+      .yg-profile-edit-status.is-error {
+        color: var(--danger, #ffb59f);
+      }
+
+      .yg-profile-edit-status.is-loading {
+        color: #f5deb3;
+      }
+
+      .yg-profile-edit-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .yg-profile-edit-btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 13px 22px;
+        cursor: pointer;
+        font: 700 0.96rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+        letter-spacing: 0.03em;
+        transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      }
+
+      .yg-profile-edit-btn:hover,
+      .yg-profile-edit-btn:focus-visible {
+        outline: none;
+        transform: translateY(-1px);
+      }
+
+      .yg-profile-edit-btn:active {
+        transform: translateY(0);
+      }
+
+      .yg-profile-edit-btn:disabled {
+        opacity: 0.55;
+        cursor: wait;
+        transform: none;
+      }
+
+      .yg-profile-edit-btn-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
+
+      .yg-profile-edit-btn-secondary:hover,
+      .yg-profile-edit-btn-secondary:focus-visible {
+        background: rgba(255, 255, 255, 0.13);
+      }
+
+      .yg-profile-edit-btn-ghost {
+        background: transparent;
+        color: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+      }
+
+      .yg-profile-edit-btn-ghost:hover,
+      .yg-profile-edit-btn-ghost:focus-visible {
+        border-color: rgba(255, 255, 255, 0.20);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .yg-profile-edit-btn-primary {
+        background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 50%, #f4ddb1);
+        color: #121212;
+        box-shadow: 0 12px 24px rgba(200, 167, 82, 0.18);
+      }
+
+      .yg-profile-edit-btn-primary:hover,
+      .yg-profile-edit-btn-primary:focus-visible {
+        box-shadow:
+          0 16px 32px rgba(200, 167, 82, 0.24),
+          0 0 20px rgba(200, 167, 82, 0.12);
+      }
+
+      @media (max-width: 900px), (max-height: 820px) {
+        .yg-profile-edit-layer {
+          padding: 12px;
+          align-items: center;
+        }
+
+        .yg-profile-edit-shell {
+          min-height: auto;
+          margin-block: auto;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .yg-profile-edit-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .yg-profile-edit-side h2 {
+          font-size: clamp(1.4rem, 5vw, 1.9rem);
+        }
+
+        .yg-profile-edit-card h3 {
+          font-size: clamp(1.25rem, 4.5vw, 1.7rem);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .yg-profile-edit-layer {
+          padding: 8px;
+        }
+
+        .yg-profile-edit-side,
+        .yg-profile-edit-card {
+          padding: 20px 18px;
+          border-radius: 22px;
+        }
+
+        .yg-profile-edit-inline,
+        .yg-profile-edit-avatar {
+          grid-template-columns: 1fr;
+        }
+
+        .yg-profile-edit-avatar-preview {
+          width: 80px;
+          height: 80px;
+          margin: 0 auto;
+        }
+
+        .yg-profile-edit-input {
+          padding: 14px 16px;
+        }
+
+        .yg-profile-edit-textarea {
+          padding: 12px 16px;
+          min-height: 120px;
+        }
+
+        .yg-profile-edit-summary-row,
+        .yg-profile-edit-footer {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .yg-profile-edit-summary-value {
+          text-align: left;
+        }
+
+        .yg-profile-edit-actions {
+          justify-content: stretch;
+        }
+
+        .yg-profile-edit-btn {
+          width: 100%;
+          padding: 14px 20px;
+          text-align: center;
+        }
+
+        .yg-profile-edit-step {
+          padding: 11px 13px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .yg-profile-edit-layer {
+          padding: 4px;
+        }
+
+        .yg-profile-edit-side,
+        .yg-profile-edit-card {
+          padding: 16px 14px;
+          border-radius: 18px;
+        }
+
+        .yg-profile-edit-side h2 {
+          font-size: 1.3rem;
+        }
+
+        .yg-profile-edit-card h3 {
+          font-size: 1.15rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .yg-profile-edit-layer,
+        .yg-profile-edit-shell,
+        .yg-profile-edit-side,
+        .yg-profile-edit-card,
+        .yg-profile-edit-body {
+          animation: none !important;
+        }
+
+        .yg-profile-edit-bar {
+          animation: none !important;
+          transition: none !important;
+        }
+
+        .yg-profile-edit-btn,
+        .yg-profile-edit-input,
+        .yg-profile-edit-textarea,
+        .yg-profile-edit-step,
+        .yg-profile-edit-step-index,
+        .yg-profile-edit-summary-row,
+        .yg-profile-edit-avatar,
+        .yg-profile-edit-avatar-preview {
+          transition: none !important;
+        }
+      }
     `;
 
     document.head.append(style);
@@ -344,9 +896,9 @@ function render(root, state) {
           </div>
           <ul class="yg-profile-edit-step-list">
             ${Array.from({ length: STEP_COUNT }).map((_, index) => {
-                const itemMeta = getStepMeta(index);
-                const stateClass = index === state.step ? 'is-active' : index < state.step ? 'is-complete' : '';
-                return `
+        const itemMeta = getStepMeta(index);
+        const stateClass = index === state.step ? 'is-active' : index < state.step ? 'is-complete' : '';
+        return `
                   <li class="yg-profile-edit-step ${stateClass}">
                     <span class="yg-profile-edit-step-index">${index + 1}</span>
                     <div>
@@ -355,7 +907,7 @@ function render(root, state) {
                     </div>
                   </li>
                 `;
-            }).join('')}
+    }).join('')}
           </ul>
           <p>${escapeHtml(stepMeta.helper)}</p>
         </aside>

@@ -27,6 +27,26 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
+    @keyframes yg-onb-fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes yg-onb-slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes yg-onb-scaleIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes yg-onb-barPulse {
+      0%, 100% { box-shadow: 0 0 0 rgba(200, 167, 82, 0); }
+      50%      { box-shadow: 0 0 10px rgba(200, 167, 82, 0.3); }
+    }
+
     .yg-onboarding-lock {
       overflow: hidden;
     }
@@ -34,17 +54,19 @@ function ensureStyles() {
     .yg-onboarding-layer {
       position: fixed;
       inset: 0;
-      z-index: 9999;
+      z-index: var(--z-modal, 1050);
       padding: 20px;
       display: flex;
       align-items: stretch;
       justify-content: center;
       overflow-y: auto;
       background:
-        radial-gradient(circle at top left, rgba(200, 167, 82, 0.16), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(200, 167, 82, 0.10), transparent 24%),
-        rgba(10, 10, 10, 0.92);
-      backdrop-filter: blur(18px);
+        radial-gradient(circle at 15% 10%, rgba(200, 167, 82, 0.14), transparent 32%),
+        radial-gradient(circle at 85% 90%, rgba(200, 167, 82, 0.10), transparent 28%),
+        rgba(10, 10, 10, 0.94);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      animation: yg-onb-fadeIn 200ms ease both;
     }
 
     .yg-onboarding-shell {
@@ -54,35 +76,40 @@ function ensureStyles() {
       grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
       gap: 18px;
       align-items: stretch;
+      animation: yg-onb-scaleIn 200ms ease both;
     }
 
     .yg-onboarding-side,
     .yg-onboarding-card {
-      border: 1px solid rgba(200, 167, 82, 0.18);
+      border: 1px solid rgba(200, 167, 82, 0.16);
       border-radius: 28px;
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)),
-        rgba(12, 12, 12, 0.95);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+        var(--bg-primary, #0a0a0a);
+      box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.36),
+        0 0 0 1px rgba(200, 167, 82, 0.06);
     }
 
     .yg-onboarding-side {
-      padding: 26px;
+      padding: 28px 26px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
       position: relative;
+      animation: yg-onb-slideUp 200ms ease both;
+      animation-delay: 60ms;
     }
 
     .yg-onboarding-side::after {
       content: '';
       position: absolute;
-      inset: auto -40px -40px auto;
-      width: 180px;
-      height: 180px;
+      inset: auto -50px -50px auto;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(200, 167, 82, 0.24), transparent 68%);
+      background: radial-gradient(circle, rgba(200, 167, 82, 0.20), transparent 65%);
       pointer-events: none;
     }
 
@@ -90,27 +117,27 @@ function ensureStyles() {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 999px;
       background: rgba(200, 167, 82, 0.10);
-      color: #f2deb0;
-      font: 600 0.84rem/1 'Rajdhani', sans-serif;
-      letter-spacing: 0.08em;
+      color: var(--primary-light, #E5C158);
+      font: 600 0.84rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
       width: fit-content;
     }
 
     .yg-onboarding-side h2 {
       margin: 18px 0 10px;
-      color: #f8f1dd;
-      font: 700 clamp(1.9rem, 4vw, 2.65rem)/1.05 'Orbitron', sans-serif;
+      color: #fff4dc;
+      font: 700 clamp(1.8rem, 3.8vw, 2.5rem)/1.06 var(--font-display, 'Orbitron'), sans-serif;
       text-wrap: balance;
     }
 
     .yg-onboarding-side p {
       margin: 0;
-      color: rgba(255, 255, 255, 0.74);
-      font: 500 1rem/1.55 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.72);
+      font: 500 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-progress-wrap {
@@ -122,23 +149,24 @@ function ensureStyles() {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
-      color: rgba(255,255,255,0.8);
-      font: 600 0.92rem/1 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.8);
+      font: 600 0.92rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-progress-track {
       width: 100%;
       height: 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.07);
       overflow: hidden;
     }
 
     .yg-onboarding-progress-bar {
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #8e7433, #c8a752 55%, #f5deb3);
+      background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 55%, #f5deb3);
       transition: width 180ms ease;
+      animation: yg-onb-barPulse 2.4s ease-in-out infinite;
     }
 
     .yg-onboarding-step-list {
@@ -151,53 +179,55 @@ function ensureStyles() {
 
     .yg-onboarding-step-item {
       display: grid;
-      grid-template-columns: 36px minmax(0, 1fr);
+      grid-template-columns: 38px minmax(0, 1fr);
       gap: 12px;
-      align-items: start;
-      padding: 12px 14px;
+      align-items: center;
+      padding: 13px 15px;
       border-radius: 18px;
-      background: rgba(255,255,255,0.03);
+      background: rgba(255, 255, 255, 0.025);
       border: 1px solid transparent;
-      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
     .yg-onboarding-step-item.is-active {
-      border-color: rgba(200, 167, 82, 0.48);
-      background: rgba(200, 167, 82, 0.09);
+      border-color: rgba(200, 167, 82, 0.5);
+      background: rgba(200, 167, 82, 0.10);
       transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(200, 167, 82, 0.08);
     }
 
     .yg-onboarding-step-item.is-complete {
-      border-color: rgba(200, 167, 82, 0.22);
+      border-color: rgba(200, 167, 82, 0.24);
     }
 
     .yg-onboarding-step-index {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.07);
       color: #ffffff;
-      font: 700 0.95rem/1 'Orbitron', sans-serif;
+      font: 700 0.94rem/1 var(--font-display, 'Orbitron'), sans-serif;
+      transition: background 180ms ease, color 180ms ease;
     }
 
     .yg-onboarding-step-item.is-active .yg-onboarding-step-index,
     .yg-onboarding-step-item.is-complete .yg-onboarding-step-index {
-      background: linear-gradient(135deg, #8e7433, #c8a752);
+      background: linear-gradient(135deg, var(--primary-dark, #8e7433), var(--primary, #c8a752));
       color: #111;
     }
 
     .yg-onboarding-step-title {
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       color: #f7f4ec;
-      font: 700 1rem/1.1 'Rajdhani', sans-serif;
+      font: 700 1rem/1.12 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-step-desc {
-      color: rgba(255,255,255,0.65);
-      font: 500 0.94rem/1.35 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.62);
+      font: 500 0.93rem/1.35 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-card {
@@ -205,31 +235,33 @@ function ensureStyles() {
       display: flex;
       flex-direction: column;
       min-height: 0;
+      animation: yg-onb-slideUp 200ms ease both;
+      animation-delay: 100ms;
     }
 
     .yg-onboarding-card header {
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .yg-onboarding-kicker {
       margin: 0 0 8px;
-      color: #c8a752;
-      font: 600 0.88rem/1 'Rajdhani', sans-serif;
-      letter-spacing: 0.08em;
+      color: var(--primary, #c8a752);
+      font: 600 0.88rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
+      letter-spacing: 0.09em;
       text-transform: uppercase;
     }
 
     .yg-onboarding-card h3 {
       margin: 0 0 8px;
       color: #fffaf0;
-      font: 700 clamp(1.55rem, 3vw, 2.15rem)/1.08 'Orbitron', sans-serif;
+      font: 700 clamp(1.5rem, 2.8vw, 2.1rem)/1.08 var(--font-display, 'Orbitron'), sans-serif;
       text-wrap: balance;
     }
 
     .yg-onboarding-card p {
       margin: 0;
-      color: rgba(255,255,255,0.72);
-      font: 500 1rem/1.55 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.70);
+      font: 500 1rem/1.55 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-form {
@@ -244,6 +276,7 @@ function ensureStyles() {
       min-height: 0;
       overflow: auto;
       padding-right: 4px;
+      animation: yg-onb-slideUp 180ms ease both;
     }
 
     .yg-onboarding-stack {
@@ -258,35 +291,36 @@ function ensureStyles() {
 
     .yg-onboarding-field label,
     .yg-onboarding-label {
-      color: rgba(255,255,255,0.9);
-      font: 700 0.96rem/1.1 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.9);
+      font: 700 0.96rem/1.1 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-input {
       width: 100%;
-      padding: 15px 16px;
+      padding: 16px 18px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.03);
       color: #fff;
-      font: 600 1rem/1.2 'Rajdhani', sans-serif;
-      transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+      font: 600 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
+      transition: border-color 180ms ease, transform 160ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
     .yg-onboarding-input:focus {
       outline: none;
-      border-color: rgba(200, 167, 82, 0.78);
-      background: rgba(255,255,255,0.05);
+      border-color: rgba(200, 167, 82, 0.72);
+      background: rgba(255, 255, 255, 0.045);
       transform: translateY(-1px);
+      box-shadow: 0 0 0 3px rgba(200, 167, 82, 0.10);
     }
 
     .yg-onboarding-help {
-      padding: 14px 16px;
+      padding: 14px 18px;
       border-radius: 18px;
-      background: rgba(200, 167, 82, 0.07);
-      border: 1px solid rgba(200, 167, 82, 0.14);
-      color: #f5e6bf;
-      font: 600 0.98rem/1.45 'Rajdhani', sans-serif;
+      background: rgba(200, 167, 82, 0.06);
+      border: 1px solid rgba(200, 167, 82, 0.13);
+      color: #f3e4ba;
+      font: 600 0.96rem/1.48 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-option-grid {
@@ -298,40 +332,45 @@ function ensureStyles() {
     .yg-onboarding-option {
       width: 100%;
       text-align: left;
-      padding: 16px;
+      padding: 18px;
       border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.025);
       color: #fff;
       cursor: pointer;
-      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      transition: transform 160ms ease, border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
     }
 
     .yg-onboarding-option:hover,
     .yg-onboarding-option:focus-visible {
       outline: none;
       transform: translateY(-2px);
-      border-color: rgba(200, 167, 82, 0.48);
-      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+      border-color: rgba(200, 167, 82, 0.50);
+      background: rgba(200, 167, 82, 0.04);
+      box-shadow:
+        0 14px 28px rgba(0, 0, 0, 0.22),
+        0 0 18px rgba(200, 167, 82, 0.06);
     }
 
     .yg-onboarding-option.is-selected {
       border-color: rgba(200, 167, 82, 0.72);
-      background: linear-gradient(180deg, rgba(200, 167, 82, 0.16), rgba(255,255,255,0.04));
-      box-shadow: 0 18px 30px rgba(0, 0, 0, 0.26);
+      background: linear-gradient(180deg, rgba(200, 167, 82, 0.14), rgba(255, 255, 255, 0.03));
+      box-shadow:
+        0 16px 30px rgba(0, 0, 0, 0.24),
+        0 0 24px rgba(200, 167, 82, 0.10);
     }
 
     .yg-onboarding-option-title {
       display: block;
       margin-bottom: 6px;
       color: #fffaf0;
-      font: 700 1rem/1.1 'Rajdhani', sans-serif;
+      font: 700 1.02rem/1.12 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-option-desc {
       display: block;
-      color: rgba(255,255,255,0.68);
-      font: 500 0.94rem/1.35 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.65);
+      font: 500 0.94rem/1.38 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-summary {
@@ -343,22 +382,28 @@ function ensureStyles() {
       display: flex;
       justify-content: space-between;
       gap: 18px;
-      padding: 14px 16px;
+      padding: 14px 18px;
       border-radius: 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .yg-onboarding-summary-row:hover {
+      border-color: rgba(200, 167, 82, 0.16);
+      background: rgba(255, 255, 255, 0.035);
     }
 
     .yg-onboarding-summary-label {
-      color: rgba(255,255,255,0.66);
-      font: 600 0.92rem/1.2 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.62);
+      font: 600 0.92rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
     }
 
     .yg-onboarding-summary-value {
       color: #fff;
-      font: 700 1rem/1.2 'Rajdhani', sans-serif;
+      font: 700 1rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
       text-align: right;
     }
 
@@ -369,17 +414,17 @@ function ensureStyles() {
       gap: 16px;
       padding-top: 20px;
       margin-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      border-top: 1px solid rgba(255, 255, 255, 0.07);
     }
 
     .yg-onboarding-status {
       min-height: 24px;
-      color: rgba(255,255,255,0.72);
-      font: 600 0.98rem/1.2 'Rajdhani', sans-serif;
+      color: rgba(255, 255, 255, 0.70);
+      font: 600 0.96rem/1.2 var(--font-heading, 'Rajdhani'), sans-serif;
     }
 
     .yg-onboarding-status.is-error {
-      color: #ffb59f;
+      color: var(--danger, #ffb59f);
     }
 
     .yg-onboarding-status.is-loading {
@@ -396,11 +441,11 @@ function ensureStyles() {
     .yg-onboarding-btn {
       border: 0;
       border-radius: 999px;
-      padding: 12px 18px;
+      padding: 13px 22px;
       cursor: pointer;
-      transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease, background 160ms ease;
-      font: 700 0.96rem/1 'Rajdhani', sans-serif;
+      font: 700 0.96rem/1 var(--font-heading, 'Rajdhani'), sans-serif;
       letter-spacing: 0.03em;
+      transition: transform 160ms ease, opacity 160ms ease, box-shadow 160ms ease, background 160ms ease;
     }
 
     .yg-onboarding-btn:hover,
@@ -409,37 +454,49 @@ function ensureStyles() {
       transform: translateY(-1px);
     }
 
+    .yg-onboarding-btn:active {
+      transform: translateY(0);
+    }
+
     .yg-onboarding-btn:disabled {
-      opacity: 0.6;
+      opacity: 0.55;
       cursor: wait;
       transform: none;
     }
 
     .yg-onboarding-btn-secondary {
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.08);
       color: #fff;
     }
 
     .yg-onboarding-btn-secondary:hover,
     .yg-onboarding-btn-secondary:focus-visible {
-      background: rgba(255,255,255,0.12);
+      background: rgba(255, 255, 255, 0.13);
     }
 
     .yg-onboarding-btn-ghost {
       background: transparent;
-      color: rgba(255,255,255,0.72);
-      border: 1px solid rgba(255,255,255,0.10);
+      color: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .yg-onboarding-btn-ghost:hover,
+    .yg-onboarding-btn-ghost:focus-visible {
+      border-color: rgba(255, 255, 255, 0.20);
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .yg-onboarding-btn-primary {
-      background: linear-gradient(90deg, #8e7433, #c8a752 52%, #f4ddb1);
+      background: linear-gradient(90deg, var(--primary-dark, #8e7433), var(--primary, #c8a752) 52%, #f4ddb1);
       color: #121212;
-      box-shadow: 0 16px 28px rgba(200, 167, 82, 0.18);
+      box-shadow: 0 12px 24px rgba(200, 167, 82, 0.18);
     }
 
     .yg-onboarding-btn-primary:hover,
     .yg-onboarding-btn-primary:focus-visible {
-      box-shadow: 0 20px 34px rgba(200, 167, 82, 0.24);
+      box-shadow:
+        0 16px 32px rgba(200, 167, 82, 0.24),
+        0 0 20px rgba(200, 167, 82, 0.12);
     }
 
     @media (max-width: 900px), (max-height: 820px) {
@@ -463,16 +520,37 @@ function ensureStyles() {
       .yg-onboarding-card {
         border-radius: 24px;
       }
+
+      .yg-onboarding-side h2 {
+        font-size: clamp(1.5rem, 5vw, 2rem);
+      }
+
+      .yg-onboarding-card h3 {
+        font-size: clamp(1.3rem, 4.5vw, 1.8rem);
+      }
     }
 
     @media (max-width: 640px) {
+      .yg-onboarding-layer {
+        padding: 8px;
+      }
+
       .yg-onboarding-side,
       .yg-onboarding-card {
-        padding: 20px;
+        padding: 20px 18px;
+        border-radius: 22px;
       }
 
       .yg-onboarding-option-grid {
         grid-template-columns: 1fr;
+      }
+
+      .yg-onboarding-option {
+        padding: 16px;
+      }
+
+      .yg-onboarding-input {
+        padding: 14px 16px;
       }
 
       .yg-onboarding-summary-row,
@@ -491,15 +569,55 @@ function ensureStyles() {
 
       .yg-onboarding-btn {
         width: 100%;
+        padding: 14px 20px;
+        text-align: center;
+      }
+
+      .yg-onboarding-step-item {
+        padding: 11px 13px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .yg-onboarding-layer {
+        padding: 4px;
+      }
+
+      .yg-onboarding-side,
+      .yg-onboarding-card {
+        padding: 16px 14px;
+        border-radius: 18px;
+      }
+
+      .yg-onboarding-side h2 {
+        font-size: 1.35rem;
+      }
+
+      .yg-onboarding-card h3 {
+        font-size: 1.2rem;
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .yg-onboarding-progress-bar,
+      .yg-onboarding-layer,
+      .yg-onboarding-shell,
+      .yg-onboarding-side,
+      .yg-onboarding-card,
+      .yg-onboarding-body {
+        animation: none !important;
+      }
+
+      .yg-onboarding-progress-bar {
+        animation: none !important;
+        transition: none !important;
+      }
+
       .yg-onboarding-option,
       .yg-onboarding-step-item,
       .yg-onboarding-btn,
-      .yg-onboarding-input {
+      .yg-onboarding-input,
+      .yg-onboarding-summary-row,
+      .yg-onboarding-step-index {
         transition: none !important;
       }
     }
@@ -997,13 +1115,13 @@ export function openOnboardingWizard({
             </div>
             <ul class="yg-onboarding-step-list">
               ${stepList.map((stepItem, index) => {
-                const stateClass = index === state.step
-                  ? 'is-active'
-                  : index < state.step
-                    ? 'is-complete'
-                    : '';
+      const stateClass = index === state.step
+        ? 'is-active'
+        : index < state.step
+          ? 'is-complete'
+          : '';
 
-                return `
+      return `
                   <li class="yg-onboarding-step-item ${stateClass}">
                     <span class="yg-onboarding-step-index">${index + 1}</span>
                     <div>
@@ -1012,7 +1130,7 @@ export function openOnboardingWizard({
                     </div>
                   </li>
                 `;
-              }).join('')}
+    }).join('')}
             </ul>
           </div>
           <p>
