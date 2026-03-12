@@ -363,9 +363,17 @@ function ensureStyles() {
       gap: 18px;
     }
 
+    .yg-onboarding-stack--compact {
+      gap: 12px;
+    }
+
     .yg-onboarding-field {
       display: grid;
       gap: 10px;
+    }
+
+    .yg-onboarding-stack--compact .yg-onboarding-field {
+      gap: 6px;
     }
 
     .yg-onboarding-field label,
@@ -386,12 +394,36 @@ function ensureStyles() {
       transition: border-color 180ms ease, transform 160ms ease, background 180ms ease, box-shadow 180ms ease;
     }
 
+    .yg-onboarding-input--compact {
+      padding: 12px 14px;
+      font-size: 0.95rem;
+    }
+
     .yg-onboarding-input:focus {
       outline: none;
       border-color: var(--ob-gold-4);
       background: var(--ob-bg-3);
       transform: translateY(-1px);
       box-shadow: 0 0 0 3px rgba(200,167,82,0.12), var(--ob-shadow-gold-sm);
+    }
+
+    .yg-onboarding-stack--compact .yg-onboarding-option-grid {
+      gap: 10px;
+    }
+
+    .yg-onboarding-stack--compact .yg-onboarding-option {
+      padding: 12px 14px;
+      border-radius: var(--radius-lg, 16px);
+    }
+
+    .yg-onboarding-stack--compact .yg-onboarding-option-title {
+      margin-bottom: 2px;
+      font-size: 0.95rem;
+    }
+
+    .yg-onboarding-stack--compact .yg-onboarding-option-desc {
+      font-size: 0.85rem;
+      line-height: 1.3;
     }
 
     /* ── Help box ── */
@@ -977,12 +1009,12 @@ function renderStepBody(state) {
       : 'Ej. Finca El Progreso';
 
     return `
-      <div class="yg-onboarding-stack">
+      <div class="yg-onboarding-stack yg-onboarding-stack--compact">
         <div class="yg-onboarding-field">
           <label for="yg-onboarding-farm-name">${escapeHtml(farmLabel)}</label>
           <input
             id="yg-onboarding-farm-name"
-            class="yg-onboarding-input"
+            class="yg-onboarding-input yg-onboarding-input--compact"
             name="farmName"
             maxlength="120"
             placeholder="${escapeHtml(farmPlaceholder)}"
@@ -991,7 +1023,7 @@ function renderStepBody(state) {
           >
         </div>
         <div class="yg-onboarding-field">
-          <span class="yg-onboarding-label">Actividad principal</span>
+          <span class="yg-onboarding-label">Actividad principal (opcional)</span>
           ${renderOptionGrid('mainActivity', ONBOARDING_ACTIVITY_OPTIONS, state.mainActivity)}
         </div>
       </div>
@@ -1139,17 +1171,13 @@ export function openOnboardingWizard({
     });
 
     root.querySelector('[name="displayName"]')?.addEventListener('input', (event) => {
-      setState({
-        displayName: normalizeText(event.target.value, 80),
-        error: ''
-      });
+      state = { ...state, displayName: normalizeText(event.target.value, 80), error: '' };
+      persistDraft();
     });
 
     root.querySelector('[name="farmName"]')?.addEventListener('input', (event) => {
-      setState({
-        farmName: normalizeText(event.target.value, 120),
-        error: ''
-      });
+      state = { ...state, farmName: normalizeText(event.target.value, 120), error: '' };
+      persistDraft();
     });
 
     root.querySelectorAll('[data-select-group]').forEach((button) => {
