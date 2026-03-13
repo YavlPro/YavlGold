@@ -35,24 +35,60 @@ const LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const MAX_LOCAL_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const DEFAULT_AVATAR_EMOJI = '👨‍🌾';
 const SAFE_DATA_IMAGE_RE = /^data:(image\/(?:png|jpeg|jpg|webp|gif|avif));base64,([a-z0-9+/=\s]+)$/i;
-const PROFILE_UNIT_FETCH_FIELDS = [
-    'crop_id',
-    'unit_type',
-    'unit_qty',
-    'quantity_kg',
-    'split_meta',
-    'concepto',
-    'concept',
-    'transfer_state',
-    'transfer_type',
-    'transferred_at',
-    'transferred_income_id',
-    'transferred_to',
-    'transferred_to_id',
-    'reverted_at',
-    'reverted_reason',
-    'deleted_at'
-];
+const PROFILE_UNIT_FETCH_FIELDS_BY_TABLE = {
+    agro_income: [
+        'crop_id',
+        'unit_type',
+        'unit_qty',
+        'quantity_kg',
+        'split_meta',
+        'concepto',
+        'reverted_at',
+        'reverted_reason',
+        'deleted_at'
+    ],
+    agro_expenses: [
+        'crop_id',
+        'split_meta',
+        'concept',
+        'deleted_at'
+    ],
+    agro_pending: [
+        'crop_id',
+        'unit_type',
+        'unit_qty',
+        'quantity_kg',
+        'split_meta',
+        'concepto',
+        'transfer_state',
+        'transferred_at',
+        'transferred_income_id',
+        'transferred_to',
+        'reverted_at',
+        'reverted_reason',
+        'deleted_at'
+    ],
+    agro_losses: [
+        'crop_id',
+        'unit_type',
+        'unit_qty',
+        'quantity_kg',
+        'split_meta',
+        'concepto',
+        'reverted_at',
+        'reverted_reason',
+        'deleted_at'
+    ],
+    agro_transfers: [
+        'crop_id',
+        'unit_type',
+        'unit_qty',
+        'quantity_kg',
+        'split_meta',
+        'concepto',
+        'deleted_at'
+    ]
+};
 
 const PROFILE_FIELD_IDS = [
     'display_name',
@@ -204,7 +240,8 @@ async function fetchProfileUnitRows(tableName, userId, options = {}) {
     if (!normalizedTable || !normalizedUserId || !state.supabase) return [];
 
     const missingColumns = getProfileUnitMissingColumns(normalizedTable);
-    let selectFields = PROFILE_UNIT_FETCH_FIELDS.filter((field) => !missingColumns.has(field));
+    const baseFields = PROFILE_UNIT_FETCH_FIELDS_BY_TABLE[normalizedTable] || ['crop_id'];
+    let selectFields = baseFields.filter((field) => !missingColumns.has(field));
     let nullFilters = ['deleted_at'];
     if (options.excludeReverted) {
         nullFilters.push('reverted_at');

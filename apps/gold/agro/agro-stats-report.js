@@ -337,11 +337,11 @@ async function fetchCrops(userId) {
     try {
         const attempts = [
             {
-                select: 'id,name,variety,status,status_override,status_mode,start_date,expected_harvest_date,actual_harvest_date,cycle_days,template_duration_days,investment',
+                select: 'id,name,variety,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: true
             },
             {
-                select: 'id,name,variety,status,status_override,status_mode,start_date,expected_harvest_date,actual_harvest_date,cycle_days,template_duration_days,investment',
+                select: 'id,name,variety,status,status_override,start_date,expected_harvest_date,actual_harvest_date,investment',
                 filterDeletedAt: false
             },
             {
@@ -368,19 +368,12 @@ async function fetchIncome(userId) {
     try {
         const attempts = [
             {
-                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,cliente,comprador',
-                filterDeletedAt: true
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,reverted_at',
+                filterDeletedAt: true,
+                extendQuery: (query) => query.is('reverted_at', null)
             },
             {
-                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,cliente',
-                filterDeletedAt: true
-            },
-            {
-                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id,comprador',
-                filterDeletedAt: true
-            },
-            {
-                select: 'id,concepto,monto,monto_usd,currency,fecha,crop_id,cliente',
+                select: 'id,concepto,monto,monto_usd,currency,exchange_rate,fecha,crop_id',
                 filterDeletedAt: true
             },
             {
@@ -629,8 +622,15 @@ function buildUnassignedSection(unassigned) {
 
 function parseWhoFromIncome(concept) {
     const text = String(concept || '').trim();
-    const m = text.match(/^Venta a\s+(.+?)\s+-\s+(.+)$/i);
-    return m ? m[1].trim() : '';
+    if (!text) return '';
+
+    const tokenMatch = text.match(/(?:comprador|cliente|beneficiario|destino):\s*([^|·]+?)(?:\s*[·|]|$)/i);
+    if (tokenMatch?.[1]) {
+        return tokenMatch[1].trim();
+    }
+
+    const legacyMatch = text.match(/^Venta a\s+(.+?)\s+-\s+(.+)$/i);
+    return legacyMatch?.[1]?.trim() || '';
 }
 
 function buildBuyerRanking(incomeRows, pendingRows) {
@@ -693,32 +693,21 @@ export async function exportStatsReport() {
         // Get profile name
         let userName = user.email || 'Usuario';
         try {
-            const profileAttempts = [
-                'full_name,username',
-                'username',
-                'full_name'
-            ];
-            const profileIdColumns = ['id', 'user_id'];
-            let profileResolved = false;
-            for (const idColumn of profileIdColumns) {
-                for (const select of profileAttempts) {
-                    const { data: profile, error } = await supabase
-                        .from('profiles')
-                        .select(select)
-                        .eq(idColumn, user.id)
-                        .maybeSingle();
-                    if (error) {
-                        if (looksLikeSchemaMismatch(error)) continue;
-                        break;
-                    }
-                    if (profile) {
-                        userName = profile.full_name || profile.username || userName;
-                        profileResolved = true;
-                        break;
-                    }
-                }
-                if (profileResolved) {
-                    break;
+            const { data: farmerProfile } = await supabase
+                .from('agro_farmer_profile')
+                .select('display_name,farm_name')
+                .eq('user_id', user.id)
+                .maybeSingle();
+            if (farmerProfile) {
+                userName = farmerProfile.display_name || farmerProfile.farm_name || userName;
+            } else {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                if (profile?.username) {
+                    userName = profile.username;
                 }
             }
         } catch { /* ignore */ }

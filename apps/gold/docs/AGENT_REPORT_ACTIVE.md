@@ -1778,3 +1778,174 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
    - 1 entrada en AgroRepo.
 3. Con ese dataset, ejecutar el QA integral final pendiente sobre sidebar, stats por seccion, selector compartido, exportes MD y AgroRepo.
 
+---
+
+## Sesion: Siembra de dataset QA y QA integral final autenticado sobre main (2026-03-12)
+
+### Diagnostico
+
+- La ruta de QA autenticado ya esta destrabada en `https://www.yavlgold.com/agro/` con sesion Playwright reutilizable.
+- El bloqueo actual ya no es de auth sino de **ausencia de dataset** en la cuenta QA `yavlcapitan@gmail.com`.
+- Para cerrar el punto 5 del plan maestro hace falta un dataset pequeno, interpretable y distribuido en el tiempo, suficiente para validar historial, stats, selector compartido, vista general, exportes, papelera, reversiones y AgroRepo.
+
+### Plan quirurgico
+
+1. Inspeccionar el esquema real de las tablas `agro_*` y el flujo de insercion actual en el codigo para no sembrar datos incompatibles.
+2. Preparar un dataset QA minimo y trazable sobre la cuenta autenticada:
+   - 2 o 3 cultivos;
+   - ingresos pagados;
+   - fiados;
+   - perdidas;
+   - donaciones / otros / transferencias segun aplique;
+   - perfil y onboarding;
+   - entradas de AgroRepo via su almacenamiento real.
+3. Validar que la data sembrada aparece correctamente via queries reales.
+4. Ejecutar QA integral final en browser real sobre `main`.
+5. Solo si aparece un bug pequeno y claro, corregirlo de forma quirurgica, rebuild si hubo codigo y revalidar.
+
+### Archivos / tablas a tocar
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- Tablas productivas de la cuenta QA, siempre bajo RLS / sesion real:
+  - `agro_crops`
+  - `agro_income`
+  - `agro_pending`
+  - `agro_losses`
+  - `agro_transfers`
+  - `agro_farmer_profile`
+  - `user_onboarding_context`
+- Persistencia local de AgroRepo si la implementacion actual sigue siendo `local-first`.
+
+### Riesgos
+
+- Insertar datos sin inspeccionar columnas obligatorias puede romper consistencia o dejar registros inutiles para QA.
+- Si el flujo de negocio genera dependencias entre tablas (por ejemplo transferencias o reversiones), una siembra directa mal hecha puede no representar bien el producto.
+- AgroRepo puede requerir validacion separada porque hoy no vive en tablas productivas sino en `localStorage`.
+
+### Dataset QA sembrado
+
+- Cuenta QA usada: `yavlcapitan@gmail.com` (`user_id = 4cad20cf-92d5-430b-ae47-e6b728587ee7`).
+- Perfil y contexto sembrados:
+  - `agro_farmer_profile` con `Capitan QA`, finca y ubicacion de prueba.
+  - `user_onboarding_context` completo para desbloquear perfil / asistente.
+  - `agro_public_profiles` poblado y desactivado.
+- Dataset operativo final, pequeno y trazable:
+  - `agro_crops`: `3`
+  - `agro_income`: `5`
+  - `agro_pending`: `4`
+  - `agro_losses`: `2`
+  - `agro_transfers`: `3`
+  - `agro_expenses`: `4`
+- Cobertura de datos:
+  - `USD`, `COP` y `VES`;
+  - decimales (`1.5`, `0.5`, `0.25`);
+  - cultivos `Maiz Amarillo`, `Tomate Rinon`, `Batata Amarilla`;
+  - compradores / clientes `Don Pedro`, `Comercial La Granja`, `Maria Elena`, `Jesus Mora`, `Mercado Local`;
+  - dispersion temporal suficiente para `7 dias`, `30 dias`, `90 dias`, `Ano` y `Todo`.
+- Limpieza final de dataset:
+  - durante QA se transfirio un pagado a fiado y luego se restauro desde papelera para validar ambos flujos;
+  - ese fiado temporal se dejo `soft-deleted` al cierre para devolver la cuenta QA a un estado coherente y reutilizable.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - se retiraron columnas legacy inexistentes (`transferred_to_id`, `transfer_type`) del flujo de transferencias y agregados;
+  - se alineo la transferencia de fiados con `transferred_income_id`;
+  - se acotaron los campos de unidades del consolidado a columnas reales (`unit_type`, `unit_qty`, `quantity_kg`).
+- `apps/gold/agro/agroestadistica.js`
+  - se corrigieron selects legacy de analitica global (`agro_crops`, `agro_expenses`);
+  - se actualizo el parser de comprador para reconocer `Comprador:`, `Cliente:`, `Beneficiario:` y `Destino:` en conceptos reales.
+- `apps/gold/agro/agroperfil.js`
+  - se reemplazo el set generico de columnas por campos especificos por tabla para que el exporte global MD no consulte columnas inexistentes.
+- `apps/gold/agro/agro-stats-report.js`
+  - se rehicieron los selects del `Reporte Detallado por Cultivo (MD)` con columnas reales del esquema actual;
+  - se tomo `display_name` desde `agro_farmer_profile` para evitar el fallback ruidoso a `profiles.full_name`;
+  - se mejoro el parser de compradores para que el ranking exportado lea nombres embebidos en `concepto`.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - se documentan dataset, fixes, QA real y el cierre final del plan maestro.
+
+### Build status
+
+- `pnpm build:gold` -> **OK** (ejecutado varias veces durante la sesion, ultima corrida despues del fix final).
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Warnings no bloqueantes:
+  - engine esperado `node 20.x` y entorno actual `node 25.6.0`;
+  - warning de chunk grande del monolito Agro.
+
+### Validacion y QA
+
+- Browser real autenticado ejecutado sobre `main` via `vite preview` local con Supabase real de `yavlgold.com`.
+- Sidebar / submenus:
+  - `Pagados`, `Fiados`, `Perdidas`, `Donaciones` y `Otros` validan padre toggle + hijos `Historial` / `Estadisticas`;
+  - autoexpansion y colapso verificados;
+  - `Carrito` y `Rankings` se mantienen como links directos;
+  - desktop y mobile (`390x844`) revisados.
+- Historial / facturero:
+  - `Pagados`, `Fiados`, `Perdidas`, `Donaciones` y `Otros` cargan con data QA real;
+  - decimal case visible: `1.5 sacos • 75 kg`;
+  - flujo real `Pagado -> Fiado` validado con toast de exito;
+  - `Papelera -> Restaurar` validado con roundtrip real;
+  - dataset devuelto luego a estado coherente para futuras QA.
+- Estadisticas por seccion:
+  - `Pagados`, `Fiados`, `Perdidas`, `Donaciones` y `Otros` muestran KPIs reales, charts renderizados, insights y exportes MD;
+  - `Vista general` y cultivo especifico funcionan;
+  - selector compartido visible en historial + estadisticas;
+  - charts contenidos, sin estiramiento vertical, en desktop y mobile.
+- Analitica global:
+  - `Historial de ciclos` carga totales reales;
+  - `Exportar Informe Global (MD)` validado sin errores;
+  - `Reporte Detallado por Cultivo (MD)` reproducido con `400`, corregido y revalidado sin errores de consola;
+  - panel `Top Compradores` corregido y revalidado con nombres reales (`Don Pedro`, `Maria Elena`, `Comercial La Granja`, `Mercado Local`).
+- AgroRepo:
+  - creacion de bitacora, alta de entradas, edicion, timeline, markdown y filtros por tag validados en browser real.
+- Perfil / wizard IA / asistente:
+  - `Mi Perfil` y wizard dedicados abren, precargan y cierran correctamente;
+  - `Asistente IA` y `Configurar asistente` abren sin romper la vista;
+  - no se envio un prompt real al asistente para evitar ruido de cuota, pero el contexto y la superficie quedaron alcanzables.
+
+### Bugs encontrados y corregidos
+
+1. `QA-BUG-01` — Transferencias / historiales consultaban columnas legacy inexistentes.
+   - Causa raiz: `agro.js` seguia mezclando `transferred_to_id` / `transfer_type` con el esquema real.
+   - Severidad: Alta.
+   - Estado: Corregido.
+2. `QA-BUG-02` — Analitica global consultaba campos legacy en `agro_crops` y `agro_expenses`.
+   - Causa raiz: selects heredados del esquema historico.
+   - Severidad: Alta.
+   - Estado: Corregido.
+3. `QA-BUG-03` — `Exportar Informe Global (MD)` intentaba leer columnas no compartidas entre tablas.
+   - Causa raiz: fetch generico de unidades en `agroperfil.js`.
+   - Severidad: Alta.
+   - Estado: Corregido.
+4. `QA-BUG-04` — `Reporte Detallado por Cultivo (MD)` disparaba `400` por columnas legacy en `agro_crops`, `agro_income` y `profiles`.
+   - Causa raiz: `agro-stats-report.js` seguia con selects historicos (`status_mode`, `cycle_days`, `cliente/comprador`, `full_name`).
+   - Severidad: Alta.
+   - Estado: Corregido y revalidado sin errores.
+5. `QA-BUG-05` — `Top Compradores` en la analitica global mostraba `Sin comprador` pese a conceptos con comprador explicito.
+   - Causa raiz: parser incompleto en `agroestadistica.js`.
+   - Severidad: Media.
+   - Estado: Corregido y revalidado.
+
+### Estado Del Plan Maestro
+
+1. Hecho
+   - Blindar facturero y transferencias.
+   - Cerrar onboarding / wizard de perfil para alimentar contexto de IA.
+   - Fortalecer AgroRepo como memoria operativa.
+   - Terminar estadisticas individuales y exportes por seccion.
+   - Hacer QA integral final.
+2. Muy avanzado
+   - Ninguno.
+3. Pendiente
+   - Ninguno bloqueante dentro del alcance actual.
+
+### QA sugerido
+
+1. Reusar `output/agro-qa-storage-state.json` para futuras corridas Playwright autenticadas.
+2. Mantener la cuenta QA como dataset controlado de regresion y evitar mutaciones manuales fuera de sesiones documentadas.
+3. Si se quiere extender cobertura futura, probar respuesta real del asistente IA con un prompt de bajo costo.
+

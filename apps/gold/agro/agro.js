@@ -79,7 +79,7 @@ const AGRO_PROFILE_LOCAL_AVATAR_KEY_PREFIX = 'YG_AGRO_PROFILE_AVATAR_V1_';
 const AGRO_PROFILE_DISPLAY_NAME_KEY = 'YG_AGRO_DISPLAY_NAME_V1';
 const AGRO_DEBUG = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('debug') === '1';
-const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_to_id,transferred_income_id';
+const AGRO_PENDING_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,crop_id,unit_type,unit_qty,quantity_kg,transfer_state,transferred_to,transferred_income_id';
 const AGRO_INCOME_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_LOSS_TRANSFER_COLUMNS = 'id,user_id,concepto,monto,fecha,causa,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state';
 const AGRO_INCOME_REVERT_COLUMNS = 'id,user_id,concepto,monto,fecha,categoria,crop_id,unit_type,unit_qty,quantity_kg,origin_table,origin_id,transfer_state,currency,exchange_rate,monto_usd,soporte_url,reverted_at,reverted_reason,split_meta';
@@ -1965,7 +1965,7 @@ async function transferPendingToIncome(pendingId) {
         .from('agro_pending')
         .update({
             transferred_to: 'income',
-            transferred_to_id: income.id,
+            transferred_income_id: income.id,
             transfer_state: 'transferred',
             transferred_at: new Date().toISOString(),
             transferred_by: userId
@@ -2006,7 +2006,7 @@ async function transferPendingToLoss(pendingId) {
     // 2. Check idempotency
     if (pending.transfer_state === 'transferred' && pending.transferred_to === 'losses') {
         console.info('[V9.7] Pending already transferred to losses, idempotent return');
-        return { success: true, lossId: pending.transferred_to_id, message: 'Ya transferido' };
+        return { success: true, lossId: pending.transferred_income_id, message: 'Ya transferido' };
     }
 
     // 3. Create loss record
@@ -2041,7 +2041,7 @@ async function transferPendingToLoss(pendingId) {
         .from('agro_pending')
         .update({
             transferred_to: 'losses',
-            transferred_to_id: loss.id,
+            transferred_income_id: loss.id,
             transfer_state: 'transferred',
             transferred_at: new Date().toISOString(),
             transferred_by: userId
@@ -4367,7 +4367,6 @@ function renderHistoryRow(tabName, item, config, options = {}) {
         || item?.other_transfer_state === 'transferred'
         || hasTransferStateMeta
         || !!String(item?.transferred_to || '').trim()
-        || !!String(item?.transferred_to_id || '').trim()
         || !!String(item?.transferred_income_id || '').trim()
         || !!String(item?.origin_table || '').trim()
         || !!String(item?.origin_id || '').trim();
@@ -9237,7 +9236,6 @@ async function fetchLossTotalsByCropIds(userId, cropIds, options = {}) {
 function getPendingTransferToken(row) {
     const explicit = String(
         row?.transfer_state
-        ?? row?.transfer_type
         ?? row?.transferType
         ?? ''
     ).trim().toLowerCase();
@@ -9251,7 +9249,6 @@ function getPendingTransferToken(row) {
     const hasTransferredMeta = !!(
         row?.transferred_at
         || row?.transferred_income_id
-        || row?.transferred_to_id
         || String(row?.transferred_to || '').trim()
     );
     if (hasTransferredMeta) return 'transferred';
@@ -9273,11 +9270,9 @@ async function fetchPendingTotalsByCropIds(userId, cropIds, options = {}) {
         optionalFields: [
             'deleted_at',
             'transfer_state',
-            'transfer_type',
             'transferred_at',
             'transferred_income_id',
             'transferred_to',
-            'transferred_to_id',
             'reverted_at',
             'reverted_reason'
         ],
@@ -9308,9 +9303,9 @@ function addCycleUnitTotals(target, source) {
     target.cestas += Number(source.cestas || 0);
 }
 
-const CYCLE_UNIT_TYPE_QUERY_FIELDS = ['unit_type', 'unit', 'measure', 'measure_unit', 'unit_name'];
-const CYCLE_UNIT_QTY_QUERY_FIELDS = ['unit_qty', 'qty', 'quantity', 'units', 'amount_units'];
-const CYCLE_UNIT_KG_QUERY_FIELDS = ['quantity_kg', 'kg', 'kilogramos'];
+const CYCLE_UNIT_TYPE_QUERY_FIELDS = ['unit_type'];
+const CYCLE_UNIT_QTY_QUERY_FIELDS = ['unit_qty'];
+const CYCLE_UNIT_KG_QUERY_FIELDS = ['quantity_kg'];
 const CYCLE_UNIT_META_FALLBACK_FIELDS = ['split_meta', 'concepto'];
 
 function resolveSplitMetaUnitFallback(row) {
@@ -9529,11 +9524,9 @@ async function fetchPendingUnitTotalsByCropIds(userId, cropIds, options = {}) {
         optionalFields: [
             'deleted_at',
             'transfer_state',
-            'transfer_type',
             'transferred_at',
             'transferred_income_id',
             'transferred_to',
-            'transferred_to_id',
             'reverted_at',
             'reverted_reason'
         ],
@@ -9555,11 +9548,9 @@ async function fetchPendingTransferredUnitTotalsByCropIds(userId, cropIds, optio
         optionalFields: [
             'deleted_at',
             'transfer_state',
-            'transfer_type',
             'transferred_at',
             'transferred_income_id',
             'transferred_to',
-            'transferred_to_id',
             'reverted_at',
             'reverted_reason'
         ],

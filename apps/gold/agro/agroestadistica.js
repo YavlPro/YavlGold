@@ -299,8 +299,8 @@ function parseBuyerName(concepto) {
     const saleMatch = text.match(/^venta\s+a\s+(.+?)(?:\s*-\s*|$)/i);
     if (saleMatch?.[1]) return saleMatch[1].trim();
 
-    const clientMatch = text.match(/cliente:\s*([^|]+)$/i);
-    if (clientMatch?.[1]) return clientMatch[1].trim();
+    const taggedMatch = text.match(/(?:comprador|cliente|beneficiario|destino):\s*([^|·]+?)(?:\s*[·|]|$)/i);
+    if (taggedMatch?.[1]) return taggedMatch[1].trim();
 
     return 'Sin comprador';
 }
@@ -361,8 +361,7 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             'agro_crops',
             resolvedUserId,
             [
-                'id,name,variety,status,status_override,investment,investment_amount,investment_currency,investment_usd_equiv,fx_usd_cop,fx_usd_bs,fx_usd_ves,created_at,start_date,deleted_at',
-                'id,name,variety,status,investment,investment_amount,investment_currency,investment_usd_equiv,created_at,start_date,deleted_at',
+                'id,name,variety,status,status_override,investment,created_at,start_date,deleted_at',
                 'id,name,variety,status,investment,created_at,start_date'
             ],
             warnings,
@@ -396,8 +395,8 @@ export async function getGlobalStats({ supabase: supabaseClient, userId, range }
             'agro_expenses',
             resolvedUserId,
             [
-                'id,crop_id,concepto,amount,monto_usd,currency,exchange_rate,category,date,created_at,deleted_at',
-                'id,crop_id,concepto,amount,monto_usd,currency,exchange_rate,category,date,created_at',
+                'id,crop_id,concept,amount,monto_usd,currency,exchange_rate,category,date,created_at,deleted_at',
+                'id,crop_id,concept,amount,monto_usd,currency,exchange_rate,category,date,created_at',
                 'id,crop_id,amount,monto_usd,currency,exchange_rate,date,created_at'
             ],
             warnings,
