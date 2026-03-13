@@ -87,6 +87,7 @@ const TIME_RANGES = [
 const sectionStatsCache = {};
 const activeSectionRange = {};
 const chartInstances = {};
+const sectionLoadSequence = {};
 let cropsMapCache = null;
 
 // ============================================================
@@ -98,6 +99,12 @@ async function getAuthUserId() {
     return data?.user?.id || null;
 }
 
+function normalizeCropId(value) {
+    if (value === undefined || value === null) return null;
+    const str = String(value).trim();
+    return str || null;
+}
+
 function getStartDateISO(days) {
     if (!days) return null;
     const d = new Date();
@@ -105,19 +112,24 @@ function getStartDateISO(days) {
     return d.toISOString().split('T')[0];
 }
 
-async function fetchSectionRows(sectionKey, rangeDays) {
+async function fetchSectionRows(sectionKey, rangeDays, options = {}) {
     const cfg = SECTIONS[sectionKey];
     if (!cfg) return [];
-    if (cfg.composite) return fetchOtrosRows(rangeDays);
+    if (cfg.composite) return fetchOtrosRows(rangeDays, options);
 
     const userId = await getAuthUserId();
     if (!userId) return [];
 
     const startDate = getStartDateISO(rangeDays);
+    const cropId = normalizeCropId(options.cropId);
     let query = supabase.from(cfg.table)
         .select(cfg.columns)
         .eq('user_id', userId)
         .is('deleted_at', null);
+
+    if (cropId) {
+        query = query.eq('crop_id', cropId);
+    }
 
     if (startDate && cfg.dateField) {
         query = query.gte(cfg.dateField, startDate);
@@ -127,22 +139,26 @@ async function fetchSectionRows(sectionKey, rangeDays) {
     if (error) {
         console.warn(`[SECTION_STATS] Error fetching ${cfg.table}:`, error.message);
         if (error.message && error.message.includes('cliente')) {
-            return fetchSectionRowsFallback(sectionKey, rangeDays, userId);
+            return fetchSectionRowsFallback(sectionKey, rangeDays, userId, options);
         }
         return [];
     }
     return (data || []).filter(cfg.filterFn);
 }
 
-async function fetchSectionRowsFallback(sectionKey, rangeDays, userId) {
+async function fetchSectionRowsFallback(sectionKey, rangeDays, userId, options = {}) {
     const cfg = SECTIONS[sectionKey];
     if (!cfg) return [];
     const cols = cfg.columns.split(',').filter((c) => c.trim() !== 'cliente').join(',');
     const startDate = getStartDateISO(rangeDays);
+    const cropId = normalizeCropId(options.cropId);
     let query = supabase.from(cfg.table)
         .select(cols)
         .eq('user_id', userId)
         .is('deleted_at', null);
+    if (cropId) {
+        query = query.eq('crop_id', cropId);
+    }
     if (startDate && cfg.dateField) {
         query = query.gte(cfg.dateField, startDate);
     }
@@ -154,7 +170,7 @@ async function fetchSectionRowsFallback(sectionKey, rangeDays, userId) {
     return (data || []).filter(cfg.filterFn);
 }
 
-async function fetchOtrosRows(rangeDays) {
+async function fetchOtrosRows(rangeDays, options = {}) {
     const userId = await getAuthUserId();
     if (!userId) return [];
 
@@ -167,6 +183,7 @@ async function fetchOtrosRows(rangeDays) {
     ];
 
     const startDate = getStartDateISO(rangeDays);
+    const cropId = normalizeCropId(options.cropId);
     const allRows = [];
 
     for (const src of sources) {
@@ -177,8 +194,13 @@ async function fetchOtrosRows(rangeDays) {
         let query = supabase.from(src.table)
             .select(baseCols)
             .eq('user_id', userId)
-            .is('deleted_at', null)
-            .is('crop_id', null);
+            .is('deleted_at', null);
+
+        if (cropId) {
+            query = query.eq('crop_id', cropId);
+        } else {
+            query = query.is('crop_id', null);
+        }
 
         if (startDate) {
             query = query.gte(src.dateField, startDate);
@@ -355,6 +377,49 @@ function fmtCOP(n) {
     return 'COP ' + v.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+function slugify(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function readSelectedCropIdFromApp() {
+    if (typeof window === 'undefined') return null;
+    if (typeof window.getSelectedCropId === 'function') {
+        return normalizeCropId(window.getSelectedCropId());
+    }
+    return normalizeCropId(window.YG_AGRO_SELECTED_CROP_ID);
+}
+
+function buildScopeContext(sectionKey, cropId, cropsMap) {
+    const normalizedCropId = normalizeCropId(cropId);
+    if (!normalizedCropId) {
+        return {
+            cropId: null,
+            isGeneral: true,
+            scopeLabel: 'Vista general',
+            scopeCopy: sectionKey === 'otros'
+                ? 'Analitica agregada de movimientos sin cultivo asignado dentro de esta seccion.'
+                : 'Analitica agregada de todos los cultivos dentro de esta seccion.',
+            scopeSlug: 'vista-general'
+        };
+    }
+
+    const cropName = String(cropsMap?.[normalizedCropId] || '').trim() || 'Cultivo filtrado';
+    return {
+        cropId: normalizedCropId,
+        isGeneral: false,
+        scopeLabel: cropName,
+        scopeCopy: sectionKey === 'otros'
+            ? 'Analitica compuesta filtrada unicamente por ' + cropName + '.'
+            : 'Analitica filtrada unicamente por ' + cropName + '.',
+        scopeSlug: slugify(cropName) || 'cultivo-filtrado'
+    };
+}
+
 function formatMonthLabel(m) {
     if (!m || m === 'Sin fecha') return 'Sin fecha';
     const parts = m.split('-');
@@ -380,10 +445,16 @@ function renderPanel(sectionKey, stats) {
     destroySectionCharts(sectionKey);
     container.innerHTML = '';
     container.hidden = false;
+    container.appendChild(buildContextBar(stats));
+
+    // Range bar
+    container.appendChild(buildRangeBar(sectionKey, range));
 
     if (stats.count === 0) {
-        container.innerHTML = '<div class="agro-ss-empty"><p class="agro-ss-empty__text">No hay datos para este periodo.</p></div>';
-        container.appendChild(buildRangeBar(sectionKey, range));
+        const empty = document.createElement('div');
+        empty.className = 'agro-ss-empty';
+        empty.innerHTML = '<p class="agro-ss-empty__text">' + (stats.emptyText || 'No hay datos para este periodo.') + '</p>';
+        container.appendChild(empty);
         return;
     }
 
@@ -398,9 +469,6 @@ function renderPanel(sectionKey, stats) {
     kpiHTML += kpiCard(fmtUSD(stats.avg), 'Promedio (USD)');
     kpis.innerHTML = kpiHTML;
     container.appendChild(kpis);
-
-    // Range bar
-    container.appendChild(buildRangeBar(sectionKey, range));
 
     // Charts
     const chartsGrid = document.createElement('div');
@@ -456,6 +524,26 @@ function renderPanel(sectionKey, stats) {
 
 function kpiCard(value, label) {
     return '<div class="agro-ss-kpi"><span class="agro-ss-kpi__value">' + value + '</span><span class="agro-ss-kpi__label">' + label + '</span></div>';
+}
+
+function buildContextBar(stats) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'agro-ss-context';
+
+    const eyebrow = document.createElement('span');
+    eyebrow.className = 'agro-ss-context__eyebrow';
+    eyebrow.textContent = 'Contexto activo';
+
+    const value = document.createElement('strong');
+    value.className = 'agro-ss-context__value';
+    value.textContent = stats.scopeLabel || 'Vista general';
+
+    const copy = document.createElement('p');
+    copy.className = 'agro-ss-context__copy';
+    copy.textContent = stats.scopeCopy || 'Analitica agregada de todos los cultivos dentro de esta seccion.';
+
+    wrapper.append(eyebrow, value, copy);
+    return wrapper;
 }
 
 function createChartCard(title, canvasId) {
@@ -681,7 +769,8 @@ function buildSectionMD(sectionKey, stats) {
 
     let md = '# ' + cfg.icon + ' Estadisticas: ' + cfg.label + '\n\n';
     md += '**Fecha:** ' + now + '  \n';
-    md += '**Periodo:** ' + rangeLabel + '\n\n';
+    md += '**Periodo:** ' + rangeLabel + '  \n';
+    md += '**Contexto:** ' + escMd(stats.scopeLabel || 'Vista general') + '\n\n';
 
     md += '## KPIs\n\n';
     md += '| Metrica | Valor |\n|---|---|\n';
@@ -738,7 +827,6 @@ function downloadMD(filename, content) {
 // ORCHESTRATOR
 // ============================================================
 
-let loadInFlight = null;
 const prefersReducedMotion = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -751,29 +839,35 @@ function showLoading(sectionKey) {
 }
 
 async function loadSectionStats(sectionKey, range) {
-    if (loadInFlight === sectionKey) return;
-    loadInFlight = sectionKey;
-
+    const requestId = (sectionLoadSequence[sectionKey] || 0) + 1;
+    sectionLoadSequence[sectionKey] = requestId;
     activeSectionRange[sectionKey] = range || 'all';
     const days = TIME_RANGES.find((r) => r.key === (range || 'all'))?.days || null;
+    const cropId = readSelectedCropIdFromApp();
     showLoading(sectionKey);
 
     try {
         const [rows, cropsMap] = await Promise.all([
-            fetchSectionRows(sectionKey, days),
+            fetchSectionRows(sectionKey, days, { cropId }),
             getCropsMap()
         ]);
+        if (sectionLoadSequence[sectionKey] !== requestId) return;
+        const scopeContext = buildScopeContext(sectionKey, cropId, cropsMap);
         const stats = computeStats(sectionKey, rows, cropsMap);
+        Object.assign(stats, scopeContext, {
+            emptyText: scopeContext.isGeneral
+                ? 'No hay datos para este periodo en Vista general.'
+                : 'No hay datos para este periodo en ' + scopeContext.scopeLabel + '.'
+        });
         sectionStatsCache[sectionKey] = stats;
         renderPanel(sectionKey, stats);
     } catch (err) {
+        if (sectionLoadSequence[sectionKey] !== requestId) return;
         console.error('[SECTION_STATS] Error loading', sectionKey, err);
         const container = document.getElementById(sectionKey + '-dedicated-stats');
         if (container) {
             container.innerHTML = '<div class="agro-ss-empty"><p class="agro-ss-empty__text">Error al cargar estadisticas.</p></div>';
         }
-    } finally {
-        loadInFlight = null;
     }
 }
 
@@ -782,12 +876,29 @@ async function loadSectionStats(sectionKey, range) {
 // ============================================================
 
 export function initSectionStats() {
+    const reloadActiveStatsSection = () => {
+        const activeView = typeof document !== 'undefined'
+            ? String(document.body?.dataset?.agroActiveView || '').trim()
+            : '';
+        const activeSubview = typeof document !== 'undefined'
+            ? String(document.body?.dataset?.agroSubview || '').trim()
+            : '';
+        if (activeSubview !== 'stats' || !SECTIONS[activeView]) return;
+        const range = activeSectionRange[activeView] || 'all';
+        loadSectionStats(activeView, range);
+    };
+
     window.addEventListener('agro:shell:view-changed', (e) => {
         const { view, subview } = e.detail || {};
         if (subview === 'stats' && SECTIONS[view]) {
             const range = activeSectionRange[view] || 'all';
             loadSectionStats(view, range);
         }
+    });
+    window.addEventListener('agro:crop:changed', reloadActiveStatsSection);
+    window.addEventListener('AGRO_CROPS_READY', () => {
+        cropsMapCache = null;
+        reloadActiveStatsSection();
     });
 
     document.addEventListener('click', (e) => {
@@ -806,9 +917,11 @@ export function initSectionStats() {
             const section = exportBtn.dataset.ssExport;
             const stats = sectionStatsCache[section];
             if (stats) {
-                const cfg = SECTIONS[section];
                 const md = buildSectionMD(section, stats);
-                downloadMD('estadisticas-' + section + '-' + new Date().toISOString().split('T')[0] + '.md', md);
+                downloadMD(
+                    'estadisticas-' + section + '-' + (stats.scopeSlug || 'vista-general') + '-' + new Date().toISOString().split('T')[0] + '.md',
+                    md
+                );
             }
             return;
         }

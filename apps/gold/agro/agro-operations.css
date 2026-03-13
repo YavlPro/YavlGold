@@ -1247,6 +1247,42 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 
 /* ── Section Stats Panels ── */
 
+.agro-ss-context {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+  margin-bottom: 0.9rem;
+  padding: 0.78rem 0.88rem;
+  background: linear-gradient(180deg, rgba(200, 167, 82, 0.09), rgba(200, 167, 82, 0.03));
+  border: 1px solid rgba(200, 167, 82, 0.14);
+  border-radius: 12px;
+}
+
+.agro-ss-context__eyebrow {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(229, 213, 160, 0.68);
+}
+
+.agro-ss-context__value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.1;
+}
+
+.agro-ss-context__copy {
+  margin: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.58);
+  line-height: 1.35;
+}
+
 .agro-ss-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));

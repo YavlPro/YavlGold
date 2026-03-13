@@ -1323,3 +1323,92 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 3. Repetir en `Pagados`, `Perdidas`, `Donaciones` y `Otros`.
 4. Validar desktop (>900px), tablet (<=900px) y mobile (<=480px).
 5. Confirmar que insights y export MD siguen saliendo con el mismo contenido esperado.
+
+---
+
+## Sesion: Bugfix sincronizacion de cultivo en estadisticas por seccion (2026-03-12)
+
+### Diagnostico
+
+- El nombre/contexto visible del cultivo en vistas dedicadas no sale de `agro-section-stats.js`; hoy sale del monolito `apps/gold/agro/agro.js` a traves de `selectedCropId`, `get*DedicatedScopeLabel()` y los badges/status de cada vista dedicada.
+- `agro-section-stats.js` carga datos por seccion y por rango temporal, pero no lee `selectedCropId`, no escucha `agro:crop:changed` y no agrega el cultivo activo al fetch ni al export MD.
+- Resultado: el badge/contexto visible puede venir del selector real, pero los KPIs/charts/insights/export de la capa estadistica quedan en otro scope.
+- En `Otros` existe una segunda particularidad: la implementacion de stats general usa `crop_id IS NULL`, mientras el estado compartido de la app permite un cultivo concreto; esa logica tambien debe obedecer el contexto cuando haya cultivo seleccionado.
+
+### Causa raiz
+
+- La capa estadistica por seccion se implemento como modulo independiente, pero quedo aislada de la fuente de verdad del contexto de cultivo:
+  1. no consume `selectedCropId`;
+  2. no reacciona al evento `agro:crop:changed`;
+  3. su export MD solo conoce el rango temporal;
+  4. no renderiza un contexto propio, asi que depende visualmente del badge del monolito.
+
+### Plan quirurgico
+
+1. Leer el cultivo activo desde la fuente compartida existente, sin duplicar estado.
+2. Aplicar ese cultivo al fetch de estadisticas por seccion y soportar `Vista general`.
+3. Re-renderizar stats al cambiar cultivo si la subvista activa es `stats`.
+4. Incluir el contexto actual en el panel estadistico y en el export MD.
+5. Mantener la logica compuesta de `Otros`, pero respetando cultivo especifico cuando exista.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-section-stats.js`
+- `apps/gold/agro/agro-operations.css`
+- `apps/gold/agro/agro.js` (solo bridge minimo si hace falta)
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Si el modulo escucha el evento pero mantiene un guard de carga demasiado agresivo, puede dejar resultados stale al cambiar cultivo rapido.
+- Si el filtro por cultivo se aplica mal en `Otros`, se puede romper su semantica de vista compuesta.
+- Si el export MD no usa el mismo contexto que el panel renderizado, reaparecera drift entre UI y archivo exportado.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-section-stats.js`
+  - ahora lee el cultivo activo desde la fuente compartida (`window.getSelectedCropId` / `YG_AGRO_SELECTED_CROP_ID`);
+  - aplica filtro por cultivo en el fetch por seccion y mantiene `Vista general` cuando no hay cultivo seleccionado;
+  - en `Otros`, `Vista general` conserva `crop_id IS NULL`, pero un cultivo especifico aplica `eq('crop_id', cropId)` para seguir la logica compuesta real;
+  - agrega contexto visible dentro del panel stats (`Contexto activo`);
+  - incluye el contexto en el export MD y en el nombre del archivo exportado;
+  - escucha `agro:crop:changed` y `AGRO_CROPS_READY` para re-renderizar stats con el cultivo correcto;
+  - reemplaza el guard de carga fragil por control de request secuencial para evitar render stale cuando cambia rapido el cultivo.
+- `apps/gold/agro/agro-operations.css`
+  - agrega estilos V10 para el bloque de contexto visible de stats.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - se registran diagnostico, causa raiz, plan, fix y validacion de esta sesion.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (140 modules)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Validacion y QA
+
+- Validacion tecnica completada:
+  - la capa stats ya no depende solo de rango temporal; ahora usa tambien el cultivo activo compartido;
+  - el export MD incluye el contexto real del cultivo/vista general;
+  - el rerender por cambio de cultivo invalida respuestas viejas para no dejar KPIs/charts stale.
+- QA browser intentada sobre preview local:
+  - preview levantado en `http://localhost:4173/`;
+  - acceso a `/agro/` redirige a `/index.html#login` por ausencia de sesion real de Supabase;
+  - por esa razon no fue posible completar dentro de esta sesion la verificacion funcional en `Fiados > Estadisticas`, `Pagados` y otra seccion con datos reales del usuario.
+- Higiene QA:
+  - navegador Playwright cerrado;
+  - carpeta temporal Playwright `1773358761516` eliminada;
+  - preview local detenido al finalizar.
+
+### QA sugerido
+
+1. Entrar con sesion real a `Fiados > Estadisticas` y verificar que el bloque `Contexto activo` muestra `Vista general`.
+2. Seleccionar un cultivo distinto y confirmar que cambian KPIs, charts, insights y export MD.
+3. Volver a `Vista general` y confirmar que la data vuelve a agregarse en toda la seccion.
+4. Repetir al menos en `Pagados` y `Perdidas` o `Donaciones`.
+5. Revisar `Otros` en ambos escenarios:
+   - `Vista general` -> movimientos sin cultivo asignado;
+   - cultivo especifico -> movimientos compuestos de ese cultivo.
