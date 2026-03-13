@@ -2632,3 +2632,124 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
   - browser de Playwright;
   - carpeta temporal `C:\\Users\\yerik\\AppData\\Local\\Temp\\playwright-mcp-output\\1773431395120`
 - No se dejaron datos QA en produccion.
+
+---
+
+## Sesion activa: smoke QA de AgroRepo publicado en produccion (2026-03-13)
+
+### Diagnostico inicial
+
+- El commit `411250c` ya fue desplegado a produccion y requiere una validacion real corta, no un sandbox local.
+- El objetivo de esta sesion es confirmar que AgroRepo publicado no quedo roto en:
+  - carga inicial;
+  - arbol virtual;
+  - CRUD basico de carpeta/archivo;
+  - persistencia;
+  - exporte `.md`;
+  - usabilidad mobile.
+
+### Plan de QA
+
+1. Iniciar sesion en `https://www.yavlgold.com/agro/` con la cuenta QA local segun protocolo.
+2. Abrir AgroRepo publicado y verificar layout base en desktop.
+3. Crear una carpeta virtual y un archivo Markdown virtual dentro de ella.
+4. Editar contenido, guardar, reabrir y comprobar persistencia.
+5. Cambiar tipo y tags si el flujo publicado lo permite sin friccion.
+6. Exportar el `.md` y validar descarga/contenido basico.
+7. Repetir una pasada corta en mobile para apertura/cierre del arbol y estabilidad visual.
+8. Limpiar o documentar cualquier dato QA creado y cerrar temporales de Playwright.
+
+### Alcance
+
+- Smoke QA funcional en produccion.
+- Sin refactor ni cambios de producto salvo que aparezca un bug pequeno y quirurgico.
+- Validacion de una sola ruta operativa real, suficiente para confirmar que el deploy es sano.
+
+### Riesgos
+
+- El login puede volver a exigir captcha o interaccion manual.
+- Como AgroRepo es local-first, la persistencia real puede depender del dispositivo/browser de QA y no del backend.
+- Si el deploy productivo difiere del commit esperado, la sesion puede revelar desalineacion entre codigo subido y app servida.
+
+### QA ejecutado
+
+- Se abrio `https://www.yavlgold.com/agro/` con sesion valida de la cuenta QA.
+- Se abrio AgroRepo publicado en produccion y se verifico:
+  - carga inicial del arbol virtual;
+  - presencia del layout hibrido;
+  - persistencia local-first real en browser productivo;
+  - exporte `.md`;
+  - pasada mobile corta.
+- Se ejecuto el flujo real con un dataset QA temporal:
+  - carpeta `QA Smoke 2026-03-13` bajo `Cultivos`;
+  - archivo `2026-03-13-smoke.md`;
+  - contenido Markdown de diario;
+  - tipo `Decision`;
+  - tags `General`, `Riego`, `Clima`;
+  - guardado, reapertura y exporte.
+
+### Hallazgos
+
+- Bug 1: modales invisibles para crear carpeta/archivo
+  - severidad: alta
+  - pasos para reproducir:
+    1. abrir AgroRepo publicado en produccion;
+    2. pulsar `Nueva carpeta`, `Subcarpeta`, `Nuevo archivo .md` o `Crear archivo .md`;
+    3. observar la pantalla.
+  - comportamiento actual:
+    - la accion dispara el modal y este queda montado en DOM, pero con `visibility: hidden`;
+    - el usuario no ve el formulario y el flujo CRUD queda bloqueado visualmente.
+  - comportamiento esperado:
+    - el modal debe aparecer visible y usable en pantalla.
+  - evidencia tecnica:
+    - overlays `arw-modal-overlay` con `aria-hidden="false"` y `visibility: hidden`;
+    - el problema se reprodujo tanto en `Crear carpeta` como en `Crear archivo Markdown`.
+  - estado:
+    - documentado, no corregido en esta sesion de QA.
+
+### Resultado funcional detras del bug
+
+- Para continuar la smoke QA sin alterar el producto, se aplico solo en el navegador de prueba una sobreescritura temporal de visibilidad del modal.
+- Con esa maniobra diagnostica, el motor publicado si respondio correctamente:
+  - la carpeta temporal se creo;
+  - el archivo Markdown temporal se creo;
+  - el contenido persistio al reabrir;
+  - el cambio de tipo y tags actualizo arbol, resumen y timeline;
+  - el preview Markdown se renderizo correctamente;
+  - el exporte `.md` se descargo con contenido coherente.
+
+### Resultado mobile
+
+- En viewport `390x844`:
+  - el sidebar de AgroRepo inicia colapsado;
+  - `Abrir árbol` lo muestra correctamente;
+  - al seleccionar una carpeta el sidebar vuelve a cerrarse;
+  - el layout no exploto ni genero overflow horizontal evidente en la pasada corta.
+- El bug de modal invisible sigue siendo relevante en mobile porque afecta el mismo flujo CRUD.
+
+### Build status
+
+- No ejecutado.
+- Motivo: esta sesion fue solo QA productiva; no hubo cambios de codigo.
+
+### Higiene QA
+
+- El dataset QA temporal no se dejo persistente.
+- Se elimino `localStorage.agrorepo_virtual_v3` al cierre de la sesion para volver al baseline publicado:
+  - `Cultivos`, `Finanzas`, `Clima y campo`, `General`;
+  - `0` archivos;
+  - sin restos de `QA Smoke 2026-03-13`.
+- Se cerro Playwright/browser al cierre de la sesion.
+- Se elimino la carpeta temporal local de Playwright:
+  - `C:\\Users\\yerik\\AppData\\Local\\Temp\\playwright-mcp-output\\1773431395120`
+
+### QA sugerido
+
+1. Corregir primero la visibilidad de `arw-modal-overlay` en produccion.
+2. Despues del fix, repetir esta misma smoke QA sin sobreescrituras diagnosticas:
+   - crear carpeta;
+   - crear archivo;
+   - guardar;
+   - reabrir;
+   - exportar;
+   - validar mobile.
