@@ -1561,3 +1561,114 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 3. Probar `hover` y `active` en desktop y confirmar feedback discreto.
 4. Probar en mobile/tablet y confirmar que el scrollbar sigue siendo usable y ya no queda oculto para ese bloque.
 5. Repetir al menos en `Pagados` y otra seccion con contexto compartido.
+
+---
+
+## Sesion: QA browser real sobre main para sidebar, stats, selector compartido y AgroRepo (2026-03-13)
+
+### Diagnostico
+
+- El alcance de esta sesion es QA funcional y visual en browser real sobre main, priorizando sidebar/submenus, stats por seccion, selector compartido, containment de charts, exportes MD, AgroRepo y coherencia DNA V10.
+- El riesgo operativo principal sigue siendo el guard de auth: la experiencia Agro redirige a /index.html#login sin sesion valida de Supabase, y QA anteriores quedaron bloqueadas por ausencia de sesion real.
+- Antes de corregir nada, esta sesion intentara reproducir flujos reales con preview local y navegador automatizado.
+
+### Causa raiz
+
+- Aun no determinada para bugs funcionales; primero se necesita validar si la app es alcanzable con sesion real desde el entorno de QA.
+
+### Plan quirurgico
+
+1. Confirmar main, levantar preview local y abrir la app con navegador real.
+2. Ejecutar QA de sidebar, submenus, stats, selector compartido, exports y AgroRepo hasta donde permita la sesion.
+3. Si aparecen bugs pequenos y claros, aplicar fix quirurgico y revalidar.
+4. Ejecutar pnpm build:gold, cerrar browser/contexto, limpiar temporales y actualizar plan maestro.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- codigo solo si QA reproduce bugs pequenos y acotados.
+
+### Riesgos
+
+- Sin sesion real, la QA funcional sobre datos reales puede quedar limitada al guard/login y no a los modulos internos.
+- Forzar bypass de auth invalidaria el objetivo de probar la app real.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - se documenta la sesion de QA browser real, los bloqueos del entorno y el estado actualizado del plan maestro.
+- Ajustes temporales de entorno local, no persistidos en git:
+  - se levanto `pnpm -C apps/gold preview --host 127.0.0.1 --port 4174`;
+  - se intento `pnpm -C apps/gold dev --host 127.0.0.1 --port 4175`;
+  - se levanto `supabase start --exclude studio,postgres-meta,logflare,vector,edge-runtime,imgproxy,storage-api`;
+  - se uso un servidor estatico sobre `apps/gold/dist` en `127.0.0.1:4176`;
+  - se sincronizo temporalmente `apps/gold/.env` con la publishable key local de Supabase para esta QA y luego se revirtio al valor previo.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (140 modules)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Validacion y QA
+
+- Browser real ejecutado sobre `main`:
+  - `http://127.0.0.1:4174/agro/` y luego `http://127.0.0.1:4175/agro/` / `http://127.0.0.1:4176/index.html#login` se abrieron en Playwright;
+  - se confirmo el gate real: `/agro/` redirige a `/index.html#login` sin sesion valida;
+  - se confirmo que el modal real de auth carga y que registro/login pasan por hCaptcha real.
+- Hallazgos operativos bloqueantes:
+  1. `QA-BLOCKER-01` — hCaptcha bloquea la automatizacion del registro/login real:
+     - reproduccion: abrir `index.html#login`, ir a `Registro`, completar datos y enviar;
+     - resultado: hCaptcha muestra desafio visual manual y frena la continuacion automatizada;
+     - severidad: Alta para QA automatizada, no clasificado como bug funcional del producto.
+  2. `QA-BLOCKER-02` — entorno Supabase local incompleto / inestable:
+     - `supabase start` completo falla en Windows por servicios auxiliares (`vector`/health checks);
+     - el backend solo pudo arrancarse parcialmente con exclusiones;
+     - durante la sesion el daemon Docker dejo de responder y `127.0.0.1:54321` paso a `connection refused`;
+     - severidad: Alta para QA local.
+  3. `QA-BLOCKER-03` — el backend local levantado no expone tablas `agro_*` en PostgREST:
+     - evidencia: el OpenAPI en `/rest/v1/` no contiene rutas `agro_*`, y requests a `/rest/v1/agro_crops` / `/rest/v1/profiles` responden `404`;
+     - impacto: aunque exista una sesion de auth local, no hay superficie de datos Agro verificable para stats, AgroRepo ni exports;
+     - severidad: Alta.
+- Alcance efectivamente validado:
+  - redirect de guard auth a login;
+  - carga visual real de la landing + modal auth;
+  - presencia real de hCaptcha en el flujo;
+  - build de `main`.
+- Alcance NO validado por bloqueo de entorno:
+  - sidebar/submenus dentro de Agro autenticado;
+  - stats por seccion con datos reales;
+  - selector compartido de cultivos en estadisticas;
+  - containment real de charts en runtime con data;
+  - exportes MD;
+  - AgroRepo autenticado;
+  - wizard/contexto IA interno.
+
+### Estado Del Plan Maestro
+
+1. Hecho
+   - Cerrar onboarding / wizard de perfil para alimentar contexto de IA.
+   - Fortalecer AgroRepo como memoria operativa.
+2. Muy avanzado
+   - Blindar facturero y transferencias.
+   - Terminar estadisticas individuales y exportes por seccion.
+     - Implementacion y build estan listos, pero NO se marca como Hecho porque la QA browser real de hoy quedo bloqueada por entorno/auth local.
+3. Pendiente
+   - Hacer QA integral final.
+     - Esta sesion avanzo el diagnostico de entorno, pero no pudo cerrar la validacion funcional real de Agro.
+
+### QA sugerido
+
+1. Ejecutar QA en un entorno con sesion valida reutilizable o con Supabase local completo y tablas `agro_*` expuestas.
+2. Repetir sobre browser real autenticado:
+   - sidebar/submenus en `Pagados`, `Fiados`, `Perdidas`, `Donaciones`, `Otros`;
+   - stats por seccion con rangos, selector compartido y exportes MD;
+   - AgroRepo (crear, editar, filtrar, markdown);
+   - visual DNA 10 en desktop y mobile.
+3. Si se mantiene el flujo local:
+   - estabilizar `supabase start` en Windows;
+   - alinear la publishable key local y una sesion QA reutilizable antes de repetir Playwright.
+
