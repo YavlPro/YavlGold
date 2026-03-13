@@ -59,6 +59,69 @@ let cyclesRefreshQueued = false;
 const cyclesOpenBreakdownSnapshot = new Set();
 let cropsRefreshEventsBound = false;
 const pendingTransferInFlightLocks = new Set();
+let cyclesWorkspaceSnapshot = createEmptyCyclesWorkspaceSnapshot();
+
+function createEmptyCyclesWorkspaceSnapshot() {
+    return {
+        active: [],
+        finished: [],
+        lost: [],
+        auditCount: 0,
+        summary: {
+            active: 0,
+            finished: 0,
+            lost: 0,
+            audit: 0,
+            closed: 0,
+            total: 0
+        },
+        updatedAt: null
+    };
+}
+
+function buildCyclesWorkspaceSnapshot(payload = {}) {
+    const active = Array.isArray(payload.active) ? payload.active : [];
+    const finished = Array.isArray(payload.finished) ? payload.finished : [];
+    const lost = Array.isArray(payload.lost) ? payload.lost : [];
+    const auditCount = Math.max(0, Number(payload.auditCount || 0) || 0);
+    const total = Number.isFinite(Number(payload.total))
+        ? Number(payload.total)
+        : (active.length + finished.length + lost.length);
+    return {
+        active,
+        finished,
+        lost,
+        auditCount,
+        summary: {
+            active: active.length,
+            finished: finished.length,
+            lost: lost.length,
+            audit: auditCount,
+            closed: finished.length + lost.length,
+            total
+        },
+        updatedAt: String(payload.updatedAt || new Date().toISOString())
+    };
+}
+
+function publishCyclesWorkspaceSnapshot(snapshot = null) {
+    cyclesWorkspaceSnapshot = snapshot && typeof snapshot === 'object'
+        ? snapshot
+        : createEmptyCyclesWorkspaceSnapshot();
+    if (typeof window === 'undefined') return;
+    window._agroCyclesWorkspace = Object.assign(window._agroCyclesWorkspace || {}, {
+        getSnapshot: () => cyclesWorkspaceSnapshot
+    });
+    window.dispatchEvent(new CustomEvent('agro:cycles:snapshot', {
+        detail: cyclesWorkspaceSnapshot
+    }));
+}
+
+if (typeof window !== 'undefined') {
+    window._agroCyclesWorkspace = Object.assign(window._agroCyclesWorkspace || {}, {
+        getSnapshot: () => cyclesWorkspaceSnapshot
+    });
+}
 
 const CROPS_LOADING_ID = 'agro-crops-loading';
 const CROPS_EMPTY_ID = 'agro-crops-empty';
@@ -10329,6 +10392,12 @@ function buildActiveCycleCardsData(crops, options = {}) {
             inversionUSD: baseInvestment,
             rentabilidad: net,
             potencialNeto: potential,
+            baseInvestmentUsd: baseInvestment,
+            gastosUsd: expenseInvestment,
+            pagadosUsd: incomeTotal,
+            costosUsd: totalCosts,
+            fiadosUsd: pendingTotal,
+            perdidasUsd: lossesTotal,
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
                 displayName: displayCrop.name
@@ -10418,6 +10487,12 @@ function buildFinishedCycleCardsData(crops, options = {}) {
             inversionUSD: baseInvestment,
             rentabilidad: finalNet,
             potencialNeto: finalNet,
+            baseInvestmentUsd: baseInvestment,
+            gastosUsd: expenseInvestment,
+            pagadosUsd: incomeTotal,
+            costosUsd: totalCosts,
+            fiadosUsd: pendingTotal,
+            perdidasUsd: lossesTotal,
             mode: 'finished',
             globalBreakdown: buildCycleGlobalBreakdown(crop, {
                 globalTotalsByCropType,
@@ -10587,7 +10662,7 @@ function buildNoActiveCropsCard(finishedCount = 0) {
         icon: '📚',
         title: 'No tienes cultivos activos',
         subtitle: finishedCount > 0
-            ? `Revisa Historial de ciclos (${finishedCount}) para ver cultivos terminados`
+            ? `Revisa Ciclos finalizados (${finishedCount}) para ver ciclos cerrados`
             : 'Crea un nuevo cultivo para iniciar un ciclo',
         titleColor: 'var(--v10-gold-4, #C8A752)',
         titleWeight: '600'
@@ -10602,7 +10677,7 @@ function createCycleHistoryGroupSection(config = {}) {
     const title = document.createElement('p');
     title.id = String(config.titleId || '').trim();
     title.className = `crop-history-group-title${config.titleClass ? ` ${config.titleClass}` : ''}`;
-    title.textContent = String(config.titleText || 'Historial de ciclos');
+    title.textContent = String(config.titleText || 'Ciclos finalizados');
 
     const grid = document.createElement('div');
     grid.id = String(config.gridId || '').trim();
@@ -10615,6 +10690,7 @@ function createCycleHistoryGroupSection(config = {}) {
 function ensureCropCycleHistorySection() {
     const cropsSection = document.querySelector('.crops-section');
     if (!cropsSection) return null;
+    const historyHost = document.getElementById('agro-cycles-history-slot') || cropsSection;
 
     let details = document.getElementById(CROP_CYCLE_HISTORY_SECTION_ID);
     if (!details) {
@@ -10636,7 +10712,7 @@ function ensureCropCycleHistorySection() {
         const title = document.createElement('span');
         title.className = 'yg-accordion-title';
         title.id = CROP_CYCLE_HISTORY_TITLE_ID;
-        title.textContent = 'Historial de ciclos (0)';
+        title.textContent = 'Ciclos finalizados y trazabilidad (0)';
 
         const chevron = document.createElement('span');
         chevron.className = 'yg-accordion-chevron';
@@ -10655,13 +10731,13 @@ function ensureCropCycleHistorySection() {
             sectionId: CROP_CYCLE_FINISHED_SECTION_ID,
             titleId: CROP_CYCLE_FINISHED_TITLE_ID,
             gridId: CROP_CYCLE_HISTORY_GRID_ID,
-            titleText: 'Historial de ciclos finalizados (0)'
+            titleText: 'Ciclos finalizados (0)'
         });
         const lostGroup = createCycleHistoryGroupSection({
             sectionId: CROP_CYCLE_LOST_SECTION_ID,
             titleId: CROP_CYCLE_LOST_TITLE_ID,
             gridId: CROP_CYCLE_LOST_GRID_ID,
-            titleText: 'Historial de ciclos perdidos (0)',
+            titleText: 'Ciclos perdidos (0)',
             titleClass: 'crop-history-group-title-lost'
         });
 
@@ -10710,7 +10786,11 @@ function ensureCropCycleHistorySection() {
 
         content.append(finishedGroup.section, lostGroup.section, auditDetails);
         details.append(summary, content);
-        cropsSection.appendChild(details);
+        historyHost.appendChild(details);
+    }
+
+    if (details.parentElement !== historyHost) {
+        historyHost.appendChild(details);
     }
 
     let contentEl = details.querySelector(`#${CROP_CYCLE_HISTORY_SECTION_ID}-content`) || details.querySelector('.yg-accordion-content');
@@ -10775,7 +10855,7 @@ function ensureCropCycleHistorySection() {
             sectionId: CROP_CYCLE_FINISHED_SECTION_ID,
             titleId: CROP_CYCLE_FINISHED_TITLE_ID,
             gridId: CROP_CYCLE_HISTORY_GRID_ID,
-            titleText: 'Historial de ciclos finalizados (0)'
+            titleText: 'Ciclos finalizados (0)'
         });
         if (legacyFinishedGridEl
             && legacyFinishedGridEl !== group.grid
@@ -10792,7 +10872,7 @@ function ensureCropCycleHistorySection() {
             sectionId: CROP_CYCLE_LOST_SECTION_ID,
             titleId: CROP_CYCLE_LOST_TITLE_ID,
             gridId: CROP_CYCLE_LOST_GRID_ID,
-            titleText: 'Historial de ciclos perdidos (0)',
+            titleText: 'Ciclos perdidos (0)',
             titleClass: 'crop-history-group-title-lost'
         });
         contentEl.insertBefore(group.section, auditDetailsEl);
@@ -10971,13 +11051,13 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
     details.style.display = 'block';
 
     if (titleEl) {
-        titleEl.textContent = `Historial de ciclos (${closedCrops.length})`;
+        titleEl.textContent = `Ciclos finalizados y trazabilidad (${closedCrops.length})`;
     }
     if (finishedTitleEl) {
-        finishedTitleEl.textContent = `Historial de ciclos finalizados (${finishedCrops.length})`;
+        finishedTitleEl.textContent = `Ciclos finalizados (${finishedCrops.length})`;
     }
     if (lostTitleEl) {
-        lostTitleEl.textContent = `Historial de ciclos perdidos (${lostCrops.length})`;
+        lostTitleEl.textContent = `Ciclos perdidos (${lostCrops.length})`;
     }
     if (!finishedGridEl || !lostGridEl) return;
 
@@ -11040,7 +11120,7 @@ function renderCropCycleHistory(crops, orphanCrops = [], options = {}) {
  * Carga cultivos del usuario (Supabase + LocalStorage fallback)
  */
 export async function loadCrops() {
-    const cropsGrid = document.querySelector('.crops-section > .crops-grid');
+    const cropsGrid = document.getElementById('cyclesContainer');
     if (!cropsGrid) return;
 
     const requestId = ++cropsLoadSeq;
@@ -11168,7 +11248,14 @@ export async function loadCrops() {
             syncLazyCropConsumers(cropsCache);
             logAgroDebug('[AGRO] renderCrops START', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             renderEmptyCropsState(cropsGrid);
-            hideCropCycleHistorySection();
+            renderCropCycleHistory([], [], {
+                expenseTotalsByCrop,
+                incomeTotalsByCrop,
+                lossTotalsByCrop,
+                pendingTotalsByCrop,
+                missingRateCountsByCrop
+            });
+            publishCyclesWorkspaceSnapshot(createEmptyCyclesWorkspaceSnapshot());
             logAgroDebug('[AGRO] renderCrops END', { ts: new Date().toISOString(), seq: requestId, count: 0 });
             const hadSelection = !!selectedCropId;
             setSelectedCropId(null, { silent: true });
@@ -11224,6 +11311,25 @@ export async function loadCrops() {
             cycles: activeCycleCards,
             emptyStateText: emptyActiveText
         });
+        const { finished: visibleClosedFinishedCrops, lost: visibleLostCrops } = splitClosedCycleHistory(visibleFinishedCrops);
+        const finishedCycleCards = buildFinishedCycleCardsData(visibleClosedFinishedCrops, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop,
+            globalTotalsByCropType,
+            groupType: 'finished'
+        });
+        const lostCycleCards = buildFinishedCycleCardsData(visibleLostCrops, {
+            expenseTotalsByCrop,
+            incomeTotalsByCrop,
+            lossTotalsByCrop,
+            pendingTotalsByCrop,
+            missingRateCountsByCrop,
+            globalTotalsByCropType,
+            groupType: 'lost'
+        });
         renderCropCycleHistory(visibleFinishedCrops, orphanFinishedCrops, {
             expenseTotalsByCrop,
             incomeTotalsByCrop,
@@ -11232,6 +11338,13 @@ export async function loadCrops() {
             missingRateCountsByCrop,
             globalTotalsByCropType
         });
+        publishCyclesWorkspaceSnapshot(buildCyclesWorkspaceSnapshot({
+            active: activeCycleCards,
+            finished: finishedCycleCards,
+            lost: lostCycleCards,
+            auditCount: orphanFinishedCrops.length,
+            total: crops.length
+        }));
         if (selectedCropChangedAfterFetch) {
             dispatchCropChanged();
         }
@@ -12720,14 +12833,14 @@ function renderOpsCultivosPanel() {
     historyButton.setAttribute(
         'aria-label',
         finishedCrops.length > 0
-            ? `Ir al historial de ciclos (${finishedCrops.length})`
-            : 'Ir al historial de ciclos'
+            ? `Ir a ciclos finalizados (${finishedCrops.length})`
+            : 'Ir a ciclos finalizados'
     );
 
     if (finishedNote) {
         finishedNote.textContent = finishedCrops.length > 0
-            ? `${finishedCrops.length} ciclos cerrados viven en Historial de ciclos.`
-            : 'Finalizados y perdidos viven en Historial de ciclos.';
+            ? `${finishedCrops.length} ciclos cerrados viven en Ciclos finalizados.`
+            : 'Finalizados y perdidos viven en Ciclos finalizados.';
     }
 }
 

@@ -21,13 +21,25 @@ const CORE_OPERATIONS_TABS = new Set([
     'otros'
 ]);
 
-const VIEWS_WITH_SUBNAV = new Set(['pagados', 'fiados', 'perdidas', 'donaciones', 'otros']);
+const VIEW_ALIASES = Object.freeze({
+    cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' })
+});
+
+const VIEW_SUBNAV_CONFIG = Object.freeze({
+    ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
+    pagados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
+    fiados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
+    perdidas: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
+    donaciones: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
+    otros: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] })
+});
+
+const VIEWS_WITH_SUBNAV = new Set(Object.keys(VIEW_SUBNAV_CONFIG));
 
 const VIEW_CONFIG = Object.freeze({
     perfil: { region: 'perfil', label: 'Mi Perfil', focusSelector: '[data-agro-shell-region="perfil"]' },
     dashboard: { region: 'dashboard', label: 'Dashboard Agro', focusSelector: '[data-agro-shell-region="dashboard"]' },
-    cultivos: { region: 'cultivos', label: 'Cultivos activos', focusSelector: '[data-agro-shell-region="cultivos"]' },
-    ciclos: { region: 'cultivos', label: 'Historial de ciclos', focusSelector: '#crops-cycle-history-accordion' },
+    ciclos: { region: 'cultivos', label: 'Ciclos de cultivos', focusSelector: '#agro-cycles-finished-view' },
     operaciones: { region: 'ops', label: 'Operaciones', resolveTab: resolveOperationsTab, dense: true },
     pagados: { region: 'ops', label: 'Pagados', tab: 'ingresos', focusSelector: '#agro-pagados-dedicated', dense: true },
     fiados: { region: 'ops', label: 'Fiados', tab: 'pendientes', focusSelector: '#agro-fiados-dedicated', dense: true },
@@ -49,17 +61,40 @@ function resolveOperationsTab() {
     return 'gastos';
 }
 
+function normalizeViewToken(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function resolveViewAlias(value) {
+    const token = normalizeViewToken(value);
+    return VIEW_ALIASES[token] || null;
+}
+
 function normalizeView(value) {
-    const token = String(value || '').trim().toLowerCase();
+    const token = normalizeViewToken(value);
+    if (VIEW_ALIASES[token]) {
+        return VIEW_ALIASES[token].view;
+    }
     return Object.prototype.hasOwnProperty.call(VIEW_CONFIG, token) ? token : AGRO_DEFAULT_VIEW;
 }
 
-function readStoredView() {
+function normalizeSubview(view, subview) {
+    const config = VIEW_SUBNAV_CONFIG[view];
+    if (!config) return '';
+    const token = normalizeViewToken(subview);
+    return config.allowed.includes(token) ? token : config.defaultSubview;
+}
+
+function readStoredViewToken() {
     try {
-        return normalizeView(localStorage.getItem(AGRO_ACTIVE_VIEW_KEY));
+        return String(localStorage.getItem(AGRO_ACTIVE_VIEW_KEY) || '').trim();
     } catch (_err) {
-        return AGRO_DEFAULT_VIEW;
+        return '';
     }
+}
+
+function readStoredView() {
+    return normalizeView(readStoredViewToken());
 }
 
 function writeStoredView(view) {
@@ -120,24 +155,68 @@ function updateAccordionState(id, isOpen) {
     }
 }
 
-function syncCultivosSubview(view) {
-    const isHistoryView = view === 'ciclos';
+const CYCLE_SUBVIEW_META = Object.freeze({
+    activos: Object.freeze({
+        title: 'Ciclos activos',
+        copy: 'Operacion y seguimiento de ciclos en curso',
+        focusSelector: '#cyclesContainer'
+    }),
+    finalizados: Object.freeze({
+        title: 'Ciclos finalizados',
+        copy: 'Historial de cierres, perdidas y auditoria de ciclos',
+        focusSelector: '#agro-cycles-finished-view'
+    }),
+    comparar: Object.freeze({
+        title: 'Comparar ciclos',
+        copy: 'Cruza rendimiento, duracion y resultado entre dos ciclos',
+        focusSelector: '#agro-cycle-compare-root'
+    }),
+    estadisticas: Object.freeze({
+        title: 'Estadisticas de ciclos',
+        copy: 'Lectura global del portafolio con insights y exportes',
+        focusSelector: '#agro-global-stats-panel'
+    })
+});
+
+function resolveCycleSubviewMeta(subview) {
+    const token = normalizeSubview('ciclos', subview);
+    return CYCLE_SUBVIEW_META[token] || CYCLE_SUBVIEW_META.finalizados;
+}
+
+function syncCycleStatsPanel(subview) {
+    const panel = document.getElementById('agro-global-stats-panel');
+    const body = document.getElementById('agro-global-stats-body');
+    if (!panel || !body) return;
+    const isStatsView = subview === 'estadisticas';
+    panel.classList.toggle('is-expanded', isStatsView);
+    body.hidden = !isStatsView;
+}
+
+function syncCultivosSubview(view, subview) {
     const title = document.getElementById('crops-section-title');
     const subtitle = document.getElementById('crops-section-subtitle');
+    const isCyclesView = view === 'ciclos';
+    const meta = isCyclesView
+        ? resolveCycleSubviewMeta(subview)
+        : {
+            title: 'Ciclos de cultivos',
+            copy: 'Activos, cierres, comparacion y estadistica en una sola familia'
+        };
 
     if (title) {
-        title.textContent = isHistoryView
-            ? (title.dataset.historyLabel || 'Historial de ciclos')
-            : (title.dataset.activeLabel || 'Cultivos activos');
+        title.textContent = meta.title;
     }
 
     if (subtitle) {
-        subtitle.textContent = isHistoryView
-            ? (subtitle.dataset.historyCopy || 'Finalizados, perdidos y auditoria de ciclos cerrados')
-            : (subtitle.dataset.activeCopy || 'Gestion de ciclos en produccion');
+        subtitle.textContent = meta.copy;
     }
 
-    updateAccordionState('crops-cycle-history-accordion', isHistoryView);
+    updateAccordionState('crops-cycle-history-accordion', isCyclesView && subview === 'finalizados');
+    syncCycleStatsPanel(isCyclesView ? subview : '');
+}
+
+function resolveCycleFocusSelector(subview) {
+    return resolveCycleSubviewMeta(subview).focusSelector || '[data-agro-shell-region="cultivos"]';
 }
 
 function clickIfExists(selector) {
@@ -186,9 +265,12 @@ export function initAgroShell() {
     const toggle = document.getElementById('agro-shell-toggle');
     if (!sidebar || !backdrop || !toggle) return null;
 
-    let activeView = readStoredView();
+    const storedViewToken = readStoredViewToken();
+    let activeView = normalizeView(storedViewToken);
+    let activeSubview = normalizeSubview(activeView, resolveViewAlias(storedViewToken)?.subview);
     let sidebarOpen = false;
     let ignoreToggleHitClose = false;
+    let expandedNavParent = VIEWS_WITH_SUBNAV.has(activeView) ? activeView : null;
 
     const topLevelRegions = Array.from(document.querySelectorAll('[data-agro-shell-region]'));
     const isPointerInsideToggle = (event) => {
@@ -227,9 +309,6 @@ export function initAgroShell() {
         syncSubnav();
     };
 
-    let activeSubview = 'historial';
-    let expandedNavParent = null;
-
     const syncSubnav = () => {
         document.querySelectorAll('.agro-shell-subnav').forEach((nav) => {
             const parent = nav.closest('[data-agro-nav-parent]');
@@ -248,7 +327,10 @@ export function initAgroShell() {
         document.querySelectorAll('[data-agro-nav-toggle]').forEach((btn) => {
             const toggleView = normalizeView(btn.dataset.agroNavToggle);
             const isActive = toggleView === activeView;
+            const isExpanded = expandedNavParent === toggleView;
             btn.classList.toggle('is-active', isActive);
+            btn.classList.toggle('is-expanded', isExpanded);
+            btn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
             if (isActive) {
                 btn.setAttribute('aria-current', 'page');
             } else {
@@ -266,7 +348,10 @@ export function initAgroShell() {
 
         document.querySelectorAll('[data-agro-view]').forEach((button) => {
             if (button.classList.contains('agro-shell-sublink')) return;
-            const isActive = normalizeView(button.dataset.agroView) === activeView;
+            const buttonView = normalizeView(button.dataset.agroView);
+            const buttonSubview = String(button.dataset.agroSubview || '').trim();
+            const isActive = buttonView === activeView
+                && (!buttonSubview || normalizeSubview(buttonView, buttonSubview) === activeSubview);
             button.classList.toggle('is-active', isActive);
             if (isActive) {
                 button.setAttribute('aria-current', 'page');
@@ -315,9 +400,11 @@ export function initAgroShell() {
             updateAccordionState('yg-acc-agrorepo', false);
         }
 
-        syncCultivosSubview(view);
+        syncCultivosSubview(view, activeSubview);
 
-        const focusSelector = config.focusSelector || `[data-agro-shell-region="${config.region}"]`;
+        const focusSelector = view === 'ciclos'
+            ? resolveCycleFocusSelector(activeSubview)
+            : (config.focusSelector || `[data-agro-shell-region="${config.region}"]`);
         focusTarget(focusSelector, options);
 
         if (view === 'perfil' && typeof window.syncPerfilViewFromProfile === 'function') {
@@ -328,7 +415,7 @@ export function initAgroShell() {
             window.openAgroAssistantInline();
         }
 
-        if (view === 'ciclos' && typeof window.loadAgroGlobalStats === 'function') {
+        if (view === 'ciclos' && activeSubview === 'estadisticas' && typeof window.loadAgroGlobalStats === 'function') {
             window.loadAgroGlobalStats();
         }
 
@@ -343,13 +430,11 @@ export function initAgroShell() {
 
     const setActiveView = (nextView, options = {}) => {
         const view = normalizeView(nextView);
+        const aliasSubview = resolveViewAlias(nextView)?.subview || '';
         const config = VIEW_CONFIG[view] || VIEW_CONFIG[AGRO_DEFAULT_VIEW];
         activeView = view;
-        if (VIEWS_WITH_SUBNAV.has(view)) {
-            activeSubview = options.subview || 'historial';
-        } else {
-            activeSubview = 'historial';
-        }
+        activeSubview = normalizeSubview(view, options.subview || aliasSubview);
+        expandedNavParent = VIEWS_WITH_SUBNAV.has(view) ? view : expandedNavParent;
         writeStoredView(view);
         syncRegions(config.region);
         syncViewButtons();
@@ -423,13 +508,16 @@ export function initAgroShell() {
     });
 
     window.addEventListener('agro:shell:set-view', (event) => {
-        const nextView = normalizeView(event.detail?.view);
-        setActiveView(nextView, { scroll: event.detail?.scroll !== false });
+        const nextView = event.detail?.view;
+        setActiveView(nextView, {
+            scroll: event.detail?.scroll !== false,
+            subview: event.detail?.subview
+        });
     });
 
     sidebar.setAttribute('inert', '');
     closeSidebar();
-    setActiveView(activeView, { scroll: false, syncTab: true });
+    setActiveView(activeView, { scroll: false, syncTab: true, subview: activeSubview });
     document.body.classList.add('agro-shell-ready');
 
     return {

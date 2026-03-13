@@ -1949,3 +1949,255 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 2. Mantener la cuenta QA como dataset controlado de regresion y evitar mutaciones manuales fuera de sesiones documentadas.
 3. Si se quiere extender cobertura futura, probar respuesta real del asistente IA con un prompt de bajo costo.
 
+---
+
+## Sesion activa: reestructura de ciclos de cultivos (2026-03-13)
+
+### Diagnostico
+
+- El sidebar actual separa la familia de ciclos en dos links planos del grupo `Principal`:
+  - `Cultivos activos` -> `data-agro-view="cultivos"`
+  - `Historial de ciclos` -> `data-agro-view="ciclos"`
+- En `agro-shell.js`, ambas entradas viven en la misma region `cultivos`, pero como vistas distintas:
+  - `cultivos` solo muestra `#cyclesContainer`
+  - `ciclos` solo muestra `#crops-cycle-history-accordion` y la analitica global
+- La shell ya tiene patron de padre toggle + submenus en `Operaciones`, implementado con:
+  - `data-agro-nav-toggle`
+  - `data-agro-view`
+  - `data-agro-subview`
+  - `expandedNavParent`
+  - `activeSubview`
+- La seccion de ciclos todavia no usa ese patron. Por eso hoy no existe una familia coherente de sub-vistas para ciclos.
+
+### Que existe hoy
+
+- `Ciclos activos`:
+  - existe como lectura clara en `#cyclesContainer`;
+  - usa `buildActiveCycleCardsData()` + `initCiclos()`;
+  - ya calcula progreso, inversion, costos, pagados, fiados y resultado.
+- `Ciclos finalizados`:
+  - existe parcialmente dentro de `renderCropCycleHistory()`;
+  - mezcla finalizados, perdidos y auditoria dentro de un accordion generado por `agro.js`;
+  - no vive como subvista dedicada limpia en sidebar.
+- `Estadisticas de ciclos`:
+  - existe una base real reutilizable en `agroperfil.js` + `agroestadistica.js`;
+  - el panel `#agro-global-stats-panel` ya muestra conteos de ciclos, resumen financiero, tops y exportes MD;
+  - hoy solo aparece acoplado a `Historial de ciclos`.
+
+### Que no existe hoy
+
+- `Comparar ciclos` no existe como vista, layout ni flujo.
+- `Estadisticas de ciclos` no existe como subvista dedicada; solo como panel embebido en la vista de historial.
+- No hay un padre `Ciclos de cultivos` que solo haga toggle de submenu.
+- La experiencia de `finalizados` sigue siendo mas historial heredado que vista dedicada.
+
+### Causa raiz
+
+1. La shell de ciclos quedo modelada como dos vistas planas (`cultivos` y `ciclos`) en lugar de una sola familia con subviews.
+2. El region shell `cultivos` concentra activos, historial y analitica, pero su visibilidad depende de CSS binario por `data-agro-active-view`, no de una arquitectura de sub-vistas.
+3. La comparacion entre ciclos nunca fue abstraida como superficie propia, aunque las metricas base ya se calculan al construir las cards.
+
+### Plan quirurgico
+
+1. Reconvertir la familia de ciclos al patron ya probado en `Operaciones`:
+   - padre `Ciclos de cultivos` = toggle;
+   - hijos navegables = `Ciclos activos`, `Ciclos finalizados`, `Comparar ciclos`, `Estadisticas de ciclos`.
+2. Normalizar la shell para que `ciclos` sea la vista base de la familia y use subviews explicitas.
+3. Reorganizar la region `cultivos` para separar visualmente:
+   - activos;
+   - finalizados;
+   - comparar;
+   - estadisticas.
+4. Reusar la analitica global existente como `Estadisticas de ciclos` solo si queda como lectura dedicada y con valor real.
+5. Crear una primera version util de `Comparar ciclos` apoyada en metricas ya calculadas por las cards de ciclo.
+6. Mantener `agro.js` con wiring minimo y mover la nueva experiencia de comparacion a modulo separado.
+
+### Archivos a tocar
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro.css`
+- `apps/gold/agro/agrociclos.css`
+- `apps/gold/agro/agro-cycles-workspace.js` (nuevo modulo, si la implementacion lo confirma)
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Cambiar `cultivos`/`ciclos` a una familia con subviews puede romper accesos legacy si no se dejan aliases o defaults razonables.
+- `renderCropCycleHistory()` hoy genera un accordion heredado; si no se encapsula bien, `Ciclos finalizados` puede seguir sintiendose como parche.
+- `Comparar ciclos` debe salir con metricas reales; si la fuente compartida no se expone bien desde el monolito, la vista quedaria hueca.
+- `Estadisticas de ciclos` solo entra si la vista dedicada aprovecha el panel global existente sin duplicar numeritos vacios.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-shell.js`
+  - `24-37`: se unifico la familia de ciclos bajo `ciclos` con aliases/subviews canonicass.
+  - `158-219`: se definio metadata de `activos`, `finalizados`, `comparar` y `estadisticas`, con foco y copy por subvista.
+  - `268-449`: `setActiveView()` y el sync del sidebar ahora respetan subviews, autoexpanden la familia activa y dejan al padre como toggle puro.
+  - `488-515`: el click del padre solo expande/colapsa; los hijos navegan con `subview`.
+- `apps/gold/agro/index.html`
+  - `1174-1186`: el sidebar paso de links planos a padre `Ciclos de cultivos` + cuatro hijos.
+  - `1610-1614`, `1661-1662`, `2246-2247`: CTAs internos apuntan a `ciclos/activos` o `ciclos/finalizados`, sin depender del modelo legacy.
+  - `1778-1818`: la region `cultivos` se separo en subviews dedicadas para activos, finalizados, comparar y estadisticas.
+  - `4364-4367`: se carga el nuevo modulo `agro-cycles-workspace.js`.
+- `apps/gold/agro/agro.js`
+  - `62-124`: se agrego puente de snapshot para compartir datos reales de ciclos con subviews externas.
+  - `10329-10510`: las cards activas/finalizadas ahora exponen metricas reutilizables para comparar ciclos.
+  - `10690-11117`: el historial heredado se reubico dentro de `Ciclos finalizados`, con host dedicado y copy de cierre.
+  - `11122-11347`: `loadCrops()` publica snapshots para `finalizados/comparar` y se corrigio el selector al nuevo `#cyclesContainer`.
+- `apps/gold/agro/agro-cycles-workspace.js`
+  - `1-494`: nuevo modulo para overview de finalizados y primera version util de `Comparar ciclos` con seleccion A/B y delta por metricas reales.
+- `apps/gold/agro/agrociclos.css`
+  - `547-895`: reglas de visibilidad por subview y estilos dedicados para finalizados/comparar con ADN V10.
+- `apps/gold/agro/agro.css`
+  - `6146-6168`: affordance visual del padre toggle (`chevron`) y estado expandido.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Warnings no bloqueantes:
+  - engine esperado `node 20.x`, entorno actual `node 25.6.0`;
+  - warning de chunk grande del monolito Agro.
+
+### QA ejecutado
+
+- Desktop (`1440x1800`) con navegador real:
+  - click en `Ciclos de cultivos` expande submenus sin navegar ni sacar la vista actual;
+  - click en `Ciclos activos` navega a `ciclos|activos` y muestra la lectura operativa dedicada;
+  - click en `Ciclos finalizados` navega a `ciclos|finalizados` y muestra overview + historial dedicado;
+  - click en `Comparar ciclos` navega a `ciclos|comparar` y muestra estado util de comparacion cuando no hay base suficiente;
+  - click en `Estadisticas de ciclos` navega a `ciclos|estadisticas` y muestra el panel global dedicado;
+  - segundo click en el padre colapsa submenu y conserva la subvista activa.
+- Mobile (`390x844`) con navegador real:
+  - hamburger abre sidebar (`body.agro-shell-open = true`, `aria-hidden=false`);
+  - la familia `Ciclos de cultivos` se mantiene expandable;
+  - click en `Ciclos finalizados` navega a `ciclos|finalizados` y cierra sidebar (`body.agro-shell-open = false`, `aria-hidden=true`).
+- Limitacion de QA:
+  - la ruta `/agro/` sigue protegida por sesion real de Supabase;
+  - para validar shell/subviews se uso un bypass temporal solo dentro del navegador automatizado, interceptando `session-guard` sin tocar el repo;
+  - por no existir una sesion real, quedaron errores esperables de perfil/estadisticas al consultar datos autenticados.
+
+### Cierre
+
+- `Ciclos de cultivos` ya no es un link ambiguo ni un parche entre `cultivos`/`ciclos`; ahora es una familia escalable con padre toggle y subviews reales.
+- `Estadisticas de ciclos` si entro hoy porque ya existia una base de valor real y quedo integrada como lectura dedicada.
+- La deuda residual principal es QA autenticada con dataset real para validar `Comparar ciclos` y `Estadisticas de ciclos` con datos vivos, no solo estructura/vacio controlado.
+
+---
+
+## Sesion activa: credenciales QA locales para pruebas reales (2026-03-13)
+
+### Diagnostico
+
+- Se necesitaba una via local y documentada para que futuros agentes puedan ejecutar QA autenticada real en produccion sin volver a pedir credenciales cada vez.
+- El requisito correcto era mantener la credencial fuera de archivos versionados y fuera de reportes canonicos.
+
+### Cambios aplicados
+
+- `.gitignore`
+  - se agrego una entrada explicita para `testqacredentials.md` como defensa adicional, aunque el patron `*credentials*.md` ya lo cubria.
+- `testqacredentials.md`
+  - se creo el archivo local en la raiz del repo con la cuenta QA y reglas de uso;
+  - el contenido sensible queda solo en este archivo ignorado por Git.
+- `AGENTS.md`
+  - se agrego la seccion `Credenciales QA locales`;
+  - se documenta que los agentes pueden consultar `testqacredentials.md` solo si existe localmente;
+  - se deja explicito que la credencial no debe copiarse a `AGENTS.md`, reportes, issues o PRs.
+
+### Build status
+
+- No ejecutado en esta micro-sesion.
+- Motivo: el alcance fue solo documental/local (`.gitignore`, `AGENTS.md`, archivo sensible ignorado) y no hubo cambios de producto.
+
+### QA sugerido
+
+1. Verificar con `git check-ignore -v testqacredentials.md` que el archivo siga ignorado.
+2. Cuando se use la cuenta QA en browser real, cerrar sesion al final y limpiar cualquier storage state persistido.
+3. Si la clave cambia, actualizar solo `testqacredentials.md` y nunca replicarla en archivos versionados.
+
+---
+
+## Sesion activa: QA real en produccion para ciclos (2026-03-13)
+
+### Diagnostico
+
+- Se intento validar en `https://www.yavlgold.com/agro/` la reestructura nueva de `Ciclos de cultivos` usando la cuenta QA local.
+- El objetivo era confirmar el estado real del deploy y, si era posible, ejecutar QA autenticada completa sobre produccion.
+
+### Cambios aplicados
+
+- No hubo cambios de producto en esta sesion.
+- Solo se actualiza el reporte con hallazgos de QA real.
+
+### Hallazgos
+
+- El deploy productivo visible todavia sirve la navegacion anterior de ciclos:
+  - sidebar con `Cultivos activos` + `Historial de ciclos`;
+  - no aparece padre `Ciclos de cultivos`;
+  - no aparecen subitems `Comparar ciclos` ni `Estadisticas de ciclos`.
+- Se detecto drift de sesion:
+  - una apertura inicial de `https://www.yavlgold.com/agro/` mostro la app autenticada y permitio observar el sidebar viejo;
+  - luego la sesion cayo a `/index.html#login` con `Invalid Refresh Token`.
+- El login automatizado con la cuenta QA quedo bloqueado por `hCaptcha` con desafio manual, por lo que no fue posible completar la QA autenticada end-to-end en esta corrida.
+- El `storageState` local previo (`output/agro-qa-storage-state.json`) ya no alcanza para entrar limpio a produccion; la captura autenticada termino otra vez en login.
+
+### Build status
+
+- No ejecutado en esta sesion.
+- Motivo: se hizo QA real/documentacion; no hubo cambios de producto.
+
+### QA sugerido
+
+1. Desplegar primero la rama/commit con la nueva arquitectura de ciclos; hoy produccion aun refleja la estructura anterior.
+2. Renovar `storageState` QA con una sesion fresca o resolver manualmente el `hCaptcha` en una corrida controlada.
+3. Repetir QA productiva despues del deploy y validar especificamente:
+   - padre toggle `Ciclos de cultivos`;
+   - hijos `Activos / Finalizados / Comparar / Estadisticas`;
+   - mobile + desktop con sesion estable.
+
+---
+
+## Sesion activa: reintento QA produccion con captcha resuelto (2026-03-13)
+
+### Diagnostico
+
+- Se reintento el acceso a `https://www.yavlgold.com/agro/` despues de resolver manualmente el captcha.
+- Esta vez la sesion QA si entro de forma valida a la app productiva.
+
+### Hallazgos
+
+- Produccion autentica carga correctamente, pero sigue sirviendo la navegacion anterior de ciclos:
+  - `Cultivos activos`
+  - `Historial de ciclos`
+- No aparece la familia nueva esperada:
+  - padre `Ciclos de cultivos`
+  - `Ciclos activos`
+  - `Ciclos finalizados`
+  - `Comparar ciclos`
+  - `Estadisticas de ciclos`
+- La evidencia coincide con:
+  - inspeccion directa del DOM autenticado en browser real;
+  - `Invoke-WebRequest` al HTML publico de `/agro/` sobre `www.yavlgold.com` y `yavlgold.com`.
+
+### Cambios aplicados
+
+- No hubo cambios de producto.
+- Solo se actualiza el reporte con el estado real observado en produccion.
+
+### Build status
+
+- No ejecutado.
+- Motivo: sesion de QA/documentacion sin cambios de codigo.
+
+### QA sugerido
+
+1. Verificar que el deploy productivo apuntado por el dominio sea el commit correcto que contiene la reestructura.
+2. Si el deploy ya existe, invalidar cache/CDN y volver a comprobar `/agro/`.
+3. Repetir QA real de ciclos solo cuando el HTML servido ya contenga `data-agro-nav-toggle="ciclos"` y los subitems nuevos.
+

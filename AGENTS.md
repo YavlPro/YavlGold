@@ -132,6 +132,15 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
   - cerrar sesión/contexto/browser al terminar cada bloque de prueba;
   - borrar explícitamente la carpeta temporal usada por esa prueba en `%LOCALAPPDATA%\Temp\playwright-mcp-output\<session-id>`.
 
+### Credenciales QA locales
+
+- Para QA autenticada en produccion, los agentes pueden consultar `testqacredentials.md` en la raiz del repo **solo si existe localmente**.
+- `testqacredentials.md` es un archivo local y sensible:
+  - debe permanecer bajo `.gitignore`;
+  - no debe copiarse a `AGENTS.md`, `AGENT_REPORT_ACTIVE.md`, issues, PRs ni otros archivos versionados;
+  - se usa solo para pruebas reales de QA, nunca como credencial de desarrollo general.
+- Si el archivo no existe o esta desactualizado, el agente debe pedir confirmacion al usuario antes de improvisar accesos o credenciales.
+
 ---
 
 ## §6 — Supabase

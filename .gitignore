@@ -24,6 +24,7 @@ apps/gold/.env.*
 
 # Credentials and sensitive files
 .admin-credentials.md
+testqacredentials.md
 *credentials*.md
 *password*.txt
 *secret*.txt

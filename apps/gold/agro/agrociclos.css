@@ -544,6 +544,299 @@
   opacity: 0.6;
 }
 
+.crops-section[data-agro-shell-region="cultivos"] .agro-cycle-subview {
+  display: none;
+}
+
+body[data-agro-active-view='ciclos'][data-agro-subview='activos'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='activos'],
+body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='finalizados'],
+body[data-agro-active-view='ciclos'][data-agro-subview='comparar'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='comparar'],
+body[data-agro-active-view='ciclos'][data-agro-subview='estadisticas'] .crops-section[data-agro-shell-region="cultivos"] [data-agro-cycle-subview='estadisticas'] {
+  display: block;
+}
+
+.agro-cycle-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.agro-cycle-overview__copy,
+.agro-cycle-overview__card,
+.agro-cycle-compare__shell,
+.agro-cycle-compare__empty {
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(200, 167, 82, 0.08), rgba(200, 167, 82, 0.03)),
+    rgba(10, 10, 10, 0.92);
+  box-shadow: var(--shadow-gold-sm);
+}
+
+.agro-cycle-overview__copy {
+  padding: 1rem 1.05rem;
+}
+
+.agro-cycle-overview__eyebrow,
+.agro-cycle-compare__eyebrow,
+.agro-cycle-compare__summary-eyebrow {
+  margin: 0 0 0.3rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-5);
+  opacity: 0.82;
+}
+
+.agro-cycle-overview__title,
+.agro-cycle-compare__title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+  color: var(--text-primary);
+}
+
+.agro-cycle-overview__subtitle,
+.agro-cycle-compare__copy,
+.agro-cycle-compare__summary-copy,
+.agro-cycle-compare__empty-copy {
+  margin: 0.35rem 0 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.agro-cycle-overview__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.agro-cycle-overview__card {
+  padding: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+}
+
+.agro-cycle-overview__card--lost {
+  border-color: rgba(239, 68, 68, 0.28);
+  background:
+    linear-gradient(180deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.02)),
+    rgba(10, 10, 10, 0.92);
+}
+
+.agro-cycle-overview__label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.agro-cycle-overview__value {
+  margin-top: auto;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  color: var(--gold-4);
+}
+
+.agro-cycle-overview__card--lost .agro-cycle-overview__value {
+  color: var(--color-error);
+}
+
+#agro-cycles-history-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] #crops-cycle-history-accordion {
+  display: block !important;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] #crops-cycle-history-accordion > summary {
+  display: none;
+}
+
+body[data-agro-active-view='ciclos'][data-agro-subview='finalizados'] #crops-cycle-history-accordion > .yg-accordion-content {
+  padding: 0;
+}
+
+.agro-cycle-compare {
+  margin-top: 1rem;
+}
+
+.agro-cycle-compare__shell {
+  padding: 1rem 1.05rem 1.1rem;
+}
+
+.agro-cycle-compare__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.agro-cycle-compare__controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.agro-cycle-compare__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.agro-cycle-compare__field-label,
+.agro-cycle-compare__metric-label,
+.agro-cycle-compare__summary-label,
+.agro-cycle-compare__delta-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.agro-cycle-compare__select {
+  min-height: 46px;
+}
+
+.agro-cycle-compare__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.agro-cycle-compare__summary-card {
+  padding: 0.95rem;
+  border: 1px solid rgba(200, 167, 82, 0.18);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.agro-cycle-compare__summary-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.agro-cycle-compare__summary-copy {
+  min-height: 1.5em;
+}
+
+.agro-cycle-compare__summary-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.agro-cycle-compare__summary-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.agro-cycle-compare__summary-value,
+.agro-cycle-compare__metric-value,
+.agro-cycle-compare__delta-value {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary);
+}
+
+.agro-cycle-compare__metric-value {
+  font-size: 0.92rem;
+}
+
+.agro-cycle-compare__summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgba(200, 167, 82, 0.22);
+  border-radius: var(--radius-pill);
+  background: rgba(200, 167, 82, 0.08);
+  color: var(--gold-5);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.agro-cycle-compare__matrix {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.agro-cycle-compare__metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.95fr) minmax(120px, 0.78fr) minmax(140px, 0.95fr);
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.agro-cycle-compare__metric-value,
+.agro-cycle-compare__delta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.agro-cycle-compare__metric-value[data-tone="gold"] .agro-cycle-compare__metric-main,
+.agro-cycle-compare__delta[data-tone="gold"] .agro-cycle-compare__delta-value {
+  color: var(--gold-4);
+}
+
+.agro-cycle-compare__metric-value[data-tone="danger"] .agro-cycle-compare__metric-main,
+.agro-cycle-compare__delta[data-tone="danger"] .agro-cycle-compare__delta-value {
+  color: var(--color-error);
+}
+
+.agro-cycle-compare__metric-main {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.94rem;
+  color: var(--text-primary);
+}
+
+.agro-cycle-compare__metric-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.agro-cycle-compare__empty {
+  padding: 1.2rem;
+  text-align: center;
+}
+
+.agro-cycle-compare__empty-title {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  color: var(--gold-5);
+}
+
 @media (min-width: 769px) {
   .agro-cycles .cycles-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -551,6 +844,20 @@
 }
 
 @media (max-width: 768px) {
+  .agro-cycle-overview,
+  .agro-cycle-compare__controls,
+  .agro-cycle-compare__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .agro-cycle-overview__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .agro-cycle-compare__metric {
+    grid-template-columns: 1fr;
+  }
+
   .agro-cycles .cycle-action {
     width: 34px;
     height: 34px;
@@ -570,5 +877,20 @@
 
   .agro-cycles .desglose {
     margin: 0 0.6rem 0.6rem;
+  }
+
+  .agro-cycle-overview__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .agro-cycle-compare__shell,
+  .agro-cycle-overview__copy,
+  .agro-cycle-overview__card,
+  .agro-cycle-compare__empty {
+    padding: 0.88rem;
+  }
+
+  .agro-cycle-compare__summary-meta {
+    grid-template-columns: 1fr;
   }
 }
