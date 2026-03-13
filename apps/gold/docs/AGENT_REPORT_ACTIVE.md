@@ -1412,3 +1412,79 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 5. Revisar `Otros` en ambos escenarios:
    - `Vista general` -> movimientos sin cultivo asignado;
    - cultivo especifico -> movimientos compuestos de ese cultivo.
+
+---
+
+## Sesion: Reubicar selector de cultivo a contexto compartido visible en estadisticas (2026-03-12)
+
+### Diagnostico
+
+- El selector de cultivos ya funciona sobre la fuente de verdad compartida (`selectedCropId`), pero su superficie visual sigue montada dentro del bloque de pasos de historial.
+- En las vistas dedicadas (`Pagados`, `Fiados`, `Perdidas`, `Donaciones`, `Otros`), el selector actual vive dentro de `.agro-pagados-dedicated__steps`.
+- `apps/gold/agro/agro-operations.css` oculta `.agro-pagados-dedicated__steps` cuando `body[data-agro-subview="stats"]`, junto con el historial y el footer.
+- Resultado: en `Estadisticas` el usuario pierde el control visual de `Vista general` vs cultivo especifico, aunque la logica interna siga reaccionando al estado global.
+
+### Causa raiz
+
+- El selector nunca se extrajo a una zona compartida del modulo; quedo acoplado al layout de `Paso 1`.
+- Al ocultar el contenedor de pasos para la subvista `stats`, tambien se oculta el unico punto visible de control del contexto de cultivo.
+
+### Plan quirurgico
+
+1. Sacar el selector de cultivo del bloque de pasos y llevarlo a una zona compartida por encima de `Historial` y `Estadisticas`.
+2. Reusar los mismos IDs y el mismo estado global para no duplicar logica ni crear un segundo selector.
+3. Dejar los pasos solo para acciones de creacion/wizard.
+4. Estilizar el bloque compartido con ADN V10 para que funcione como contexto visible de verdad en ambas subviews.
+5. Validar que historial, stats y export MD sigan usando el mismo cultivo activo.
+
+### Archivos a tocar
+
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro-operations.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Si se duplican accidentalmente IDs de `crop-row` o `scope-copy`, el binding del monolito se rompe.
+- Si el selector se mueve pero conserva copy de `Paso 1`, la UX puede quedar inconsistente entre historial y stats.
+- Si `Otros` no mantiene su copy especifica, puede confundir `Vista general` con "todos los cultivos" cuando en realidad es una vista compuesta.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - se extrajo el selector de cultivo de `Pagados`, `Fiados`, `Perdidas`, `Donaciones` y `Otros` a un nuevo bloque compartido `agro-dedicated-context`, visible por encima de `Historial` y `Estadisticas`;
+  - se conservaron los mismos IDs (`*-dedicated-crop-row` y `*-dedicated-scope-copy`) para mantener intacta la fuente de verdad del cultivo activo;
+  - los bloques operativos que quedan dentro de `agro-pagados-dedicated__steps` pasaron a ser solo acciones principales de registro/wizard, sin semantica de `Paso 2`.
+- `apps/gold/agro/agro-operations.css`
+  - se agrego la arquitectura visual del nuevo contexto compartido como panel analitico reutilizable;
+  - se integraron tipografia, spacing y responsive del bloque a ADN V10;
+  - el selector sigue visible en desktop y mobile porque ya no depende del contenedor que se oculta en `stats`.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - se registran diagnostico, causa raiz, plan, fix y validacion de esta sesion.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (140 modules)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Validacion y QA
+
+- Validacion tecnica completada:
+  - el selector ahora existe una sola vez por seccion y ya no queda dentro de `.agro-pagados-dedicated__steps`;
+  - `Historial` y `Estadisticas` comparten el mismo control visual de cultivo sin duplicar IDs ni estado;
+  - `git diff --check` paso limpio.
+- QA browser funcional no completada en esta sesion:
+  - no se ejecuto verificacion end-to-end con datos reales porque el acceso local a `/agro/` sigue requiriendo sesion valida de Supabase;
+  - por esa limitacion, la comprobacion de cambio real en KPIs, charts, insights y export MD debe hacerse con sesion real del usuario.
+
+### QA sugerido
+
+1. Entrar con sesion real a `Fiados > Estadisticas` y confirmar que el selector de cultivos permanece visible por encima del panel estadistico.
+2. Cambiar entre `Vista general` y un cultivo especifico y verificar que el historial responde al mismo control.
+3. Confirmar que tambien cambian KPIs, charts, insights y export MD.
+4. Repetir la validacion en `Pagados` y al menos una seccion adicional (`Perdidas`, `Donaciones` u `Otros`).
+5. Revisar mobile para confirmar que el bloque `Contexto compartido` apila correctamente el copy y la tira de cultivos.
