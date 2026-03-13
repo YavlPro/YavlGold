@@ -2451,3 +2451,184 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 - Se cerro Playwright/browser al final de la verificacion.
 - Se debe borrar la carpeta temporal local de la sesion Playwright usada en esta corrida.
 
+---
+
+## Sesion activa: AgroRepo como bitacora arbol local-first (2026-03-13)
+
+### Diagnostico
+
+- AgroRepo existe hoy como memoria local-first util, pero su modelo es plano:
+  - `bitacoras[]`
+  - `reports[]` dentro de cada bitacora
+- Esa base sirve para timeline, tags, edicion, exporte y puente IA, pero no permite:
+  - carpetas virtuales;
+  - archivos Markdown virtuales;
+  - navegacion jerarquica real;
+  - diarios por cultivo/fecha en forma de arbol navegable.
+- La UI actual confirma esa limitacion:
+  - sidebar con bitacoras planas;
+  - editor/timeline centrado en reportes;
+  - preview lateral con estadisticas de la bitacora activa;
+  - sin explorador de archivos virtual.
+
+### Causa raiz
+
+- La causa raiz no es visual sino estructural:
+  - el dato persistido en `localStorage` (`agrorepo_ultimate_v2`) no representa nodos jerarquicos;
+  - la navegacion depende de `activeBitacoraId`, no de carpetas/archivos;
+  - timeline, editor y bridge IA asumen que la unidad base es un `report`, no un archivo Markdown virtual.
+- Resultado:
+  - AgroRepo se siente como lista de reportes por cultivo, no como memoria agricola navegable.
+
+### Plan quirurgico
+
+- Adoptar una arquitectura hibrida, no arbol puro:
+  - arbol virtual en sidebar;
+  - editor/preview del archivo activo en el cuerpo principal;
+  - timeline y metadata contextual como capacidad derivada, no como vista eliminada.
+- Crear un nuevo modelo local-first basado en nodos:
+  - `nodes[]`
+  - `type = folder | file`
+  - `id`, `parentId`, `title`, `slug`, `content`, `createdAt`, `updatedAt`, `tags`, `entryType`, `cropId?`
+  - `expandedIds`, `activeNodeId`, `activeFolderId` como estado UI
+- Migrar controladamente el formato legacy:
+  - convertir bitacoras existentes en carpetas;
+  - convertir reportes existentes en archivos `.md`;
+  - preservar contenido y fechas;
+  - mantener timeline y contexto IA como derivados del nuevo arbol.
+- Implementar CRUD real:
+  - crear carpeta;
+  - crear archivo Markdown;
+  - renombrar carpeta/archivo;
+  - eliminar con confirmacion clara;
+  - editar y guardar archivo;
+  - exportar archivo `.md`.
+- Mantener la filosofia local-first:
+  - persistencia en `localStorage`;
+  - import/export de backup;
+  - sin dependencias nuevas ni complejidad innecesaria.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agrorepo.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/agro/agro.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Riesgo de migracion:
+  - perder compatibilidad con contenido legacy si el adaptador no conserva bien fechas, tags y tipos.
+- Riesgo UX:
+  - convertir AgroRepo en un file manager generico y frio si el timeline se elimina en vez de convivir.
+- Riesgo mobile:
+  - un arbol demasiado ancho o acciones demasiado densas puede romper usabilidad en <=768px.
+- Riesgo tecnico:
+  - `agrorepo.js` hoy concentra estado y renderizado; la migracion debe ser integral para evitar mezclar dos modelos incompatibles.
+
+### Decision de arquitectura
+
+- Se eligio opcion `B) hibrido`.
+- Motivo:
+  - el arbol virtual resuelve organizacion y navegacion;
+  - el editor/preview resuelve uso diario real;
+  - el timeline contextual conserva el valor operativo e IA de AgroRepo;
+  - evita convertir el modulo en un file manager generico sin memoria de contexto.
+
+### Modelo de datos elegido
+
+- Persistencia nueva local-first en `localStorage` bajo `agrorepo_virtual_v3`.
+- Estructura:
+  - `nodes[]`
+  - `folder` y `file`
+  - `id`, `parentId`, `title`, `slug`, `content`, `createdAt`, `updatedAt`, `tags`, `entryType`, `cropId`, `position`
+  - `activeNodeId`, `expandedIds`, `lastSaved`
+- Compatibilidad:
+  - migracion desde `agrorepo_ultimate_v2`:
+    - bitacoras legacy -> carpetas bajo `Cultivos`
+    - reportes legacy -> archivos `.md`
+
+### Cambios aplicados
+
+- `apps/gold/agro/agrorepo.js`
+  - nuevo motor `Tree Memory v3`;
+  - migracion legacy en `migrateLegacyData()` (`~500`);
+  - render de arbol virtual en `renderTreeNode()` (`~890`);
+  - workspace hibrido en `renderMainView()` (`~1170`);
+  - exporte de archivo `.md` en `buildFileMarkdown()` (`~1408`);
+  - bridge IA rearmado sobre archivos del arbol;
+  - CRUD de carpeta/archivo, rename, delete, autosave local y backup/import.
+- `apps/gold/agro/index.html`
+  - subtitle de AgroRepo actualizado;
+  - template completo reconstruido como shell de:
+    - sidebar arbol;
+    - main panel;
+    - context rail;
+    - modales;
+    - toasts.
+- `apps/gold/agro/agro.css`
+  - nueva capa visual `AgroRepo Tree Memory v3` injertada sobre tokens ADN V10;
+  - layout hibrido responsive desktop/mobile;
+  - estilos de arbol, editor, preview, timeline, modales y estados.
+
+### QA manual ejecutado
+
+- Metodo:
+  - `pnpm build:gold`
+  - preview local con `vite preview`
+  - sandbox funcional de AgroRepo dentro del build, porque el preview local apunta a Supabase local (`127.0.0.1:54321`) y no permite auth real sin backend local levantado.
+- Desktop:
+  - se creo `Maíz` dentro de `Cultivos`;
+  - se creo `2026-03-13.md`;
+  - se escribio contenido Markdown de diario;
+  - se marcaron tags `General`, `Riego`, `Abono`, `Clima`;
+  - se cambio `Tipo` a `Decision`;
+  - `Guardar cambios` persistio;
+  - se navego fuera del archivo y se reabrio conservando contenido;
+  - `Exportar .md` genero archivo real descargado con metadata y contenido fiel.
+- Mobile:
+  - viewport `390x844`;
+  - sidebar colapsado por defecto;
+  - `Abrir árbol` abre sidebar y backdrop;
+  - al seleccionar `General`, el sidebar se cierra;
+  - `Exportar .md` se desactiva correctamente al quedar una carpeta activa.
+- Rename:
+  - se renombro carpeta `General` a `Notas libres`;
+  - breadcrumb y arbol se actualizaron correctamente.
+
+### Hallazgos QA
+
+- Hallazgo menor:
+  - el icono del archivo en el arbol cambiaba al modificar `entryType`, pero el texto meta seguia mostrando `Observacion`.
+- Estado:
+  - corregido en la misma sesion;
+  - se agrego `data-tree-meta-for` y actualizacion live de la meta del nodo archivo.
+
+### Build status
+
+- `pnpm build:gold` = OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Warnings no bloqueantes:
+  - engine esperado `node 20.x`, entorno actual `node 25.6.0`
+  - warning habitual por chunk grande del monolito Agro
+
+### Pendiente / deuda residual
+
+- Exportar carpeta completa como paquete logico:
+  - no se incluyo en esta fase para no meter una UX vacia o un pseudo-zip improvisado;
+  - queda como siguiente iteracion real.
+- QA con backend local autentico:
+  - si se quiere validar el modulo dentro del shell completo sin sandbox, hace falta Supabase local operativo o un entorno preview con auth funcional.
+
+### Cleanup
+
+- Se eliminaran al cierre tecnico:
+  - preview local de `vite`;
+  - browser de Playwright;
+  - carpeta temporal `C:\\Users\\yerik\\AppData\\Local\\Temp\\playwright-mcp-output\\1773431395120`
+- No se dejaron datos QA en produccion.

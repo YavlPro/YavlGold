@@ -1,11 +1,5 @@
-// ============================================================
-// AGROREPO ULTIMATE ENGINE v2.0.0
-// Local-First, Feature-Complete, Premium UX
-// Extracted from agro.js monolith → standalone lazy module
-// ============================================================
 'use strict';
 
-// ─── LOCAL UTILITY (self-contained, no external deps) ────────
 function randomBase36(length = 6) {
     const size = Math.max(1, Number(length) || 6);
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
@@ -16,14 +10,28 @@ function randomBase36(length = 6) {
     return (Date.now().toString(36) + '000000000000').slice(-size);
 }
 
-// FEATURE FLAG
 const AGROREPO_ENABLED = true;
-
-// Constants
-const APP_KEY = 'agrorepo_ultimate_v2';
+const STORAGE_KEY = 'agrorepo_virtual_v3';
+const LEGACY_STORAGE_KEY = 'agrorepo_ultimate_v2';
+const REPO_VERSION = '3.0.0';
+const ROOT_FOLDERS = [
+    { title: 'Cultivos', icon: '🌽' },
+    { title: 'Finanzas', icon: '💰' },
+    { title: 'Clima y campo', icon: '⛅' },
+    { title: 'General', icon: '📁' }
+];
 const CROP_ICONS = {
-    maiz: '🌽', caraota: '🫘', tomate: '🍅', papa: '🥔',
-    cafe: '☕', lechuga: '🥬', cebolla: '🧅', ajo: '🧄', otro: '🌾'
+    maiz: '🌽',
+    caraota: '🫘',
+    tomate: '🍅',
+    papa: '🥔',
+    cafe: '☕',
+    lechuga: '🥬',
+    cebolla: '🧅',
+    ajo: '🧄',
+    batata: '🍠',
+    yuca: '🥔',
+    otro: '🌾'
 };
 const TAG_CONFIG = {
     riego: { icon: '💧', label: 'Riego' },
@@ -35,813 +43,1453 @@ const TAG_CONFIG = {
     general: { icon: '📋', label: 'General' }
 };
 const ENTRY_TYPE_CONFIG = {
-    observacion: { icon: '👁️', label: 'Observacion', color: 'var(--arw-gold-primary, #C8A752)' },
-    decision: { icon: '⚡', label: 'Decision', color: 'var(--arw-success, #10B981)' },
-    problema: { icon: '⚠️', label: 'Problema', color: 'var(--arw-warning, #F59E0B)' },
-    aprendizaje: { icon: '💡', label: 'Aprendizaje', color: 'var(--arw-text-secondary, #ccc)' },
-    evento: { icon: '📌', label: 'Evento', color: 'var(--arw-gold-muted, #a08732)' }
+    observacion: { icon: '👁️', label: 'Observacion', color: 'var(--arw-gold-primary)' },
+    decision: { icon: '⚡', label: 'Decision', color: 'var(--arw-success)' },
+    problema: { icon: '⚠️', label: 'Problema', color: 'var(--arw-warning)' },
+    aprendizaje: { icon: '💡', label: 'Aprendizaje', color: 'var(--arw-text-secondary)' },
+    evento: { icon: '📌', label: 'Evento', color: 'var(--arw-gold-muted)' }
 };
 
-// State
 const state = {
-    bitacoras: [],
-    activeBitacoraId: null,
-    selectedTags: [],
-    selectedEntryType: 'observacion',
-    filterTag: null,
-    editingReportId: null,
-    lastSaved: null
+    repo: createEmptyRepo(false),
+    deleteTargetId: null,
+    nodeModal: null,
+    autosaveTimer: null,
+    pendingNotice: ''
 };
 
-// DOM refs
 let root = null;
 let widgetInitialized = false;
-let _deleteCallback = null;
 
-// ─── UTILITIES ─────────────────────────────────────────
-const $ = id => root?.querySelector(`#${id}`) || document.getElementById(id);
+const qs = (selector, scope = root) => scope?.querySelector(selector) || null;
+const qsa = (selector, scope = root) => Array.from(scope?.querySelectorAll(selector) || []);
 const generateId = () => `arw_${Date.now().toString(36)}_${randomBase36(6)}`;
 const generateHash = () => randomBase36(6).toUpperCase();
 
+function createEmptyRepo(bootstrap = true) {
+    const repo = {
+        version: REPO_VERSION,
+        nodes: [],
+        activeNodeId: null,
+        expandedIds: [],
+        lastSaved: null
+    };
+    if (bootstrap) seedRootFolders(repo);
+    return repo;
+}
+
+function seedRootFolders(repo) {
+    if (!repo || repo.nodes.length) return;
+    const now = new Date().toISOString();
+    ROOT_FOLDERS.forEach((seed, index) => {
+        repo.nodes.push(makeFolderNode({
+            title: seed.title,
+            icon: seed.icon,
+            parentId: null,
+            createdAt: now,
+            updatedAt: now,
+            position: index
+        }));
+    });
+    repo.expandedIds = repo.nodes.map((node) => node.id);
+    repo.activeNodeId = repo.nodes[0]?.id || null;
+}
+
+function makeFolderNode({
+    title,
+    parentId = null,
+    icon = '📁',
+    createdAt = new Date().toISOString(),
+    updatedAt = createdAt,
+    position = 0,
+    cropId = null,
+    id = generateId()
+}) {
+    const safeTitle = normalizeFolderTitle(title);
+    return {
+        id,
+        type: 'folder',
+        parentId,
+        title: safeTitle,
+        slug: slugify(safeTitle),
+        icon,
+        createdAt,
+        updatedAt,
+        position,
+        cropId
+    };
+}
+
+function makeFileNode({
+    title,
+    parentId,
+    content = '',
+    tags = ['general'],
+    entryType = 'observacion',
+    createdAt = new Date().toISOString(),
+    updatedAt = createdAt,
+    position = 0,
+    cropId = null,
+    hash = generateHash(),
+    id = generateId()
+}) {
+    const safeTitle = normalizeFileTitle(title);
+    return {
+        id,
+        type: 'file',
+        parentId,
+        title: safeTitle,
+        slug: slugify(stripMarkdownExtension(safeTitle)),
+        content: String(content || ''),
+        tags: normalizeTags(tags),
+        entryType: normalizeEntryType(entryType),
+        createdAt,
+        updatedAt,
+        position,
+        cropId,
+        hash
+    };
+}
+
+function normalizeFolderTitle(title) {
+    return sanitizeTitle(title) || 'Nueva carpeta';
+}
+
+function normalizeFileTitle(title) {
+    const base = sanitizeTitle(title).replace(/\.md$/i, '');
+    return `${base || getTodayFileStem()}.md`;
+}
+
+function normalizeEntryType(value) {
+    return ENTRY_TYPE_CONFIG[value] ? value : 'observacion';
+}
+
+function normalizeTags(tags) {
+    const safe = Array.isArray(tags) ? tags.filter((tag) => TAG_CONFIG[tag]) : [];
+    return safe.length ? Array.from(new Set(safe)) : ['general'];
+}
+
+function sanitizeTitle(value) {
+    return String(value || '')
+        .replace(/[\\/:*?"<>|]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function slugify(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'nota';
+}
+
+function stripMarkdownExtension(title) {
+    return String(title || '').replace(/\.md$/i, '');
+}
+
 function formatDate(iso) {
     try {
-        return new Date(iso).toLocaleDateString('es-VE', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } catch { return iso; }
+        return new Date(iso).toLocaleDateString('es-VE', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch {
+        return iso;
+    }
+}
+
+function formatDay(iso) {
+    try {
+        return new Date(iso).toLocaleDateString('es-VE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    } catch {
+        return iso;
+    }
 }
 
 function timeAgo(iso) {
-    const diff = Date.now() - new Date(iso).getTime();
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return 'Sin fecha';
+    const diff = Date.now() - date.getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 1) return 'Ahora';
     if (mins < 60) return `Hace ${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `Hace ${hrs}h`;
-    return `Hace ${Math.floor(hrs / 24)}d`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `Hace ${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `Hace ${days}d`;
+    return formatDay(iso);
+}
+
+function getTodayFileStem() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getStorageSize() {
+    const data = localStorage.getItem(STORAGE_KEY) || '';
+    const bytes = new Blob([data]).size;
+    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function showToast(message, type = 'info') {
+    const container = qs('#arw-toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `arw-toast arw-toast--${type}`;
+    toast.innerHTML = `<span class="arw-toast-icon">${type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ'}</span><span class="arw-toast-copy">${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('is-leaving');
+        setTimeout(() => toast.remove(), 260);
+    }, 2600);
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderInlineMarkdown(text) {
+    return escapeHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>');
+}
+
+function renderMarkdown(text) {
+    const lines = String(text || '').split(/\r?\n/);
+    const blocks = [];
+    let listItems = [];
+
+    function flushList() {
+        if (!listItems.length) return;
+        blocks.push(`<ul class="arw-md-list">${listItems.join('')}</ul>`);
+        listItems = [];
+    }
+
+    lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+            flushList();
+            blocks.push('<div class="arw-md-gap"></div>');
+            return;
+        }
+        const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
+        if (heading) {
+            flushList();
+            const level = Math.min(heading[1].length, 3);
+            blocks.push(`<h${level + 1} class="arw-md-heading">${renderInlineMarkdown(heading[2])}</h${level + 1}>`);
+            return;
+        }
+        const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+        if (bullet) {
+            listItems.push(`<li>${renderInlineMarkdown(bullet[1])}</li>`);
+            return;
+        }
+        flushList();
+        blocks.push(`<p>${renderInlineMarkdown(trimmed)}</p>`);
+    });
+
+    flushList();
+    if (!blocks.length) return '<p class="arw-md-empty">Sin contenido aún.</p>';
+    return blocks.join('');
+}
+
+function stripMarkdown(text) {
+    return String(text || '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/^[-*]\s+/gm, '')
+        .replace(/^#{1,3}\s+/gm, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function getWordCount(text) {
+    const normalized = stripMarkdown(text);
+    return normalized ? normalized.split(/\s+/).length : 0;
+}
+
+function getSnippet(text, maxLength = 120) {
+    const plain = stripMarkdown(text);
+    if (plain.length <= maxLength) return plain;
+    return `${plain.slice(0, maxLength).trim()}…`;
+}
+
+function pluralize(count, singular, plural = `${singular}s`) {
+    return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function getTagLabel(tag) {
+    const config = TAG_CONFIG[tag];
+    return config ? `${config.icon} ${config.label}` : tag;
 }
 
 function getCropIcon(name) {
-    const lower = name.toLowerCase();
-    for (const [key, icon] of Object.entries(CROP_ICONS)) {
-        if (lower.includes(key)) return icon;
+    const lower = String(name || '').toLowerCase();
+    for (const [needle, icon] of Object.entries(CROP_ICONS)) {
+        if (lower.includes(needle)) return icon;
     }
     return '🌾';
 }
 
-function getStorageSize() {
-    const data = localStorage.getItem(APP_KEY) || '';
-    const bytes = new Blob([data]).size;
-    return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB';
+function getNode(id) {
+    return state.repo.nodes.find((node) => node.id === id) || null;
 }
 
-function renderMarkdown(text) {
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code>$1</code>')
-        .replace(/^- (.+)/gm, '<span style="color:var(--arw-text-muted);margin-right:6px">▸</span>$1');
+function getChildren(parentId, sourceNodes = state.repo.nodes) {
+    return sortNodes(sourceNodes.filter((node) => (node.parentId || null) === (parentId || null)));
 }
 
-function getTagLabel(tag) {
-    return TAG_CONFIG[tag] ? `${TAG_CONFIG[tag].icon} ${TAG_CONFIG[tag].label}` : tag;
+function sortNodes(nodes) {
+    return [...nodes].sort((left, right) => {
+        if (left.type !== right.type) return left.type === 'folder' ? -1 : 1;
+        if ((left.position ?? 0) !== (right.position ?? 0)) return (left.position ?? 0) - (right.position ?? 0);
+        return String(left.title || '').localeCompare(String(right.title || ''), 'es', { sensitivity: 'base' });
+    });
 }
 
-// ─── PERSISTENCE ─────────────────────────────────────────
-function persist() {
-    try {
-        localStorage.setItem(APP_KEY, JSON.stringify({
-            bitacoras: state.bitacoras,
-            activeBitacoraId: state.activeBitacoraId,
-            lastSaved: state.lastSaved
-        }));
-        updateStats();
-    } catch (e) {
-        console.error('[AgroRepo] Persist error:', e);
-        showToast('❌ Error al guardar', 'error');
+function getDescendants(nodeId, sourceNodes = state.repo.nodes) {
+    const children = sourceNodes.filter((node) => node.parentId === nodeId);
+    return children.flatMap((child) => [child, ...getDescendants(child.id, sourceNodes)]);
+}
+
+function getAllFiles(sourceNodes = state.repo.nodes) {
+    return sourceNodes.filter((node) => node.type === 'file');
+}
+
+function getPathNodes(nodeId, sourceNodes = state.repo.nodes) {
+    const path = [];
+    let current = sourceNodes.find((node) => node.id === nodeId) || null;
+    while (current) {
+        path.unshift(current);
+        current = current.parentId ? sourceNodes.find((node) => node.id === current.parentId) || null : null;
     }
+    return path;
+}
+
+function ensureUniqueTitle(title, parentId, type, ignoreId = null, sourceNodes = state.repo.nodes) {
+    const safeTitle = type === 'file' ? normalizeFileTitle(title) : normalizeFolderTitle(title);
+    const existing = new Set(
+        sourceNodes
+            .filter((node) => node.parentId === parentId && node.type === type && node.id !== ignoreId)
+            .map((node) => String(node.title || '').toLowerCase())
+    );
+    if (!existing.has(safeTitle.toLowerCase())) return safeTitle;
+
+    const base = type === 'file' ? stripMarkdownExtension(safeTitle) : safeTitle;
+    let suffix = 2;
+    let candidate = type === 'file' ? `${base} ${suffix}.md` : `${base} ${suffix}`;
+    while (existing.has(candidate.toLowerCase())) {
+        suffix += 1;
+        candidate = type === 'file' ? `${base} ${suffix}.md` : `${base} ${suffix}`;
+    }
+    return candidate;
+}
+
+function getNextPosition(parentId) {
+    const siblings = state.repo.nodes.filter((node) => node.parentId === parentId);
+    if (!siblings.length) return 0;
+    return Math.max(...siblings.map((node) => Number(node.position) || 0)) + 1;
+}
+
+function getActiveNode() {
+    return getNode(state.repo.activeNodeId);
+}
+
+function getActiveFile() {
+    const active = getActiveNode();
+    return active?.type === 'file' ? active : null;
+}
+
+function getSelectedFolderId(explicitParentId = null) {
+    if (explicitParentId && getNode(explicitParentId)?.type === 'folder') return explicitParentId;
+    const active = getActiveNode();
+    if (active?.type === 'folder') return active.id;
+    if (active?.type === 'file' && getNode(active.parentId)?.type === 'folder') return active.parentId;
+    const general = state.repo.nodes.find((node) => node.type === 'folder' && node.parentId === null && node.title === 'General');
+    return general?.id || state.repo.nodes.find((node) => node.type === 'folder')?.id || null;
+}
+
+function ensureAncestorsExpanded(nodeId, repo = state.repo) {
+    const sourceNodes = repo.nodes;
+    getPathNodes(nodeId, sourceNodes)
+        .filter((node) => node.type === 'folder')
+        .forEach((node) => {
+            if (!repo.expandedIds.includes(node.id)) repo.expandedIds.push(node.id);
+        });
+}
+
+function normalizeNode(rawNode) {
+    if (!rawNode || !rawNode.id || !rawNode.type) return null;
+    if (rawNode.type === 'folder') {
+        return makeFolderNode({
+            id: rawNode.id,
+            title: rawNode.title,
+            parentId: rawNode.parentId || null,
+            icon: rawNode.icon || getCropIcon(rawNode.title),
+            createdAt: rawNode.createdAt || new Date().toISOString(),
+            updatedAt: rawNode.updatedAt || rawNode.createdAt || new Date().toISOString(),
+            position: Number(rawNode.position) || 0,
+            cropId: rawNode.cropId || null
+        });
+    }
+    if (rawNode.type === 'file') {
+        return makeFileNode({
+            id: rawNode.id,
+            title: rawNode.title,
+            parentId: rawNode.parentId || null,
+            content: rawNode.content || '',
+            tags: rawNode.tags || [],
+            entryType: rawNode.entryType || 'observacion',
+            createdAt: rawNode.createdAt || new Date().toISOString(),
+            updatedAt: rawNode.updatedAt || rawNode.createdAt || new Date().toISOString(),
+            position: Number(rawNode.position) || 0,
+            cropId: rawNode.cropId || null,
+            hash: rawNode.hash || generateHash()
+        });
+    }
+    return null;
+}
+
+function normalizeRepoShape(parsed) {
+    const repo = createEmptyRepo(false);
+    repo.nodes = Array.isArray(parsed?.nodes)
+        ? parsed.nodes.map(normalizeNode).filter(Boolean)
+        : [];
+    if (!repo.nodes.length) seedRootFolders(repo);
+    repo.activeNodeId = repo.nodes.some((node) => node.id === parsed?.activeNodeId)
+        ? parsed.activeNodeId
+        : repo.nodes[0]?.id || null;
+    repo.expandedIds = Array.isArray(parsed?.expandedIds)
+        ? parsed.expandedIds.filter((id, index, list) => list.indexOf(id) === index && repo.nodes.some((node) => node.id === id))
+        : [];
+    ensureAncestorsExpanded(repo.activeNodeId, repo);
+    repo.lastSaved = parsed?.lastSaved || null;
+    return repo;
+}
+
+function buildMigratedFileName(report, index) {
+    const date = new Date(report?.createdAt || Date.now());
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const suffix = slugify(report?.entryType || 'registro');
+    return `${year}-${month}-${day}-${hours}${minutes}-${suffix}-${index + 1}.md`;
+}
+
+function migrateLegacyData(parsed) {
+    const repo = createEmptyRepo(true);
+    const cultivos = repo.nodes.find((node) => node.title === 'Cultivos') || repo.nodes[0];
+    const bitacoras = Array.isArray(parsed?.bitacoras) ? parsed.bitacoras : [];
+
+    bitacoras.forEach((bitacora, index) => {
+        const folderTitle = ensureUniqueTitle(bitacora?.name || 'Cultivo', cultivos.id, 'folder', null, repo.nodes);
+        const reports = Array.isArray(bitacora?.reports) ? bitacora.reports : [];
+        const lastReportDate = reports[0]?.updatedAt || reports[0]?.createdAt || bitacora?.createdAt || new Date().toISOString();
+        const folder = makeFolderNode({
+            title: folderTitle,
+            parentId: cultivos.id,
+            icon: bitacora?.icon || getCropIcon(bitacora?.name),
+            createdAt: bitacora?.createdAt || new Date().toISOString(),
+            updatedAt: lastReportDate,
+            position: index,
+            cropId: bitacora?.id || null
+        });
+        repo.nodes.push(folder);
+        repo.expandedIds.push(folder.id);
+
+        [...reports]
+            .sort((left, right) => new Date(left?.createdAt || 0) - new Date(right?.createdAt || 0))
+            .forEach((report, reportIndex) => {
+                const fileTitle = ensureUniqueTitle(buildMigratedFileName(report, reportIndex), folder.id, 'file', null, repo.nodes);
+                repo.nodes.push(makeFileNode({
+                    title: fileTitle,
+                    parentId: folder.id,
+                    content: report?.content || '',
+                    tags: report?.tags || [],
+                    entryType: report?.entryType || 'observacion',
+                    createdAt: report?.createdAt || new Date().toISOString(),
+                    updatedAt: report?.updatedAt || report?.createdAt || new Date().toISOString(),
+                    position: reportIndex,
+                    cropId: bitacora?.id || null,
+                    hash: report?.hash || generateHash()
+                }));
+            });
+    });
+
+    repo.activeNodeId = cultivos?.id || repo.nodes[0]?.id || null;
+    ensureAncestorsExpanded(repo.activeNodeId, repo);
+    return repo;
 }
 
 function loadState() {
     try {
-        const raw = localStorage.getItem(APP_KEY);
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            state.bitacoras = parsed.bitacoras || [];
-            state.activeBitacoraId = parsed.activeBitacoraId || null;
-            state.lastSaved = parsed.lastSaved || null;
+        const current = localStorage.getItem(STORAGE_KEY);
+        if (current) {
+            state.repo = normalizeRepoShape(JSON.parse(current));
+            return;
         }
-    } catch (e) {
-        console.error('[AgroRepo] Load error:', e);
-        state.bitacoras = [];
-    }
-}
 
-// ─── TOAST ────────────────────────────────────────────
-function showToast(message, type = 'info') {
-    const container = $('arw-toastContainer');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = 'arw-toast';
-    const icon = document.createElement('span');
-    icon.style.fontSize = '1.1rem';
-    icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : type === 'warning' ? '⚠' : 'ℹ';
-    const text = document.createElement('span');
-    text.style.cssText = 'font-size:0.82rem;color:var(--arw-text-primary)';
-    text.textContent = String(message || '');
-    toast.append(icon, text);
-    toast.style.borderColor = type === 'success' ? 'var(--arw-success)' : type === 'error' ? 'var(--arw-danger)' : type === 'warning' ? 'var(--arw-warning)' : 'var(--arw-border-gold)';
-    container.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3500);
-}
-
-// ─── DELETE MODAL ─────────────────────────────────────
-function showDeleteModal(text, callback) {
-    const modal = $('arw-deleteModal');
-    const modalText = $('arw-deleteModalText');
-    if (modal && modalText) {
-        modalText.textContent = text;
-        modal.classList.add('active');
-        _deleteCallback = callback;
-    }
-}
-
-function closeDeleteModal() {
-    const modal = $('arw-deleteModal');
-    if (modal) modal.classList.remove('active');
-    _deleteCallback = null;
-}
-
-// ─── BITÁCORA CRUD ────────────────────────────────────
-function createBitacora() {
-    const input = $('arw-newBitacoraInput');
-    const name = input?.value?.trim();
-    if (!name) {
-        showToast('⚠️ Escribe el nombre del cultivo', 'warning');
-        input?.focus();
-        return;
-    }
-    if (state.bitacoras.some(b => b.name.toLowerCase() === name.toLowerCase())) {
-        showToast('⚠️ Ya existe una bitácora con ese nombre', 'warning');
-        return;
-    }
-    const bitacora = {
-        id: generateId(),
-        name,
-        icon: getCropIcon(name),
-        createdAt: new Date().toISOString(),
-        reports: []
-    };
-    state.bitacoras.unshift(bitacora);
-    if (input) input.value = '';
-    persist();
-    renderBitacoraList();
-    selectBitacora(bitacora.id);
-    showToast(`✅ Bitácora "${String(name || '')}" creada`, 'success');
-}
-
-function deleteBitacora(id) {
-    const b = state.bitacoras.find(x => x.id === id);
-    if (!b) return;
-    showDeleteModal(`¿Eliminar "${b.name}" y sus ${b.reports.length} reportes? No se puede deshacer.`, () => {
-        state.bitacoras = state.bitacoras.filter(x => x.id !== id);
-        if (state.activeBitacoraId === id) {
-            state.activeBitacoraId = null;
-            showWelcome();
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+            const parsed = JSON.parse(legacy);
+            if (Array.isArray(parsed?.nodes)) {
+                state.repo = normalizeRepoShape(parsed);
+                return;
+            }
+            if (Array.isArray(parsed?.bitacoras)) {
+                state.repo = migrateLegacyData(parsed);
+                state.pendingNotice = 'Se migraron tus bitácoras legacy al árbol virtual de AgroRepo.';
+                persist();
+                return;
+            }
         }
+
+        state.repo = createEmptyRepo(true);
+    } catch (error) {
+        console.error('[AgroRepo] Load error:', error);
+        state.repo = createEmptyRepo(true);
+        state.pendingNotice = 'Se reinició AgroRepo por un problema al leer el almacenamiento local.';
+    }
+}
+
+function persist() {
+    try {
+        state.repo.lastSaved = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            version: REPO_VERSION,
+            nodes: state.repo.nodes,
+            activeNodeId: state.repo.activeNodeId,
+            expandedIds: Array.from(new Set(state.repo.expandedIds)),
+            lastSaved: state.repo.lastSaved
+        }));
+        updateSidebarStats();
+        updateSaveStateLabel();
+        syncRepoBridge();
+    } catch (error) {
+        console.error('[AgroRepo] Persist error:', error);
+        showToast('No se pudo guardar AgroRepo en local.', 'error');
+    }
+}
+
+function schedulePersist() {
+    clearTimeout(state.autosaveTimer);
+    updateSaveStateLabel('Guardando localmente...');
+    state.autosaveTimer = window.setTimeout(() => {
         persist();
-        renderBitacoraList();
-        showToast(`🗑️ Bitácora "${String(b?.name || '')}" eliminada`);
-    });
+        renderContextRail();
+    }, 220);
 }
 
-function selectBitacora(id) {
-    state.activeBitacoraId = id;
+function syncRepoBridge() {
+    const files = getAllFiles()
+        .sort((left, right) => new Date(right.updatedAt || right.createdAt) - new Date(left.updatedAt || left.createdAt))
+        .slice(0, 15)
+        .map((file) => ({
+            bitacora: getPathNodes(file.parentId).slice(-1)[0]?.title || null,
+            path: getPathNodes(file.id).map((node) => node.title).join(' / '),
+            type: file.entryType || 'observacion',
+            tags: file.tags || [],
+            content: getSnippet(file.content, 180),
+            date: file.updatedAt || file.createdAt
+        }));
+
+    const cropRoot = state.repo.nodes.find((node) => node.type === 'folder' && node.parentId === null && node.title === 'Cultivos');
+    const cropFolders = cropRoot
+        ? getChildren(cropRoot.id).filter((node) => node.type === 'folder').length
+        : 0;
+
+    window._agroRepoContext = {
+        bitacoras_count: cropFolders,
+        total_reports: getAllFiles().length,
+        total_folders: state.repo.nodes.filter((node) => node.type === 'folder').length,
+        total_files: getAllFiles().length,
+        active_bitacora: getPathNodes(state.repo.activeNodeId).find((node) => node.parentId === cropRoot?.id)?.title || null,
+        active_path: getPathNodes(state.repo.activeNodeId).map((node) => node.title).join(' / '),
+        recent_entries: files
+    };
+}
+
+function toggleFolder(nodeId) {
+    const folder = getNode(nodeId);
+    if (!folder || folder.type !== 'folder') return;
+    if (state.repo.expandedIds.includes(nodeId)) {
+        state.repo.expandedIds = state.repo.expandedIds.filter((id) => id !== nodeId);
+    } else {
+        state.repo.expandedIds.push(nodeId);
+    }
     persist();
-    renderBitacoraList();
-    showEditor();
+    renderTree();
+}
+
+function selectNode(nodeId) {
+    const node = getNode(nodeId);
+    if (!node) return;
+    state.repo.activeNodeId = node.id;
+    ensureAncestorsExpanded(node.id);
+    persist();
+    renderAll();
     closeSidebar();
 }
 
-// ─── REPORTS ──────────────────────────────────────────
-function commitReport() {
-    const textarea = $('arw-reportContent');
-    const text = textarea?.value?.trim();
-    if (!state.activeBitacoraId) {
-        showToast('⚠️ Selecciona una bitacora primero', 'warning');
+function createNode(nodeType, parentId, requestedTitle) {
+    const safeParentId = nodeType === 'folder' || nodeType === 'file'
+        ? getSelectedFolderId(parentId)
+        : null;
+
+    if ((nodeType === 'folder' || nodeType === 'file') && !safeParentId) {
+        showToast('Selecciona una carpeta destino primero.', 'warning');
         return;
     }
-    if (!text) {
-        showToast('⚠️ Escribe algo en el reporte', 'warning');
-        textarea?.focus();
-        return;
-    }
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    if (!bitacora) return;
 
-    // Edit mode: update existing report
-    if (state.editingReportId) {
-        const existing = bitacora.reports.find(r => r.id === state.editingReportId);
-        if (existing) {
-            existing.content = text;
-            existing.tags = [...state.selectedTags];
-            existing.entryType = state.selectedEntryType || 'observacion';
-            existing.updatedAt = new Date().toISOString();
-        }
-        state.editingReportId = null;
-        const submitBtn = $('arw-submitBtn');
-        if (submitBtn) submitBtn.innerHTML = '&#10003; Registrar Reporte';
-    } else {
-        const report = {
-            id: generateId(),
-            hash: generateHash(),
-            content: text,
-            tags: [...state.selectedTags],
-            entryType: state.selectedEntryType || 'observacion',
-            createdAt: new Date().toISOString()
-        };
-        if (report.tags.length === 0) report.tags.push('general');
-        bitacora.reports.unshift(report);
-    }
+    const title = ensureUniqueTitle(requestedTitle, safeParentId, nodeType);
+    const position = getNextPosition(safeParentId);
+    const now = new Date().toISOString();
+    const parentNode = getNode(safeParentId);
 
-    if (textarea) textarea.value = '';
-    state.selectedTags = [];
-    state.selectedEntryType = 'observacion';
-    root?.querySelectorAll('.arw-tag-btn.selected')?.forEach(b => {
-        b.classList.remove('selected');
-        b.style.background = 'var(--arw-bg-tertiary)';
-        b.style.borderColor = 'var(--arw-border-subtle)';
-        b.style.color = 'var(--arw-text-secondary)';
-    });
-    renderEntryTypeSelector();
+    const node = nodeType === 'folder'
+        ? makeFolderNode({
+            title,
+            parentId: safeParentId,
+            icon: getCropIcon(title),
+            createdAt: now,
+            updatedAt: now,
+            position
+        })
+        : makeFileNode({
+            title,
+            parentId: safeParentId,
+            content: '',
+            tags: ['general'],
+            entryType: 'observacion',
+            createdAt: now,
+            updatedAt: now,
+            position,
+            cropId: parentNode?.cropId || null
+        });
+
+    state.repo.nodes.push(node);
+    if (safeParentId && !state.repo.expandedIds.includes(safeParentId)) {
+        state.repo.expandedIds.push(safeParentId);
+    }
+    state.repo.activeNodeId = node.id;
     persist();
-    syncRepoBridge();
-    renderTimeline();
-    renderPreview();
-    renderBitacoraList();
-    if (!state.editingReportId) {
-        const last = bitacora.reports[0];
-        showToast(`&#10003; Reporte registrado · <strong style="font-family:monospace;color:var(--arw-gold-muted)">#${last?.hash || ''}</strong>`, 'success');
-    } else {
-        showToast('&#10003; Reporte actualizado', 'success');
+    renderAll();
+    showToast(nodeType === 'folder' ? 'Carpeta virtual creada.' : 'Archivo Markdown creado.', 'success');
+}
+
+function renameNode(nodeId, requestedTitle) {
+    const node = getNode(nodeId);
+    if (!node) return;
+    const safeTitle = ensureUniqueTitle(requestedTitle, node.parentId || null, node.type, node.id);
+    node.title = safeTitle;
+    node.slug = slugify(node.type === 'file' ? stripMarkdownExtension(safeTitle) : safeTitle);
+    node.updatedAt = new Date().toISOString();
+    if (node.type === 'folder' && !node.icon) node.icon = getCropIcon(node.title);
+    persist();
+    renderAll();
+    showToast(`${node.type === 'folder' ? 'Carpeta' : 'Archivo'} renombrado.`, 'success');
+}
+
+function deleteNode(nodeId) {
+    const node = getNode(nodeId);
+    if (!node) return;
+    const descendants = getDescendants(nodeId);
+    const idsToRemove = new Set([nodeId, ...descendants.map((entry) => entry.id)]);
+    state.repo.nodes = state.repo.nodes.filter((entry) => !idsToRemove.has(entry.id));
+    state.repo.expandedIds = state.repo.expandedIds.filter((id) => !idsToRemove.has(id));
+
+    if (idsToRemove.has(state.repo.activeNodeId)) {
+        state.repo.activeNodeId = node.parentId || state.repo.nodes[0]?.id || null;
     }
-}
 
-function editReport(reportId) {
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    if (!bitacora) return;
-    const r = bitacora.reports.find(x => x.id === reportId);
-    if (!r) return;
-    const textarea = $('arw-reportContent');
-    if (textarea) {
-        textarea.value = r.content;
-        textarea.focus();
+    if (!state.repo.nodes.length) {
+        state.repo = createEmptyRepo(true);
     }
-    state.editingReportId = reportId;
-    state.selectedTags = [...(r.tags || [])];
-    state.selectedEntryType = r.entryType || 'observacion';
-    // Update tag visual state
-    root?.querySelectorAll('.arw-tag-btn')?.forEach(btn => {
-        const tag = btn.dataset.tag;
-        if (state.selectedTags.includes(tag)) {
-            btn.classList.add('selected');
-            btn.style.background = 'rgba(212,175,55,0.2)';
-            btn.style.borderColor = 'var(--arw-gold-primary)';
-            btn.style.color = 'var(--arw-gold-bright)';
-        } else {
-            btn.classList.remove('selected');
-            btn.style.background = 'var(--arw-bg-tertiary)';
-            btn.style.borderColor = 'var(--arw-border-subtle)';
-            btn.style.color = 'var(--arw-text-secondary)';
-        }
-    });
-    renderEntryTypeSelector();
-    const submitBtn = $('arw-submitBtn');
-    if (submitBtn) submitBtn.innerHTML = '&#9998; Actualizar Reporte';
-    // Scroll to top of editor
-    const editorPanel = $('arw-editorPanel');
-    if (editorPanel) editorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    persist();
+    renderAll();
+    showToast(node.type === 'folder' ? 'Carpeta eliminada.' : 'Archivo eliminado.', 'success');
 }
 
-function deleteReport(reportId) {
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    if (!bitacora) return;
-    showDeleteModal('¿Eliminar este reporte? No se puede deshacer.', () => {
-        bitacora.reports = bitacora.reports.filter(r => r.id !== reportId);
-        persist();
-        renderTimeline();
-        renderPreview();
-        renderBitacoraList();
-        showToast('🗑️ Reporte eliminado');
-    });
+function showDeleteModal(nodeId) {
+    const node = getNode(nodeId);
+    const modal = qs('#arw-deleteModal');
+    const text = qs('#arw-deleteModalText');
+    if (!node || !modal || !text) return;
+    const descendants = getDescendants(nodeId);
+    const fileCount = descendants.filter((entry) => entry.type === 'file').length + (node.type === 'file' ? 1 : 0);
+    const folderCount = descendants.filter((entry) => entry.type === 'folder').length + (node.type === 'folder' ? 1 : 0);
+    state.deleteTargetId = nodeId;
+    text.textContent = node.type === 'folder'
+        ? `Eliminar "${node.title}" quitará ${pluralize(folderCount, 'carpeta')} y ${pluralize(fileCount, 'archivo')} del árbol virtual.`
+        : `Eliminar "${node.title}" quitará este archivo Markdown de AgroRepo.`;
+    modal.classList.add('is-active');
+    modal.setAttribute('aria-hidden', 'false');
 }
 
-function copyReport(reportId) {
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    if (!bitacora) return;
-    const r = bitacora.reports.find(x => x.id === reportId);
-    if (!r) return;
-    const typeCfg = ENTRY_TYPE_CONFIG[r.entryType] || ENTRY_TYPE_CONFIG.observacion;
-    const text = `[#${r.hash}] ${typeCfg.label} · ${formatDate(r.createdAt)}\nTags: ${r.tags.join(', ')}\n\n${r.content}`;
-    navigator.clipboard.writeText(text).then(() => {
-        showToast('📋 Reporte copiado al portapapeles', 'success');
-    }).catch(() => {
-        showToast('❌ No se pudo copiar', 'error');
-    });
+function closeDeleteModal() {
+    const modal = qs('#arw-deleteModal');
+    if (!modal) return;
+    modal.classList.remove('is-active');
+    modal.setAttribute('aria-hidden', 'true');
+    state.deleteTargetId = null;
 }
 
-// ─── TAG SYSTEM ───────────────────────────────────────
-function toggleTag(btn) {
-    const tag = btn.dataset.tag;
-    btn.classList.toggle('selected');
-    if (state.selectedTags.includes(tag)) {
-        state.selectedTags = state.selectedTags.filter(t => t !== tag);
-    } else {
-        state.selectedTags.push(tag);
-    }
-    // Update visual state
-    if (btn.classList.contains('selected')) {
-        btn.style.background = 'rgba(212,175,55,0.2)';
-        btn.style.borderColor = 'var(--arw-gold-primary)';
-        btn.style.color = 'var(--arw-gold-bright)';
-    } else {
-        btn.style.background = 'var(--arw-bg-tertiary)';
-        btn.style.borderColor = 'var(--arw-border-subtle)';
-        btn.style.color = 'var(--arw-text-secondary)';
-    }
+function openNodeModal(mode, nodeType, options = {}) {
+    const modal = qs('#arw-nodeModal');
+    const title = qs('#arw-nodeModalTitle');
+    const hint = qs('#arw-nodeModalHint');
+    const input = qs('#arw-nodeModalName');
+    const parent = qs('#arw-nodeModalParent');
+    const confirm = qs('#arw-nodeModalConfirm');
+    if (!modal || !title || !hint || !input || !parent || !confirm) return;
+
+    const targetFolderId = getSelectedFolderId(options.parentId);
+    const folder = getNode(targetFolderId);
+    const node = options.nodeId ? getNode(options.nodeId) : null;
+    state.nodeModal = {
+        mode,
+        nodeType,
+        nodeId: options.nodeId || null,
+        parentId: targetFolderId
+    };
+
+    title.textContent = mode === 'rename'
+        ? `Renombrar ${nodeType === 'folder' ? 'carpeta' : 'archivo'}`
+        : `Crear ${nodeType === 'folder' ? 'carpeta' : 'archivo Markdown'}`;
+    hint.textContent = mode === 'rename'
+        ? 'Cambia el nombre sin perder el contenido ni el historial local.'
+        : nodeType === 'folder'
+            ? 'Las carpetas virtuales organizan tu memoria agrícola sin tocar archivos del sistema.'
+            : 'Crea una nota diaria o técnica dentro de la carpeta activa. Se exportará como `.md` cuando lo necesites.';
+    input.value = mode === 'rename'
+        ? String(node?.title || '')
+        : nodeType === 'file'
+            ? `${getTodayFileStem()}.md`
+            : '';
+    parent.textContent = mode === 'rename'
+        ? `Ubicación: ${getPathNodes(node?.parentId).map((entry) => entry.title).join(' / ') || 'Raíz de AgroRepo'}`
+        : `Destino: ${folder ? getPathNodes(folder.id).map((entry) => entry.title).join(' / ') : 'Selecciona una carpeta'}`;
+    confirm.textContent = mode === 'rename' ? 'Actualizar' : 'Crear';
+    modal.classList.add('is-active');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => input.focus(), 20);
 }
 
-// ─── ENTRY TYPE SELECTOR ─────────────────────────────
-function renderEntryTypeSelector() {
-    const container = $('arw-entryTypeSelector');
-    if (!container) return;
-    container.replaceChildren();
-    Object.entries(ENTRY_TYPE_CONFIG).forEach(([key, cfg]) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'arw-entry-type-btn' + (state.selectedEntryType === key ? ' arw-entry-type-btn--active' : '');
-        btn.dataset.entryType = key;
-        btn.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:${state.selectedEntryType === key ? 'rgba(200,167,82,0.15)' : 'var(--arw-bg-tertiary)'};border:1px solid ${state.selectedEntryType === key ? cfg.color : 'var(--arw-border-subtle)'};border-radius:6px;font-size:11px;cursor:pointer;color:${state.selectedEntryType === key ? cfg.color : 'var(--arw-text-muted)'};transition:all 0.15s ease;font-family:inherit;`;
-        btn.innerHTML = `<span>${cfg.icon}</span><span>${cfg.label}</span>`;
-        btn.addEventListener('click', () => {
-            state.selectedEntryType = key;
-            renderEntryTypeSelector();
-        });
-        container.appendChild(btn);
-    });
+function closeNodeModal() {
+    const modal = qs('#arw-nodeModal');
+    if (!modal) return;
+    modal.classList.remove('is-active');
+    modal.setAttribute('aria-hidden', 'true');
+    state.nodeModal = null;
 }
 
-// ─── TAG FILTER ──────────────────────────────────────
-function setTagFilter(tag) {
-    state.filterTag = state.filterTag === tag ? null : tag;
-    renderTimeline();
-    renderFilterBar();
-}
-
-function renderFilterBar() {
-    const bar = $('arw-filterBar');
-    if (!bar) return;
-    if (!state.filterTag) {
-        bar.style.display = 'none';
+function submitNodeModal() {
+    const modalState = state.nodeModal;
+    const input = qs('#arw-nodeModalName');
+    if (!modalState || !input) return;
+    const value = input.value.trim();
+    if (!value) {
+        showToast('Escribe un nombre antes de continuar.', 'warning');
+        input.focus();
         return;
     }
-    bar.style.display = 'flex';
-    const cfg = TAG_CONFIG[state.filterTag];
-    bar.innerHTML = `<span style="font-size:0.78rem;color:var(--arw-text-muted);">Filtrando por: <strong style="color:var(--arw-gold-primary)">${cfg ? cfg.icon + ' ' + cfg.label : state.filterTag}</strong></span><button type="button" style="background:none;border:none;color:var(--arw-text-muted);cursor:pointer;font-size:14px;padding:2px 6px;" title="Quitar filtro">&times;</button>`;
-    bar.querySelector('button')?.addEventListener('click', () => {
-        state.filterTag = null;
-        renderTimeline();
-        renderFilterBar();
-    });
+
+    if (modalState.mode === 'rename') {
+        renameNode(modalState.nodeId, value);
+    } else {
+        createNode(modalState.nodeType, modalState.parentId, value);
+    }
+
+    closeNodeModal();
 }
 
-// ─── IA BRIDGE ───────────────────────────────────────
-function syncRepoBridge() {
-    const allReports = [];
-    state.bitacoras.forEach(b => {
-        (b.reports || []).slice(0, 5).forEach(r => {
-            allReports.push({
-                bitacora: b.name,
-                type: r.entryType || 'observacion',
-                tags: r.tags || [],
-                content: (r.content || '').slice(0, 200),
-                date: r.createdAt
-            });
+function normalizeActiveFileTitleOnBlur() {
+    const file = getActiveFile();
+    if (!file) return;
+    const normalized = ensureUniqueTitle(file.title, file.parentId, 'file', file.id);
+    if (file.title !== normalized) {
+        file.title = normalized;
+        file.slug = slugify(stripMarkdownExtension(normalized));
+        file.updatedAt = new Date().toISOString();
+        persist();
+        renderAll();
+    } else {
+        updateLiveFileUI();
+    }
+}
+
+function saveActiveFile(notify = true) {
+    const file = getActiveFile();
+    if (!file) return;
+    file.title = ensureUniqueTitle(file.title, file.parentId, 'file', file.id);
+    file.slug = slugify(stripMarkdownExtension(file.title));
+    file.updatedAt = new Date().toISOString();
+    persist();
+    renderAll();
+    if (notify) showToast('Archivo guardado localmente.', 'success');
+}
+
+function updateActiveFileField(patch) {
+    const file = getActiveFile();
+    if (!file) return;
+    Object.assign(file, patch, { updatedAt: new Date().toISOString() });
+    schedulePersist();
+}
+
+function toggleActiveFileTag(tag) {
+    const file = getActiveFile();
+    if (!file) return;
+    const tags = new Set(file.tags || []);
+    if (tags.has(tag)) tags.delete(tag);
+    else tags.add(tag);
+    file.tags = normalizeTags(Array.from(tags));
+    file.updatedAt = new Date().toISOString();
+    schedulePersist();
+    updateLiveFileUI();
+    renderContextRail();
+}
+
+function setActiveFileEntryType(entryType) {
+    const file = getActiveFile();
+    if (!file) return;
+    file.entryType = normalizeEntryType(entryType);
+    file.updatedAt = new Date().toISOString();
+    schedulePersist();
+    updateLiveFileUI();
+    renderContextRail();
+}
+
+function getNodeIcon(node) {
+    if (!node) return '📁';
+    if (node.type === 'folder') return node.icon || getCropIcon(node.title);
+    return ENTRY_TYPE_CONFIG[node.entryType]?.icon || '📝';
+}
+
+function renderTreeNode(node, depth = 0) {
+    const isFolder = node.type === 'folder';
+    const active = node.id === state.repo.activeNodeId;
+    const expanded = isFolder && state.repo.expandedIds.includes(node.id);
+    const children = isFolder ? getChildren(node.id) : [];
+    const directFolders = children.filter((child) => child.type === 'folder').length;
+    const directFiles = children.filter((child) => child.type === 'file').length;
+    const meta = isFolder
+        ? `${pluralize(directFolders, 'subcarpeta')} · ${pluralize(directFiles, 'archivo')}`
+        : `${ENTRY_TYPE_CONFIG[node.entryType]?.label || 'Archivo'} · ${timeAgo(node.updatedAt || node.createdAt)}`;
+
+    return `
+        <div class="arw-tree-node ${active ? 'is-active' : ''}" style="--arw-depth:${depth}">
+            <div class="arw-tree-row">
+                ${isFolder
+            ? `<button type="button" class="arw-tree-toggle ${expanded ? 'is-open' : ''}" data-action="toggle-folder" data-node-id="${node.id}" aria-label="${expanded ? 'Contraer' : 'Expandir'} carpeta">›</button>`
+            : '<span class="arw-tree-toggle arw-tree-toggle--spacer"></span>'}
+                <button type="button" class="arw-tree-hit" data-action="select-node" data-node-id="${node.id}">
+                    <span class="arw-tree-icon" data-tree-icon-for="${node.id}">${getNodeIcon(node)}</span>
+                    <span class="arw-tree-copy">
+                        <span class="arw-tree-label" data-tree-label-for="${node.id}">${escapeHtml(node.title)}</span>
+                        <span class="arw-tree-meta" data-tree-meta-for="${node.id}">${escapeHtml(meta)}</span>
+                    </span>
+                </button>
+                <div class="arw-tree-actions">
+                    ${isFolder ? `<button type="button" class="arw-mini-btn" data-action="create-file" data-parent-id="${node.id}" title="Nuevo archivo">+</button>` : ''}
+                    <button type="button" class="arw-mini-btn" data-action="rename-node" data-node-id="${node.id}" title="Renombrar">✎</button>
+                    <button type="button" class="arw-mini-btn arw-mini-btn--danger" data-action="delete-node" data-node-id="${node.id}" title="Eliminar">✕</button>
+                </div>
+            </div>
+            ${isFolder && expanded ? `<div class="arw-tree-children">${children.map((child) => renderTreeNode(child, depth + 1)).join('')}</div>` : ''}
+        </div>
+    `;
+}
+
+function renderTree() {
+    const container = qs('#arw-treeList');
+    if (!container) return;
+    const roots = getChildren(null);
+    if (!roots.length) {
+        container.innerHTML = `
+            <div class="arw-empty-mini">
+                <div class="arw-empty-mini-title">Sin estructura aún</div>
+                <p>Recupera la estructura base para comenzar a sembrar tu bitácora.</p>
+                <button type="button" class="arw-btn-secondary arw-btn-block" data-action="restore-structure">Recrear estructura base</button>
+            </div>
+        `;
+        return;
+    }
+    container.innerHTML = roots.map((node) => renderTreeNode(node, 0)).join('');
+}
+
+function renderBreadcrumb() {
+    const breadcrumb = qs('#arw-breadcrumb');
+    if (!breadcrumb) return;
+    const parts = getPathNodes(state.repo.activeNodeId);
+    const crumbs = ['<span class="arw-breadcrumb-item">AgroRepo</span>'];
+    parts.forEach((part) => {
+        crumbs.push('<span class="arw-breadcrumb-sep">›</span>');
+        crumbs.push(`<span class="arw-breadcrumb-item ${part.id === state.repo.activeNodeId ? 'is-current' : ''}">${escapeHtml(part.title)}</span>`);
+    });
+    breadcrumb.innerHTML = crumbs.join('');
+}
+
+function renderNodeCard(node) {
+    const isFolder = node.type === 'folder';
+    const descendants = isFolder ? getDescendants(node.id) : [];
+    const folderCount = descendants.filter((entry) => entry.type === 'folder').length;
+    const fileCount = descendants.filter((entry) => entry.type === 'file').length;
+    const meta = isFolder
+        ? `${pluralize(folderCount, 'subcarpeta')} · ${pluralize(fileCount, 'archivo')}`
+        : `${ENTRY_TYPE_CONFIG[node.entryType]?.label || 'Archivo'} · ${timeAgo(node.updatedAt || node.createdAt)}`;
+
+    return `
+        <article class="arw-node-card">
+            <button type="button" class="arw-node-card-main" data-action="select-node" data-node-id="${node.id}">
+                <span class="arw-node-card-icon">${getNodeIcon(node)}</span>
+                <span class="arw-node-card-copy">
+                    <span class="arw-node-card-title">${escapeHtml(node.title)}</span>
+                    <span class="arw-node-card-meta">${escapeHtml(meta)}</span>
+                </span>
+            </button>
+            <div class="arw-node-card-actions">
+                ${isFolder ? `<button type="button" class="arw-mini-btn" data-action="create-file" data-parent-id="${node.id}" title="Nuevo archivo">Archivo</button>` : `<button type="button" class="arw-mini-btn" data-action="export-node-md" data-node-id="${node.id}" title="Exportar .md">.md</button>`}
+                <button type="button" class="arw-mini-btn" data-action="rename-node" data-node-id="${node.id}" title="Renombrar">Renombrar</button>
+                <button type="button" class="arw-mini-btn arw-mini-btn--danger" data-action="delete-node" data-node-id="${node.id}" title="Eliminar">Eliminar</button>
+            </div>
+        </article>
+    `;
+}
+
+function renderWelcomeView() {
+    const roots = getChildren(null);
+    return `
+        <section class="arw-view arw-welcome-view">
+            <div class="arw-hero-card">
+                <div class="arw-hero-eyebrow">AgroRepo · Memoria operativa</div>
+                <div class="arw-hero-main">
+                    <div>
+                        <h2>Una bitácora agrícola que se navega como árbol virtual</h2>
+                        <p>
+                            Organiza cultivos, finanzas, clima y decisiones del campo en carpetas virtuales y archivos Markdown exportables.
+                            El timeline y el contexto para IA se derivan del mismo árbol.
+                        </p>
+                    </div>
+                    <div class="arw-hero-actions">
+                        <button type="button" class="arw-btn-primary" data-action="create-folder">Nueva carpeta</button>
+                        <button type="button" class="arw-btn-secondary" data-action="create-file">Nuevo archivo .md</button>
+                    </div>
+                </div>
+                <div class="arw-feature-grid">
+                    <div class="arw-feature-card">
+                        <strong>Árbol claro</strong>
+                        <p>Carpetas y archivos distinguidos visualmente, con foco claro y ruta visible.</p>
+                    </div>
+                    <div class="arw-feature-card">
+                        <strong>Diario agrícola</strong>
+                        <p>Notas por fecha, decisiones, fertilización, clima y plagas en Markdown.</p>
+                    </div>
+                    <div class="arw-feature-card">
+                        <strong>Local-first útil</strong>
+                        <p>Todo persiste en tu navegador, con backup JSON y exporte por archivo.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="arw-node-grid">
+                ${roots.map((rootNode) => renderNodeCard(rootNode)).join('')}
+            </div>
+        </section>
+    `;
+}
+
+function renderFolderView(folder) {
+    const children = getChildren(folder.id);
+    const descendants = getDescendants(folder.id);
+    const files = descendants.filter((entry) => entry.type === 'file');
+    const folders = descendants.filter((entry) => entry.type === 'folder');
+    const lastActivity = files[0]?.updatedAt || folder.updatedAt || folder.createdAt;
+
+    return `
+        <section class="arw-view arw-folder-view">
+            <div class="arw-hero-card">
+                <div class="arw-hero-eyebrow">Carpeta virtual</div>
+                <div class="arw-hero-main">
+                    <div>
+                        <h2>${getNodeIcon(folder)} ${escapeHtml(folder.title)}</h2>
+                        <p>${escapeHtml(getPathNodes(folder.id).map((node) => node.title).join(' / '))}</p>
+                    </div>
+                    <div class="arw-hero-actions">
+                        <button type="button" class="arw-btn-primary" data-action="create-folder" data-parent-id="${folder.id}">Subcarpeta</button>
+                        <button type="button" class="arw-btn-secondary" data-action="create-file" data-parent-id="${folder.id}">Nuevo archivo .md</button>
+                        <button type="button" class="arw-btn-secondary" data-action="rename-node" data-node-id="${folder.id}">Renombrar</button>
+                        <button type="button" class="arw-btn-secondary" data-action="delete-node" data-node-id="${folder.id}">Eliminar</button>
+                    </div>
+                </div>
+                <div class="arw-hero-stats">
+                    <div class="arw-stat-card">
+                        <span class="arw-stat-card-label">Subcarpetas</span>
+                        <strong>${folders.length}</strong>
+                    </div>
+                    <div class="arw-stat-card">
+                        <span class="arw-stat-card-label">Archivos</span>
+                        <strong>${files.length}</strong>
+                    </div>
+                    <div class="arw-stat-card">
+                        <span class="arw-stat-card-label">Última señal</span>
+                        <strong>${escapeHtml(timeAgo(lastActivity))}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arw-section-block">
+                <div class="arw-section-heading">
+                    <h3>Contenido inmediato</h3>
+                    <p>Abre un archivo para editarlo o sigue creciendo el árbol desde esta carpeta.</p>
+                </div>
+                ${children.length
+            ? `<div class="arw-node-grid">${children.map((node) => renderNodeCard(node)).join('')}</div>`
+            : `
+                        <div class="arw-empty-panel">
+                            <div class="arw-empty-panel-icon">🧺</div>
+                            <h4>Carpeta vacía</h4>
+                            <p>Crea una subcarpeta para organizar una temporada o abre un archivo Markdown para empezar el diario.</p>
+                            <div class="arw-inline-actions">
+                                <button type="button" class="arw-btn-primary" data-action="create-file" data-parent-id="${folder.id}">Crear archivo .md</button>
+                                <button type="button" class="arw-btn-secondary" data-action="create-folder" data-parent-id="${folder.id}">Crear subcarpeta</button>
+                            </div>
+                        </div>
+                    `}
+            </div>
+        </section>
+    `;
+}
+
+function renderEntryTypeButtons(file) {
+    return Object.entries(ENTRY_TYPE_CONFIG).map(([key, config]) => `
+        <button
+            type="button"
+            class="arw-chip arw-chip--entry ${file.entryType === key ? 'is-active' : ''}"
+            data-action="set-entry-type"
+            data-entry-type="${key}"
+            style="--arw-chip-accent:${config.color};"
+        >
+            <span>${config.icon}</span>
+            <span>${config.label}</span>
+        </button>
+    `).join('');
+}
+
+function renderTagButtons(file) {
+    return Object.entries(TAG_CONFIG).map(([key, config]) => `
+        <button
+            type="button"
+            class="arw-chip ${file.tags.includes(key) ? 'is-active' : ''}"
+            data-action="toggle-tag"
+            data-tag="${key}"
+        >
+            <span>${config.icon}</span>
+            <span>${config.label}</span>
+        </button>
+    `).join('');
+}
+
+function renderFileView(file) {
+    return `
+        <section class="arw-view arw-file-view">
+            <div class="arw-hero-card">
+                <div class="arw-hero-eyebrow">Archivo Markdown virtual</div>
+                <div class="arw-hero-main">
+                    <div>
+                        <h2><span class="arw-file-hero-icon" id="arw-fileHeroIcon">${getNodeIcon(file)}</span> <span id="arw-fileHeroTitle">${escapeHtml(file.title)}</span></h2>
+                        <p>${escapeHtml(getPathNodes(file.id).map((node) => node.title).join(' / '))}</p>
+                    </div>
+                    <div class="arw-hero-actions">
+                        <button type="button" class="arw-btn-primary" data-action="save-file">Guardar cambios</button>
+                        <button type="button" class="arw-btn-secondary" data-action="export-active-md">Exportar .md</button>
+                        <button type="button" class="arw-btn-secondary" data-action="delete-node" data-node-id="${file.id}">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arw-file-shell">
+                <div class="arw-form-card">
+                    <div class="arw-form-group">
+                        <label class="arw-input-label" for="arw-fileTitle">Nombre del archivo</label>
+                        <input type="text" id="arw-fileTitle" class="arw-input-field arw-input-field--single" value="${escapeHtml(file.title)}" maxlength="100" />
+                    </div>
+                    <div class="arw-file-status">
+                        <span id="arw-liveSaveState">Guardado local ${escapeHtml(state.repo.lastSaved ? timeAgo(state.repo.lastSaved) : 'pendiente')}</span>
+                        <span id="arw-fileMeta">${escapeHtml(`${getWordCount(file.content)} palabras · ${file.content.length} caracteres`)}</span>
+                    </div>
+                    <div class="arw-form-group">
+                        <label class="arw-input-label">Tipo de entrada</label>
+                        <div class="arw-chip-row">${renderEntryTypeButtons(file)}</div>
+                    </div>
+                    <div class="arw-form-group">
+                        <label class="arw-input-label">Tags agrícolas</label>
+                        <div class="arw-chip-row">${renderTagButtons(file)}</div>
+                    </div>
+                </div>
+
+                <div class="arw-editor-grid">
+                    <div class="arw-form-card arw-editor-card">
+                        <div class="arw-pane-header">Edición Markdown</div>
+                        <textarea id="arw-fileContent" class="arw-input-field arw-input-field--editor" placeholder="Ejemplo:
+- Riego realizado
+- Fertilización aplicada
+- Observación del clima
+- Señales de plaga o suelo">${escapeHtml(file.content)}</textarea>
+                    </div>
+                    <div class="arw-form-card arw-preview-card">
+                        <div class="arw-pane-header">Vista previa</div>
+                        <div class="arw-markdown-preview" id="arw-filePreview">${renderMarkdown(file.content)}</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    `;
+}
+
+function renderMainView() {
+    const container = qs('#arw-mainView');
+    if (!container) return;
+    const active = getActiveNode();
+    if (!active) {
+        container.innerHTML = renderWelcomeView();
+        return;
+    }
+    container.innerHTML = active.type === 'folder'
+        ? renderFolderView(active)
+        : renderFileView(active);
+}
+
+function getContextFiles() {
+    const active = getActiveNode();
+    if (!active) return getAllFiles().sort((left, right) => new Date(right.updatedAt || right.createdAt) - new Date(left.updatedAt || left.createdAt));
+    if (active.type === 'file') {
+        const parent = getNode(active.parentId);
+        return parent
+            ? [active, ...getDescendants(parent.id).filter((entry) => entry.type === 'file' && entry.id !== active.id)]
+                .sort((left, right) => new Date(right.updatedAt || right.createdAt) - new Date(left.updatedAt || left.createdAt))
+            : [active];
+    }
+    return getDescendants(active.id)
+        .filter((entry) => entry.type === 'file')
+        .sort((left, right) => new Date(right.updatedAt || right.createdAt) - new Date(left.updatedAt || left.createdAt));
+}
+
+function renderInfoRows(rows) {
+    return rows.map((row) => `
+        <div class="arw-info-row">
+            <span>${escapeHtml(row.label)}</span>
+            <strong>${escapeHtml(row.value)}</strong>
+        </div>
+    `).join('');
+}
+
+function renderContextSummary() {
+    const container = qs('#arw-contextSummary');
+    if (!container) return;
+    const active = getActiveNode();
+    if (!active) {
+        container.innerHTML = renderInfoRows([
+            { label: 'Carpetas', value: String(state.repo.nodes.filter((node) => node.type === 'folder').length) },
+            { label: 'Archivos', value: String(getAllFiles().length) },
+            { label: 'Modo', value: 'Local-first' }
+        ]);
+        return;
+    }
+
+    if (active.type === 'folder') {
+        const descendants = getDescendants(active.id);
+        const folders = descendants.filter((entry) => entry.type === 'folder');
+        const files = descendants.filter((entry) => entry.type === 'file');
+        container.innerHTML = renderInfoRows([
+            { label: 'Ruta', value: getPathNodes(active.id).map((node) => node.title).join(' / ') },
+            { label: 'Subcarpetas', value: String(folders.length) },
+            { label: 'Archivos', value: String(files.length) },
+            { label: 'Última señal', value: timeAgo(files[0]?.updatedAt || active.updatedAt || active.createdAt) }
+        ]);
+        return;
+    }
+
+    container.innerHTML = renderInfoRows([
+        { label: 'Ruta', value: getPathNodes(active.id).map((node) => node.title).join(' / ') },
+        { label: 'Tipo', value: ENTRY_TYPE_CONFIG[active.entryType]?.label || 'Observacion' },
+        { label: 'Tags', value: active.tags.map((tag) => TAG_CONFIG[tag]?.label || tag).join(', ') || 'General' },
+        { label: 'Creado', value: formatDate(active.createdAt) },
+        { label: 'Actualizado', value: formatDate(active.updatedAt || active.createdAt) }
+    ]);
+}
+
+function renderContextTimeline() {
+    const container = qs('#arw-contextTimeline');
+    if (!container) return;
+    const files = getContextFiles().slice(0, 8);
+    if (!files.length) {
+        container.innerHTML = '<div class="arw-empty-mini"><div class="arw-empty-mini-title">Sin actividad</div><p>El timeline aparecerá cuando guardes archivos Markdown.</p></div>';
+        return;
+    }
+
+    container.innerHTML = files.map((file) => `
+        <button type="button" class="arw-timeline-item ${file.id === state.repo.activeNodeId ? 'is-active' : ''}" data-action="select-node" data-node-id="${file.id}">
+            <div class="arw-timeline-item-head">
+                <span>${getNodeIcon(file)} ${escapeHtml(file.title)}</span>
+                <span>${escapeHtml(timeAgo(file.updatedAt || file.createdAt))}</span>
+            </div>
+            <div class="arw-timeline-item-body">${escapeHtml(getSnippet(file.content || '', 90) || 'Archivo listo para empezar.')}</div>
+        </button>
+    `).join('');
+}
+
+function renderContextTags() {
+    const container = qs('#arw-contextTags');
+    if (!container) return;
+    const counts = {};
+    getContextFiles().forEach((file) => {
+        (file.tags || []).forEach((tag) => {
+            counts[tag] = (counts[tag] || 0) + 1;
         });
     });
-    // Sort by date desc, limit to 15 most recent across all bitacoras
-    allReports.sort((a, b) => new Date(b.date) - new Date(a.date));
-    window._agroRepoContext = {
-        bitacoras_count: state.bitacoras.length,
-        total_reports: state.bitacoras.reduce((s, b) => s + (b.reports?.length || 0), 0),
-        recent_entries: allReports.slice(0, 15),
-        active_bitacora: state.activeBitacoraId
-            ? state.bitacoras.find(b => b.id === state.activeBitacoraId)?.name || null
-            : null
+
+    const rows = Object.entries(counts).sort((left, right) => right[1] - left[1]).slice(0, 8);
+    if (!rows.length) {
+        container.innerHTML = '<div class="arw-empty-mini"><div class="arw-empty-mini-title">Sin tags aún</div><p>Cuando etiquetes riego, clima o plaga verás las señales aquí.</p></div>';
+        return;
+    }
+
+    container.innerHTML = rows.map(([tag, count]) => `
+        <div class="arw-tag-stat">
+            <span>${escapeHtml(getTagLabel(tag))}</span>
+            <strong>${count}</strong>
+        </div>
+    `).join('');
+}
+
+function renderContextRail() {
+    renderContextSummary();
+    renderContextTimeline();
+    renderContextTags();
+}
+
+function updateSidebarStats() {
+    const folders = state.repo.nodes.filter((node) => node.type === 'folder').length;
+    const files = getAllFiles().length;
+    const foldersEl = qs('#arw-statFolders');
+    const filesEl = qs('#arw-statFiles');
+    const storage = qs('#arw-storageStatus');
+    if (foldersEl) foldersEl.textContent = String(folders);
+    if (filesEl) filesEl.textContent = String(files);
+    if (storage) storage.textContent = `LocalStorage · ${getStorageSize()} · 100% Offline`;
+}
+
+function updateHeaderActionsState() {
+    const exportButton = qs('#arw-btnExportActiveMd');
+    if (!exportButton) return;
+    exportButton.disabled = !getActiveFile();
+}
+
+function updateSaveStateLabel(text = '') {
+    const label = qs('#arw-liveSaveState');
+    if (!label) return;
+    if (text) {
+        label.textContent = text;
+        return;
+    }
+    label.textContent = `Guardado local ${state.repo.lastSaved ? timeAgo(state.repo.lastSaved) : 'pendiente'}`;
+}
+
+function updateLiveFileUI() {
+    const file = getActiveFile();
+    if (!file) return;
+    const preview = qs('#arw-filePreview');
+    const heroTitle = qs('#arw-fileHeroTitle');
+    const heroIcon = qs('#arw-fileHeroIcon');
+    const meta = qs('#arw-fileMeta');
+    const treeLabel = qs(`[data-tree-label-for="${file.id}"]`);
+    const treeIcon = qs(`[data-tree-icon-for="${file.id}"]`);
+    const treeMeta = qs(`[data-tree-meta-for="${file.id}"]`);
+
+    if (preview) preview.innerHTML = renderMarkdown(file.content);
+    if (heroTitle) heroTitle.textContent = file.title;
+    if (heroIcon) heroIcon.textContent = getNodeIcon(file);
+    if (meta) meta.textContent = `${getWordCount(file.content)} palabras · ${file.content.length} caracteres`;
+    if (treeLabel) treeLabel.textContent = file.title || 'Sin nombre';
+    if (treeIcon) treeIcon.textContent = getNodeIcon(file);
+    if (treeMeta) treeMeta.textContent = `${ENTRY_TYPE_CONFIG[file.entryType]?.label || 'Archivo'} · ${timeAgo(file.updatedAt || file.createdAt)}`;
+
+    qsa('[data-action="set-entry-type"]').forEach((button) => {
+        button.classList.toggle('is-active', button.dataset.entryType === file.entryType);
+    });
+    qsa('[data-action="toggle-tag"]').forEach((button) => {
+        button.classList.toggle('is-active', file.tags.includes(button.dataset.tag));
+    });
+
+    updateSaveStateLabel();
+}
+
+function renderAll() {
+    renderTree();
+    renderBreadcrumb();
+    renderMainView();
+    renderContextRail();
+    updateSidebarStats();
+    updateHeaderActionsState();
+    updateLiveFileUI();
+}
+
+function buildBackupPayload() {
+    return {
+        exportedAt: new Date().toISOString(),
+        version: REPO_VERSION,
+        system: 'AgroRepo Tree Memory | YavlGold',
+        nodes: state.repo.nodes,
+        activeNodeId: state.repo.activeNodeId,
+        expandedIds: state.repo.expandedIds
     };
 }
 
-// ─── RENDERING ───────────────────────────────────────
-function renderBitacoraList() {
-    const list = $('arw-bitacoraList');
-    if (!list) return;
-    if (state.bitacoras.length === 0) {
-        list.replaceChildren();
-        const emptyItem = document.createElement('li');
-        emptyItem.style.cssText = 'padding:24px 20px;text-align:center;color:var(--arw-text-muted);font-size:0.82rem;white-space:pre-line;';
-        emptyItem.textContent = 'No hay bitácoras aún.\n¡Crea la primera arriba!';
-        list.appendChild(emptyItem);
-        return;
-    }
-    list.replaceChildren();
-    const fragment = document.createDocumentFragment();
-    state.bitacoras.forEach((b) => {
-        const item = document.createElement('li');
-        item.className = `arw-bitacora-item ${b.id === state.activeBitacoraId ? 'active' : ''}`;
-        item.dataset.id = b.id;
-
-        const icon = document.createElement('span');
-        icon.className = 'arw-bitacora-icon';
-        icon.textContent = String(b.icon || '');
-
-        const info = document.createElement('div');
-        info.className = 'arw-bitacora-info';
-
-        const name = document.createElement('div');
-        name.className = 'arw-bitacora-name';
-        name.textContent = String(b.name || '');
-
-        const meta = document.createElement('div');
-        meta.className = 'arw-bitacora-meta';
-        meta.textContent = `${b.reports.length} reporte${b.reports.length !== 1 ? 's' : ''} · ${timeAgo(b.createdAt)}`;
-
-        info.append(name, meta);
-
-        const del = document.createElement('button');
-        del.className = 'arw-bitacora-delete';
-        del.dataset.del = b.id;
-        del.title = 'Eliminar';
-        del.style.cssText = 'background:none;border:none;color:var(--arw-text-muted);cursor:pointer;padding:4px 8px;font-size:14px;opacity:0;transition:opacity 0.2s;';
-        del.textContent = '✕';
-
-        item.append(icon, info, del);
-        fragment.appendChild(item);
-    });
-    list.appendChild(fragment);
-    // Bind clicks
-    list.querySelectorAll('.arw-bitacora-item').forEach(item => {
-        item.addEventListener('click', e => {
-            if (e.target.closest('.arw-bitacora-delete')) return;
-            selectBitacora(item.dataset.id);
-        });
-        item.addEventListener('mouseenter', () => {
-            item.querySelector('.arw-bitacora-delete').style.opacity = '1';
-        });
-        item.addEventListener('mouseleave', () => {
-            item.querySelector('.arw-bitacora-delete').style.opacity = '0';
-        });
-    });
-    list.querySelectorAll('.arw-bitacora-delete').forEach(btn => {
-        btn.addEventListener('click', e => {
-            e.stopPropagation();
-            deleteBitacora(btn.dataset.del);
-        });
-    });
+function downloadBlob(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
 }
 
-function showWelcome() {
-    const welcome = $('arw-welcomeScreen');
-    const editor = $('arw-editorPanel');
-    const preview = $('arw-previewPanel');
-    const breadcrumb = $('arw-breadcrumb');
-    if (welcome) welcome.style.display = 'flex';
-    if (editor) editor.style.display = 'none';
-    if (preview) preview.style.display = 'none';
-    if (breadcrumb) {
-        breadcrumb.replaceChildren();
-        const rootEl = document.createElement('span');
-        rootEl.className = 'arw-breadcrumb-item';
-        rootEl.textContent = 'AgroRepo';
-        breadcrumb.appendChild(rootEl);
-    }
-}
-
-function showEditor() {
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    if (!bitacora) { showWelcome(); return; }
-    const welcome = $('arw-welcomeScreen');
-    const editor = $('arw-editorPanel');
-    const preview = $('arw-previewPanel');
-    const breadcrumb = $('arw-breadcrumb');
-    if (welcome) welcome.style.display = 'none';
-    if (editor) editor.style.display = 'flex';
-    if (preview) preview.style.display = 'block';
-    if (breadcrumb) {
-        breadcrumb.replaceChildren();
-        const rootEl = document.createElement('span');
-        rootEl.className = 'arw-breadcrumb-item';
-        rootEl.textContent = 'AgroRepo';
-        const sep = document.createElement('span');
-        sep.style.cssText = 'color:var(--arw-text-muted);margin:0 8px;';
-        sep.textContent = '\u203a';
-        const current = document.createElement('span');
-        current.className = 'arw-breadcrumb-current';
-        current.style.color = 'var(--arw-gold-primary)';
-        current.textContent = `${bitacora.icon} ${bitacora.name}`;
-        breadcrumb.append(rootEl, sep, current);
-    }
-    state.filterTag = null;
-    state.editingReportId = null;
-    renderEntryTypeSelector();
-    renderFilterBar();
-    renderTimeline();
-    renderPreview();
-}
-
-function renderTimeline() {
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    const container = $('arw-commitsTimeline');
-    const countEl = $('arw-commitsCount');
-    if (!container || !bitacora) return;
-    if (countEl) countEl.textContent = bitacora.reports.length;
-    if (bitacora.reports.length === 0) {
-        container.replaceChildren();
-        const emptyState = document.createElement('div');
-        emptyState.className = 'arw-empty-state';
-        const icon = document.createElement('div');
-        icon.className = 'arw-empty-state-icon';
-        icon.textContent = '\ud83d\udcdd';
-        const title = document.createElement('div');
-        title.className = 'arw-empty-state-title';
-        title.textContent = 'Sin registros aun';
-        const text = document.createElement('div');
-        text.className = 'arw-empty-state-text';
-        text.textContent = 'Registra tu primera observacion, decision o hallazgo arriba.';
-        emptyState.append(icon, title, text);
-        container.appendChild(emptyState);
-        return;
-    }
-
-    // Apply tag filter
-    let reports = bitacora.reports;
-    if (state.filterTag) {
-        reports = reports.filter(r => Array.isArray(r.tags) && r.tags.includes(state.filterTag));
-    }
-
-    container.replaceChildren();
-
-    if (reports.length === 0 && state.filterTag) {
-        const noMatch = document.createElement('div');
-        noMatch.style.cssText = 'text-align:center;padding:24px;color:var(--arw-text-muted);font-size:0.82rem;';
-        noMatch.textContent = 'Sin registros con este filtro.';
-        container.appendChild(noMatch);
-        return;
-    }
-
-    const timeline = document.createElement('div');
-    timeline.className = 'arw-commit-timeline';
-    timeline.style.cssText = 'position:relative;padding-left:20px;';
-
-    reports.forEach((r) => {
-        const entryTypeCfg = ENTRY_TYPE_CONFIG[r.entryType] || ENTRY_TYPE_CONFIG.observacion;
-        const entry = document.createElement('div');
-        entry.className = 'arw-commit-entry';
-        entry.style.cssText = 'position:relative;padding:14px;background:var(--arw-bg-tertiary);border-radius:var(--arw-radius-md);margin-bottom:12px;border:1px solid var(--arw-border-subtle);';
-
-        const dot = document.createElement('div');
-        dot.style.cssText = `position:absolute;left:-26px;top:18px;width:12px;height:12px;background:${entryTypeCfg.color};border-radius:50%;border:2px solid var(--arw-bg-primary);`;
-
-        const header = document.createElement('div');
-        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;';
-
-        const headerLeft = document.createElement('div');
-        headerLeft.style.cssText = 'display:flex;align-items:center;gap:8px;';
-
-        const typeBadge = document.createElement('span');
-        typeBadge.style.cssText = `font-size:10px;padding:2px 8px;background:rgba(200,167,82,0.08);border:1px solid ${entryTypeCfg.color};border-radius:4px;color:${entryTypeCfg.color};display:inline-flex;align-items:center;gap:3px;`;
-        typeBadge.innerHTML = `<span>${entryTypeCfg.icon}</span><span>${entryTypeCfg.label}</span>`;
-
-        const hash = document.createElement('span');
-        hash.style.cssText = 'font-family:monospace;font-size:11px;color:var(--arw-gold-muted);background:var(--arw-bg-elevated);padding:2px 8px;border-radius:4px;';
-        hash.textContent = `#${r.hash}`;
-
-        headerLeft.append(typeBadge, hash);
-
-        const createdAt = document.createElement('span');
-        createdAt.style.cssText = 'font-size:10px;color:var(--arw-text-muted);';
-        createdAt.textContent = formatDate(r.createdAt);
-        if (r.updatedAt) createdAt.textContent += ' (editado)';
-        header.append(headerLeft, createdAt);
-
-        const content = document.createElement('div');
-        content.style.cssText = 'font-size:13px;color:var(--arw-text-primary);line-height:1.6;margin-bottom:10px;white-space:pre-wrap;';
-        content.innerHTML = renderMarkdown(String(r.content || ''));
-
-        entry.append(dot, header, content);
-
-        if (Array.isArray(r.tags) && r.tags.length > 0) {
-            const tagsWrap = document.createElement('div');
-            tagsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;';
-            r.tags.forEach((t) => {
-                const tag = document.createElement('button');
-                tag.type = 'button';
-                tag.style.cssText = 'font-size:10px;padding:3px 8px;background:rgba(212,175,55,0.1);border:1px solid var(--arw-border-gold);border-radius:12px;color:var(--arw-gold-muted);cursor:pointer;font-family:inherit;transition:background 0.15s ease;';
-                tag.textContent = getTagLabel(t);
-                tag.addEventListener('click', () => setTagFilter(t));
-                tagsWrap.appendChild(tag);
-            });
-            entry.appendChild(tagsWrap);
-        }
-
-        const actions = document.createElement('div');
-        actions.style.cssText = 'display:flex;gap:8px;';
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'arw-action-edit';
-        editBtn.dataset.edit = r.id;
-        editBtn.style.cssText = 'background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
-        editBtn.textContent = '\u270e Editar';
-
-        const copyBtn = document.createElement('button');
-        copyBtn.className = 'arw-action-copy';
-        copyBtn.dataset.copy = r.id;
-        copyBtn.style.cssText = 'background:none;border:1px solid var(--arw-border-subtle);color:var(--arw-text-secondary);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
-        copyBtn.textContent = '\ud83d\udccb Copiar';
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'arw-action-del';
-        delBtn.dataset.del = r.id;
-        delBtn.style.cssText = 'background:none;border:1px solid rgba(239,68,68,0.3);color:#ef4444;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;';
-        delBtn.textContent = '\ud83d\uddd1\ufe0f Eliminar';
-
-        actions.append(editBtn, copyBtn, delBtn);
-        entry.appendChild(actions);
-        timeline.appendChild(entry);
-    });
-
-    container.appendChild(timeline);
-    container.querySelectorAll('.arw-action-edit').forEach(btn => {
-        btn.addEventListener('click', () => editReport(btn.dataset.edit));
-    });
-    container.querySelectorAll('.arw-action-copy').forEach(btn => {
-        btn.addEventListener('click', () => copyReport(btn.dataset.copy));
-    });
-    container.querySelectorAll('.arw-action-del').forEach(btn => {
-        btn.addEventListener('click', () => deleteReport(btn.dataset.del));
-    });
-}
-
-function renderPreview() {
-    const bitacora = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-    if (!bitacora) return;
-    const pvStatTotal = $('arw-pvStatTotal');
-    const pvStatDays = $('arw-pvStatDays');
-    const pvInfoName = $('arw-pvInfoName');
-    const pvInfoCreated = $('arw-pvInfoCreated');
-    const pvInfoLast = $('arw-pvInfoLast');
-    const pvTagStats = $('arw-pvTagStats');
-    if (pvStatTotal) pvStatTotal.textContent = bitacora.reports.length;
-    const uniqueDays = new Set(bitacora.reports.map(r => new Date(r.createdAt).toDateString()));
-    if (pvStatDays) pvStatDays.textContent = uniqueDays.size;
-    if (pvInfoName) pvInfoName.textContent = bitacora.name;
-    if (pvInfoCreated) pvInfoCreated.textContent = formatDate(bitacora.createdAt);
-    const lastR = bitacora.reports[0];
-    if (pvInfoLast) pvInfoLast.textContent = lastR ? timeAgo(lastR.createdAt) : 'Sin reportes';
-    // Tag distribution
-    const tagCount = {};
-    bitacora.reports.forEach(r => {
-        (r.tags || []).forEach(t => { tagCount[t] = (tagCount[t] || 0) + 1; });
-    });
-    if (pvTagStats) {
-        const entries = Object.entries(tagCount).sort((a, b) => b[1] - a[1]);
-        pvTagStats.replaceChildren();
-        if (entries.length === 0) {
-            const empty = document.createElement('p');
-            empty.style.cssText = 'font-size:0.78rem;color:var(--arw-text-muted);';
-            empty.textContent = 'Sin datos aún';
-            pvTagStats.appendChild(empty);
-        } else {
-            const fragment = document.createDocumentFragment();
-            entries.forEach(([tag, count]) => {
-                const row = document.createElement('div');
-                row.style.cssText = 'display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--arw-border-subtle);font-size:12px;';
-
-                const tagLabel = document.createElement('span');
-                tagLabel.style.color = 'var(--arw-text-secondary)';
-                tagLabel.textContent = getTagLabel(tag);
-
-                const countLabel = document.createElement('span');
-                countLabel.style.cssText = 'color:var(--arw-gold-primary);font-weight:600;';
-                countLabel.textContent = String(count);
-
-                row.append(tagLabel, countLabel);
-                fragment.appendChild(row);
-            });
-            pvTagStats.appendChild(fragment);
-        }
-    }
-}
-
-function updateStats() {
-    const total = state.bitacoras.reduce((s, b) => s + b.reports.length, 0);
-    const statBitacoras = $('arw-statBitacoras');
-    const statReportes = $('arw-statReportes');
-    const storageStatus = $('arw-storageStatus');
-    if (statBitacoras) statBitacoras.textContent = state.bitacoras.length;
-    if (statReportes) statReportes.textContent = total;
-    if (storageStatus) storageStatus.textContent = `LocalStorage · ${getStorageSize()} · 100% Offline`;
-}
-
-// ─── EXPORT/IMPORT ────────────────────────────────────
 async function saveToFile() {
-    const data = JSON.stringify({ bitacoras: state.bitacoras, exportedAt: new Date().toISOString(), version: '2.0.0' }, null, 2);
-    const fileName = `agrorepo_backup_${new Date().toISOString().slice(0, 10)}.json`;
+    const data = JSON.stringify(buildBackupPayload(), null, 2);
+    const filename = `agrorepo_backup_${getTodayFileStem()}.json`;
     if ('showSaveFilePicker' in window) {
         try {
             const handle = await window.showSaveFilePicker({
-                suggestedName: fileName,
-                types: [{ description: 'AgroRepo Data', accept: { 'application/json': ['.json'] } }]
+                suggestedName: filename,
+                types: [{ description: 'AgroRepo Backup', accept: { 'application/json': ['.json'] } }]
             });
             const writable = await handle.createWritable();
             await writable.write(data);
             await writable.close();
-            state.lastSaved = new Date().toISOString();
-            persist();
-            showToast('💾 Datos guardados en disco', 'success');
+            showToast('Backup guardado en disco.', 'success');
             return;
-        } catch (e) { if (e.name === 'AbortError') return; }
+        } catch (error) {
+            if (error?.name === 'AbortError') return;
+        }
     }
-    downloadBlob(data, fileName, 'application/json');
-    showToast('💾 Archivo JSON descargado', 'success');
+    downloadBlob(data, filename, 'application/json');
+    showToast('Backup JSON descargado.', 'success');
 }
 
-async function exportJSON() {
-    if (state.bitacoras.length === 0) {
-        showToast('⚠️ No hay datos para exportar', 'warning');
-        return;
-    }
-    const data = JSON.stringify({
-        exportedAt: new Date().toISOString(),
-        version: '2.0.0',
-        system: 'AgroRepo Ultimate | YavlGold',
-        bitacoras: state.bitacoras
-    }, null, 2);
-    const fileName = `agrorepo_backup_${new Date().toISOString().slice(0, 10)}.json`;
-    downloadBlob(data, fileName, 'application/json');
-    showToast('📦 Backup JSON descargado', 'success');
+function exportJSON() {
+    downloadBlob(JSON.stringify(buildBackupPayload(), null, 2), `agrorepo_backup_${getTodayFileStem()}.json`, 'application/json');
+    showToast('Backup JSON exportado.', 'success');
 }
 
-async function exportMarkdown() {
-    if (state.bitacoras.length === 0) {
-        showToast('⚠️ No hay datos para exportar', 'warning');
+function buildFileMarkdown(file) {
+    const folderPath = getPathNodes(file.parentId).map((node) => node.title).join(' / ') || 'AgroRepo';
+    const typeLabel = ENTRY_TYPE_CONFIG[file.entryType]?.label || 'Observacion';
+    const tags = file.tags.map((tag) => TAG_CONFIG[tag]?.label || tag).join(', ') || 'General';
+    const content = String(file.content || '').trim() || '_Sin contenido._';
+    return [
+        `# ${stripMarkdownExtension(file.title)}`,
+        '',
+        `- Ruta: ${folderPath}`,
+        `- Tipo: ${typeLabel}`,
+        `- Tags: ${tags}`,
+        `- Creado: ${formatDate(file.createdAt)}`,
+        `- Actualizado: ${formatDate(file.updatedAt || file.createdAt)}`,
+        '',
+        '---',
+        '',
+        content,
+        ''
+    ].join('\n');
+}
+
+function exportActiveMarkdown(fileId = null) {
+    const file = fileId ? getNode(fileId) : getActiveFile();
+    if (!file || file.type !== 'file') {
+        showToast('Selecciona un archivo Markdown primero.', 'warning');
         return;
     }
-    let md = `# 🌾 AgroRepo Ultimate — Exportación Completa\n`;
-    md += `**Fecha:** ${new Date().toLocaleString('es-VE')}\n`;
-    md += `**Bitácoras:** ${state.bitacoras.length}\n\n---\n\n`;
-    state.bitacoras.forEach(b => {
-        md += `## ${b.icon} ${b.name}\n`;
-        md += `*Creada: ${formatDate(b.createdAt)} · ${b.reports.length} reportes*\n\n`;
-        b.reports.forEach(r => {
-            const typeCfg = ENTRY_TYPE_CONFIG[r.entryType] || ENTRY_TYPE_CONFIG.observacion;
-            md += `### \`#${r.hash}\` ${typeCfg.icon} ${typeCfg.label} — ${formatDate(r.createdAt)}\n`;
-            if (r.tags?.length) md += `**Tags:** ${r.tags.join(', ')}\n\n`;
-            md += `${r.content}\n\n---\n\n`;
-        });
+    const safeTitle = normalizeFileTitle(file.title);
+    downloadBlob(buildFileMarkdown(file), safeTitle, 'text/markdown');
+    showToast(`Archivo ${safeTitle} exportado.`, 'success');
+}
+
+function mergeImportedRepo(incomingRepo) {
+    if (isSeedOnlyRepo(state.repo)) {
+        state.repo = incomingRepo;
+        return incomingRepo.nodes.length;
+    }
+
+    const currentIds = new Set(state.repo.nodes.map((node) => node.id));
+    let added = 0;
+    incomingRepo.nodes.forEach((node) => {
+        if (!currentIds.has(node.id)) {
+            state.repo.nodes.push(node);
+            currentIds.add(node.id);
+            added += 1;
+        }
     });
-    const fileName = `agrorepo_export_${new Date().toISOString().slice(0, 10)}.md`;
-    downloadBlob(md, fileName, 'text/markdown');
-    showToast('📝 Exportación Markdown descargada', 'success');
+    state.repo.expandedIds = Array.from(new Set([...state.repo.expandedIds, ...incomingRepo.expandedIds]));
+    if (!state.repo.activeNodeId && incomingRepo.activeNodeId) {
+        state.repo.activeNodeId = incomingRepo.activeNodeId;
+    }
+    return added;
+}
+
+function isSeedOnlyRepo(repo) {
+    const files = repo.nodes.filter((node) => node.type === 'file');
+    if (files.length) return false;
+    const rootNames = getChildren(null, repo.nodes).map((node) => node.title).join('|');
+    return rootNames === ROOT_FOLDERS.map((entry) => entry.title).join('|');
 }
 
 function importData() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = e => {
-        const file = e.target.files[0];
+    input.onchange = (event) => {
+        const file = event.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = ev => {
+        reader.onload = (loadEvent) => {
             try {
-                const imported = JSON.parse(ev.target.result);
-                const bitacoras = imported.bitacoras;
-                if (!bitacoras || !Array.isArray(bitacoras)) throw new Error('Formato inválido');
-                let added = 0;
-                bitacoras.forEach(ib => {
-                    if (!state.bitacoras.some(b => b.id === ib.id)) {
-                        state.bitacoras.push(ib);
-                        added++;
-                    }
-                });
+                const parsed = JSON.parse(loadEvent.target?.result);
+                const importedRepo = Array.isArray(parsed?.nodes)
+                    ? normalizeRepoShape(parsed)
+                    : Array.isArray(parsed?.bitacoras)
+                        ? migrateLegacyData(parsed)
+                        : null;
+                if (!importedRepo) throw new Error('Formato no compatible');
+                const added = mergeImportedRepo(importedRepo);
                 persist();
-                renderBitacoraList();
-                showToast(`📂 Importadas ${added} bitácora${added !== 1 ? 's' : ''} nueva${added !== 1 ? 's' : ''}`, 'success');
-            } catch (err) {
-                showToast('❌ Archivo no tiene formato AgroRepo válido', 'error');
-                console.error('[AgroRepo] Import error:', err);
+                renderAll();
+                showToast(`Importación completada: ${pluralize(added, 'nodo')} agregado${added === 1 ? '' : 's'}.`, 'success');
+            } catch (error) {
+                console.error('[AgroRepo] Import error:', error);
+                showToast('El archivo no tiene un formato AgroRepo válido.', 'error');
             }
         };
         reader.readAsText(file);
@@ -849,104 +1497,186 @@ function importData() {
     input.click();
 }
 
-function downloadBlob(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+function restoreSeedStructure() {
+    state.repo = createEmptyRepo(true);
+    persist();
+    renderAll();
+    showToast('Se recreó la estructura base de AgroRepo.', 'success');
 }
 
-// ─── MOBILE SIDEBAR ──────────────────────────────────
 function toggleSidebar() {
-    const sidebar = $('arw-sidebar');
-    const backdrop = $('arw-sidebarBackdrop');
-    sidebar?.classList.toggle('open');
-    backdrop?.classList.toggle('show');
+    qs('#arw-sidebar')?.classList.toggle('is-open');
+    qs('#arw-sidebarBackdrop')?.classList.toggle('is-visible');
 }
 
 function closeSidebar() {
-    const sidebar = $('arw-sidebar');
-    const backdrop = $('arw-sidebarBackdrop');
-    sidebar?.classList.remove('open');
-    backdrop?.classList.remove('show');
+    qs('#arw-sidebar')?.classList.remove('is-open');
+    qs('#arw-sidebarBackdrop')?.classList.remove('is-visible');
 }
 
-// ─── EVENT BINDING ──────────────────────────────────
-function bindEvents() {
-    // Create bitacora
-    $('arw-btnCreateBitacora')?.addEventListener('click', createBitacora);
-    $('arw-newBitacoraInput')?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); createBitacora(); }
-    });
-    // Tags
-    root?.querySelectorAll('.arw-tag-btn')?.forEach(btn => {
-        btn.addEventListener('click', () => toggleTag(btn));
-    });
-    // Submit report
-    $('arw-submitBtn')?.addEventListener('click', commitReport);
-    // Mobile menu
-    $('arw-menuToggle')?.addEventListener('click', toggleSidebar);
-    $('arw-sidebarBackdrop')?.addEventListener('click', closeSidebar);
-    // Header actions
-    $('arw-btnOpenFile')?.addEventListener('click', importData);
-    $('arw-btnExportJSON')?.addEventListener('click', exportJSON);
-    $('arw-btnExportMD')?.addEventListener('click', exportMarkdown);
-    $('arw-btnSaveFile')?.addEventListener('click', saveToFile);
-    // Delete modal
-    $('arw-deleteModalConfirm')?.addEventListener('click', () => {
-        if (_deleteCallback) _deleteCallback();
+function handleAction(event) {
+    const actionTarget = event.target.closest('[data-action]');
+    if (!actionTarget) return;
+
+    const { action, nodeId, parentId, entryType, tag } = actionTarget.dataset;
+
+    switch (action) {
+        case 'toggle-folder':
+            toggleFolder(nodeId);
+            return;
+        case 'select-node':
+            selectNode(nodeId);
+            return;
+        case 'create-folder':
+            openNodeModal('create', 'folder', { parentId });
+            return;
+        case 'create-file':
+            openNodeModal('create', 'file', { parentId });
+            return;
+        case 'rename-node': {
+            const node = getNode(nodeId);
+            if (!node) return;
+            openNodeModal('rename', node.type, { nodeId });
+            return;
+        }
+        case 'delete-node':
+            showDeleteModal(nodeId);
+            return;
+        case 'confirm-delete':
+            if (state.deleteTargetId) deleteNode(state.deleteTargetId);
+            closeDeleteModal();
+            return;
+        case 'close-delete-modal':
+            closeDeleteModal();
+            return;
+        case 'close-node-modal':
+            closeNodeModal();
+            return;
+        case 'save-file':
+            saveActiveFile(true);
+            return;
+        case 'save-backup':
+            saveToFile();
+            return;
+        case 'export-json':
+            exportJSON();
+            return;
+        case 'import-json':
+            importData();
+            return;
+        case 'export-active-md':
+            exportActiveMarkdown();
+            return;
+        case 'export-node-md':
+            exportActiveMarkdown(nodeId);
+            return;
+        case 'toggle-tag':
+            toggleActiveFileTag(tag);
+            return;
+        case 'set-entry-type':
+            setActiveFileEntryType(entryType);
+            return;
+        case 'restore-structure':
+            restoreSeedStructure();
+            return;
+        default:
+            break;
+    }
+}
+
+function handleInput(event) {
+    const activeFile = getActiveFile();
+    if (!activeFile) return;
+
+    if (event.target.id === 'arw-fileTitle') {
+        updateActiveFileField({ title: event.target.value || getTodayFileStem() });
+        updateLiveFileUI();
+        return;
+    }
+
+    if (event.target.id === 'arw-fileContent') {
+        updateActiveFileField({ content: event.target.value });
+        updateLiveFileUI();
+    }
+}
+
+function handleBlur(event) {
+    if (event.target.id === 'arw-fileTitle') {
+        normalizeActiveFileTitleOnBlur();
+    }
+}
+
+function handleKeydown(event) {
+    if (event.key === 'Escape') {
         closeDeleteModal();
+        closeNodeModal();
+        closeSidebar();
+    }
+    if (event.ctrlKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        if (getActiveFile()) saveActiveFile(true);
+        else saveToFile();
+    }
+}
+
+function bindEvents() {
+    root?.addEventListener('click', handleAction);
+    root?.addEventListener('input', handleInput);
+    root?.addEventListener('blur', handleBlur, true);
+    root?.addEventListener('keydown', handleKeydown);
+    qs('#arw-menuToggle')?.addEventListener('click', toggleSidebar);
+    qs('#arw-sidebarBackdrop')?.addEventListener('click', closeSidebar);
+    qs('#arw-nodeModalForm')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        submitNodeModal();
     });
-    $('arw-deleteModalCancel')?.addEventListener('click', closeDeleteModal);
-    $('arw-deleteModalClose')?.addEventListener('click', closeDeleteModal);
-    $('arw-deleteModal')?.addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeDeleteModal();
+    qs('#arw-deleteModal')?.addEventListener('click', (event) => {
+        if (event.target === event.currentTarget) closeDeleteModal();
     });
-    // Keyboard shortcuts
-    root?.addEventListener('keydown', e => {
-        if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveToFile(); }
-        if (e.ctrlKey && e.key === 'e') { e.preventDefault(); exportJSON(); }
-        if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); commitReport(); }
-        if (e.key === 'Escape') { closeDeleteModal(); closeSidebar(); }
+    qs('#arw-nodeModal')?.addEventListener('click', (event) => {
+        if (event.target === event.currentTarget) closeNodeModal();
     });
 }
 
-// ─── INIT ────────────────────────────────────────────
 function initWidget() {
     if (widgetInitialized) return;
     root = document.getElementById('agro-widget-root');
-    if (!root) { console.error('[AgroRepo] Root not found'); return; }
-    if (root.dataset.loaded === '1') { console.log('[AgroRepo] Already loaded'); return; }
+    if (!root) {
+        console.error('[AgroRepo] Root not found');
+        return;
+    }
+    if (root.dataset.loaded === '1') return;
+
+    const template = document.getElementById('agro-repo-template');
+    if (!template) {
+        console.error('[AgroRepo] Template not found');
+        return;
+    }
+
     widgetInitialized = true;
     root.dataset.loaded = '1';
-    console.log('[AgroRepo] 🌾 Initializing Ultimate Engine v2.0...');
-    const template = document.getElementById('agro-repo-template');
-    if (!template) { console.error('[AgroRepo] Template not found'); return; }
     root.replaceChildren();
     root.appendChild(template.content.cloneNode(true));
+
     loadState();
-    syncRepoBridge();
     bindEvents();
-    renderEntryTypeSelector();
-    renderBitacoraList();
-    updateStats();
-    if (state.activeBitacoraId) {
-        const exists = state.bitacoras.find(b => b.id === state.activeBitacoraId);
-        if (exists) showEditor();
-        else { state.activeBitacoraId = null; persist(); }
+    syncRepoBridge();
+    renderAll();
+
+    if (state.pendingNotice) {
+        showToast(state.pendingNotice, 'success');
+        state.pendingNotice = '';
     }
-    console.log('[AgroRepo] ✅ Widget initialized with', state.bitacoras.length, 'bitácoras');
+
+    console.log('[AgroRepo] Tree Memory v3 loaded with', state.repo.nodes.length, 'nodes');
 }
 
-// ─── ACCORDION LISTENER ──────────────────────────────
 function setupAccordionListener() {
     const accordion = document.getElementById('yg-acc-agrorepo');
-    if (!accordion) { console.warn('[AgroRepo] Accordion not found'); return; }
+    if (!accordion) {
+        console.warn('[AgroRepo] Accordion not found');
+        return;
+    }
     if (accordion.dataset.listenerBound === '1') return;
     accordion.dataset.listenerBound = '1';
     accordion.addEventListener('toggle', () => {
@@ -955,13 +1685,8 @@ function setupAccordionListener() {
     if (accordion.open) initWidget();
 }
 
-/**
- * Main entry point — called from agro.js via dynamic import.
- * Sets up the accordion listener that lazy-inits the widget on first open.
- */
 export function initAgroRepo() {
     if (!AGROREPO_ENABLED) {
-        console.log('[AgroRepo] ⛔ Widget disabled');
         const section = document.getElementById('agro-repo-section');
         if (section) section.style.display = 'none';
         return;
@@ -973,5 +1698,5 @@ export function initAgroRepo() {
         setupAccordionListener();
     }
 
-    console.log('[AgroRepo] 📦 Ultimate Engine v2.0 loaded (lazy init on accordion open)');
+    console.log('[AgroRepo] Tree Memory v3 ready (lazy init on accordion open)');
 }
