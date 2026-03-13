@@ -2201,3 +2201,197 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 2. Si el deploy ya existe, invalidar cache/CDN y volver a comprobar `/agro/`.
 3. Repetir QA real de ciclos solo cuando el HTML servido ya contenga `data-agro-nav-toggle="ciclos"` y los subitems nuevos.
 
+---
+
+## Sesion activa: politica de higiene QA para produccion real (2026-03-13)
+
+### Diagnostico
+
+- Faltaba una regla explicita en `AGENTS.md` para evitar que futuras sesiones de QA sobre produccion dejen datos de prueba ambiguos, duplicados o basura persistente.
+- La cuenta QA local ya estaba documentada, pero hacia falta cerrar tambien la politica de limpieza y trazabilidad de datos sembrados durante pruebas reales.
+
+### Cambios aplicados
+
+- `AGENTS.md`
+  - se agrego la seccion `Politica de QA sobre produccion real`;
+  - se establecio que los datos de prueba deben tratarse como temporales y controlados;
+  - se documento la obligacion de limpiar/revertir datos temporales o dejar trazado un dataset QA estable si debe permanecer;
+  - se dejo explicito que cualquier dataset persistente debe vivir solo en la cuenta QA dedicada;
+  - se reforzo el cierre obligatorio de Playwright/browser y la limpieza de temporales locales.
+
+### Build status
+
+- No ejecutado.
+- Motivo: cambio documental en instrucciones canonicas, sin cambios de producto.
+
+### QA sugerido
+
+1. En la proxima sesion de QA real, verificar que cualquier dato sembrado quede borrado o claramente documentado como dataset QA estable.
+2. Confirmar al cierre de cada corrida que no quedan duplicados ni estados intermedios en la cuenta QA.
+3. Mantener `AGENT_REPORT_ACTIVE.md` como rastro operativo de cualquier siembra, limpieza o persistencia deliberada de datos QA.
+
+---
+
+## Sesion activa: QA funcional real en produccion para ciclos de cultivos (2026-03-13)
+
+### Diagnostico inicial
+
+- La nueva familia de `Ciclos de cultivos` ya esta desplegada en produccion a nivel de HTML publico.
+- Falta validar en browser real autenticado si la experiencia funciona end-to-end con datos reales, sin contradicciones entre vistas y sin regresiones visibles.
+- Esta sesion se enfoca en navegacion, coherencia de informacion, calidad visual y bugs funcionales reales sobre `https://www.yavlgold.com/agro/` y `https://yavlgold.com/agro/`.
+
+### Plan de QA
+
+1. Iniciar sesion en produccion con la cuenta QA local siguiendo el protocolo de `AGENTS.md`.
+2. Validar desktop sobre:
+   - sidebar padre/hijos de `Ciclos de cultivos`;
+   - `Ciclos activos`;
+   - `Ciclos finalizados`;
+   - `Comparar ciclos`;
+   - `Estadisticas de ciclos`.
+3. Repetir validacion base en mobile.
+4. Cruce rapido de coherencia entre activos, finalizados, comparar y estadisticas.
+5. Documentar hallazgos, corregir solo bugs pequenos y quirurgicos si aparecen, revalidar y limpiar temporales.
+
+### Alcance
+
+- QA funcional real en produccion, no review estatico.
+- Validacion con datos reales de la cuenta QA dedicada para agentes.
+- Sin refactor grande ni redisenos; solo diagnostico y, si aplica, fix pequeno y claro.
+
+### Riesgos
+
+- `hCaptcha` o expiracion de sesion pueden bloquear el login automatizado.
+- La cuenta QA puede no tener suficiente dataset para validar algunas comparaciones profundas.
+- Si el QA exige sembrar datos, deberan limpiarse o documentarse segun la nueva politica de higiene en produccion.
+
+### Ejecucion QA
+
+- Se valido la familia de `Ciclos de cultivos` en produccion real autenticada sobre `https://www.yavlgold.com/agro/`.
+- Se ejecuto QA funcional en desktop y mobile con browser real.
+- No se sembraron ni modificaron datos QA en produccion durante esta sesion.
+
+### Que paso bien
+
+- Sidebar:
+  - `Ciclos de cultivos` funciona como padre toggle y no navega automaticamente.
+  - segundo clic en el padre colapsa correctamente.
+  - los hijos navegan a su subvista correspondiente.
+- `Ciclos activos`:
+  - cargaron 3 ciclos reales de la cuenta QA (`Batata Amarilla`, `Tomate Rinon`, `Maiz Amarillo`);
+  - progreso, fechas, inversion y potencial neto mostraron lectura coherente;
+  - la accion `Informe del cultivo` exporta Markdown real.
+- `Ciclos finalizados`:
+  - la subvista carga limpia;
+  - el estado vacio de finalizados/perdidos es honesto y no mezcla activos.
+- `Comparar ciclos`:
+  - carga con dataset real suficiente;
+  - compara estado, progreso, duracion, area, inversion, costos, pagados, fiados y resultado;
+  - la mayoria de metricas coincide con lo visible en `Ciclos activos`.
+- `Estadisticas de ciclos`:
+  - carga sin romper layout;
+  - `Activos = 3`, `Finalizados = 0`, `Perdidos = 0`, `Total = 3`, consistente con las otras vistas;
+  - ambos exportes Markdown funcionan.
+- Mobile:
+  - el sidebar abre/cierra bien;
+  - al navegar por un hijo, el panel vuelve a cerrarse;
+  - no se detecto overflow horizontal en `Comparar ciclos` ni en `Estadisticas de ciclos`.
+
+### Bugs encontrados
+
+1. `Comparar ciclos` no calcula el delta numerico de area
+   - Severidad: media
+   - Pasos:
+     - abrir `Ciclos de cultivos > Comparar ciclos`;
+     - comparar `Batata Amarilla` vs `Tomate Rinon`.
+   - Comportamiento actual observado en produccion:
+     - la tarjeta `Area` muestra `Sin delta numérica`;
+     - los valores comparados son `0.6 Ha` vs `0.75 Ha`.
+   - Comportamiento esperado:
+     - mostrar un delta real de area, no un estado nulo.
+   - Causa raiz probable:
+     - el workspace de comparacion trataba `area` como texto visible, sin extraer un valor numerico para el calculo.
+   - Estado:
+     - corregido localmente en `apps/gold/agro/agro-cycles-workspace.js`;
+     - pendiente revalidacion productiva tras deploy.
+
+2. `Informe del cultivo` dispara una consulta 400 antes del fallback exitoso
+   - Severidad: baja
+   - Pasos:
+     - abrir `Ciclos activos`;
+     - pulsar `Informe del cultivo` sobre `Batata Amarilla`.
+   - Comportamiento actual observado en produccion:
+     - el exporte Markdown se genera correctamente;
+     - la consola registra un `400` inicial contra `agro_crops` y luego una consulta fallback `200`.
+   - Comportamiento esperado:
+     - exporte limpio, sin request fallida previa.
+   - Causa raiz probable:
+     - el helper de reporte intentaba primero un `select` con columnas no compatibles con el schema productivo actual.
+   - Estado:
+     - corregido localmente en `apps/gold/agro/agro-crop-report.js`;
+     - pendiente revalidacion productiva tras deploy.
+
+### Bugs corregidos durante QA
+
+- `apps/gold/agro/agro-cycles-workspace.js`
+  - se agrego extraccion numerica de `area`;
+  - el delta de area ahora se renderiza como numero con unidad (`Ha`) en lugar de quedar en `Sin delta numérica`.
+- `apps/gold/agro/agro-crop-report.js`
+  - se redujo el `select` por defecto del reporte de cultivo al subconjunto compatible con produccion;
+  - objetivo: evitar el `400` inicial antes del fallback.
+
+### Coherencia general de informacion
+
+- `Activos (3)` coincide entre:
+  - cards de `Ciclos activos`;
+  - `Comparar ciclos`;
+  - `Estadisticas de ciclos`.
+- `Finalizados (0)` y `Perdidos (0)` coincide entre:
+  - `Ciclos finalizados`;
+  - `Estadisticas de ciclos`.
+- Los montos usados en comparacion para `Batata Amarilla` y `Tomate Rinon` fueron coherentes con los cards activos:
+  - inversion base;
+  - resultado cobrado;
+  - resultado potencial.
+- No se detectaron contradicciones visibles entre vistas durante esta corrida.
+
+### Build status
+
+- `pnpm build:gold` = OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Warning no bloqueante:
+  - engine esperado `node 20.x`, entorno actual `node 25.6.0`;
+  - warning habitual por chunk grande del monolito Agro.
+
+### Revalidacion post-fix
+
+- La correccion quedo validada por build local.
+- La revalidacion end-to-end de los dos fixes en browser quedo parcialmente bloqueada porque el preview local compila contra Supabase local (`127.0.0.1:54321`) y no contra el dataset productivo autenticado.
+- Se mantiene como pendiente la comprobacion final en produccion una vez desplegados estos dos ajustes.
+
+### Estado desktop
+
+- Aprobado con 2 hallazgos detectados.
+
+### Estado mobile
+
+- Aprobado visual y funcionalmente en la familia de ciclos.
+
+### Estado actualizado del plan maestro
+
+- La familia `Ciclos de cultivos` ya funciona como grupo real y coherente en produccion.
+- Quedaron detectadas 2 grietas concretas; ambas tienen fix local aplicado y pendiente de deploy/revalidacion productiva.
+
+### Cleanup
+
+- No se dejaron datos QA nuevos ni basura funcional en produccion.
+- Pendiente al cierre tecnico de la sesion:
+  - cerrar Playwright/browser;
+  - detener preview local;
+  - borrar temporales locales de Playwright y descargas de la corrida.
+

@@ -49,8 +49,10 @@ const TAB_CONFIGS = {
     }
 };
 
-const CROP_REPORT_COLUMNS_FULL = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment,cycle_days,template_duration_days';
-const CROP_REPORT_COLUMNS_SAFE = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,investment';
+// Production still serves a leaner agro_crops schema in some environments.
+// Keep the default export query on the compatibility subset to avoid 400s on report export.
+const CROP_REPORT_COLUMNS_FULL = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment';
+const CROP_REPORT_COLUMNS_SAFE = 'id,name,variety,status,status_override,status_mode,area_size,start_date,expected_harvest_date,actual_harvest_date,investment';
 
 function normalizeCropId(value) {
     if (value === undefined || value === null) return null;

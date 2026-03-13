@@ -32,8 +32,9 @@ const METRICS = Object.freeze([
     {
         key: 'area',
         label: 'Area',
-        kind: 'text',
-        helper: 'Escala del ciclo'
+        kind: 'number',
+        helper: 'Escala del ciclo',
+        unit: ' Ha'
     },
     {
         key: 'baseInvestmentUsd',
@@ -107,6 +108,14 @@ function toNumber(value, fallback = 0) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function extractNumericValue(value) {
+    const text = String(value ?? '').replace(',', '.');
+    const match = text.match(/-?\d+(?:\.\d+)?/);
+    if (!match) return null;
+    const parsed = Number(match[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function formatUsd(value, options = {}) {
     const number = toNumber(value, 0);
     const abs = Math.abs(number);
@@ -130,6 +139,17 @@ function formatDays(value) {
     const number = Math.max(0, Math.round(toNumber(value, 0)));
     if (!number) return 'N/D';
     return `${number} dia${number === 1 ? '' : 's'}`;
+}
+
+function formatSignedNumber(value, unit = '') {
+    const number = toNumber(value, 0);
+    const abs = Math.abs(number);
+    const formatted = abs.toLocaleString('en-US', {
+        minimumFractionDigits: abs % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2
+    });
+    if (!number) return `0${unit}`;
+    return `${number > 0 ? '+' : '-'}${formatted}${unit}`;
 }
 
 function readBridgeSnapshot() {
@@ -178,6 +198,7 @@ function buildCycleCollection(snapshot) {
                 diaActual: toNumber(row?.diaActual, 0),
                 duracion: toNumber(row?.diasTotales, 0),
                 area: String(row?.area || 'N/D').trim() || 'N/D',
+                areaValue: extractNumericValue(row?.area),
                 estado: String(row?.estadoTexto || lifecycleLabel).trim() || lifecycleLabel,
                 baseInvestmentUsd: toNumber(row?.baseInvestmentUsd ?? row?.inversionUSD, 0),
                 costosUsd: toNumber(row?.costosUsd, 0),
@@ -258,6 +279,7 @@ function resolveMetricValue(metric, item) {
             };
         case 'area':
             return {
+                raw: item.areaValue,
                 main: item.area,
                 sub: item.cosechaEst !== 'N/D' ? `Cierre/estimado ${item.cosechaEst}` : 'Sin fecha de cierre'
             };
@@ -324,6 +346,8 @@ function resolveDelta(metric, leftValue, rightValue) {
         value = `${delta >= 0 ? '+' : ''}${Math.round(delta)} pts`;
     } else if (metric.kind === 'days') {
         value = `${delta >= 0 ? '+' : ''}${Math.round(delta)} dias`;
+    } else if (metric.kind === 'number') {
+        value = formatSignedNumber(delta, metric.unit || '');
     }
 
     return {
