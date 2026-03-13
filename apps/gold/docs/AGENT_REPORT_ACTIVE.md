@@ -2395,3 +2395,59 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
   - detener preview local;
   - borrar temporales locales de Playwright y descargas de la corrida.
 
+---
+
+## Sesion activa: verificacion final de fixes en produccion para ciclos (2026-03-13)
+
+### Diagnostico
+
+- El usuario indico que los fixes pendientes ya estaban desplegados en produccion.
+- Quedaban por verificar solo los dos hallazgos abiertos de la corrida anterior:
+  - delta numerico de `Area` en `Comparar ciclos`;
+  - ausencia del `400` previo al exportar `Informe del cultivo`.
+
+### Verificacion ejecutada
+
+- Se abrio `https://www.yavlgold.com/agro/` con sesion valida de la cuenta QA.
+- Se verifico `Comparar ciclos` sobre:
+  - `Batata Amarilla · Temprana · Activo`
+  - `Tomate Rinon · Hibrido · Activo`
+- Se verifico `Ciclos activos > Informe del cultivo` sobre `Batata Amarilla`.
+
+### Resultado
+
+- `Comparar ciclos`
+  - fix verificado en produccion;
+  - `Area` ahora muestra `-0.15 Ha` en el delta `A - B`;
+  - ya no aparece `Sin delta numérica` para `0.6 Ha` vs `0.75 Ha`.
+- `Informe del cultivo`
+  - fix verificado en produccion;
+  - el export Markdown se descargo correctamente;
+  - consola limpia respecto al bug previo:
+    - `Errors: 0`
+  - red limpia respecto al bug previo:
+    - la consulta de metadata a `agro_crops` regreso `200`;
+    - no aparecio el `400` que antes precedia al fallback.
+
+### Estado de hallazgos previos
+
+- Bug 1: delta de area en `Comparar ciclos`
+  - cerrado.
+- Bug 2: `400` previo en export de `Informe del cultivo`
+  - cerrado.
+
+### Build status
+
+- No ejecutado en esta micro-sesion de verificacion.
+- Motivo: no hubo cambios de codigo; solo comprobacion productiva post-deploy.
+
+### QA sugerido
+
+1. Mantener una pasada corta de regresion cuando cambie de nuevo el contrato de `agro_crops`.
+2. Si se agregan nuevos datasets QA con ciclos cerrados/perdidos, repetir una validacion rapida de `Comparar ciclos` con escenarios mixtos.
+
+### Cleanup
+
+- Se cerro Playwright/browser al final de la verificacion.
+- Se debe borrar la carpeta temporal local de la sesion Playwright usada en esta corrida.
+

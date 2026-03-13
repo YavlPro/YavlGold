@@ -141,6 +141,18 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
   - se usa solo para pruebas reales de QA, nunca como credencial de desarrollo general.
 - Si el archivo no existe o esta desactualizado, el agente debe pedir confirmacion al usuario antes de improvisar accesos o credenciales.
 
+### Politica de QA sobre produccion real
+
+- Cuando se use la cuenta QA dedicada para agentes sobre produccion real:
+  - los datos creados para pruebas deben tratarse como temporales y controlados;
+  - no se deben dejar datos QA ambiguos, basura de prueba o duplicados que contaminen la siguiente sesion;
+  - al terminar cada bloque de QA, el agente debe:
+    - limpiar o revertir datos temporales sembrados para la prueba, o
+    - dejar explicitamente documentado que dataset QA estable permanece y por que;
+  - cualquier dataset QA persistente debe vivir solo en la cuenta QA dedicada, no mezclado con la cuenta personal del usuario;
+  - el cierre de sesion debe dejar produccion en un estado entendible y seguro para futuras pruebas;
+  - ademas del cleanup de datos QA, el agente debe cerrar Playwright/browser y borrar temporales locales de esa sesion.
+
 ---
 
 ## §6 — Supabase
