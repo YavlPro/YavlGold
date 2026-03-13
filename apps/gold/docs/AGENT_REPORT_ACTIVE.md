@@ -1488,3 +1488,76 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 3. Confirmar que tambien cambian KPIs, charts, insights y export MD.
 4. Repetir la validacion en `Pagados` y al menos una seccion adicional (`Perdidas`, `Donaciones` u `Otros`).
 5. Revisar mobile para confirmar que el bloque `Contexto compartido` apila correctamente el copy y la tira de cultivos.
+
+---
+
+## Sesion: Refinar scrollbar del contexto compartido de cultivos con ADN V10 (2026-03-13)
+
+### Diagnostico
+
+- El scroll horizontal visible del selector/contexto compartido sale del contenedor `.agro-dedicated-context .agro-pagados-crop-row`.
+- Hoy ese row solo declara `overflow-x: auto` y `scrollbar-width: thin`, por lo que en desktop queda a merced del scrollbar nativo del navegador/SO.
+- En `<=900px`, `apps/gold/agro/agro-operations.css` ademas fuerza `scrollbar-width: none` y `::-webkit-scrollbar { display: none; }` sobre `.agro-pagados-crop-row`.
+- Resultado: en desktop la barra se ve generica del sistema operativo y en tablet/mobile la pista visual del scroll desaparece por completo, dejando una UX menos premium y menos clara.
+
+### Causa raiz
+
+- El row desplazable del contexto compartido no recibio un tratamiento visual propio cuando se extrajo a la zona compartida.
+- El CSS heredado para crop rows prioriza overflow funcional, pero no integra scrollbar, track, thumb ni estados de interaccion al lenguaje dark metallic de YavlGold.
+
+### Plan quirurgico
+
+1. Aplicar estilo de scrollbar solo al row de cultivo dentro de `.agro-dedicated-context`.
+2. Reemplazar la apariencia nativa por track y thumb oscuros con gold metalico sutil, sin afectar scrollbars globales del producto.
+3. Mantener feedback discreto en `hover` y `active`, con radios y contraste alineados a ADN V10.
+4. Restaurar visibilidad/uso del scrollbar en tablet/mobile para este row, sin ocultarlo por completo.
+5. Ejecutar build final y registrar validacion.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-operations.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Si el selector se estiliza con alcance demasiado amplio, puede contaminar scrollbars de otras zonas del producto.
+- Si se hace demasiado fino o con contraste insuficiente, el scrollbar puede verse elegante pero perder usabilidad.
+- En algunos navegadores moviles parte del rendering del scrollbar sigue siendo del motor del navegador; el fix debe mejorar la integracion sin depender de hacks globales fragiles.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-operations.css`
+  - se identifico el contenedor exacto del scroll visible como `.agro-dedicated-context .agro-pagados-crop-row`;
+  - se agrego styling localizado del scrollbar con track dark metallic y thumb gold sutil, usando tokens del sistema (`--bg-*`, `--gold-*`, `--border-*`, `--radius-pill`, `--shadow-gold-*`);
+  - se incorporaron estados discretos de `hover`, `focus-within` y `active` para el thumb;
+  - se restauro la visibilidad del scrollbar en `<=900px` solo para el contexto compartido, evitando que ese row siga heredando `scrollbar-width: none` / `display: none`;
+  - se agrego `prefers-reduced-motion` para eliminar la transicion del thumb cuando el usuario lo solicite.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - se registran diagnostico, causa raiz, plan, fix y validacion de esta sesion.
+
+### Build status
+
+- `pnpm build:gold` -> **OK**
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK` (140 modules)
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+
+### Validacion y QA
+
+- Validacion tecnica completada:
+  - `git diff --check` paso limpio;
+  - el styling del scrollbar quedo limitado al row desplazable del contexto compartido y no se expandio al resto del producto;
+  - desktop conserva scrollbar visible estilizado y `<=900px` ya no la oculta para ese bloque.
+- QA funcional/manual no completada con navegador autenticado:
+  - no fue posible abrir la vista real de Agro dentro de esta sesion con datos del usuario porque el acceso local sigue requiriendo sesion valida de Supabase;
+  - por esa razon, la comprobacion visual final de hover/active y sensacion premium en desktop/mobile queda pendiente con sesion real.
+
+### QA sugerido
+
+1. Abrir `Fiados > Estadisticas` con sesion real y confirmar que el scrollbar horizontal del selector ya no luce nativo/genérico.
+2. Verificar que el thumb y el track usan tonos oscuros con gold sutil y mantienen lectura limpia sobre el panel.
+3. Probar `hover` y `active` en desktop y confirmar feedback discreto.
+4. Probar en mobile/tablet y confirmar que el scrollbar sigue siendo usable y ya no queda oculto para ese bloque.
+5. Repetir al menos en `Pagados` y otra seccion con contexto compartido.
