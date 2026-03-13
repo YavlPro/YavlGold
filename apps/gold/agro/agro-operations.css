@@ -803,7 +803,8 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   }
 }
 
-/* ── Shared card base (steps + history only) ── */
+/* ── Shared card base (context + steps + history) ── */
+.agro-ops-v10 .agro-dedicated-context,
 .agro-ops-v10 .agro-pagados-history,
 .agro-ops-v10 .agro-pagados-step {
   border: 1px solid rgba(200, 167, 82, 0.2);
@@ -813,6 +814,36 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
     rgba(8, 8, 8, 0.92);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22), 0 0 22px rgba(200, 167, 82, 0.04);
   transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.agro-ops-v10 .agro-dedicated-context {
+  display: grid;
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  align-items: center;
+  gap: 0.84rem;
+  padding: 0.82rem 0.92rem;
+  border-color: rgba(200, 167, 82, 0.24);
+  background:
+    linear-gradient(135deg, rgba(200, 167, 82, 0.1), rgba(200, 167, 82, 0.03) 58%, rgba(255, 255, 255, 0.01)),
+    rgba(8, 8, 8, 0.94);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24), 0 0 20px rgba(200, 167, 82, 0.05);
+}
+
+.agro-ops-v10 .agro-dedicated-context__head,
+.agro-ops-v10 .agro-dedicated-context__copy,
+.agro-ops-v10 .agro-dedicated-context__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.agro-ops-v10 .agro-dedicated-context__head,
+.agro-ops-v10 .agro-dedicated-context__copy {
+  gap: 0.18rem;
+}
+
+.agro-ops-v10 .agro-dedicated-context__body {
+  gap: 0.42rem;
 }
 
 /* ── Hero → flat status bar ── */
@@ -872,6 +903,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   flex-direction: column;
 }
 
+.agro-ops-v10 .agro-dedicated-context__eyebrow,
 .agro-ops-v10 .agro-pagados-dedicated__eyebrow,
 .agro-ops-v10 .agro-pagados-history__eyebrow,
 .agro-ops-v10 .agro-pagados-step__label {
@@ -883,6 +915,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   color: rgba(200, 167, 82, 0.72);
 }
 
+.agro-ops-v10 .agro-dedicated-context__title,
 .agro-ops-v10 .agro-pagados-dedicated__title,
 .agro-ops-v10 .agro-pagados-history__title,
 .agro-ops-v10 .agro-pagados-step__title {
@@ -892,6 +925,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   letter-spacing: 0.04em;
 }
 
+.agro-ops-v10 .agro-dedicated-context__title,
 .agro-ops-v10 .agro-pagados-dedicated__title {
   font-size: clamp(1rem, 2vw, 1.22rem);
   background: linear-gradient(135deg, #fff 0%, rgba(200, 167, 82, 0.85) 100%);
@@ -900,6 +934,7 @@ body[data-agro-active-view='rankings'] .agro-ops-v10 .agro-rankings-dedicated {
   background-clip: text;
 }
 
+.agro-ops-v10 .agro-dedicated-context__note,
 .agro-ops-v10 .agro-pagados-dedicated__subtitle,
 .agro-ops-v10 .agro-pagados-history__subtitle,
 .agro-ops-v10 .agro-pagados-step__note,
@@ -1590,6 +1625,10 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
     width: 100%;
   }
 
+  .agro-ops-v10 .agro-dedicated-context {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .agro-ops-v10 .agro-pagados-history__head {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1623,6 +1662,11 @@ body[data-agro-subview="stats"] .agro-dedicated-stats[hidden] {
 }
 
 @media (max-width: 768px) {
+  .agro-ops-v10 .agro-dedicated-context {
+    gap: 0.68rem;
+    padding: 0.78rem 0.82rem;
+  }
+
   .agro-ops-v10 .agro-dedicated-stats {
     --agro-ss-chart-height: clamp(14rem, 48vw, 16rem);
   }
