@@ -1672,3 +1672,109 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
    - estabilizar `supabase start` en Windows;
    - alinear la publishable key local y una sesion QA reutilizable antes de repetir Playwright.
 
+---
+
+## Sesion: Destrabar QA autenticado real de Agro sin debilitar produccion (2026-03-12)
+
+### Diagnostico
+
+- El QA integral final quedo bloqueado por tres factores de entorno, no por bugs confirmados del producto:
+  - `hCaptcha` exige resolucion manual en el login/registro real;
+  - Supabase local en Windows fue inestable y no sostuvo una superficie confiable para repetir QA;
+  - el backend local disponible no expuso correctamente las tablas `agro_*`, por lo que aun con auth local no habia superficie real de Agro para validar.
+- La necesidad real no es "bypassear" seguridad, sino dejar una via estable y repetible para entrar autenticado a `Agro` y ejecutar QA browser real sobre el proyecto visible `yavlgold.com`.
+- El usuario entrego una cuenta de prueba no sensible para esta tarea, lo que habilita usar el entorno real como referencia de QA sin tocar la configuracion de auth de produccion.
+
+### Causa raiz
+
+- La automatizacion anterior intento resolver QA sobre un entorno local que no era la fuente mas estable para este producto hoy.
+- La app ya tiene una via autentica de acceso en produccion, pero faltaba operacionalizar una estrategia segura y repetible para reutilizar una sesion QA autenticada sin depender de rehacer el captcha en cada corrida automatizada.
+
+### Plan quirurgico
+
+1. Auditar el flujo real de auth/captcha en `yavlgold.com` con la cuenta de prueba provista.
+2. Si el captcha exige resolucion manual, usarlo solo como paso humano puntual para generar una sesion valida y luego persistirla para Playwright.
+3. Verificar que la sesion autenticada entra de verdad a `/agro/` y permite observar la superficie necesaria para el QA integral final.
+4. Confirmar que el backend real accesible desde esa sesion expone las tablas y vistas `agro_*` requeridas para stats, historial y AgroRepo.
+5. Documentar un flujo repetible de QA autenticado, explicito, reversible y sin impacto en la seguridad de produccion.
+
+### Archivos a tocar
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- Codigo solo si aparece un bug pequeno, claro y estrictamente necesario para habilitar QA local/staging sin contaminar produccion.
+
+### Riesgos
+
+- Si el captcha requiere intervencion manual, la automatizacion completa seguira necesitando un paso humano inicial para refrescar la sesion QA.
+- Persistir storage/auth state debe hacerse solo en un artefacto local de QA y nunca como bypass productivo ni en archivos versionados.
+- Si la cuenta de prueba no tiene datos suficientes en Agro, la autenticacion podria validarse sin cerrar aun toda la cobertura funcional del QA final.
+
+### Decision tomada
+
+- Se descarta por ahora usar Supabase local/Windows como via principal de QA autenticado porque fue la fuente mas inestable del intento anterior.
+- Se adopta como estrategia oficial de desbloqueo el **entorno real `yavlgold.com` + cuenta QA de prueba + `storageState` local reutilizable de Playwright**.
+- El captcha **no** se desactiva ni se debilita en produccion. La sesion se genera con el flujo autentico de la app y luego se reutiliza localmente para QA repetible.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - se documenta diagnostico, causa raiz, decision, validacion y limites de esta sesion.
+- Ajustes operativos locales no versionados:
+  - se inicio sesion real en `https://www.yavlgold.com/agro/` con la cuenta QA de prueba;
+  - se serializo el contexto autenticado en `output/agro-qa-storage-state.json`;
+  - se agrego `output/agro-qa-storage-state.json` a `.git/info/exclude` para evitar commits accidentales del token de QA;
+  - se elimino la captura temporal del reto hCaptcha usada durante el diagnostico visual.
+
+### Validacion
+
+- Flujo auth real validado:
+  - `https://www.yavlgold.com/agro/` redirige correctamente a login cuando no hay sesion;
+  - `hCaptcha` esta activo y el backend real exige verificacion a nivel de `Supabase Auth` (sin token devuelve `captcha verification process failed`);
+  - una vez emitida la verificacion valida, el usuario QA entra de verdad a `https://www.yavlgold.com/agro/`.
+- Reutilizacion de sesion validada:
+  - se guardo `storageState` local en `output/agro-qa-storage-state.json`;
+  - se abrio un **contexto nuevo** de navegador usando ese archivo y cargo `https://www.yavlgold.com/agro/` sin redirigir a login ni rehacer captcha.
+- Backend Agro validado en entorno real:
+  - requests autenticados a `agro_crops`, `agro_income`, `agro_pending`, `agro_losses`, `agro_transfers`, `agro_farmer_profile`, `agro_public_profiles` y `user_onboarding_context` respondieron `200`;
+  - el cliente real expuesto como `window.__YG_AGRO_SUPABASE` confirmo sesion valida para `yavlcapitan@gmail.com`.
+- Estado de datos de la cuenta QA:
+  - `agro_crops`: `0`
+  - `agro_income`: `0`
+  - `agro_pending`: `0`
+  - `agro_losses`: `0`
+  - `agro_transfers`: `0`
+  - esto significa que el **bloqueo de auth ya esta resuelto**, pero el QA integral final de estadisticas/exportes todavia requiere sembrar dataset QA o usar una cuenta de prueba con datos.
+- Nota sobre AgroRepo:
+  - `agrorepo.js` sigue siendo `local-first` via `localStorage` (`APP_KEY = agrorepo_ultimate_v2`), no una tabla productiva en Supabase;
+  - consultar `agro_repo_entries` en produccion devuelve `PGRST205` porque esa tabla no existe en el schema cache, lo cual es coherente con la implementacion actual y no un bug nuevo del flujo de auth.
+
+### Build status
+
+- No se ejecuto `pnpm build:gold` en esta sesion porque no hubo cambios de codigo productivo; solo se actualizo documentacion y artefactos locales de QA no versionados.
+
+### Estado Del Plan Maestro
+
+1. Hecho
+   - Cerrar onboarding / wizard de perfil para alimentar contexto de IA.
+   - Fortalecer AgroRepo como memoria operativa.
+2. Muy avanzado
+   - Blindar facturero y transferencias.
+   - Terminar estadisticas individuales y exportes por seccion.
+     - La ruta de auth QA ya esta destrabada, pero la cuenta de prueba sigue sin dataset para cerrar la validacion funcional rica.
+3. Pendiente
+   - Hacer QA integral final.
+     - Ya no esta bloqueado por login/captcha/entorno local.
+     - El siguiente cuello de botella es disponer de datos QA suficientes en la cuenta de prueba o en otra cuenta controlada.
+
+### QA sugerido
+
+1. Reusar `output/agro-qa-storage-state.json` para abrir Playwright autenticado directo sobre `https://www.yavlgold.com/agro/`.
+2. Poblar la cuenta QA con un dataset minimo controlado antes del QA integral final:
+   - al menos 1 cultivo;
+   - 1 registro en `Pagados`;
+   - 1 registro en `Fiados`;
+   - 1 registro en `Perdidas`;
+   - 1 registro en `Donaciones` o `Otros`;
+   - 1 entrada en AgroRepo.
+3. Con ese dataset, ejecutar el QA integral final pendiente sobre sidebar, stats por seccion, selector compartido, exportes MD y AgroRepo.
+
