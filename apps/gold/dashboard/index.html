@@ -2122,6 +2122,8 @@
       window.location.href = '/';
     }
 
+    window.YGDashboardPerformLogout = performDashboardLogout;
+
     async function initDashboard() {
       console.log('[Dashboard] Verificando sesión...');
 
@@ -3000,7 +3002,18 @@
     fab.addEventListener('click', async () => {
       try {
         fab.style.opacity = '0.5';
-        await performDashboardLogout();
+        if (typeof window.YGDashboardPerformLogout === 'function') {
+          await window.YGDashboardPerformLogout();
+          return;
+        }
+
+        sessionStorage.removeItem('yavl_dismissed_announcements');
+        if (window.AuthClient?.logout) {
+          await window.AuthClient.logout();
+          return;
+        }
+
+        window.location.href = '/';
 
       } catch (err) {
         console.error('Logout failed:', err);

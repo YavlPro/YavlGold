@@ -2902,3 +2902,43 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
    - dashboard -> abrir sidebar -> `Bitacora` -> confirmar visibilidad inmediata.
 2. Confirmar en produccion real que `Nueva carpeta` y `Crear archivo .md` siguen visibles y usables sin bypass.
 3. Repetir una pasada corta en mobile real fisico si el usuario quiere cerrar del todo la diferencia viewport vs dispositivo.
+
+---
+
+## Sesion activa: fix logout mobile dashboard a landing (2026-03-15)
+
+### Diagnostico
+
+- El logout de desktop en `apps/gold/dashboard/index.html` funciona porque los botones visibles dentro del script `type="module"` llaman `performDashboardLogout()`, que si ejecuta `AuthClient.logout()` o `supabase.auth.signOut()`.
+- El FAB mobile `#mobile-logout-fab` vive en un script clasico posterior y estaba intentando llamar la misma funcion por nombre directo.
+- Como `performDashboardLogout()` esta declarada dentro de un modulo, no queda en el scope global del script clasico.
+- Resultado en mobile:
+  - el click caia en `catch`;
+  - se navegaba a `/` sin cerrar sesion real;
+  - al llegar a la landing, el guard detectaba sesion valida y redirigia otra vez a `/dashboard/`.
+
+### Cambios aplicados
+
+- `apps/gold/dashboard/index.html`
+  - se expuso un puente minimo `window.YGDashboardPerformLogout = performDashboardLogout;` justo despues de la funcion canonica de logout;
+  - el handler del FAB mobile ahora llama primero ese puente global;
+  - si el puente no existiera, hace fallback a `window.AuthClient.logout()` antes de navegar a `/`.
+
+### Build status
+
+- `pnpm build:gold` = OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Warning no bloqueante:
+  - engine esperado `node 20.x`, entorno actual `node 25.6.0`
+  - warning habitual por chunk grande > `500 kB` en Agro
+
+### QA sugerido
+
+1. En mobile o viewport <= `991px`, abrir dashboard autenticado y pulsar el FAB de logout.
+2. Confirmar que la sesion realmente se cierra y la app queda en `/` o `/index.html#login` sin rebote a `/dashboard/`.
+3. Repetir logout desktop para confirmar que no hubo regresion en navbar/topbar.
