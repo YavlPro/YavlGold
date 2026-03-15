@@ -2753,3 +2753,130 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
    - reabrir;
    - exportar;
    - validar mobile.
+
+---
+
+## Sesion activa: fix mobile Bitacora / AgroRepo desde sidebar (2026-03-14)
+
+### Diagnostico pre-edicion
+
+- Se leyo `AGENTS.md` y se audito el flujo shell/mobile en:
+  - `apps/gold/agro/agro-shell.js`
+  - `apps/gold/agro/agrorepo.js`
+  - `apps/gold/agro/index.html`
+  - `apps/gold/agro/agro.css`
+- Se valido navegacion en viewport mobile `390x844` sobre produccion real con cuenta QA.
+- En la corrida mobile ya cargada, `Bitacora` puede abrir AgroRepo; pero la auditoria de codigo encontro una ventana de fallo concreta en mobile:
+  - `initAccordions()` en `agro.js` remueve `open` a **todos** los `.yg-accordion` en mobile, aunque AgroRepo y Herramientas son acordeones controlados por la shell y no por el grupo de formularios;
+  - AgroRepo monta el widget real solo al abrir el acordeon (`toggle`) o si al enlazar listeners ya encuentra el `<details>` abierto;
+  - la shell activa la region `agrorepo` via `updateAccordionState('yg-acc-agrorepo', true)`, pero ese estado puede desincronizarse en mobile cuando el reset global de acordeones pisa `open` o cuando el modulo llega tarde respecto a la navegacion.
+- Resultado tecnico del bug:
+  - la vista de shell puede quedar en `data-agro-active-view="agrorepo"`;
+  - la region principal cambia de estado;
+  - pero el widget de AgroRepo puede quedarse sin inicializar o con el acordeon cerrado, dejando la sensacion de vista vacia en mobile.
+
+### Causa raiz exacta
+
+- La causa raiz es una combinacion de dos decisiones incompatibles en mobile:
+  1. `agro.js` hace un reset global de `open` sobre todos los `.yg-accordion` en `initAccordions()`.
+  2. `agrorepo.js` depende de la apertura efectiva del `<details id="yg-acc-agrorepo">` para montar el widget real.
+- Eso rompe la sincronizacion entre shell y contenido:
+  - la shell cree que `Bitacora` ya esta visible;
+  - pero AgroRepo sigue dependiendo de un `toggle/open` que ya fue pisado o no se recomputo a tiempo.
+
+### Plan quirurgico
+
+1. Limitar el reset mobile de acordeones solo a los acordeones agrupados que si lo necesitan (`data-accordion-group`), sin tocar el acordeon de AgroRepo.
+2. Hacer que AgroRepo pueda inicializarse tambien cuando la shell entra a `agrorepo`, no solo cuando el `<details>` emite `toggle`.
+3. Reforzar el puente shell -> AgroRepo para que, al navegar a `Bitacora`, el widget se garantice listo en mobile y desktop.
+4. Validar en viewport mobile y desktop.
+5. Cerrar con `pnpm build:gold`.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro.js`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/agrorepo.js`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Bajo:
+  - si el reset mobile de acordeones se acota mal, podria dejar algun formulario del facturero abierto por defecto en mobile.
+- Bajo:
+  - si AgroRepo se inicializa de mas, podria duplicar listeners o renders; el fix debe preservar el guard actual de `widgetInitialized`.
+- Bajo:
+  - el cambio debe evitar cualquier regresion en desktop, donde AgroRepo ya funciona cuando el acordeon y la shell quedan sincronizados.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro.js`
+  - `L18274`: el reset mobile de acordeones ya no remueve `open` en todos los `.yg-accordion`;
+  - ahora se limita a acordeones con `data-accordion-group`, dejando intactos los acordeones shell-managed como `AgroRepo`.
+  - cierre de sesion: el archivo se normalizo a `LF` conforme a `.gitattributes`, eliminando el warning persistente `CRLF will be replaced by LF`.
+- `apps/gold/agro/agro-shell.js`
+  - `L398-L400`: al entrar a `agrorepo`, la shell no solo abre `yg-acc-agrorepo`; tambien llama `window.ensureAgroRepoReady()` si ya esta disponible.
+- `apps/gold/agro/agrorepo.js`
+  - `L1674-L1718`: se agrego `ensureWidgetReady()` y deteccion de shell activa;
+  - se reforzo `setupAccordionListener()` para inicializar AgroRepo:
+    - al abrir el acordeon;
+    - al recibir `agro:shell:view-changed` hacia `agrorepo`;
+    - al cargar el modulo si la shell ya estaba en `agrorepo`.
+  - se expuso `window.ensureAgroRepoReady` como puente minimo shell -> AgroRepo.
+- `apps/gold/agro/agro.css`
+  - `L6590-L6604`: se corrigio una colision CSS legacy del modal AgroRepo;
+  - `.arw-modal-overlay.is-active` ahora fuerza `visibility: visible`;
+  - `.arw-modal-overlay.is-active .arw-modal` recupera el transform visible, alineado con el estado usado por JS (`is-active`).
+
+### Build status
+
+- `pnpm build:gold` = OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Warning no bloqueante:
+  - engine esperado `node 20.x`, entorno actual `node 25.6.0`
+  - warning habitual por chunk grande del monolito Agro
+
+### QA ejecutado
+
+- Diagnostico base:
+  - viewport mobile `390x844` en produccion real con cuenta QA para auditar el comportamiento visible y la shell actual.
+- Validacion final del fix:
+  - se ejecuto sobre `vite preview` del build compilado en `http://localhost:4173/agro/`;
+  - para abrir la ruta protegida sin tocar auth del repo, se uso un bypass temporal **solo dentro del navegador automatizado**, interceptando el asset compilado `session-guard-*`;
+  - por ese bypass, quedaron errores esperables de datos autenticados fuera del scope de esta sesion.
+- Mobile (`390x844`) sobre el build:
+  - sidebar abre correctamente;
+  - click en `Bitacora` cambia la shell a `agrorepo`;
+  - el sidebar principal queda cerrado despues de navegar (`shellClosedAfterNav = true`);
+  - AgroRepo queda visible y util:
+    - `treeVisible = true`
+    - `mainVisible = true`
+    - `timelineVisible = true`
+    - `modalVisible = true`
+    - `editorVisible = true`
+    - `previewVisible = true`
+    - `timelineCount = 1`
+  - breadcrumb final validado:
+    - `AgroRepo > Cultivos > 2026-03-14.md`
+- Desktop (`1440x1800`) sobre el build:
+  - `Bitacora` abre visible;
+  - `treeVisible = true`
+  - `mainVisible = true`
+  - `timelineVisible = true`
+  - `editorVisible = true`
+  - `previewVisible = true`
+  - `timelineCount = 1`
+  - breadcrumb final:
+    - `AgroRepo > Cultivos > 2026-03-14.md`
+
+### QA sugerido
+
+1. Despues del deploy, repetir la misma pasada en produccion real autenticada:
+   - dashboard -> abrir sidebar -> `Bitacora` -> confirmar visibilidad inmediata.
+2. Confirmar en produccion real que `Nueva carpeta` y `Crear archivo .md` siguen visibles y usables sin bypass.
+3. Repetir una pasada corta en mobile real fisico si el usuario quiere cerrar del todo la diferencia viewport vs dispositivo.

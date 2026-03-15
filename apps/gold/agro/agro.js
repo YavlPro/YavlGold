@@ -18271,7 +18271,7 @@ window.deleteCrop = deleteCrop;
                 summary.setAttribute('aria-controls', content.id);
                 summary.setAttribute('aria-expanded', el.hasAttribute('open') ? 'true' : 'false');
             }
-            if (isMobile) {
+            if (isMobile && el.dataset.accordionGroup) {
                 el.removeAttribute('open');
             }
             if (el.dataset.accordionBound === 'true') return;

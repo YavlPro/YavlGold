@@ -1671,6 +1671,14 @@ function initWidget() {
     console.log('[AgroRepo] Tree Memory v3 loaded with', state.repo.nodes.length, 'nodes');
 }
 
+function ensureWidgetReady() {
+    initWidget();
+}
+
+function isAgroRepoShellActive() {
+    return document.body?.dataset?.agroActiveView === 'agrorepo';
+}
+
 function setupAccordionListener() {
     const accordion = document.getElementById('yg-acc-agrorepo');
     if (!accordion) {
@@ -1680,9 +1688,24 @@ function setupAccordionListener() {
     if (accordion.dataset.listenerBound === '1') return;
     accordion.dataset.listenerBound = '1';
     accordion.addEventListener('toggle', () => {
-        if (accordion.open && !widgetInitialized) initWidget();
+        if (accordion.open) ensureWidgetReady();
     });
-    if (accordion.open) initWidget();
+    if (accordion.dataset.shellListenerBound !== '1') {
+        accordion.dataset.shellListenerBound = '1';
+        window.addEventListener('agro:shell:view-changed', (event) => {
+            if (event.detail?.view !== 'agrorepo') return;
+            accordion.open = true;
+            const summary = accordion.querySelector('summary');
+            if (summary) {
+                summary.setAttribute('aria-expanded', 'true');
+            }
+            ensureWidgetReady();
+        });
+    }
+    if (accordion.open || isAgroRepoShellActive()) {
+        accordion.open = true;
+        ensureWidgetReady();
+    }
 }
 
 export function initAgroRepo() {
@@ -1691,6 +1714,8 @@ export function initAgroRepo() {
         if (section) section.style.display = 'none';
         return;
     }
+
+    window.ensureAgroRepoReady = ensureWidgetReady;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupAccordionListener);

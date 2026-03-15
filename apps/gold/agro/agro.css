@@ -6590,6 +6590,7 @@ body.modal-open {
 #agro-widget-root .arw-modal-overlay.is-active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 #agro-widget-root .arw-modal {
@@ -6598,6 +6599,10 @@ body.modal-open {
   border: 1px solid rgba(200, 167, 82, 0.24);
   background: rgba(11, 12, 15, 0.96);
   box-shadow: var(--arw-shadow-lg);
+}
+
+#agro-widget-root .arw-modal-overlay.is-active .arw-modal {
+  transform: scale(1) translateY(0);
 }
 
 #agro-widget-root .arw-modal-header,

@@ -396,6 +396,9 @@ export function initAgroShell() {
 
         if (view === 'agrorepo') {
             updateAccordionState('yg-acc-agrorepo', true);
+            if (typeof window.ensureAgroRepoReady === 'function') {
+                window.ensureAgroRepoReady();
+            }
         } else {
             updateAccordionState('yg-acc-agrorepo', false);
         }
