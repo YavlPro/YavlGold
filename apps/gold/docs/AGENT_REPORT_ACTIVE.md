@@ -1238,6 +1238,28 @@ Estilos ADN V10 para: KPI cards (grid responsive), range selector (pill buttons)
 
 ---
 
+## Sesión: Redefinición del rol de Codex (2026-03-14)
+
+### Diagnóstico
+
+**Causa raíz y motivación:**
+El uso intensivo de Codex para sesiones de QA pesado o exploraciones de browser vía Playwright resulta ineficiente y consume créditos rápidamente, alejándolo de su fortaleza principal.
+
+**Decisión operativa nueva:**
+Codex no debe usarse como agente principal de QA intensivo. Vuelve a su rol original de **cirujano**: diagnóstico técnico fino, fixes quirúrgicos, cambios acotados, build/checks y salida limpia. El QA manual/visual debe priorizarse fuera de Codex, documentando los bugs claramente para que luego Codex entre de forma quirúrgica.
+
+### Archivos a tocar
+- `AGENTS.md`: Integrar la policy explicitamente en §7 (Reglas de conducta). Riesgo: Bajo.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`: Registro de la sesión. Riesgo: Nulo.
+
+### Implementación
+Se agregó el punto 2 a la sección **§7 — Reglas de conducta del agente** en `AGENTS.md`, definiendo el rol de "cirujano" por defecto y restringiendo el uso intensivo de QA/browser/Playwright solo a casos excepcionales. Se delineó el flujo recomendado de 4 pasos (QA manual -> Documentar -> Fix Codex -> Revalidar).
+
+### QA
+Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown correcto y no se modificaron reglas previas inadvertidamente. No se tocó código de producto, por lo que no es necesario un build.
+
+---
+
 ## Sesion: Bugfix layout charts de estadisticas por seccion (2026-03-12)
 
 ### Diagnostico

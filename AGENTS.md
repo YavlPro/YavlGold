@@ -168,12 +168,18 @@ Incluye: `agent-guard.mjs` (deps prohibidas) + `agent-report-check.mjs` (reporte
 ## §7 — Reglas de conducta del agente
 
 1. **Leer antes de editar**: siempre leer el archivo antes de hacer cambios.
-2. **Ediciones mínimas**: preferir cambios quirúrgicos. No reescribir funciones enteras para un bugfix.
-3. **No crear archivos innecesarios**: no generar scripts temporales, tests sueltos, ni .md redundantes.
-4. **No borrar comentarios existentes** salvo que el usuario lo pida.
-5. **No agregar emojis al código** salvo que el usuario lo pida.
-6. **Respetar el idioma**: UI en español. Código y logs en inglés o español según contexto existente.
-7. **Build siempre al final**: cualquier sesión con cambios de código debe terminar con `pnpm build:gold`.
+2. **Rol de cirugía (Policy operativa)**: Codex debe usarse prioritariamente como agente de cirugía técnica (diagnóstico fino, fix quirúrgico, build y cierre). No debe usarse por defecto como agente principal de QA intensivo, browser exploration larga o sesiones pesadas de Playwright, ya que consume créditos ineficientemente. El flujo recomendado es:
+   - QA manual o validación humana/browser para detectar el bug.
+   - Documentación clara del problema.
+   - Codex entra a corregir de forma quirúrgica.
+   - Revalidación posterior manual/humana.
+   - *Nota: Solo en casos excepcionales y justificados se permite usar Codex para QA/browser intensivo.*
+3. **Ediciones mínimas**: preferir cambios quirúrgicos. No reescribir funciones enteras para un bugfix.
+4. **No crear archivos innecesarios**: no generar scripts temporales, tests sueltos, ni .md redundantes.
+5. **No borrar comentarios existentes** salvo que el usuario lo pida.
+6. **No agregar emojis al código** salvo que el usuario lo pida.
+7. **Respetar el idioma**: UI en español. Código y logs en inglés o español según contexto existente.
+8. **Build siempre al final**: cualquier sesión con cambios de código debe terminar con `pnpm build:gold`.
 
 ---
 
