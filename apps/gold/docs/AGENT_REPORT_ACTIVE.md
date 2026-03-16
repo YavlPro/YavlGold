@@ -2942,3 +2942,112 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 1. En mobile o viewport <= `991px`, abrir dashboard autenticado y pulsar el FAB de logout.
 2. Confirmar que la sesion realmente se cierra y la app queda en `/` o `/index.html#login` sin rebote a `/dashboard/`.
 3. Repetir logout desktop para confirmar que no hubo regresion en navbar/topbar.
+
+---
+
+## Sesion activa: auditoria y fix quirurgico de icono PWA Android (2026-03-16)
+
+### Diagnostico inicial
+
+- La superficie activa ya expone manifest desde `apps/gold/index.html` via `href="/site.webmanifest"`.
+- El primer barrido del repo muestra un manifest publico en `apps/gold/public/site.webmanifest`, multiples logos/favicons en `public/`, `public/brand/`, `public/images/` y `assets/images/`, y todavia no confirma si existe plugin PWA o service worker compitiendo.
+- El riesgo operativo principal es tener una mezcla de rutas heredadas y nombres reciclados que permita a Android o al navegador reutilizar iconos viejos cacheados aunque la UI local hoy se vea mejor.
+
+### Hipotesis tecnicas
+
+1. El manifest publico puede seguir apuntando a assets ambiguos o heredados.
+2. Puede existir duplicacion de iconos con el mismo logo en rutas distintas (`/`, `/brand/`, `/images/`, `assets/`) sin una fuente canonica clara.
+3. Si hay nombres de archivo reciclados, Android o algun cache intermedio puede seguir resolviendo un icono viejo.
+4. Si existe service worker, precache o estrategia de cache podria estar perpetuando manifest/iconos obsoletos.
+5. Puede faltar o estar mal declarado un icono `maskable`, lo que explicaria borde/fondo no deseado en instalacion Android.
+
+### Plan quirurgico
+
+1. Auditar `vite.config.js`, `index.html`, `site.webmanifest` y cualquier configuracion PWA/SW real.
+2. Inventariar todos los iconos referenciados y sus archivos fisicos para detectar duplicados, rutas viejas y nombres reciclados.
+3. Definir una sola ruta canonica de iconos PWA con set minimo:
+   - `192x192` any
+   - `512x512` any
+   - `512x512` maskable
+4. Si conviene para cortar cache fantasma, versionar los nombres de archivo y actualizar manifest/referencias.
+5. Revisar si el build o algun SW puede seguir sirviendo manifest/iconos anteriores y ajustar solo si aplica.
+6. Ejecutar `pnpm build:gold` y cerrar la sesion documentando causa raiz, cambios y QA sugerido.
+
+### Riesgos
+
+- Si la causa real incluye cache persistente del launcher Android, el fix de codigo reduce riesgo futuro pero no puede limpiar instalaciones previas ya hechas.
+- Si el proyecto no tiene plugin PWA ni service worker, el problema puede estar concentrado en manifest/assets y el alcance debe mantenerse ahi para no introducir una segunda capa de instalacion.
+- Cualquier regeneracion de iconos debe respetar el ADN Visual V10 y evitar remaquetar marca fuera del alcance.
+
+### Archivos candidatos a tocar
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- `apps/gold/vite.config.js`
+- `apps/gold/index.html`
+- `apps/gold/public/site.webmanifest`
+- assets/iconos PWA reales bajo `apps/gold/public/` y rutas relacionadas
+- configuracion de service worker o plugin PWA, solo si existe y esta implicada
+
+### Hallazgos y causa raiz
+
+- **Manifest real activo**:
+  - `apps/gold/index.html` apunta a `apps/gold/public/site.webmanifest`.
+  - No se encontro segundo manifest compitiendo en la superficie activa.
+- **Plugin PWA / Vite**:
+  - `apps/gold/vite.config.js` no usa `vite-plugin-pwa` ni genera manifest/iconos automaticamente.
+- **Service worker**:
+  - No se encontraron `serviceWorker`, `navigator.serviceWorker`, `registerSW`, `workbox`, `sw.js` ni precache en `apps/gold`.
+  - Conclusion: no habia capa SW perpetuando iconos viejos en el codigo actual.
+- **Causa raiz mas probable**:
+  - `apps/gold/public/site.webmanifest` apuntaba dos veces al mismo `"/brand/logo.png"` para `192` y `512`, sin `purpose` y sin icono `maskable`.
+  - El PNG base `apps/gold/public/brand/logo.png` tiene transparencia en esquinas (`A=0` en pixeles de borde), lo que vuelve probable que Android rellene o encapsule el icono con fondo claro al instalar si no recibe un asset `maskable`/canonico adecuado.
+  - El repo arrastraba multiples copias del mismo logo en `/brand`, `/images` y `assets/images`, lo que aumentaba la ambiguedad operativa.
+
+### Cambios aplicados
+
+- `apps/gold/index.html`:
+  - lineas `29-32`
+  - el icono `192x192` y `apple-touch-icon` ahora apuntan al asset canonico versionado `/pwa/yavlgold-pwa-192-v20260316.png`;
+  - el manifest se sigue sirviendo desde la unica fuente real, pero ahora con `?v=20260316` para cortar cache heredada del URL anterior.
+- `apps/gold/public/site.webmanifest`:
+  - lineas `2-28`
+  - agregado `id: "/"`, `start_url: "/"` y `scope: "/"` para dejar la instalacion anclada a la raiz canonica;
+  - `background_color` ajustado a `#0A0A0A` y `theme_color` a `#C8A752`, alineados con el ADN Visual V10;
+  - consolidado el set PWA canonico a tres iconos explicitos:
+    - `192x192` any -> `/pwa/yavlgold-pwa-192-v20260316.png`
+    - `512x512` any -> `/pwa/yavlgold-pwa-512-v20260316.png`
+    - `512x512` maskable -> `/pwa/yavlgold-pwa-maskable-512-v20260316.png`
+- `apps/gold/vercel.json`:
+  - lineas `75-87`
+  - agregado `Cache-Control: public, max-age=0, must-revalidate` para `/site.webmanifest`;
+  - agregado `Cache-Control: public, max-age=31536000, immutable` para `/pwa/:path*`;
+  - esto deja el manifest siempre revalidable y los iconos versionados aptos para cache largo sin ambiguedad.
+- `apps/gold/public/pwa/yavlgold-pwa-192-v20260316.png`
+- `apps/gold/public/pwa/yavlgold-pwa-512-v20260316.png`
+- `apps/gold/public/pwa/yavlgold-pwa-maskable-512-v20260316.png`
+  - nuevos assets binarios canonicos;
+  - generados a partir del logo vigente, pero con fondo opaco `#0A0A0A` para eliminar transparencia en esquinas;
+  - el asset `maskable` 512 se compuso con padding adicional para reducir recorte agresivo en Android.
+
+### Build status
+
+- `pnpm build:gold` = OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Advertencias no bloqueantes:
+  - engine esperado `node 20.x`, entorno actual `node 25.6.0`
+  - warning habitual de chunk > `500 kB` en Agro
+
+### QA sugerido
+
+1. Desplegar y abrir la landing productiva fresca desde Android.
+2. Forzar recarga del manifest si el navegador conserva residuos:
+   - cerrar tabs del sitio;
+   - abrir la URL raiz;
+   - reinstalar la PWA en lugar de reutilizar una instalacion historica.
+3. Verificar en Android que el icono instalado use el nuevo set canonico sin fondo/blanco invasivo.
+4. Si existe una instalacion vieja en el telefono, eliminarla antes de validar la nueva, porque el launcher puede conservar snapshot anterior aunque el codigo ya haya quedado corregido.

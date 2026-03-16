@@ -1,21 +1,31 @@
 {
+    "id": "/",
     "name": "YavlGold",
     "short_name": "YavlGold",
-    "start_url": "/index.html",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#D4AF37",
+    "background_color": "#0A0A0A",
+    "theme_color": "#C8A752",
     "orientation": "portrait-primary",
     "icons": [
         {
-            "src": "/brand/logo.png",
+            "src": "/pwa/yavlgold-pwa-192-v20260316.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
-            "src": "/brand/logo.png",
+            "src": "/pwa/yavlgold-pwa-512-v20260316.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/pwa/yavlgold-pwa-maskable-512-v20260316.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ]
 }
