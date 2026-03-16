@@ -3051,3 +3051,23 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
    - reinstalar la PWA en lugar de reutilizar una instalacion historica.
 3. Verificar en Android que el icono instalado use el nuevo set canonico sin fondo/blanco invasivo.
 4. Si existe una instalacion vieja en el telefono, eliminarla antes de validar la nueva, porque el launcher puede conservar snapshot anterior aunque el codigo ya haya quedado corregido.
+
+---
+
+## Publicación Crónica Febrero 2026 (2026-03-16)
+
+### Diagnóstico
+- Existe texto fuente aprobado para la crónica de febrero 2026 en `cronica de febrero.txt` en la raíz del repo, pero aún no está publicado en `apps/gold/docs/chronicles/2026-02.md`.
+
+### Plan
+- Leer `cronica de febrero.txt`.
+- Crear `2026-02.md`.
+- Revisar estilo de crónicas existentes.
+- Actualizar master `CRONICA-YAVLGOLD.md`.
+- Validar formato/encoding y dejar entrega lista.
+
+### Cierre y Resultados
+- Se creó `apps/gold/docs/chronicles/2026-02.md` iterando sobre el formato del source pero manteniendo el texto fuente idéntico.
+- Se añadió un bloque append-only en `CRONICA-YAVLGOLD.md`.
+- No hubieron cambios al código del proyecto, solo actualizaciones de documentación. Encoding preservado a UTF-8.
+

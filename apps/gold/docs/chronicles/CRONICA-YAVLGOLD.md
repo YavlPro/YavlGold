@@ -449,4 +449,39 @@ Los 8 hitos que marcaron el primer mes de 2026:
 *Fecha de extensión*: 2026-02-01
 *Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
 
+---
 
+# 🧩 ADDENDUM — Febrero 2026 (Append-only)
+
+> *Esta sección extiende la cobertura de la crónica al mes de febrero 2026.*
+
+## Resumen Ejecutivo — Febrero 2026
+
+Los hechos que marcaron el segundo mes de 2026:
+
+1. **🤖 IA Agéntica V1 (Feb 2-3)**: Implementación de tools reales para el asistente.
+2. **💰 Facturero V9.7 (Feb 3-5)**: Transferencias bidireccionales y contabilidad real.
+3. **🔌 Infraestructura Offline (Feb 4-6)**: Supabase local funcional.
+4. **🧹 La Gran Limpieza (Feb 9-11)**: Eliminación de código muerto legacy.
+5. **🎯 Modo Enfoque + Multi-moneda (Feb 12-16)**: Manejo de USD/COP/VES y tasas en vivo.
+6. **🏘️ La Vecindad de Bugs (Feb 17-27)**: Taxonomía y resolución de bugs críticos.
+7. **🏆 Rankings y Privacidad Visual (Feb 18-26)**: Tableros y toggles de privacidad.
+8. **👥 Social V1 (Feb 26)**: Feed público, hilos y mensajes privados.
+
+---
+
+## Anexo F — Febrero 2026
+
+📄 **Archivo**: [2026-02.md](./2026-02.md)
+
+**Resumen**: Febrero 2026 consolidó a YavlGold aportando IA real, multi-moneda, privacidad, componentes sociales, la resolución clasificada de bugs ("La Vecindad") y una infraestructura robusta.
+
+**Métricas verificadas**:
+- **~203 commits**
+- **5 versiones**: V9.6.6 → V9.8.1
+- **13 nuevos módulos** integrados (Social, Feedback, Rankings, AgroWizard, etc.)
+
+---
+
+*Fecha de extensión*: 2026-03-16
+*Generado por*: Historiador Forense de Git — Protocolo Append-Only v1.0
