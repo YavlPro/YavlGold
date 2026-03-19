@@ -3346,3 +3346,153 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 - QA real completado.
 - Dataset QA temporal limpiado.
 - Sin bugs funcionales abiertos dentro de Ciclos Operativos al cierre de hoy.
+
+---
+
+## Ciclos Operativos V2 (2026-03-18)
+
+### Diagnostico
+
+- Ciclos Operativos V1 ya existe como modulo separado, con CRUD, validacion de `crop_id`, cierre rapido, balance visible, integracion en shell y soporte real validado sobre Supabase.
+- La evolucion V2 no requiere tocar DDL ni RLS; el frente es principalmente UX/UI y organizacion del flujo dentro del mismo modulo.
+- El mayor trabajo cae en tres frentes coordinados:
+  - shell/sidebar con submenú y subviews;
+  - refactor del modulo a wizard, filtros y export;
+  - ajuste visual/copy humano sin romper la familia visual ni el MVP ya estable.
+
+### Plan de implementacion V2
+
+1. Extender la shell para soportar la familia `operational` con submenú `activos`, `finalizados` y `export`.
+2. Reorganizar `agroOperationalCycles.js` para:
+   - separar listas de activos/finalizados;
+   - aplicar filtros por periodo, categoria y tipo economico;
+   - reemplazar el formulario largo por wizard de 4 pasos;
+   - humanizar labels, estados, acciones y resumenes con emojis;
+   - agregar export markdown y mejor historial expandible.
+3. Ajustar `index.html` solo en el wiring minimo del sidebar/region para respetar el patron de familia ya usado por ciclos.
+4. Adaptar `agro-operational-cycles.css` a la nueva estructura V2 manteniendo ADN V10, tokens y responsive.
+5. Ejecutar QA funcional y visual del flujo completo y cerrar con `pnpm build:gold`.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agro-operational-cycles.css`
+- `apps/gold/agro/agro-shell.js`
+- `apps/gold/agro/index.html`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Riesgo de regresion en la shell si el submenú `operational` no queda alineado con el patron existente de `ciclos`.
+- Riesgo de regression funcional si el wizard rompe la compatibilidad con el create/edit ya validado en V1.
+- Riesgo visual en mobile si los filtros y acciones crecen demasiado y fuerzan overflow horizontal.
+- Riesgo de acoplamiento excesivo si la exportacion o los filtros terminan saliendo del modulo; se debe mantener todo encerrado en `agroOperationalCycles.js`.
+
+### Estrategia de QA
+
+- Validar la navegacion del sidebar con padre + submenú.
+- Validar segmentacion:
+  - `activos` solo `open`, `in_progress`, `compensating`;
+  - `finalizados` solo `closed`, `lost`.
+- Validar filtros por periodo, categoria y tipo economico con recalculo de resumen.
+- Validar wizard:
+  - avance/retroceso;
+  - persistencia de datos entre pasos;
+  - resumen correcto en paso 4;
+  - creacion final con y sin monto.
+- Validar export MD descargable y con contenido coherente.
+- Validar historial expandible en tarjetas.
+- Validar copy humano con emojis y responsive `390x844`.
+- Cerrar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-shell.js`
+  - Se registro la familia `operational` con aliases canonicos:
+    - `operational-active`
+    - `operational-finished`
+    - `operational-export`
+  - Se habilito `VIEW_SUBNAV_CONFIG.operational` con default `active`.
+- `apps/gold/agro/index.html`
+  - El acceso lateral paso de enlace simple a familia expandible:
+    - `💼 Ciclos Operativos`
+    - `🟡 Activos`
+    - `✅ Finalizados`
+    - `📥 Exportar MD`
+  - Se mantuvo una sola region `operational`, sin crecer regiones innecesarias.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - Refactor completo a flujo V2 dentro del modulo existente:
+    - copy humano con emojis;
+    - datasets separados para `active` y `finished`;
+    - filtros por periodo, categoria y tipo economico usando queries al cliente Supabase;
+    - wizard de 4 pasos con persistencia al retroceder;
+    - resumen confirmatorio en paso 4;
+    - subvista de export Markdown;
+    - historial expandible por tarjeta;
+    - snapshot de debug ampliado para QA;
+    - `openView(subview)` expuesto en API global;
+    - soporte conservado para CRUD, balance, `amount` nullable y validacion de `crop_id`.
+  - Se corrigio en `updateCycleRecord` la persistencia de `opened_at` al editar la fecha del movimiento inicial.
+  - Se corrigio la navegacion del stepper: ya no permite saltar hacia delante validando solo el paso actual; ahora valida secuencialmente cada paso intermedio.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - Se agregaron estilos V2 para:
+    - stepper;
+    - paneles del wizard;
+    - grilla confirmatoria;
+    - barra de filtros;
+    - pills activas;
+    - subvista de export;
+    - responsive en `1024`, `768` y `480`.
+
+### QA ejecutado
+
+- Verificacion estatica de shell/sidebar:
+  - parent toggle `operational`: OK;
+  - aliases `operational-active`, `operational-finished`, `operational-export`: OK;
+  - labels del submenú en `index.html`: OK.
+- QA funcional dirigido en navegador sobre harness local del modulo con mock de Supabase en memoria y los 6 casos fundadores:
+  1. `Finalizados` carga los 6 casos fundadores: OK.
+  2. Copy humano con emojis (`📝 Monto no anotado`, `📊 Balance del ciclo`, `📜 Historial`): OK.
+  3. Historial expandible en tarjeta: OK.
+  4. Filtro por categoria `🔧 Herramientas`: `2` ciclos: OK.
+  5. Filtro por tipo `🤝 Donación`: `1` ciclo: OK.
+  6. Filtro por periodo `📅 Esta semana`: `0` ciclos para el dataset fundador usado en QA: OK.
+  7. Wizard crea ciclo activo nuevo: OK.
+  8. Wizard conserva datos al retroceder entre pasos 3 -> 2 -> 3: OK.
+  9. Paso 4 resume nombre, cultivo y monto correctamente: OK.
+  10. `Activos` muestra solo estados de familia abierta (`open`/`in_progress`/`compensating`) y excluye cerrados: OK.
+  11. Edicion de ciclo con estado `in_progress` + `notes`: OK.
+  12. Rechazo de `crop_id` invalido con mensaje controlado `Cultivo no valido.`: OK.
+  13. Export MD genera `ciclos-operativos-2026-03.md` con encabezado, resumen y detalle: OK.
+  14. Eliminacion con cascade de movimientos en el mock: OK.
+  15. Mobile `390x844`: sin overflow horizontal, tarjetas visibles y botones utilizables: OK.
+
+### Bugs encontrados hoy
+
+- Bug de stepper:
+  - Sintoma: el usuario podia saltar desde el stepper a pasos futuros validando solo el paso actual.
+  - Fix: validacion secuencial de todos los pasos intermedios antes de permitir el salto hacia delante.
+- Hallazgo de QA local:
+  - El bundle `dist` generado en esta maquina sigue apuntando al `VITE_SUPABASE_URL` local (`127.0.0.1:54321`), por lo que no fue util para QA autenticada real en local.
+  - Impacto: no bloquea V2 porque el cambio de hoy es frontend-only y no modifica backend ni RLS; el QA dirigido se hizo sobre el modulo real con mock controlado y build limpio.
+
+### Build status
+
+- `pnpm build:gold`: OK.
+- Secuencia confirmada:
+  - `agent-guard`: OK
+  - `agent-report-check`: OK
+  - `vite build`: OK
+  - `check-llms`: OK
+  - `check-dist-utf8`: OK
+- Observaciones no bloqueantes:
+  - warning de engine por Node `v25.6.0` vs objetivo `20.x`;
+  - warning de chunk grande existente en `assets/agro-BI9oqc3H.js`.
+
+### Estado final V2
+
+- V2 implementada dentro del modulo `agroOperationalCycles.js`.
+- Sin cambios grandes en `agro.js`.
+- Sidebar con familia operativa, wizard, filtros, export MD e historial expandible listos.
+- Build limpio.
+- Sin bug funcional abierto detectado dentro del alcance de Ciclos Operativos V2.

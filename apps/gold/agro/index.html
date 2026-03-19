@@ -1187,9 +1187,21 @@
                             data-agro-subview="estadisticas">Estadísticas de ciclos</button>
                     </div>
                 </div>
-                <button type="button" class="agro-shell-link" data-agro-view="operational"><span
-                        class="agro-shell-link__icon" aria-hidden="true"><i class="fa-solid fa-arrows-spin"></i></span><span
-                        class="agro-shell-link__label">Ciclos Operativos</span></button>
+                <div class="agro-shell-nav-item" data-agro-nav-parent="operational">
+                    <button type="button" class="agro-shell-link" data-agro-nav-toggle="operational"
+                        aria-expanded="false">
+                        <span class="agro-shell-link__icon" aria-hidden="true">💼</span><span
+                            class="agro-shell-link__label">Ciclos Operativos</span>
+                    </button>
+                    <div class="agro-shell-subnav">
+                        <button type="button" class="agro-shell-sublink" data-agro-view="operational"
+                            data-agro-subview="active">🟡 Activos</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="operational"
+                            data-agro-subview="finished">✅ Finalizados</button>
+                        <button type="button" class="agro-shell-sublink" data-agro-view="operational"
+                            data-agro-subview="export">📥 Exportar MD</button>
+                    </div>
+                </div>
             </div>
 
             <div class="agro-shell-sidebar__group">

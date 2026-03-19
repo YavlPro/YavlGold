@@ -1,30 +1,40 @@
 const ROOT_ID = 'agro-operational-root';
 const VIEW_NAME = 'operational';
+const SUBVIEW_ACTIVE = 'active';
+const SUBVIEW_FINISHED = 'finished';
+const SUBVIEW_EXPORT = 'export';
 const CROPS_READY_EVENT = 'AGRO_CROPS_READY';
 const VIEW_CHANGED_EVENT = 'agro:shell:view-changed';
+const EMPTY_AMOUNT_LABEL = '📝 Monto no anotado';
+const EMPTY_BALANCE_LABEL = '📝 Sin balance monetario';
+
+const ACTIVE_STATUS_VALUES = Object.freeze(['open', 'in_progress', 'compensating']);
+const FINISHED_STATUS_VALUES = Object.freeze(['closed', 'lost']);
+const SUBVIEW_OPTIONS = Object.freeze([SUBVIEW_ACTIVE, SUBVIEW_FINISHED, SUBVIEW_EXPORT]);
+const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
 
 const ECONOMIC_TYPE_OPTIONS = Object.freeze([
-    { value: 'expense', label: 'Gasto' },
-    { value: 'income', label: 'Ingreso' },
-    { value: 'donation', label: 'Donacion' },
-    { value: 'loss', label: 'Perdida' }
+    { value: 'expense', label: '💸 Gasto' },
+    { value: 'income', label: '💰 Ingreso' },
+    { value: 'donation', label: '🤝 Donación' },
+    { value: 'loss', label: '💔 Pérdida' }
 ]);
 
 const CATEGORY_OPTIONS = Object.freeze([
-    { value: 'tools', label: 'Herramientas' },
-    { value: 'maintenance', label: 'Mantenimiento' },
-    { value: 'labor', label: 'Mano de obra' },
-    { value: 'transport', label: 'Transporte' },
-    { value: 'supplies', label: 'Suministros' },
-    { value: 'other', label: 'Otro' }
+    { value: 'tools', label: '🔧 Herramientas' },
+    { value: 'maintenance', label: '🛠️ Mantenimiento' },
+    { value: 'labor', label: '👷 Mano de obra' },
+    { value: 'transport', label: '🚛 Transporte' },
+    { value: 'supplies', label: '📦 Insumos' },
+    { value: 'other', label: '📋 Otro' }
 ]);
 
 const STATUS_OPTIONS = Object.freeze([
-    { value: 'open', label: 'Abierto' },
-    { value: 'in_progress', label: 'En progreso' },
-    { value: 'compensating', label: 'Compensando' },
-    { value: 'closed', label: 'Cerrado' },
-    { value: 'lost', label: 'Perdido' }
+    { value: 'open', label: '🟡 Abierto' },
+    { value: 'in_progress', label: '🟠 En seguimiento' },
+    { value: 'compensating', label: '🟠 Compensándose' },
+    { value: 'closed', label: '✅ Cerrado' },
+    { value: 'lost', label: '🔴 Perdido' }
 ]);
 
 const UNIT_TYPE_OPTIONS = Object.freeze([
@@ -33,7 +43,23 @@ const UNIT_TYPE_OPTIONS = Object.freeze([
     { value: 'kg', label: 'Kg' }
 ]);
 
-const CURRENCY_OPTIONS = Object.freeze(['COP', 'USD', 'VES']);
+const PERIOD_OPTIONS = Object.freeze([
+    { value: 'week', label: '📅 Esta semana' },
+    { value: 'month', label: '📅 Este mes' },
+    { value: 'quarter', label: '📅 Este trimestre' },
+    { value: 'year', label: '📅 Este año' },
+    { value: 'all', label: '📅 Todo' }
+]);
+
+const CATEGORY_FILTER_OPTIONS = Object.freeze([
+    { value: 'all', label: '📁 Todas las categorías' },
+    ...CATEGORY_OPTIONS
+]);
+
+const TYPE_FILTER_OPTIONS = Object.freeze([
+    { value: 'all', label: '💰 Todos los tipos' },
+    ...ECONOMIC_TYPE_OPTIONS
+]);
 
 const DIRECTION_BY_TYPE = Object.freeze({
     expense: 'out',
@@ -50,22 +76,85 @@ const STATUS_CLASS_BY_VALUE = Object.freeze({
     lost: 'is-lost'
 });
 
+const WIZARD_STEPS = Object.freeze([
+    { id: 1, eyebrow: 'Paso 1', title: '¿Qué pasó? 📝' },
+    { id: 2, eyebrow: 'Paso 2', title: '¿Cómo se clasifica? 📁' },
+    { id: 3, eyebrow: 'Paso 3', title: '¿Cuánto y cuándo? 💰' },
+    { id: 4, eyebrow: 'Paso 4', title: 'Confirmar ✅' }
+]);
+
 const state = {
     root: null,
     refs: null,
     supabase: null,
     userId: '',
     crops: [],
-    cycles: [],
+    datasets: createDatasetsState(),
+    cycleIndex: new Map(),
     initialized: false,
+    loadedOnce: false,
     loading: false,
     saving: false,
-    editId: '',
+    needsRefresh: false,
     currentView: '',
+    currentSubview: SUBVIEW_ACTIVE,
+    editId: '',
     schemaMissing: false,
     cropDeletedAtSupported: true,
-    lastCascadeCheck: null
+    lastCascadeCheck: null,
+    form: createFormState()
 };
+
+function createDefaultFilters() {
+    return {
+        period: 'all',
+        category: 'all',
+        economicType: 'all'
+    };
+}
+
+function createDatasetState() {
+    return {
+        filters: createDefaultFilters(),
+        cycles: [],
+        summary: createDatasetSummary([])
+    };
+}
+
+function createDatasetsState() {
+    return {
+        [SUBVIEW_ACTIVE]: createDatasetState(),
+        [SUBVIEW_FINISHED]: createDatasetState()
+    };
+}
+
+function createDraftValues(overrides = {}) {
+    return {
+        name: '',
+        description: '',
+        economicType: 'expense',
+        category: 'other',
+        cropId: '',
+        amount: '',
+        currency: 'COP',
+        movementDate: todayLocalIso(),
+        quantity: '',
+        unitType: '',
+        closeOnSave: false,
+        status: 'open',
+        notes: '',
+        ...overrides
+    };
+}
+
+function createFormState(overrides = {}) {
+    return {
+        mode: 'create',
+        step: 1,
+        values: createDraftValues(),
+        ...overrides
+    };
+}
 
 function normalizeToken(value) {
     return String(value || '').trim().toLowerCase();
@@ -73,6 +162,11 @@ function normalizeToken(value) {
 
 function normalizeId(value) {
     return String(value || '').trim();
+}
+
+function normalizeOperationalSubview(value) {
+    const token = normalizeToken(value);
+    return SUBVIEW_OPTIONS.includes(token) ? token : SUBVIEW_ACTIVE;
 }
 
 function escapeHtml(value) {
@@ -96,6 +190,10 @@ function todayLocalIso() {
     return `${year}-${month}-${day}`;
 }
 
+function currentMonthKey() {
+    return todayLocalIso().slice(0, 7);
+}
+
 function isMissingColumnError(error, columnName) {
     const message = String(error?.message || '').toLowerCase();
     return message.includes(String(columnName || '').toLowerCase());
@@ -110,22 +208,14 @@ function isSchemaMissingError(error) {
         || String(error?.code || '') === '42P01';
 }
 
+function prefersReducedMotion() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+}
+
 function readLabel(options, value, fallback = 'Sin definir') {
     const token = normalizeToken(value);
     const match = options.find((option) => option.value === token);
     return match?.label || fallback;
-}
-
-function createOptionsMarkup(options, selectedValue = '', includeBlank = null) {
-    const parts = [];
-    if (includeBlank) {
-        parts.push(`<option value="">${escapeHtml(includeBlank)}</option>`);
-    }
-    options.forEach((option) => {
-        const selected = option.value === selectedValue ? ' selected' : '';
-        parts.push(`<option value="${escapeAttr(option.value)}"${selected}>${escapeHtml(option.label)}</option>`);
-    });
-    return parts.join('');
 }
 
 function formatDateLabel(value) {
@@ -142,7 +232,7 @@ function formatDateLabel(value) {
 
 function formatCurrencyValue(value, currency = 'COP') {
     const amount = Number(value);
-    if (!Number.isFinite(amount)) return 'Sin monto';
+    if (!Number.isFinite(amount)) return EMPTY_AMOUNT_LABEL;
     const code = CURRENCY_OPTIONS.includes(String(currency || '').toUpperCase())
         ? String(currency).toUpperCase()
         : 'COP';
@@ -158,7 +248,7 @@ function formatCurrencyValue(value, currency = 'COP') {
 
 function formatSignedCurrencyValue(value, currency = 'COP') {
     const amount = Number(value);
-    if (!Number.isFinite(amount)) return 'Sin balance monetario';
+    if (!Number.isFinite(amount)) return EMPTY_BALANCE_LABEL;
     const sign = amount > 0 ? '+' : (amount < 0 ? '-' : '');
     return `${sign}${formatCurrencyValue(Math.abs(amount), currency)}`;
 }
@@ -220,7 +310,7 @@ function subtractMoneyBuckets(incoming, outgoing) {
 function formatMoneyBucket(bucket, options = {}) {
     const map = bucket instanceof Map ? bucket : createMoneyBucket();
     if (map.size === 0) {
-        return options.emptyText || 'Sin monto';
+        return options.emptyText || EMPTY_AMOUNT_LABEL;
     }
     return Array.from(map.entries())
         .sort(([a], [b]) => a.localeCompare(b))
@@ -233,9 +323,9 @@ function formatMoneyBucket(bucket, options = {}) {
 }
 
 function resolveBalanceTone(balanceBucket) {
-    const entries = Array.from((balanceBucket instanceof Map ? balanceBucket : createMoneyBucket()).values());
-    if (entries.length !== 1) return 'gold';
-    const value = entries[0];
+    const values = Array.from((balanceBucket instanceof Map ? balanceBucket : createMoneyBucket()).values());
+    if (values.length !== 1) return 'gold';
+    const value = values[0];
     if (value > 0) return 'success';
     if (value < 0) return 'danger';
     return 'gold';
@@ -280,6 +370,23 @@ function sortMovementsAscending(left, right) {
     return leftKey.localeCompare(rightKey);
 }
 
+function directionSummaryLabel(direction) {
+    return direction === 'in' ? '💰 Recibí / Cobré' : '💸 Pagué / Gasté';
+}
+
+function directionDetailLabel(direction) {
+    return direction === 'in' ? '💰 Entrada de dinero' : '💸 Salida de dinero';
+}
+
+function formatAmountLabel(amount, currency) {
+    return amount == null ? EMPTY_AMOUNT_LABEL : formatCurrencyValue(amount, currency);
+}
+
+function formatQuantityLabel(quantity, unitType) {
+    if (quantity == null || !unitType) return 'Sin cantidad física';
+    return `${quantity} ${readLabel(UNIT_TYPE_OPTIONS, unitType, unitType)}`;
+}
+
 function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
     const cycleId = normalizeId(cycle?.id);
     const movements = Array.isArray(movementsByCycle.get(cycleId))
@@ -291,6 +398,7 @@ function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
     const primaryMovement = movements[0] || null;
     const crop = cycle?.crop_id ? cropMap.get(normalizeId(cycle.crop_id)) || null : null;
     const movementCount = movements.length;
+    const direction = primaryMovement?.direction || deriveMovementDirection(cycle?.economic_type);
 
     return {
         id: cycleId,
@@ -309,22 +417,52 @@ function buildCycleViewModel(cycle, movementsByCycle, cropMap) {
         movements,
         primaryMovement,
         movementCount,
-        incomingText: formatMoneyBucket(summary.incoming),
-        outgoingText: formatMoneyBucket(summary.outgoing),
-        balanceText: formatMoneyBucket(summary.balance, { signed: true, emptyText: 'Sin balance monetario' }),
+        direction,
+        incomingText: formatMoneyBucket(summary.incoming, { emptyText: EMPTY_AMOUNT_LABEL }),
+        outgoingText: formatMoneyBucket(summary.outgoing, { emptyText: EMPTY_AMOUNT_LABEL }),
+        balanceText: formatMoneyBucket(summary.balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL }),
         balanceTone: resolveBalanceTone(summary.balance),
         summary
+    };
+}
+
+function createDatasetSummary(cycles = []) {
+    const incoming = createMoneyBucket();
+    const outgoing = createMoneyBucket();
+    let linkedCount = 0;
+    let movementCount = 0;
+
+    cycles.forEach((cycle) => {
+        if (cycle.crop_id) linkedCount += 1;
+        movementCount += Number(cycle.movementCount || 0);
+        mergeMoneyBuckets(incoming, cycle.summary.incoming);
+        mergeMoneyBuckets(outgoing, cycle.summary.outgoing);
+    });
+
+    const balance = subtractMoneyBuckets(incoming, outgoing);
+
+    return {
+        count: cycles.length,
+        linkedCount,
+        movementCount,
+        incoming,
+        outgoing,
+        balance,
+        incomingText: formatMoneyBucket(incoming, { emptyText: EMPTY_AMOUNT_LABEL }),
+        outgoingText: formatMoneyBucket(outgoing, { emptyText: EMPTY_AMOUNT_LABEL }),
+        balanceText: formatMoneyBucket(balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL }),
+        balanceTone: resolveBalanceTone(balance)
     };
 }
 
 function normalizeOperationalError(error) {
     if (error instanceof Error && error.message) {
         if (isSchemaMissingError(error)) {
-            return 'Falta aplicar la migracion de Ciclos Operativos en Supabase.';
+            return 'Falta aplicar la migración de Ciclos Operativos en Supabase.';
         }
         return error.message;
     }
-    return 'No se pudo completar la operacion.';
+    return 'No se pudo completar la operación.';
 }
 
 function notify(message, type = 'info') {
@@ -352,6 +490,29 @@ function clearFeedback() {
     setFeedback('', 'info');
 }
 
+function setDraftFieldValue(key, value) {
+    state.form.values[key] = value;
+}
+
+function getDataset(subview) {
+    const key = subview === SUBVIEW_FINISHED ? SUBVIEW_FINISHED : SUBVIEW_ACTIVE;
+    return state.datasets[key];
+}
+
+function getAllCycles() {
+    return [
+        ...state.datasets[SUBVIEW_ACTIVE].cycles,
+        ...state.datasets[SUBVIEW_FINISHED].cycles
+    ];
+}
+
+function rebuildCycleIndex() {
+    state.cycleIndex = new Map();
+    getAllCycles().forEach((cycle) => {
+        state.cycleIndex.set(cycle.id, cycle);
+    });
+}
+
 async function getSupabaseClient() {
     if (state.supabase) return state.supabase;
     if (typeof globalThis !== 'undefined' && globalThis.__YG_AGRO_SUPABASE) {
@@ -376,7 +537,7 @@ async function ensureUserId(initialUserId = '') {
 
     const userId = normalizeId(data?.user?.id);
     if (!userId) {
-        throw new Error('No se pudo resolver la sesion activa de Agro.');
+        throw new Error('No se pudo resolver la sesión activa de Agro.');
     }
 
     state.userId = userId;
@@ -404,14 +565,61 @@ async function fetchCrops(supabase, userId) {
     return (data || []).filter((crop) => !crop?.deleted_at);
 }
 
-async function fetchCycles(supabase, userId) {
-    const { data, error } = await supabase
+function getPeriodRange(period) {
+    const token = normalizeToken(period);
+    if (!token || token === 'all') return null;
+
+    const now = new Date();
+    const end = todayLocalIso();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (token === 'week') {
+        const weekday = (start.getDay() + 6) % 7;
+        start.setDate(start.getDate() - weekday);
+    } else if (token === 'month') {
+        start.setDate(1);
+    } else if (token === 'quarter') {
+        start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+    } else if (token === 'year') {
+        start.setMonth(0, 1);
+    } else {
+        return null;
+    }
+
+    const startIso = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+    return { start: startIso, end };
+}
+
+async function fetchCycles(supabase, userId, filters, statuses) {
+    let query = supabase
         .from('agro_operational_cycles')
         .select('id,user_id,name,description,economic_type,category,crop_id,status,opened_at,closed_at,notes,created_at,updated_at')
         .eq('user_id', userId)
+        .in('status', statuses)
         .order('opened_at', { ascending: false })
         .order('created_at', { ascending: false });
 
+    const category = normalizeToken(filters?.category);
+    const economicType = normalizeToken(filters?.economicType);
+    const period = normalizeToken(filters?.period);
+
+    if (category && category !== 'all') {
+        query = query.eq('category', category);
+    }
+
+    if (economicType && economicType !== 'all') {
+        query = query.eq('economic_type', economicType);
+    }
+
+    const range = getPeriodRange(period);
+    if (range?.start) {
+        query = query.gte('opened_at', range.start);
+    }
+    if (range?.end) {
+        query = query.lte('opened_at', range.end);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return data || [];
 }
@@ -457,6 +665,16 @@ async function validateCropId(supabase, userId, cropId) {
     return normalizedId;
 }
 
+function ensureLocalCropSelection(cropId) {
+    const normalizedId = normalizeId(cropId);
+    if (!normalizedId) return '';
+    const isOwnedCrop = state.crops.some((crop) => buildCropDisplay(crop).id === normalizedId);
+    if (!isOwnedCrop) {
+        throw new Error('Cultivo no valido.');
+    }
+    return normalizedId;
+}
+
 function normalizePayload(source = {}, options = {}) {
     const mode = options.mode === 'edit' ? 'edit' : 'create';
     const existingCycle = options.existingCycle || null;
@@ -469,14 +687,13 @@ function normalizePayload(source = {}, options = {}) {
     const economicType = ensureAllowedValue(
         source.economicType || source.economic_type,
         ECONOMIC_TYPE_OPTIONS.map((option) => option.value),
-        'Tipo economico no valido.'
+        'Tipo económico no valido.'
     );
     const category = ensureAllowedValue(
         source.category,
         CATEGORY_OPTIONS.map((option) => option.value),
-        'Categoria no valida.'
+        'Categoría no valida.'
     );
-
     const movementDate = String(source.movementDate || source.movement_date || source.openedAt || source.opened_at || todayLocalIso()).trim();
     if (!movementDate) {
         throw new Error('La fecha del movimiento es obligatoria.');
@@ -512,6 +729,7 @@ function normalizePayload(source = {}, options = {}) {
     if (mode === 'create' && STATUS_OPTIONS.some((option) => option.value === requestedStatus)) {
         status = requestedStatus;
     }
+
     if (source.closeOnSave === true) {
         status = 'closed';
     }
@@ -521,7 +739,7 @@ function normalizePayload(source = {}, options = {}) {
         description,
         economicType,
         category,
-        cropId: normalizeId(source.cropId || source.crop_id),
+        cropId: ensureLocalCropSelection(source.cropId || source.crop_id),
         amount,
         currency,
         movementDate,
@@ -628,17 +846,17 @@ async function createCycleRecord(payload) {
     return {
         cycleId,
         message: payload.status === 'closed'
-            ? 'Ciclo operativo creado y cerrado.'
-            : 'Ciclo operativo creado.'
+            ? '✅ Ciclo operativo creado y cerrado.'
+            : '✅ Ciclo operativo creado.'
     };
 }
 
 async function updateCycleRecord(cycleId, payload) {
     const supabase = await getSupabaseClient();
     const userId = await ensureUserId();
-    const existingCycle = state.cycles.find((cycle) => cycle.id === cycleId);
+    const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontro el ciclo operativo a editar.');
+        throw new Error('No se encontró el ciclo operativo a editar.');
     }
 
     const cropId = await validateCropId(supabase, userId, payload.cropId);
@@ -653,6 +871,7 @@ async function updateCycleRecord(cycleId, payload) {
         category: payload.category,
         crop_id: cropId,
         status: payload.status,
+        opened_at: payload.movementDate,
         closed_at: closedAt,
         notes: payload.notes
     };
@@ -675,28 +894,28 @@ async function updateCycleRecord(cycleId, payload) {
 
     return {
         cycleId,
-        message: 'Ciclo operativo actualizado.'
+        message: '💾 Cambios guardados en el ciclo operativo.'
     };
 }
 
 async function deleteCycleRecord(cycleId, options = {}) {
     const supabase = await getSupabaseClient();
     const userId = await ensureUserId();
-    const existingCycle = state.cycles.find((cycle) => cycle.id === cycleId);
+    const existingCycle = state.cycleIndex.get(cycleId);
     if (!existingCycle) {
-        throw new Error('No se encontro el ciclo operativo a eliminar.');
+        throw new Error('No se encontró el ciclo operativo a eliminar.');
     }
 
     if (!options.skipConfirm) {
         const confirmed = typeof window.confirm === 'function'
-            ? window.confirm(`¿Eliminar "${existingCycle.name}"? Esta accion tambien borrara sus movimientos asociados.`)
+            ? window.confirm(`¿Eliminar "${existingCycle.name}"? Esta acción también borrará su historial de movimientos.`)
             : true;
         if (!confirmed) {
             return {
                 cycleId,
                 skipped: true,
                 cascadeVerified: null,
-                message: 'Eliminacion cancelada.'
+                message: 'Eliminación cancelada.'
             };
         }
     }
@@ -719,8 +938,8 @@ async function deleteCycleRecord(cycleId, options = {}) {
         cycleId,
         cascadeVerified,
         message: cascadeVerified === true
-            ? 'Ciclo eliminado y cascade verificado en movimientos.'
-            : 'Ciclo eliminado.'
+            ? '🗑️ Ciclo eliminado y cascade verificado.'
+            : '🗑️ Ciclo eliminado.'
     };
 }
 
@@ -731,170 +950,56 @@ function renderShell() {
         <div class="agro-operational-shell agro-ops-v10">
             <header class="module-header animate-in delay-3">
                 <div class="module-title-group">
-                    <div class="module-icon"><i class="fa-solid fa-arrows-spin" aria-hidden="true"></i></div>
+                    <div class="module-icon">💼</div>
                     <div class="module-heading">
-                        <p class="ops-module-eyebrow">Familia nueva</p>
+                        <p class="ops-module-eyebrow">Familia operativa V2</p>
                         <h2 class="module-title">Ciclos Operativos</h2>
-                        <p class="module-subtitle">Gastos, ingresos, donaciones y perdidas con balance visible, cierre rapido y asociacion opcional a cultivo.</p>
+                        <p class="module-subtitle">Más humano, más guiado y más ordenado: wizard, filtros por período y exportación Markdown sin salir del módulo.</p>
                     </div>
                 </div>
                 <div class="header-actions">
-                    <button type="button" class="btn btn-primary" id="agro-operational-new-btn">Nuevo ciclo</button>
-                    <button type="button" class="agro-operational-refresh-btn" id="agro-operational-refresh-btn" aria-label="Actualizar Ciclos Operativos" title="Actualizar">
+                    <button type="button" class="btn btn-primary" data-operational-action="new-cycle">➕ Nuevo ciclo operativo</button>
+                    <button type="button" class="agro-operational-refresh-btn" data-operational-action="refresh" aria-label="Actualizar Ciclos Operativos" title="Actualizar">
                         <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     </button>
                 </div>
             </header>
 
             <div class="agro-operational-layout">
-                <section class="agro-operational-panel" id="agro-operational-form-panel">
+                <section class="agro-operational-panel agro-operational-wizard-panel" id="agro-operational-form-panel">
                     <div class="agro-operational-panel__head">
                         <div>
-                            <p class="agro-operational-panel__eyebrow" id="agro-operational-form-eyebrow">Modo rapido</p>
-                            <h3 class="agro-operational-panel__title" id="agro-operational-form-title">Crear ciclo operativo</h3>
-                            <p class="agro-operational-panel__copy" id="agro-operational-form-copy">Crea el ciclo, registra el movimiento inicial y cierralo en un solo paso si ya quedo resuelto.</p>
+                            <p class="agro-operational-panel__eyebrow" id="agro-operational-form-eyebrow">➕ Nuevo ciclo operativo</p>
+                            <h3 class="agro-operational-panel__title" id="agro-operational-form-title">Wizard guiado de 4 pasos</h3>
+                            <p class="agro-operational-panel__copy" id="agro-operational-form-copy">Crea o edita el ciclo sin perder el hilo: describe, clasifica, registra y confirma.</p>
                         </div>
                     </div>
-
                     <div class="agro-operational-feedback" id="agro-operational-feedback" data-tone="info"></div>
-
-                    <form id="agro-operational-form" class="agro-operational-form" novalidate>
-                        <div class="agro-operational-form-grid">
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-name">Nombre del ciclo</label>
-                                <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required>
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-crop">Cultivo asociado</label>
-                                <select id="agro-operational-crop" class="styled-input">
-                                    <option value="">General (sin asociar)</option>
-                                </select>
-                            </div>
-
-                            <div class="input-group input-group--full">
-                                <label class="input-label" for="agro-operational-description">Descripcion principal</label>
-                                <textarea id="agro-operational-description" class="styled-input" placeholder="Describe el movimiento principal o el contexto del ciclo."></textarea>
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-economic-type">Tipo economico</label>
-                                <select id="agro-operational-economic-type" class="styled-input">
-                                    ${createOptionsMarkup(ECONOMIC_TYPE_OPTIONS, 'expense')}
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-category">Categoria</label>
-                                <select id="agro-operational-category" class="styled-input">
-                                    ${createOptionsMarkup(CATEGORY_OPTIONS, 'other')}
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-amount">Monto</label>
-                                <input type="number" id="agro-operational-amount" class="styled-input" min="0" step="0.01" placeholder="Opcional">
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-currency">Moneda</label>
-                                <select id="agro-operational-currency" class="styled-input">
-                                    ${CURRENCY_OPTIONS.map((currency) => `<option value="${currency}"${currency === 'COP' ? ' selected' : ''}>${currency}</option>`).join('')}
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-date">Fecha</label>
-                                <input type="date" id="agro-operational-date" class="styled-input" value="${todayLocalIso()}">
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-quantity">Cantidad fisica</label>
-                                <input type="number" id="agro-operational-quantity" class="styled-input" min="0" step="0.01" placeholder="Opcional">
-                            </div>
-
-                            <div class="input-group">
-                                <label class="input-label" for="agro-operational-unit-type">Unidad</label>
-                                <select id="agro-operational-unit-type" class="styled-input">
-                                    ${createOptionsMarkup(UNIT_TYPE_OPTIONS, '', 'Sin unidad')}
-                                </select>
-                            </div>
-
-                            <div class="agro-operational-edit-row agro-operational-form-grid input-group--full" id="agro-operational-edit-row">
-                                <div class="input-group">
-                                    <label class="input-label" for="agro-operational-status">Estado</label>
-                                    <select id="agro-operational-status" class="styled-input">
-                                        ${createOptionsMarkup(STATUS_OPTIONS, 'open')}
-                                    </select>
-                                </div>
-                                <div class="input-group input-group--full">
-                                    <label class="input-label" for="agro-operational-notes">Observaciones posteriores</label>
-                                    <textarea id="agro-operational-notes" class="styled-input" placeholder="Notas internas posteriores al crear el ciclo."></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="agro-operational-inline-meta">
-                            <div class="agro-operational-impact" id="agro-operational-impact">
-                                <span>Impacto inicial</span>
-                                <span class="agro-operational-impact__badge is-out" id="agro-operational-impact-badge">Salida</span>
-                            </div>
-                            <label class="agro-operational-close-toggle" id="agro-operational-close-toggle">
-                                <input type="checkbox" id="agro-operational-close-on-save">
-                                <span>Cerrar al guardar</span>
-                            </label>
-                        </div>
-
-                        <div class="agro-operational-form-actions">
-                            <button type="button" class="btn" id="agro-operational-cancel-btn" hidden>Cancelar edicion</button>
-                            <button type="submit" class="btn btn-primary" id="agro-operational-submit-btn">Crear ciclo operativo</button>
-                        </div>
-                    </form>
+                    <div id="agro-operational-wizard-host"></div>
                 </section>
 
-                <aside class="agro-operational-panel">
+                <aside class="agro-operational-panel agro-operational-overview-panel">
                     <div class="agro-operational-panel__head">
                         <div>
-                            <p class="agro-operational-panel__eyebrow">Resumen base</p>
-                            <h3 class="agro-operational-panel__title">Lectura rapida del MVP</h3>
-                            <p class="agro-operational-panel__copy">El balance agrega entradas y salidas registradas por moneda. Si un monto falta, no se fuerza ni se inventa.</p>
+                            <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">🟡 Activos</p>
+                            <h3 class="agro-operational-panel__title" id="agro-operational-overview-title">Vista organizada por estado</h3>
+                            <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula su balance y conserva sus propios filtros.</p>
                         </div>
                     </div>
-
-                    <div class="agro-operational-summary-grid">
-                        <article class="agro-operational-summary-card">
-                            <span class="agro-operational-summary-card__label">Total ciclos</span>
-                            <strong class="agro-operational-summary-card__value" id="agro-operational-summary-total">0</strong>
-                            <p class="agro-operational-summary-card__hint">Ciclos operativos visibles para este usuario.</p>
-                        </article>
-                        <article class="agro-operational-summary-card">
-                            <span class="agro-operational-summary-card__label">Cerrados</span>
-                            <strong class="agro-operational-summary-card__value" id="agro-operational-summary-closed">0</strong>
-                            <p class="agro-operational-summary-card__hint">Ciclos que terminaron en estado cerrado.</p>
-                        </article>
-                        <article class="agro-operational-summary-card">
-                            <span class="agro-operational-summary-card__label">Con cultivo</span>
-                            <strong class="agro-operational-summary-card__value" id="agro-operational-summary-linked">0</strong>
-                            <p class="agro-operational-summary-card__hint">Ciclos amarrados a un cultivo valido del usuario.</p>
-                        </article>
-                        <article class="agro-operational-summary-card">
-                            <span class="agro-operational-summary-card__label">Balance neto</span>
-                            <strong class="agro-operational-summary-card__value" id="agro-operational-summary-balance">Sin balance monetario</strong>
-                            <p class="agro-operational-summary-card__hint" id="agro-operational-summary-breakdown">Entradas: Sin monto · Salidas: Sin monto</p>
-                        </article>
-                    </div>
+                    <div id="agro-operational-overview-body"></div>
                 </aside>
             </div>
 
             <section class="agro-operational-list-section">
                 <div class="agro-operational-list-head">
                     <div>
-                        <p class="agro-operational-list-eyebrow">Lista visible</p>
-                        <h3 class="agro-operational-list-title">Tarjetas de ciclos</h3>
-                        <p class="agro-operational-list-copy">Cada tarjeta muestra tipo economico, categoria, monto base, balance y acciones principales.</p>
+                        <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
+                        <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Ciclos operativos activos</h3>
+                        <p class="agro-operational-list-copy" id="agro-operational-list-copy">Abiertos, en seguimiento o compensándose.</p>
                     </div>
-                    <button type="button" class="btn" id="agro-operational-scroll-form-btn">Volver al formulario</button>
+                    <button type="button" class="btn" data-operational-action="focus-form">➕ Nuevo ciclo operativo</button>
                 </div>
+                <div id="agro-operational-filters-host"></div>
                 <p class="agro-operational-list-section__status" id="agro-operational-list-status">Cargando ciclos operativos...</p>
                 <div class="agro-operational-list" id="agro-operational-list"></div>
             </section>
@@ -902,335 +1007,270 @@ function renderShell() {
     `;
 
     state.refs = {
-        form: document.getElementById('agro-operational-form'),
+        feedback: document.getElementById('agro-operational-feedback'),
+        wizardHost: document.getElementById('agro-operational-wizard-host'),
+        overviewEyebrow: document.getElementById('agro-operational-overview-eyebrow'),
+        overviewTitle: document.getElementById('agro-operational-overview-title'),
+        overviewCopy: document.getElementById('agro-operational-overview-copy'),
+        overviewBody: document.getElementById('agro-operational-overview-body'),
+        listEyebrow: document.getElementById('agro-operational-list-eyebrow'),
+        listTitle: document.getElementById('agro-operational-list-title'),
+        listCopy: document.getElementById('agro-operational-list-copy'),
+        filtersHost: document.getElementById('agro-operational-filters-host'),
+        listStatus: document.getElementById('agro-operational-list-status'),
+        list: document.getElementById('agro-operational-list'),
         formPanel: document.getElementById('agro-operational-form-panel'),
         formEyebrow: document.getElementById('agro-operational-form-eyebrow'),
         formTitle: document.getElementById('agro-operational-form-title'),
-        formCopy: document.getElementById('agro-operational-form-copy'),
-        feedback: document.getElementById('agro-operational-feedback'),
-        newButton: document.getElementById('agro-operational-new-btn'),
-        refreshButton: document.getElementById('agro-operational-refresh-btn'),
-        scrollFormButton: document.getElementById('agro-operational-scroll-form-btn'),
-        list: document.getElementById('agro-operational-list'),
-        listStatus: document.getElementById('agro-operational-list-status'),
-        totalValue: document.getElementById('agro-operational-summary-total'),
-        closedValue: document.getElementById('agro-operational-summary-closed'),
-        linkedValue: document.getElementById('agro-operational-summary-linked'),
-        balanceValue: document.getElementById('agro-operational-summary-balance'),
-        balanceBreakdown: document.getElementById('agro-operational-summary-breakdown'),
-        name: document.getElementById('agro-operational-name'),
-        crop: document.getElementById('agro-operational-crop'),
-        description: document.getElementById('agro-operational-description'),
-        economicType: document.getElementById('agro-operational-economic-type'),
-        category: document.getElementById('agro-operational-category'),
-        amount: document.getElementById('agro-operational-amount'),
-        currency: document.getElementById('agro-operational-currency'),
-        date: document.getElementById('agro-operational-date'),
-        quantity: document.getElementById('agro-operational-quantity'),
-        unitType: document.getElementById('agro-operational-unit-type'),
-        editRow: document.getElementById('agro-operational-edit-row'),
-        status: document.getElementById('agro-operational-status'),
-        notes: document.getElementById('agro-operational-notes'),
-        impactBadge: document.getElementById('agro-operational-impact-badge'),
-        closeToggle: document.getElementById('agro-operational-close-toggle'),
-        closeOnSave: document.getElementById('agro-operational-close-on-save'),
-        cancelButton: document.getElementById('agro-operational-cancel-btn'),
-        submitButton: document.getElementById('agro-operational-submit-btn')
+        formCopy: document.getElementById('agro-operational-form-copy')
     };
 }
 
-function renderCropOptions(selectedValue = '') {
-    const select = state.refs?.crop;
-    if (!select) return;
-
+function buildCropOptionsMarkup(selectedValue = '') {
     const selected = normalizeId(selectedValue);
-    const options = ['<option value="">General (sin asociar)</option>'];
+    const options = ['<option value="">🌾 Sin asociar a cultivo</option>'];
     state.crops.forEach((crop) => {
         const display = buildCropDisplay(crop);
         const isSelected = display.id === selected ? ' selected' : '';
         options.push(`<option value="${escapeAttr(display.id)}"${isSelected}>${escapeHtml(display.label)}</option>`);
     });
-    select.innerHTML = options.join('');
+    return options.join('');
 }
 
-function renderSummary() {
-    const total = state.cycles.length;
-    const closed = state.cycles.filter((cycle) => cycle.status === 'closed').length;
-    const linked = state.cycles.filter((cycle) => !!cycle.crop_id).length;
-
-    const incoming = createMoneyBucket();
-    const outgoing = createMoneyBucket();
-    state.cycles.forEach((cycle) => {
-        mergeMoneyBuckets(incoming, cycle.summary.incoming);
-        mergeMoneyBuckets(outgoing, cycle.summary.outgoing);
-    });
-
-    const balance = subtractMoneyBuckets(incoming, outgoing);
-
-    if (state.refs?.totalValue) state.refs.totalValue.textContent = String(total);
-    if (state.refs?.closedValue) state.refs.closedValue.textContent = String(closed);
-    if (state.refs?.linkedValue) state.refs.linkedValue.textContent = String(linked);
-    if (state.refs?.balanceValue) {
-        state.refs.balanceValue.textContent = formatMoneyBucket(balance, { signed: true, emptyText: 'Sin balance monetario' });
-    }
-    if (state.refs?.balanceBreakdown) {
-        state.refs.balanceBreakdown.textContent = `Entradas: ${formatMoneyBucket(incoming)} · Salidas: ${formatMoneyBucket(outgoing)}`;
-    }
-}
-
-function buildStatusClass(status) {
-    return STATUS_CLASS_BY_VALUE[normalizeToken(status)] || 'is-open';
-}
-
-function renderMovementRows(cycle) {
-    if (!Array.isArray(cycle.movements) || cycle.movements.length === 0) {
-        return `
-            <div class="agro-operational-empty">
-                <div class="agro-operational-empty__icon"><i class="fa-solid fa-file-circle-question" aria-hidden="true"></i></div>
-                <p class="agro-operational-empty__title">Sin movimientos</p>
-                <p class="agro-operational-empty__copy">Este ciclo todavia no tiene movimientos visibles.</p>
-            </div>
-        `;
-    }
-
-    return `
-        <div class="agro-operational-detail-list">
-            ${cycle.movements.map((movement) => {
-                const direction = movement.direction === 'in' ? 'Entrada' : 'Salida';
-                const amountText = movement.amount == null
-                    ? 'Monto: No registrado'
-                    : `Monto: ${formatCurrencyValue(movement.amount, movement.currency)}`;
-                const quantityText = movement.quantity != null && movement.unit_type
-                    ? ` · Cantidad: ${movement.quantity} ${movement.unit_type}`
-                    : '';
-
-                return `
-                    <article class="agro-operational-detail-item">
-                        <span class="agro-operational-movement-badge ${movement.direction === 'in' ? 'is-in' : 'is-out'}">${direction}</span>
-                        <div>
-                            <p class="agro-operational-detail-item__concept">${escapeHtml(movement.concept || cycle.name)}</p>
-                            <p class="agro-operational-detail-item__meta">${escapeHtml(formatDateLabel(movement.movement_date))} · ${escapeHtml(amountText)}${escapeHtml(quantityText)}</p>
-                        </div>
-                    </article>
-                `;
-            }).join('')}
-        </div>
-    `;
-}
-
-function renderList() {
-    const list = state.refs?.list;
-    const listStatus = state.refs?.listStatus;
-    if (!list || !listStatus) return;
-
-    if (state.loading) {
-        listStatus.textContent = 'Cargando ciclos operativos...';
-        list.innerHTML = `
-            <div class="agro-operational-panel">
-                <div class="agro-operational-loading">
-                    <span class="agro-operational-loading__spinner" aria-hidden="true"></span>
-                    <span>Consultando ciclos y movimientos...</span>
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    if (state.schemaMissing) {
-        listStatus.textContent = 'La vista quedo lista, pero la base de datos aun no tiene la migracion aplicada.';
-        list.innerHTML = `
-            <div class="agro-operational-empty">
-                <div class="agro-operational-empty__icon"><i class="fa-solid fa-database" aria-hidden="true"></i></div>
-                <p class="agro-operational-empty__title">Migracion pendiente</p>
-                <p class="agro-operational-empty__copy">Aplica la migracion canónica de Supabase para habilitar <code>agro_operational_cycles</code> y <code>agro_operational_movements</code>.</p>
-            </div>
-        `;
-        return;
-    }
-
-    if (state.cycles.length === 0) {
-        listStatus.textContent = 'No hay ciclos operativos registrados todavia.';
-        list.innerHTML = `
-            <div class="agro-operational-empty">
-                <div class="agro-operational-empty__icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
-                <p class="agro-operational-empty__title">Sin ciclos operativos</p>
-                <p class="agro-operational-empty__copy">Crea el primer ciclo con el formulario rapido. Puedes cerrar el registro al guardar si ya fue resuelto.</p>
-                <div class="agro-operational-empty__cta">
-                    <button type="button" class="btn btn-primary" data-operational-action="focus-form">Crear primer ciclo</button>
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    listStatus.textContent = `${state.cycles.length} ciclo${state.cycles.length === 1 ? '' : 's'} visible${state.cycles.length === 1 ? '' : 's'}.`;
-    list.innerHTML = state.cycles.map((cycle) => {
-        const cropText = cycle.crop?.label || 'General';
-        const primaryAmount = cycle.primaryMovement?.amount == null
-            ? 'Monto: No registrado'
-            : `Monto: ${formatCurrencyValue(cycle.primaryMovement.amount, cycle.primaryMovement.currency)}`;
-        const dates = cycle.closed_at
-            ? `${formatDateLabel(cycle.opened_at)} · Cierre: ${formatDateLabel(cycle.closed_at)}`
-            : `${formatDateLabel(cycle.opened_at)} · Sin cierre`;
-
-        return `
-            <article class="agro-operational-card" data-cycle-id="${escapeAttr(cycle.id)}">
-                <div class="agro-operational-card__head">
-                    <div>
-                        <p class="agro-operational-card__eyebrow">${escapeHtml(readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operacion'))} · ${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Categoria'))}</p>
-                        <h3 class="agro-operational-card__title">${escapeHtml(cycle.name)}</h3>
-                        <p class="agro-operational-card__meta">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
-                    </div>
-                    <div class="agro-operational-card__badges">
-                        <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(readLabel(STATUS_OPTIONS, cycle.status, 'Abierto'))}</span>
-                        <span class="agro-operational-pill">${escapeHtml(cycle.primaryMovement?.direction === 'in' ? 'Entrada' : 'Salida')}</span>
-                    </div>
-                </div>
-
-                ${cycle.description ? `<p class="agro-operational-card__description">${escapeHtml(cycle.description)}</p>` : ''}
-                ${cycle.notes ? `<p class="agro-operational-card__notes"><strong>Notas:</strong> ${escapeHtml(cycle.notes)}</p>` : ''}
-
-                <div class="agro-operational-money-grid">
-                    <div class="agro-operational-money-cell" data-tone="gold">
-                        <span class="agro-operational-money-cell__label">Monto base</span>
-                        <strong class="agro-operational-money-cell__value">${escapeHtml(primaryAmount)}</strong>
-                    </div>
-                    <div class="agro-operational-money-cell">
-                        <span class="agro-operational-money-cell__label">Entradas</span>
-                        <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.incomingText)}</strong>
-                    </div>
-                    <div class="agro-operational-money-cell">
-                        <span class="agro-operational-money-cell__label">Salidas</span>
-                        <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.outgoingText)}</strong>
-                    </div>
-                    <div class="agro-operational-money-cell" data-tone="${escapeAttr(cycle.balanceTone)}">
-                        <span class="agro-operational-money-cell__label">Balance</span>
-                        <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.balanceText)}</strong>
-                    </div>
-                </div>
-
-                <div class="agro-operational-card__footer">
-                    <div class="agro-operational-card__support">
-                        <span class="agro-operational-card__support-item"><i class="fa-solid fa-list-check" aria-hidden="true"></i> ${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
-                        <span class="agro-operational-card__support-item"><i class="fa-solid fa-tag" aria-hidden="true"></i> ${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Categoria'))}</span>
-                    </div>
-                    <div class="agro-operational-card__actions">
-                        <button type="button" class="btn" data-operational-action="edit" data-cycle-id="${escapeAttr(cycle.id)}">Editar</button>
-                        <button type="button" class="btn btn-primary" data-operational-action="delete" data-cycle-id="${escapeAttr(cycle.id)}">Eliminar</button>
-                    </div>
-                </div>
-
-                <details class="agro-operational-card__details">
-                    <summary>
-                        <span>Historial del ciclo</span>
-                        <span>${cycle.movementCount} registro${cycle.movementCount === 1 ? '' : 's'}</span>
-                    </summary>
-                    ${renderMovementRows(cycle)}
-                </details>
-            </article>
-        `;
+function buildSelectOptionsMarkup(options, selectedValue = '') {
+    return options.map((option) => {
+        const selected = option.value === selectedValue ? ' selected' : '';
+        return `<option value="${escapeAttr(option.value)}"${selected}>${escapeHtml(option.label)}</option>`;
     }).join('');
 }
 
-function updateImpactPreview() {
-    const badge = state.refs?.impactBadge;
-    if (!badge) return;
-    const direction = deriveMovementDirection(state.refs?.economicType?.value);
-    badge.textContent = direction === 'in' ? 'Entrada' : 'Salida';
-    badge.classList.toggle('is-in', direction === 'in');
-    badge.classList.toggle('is-out', direction !== 'in');
+function renderWizard() {
+    if (!state.refs?.wizardHost) return;
+
+    const isEdit = state.form.mode === 'edit';
+    const values = state.form.values;
+    const currentStep = Number(state.form.step || 1);
+    const direction = deriveMovementDirection(values.economicType);
+    const parsedAmount = toNullableNumber(values.amount, 'El monto');
+    const parsedQuantity = toNullableNumber(values.quantity, 'La cantidad');
+    const effectiveStatus = isEdit
+        ? readLabel(STATUS_OPTIONS, values.status, '🟡 Abierto')
+        : (values.closeOnSave ? '✅ Cerrado' : '🟡 Abierto');
+
+    state.refs.formEyebrow.textContent = isEdit ? '✏️ Editar ciclo operativo' : '➕ Nuevo ciclo operativo';
+    state.refs.formTitle.textContent = isEdit ? 'Wizard de edición guiada' : 'Wizard guiado de 4 pasos';
+    state.refs.formCopy.textContent = isEdit
+        ? 'Ajusta el mismo ciclo sin perder clasificación, cultivo, monto base ni observaciones.'
+        : 'Crea el ciclo, registra el movimiento inicial y decide si se cierra hoy mismo.';
+
+    state.refs.wizardHost.innerHTML = `
+        <form id="agro-operational-form" class="agro-operational-form" novalidate>
+            <div class="agro-operational-stepper" role="list">
+                ${WIZARD_STEPS.map((step) => {
+                    const isActive = currentStep === step.id;
+                    const isComplete = currentStep > step.id;
+                    return `
+                        <button type="button" class="agro-operational-step${isActive ? ' is-active' : ''}${isComplete ? ' is-complete' : ''}" data-operational-action="wizard-goto" data-step="${step.id}">
+                            <span class="agro-operational-step__index">${step.id}</span>
+                            <span class="agro-operational-step__copy">
+                                <strong>${escapeHtml(step.title)}</strong>
+                                <small>${escapeHtml(step.eyebrow)}</small>
+                            </span>
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+
+            <div class="agro-operational-step-panels">
+                <section class="agro-operational-step-panel${currentStep === 1 ? ' is-active' : ''}" data-step-panel="1"${currentStep === 1 ? '' : ' hidden'}>
+                    <div class="agro-operational-step-panel__head">
+                        <p class="agro-operational-step-panel__eyebrow">Paso 1</p>
+                        <h4 class="agro-operational-step-panel__title">¿Qué pasó? 📝</h4>
+                        <p class="agro-operational-step-panel__copy">Ponle nombre claro al ciclo y deja la descripción principal si hace falta contexto.</p>
+                    </div>
+                    <div class="agro-operational-form-grid">
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-name">Nombre del ciclo</label>
+                            <input type="text" id="agro-operational-name" class="styled-input" maxlength="140" placeholder="Ej: Botas de cuero Titan" required data-operational-draft="name" value="${escapeAttr(values.name)}">
+                        </div>
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-description">Descripción principal</label>
+                            <textarea id="agro-operational-description" class="styled-input" placeholder="Cuéntame qué pasó o qué se resolvió." data-operational-draft="description">${escapeHtml(values.description)}</textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="agro-operational-step-panel${currentStep === 2 ? ' is-active' : ''}" data-step-panel="2"${currentStep === 2 ? '' : ' hidden'}>
+                    <div class="agro-operational-step-panel__head">
+                        <p class="agro-operational-step-panel__eyebrow">Paso 2</p>
+                        <h4 class="agro-operational-step-panel__title">¿Cómo se clasifica? 📁</h4>
+                        <p class="agro-operational-step-panel__copy">Define el tipo económico, la categoría y, si aplica, amárralo a un cultivo real del usuario.</p>
+                    </div>
+                    <div class="agro-operational-form-grid">
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-economic-type">Tipo económico</label>
+                            <select id="agro-operational-economic-type" class="styled-input" data-operational-draft="economicType">
+                                ${buildSelectOptionsMarkup(ECONOMIC_TYPE_OPTIONS, values.economicType)}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-category">Categoría</label>
+                            <select id="agro-operational-category" class="styled-input" data-operational-draft="category">
+                                ${buildSelectOptionsMarkup(CATEGORY_OPTIONS, values.category)}
+                            </select>
+                        </div>
+                        <div class="input-group input-group--full">
+                            <label class="input-label" for="agro-operational-crop">Cultivo asociado</label>
+                            <select id="agro-operational-crop" class="styled-input" data-operational-draft="cropId">
+                                ${buildCropOptionsMarkup(values.cropId)}
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="agro-operational-step-panel${currentStep === 3 ? ' is-active' : ''}" data-step-panel="3"${currentStep === 3 ? '' : ' hidden'}>
+                    <div class="agro-operational-step-panel__head">
+                        <p class="agro-operational-step-panel__eyebrow">Paso 3</p>
+                        <h4 class="agro-operational-step-panel__title">¿Cuánto y cuándo? 💰</h4>
+                        <p class="agro-operational-step-panel__copy">El monto puede quedar nulo. La fecha del movimiento inicial sí es obligatoria.</p>
+                    </div>
+                    <div class="agro-operational-inline-meta">
+                        <div class="agro-operational-impact">
+                            <span>Impacto inicial</span>
+                            <span class="agro-operational-impact__badge ${direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(direction))}</span>
+                        </div>
+                    </div>
+                    <div class="agro-operational-form-grid">
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-amount">Monto</label>
+                            <input type="number" id="agro-operational-amount" class="styled-input" min="0" step="0.01" placeholder="Opcional" data-operational-draft="amount" value="${escapeAttr(values.amount)}">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-currency">Moneda</label>
+                            <select id="agro-operational-currency" class="styled-input" data-operational-draft="currency">
+                                ${CURRENCY_OPTIONS.map((currency) => `<option value="${currency}"${currency === values.currency ? ' selected' : ''}>${currency}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-date">Fecha</label>
+                            <input type="date" id="agro-operational-date" class="styled-input" data-operational-draft="movementDate" value="${escapeAttr(values.movementDate)}">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-quantity">Cantidad física</label>
+                            <input type="number" id="agro-operational-quantity" class="styled-input" min="0" step="0.01" placeholder="Opcional" data-operational-draft="quantity" value="${escapeAttr(values.quantity)}">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label" for="agro-operational-unit-type">Unidad</label>
+                            <select id="agro-operational-unit-type" class="styled-input" data-operational-draft="unitType">
+                                <option value="">Sin unidad</option>
+                                ${buildSelectOptionsMarkup(UNIT_TYPE_OPTIONS, values.unitType)}
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="agro-operational-step-panel${currentStep === 4 ? ' is-active' : ''}" data-step-panel="4"${currentStep === 4 ? '' : ' hidden'}>
+                    <div class="agro-operational-step-panel__head">
+                        <p class="agro-operational-step-panel__eyebrow">Paso 4</p>
+                        <h4 class="agro-operational-step-panel__title">Confirmar ✅</h4>
+                        <p class="agro-operational-step-panel__copy">Revisa el resumen antes de guardar. Puedes volver atrás sin perder datos.</p>
+                    </div>
+                    <div class="agro-operational-confirm-grid">
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Nombre</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(values.name || 'Sin nombre')}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Tipo económico</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(readLabel(ECONOMIC_TYPE_OPTIONS, values.economicType, 'Sin tipo'))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Categoría</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(readLabel(CATEGORY_OPTIONS, values.category, 'Sin categoría'))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Cultivo asociado</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftCropLabel(values.cropId))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">${escapeHtml(directionSummaryLabel(direction))}</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(formatAmountLabel(parsedAmount, values.currency))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">📊 Balance del ciclo</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(parsedAmount == null ? EMPTY_BALANCE_LABEL : formatSignedCurrencyValue(direction === 'in' ? parsedAmount : -parsedAmount, values.currency))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Fecha</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(formatDateLabel(values.movementDate))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Cantidad física</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(formatQuantityLabel(parsedQuantity, values.unitType))}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item agro-operational-confirm-item--wide">
+                            <span class="agro-operational-confirm-item__label">Descripción principal</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(values.description || 'Sin descripción principal')}</strong>
+                        </article>
+                        <article class="agro-operational-confirm-item">
+                            <span class="agro-operational-confirm-item__label">Estado final</span>
+                            <strong class="agro-operational-confirm-item__value">${escapeHtml(effectiveStatus)}</strong>
+                        </article>
+                    </div>
+
+                    ${isEdit ? `
+                        <div class="agro-operational-form-grid agro-operational-confirm-form">
+                            <div class="input-group">
+                                <label class="input-label" for="agro-operational-status">Estado</label>
+                                <select id="agro-operational-status" class="styled-input" data-operational-draft="status">
+                                    ${buildSelectOptionsMarkup(STATUS_OPTIONS, values.status)}
+                                </select>
+                            </div>
+                            <div class="input-group input-group--full">
+                                <label class="input-label" for="agro-operational-notes">Observaciones posteriores</label>
+                                <textarea id="agro-operational-notes" class="styled-input" placeholder="Notas que aparecieron después de crear el ciclo." data-operational-draft="notes">${escapeHtml(values.notes)}</textarea>
+                            </div>
+                        </div>
+                    ` : `
+                        <label class="agro-operational-close-toggle">
+                            <input type="checkbox" id="agro-operational-close-on-save" data-operational-draft="closeOnSave"${values.closeOnSave ? ' checked' : ''}>
+                            <span>✅ Cerrar al guardar</span>
+                        </label>
+                    `}
+                </section>
+            </div>
+
+            <div class="agro-operational-form-actions">
+                ${currentStep > 1 ? '<button type="button" class="btn" data-operational-action="wizard-prev">⬅️ Atrás</button>' : ''}
+                ${isEdit ? '<button type="button" class="btn" data-operational-action="cancel-edit">❌ Cancelar</button>' : ''}
+                ${currentStep < 4
+                    ? '<button type="button" class="btn btn-primary" data-operational-action="wizard-next">➡️ Siguiente</button>'
+                    : `<button type="submit" class="btn btn-primary">${isEdit ? '💾 Guardar cambios' : '➕ Nuevo ciclo operativo'}</button>`}
+            </div>
+        </form>
+    `;
+
+    cacheDynamicRefs();
+    setControlsDisabled(state.schemaMissing || state.saving);
 }
 
-function updateSubmitButtonLabel() {
-    const submitButton = state.refs?.submitButton;
-    if (!submitButton) return;
-
-    if (state.editId) {
-        submitButton.textContent = 'Guardar cambios';
-        return;
-    }
-
-    submitButton.textContent = state.refs?.closeOnSave?.checked
-        ? 'Crear y cerrar'
-        : 'Crear ciclo operativo';
-}
-
-function fillForm(payload = {}) {
+function cacheDynamicRefs() {
     if (!state.refs) return;
-    state.refs.name.value = payload.name || '';
-    state.refs.crop.value = normalizeId(payload.cropId || payload.crop_id);
-    state.refs.description.value = payload.description || '';
-    state.refs.economicType.value = payload.economicType || payload.economic_type || 'expense';
-    state.refs.category.value = payload.category || 'other';
-    state.refs.amount.value = payload.amount == null ? '' : String(payload.amount);
-    state.refs.currency.value = payload.currency || 'COP';
-    state.refs.date.value = payload.movementDate || payload.movement_date || payload.openedAt || payload.opened_at || todayLocalIso();
-    state.refs.quantity.value = payload.quantity == null ? '' : String(payload.quantity);
-    state.refs.unitType.value = payload.unitType || payload.unit_type || '';
-    state.refs.status.value = payload.status || 'open';
-    state.refs.notes.value = payload.notes || '';
-    state.refs.closeOnSave.checked = payload.status === 'closed';
-    updateImpactPreview();
-    updateSubmitButtonLabel();
-}
-
-function setFormModeCreate() {
-    state.editId = '';
-    if (!state.refs) return;
-    state.refs.formEyebrow.textContent = 'Modo rapido';
-    state.refs.formTitle.textContent = 'Crear ciclo operativo';
-    state.refs.formCopy.textContent = 'Crea el ciclo, registra el movimiento inicial y cierralo en un solo paso si ya quedo resuelto.';
-    state.refs.closeToggle.hidden = false;
-    state.refs.editRow.classList.remove('is-visible');
-    state.refs.cancelButton.hidden = true;
-    fillForm({
-        economicType: state.refs.economicType?.value || 'expense',
-        category: state.refs.category?.value || 'other',
-        currency: state.refs.currency?.value || 'COP',
-        movementDate: todayLocalIso()
-    });
-}
-
-function setFormModeEdit(cycle) {
-    state.editId = normalizeId(cycle?.id);
-    if (!state.refs || !state.editId) return;
-    state.refs.formEyebrow.textContent = 'Edicion';
-    state.refs.formTitle.textContent = 'Editar ciclo operativo';
-    state.refs.formCopy.textContent = 'Puedes ajustar clasificacion, cultivo, monto base, estado y observaciones posteriores.';
-    state.refs.closeToggle.hidden = true;
-    state.refs.editRow.classList.add('is-visible');
-    state.refs.cancelButton.hidden = false;
-    fillForm({
-        name: cycle.name,
-        cropId: cycle.crop_id,
-        description: cycle.description,
-        economicType: cycle.economic_type,
-        category: cycle.category,
-        amount: cycle.primaryMovement?.amount,
-        currency: cycle.primaryMovement?.currency || 'COP',
-        movementDate: cycle.primaryMovement?.movement_date || cycle.opened_at || todayLocalIso(),
-        quantity: cycle.primaryMovement?.quantity,
-        unitType: cycle.primaryMovement?.unit_type,
-        status: cycle.status,
-        notes: cycle.notes
-    });
-}
-
-function resetForm() {
-    clearFeedback();
-    renderCropOptions('');
-    setFormModeCreate();
-}
-
-function focusForm() {
-    const target = state.refs?.formPanel;
-    if (!target) return;
-    target.scrollIntoView({
-        behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth',
-        block: 'start'
-    });
-    window.requestAnimationFrame(() => {
-        state.refs?.name?.focus();
+    Object.assign(state.refs, {
+        form: document.getElementById('agro-operational-form'),
+        name: document.getElementById('agro-operational-name'),
+        description: document.getElementById('agro-operational-description'),
+        economicType: document.getElementById('agro-operational-economic-type'),
+        category: document.getElementById('agro-operational-category'),
+        crop: document.getElementById('agro-operational-crop'),
+        amount: document.getElementById('agro-operational-amount'),
+        currency: document.getElementById('agro-operational-currency'),
+        date: document.getElementById('agro-operational-date'),
+        quantity: document.getElementById('agro-operational-quantity'),
+        unitType: document.getElementById('agro-operational-unit-type'),
+        closeOnSave: document.getElementById('agro-operational-close-on-save'),
+        status: document.getElementById('agro-operational-status'),
+        notes: document.getElementById('agro-operational-notes')
     });
 }
 
@@ -1242,90 +1282,660 @@ function setControlsDisabled(disabled) {
     });
 }
 
-function readFormPayload() {
-    return normalizePayload({
-        name: state.refs?.name?.value,
-        cropId: state.refs?.crop?.value,
-        description: state.refs?.description?.value,
-        economicType: state.refs?.economicType?.value,
-        category: state.refs?.category?.value,
-        amount: state.refs?.amount?.value,
-        currency: state.refs?.currency?.value,
-        movementDate: state.refs?.date?.value,
-        quantity: state.refs?.quantity?.value,
-        unitType: state.refs?.unitType?.value,
-        status: state.editId ? state.refs?.status?.value : undefined,
-        notes: state.editId ? state.refs?.notes?.value : undefined,
-        closeOnSave: !state.editId && !!state.refs?.closeOnSave?.checked
-    }, {
-        mode: state.editId ? 'edit' : 'create',
-        existingCycle: state.cycles.find((cycle) => cycle.id === state.editId) || null
+function resolveDraftCropLabel(cropId) {
+    const normalizedId = normalizeId(cropId);
+    if (!normalizedId) return '🌾 Sin asociar a cultivo';
+    const match = state.crops.find((crop) => buildCropDisplay(crop).id === normalizedId);
+    return match ? buildCropDisplay(match).label : 'Cultivo no valido.';
+}
+
+function getSubviewMeta(subview) {
+    if (subview === SUBVIEW_FINISHED) {
+        return {
+            eyebrow: '✅ Finalizados',
+            title: '✅ Ciclos operativos finalizados',
+            copy: 'Cerrados o perdidos, con su propio balance, conteo y filtros.'
+        };
+    }
+
+    if (subview === SUBVIEW_EXPORT) {
+        return {
+            eyebrow: '📥 Exportar MD',
+            title: '📥 Exportar Ciclos Operativos a Markdown',
+            copy: 'Descarga un reporte limpio usando los filtros activos de Activos y Finalizados.'
+        };
+    }
+
+    return {
+        eyebrow: '🟡 Activos',
+        title: '🟡 Ciclos operativos activos',
+        copy: 'Abiertos, en seguimiento o compensándose.'
+    };
+}
+
+function renderFilterPills(filters) {
+    const pills = [
+        readLabel(PERIOD_OPTIONS, filters.period, '📅 Todo'),
+        readLabel(CATEGORY_FILTER_OPTIONS, filters.category, '📁 Todas las categorías'),
+        readLabel(TYPE_FILTER_OPTIONS, filters.economicType, '💰 Todos los tipos')
+    ];
+
+    return `
+        <div class="agro-operational-filter-pills">
+            ${pills.map((label) => `<span class="agro-operational-filter-pill">${escapeHtml(label)}</span>`).join('')}
+        </div>
+    `;
+}
+
+function mergeSummaryBalanceText(leftSummary, rightSummary) {
+    const incoming = createMoneyBucket();
+    const outgoing = createMoneyBucket();
+    mergeMoneyBuckets(incoming, leftSummary.incoming);
+    mergeMoneyBuckets(incoming, rightSummary.incoming);
+    mergeMoneyBuckets(outgoing, leftSummary.outgoing);
+    mergeMoneyBuckets(outgoing, rightSummary.outgoing);
+    const balance = subtractMoneyBuckets(incoming, outgoing);
+    return formatMoneyBucket(balance, { signed: true, emptyText: EMPTY_BALANCE_LABEL });
+}
+
+function renderOverview() {
+    if (!state.refs?.overviewBody) return;
+
+    const meta = getSubviewMeta(state.currentSubview);
+    state.refs.overviewEyebrow.textContent = meta.eyebrow;
+    state.refs.overviewTitle.textContent = meta.title;
+    state.refs.overviewCopy.textContent = meta.copy;
+
+    if (state.currentSubview === SUBVIEW_EXPORT) {
+        const activeSummary = state.datasets[SUBVIEW_ACTIVE].summary;
+        const finishedSummary = state.datasets[SUBVIEW_FINISHED].summary;
+        const totalCount = activeSummary.count + finishedSummary.count;
+        state.refs.overviewBody.innerHTML = `
+            <div class="agro-operational-summary-grid">
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">🟡 Activos exportables</span>
+                    <strong class="agro-operational-summary-card__value">${activeSummary.count}</strong>
+                    <p class="agro-operational-summary-card__hint">${escapeHtml(activeSummary.balanceText)}</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">✅ Finalizados exportables</span>
+                    <strong class="agro-operational-summary-card__value">${finishedSummary.count}</strong>
+                    <p class="agro-operational-summary-card__hint">${escapeHtml(finishedSummary.balanceText)}</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">📦 Total ciclos</span>
+                    <strong class="agro-operational-summary-card__value">${totalCount}</strong>
+                    <p class="agro-operational-summary-card__hint">El archivo saldrá como <code>${escapeHtml(buildExportFileName())}</code>.</p>
+                </article>
+                <article class="agro-operational-summary-card">
+                    <span class="agro-operational-summary-card__label">📊 Balance combinado</span>
+                    <strong class="agro-operational-summary-card__value">${escapeHtml(mergeSummaryBalanceText(activeSummary, finishedSummary))}</strong>
+                    <p class="agro-operational-summary-card__hint">Respeta filtros activos y finalizados por separado.</p>
+                </article>
+            </div>
+            <div class="agro-operational-overview-stack">
+                <div>
+                    <p class="agro-operational-subtext">Filtros activos para exportar:</p>
+                    ${renderFilterPills(state.datasets[SUBVIEW_ACTIVE].filters)}
+                </div>
+                <div>
+                    <p class="agro-operational-subtext">Filtros finalizados para exportar:</p>
+                    ${renderFilterPills(state.datasets[SUBVIEW_FINISHED].filters)}
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const dataset = getDataset(state.currentSubview);
+    const summary = dataset.summary;
+    state.refs.overviewBody.innerHTML = `
+        <div class="agro-operational-summary-grid">
+            <article class="agro-operational-summary-card">
+                <span class="agro-operational-summary-card__label">🗂️ Ciclos visibles</span>
+                <strong class="agro-operational-summary-card__value">${summary.count}</strong>
+                <p class="agro-operational-summary-card__hint">Conteo propio de esta subvista.</p>
+            </article>
+            <article class="agro-operational-summary-card">
+                <span class="agro-operational-summary-card__label">🌱 Con cultivo</span>
+                <strong class="agro-operational-summary-card__value">${summary.linkedCount}</strong>
+                <p class="agro-operational-summary-card__hint">Solo cultivos válidos del usuario.</p>
+            </article>
+            <article class="agro-operational-summary-card">
+                <span class="agro-operational-summary-card__label">📜 Movimientos</span>
+                <strong class="agro-operational-summary-card__value">${summary.movementCount}</strong>
+                <p class="agro-operational-summary-card__hint">Historial expandible dentro de cada tarjeta.</p>
+            </article>
+            <article class="agro-operational-summary-card" data-tone="${escapeAttr(summary.balanceTone)}">
+                <span class="agro-operational-summary-card__label">📊 Balance del ciclo</span>
+                <strong class="agro-operational-summary-card__value">${escapeHtml(summary.balanceText)}</strong>
+                <p class="agro-operational-summary-card__hint">💰 Recibí / Cobré: ${escapeHtml(summary.incomingText)} · 💸 Pagué / Gasté: ${escapeHtml(summary.outgoingText)}</p>
+            </article>
+        </div>
+        ${renderFilterPills(dataset.filters)}
+    `;
+}
+
+function renderFilters(subview) {
+    const dataset = getDataset(subview);
+    const filters = dataset.filters;
+
+    return `
+        <section class="agro-operational-filter-bar">
+            <div class="agro-operational-filter-grid">
+                <label class="agro-operational-filter">
+                    <span class="agro-operational-filter__label">Período</span>
+                    <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="period">
+                        ${buildSelectOptionsMarkup(PERIOD_OPTIONS, filters.period)}
+                    </select>
+                </label>
+                <label class="agro-operational-filter">
+                    <span class="agro-operational-filter__label">Categoría</span>
+                    <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="category">
+                        ${buildSelectOptionsMarkup(CATEGORY_FILTER_OPTIONS, filters.category)}
+                    </select>
+                </label>
+                <label class="agro-operational-filter">
+                    <span class="agro-operational-filter__label">Tipo económico</span>
+                    <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="economicType">
+                        ${buildSelectOptionsMarkup(TYPE_FILTER_OPTIONS, filters.economicType)}
+                    </select>
+                </label>
+            </div>
+        </section>
+    `;
+}
+
+function buildStatusClass(status) {
+    return STATUS_CLASS_BY_VALUE[normalizeToken(status)] || 'is-open';
+}
+
+function renderMovementRows(cycle) {
+    if (!Array.isArray(cycle.movements) || cycle.movements.length === 0) {
+        return `
+            <div class="agro-operational-empty">
+                <div class="agro-operational-empty__icon"><i class="fa-solid fa-file-circle-question" aria-hidden="true"></i></div>
+                <p class="agro-operational-empty__title">📜 Sin historial todavía</p>
+                <p class="agro-operational-empty__copy">Este ciclo aún no tiene movimientos visibles.</p>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="agro-operational-detail-list">
+            ${cycle.movements.map((movement) => `
+                <article class="agro-operational-detail-item">
+                    <span class="agro-operational-movement-badge ${movement.direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(movement.direction))}</span>
+                    <div>
+                        <p class="agro-operational-detail-item__concept">${escapeHtml(movement.concept || cycle.name)}</p>
+                        <p class="agro-operational-detail-item__meta">${escapeHtml(formatDateLabel(movement.movement_date))} · ${escapeHtml(formatAmountLabel(movement.amount, movement.currency))} · ${escapeHtml(formatQuantityLabel(movement.quantity, movement.unit_type))}</p>
+                    </div>
+                </article>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderCycleCard(cycle) {
+    const cropText = cycle.crop?.label || '🌾 Sin asociar a cultivo';
+    const primaryAmount = formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency);
+    const dates = cycle.closed_at
+        ? `${formatDateLabel(cycle.opened_at)} · Cierre: ${formatDateLabel(cycle.closed_at)}`
+        : `${formatDateLabel(cycle.opened_at)} · Sin cierre`;
+
+    return `
+        <article class="agro-operational-card" data-cycle-id="${escapeAttr(cycle.id)}">
+            <div class="agro-operational-card__head">
+                <div class="agro-operational-card__stack">
+                    <p class="agro-operational-card__eyebrow">${escapeHtml(readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Operación'))} · ${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, 'Categoría'))}</p>
+                    <h3 class="agro-operational-card__title">${escapeHtml(cycle.name)}</h3>
+                    <p class="agro-operational-card__meta">${escapeHtml(cropText)} · ${escapeHtml(dates)}</p>
+                </div>
+                <div class="agro-operational-card__badges">
+                    <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto'))}</span>
+                    <span class="agro-operational-pill">${escapeHtml(directionDetailLabel(cycle.direction))}</span>
+                </div>
+            </div>
+
+            ${cycle.description ? `<p class="agro-operational-card__description"><strong>📝 Descripción:</strong> ${escapeHtml(cycle.description)}</p>` : ''}
+            ${cycle.notes ? `<p class="agro-operational-card__notes"><strong>📌 Observaciones:</strong> ${escapeHtml(cycle.notes)}</p>` : ''}
+
+            <div class="agro-operational-money-grid">
+                <div class="agro-operational-money-cell" data-tone="gold">
+                    <span class="agro-operational-money-cell__label">${escapeHtml(directionSummaryLabel(cycle.direction))}</span>
+                    <strong class="agro-operational-money-cell__value">${escapeHtml(primaryAmount)}</strong>
+                </div>
+                <div class="agro-operational-money-cell">
+                    <span class="agro-operational-money-cell__label">💰 Recibí / Cobré</span>
+                    <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.incomingText)}</strong>
+                </div>
+                <div class="agro-operational-money-cell">
+                    <span class="agro-operational-money-cell__label">💸 Pagué / Gasté</span>
+                    <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.outgoingText)}</strong>
+                </div>
+                <div class="agro-operational-money-cell" data-tone="${escapeAttr(cycle.balanceTone)}">
+                    <span class="agro-operational-money-cell__label">📊 Balance del ciclo</span>
+                    <strong class="agro-operational-money-cell__value">${escapeHtml(cycle.balanceText)}</strong>
+                </div>
+            </div>
+
+            <div class="agro-operational-card__footer">
+                <div class="agro-operational-card__support">
+                    <span class="agro-operational-card__support-item">📜 ${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'}</span>
+                    <span class="agro-operational-card__support-item">${escapeHtml(readLabel(CATEGORY_OPTIONS, cycle.category, '📋 Otro'))}</span>
+                </div>
+                <div class="agro-operational-card__actions">
+                    <button type="button" class="btn" data-operational-action="edit" data-cycle-id="${escapeAttr(cycle.id)}">✏️ Editar</button>
+                    <button type="button" class="btn btn-primary" data-operational-action="delete" data-cycle-id="${escapeAttr(cycle.id)}">🗑️ Eliminar</button>
+                </div>
+            </div>
+
+            <details class="agro-operational-card__details">
+                <summary>
+                    <span>📜 Historial (${cycle.movementCount} movimiento${cycle.movementCount === 1 ? '' : 's'})</span>
+                    <span>${escapeHtml(readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto'))}</span>
+                </summary>
+                ${renderMovementRows(cycle)}
+            </details>
+        </article>
+    `;
+}
+
+function renderEmptyState(subview) {
+    const title = subview === SUBVIEW_FINISHED
+        ? '✅ Sin finalizados con esos filtros'
+        : '🟡 Sin activos con esos filtros';
+    const copy = subview === SUBVIEW_FINISHED
+        ? 'Ajusta período, categoría o tipo económico para ver cierres y pérdidas.'
+        : 'Ajusta período, categoría o tipo económico para ver ciclos abiertos, en seguimiento o compensándose.';
+
+    return `
+        <div class="agro-operational-empty">
+            <div class="agro-operational-empty__icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
+            <p class="agro-operational-empty__title">${title}</p>
+            <p class="agro-operational-empty__copy">${copy}</p>
+            <div class="agro-operational-empty__cta">
+                <button type="button" class="btn btn-primary" data-operational-action="focus-form">➕ Nuevo ciclo operativo</button>
+            </div>
+        </div>
+    `;
+}
+
+function buildExportFileName() {
+    return `ciclos-operativos-${currentMonthKey()}.md`;
+}
+
+function buildMarkdownSection(title, datasetKey) {
+    const dataset = getDataset(datasetKey);
+    const lines = [`## ${title}`, ''];
+    lines.push(`Filtros: ${readLabel(PERIOD_OPTIONS, dataset.filters.period, '📅 Todo')} · ${readLabel(CATEGORY_FILTER_OPTIONS, dataset.filters.category, '📁 Todas las categorías')} · ${readLabel(TYPE_FILTER_OPTIONS, dataset.filters.economicType, '💰 Todos los tipos')}`);
+    lines.push(`Balance: ${dataset.summary.balanceText}`);
+    lines.push(`Ciclos visibles: ${dataset.summary.count}`);
+    lines.push('');
+
+    if (dataset.cycles.length === 0) {
+        lines.push('- Sin ciclos con los filtros actuales.');
+        lines.push('');
+        return lines;
+    }
+
+    dataset.cycles.forEach((cycle) => {
+        lines.push(`### ${cycle.name}`);
+        lines.push(`- Tipo económico: ${readLabel(ECONOMIC_TYPE_OPTIONS, cycle.economic_type, 'Sin tipo')}`);
+        lines.push(`- Categoría: ${readLabel(CATEGORY_OPTIONS, cycle.category, 'Sin categoría')}`);
+        lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto')}`);
+        lines.push(`- Cultivo asociado: ${cycle.crop?.label || '🌾 Sin asociar a cultivo'}`);
+        lines.push(`- Fechas: ${cycle.closed_at ? `${formatDateLabel(cycle.opened_at)} · Cierre ${formatDateLabel(cycle.closed_at)}` : `${formatDateLabel(cycle.opened_at)} · Sin cierre`}`);
+        lines.push(`- ${directionSummaryLabel(cycle.direction)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
+        lines.push(`- 📊 Balance del ciclo: ${cycle.balanceText}`);
+        lines.push(`- Descripción principal: ${cycle.description || 'Sin descripción principal'}`);
+        if (cycle.notes) {
+            lines.push(`- Observaciones posteriores: ${cycle.notes}`);
+        }
+        lines.push('- 📜 Historial:');
+        if (cycle.movements.length === 0) {
+            lines.push('  - Sin movimientos visibles.');
+        } else {
+            cycle.movements.forEach((movement) => {
+                lines.push(`  - ${formatDateLabel(movement.movement_date)} · ${directionDetailLabel(movement.direction)} · ${formatAmountLabel(movement.amount, movement.currency)} · ${movement.concept || cycle.name}`);
+            });
+        }
+        lines.push('');
+    });
+
+    return lines;
+}
+
+function buildExportMarkdown() {
+    const lines = [
+        '# 💼 Ciclos Operativos',
+        '',
+        `Generado: ${formatDateLabel(todayLocalIso())}`,
+        '',
+        '## 📊 Resumen',
+        '',
+        `- 🟡 Activos exportados: ${state.datasets[SUBVIEW_ACTIVE].summary.count}`,
+        `- ✅ Finalizados exportados: ${state.datasets[SUBVIEW_FINISHED].summary.count}`,
+        `- 📊 Balance combinado: ${mergeSummaryBalanceText(state.datasets[SUBVIEW_ACTIVE].summary, state.datasets[SUBVIEW_FINISHED].summary)}`,
+        ''
+    ];
+
+    buildMarkdownSection('🟡 Activos', SUBVIEW_ACTIVE).forEach((line) => lines.push(line));
+    buildMarkdownSection('✅ Finalizados', SUBVIEW_FINISHED).forEach((line) => lines.push(line));
+
+    return lines.join('\n');
+}
+
+function downloadMarkdownFile() {
+    const markdown = buildExportMarkdown();
+    const filename = buildExportFileName();
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    return {
+        filename,
+        markdown
+    };
+}
+
+function renderExportView() {
+    const markdown = buildExportMarkdown();
+
+    return `
+        <div class="agro-operational-export-panel">
+            <div class="agro-operational-export-actions">
+                <button type="button" class="btn btn-primary" data-operational-action="download-markdown">📥 Exportar MD</button>
+                <span class="agro-operational-export-filename">${escapeHtml(buildExportFileName())}</span>
+            </div>
+            <div class="agro-operational-export-preview">
+                <p class="agro-operational-export-preview__label">Vista previa del archivo</p>
+                <pre>${escapeHtml(markdown)}</pre>
+            </div>
+        </div>
+    `;
+}
+
+function renderCurrentSubview() {
+    if (!state.refs?.list || !state.refs?.listStatus || !state.refs?.filtersHost) return;
+
+    const meta = getSubviewMeta(state.currentSubview);
+    state.refs.listEyebrow.textContent = meta.eyebrow;
+    state.refs.listTitle.textContent = meta.title;
+    state.refs.listCopy.textContent = meta.copy;
+
+    if (state.loading) {
+        state.refs.filtersHost.innerHTML = state.currentSubview === SUBVIEW_EXPORT ? '' : renderFilters(state.currentSubview);
+        state.refs.listStatus.textContent = 'Cargando ciclos operativos...';
+        state.refs.list.innerHTML = `
+            <div class="agro-operational-panel">
+                <div class="agro-operational-loading">
+                    <span class="agro-operational-loading__spinner" aria-hidden="true"></span>
+                    <span>Consultando ciclos y movimientos...</span>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    if (state.schemaMissing) {
+        state.refs.filtersHost.innerHTML = '';
+        state.refs.listStatus.textContent = 'La vista quedó lista, pero Supabase aún no tiene la migración aplicada.';
+        state.refs.list.innerHTML = `
+            <div class="agro-operational-empty">
+                <div class="agro-operational-empty__icon"><i class="fa-solid fa-database" aria-hidden="true"></i></div>
+                <p class="agro-operational-empty__title">Migración pendiente</p>
+                <p class="agro-operational-empty__copy">Aplica la migración canónica para habilitar <code>agro_operational_cycles</code> y <code>agro_operational_movements</code>.</p>
+            </div>
+        `;
+        return;
+    }
+
+    if (state.currentSubview === SUBVIEW_EXPORT) {
+        const activeCount = state.datasets[SUBVIEW_ACTIVE].summary.count;
+        const finishedCount = state.datasets[SUBVIEW_FINISHED].summary.count;
+        state.refs.filtersHost.innerHTML = '';
+        state.refs.listStatus.textContent = `Exportarás ${activeCount + finishedCount} ciclo${activeCount + finishedCount === 1 ? '' : 's'} respetando los filtros activos.`;
+        state.refs.list.innerHTML = renderExportView();
+        return;
+    }
+
+    const dataset = getDataset(state.currentSubview);
+    state.refs.filtersHost.innerHTML = renderFilters(state.currentSubview);
+    state.refs.listStatus.textContent = `${dataset.summary.count} ciclo${dataset.summary.count === 1 ? '' : 's'} visible${dataset.summary.count === 1 ? '' : 's'} en esta subvista.`;
+
+    if (dataset.cycles.length === 0) {
+        state.refs.list.innerHTML = renderEmptyState(state.currentSubview);
+        return;
+    }
+
+    state.refs.list.innerHTML = dataset.cycles.map((cycle) => renderCycleCard(cycle)).join('');
+}
+
+function renderAll() {
+    renderWizard();
+    renderOverview();
+    renderCurrentSubview();
+}
+
+function readExistingCycle(cycleId) {
+    return state.cycleIndex.get(normalizeId(cycleId)) || null;
+}
+
+function resetForm() {
+    state.editId = '';
+    state.form = createFormState({
+        values: createDraftValues({
+            economicType: state.form.values.economicType || 'expense',
+            category: state.form.values.category || 'other',
+            currency: state.form.values.currency || 'COP',
+            movementDate: todayLocalIso()
+        })
+    });
+    clearFeedback();
+    renderWizard();
+}
+
+function setEditMode(cycle) {
+    if (!cycle) return;
+    state.editId = normalizeId(cycle.id);
+    state.form = createFormState({
+        mode: 'edit',
+        step: 1,
+        values: createDraftValues({
+            name: cycle.name,
+            description: cycle.description || '',
+            economicType: cycle.economic_type,
+            category: cycle.category,
+            cropId: cycle.crop_id,
+            amount: cycle.primaryMovement?.amount == null ? '' : String(cycle.primaryMovement.amount),
+            currency: cycle.primaryMovement?.currency || 'COP',
+            movementDate: cycle.primaryMovement?.movement_date || cycle.opened_at || todayLocalIso(),
+            quantity: cycle.primaryMovement?.quantity == null ? '' : String(cycle.primaryMovement.quantity),
+            unitType: cycle.primaryMovement?.unit_type || '',
+            status: cycle.status || 'open',
+            notes: cycle.notes || '',
+            closeOnSave: cycle.status === 'closed'
+        })
+    });
+    clearFeedback();
+    renderWizard();
+}
+
+function focusForm() {
+    const target = state.refs?.formPanel;
+    if (!target) return;
+    target.scrollIntoView({
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        block: 'start'
+    });
+    window.requestAnimationFrame(() => {
+        const focusNode = state.refs?.name || state.refs?.form?.querySelector('input, select, textarea, button');
+        focusNode?.focus?.();
     });
 }
 
+function focusWizardStep(step) {
+    window.requestAnimationFrame(() => {
+        if (step === 1) {
+            state.refs?.name?.focus?.();
+            return;
+        }
+        if (step === 2) {
+            state.refs?.economicType?.focus?.();
+            return;
+        }
+        if (step === 3) {
+            state.refs?.amount?.focus?.();
+            return;
+        }
+        const focusNode = state.refs?.closeOnSave || state.refs?.status || state.refs?.form?.querySelector('button[type="submit"]');
+        focusNode?.focus?.();
+    });
+}
+
+function validateStep(step) {
+    try {
+        const values = state.form.values;
+        if (step === 1 && !String(values.name || '').trim()) {
+            throw new Error('El nombre del ciclo es obligatorio.');
+        }
+
+        if (step === 2) {
+            ensureAllowedValue(values.economicType, ECONOMIC_TYPE_OPTIONS.map((option) => option.value), 'Tipo económico no valido.');
+            ensureAllowedValue(values.category, CATEGORY_OPTIONS.map((option) => option.value), 'Categoría no valida.');
+            ensureLocalCropSelection(values.cropId);
+        }
+
+        if (step === 3) {
+            if (!String(values.movementDate || '').trim()) {
+                throw new Error('La fecha del movimiento es obligatoria.');
+            }
+            toNullableNumber(values.amount, 'El monto');
+            const quantity = toNullableNumber(values.quantity, 'La cantidad');
+            const unitTypeRaw = toNullableText(values.unitType);
+            if ((quantity == null) !== (unitTypeRaw == null)) {
+                throw new Error('Cantidad y unidad deben viajar juntas.');
+            }
+            if (unitTypeRaw) {
+                ensureAllowedValue(unitTypeRaw, UNIT_TYPE_OPTIONS.map((option) => option.value), 'Unidad no valida.');
+            }
+        }
+
+        clearFeedback();
+        return true;
+    } catch (error) {
+        const message = normalizeOperationalError(error);
+        setFeedback(message, 'error');
+        notify(message, 'error');
+        return false;
+    }
+}
+
+function readFormPayload() {
+    return normalizePayload(state.form.values, {
+        mode: state.form.mode,
+        existingCycle: state.editId ? readExistingCycle(state.editId) : null
+    });
+}
+
+async function fetchDatasetRecords(supabase, userId, datasetKey, statuses) {
+    const filters = getDataset(datasetKey).filters;
+    const cycles = await fetchCycles(supabase, userId, filters, statuses);
+    const cycleIds = cycles.map((cycle) => normalizeId(cycle.id)).filter(Boolean);
+    const movements = await fetchMovements(supabase, userId, cycleIds);
+    return { cycles, movements };
+}
+
 async function refreshData(options = {}) {
-    if (!state.root || state.loading) return;
+    if (!state.root) return;
+    if (state.loading) {
+        state.needsRefresh = true;
+        return;
+    }
 
     state.loading = true;
     state.schemaMissing = false;
-    renderList();
+    renderOverview();
+    renderCurrentSubview();
 
     try {
         const supabase = await getSupabaseClient();
         const userId = await ensureUserId(options.initialUserId);
-        const [crops, cycles] = await Promise.all([
+        const [crops, activeRecords, finishedRecords] = await Promise.all([
             fetchCrops(supabase, userId),
-            fetchCycles(supabase, userId)
+            fetchDatasetRecords(supabase, userId, SUBVIEW_ACTIVE, ACTIVE_STATUS_VALUES),
+            fetchDatasetRecords(supabase, userId, SUBVIEW_FINISHED, FINISHED_STATUS_VALUES)
         ]);
 
-        const cycleIds = cycles.map((cycle) => normalizeId(cycle.id)).filter(Boolean);
-        const movements = await fetchMovements(supabase, userId, cycleIds);
         const cropMap = new Map(crops.map((crop) => {
             const display = buildCropDisplay(crop);
             return [display.id, display];
         }));
-        const movementMap = new Map();
-        movements.forEach((movement) => {
-            const cycleId = normalizeId(movement?.cycle_id);
-            if (!movementMap.has(cycleId)) {
-                movementMap.set(cycleId, []);
-            }
-            movementMap.get(cycleId).push(movement);
-        });
+
+        const buildCyclesFromRecords = (records) => {
+            const movementMap = new Map();
+            records.movements.forEach((movement) => {
+                const cycleId = normalizeId(movement?.cycle_id);
+                if (!movementMap.has(cycleId)) {
+                    movementMap.set(cycleId, []);
+                }
+                movementMap.get(cycleId).push(movement);
+            });
+            return records.cycles.map((cycle) => buildCycleViewModel(cycle, movementMap, cropMap));
+        };
 
         state.crops = crops;
-        state.cycles = cycles.map((cycle) => buildCycleViewModel(cycle, movementMap, cropMap));
-
-        renderCropOptions(state.refs?.crop?.value);
-        renderSummary();
-        renderList();
+        state.datasets[SUBVIEW_ACTIVE].cycles = buildCyclesFromRecords(activeRecords);
+        state.datasets[SUBVIEW_ACTIVE].summary = createDatasetSummary(state.datasets[SUBVIEW_ACTIVE].cycles);
+        state.datasets[SUBVIEW_FINISHED].cycles = buildCyclesFromRecords(finishedRecords);
+        state.datasets[SUBVIEW_FINISHED].summary = createDatasetSummary(state.datasets[SUBVIEW_FINISHED].cycles);
+        rebuildCycleIndex();
+        state.loadedOnce = true;
 
         if (state.editId) {
-            const current = state.cycles.find((cycle) => cycle.id === state.editId);
+            const current = readExistingCycle(state.editId);
             if (current) {
-                setFormModeEdit(current);
+                setEditMode(current);
             } else {
                 resetForm();
             }
+        } else {
+            renderWizard();
         }
+
+        renderOverview();
+        renderCurrentSubview();
     } catch (error) {
         state.schemaMissing = isSchemaMissingError(error);
         state.crops = [];
-        state.cycles = [];
-        renderCropOptions('');
-        renderSummary();
-        renderList();
+        state.datasets = createDatasetsState();
+        rebuildCycleIndex();
+        renderWizard();
+        renderOverview();
+        renderCurrentSubview();
         setFeedback(normalizeOperationalError(error), 'error');
     } finally {
         state.loading = false;
         setControlsDisabled(state.schemaMissing || state.saving);
-        renderList();
+        renderCurrentSubview();
+        renderOverview();
+        if (state.needsRefresh) {
+            state.needsRefresh = false;
+            window.setTimeout(() => refreshData(), 0);
+        }
     }
 }
 
 async function handleFormSubmit(event) {
     event.preventDefault();
     if (state.saving) return;
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
 
     clearFeedback();
     state.saving = true;
@@ -1351,13 +1961,82 @@ async function handleFormSubmit(event) {
     }
 }
 
-async function handleListClick(event) {
+function updateDraftFromField(field, value) {
+    setDraftFieldValue(field, value);
+
+    if (field === 'economicType' || field === 'status' || field === 'closeOnSave' || field === 'cropId' || field === 'unitType') {
+        renderWizard();
+    }
+
+    if (state.form.step === 4 && ['amount', 'currency', 'movementDate', 'quantity', 'description', 'name', 'category'].includes(field)) {
+        renderWizard();
+    }
+}
+
+async function handleRootClick(event) {
     const button = event.target.closest('[data-operational-action]');
     if (!button) return;
 
     const action = button.dataset.operationalAction;
+
+    if (action === 'new-cycle') {
+        resetForm();
+        focusForm();
+        return;
+    }
+
+    if (action === 'refresh') {
+        await refreshData();
+        return;
+    }
+
     if (action === 'focus-form') {
         focusForm();
+        return;
+    }
+
+    if (action === 'wizard-next') {
+        if (!validateStep(state.form.step)) return;
+        state.form.step = Math.min(4, state.form.step + 1);
+        renderWizard();
+        focusWizardStep(state.form.step);
+        return;
+    }
+
+    if (action === 'wizard-prev') {
+        state.form.step = Math.max(1, state.form.step - 1);
+        clearFeedback();
+        renderWizard();
+        focusWizardStep(state.form.step);
+        return;
+    }
+
+    if (action === 'wizard-goto') {
+        const nextStep = Number(button.dataset.step || 1);
+        if (!Number.isFinite(nextStep) || nextStep < 1 || nextStep > 4) return;
+        if (nextStep > state.form.step) {
+            for (let step = state.form.step; step < nextStep; step += 1) {
+                if (!validateStep(step)) return;
+            }
+        }
+        state.form.step = nextStep;
+        clearFeedback();
+        renderWizard();
+        focusWizardStep(state.form.step);
+        return;
+    }
+
+    if (action === 'cancel-edit') {
+        resetForm();
+        focusForm();
+        return;
+    }
+
+    if (action === 'download-markdown') {
+        const result = downloadMarkdownFile();
+        const message = `📥 Export listo: ${result.filename}`;
+        setFeedback(message, 'success');
+        notify(message, 'success');
         return;
     }
 
@@ -1365,10 +2044,9 @@ async function handleListClick(event) {
     if (!cycleId) return;
 
     if (action === 'edit') {
-        const cycle = state.cycles.find((item) => item.id === cycleId);
+        const cycle = readExistingCycle(cycleId);
         if (!cycle) return;
-        clearFeedback();
-        setFormModeEdit(cycle);
+        setEditMode(cycle);
         focusForm();
         return;
     }
@@ -1378,10 +2056,10 @@ async function handleListClick(event) {
         try {
             const result = await deleteCycleRecord(cycleId);
             if (result?.skipped) return;
-            await refreshData();
             if (state.editId === cycleId) {
                 resetForm();
             }
+            await refreshData();
             setFeedback(result.message, result.cascadeVerified === false ? 'info' : 'success');
             notify(result.message, result.cascadeVerified === false ? 'warning' : 'success');
         } catch (error) {
@@ -1392,62 +2070,118 @@ async function handleListClick(event) {
     }
 }
 
-function bindEvents() {
-    if (!state.refs || state.root?.dataset.operationalBound === '1') return;
+function handleRootInput(event) {
+    const field = event.target.dataset.operationalDraft;
+    if (!field) return;
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    updateDraftFromField(field, value);
+}
 
-    state.refs.form?.addEventListener('submit', handleFormSubmit);
-    state.refs.economicType?.addEventListener('change', updateImpactPreview);
-    state.refs.closeOnSave?.addEventListener('change', updateSubmitButtonLabel);
-    state.refs.cancelButton?.addEventListener('click', resetForm);
-    state.refs.refreshButton?.addEventListener('click', () => refreshData());
-    state.refs.newButton?.addEventListener('click', () => {
-        resetForm();
-        focusForm();
+async function handleRootChange(event) {
+    const filterKey = event.target.dataset.operationalFilterKey;
+    const filterView = normalizeOperationalSubview(event.target.dataset.operationalFilterView);
+    if (filterKey && (filterView === SUBVIEW_ACTIVE || filterView === SUBVIEW_FINISHED)) {
+        getDataset(filterView).filters[filterKey] = normalizeToken(event.target.value) || 'all';
+        await refreshData();
+        return;
+    }
+
+    const field = event.target.dataset.operationalDraft;
+    if (!field) return;
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    updateDraftFromField(field, value);
+}
+
+function bindEvents() {
+    if (!state.root || state.root.dataset.operationalBound === '1') return;
+
+    state.root.addEventListener('submit', (event) => {
+        if (event.target?.id === 'agro-operational-form') {
+            handleFormSubmit(event);
+        }
     });
-    state.refs.scrollFormButton?.addEventListener('click', focusForm);
-    state.refs.list?.addEventListener('click', handleListClick);
+    state.root.addEventListener('click', (event) => {
+        void handleRootClick(event);
+    });
+    state.root.addEventListener('input', handleRootInput);
+    state.root.addEventListener('change', (event) => {
+        void handleRootChange(event);
+    });
 
     window.addEventListener(VIEW_CHANGED_EVENT, (event) => {
         state.currentView = normalizeToken(event?.detail?.view);
+        state.currentSubview = normalizeOperationalSubview(event?.detail?.subview || state.currentSubview);
+
         if (state.currentView === VIEW_NAME) {
-            refreshData();
+            renderOverview();
+            renderCurrentSubview();
+            void refreshData();
         }
     });
 
     window.addEventListener(CROPS_READY_EVENT, () => {
         if (state.currentView === VIEW_NAME) {
-            refreshData();
+            void refreshData();
         }
     });
 
     state.root.dataset.operationalBound = '1';
 }
 
-function buildDebugSnapshot() {
+function buildDatasetSnapshot(datasetKey) {
+    const dataset = getDataset(datasetKey);
     return {
-        userId: state.userId,
-        currentView: state.currentView,
-        schemaMissing: state.schemaMissing,
-        loading: state.loading,
-        saving: state.saving,
-        editId: state.editId,
-        lastCascadeCheck: state.lastCascadeCheck,
-        crops: state.crops.map((crop) => buildCropDisplay(crop)),
-        cycles: state.cycles.map((cycle) => ({
+        filters: { ...dataset.filters },
+        summary: {
+            count: dataset.summary.count,
+            linkedCount: dataset.summary.linkedCount,
+            movementCount: dataset.summary.movementCount,
+            incomingText: dataset.summary.incomingText,
+            outgoingText: dataset.summary.outgoingText,
+            balanceText: dataset.summary.balanceText
+        },
+        cycles: dataset.cycles.map((cycle) => ({
             id: cycle.id,
             name: cycle.name,
+            description: cycle.description,
+            notes: cycle.notes,
             economic_type: cycle.economic_type,
             category: cycle.category,
             crop_id: cycle.crop_id,
-            crop_label: cycle.crop?.label || 'General',
+            crop_label: cycle.crop?.label || '🌾 Sin asociar a cultivo',
             status: cycle.status,
+            direction: cycle.direction,
             movementCount: cycle.movementCount,
             primaryAmount: cycle.primaryMovement?.amount ?? null,
-            primaryCurrency: cycle.primaryMovement?.currency || 'COP',
+            primaryAmountLabel: formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency),
             incomingText: cycle.incomingText,
             outgoingText: cycle.outgoingText,
             balanceText: cycle.balanceText
         }))
+    };
+}
+
+function buildDebugSnapshot() {
+    return {
+        userId: state.userId,
+        currentView: state.currentView,
+        currentSubview: state.currentSubview,
+        schemaMissing: state.schemaMissing,
+        loading: state.loading,
+        saving: state.saving,
+        editId: state.editId,
+        formMode: state.form.mode,
+        wizardStep: state.form.step,
+        formValues: { ...state.form.values },
+        lastCascadeCheck: state.lastCascadeCheck,
+        activeFilters: { ...state.datasets[SUBVIEW_ACTIVE].filters },
+        finishedFilters: { ...state.datasets[SUBVIEW_FINISHED].filters },
+        crops: state.crops.map((crop) => buildCropDisplay(crop)),
+        datasets: {
+            active: buildDatasetSnapshot(SUBVIEW_ACTIVE),
+            finished: buildDatasetSnapshot(SUBVIEW_FINISHED)
+        },
+        markdownPreview: buildExportMarkdown()
     };
 }
 
@@ -1471,7 +2205,7 @@ async function createFromPayload(payload = {}) {
 
 async function updateById(cycleId, payload = {}) {
     await ensureInitialized();
-    const existingCycle = state.cycles.find((cycle) => cycle.id === normalizeId(cycleId));
+    const existingCycle = readExistingCycle(cycleId);
     const normalized = normalizePayload(payload, {
         mode: 'edit',
         existingCycle
@@ -1499,10 +2233,12 @@ function exposeGlobalApi() {
         createFromPayload,
         updateById,
         deleteById,
-        openView: () => {
+        downloadMarkdown: downloadMarkdownFile,
+        openView: (subview = SUBVIEW_ACTIVE) => {
             window.dispatchEvent(new CustomEvent('agro:shell:set-view', {
                 detail: {
                     view: VIEW_NAME,
+                    subview: normalizeOperationalSubview(subview),
                     scroll: true
                 }
             }));
@@ -1525,13 +2261,9 @@ export async function initAgroOperationalCycles(options = {}) {
     }
 
     exposeGlobalApi();
-    updateImpactPreview();
-    updateSubmitButtonLabel();
-    renderCropOptions(state.refs?.crop?.value);
-    renderSummary();
-    renderList();
-
     state.currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
+    state.currentSubview = normalizeOperationalSubview(document.body?.dataset?.agroSubview || state.currentSubview);
+    renderAll();
     await refreshData({ initialUserId: options.initialUserId });
 
     return {

@@ -22,11 +22,15 @@ const CORE_OPERATIONS_TABS = new Set([
 ]);
 
 const VIEW_ALIASES = Object.freeze({
-    cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' })
+    cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' }),
+    'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
+    'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
+    'operational-export': Object.freeze({ view: 'operational', subview: 'export' })
 });
 
 const VIEW_SUBNAV_CONFIG = Object.freeze({
     ciclos: Object.freeze({ defaultSubview: 'finalizados', allowed: ['activos', 'finalizados', 'comparar', 'estadisticas'] }),
+    operational: Object.freeze({ defaultSubview: 'active', allowed: ['active', 'finished', 'export'] }),
     pagados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
     fiados: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
     perdidas: Object.freeze({ defaultSubview: 'historial', allowed: ['historial', 'stats'] }),
