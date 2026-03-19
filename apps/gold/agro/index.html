@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="./agrociclos.css">
     <link rel="stylesheet" href="./agro-dashboard.css">
     <link rel="stylesheet" href="./agro-operations.css">
+    <link rel="stylesheet" href="./agro-operational-cycles.css">
     <link rel="stylesheet" href="./tx-cards-v2.css">
     <style>
         /* ============================================ SHELL BOOTSTRAP: prevent flash of inactive regions ============================================ */
@@ -1158,7 +1159,7 @@
                 <p class="agro-shell-sidebar__copy">Una sola vista principal a la vez. Paso 1 y Paso 2 siguen dentro de
                     Operaciones.</p>
                 <p class="agro-shell-sidebar__milestone"><strong>Baseline oficial:</strong> dashboard, ciclos de
-                    cultivos, operaciones, carrito, rankings, clima, agenda y bitácora.</p>
+                    cultivos, ciclos operativos, operaciones, carrito, rankings, clima, agenda y bitácora.</p>
             </div>
 
             <div class="agro-shell-sidebar__group">
@@ -1186,6 +1187,9 @@
                             data-agro-subview="estadisticas">Estadísticas de ciclos</button>
                     </div>
                 </div>
+                <button type="button" class="agro-shell-link" data-agro-view="operational"><span
+                        class="agro-shell-link__icon" aria-hidden="true"><i class="fa-solid fa-arrows-spin"></i></span><span
+                        class="agro-shell-link__label">Ciclos Operativos</span></button>
             </div>
 
             <div class="agro-shell-sidebar__group">
@@ -1757,6 +1761,10 @@
             <div id="agro-agenda-inline-root" class="agro-agenda-inline-root">
                 <!-- agro-agenda.js renders here when agenda view is active -->
             </div>
+        </section>
+
+        <section class="agro-operational-region agro-ops-v10" data-agro-shell-region="operational" hidden inert>
+            <div id="agro-operational-root"></div>
         </section>
 
         <!-- Active Crops Section -->
@@ -4245,6 +4253,12 @@
                         mod.initAgroCyclesWorkspace();
                     }
                 }).catch(err => console.warn('[AGRO] Cycles workspace module load error:', err.message));
+
+                import('./agroOperationalCycles.js').then((mod) => {
+                    if (typeof mod.initAgroOperationalCycles === 'function') {
+                        mod.initAgroOperationalCycles({ initialUserId: session.user?.id });
+                    }
+                }).catch(err => console.warn('[AGRO] Operational cycles module load error:', err.message));
 
                 // Expose unified stats globally for inline scripts
                 window.refreshAgroStats = async function () {
