@@ -8,12 +8,12 @@ import {
   getTemplateLabel,
   normalizeTemplateKey
 } from './agro-repo-templates.js';
-import { normalizeSearchText, sortByMode } from './agro-repo-search.js';
+import { nodeMatchesQuery, normalizeSearchText, sortByMode } from './agro-repo-search.js';
 import {
-  buildFileNode,
-  buildFolderNode,
   buildRepoContext,
-  ensureUniqueNodeTitle,
+  createFileInRepo,
+  createFolderInRepo,
+  deleteNodeFromRepo,
   getActiveFolderId,
   getAllFiles,
   getChildren,
@@ -22,7 +22,8 @@ import {
   getRootFolders,
   isSystemFolder,
   loadRepoState,
-  persistRepoState
+  persistRepoState,
+  updateNodeInRepo
 } from './agro-repo-storage.js';
 
 const AGROREPO_ENABLED = true;
@@ -35,10 +36,17 @@ const state = {
   sortMode: 'updated',
   treeOpen: false,
   modal: null,
-  autoSaveTimer: null
+  autoSaveTimer: null,
+  mobileStage: 'browser',
+  viewportBound: false
 };
 
 const qs = (selector, scope = state.root) => scope?.querySelector(selector) || null;
+
+function isSparkMobileViewport() {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia?.('(max-width: 480px)')?.matches || window.innerWidth <= 480;
+}
 
 function escapeHtml(value) {
   return String(value || '')
@@ -164,8 +172,47 @@ function closeTreeOnMobile() {
   syncTreeShell();
 }
 
+function syncActiveFileDraft() {
+  const activeFile = getActiveFile();
+  if (!activeFile) return null;
+
+  const titleInput = qs('#agrp-fileTitle');
+  const contentInput = qs('#agrp-fileContent');
+  const templateInput = qs('#agrp-fileTemplate');
+
+  const nextTitle = titleInput ? titleInput.value : activeFile.title;
+  const nextContent = contentInput ? contentInput.value : activeFile.content;
+  const nextTemplateKey = templateInput ? normalizeTemplateKey(templateInput.value) : activeFile.templateKey;
+
+  const { repo, node } = updateNodeInRepo(state.repo, activeFile.id, {
+    title: nextTitle,
+    content: nextContent,
+    templateKey: nextTemplateKey
+  });
+
+  state.repo = repo;
+  return node;
+}
+
 function syncRepoBridge() {
   window._agroRepoContext = buildRepoContext(state.repo);
+}
+
+function syncChromeState() {
+  const shell = qs('.agrp-shell');
+  if (!shell) return;
+  shell.dataset.mobileStage = state.mobileStage;
+  shell.dataset.viewMode = state.viewMode;
+}
+
+function handleViewportChange() {
+  if (isSparkMobileViewport()) {
+    if (state.mobileStage !== 'editor') state.mobileStage = 'browser';
+    state.treeOpen = false;
+  } else {
+    state.mobileStage = 'editor';
+  }
+  if (state.initialized) renderAll();
 }
 
 function showToast(message, type = 'info') {
@@ -183,6 +230,7 @@ function showToast(message, type = 'info') {
 
 function persistNow(showFeedback = false) {
   clearTimer();
+  syncActiveFileDraft();
   state.repo = persistRepoState(state.repo);
   syncRepoBridge();
   syncHeader();
@@ -223,13 +271,7 @@ function getVisibleNodeIds(query) {
   const visible = new Set();
 
   function matches(node) {
-    const text = normalizeSearchText([
-      node.title,
-      node.legacyPath,
-      node.type === 'file' ? node.content : '',
-      node.type === 'file' ? getTemplateLabel(node.templateKey) : ''
-    ].join(' '));
-    return text.includes(safeQuery);
+    return nodeMatchesQuery(node, safeQuery, (entry) => getTemplateLabel(entry.templateKey));
   }
 
   function mark(node) {
@@ -281,10 +323,10 @@ function renderTreeNode(node, depth = 0, visibleIds = null) {
         ${isFolder
           ? `<button type="button" class="agrp-tree-toggle ${isOpen ? 'is-open' : ''}" data-action="toggle-folder" data-node-id="${node.id}" aria-label="${isOpen ? 'Contraer carpeta' : 'Expandir carpeta'}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>`
           : '<span class="agrp-tree-toggle agrp-tree-toggle--spacer"></span>'}
-        <button type="button" class="agrp-tree-hit" data-action="select-node" data-node-id="${node.id}">
+        <button type="button" class="agrp-tree-hit" data-action="select-node" data-node-id="${node.id}" title="${escapeHtml(node.title)}">
           <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
           <span class="agrp-tree-copy">
-            <strong>${escapeHtml(node.title)}</strong>
+            <strong title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</strong>
             <small>${escapeHtml(meta)}</small>
           </span>
         </button>
@@ -313,7 +355,7 @@ function renderTree() {
     : `${getAllFiles(state.repo.nodes).length} archivos`;
 
   if (!roots.length) {
-    body.innerHTML = '<div class="agrp-tree-empty"><h4>Sin coincidencias</h4><p>Prueba otra busqueda o limpia el filtro actual.</p></div>';
+    body.innerHTML = '<div class="agrp-tree-empty"><h4>Sin resultados</h4><p>Prueba otra busqueda o limpia el filtro actual.</p></div>';
     return;
   }
 
@@ -332,9 +374,9 @@ function renderFolderCards(folder) {
   return `
     <div class="agrp-folder-grid">
       ${children.map((node) => `
-        <button type="button" class="agrp-folder-card" data-action="select-node" data-node-id="${node.id}">
+        <button type="button" class="agrp-folder-card" data-action="select-node" data-node-id="${node.id}" title="${escapeHtml(node.title)}">
           <span class="agrp-folder-card-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
-          <strong>${escapeHtml(node.title)}</strong>
+          <strong title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</strong>
           <small>${node.type === 'folder' ? 'Carpeta' : getTemplateLabel(node.templateKey)}</small>
         </button>
       `).join('')}
@@ -370,16 +412,16 @@ function renderFileView(file) {
       <div class="agrp-file-head">
         <div class="agrp-file-meta">
           <span class="agrp-type-pill" style="--agrp-accent:${template.accentToken};"><i class="${template.iconClass}" aria-hidden="true"></i><span>${escapeHtml(template.label)}</span></span>
-          <span class="agrp-file-path">${escapeHtml(getNodePathLabel(file.id))}</span>
+          <span class="agrp-file-path" title="${escapeHtml(getNodePathLabel(file.id))}">${escapeHtml(getNodePathLabel(file.id))}</span>
           <span class="agrp-file-dates">${escapeHtml(formatFullDate(file.updatedAt || file.createdAt))}</span>
         </div>
-        <div class="agrp-file-actions">
+        <div class="agrp-file-actions agrp-file-actions--desktop">
           <button type="button" class="agrp-icon-btn agrp-icon-btn--soft" data-action="save-file" title="Guardar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
           <button type="button" class="agrp-icon-btn agrp-icon-btn--soft" data-action="delete-node" data-node-id="${file.id}" title="Eliminar"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
         </div>
       </div>
       <div class="agrp-file-title-row">
-        <input type="text" id="agrp-fileTitle" class="agrp-title-input" maxlength="96" value="${escapeHtml(file.title)}" placeholder="nombre-del-archivo.md" />
+        <input type="text" id="agrp-fileTitle" class="agrp-title-input" maxlength="96" value="${escapeHtml(file.title)}" placeholder="nombre-del-archivo.md" title="${escapeHtml(file.title)}" />
         <label class="agrp-inline-field">
           <span>Plantilla</span>
           <select id="agrp-fileTemplate" class="agrp-select">
@@ -498,13 +540,46 @@ function syncHeader() {
   const searchInput = qs('#agrp-searchInput');
   const editorBtn = qs('[data-role="mode-editor"]');
   const previewBtn = qs('[data-role="mode-preview"]');
+  const modeToggleBtn = qs('[data-role="mode-toggle"]');
   const sortBtn = qs('[data-role="sort-button"]');
+  const activeNode = getActiveNode();
+  const activeFile = getActiveFile();
+  const visibleIds = state.query ? getVisibleNodeIds(state.query) : null;
+  const visibleFileCount = state.query
+    ? getAllFiles(state.repo.nodes).filter((file) => visibleIds?.has(file.id)).length
+    : getAllFiles(state.repo.nodes).length;
 
-  if (path) path.textContent = getNodePathLabel(state.repo.activeNodeId);
-  if (fileCount) fileCount.textContent = `${getAllFiles(state.repo.nodes).length} archivos locales`;
+  let headerLabel = getNodePathLabel(state.repo.activeNodeId);
+  if (isSparkMobileViewport()) {
+    if (state.mobileStage === 'editor' && activeFile) {
+      headerLabel = activeFile.title;
+    } else if (state.query) {
+      headerLabel = 'Buscar';
+    } else {
+      headerLabel = activeNode?.type === 'folder' ? activeNode.title : 'Archivos';
+    }
+  }
+
+  if (path) {
+    path.textContent = headerLabel;
+    path.title = headerLabel;
+  }
+  if (fileCount) {
+    fileCount.textContent = state.query
+      ? `${visibleFileCount} resultado${visibleFileCount === 1 ? '' : 's'}`
+      : `${visibleFileCount} archivos locales`;
+  }
   if (searchInput && searchInput.value !== state.query) searchInput.value = state.query;
   editorBtn?.classList.toggle('is-active', state.viewMode === 'editor');
   previewBtn?.classList.toggle('is-active', state.viewMode === 'preview');
+
+  if (modeToggleBtn) {
+    modeToggleBtn.classList.toggle('is-active', state.viewMode === 'preview');
+    modeToggleBtn.title = state.viewMode === 'preview' ? 'Volver al editor' : 'Vista previa';
+    modeToggleBtn.innerHTML = state.viewMode === 'preview'
+      ? '<i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>'
+      : '<i class="fa-regular fa-eye" aria-hidden="true"></i>';
+  }
 
   if (sortBtn) {
     sortBtn.classList.toggle('is-active', state.sortMode === 'name');
@@ -516,8 +591,12 @@ function syncHeader() {
 }
 
 function syncTreeShell() {
+  if (isSparkMobileViewport() && state.mobileStage === 'browser') {
+    state.treeOpen = false;
+  }
   qs('#agrp-treePanel')?.classList.toggle('is-open', state.treeOpen);
   qs('#agrp-treeBackdrop')?.classList.toggle('is-visible', state.treeOpen);
+  syncChromeState();
 }
 
 function renderAll() {
@@ -538,6 +617,7 @@ function updateActiveFileTitleMirror(title) {
 }
 
 function openModal(kind, payload = {}) {
+  persistNow(false);
   state.modal = {
     kind,
     nodeId: payload.nodeId || null,
@@ -564,15 +644,20 @@ function toggleFolder(nodeId) {
 }
 
 function selectNode(nodeId) {
+  persistNow(false);
   const node = getNode(state.repo.nodes, nodeId);
   if (!node) return;
   state.repo.activeNodeId = node.id;
   ensureAncestorsExpanded(node.id);
+  if (isSparkMobileViewport()) {
+    state.mobileStage = node.type === 'file' ? 'editor' : 'browser';
+  }
   renderAll();
   closeTreeOnMobile();
 }
 
 function removeNode(nodeId) {
+  syncActiveFileDraft();
   const node = getNode(state.repo.nodes, nodeId);
   if (!node || isSystemFolder(node)) return;
   const descendants = [];
@@ -588,11 +673,8 @@ function removeNode(nodeId) {
     : `Eliminar "${node.title}" de AgroRepo local?`;
   if (!window.confirm(confirmText)) return;
 
-  state.repo.nodes = state.repo.nodes.filter((entry) => !descendants.includes(entry.id));
-  state.repo.expandedIds = state.repo.expandedIds.filter((id) => !descendants.includes(id));
-  if (descendants.includes(state.repo.activeNodeId)) {
-    state.repo.activeNodeId = getAllFiles(state.repo.nodes)[0]?.id || getRootFolders(state.repo.nodes)[0]?.id || null;
-  }
+  state.repo = deleteNodeFromRepo(state.repo, nodeId).repo;
+  if (isSparkMobileViewport()) state.mobileStage = 'browser';
   persistNow(false);
   renderAll();
   showToast('Elemento eliminado del repo local.', 'info');
@@ -608,10 +690,10 @@ function handleModalSubmit() {
   const templateKey = normalizeTemplateKey(qs('#agrp-modalTemplate')?.value || state.modal.templateKey || 'nota-libre');
 
   if (state.modal.kind === 'create-folder') {
-    const folder = buildFolderNode(state.repo.nodes, { parentId, title: name || 'Nueva carpeta' });
-    state.repo.nodes.push(folder);
-    state.repo.activeNodeId = folder.id;
-    ensureAncestorsExpanded(folder.id);
+    const result = createFolderInRepo(state.repo, { parentId, title: name || 'Nueva carpeta' });
+    state.repo = result.repo;
+    ensureAncestorsExpanded(result.node.id);
+    if (isSparkMobileViewport()) state.mobileStage = 'browser';
     persistNow(false);
     closeModal();
     renderAll();
@@ -620,15 +702,15 @@ function handleModalSubmit() {
   }
 
   if (state.modal.kind === 'create-file') {
-    const file = buildFileNode(state.repo.nodes, {
+    const result = createFileInRepo(state.repo, {
       parentId,
       templateKey,
       title: name || getTemplate(templateKey).defaultTitle
     });
-    state.repo.nodes.push(file);
-    state.repo.activeNodeId = file.id;
+    state.repo = result.repo;
     state.viewMode = 'editor';
-    ensureAncestorsExpanded(file.id);
+    ensureAncestorsExpanded(result.node.id);
+    if (isSparkMobileViewport()) state.mobileStage = 'editor';
     persistNow(false);
     closeModal();
     renderAll();
@@ -643,8 +725,9 @@ function handleModalSubmit() {
       closeModal();
       return;
     }
-    node.title = ensureUniqueNodeTitle(name || node.title, node.parentId || null, node.type, state.repo.nodes, node.id);
-    node.updatedAt = new Date().toISOString();
+    state.repo = updateNodeInRepo(state.repo, node.id, {
+      title: name || node.title
+    }).repo;
     persistNow(false);
     closeModal();
     renderAll();
@@ -657,9 +740,21 @@ function handleClick(event) {
   if (!target) return;
   const action = target.dataset.action;
 
+  if (action === 'close-modal') {
+    const isBackdrop = target.classList.contains('agrp-modal-backdrop');
+    if (isBackdrop && event.target !== target) return;
+    closeModal();
+    return;
+  }
   if (action === 'toggle-tree') {
     state.treeOpen = !state.treeOpen;
     syncTreeShell();
+    return;
+  }
+  if (action === 'mobile-back') {
+    persistNow(false);
+    state.mobileStage = 'browser';
+    renderAll();
     return;
   }
   if (action === 'toggle-folder') return void toggleFolder(target.dataset.nodeId);
@@ -674,9 +769,18 @@ function handleClick(event) {
   }
   if (action === 'open-rename') return void openModal('rename', { nodeId: target.dataset.nodeId });
   if (action === 'delete-node') return void removeNode(target.dataset.nodeId || state.repo.activeNodeId);
+  if (action === 'delete-active-node') return void removeNode(state.repo.activeNodeId);
   if (action === 'save-file') return void persistNow(true);
   if (action === 'set-mode') {
+    persistNow(false);
     state.viewMode = target.dataset.mode === 'preview' ? 'preview' : 'editor';
+    syncHeader();
+    renderMain();
+    return;
+  }
+  if (action === 'toggle-preview-mode') {
+    persistNow(false);
+    state.viewMode = state.viewMode === 'preview' ? 'editor' : 'preview';
     syncHeader();
     renderMain();
     return;
@@ -687,7 +791,6 @@ function handleClick(event) {
     syncHeader();
     return;
   }
-  if (action === 'close-modal') closeModal();
 }
 
 function handleInput(event) {
@@ -722,8 +825,6 @@ function handleChange(event) {
   const activeFile = getActiveFile();
   if (!activeFile) return;
   if (event.target.id === 'agrp-fileTemplate') {
-    activeFile.templateKey = normalizeTemplateKey(event.target.value);
-    activeFile.updatedAt = new Date().toISOString();
     persistNow(false);
     renderAll();
   }
@@ -733,9 +834,12 @@ function handleFocusOut(event) {
   const activeFile = getActiveFile();
   if (!activeFile) return;
   if (event.target.id === 'agrp-fileTitle') {
-    activeFile.title = ensureUniqueNodeTitle(activeFile.title || 'nota.md', activeFile.parentId, 'file', state.repo.nodes, activeFile.id);
     persistNow(false);
     renderAll();
+    return;
+  }
+  if (event.target.id === 'agrp-fileContent') {
+    persistNow(false);
   }
 }
 
@@ -784,22 +888,26 @@ function renderFrame() {
       <main class="agrp-main-shell">
         <header class="agrp-topbar">
           <div class="agrp-topbar-left">
-            <button type="button" class="agrp-icon-btn agrp-icon-btn--soft agrp-tree-toggle-mobile" data-action="toggle-tree" title="Abrir arbol"><i class="fa-solid fa-bars-staggered" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-icon-btn--soft agrp-mobile-back" data-action="mobile-back" title="Volver"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-icon-btn--soft agrp-tree-toggle-mobile agrp-action-browser" data-action="toggle-tree" title="Abrir arbol"><i class="fa-solid fa-bars-staggered" aria-hidden="true"></i></button>
             <div class="agrp-topbar-brand">
               <span class="agrp-brand-name">AgroRepo</span>
               <span class="agrp-current-path" id="agrp-currentPath">AgroRepo</span>
             </div>
           </div>
-          <label class="agrp-searchbar" for="agrp-searchInput">
+          <label class="agrp-searchbar agrp-action-browser" for="agrp-searchInput">
             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
             <input id="agrp-searchInput" type="search" placeholder="Buscar en titulos y contenido" autocomplete="off" />
           </label>
           <div class="agrp-topbar-actions">
-            <button type="button" class="agrp-icon-btn" data-action="open-create-folder" title="Nueva carpeta"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i></button>
-            <button type="button" class="agrp-icon-btn" data-action="open-create-file" title="Nuevo archivo"><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i></button>
-            <button type="button" class="agrp-icon-btn" data-action="toggle-sort" data-role="sort-button" title="Ordenar por nombre"><i class="fa-solid fa-arrow-down-a-z" aria-hidden="true"></i></button>
-            <button type="button" class="agrp-icon-btn" data-action="set-mode" data-mode="editor" data-role="mode-editor" title="Editor"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
-            <button type="button" class="agrp-icon-btn" data-action="set-mode" data-mode="preview" data-role="mode-preview" title="Vista previa"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-browser" data-action="open-create-folder" title="Nueva carpeta"><i class="fa-solid fa-folder-plus" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-browser" data-action="open-create-file" title="Nuevo archivo"><i class="fa-solid fa-file-circle-plus" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-browser" data-action="toggle-sort" data-role="sort-button" title="Ordenar por nombre"><i class="fa-solid fa-arrow-down-a-z" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-desktop" data-action="set-mode" data-mode="editor" data-role="mode-editor" title="Editor"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-desktop" data-action="set-mode" data-mode="preview" data-role="mode-preview" title="Vista previa"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-mobile-editor" data-action="toggle-preview-mode" data-role="mode-toggle" title="Vista previa"><i class="fa-regular fa-eye" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-mobile-editor" data-action="save-file" title="Guardar"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
+            <button type="button" class="agrp-icon-btn agrp-action-mobile-editor" data-action="delete-active-node" title="Eliminar"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
           </div>
         </header>
         <div class="agrp-subbar">
@@ -826,10 +934,15 @@ function initWidget() {
   const { repo, notice } = loadRepoState();
   state.repo = repo;
   state.initialized = true;
+  state.mobileStage = isSparkMobileViewport() ? 'browser' : 'editor';
   root.dataset.loaded = '1';
 
   renderFrame();
   bindEvents();
+  if (!state.viewportBound) {
+    window.addEventListener('resize', handleViewportChange);
+    state.viewportBound = true;
+  }
   syncRepoBridge();
   renderAll();
   if (notice) showToast(notice, 'success');

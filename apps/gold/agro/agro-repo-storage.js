@@ -204,6 +204,86 @@ export function buildFileNode(nodes, overrides = {}) {
     };
 }
 
+export function createFolderInRepo(repoLike, overrides = {}) {
+    const repo = normalizeRepo(repoLike);
+    const folder = buildFolderNode(repo.nodes, overrides);
+    repo.nodes = [...repo.nodes, folder];
+    repo.activeNodeId = folder.id;
+    if (folder.parentId && !repo.expandedIds.includes(folder.parentId)) {
+        repo.expandedIds = [...repo.expandedIds, folder.parentId];
+    }
+    return { repo, node: folder };
+}
+
+export function createFileInRepo(repoLike, overrides = {}) {
+    const repo = normalizeRepo(repoLike);
+    const file = buildFileNode(repo.nodes, overrides);
+    repo.nodes = [...repo.nodes, file];
+    repo.activeNodeId = file.id;
+    if (file.parentId && !repo.expandedIds.includes(file.parentId)) {
+        repo.expandedIds = [...repo.expandedIds, file.parentId];
+    }
+    return { repo, node: file };
+}
+
+export function updateNodeInRepo(repoLike, nodeId, updates = {}) {
+    const repo = normalizeRepo(repoLike);
+    const node = getNode(repo.nodes, nodeId);
+    if (!node) return { repo, node: null };
+
+    if (node.type === 'folder') {
+        if (typeof updates.title !== 'undefined') {
+            node.title = ensureUniqueNodeTitle(updates.title || node.title, node.parentId || null, 'folder', repo.nodes, node.id);
+        }
+    }
+
+    if (node.type === 'file') {
+        if (typeof updates.title !== 'undefined') {
+            node.title = ensureUniqueNodeTitle(updates.title || node.title, node.parentId || null, 'file', repo.nodes, node.id);
+        }
+        if (typeof updates.content !== 'undefined') {
+            node.content = String(updates.content ?? '');
+        }
+        if (typeof updates.templateKey !== 'undefined') {
+            node.templateKey = normalizeTemplateKey(updates.templateKey || node.templateKey);
+        }
+    }
+
+    if (typeof updates.legacyPath !== 'undefined') {
+        node.legacyPath = String(updates.legacyPath || '');
+    }
+
+    node.updatedAt = updates.updatedAt || safeNow();
+    return { repo, node };
+}
+
+export function deleteNodeFromRepo(repoLike, nodeId) {
+    const repo = normalizeRepo(repoLike);
+    const node = getNode(repo.nodes, nodeId);
+
+    if (!node || isSystemFolder(node)) {
+        return { repo, removedIds: [], removed: false };
+    }
+
+    const removedIds = [];
+    const queue = [nodeId];
+
+    while (queue.length) {
+        const currentId = queue.shift();
+        removedIds.push(currentId);
+        getChildren(repo.nodes, currentId).forEach((child) => queue.push(child.id));
+    }
+
+    repo.nodes = repo.nodes.filter((entry) => !removedIds.includes(entry.id));
+    repo.expandedIds = repo.expandedIds.filter((id) => !removedIds.includes(id));
+
+    if (removedIds.includes(repo.activeNodeId)) {
+        repo.activeNodeId = getAllFiles(repo.nodes)[0]?.id || getRootFolders(repo.nodes)[0]?.id || null;
+    }
+
+    return { repo, removedIds, removed: true };
+}
+
 function findSystemFolderIdByKey(nodes, folderKey) {
     return getRootFolders(nodes).find((node) => node.folderKey === folderKey)?.id || null;
 }
@@ -492,37 +572,44 @@ export function normalizeRepo(repoLike) {
 }
 
 export function loadRepoState() {
-    const current = readStorage(AGRO_REPO_STORAGE_KEY);
-    if (Array.isArray(current?.nodes) || Array.isArray(current?.notes)) {
-        const repo = persistRepoState(normalizeRepo(current));
+    try {
+        const current = readStorage(AGRO_REPO_STORAGE_KEY);
+        if (Array.isArray(current?.nodes) || Array.isArray(current?.notes)) {
+            const repo = persistRepoState(normalizeRepo(current));
+            return {
+                repo,
+                notice: Array.isArray(current?.notes) ? 'Se organizo tu AgroRepo actual en una estructura de carpetas local.' : ''
+            };
+        }
+
+        const legacyTree = readStorage(AGRO_REPO_LEGACY_TREE_KEY);
+        if (Array.isArray(legacyTree?.nodes)) {
+            const repo = persistRepoState(migrateFromTreeV3(legacyTree));
+            return {
+                repo,
+                notice: 'Se migro tu AgroRepo legacy a la nueva estructura de arbol local.'
+            };
+        }
+
+        const legacyFlat = readStorage(AGRO_REPO_LEGACY_FLAT_KEY);
+        if (Array.isArray(legacyFlat?.bitacoras)) {
+            const repo = persistRepoState(migrateFromFlatV2(legacyFlat));
+            return {
+                repo,
+                notice: 'Se migraron tus notas legacy al arbol local de AgroRepo.'
+            };
+        }
+
         return {
-            repo,
-            notice: Array.isArray(current?.notes) ? 'Se organizo tu AgroRepo actual en una estructura de carpetas local.' : ''
+            repo: persistRepoState(ensureSystemRoots(createEmptyRepo())),
+            notice: ''
+        };
+    } catch {
+        return {
+            repo: persistRepoState(ensureSystemRoots(createEmptyRepo())),
+            notice: ''
         };
     }
-
-    const legacyTree = readStorage(AGRO_REPO_LEGACY_TREE_KEY);
-    if (Array.isArray(legacyTree?.nodes)) {
-        const repo = persistRepoState(migrateFromTreeV3(legacyTree));
-        return {
-            repo,
-            notice: 'Se migro tu AgroRepo legacy a la nueva estructura de arbol local.'
-        };
-    }
-
-    const legacyFlat = readStorage(AGRO_REPO_LEGACY_FLAT_KEY);
-    if (Array.isArray(legacyFlat?.bitacoras)) {
-        const repo = persistRepoState(migrateFromFlatV2(legacyFlat));
-        return {
-            repo,
-            notice: 'Se migraron tus notas legacy al arbol local de AgroRepo.'
-        };
-    }
-
-    return {
-        repo: persistRepoState(ensureSystemRoots(createEmptyRepo())),
-        notice: ''
-    };
 }
 
 export function persistRepoState(repoLike) {

@@ -5,6 +5,21 @@ export function normalizeSearchText(value) {
         .toLowerCase();
 }
 
+export function buildSearchableNodeText(node, resolveLabel = () => '') {
+    return normalizeSearchText([
+        node?.title,
+        node?.legacyPath,
+        node?.type === 'file' ? node?.content : '',
+        node?.type === 'file' ? resolveLabel(node) : ''
+    ].join(' '));
+}
+
+export function nodeMatchesQuery(node, query, resolveLabel = () => '') {
+    const safeQuery = normalizeSearchText(query);
+    if (!safeQuery) return true;
+    return buildSearchableNodeText(node, resolveLabel).includes(safeQuery);
+}
+
 export function buildNoteSnippet(content, maxLength = 132) {
     const safe = String(content || '').replace(/\s+/g, ' ').trim();
     if (!safe) return 'Sin contenido todavia.';

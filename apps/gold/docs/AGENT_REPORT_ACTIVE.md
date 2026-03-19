@@ -3861,3 +3861,86 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
    - legibilidad de rutas largas;
    - targets tactiles de topbar y acciones del arbol.
 3. Si el navegador habitual del usuario tiene data legacy local, validar la migracion real sobre ese dataset.
+
+---
+
+## 2026-03-19 - AgroRepo V1.1 Critical Fixes + Spark Mobile
+
+### Diagnostico inicial
+
+- QA real reporta fallas de wiring en create/delete/save/search que no se reprodujeron en el smoke DOM previo.
+- El storage base y la arquitectura general del arbol estan bien, pero la experiencia actual todavia mezcla demasiado contexto en pantalla y en mobile no se comporta como flujo tipo Spark.
+- El runtime efectivo de AgroRepo sigue estando en `apps/gold/agro/agro-repo-app.js`; `apps/gold/agro/agrorepo.js` permanece como adapter de entrada para no romper sidebar/imports.
+- Alcance de esta sesion:
+  - corregir wiring critico de CRUD y persistencia sin cambiar arquitectura de storage;
+  - endurecer carga segura sin datos previos;
+  - corregir search y evitar duplicacion al editar;
+  - evolucionar mobile `<=480px` a una experiencia una-pantalla-a-la-vez con editor protagonista.
+
+### Plan
+
+1. Auditar el wiring real entre UI, estado y storage para create/delete/edit/save/search.
+2. Corregir puntos criticos con cambios quirurgicos en el runtime AgroRepo y helpers de storage/search.
+3. Reducir densidad visual superior y cerrar UX Spark mobile en CSS y shell.
+4. Ejecutar build + smoke de CRUD/persistencia + validacion de estados mobile.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agrorepo.js`
+  - se deja explicito el adapter de compatibilidad del sidebar actual.
+- `apps/gold/agro/agro-repo-app.js`
+  - fix del modal: el backdrop ya no cierra la UI cuando el click ocurre dentro del dialogo;
+  - persistencia inmediata al cambiar de vista, navegar o volver en mobile;
+  - wiring CRUD apoyado en helpers de storage;
+  - delete activo en topbar mobile;
+  - mobile stage `browser/editor` para experiencia Spark;
+  - topbar mobile reducida con titulo, volver, preview, guardar y eliminar.
+- `apps/gold/agro/agro-repo-storage.js`
+  - helpers de `create/update/delete` sobre el repo sin cambiar la arquitectura base;
+  - carga segura reforzada ante estado vacio/corrupto en `localStorage`.
+- `apps/gold/agro/agro-repo-search.js`
+  - helper de matching/search text para conectar mejor el filtro del arbol.
+- `apps/gold/agro/agro-repo.css`
+  - truncado visual con ellipsis + tooltip por `title`;
+  - `overflow-x: hidden` en contenedores clave;
+  - targets mobile de `44px`;
+  - reglas Spark `browser/editor` en `<=480px`;
+  - reduccion de densidad superior en modo editor mobile.
+
+### QA ejecutado
+
+- Smoke desktop con clicks reales sobre el modulo bundleado:
+  - crear carpeta en raiz: OK;
+  - crear carpeta hija: OK;
+  - crear archivo: OK;
+  - editar sin duplicacion y manteniendo ID: OK;
+  - guardar contenido y navegar ida/vuelta: OK;
+  - preview Markdown: OK;
+  - preview -> edit sin perder contenido: OK;
+  - busqueda por contenido y estado vacio `Sin resultados`: OK;
+  - eliminar archivo: OK;
+  - eliminar carpeta con hija: OK.
+- Smoke mobile corto (`390x844`) sobre el modulo bundleado:
+  - inicia en stage `browser`: OK;
+  - tocar nota abre stage `editor`: OK;
+  - topbar muestra solo titulo de nota: OK;
+  - boton volver regresa a `browser`: OK.
+- Smoke de recarga desde storage ya persistido:
+  - titulo y contenido se restauran al reiniciar: OK.
+- Verificacion estructural de CSS:
+  - `overflow-x: hidden`: OK;
+  - `text-overflow: ellipsis`: OK;
+  - targets `44px`: OK;
+  - reglas `data-mobile-stage="browser/editor"`: OK.
+
+### Build status final
+
+- `pnpm build:gold`: OK.
+- Observaciones no bloqueantes:
+  - warning de engine por Node `v25.6.0` frente a objetivo `20.x`;
+  - warning historico por chunk grande en `assets/agro-*.js`.
+
+### QA sugerido
+
+1. Validar visualmente en navegador real mobile `390x844` que no exista scroll horizontal.
+2. Hacer smoke manual de sidebar/dashboard/facturero/ciclos para no interferencia, ya que esta sesion no toco esos modulos pero tampoco los ejercito en navegador real.
