@@ -3762,3 +3762,102 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 - Nota tecnica:
   - en este entorno local no fue viable usar simultaneamente `agroRepo.js` y `agrorepo.js` por colision de path case-insensitive;
   - por eso la implementacion real vive en `agro-repo-app.js` y `agrorepo.js` queda como entry compatible.
+
+---
+
+## 2026-03-19 - AgroRepo V1.1 Workspace Tree
+
+### Diagnostico
+
+- El MVP previo ya resolvia CRUD Markdown local-first, pero todavia se sentia como lista de notas y no como repositorio operativo.
+- Faltaban dos capas visibles para alinearlo con la referencia pedida y con el ADN Visual V10:
+  - arbol local real con carpetas persistentes;
+  - topbar minimalista con iconos discretos y jerarquia de workspace.
+- A nivel visual, hacia falta cerrar cumplimiento fino de ADN V10 en:
+  - breakpoints `900 / 768 / 480`;
+  - `prefers-reduced-motion`;
+  - comportamiento movil del arbol lateral;
+  - ghost emojis con motion sutil y opacidad contenida.
+
+### Alcance aplicado
+
+- `apps/gold/agro/agro-repo-storage.js`
+  - evolucion del storage flat a modelo de arbol local persistente;
+  - nodos `folder/file`, `activeNodeId`, `expandedIds`, contexto para IA y migracion segura desde estructuras previas.
+- `apps/gold/agro/agro-repo-templates.js`
+  - carpetas canonicas del repo local:
+    - Mi Finca
+    - Cultivos
+    - Observaciones
+    - Incidencias
+    - Decisiones
+    - Pruebas
+    - Mercado
+- `apps/gold/agro/agro-repo-app.js`
+  - shell V1.1 tipo workspace;
+  - arbol de archivos local con carpetas plegables;
+  - topbar minimalista con iconos;
+  - creacion de carpeta y archivo;
+  - soporte de carpeta raiz `AgroRepo` en el modal de creacion;
+  - editor textarea + vista previa alternable;
+  - busqueda por titulo/contenido y orden simple.
+- `apps/gold/agro/agro-repo.css`
+  - adaptacion estricta al ADN Visual V10 sobre la nueva experiencia:
+    - Orbitron para branding/headings;
+    - Rajdhani para UI;
+    - acento gold via tokens;
+    - motion de `180ms`;
+    - overlay movil del arbol;
+    - media queries `900 / 768 / 480`;
+    - `prefers-reduced-motion`;
+    - ghost emojis con opacidad baja y float sutil;
+    - control de overflow en rutas y nombres largos.
+- `apps/gold/agro/agrorepo.js`
+  - se conserva como adaptador de entrada sin romper shell/sidebar actuales.
+
+### Riesgos y decision
+
+- Decision de reemplazo:
+  - se mantiene el reemplazo del AgroRepo anterior como experiencia activa;
+  - el contrato externo no cambia.
+- Decision de migracion:
+  - SI;
+  - se conserva migracion desde el MVP local actual y desde legados `agrorepo_virtual_v3` / `agrorepo_ultimate_v2`.
+- Riesgo residual:
+  - no se corrio QA visual en navegador real para confirmar layout mobile fino `<=480px`;
+  - el smoke corrido fue DOM-driven, no de render visual.
+
+### Build status
+
+- `pnpm build:gold`: OK.
+- Secuencia validada:
+  - `agent-guard`: OK
+  - `agent-report-check`: OK
+  - `vite build`: OK
+  - `check-llms`: OK
+  - `check-dist-utf8`: OK
+- Observaciones no bloqueantes:
+  - warning de engine por Node `v25.6.0` frente a objetivo `20.x`;
+  - warning historico por chunk grande en `assets/agro-*.js`.
+
+### QA ejecutado
+
+- Smoke DOM sobre el modulo real:
+  - render del shell AgroRepo: OK;
+  - crear carpeta en raiz `AgroRepo`: OK;
+  - crear archivo dentro de carpeta logica: OK;
+  - editar contenido Markdown: OK;
+  - vista previa alternable: OK;
+  - busqueda por contenido: OK;
+  - persistencia tras recarga: OK;
+  - eliminar archivo y persistir borrado: OK.
+
+### QA sugerido
+
+1. Abrir AgroRepo desde la entrada actual del sidebar y confirmar arbol + topbar en la UI real.
+2. En viewport mobile real (`<=480px`), validar:
+   - apertura/cierre del arbol overlay;
+   - ausencia de overflow horizontal;
+   - legibilidad de rutas largas;
+   - targets tactiles de topbar y acciones del arbol.
+3. Si el navegador habitual del usuario tiene data legacy local, validar la migracion real sobre ese dataset.

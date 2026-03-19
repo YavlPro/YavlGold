@@ -1,6 +1,4 @@
-import { getTemplateLabel } from './agro-repo-templates.js';
-
-function normalizeText(value) {
+export function normalizeSearchText(value) {
     return String(value || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -14,37 +12,21 @@ export function buildNoteSnippet(content, maxLength = 132) {
     return `${safe.slice(0, Math.max(0, maxLength - 1)).trimEnd()}...`;
 }
 
-export function sortNotesByUpdatedAt(notes) {
-    return [...(Array.isArray(notes) ? notes : [])].sort((left, right) => {
-        const leftTime = new Date(left?.updatedAt || left?.createdAt || 0).getTime();
-        const rightTime = new Date(right?.updatedAt || right?.createdAt || 0).getTime();
-        return rightTime - leftTime;
+export function compareByUpdatedAt(left, right) {
+    const leftTime = new Date(left?.updatedAt || left?.createdAt || 0).getTime();
+    const rightTime = new Date(right?.updatedAt || right?.createdAt || 0).getTime();
+    return rightTime - leftTime;
+}
+
+export function compareByName(left, right) {
+    return String(left?.title || '').localeCompare(String(right?.title || ''), 'es', {
+        sensitivity: 'base',
+        numeric: true
     });
 }
 
-export function filterNotes(notes, options = {}) {
-    const query = normalizeText(options.query);
-    const section = String(options.section || 'all').trim();
-
-    return sortNotesByUpdatedAt(notes).filter((note) => {
-        if (section !== 'all' && note?.templateKey !== section) return false;
-        if (!query) return true;
-
-        const haystack = normalizeText([
-            note?.title,
-            note?.content,
-            note?.legacyPath,
-            getTemplateLabel(note?.templateKey)
-        ].join(' '));
-
-        return haystack.includes(query);
-    });
-}
-
-export function countNotesBySection(notes) {
-    return (Array.isArray(notes) ? notes : []).reduce((accumulator, note) => {
-        const key = String(note?.templateKey || 'nota-libre');
-        accumulator[key] = (accumulator[key] || 0) + 1;
-        return accumulator;
-    }, {});
+export function sortByMode(items, mode = 'updated') {
+    const safe = Array.isArray(items) ? [...items] : [];
+    if (mode === 'name') return safe.sort(compareByName);
+    return safe.sort(compareByUpdatedAt);
 }
