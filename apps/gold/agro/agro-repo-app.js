@@ -90,6 +90,32 @@ function getTargetParentId(nodeId) {
   return node.type === 'folder' ? node.id : (node.parentId || null);
 }
 
+function getFolderLocationLabel(folderId = null) {
+  if (!folderId) return 'AgroRepo / raíz';
+  const path = getPathNodes(state.repo?.nodes || [], folderId)
+    .filter((node) => node?.type === 'folder')
+    .map((node) => node.title);
+  return path.length ? `AgroRepo / ${path.join(' / ')}` : 'AgroRepo / raíz';
+}
+
+function expandPathToNode(nodeId, { includeSelf = false } = {}) {
+  if (!nodeId || !state.repo) return false;
+  const nextExpanded = [...(state.repo.expandedIds || [])];
+  let changed = false;
+
+  getPathNodes(state.repo.nodes, nodeId).forEach((node) => {
+    if (node?.type !== 'folder') return;
+    if (!includeSelf && node.id === nodeId) return;
+    if (!nextExpanded.includes(node.id)) {
+      nextExpanded.push(node.id);
+      changed = true;
+    }
+  });
+
+  if (changed) state.repo.expandedIds = nextExpanded;
+  return changed;
+}
+
 function getTemplateKeyForParent(parentId) {
   const rootFolder = getPathNodes(state.repo?.nodes || [], parentId)
     .find((node) => node?.type === 'folder' && node?.parentId === null);
@@ -447,29 +473,30 @@ function updateStatusBar() {
   updateCounts(text);
 }
 
-function renderTreeNode(node, visibleIds) {
+function renderTreeNode(node, visibleIds, depth = 0) {
   if (visibleIds && !visibleIds.has(node.id)) return '';
 
   if (node.type === 'folder') {
     const children = getSortedChildren(node.id).filter((child) => !visibleIds || visibleIds.has(child.id));
-    const isOpen = state.treeQuery ? children.length > 0 : state.repo.expandedIds.includes(node.id);
+    const hasChildren = children.length > 0;
+    const isOpen = state.treeQuery ? hasChildren : state.repo.expandedIds.includes(node.id);
     return `
-      <div class="agrp-tree-node">
-        <div class="agrp-tree-item folder ${isOpen ? 'open' : ''}" data-node-id="${node.id}" data-node-type="folder" title="${escapeHtml(node.title)}">
+      <div class="agrp-tree-node" data-depth="${depth}">
+        <div class="agrp-tree-item folder ${isOpen ? 'open' : ''} ${hasChildren ? 'has-children' : 'is-empty'}" data-node-id="${node.id}" data-node-type="folder" title="${escapeHtml(node.title)}" aria-expanded="${hasChildren ? String(isOpen) : 'false'}" role="button">
           <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
           <span class="label" title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</span>
         </div>
         <div class="agrp-tree-children ${isOpen ? '' : 'collapsed'}">
-          ${children.map((child) => renderTreeNode(child, visibleIds)).join('')}
+          ${children.map((child) => renderTreeNode(child, visibleIds, depth + 1)).join('')}
         </div>
       </div>
     `;
   }
 
   return `
-    <div class="agrp-tree-node">
-      <div class="agrp-tree-item ${node.id === state.activeFileId ? 'active' : ''}" data-node-id="${node.id}" data-node-type="file" title="${escapeHtml(node.title)}">
+    <div class="agrp-tree-node" data-depth="${depth}">
+      <div class="agrp-tree-item ${node.id === state.activeFileId ? 'active' : ''}" data-node-id="${node.id}" data-node-type="file" title="${escapeHtml(node.title)}" role="button">
         <span class="agrp-tree-spacer"></span>
         <span class="agrp-tree-icon"><i class="${getNodeIconClass(node)}" aria-hidden="true"></i></span>
         <span class="label" title="${escapeHtml(node.title)}">${escapeHtml(node.title)}</span>
@@ -635,20 +662,33 @@ function closeModal() {
 }
 
 function getFolderOptions(selectedId = null) {
-  const options = ['<option value="__root__">/</option>'];
+  const rootLabel = 'AgroRepo / raíz';
+  const options = [`<option value="__root__" ${selectedId ? '' : 'selected'} title="${rootLabel}">${rootLabel}</option>`];
 
-  function walk(parentId, prefix = '') {
+  function walk(parentId, segments = ['AgroRepo']) {
     getSortedChildren(parentId)
       .filter((node) => node.type === 'folder')
       .forEach((folder) => {
-        const path = `${prefix}/${folder.title}`;
-        options.push(`<option value="${folder.id}" ${folder.id === selectedId ? 'selected' : ''}>${escapeHtml(path)}</option>`);
-        walk(folder.id, path);
+        const pathSegments = [...segments, folder.title];
+        const pathLabel = pathSegments.join(' / ');
+        options.push(`<option value="${folder.id}" ${folder.id === selectedId ? 'selected' : ''} title="${escapeHtml(pathLabel)}">${escapeHtml(pathLabel)}</option>`);
+        walk(folder.id, pathSegments);
       });
   }
 
-  walk(null, '');
+  walk(null);
   return options.join('');
+}
+
+function updateCreateLocationHint() {
+  const select = qs('#agrpCreateParent');
+  const hint = qs('#agrpCreateLocationHint');
+  if (!select || !hint) return;
+
+  const label = select.selectedOptions?.[0]?.textContent?.trim() || getFolderLocationLabel(null);
+  select.title = label;
+  hint.textContent = `Se alojará en ${label}`;
+  hint.title = label;
 }
 
 function getDefaultParentId(type = 'file') {
@@ -676,6 +716,7 @@ function openCreateModal(type, parentId = null) {
     select.innerHTML = getFolderOptions(state.modal.parentId);
     select.value = state.modal.parentId || '__root__';
   }
+  updateCreateLocationHint();
 
   setModalVisible('#agrpCreateModal', true);
   window.setTimeout(() => {
@@ -796,6 +837,7 @@ function openFile(fileId, { skipSave = false } = {}) {
   const file = getNode(state.repo.nodes, fileId);
   if (!file || file.type !== 'file') return;
 
+  expandPathToNode(file.id);
   if (!state.openTabs.includes(file.id)) state.openTabs.push(file.id);
   state.activeFileId = file.id;
   state.repo.activeNodeId = file.id;
@@ -855,6 +897,7 @@ function confirmCreate() {
   if (state.modal.createType === 'folder') {
     const result = createFolderInRepo(state.repo, { title: name, parentId });
     state.repo = result.repo;
+    expandPathToNode(result.node.id, { includeSelf: true });
     state.repo.activeNodeId = state.activeFileId || null;
     persistAll(false);
     renderTree();
@@ -870,6 +913,7 @@ function confirmCreate() {
     templateKey
   });
   state.repo = result.repo;
+  expandPathToNode(result.node.id);
   if (!state.openTabs.includes(result.node.id)) state.openTabs.push(result.node.id);
   state.activeFileId = result.node.id;
   state.preview = false;
@@ -956,6 +1000,7 @@ function handleContextAction(action) {
       if (state.clipboard) {
         const result = pasteNodeSnapshotIntoRepo(state.repo, state.clipboard, resolveClipboardPasteParent(node));
         state.repo = result.repo;
+        if (result.node?.id) expandPathToNode(result.node.id, { includeSelf: result.node.type === 'folder' });
         if (result.node?.type === 'file') {
           if (!state.openTabs.includes(result.node.id)) state.openTabs.push(result.node.id);
           state.activeFileId = result.node.id;
@@ -972,6 +1017,7 @@ function handleContextAction(action) {
         const snapshot = snapshotNodeTree(state.repo.nodes, node.id);
         const result = pasteNodeSnapshotIntoRepo(state.repo, snapshot, node.parentId || null);
         state.repo = result.repo;
+        if (result.node?.id) expandPathToNode(result.node.id, { includeSelf: result.node.type === 'folder' });
         if (result.node?.type === 'file') {
           if (!state.openTabs.includes(result.node.id)) state.openTabs.push(result.node.id);
           state.activeFileId = result.node.id;
@@ -1035,6 +1081,7 @@ async function handleImport(fileList) {
       templateKey: 'nota-libre'
     });
     state.repo = result.repo;
+    expandPathToNode(result.node.id);
     lastImportedId = result.node.id;
   }
 
@@ -1222,7 +1269,11 @@ function renderFrame() {
           <label for="agrpCreateName">Nombre</label>
           <input type="text" id="agrpCreateName" placeholder="mi-archivo.md">
           <label for="agrpCreateParent">Ubicación</label>
-          <select id="agrpCreateParent"></select>
+          <div class="agrp-select-wrap">
+            <select id="agrpCreateParent"></select>
+            <span class="agrp-select-icon" aria-hidden="true"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></span>
+          </div>
+          <div class="agrp-location-hint" id="agrpCreateLocationHint">Se alojará en AgroRepo / raíz</div>
           <div class="agrp-modal-actions">
             <button type="button" class="agrp-btn agrp-btn-ghost" data-action="close-modal">Cancelar</button>
             <button type="submit" class="agrp-btn agrp-btn-primary">Crear</button>
@@ -1434,6 +1485,14 @@ function handleSubmit(event) {
 }
 
 function handleChange(event) {
+  if (event.target.id === 'agrpCreateParent') {
+    if (state.modal?.id === 'create') {
+      state.modal.parentId = event.target.value === '__root__' ? null : (event.target.value || null);
+    }
+    updateCreateLocationHint();
+    return;
+  }
+
   if (event.target.id === 'agrpFileImport') {
     handleImport(event.target.files);
   }
@@ -1556,6 +1615,19 @@ function isAgroRepoShellActive() {
   return document.body?.dataset?.agroActiveView === 'agrorepo';
 }
 
+function neutralizeAccordionChrome(accordion) {
+  if (!accordion) return;
+  accordion.open = true;
+  accordion.classList.add('agrp-accordion-removed');
+
+  const summary = accordion.querySelector('summary');
+  if (summary) {
+    summary.hidden = true;
+    summary.setAttribute('aria-hidden', 'true');
+    summary.tabIndex = -1;
+  }
+}
+
 function setupAccordionListener() {
   const accordion = document.getElementById('yg-acc-agrorepo');
   if (!accordion) {
@@ -1564,20 +1636,22 @@ function setupAccordionListener() {
   }
   if (accordion.dataset.listenerBound === '1') return;
   accordion.dataset.listenerBound = '1';
+  neutralizeAccordionChrome(accordion);
 
   accordion.addEventListener('toggle', () => {
-    if (accordion.open) ensureWidgetReady();
+    if (!accordion.open) accordion.open = true;
+    neutralizeAccordionChrome(accordion);
+    ensureWidgetReady();
   });
 
   window.addEventListener('agro:shell:view-changed', (event) => {
     if (event.detail?.view !== 'agrorepo') return;
-    accordion.open = true;
-    accordion.querySelector('summary')?.setAttribute('aria-expanded', 'true');
+    neutralizeAccordionChrome(accordion);
     ensureWidgetReady();
   });
 
   if (accordion.open || isAgroRepoShellActive()) {
-    accordion.open = true;
+    neutralizeAccordionChrome(accordion);
     ensureWidgetReady();
   }
 }

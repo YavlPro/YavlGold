@@ -23,6 +23,16 @@
   overflow-x: hidden;
 }
 
+#yg-acc-agrorepo.agrp-accordion-removed {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+#yg-acc-agrorepo.agrp-accordion-removed > summary {
+  display: none !important;
+}
+
 #agro-widget-root [hidden] {
   display: none !important;
 }
@@ -278,6 +288,10 @@
   user-select: none;
 }
 
+#agro-widget-root .agrp-tree-node {
+  min-width: 0;
+}
+
 #agro-widget-root .agrp-tree-item:hover,
 #agro-widget-root .agrp-tree-item.active {
   background: var(--agrp-bg-hover);
@@ -291,6 +305,15 @@
 
 #agro-widget-root .agrp-tree-item.folder.open .arrow {
   transform: rotate(90deg);
+}
+
+#agro-widget-root .agrp-tree-item.folder.has-children .arrow {
+  color: var(--agrp-gold-light);
+  opacity: 0.82;
+}
+
+#agro-widget-root .agrp-tree-item.folder.is-empty .arrow {
+  opacity: 0;
 }
 
 #agro-widget-root .agrp-tree-item .arrow,
@@ -318,7 +341,9 @@
 }
 
 #agro-widget-root .agrp-tree-children {
-  padding-left: 16px;
+  margin-left: 10px;
+  padding-left: 14px;
+  border-left: 1px solid color-mix(in srgb, var(--agrp-border) 72%, transparent);
 }
 
 #agro-widget-root .agrp-tree-children.collapsed {
@@ -690,6 +715,50 @@
   min-height: 40px;
   padding: 0 14px;
   margin-bottom: 14px;
+}
+
+#agro-widget-root .agrp-select-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+#agro-widget-root .agrp-select-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 42px;
+  margin-bottom: 0;
+  background: color-mix(in srgb, var(--agrp-bg-card) 88%, transparent);
+}
+
+#agro-widget-root .agrp-select-wrap select option {
+  color: var(--agrp-text);
+  background: var(--agrp-bg-card-solid);
+}
+
+#agro-widget-root .agrp-select-wrap select,
+#agro-widget-root .agrp-location-hint {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#agro-widget-root .agrp-select-icon {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: var(--agrp-text-muted);
+  pointer-events: none;
+}
+
+#agro-widget-root .agrp-location-hint {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--agrp-border) 78%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--agrp-gold) 5%, transparent);
+  color: var(--agrp-text-dim);
+  font-size: 0.82rem;
 }
 
 #agro-widget-root .agrp-modal-actions {

@@ -524,23 +524,13 @@ function normalizeTreeRepo(repoLike) {
     const folderIds = new Set(draft.nodes.filter((node) => node.type === 'folder').map((node) => node.id));
     draft.expandedIds = Array.isArray(repoLike?.expandedIds)
         ? Array.from(new Set(repoLike.expandedIds.filter((id) => folderIds.has(id))))
-        : [];
-
-    getRootFolders(draft.nodes).forEach((folder) => {
-        if (!draft.expandedIds.includes(folder.id)) draft.expandedIds.push(folder.id);
-    });
+        : getRootFolders(draft.nodes).map((folder) => folder.id);
 
     draft.lastSaved = repoLike?.lastSaved || null;
     draft.migratedFrom = repoLike?.migratedFrom || null;
 
     const activeNode = getNode(draft.nodes, repoLike?.activeNodeId);
     draft.activeNodeId = activeNode?.id || getAllFiles(draft.nodes)[0]?.id || getRootFolders(draft.nodes)[0]?.id || null;
-
-    getPathNodes(draft.nodes, draft.activeNodeId)
-        .filter((node) => node.type === 'folder')
-        .forEach((node) => {
-            if (!draft.expandedIds.includes(node.id)) draft.expandedIds.push(node.id);
-        });
 
     return draft;
 }

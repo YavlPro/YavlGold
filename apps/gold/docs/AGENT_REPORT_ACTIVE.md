@@ -4054,3 +4054,71 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 ### QA sugerido
 
 1. Reintentar `git add` + `git commit` con el mismo mensaje.
+
+## 2026-03-19 - AgroRepo Tree Refinement + Accordion Removal
+
+### Diagnostico inicial
+
+- El modulo AgroRepo ya esta funcional y aprobado en su diseño general, pero quedan tres fricciones puntuales:
+  - el arbol necesita un comportamiento mas claro y estable para expandir/colapsar carpetas hijas y subhijas;
+  - el selector de ubicacion en modales se ve demasiado nativo y no comunica bien rutas largas;
+  - el contenedor superior basado en `details/summary` agrega ruido porque AgroRepo ya no necesita esa capa de acordeon.
+
+### Alcance
+
+- Ajustar solo interacciones del arbol anidado.
+- Refinar visualmente el selector de ubicacion y su lectura de ruta.
+- Eliminar el comportamiento/ruido del acordeon superior sin redisenar el modulo.
+
+### Plan
+
+1. Endurecer el manejo de expansion de ancestros y el render del toggle en el arbol.
+2. Mejorar el select de ubicacion con mejor acabado visual y una pista de ruta clara.
+3. Neutralizar el `details/summary` superior desde el runtime AgroRepo para dejar el bloque fijo y estable.
+4. Ejecutar smoke de arbol + build.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agro-repo-app.js`
+- `apps/gold/agro/agro-repo.css`
+- `apps/gold/agro/agro-repo-storage.js` *(necesario para que el estado expandido/colapsado de carpetas raiz e hijas no se reabra al persistir)*
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-repo-app.js`
+  - Se agrego `expandPathToNode()` para abrir ancestros reales del archivo o carpeta creada/pegada, manteniendo navegacion estable en todos los niveles.
+  - Se ajusto el render del arbol con estado `has-children` / `is-empty`, `aria-expanded` y recursion con profundidad para que carpetas hijas y nietas reflejen mejor su estado.
+  - Se mejoro el modal de creacion con `agrp-select-wrap`, icono de dropdown y `agrpCreateLocationHint` para comunicar la ruta seleccionada.
+  - Se neutralizo el `details/summary` superior via `neutralizeAccordionChrome()` para que AgroRepo cargue directo, sin capa de acordeon visible.
+- `apps/gold/agro/agro-repo.css`
+  - Se reforzo la legibilidad del arbol con indentacion/borde de jerarquia y estado visual mas claro para toggles de carpeta.
+  - Se refino el selector de ubicacion con `appearance: none`, icono propio, mejor contraste y pista truncable para rutas largas.
+  - Se oculto el `summary` del acordeon legacy y se limpio su chrome visual.
+- `apps/gold/agro/agro-repo-storage.js`
+  - Se corrigio `normalizeTreeRepo()` para no reabrir siempre todas las carpetas raiz ni la ruta activa en cada persistencia.
+  - Se mantiene la apertura inicial por defecto cuando no existe estado previo, pero ahora el colapso del usuario persiste correctamente.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Warning no bloqueante: engine esperado `node 20.x`, entorno actual `node v25.6.0`.
+
+### QA ejecutado
+
+- Smoke DOM con `jsdom` sobre el runtime real:
+  - acordeon superior neutralizado y `summary` oculto;
+  - crear carpeta hija dentro de `Mi Finca`;
+  - crear carpeta nieta dentro de la carpeta hija;
+  - crear archivo dentro de la carpeta nieta;
+  - colapso/expansion de carpeta raiz, hija y nieta;
+  - apertura de archivo desde nivel anidado con reapertura correcta de ancestros;
+  - actualizacion del selector de ubicacion y su hint de ruta;
+  - resize a `390px` sin romper el montaje del modulo.
+- Resultado smoke: `AGROREPO_TREE_REFINEMENT_SMOKE_OK`
+
+### QA sugerido
+
+1. Validar visualmente el modal de creacion con rutas largas reales dentro del shell `/agro/`.
+2. Confirmar en navegador real que el header superior ya no deja rastro de acordeon legacy.
+3. Repetir una prueba manual rapida en movil para targets tactiles y ausencia de overflow horizontal.
