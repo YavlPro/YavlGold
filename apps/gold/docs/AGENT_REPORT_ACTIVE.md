@@ -3608,3 +3608,157 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 
 - Ciclos Operativos ya no se presenta como una pantalla-formulario pesada.
 - `Nuevo ciclo operativo` se siente como hermano real de `Nuevo Cultivo`: modal centrado, ritmo corto, pasos claros y vista principal despejada.
+
+---
+
+## Sesion activa: AgroRepo MVP modular local-first (2026-03-19)
+
+### Diagnostico
+
+- El AgroRepo actual ya no es el modulo plano original: hoy corre como `Tree Memory v3` dentro de `apps/gold/agro/agrorepo.js`.
+- Ese reemplazo previo resolvio jerarquia y bridge IA, pero para este objetivo ahora introduce friccion real:
+  - demasiada densidad visual para uso diario movil;
+  - demasiadas acciones secundarias para un MVP de memoria operativa;
+  - modelo de carpetas/archivos mas cercano a explorador que a bitacora viva del campo.
+- La integracion vigente que no se debe romper ya esta clara:
+  - entrada simple del sidebar `data-agro-view="agrorepo"`;
+  - lazy-load desde `apps/gold/agro/agro.js` via `import('./agrorepo.js')`;
+  - puente shell -> modulo con `window.ensureAgroRepoReady()`;
+  - continuidad con IA via `window._agroRepoContext`.
+- La persistencia legacy hoy vive en dos capas locales:
+  - `agrorepo_virtual_v3` para el arbol actual;
+  - `agrorepo_ultimate_v2` para el formato anterior de bitacoras/reportes.
+
+### Alcance
+
+- Reemplazar la experiencia actual de AgroRepo por un MVP modular nuevo, minimalista y mobile-first.
+- Mantener intacta la entrada actual del sidebar y el lazy-load del shell.
+- Cambiar el enfoque de arbol virtual a notas Markdown simples con:
+  - CRUD;
+  - plantillas minimas;
+  - busqueda basica;
+  - persistencia local-first;
+  - textarea + vista previa alternable;
+  - base de contexto preparada para futura IA.
+- Evitar cambios grandes en `agro.js`; solo se permite compatibilidad minima si hiciera falta.
+
+### Riesgos
+
+- Riesgo de migracion:
+  - si no se leen bien `agrorepo_virtual_v3` o `agrorepo_ultimate_v2`, el usuario puede perder contexto local previo.
+- Riesgo de integracion:
+  - romper `window.ensureAgroRepoReady()` o `window._agroRepoContext` afectaria shell e IA.
+- Riesgo UX:
+  - simplificar demasiado puede dejar fuera señales utiles del repo viejo si no se preserva una lista de notas clara y buscable.
+- Riesgo tecnico:
+  - dejar residuos mezclados entre el modulo viejo y el nuevo puede generar doble render o listeners duplicados.
+
+### Plan
+
+1. Crear una nueva implementacion modular en:
+   - `apps/gold/agro/agroRepo.js`
+   - `apps/gold/agro/agro-repo-storage.js`
+   - `apps/gold/agro/agro-repo-templates.js`
+   - `apps/gold/agro/agro-repo-search.js`
+   - `apps/gold/agro/agro-repo.css`
+2. Convertir `apps/gold/agro/agrorepo.js` en puente de compatibilidad minimo hacia la implementacion nueva.
+3. Mantener la region y entrada actual del sidebar sin submenu ni cambio de ruta.
+4. Renderizar un shell limpio directamente en `#agro-widget-root`, sin revivir el template complejo previo.
+5. Implementar migracion local segura:
+   - prioridad 1: leer `agrorepo_mvp_v1` si ya existe;
+   - prioridad 2: migrar desde `agrorepo_virtual_v3` convirtiendo archivos a notas;
+   - prioridad 3: migrar desde `agrorepo_ultimate_v2` convirtiendo reportes a notas.
+6. Exponer contexto ligero para IA y continuidad operativa usando el nuevo modelo de notas.
+7. Validar con `pnpm build:gold`.
+
+### Decision sobre reemplazo y migracion
+
+- **Reemplazo**: SI. El `Tree Memory v3` deja de ser la experiencia activa de AgroRepo. La ruta/entrada se conserva, pero la UI y el modelo operativo visibles pasan al nuevo MVP modular.
+- **Legacy seguro**: `apps/gold/agro/agrorepo.js` queda solo como adaptador compatible para no tocar el import actual del shell.
+- **Migracion local**: SI. Se implementara migracion one-shot desde `agrorepo_virtual_v3` y fallback desde `agrorepo_ultimate_v2` para no botar memoria local existente.
+- **Seccion canonica**: se usara `Mi Finca` en lugar de `Perfil Agro`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agrorepo.js`
+  - reemplazado por un adaptador minimo de 1 linea hacia la implementacion modular nueva;
+  - se conserva intacto el import actual del shell (`import('./agrorepo.js')`).
+- `apps/gold/agro/agro-repo-app.js`
+  - nuevo shell MVP de AgroRepo (`588` lineas);
+  - layout limpio con hero corto, filtros por seccion, listado de notas y editor unico;
+  - textarea plano + toggle de vista previa;
+  - create/edit/delete/save local;
+  - integracion lazy con `yg-acc-agrorepo`, `window.ensureAgroRepoReady()` y `window._agroRepoContext`.
+- `apps/gold/agro/agro-repo-storage.js`
+  - nueva capa local-first (`331` lineas);
+  - storage nuevo `agrorepo_mvp_v1`;
+  - migracion desde `agrorepo_virtual_v3` y fallback desde `agrorepo_ultimate_v2`;
+  - normalizacion de notas `.md` y bridge de contexto para IA.
+- `apps/gold/agro/agro-repo-templates.js`
+  - catalogo minimo de plantillas (`114` lineas):
+    - Mi Finca
+    - Observacion
+    - Incidencia
+    - Decision
+    - Prueba
+    - Nota libre
+- `apps/gold/agro/agro-repo-search.js`
+  - filtro simple por titulo y contenido (`42` lineas);
+  - conteo por seccion para chips y resumen.
+- `apps/gold/agro/agro-repo.css`
+  - nueva capa visual dedicada (`561` lineas);
+  - mobile-first;
+  - breakpoints `900 / 768 / 480`;
+  - sin split view;
+  - max-height controlado en lista;
+  - `prefers-reduced-motion` respetado.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - paso 0 obligatorio + cierre de esta sesion.
+
+### QA ejecutado
+
+- `pnpm build:gold`
+  - OK.
+- Smoke funcional con harness DOM sobre el modulo real bundleado:
+  - apertura desde el evento del shell actual `agro:shell:view-changed`: OK;
+  - crear nota: OK;
+  - editar titulo y contenido: OK;
+  - vista previa Markdown: OK;
+  - busqueda por contenido: OK;
+  - persistencia tras recarga (`localStorage.agrorepo_mvp_v1`): OK;
+  - eliminar nota: OK.
+- Limite conocido del smoke:
+  - no se corrio medicion de overflow/render layout en navegador real; el smoke fue DOM-driven, no visual.
+
+### Build status
+
+- `pnpm build:gold`: OK.
+- Secuencia:
+  - `agent-guard`: OK
+  - `agent-report-check`: OK
+  - `vite build`: OK
+  - `check-llms`: OK
+  - `check-dist-utf8`: OK
+- Observaciones no bloqueantes:
+  - warning de engine por Node `v25.6.0` vs objetivo `20.x`;
+  - warning historico por chunk grande en `assets/agro-*.js`.
+
+### QA sugerido
+
+1. Abrir AgroRepo desde la entrada actual del sidebar y confirmar que inicializa sin cambio de ruta ni submenu.
+2. En mobile real (`<=480px`), validar que:
+   - la lista no desborda horizontalmente;
+   - el editor mantiene targets claros;
+   - el toggle `Editor / Vista previa` no se rompe.
+3. Si existe data legacy local en el navegador habitual del usuario, verificar que:
+   - se migra a `agrorepo_mvp_v1`;
+   - no se pierde contenido de `agrorepo_virtual_v3` o `agrorepo_ultimate_v2`.
+
+### Estado final
+
+- AgroRepo viejo queda reemplazado como experiencia activa.
+- La entrada actual del sidebar se conserva intacta.
+- El nuevo MVP queda modular, local-first, Markdown-first y preparado para futura IA sin tocar logica sensible del facturero.
+- Nota tecnica:
+  - en este entorno local no fue viable usar simultaneamente `agroRepo.js` y `agrorepo.js` por colision de path case-insensitive;
+  - por eso la implementacion real vive en `agro-repo-app.js` y `agrorepo.js` queda como entry compatible.
