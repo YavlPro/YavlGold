@@ -3944,3 +3944,113 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 
 1. Validar visualmente en navegador real mobile `390x844` que no exista scroll horizontal.
 2. Hacer smoke manual de sidebar/dashboard/facturero/ciclos para no interferencia, ya que esta sesion no toco esos modulos pero tampoco los ejercito en navegador real.
+
+## 2026-03-19 - AgroRepo Blueprint Definitivo
+
+### Diagnostico inicial
+
+- El archivo `C:\Users\yerik\gold\agrorepo definitivo.html` define un contrato mas amplio que el runtime activo: layout monorepo completo, tabs, menu contextual, modales, import/export, status bar, global search, sync UI y toasts.
+- El runtime actual de AgroRepo vive en `apps/gold/agro/agro-repo-app.js` y todavia responde a la iteracion V1.1; su estructura y flujo no son fieles al HTML definitivo aunque el storage local ya resuelve bien la persistencia base.
+- La entrada real del sidebar sigue siendo `apps/gold/agro/agrorepo.js`; conviene mantenerla como adapter para no tocar `agro.js` ni romper imports/rutas existentes.
+- Riesgo principal: trasladar el blueprint sin duplicar estado entre UI nueva y storage existente. Riesgo secundario: tabs, clipboard, import/export y sync UI requieren ampliar wiring sin degradar mobile ni persistencia.
+
+### Plan de implementacion
+
+1. Leer el blueprint definitivo completo y tomar su estructura DOM, acciones y modales como contrato de UI/UX.
+2. Rehacer el shell runtime de AgroRepo para replicar ese blueprint dentro del widget actual, manteniendo el adapter existente.
+3. Extender storage/search solo donde haga falta para tabs, clipboard, import/export, busqueda global y estado de sync, sin mover la arquitectura base del repo local.
+4. Ajustar CSS para que la estructura, densidad y jerarquia sigan el HTML definitivo usando tokens del ADN Visual V10.
+5. Ejecutar smoke funcional de los flujos obligatorios y cerrar con `pnpm build:gold`.
+
+### Alcance y archivos a tocar
+
+- `apps/gold/agro/agrorepo.js`
+- `apps/gold/agro/agro-repo-app.js`
+- `apps/gold/agro/agro-repo-storage.js`
+- `apps/gold/agro/agro-repo-search.js`
+- `apps/gold/agro/agro-repo.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Criterio de fidelidad respecto al HTML definitivo
+
+- El HTML definitivo manda sobre las iteraciones previas de AgroRepo.
+- Se debe conservar la misma estructura general: sidebar, topbar, tabs, editor, preview, status bar, context menu, modales y toast stack.
+- La adaptacion visual a YavlGold solo puede ocurrir en tokens, tipografias y acabado del ADN Visual V10; no debe cambiar la organizacion, densidad ni la sensacion del producto definida en el blueprint.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-repo-app.js`
+  - se reemplaza el shell V1.1 por un runtime fiel al blueprint definitivo;
+  - sidebar, topbar, tabs, editor, preview, status bar, context menu, modales, import/export, global search, sync UI y toasts quedan cableados en el modulo real;
+  - se mantiene el adapter de entrada existente via `apps/gold/agro/agrorepo.js` y el puente `window._agroRepoContext`.
+- `apps/gold/agro/agro-repo-storage.js`
+  - soporte de nombres de archivo `.md`, `.markdown` y `.txt`;
+  - persistencia de tabs y sync config;
+  - helpers de snapshot/paste para copiar, pegar y duplicar nodos;
+  - fix critico: la normalizacion ya no re-siembra `finca.md` en cada persistencia.
+- `apps/gold/agro/agro-repo-search.js`
+  - helper de busqueda global por titulo y contenido con resultados clickeables.
+- `apps/gold/agro/agro-repo.css`
+  - se sustituye el estilo previo por la estructura visual del HTML definitivo adaptada a tokens ADN V10;
+  - sidebar overlay en mobile, tabs scrollables, ellipsis, modales, context menu, status bar y toast stack.
+
+### QA ejecutado
+
+- `pnpm build:gold`: OK.
+- Smoke DOM con bundle de produccion (`jsdom`):
+  - shell AgroRepo renderiza correctamente;
+  - crear carpeta en raiz: OK;
+  - crear archivo dentro de carpeta: OK;
+  - abrir archivo y crear tab: OK;
+  - editar contenido y persistir: OK;
+  - preview Markdown con heading/lista: OK;
+  - busqueda local en arbol: OK;
+  - busqueda global por contenido: OK;
+  - duplicar y eliminar por menu contextual: OK;
+  - guardar sync config y reflejar status bar: OK;
+  - importar archivo `.txt`: OK;
+  - exportar todo sin romper flujo: OK;
+  - tabs y repo persisten en `localStorage`: OK.
+- Nota de QA:
+  - la validacion browser real dentro de `/agro/` quedo limitada por el guard de acceso del shell completo; la verificacion funcional se hizo sobre el bundle de produccion del modulo.
+
+### Build status final
+
+- `pnpm build:gold`: OK.
+- Observaciones no bloqueantes:
+  - warning de engine por Node `v25.6.0` frente al objetivo `20.x`;
+  - warning historico de chunk grande en `assets/agro-*.js`.
+
+### QA sugerido
+
+1. Hacer un pass visual humano en navegador real desktop y mobile para ajustar micro-espaciados si hace falta.
+2. Validar login -> sidebar -> entrada AgroRepo dentro del shell completo usando cuenta QA cuando corresponda.
+
+## 2026-03-19 - AgroRepo Pre-commit Unblock
+
+### Diagnostico inicial
+
+- El commit del blueprint quedo bloqueado por el hook local `pre-commit`.
+- El hook no detecta una credencial real; solo bloquea patrones `eyJ...` y `https://*.supabase.co` en archivos `.js/.ts`.
+- En `apps/gold/agro/agro-repo-app.js` esos patrones venian de placeholders del modal de sync del blueprint definitivo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-repo-app.js`
+  - se reemplazan los placeholders sensibles del modal de sync por textos neutros:
+    - URL placeholder: `URL del proyecto`
+    - key placeholder: `Ingresa tu clave publishable`
+
+### QA ejecutado
+
+- Verificacion del hook:
+  - lectura directa de `.git/hooks/pre-commit`: OK;
+  - re-scan del archivo AgroRepo contra patrones del hook: OK tras limpieza.
+
+### Build status final
+
+- `pnpm build:gold`: OK.
+
+### QA sugerido
+
+1. Reintentar `git add` + `git commit` con el mismo mensaje.

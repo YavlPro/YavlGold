@@ -14,6 +14,9 @@ import { buildNoteSnippet, compareByUpdatedAt } from './agro-repo-search.js';
 export const AGRO_REPO_STORAGE_KEY = 'agrorepo_mvp_v1';
 export const AGRO_REPO_LEGACY_TREE_KEY = 'agrorepo_virtual_v3';
 export const AGRO_REPO_LEGACY_FLAT_KEY = 'agrorepo_ultimate_v2';
+export const AGRO_REPO_TABS_STORAGE_KEY = 'agrorepo_tabs';
+export const AGRO_REPO_ACTIVE_FILE_STORAGE_KEY = 'agrorepo_active';
+export const AGRO_REPO_SYNC_STORAGE_KEY = 'agrorepo_sync';
 export const AGRO_REPO_VERSION = '1.1.0';
 
 function randomBase36(length = 8) {
@@ -46,9 +49,24 @@ function sanitizeTitle(value) {
         .trim();
 }
 
-function ensureMarkdownTitle(value, fallback = 'nota') {
-    const base = sanitizeTitle(value).replace(/\.md$/i, '') || fallback;
-    return `${base}.md`;
+function splitNoteFileTitle(value, fallback = 'nota') {
+    const safe = sanitizeTitle(value) || fallback;
+    const match = safe.match(/^(.*?)(\.(?:md|markdown|txt))$/i);
+    if (match) {
+        return {
+            stem: sanitizeTitle(match[1]) || fallback,
+            extension: match[2].toLowerCase()
+        };
+    }
+    return {
+        stem: safe,
+        extension: '.md'
+    };
+}
+
+function ensureNoteFileTitle(value, fallback = 'nota') {
+    const parts = splitNoteFileTitle(value, fallback);
+    return `${parts.stem}${parts.extension}`;
 }
 
 function buildId(prefix = 'agrp') {
@@ -89,7 +107,7 @@ function formatLegacyDateStem(value) {
 function buildMigratedTitle(candidateTitle, content, templateKey, fallbackDate, prefix = '') {
     const rawCandidate = String(candidateTitle || '').trim();
     if (rawCandidate) {
-        return ensureMarkdownTitle(rawCandidate, getTemplate(templateKey).defaultTitle.replace(/\.md$/i, ''));
+        return ensureNoteFileTitle(rawCandidate, getTemplate(templateKey).defaultTitle.replace(/\.(?:md|markdown|txt)$/i, ''));
     }
 
     const line = sanitizeTitle(firstMeaningfulLine(content)).slice(0, 58);
@@ -100,7 +118,7 @@ function buildMigratedTitle(candidateTitle, content, templateKey, fallbackDate, 
         .join(' - ')
         .slice(0, 72);
 
-    return ensureMarkdownTitle(fallback, getTemplate(templateKey).defaultTitle.replace(/\.md$/i, ''));
+    return ensureNoteFileTitle(fallback, getTemplate(templateKey).defaultTitle.replace(/\.(?:md|markdown|txt)$/i, ''));
 }
 
 export function createEmptyRepo() {
@@ -155,9 +173,10 @@ export function isSystemFolder(node) {
 
 export function ensureUniqueNodeTitle(title, parentId, type, nodes, ignoreId = null) {
     const safe = type === 'file'
-        ? ensureMarkdownTitle(title, 'nota')
+        ? ensureNoteFileTitle(title, 'nota')
         : sanitizeTitle(title) || 'Nueva carpeta';
-    const base = type === 'file' ? safe.replace(/\.md$/i, '') : safe;
+    const fileParts = type === 'file' ? splitNoteFileTitle(safe, 'nota') : null;
+    const base = type === 'file' ? fileParts.stem : safe;
 
     const inUse = new Set(
         (Array.isArray(nodes) ? nodes : [])
@@ -168,7 +187,7 @@ export function ensureUniqueNodeTitle(title, parentId, type, nodes, ignoreId = n
     if (!inUse.has(safe.toLowerCase())) return safe;
 
     let index = 2;
-    const suffix = type === 'file' ? '.md' : '';
+    const suffix = type === 'file' ? fileParts.extension : '';
     while (inUse.has(`${base}-${index}${suffix}`.toLowerCase())) {
         index += 1;
     }
@@ -284,6 +303,87 @@ export function deleteNodeFromRepo(repoLike, nodeId) {
     return { repo, removedIds, removed: true };
 }
 
+export function collectDescendantIds(nodes, nodeId) {
+    const source = Array.isArray(nodes) ? nodes : [];
+    const node = getNode(source, nodeId);
+    if (!node) return [];
+
+    const removedIds = [];
+    const queue = [nodeId];
+
+    while (queue.length) {
+        const currentId = queue.shift();
+        removedIds.push(currentId);
+        getChildren(source, currentId).forEach((child) => queue.push(child.id));
+    }
+
+    return removedIds;
+}
+
+export function snapshotNodeTree(nodes, nodeId) {
+    const node = getNode(nodes, nodeId);
+    if (!node) return null;
+
+    if (node.type === 'folder') {
+        return {
+            type: 'folder',
+            title: node.title,
+            legacyPath: node.legacyPath || '',
+            children: getChildren(nodes, node.id).map((child) => snapshotNodeTree(nodes, child.id)).filter(Boolean)
+        };
+    }
+
+    return {
+        type: 'file',
+        title: node.title,
+        templateKey: node.templateKey,
+        content: node.content,
+        legacyPath: node.legacyPath || '',
+        children: []
+    };
+}
+
+function pasteSnapshotChildren(repo, snapshotChildren, parentId) {
+    const created = [];
+    snapshotChildren.forEach((child) => {
+        const result = pasteNodeSnapshotIntoRepo(repo, child, parentId);
+        repo.nodes = result.repo.nodes;
+        repo.expandedIds = result.repo.expandedIds;
+        created.push(result.node);
+    });
+    return created;
+}
+
+export function pasteNodeSnapshotIntoRepo(repoLike, snapshot, parentId = null) {
+    const repo = normalizeRepo(repoLike);
+    if (!snapshot?.type) return { repo, node: null };
+
+    if (snapshot.type === 'folder') {
+        const folder = buildFolderNode(repo.nodes, {
+            parentId,
+            title: snapshot.title || 'Nueva carpeta',
+            legacyPath: snapshot.legacyPath || ''
+        });
+        repo.nodes = [...repo.nodes, folder];
+        if (parentId && !repo.expandedIds.includes(parentId)) repo.expandedIds = [...repo.expandedIds, parentId];
+        if (!repo.expandedIds.includes(folder.id)) repo.expandedIds = [...repo.expandedIds, folder.id];
+        pasteSnapshotChildren(repo, Array.isArray(snapshot.children) ? snapshot.children : [], folder.id);
+        return { repo, node: folder };
+    }
+
+    const file = buildFileNode(repo.nodes, {
+        parentId,
+        title: snapshot.title || 'nota.md',
+        templateKey: snapshot.templateKey || 'nota-libre',
+        content: snapshot.content || '',
+        legacyPath: snapshot.legacyPath || ''
+    });
+    repo.nodes = [...repo.nodes, file];
+    repo.activeNodeId = file.id;
+    if (parentId && !repo.expandedIds.includes(parentId)) repo.expandedIds = [...repo.expandedIds, parentId];
+    return { repo, node: file };
+}
+
 function findSystemFolderIdByKey(nodes, folderKey) {
     return getRootFolders(nodes).find((node) => node.folderKey === folderKey)?.id || null;
 }
@@ -319,8 +419,9 @@ function ensureFolderChain(repo, rootFolderKey, subfolders = []) {
     return parentId || findSystemFolderIdByKey(safeRepo.nodes, rootFolderKey);
 }
 
-function ensureSystemRoots(repoLike) {
+function ensureSystemRoots(repoLike, options = {}) {
     const repo = repoLike || createEmptyRepo();
+    const seedMiFinca = options.seedMiFinca !== false;
     const draftNodes = Array.isArray(repo.nodes) ? [...repo.nodes] : [];
 
     AGRO_REPO_ROOT_FOLDERS.forEach((folderDef) => {
@@ -349,7 +450,7 @@ function ensureSystemRoots(repoLike) {
 
     const miFincaRootId = findSystemFolderIdByKey(repo.nodes, 'mi-finca');
     const hasMiFincaFile = repo.nodes.some((node) => node?.type === 'file' && node?.parentId === miFincaRootId);
-    if (!hasMiFincaFile && miFincaRootId) {
+    if (seedMiFinca && !hasMiFincaFile && miFincaRootId) {
         const seed = AGRO_REPO_ROOT_FOLDERS.find((folder) => folder.key === 'mi-finca')?.seedFiles || [];
         seed.forEach((file) => {
             repo.nodes.push(buildFileNode(repo.nodes, {
@@ -408,7 +509,7 @@ function normalizeTreeRepo(repoLike) {
             draft.nodes.push(normalizeFolderNode(node, draft.nodes));
         });
 
-    ensureSystemRoots(draft);
+    ensureSystemRoots(draft, { seedMiFinca: false });
 
     const fallbackParentId = findSystemFolderIdByKey(draft.nodes, 'mi-finca');
 
@@ -563,6 +664,14 @@ function writeStorage(key, value) {
     }
 }
 
+function readTextStorage(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch {
+        return '';
+    }
+}
+
 export function normalizeRepo(repoLike) {
     const raw = repoLike || createEmptyRepo();
     if (Array.isArray(raw?.notes)) {
@@ -624,6 +733,59 @@ export function persistRepoState(repoLike) {
         migratedFrom: repo.migratedFrom
     });
     return repo;
+}
+
+export function loadTabState(repoLike) {
+    const repo = normalizeRepo(repoLike);
+    const rawTabs = readStorage(AGRO_REPO_TABS_STORAGE_KEY);
+    const openTabs = Array.isArray(rawTabs)
+        ? rawTabs.filter((id) => getNode(repo.nodes, id)?.type === 'file')
+        : [];
+    const storedActiveId = String(readTextStorage(AGRO_REPO_ACTIVE_FILE_STORAGE_KEY) || '');
+    const fallbackActiveId = getNode(repo.nodes, repo.activeNodeId)?.type === 'file' ? repo.activeNodeId : '';
+    const activeFileId = getNode(repo.nodes, storedActiveId)?.type === 'file'
+        ? storedActiveId
+        : (getNode(repo.nodes, fallbackActiveId)?.type === 'file' ? fallbackActiveId : (openTabs[0] || ''));
+
+    return {
+        openTabs,
+        activeFileId: activeFileId || null
+    };
+}
+
+export function persistTabState(openTabs = [], activeFileId = null) {
+    const safeTabs = Array.isArray(openTabs) ? openTabs.filter(Boolean) : [];
+    try {
+        localStorage.setItem(AGRO_REPO_TABS_STORAGE_KEY, JSON.stringify(safeTabs));
+        localStorage.setItem(AGRO_REPO_ACTIVE_FILE_STORAGE_KEY, activeFileId || '');
+    } catch {
+        // ignore storage quota errors for UI state
+    }
+    return {
+        openTabs: safeTabs,
+        activeFileId: activeFileId || null
+    };
+}
+
+export function loadSyncConfig() {
+    const raw = readStorage(AGRO_REPO_SYNC_STORAGE_KEY);
+    return {
+        url: String(raw?.url || ''),
+        key: String(raw?.key || ''),
+        autoSync: Boolean(raw?.autoSync),
+        lastSyncAt: String(raw?.lastSyncAt || '')
+    };
+}
+
+export function persistSyncConfig(configLike = {}) {
+    const config = {
+        url: String(configLike?.url || '').trim(),
+        key: String(configLike?.key || '').trim(),
+        autoSync: Boolean(configLike?.autoSync),
+        lastSyncAt: String(configLike?.lastSyncAt || '')
+    };
+    writeStorage(AGRO_REPO_SYNC_STORAGE_KEY, config);
+    return config;
 }
 
 function getRootFolderForNode(nodes, nodeId) {

@@ -45,3 +45,44 @@ export function sortByMode(items, mode = 'updated') {
     if (mode === 'name') return safe.sort(compareByName);
     return safe.sort(compareByUpdatedAt);
 }
+
+export function searchFiles(files, query, resolvePath = () => '') {
+    const safeQuery = normalizeSearchText(query);
+    if (!safeQuery || safeQuery.length < 2) return [];
+
+    const results = [];
+    (Array.isArray(files) ? files : []).forEach((file) => {
+        if (!file) return;
+        const path = resolvePath(file);
+        const safeTitle = normalizeSearchText(file.title);
+        if (safeTitle.includes(safeQuery)) {
+            results.push({
+                file,
+                path,
+                type: 'name',
+                line: '',
+                lineNum: null
+            });
+        }
+
+        String(file.content || '')
+            .split(/\r?\n/)
+            .forEach((line, index) => {
+                if (normalizeSearchText(line).includes(safeQuery)) {
+                    results.push({
+                        file,
+                        path,
+                        type: 'content',
+                        line: line.trim(),
+                        lineNum: index + 1
+                    });
+                }
+            });
+    });
+
+    return results;
+}
+
+export function escapeSearchRegExp(value) {
+    return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
