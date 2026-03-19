@@ -3496,3 +3496,115 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 - Sidebar con familia operativa, wizard, filtros, export MD e historial expandible listos.
 - Build limpio.
 - Sin bug funcional abierto detectado dentro del alcance de Ciclos Operativos V2.
+
+## 2026-03-19 — Ciclos Operativos UX/UI Modal Alignment
+
+### Diagnostico
+
+- La creacion de `Nuevo ciclo operativo` funciona, pero hoy se siente pesada porque el wizard vive incrustado en la vista principal.
+- La comparacion correcta es el flujo actual de `Nuevo Cultivo`, que resuelve mejor la jerarquia visual usando modal centrado, ritmo corto y footer claro.
+- La pantalla de Ciclos Operativos necesita volver a parecer una seccion madura de gestion: header, CTA, filtros, resumen y tarjetas, sin un formulario largo abierto por defecto.
+
+### Estrategia de rediseño
+
+- Sacar el wizard del layout principal y renderizarlo dentro de un modal propio del modulo.
+- Reusar la logica actual de create/edit, pasos, validaciones y draft state para no abrir un frente funcional nuevo.
+- Copiar el patron visual de `Nuevo Cultivo`:
+  - overlay oscuro;
+  - contenedor centrado;
+  - header con titulo y cierre;
+  - cuerpo compacto por pasos;
+  - footer limpio con navegacion.
+- Mantener intactos filtros, tarjetas, historial, export y segmentacion `Activos/Finalizados`.
+
+### Archivos a tocar
+
+- `apps/gold/agro/agroOperationalCycles.js`
+- `apps/gold/agro/agro-operational-cycles.css`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+
+### Riesgos
+
+- Riesgo de regresion si el cambio de contenedor rompe el flujo de create/edit o el foco del wizard.
+- Riesgo de desborde vertical u horizontal en mobile si el modal no controla bien `max-height` y scroll interno.
+- Riesgo de inconsistencia visual si el modal nuevo se aleja del patron real de `Nuevo Cultivo`.
+
+### Plan de QA
+
+- Verificar que la vista principal ya no renderiza el wizard incrustado.
+- Abrir modal desde `➕ Nuevo ciclo operativo`.
+- Validar avance/retroceso sin perder datos.
+- Validar creacion y edicion dentro del modal.
+- Validar cierre por boton y backdrop sin romper estado.
+- Validar desktop y mobile `390x844` sin overflow.
+- Cerrar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agroOperationalCycles.js`
+  - `renderShell()` se rediseño para dejar la vista principal limpia:
+    - header;
+    - feedback discreto;
+    - resumen;
+    - filtros/lista;
+    - modal propio del modulo.
+  - El wizard dejo de renderizarse incrustado y ahora vive dentro de `#agro-operational-modal`.
+  - Se agrego estado `modalOpen` y helpers `openComposerModal()` / `closeComposerModal()` / `syncModalVisibility()`.
+  - `focusForm()` paso de hacer scroll en la vista a abrir el modal y enfocar el primer campo.
+  - El footer del wizard se compacto y quedo alineado al patron modal con `Cancelar`, `Atrás`, `Siguiente` y guardado final.
+  - Se agrego cierre por `Escape`, backdrop y boton `×`.
+  - Se actualizo el cambio de vista para cerrar el modal al salir de `operational`.
+  - El feedback ahora se refleja tanto en la superficie principal como dentro del modal.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - Se agrego base propia del modal para que el modulo no dependa de estilos inyectados por `agro.js`.
+  - Se alineo el dialogo al lenguaje visual de `Nuevo Cultivo`:
+    - overlay oscuro;
+    - contenedor centrado;
+    - header limpio;
+    - cuerpo compacto;
+    - footer estructurado.
+  - Se ajustaron stepper, espaciados, footer del wizard y responsive mobile.
+  - Se agrego lock de scroll del `body` y soporte `prefers-reduced-motion`.
+
+### QA ejecutado
+
+- Verificacion estructural:
+  - la vista principal ya no contiene wizard incrustado: OK;
+  - el CTA `➕ Nuevo ciclo operativo` abre modal centrado: OK.
+- QA en navegador con harness local del modulo y mock de Supabase:
+  - apertura del modal desde header: OK;
+  - cierre por `❌ Cancelar`: OK;
+  - cierre por `×`: OK;
+  - `modalOpenClass` y `display:flex/none` correctos al abrir/cerrar: OK;
+  - `body` bloqueado al abrir y liberado al cerrar: OK;
+  - paso 1 -> 2 -> 1 conserva nombre y descripcion: OK;
+  - paso 4 resume nombre, cultivo, monto y cantidad correctamente: OK;
+  - creacion via wizard de `Compra de manguera principal` con cultivo `Maíz`, monto `38.000 COP`, cantidad `1 Unidad`: OK;
+  - el modal se cierra tras guardar y la tarjeta activa queda visible: OK;
+  - `390x844` sin overflow horizontal en vista principal: OK;
+  - `390x844` sin overflow horizontal con modal abierto: OK.
+
+### Bug encontrado hoy
+
+- Bug de autosuficiencia visual del modal:
+  - Sintoma: en el harness local, el overlay quedaba `display: block` aunque `modalOpen=false`, porque el modulo dependia del baseline global de `.modal-overlay` inyectado por `agro.js`.
+  - Fix: se agrego en `agro-operational-cycles.css` la base propia de `.agro-operational-modal` y `.agro-operational-modal.active`, junto con animacion, backdrop y layout del dialogo.
+  - Re-test: `modalDisplay` cambio a `none` al cerrar y `flex` al abrir: OK.
+
+### Build status
+
+- `pnpm build:gold`: OK.
+- Secuencia:
+  - `agent-guard`: OK
+  - `agent-report-check`: OK
+  - `vite build`: OK
+  - `check-llms`: OK
+  - `check-dist-utf8`: OK
+- Observaciones no bloqueantes:
+  - warning de engine por Node `v25.6.0` vs objetivo `20.x`;
+  - warning de chunk grande existente en `assets/agro-Bq8HV0My.js`.
+
+### Estado final
+
+- Ciclos Operativos ya no se presenta como una pantalla-formulario pesada.
+- `Nuevo ciclo operativo` se siente como hermano real de `Nuevo Cultivo`: modal centrado, ritmo corto, pasos claros y vista principal despejada.
