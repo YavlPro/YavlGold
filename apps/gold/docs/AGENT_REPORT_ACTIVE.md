@@ -4122,3 +4122,145 @@ Validación visual de `AGENTS.md` para confirmar que se mantiene el Markdown cor
 1. Validar visualmente el modal de creacion con rutas largas reales dentro del shell `/agro/`.
 2. Confirmar en navegador real que el header superior ya no deja rastro de acordeon legacy.
 3. Repetir una prueba manual rapida en movil para targets tactiles y ausencia de overflow horizontal.
+
+## 2026-03-22 - Fase 0 canonica Cartera Viva V2
+
+### Diagnostico inicial
+
+- La sesion no implementa UI ni modulo nuevo; solo debe producir diagnostico tecnico verificable para Cartera Viva V2.
+- El punto critico a comprobar es si el facturero ya tiene entidad comprador canonica (`buyer_id` o equivalente) o si sigue operando con texto libre.
+- Tambien debe verificarse si el esquema real y la data existente soportan agrupar cartera por comprador sin romper historiales ni mezclar variantes de nombre.
+
+### Plan
+
+1. Inspeccionar el repo para localizar codigo de facturero, historial, exportes, rankings, stats y cualquier manejo de compradores/clientes.
+2. Inspeccionar el esquema real de Supabase via MCP para identificar tablas, columnas, relaciones, claves foraneas y restricciones relevantes.
+3. Contrastar codigo y esquema para determinar si existe `buyer_id` real, si hay tabla de compradores y como se guardan fiados/pagos/perdidas/transferencias/donaciones.
+4. Buscar evidencia de duplicados o fragmentacion de compradores por variantes de texto.
+5. Emitir veredicto de factibilidad y recomendacion arquitectonica sin implementar nada.
+
+### Preguntas a responder
+
+- Existe una tabla `agro_buyers` o equivalente para compradores normalizados.
+- Los movimientos del facturero guardan `buyer_id` real o solo nombre libre.
+- Existen duplicados reales de compradores por mayusculas/minusculas/tildes/variantes.
+- Donde debe vivir Cartera Viva en la arquitectura actual.
+- Si la implementacion correcta debe ser un modulo nuevo dedicado y por que.
+- Si el modelo actual soporta `buyer_id` canonico, nombre canonico, aliases y el mapeo a `credited_sale`, `debt_payment`, `cash_sale`, `loss`, `transfer` y `donation`.
+
+### Riesgos tecnicos
+
+- Puede existir drift entre el codigo del repo y el esquema productivo real.
+- Puede haber nombres de comprador persistidos como texto libre en multiples tablas, lo que fragmentaria cartera e historial.
+- La semantica de estados como "pagado" puede no equivaler siempre a pago de deuda; hay que validar contra columnas y flujo real.
+- Si no existe FK real hacia comprador, cualquier MVP de cartera exigira saneamiento o migracion previa/minima.
+
+### Fuentes a inspeccionar
+
+- Repo:
+  - `AGENTS.md`
+  - `apps/gold/agro/agro.js`
+  - modulos `apps/gold/agro/agro-*.js` relacionados con historial, stats, carrito, trash, dashboard o compradores
+  - `apps/gold/agro/agrocompradores.js`
+  - exportes markdown o documentos que revelen agrupacion actual
+  - `apps/gold/supabase/agro_schema.sql` y migraciones relevantes
+- Supabase MCP:
+  - tablas del schema real
+  - columnas y claves foraneas
+  - consultas de muestra para detectar `buyer_id`, nombres de comprador y duplicados
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agrego la apertura formal de la sesion Fase 0 canonica Cartera Viva V2 con diagnostico, plan, preguntas, riesgos y fuentes.
+
+### Build status
+
+- No ejecutado en esta fase inicial de diagnostico; solo se actualizo documentacion obligatoria previa al analisis.
+
+### QA sugerido
+
+1. Verificar al cierre de la sesion que el diagnostico cite columnas y tablas reales del esquema Supabase activo.
+2. Confirmar que cualquier recomendacion arquitectonica quede respaldada por archivos concretos del repo y no por supuestos.
+
+---
+
+## Sesion: Fix decimales en transferencias parciales del Facturero (2026-03-23)
+
+### Diagnostico
+
+El flujo de transferencias parciales del historial (fiados → pagados / fiados → perdidas) bloqueaba el ingreso de cantidades decimales (ej. `2.5` sacos) cuando el total de la transaccion era un numero entero (ej. `4`).
+
+### Causa raiz
+
+El sistema usa `isIntegerLike(valor_total)` para determinar el modo de precision (`qtyPrecision`):
+- Si el total es entero (ej. `4`), `qtyPrecision = 0` → modo entero forzado.
+- Esto propaga a:
+  1. `qtyStep = '1'` → atributo HTML `step="1"` que bloquea decimales en el `<input>`.
+  2. `Math.round(parsed)` en `resolveQtyMoveDraft` → descarta la parte decimal del valor ingresado.
+  3. `Math.round(qtyLeftRaw)` en `updateSplitPreview` → redondea el remanente.
+  4. `Math.round(qtyTransfer)` y `Math.round(qtyTotal)` en `computePendingSplitDraft` → destruye los decimales al construir el split draft.
+  5. `roundNumeric(qty, 0)` en `buildPartialSplitMetaPayload` → guarda en DB sin decimales.
+
+Archivos y lineas afectadas:
+- `apps/gold/agro/agro.js:6947-6948` — calculo de `qtyPrecision` y `qtyStep` en `buildTransferMetaModal`
+- `apps/gold/agro/agro.js:6967` — `qtyTotalInput.step = qtyStep` (bloqueo en input total)
+- `apps/gold/agro/agro.js:7003` — `Math.round` en valor inicial del input de cantidad
+- `apps/gold/agro/agro.js:7006` — `Math.round` en `qtyInput.max`
+- `apps/gold/agro/agro.js:7011` — `qtyInput.step = qtyStep` (bloqueo en input cantidad)
+- `apps/gold/agro/agro.js:7105` — `qtyPrecision` derivado de `isIntegerLike` en `resolveQtyTotalDraft`
+- `apps/gold/agro/agro.js:7133` — `Math.round(parsed)` en `resolveQtyMoveDraft`
+- `apps/gold/agro/agro.js:7157-7158` — step y max en `updateSplitPreview`
+- `apps/gold/agro/agro.js:7179` — `Math.round(qtyLeftRaw)` en `updateSplitPreview`
+- `apps/gold/agro/agro.js:4010` — `Math.round(qtyRaw)` en `computePendingSplitDraft`
+- `apps/gold/agro/agro.js:4013` — `normalizedQtyPrecision = 0` si total es entero
+- `apps/gold/agro/agro.js:4044-4045` — `Math.round(base.qtyTotal)` en `computePendingSplitDraft`
+- `apps/gold/agro/agro.js:4051` — `Math.round(qtyTransfer)` en `computePendingSplitDraft`
+- `apps/gold/agro/agro.js:4059` — `Math.round(qtyLeftRaw)` en `computePendingSplitDraft`
+- `apps/gold/agro/agro.js:3948` — `qtyPrecision = 0` en `buildPartialSplitMetaPayload` si todos son enteros
+
+### Plan del fix
+
+1. En `buildTransferMetaModal`: `qtyPrecision` siempre = `2`; `qtyStep` siempre = `'any'`.
+2. En `resolveQtyTotalDraft`: `qtyPrecision` siempre = `2`.
+3. En `resolveQtyMoveDraft`: siempre usar `roundNumeric(parsed, 2)`, nunca `Math.round`.
+4. En `updateSplitPreview`: step siempre `'any'`, max y qtyLeft siempre con `roundNumeric(..., 2)`.
+5. En `computePendingSplitDraft`: eliminar los `Math.round` y forzar `precision = 2`.
+6. En `buildPartialSplitMetaPayload`: usar `precision = 2` siempre para guardar con decimales.
+7. Display inteligente se mantiene via `formatSplitQuantity` que ya usa `isIntegerLike` para el render.
+
+### Cambios aplicados
+
+**`apps/gold/agro/agro.js`** — 10 ediciones quirurgicas:
+
+| Linea (aprox) | Funcion | Cambio |
+|---|---|---|
+| 6947-6949 | `buildTransferMetaModal` | `qtyPrecision=2` fijo; `qtyStep='any'` fijo (antes derivados de `isIntegerLike`) |
+| 6999-7006 | `buildTransferMetaModal` | Eliminado `Math.round` en clamp default y en `qtyInput.max`; usa `roundNumeric(...,2)` |
+| 7106-7107 | `resolveQtyTotalDraft` | `qtyPrecision=2` fijo (antes `isIntegerLike`) |
+| 7133 | `resolveQtyMoveDraft` | Eliminado `Math.round(parsed)`; usa `roundNumeric(parsed,2)` |
+| 7157-7158 | `updateSplitPreview` | `qtyInput.step='any'`; `qtyInput.max=roundNumeric(...,2)` |
+| 7179 | `updateSplitPreview` | Eliminado `Math.round(qtyLeftRaw)`; usa `roundNumeric(qtyLeftRaw,2)` |
+| 4009-4010 | `computePendingSplitDraft` | Eliminado `Math.round(qtyRaw)`; usa `roundNumeric(qtyRaw,2)` |
+| 4013 | `computePendingSplitDraft` | `normalizedQtyPrecision=2` fijo |
+| 4044-4059 | `computePendingSplitDraft` | Eliminados `Math.round` en `qtyTotal`, `qtyTransfer`, `qtyLeft` |
+| 3948 | `buildPartialSplitMetaPayload` | `qtyPrecision=2` fijo (antes condicionado a `isIntegerLike`) |
+
+**`apps/gold/docs/AGENT_REPORT_ACTIVE.md`** — esta seccion de reporte
+
+### Build status
+
+- `pnpm build:gold` PASS — sin errores ni warnings nuevos.
+
+### QA sugerido
+
+| Caso | Entrada | Resultado esperado |
+|---|---|---|
+| Entero normal | Transferir `2` de `4` sacos | OK, funciona como antes |
+| Decimal nuevo | Transferir `2.5` de `4` sacos | Transferido: `2.5`, Restante: `1.5` |
+| Cero rechazado | Transferir `0` | Error: cantidad invalida |
+| Negativo rechazado | Transferir `-1` | Error: cantidad invalida |
+| Exceso rechazado | Transferir `4.1` de `4` | Error: supera disponible |
+| Decimal fino | Transferir `1.25` de `4` | Transferido: `1.25`, Restante: `2.75` |
+| Display limpio | Ver badge tras split `2.5/1.5` | Sin `1.5000000002` ni basura visual |
+| Flujo reversa | Devolver pagado a fiados con cantidad decimal | Funciona; `split_meta` guarda con 2 decimales |

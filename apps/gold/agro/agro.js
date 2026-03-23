@@ -3945,7 +3945,8 @@ function buildPartialSplitMetaPayload(input = {}) {
     const amountLeft = toSafeLocaleNumber(input.amountLeft);
     const movedAt = input.movedAt || new Date().toISOString();
 
-    const qtyPrecision = isIntegerLike(qtyTotal) && isIntegerLike(qtyMoved) && isIntegerLike(qtyLeft) ? 0 : 2;
+    // Always precision=2: preserve decimals (e.g. 2.5 sacos, 1.5 remanente)
+    const qtyPrecision = 2;
 
     return {
         type: 'partial_transfer',
@@ -4007,10 +4008,11 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
     let qtyRaw = toSafeLocaleNumber(decision?.qtyTotal);
     if (qtyRaw === null) qtyRaw = resolvedQty.qtyTotal;
     const normalizedQtyRaw = qtyRaw !== null
-        ? (isIntegerLike(qtyRaw) ? Math.round(qtyRaw) : roundNumeric(qtyRaw, 2))
+        ? roundNumeric(qtyRaw, 2)
         : null;
     const sourceAmount = toSafeLocaleNumber(pending?.monto) ?? 0;
-    const normalizedQtyPrecision = normalizedQtyRaw !== null && isIntegerLike(normalizedQtyRaw) ? 0 : 2;
+    // Always precision=2: integer totals (e.g. 4 sacos) must accept decimal transfers (e.g. 2.5)
+    const normalizedQtyPrecision = 2;
     const minTransferQty = getSplitQuantityFloor(normalizedQtyPrecision);
     const splitEnabled = !!unitType && normalizedQtyRaw !== null && normalizedQtyRaw >= minTransferQty;
 
@@ -4041,14 +4043,12 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
         return base;
     }
 
-    const qtyTotal = base.qtyPrecision === 0
-        ? Math.round(base.qtyTotal)
-        : roundNumeric(base.qtyTotal, 2);
+    const qtyTotal = roundNumeric(base.qtyTotal, 2);
     const minimumTransferQty = getSplitQuantityFloor(base.qtyPrecision);
 
     let qtyTransfer = toSafeLocaleNumber(decision?.quantity);
     if (qtyTransfer === null) qtyTransfer = qtyTotal;
-    qtyTransfer = base.qtyPrecision === 0 ? Math.round(qtyTransfer) : roundNumeric(qtyTransfer, 2);
+    qtyTransfer = roundNumeric(qtyTransfer, 2);
 
     if (qtyTransfer < minimumTransferQty || qtyTransfer > qtyTotal) {
         base.error = `La cantidad a transferir debe estar entre ${formatQuantityValue(minimumTransferQty, base.qtyPrecision)} y ${formatQuantityValue(qtyTotal, base.qtyPrecision)}.`;
@@ -4056,7 +4056,7 @@ function computePendingSplitDraft(pending, destination, decision = {}) {
     }
 
     const qtyLeftRaw = Math.max(qtyTotal - qtyTransfer, 0);
-    const qtyLeft = base.qtyPrecision === 0 ? Math.round(qtyLeftRaw) : roundNumeric(qtyLeftRaw, 2);
+    const qtyLeft = roundNumeric(qtyLeftRaw, 2);
 
     const unitPriceOriginal = base.unitPriceOriginal;
     const transferTotalInput = toSafeLocaleNumber(decision?.transferTotal);
@@ -6944,8 +6944,9 @@ function buildTransferMetaModal(options = {}) {
         const forceQtyTotalInput = splitOptions.forceQtyTotalInput === true;
         const forceTransferQtyInput = splitOptions.forceTransferQtyInput === true;
         const effectiveQtyTotal = configuredQtyTotal;
-        const qtyPrecision = effectiveQtyTotal !== null && isIntegerLike(effectiveQtyTotal) ? 0 : 2;
-        const qtyStep = qtyPrecision === 0 ? '1' : '0.01';
+        // Always allow decimals in transfer qty: integer total (e.g. 4 sacos) must still accept 2.5
+        const qtyPrecision = 2;
+        const qtyStep = 'any';
         const minQtyValue = getSplitQuantityFloor(qtyPrecision);
         const needsQtyTotalInput = (splitOptions.requireQtyTotal === true && configuredQtyTotal === null) || forceQtyTotalInput;
         const qtyTotalInitial = configuredQtyTotal !== null && configuredQtyTotal >= minQtyValue ? configuredQtyTotal : minQtyValue;
@@ -7000,10 +7001,10 @@ function buildTransferMetaModal(options = {}) {
                     minQtyValue,
                     Math.min(
                         effectiveQtyTotal,
-                        qtyPrecision === 0 ? Math.round(defaultQty ?? effectiveQtyTotal) : roundNumeric(defaultQty ?? effectiveQtyTotal, 2)
+                        roundNumeric(defaultQty ?? effectiveQtyTotal, 2)
                     )
                 );
-                qtyInput.max = String(qtyPrecision === 0 ? Math.round(effectiveQtyTotal) : roundNumeric(effectiveQtyTotal, 2));
+                qtyInput.max = String(roundNumeric(effectiveQtyTotal, 2));
                 qtyInput.value = formatQuantityValue(clampedDefaultQty, qtyPrecision);
             } else if (defaultQty !== null && defaultQty > 0) {
                 qtyInput.value = formatQuantityValue(defaultQty, isIntegerLike(defaultQty) ? 0 : 2);
@@ -7102,7 +7103,8 @@ function openTransferMetaModal(options = {}) {
             const qtyTotalRaw = usesEditableQtyTotal
                 ? (qtyTotalDraft !== null ? qtyTotalDraft : qtyTotalFixed)
                 : (qtyTotalFixed !== null ? qtyTotalFixed : qtyTotalDraft);
-            const qtyPrecision = qtyTotalRaw !== null && isIntegerLike(qtyTotalRaw) ? 0 : 2;
+            // Always precision=2: integer total (e.g. 4 sacos) must accept decimal transfers (e.g. 2.5)
+            const qtyPrecision = 2;
             return { qtyTotalRaw, qtyPrecision };
         };
 
@@ -7130,7 +7132,8 @@ function openTransferMetaModal(options = {}) {
                 return { valid: false, empty: false, qtyMove: null };
             }
 
-            const normalized = qtyPrecision === 0 ? Math.round(parsed) : roundNumeric(parsed, 2);
+            // Always preserve decimals: use roundNumeric instead of Math.round
+            const normalized = roundNumeric(parsed, 2);
             if (!(normalized >= minQty) || normalized > qtyTotalRaw) {
                 return { valid: false, empty: false, qtyMove: normalized };
             }
@@ -7154,8 +7157,8 @@ function openTransferMetaModal(options = {}) {
             }
 
             if (qtyInput) {
-                qtyInput.max = String(qtyPrecision === 0 ? Math.round(qtyTotalRaw) : roundNumeric(qtyTotalRaw, 2));
-                qtyInput.step = qtyPrecision === 0 ? '1' : '0.01';
+                qtyInput.max = String(roundNumeric(qtyTotalRaw, 2));
+                qtyInput.step = 'any';
             }
 
             const qtyState = resolveQtyMoveDraft(qtyTotalRaw, qtyPrecision);
@@ -7176,7 +7179,7 @@ function openTransferMetaModal(options = {}) {
             }
 
             const qtyLeftRaw = Math.max(qtyTotalRaw - qtyMove, 0);
-            const qtyLeft = qtyPrecision === 0 ? Math.round(qtyLeftRaw) : roundNumeric(qtyLeftRaw, 2);
+            const qtyLeft = roundNumeric(qtyLeftRaw, 2);
             const qtyMoveText = formatSplitQuantity(qtyMove, splitOptions.unitType);
             const qtyLeftText = formatSplitQuantity(qtyLeft, splitOptions.unitType);
             const destinationLabel = splitOptions.destinationLabel || 'Destino';
