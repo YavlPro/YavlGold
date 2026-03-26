@@ -689,36 +689,54 @@ body.landing-page .v10-glass-card:hover::before {
    ============================================ */
 body.landing-page .v10-modules-section { background: var(--v10-bg-1); }
 body.landing-page .v10-modules-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem; position: relative; z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.95rem;
+  max-width: 820px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
 }
 
-body.landing-page .v10-module-card { padding: 1.35rem 1.3rem; cursor: pointer; }
-body.landing-page .v10-module-card .module-top {
-  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem;
+body.landing-page .v10-module-card {
+  padding: 1.1rem 1.05rem;
+  min-height: 0;
 }
-body.landing-page .v10-module-card .module-icon { font-size: 1.9rem; animation: v10-breathe 5s infinite; }
+body.landing-page .v10-module-card .module-top {
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.7rem;
+}
+body.landing-page .v10-module-card .module-icon {
+  font-size: 1.45rem;
+  animation: none;
+}
 body.landing-page .v10-module-card .module-title {
-  font-family: var(--v10-font-heading); font-size: 0.95rem; font-weight: 700;
+  font-family: var(--v10-font-heading); font-size: 0.78rem; font-weight: 700;
   color: var(--v10-gold-4); margin-bottom: 0.35rem; letter-spacing: 1px;
 }
 body.landing-page .v10-module-card .module-desc {
-  font-size: 0.88rem; color: var(--v10-text-secondary); line-height: 1.45;
+  font-size: 0.82rem; color: var(--v10-text-secondary); line-height: 1.42;
 }
-body.landing-page .v10-module-card .module-link {
-  display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 0.8rem; font-weight: 700;
-  font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--v10-text-muted); transition: color 0.2s;
-  text-decoration: none;
+body.landing-page .v10-module-card .module-link { display: none; }
+body.landing-page .v10-section-action {
+  max-width: 820px;
+  margin: 1.1rem auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
-body.landing-page .v10-module-card:hover .module-link { color: var(--v10-gold-4); }
+body.landing-page .v10-section-action-copy {
+  font-size: 0.88rem;
+  color: var(--v10-text-muted);
+  margin: 0;
+}
 
 /* Module status badges */
 body.landing-page .v10-status {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 12px; border-radius: var(--v10-radius-pill);
-  font-family: var(--v10-font-body); font-weight: 700; font-size: 0.60rem;
+  padding: 4px 10px; border-radius: var(--v10-radius-pill);
+  font-family: var(--v10-font-body); font-weight: 700; font-size: 0.56rem;
   text-transform: uppercase; letter-spacing: 1px;
 }
 body.landing-page .v10-status-available { color: #10B981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); }
@@ -732,30 +750,6 @@ body.landing-page .v10-status-available .v10-status-dot {
 }
 body.landing-page .v10-status-dev .v10-status-dot { background: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
 body.landing-page .v10-status-soon .v10-status-dot { background: var(--v10-text-muted); }
-
-/* ============================================
-   V10 VALUE PROPOSITION
-   ============================================ */
-body.landing-page .v10-value-section { background: var(--v10-bg-2); }
-body.landing-page .v10-value-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem; position: relative; z-index: 2;
-}
-body.landing-page .v10-value-card {
-  padding: 1.2rem 1.1rem;
-  text-align: left;
-  min-height: 0;
-}
-body.landing-page .v10-value-icon {
-  font-size: 1.5rem; margin-bottom: 0.7rem; display: block;
-}
-body.landing-page .v10-value-title {
-  font-family: var(--v10-font-heading); font-size: 0.72rem; font-weight: 700;
-  letter-spacing: 1px; color: var(--v10-gold-4); margin-bottom: 0.45rem;
-}
-body.landing-page .v10-value-desc {
-  font-size: 0.84rem; color: var(--v10-text-secondary); line-height: 1.45;
-}
 
 /* ============================================
    V10 DNA QUOTE SECTION
@@ -1038,7 +1032,7 @@ body.landing-page .forgot-password-link:hover { color: var(--v10-gold-4); }
   body.landing-page .hero-desc { margin-left: auto; margin-right: auto; }
   body.landing-page .hero-cta { justify-content: center; }
   body.landing-page .v10-modules-grid { grid-template-columns: 1fr; }
-  body.landing-page .v10-value-grid { grid-template-columns: 1fr; }
+  body.landing-page .v10-section-action { justify-content: center; text-align: center; }
   body.landing-page .auth-logo-box img { width: 60px !important; height: 60px !important; }
   body.landing-page .auth-modal-container { padding: 24px 20px; }
   body.landing-page #auth-modal {

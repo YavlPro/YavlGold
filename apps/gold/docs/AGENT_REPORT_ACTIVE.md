@@ -4386,3 +4386,70 @@ Archivos y lineas afectadas:
 
 1. Revisar visualmente la landing en desktop y mobile para confirmar que los beneficios se leen mas rapido y con menos peso vertical.
 2. Verificar que FAQ y Soporte siguen navegables y que el acceso principal a `/agro/` no cambia.
+
+---
+
+## Sesion: Compactar de verdad landing y card Agro del dashboard (2026-03-26)
+
+### Diagnostico
+
+- La landing en `apps/gold/index.html` y `apps/gold/assets/css/landing-v10.css` sigue teniendo una estructura pesada:
+  - `#modulos` conserva una sola card dominante que se percibe como franja horizontal;
+  - la compactacion anterior redujo padding, pero no elimino la estructura ultra-ancha;
+  - la seccion principal todavia no funciona como grid compacto de beneficios.
+- El dashboard en `apps/gold/dashboard/index.html` sigue renderizando Agro como card demasiado ancha:
+  - `modules-grid` conserva una huella visual de catalogo amplio aunque ahora solo exista Agro;
+  - la card mantiene layout con demasiado ancho percibido y poco contenido util por bloque;
+  - la presencia de thumbnail y el orden interno la siguen acercando a banner mas que a modulo operativo.
+
+### Plan
+
+1. Reemplazar la mega-card principal de la landing por una grilla compacta real de 4 beneficios.
+2. Forzar una estructura de 2 columnas en desktop/tablet y 1 columna en mobile para esa seccion.
+3. Compactar la card Agro del dashboard con menos ancho percibido, menos imagen dominante y mas densidad util, luego cerrar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/index.html`
+  - La seccion principal `#modulos` dejo de usar una sola card dominante.
+  - Ahora renderiza 4 cards compactas:
+    - Cultivos y ciclos
+    - Finanzas reales
+    - Clima y seguimiento
+    - Historial operativo
+  - Se elimino la seccion de valor redundante para evitar doble bloque grande y se reemplazo por una accion compacta `Entrar a Agro`.
+- `apps/gold/assets/css/landing-v10.css`
+  - `v10-modules-grid` paso a una grilla real contenida:
+    - 2 columnas en desktop/tablet
+    - 1 columna en mobile
+    - `max-width` acotado para evitar banners horizontales disfrazados de cards
+  - `v10-module-card` quedo mas densa, con menos altura y menos protagonismo vacio.
+  - Se elimino el bloque CSS de la seccion de valor anterior que ya no se usa.
+- `apps/gold/dashboard/index.html`
+  - La card Agro dejo de usar thumbnail dominante.
+  - El contenido interno se reorganizo para concentrar icono, titulo, descripcion y badge en un bloque mas compacto.
+  - Se agrego fallback de features reales de Agro para subir densidad util de la card.
+- `apps/gold/assets/css/dashboard-v1.css`
+  - `modules-grid` ya no se abre como franja amplia: queda centrado y contenido.
+  - La card Agro reduce padding, icono, altura y dispersión.
+  - El CTA queda mas cerca del contenido util y la card se comporta como panel operativo, no como banner.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Apertura y cierre de esta sesion documentados conforme a la politica canonica.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Verificar visualmente en navegador que la landing ya se percibe como 4 panels compactos y no como una mega-card.
+2. Confirmar que la card Agro del dashboard ya no se siente como banner y que el CTA sigue llevando bien a `/agro/`.

@@ -2599,12 +2599,11 @@
         let featuresHtml = '';
         if (mod.features && Array.isArray(mod.features)) {
           featuresHtml = `<ul class="module-features">${mod.features.map(f => `<li>${f}</li>`).join('')}</ul>`;
+        } else if (moduleKey === 'agro') {
+          featuresHtml = `<ul class="module-features"><li>Cultivos y ciclos</li><li>Ingresos y gastos</li><li>Fiados y perdidas</li><li>Clima y seguimiento</li></ul>`;
         }
 
-        // Thumbnail image if available - with fallback
-        const thumbnailHtml = mod.thumbnail_url
-          ? `<img src="${mod.thumbnail_url}" alt="${mod.title || mod.name}" class="module-thumbnail" loading="lazy" onerror="this.style.display='none'">`
-          : '';
+        const thumbnailHtml = '';
 
         // Button text
         const btnText = mod.title || mod.name || 'Módulo';
@@ -2615,12 +2614,16 @@
           return `
             <div class="module-card disabled">
               ${thumbnailHtml}
-              <div class="module-icon">${icon}</div>
               <div class="module-header">
-                <h3 class="module-title">${title}</h3>
+                <div class="module-header-main">
+                  <div class="module-icon">${icon}</div>
+                  <div class="module-copy">
+                    <h3 class="module-title">${title}</h3>
+                    <p class="module-description">${description}</p>
+                  </div>
+                </div>
                 <span class="badge ${badge.class}">${badge.text}</span>
               </div>
-              <p class="module-description">${description}</p>
               ${featuresHtml}
               <button class="btn-modulo disabled" aria-disabled="true" type="button">${disabledCtaText}</button>
             </div>
@@ -2633,12 +2636,16 @@
               <i class="${starClass} fa-star" style="${starColor}"></i>
             </button>
             ${thumbnailHtml}
-            <div class="module-icon">${icon}</div>
             <div class="module-header">
-              <h3 class="module-title">${title}</h3>
+              <div class="module-header-main">
+                <div class="module-icon">${icon}</div>
+                <div class="module-copy">
+                  <h3 class="module-title">${title}</h3>
+                  <p class="module-description">${description}</p>
+                </div>
+              </div>
               <span class="badge ${badge.class}">${badge.text}</span>
             </div>
-            <p class="module-description">${description}</p>
             ${featuresHtml}
             <a href="${url}" class="btn-modulo">
               Abrir ${btnText}
