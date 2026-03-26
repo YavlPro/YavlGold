@@ -4264,3 +4264,61 @@ Archivos y lineas afectadas:
 | Decimal fino | Transferir `1.25` de `4` | Transferido: `1.25`, Restante: `2.75` |
 | Display limpio | Ver badge tras split `2.5/1.5` | Sin `1.5000000002` ni basura visual |
 | Flujo reversa | Devolver pagado a fiados con cantidad decimal | Funciona; `split_meta` guarda con 2 decimales |
+
+---
+
+## Sesion: Consolidar YavlGold = Agro en dashboard y landing (2026-03-26)
+
+### Diagnostico
+
+- La landing activa en `apps/gold/index.html` todavia presenta un ecosistema inflado:
+  - la seccion `#modulos` muestra Agro junto a Crypto, Academia, Tecnologia, Social y Dashboard como si formaran parte de la propuesta activa;
+  - el CTA y el footer hablan de comunidad y amplitud de plataforma mas alla del estado real actual.
+- El dashboard activo en `apps/gold/dashboard/index.html` sigue cargando el catalogo completo desde Supabase:
+  - `normalizeModules()` y `loadModules()` renderizan todos los modulos canonicos detectados;
+  - la UI mantiene copy como "Buscar modulos", estadistica "Modulos" y tarjetas de insight redactadas para un catalogo multiproducto;
+  - `StatsManager.updateModulesCount()` en `apps/gold/assets/js/modules/moduleManager.js` cuenta todos los modulos activos de la tabla `modules`, no solo Agro.
+- `apps/gold/assets/js/modules/moduleIdentity.js` ya marca `agro` como unico modulo liberado (`RELEASED_DASHBOARD_MODULES`), asi que el ajuste puede ser quirurgico: filtrar visibilidad del dashboard y reescribir copy visible sin abrir otros frentes.
+
+### Plan
+
+1. Consolidar el dashboard para mostrar solo Agro como area activa y eliminar ruido de catalogo multiproducto en copy/estadisticas.
+2. Reenfocar la landing para que la narrativa, los bloques y los CTA hablen solo del valor agricola real actual.
+3. Evitar QA intensivo, cerrar con `pnpm build:gold` y completar esta misma seccion con cambios aplicados, build status y QA sugerido.
+
+### Cambios aplicados
+
+- `apps/gold/dashboard/index.html`
+  - `1582-1684`: copy visible del shell ajustado a una sola verdad activa:
+    - `Dashboard V1` -> `Agro Activo`
+    - `Buscar modulos...` -> `Buscar acceso Agro...`
+    - hero, estadisticas e insights reescritos para enfoque Agro
+    - loading `Cargando modulos...` -> `Cargando Agro...`
+  - `2251-2304`: `normalizeModules()` ahora filtra solo `agro`; el contador visible de areas activas se fija con el resultado filtrado y el dashboard deja de usar `updateAllStats()` para no volver a contar el catalogo completo.
+  - `2397-2694`: CTA, badge y estados vacios quedaron alineados a Agro (`ACTIVO`, `Abrir Agro`, `primer acceso pendiente`, `No encontramos Agro con ese criterio`).
+- `apps/gold/index.html`
+  - `70-151`: navegacion y hero reenfocados a Agro (`Agro` en lugar de `Modulos`, badge `Agro Activo`, hero con narrativa agricola real).
+  - `148-160`: la seccion `#modulos` deja de listar Crypto, Academia, Tecnologia, Social y Dashboard; queda una sola card activa de Agro con copy operativo real.
+  - `221-237`: CTA y footer dejan de prometer amplitud de modulos y pasan a hablar de comunidad del campo y del sistema agricola real actual.
+- `apps/gold/assets/js/profile/onboardingManager.js`
+  - `195-197`: fallback de `buildOnboardingHeroSubtitle()` alineado con el nuevo mensaje base del dashboard para que el onboarding no reintroduzca copy legacy.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - apertura y cierre de esta sesion documentados segun la politica canonica.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Abrir landing y dashboard en navegador real para confirmar visualmente que solo Agro compite por atencion.
+2. Verificar login -> `/dashboard/` -> `/agro/` para confirmar que el acceso principal sigue intacto.

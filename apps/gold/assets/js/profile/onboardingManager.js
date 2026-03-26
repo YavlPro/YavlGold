@@ -194,7 +194,7 @@ export function getOnboardingLabel(type, value) {
 
 export function buildOnboardingHeroSubtitle(context) {
   if (!context?.onboardingCompleted) {
-    return 'Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.';
+    return 'YavlGold hoy es Agro: registra cultivos, controla movimientos y sigue la operacion real de tu finca.';
   }
 
   const relation = getOptionByValue(ONBOARDING_RELATION_OPTIONS, context.agroRelation);

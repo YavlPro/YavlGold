@@ -1579,14 +1579,14 @@
             <div class="logo-icon"><img src="/brand/logo.webp" alt="YavlGold"></div>
             <div class="logo-text">
               <h1>YAVLGOLD</h1>
-              <span>Dashboard V1</span>
+              <span>Agro Activo</span>
             </div>
           </a>
         </div>
         <div class="topbar-center">
           <div class="search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="moduleSearch" placeholder="Buscar módulos..." autocomplete="off">
+            <input type="text" id="moduleSearch" placeholder="Buscar acceso Agro..." autocomplete="off">
           </div>
         </div>
         <div class="topbar-right">
@@ -1624,7 +1624,7 @@
             onerror="this.src='/assets/images/logo.webp'">
           <div>
             <h1 class="hero-title text-metallic">Bienvenido, <span id="user-name-display">Usuario</span></h1>
-            <p id="hero-subtitle" class="hero-subtitle">Tu finca digital. Gestiona cultivos, controla ventas y planifica tu campo.</p>
+            <p id="hero-subtitle" class="hero-subtitle">YavlGold hoy es Agro: registra cultivos, controla movimientos y sigue la operación real de tu finca.</p>
           </div>
         </div>
       </div>
@@ -1635,15 +1635,15 @@
     <section class="stats-section">
       <div class="stat-card">
         <span class="stat-number yg-pulse" id="stat-modules">-</span>
-        <span class="stat-label">Módulos</span>
+        <span class="stat-label">Área activa</span>
       </div>
       <div class="stat-card">
         <span class="stat-number yg-pulse" id="stat-stars">0</span>
         <span class="stat-label">Favoritos</span>
       </div>
       <div class="stat-card">
-        <span class="stat-number yg-pulse">∞</span>
-        <span class="stat-label">Potencial</span>
+        <span class="stat-number yg-pulse">AGRO</span>
+        <span class="stat-label">Producto real</span>
       </div>
     </section>
 
@@ -1653,20 +1653,20 @@
         <div class="insight-title">Continuar</div>
         <div class="insight-name" id="continue-title">Sin datos</div>
         <div class="insight-meta" id="continue-meta">Sin actividad reciente</div>
-        <a id="continue-link" class="insight-action disabled" href="#">Ir al módulo</a>
+        <a id="continue-link" class="insight-action disabled" href="#">Abrir Agro</a>
       </div>
       <div class="insight-card" id="recommend-card">
         <div class="insight-title">Recomendado</div>
         <div class="insight-name" id="recommend-title">Sin datos</div>
         <div class="insight-meta" id="recommend-meta">Sin sugerencias</div>
-        <a id="recommend-link" class="insight-action disabled" href="#">Explorar</a>
+        <a id="recommend-link" class="insight-action disabled" href="#">Entrar</a>
       </div>
       <div class="insight-card" id="summary-card">
         <div class="insight-title">Resumen</div>
         <ul class="summary-list">
-          <li class="summary-item"><span>Módulos visitados</span><span id="summary-visited"
+          <li class="summary-item"><span>Visitas registradas</span><span id="summary-visited"
               class="summary-value">0</span></li>
-          <li class="summary-item"><span>Último módulo</span><span id="summary-last" class="summary-value">-</span></li>
+          <li class="summary-item"><span>Último acceso</span><span id="summary-last" class="summary-value">-</span></li>
           <li class="summary-item"><span>Favoritos</span><span id="summary-favorites" class="summary-value">0</span>
           </li>
           <li class="summary-item"><span>No leídas</span><span id="summary-unread" class="summary-value">0</span></li>
@@ -1681,7 +1681,7 @@
       <!-- Loading placeholder -->
       <div id="modules-loading" class="modules-loading">
         <div class="loading-spinner"></div>
-        <p>Cargando módulos...</p>
+        <p>Cargando Agro...</p>
       </div>
     </section>
 
@@ -2251,7 +2251,7 @@
     function normalizeModules(modules) {
       return (modules || [])
         .map((mod) => normalizeDashboardModule(mod))
-        .filter((mod) => !!mod.canonical_key);
+        .filter((mod) => mod.canonical_key === 'agro');
     }
 
     async function loadModules() {
@@ -2268,7 +2268,7 @@
 
         if (error) {
           console.error('[Dashboard] Error loading modules:', error.message);
-          if (loading) loading.innerHTML = '<p style="color: var(--gold-vibrante);">Error al cargar módulos</p>';
+          if (loading) loading.innerHTML = '<p style="color: var(--gold-vibrante);">Error al cargar Agro</p>';
           return [];
         }
 
@@ -2291,13 +2291,17 @@
           allUserFavorites = userFavorites;
 
           renderModules(normalizedModules, grid, userFavorites);
+          const statModulesEl = document.getElementById('stat-modules');
+          if (statModulesEl) statModulesEl.textContent = String(normalizedModules.length);
         } else {
-          grid.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay módulos disponibles</p>';
+          const statModulesEl = document.getElementById('stat-modules');
+          if (statModulesEl) statModulesEl.textContent = '0';
+          grid.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Agro no esta disponible en este momento</p>';
         }
 
         // Update stats after loading
         if (window.StatsManager) {
-          window.StatsManager.updateAllStats();
+          window.StatsManager.updateFavoritesCount();
         }
         return normalizedModules || [];
       } catch (err) {
@@ -2393,7 +2397,7 @@
           id: getModuleId(mod),
           title: getModuleTitle(mod),
           path: getModuleRoute(mod),
-          reason: `${prefix}primer módulo sin visitar`
+          reason: `${prefix}primer acceso pendiente`
         };
       }
 
@@ -2466,8 +2470,8 @@
     }
 
     function setInsightsEmptyState() {
-      updateInsightCard('continue', null, 'Aún no hay actividad', 'Explora un módulo para empezar');
-      updateInsightCard('recommend', null, 'Sin datos', 'Sin sugerencias');
+      updateInsightCard('continue', null, 'Aun no has entrado a Agro', 'Abre Agro para empezar');
+      updateInsightCard('recommend', null, 'Agro listo', 'Tu area activa esta disponible');
 
       const visitedEl = document.getElementById('summary-visited');
       const lastEl = document.getElementById('summary-last');
@@ -2485,7 +2489,7 @@
         title: continueData.title,
         path: continueData.path,
         meta: continueMeta
-      } : null, 'Aún no hay actividad', 'Explora un módulo para empezar');
+      } : null, 'Aun no has entrado a Agro', 'Abre Agro para empezar');
     }
 
     function updateSummaryCard(summary, modules) {
@@ -2513,7 +2517,7 @@
         title: recommended.title,
         path: recommended.path,
         meta: recommended.reason
-      } : null, 'Sin datos', 'Sin sugerencias');
+      } : null, 'Agro listo', 'Tu area activa esta disponible');
     }
 
     async function updateDashboardInsights(modules, user, onboardingContext) {
@@ -2569,7 +2573,7 @@
       const html = modules.map(mod => {
         // Determine badge class and text based on status
         const badgeMap = {
-          'available': { class: 'badge-estrella', text: 'DISPONIBLE', icon: '' },
+          'available': { class: 'badge-estrella', text: 'ACTIVO', icon: '' },
           'active': { class: 'badge-activo', text: 'ACTIVO', icon: '' },
           'development': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' },
           'coming_soon': { class: 'badge-proximo', text: 'NO DISPONIBLE', icon: '' },
@@ -2637,7 +2641,7 @@
             <p class="module-description">${description}</p>
             ${featuresHtml}
             <a href="${url}" class="btn-modulo">
-              Explorar ${btnText}
+              Abrir ${btnText}
               <i class="fas fa-arrow-right"></i>
             </a>
           </div>
@@ -2687,7 +2691,7 @@
         grid.innerHTML = `
           <div class="no-results-message">
             <span>🔍</span>
-            <p>No se encontraron módulos con esos criterios</p>
+            <p>No encontramos Agro con ese criterio</p>
           </div>
         `;
       }
