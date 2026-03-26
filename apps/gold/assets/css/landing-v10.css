@@ -643,10 +643,10 @@ body.landing-page .hero-scroll-arrow { animation: v10-float 1.5s ease-in-out inf
    V10 SECTIONS
    ============================================ */
 body.landing-page .v10-section {
-  position: relative; padding: 5rem 2rem; z-index: 2;
+  position: relative; padding: 4rem 2rem; z-index: 2;
 }
 body.landing-page .v10-section-inner { max-width: 1100px; margin: 0 auto; }
-body.landing-page .v10-section-header { text-align: center; margin-bottom: 3.5rem; }
+body.landing-page .v10-section-header { text-align: center; margin-bottom: 2.4rem; }
 body.landing-page .v10-section-tag {
   font-family: var(--v10-font-body); font-weight: 700; font-size: 0.68rem;
   letter-spacing: 3px; color: var(--v10-gold-3); text-transform: uppercase;
@@ -656,8 +656,8 @@ body.landing-page .v10-section-title {
   font-size: clamp(1.5rem, 3vw, 2.2rem); margin-top: 8px;
 }
 body.landing-page .v10-section-desc {
-  font-size: 0.95rem; color: var(--v10-text-muted);
-  margin-top: 12px; max-width: 560px; margin-left: auto; margin-right: auto;
+  font-size: 0.92rem; color: var(--v10-text-muted);
+  margin-top: 12px; max-width: 620px; margin-left: auto; margin-right: auto;
 }
 
 /* ============================================
@@ -689,25 +689,25 @@ body.landing-page .v10-glass-card:hover::before {
    ============================================ */
 body.landing-page .v10-modules-section { background: var(--v10-bg-1); }
 body.landing-page .v10-modules-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem; position: relative; z-index: 2;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem; position: relative; z-index: 2;
 }
 
-body.landing-page .v10-module-card { padding: 1.8rem; cursor: pointer; }
+body.landing-page .v10-module-card { padding: 1.35rem 1.3rem; cursor: pointer; }
 body.landing-page .v10-module-card .module-top {
-  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.2rem;
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem;
 }
-body.landing-page .v10-module-card .module-icon { font-size: 2.2rem; animation: v10-breathe 5s infinite; }
+body.landing-page .v10-module-card .module-icon { font-size: 1.9rem; animation: v10-breathe 5s infinite; }
 body.landing-page .v10-module-card .module-title {
-  font-family: var(--v10-font-heading); font-size: 1rem; font-weight: 700;
-  color: var(--v10-gold-4); margin-bottom: 0.5rem; letter-spacing: 1px;
+  font-family: var(--v10-font-heading); font-size: 0.95rem; font-weight: 700;
+  color: var(--v10-gold-4); margin-bottom: 0.35rem; letter-spacing: 1px;
 }
 body.landing-page .v10-module-card .module-desc {
-  font-size: 0.9rem; color: var(--v10-text-secondary); line-height: 1.5;
+  font-size: 0.88rem; color: var(--v10-text-secondary); line-height: 1.45;
 }
 body.landing-page .v10-module-card .module-link {
   display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 1rem; font-weight: 700;
+  margin-top: 0.8rem; font-weight: 700;
   font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;
   color: var(--v10-text-muted); transition: color 0.2s;
   text-decoration: none;
@@ -738,19 +738,23 @@ body.landing-page .v10-status-soon .v10-status-dot { background: var(--v10-text-
    ============================================ */
 body.landing-page .v10-value-section { background: var(--v10-bg-2); }
 body.landing-page .v10-value-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem; position: relative; z-index: 2;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem; position: relative; z-index: 2;
 }
-body.landing-page .v10-value-card { padding: 2rem; text-align: center; }
+body.landing-page .v10-value-card {
+  padding: 1.2rem 1.1rem;
+  text-align: left;
+  min-height: 0;
+}
 body.landing-page .v10-value-icon {
-  font-size: 2.5rem; margin-bottom: 1rem; display: block;
+  font-size: 1.5rem; margin-bottom: 0.7rem; display: block;
 }
 body.landing-page .v10-value-title {
-  font-family: var(--v10-font-heading); font-size: 0.8rem; font-weight: 700;
-  letter-spacing: 1px; color: var(--v10-gold-4); margin-bottom: 0.8rem;
+  font-family: var(--v10-font-heading); font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 1px; color: var(--v10-gold-4); margin-bottom: 0.45rem;
 }
 body.landing-page .v10-value-desc {
-  font-size: 0.9rem; color: var(--v10-text-secondary); line-height: 1.5;
+  font-size: 0.84rem; color: var(--v10-text-secondary); line-height: 1.45;
 }
 
 /* ============================================

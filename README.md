@@ -8,10 +8,13 @@ AI coding agents: read AGENTS.md first and follow it strictly.
 
 - Versión visible: YavlGold V1
 - Fase: Producción en Vercel
-- Estado: V1 (MPA + Supabase) — Agro liberado y documentación activa alineada con el release vigente.
+- Estado: V1 (MPA + Supabase) — YavlGold hoy es Agro y la documentación activa ya refleja esa verdad operativa.
 
 ## Modulo Agro (release activo)
 
+- Registro de cultivos y ciclos productivos.
+- Facturero real para ingresos, gastos, fiados, perdidas y transferencias.
+- Clima y seguimiento operativo dentro del flujo agrícola.
 - Gestion de gastos segura: eliminacion por UUID con Supabase para integridad de datos.
 - Calculadora ROI con boton LIMPIAR para reinicio rapido.
 - Interfaz refinada: footer reubicado via JS al final absoluto y sanitizacion XSS en formularios.
@@ -46,13 +49,9 @@ pnpm build:gold
 gold/
   apps/
     gold/              # App principal
+      index.html       # Landing pública enfocada en Agro
+      dashboard/       # Entrada del usuario hacia Agro
       agro/            # Modulo Agro (V1 activo)
-      dashboard/       # Dashboard principal
-      academia/        # Modulo oficial no disponible
-      herramientas/    # Alias legacy
-      social/          # Modulo oficial no disponible
-      tecnologia/      # Modulo oficial no disponible
-      crypto/          # Modulo oficial no disponible
       assets/          # Recursos compartidos
   packages/            # Paquetes compartidos
   turbo.json

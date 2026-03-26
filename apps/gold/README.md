@@ -1,17 +1,13 @@
 # YavlGold
 
-Plataforma digital construida como MPA con Vite, Vanilla JS y Supabase.
+YavlGold hoy es Agro: una herramienta agricola digital construida como MPA con Vite, Vanilla JS y Supabase.
 Release visible activo: `V1`.
 
-## Estado actual del catálogo
+## Estado actual
 
-- `Agro`: único módulo liberado y operativo.
-- `Academia`: no disponible.
-- `Social`: no disponible.
-- `Tecnología`: no disponible.
-- `Crypto`: no disponible.
-
-`Herramientas` y `Suite` ya no cuentan como módulos oficiales. Se tratan como alias legacy hacia `Tecnología` y `Crypto`.
+- `Agro` es la unica superficie operativa real del producto.
+- Landing y dashboard ya estan alineados para presentar YavlGold como Agro.
+- Las demas superficies no activas quedan fuera del discurso publico y se tratan como legado o placeholders de compatibilidad.
 
 ## Stack
 
@@ -27,10 +23,6 @@ apps/gold/
 |- index.html
 |- dashboard/
 |- agro/
-|- academia/
-|- social/
-|- tecnologia/
-|- crypto/
 |- assets/
 |  |- css/
 |  \- js/
@@ -49,8 +41,7 @@ apps/gold/
 
 - `/` -> landing principal
 - `/dashboard/` -> panel del usuario
-- `/agro/` -> módulo liberado
-- `/academia/`, `/social/`, `/tecnologia/`, `/crypto/` -> placeholder oficial `No disponible`
+- `/agro/` -> superficie operativa vigente
 
 ## Build
 
@@ -80,4 +71,4 @@ pnpm -C apps/gold build
 
 ## Nota sobre legado
 
-El repo todavía conserva archivos históricos de `academia`, `herramientas`, `suite` y otras superficies antiguas. Los HTML huérfanos ya fueron movidos a `archive/legacy-html/` y el bridge auth histórico a `archive/legacy-js/`. `music` sigue vivo como utilidad interna del dashboard, separada del catálogo oficial de módulos. El inventario vivo está en `apps/gold/docs/LEGACY_SURFACES.md`.
+El repo todavia conserva superficies antiguas y placeholders por compatibilidad. Los HTML huerfanos ya fueron movidos a `archive/legacy-html/`, el bridge auth historico a `archive/legacy-js/` y `music` sigue como utilidad interna del dashboard. El inventario vivo esta en `apps/gold/docs/LEGACY_SURFACES.md`.

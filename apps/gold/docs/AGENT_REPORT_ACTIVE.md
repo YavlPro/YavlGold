@@ -4322,3 +4322,67 @@ Archivos y lineas afectadas:
 
 1. Abrir landing y dashboard en navegador real para confirmar visualmente que solo Agro compite por atencion.
 2. Verificar login -> `/dashboard/` -> `/agro/` para confirmar que el acceso principal sigue intacto.
+
+---
+
+## Sesion: Compactar landing Agro y alinear superficies publicas (2026-03-26)
+
+### Diagnostico
+
+- La landing activa en `apps/gold/index.html` ya esta enfocada en Agro, pero el bloque principal sigue dependiendo de cards altas:
+  - `#modulos` usa una card hero unica con demasiado peso vertical para una sola idea;
+  - la seccion `v10-value-section` mantiene cuatro `v10-value-card` grandes y genericas, con altura y densidad bajas para el valor real actual.
+- El peso visual de ese bloque vive en `apps/gold/assets/css/landing-v10.css`:
+  - `v10-section`, `v10-section-header`, `v10-module-card`, `v10-value-grid` y `v10-value-card` concentran padding, gaps y alturas que hoy hacen ver la landing mas decorativa que operativa.
+- Las superficies publicas con contradicciones claras son:
+  - `apps/gold/index.html` en `title`, `description`, Open Graph, Twitter y schema, todavia redactados como plataforma agricola amplia en vez de Agro operativo;
+  - `README.md`, que sigue describiendo estructura y catalogo con amplitud mayor a la verdad visible actual.
+
+### Plan
+
+1. Compactar el bloque visible de valor en landing con beneficios concretos, mas densos y mas utiles.
+2. Reducir altura y peso visual de cards y secciones solo donde hoy estorban la lectura del producto real.
+3. Alinear metadatos SEO y README con `YavlGold = Agro`, evitando QA intensivo y cerrando con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/index.html`
+  - Se compactaron los bloques principales de la landing sin rediseñarla desde cero:
+    - card principal de Agro con copy mas corto y mas operativo;
+    - bloque de valor rehecho como beneficios concretos de uso real;
+    - CTA y footer con narrativa mas sobria y util.
+  - SEO alineado a Agro:
+    - `title`, `meta description`, Open Graph, Twitter y schema dejaron de vender una plataforma agricola amplia y pasaron a describir Agro operativo.
+- `apps/gold/assets/css/landing-v10.css`
+  - Se redujo el peso visual del bloque central:
+    - `v10-section` y `v10-section-header` con menos altura;
+    - `v10-module-card` con menos padding, gap e icono mas contenido;
+    - `v10-value-grid` mas eficiente y `v10-value-card` mas compactas y densas.
+- `README.md`
+  - Se reforzo la lectura publica de que YavlGold hoy es Agro y se limpiaron referencias innecesarias al catalogo no activo en el resumen principal y en la estructura expuesta.
+- `apps/gold/README.md`
+  - Se alineo el documento operativo publico a `YavlGold = Agro`, eliminando listado innecesario de modulos no activos y reduciendo el discurso a superficies reales + legado.
+- `apps/gold/faq.html`
+  - Meta description y respuestas publicas alineadas a Agro como experiencia activa, sin enumerar modulos no activos.
+- `apps/gold/soporte.html`
+  - Copy de soporte alineado a Agro, se elimino la nota de futuro tipo `Proximamente` y el footer visible ya apunta a `Agro` en lugar de `Modulos`.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Apertura y cierre de esta sesion documentados conforme a la politica canonica.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Revisar visualmente la landing en desktop y mobile para confirmar que los beneficios se leen mas rapido y con menos peso vertical.
+2. Verificar que FAQ y Soporte siguen navegables y que el acceso principal a `/agro/` no cambia.
