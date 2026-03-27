@@ -4453,3 +4453,113 @@ Archivos y lineas afectadas:
 
 1. Verificar visualmente en navegador que la landing ya se percibe como 4 panels compactos y no como una mega-card.
 2. Confirmar que la card Agro del dashboard ya no se siente como banner y que el CTA sigue llevando bien a `/agro/`.
+
+---
+
+## Sesion: Cartera Viva V4 Fase 1 real buyer-centric (2026-03-26)
+
+### Diagnostico
+
+- La verdad parcial de compradores ya existia en dos capas separadas:
+  - `public.agro_buyers` existia en Supabase con `display_name` + `group_key`, pero estaba vacia en produccion;
+  - el facturero seguia operando principalmente con texto libre:
+    - `agro_pending.cliente`
+    - `agro_income.concepto` con patron `Venta a X - ...`
+    - `agro_losses.causa` / `concepto` solo en casos derivados de fiados.
+- El estado real auditado en Supabase `gerzlzprkarikblqxpjt` antes del cambio fue:
+  - `agro_buyers`: 0 filas;
+  - sin `buyer_id` en `agro_pending`, `agro_income`, `agro_losses`, `agro_transfers`, `agro_expenses`;
+  - sin FK entre movimientos y compradores.
+- Legacy medido antes de aplicar Fase 1:
+  - `agro_pending`: 96 filas, 91 con nombre candidato seguro;
+  - `agro_income`: 112 filas, 98 con nombre candidato seguro;
+  - `agro_losses`: 12 filas, solo 2 seguras como deuda cancelada desde `agro_pending`;
+  - variantes reales confirmadas por canonicalizacion: `oliva/Oliva`, `gollo/Gollo`, `Jesus/Jesús berraco`, `Qa/QA`, etc.
+- Conclusión operativa:
+  - la fase correcta era estructural y no visual;
+  - la ruta de menor riesgo era SQL + backfill real + wiring minimo de escrituras, sin UI nueva.
+
+### Cambios aplicados
+
+- `apps/gold/supabase/migrations/20260326120000_agro_buyer_foundation_v4.sql`
+  - Se agrego `public.agro_canonicalize_buyer_name()` con la canonicalizacion simple V4.
+  - Se agregaron columnas nullable en movimientos relevantes:
+    - `agro_pending.buyer_id`, `buyer_group_key`, `buyer_match_status`
+    - `agro_income.buyer_id`, `buyer_group_key`, `buyer_match_status`
+    - `agro_losses.buyer_id`, `buyer_group_key`, `buyer_match_status`
+  - Se agregaron indices `(user_id, buyer_id)` y `(user_id, buyer_group_key)` para esas tablas.
+  - Se poblo `agro_buyers` por backfill seguro desde `agro_pending`, `agro_income` y perdidas originadas en `agro_pending`.
+  - Se dejaron ambiguos marcados sin inventar clasificacion:
+    - `legacy_review_required`
+    - `legacy_unclassified`
+- Supabase real `gerzlzprkarikblqxpjt`
+  - Migracion aplicada en real.
+  - Fix posterior aplicado sobre la misma funcion para dejar `search_path` fijo y no introducir warning nuevo del advisor.
+  - Resultado real tras el backfill:
+    - `agro_buyers`: 49 compradores poblados;
+    - `agro_pending`: 92 con `buyer_id`, 4 `legacy_review_required`;
+    - `agro_income`: 103 con `buyer_id`, 9 `legacy_review_required`;
+    - `agro_losses`: 2 con `buyer_id`, 10 `legacy_unclassified`.
+- `apps/gold/agro/agro-buyer-identity.js`
+  - Nuevo helper compartido para canonicalizacion y resolucion de identidad buyer-centric.
+  - Centraliza:
+    - `normalizeBuyerGroupKey`
+    - extraccion segura de candidato
+    - `ensureBuyerIdentityLink()` para crear o reutilizar `agro_buyers` y devolver `buyer_id`.
+- `apps/gold/agro/agrocompradores.js`
+  - Ahora reutiliza la canonicalizacion compartida en vez de mantener una copia local.
+- `apps/gold/agro/agrosocial.js`
+  - Ahora reutiliza la canonicalizacion compartida para `buyer_group_key`.
+- `apps/gold/agro/agro-wizard.js`
+  - Wiring minimo para que nuevas altas en `pendientes`, `ingresos` y `perdidas` generen o resuelvan `buyer_id` y no sigan creando legacy libre.
+- `apps/gold/agro/agro.js`
+  - Wiring minimo en:
+    - edicion de movimientos;
+    - conversiones `fiados -> pagados/perdidas`;
+    - conversiones `pagados/perdidas -> fiados`;
+    - duplicado de movimientos;
+  - Sin UI nueva, sin vista nueva y sin refactor amplio del monolito.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+- Advisors de seguridad revisados:
+  - no quedaron warnings nuevos atribuibles a esta fase;
+  - persisten warnings legacy del proyecto (`admin_audit_log` sin policy, funciones legacy con `search_path` mutable, leaked password protection desactivado).
+
+### QA sugerido
+
+1. Revisar en Supabase las filas `legacy_review_required` de `agro_pending` y `agro_income` para completar los pocos casos sin comprador resoluble automaticamente.
+2. Revisar las `agro_losses` marcadas `legacy_unclassified` para confirmar que siguen siendo perdidas operativas reales y no deuda mal modelada.
+3. Crear manualmente un fiado nuevo, un pagado nuevo y una conversion `fiado -> pagado` para confirmar que el movimiento nuevo ya persiste `buyer_id`.
+4. Revisar nombres duplicados por alias reales (`Yony` vs `Yony chupeto`, `Jesus` vs `Jesús berraco`) antes de usar Fase 2 de agregacion buyer-centric.
+5. Smoke test general del facturero para altas, ediciones, transferencias y reversions.
+
+## Sesion: Cartera Viva V4 Fase 1 cierre final canonicalizacion (2026-03-26)
+
+### Diagnostico
+
+La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroupKey()` en JS eliminaba puntuacion, mientras la canonicalizacion V4 aprobada en SQL solo permite `lowercase(trim(collapse_spaces(remove_accents(name))))`. Eso podia generar `group_key` divergente entre backfill y nuevas escrituras.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-buyer-identity.js`
+  - Se elimino la normalizacion extra de puntuacion en `normalizeBuyerGroupKey()` para alinear JS con SQL y con la formula simple del plan maestro.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+
+### QA sugerido
+
+1. Crear o editar un comprador con signos o puntuacion y confirmar que JS y SQL generan el mismo `group_key`.
+2. Revisar un caso legacy con puntuacion para validar que no aparezcan divergencias nuevas.
