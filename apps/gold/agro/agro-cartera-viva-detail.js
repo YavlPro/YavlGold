@@ -83,13 +83,94 @@ function formatMoney(value) {
 
 function formatPercent(value) {
     const nextValue = Number(value);
-    if (!Number.isFinite(nextValue)) return 'En revision';
+    if (!Number.isFinite(nextValue)) return 'Sin lectura';
     return `${nextValue.toFixed(0)}%`;
 }
 
 function normalizeMoney(value) {
     const amount = Number(value);
     return Number.isFinite(amount) ? amount : 0;
+}
+
+function clampPercent(value) {
+    const nextValue = Number(value);
+    if (!Number.isFinite(nextValue)) return 0;
+    return Math.min(100, Math.max(0, nextValue));
+}
+
+function getReviewTotal(buyerRow) {
+    return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
+}
+
+function getProgressBase(buyerRow) {
+    const credited = Number(buyerRow?.credited_total || 0);
+    const combined = Number(buyerRow?.paid_total || 0) + Number(buyerRow?.pending_total || 0) + Number(buyerRow?.loss_total || 0);
+    return Math.max(credited, combined, 0);
+}
+
+function getPaidPercent(buyerRow) {
+    const compliance = Number(buyerRow?.compliance_percent);
+    if (Number.isFinite(compliance)) return clampPercent(compliance);
+
+    const base = getProgressBase(buyerRow);
+    if (base <= 0) return 0;
+    return clampPercent((Number(buyerRow?.paid_total || 0) / base) * 100);
+}
+
+function resolveBuyerStatus(buyerRow) {
+    const pending = Number(buyerRow?.pending_total || 0);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
+    const review = getReviewTotal(buyerRow);
+
+    if (pending > 0) {
+        return {
+            tone: 'fiado',
+            label: paid > 0 ? 'Cobro en curso' : 'Fiado activo',
+            copy: `${formatMoney(pending)} por cobrar`
+        };
+    }
+
+    if (paid > 0) {
+        return {
+            tone: 'pagado',
+            label: 'Pagado',
+            copy: 'Saldo cerrado sin pendiente'
+        };
+    }
+
+    if (loss > 0) {
+        return {
+            tone: 'perdido',
+            label: 'Pérdida',
+            copy: `${formatMoney(loss)} cerrados fuera de cartera`
+        };
+    }
+
+    return {
+        tone: review > 0 ? 'review' : 'seguimiento',
+        label: review > 0 ? 'Por revisar' : 'Seguimiento',
+        copy: review > 0 ? `${formatMoney(review)} por ordenar` : 'Sin saldo suficiente para resumir'
+    };
+}
+
+function buildProgressBreakdown(buyerRow) {
+    const base = Math.max(getProgressBase(buyerRow), 1);
+    const paid = Math.max(0, Number(buyerRow?.paid_total || 0));
+    const pending = Math.max(0, Number(buyerRow?.pending_total || 0));
+    const loss = Math.max(0, Number(buyerRow?.loss_total || 0));
+
+    const paidShare = clampPercent((paid / base) * 100);
+    const lossShare = clampPercent((loss / base) * 100);
+    const pendingShare = clampPercent(Math.max(0, 100 - paidShare - lossShare));
+
+    return {
+        paidShare,
+        lossShare,
+        pendingShare,
+        paidPercent: getPaidPercent(buyerRow),
+        base
+    };
 }
 
 function normalizeBuyerScope(buyerRow) {
@@ -189,26 +270,27 @@ function buildPendingHistoryRow(row) {
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
 
     let label = 'Fiado';
-    let note = 'Movimiento de deuda registrado para este comprador.';
+    let note = 'Saldo abierto dentro de la cartera del comprador.';
     let tone = 'pending';
 
     if (transferState === 'transferred' && transferredTo === 'income') {
-        label = 'Fiado convertido en pago';
-        note = 'Este fiado ya fue movido al eje de pagos vinculados.';
+        label = 'Fiado cerrado';
+        note = 'Este saldo ya terminó como cobro.';
         tone = 'paid';
     } else if (transferState === 'transferred' && transferredTo === 'losses') {
-        label = 'Fiado convertido en perdida';
-        note = 'Este fiado ya fue movido al eje de perdidas vinculadas.';
+        label = 'Fiado cerrado';
+        note = 'Este saldo terminó cerrado como pérdida.';
         tone = 'loss';
     } else if (transferState === 'transferred') {
-        label = 'Fiado transferido';
-        note = 'El movimiento salio del eje deuda hacia otro destino operativo.';
+        label = 'Fiado movido';
+        note = 'El movimiento salió de cartera hacia otra salida operativa.';
         tone = 'review';
     }
 
     if (isReview) {
         tone = 'review';
-        note = 'Movimiento buyer-centric en revision. No entra como lectura confiable cerrada.';
+        label = 'Por revisar';
+        note = 'Este movimiento aún necesita revisión antes de cerrar su lectura.';
     }
 
     return {
@@ -235,18 +317,18 @@ function buildIncomeHistoryRow(row) {
     return {
         history_id: `agro_income:${row?.id || ''}`,
         source_table: 'agro_income',
-        title: fromPending ? 'Pago vinculado a deuda' : 'Ingreso fuera de deuda',
-        label: fromPending ? 'Pago' : 'Ingreso operativo',
+        title: fromPending ? 'Cobro registrado' : 'Ingreso aparte',
+        label: fromPending ? 'Pago' : 'Ingreso aparte',
         amount,
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: String(row?.categoria || '').trim(),
         note: isReview
-            ? 'Ingreso en revision buyer-centric. No se toma como pago confiable.'
+            ? 'Este ingreso aún está pendiente por revisar.'
             : (fromPending
-                ? 'Entrada confirmada como cobro de deuda.'
-                : 'Entrada atribuible al comprador, pero fuera del eje deuda.'),
+                ? 'Entrada confirmada como cobro del saldo.'
+                : 'Entrada relacionada con el comprador, pero separada de la cartera.'),
         tone: isReview ? 'review' : (fromPending ? 'paid' : 'neutral'),
         is_review: isReview
     };
@@ -261,8 +343,8 @@ function buildLossHistoryRow(row) {
     return {
         history_id: `agro_losses:${row?.id || ''}`,
         source_table: 'agro_losses',
-        title: fromPending ? 'Perdida vinculada a deuda' : 'Perdida en revision',
-        label: fromPending ? 'Perdida' : 'Revision',
+        title: fromPending ? 'Pérdida registrada' : 'Pérdida por revisar',
+        label: fromPending ? 'Pérdida' : 'Por revisar',
         amount,
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
@@ -270,9 +352,9 @@ function buildLossHistoryRow(row) {
         meta: String(row?.causa || '').trim(),
         note: isReview
             ? (matchStatus === 'legacy_unclassified'
-                ? 'Legacy ambiguo. Se muestra por contexto, no como lectura cerrada.'
-                : 'Perdida atribuible al comprador, pero todavia en revision.')
-            : 'Salida confirmada del eje deuda.',
+                ? 'Hay un registro antiguo que todavía necesita ordenarse.'
+                : 'Esta pérdida aún necesita confirmación final.')
+            : 'Salida cerrada de la cartera.',
         tone: isReview ? 'review' : 'loss',
         is_review: isReview
     };
@@ -303,7 +385,7 @@ export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow) {
 
 function renderEmptyState(config = {}) {
     const title = escapeHtml(config.title || 'Sin historial legible');
-    const copy = escapeHtml(config.copy || 'Este comprador todavia no tiene movimientos buyer-centric visibles.');
+    const copy = escapeHtml(config.copy || 'Este comprador todavía no tiene movimientos visibles para contar su historia.');
 
     return `
         <div class="cartera-viva-empty">
@@ -324,35 +406,48 @@ function renderDetailInsight(label, value) {
 }
 
 function renderBuyerSummary(buyerRow) {
-    const reviewTotal = Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
+    const reviewTotal = getReviewTotal(buyerRow);
+    const buyerStatus = resolveBuyerStatus(buyerRow);
+    const progress = buildProgressBreakdown(buyerRow);
     const reviewCopy = reviewTotal > 0
-        ? `Revision abierta ${formatMoney(reviewTotal)}`
-        : 'Sin revision abierta';
+        ? `Hay ${formatMoney(reviewTotal)} por revisar en este comprador`
+        : buyerStatus.copy;
 
     return `
         <section class="cartera-viva-detail__summary">
             <header class="cartera-viva-detail__summary-head">
                 <div class="cartera-viva-detail__identity">
-                    <p class="cartera-viva-card__eyebrow">Comprador canonico</p>
                     <h2 class="cartera-viva-detail__title">${escapeHtml(buyerRow?.display_name || 'Comprador no encontrado')}</h2>
-                    <p class="cartera-viva-card__key">${escapeHtml(buyerRow?.group_key || 'sin-group-key')}</p>
+                    <p class="cartera-viva-detail__subtitle">${escapeHtml(reviewCopy)}</p>
                 </div>
                 <div class="cartera-viva-card__badges">
-                    <span class="cartera-viva-badge cartera-viva-badge--${escapeHtml(String(buyerRow?.global_status || 'Mixto').toLowerCase())}">
-                        ${escapeHtml(buyerRow?.global_status || 'Mixto')}
-                    </span>
-                    ${buyerRow?.requires_review ? '<span class="cartera-viva-badge cartera-viva-badge--review">Revision</span>' : ''}
+                    <span class="cartera-viva-badge cartera-viva-badge--${buyerStatus.tone}">${escapeHtml(buyerStatus.label)}</span>
+                    ${buyerRow?.requires_review ? '<span class="cartera-viva-badge cartera-viva-badge--review">Por revisar</span>' : ''}
                 </div>
             </header>
 
-            <div class="cartera-viva-insight-strip cartera-viva-insight-strip--detail">
-                ${renderDetailInsight('Pendiente', formatMoney(buyerRow?.pending_total))}
-                ${renderDetailInsight('Pagado', formatMoney(buyerRow?.paid_total))}
-                ${renderDetailInsight('Fiado total', formatMoney(buyerRow?.credited_total))}
-                ${renderDetailInsight('Cumplimiento', formatPercent(buyerRow?.compliance_percent))}
-            </div>
+            <section class="cartera-viva-progress cartera-viva-progress--large">
+                <div class="cartera-viva-progress__head">
+                    <span class="cartera-viva-progress__label">Cobrado de ${formatMoney(progress.base)}</span>
+                    <span class="cartera-viva-progress__value">${formatPercent(progress.paidPercent)}</span>
+                </div>
+                <div class="cartera-viva-progress__track">
+                    ${progress.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${progress.paidShare}%"></span>` : ''}
+                    ${progress.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${progress.pendingShare}%"></span>` : ''}
+                    ${progress.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${progress.lossShare}%"></span>` : ''}
+                </div>
+                <div class="cartera-viva-progress__legend">
+                    <span>${formatMoney(buyerRow?.paid_total || 0)} cobrados</span>
+                    <span>${Number(buyerRow?.pending_total || 0) > 0 ? `Faltan ${formatMoney(buyerRow?.pending_total || 0)}` : 'Sin saldo pendiente'}</span>
+                </div>
+            </section>
 
-            <p class="cartera-viva-detail__summary-copy">${escapeHtml(reviewCopy)}</p>
+            <div class="cartera-viva-insight-strip cartera-viva-insight-strip--detail">
+                ${renderDetailInsight('Fiado', formatMoney(buyerRow?.credited_total))}
+                ${renderDetailInsight('Cobrado', formatMoney(buyerRow?.paid_total))}
+                ${renderDetailInsight('Falta', formatMoney(buyerRow?.pending_total))}
+                ${renderDetailInsight('Cumplimiento', formatPercent(getPaidPercent(buyerRow)))}
+            </div>
         </section>
     `;
 }
@@ -405,7 +500,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                 </div>
                 ${renderEmptyState({
                     title: 'Comprador no encontrado',
-                    copy: 'La grilla buyer-centric ya no tiene disponible este comprador.'
+                    copy: 'La grilla ya no tiene disponible este comprador.'
                 })}
             </section>
         `;
@@ -423,7 +518,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     if (loading) {
         bodyContent = renderEmptyState({
             title: 'Cargando historial del comprador',
-            copy: 'Leyendo la historia comercial atribuible a este comprador.'
+            copy: 'Ordenando los movimientos relacionados a este comprador.'
         });
     } else if (errorMessage) {
         bodyContent = renderEmptyState({
@@ -433,7 +528,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     } else if (historyRows.length <= 0) {
         bodyContent = renderEmptyState({
             title: 'Sin historial legible',
-            copy: 'Este comprador no tiene movimientos suficientes para contar una historia contextual todavia.'
+            copy: 'Este comprador todavía no tiene movimientos suficientes para contar su historia.'
         });
     } else {
         bodyContent = '<div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>';
@@ -444,7 +539,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 <div class="cartera-viva-detail__toolbar-actions">
-                    <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar historial</button>
+                    <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar</button>
                     <button
                         type="button"
                         class="cartera-viva-refresh"
@@ -462,11 +557,11 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             <section class="cartera-viva-detail__body">
                 <header class="cartera-viva-detail__body-head">
                     <div>
-                        <p class="cartera-viva-view__eyebrow">Historial contextual</p>
-                        <h3 class="cartera-viva-detail__section-title">Historia comercial del comprador</h3>
+                        <p class="cartera-viva-view__eyebrow">Historial</p>
+                        <h3 class="cartera-viva-detail__section-title">Movimientos del comprador</h3>
                     </div>
                     <p class="cartera-viva-detail__body-copy">
-                        Fiados, pagos, perdidas y registros en revision atribuibles honestamente a este comprador.
+                        Fiados, cobros, pérdidas e ingresos relacionados con este comprador.
                     </p>
                 </header>
                 ${bodyContent}

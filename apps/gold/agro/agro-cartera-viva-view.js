@@ -14,26 +14,21 @@ const CATEGORY_META = Object.freeze({
     fiados: Object.freeze({
         label: 'Fiados',
         emptyTitle: 'No hay fiados activos',
-        emptyCopy: 'Esta categoria solo muestra compradores con estado global Fiado.'
+        emptyCopy: 'Aquí ves a quienes todavía tienen saldo pendiente.'
     }),
     pagados: Object.freeze({
         label: 'Pagados',
-        emptyTitle: 'No hay compradores totalmente pagados',
-        emptyCopy: 'Esta categoria muestra compradores sin pendiente activo y sin revision abierta.'
+        emptyTitle: 'No hay compradores al día',
+        emptyCopy: 'Aquí aparecen los compradores que ya cerraron su saldo.'
     }),
     perdidos: Object.freeze({
-        label: 'Perdidos',
-        emptyTitle: 'No hay perdidas buyer-centric para mostrar',
-        emptyCopy: 'Esta categoria solo muestra compradores con perdida confiable registrada.'
-    }),
-    mixto: Object.freeze({
-        label: 'Mixto',
-        emptyTitle: 'No hay balances mixtos en este momento',
-        emptyCopy: 'Aqui aparecen compradores con deuda activa combinada con pagos, perdidas o revision.'
+        label: 'Pérdidas',
+        emptyTitle: 'No hay pérdidas registradas',
+        emptyCopy: 'Aquí solo quedan los casos cerrados como pérdida.'
     })
 });
 
-const CATEGORY_ORDER = Object.freeze(['fiados', 'pagados', 'perdidos', 'mixto']);
+const CATEGORY_ORDER = Object.freeze(['fiados', 'pagados', 'perdidos']);
 
 let initialized = false;
 let rootNode = null;
@@ -98,7 +93,7 @@ function formatMoney(value) {
 
 function formatPercent(value) {
     const nextValue = Number(value);
-    if (!Number.isFinite(nextValue)) return 'En revision';
+    if (!Number.isFinite(nextValue)) return 'Sin lectura';
     return `${nextValue.toFixed(0)}%`;
 }
 
@@ -106,6 +101,119 @@ function formatCount(value) {
     const count = Number(value);
     if (!Number.isFinite(count) || count <= 0) return '0';
     return new Intl.NumberFormat('es-VE').format(Math.trunc(count));
+}
+
+function clampPercent(value) {
+    const nextValue = Number(value);
+    if (!Number.isFinite(nextValue)) return 0;
+    return Math.min(100, Math.max(0, nextValue));
+}
+
+function getReviewTotal(row) {
+    return Number(row?.review_required_total || 0) + Number(row?.legacy_unclassified_total || 0);
+}
+
+function getProgressBase(row) {
+    const credited = Number(row?.credited_total || 0);
+    const combined = Number(row?.paid_total || 0) + Number(row?.pending_total || 0) + Number(row?.loss_total || 0);
+    return Math.max(credited, combined, 0);
+}
+
+function getPaidPercent(row) {
+    const compliance = Number(row?.compliance_percent);
+    if (Number.isFinite(compliance)) return clampPercent(compliance);
+
+    const base = getProgressBase(row);
+    if (base <= 0) return 0;
+    return clampPercent((Number(row?.paid_total || 0) / base) * 100);
+}
+
+function getProgressBreakdown(row) {
+    const base = Math.max(getProgressBase(row), 1);
+    const paid = Math.max(0, Number(row?.paid_total || 0));
+    const pending = Math.max(0, Number(row?.pending_total || 0));
+    const loss = Math.max(0, Number(row?.loss_total || 0));
+
+    const paidShare = clampPercent((paid / base) * 100);
+    const lossShare = clampPercent((loss / base) * 100);
+    const pendingShare = clampPercent(Math.max(0, 100 - paidShare - lossShare));
+
+    return {
+        base,
+        paidShare,
+        lossShare,
+        pendingShare,
+        paidPercent: getPaidPercent(row)
+    };
+}
+
+function resolveVisibleCategory(row) {
+    const pending = Number(row?.pending_total || 0);
+    const paid = Number(row?.paid_total || 0);
+    const loss = Number(row?.loss_total || 0);
+
+    if (pending > 0) return 'fiados';
+    if (paid > 0) return 'pagados';
+    if (loss > 0) return 'perdidos';
+    return 'fiados';
+}
+
+function resolveBuyerStatus(row) {
+    const pending = Number(row?.pending_total || 0);
+    const paid = Number(row?.paid_total || 0);
+    const loss = Number(row?.loss_total || 0);
+    const review = getReviewTotal(row);
+    const paidPercent = getPaidPercent(row);
+
+    if (pending > 0) {
+        if (paid > 0 && paidPercent >= 65) {
+            return {
+                tone: 'fiado',
+                label: 'Cobro avanzado',
+                detail: `${formatMoney(pending)} por cobrar · ${formatMoney(paid)} ya cobrados`
+            };
+        }
+
+        if (paid > 0) {
+            return {
+                tone: 'fiado',
+                label: 'Fiado activo',
+                detail: `${formatMoney(pending)} por cobrar · sigue abonando`
+            };
+        }
+
+        return {
+            tone: 'fiado',
+            label: 'Fiado activo',
+            detail: `${formatMoney(pending)} por cobrar${review > 0 ? ' · con revisión pendiente' : ''}`
+        };
+    }
+
+    if (paid > 0) {
+        return {
+            tone: 'pagado',
+            label: 'Pagado',
+            detail: loss > 0
+                ? `Saldo cobrado con ${formatMoney(loss)} cerrados como pérdida`
+                : 'Cuenta cerrada sin saldo pendiente'
+        };
+    }
+
+    if (loss > 0) {
+        return {
+            tone: 'perdido',
+            label: 'Pérdida',
+            detail: `${formatMoney(loss)} cerrados fuera de cartera`
+        };
+    }
+
+    return {
+        tone: review > 0 ? 'review' : 'seguimiento',
+        label: review > 0 ? 'Por revisar' : 'Seguimiento',
+        detail: review > 0
+            ? `${formatMoney(review)} pendientes por ordenar`
+            : 'Sin lectura suficiente todavía'
+    };
 }
 
 function comparePortfolioRows(a, b) {
@@ -121,13 +229,7 @@ function comparePortfolioRows(a, b) {
 function filterRowsByCategory(rows, category) {
     const safeRows = Array.isArray(rows) ? rows.slice() : [];
     return safeRows
-        .filter((row) => {
-            if (category === 'fiados') return row?.global_status === 'Fiado';
-            if (category === 'pagados') return row?.global_status === 'Pagado';
-            if (category === 'perdidos') return Number(row?.loss_total || 0) > 0;
-            if (category === 'mixto') return row?.global_status === 'Mixto';
-            return true;
-        })
+        .filter((row) => resolveVisibleCategory(row) === category)
         .sort(comparePortfolioRows);
 }
 
@@ -135,56 +237,180 @@ function getCategoryCounts(rows) {
     return {
         fiados: filterRowsByCategory(rows, 'fiados').length,
         pagados: filterRowsByCategory(rows, 'pagados').length,
-        perdidos: filterRowsByCategory(rows, 'perdidos').length,
-        mixto: filterRowsByCategory(rows, 'mixto').length
+        perdidos: filterRowsByCategory(rows, 'perdidos').length
     };
 }
 
 function sumField(rows, fieldName) {
-    return (Array.isArray(rows) ? rows : []).reduce((total, row) => total + (Number(row?.[fieldName] || 0)), 0);
+    return (Array.isArray(rows) ? rows : []).reduce((total, row) => total + Number(row?.[fieldName] || 0), 0);
 }
 
-function resolveContextMetric(row, category) {
-    const paidTotal = Number(row?.paid_total || 0);
-    const pendingTotal = Number(row?.pending_total || 0);
-    const lossTotal = Number(row?.loss_total || 0);
-    const reviewTotal = Number(row?.review_required_total || 0) + Number(row?.legacy_unclassified_total || 0);
+function renderHeroSignal(rows) {
+    const base = Math.max(
+        sumField(rows, 'credited_total'),
+        sumField(rows, 'paid_total') + sumField(rows, 'pending_total') + sumField(rows, 'loss_total'),
+        1
+    );
+    const paidShare = clampPercent((sumField(rows, 'paid_total') / base) * 100);
+    const lossShare = clampPercent((sumField(rows, 'loss_total') / base) * 100);
+    const pendingShare = clampPercent(Math.max(0, 100 - paidShare - lossShare));
+
+    return `
+        <div class="cartera-viva-hero__signal" aria-hidden="true">
+            <span class="cartera-viva-hero__signal-track">
+                ${paidShare > 0 ? `<span class="cartera-viva-hero__signal-segment is-paid" style="width:${paidShare}%"></span>` : ''}
+                ${pendingShare > 0 ? `<span class="cartera-viva-hero__signal-segment is-pending" style="width:${pendingShare}%"></span>` : ''}
+                ${lossShare > 0 ? `<span class="cartera-viva-hero__signal-segment is-loss" style="width:${lossShare}%"></span>` : ''}
+            </span>
+            <span class="cartera-viva-hero__signal-legend">
+                <span>Cobrado</span>
+                <span>Falta</span>
+                <span>Pérdida</span>
+            </span>
+        </div>
+    `;
+}
+
+function resolveCategoryHero(rows, category) {
+    const count = rows.length;
+    const pending = sumField(rows, 'pending_total');
+    const paid = sumField(rows, 'paid_total');
+    const loss = sumField(rows, 'loss_total');
+    const review = rows.reduce((total, row) => total + getReviewTotal(row), 0);
 
     if (category === 'pagados') {
         return {
-            label: 'Pagado confirmado',
-            value: formatMoney(paidTotal),
-            hint: Number.isFinite(row?.compliance_percent)
-                ? `Cumplimiento ${formatPercent(row.compliance_percent)}`
-                : 'Sin porcentaje confiable'
+            label: 'Cobrado en esta vista',
+            amount: formatMoney(paid),
+            copy: `${formatCount(count)} comprador${count === 1 ? '' : 'es'} con saldo cerrado`,
+            stats: [
+                { label: 'Compradores', value: formatCount(count) },
+                { label: 'Fiado que pasó por cartera', value: formatMoney(sumField(rows, 'credited_total')) },
+                { label: 'Por revisar', value: formatMoney(review) }
+            ]
         };
     }
 
     if (category === 'perdidos') {
         return {
-            label: 'Perdida registrada',
-            value: formatMoney(lossTotal),
-            hint: reviewTotal > 0
-                ? `Revision pendiente ${formatMoney(reviewTotal)}`
-                : 'Salida registrada del eje deuda'
-        };
-    }
-
-    if (category === 'mixto') {
-        return {
-            label: 'Balance mixto',
-            value: formatMoney(pendingTotal),
-            hint: `${formatMoney(paidTotal)} pagado · ${formatMoney(lossTotal)} perdido`
+            label: 'Saldo cerrado como pérdida',
+            amount: formatMoney(loss),
+            copy: `${formatCount(count)} caso${count === 1 ? '' : 's'} con salida registrada`,
+            stats: [
+                { label: 'Casos', value: formatCount(count) },
+                { label: 'Cobrado antes del cierre', value: formatMoney(paid) },
+                { label: 'Por revisar', value: formatMoney(review) }
+            ]
         };
     }
 
     return {
-        label: 'Pendiente activo',
-        value: formatMoney(pendingTotal),
-        hint: paidTotal > 0
-            ? `${formatMoney(paidTotal)} ya cobrado`
-            : 'Sin pagos confirmados todavia'
+        label: 'Te deben hoy',
+        amount: formatMoney(pending),
+        copy: `${formatCount(count)} comprador${count === 1 ? '' : 'es'} con saldo activo`,
+        stats: [
+            { label: 'Compradores', value: formatCount(count) },
+            { label: 'Ya cobrado', value: formatMoney(paid) },
+            { label: 'Por revisar', value: formatMoney(review) }
+        ]
     };
+}
+
+function renderHeaderHero(filteredRows) {
+    const hero = resolveCategoryHero(filteredRows, activeCategory);
+    return `
+        <div class="cartera-viva-hero">
+            <div class="cartera-viva-hero__main">
+                <p class="cartera-viva-hero__label">${hero.label}</p>
+                <strong class="cartera-viva-hero__amount">${hero.amount}</strong>
+                <p class="cartera-viva-hero__copy">${hero.copy}</p>
+            </div>
+            <div class="cartera-viva-hero__aside">
+                ${renderHeroSignal(filteredRows)}
+                <div class="cartera-viva-hero__stats">
+                    ${hero.stats.map((stat) => `
+                        <div class="cartera-viva-hero__stat">
+                            <span class="cartera-viva-hero__stat-label">${stat.label}</span>
+                            <strong class="cartera-viva-hero__stat-value">${stat.value}</strong>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderCardSignal(row) {
+    const paid = Math.max(4, Math.round(clampPercent(getPaidPercent(row)) / 7) + 4);
+    const pending = Math.max(4, Math.round(clampPercent((Number(row?.pending_total || 0) / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
+    const thirdMetric = Math.max(Number(row?.loss_total || 0), getReviewTotal(row));
+    const third = Math.max(4, Math.round(clampPercent((thirdMetric / Math.max(getProgressBase(row), 1)) * 100) / 7) + 4);
+    const thirdClass = Number(row?.loss_total || 0) > 0 ? 'is-loss' : 'is-review';
+
+    return `
+        <svg class="cartera-viva-card__signal" viewBox="0 0 28 18" role="img" aria-label="Señal rápida del comprador">
+            <rect x="1" y="${18 - paid}" width="6" height="${paid}" rx="2"></rect>
+            <rect x="11" y="${18 - pending}" width="6" height="${pending}" rx="2"></rect>
+            <rect class="${thirdClass}" x="21" y="${18 - third}" width="6" height="${third}" rx="2"></rect>
+        </svg>
+    `;
+}
+
+function renderSupportChips(row) {
+    const chips = [];
+    const review = getReviewTotal(row);
+
+    if (Number(row?.loss_total || 0) > 0) {
+        chips.push(`<span class="cartera-viva-chip is-loss">Pérdida ${formatMoney(row.loss_total)}</span>`);
+    }
+    if (review > 0) {
+        chips.push(`<span class="cartera-viva-chip is-review">Por revisar ${formatMoney(review)}</span>`);
+    }
+    if (Number(row?.non_debt_income_total || 0) > 0) {
+        chips.push(`<span class="cartera-viva-chip">Ingreso aparte ${formatMoney(row.non_debt_income_total)}</span>`);
+    }
+
+    if (chips.length <= 0) return '';
+
+    return `
+        <div class="cartera-viva-card__chips">
+            ${chips.join('')}
+        </div>
+    `;
+}
+
+function renderProgressBlock(row, options = {}) {
+    const large = options.large === true;
+    const breakdown = getProgressBreakdown(row);
+    const pending = Number(row?.pending_total || 0);
+    const loss = Number(row?.loss_total || 0);
+    const base = Math.max(breakdown.base, 0);
+    const label = base > 0 ? `Cobrado de ${formatMoney(base)}` : 'Sin base para medir';
+    let footer = 'Sin saldo pendiente';
+
+    if (pending > 0) {
+        footer = `Faltan ${formatMoney(pending)}`;
+    } else if (loss > 0) {
+        footer = `${formatMoney(loss)} cerrados como pérdida`;
+    }
+
+    return `
+        <section class="cartera-viva-progress${large ? ' cartera-viva-progress--large' : ''}">
+            <div class="cartera-viva-progress__head">
+                <span class="cartera-viva-progress__label">${label}</span>
+                <span class="cartera-viva-progress__value">${formatPercent(breakdown.paidPercent)}</span>
+            </div>
+            <div class="cartera-viva-progress__track">
+                ${breakdown.paidShare > 0 ? `<span class="cartera-viva-progress__segment is-paid" style="width:${breakdown.paidShare}%"></span>` : ''}
+                ${breakdown.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${breakdown.pendingShare}%"></span>` : ''}
+                ${breakdown.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${breakdown.lossShare}%"></span>` : ''}
+            </div>
+            <div class="cartera-viva-progress__legend">
+                <span>${formatMoney(row?.paid_total || 0)} cobrados</span>
+                <span>${footer}</span>
+            </div>
+        </section>
+    `;
 }
 
 function renderCategoryControls(counts) {
@@ -204,127 +430,54 @@ function renderCategoryControls(counts) {
     }).join('');
 }
 
-function renderInsightStrip(filteredRows) {
-    return `
-        <div class="cartera-viva-insight-strip" aria-label="Resumen de la categoria activa">
-            <article class="cartera-viva-insight">
-                <span class="cartera-viva-insight__label">Compradores</span>
-                <strong class="cartera-viva-insight__value">${formatCount(filteredRows.length)}</strong>
-            </article>
-            <article class="cartera-viva-insight">
-                <span class="cartera-viva-insight__label">Pendiente activo</span>
-                <strong class="cartera-viva-insight__value">${formatMoney(sumField(filteredRows, 'pending_total'))}</strong>
-            </article>
-            <article class="cartera-viva-insight">
-                <span class="cartera-viva-insight__label">Pagado confiable</span>
-                <strong class="cartera-viva-insight__value">${formatMoney(sumField(filteredRows, 'paid_total'))}</strong>
-            </article>
-            <article class="cartera-viva-insight">
-                <span class="cartera-viva-insight__label">En revision</span>
-                <strong class="cartera-viva-insight__value">${formatMoney(sumField(filteredRows, 'review_required_total') + sumField(filteredRows, 'legacy_unclassified_total'))}</strong>
-            </article>
-        </div>
-    `;
-}
-
-function renderReviewLine(row) {
-    const reviewRequired = Number(row?.review_required_total || 0);
-    const legacyUnclassified = Number(row?.legacy_unclassified_total || 0);
-    const parts = [];
-
-    if (reviewRequired > 0) {
-        parts.push(`Revision ${formatMoney(reviewRequired)}`);
-    }
-    if (legacyUnclassified > 0) {
-        parts.push(`Legacy ambiguo ${formatMoney(legacyUnclassified)}`);
-    }
-    if (Number(row?.balance_gap_total || 0) !== 0) {
-        parts.push(`Gap ${formatMoney(row.balance_gap_total)}`);
-    }
-
-    if (parts.length === 0) return '';
-
-    return `
-        <div class="cartera-viva-card__review">
-            <span class="cartera-viva-card__review-label">Revision</span>
-            <span class="cartera-viva-card__review-copy">${parts.join(' · ')}</span>
-        </div>
-    `;
-}
-
-function renderSecondaryLine(row) {
-    const parts = [];
-
-    if (Number(row?.loss_total || 0) > 0) {
-        parts.push(`Perdida ${formatMoney(row.loss_total)}`);
-    }
-    if (Number(row?.transferred_total || 0) > 0) {
-        parts.push(`Transferido ${formatMoney(row.transferred_total)}`);
-    }
-    if (Number(row?.non_debt_income_total || 0) > 0) {
-        parts.push(`Fuera de deuda ${formatMoney(row.non_debt_income_total)}`);
-    }
-    if (Number(row?.pending_total || 0) <= 0) {
-        parts.push('Sin pendiente activo');
-    }
-
-    if (parts.length === 0) return '';
-    return `<p class="cartera-viva-card__secondary">${parts.join(' · ')}</p>`;
-}
-
 function renderPortfolioCards(filteredRows) {
     return filteredRows.map((row) => {
-        const context = resolveContextMetric(row, activeCategory);
-        const reviewBadge = row?.requires_review ? '<span class="cartera-viva-badge cartera-viva-badge--review">Revision</span>' : '';
-        const statusClass = String(row?.global_status || 'Mixto').toLowerCase();
+        const status = resolveBuyerStatus(row);
+        const thirdMetricLabel = Number(row?.loss_total || 0) > 0 && Number(row?.pending_total || 0) <= 0
+            ? 'Pérdida'
+            : 'Falta';
+        const thirdMetricValue = thirdMetricLabel === 'Pérdida'
+            ? formatMoney(row?.loss_total || 0)
+            : formatMoney(row?.pending_total || 0);
         return `
             <article class="cartera-viva-card${row?.requires_review ? ' is-review' : ''}">
                 <header class="cartera-viva-card__head">
                     <div class="cartera-viva-card__identity">
-                        <p class="cartera-viva-card__eyebrow">Comprador canonico</p>
                         <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Comprador sin nombre')}</h3>
-                        <p class="cartera-viva-card__key">${escapeHtml(row?.group_key || 'sin-group-key')}</p>
+                        <p class="cartera-viva-card__subtitle">${status.detail}</p>
                     </div>
-                    <div class="cartera-viva-card__badges">
-                        <span class="cartera-viva-badge cartera-viva-badge--${escapeHtml(statusClass)}">${escapeHtml(row?.global_status || 'Mixto')}</span>
-                        ${reviewBadge}
+                    <div class="cartera-viva-card__head-side">
+                        ${renderCardSignal(row)}
+                        <span class="cartera-viva-badge cartera-viva-badge--${status.tone}">${status.label}</span>
                     </div>
                 </header>
 
-                <section class="cartera-viva-card__context">
-                    <p class="cartera-viva-card__context-label">${context.label}</p>
-                    <strong class="cartera-viva-card__context-value">${context.value}</strong>
-                    <p class="cartera-viva-card__context-copy">${context.hint}</p>
-                </section>
+                ${renderProgressBlock(row)}
 
                 <dl class="cartera-viva-card__metrics">
                     <div class="cartera-viva-card__metric">
-                        <dt>Fiado total</dt>
+                        <dt>Fiado</dt>
                         <dd>${formatMoney(row?.credited_total)}</dd>
                     </div>
                     <div class="cartera-viva-card__metric">
-                        <dt>Pagado</dt>
+                        <dt>Cobrado</dt>
                         <dd>${formatMoney(row?.paid_total)}</dd>
                     </div>
                     <div class="cartera-viva-card__metric">
-                        <dt>Pendiente</dt>
-                        <dd>${formatMoney(row?.pending_total)}</dd>
-                    </div>
-                    <div class="cartera-viva-card__metric">
-                        <dt>Cumplimiento</dt>
-                        <dd>${formatPercent(row?.compliance_percent)}</dd>
+                        <dt>${thirdMetricLabel}</dt>
+                        <dd>${thirdMetricValue}</dd>
                     </div>
                 </dl>
 
-                ${renderSecondaryLine(row)}
-                ${renderReviewLine(row)}
+                ${renderSupportChips(row)}
 
                 <div class="cartera-viva-card__footer">
+                    <span class="cartera-viva-card__footer-copy">Cumplimiento ${formatPercent(getPaidPercent(row))}</span>
                     <button
                         type="button"
                         class="cartera-viva-detail-link"
                         data-cartera-open-history="${escapeHtml(row?.buyer_id || '')}">
-                        Ver historial
+                        Ver detalle
                     </button>
                 </div>
             </article>
@@ -357,8 +510,8 @@ function renderLoadingState() {
     return `
         <div class="cartera-viva-empty cartera-viva-empty--loading">
             <div class="cartera-viva-loading-dot" aria-hidden="true"></div>
-            <h3 class="cartera-viva-empty__title">Cargando Cartera Viva</h3>
-            <p class="cartera-viva-empty__copy">Leyendo la fuente buyer-centric por comprador.</p>
+            <h3 class="cartera-viva-empty__title">Cargando cartera</h3>
+            <p class="cartera-viva-empty__copy">Ordenando compradores y saldos visibles.</p>
         </div>
     `;
 }
@@ -366,7 +519,7 @@ function renderLoadingState() {
 function renderErrorState(message) {
     return renderEmptyState({
         title: 'No se pudo cargar Cartera Viva',
-        copy: message || 'La vista no pudo leer la fuente buyer-centric. Intenta actualizar la vista.'
+        copy: message || 'La vista no pudo leer los saldos de compradores. Intenta actualizar.'
     });
 }
 
@@ -392,14 +545,14 @@ function renderListView(root) {
         bodyContent = renderErrorState(lastErrorMessage);
     } else if (summaryRows.length <= 0) {
         bodyContent = renderEmptyState({
-            title: 'Cartera Viva aun no tiene compradores',
-            copy: 'Registra fiados o movimientos buyer-centric para empezar a leer compradores unicos.',
+            title: 'Todavía no hay compradores en cartera',
+            copy: 'Registra fiados o movimientos para empezar a ver compradores aquí.',
             action: 'new-record'
         });
     } else if (!hasReliableMetrics) {
         bodyContent = renderEmptyState({
-            title: 'Solo hay metricas en revision',
-            copy: 'La base buyer-centric existe, pero todavia no hay totales confiables suficientes para esta lectura.'
+            title: 'Todavía no hay lectura suficiente',
+            copy: 'Hay movimientos por ordenar, pero aún no alcanzan para mostrar una cartera clara.'
         });
     } else if (filteredRows.length <= 0) {
         const categoryMeta = CATEGORY_META[activeCategory];
@@ -409,7 +562,6 @@ function renderListView(root) {
         });
     } else {
         bodyContent = `
-            ${renderInsightStrip(filteredRows)}
             <div class="cartera-viva-grid">
                 ${renderPortfolioCards(filteredRows)}
             </div>
@@ -417,19 +569,21 @@ function renderListView(root) {
     }
 
     root.innerHTML = `
-        <section class="cartera-viva-view" aria-label="Cartera Viva buyer-centric">
+        <section class="cartera-viva-view" aria-label="Cartera de compradores">
             <header class="cartera-viva-view__header">
-                <div class="cartera-viva-view__copy">
-                    <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
-                    <h2 class="cartera-viva-view__title">Compradores buyer-centric</h2>
-                    <p class="cartera-viva-view__subtitle">Una sola categoria visible a la vez. Orden base: mayor pendiente primero.</p>
+                <div class="cartera-viva-view__headline">
+                    <div class="cartera-viva-view__copy">
+                        <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
+                        <h2 class="cartera-viva-view__title">Cartera de compradores</h2>
+                        <p class="cartera-viva-view__subtitle">Una sola vista a la vez, ordenada por el saldo que todavía importa.</p>
+                    </div>
+                    <div class="cartera-viva-view__actions">
+                        <button type="button" class="cartera-viva-refresh" data-cartera-refresh>
+                            Actualizar
+                        </button>
+                    </div>
                 </div>
-                <div class="cartera-viva-view__actions">
-                    <span class="cartera-viva-view__meta">Fuente: buyer summary</span>
-                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh>
-                        Actualizar
-                    </button>
-                </div>
+                ${renderHeaderHero(filteredRows)}
             </header>
 
             <div class="cartera-viva-category-bar" role="group" aria-label="Categorias de Cartera Viva">
@@ -485,7 +639,7 @@ async function loadSummary() {
         summaryRows = await fetchBuyerPortfolioSummary(supabase);
     } catch (error) {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
-        lastErrorMessage = String(error?.message || 'Error leyendo el summary buyer-centric.');
+        lastErrorMessage = String(error?.message || 'Error leyendo la cartera de compradores.');
         summaryRows = [];
     } finally {
         loading = false;
@@ -551,7 +705,7 @@ async function exportBuyerDetail() {
         setDetailExportState(`Exportado: ${fileName}`, 'success');
     } catch (error) {
         console.error('[CarteraViva] buyer export failed:', error?.message || error);
-        setDetailExportState(String(error?.message || 'No se pudo generar la exportacion buyer-centric.'), 'error');
+        setDetailExportState(String(error?.message || 'No se pudo generar la exportación del comprador.'), 'error');
     } finally {
         detailExportPending = false;
         renderView();

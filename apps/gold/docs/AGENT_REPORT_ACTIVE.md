@@ -5285,3 +5285,109 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 1. No abrir nuevas features; el siguiente paso ya seria solo declarar cierre si esta correccion pasa la auditoria final humana.
 2. Si se quiere una verificacion extra, basta con repetir:
    - `Cartera Viva` -> `Maria Elena` -> `Ver historial` -> `Exportar`.
+
+## Sesion: Cartera Viva cierre visual + evaluacion de Otros (2026-03-28)
+
+### Diagnostico
+
+- La base funcional buyer-centric ya existe, pero la vista todavia expone copy tecnico visible y una categoria `Mixto` al frente.
+- Las cards actuales siguen altas para la densidad real de datos y repiten cajas internas que debilitan el escaneo.
+- El detalle contextual y la exportacion conservan etiquetas tecnicas que ya no deben mostrarse como lenguaje de producto.
+- `Otros` no vive dentro de Cartera Viva, pero hoy sigue amarrado al bloque de operaciones del facturero y a wiring amplio dentro de `agro.js`; moverlo hacia `Ciclos Operativos` solo se ejecutara si aparece una ruta de diff bajo y riesgo bajo.
+
+### Plan
+
+1. Tomar `cartera-viva-prototype.html` de la raiz como blueprint visual y traducir solo sus patrones utiles al modulo real.
+2. Limpiar copy tecnico visible y retirar `Mixto` como categoria principal de la UI sin romper la verdad buyer-centric interna.
+3. Compactar cards, reforzar la lectura superior y volver la barra de progreso la pieza dominante.
+4. Ordenar la subvista de detalle y alinear labels de exportacion con el lenguaje humano del modulo.
+5. Evaluar `Otros` frente a `Ciclos Operativos`; si no es seguro, dejar constancia y no forzarlo.
+
+### Criterio visual
+
+- Cierre sobrio, agricola, compacto y movil-first.
+- Menos glow, menos cajas, menos texto, cero copy tecnico visible.
+- ADN V10 aplicado con dorado oscuro, jerarquia clara y motion silencioso.
+
+### Alcance exacto
+
+- Esta ronda cierra visualmente Cartera Viva sobre los modulos dedicados existentes.
+- `Otros` solo se reubica si el diff real es bajo y no obliga a crecer `agro.js` ni a abrir refactor estructural.
+- El historial legacy viejo del facturero **no se elimina aun**; su retiro solo se evaluara cuando el nuevo sistema quede estable y validado.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - `Mixto` sale del frente visible:
+    - la UI ahora expone solo `Fiados`, `Pagados` y `Pérdidas`;
+    - los casos mixtos se reencaminan a la categoria visible mas util sin romper la logica interna.
+  - se elimina copy tecnico visible:
+    - fuera `buyer-centric`, `comprador canonico`, `fuente: buyer summary`;
+    - header nuevo: `Cartera de compradores`.
+  - se rehace la composicion:
+    - hero superior con lectura principal por categoria;
+    - cards compactas con progreso dominante, 3 metricas y CTA discreto;
+    - microseñal SVG pequena por comprador;
+    - chips cortos para `Por revisar`, `Pérdida` e `Ingreso aparte`.
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - detalle superior compactado con barra principal y resumen corto;
+  - toolbar mas limpia;
+  - timeline con labels y notas de producto, no de implementacion.
+- `apps/gold/agro/agro-cartera-viva-export.js`
+  - export en Markdown alineado al lenguaje humano del modulo;
+  - se removio copy tecnico visible y se renombraron secciones/estados.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - se ajusto la capa visual completa para densidad util:
+    - menos glow;
+    - menos cajas grandes;
+    - ritmo mas compacto;
+    - tokens V10 y progreso protagonista;
+    - mobile-first y sin motion ruidoso.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion abierta y cerrada conforme a la policy canonica.
+
+### Resultado sobre Otros
+
+- `Otros` no vive dentro de Cartera Viva hoy.
+- La evaluacion real muestra que moverlo hacia `Ciclos Operativos` en esta ronda no es diff bajo:
+  - sigue ligado a `agro-shell.js`, `index.html` y un bloque amplio de `agro.js`;
+  - forzarlo abriria refactor estructural fuera del alcance.
+- Decision aplicada:
+  - **no se reubica en esta ronda**;
+  - se prioriza cerrar bien Cartera Viva sin abrir otro frente.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA ejecutado
+
+- Smoke tecnico:
+  - build completo validado.
+- Smoke visual/funcional corto:
+  - se levanto preview local desde `apps/gold/dist`;
+  - se intento login QA local para entrar a `/agro/`;
+  - el smoke autenticado quedo bloqueado por hCaptcha en el flujo de login del preview;
+  - no se forzo bypass ni QA intensivo.
+- Higiene Playwright:
+  - navegador cerrado;
+  - temporal borrado: `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1774738591032`
+
+### QA sugerido
+
+1. QA humano corto con sesion valida:
+   - abrir `Cartera Viva` en desktop y mobile;
+   - cambiar entre `Fiados`, `Pagados` y `Pérdidas`;
+   - abrir una card y volver;
+   - exportar un comprador;
+   - confirmar que no queda copy tecnico visible.
+2. Mantener fuera de esta ronda la eliminacion del historial legacy viejo del facturero; solo se evaluara cuando el nuevo sistema quede estable y validado.

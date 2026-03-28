@@ -1,6 +1,5 @@
 .agro-cartera-viva-region {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+  margin-block: 2rem;
 }
 
 .agro-cartera-viva-root {
@@ -12,47 +11,91 @@
   gap: 1rem;
 }
 
-.cartera-viva-view__header {
+.cartera-viva-view__header,
+.cartera-viva-detail__summary,
+.cartera-viva-detail__body {
   display: grid;
   gap: 1rem;
-  padding: 1.25rem;
-  border-radius: 18px;
-  border: 1px solid rgba(200, 167, 82, 0.18);
+  padding: 1.15rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background:
-    radial-gradient(circle at top left, rgba(200, 167, 82, 0.12), transparent 38%),
-    linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(12, 12, 12, 0.98));
-  box-shadow: 0 22px 40px rgba(0, 0, 0, 0.26);
+    radial-gradient(circle at top left, rgba(200, 167, 82, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(17, 17, 19, 0.96), rgba(10, 10, 10, 0.98));
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.24);
 }
 
-.cartera-viva-view__copy {
+.cartera-viva-view__headline,
+.cartera-viva-view__copy,
+.cartera-viva-view__body,
+.cartera-viva-detail__body-head,
+.cartera-viva-detail__identity {
   display: grid;
   gap: 0.35rem;
 }
 
-.cartera-viva-view__eyebrow {
+.cartera-viva-view__headline {
+  gap: 0.9rem;
+}
+
+.cartera-viva-view__eyebrow,
+.cartera-viva-progress__label,
+.cartera-viva-hero__label,
+.cartera-viva-hero__stat-label,
+.cartera-viva-card__metric dt,
+.cartera-viva-card__footer-copy,
+.cartera-viva-history-item__label {
   font-size: 0.72rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--gold-primary, #C8A752);
+}
+
+.cartera-viva-view__eyebrow {
+  color: var(--gold-4);
+}
+
+.cartera-viva-view__title,
+.cartera-viva-hero__amount,
+.cartera-viva-card__title,
+.cartera-viva-detail__title,
+.cartera-viva-progress__value,
+.cartera-viva-insight__value,
+.cartera-viva-history-item__amount {
+  font-family: 'Orbitron', sans-serif;
 }
 
 .cartera-viva-view__title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.4rem, 3vw, 2rem);
-  color: var(--text-primary, #fff);
+  font-size: clamp(1.3rem, 2.5vw, 1.9rem);
+  color: var(--text-primary);
+  line-height: 1.08;
 }
 
 .cartera-viva-view__subtitle,
-.cartera-viva-view__meta {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.95rem;
+.cartera-viva-card__subtitle,
+.cartera-viva-hero__copy,
+.cartera-viva-progress__legend,
+.cartera-viva-empty__copy,
+.cartera-viva-detail__subtitle,
+.cartera-viva-detail__body-copy,
+.cartera-viva-detail__status,
+.cartera-viva-history-item__meta,
+.cartera-viva-history-item__concept,
+.cartera-viva-history-item__note {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
 }
 
-.cartera-viva-view__actions {
+.cartera-viva-view__actions,
+.cartera-viva-detail__toolbar-actions,
+.cartera-viva-card__head-side,
+.cartera-viva-card__footer {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
   align-items: center;
+  gap: 0.7rem;
+}
+
+.cartera-viva-view__actions,
+.cartera-viva-card__footer {
   justify-content: space-between;
 }
 
@@ -62,22 +105,22 @@
 .cartera-viva-detail-link {
   appearance: none;
   border: 1px solid rgba(200, 167, 82, 0.28);
-  background: rgba(200, 167, 82, 0.12);
-  color: var(--gold-primary, #C8A752);
-  border-radius: 999px;
-  padding: 0.7rem 1rem;
+  background: rgba(200, 167, 82, 0.1);
+  color: var(--gold-4);
+  border-radius: var(--radius-pill);
+  padding: 0.65rem 0.95rem;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, opacity 180ms ease;
 }
 
 .cartera-viva-refresh:hover,
 .cartera-viva-empty__action:hover,
 .cartera-viva-back:hover,
 .cartera-viva-detail-link:hover {
-  border-color: rgba(232, 208, 144, 0.6);
-  background: rgba(200, 167, 82, 0.18);
+  background: rgba(200, 167, 82, 0.16);
+  border-color: rgba(232, 212, 139, 0.4);
   transform: translateY(-1px);
 }
 
@@ -90,10 +133,109 @@
   transform: none;
 }
 
-.cartera-viva-category-bar {
+.cartera-viva-hero {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.2rem;
+}
+
+.cartera-viva-hero__main,
+.cartera-viva-hero__aside {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.cartera-viva-hero__label,
+.cartera-viva-hero__stat-label,
+.cartera-viva-progress__label,
+.cartera-viva-card__metric dt,
+.cartera-viva-card__footer-copy,
+.cartera-viva-history-item__label {
+  color: var(--text-muted);
+}
+
+.cartera-viva-hero__amount {
+  font-size: clamp(1.55rem, 4vw, 2.2rem);
+  color: var(--text-primary);
+  line-height: 0.98;
+}
+
+.cartera-viva-hero__copy {
+  max-width: 26rem;
+}
+
+.cartera-viva-hero__signal {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.cartera-viva-hero__signal-track,
+.cartera-viva-progress__track {
+  display: flex;
+  overflow: hidden;
+  min-height: 0.55rem;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cartera-viva-hero__signal-segment,
+.cartera-viva-progress__segment {
+  display: block;
+  height: 100%;
+}
+
+.cartera-viva-hero__signal-segment.is-paid,
+.cartera-viva-progress__segment.is-paid {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.88), rgba(16, 185, 129, 0.54));
+}
+
+.cartera-viva-hero__signal-segment.is-pending,
+.cartera-viva-progress__segment.is-pending {
+  background: linear-gradient(90deg, rgba(200, 167, 82, 0.92), rgba(232, 212, 139, 0.58));
+}
+
+.cartera-viva-hero__signal-segment.is-loss,
+.cartera-viva-progress__segment.is-loss {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.88), rgba(239, 68, 68, 0.55));
+}
+
+.cartera-viva-hero__signal-legend,
+.cartera-viva-progress__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.cartera-viva-hero__stats,
+.cartera-viva-insight-strip {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: 0.7rem;
+}
+
+.cartera-viva-hero__stat,
+.cartera-viva-insight {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cartera-viva-hero__stat-value,
+.cartera-viva-insight__value {
+  color: var(--text-primary);
+  font-size: 0.96rem;
+}
+
+.cartera-viva-category-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
 }
 
 .cartera-viva-category {
@@ -101,27 +243,27 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.95rem 1rem;
-  border-radius: 16px;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(22, 22, 22, 0.92);
-  color: var(--text-primary, #fff);
+  background: rgba(17, 17, 19, 0.92);
+  color: var(--text-primary);
   font: inherit;
   cursor: pointer;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
 .cartera-viva-category:hover {
   transform: translateY(-1px);
-  border-color: rgba(200, 167, 82, 0.28);
+  border-color: rgba(200, 167, 82, 0.3);
 }
 
 .cartera-viva-category.is-active {
   background: linear-gradient(180deg, rgba(200, 167, 82, 0.18), rgba(200, 167, 82, 0.08));
-  border-color: rgba(200, 167, 82, 0.52);
-  color: var(--gold-light, #e8d090);
+  border-color: rgba(200, 167, 82, 0.46);
+  color: var(--gold-5);
 }
 
 .cartera-viva-category__label {
@@ -129,70 +271,40 @@
 }
 
 .cartera-viva-category__count {
-  min-width: 2.25rem;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
+  min-width: 1.9rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  color: var(--text-secondary);
   text-align: center;
-  font-size: 0.84rem;
-}
-
-.cartera-viva-view__body {
-  display: grid;
-  gap: 1rem;
-}
-
-.cartera-viva-insight-strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.cartera-viva-insight {
-  display: grid;
-  gap: 0.28rem;
-  padding: 1rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(18, 18, 18, 0.94);
-}
-
-.cartera-viva-insight__label {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.82rem;
-}
-
-.cartera-viva-insight__value {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  color: var(--text-primary, #fff);
+  font-size: 0.8rem;
 }
 
 .cartera-viva-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .cartera-viva-card {
   display: grid;
-  gap: 0.9rem;
-  padding: 1rem;
-  border-radius: 18px;
+  gap: 0.8rem;
+  padding: 0.95rem;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(180deg, rgba(24, 24, 24, 0.98), rgba(15, 15, 15, 0.96));
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.97), rgba(10, 10, 10, 0.98));
 }
 
 .cartera-viva-card.is-review {
-  border-color: rgba(251, 191, 36, 0.35);
+  border-color: rgba(245, 158, 11, 0.36);
 }
 
-.cartera-viva-card__head {
+.cartera-viva-card__head,
+.cartera-viva-detail__summary-head,
+.cartera-viva-history-item__main,
+.cartera-viva-detail__toolbar {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.9rem;
   align-items: flex-start;
 }
 
@@ -202,148 +314,165 @@
   min-width: 0;
 }
 
-.cartera-viva-card__eyebrow {
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted, rgba(255, 255, 255, 0.46));
+.cartera-viva-card__title,
+.cartera-viva-detail__title,
+.cartera-viva-detail__section-title,
+.cartera-viva-empty__title,
+.cartera-viva-history-item__title {
+  color: var(--text-primary);
 }
 
 .cartera-viva-card__title {
-  font-size: 1.1rem;
-  line-height: 1.1;
-  color: var(--text-primary, #fff);
-  word-break: break-word;
+  font-size: 1rem;
+  line-height: 1.08;
 }
 
-.cartera-viva-card__key {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.82rem;
-  word-break: break-word;
-}
-
-.cartera-viva-card__badges {
-  display: flex;
-  flex-wrap: wrap;
+.cartera-viva-card__head-side {
   justify-content: flex-end;
-  gap: 0.45rem;
 }
 
-.cartera-viva-badge {
+.cartera-viva-card__signal {
+  width: 1.75rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+}
+
+.cartera-viva-card__signal rect {
+  fill: rgba(16, 185, 129, 0.82);
+}
+
+.cartera-viva-card__signal rect:nth-child(2) {
+  fill: rgba(200, 167, 82, 0.86);
+}
+
+.cartera-viva-card__signal rect.is-loss {
+  fill: rgba(239, 68, 68, 0.82);
+}
+
+.cartera-viva-card__signal rect.is-review {
+  fill: rgba(148, 163, 184, 0.82);
+}
+
+.cartera-viva-badge,
+.cartera-viva-chip,
+.cartera-viva-history-item__label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
+  min-height: 1.7rem;
+  padding: 0.22rem 0.62rem;
+  border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 700;
 }
 
 .cartera-viva-badge--fiado {
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.35);
-  background: rgba(251, 191, 36, 0.08);
+  color: var(--gold-5);
+  border-color: rgba(200, 167, 82, 0.34);
+  background: rgba(200, 167, 82, 0.11);
 }
 
 .cartera-viva-badge--pagado {
-  color: #4ade80;
-  border-color: rgba(74, 222, 128, 0.35);
-  background: rgba(74, 222, 128, 0.08);
+  color: var(--color-success);
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.1);
 }
 
-.cartera-viva-badge--mixto {
-  color: var(--gold-primary, #C8A752);
-  border-color: rgba(200, 167, 82, 0.35);
-  background: rgba(200, 167, 82, 0.08);
+.cartera-viva-badge--perdido {
+  color: var(--color-error);
+  border-color: rgba(239, 68, 68, 0.28);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .cartera-viva-badge--review {
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.28);
-  background: rgba(251, 191, 36, 0.08);
+  color: var(--color-warning);
+  border-color: rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.1);
 }
 
-.cartera-viva-card__context {
+.cartera-viva-badge--seguimiento {
+  color: var(--text-secondary);
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.cartera-viva-progress {
   display: grid;
-  gap: 0.25rem;
-  padding: 0.95rem;
-  border-radius: 16px;
+  gap: 0.45rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.cartera-viva-card__context-label {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.84rem;
+.cartera-viva-progress--large {
+  padding: 0.85rem 0.9rem;
 }
 
-.cartera-viva-card__context-value {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1.18rem;
-  color: var(--text-primary, #fff);
+.cartera-viva-progress--large .cartera-viva-progress__track {
+  min-height: 0.7rem;
 }
 
-.cartera-viva-card__context-copy,
-.cartera-viva-card__secondary,
-.cartera-viva-card__review-copy {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.86rem;
+.cartera-viva-progress__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: baseline;
+}
+
+.cartera-viva-progress__value {
+  color: var(--text-primary);
+  font-size: 0.8rem;
 }
 
 .cartera-viva-card__metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
 }
 
 .cartera-viva-card__metric {
   display: grid;
-  gap: 0.2rem;
-  padding: 0.85rem;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.18);
+  gap: 0.18rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.cartera-viva-card__metric dt {
-  color: var(--text-muted, rgba(255, 255, 255, 0.46));
-  font-size: 0.76rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .cartera-viva-card__metric dd {
-  color: var(--text-primary, #fff);
+  margin: 0;
+  color: var(--text-primary);
   font-weight: 700;
+  font-size: 0.92rem;
 }
 
-.cartera-viva-card__secondary {
-  margin-top: -0.1rem;
-}
-
-.cartera-viva-card__review {
-  display: grid;
-  gap: 0.18rem;
-  padding-top: 0.75rem;
-  border-top: 1px dashed rgba(251, 191, 36, 0.26);
-}
-
-.cartera-viva-card__review-label {
-  color: #fbbf24;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.cartera-viva-card__footer {
+.cartera-viva-card__chips {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
-.cartera-viva-detail-link {
-  padding-inline: 1.1rem;
+.cartera-viva-chip {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cartera-viva-chip.is-loss {
+  color: var(--color-error);
+  border-color: rgba(239, 68, 68, 0.22);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.cartera-viva-chip.is-review {
+  color: var(--color-warning);
+  border-color: rgba(245, 158, 11, 0.22);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.cartera-viva-card__footer-copy {
+  color: var(--text-muted);
 }
 
 .cartera-viva-view--detail {
@@ -351,244 +480,220 @@
 }
 
 .cartera-viva-detail__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: space-between;
   align-items: center;
 }
 
 .cartera-viva-detail__toolbar-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
   justify-content: flex-end;
 }
 
-.cartera-viva-detail__status {
-  margin-top: -0.15rem;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.88rem;
-}
-
 .cartera-viva-detail__status.is-success {
-  color: #4ade80;
+  color: var(--color-success);
 }
 
 .cartera-viva-detail__status.is-error {
-  color: #fbbf24;
-}
-
-.cartera-viva-detail__summary,
-.cartera-viva-detail__body {
-  display: grid;
-  gap: 1rem;
-  padding: 1.1rem;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(12, 12, 12, 0.98));
-}
-
-.cartera-viva-detail__summary-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.cartera-viva-detail__identity {
-  display: grid;
-  gap: 0.18rem;
-}
-
-.cartera-viva-detail__title,
-.cartera-viva-detail__section-title {
-  color: var(--text-primary, #fff);
+  color: var(--color-warning);
 }
 
 .cartera-viva-detail__title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.2rem, 3vw, 1.7rem);
+  font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+  line-height: 1.05;
 }
 
-.cartera-viva-detail__summary-copy,
-.cartera-viva-detail__body-copy {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.9rem;
+.cartera-viva-detail__subtitle {
+  margin: 0;
 }
 
-.cartera-viva-detail__body-head {
-  display: grid;
-  gap: 0.6rem;
+.cartera-viva-detail__body {
+  gap: 0.85rem;
+}
+
+.cartera-viva-insight-strip--detail {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .cartera-viva-detail__timeline {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.7rem;
+}
+
+.cartera-viva-detail__timeline .facturero-day-header {
+  margin-top: 0.4rem;
+  color: var(--gold-4);
+  font-size: 0.76rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .cartera-viva-history-item {
   display: grid;
   gap: 0.6rem;
-  padding: 1rem;
-  border-radius: 16px;
+  padding: 0.85rem 0.9rem;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
 }
 
 .cartera-viva-history-item--pending {
-  border-color: rgba(251, 191, 36, 0.28);
+  border-color: rgba(200, 167, 82, 0.26);
 }
 
 .cartera-viva-history-item--paid {
-  border-color: rgba(74, 222, 128, 0.24);
+  border-color: rgba(16, 185, 129, 0.24);
 }
 
 .cartera-viva-history-item--loss {
-  border-color: rgba(248, 113, 113, 0.24);
+  border-color: rgba(239, 68, 68, 0.22);
 }
 
 .cartera-viva-history-item--review {
-  border-color: rgba(200, 167, 82, 0.28);
-}
-
-.cartera-viva-history-item__main {
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  align-items: flex-start;
+  border-color: rgba(245, 158, 11, 0.24);
 }
 
 .cartera-viva-history-item__copy {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.28rem;
   min-width: 0;
 }
 
 .cartera-viva-history-item__head {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.45rem;
   align-items: center;
-}
-
-.cartera-viva-history-item__title {
-  font-size: 1rem;
-  color: var(--text-primary, #fff);
 }
 
 .cartera-viva-history-item__label {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.7rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  color: var(--text-secondary);
   background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.74rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.cartera-viva-history-item__meta,
-.cartera-viva-history-item__concept,
-.cartera-viva-history-item__note {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
-  font-size: 0.86rem;
 }
 
 .cartera-viva-history-item__amount {
-  font-family: 'Orbitron', sans-serif;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary);
+  font-size: 0.85rem;
   text-align: right;
 }
 
 .cartera-viva-empty {
   display: grid;
-  gap: 0.7rem;
+  gap: 0.65rem;
   place-items: center;
-  text-align: center;
-  padding: 2.2rem 1.4rem;
-  border-radius: 18px;
+  padding: 2rem 1.2rem;
+  border-radius: var(--radius-lg);
   border: 1px dashed rgba(255, 255, 255, 0.12);
-  background: rgba(16, 16, 16, 0.92);
+  background: rgba(17, 17, 19, 0.92);
+  text-align: center;
 }
 
 .cartera-viva-empty__icon {
-  font-size: 2rem;
-  opacity: 0.85;
+  font-size: 1.8rem;
+  opacity: 0.8;
 }
 
 .cartera-viva-empty__title {
-  color: var(--text-primary, #fff);
-  font-size: 1.05rem;
+  font-size: 1rem;
+  margin: 0;
 }
 
 .cartera-viva-empty__copy {
-  max-width: 42rem;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  max-width: 34rem;
+  margin: 0;
 }
 
 .cartera-viva-loading-dot {
-  width: 0.9rem;
-  height: 0.9rem;
+  width: 0.8rem;
+  height: 0.8rem;
   border-radius: 50%;
-  background: var(--gold-primary, #C8A752);
-  box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.35);
-  animation: carteraVivaPulse 1.4s ease-in-out infinite;
+  background: var(--gold-4);
+  box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.28);
+  animation: carteraVivaPulse 1.35s ease-in-out infinite;
 }
 
 @keyframes carteraVivaPulse {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.12);
+    box-shadow: 0 0 0 0 rgba(200, 167, 82, 0.18);
   }
 
   50% {
-    transform: scale(1.15);
-    box-shadow: 0 0 0 12px rgba(200, 167, 82, 0);
+    transform: scale(1.08);
+    box-shadow: 0 0 0 10px rgba(200, 167, 82, 0);
   }
 }
 
-@media (min-width: 720px) {
-  .cartera-viva-view__header {
+@media (min-width: 900px) {
+  .cartera-viva-view__headline,
+  .cartera-viva-hero {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
   }
 
-  .cartera-viva-category-bar,
-  .cartera-viva-insight-strip {
+  .cartera-viva-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cartera-viva-insight-strip--detail {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 960px) {
-  .cartera-viva-grid {
+@media (max-width: 768px) {
+  .cartera-viva-card__head,
+  .cartera-viva-detail__summary-head,
+  .cartera-viva-history-item__main,
+  .cartera-viva-detail__toolbar {
+    display: grid;
+  }
+
+  .cartera-viva-card__head-side,
+  .cartera-viva-detail__toolbar-actions,
+  .cartera-viva-card__footer {
+    justify-content: flex-start;
+  }
+
+  .cartera-viva-category-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .cartera-viva-card__metrics,
+  .cartera-viva-insight-strip--detail,
+  .cartera-viva-hero__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cartera-viva-history-item__amount {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .cartera-viva-view__header,
+  .cartera-viva-detail__summary,
+  .cartera-viva-detail__body,
+  .cartera-viva-card {
+    padding: 0.95rem;
+  }
+
+  .cartera-viva-card__metrics,
+  .cartera-viva-hero__stats,
+  .cartera-viva-insight-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .cartera-viva-card__footer-copy {
+    letter-spacing: 0.08em;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cartera-viva-refresh,
   .cartera-viva-empty__action,
-  .cartera-viva-category,
   .cartera-viva-back,
   .cartera-viva-detail-link,
+  .cartera-viva-category,
   .cartera-viva-loading-dot {
     transition: none;
     animation: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .cartera-viva-history-item__main,
-  .cartera-viva-detail__summary-head {
-    display: grid;
-  }
-
-  .cartera-viva-history-item__amount {
-    text-align: left;
   }
 }

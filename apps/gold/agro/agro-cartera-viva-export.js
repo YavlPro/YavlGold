@@ -16,8 +16,25 @@ function formatMoney(value) {
 
 function formatPercent(value) {
     const nextValue = Number(value);
-    if (!Number.isFinite(nextValue)) return 'En revision';
+    if (!Number.isFinite(nextValue)) return 'Sin lectura';
     return `${nextValue.toFixed(0)}%`;
+}
+
+function getReviewTotal(buyerRow) {
+    return Number(buyerRow?.review_required_total || 0) + Number(buyerRow?.legacy_unclassified_total || 0);
+}
+
+function resolveBuyerStatus(buyerRow) {
+    const pending = Number(buyerRow?.pending_total || 0);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
+    const review = getReviewTotal(buyerRow);
+
+    if (pending > 0) return paid > 0 ? 'Cobro en curso' : 'Fiado activo';
+    if (paid > 0) return 'Pagado';
+    if (loss > 0) return 'Pérdida';
+    if (review > 0) return 'Por revisar';
+    return 'Seguimiento';
 }
 
 function sanitizeFileToken(value) {
@@ -48,27 +65,27 @@ function formatExportTimestamp(date = new Date()) {
 
 function buildReviewSectionLines(buyerRow) {
     const lines = [
-        `- En revision: ${formatMoney(buyerRow?.review_required_total)}`,
-        `- Legacy ambiguo: ${formatMoney(buyerRow?.legacy_unclassified_total)}`
+        `- Por revisar: ${formatMoney(buyerRow?.review_required_total)}`,
+        `- Registros antiguos por ordenar: ${formatMoney(buyerRow?.legacy_unclassified_total)}`
     ];
 
     if (Number(buyerRow?.non_debt_income_total || 0) > 0) {
-        lines.push(`- Ingreso fuera de deuda: ${formatMoney(buyerRow?.non_debt_income_total)}`);
+        lines.push(`- Ingreso aparte: ${formatMoney(buyerRow?.non_debt_income_total)}`);
     }
 
     if (Number(buyerRow?.transferred_total || 0) > 0) {
-        lines.push(`- Transferido fuera del eje deuda: ${formatMoney(buyerRow?.transferred_total)}`);
+        lines.push(`- Movido fuera de cartera: ${formatMoney(buyerRow?.transferred_total)}`);
     }
 
     if (Number(buyerRow?.balance_gap_total || 0) !== 0) {
-        lines.push(`- Gap de balance: ${formatMoney(buyerRow?.balance_gap_total)}`);
+        lines.push(`- Diferencia pendiente por cuadrar: ${formatMoney(buyerRow?.balance_gap_total)}`);
     }
 
     return lines;
 }
 
 function getHistoryConfidenceLabel(row) {
-    return row?.is_review ? 'En revision' : 'Confiable';
+    return row?.is_review ? 'Por revisar' : 'Confirmado';
 }
 
 function buildHistoryLines(rows) {
@@ -89,8 +106,8 @@ function buildHistoryLines(rows) {
 
         (group?.rows || []).forEach((row) => {
             lines.push(`- **${row?.label || 'Movimiento'}** · ${formatMoney(row?.amount)}`);
-            lines.push(`  - Registro: ${row?.title || 'Movimiento buyer-centric'}`);
-            lines.push(`  - Confiabilidad: ${getHistoryConfidenceLabel(row)}`);
+            lines.push(`  - Registro: ${row?.title || 'Movimiento del comprador'}`);
+            lines.push(`  - Estado: ${getHistoryConfidenceLabel(row)}`);
             if (row?.meta) {
                 lines.push(`  - Contexto: ${row.meta}`);
             }
@@ -117,22 +134,21 @@ export function buildBuyerPortfolioExportMarkdown({ buyerRow, historyRows, expor
     const historyLines = buildHistoryLines(historyRows);
 
     return [
-        `# Cartera Viva — ${buyerRow.display_name || 'Comprador'}`,
+        `# Cartera de compradores — ${buyerRow.display_name || 'Comprador'}`,
         '',
-        `- Fecha de exportacion: ${formatExportTimestamp(exportedAt)}`,
-        `- Estado simple: ${buyerRow.global_status || 'Mixto'}`,
-        `- Requiere revision: ${buyerRow.requires_review ? 'Si' : 'No'}`,
-        `- Group key: ${buyerRow.group_key || 'sin-group-key'}`,
+        `- Fecha de exportación: ${formatExportTimestamp(exportedAt)}`,
+        `- Estado: ${resolveBuyerStatus(buyerRow)}`,
+        `- Requiere revisión: ${buyerRow.requires_review ? 'Sí' : 'No'}`,
         '',
-        '## Resumen comercial',
+        '## Resumen de cartera',
         '',
-        `- Fiado total: ${formatMoney(buyerRow.credited_total)}`,
-        `- Pagado confiable: ${formatMoney(buyerRow.paid_total)}`,
-        `- Perdida confiable: ${formatMoney(buyerRow.loss_total)}`,
-        `- Pendiente activo: ${formatMoney(buyerRow.pending_total)}`,
+        `- Fiado: ${formatMoney(buyerRow.credited_total)}`,
+        `- Cobrado: ${formatMoney(buyerRow.paid_total)}`,
+        `- Pérdida: ${formatMoney(buyerRow.loss_total)}`,
+        `- Falta por cobrar: ${formatMoney(buyerRow.pending_total)}`,
         `- Cumplimiento: ${formatPercent(buyerRow.compliance_percent)}`,
         '',
-        '## Revision y capas separadas',
+        '## Movimientos separados',
         '',
         ...reviewLines,
         '',
