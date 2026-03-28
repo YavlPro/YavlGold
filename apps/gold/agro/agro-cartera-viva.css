@@ -81,6 +81,15 @@
   transform: translateY(-1px);
 }
 
+.cartera-viva-refresh:disabled,
+.cartera-viva-empty__action:disabled,
+.cartera-viva-back:disabled,
+.cartera-viva-detail-link:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none;
+}
+
 .cartera-viva-category-bar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -347,6 +356,27 @@
   gap: 0.75rem;
   justify-content: space-between;
   align-items: center;
+}
+
+.cartera-viva-detail__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.cartera-viva-detail__status {
+  margin-top: -0.15rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  font-size: 0.88rem;
+}
+
+.cartera-viva-detail__status.is-success {
+  color: #4ade80;
+}
+
+.cartera-viva-detail__status.is-error {
+  color: #fbbf24;
 }
 
 .cartera-viva-detail__summary,

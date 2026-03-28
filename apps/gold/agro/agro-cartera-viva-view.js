@@ -1,5 +1,6 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
 import { fetchBuyerPortfolioSummary } from './agro-cartera-viva.js';
+import { downloadBuyerPortfolioExport } from './agro-cartera-viva-export.js';
 import {
     fetchBuyerHistoryTimeline,
     renderBuyerHistoryDetail
@@ -44,6 +45,9 @@ let selectedBuyerId = '';
 let detailRows = [];
 let detailLoading = false;
 let detailErrorMessage = '';
+let detailExportPending = false;
+let detailExportMessage = '';
+let detailExportTone = '';
 
 function readStoredCategory() {
     try {
@@ -450,6 +454,9 @@ function renderView() {
             historyRows: detailRows,
             loading: detailLoading,
             errorMessage: detailErrorMessage,
+            exportPending: detailExportPending,
+            exportMessage: detailExportMessage,
+            exportTone: detailExportTone,
             onBack: () => {
                 resetDetailState();
                 renderView();
@@ -457,6 +464,9 @@ function renderView() {
             onRefresh: () => {
                 if (!selectedBuyerId) return;
                 loadBuyerDetail(selectedBuyerId);
+            },
+            onExport: () => {
+                exportBuyerDetail();
             }
         });
         return;
@@ -488,6 +498,7 @@ async function loadBuyerDetail(buyerId) {
     detailLoading = true;
     detailErrorMessage = '';
     detailRows = [];
+    resetDetailExportState();
     renderView();
 
     try {
@@ -499,6 +510,50 @@ async function loadBuyerDetail(buyerId) {
         detailRows = [];
     } finally {
         detailLoading = false;
+        renderView();
+    }
+}
+
+function setDetailExportState(message = '', tone = '') {
+    detailExportMessage = String(message || '').trim();
+    detailExportTone = String(tone || '').trim().toLowerCase();
+}
+
+async function exportBuyerDetail() {
+    const buyerRow = getSelectedBuyerRow();
+    if (!buyerRow) {
+        setDetailExportState('No se encontro el comprador activo para exportar.', 'error');
+        renderView();
+        return;
+    }
+
+    if (detailLoading) {
+        setDetailExportState('Espera a que termine de cargar el historial antes de exportar.', 'error');
+        renderView();
+        return;
+    }
+
+    if (detailErrorMessage) {
+        setDetailExportState('Actualiza el historial antes de exportar este comprador.', 'error');
+        renderView();
+        return;
+    }
+
+    detailExportPending = true;
+    setDetailExportState('', '');
+    renderView();
+
+    try {
+        const fileName = downloadBuyerPortfolioExport({
+            buyerRow,
+            historyRows: detailRows
+        });
+        setDetailExportState(`Exportado: ${fileName}`, 'success');
+    } catch (error) {
+        console.error('[CarteraViva] buyer export failed:', error?.message || error);
+        setDetailExportState(String(error?.message || 'No se pudo generar la exportacion buyer-centric.'), 'error');
+    } finally {
+        detailExportPending = false;
         renderView();
     }
 }
@@ -532,6 +587,13 @@ function resetDetailState() {
     detailRows = [];
     detailLoading = false;
     detailErrorMessage = '';
+    resetDetailExportState();
+}
+
+function resetDetailExportState() {
+    detailExportPending = false;
+    detailExportMessage = '';
+    detailExportTone = '';
 }
 
 function handleShellViewChanged(event) {
