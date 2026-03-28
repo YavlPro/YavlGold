@@ -5,6 +5,7 @@
  */
 
 import { SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
+import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-cartera-viva.js';
 import uxMessages from '../assets/js/ui/uxMessages.js';
 
 // ============================================================
@@ -1704,6 +1705,20 @@ export async function openAgroWizard(tabName, deps) {
                 insertData.destino = insertData.destino || 'Beneficiario general';
             }
 
+            if (isBuyerIdentityRelevantTab(tabName)) {
+                const buyerLink = await ensureBuyerIdentityLink({
+                    supabase,
+                    userId: user.id,
+                    tabName,
+                    concept: finalConcepto,
+                    whoValue: state.who,
+                    buyerHint: insertData.cliente,
+                    cause: insertData.causa,
+                    originTable: insertData.origin_table
+                });
+                Object.assign(insertData, buyerLink);
+            }
+
             // Units (if applicable)
             if (meta.hasUnits) {
                 const unitType = String(state.unitType || '').trim().toLowerCase();
@@ -1805,10 +1820,10 @@ export async function openAgroWizard(tabName, deps) {
                 };
             } else {
                 const optionalFieldsByTab = {
-                    ingresos: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state'],
-                    pendientes: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd'],
+                    ingresos: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'origin_table', 'transfer_state', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
+                    pendientes: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
                     gastos: ['currency', 'exchange_rate', 'monto_usd'],
-                    perdidas: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd'],
+                    perdidas: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd', 'buyer_id', 'buyer_group_key', 'buyer_match_status'],
                     transferencias: ['unit_type', 'unit_qty', 'quantity_kg', 'currency', 'exchange_rate', 'monto_usd']
                 };
                 const insertResult = await insertWizardRowWithFallback(

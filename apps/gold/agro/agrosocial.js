@@ -1,4 +1,5 @@
 import { applyBuyerPrivacy, applyMoneyPrivacy } from './agro-privacy.js';
+import { normalizeBuyerGroupKey } from './agro-cartera-viva.js';
 import { openPublicFarmerProfile } from './agropublico.js';
 
 const SOCIAL_MODAL_ID = 'modal-agro-social';
@@ -62,17 +63,6 @@ function applySocialPrivacy() {
     if (!modal) return;
     applyBuyerPrivacy(modal);
     applyMoneyPrivacy(modal);
-}
-
-function normalizeGroupKey(value) {
-    const raw = String(value || '').trim();
-    if (!raw) return '';
-    const withoutAccents = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return withoutAccents
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
 }
 
 function formatDateTime(value) {
@@ -514,7 +504,7 @@ async function createThread() {
     const payload = {
         user_id: user.id,
         title: rawTitle || defaultTitle,
-        buyer_group_key: normalizeGroupKey(rawBuyerKey) || null,
+        buyer_group_key: normalizeBuyerGroupKey(rawBuyerKey) || null,
         updated_at: new Date().toISOString()
     };
 

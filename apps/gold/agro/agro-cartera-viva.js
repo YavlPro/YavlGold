@@ -1,3 +1,11 @@
+export {
+    BUYER_MATCH_STATUS,
+    ensureBuyerIdentityLink,
+    extractBuyerIdentityCandidate,
+    isBuyerIdentityRelevantTab,
+    normalizeBuyerGroupKey
+} from './agro-buyer-identity.js';
+
 export function normalizeHistorySearchToken(value) {
     return String(value || '')
         .normalize('NFD')

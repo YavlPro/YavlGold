@@ -1,4 +1,5 @@
 import { applyBuyerPrivacy, applyMoneyPrivacy } from './agro-privacy.js';
+import { normalizeBuyerGroupKey } from './agro-cartera-viva.js';
 import { openPublicFarmerProfile } from './agropublico.js';
 
 const BUYER_MODAL_ID = 'modal-agro-buyer';
@@ -39,17 +40,6 @@ function setSaveBusy(isBusy) {
     if (!button) return;
     button.disabled = !!isBusy;
     button.textContent = isBusy ? 'Guardando...' : 'Guardar ficha';
-}
-
-function normalizeGroupKey(value) {
-    const raw = String(value || '').trim();
-    if (!raw) return '';
-    const withoutAccents = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return withoutAccents
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
 }
 
 function normalizeUuid(value) {
@@ -293,7 +283,7 @@ function bindBuyerModalEvents() {
 
 export async function openBuyerProfileByName(displayName) {
     const safeName = String(displayName || '').trim();
-    const groupKey = normalizeGroupKey(safeName);
+    const groupKey = normalizeBuyerGroupKey(safeName);
     if (!safeName || !groupKey) return false;
 
     state.currentDisplayName = safeName;
@@ -351,4 +341,4 @@ export function initAgroCompradores({ supabase } = {}) {
     setBuyerStatus('Haz clic en un comprador del historial o rankings.', 'muted');
 }
 
-export { normalizeGroupKey };
+export { normalizeBuyerGroupKey as normalizeGroupKey };
