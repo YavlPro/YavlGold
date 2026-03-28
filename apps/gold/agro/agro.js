@@ -14,10 +14,22 @@ import { initAgroSocial, openSocialPanel } from './agrosocial.js';
 import { initAgroCalculadora } from './agrocalculadora.js';
 import { initClimaWeeklyEmbed } from './agroclima-layout.js';
 import { formatCurrencyDisplay, SUPPORTED_CURRENCIES, initExchangeRates, getRate, convertToUSD, hasOverride, clearOverride } from './agro-exchange.js';
+import { ensureBuyerIdentityLink, isBuyerIdentityRelevantTab } from './agro-buyer-identity.js';
 import { initCiclos, renderFinishedCycles } from './agrociclos.js';
 import { initAgroShell } from './agro-shell.js';
 import { initFactureroSelection } from './agro-selection.js';
 import { computeUnitTotalsFromRows as computeMdUnitTotalsFromRows, formatUnitTotalsMarkdown as formatMdUnitTotalsMarkdown } from './agro-unit-totals.js';
+import {
+    formatHistoryAbsoluteDayLabel as formatPagadosDedicatedDayLabel,
+    formatHistoryDayLabel as formatDayHeader,
+    getHistoryDayKey as getDayKey,
+    getHistoryRowTimestamp as getRowTimestamp,
+    groupHistoryRowsByDay as groupRowsByDay,
+    normalizeHistorySearchToken as normalizeFactureroSearchToken,
+    readHistoryItemField,
+    readHistoryItemFieldWithSource,
+    renderHistoryDayGroups
+} from './agro-cartera-viva.js';
 import { clearLegacyAgroCropsCache, readAgroCropsCache, readBestAgroCrops, writeAgroCropsCache } from '../assets/js/utils/agroCropsCache.js';
 import uxMessages from '../assets/js/ui/uxMessages.js';
 import {
@@ -581,107 +593,6 @@ function assertDateNotFuture(dateStr, fieldLabel = 'Fecha') {
 window.getTodayLocalISO = getTodayLocalISO;
 window.isValidISODate = isValidISODate;
 window.assertDateNotFuture = assertDateNotFuture;
-
-// ============================================================
-// HISTORY ORDERING & DAY GROUPING HELPERS (V9.6.7)
-// Sort by timestamp DESC and group visually by day
-// ============================================================
-
-/**
- * Get timestamp (ms) for sorting a facturero row.
- * Priority: created_at > updated_at > fecha/date field (noon local).
- */
-function getRowTimestamp(row, dateFieldName = 'fecha') {
-    // Priority 1: event date (YYYY-MM-DD) -> use noon local to avoid timezone edge cases
-    const dateStr = row[dateFieldName] || row.fecha || row.date;
-    if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-        const datePart = dateStr.slice(0, 10);
-        const [yyyy, mm, dd] = datePart.split('-').map(Number);
-        const d = new Date(yyyy, mm - 1, dd, 12, 0, 0);
-        return d.getTime();
-    }
-    // Priority 2: created_at (full ISO timestamp)
-    if (row.created_at) {
-        const ts = Date.parse(row.created_at);
-        if (!isNaN(ts)) return ts;
-    }
-    // Priority 3: updated_at
-    if (row.updated_at) {
-        const ts = Date.parse(row.updated_at);
-        if (!isNaN(ts)) return ts;
-    }
-    // Fallback: epoch 0 (will sort to end)
-    return 0;
-}
-
-/**
- * Get day key (YYYY-MM-DD) from row for grouping.
- */
-function getDayKey(row, dateFieldName = 'fecha') {
-    // Try event date field first
-    const dateStr = row[dateFieldName] || row.fecha || row.date;
-    if (dateStr && typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-        return dateStr.slice(0, 10);
-    }
-    // Fallback: created_at (local day)
-    if (row.created_at) {
-        const d = new Date(row.created_at);
-        if (!isNaN(d.getTime())) {
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
-    }
-    return 'unknown';
-}
-
-/**
- * Group rows by day, sorted DESC (newest day first).
- * Returns: [{ dayKey, label, rows: [...] }, ...]
- */
-function groupRowsByDay(rows, dateFieldName = 'fecha') {
-    // Sort rows by timestamp DESC
-    const sorted = [...rows].sort((a, b) => getRowTimestamp(b, dateFieldName) - getRowTimestamp(a, dateFieldName));
-
-    // Group into Map
-    const groups = new Map();
-    for (const row of sorted) {
-        const dayKey = getDayKey(row, dateFieldName);
-        if (!groups.has(dayKey)) {
-            groups.set(dayKey, []);
-        }
-        groups.get(dayKey).push(row);
-    }
-
-    // Convert to array with formatted labels
-    const result = [];
-    const dayKeys = Array.from(groups.keys()).sort((a, b) => b.localeCompare(a)); // DESC
-    for (const dayKey of dayKeys) {
-        result.push({
-            dayKey,
-            label: formatDayHeader(dayKey),
-            rows: groups.get(dayKey)
-        });
-    }
-    return result;
-}
-
-/**
- * Format day key into human-readable Spanish label.
- * Example: "2026-02-01" => "1 Feb 2026"
- */
-function formatDayHeader(dayKey) {
-    if (dayKey === 'unknown') return 'Sin fecha';
-    const [yyyy, mm, dd] = dayKey.split('-').map(Number);
-    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    const today = new Date();
-    const isToday = today.getFullYear() === yyyy && (today.getMonth() + 1) === mm && today.getDate() === dd;
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday = yesterday.getFullYear() === yyyy && (yesterday.getMonth() + 1) === mm && yesterday.getDate() === dd;
-
-    if (isToday) return 'Hoy';
-    if (isYesterday) return 'Ayer';
-    return `${dd} ${monthNames[mm - 1]} ${yyyy}`;
-}
 
 // Expose globally
 window.getRowTimestamp = getRowTimestamp;
@@ -1559,6 +1470,35 @@ function getWhoData(tabName, item, concept) {
     };
 }
 
+async function enrichBuyerIdentityPayload(tabName, payload = {}, overrides = {}) {
+    if (!isBuyerIdentityRelevantTab(tabName)) return { ...(payload || {}) };
+
+    const safePayload = { ...(payload || {}) };
+    const conceptField = overrides.conceptField || (tabName === 'gastos' ? 'concept' : 'concepto');
+    const concept = overrides.concept ?? safePayload?.[conceptField] ?? safePayload?.concepto ?? safePayload?.concept ?? '';
+    const buyerHint = overrides.buyerHint ?? safePayload?.cliente ?? '';
+    const cause = overrides.cause ?? safePayload?.causa ?? '';
+    const whoValue = overrides.whoValue ?? '';
+    const originTable = overrides.originTable ?? safePayload?.origin_table ?? '';
+    const userId = String(overrides.userId || safePayload?.user_id || '').trim();
+
+    const buyerLink = await ensureBuyerIdentityLink({
+        supabase,
+        userId,
+        tabName,
+        concept,
+        whoValue,
+        buyerHint,
+        cause,
+        originTable
+    });
+
+    return {
+        ...safePayload,
+        ...buyerLink
+    };
+}
+
 function formatWhoDisplay(tabName, whoValue) {
     const meta = WHO_FIELD_META[tabName];
     if (!meta || !whoValue) return '';
@@ -2344,7 +2284,14 @@ async function executeCompensationRevertToPending({
         split_meta: splitMetaPending
     };
 
-    const pendingInsert = await insertRowWithMissingColumnFallback('agro_pending', pendingPayload, [
+    const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
+        userId,
+        concept: pendingPayload.concepto,
+        whoValue: sourceWhoData?.who || '',
+        buyerHint: pendingPayload.cliente
+    });
+
+    const pendingInsert = await insertRowWithMissingColumnFallback('agro_pending', pendingPayloadWithBuyer, [
         'cliente',
         'notas',
         'unit_type',
@@ -2355,7 +2302,10 @@ async function executeCompensationRevertToPending({
         'monto_usd',
         'transfer_state',
         'split_from_id',
-        'split_meta'
+        'split_meta',
+        'buyer_id',
+        'buyer_group_key',
+        'buyer_match_status'
     ]);
     if (pendingInsert.error) {
         return { success: false, error: pendingInsert.error?.message || 'No se pudo crear el movimiento compensatorio en Fiados.' };
@@ -2409,7 +2359,17 @@ async function executeCompensationRevertToPending({
                 split_meta: splitMetaRemainder
             };
 
-        const remainderInsert = await insertRowWithMissingColumnFallback(sourceTable, remainderPayload, [
+        const remainderTabName = sourceTable === 'agro_income'
+            ? 'ingresos'
+            : (sourceTable === 'agro_losses' ? 'perdidas' : '');
+        const remainderPayloadWithBuyer = await enrichBuyerIdentityPayload(remainderTabName, remainderPayload, {
+            userId,
+            concept: remainderPayload.concepto,
+            cause: remainderPayload.causa,
+            originTable: remainderPayload.origin_table
+        });
+
+        const remainderInsert = await insertRowWithMissingColumnFallback(sourceTable, remainderPayloadWithBuyer, [
             'unit_type',
             'unit_qty',
             'quantity_kg',
@@ -2420,7 +2380,10 @@ async function executeCompensationRevertToPending({
             'origin_id',
             'transfer_state',
             'split_from_id',
-            'split_meta'
+            'split_meta',
+            'buyer_id',
+            'buyer_group_key',
+            'buyer_match_status'
         ]);
         if (remainderInsert.error) {
             await softDeleteFactureroRow('agro_pending', pendingId, userId);
@@ -3154,37 +3117,6 @@ const HISTORY_UNIT_TYPE_FIELDS = ['unit_type', 'unitType', 'unit', 'measure', 'm
 const HISTORY_UNIT_QTY_FIELDS = ['unit_qty', 'unitQty', 'qty', 'quantity', 'units', 'amount_units'];
 const HISTORY_KG_QTY_FIELDS = ['quantity_kg', 'quantityKg', 'kg', 'kilogramos'];
 let historyFiltersInitialized = false;
-
-function normalizeFactureroSearchToken(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-}
-
-function readHistoryItemField(item, fields) {
-    if (!item || typeof item !== 'object' || !Array.isArray(fields)) return null;
-    for (const field of fields) {
-        const raw = item[field];
-        if (raw === undefined || raw === null) continue;
-        if (typeof raw === 'string' && raw.trim() === '') continue;
-        return raw;
-    }
-    return null;
-}
-
-function readHistoryItemFieldWithSource(item, fields) {
-    if (!item || typeof item !== 'object' || !Array.isArray(fields)) {
-        return { field: '', value: null };
-    }
-    for (const field of fields) {
-        const raw = item[field];
-        if (raw === undefined || raw === null) continue;
-        if (typeof raw === 'string' && raw.trim() === '') continue;
-        return { field: String(field || ''), value: raw };
-    }
-    return { field: '', value: null };
-}
 
 function normalizeHistoryUnitKey(rawUnit) {
     const value = normalizeFactureroSearchToken(rawUnit).trim();
@@ -6437,6 +6369,19 @@ async function saveEditModal() {
             return;
         }
 
+        let currentOriginTable = '';
+        if (tabName === 'perdidas') {
+            const currentRowResult = await supabase
+                .from(config.table)
+                .select('origin_table')
+                .eq('id', itemId)
+                .eq('user_id', user.id)
+                .maybeSingle();
+            if (!currentRowResult.error) {
+                currentOriginTable = String(currentRowResult.data?.origin_table || '').trim();
+            }
+        }
+
         const conceptValue = document.getElementById('edit-concepto')?.value?.trim() || '';
         const whoValue = document.getElementById('edit-who-input')?.value?.trim() || '';
         const whoMeta = WHO_FIELD_META[tabName];
@@ -6607,9 +6552,18 @@ async function saveEditModal() {
 
         // console.log('[AGRO] V9.6.5 updateData:', { table: config.table, itemId, updateData });
 
+        const finalUpdateData = await enrichBuyerIdentityPayload(tabName, updateData, {
+            userId: user.id,
+            concept: conceptForSave,
+            whoValue,
+            buyerHint: updateData.cliente,
+            cause: updateData.causa,
+            originTable: currentOriginTable
+        });
+
         let { error } = await supabase
             .from(config.table)
-            .update(updateData)
+            .update(finalUpdateData)
             .eq('id', itemId)
             .eq('user_id', user.id);
 
@@ -6618,9 +6572,12 @@ async function saveEditModal() {
             const dropUnits = isMissingColumnError(error, 'unit_type')
                 || isMissingColumnError(error, 'unit_qty')
                 || isMissingColumnError(error, 'quantity_kg');
+            const dropBuyerIdentity = isMissingColumnError(error, 'buyer_id')
+                || isMissingColumnError(error, 'buyer_group_key')
+                || isMissingColumnError(error, 'buyer_match_status');
 
-            if (dropWho || dropUnits) {
-                const fallbackData = { ...updateData };
+            if (dropWho || dropUnits || dropBuyerIdentity) {
+                const fallbackData = { ...finalUpdateData };
                 if (dropWho) {
                     delete fallbackData[whoMeta.field];
                     fallbackData[config.conceptField] = buildConceptWithWho(tabName, conceptValue, whoValue);
@@ -6634,6 +6591,11 @@ async function saveEditModal() {
                     } else {
                         alert('Aviso: columnas de presentacion/kg no disponibles, se guardo sin ellas.');
                     }
+                }
+                if (dropBuyerIdentity) {
+                    delete fallbackData.buyer_id;
+                    delete fallbackData.buyer_group_key;
+                    delete fallbackData.buyer_match_status;
                 }
                 const retry = await supabase
                     .from(config.table)
@@ -6712,9 +6674,20 @@ async function duplicateFactureroItem(tabName, itemId) {
             copy[config.amountField] = parsedAmount;
         }
 
+        const copyWithBuyer = await enrichBuyerIdentityPayload(tabName, copy, {
+            userId: user.id,
+            concept: copy[config.conceptField] || copy.concepto || copy.concept || '',
+            buyerHint: copy.cliente,
+            cause: copy.causa,
+            originTable: copy.origin_table,
+            whoValue: tabName === 'ingresos'
+                ? (getWhoData('ingresos', copy, copy[config.conceptField] || copy.concepto || '').who || '')
+                : ''
+        });
+
         const { error: insertError } = await supabase
             .from(config.table)
-            .insert(copy);
+            .insert(copyWithBuyer);
 
         if (insertError) throw insertError;
 
@@ -7600,7 +7573,14 @@ async function handlePendingTransfer(itemId) {
                 split_meta: splitMetaDestination
             };
 
-            const insertResult = await insertRowWithMissingColumnFallback('agro_income', incomePayload, [
+            const incomePayloadWithBuyer = await enrichBuyerIdentityPayload('ingresos', incomePayload, {
+                userId: user.id,
+                concept: conceptFinal,
+                whoValue: buyer,
+                originTable: incomePayload.origin_table
+            });
+
+            const insertResult = await insertRowWithMissingColumnFallback('agro_income', incomePayloadWithBuyer, [
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
@@ -7611,7 +7591,10 @@ async function handlePendingTransfer(itemId) {
                 'exchange_rate',
                 'monto_usd',
                 'split_from_id',
-                'split_meta'
+                'split_meta',
+                'buyer_id',
+                'buyer_group_key',
+                'buyer_match_status'
             ]);
             const insertError = insertResult.error;
             if (insertError) throw insertError;
@@ -7767,7 +7750,14 @@ async function handlePendingTransfer(itemId) {
                 split_meta: splitMetaDestination
             };
 
-            const insertResult = await insertRowWithMissingColumnFallback('agro_losses', lossPayload, [
+            const lossPayloadWithBuyer = await enrichBuyerIdentityPayload('perdidas', lossPayload, {
+                userId: user.id,
+                concept: conceptFinal,
+                cause: lossCause,
+                originTable: lossPayload.origin_table
+            });
+
+            const insertResult = await insertRowWithMissingColumnFallback('agro_losses', lossPayloadWithBuyer, [
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
@@ -7778,7 +7768,10 @@ async function handlePendingTransfer(itemId) {
                 'origin_id',
                 'transfer_state',
                 'split_from_id',
-                'split_meta'
+                'split_meta',
+                'buyer_id',
+                'buyer_group_key',
+                'buyer_match_status'
             ]);
             const insertError = insertResult.error;
             if (insertError) throw insertError;
@@ -8012,10 +8005,20 @@ async function handleIncomeTransfer(itemId) {
                 quantity_kg: Number.isFinite(Number(income.quantity_kg)) ? Number(income.quantity_kg) : null
             };
 
-            const insertResult = await insertFactureroRow('agro_pending', pendingPayload, [
+            const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
+                userId: user.id,
+                concept: pendingPayload.concepto,
+                whoValue: whoData.who || '',
+                buyerHint: pendingPayload.cliente
+            });
+
+            const insertResult = await insertFactureroRow('agro_pending', pendingPayloadWithBuyer, [
                 'unit_type',
                 'unit_qty',
-                'quantity_kg'
+                'quantity_kg',
+                'buyer_id',
+                'buyer_group_key',
+                'buyer_match_status'
             ]);
             if (insertResult.error) throw insertResult.error;
 
@@ -8061,13 +8064,23 @@ async function handleIncomeTransfer(itemId) {
                 transfer_state: 'active'
             };
 
-            const insertResult = await insertFactureroRow('agro_losses', lossPayload, [
+            const lossPayloadWithBuyer = await enrichBuyerIdentityPayload('perdidas', lossPayload, {
+                userId: user.id,
+                concept: lossPayload.concepto,
+                cause: lossPayload.causa,
+                originTable: lossPayload.origin_table
+            });
+
+            const insertResult = await insertFactureroRow('agro_losses', lossPayloadWithBuyer, [
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
                 'origin_table',
                 'origin_id',
-                'transfer_state'
+                'transfer_state',
+                'buyer_id',
+                'buyer_group_key',
+                'buyer_match_status'
             ]);
             if (insertResult.error) throw insertResult.error;
 
@@ -8160,11 +8173,20 @@ async function handleLossTransfer(itemId) {
                 quantity_kg: Number.isFinite(Number(loss.quantity_kg)) ? Number(loss.quantity_kg) : null
             };
 
-            const insertResult = await insertFactureroRow('agro_pending', pendingPayload, [
+            const pendingPayloadWithBuyer = await enrichBuyerIdentityPayload('pendientes', pendingPayload, {
+                userId: user.id,
+                concept: pendingPayload.concepto,
+                buyerHint: pendingPayload.cliente
+            });
+
+            const insertResult = await insertFactureroRow('agro_pending', pendingPayloadWithBuyer, [
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
-                'notas'
+                'notas',
+                'buyer_id',
+                'buyer_group_key',
+                'buyer_match_status'
             ]);
             if (insertResult.error) throw insertResult.error;
 
@@ -8235,7 +8257,13 @@ async function handleLossTransfer(itemId) {
                 transfer_state: 'active'
             };
 
-            const insertResult = await insertFactureroRow('agro_income', incomePayload, [
+            const incomePayloadWithBuyer = await enrichBuyerIdentityPayload('ingresos', incomePayload, {
+                userId: user.id,
+                concept: incomePayload.concepto,
+                originTable: incomePayload.origin_table
+            });
+
+            const insertResult = await insertFactureroRow('agro_income', incomePayloadWithBuyer, [
                 'unit_type',
                 'unit_qty',
                 'quantity_kg',
@@ -8244,7 +8272,10 @@ async function handleLossTransfer(itemId) {
                 'monto_usd',
                 'origin_table',
                 'origin_id',
-                'transfer_state'
+                'transfer_state',
+                'buyer_id',
+                'buyer_group_key',
+                'buyer_match_status'
             ]);
             if (insertResult.error) throw insertResult.error;
 
@@ -13056,11 +13087,7 @@ function renderPagadosDedicatedStateFilters(context) {
 }
 
 function normalizePagadosSearchQuery(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    return normalizeFactureroSearchToken(value).trim();
 }
 
 function setPagadosDedicatedVisibility(element, shouldShow) {
@@ -13073,37 +13100,18 @@ function setPagadosDedicatedVisibility(element, shouldShow) {
     }
 }
 
-function formatPagadosDedicatedDayLabel(dayKey) {
-    if (dayKey === 'unknown') return 'Sin fecha';
-    const [yyyy, mm, dd] = String(dayKey || '').split('-').map(Number);
-    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    if (!Number.isFinite(yyyy) || !Number.isFinite(mm) || !Number.isFinite(dd) || !monthNames[mm - 1]) {
-        return 'Sin fecha';
-    }
-    return `${dd} ${monthNames[mm - 1]} ${yyyy}`;
-}
-
 function renderPagadosDedicatedGroupedRows(listEl, rows, signedUrlMap = new Map()) {
     if (!listEl) return;
-
-    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.ingresos?.dateField || 'fecha');
-    const fragment = document.createDocumentFragment();
-
-    groups.forEach((group) => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'facturero-day-header date-divider';
-        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
-        fragment.appendChild(dayHeader);
-
-        (group?.rows || []).forEach((income) => {
+    renderHistoryDayGroups(listEl, rows, {
+        dateFieldName: FACTURERO_CONFIG.ingresos?.dateField || 'fecha',
+        formatDayLabel: formatPagadosDedicatedDayLabel,
+        renderRow: (fragment, income) => {
             const signedUrl = signedUrlMap instanceof Map
                 ? signedUrlMap.get(income?.id)
                 : undefined;
             renderPagadosDedicatedItem(fragment, income, signedUrl);
-        });
+        }
     });
-
-    listEl.appendChild(fragment);
 }
 
 function matchesPagadosDedicatedQuery(income, query) {
@@ -13325,11 +13333,7 @@ function getFiadosDedicatedSourceRows() {
 }
 
 function normalizeFiadosSearchQuery(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    return normalizeFactureroSearchToken(value).trim();
 }
 
 function matchesFiadosDedicatedQuery(pending, query) {
@@ -13504,22 +13508,11 @@ function renderFiadosDedicatedItem(listEl, pending) {
 
 function renderFiadosDedicatedGroupedRows(listEl, rows) {
     if (!listEl) return;
-
-    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.pendientes?.dateField || 'fecha');
-    const fragment = document.createDocumentFragment();
-
-    groups.forEach((group) => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'facturero-day-header date-divider';
-        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
-        fragment.appendChild(dayHeader);
-
-        (group?.rows || []).forEach((pending) => {
-            renderFiadosDedicatedItem(fragment, pending);
-        });
+    renderHistoryDayGroups(listEl, rows, {
+        dateFieldName: FACTURERO_CONFIG.pendientes?.dateField || 'fecha',
+        formatDayLabel: formatPagadosDedicatedDayLabel,
+        renderRow: (fragment, pending) => renderFiadosDedicatedItem(fragment, pending)
     });
-
-    listEl.appendChild(fragment);
 }
 
 async function renderFiadosDedicatedView() {
@@ -13717,11 +13710,7 @@ function getPerdidasDedicatedSourceRows() {
 }
 
 function normalizePerdidasSearchQuery(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    return normalizeFactureroSearchToken(value).trim();
 }
 
 function matchesPerdidasDedicatedQuery(item, query) {
@@ -13887,18 +13876,11 @@ function renderPerdidasDedicatedItem(listEl, item) {
 
 function renderPerdidasDedicatedGroupedRows(listEl, rows) {
     if (!listEl) return;
-    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.perdidas?.dateField || 'fecha');
-    const fragment = document.createDocumentFragment();
-    groups.forEach((group) => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'facturero-day-header date-divider';
-        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
-        fragment.appendChild(dayHeader);
-        (group?.rows || []).forEach((item) => {
-            renderPerdidasDedicatedItem(fragment, item);
-        });
+    renderHistoryDayGroups(listEl, rows, {
+        dateFieldName: FACTURERO_CONFIG.perdidas?.dateField || 'fecha',
+        formatDayLabel: formatPagadosDedicatedDayLabel,
+        renderRow: (fragment, item) => renderPerdidasDedicatedItem(fragment, item)
     });
-    listEl.appendChild(fragment);
 }
 
 function setPerdidasDedicatedVisibility(element, shouldShow) {
@@ -14096,11 +14078,7 @@ function getDonacionesDedicatedSourceRows() {
 }
 
 function normalizeDonacionesSearchQuery(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    return normalizeFactureroSearchToken(value).trim();
 }
 
 function matchesDonacionesDedicatedQuery(item, query) {
@@ -14209,18 +14187,11 @@ function renderDonacionesDedicatedItem(listEl, item) {
 
 function renderDonacionesDedicatedGroupedRows(listEl, rows) {
     if (!listEl) return;
-    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.transferencias?.dateField || 'fecha');
-    const fragment = document.createDocumentFragment();
-    groups.forEach((group) => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'facturero-day-header date-divider';
-        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
-        fragment.appendChild(dayHeader);
-        (group?.rows || []).forEach((item) => {
-            renderDonacionesDedicatedItem(fragment, item);
-        });
+    renderHistoryDayGroups(listEl, rows, {
+        dateFieldName: FACTURERO_CONFIG.transferencias?.dateField || 'fecha',
+        formatDayLabel: formatPagadosDedicatedDayLabel,
+        renderRow: (fragment, item) => renderDonacionesDedicatedItem(fragment, item)
     });
-    listEl.appendChild(fragment);
 }
 
 function setDonacionesDedicatedVisibility(element, shouldShow) {
@@ -14398,11 +14369,7 @@ function getOtrosDedicatedSourceRows() {
 }
 
 function normalizeOtrosSearchQuery(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    return normalizeFactureroSearchToken(value).trim();
 }
 
 function matchesOtrosDedicatedQuery(item, query) {
@@ -14511,18 +14478,11 @@ function renderOtrosDedicatedItem(listEl, item) {
 
 function renderOtrosDedicatedGroupedRows(listEl, rows) {
     if (!listEl) return;
-    const groups = groupRowsByDay(rows, FACTURERO_CONFIG.otros?.dateField || 'fecha');
-    const fragment = document.createDocumentFragment();
-    groups.forEach((group) => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'facturero-day-header date-divider';
-        dayHeader.textContent = formatPagadosDedicatedDayLabel(group?.dayKey);
-        fragment.appendChild(dayHeader);
-        (group?.rows || []).forEach((item) => {
-            renderOtrosDedicatedItem(fragment, item);
-        });
+    renderHistoryDayGroups(listEl, rows, {
+        dateFieldName: FACTURERO_CONFIG.otros?.dateField || 'fecha',
+        formatDayLabel: formatPagadosDedicatedDayLabel,
+        renderRow: (fragment, item) => renderOtrosDedicatedItem(fragment, item)
     });
-    listEl.appendChild(fragment);
 }
 
 function setOtrosDedicatedVisibility(element, shouldShow) {

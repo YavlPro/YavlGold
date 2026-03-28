@@ -4563,3 +4563,80 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 1. Crear o editar un comprador con signos o puntuacion y confirmar que JS y SQL generan el mismo `group_key`.
 2. Revisar un caso legacy con puntuacion para validar que no aparezcan divergencias nuevas.
+
+---
+
+## Sesion: Fase 2 / Cartera Viva base modular de historial (2026-03-27)
+
+### Diagnostico
+
+- Comienza formalmente **Fase 2 / Cartera Viva**.
+- Regla canonica activa: **no seguir construyendo producto nuevo dentro de `apps/gold/agro/agro.js`**.
+- El historial del facturero sigue demasiado concentrado en `agro.js`:
+  - ahi viven la normalizacion de busqueda del historial;
+  - el ordenado y la agrupacion por dia;
+  - helpers de lectura de campos del historial;
+  - render agrupado repetido en vistas dedicadas (`pagados`, `fiados`, `perdidas`, `donaciones`, `otros`).
+- Primer corte modular de bajo riesgo detectado:
+  - extraer la capa pura de historial usada por Cartera Viva;
+  - mover normalizacion + agrupacion + base de render agrupado a un modulo nuevo;
+  - dejar `agro.js` solo orquestando la integracion de esas piezas.
+- Piezas que deben quedarse temporalmente en `agro.js`:
+  - queries Supabase;
+  - `renderHistoryRow()` y acciones CRUD;
+  - wiring de vistas dedicadas y listeners.
+
+### Plan
+
+1. Crear un modulo nuevo de Cartera Viva para utilidades puras de historial.
+2. Mover desde `agro.js` la normalizacion del historial, lectura de campos y agrupacion por dia.
+3. Reutilizar ese modulo en el historial general y en los render agrupados de vistas dedicadas.
+4. Mantener compatibilidad funcional y cerrar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva.js`
+  - nuevo modulo base de Cartera Viva para historial;
+  - centraliza:
+    - normalizacion de busqueda;
+    - lectura tolerante de campos;
+    - sort por fecha/timestamp;
+    - agrupacion por dia;
+    - base de render agrupado con headers por fecha.
+- `apps/gold/agro/agro.js`
+  - importa el modulo nuevo y deja de implementar localmente esos helpers;
+  - conserva solo el wiring del historial general y de las vistas dedicadas;
+  - las vistas dedicadas de `pagados`, `fiados`, `perdidas`, `donaciones` y `otros` ahora usan el renderer agrupado compartido;
+  - la normalizacion de busqueda dedicada ya no se duplica por vista.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion abierta y cerrada conforme a la policy canonica.
+
+### Archivos + lineas
+
+- `apps/gold/agro/agro-cartera-viva.js:1-138`
+  - nueva base modular del historial Cartera Viva.
+- `apps/gold/agro/agro.js:23-32`
+  - import del modulo `agro-cartera-viva.js`.
+- `apps/gold/agro/agro.js:598-601`
+  - puente global ahora apunta a helpers importados, no a implementacion local.
+- `apps/gold/agro/agro.js:13089-14546`
+  - normalizacion dedicada y render agrupado de vistas dedicadas conectados al modulo nuevo.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Abrir `Pagados`, `Fiados`, `Perdidas`, `Donaciones` y `Otros` para confirmar que siguen agrupando por fecha y mostrando el mismo orden visual.
+2. Probar una busqueda simple en las vistas dedicadas para validar que la normalizacion acentos/mayusculas sigue intacta.
+3. Hacer smoke visual corto en desktop y mobile del historial tocado, sin ampliar alcance a QA intensivo.
