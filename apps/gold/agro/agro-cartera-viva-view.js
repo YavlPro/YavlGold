@@ -152,9 +152,13 @@ function resolveVisibleCategory(row) {
     const paid = Number(row?.paid_total || 0);
     const loss = Number(row?.loss_total || 0);
 
+    // Active debt: always fiados regardless of partial payments.
     if (pending > 0) return 'fiados';
-    if (paid > 0) return 'pagados';
+    // Any closed account that carries a loss falls under perdidos,
+    // even if some amount was previously collected.
     if (loss > 0) return 'perdidos';
+    // Fully collected with no loss.
+    if (paid > 0) return 'pagados';
     return 'fiados';
 }
 
@@ -381,17 +385,18 @@ function renderSupportChips(row) {
 
 function renderProgressBlock(row, options = {}) {
     const large = options.large === true;
+    const noLegend = options.noLegend === true;
     const breakdown = getProgressBreakdown(row);
     const pending = Number(row?.pending_total || 0);
     const loss = Number(row?.loss_total || 0);
     const base = Math.max(breakdown.base, 0);
-    const label = base > 0 ? `Cobrado de ${formatMoney(base)}` : 'Sin base para medir';
-    let footer = 'Sin saldo pendiente';
+    const label = base > 0 ? `Cobrado de ${formatMoney(base)}` : 'Sin base';
+    let footer = 'Saldo cerrado';
 
     if (pending > 0) {
         footer = `Faltan ${formatMoney(pending)}`;
     } else if (loss > 0) {
-        footer = `${formatMoney(loss)} cerrados como pérdida`;
+        footer = `${formatMoney(loss)} como pérdida`;
     }
 
     return `
@@ -405,10 +410,12 @@ function renderProgressBlock(row, options = {}) {
                 ${breakdown.pendingShare > 0 ? `<span class="cartera-viva-progress__segment is-pending" style="width:${breakdown.pendingShare}%"></span>` : ''}
                 ${breakdown.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${breakdown.lossShare}%"></span>` : ''}
             </div>
+            ${!noLegend ? `
             <div class="cartera-viva-progress__legend">
                 <span>${formatMoney(row?.paid_total || 0)} cobrados</span>
                 <span>${footer}</span>
             </div>
+            ` : ''}
         </section>
     `;
 }
@@ -433,26 +440,27 @@ function renderCategoryControls(counts) {
 function renderPortfolioCards(filteredRows) {
     return filteredRows.map((row) => {
         const status = resolveBuyerStatus(row);
-        const thirdMetricLabel = Number(row?.loss_total || 0) > 0 && Number(row?.pending_total || 0) <= 0
-            ? 'Pérdida'
-            : 'Falta';
+        const loss = Number(row?.loss_total || 0);
+        const pending = Number(row?.pending_total || 0);
+        const thirdMetricLabel = loss > 0 && pending <= 0 ? 'Pérdida' : 'Falta';
         const thirdMetricValue = thirdMetricLabel === 'Pérdida'
-            ? formatMoney(row?.loss_total || 0)
-            : formatMoney(row?.pending_total || 0);
+            ? formatMoney(loss)
+            : formatMoney(pending);
+        const hasReview = getReviewTotal(row) > 0;
+
         return `
             <article class="cartera-viva-card${row?.requires_review ? ' is-review' : ''}">
                 <header class="cartera-viva-card__head">
                     <div class="cartera-viva-card__identity">
                         <h3 class="cartera-viva-card__title">${escapeHtml(row?.display_name || 'Comprador sin nombre')}</h3>
-                        <p class="cartera-viva-card__subtitle">${status.detail}</p>
                     </div>
                     <div class="cartera-viva-card__head-side">
-                        ${renderCardSignal(row)}
                         <span class="cartera-viva-badge cartera-viva-badge--${status.tone}">${status.label}</span>
+                        ${hasReview ? '<span class="cartera-viva-badge cartera-viva-badge--review">Revisar</span>' : ''}
                     </div>
                 </header>
 
-                ${renderProgressBlock(row)}
+                ${renderProgressBlock(row, { noLegend: true })}
 
                 <dl class="cartera-viva-card__metrics">
                     <div class="cartera-viva-card__metric">
@@ -469,10 +477,7 @@ function renderPortfolioCards(filteredRows) {
                     </div>
                 </dl>
 
-                ${renderSupportChips(row)}
-
                 <div class="cartera-viva-card__footer">
-                    <span class="cartera-viva-card__footer-copy">Cumplimiento ${formatPercent(getPaidPercent(row))}</span>
                     <button
                         type="button"
                         class="cartera-viva-detail-link"

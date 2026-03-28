@@ -5391,3 +5391,58 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
    - exportar un comprador;
    - confirmar que no queda copy tecnico visible.
 2. Mantener fuera de esta ronda la eliminacion del historial legacy viejo del facturero; solo se evaluara cuando el nuevo sistema quede estable y validado.
+
+## Sesión: Compactación final Cartera Viva + corrección Pérdidas (2026-03-28)
+
+### Diagnóstico
+
+- **Cards demasiado altas**: subtítulo de estado (texto largo), bloque chips, leyenda del progress bar y texto "Cumplimiento X%" en footer sumaban 4 filas extra por cada card.
+- **Categorías poco compactas**: la barra usaba `grid 3-col` con botones tipo caja (border + bg), lo que los hacía parecer tabs legados pesados.
+- **Pérdidas = 0 inconsistente**: `resolveVisibleCategory()` evaluaba `paid > 0` **antes** de `loss > 0`. Cualquier comprador con un pago parcial antes del cierre por pérdida quedaba clasificado como `pagados`, haciendo invisible la categoría `perdidos`.
+
+### Plan aplicado
+
+1. Corregir orden de clasificación en `resolveVisibleCategory`: primero `pending > 0` → fiados; luego `loss > 0` → perdidos; después `paid > 0` → pagados.
+2. Compactar card: eliminar subtítulo de estado, bloque de chips, leyenda del progress bar y texto "Cumplimiento" del footer; dejar solo nombre + badge + barra + 3 métricas + CTA discreto.
+3. Rediseñar barra de categorías: flex sin border/bg, tabs planos con underline activo dorado — estilo del prototipo HTML.
+4. Reducir paddings, gaps y tamaños de fuente en cards y métricas.
+
+### Cambios por archivo
+
+#### `apps/gold/agro/agro-cartera-viva-view.js`
+
+- `resolveVisibleCategory` (línea ~150): reordenó la lógica de clasificación; `loss > 0` ahora precede a `paid > 0` cuando no hay `pending`.
+- `renderProgressBlock` (línea ~382): agregó opción `noLegend` para suprimir la leyenda de texto bajo la barra cuando se usa en cards.
+- `renderPortfolioCards` (línea ~433): eliminó `<p class="cartera-viva-card__subtitle">`, el bloque `renderSupportChips(row)`, y el texto "Cumplimiento X%" del footer. CTA queda como link discreto.
+
+#### `apps/gold/agro/agro-cartera-viva.css`
+
+- `.cartera-viva-category-bar`: cambiado de `grid 3-col` a `flex` con `border-bottom`.
+- `.cartera-viva-category`: eliminados `border`, `background` y `border-radius`; ahora es tab plano con `border-bottom: 2px solid transparent`; activo usa `border-bottom-color: var(--gold-4)`.
+- `.cartera-viva-category__count`: reducido a badge pequeño inline.
+- `.cartera-viva-card`: reducido a `gap: 0.55rem`, `padding: 0.85rem 0.9rem`, `border-radius: var(--radius-md)`.
+- `.cartera-viva-card__title`: reducido a `0.88rem`.
+- `.cartera-viva-progress`: reducido a `gap: 0.3rem`, `padding: 0.5rem 0.6rem`.
+- `.cartera-viva-card__metric`: reducido a `padding: 0.45rem 0.5rem`, `font-size: 0.82rem`.
+- `.cartera-viva-detail-link`: separado como link discreto (sin border/bg, solo texto dorado con opacity).
+- Media queries: corregido 768px para no colapsar card head a grid; 480px mantiene métricas en 3 columnas.
+- `.cartera-viva-grid`: gap reducido a `0.55rem`.
+- `.cartera-viva-badge`: altura reducida a `1.4rem`, font `0.68rem`.
+
+### Build status
+
+- `pnpm build:gold` → **OK**
+- `agent-guard: OK`
+- `agent-report-check: OK`
+- `vite build: OK` (warning preexistente de chunk size en agro.js — no bloqueante)
+- `check-llms: OK`
+- `check-dist-utf8: OK`
+
+### QA sugerido
+
+1. Abrir Cartera Viva en desktop y mobile.
+2. Confirmar que las cards son visiblemente más compactas (sin subtítulo ni chips).
+3. Cambiar a categoría Pérdidas — debe mostrar compradores reales con `loss_total > 0` y `pending_total = 0`.
+4. Cambiar entre Fiados, Pagados, Pérdidas — confirmar que las categorías lucen como tabs con underline dorado.
+5. Abrir una card → confirmar que exportación y detalle siguen funcionando.
+6. Confirmar mobile ≤480px — métricas deben mostrarse en 3 columnas, no apiladas.
