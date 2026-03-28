@@ -53,6 +53,7 @@ const VIEW_CONFIG = Object.freeze({
     otros: { region: 'ops', label: 'Otros', tab: 'otros', focusSelector: '#agro-otros-dedicated', dense: true },
     carrito: { region: 'ops', label: 'Carrito', tab: 'carrito', focusSelector: '#agro-carrito-dedicated', dense: true },
     rankings: { region: 'ops', label: 'Rankings', tab: 'rankings', focusSelector: '#agro-rankings-dedicated', dense: true },
+    'cartera-viva': { region: 'cartera-viva', label: 'Cartera Viva', focusSelector: '#agro-cartera-viva-root' },
     clima: { region: 'clima', label: 'Clima Agro', focusSelector: '[data-agro-shell-region="clima"]' },
     agenda: { region: 'agenda', label: 'Agenda', focusSelector: '[data-agro-shell-region="agenda"]' },
     herramientas: { region: 'herramientas', label: 'Herramientas', focusSelector: '#agro-tools-section' },

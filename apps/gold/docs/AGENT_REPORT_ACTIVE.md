@@ -4885,3 +4885,117 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 1. No abrir QA visual nuevo; esta ronda solo crea la fuente buyer-centric y su adapter.
 2. En la siguiente fase del MVP, leer `agro_buyer_portfolio_summary_v1()` desde el modulo de Cartera Viva y validar orden por `pending_total` en un smoke corto.
+
+---
+
+## Sesion: Cartera Viva Fase 3 MVP visual buyer-centric (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion ejecuta **Fase 3: MVP visual**.
+- La base estructural y la agregacion ya existen:
+  - `agro_buyers` como identidad canonica;
+  - `public.agro_buyer_portfolio_summary_v1()` como fuente de verdad;
+  - `fetchBuyerPortfolioSummary()` en `apps/gold/agro/agro-cartera-viva.js`.
+- La mision ahora es montar la vista buyer-centric.
+- **No toca historial contextual**.
+- **No toca exportacion**.
+- `agro.js` no debe crecer como destino principal.
+- Puntos de integracion detectados:
+  - shell y sidebar en `apps/gold/agro/index.html`;
+  - enrutado de vistas en `apps/gold/agro/agro-shell.js`;
+  - bootstrap modular en el script `type=\"module\"` de `index.html`;
+  - la vista debe vivir en un modulo nuevo dedicado y con CSS propio.
+
+### Plan
+
+1. Agregar entrada propia en sidebar y region dedicada `data-agro-shell-region` para Cartera Viva.
+2. Registrar la vista en `agro-shell.js` con wiring minimo.
+3. Crear `agro-cartera-viva-view.js` para render, categoria activa y estados vacios.
+4. Crear `agro-cartera-viva.css` para cards y layout del MVP, sin tocar tabs legacy.
+5. Cargar el modulo desde el bootstrap existente y cerrar con `pnpm build:gold`.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - se agrego la entrada propia de sidebar para `Cartera Viva`;
+  - se agrego la region dedicada `data-agro-shell-region="cartera-viva"` con root propio;
+  - se enlazo `agro-cartera-viva.css`;
+  - se cargo `agro-cartera-viva-view.js` desde el bootstrap modular existente.
+- `apps/gold/agro/agro-shell.js`
+  - se registro la vista `cartera-viva` en `VIEW_CONFIG` sin crecer `agro.js`.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - nuevo modulo visual del MVP buyer-centric;
+  - consume `fetchBuyerPortfolioSummary()` como fuente de verdad;
+  - maneja categoria activa unica, orden por `pending_total`, cards y estados vacios.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - nuevo CSS propio de Cartera Viva para header, categorias, cards, badges y estados vacios.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion documentada conforme a la policy canonica.
+
+### Resultado visual
+
+- Vista dedicada:
+  - `Cartera Viva` ya vive como region propia del shell, no dentro de tabs legacy.
+- Sidebar:
+  - tiene entrada propia de navegacion.
+- Cards:
+  - una card por comprador canonico;
+  - identidad global visible;
+  - estado simple visible;
+  - bloque contextual cambia segun categoria activa;
+  - badges de revision cuando aplica.
+- Categoria activa:
+  - solo una categoria visible a la vez;
+  - categorias MVP: `Fiados`, `Pagados`, `Perdidos`, `Mixto`.
+- Orden:
+  - mayor `pending_total` primero.
+- Estados vacios:
+  - sin compradores;
+  - sin metricas confiables;
+  - categoria activa vacia;
+  - comprador con revision;
+  - comprador sin pendiente activo.
+- Fuera de alcance mantenido:
+  - no se implemento historial contextual;
+  - no se implemento exportacion.
+
+### Archivos + lineas
+
+- `apps/gold/agro/index.html:33`
+  - enlace CSS de Cartera Viva.
+- `apps/gold/agro/index.html:1278-1280`
+  - entrada propia en sidebar.
+- `apps/gold/agro/index.html:1786-1789`
+  - region dedicada con root visual.
+- `apps/gold/agro/index.html:4285-4289`
+  - carga modular de `agro-cartera-viva-view.js`.
+- `apps/gold/agro/agro-shell.js:56`
+  - wiring minimo de la vista en `VIEW_CONFIG`.
+- `apps/gold/agro/agro-cartera-viva-view.js:1-476`
+  - modulo visual buyer-centric.
+- `apps/gold/agro/agro-cartera-viva.css:1-312`
+  - CSS propio de la vista.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Smoke corto manual solamente:
+   - abrir entrada de sidebar `Cartera Viva`;
+   - confirmar carga de vista;
+   - cambiar categoria activa;
+   - validar render de cards;
+   - validar un estado vacio.
+2. No ampliar a QA intensivo ni abrir historial/exportacion en esta ronda.
