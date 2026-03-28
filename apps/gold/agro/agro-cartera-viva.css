@@ -57,7 +57,9 @@
 }
 
 .cartera-viva-refresh,
-.cartera-viva-empty__action {
+.cartera-viva-empty__action,
+.cartera-viva-back,
+.cartera-viva-detail-link {
   appearance: none;
   border: 1px solid rgba(200, 167, 82, 0.28);
   background: rgba(200, 167, 82, 0.12);
@@ -71,7 +73,9 @@
 }
 
 .cartera-viva-refresh:hover,
-.cartera-viva-empty__action:hover {
+.cartera-viva-empty__action:hover,
+.cartera-viva-back:hover,
+.cartera-viva-detail-link:hover {
   border-color: rgba(232, 208, 144, 0.6);
   background: rgba(200, 167, 82, 0.18);
   transform: translateY(-1px);
@@ -324,6 +328,152 @@
   letter-spacing: 0.12em;
 }
 
+.cartera-viva-card__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cartera-viva-detail-link {
+  padding-inline: 1.1rem;
+}
+
+.cartera-viva-view--detail {
+  gap: 1rem;
+}
+
+.cartera-viva-detail__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cartera-viva-detail__summary,
+.cartera-viva-detail__body {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(12, 12, 12, 0.98));
+}
+
+.cartera-viva-detail__summary-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.cartera-viva-detail__identity {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.cartera-viva-detail__title,
+.cartera-viva-detail__section-title {
+  color: var(--text-primary, #fff);
+}
+
+.cartera-viva-detail__title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.2rem, 3vw, 1.7rem);
+}
+
+.cartera-viva-detail__summary-copy,
+.cartera-viva-detail__body-copy {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  font-size: 0.9rem;
+}
+
+.cartera-viva-detail__body-head {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.cartera-viva-detail__timeline {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.cartera-viva-history-item {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cartera-viva-history-item--pending {
+  border-color: rgba(251, 191, 36, 0.28);
+}
+
+.cartera-viva-history-item--paid {
+  border-color: rgba(74, 222, 128, 0.24);
+}
+
+.cartera-viva-history-item--loss {
+  border-color: rgba(248, 113, 113, 0.24);
+}
+
+.cartera-viva-history-item--review {
+  border-color: rgba(200, 167, 82, 0.28);
+}
+
+.cartera-viva-history-item__main {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.cartera-viva-history-item__copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.cartera-viva-history-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.cartera-viva-history-item__title {
+  font-size: 1rem;
+  color: var(--text-primary, #fff);
+}
+
+.cartera-viva-history-item__label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cartera-viva-history-item__meta,
+.cartera-viva-history-item__concept,
+.cartera-viva-history-item__note {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  font-size: 0.86rem;
+}
+
+.cartera-viva-history-item__amount {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary, #fff);
+  text-align: right;
+}
+
 .cartera-viva-empty {
   display: grid;
   gap: 0.7rem;
@@ -394,8 +544,21 @@
   .cartera-viva-refresh,
   .cartera-viva-empty__action,
   .cartera-viva-category,
+  .cartera-viva-back,
+  .cartera-viva-detail-link,
   .cartera-viva-loading-dot {
     transition: none;
     animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .cartera-viva-history-item__main,
+  .cartera-viva-detail__summary-head {
+    display: grid;
+  }
+
+  .cartera-viva-history-item__amount {
+    text-align: left;
   }
 }

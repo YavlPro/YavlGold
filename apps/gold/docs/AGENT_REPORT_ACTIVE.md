@@ -4999,3 +4999,96 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
    - validar render de cards;
    - validar un estado vacio.
 2. No ampliar a QA intensivo ni abrir historial/exportacion en esta ronda.
+
+---
+
+## Sesion: Cartera Viva Fase 4 historial contextual por comprador (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion ejecuta **Fase 4: historial contextual**.
+- La vista buyer-centric ya existe y ya consume la fuente de verdad `buyer summary`.
+- **No toca exportacion**.
+- `agro.js` no debe crecer salvo wiring minimo, y en esta ronda no fue necesario tocarlo.
+- El historial debe vivir como **subvista exclusiva por comprador**.
+- Piezas reutilizables detectadas:
+  - `apps/gold/agro/agro-cartera-viva.js`
+    - summary buyer-centric via `fetchBuyerPortfolioSummary()`;
+    - helpers modulares de historial: lectura tolerante, agrupacion por dia y `renderHistoryDayGroups()`.
+  - `apps/gold/agro/agro-cartera-viva-view.js`
+    - grilla buyer-centric, categoria activa y orden por pendiente.
+- Corte de menor riesgo:
+  - mantener la navegacion interna dentro del modulo de Cartera Viva;
+  - crear modulo nuevo de detalle buyer-centric;
+  - usar `buyer_id` y `buyer_group_key` para leer movimientos atribuibles honestamente;
+  - dejar el resumen superior apoyado en el summary existente, sin recalculo contable en render.
+
+### Plan
+
+1. Crear una subvista exclusiva por comprador fuera de `agro.js`.
+2. Abrir esa subvista desde cada card con un CTA sobrio `Ver historial`.
+3. Leer `agro_pending`, `agro_income` y `agro_losses` solo cuando el movimiento sea atribuible honestamente al comprador.
+4. Reutilizar la agrupacion modular por dia ya extraida en Cartera Viva.
+5. Cerrar con build sin abrir QA intensivo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - nuevo modulo de detalle buyer-centric;
+  - resuelve fetch contextual por `buyer_id` y `buyer_group_key`;
+  - normaliza fiados, pagos, perdidas y review/legacy a una timeline unica;
+  - reutiliza `renderHistoryDayGroups()` del modulo base.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - agrega navegacion interna grilla -> detalle -> volver;
+  - agrega CTA `Ver historial` por card;
+  - mantiene categoria activa y estado base de la vista al volver;
+  - delega el render del detalle al modulo nuevo sin crecer `agro.js`.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - agrega estilos del toolbar, resumen superior y timeline contextual;
+  - mantiene el lenguaje visual sobrio y movil-first del MVP.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion documentada conforme a la policy canonica.
+
+### Resultado funcional
+
+- Entrada desde card:
+  - cada card buyer-centric tiene accion `Ver historial`.
+- Subvista exclusiva:
+  - el detalle vive como vista exclusiva dentro del modulo, no en drawer ni inline gigante.
+- Resumen superior:
+  - nombre canonico, estado simple, pendiente, pagado, fiado y revision salen del summary buyer-centric ya existente.
+- Historial contextual:
+  - muestra fiados, pagos, perdidas y registros en revision atribuibles honestamente al comprador;
+  - reutiliza agrupacion por dia y orden descendente.
+- Volver:
+  - vuelve limpio a la grilla sin perder la categoria activa.
+- Estados vacios:
+  - buyer no encontrado;
+  - sin historial legible;
+  - error de carga;
+  - buyer con revision.
+- Fuera de alcance mantenido:
+  - no se implemento exportacion;
+  - no se rehizo la agregacion buyer-centric.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Smoke corto manual solamente:
+   - abrir `Cartera Viva`;
+   - entrar a historial de un comprador;
+   - volver a la grilla;
+   - validar un estado vacio.
+2. No ampliar a QA intensivo ni abrir exportacion en esta ronda.

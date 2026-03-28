@@ -1,5 +1,9 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
 import { fetchBuyerPortfolioSummary } from './agro-cartera-viva.js';
+import {
+    fetchBuyerHistoryTimeline,
+    renderBuyerHistoryDetail
+} from './agro-cartera-viva-detail.js';
 
 const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
@@ -36,6 +40,10 @@ let activeCategory = readStoredCategory();
 let summaryRows = [];
 let loading = false;
 let lastErrorMessage = '';
+let selectedBuyerId = '';
+let detailRows = [];
+let detailLoading = false;
+let detailErrorMessage = '';
 
 function readStoredCategory() {
     try {
@@ -306,6 +314,15 @@ function renderPortfolioCards(filteredRows) {
 
                 ${renderSecondaryLine(row)}
                 ${renderReviewLine(row)}
+
+                <div class="cartera-viva-card__footer">
+                    <button
+                        type="button"
+                        class="cartera-viva-detail-link"
+                        data-cartera-open-history="${escapeHtml(row?.buyer_id || '')}">
+                        Ver historial
+                    </button>
+                </div>
             </article>
         `;
     }).join('');
@@ -349,10 +366,12 @@ function renderErrorState(message) {
     });
 }
 
-function renderView() {
-    const root = getRootNode();
-    if (!root) return;
+function getSelectedBuyerRow() {
+    if (!selectedBuyerId) return null;
+    return summaryRows.find((row) => String(row?.buyer_id || '') === selectedBuyerId) || null;
+}
 
+function renderListView(root) {
     const categoryCounts = getCategoryCounts(summaryRows);
     const filteredRows = filterRowsByCategory(summaryRows, activeCategory);
     const hasReliableMetrics = summaryRows.some((row) =>
@@ -418,8 +437,33 @@ function renderView() {
             </div>
         </section>
     `;
+}
 
-    bindViewEvents(root);
+function renderView() {
+    const root = getRootNode();
+    if (!root) return;
+
+    const selectedBuyerRow = getSelectedBuyerRow();
+    if (selectedBuyerId) {
+        renderBuyerHistoryDetail(root, {
+            buyerRow: selectedBuyerRow,
+            historyRows: detailRows,
+            loading: detailLoading,
+            errorMessage: detailErrorMessage,
+            onBack: () => {
+                resetDetailState();
+                renderView();
+            },
+            onRefresh: () => {
+                if (!selectedBuyerId) return;
+                loadBuyerDetail(selectedBuyerId);
+            }
+        });
+        return;
+    }
+
+    renderListView(root);
+    bindListViewEvents(root);
 }
 
 async function loadSummary() {
@@ -439,7 +483,27 @@ async function loadSummary() {
     }
 }
 
-function bindViewEvents(root) {
+async function loadBuyerDetail(buyerId) {
+    selectedBuyerId = String(buyerId || '').trim();
+    detailLoading = true;
+    detailErrorMessage = '';
+    detailRows = [];
+    renderView();
+
+    try {
+        const buyerRow = getSelectedBuyerRow();
+        detailRows = await fetchBuyerHistoryTimeline(supabase, buyerRow);
+    } catch (error) {
+        console.error('[CarteraViva] buyer detail load failed:', error?.message || error);
+        detailErrorMessage = String(error?.message || 'Error leyendo el historial contextual del comprador.');
+        detailRows = [];
+    } finally {
+        detailLoading = false;
+        renderView();
+    }
+}
+
+function bindListViewEvents(root) {
     root.querySelectorAll('[data-cartera-category]').forEach((button) => {
         button.addEventListener('click', () => {
             const nextCategory = normalizeCategory(button.dataset.carteraCategory);
@@ -453,12 +517,33 @@ function bindViewEvents(root) {
     root.querySelector('[data-cartera-refresh]')?.addEventListener('click', () => {
         loadSummary();
     });
+
+    root.querySelectorAll('[data-cartera-open-history]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const buyerId = String(button.dataset.carteraOpenHistory || '').trim();
+            if (!buyerId) return;
+            loadBuyerDetail(buyerId);
+        });
+    });
+}
+
+function resetDetailState() {
+    selectedBuyerId = '';
+    detailRows = [];
+    detailLoading = false;
+    detailErrorMessage = '';
 }
 
 function handleShellViewChanged(event) {
     const nextView = String(event?.detail?.view || '').trim().toLowerCase();
     if (nextView !== CARTERA_VIVA_VIEW) return;
-    loadSummary();
+
+    if (!summaryRows.length) {
+        loadSummary();
+        return;
+    }
+
+    renderView();
 }
 
 export function initAgroCarteraVivaView() {
