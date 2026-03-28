@@ -4640,3 +4640,147 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 1. Abrir `Pagados`, `Fiados`, `Perdidas`, `Donaciones` y `Otros` para confirmar que siguen agrupando por fecha y mostrando el mismo orden visual.
 2. Probar una busqueda simple en las vistas dedicadas para validar que la normalizacion acentos/mayusculas sigue intacta.
 3. Hacer smoke visual corto en desktop y mobile del historial tocado, sin ampliar alcance a QA intensivo.
+
+---
+
+## Sesion: Cartera Viva Fase 1 estructural buyer-centric consolidacion modular (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion ejecuta **Fase 1 estructural**.
+- **Cartera Viva aun no arranca por UI**; el foco correcto sigue siendo `buyer_id` + canonicalizacion + backfill seguro.
+- El repo ya trae la base V4 en progreso:
+  - existe `public.agro_buyers`;
+  - existe la migracion `apps/gold/supabase/migrations/20260326120000_agro_buyer_foundation_v4.sql`;
+  - existe el helper modular `apps/gold/agro/agro-buyer-identity.js`;
+  - existen cambios abiertos en `agro-wizard.js`, `agrocompradores.js` y `agrosocial.js` para usar esa base.
+- El hueco estructural detectado no es rehacer schema ni UI:
+  - la identidad buyer-centric todavia vive repartida por imports directos;
+  - Cartera Viva aun no funciona como punto de entrada modular claro para esta fundacion;
+  - `agro.js` no debe seguir creciendo como destino principal.
+
+### Plan
+
+1. Consolidar la fundacion buyer-centric bajo `apps/gold/agro/agro-cartera-viva.js` como entrypoint modular de Cartera Viva.
+2. Reexportar desde ahi la capa de identidad buyer-centric existente, sin duplicar logica.
+3. Mover imports de bajo riesgo para que wizard, compradores, social y el wiring minimo del monolito consuman Cartera Viva desde ese punto.
+4. Documentar el estado real: que la migracion V4 queda preparada en repo y que esta sesion consolida la base modular sin abrir UI nueva.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva.js`
+  - pasa de base de historial a entrypoint modular mas claro de Cartera Viva;
+  - ahora reexporta la capa buyer-centric existente:
+    - `normalizeBuyerGroupKey`
+    - `extractBuyerIdentityCandidate`
+    - `ensureBuyerIdentityLink`
+    - `isBuyerIdentityRelevantTab`
+    - `BUYER_MATCH_STATUS`
+- `apps/gold/agro/agro-wizard.js`
+  - deja de depender directo de `agro-buyer-identity.js`;
+  - ahora consume la base buyer-centric via `agro-cartera-viva.js`.
+- `apps/gold/agro/agrocompradores.js`
+  - deja de mantener su normalizacion local y consume la canonicalizacion compartida desde Cartera Viva.
+- `apps/gold/agro/agrosocial.js`
+  - deja de mantener su normalizacion local y consume la canonicalizacion compartida desde Cartera Viva.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - apertura y cierre de esta sesion segun policy canonica.
+
+### Archivos + lineas
+
+- `apps/gold/agro/agro-cartera-viva.js:1-11`
+  - entrypoint modular buyer-centric de Cartera Viva.
+- `apps/gold/agro/agro-wizard.js:8`
+  - import buyer-centric apuntando a Cartera Viva.
+- `apps/gold/agro/agrocompradores.js:2`
+  - canonicalizacion compartida via Cartera Viva.
+- `apps/gold/agro/agrosocial.js:2`
+  - canonicalizacion compartida via Cartera Viva.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Crear un fiado, un pagado y una perdida nuevos para confirmar que el wizard sigue resolviendo `buyer_id` desde el entrypoint modular de Cartera Viva.
+2. Abrir una ficha en Compradores y crear un hilo en Social para validar que ambos usan la misma canonicalizacion de `group_key`.
+3. No ampliar a QA intensivo; esta ronda es estructural y sin UI nueva.
+
+---
+
+## Sesion: Cartera Viva cierre Fase 1 estructural DB y backfill prudente (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion busca **cerrar Fase 1 estructural de verdad**.
+- El lote anterior consolidó el codigo modular de Cartera Viva, pero no habia cerrado todavia el estado **DB/backfill** en el repo canónico.
+- Estado real verificado contra Supabase:
+  - `public.agro_buyers` ya existe y esta activo en produccion;
+  - `agro_pending`, `agro_income` y `agro_losses` ya tienen `buyer_id`, `buyer_group_key` y `buyer_match_status`;
+  - el backfill prudente ya esta aplicado en la base real con buckets honestos (`matched`, `legacy_review_required`, `legacy_unclassified`);
+  - la base remota ya registra las migraciones `20260327001037_agro_buyer_foundation_v4` y `20260327001106_agro_buyer_foundation_v4_search_path_fix`.
+- El gap real estaba en el repo:
+  - la foundation V4 solo existia como draft no trackeado en `apps/gold/supabase/migrations/20260326120000_agro_buyer_foundation_v4.sql`;
+  - faltaba reflejar en `supabase/migrations` las versiones reales aplicadas;
+  - `agro.js` no debia crecer para resolver esto.
+
+### Plan
+
+1. Usar la ruta de menor riesgo: complementar el repo con las migraciones canónicas ya aplicadas en Supabase.
+2. Registrar en `supabase/migrations` la foundation V4 y su fix de `search_path` con los timestamps reales.
+3. Eliminar el draft duplicado fuera de la ruta canónica para no dejar dos verdades.
+4. Cerrar la sesion con build y estado documentado.
+
+### Cambios aplicados
+
+- `supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql`
+  - nueva migracion canónica trackeada que registra en el repo la foundation buyer-centric V4:
+    - funcion `public.agro_canonicalize_buyer_name`;
+    - `buyer_id` nullable;
+    - `buyer_group_key`;
+    - `buyer_match_status`;
+    - indices por `user_id + buyer_id` y `user_id + buyer_group_key`;
+    - seed/backfill prudente en `agro_buyers`, `agro_pending`, `agro_income`, `agro_losses`.
+- `supabase/migrations/20260327001106_agro_buyer_foundation_v4_search_path_fix.sql`
+  - nueva migracion canónica trackeada para alinear el repo con el fix real aplicado de `search_path`.
+- `apps/gold/supabase/migrations/20260326120000_agro_buyer_foundation_v4.sql`
+  - eliminado el draft duplicado fuera de la ruta principal de migraciones.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion abierta y cerrada conforme a la policy canonica.
+
+### Archivos + lineas
+
+- `supabase/migrations/20260327001037_agro_buyer_foundation_v4.sql:1-216`
+  - foundation buyer-centric V4 registrada en la ruta canónica del repo.
+- `supabase/migrations/20260327001106_agro_buyer_foundation_v4_search_path_fix.sql:1-30`
+  - fix canónico de `search_path` alineado con Supabase real.
+- `apps/gold/supabase/migrations/20260326120000_agro_buyer_foundation_v4.sql`
+  - draft duplicado removido.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. No hace falta QA visual nuevo en esta ronda; el cierre fue estructural de migraciones y estado de backfill.
+2. En la siguiente ronda buyer-centric, usar un smoke corto de alta señal sobre un fiado nuevo, un ingreso y una perdida para validar escritura/lectura de `buyer_id`.
