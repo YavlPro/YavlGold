@@ -5092,3 +5092,196 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
    - volver a la grilla;
    - validar un estado vacio.
 2. No ampliar a QA intensivo ni abrir exportacion en esta ronda.
+
+---
+
+## Sesion: Cartera Viva Fase 5 exportacion agrupada por comprador (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion ejecuta **Fase 5: exportacion agrupada**.
+- La base buyer-centric, el MVP visual y el historial contextual ya existen.
+- **No toca QA intensivo**.
+- `agro.js` no debe crecer y no sera el destino principal de esta ronda.
+- Punto de disparo de menor riesgo:
+  - la toolbar de la subvista contextual en `apps/gold/agro/agro-cartera-viva-detail.js`.
+- Piezas reutilizables:
+  - `fetchBuyerPortfolioSummary()` y el summary buyer-centric ya cargado en la vista;
+  - `fetchBuyerHistoryTimeline()` para la historia comercial ya normalizada;
+  - helpers de agrupacion por fecha en `apps/gold/agro/agro-cartera-viva.js`.
+- Formato inicial correcto:
+  - Markdown `.md`, porque el repo ya tiene patrones de export por `Blob` y descarga directa sin abrir otra infraestructura.
+
+### Plan
+
+1. Crear un modulo nuevo de exportacion buyer-centric en Markdown.
+2. Reutilizar summary + timeline ya existentes, sin recalcular contabilidad en el export.
+3. Disparar el export solo desde la subvista contextual del comprador.
+4. Separar claramente en el documento lo confiable, la revision y el ingreso fuera de deuda.
+5. Cerrar con build y reporte final.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-export.js`
+  - nuevo modulo de exportacion agrupada por comprador en Markdown;
+  - construye nombre de archivo estable;
+  - separa resumen comercial, revision y historial contextual;
+  - descarga el `.md` via `Blob`.
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - agrega boton `Exportar` en la toolbar de la subvista contextual;
+  - agrega feedback minimo de exportacion con estado sobrio.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - conecta la accion de exportacion desde la subvista;
+  - dispara el modulo nuevo sin recalcular summary ni historial;
+  - maneja error elegante cuando el buyer no esta listo para exportar.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - agrega estilos de toolbar actions, estado de exportacion y disabled.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion documentada conforme a la policy canonica.
+
+### Resultado funcional
+
+- Punto de exportacion:
+  - la accion vive en la subvista contextual del comprador, no en la card de la grilla.
+- Archivo generado:
+  - Markdown `.md` con naming `cartera-viva-<buyer>-YYYY-MM-DD.md`.
+- Resumen superior exportado:
+  - nombre canonico, fecha, estado simple, fiado, pagado, perdido, pendiente y cumplimiento.
+- Historial contextual exportado:
+  - fiados, pagos, perdidas, ingresos fuera de deuda y revision cuando aplican;
+  - agrupado por fecha con la infraestructura modular ya existente.
+- Honestidad de datos:
+  - `pagado confiable`, `revision`, `legacy ambiguo` e `ingreso fuera de deuda` quedan separados.
+- Vacios/errores:
+  - si no hay historial exportable, el `.md` lo deja explicito;
+  - si el buyer no existe o el detalle esta roto, la vista falla con mensaje sobrio y no inventa export.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. Smoke corto manual solamente:
+   - abrir historial de un comprador;
+   - exportar;
+   - confirmar nombre y formato del archivo;
+   - revisar un caso con revision o ingreso fuera de deuda.
+2. No ampliar a QA intensivo ni mezclar esta ronda con saneamiento final.
+
+---
+
+## Sesion: Cartera Viva Fase 6 QA y saneamiento final (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion ejecuta **Fase 6: QA y saneamiento final**.
+- **No se abren nuevas features**.
+- Se debe respetar el **ADN Visual V10** ademas de la logica y los datos.
+- `agro.js` no debe crecer y no es destino principal de esta ronda.
+- Superficies a auditar:
+  - `apps/gold/agro/agro-cartera-viva.js`
+  - `apps/gold/agro/agro-cartera-viva-view.js`
+  - `apps/gold/agro/agro-cartera-viva-detail.js`
+  - `apps/gold/agro/agro-cartera-viva-export.js`
+  - `apps/gold/agro/agro-cartera-viva.css`
+- QA real pero acotado esperado:
+  - sidebar -> Cartera Viva;
+  - cambio de categoria;
+  - apertura de historial;
+  - volver;
+  - exportacion `.md`;
+  - caso con revision o ingreso fuera de deuda;
+  - al menos un estado vacio;
+  - revisión desktop y mobile.
+
+### Plan
+
+1. Hacer smoke funcional corto sobre preview local autenticada con la cuenta QA.
+2. Detectar bugs funcionales reales e incoherencias semanticas visibles entre grilla, detalle y export.
+3. Auditar el modulo contra ADN V10 para detectar ruido visual, spacing o badges incoherentes.
+4. Corregir solo lo de mayor impacto y menor diff.
+5. Cerrar con build y reporte final.
+
+### Hallazgos reales
+
+- Bug funcional critico:
+  - la subvista contextual fallaba al abrir un comprador real porque `apps/gold/agro/agro-cartera-viva-detail.js` consultaba `updated_at` en `agro_pending`, `agro_income` y `agro_losses`, columnas inexistentes en la base activa;
+  - efecto visible en produccion: `No se pudo leer el historial` con error `column agro_pending.updated_at does not exist`.
+- Coherencia funcional verificada:
+  - la grilla mantiene orden por `pending_total` descendente;
+  - el cambio de categoria muestra estado vacio limpio en `Pagados`;
+  - el caso `Ingreso fuera de deuda` se mantiene separado en card, detalle y export.
+- ADN Visual V10:
+  - no aparecio una ruptura visual grave que justificara rediseño;
+  - desktop y mobile mantuvieron densidad, jerarquia y tono sobrio compatibles con V10.
+- Dataset real:
+  - no aparecieron buyers con `review_required_total` o `legacy_unclassified_total` activos en la cuenta QA durante esta ronda;
+  - no se inventaron casos de revision.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - se removieron `updated_at` de los selects buyer-centric del historial contextual para alinear el detalle con el schema real y evitar errores 400 en Supabase.
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - apertura y cierre de la sesion con hallazgos reales, validacion y build.
+
+### Resultado de saneamiento
+
+- Grilla:
+  - sidebar -> `Cartera Viva` abre la vista buyer-centric;
+  - categoria activa cambia bien;
+  - `Pagados` vacio responde con empty state honesto.
+- Detalle:
+  - `Ver historial` abre la subvista exclusiva;
+  - `Volver` regresa limpio a la grilla;
+  - el historial contextual de `Maria Elena` carga sin error y muestra `Ingreso fuera de deuda` + `Fiado`.
+- Exportacion:
+  - `Exportar` genera `cartera-viva-maria-elena-2026-03-27.md`;
+  - el Markdown conserva separacion entre resumen confiable e ingreso fuera de deuda.
+- Mobile:
+  - smoke corto en `390x844` sin colapso visible del header, resumen ni timeline contextual.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA real ejecutado
+
+1. Produccion:
+   - se abrio `Cartera Viva`;
+   - se valido cambio de categoria y empty state de `Pagados`;
+   - se detecto el error real de `updated_at` al abrir detalle.
+2. Preview local contra Supabase cloud:
+   - se reconstruyo `apps/gold/dist` apuntando a cloud solo para validar el fix;
+   - se rehidrato la sesion QA ya activa para evitar flujo de captcha;
+   - se verifico `Fiados` ordenado por `pending_total`;
+   - se abrio historial de `Maria Elena`;
+   - se volvio a la grilla;
+   - se exporto `.md`;
+   - se reviso consistencia entre card, detalle y export para el caso `Ingreso fuera de deuda`;
+   - se hizo smoke mobile corto en `390x844`.
+
+### QA sugerido
+
+1. No abrir nuevas features; el siguiente paso ya seria solo declarar cierre si esta correccion pasa la auditoria final humana.
+2. Si se quiere una verificacion extra, basta con repetir:
+   - `Cartera Viva` -> `Maria Elena` -> `Ver historial` -> `Exportar`.

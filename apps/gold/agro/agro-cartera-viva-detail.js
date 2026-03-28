@@ -13,7 +13,6 @@ const PENDING_HISTORY_COLUMNS = [
     'monto_usd',
     'fecha',
     'created_at',
-    'updated_at',
     'unit_type',
     'unit_qty',
     'quantity_kg',
@@ -34,7 +33,6 @@ const INCOME_HISTORY_COLUMNS = [
     'monto_usd',
     'fecha',
     'created_at',
-    'updated_at',
     'origin_table',
     'origin_id',
     'transfer_state',
@@ -53,7 +51,6 @@ const LOSS_HISTORY_COLUMNS = [
     'monto_usd',
     'fecha',
     'created_at',
-    'updated_at',
     'origin_table',
     'origin_id',
     'transfer_state',
@@ -396,6 +393,9 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const historyRows = Array.isArray(options.historyRows) ? options.historyRows : [];
     const loading = Boolean(options.loading);
     const errorMessage = String(options.errorMessage || '').trim();
+    const exportPending = Boolean(options.exportPending);
+    const exportMessage = String(options.exportMessage || '').trim();
+    const exportTone = String(options.exportTone || '').trim().toLowerCase();
 
     if (!buyerRow) {
         root.innerHTML = `
@@ -416,6 +416,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     }
 
     let bodyContent = '';
+    const exportStatus = exportMessage
+        ? `<p class="cartera-viva-detail__status${exportTone ? ` is-${escapeHtml(exportTone)}` : ''}">${escapeHtml(exportMessage)}</p>`
+        : '';
+
     if (loading) {
         bodyContent = renderEmptyState({
             title: 'Cargando historial del comprador',
@@ -439,8 +443,19 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         <section class="cartera-viva-view cartera-viva-view--detail" aria-label="Historial contextual por comprador">
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
-                <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar historial</button>
+                <div class="cartera-viva-detail__toolbar-actions">
+                    <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar historial</button>
+                    <button
+                        type="button"
+                        class="cartera-viva-refresh"
+                        data-cartera-detail-export
+                        ${loading || exportPending ? 'disabled' : ''}>
+                        ${exportPending ? 'Exportando…' : 'Exportar'}
+                    </button>
+                </div>
             </div>
+
+            ${exportStatus}
 
             ${renderBuyerSummary(buyerRow)}
 
@@ -465,6 +480,10 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.querySelector('[data-cartera-detail-refresh]')?.addEventListener('click', () => {
         options.onRefresh?.();
+    });
+
+    root.querySelector('[data-cartera-detail-export]')?.addEventListener('click', () => {
+        options.onExport?.();
     });
 
     const timelineNode = root.querySelector('[data-cartera-detail-timeline]');
