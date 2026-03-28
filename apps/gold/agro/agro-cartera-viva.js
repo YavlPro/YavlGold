@@ -6,6 +6,84 @@ export {
     normalizeBuyerGroupKey
 } from './agro-buyer-identity.js';
 
+export const AGRO_BUYER_PORTFOLIO_RPC = 'agro_buyer_portfolio_summary_v1';
+
+const BUYER_PORTFOLIO_NUMERIC_FIELDS = Object.freeze([
+    'credited_total',
+    'paid_total',
+    'loss_total',
+    'transferred_total',
+    'pending_total',
+    'review_required_total',
+    'legacy_unclassified_total',
+    'non_debt_income_total',
+    'balance_gap_total'
+]);
+
+const BUYER_PORTFOLIO_NULLABLE_NUMERIC_FIELDS = Object.freeze([
+    'compliance_percent'
+]);
+
+const BUYER_PORTFOLIO_COUNT_FIELDS = Object.freeze([
+    'review_required_count',
+    'legacy_unclassified_count'
+]);
+
+function normalizeBuyerPortfolioNumber(value) {
+    if (value === null || value === undefined || value === '') return 0;
+    const nextValue = Number(value);
+    return Number.isFinite(nextValue) ? nextValue : 0;
+}
+
+function normalizeBuyerPortfolioNullableNumber(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const nextValue = Number(value);
+    return Number.isFinite(nextValue) ? nextValue : null;
+}
+
+function normalizeBuyerPortfolioBoolean(value) {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        return normalized === 'true' || normalized === 't' || normalized === '1';
+    }
+    return Boolean(value);
+}
+
+export function normalizeBuyerPortfolioSummaryRow(row) {
+    const nextRow = row && typeof row === 'object' ? { ...row } : {};
+
+    BUYER_PORTFOLIO_NUMERIC_FIELDS.forEach((field) => {
+        nextRow[field] = normalizeBuyerPortfolioNumber(nextRow[field]);
+    });
+
+    BUYER_PORTFOLIO_NULLABLE_NUMERIC_FIELDS.forEach((field) => {
+        nextRow[field] = normalizeBuyerPortfolioNullableNumber(nextRow[field]);
+    });
+
+    BUYER_PORTFOLIO_COUNT_FIELDS.forEach((field) => {
+        nextRow[field] = Math.max(0, Math.trunc(normalizeBuyerPortfolioNumber(nextRow[field])));
+    });
+
+    nextRow.global_status = String(nextRow.global_status || 'Mixto');
+    nextRow.requires_review = normalizeBuyerPortfolioBoolean(nextRow.requires_review);
+
+    return nextRow;
+}
+
+export async function fetchBuyerPortfolioSummary(supabaseClient) {
+    if (!supabaseClient || typeof supabaseClient.rpc !== 'function') {
+        throw new TypeError('fetchBuyerPortfolioSummary requires a Supabase client with rpc().');
+    }
+
+    const { data, error } = await supabaseClient.rpc(AGRO_BUYER_PORTFOLIO_RPC);
+    if (error) throw error;
+
+    return Array.isArray(data)
+        ? data.map(normalizeBuyerPortfolioSummaryRow)
+        : [];
+}
+
 export function normalizeHistorySearchToken(value) {
     return String(value || '')
         .normalize('NFD')

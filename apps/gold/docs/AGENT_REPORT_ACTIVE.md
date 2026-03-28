@@ -4784,3 +4784,104 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 1. No hace falta QA visual nuevo en esta ronda; el cierre fue estructural de migraciones y estado de backfill.
 2. En la siguiente ronda buyer-centric, usar un smoke corto de alta señal sobre un fiado nuevo, un ingreso y una perdida para validar escritura/lectura de `buyer_id`.
+
+---
+
+## Sesion: Cartera Viva Fase 2 agregacion buyer-centric (2026-03-27)
+
+### Diagnostico
+
+- Esta sesion ejecuta **Fase 2: agregacion buyer-centric**.
+- La base estructural ya existe:
+  - `agro_buyers` como identidad canonica;
+  - `buyer_id`, `buyer_group_key` y `buyer_match_status` en movimientos relevantes;
+  - backfill prudente ya canonizado;
+  - entrypoint modular de Cartera Viva ya abierto en codigo.
+- Todavia **no toca UI**; la mision es crear la **fuente de verdad por comprador** sin crecer `agro.js`.
+- Tablas que alimentan la agregacion:
+  - `agro_pending` para fiado y saldo activo;
+  - `agro_income` para pagos confiables solo cuando `origin_table = 'agro_pending'`;
+  - `agro_losses` para perdidas confiables solo cuando `origin_table = 'agro_pending'`;
+  - `agro_buyers` como identidad y display canonico.
+- Hallazgo critico:
+  - `agro_pending.transfer_state = 'transferred'` se usa al mover fiados a `income` o `losses`;
+  - por tanto `transferido_total` no puede restarse ciegamente junto con `paid_total` y `loss_total`, o se duplicaria la salida del eje deuda.
+
+### Plan
+
+1. Construir la verdad primaria de agregacion en SQL para que la UI futura no invente contabilidad.
+2. Separar movimientos confiables de buckets en revision y legacy ambiguo.
+3. Definir `pending_total` con criterio honesto:
+   - usar saldo activo real en `agro_pending`;
+   - dejar `transferido_total` como senal operativa prudente y no como doble descuento.
+4. Exponer un wrapper JS minimo desde `agro-cartera-viva.js` para que la UI futura consuma la fuente agregada sin conocer detalles del RPC.
+
+### Cambios aplicados
+
+- `public.agro_buyer_portfolio_summary_v1()`
+  - RPC SQL nuevo aplicado en Supabase y registrado en migracion canónica;
+  - agrega por comprador:
+    - `credited_total`
+    - `paid_total`
+    - `loss_total`
+    - `transferred_total`
+    - `pending_total`
+    - `compliance_percent`
+    - `review_required_total`
+    - `legacy_unclassified_total`
+    - `non_debt_income_total`
+    - `global_status`
+    - `balance_gap_total`
+    - `requires_review`
+- `supabase/migrations/20260328005620_agro_buyer_portfolio_summary_v1.sql`
+  - nueva migracion canónica con la agregacion buyer-centric.
+- `apps/gold/agro/agro-cartera-viva.js`
+  - adapter minimo para la UI futura:
+    - `AGRO_BUYER_PORTFOLIO_RPC`
+    - `normalizeBuyerPortfolioSummaryRow()`
+    - `fetchBuyerPortfolioSummary()`
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - sesion documentada conforme a la policy canonica.
+
+### Criterio aplicado
+
+- `fiado` confiable:
+  - `agro_pending` con `buyer_id` y `buyer_match_status = 'matched'`.
+- `pagado` confiable:
+  - solo `agro_income` con `origin_table = 'agro_pending'` y `buyer_match_status = 'matched'`.
+- `perdida` confiable:
+  - solo `agro_losses` con `origin_table = 'agro_pending'` y `buyer_match_status = 'matched'`.
+- `transferido_total`:
+  - queda como senal operativa separada;
+  - solo descuenta si sale del eje deuda hacia un destino distinto de `income` o `losses`;
+  - evita doble descuento con pagos/perdidas ya derivados del fiado.
+- `pending_total`:
+  - se define como saldo activo real en `agro_pending`, no como resta ciega que mezcle transferencias ya absorbidas por otros buckets.
+- `review/ambiguos`:
+  - `legacy_review_required` y `legacy_unclassified` quedan fuera del eje confiable;
+  - solo se agregan al comprador cuando existe `buyer_id` o `buyer_group_key` resoluble de forma honesta.
+
+### Archivos + lineas
+
+- `supabase/migrations/20260328005620_agro_buyer_portfolio_summary_v1.sql:1-263`
+  - migracion de la fuente de verdad buyer-centric.
+- `apps/gold/agro/agro-cartera-viva.js:9-84`
+  - adapter JS minimo para consumir el RPC sin meter logica en UI.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+- Checks:
+  - `agent-guard: OK`
+  - `agent-report-check: OK (AGENT_REPORT_ACTIVE.md)`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning historico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+1. No abrir QA visual nuevo; esta ronda solo crea la fuente buyer-centric y su adapter.
+2. En la siguiente fase del MVP, leer `agro_buyer_portfolio_summary_v1()` desde el modulo de Cartera Viva y validar orden por `pending_total` en un smoke corto.
