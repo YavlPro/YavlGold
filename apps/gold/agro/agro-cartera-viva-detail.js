@@ -21,6 +21,7 @@ const PENDING_HISTORY_COLUMNS = [
     'buyer_id',
     'buyer_group_key',
     'buyer_match_status',
+    'crop_id',
     'deleted_at',
     'reverted_at'
 ].join(',');
@@ -39,6 +40,7 @@ const INCOME_HISTORY_COLUMNS = [
     'buyer_id',
     'buyer_group_key',
     'buyer_match_status',
+    'crop_id',
     'deleted_at',
     'reverted_at'
 ].join(',');
@@ -57,6 +59,7 @@ const LOSS_HISTORY_COLUMNS = [
     'buyer_id',
     'buyer_group_key',
     'buyer_match_status',
+    'crop_id',
     'deleted_at',
     'reverted_at'
 ].join(',');
@@ -175,7 +178,7 @@ function buildProgressBreakdown(buyerRow) {
 
 function normalizeBuyerScope(buyerRow) {
     const buyerId = String(buyerRow?.buyer_id || '').trim();
-    const groupKey = normalizeHistorySearchToken(buyerRow?.group_key || '');
+    const groupKey = normalizeHistorySearchToken(buyerRow?.group_key || buyerRow?.buyer_group_key || '');
 
     return {
         buyerId,
@@ -366,14 +369,18 @@ function compareHistoryRows(a, b) {
     return bDate - aDate;
 }
 
-export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow) {
+export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, options = {}) {
     const buyerScope = normalizeBuyerScope(buyerRow);
     if (!buyerScope.hasIdentity) return [];
+    const cropId = String(options?.cropId || '').trim();
+    const extraFilters = cropId
+        ? [(query) => query.eq('crop_id', cropId)]
+        : [];
 
     const [pendingRows, incomeRows, lossRows] = await Promise.all([
-        fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope),
-        fetchBuyerScopedRows(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, buyerScope),
-        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope)
+        fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters }),
+        fetchBuyerScopedRows(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, buyerScope, { extraFilters }),
+        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters })
     ]);
 
     return [

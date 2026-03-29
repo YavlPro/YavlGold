@@ -7,6 +7,11 @@ export {
 } from './agro-buyer-identity.js';
 
 export const AGRO_BUYER_PORTFOLIO_RPC = 'agro_buyer_portfolio_summary_v1';
+const BUYER_PORTFOLIO_CROP_SCOPE_TABLES = Object.freeze([
+    Object.freeze({ table: 'agro_pending', excludeReverted: true }),
+    Object.freeze({ table: 'agro_income', excludeReverted: true }),
+    Object.freeze({ table: 'agro_losses', excludeReverted: true })
+]);
 
 const BUYER_PORTFOLIO_NUMERIC_FIELDS = Object.freeze([
     'credited_total',
@@ -82,6 +87,58 @@ export async function fetchBuyerPortfolioSummary(supabaseClient) {
     return Array.isArray(data)
         ? data.map(normalizeBuyerPortfolioSummaryRow)
         : [];
+}
+
+export function buildBuyerPortfolioScopeKey(row) {
+    const buyerId = String(row?.buyer_id || '').trim();
+    if (buyerId) return `buyer:${buyerId}`;
+
+    const buyerGroupKey = normalizeHistorySearchToken(
+        row?.buyer_group_key
+        || row?.group_key
+        || ''
+    );
+    if (buyerGroupKey) return `group:${buyerGroupKey}`;
+
+    return '';
+}
+
+export async function fetchBuyerPortfolioCropScopeKeys(supabaseClient, cropId) {
+    const safeCropId = String(cropId || '').trim();
+    if (!safeCropId) return new Set();
+
+    if (!supabaseClient?.from) {
+        throw new TypeError('fetchBuyerPortfolioCropScopeKeys requires a Supabase client with from().');
+    }
+
+    const queries = BUYER_PORTFOLIO_CROP_SCOPE_TABLES.map(({ table, excludeReverted }) => {
+        let query = supabaseClient
+            .from(table)
+            .select('id,buyer_id,buyer_group_key')
+            .eq('crop_id', safeCropId)
+            .is('deleted_at', null);
+
+        if (excludeReverted !== false) {
+            query = query.is('reverted_at', null);
+        }
+
+        return query;
+    });
+
+    const results = await Promise.all(queries);
+    const visibleKeys = new Set();
+
+    results.forEach((result) => {
+        if (result?.error) throw result.error;
+        if (!Array.isArray(result?.data)) return;
+
+        result.data.forEach((row) => {
+            const scopeKey = buildBuyerPortfolioScopeKey(row);
+            if (scopeKey) visibleKeys.add(scopeKey);
+        });
+    });
+
+    return visibleKeys;
 }
 
 export function normalizeHistorySearchToken(value) {

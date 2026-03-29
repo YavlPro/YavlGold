@@ -5554,3 +5554,57 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 - Smoke visual:
   - no se ejecutó QA autenticado intensivo en esta ronda;
   - sigue pendiente validación humana corta dentro de sesión real por el bloqueo conocido del preview local con hCaptcha.
+
+## Sesión: Fix final filtro real por cultivo en Cartera Viva (2026-03-28)
+
+### Diagnóstico
+
+- El selector de cultivo actual solo actúa como contexto operativo para `Nuevo registro`.
+- La grilla buyer-centric, los conteos visibles y el detalle contextual no se estaban filtrando de verdad por el cultivo activo.
+- La fuente `agro_buyer_portfolio_summary_v1` sigue siendo global por comprador, así que no soporta crop-scope total para el summary superior.
+
+### Plan
+
+1. Aplicar un filtro real y honesto por cultivo sobre los compradores visibles a partir de movimientos subyacentes (`agro_pending`, `agro_income`, `agro_losses`).
+2. Filtrar también el timeline/detalle contextual por `crop_id` cuando haya cultivo activo.
+3. Mantener el summary buyer-centric dentro del alcance real que hoy soporta la arquitectura.
+4. Ejecutar build y QA corto; el historial legacy viejo no se retira aún en esta ronda.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva.js`
+  - helper nuevo para resolver compradores visibles por `crop_id` a partir de movimientos reales;
+  - llave buyer-centric compartida para `buyer_id` / `buyer_group_key`.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - la grilla y los conteos visibles ahora sí se filtran por el cultivo activo;
+  - el filtro se alimenta con movimientos reales, no con un label cosmético;
+  - el summary superior se mantiene honesto cuando hay cultivo activo: sigue global buyer-centric;
+  - la nota visible explica el alcance real del filtro.
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - timeline del comprador filtrado por `crop_id` cuando hay cultivo activo;
+  - soporte de `buyer_group_key` también en el detalle para buyers sin `buyer_id`.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA corto ejecutado
+
+- Preview local levantado desde `apps/gold/dist`.
+- La app cargó correctamente y abrió el flujo real de login.
+- Se probó submit real con la cuenta QA local.
+- El acceso quedó bloqueado en `Validando...` después de ejecutar hCaptcha invisible, por lo que no fue posible completar la validación autenticada de cambio de cultivo / detalle / nuevo registro.
+- Browser cerrado, servidor temporal detenido y carpeta temporal de Playwright eliminada.
+
+### Nota operativa
+
+- El historial legacy viejo del facturero no se elimina aún en esta ronda.
+- El retiro del legacy solo se evaluará cuando esta capa nueva quede estable y validada con QA autenticada real.

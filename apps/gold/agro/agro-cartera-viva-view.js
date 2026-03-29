@@ -1,5 +1,10 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
-import { fetchBuyerPortfolioSummary, normalizeHistorySearchToken } from './agro-cartera-viva.js';
+import {
+    buildBuyerPortfolioScopeKey,
+    fetchBuyerPortfolioCropScopeKeys,
+    fetchBuyerPortfolioSummary,
+    normalizeHistorySearchToken
+} from './agro-cartera-viva.js';
 import { downloadBuyerPortfolioExport } from './agro-cartera-viva-export.js';
 import {
     fetchBuyerHistoryTimeline,
@@ -46,6 +51,11 @@ let detailErrorMessage = '';
 let detailExportPending = false;
 let detailExportMessage = '';
 let detailExportTone = '';
+let visibleCropScopeKeys = null;
+let visibleCropScopeId = null;
+let visibleCropScopeLoading = false;
+let visibleCropScopeError = '';
+let visibleCropScopeRequestId = 0;
 
 function readStoredCategory() {
     try {
@@ -138,6 +148,12 @@ function getSelectedCropId() {
     return null;
 }
 
+function getSelectedCrop() {
+    const selectedId = getSelectedCropId();
+    if (!selectedId) return null;
+    return getAvailableCrops().find((crop) => normalizeCropId(crop?.id) === selectedId) || null;
+}
+
 function resolveCropDisplay(crop) {
     const rawName = String(crop?.name || '').trim();
     const icon = String(crop?.icon || '').trim() || '🌱';
@@ -148,6 +164,12 @@ function resolveCropDisplay(crop) {
         label: variety ? `${icon} ${safeName} · ${variety}` : `${icon} ${safeName}`,
         shortLabel: safeName
     };
+}
+
+function getSelectedCropShortLabel() {
+    const selectedCrop = getSelectedCrop();
+    if (!selectedCrop) return 'este cultivo';
+    return resolveCropDisplay(selectedCrop).shortLabel || 'este cultivo';
 }
 
 function formatMoney(value) {
@@ -307,12 +329,25 @@ function matchesPortfolioSearch(row, query = searchQuery) {
     const haystack = [
         row?.display_name,
         row?.buyer_group_key,
+        row?.group_key,
         row?.global_status
     ]
         .filter(Boolean)
         .join(' ');
 
     return getSearchToken(haystack).includes(token);
+}
+
+function getCropScopedRows(rows) {
+    const safeRows = Array.isArray(rows) ? rows.slice() : [];
+    const selectedCropId = getSelectedCropId();
+    if (!selectedCropId) return safeRows;
+    if (!(visibleCropScopeKeys instanceof Set) || visibleCropScopeId !== selectedCropId) return [];
+
+    return safeRows.filter((row) => {
+        const scopeKey = buildBuyerPortfolioScopeKey(row);
+        return scopeKey && visibleCropScopeKeys.has(scopeKey);
+    });
 }
 
 function filterRowsByCategory(rows, category) {
@@ -624,6 +659,14 @@ function renderToolbarControls() {
     `;
 }
 
+function renderScopeNote() {
+    const selectedCropId = getSelectedCropId();
+    if (selectedCropId) {
+        return `Lista y detalle filtrados por ${escapeHtml(getSelectedCropShortLabel())}. El resumen superior sigue la lectura global buyer-centric. Otros pertenece a Ciclos Operativos.`;
+    }
+    return 'Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.';
+}
+
 function renderCategoryControls(counts) {
     return CATEGORY_ORDER.map((category) => {
         const meta = CATEGORY_META[category];
@@ -738,9 +781,14 @@ function getSelectedBuyerRow() {
 }
 
 function renderListView(root) {
-    const categoryCounts = getCategoryCounts(summaryRows);
-    const filteredRows = filterRowsByCategory(summaryRows, activeCategory);
-    const hasReliableMetrics = summaryRows.some((row) =>
+    const selectedCropId = getSelectedCropId();
+    const cropScopedRows = getCropScopedRows(summaryRows);
+    const summaryRowsForHeader = selectedCropId
+        ? filterRowsByCategory(summaryRows, activeCategory)
+        : filterRowsByCategory(cropScopedRows, activeCategory);
+    const categoryCounts = getCategoryCounts(cropScopedRows);
+    const filteredRows = filterRowsByCategory(cropScopedRows, activeCategory);
+    const hasReliableMetrics = cropScopedRows.some((row) =>
         Number(row?.credited_total || 0) > 0
         || Number(row?.paid_total || 0) > 0
         || Number(row?.loss_total || 0) > 0
@@ -750,6 +798,13 @@ function renderListView(root) {
     let bodyContent = '';
     if (loading) {
         bodyContent = renderLoadingState();
+    } else if (visibleCropScopeLoading && selectedCropId) {
+        bodyContent = renderEmptyState({
+            title: 'Cargando compradores del cultivo',
+            copy: `Buscando movimientos visibles para ${getSelectedCropShortLabel()}.`
+        });
+    } else if (visibleCropScopeError && selectedCropId) {
+        bodyContent = renderErrorState(visibleCropScopeError);
     } else if (lastErrorMessage) {
         bodyContent = renderErrorState(lastErrorMessage);
     } else if (summaryRows.length <= 0) {
@@ -761,7 +816,9 @@ function renderListView(root) {
     } else if (!hasReliableMetrics) {
         bodyContent = renderEmptyState({
             title: 'Todavía no hay lectura suficiente',
-            copy: 'Hay movimientos por ordenar, pero aún no alcanzan para mostrar una cartera clara.'
+            copy: selectedCropId
+                ? `Todavía no hay movimientos visibles de ${getSelectedCropShortLabel()} para mostrar una cartera clara.`
+                : 'Hay movimientos por ordenar, pero aún no alcanzan para mostrar una cartera clara.'
         });
     } else if (filteredRows.length <= 0) {
         const categoryMeta = CATEGORY_META[activeCategory];
@@ -769,7 +826,9 @@ function renderListView(root) {
             title: searchQuery ? 'Sin coincidencias en esta vista' : categoryMeta.emptyTitle,
             copy: searchQuery
                 ? `No encontramos compradores para "${searchQuery}" dentro de ${categoryMeta.label.toLowerCase()}.`
-                : categoryMeta.emptyCopy
+                : (selectedCropId
+                    ? `${categoryMeta.emptyCopy} Ahora mismo ${getSelectedCropShortLabel()} no tiene compradores visibles en esta categoría.`
+                    : categoryMeta.emptyCopy)
         });
     } else {
         bodyContent = `
@@ -788,13 +847,13 @@ function renderListView(root) {
                         <h2 class="cartera-viva-view__title">Cartera de compradores</h2>
                         <p class="cartera-viva-view__subtitle">Cobros, cierres y pérdidas con lectura compacta.</p>
                     </div>
-                    <div class="cartera-viva-view__actions">
-                        <button type="button" class="cartera-viva-refresh" data-cartera-refresh>
-                            Actualizar
-                        </button>
-                    </div>
+                <div class="cartera-viva-view__actions">
+                    <button type="button" class="cartera-viva-refresh" data-cartera-refresh>
+                        Actualizar
+                    </button>
                 </div>
-                ${renderHeaderSummary(filteredRows)}
+            </div>
+                ${renderHeaderSummary(summaryRowsForHeader)}
             </header>
 
             ${renderToolbarControls()}
@@ -803,7 +862,7 @@ function renderListView(root) {
                 ${renderCategoryControls(categoryCounts)}
             </div>
 
-            <p class="cartera-viva-view__note">Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.</p>
+            <p class="cartera-viva-view__note">${renderScopeNote()}</p>
 
             <div class="cartera-viva-view__body">
                 ${bodyContent}
@@ -845,6 +904,41 @@ function renderView() {
     bindListViewEvents(root);
 }
 
+async function syncVisibleCropScope(options = {}) {
+    const selectedCropId = getSelectedCropId();
+    const requestId = ++visibleCropScopeRequestId;
+    const shouldRender = options.render !== false;
+
+    if (!selectedCropId) {
+        visibleCropScopeKeys = null;
+        visibleCropScopeId = null;
+        visibleCropScopeLoading = false;
+        visibleCropScopeError = '';
+        if (shouldRender) renderView();
+        return;
+    }
+
+    visibleCropScopeLoading = true;
+    visibleCropScopeError = '';
+    visibleCropScopeId = selectedCropId;
+    if (shouldRender) renderView();
+
+    try {
+        const nextKeys = await fetchBuyerPortfolioCropScopeKeys(supabase, selectedCropId);
+        if (requestId !== visibleCropScopeRequestId) return;
+        visibleCropScopeKeys = nextKeys;
+    } catch (error) {
+        if (requestId !== visibleCropScopeRequestId) return;
+        console.error('[CarteraViva] crop scope load failed:', error?.message || error);
+        visibleCropScopeKeys = new Set();
+        visibleCropScopeError = String(error?.message || 'No se pudo filtrar la cartera por cultivo.');
+    } finally {
+        if (requestId !== visibleCropScopeRequestId) return;
+        visibleCropScopeLoading = false;
+        if (shouldRender) renderView();
+    }
+}
+
 async function loadSummary() {
     loading = true;
     lastErrorMessage = '';
@@ -852,10 +946,15 @@ async function loadSummary() {
 
     try {
         summaryRows = await fetchBuyerPortfolioSummary(supabase);
+        await syncVisibleCropScope({ render: false });
     } catch (error) {
         console.error('[CarteraViva] summary load failed:', error?.message || error);
         lastErrorMessage = String(error?.message || 'Error leyendo la cartera de compradores.');
         summaryRows = [];
+        visibleCropScopeKeys = null;
+        visibleCropScopeId = null;
+        visibleCropScopeLoading = false;
+        visibleCropScopeError = '';
     } finally {
         loading = false;
         renderView();
@@ -872,7 +971,9 @@ async function loadBuyerDetail(buyerId) {
 
     try {
         const buyerRow = getSelectedBuyerRow();
-        detailRows = await fetchBuyerHistoryTimeline(supabase, buyerRow);
+        detailRows = await fetchBuyerHistoryTimeline(supabase, buyerRow, {
+            cropId: getSelectedCropId()
+        });
     } catch (error) {
         console.error('[CarteraViva] buyer detail load failed:', error?.message || error);
         detailErrorMessage = String(error?.message || 'Error leyendo el historial contextual del comprador.');
@@ -997,8 +1098,13 @@ function handleShellViewChanged(event) {
     renderView();
 }
 
-function handleCropContextUpdated() {
+async function handleCropContextUpdated() {
     if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() !== CARTERA_VIVA_VIEW) return;
+    await syncVisibleCropScope();
+    if (selectedBuyerId) {
+        loadBuyerDetail(selectedBuyerId);
+        return;
+    }
     renderView();
 }
 
