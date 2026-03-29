@@ -8,6 +8,16 @@
   gap: 1rem;
 }
 
+.agro-operational-shell__heading {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.agro-operational-shell__heading > .module-title-group {
+  min-width: 0;
+}
+
 body.agro-operational-modal-open {
   overflow: hidden;
 }

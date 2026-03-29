@@ -1002,6 +1002,28 @@ function renderEquivalentItem(label, value) {
     `;
 }
 
+function renderCommercialFamilyNav(activeView = 'cartera-viva') {
+    return `
+        <div class="agro-commercial-family" aria-label="Historial comercial">
+            <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
+                <button
+                    type="button"
+                    class="agro-commercial-family__tab${activeView === 'cartera-viva' ? ' is-active' : ''}"
+                    data-agro-view="cartera-viva">
+                    Cartera Viva
+                </button>
+                <button
+                    type="button"
+                    class="agro-commercial-family__tab${activeView === 'operational' ? ' is-active' : ''}"
+                    data-agro-view="operational">
+                    Ciclos Operativos
+                </button>
+            </div>
+            <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>
+        </div>
+    `;
+}
+
 function renderBuyerSummary(buyerRow, options = {}) {
     const buyerStatus = resolveBuyerStatus(buyerRow);
     const progress = buildProgressBreakdown(buyerRow);
@@ -1195,6 +1217,7 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.innerHTML = `
         <section class="cartera-viva-view cartera-viva-view--detail" aria-label="Historial contextual por comprador">
+            ${renderCommercialFamilyNav('cartera-viva')}
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 <div class="cartera-viva-detail__toolbar-actions">

@@ -23,9 +23,17 @@ const CORE_OPERATIONS_TABS = new Set([
 
 const VIEW_ALIASES = Object.freeze({
     cultivos: Object.freeze({ view: 'ciclos', subview: 'activos' }),
+    'historial-comercial': Object.freeze({ view: 'cartera-viva', subview: '' }),
     'operational-active': Object.freeze({ view: 'operational', subview: 'active' }),
     'operational-finished': Object.freeze({ view: 'operational', subview: 'finished' }),
     'operational-export': Object.freeze({ view: 'operational', subview: 'export' })
+});
+
+const NAV_PARENT_GROUPS = Object.freeze({
+    'historial-comercial': Object.freeze({
+        views: Object.freeze(['cartera-viva', 'operational']),
+        defaultView: 'cartera-viva'
+    })
 });
 
 const VIEW_SUBNAV_CONFIG = Object.freeze({
@@ -89,6 +97,19 @@ function normalizeSubview(view, subview) {
     if (!config) return '';
     const token = normalizeViewToken(subview);
     return config.allowed.includes(token) ? token : config.defaultSubview;
+}
+
+function resolveNavParentForView(view) {
+    const matchedGroup = Object.entries(NAV_PARENT_GROUPS).find(([, config]) => config.views.includes(view));
+    if (matchedGroup) return matchedGroup[0];
+    return VIEWS_WITH_SUBNAV.has(view) ? view : null;
+}
+
+function isViewWithinNavParent(view, navParent) {
+    const token = normalizeViewToken(navParent);
+    const groupConfig = NAV_PARENT_GROUPS[token];
+    if (groupConfig) return groupConfig.views.includes(view);
+    return token === view;
 }
 
 function readStoredViewToken() {
@@ -279,7 +300,7 @@ export function initAgroShell() {
     let activeSubview = normalizeSubview(activeView, resolveViewAlias(storedViewToken)?.subview);
     let sidebarOpen = false;
     let ignoreToggleHitClose = false;
-    let expandedNavParent = VIEWS_WITH_SUBNAV.has(activeView) ? activeView : null;
+    let expandedNavParent = resolveNavParentForView(activeView);
 
     const topLevelRegions = Array.from(document.querySelectorAll('[data-agro-shell-region]'));
     const isPointerInsideToggle = (event) => {
@@ -312,30 +333,29 @@ export function initAgroShell() {
         sidebar.removeAttribute('inert');
         backdrop.hidden = false;
         backdrop.setAttribute('aria-hidden', 'false');
-        if (VIEWS_WITH_SUBNAV.has(activeView)) {
-            expandedNavParent = activeView;
-        }
+        expandedNavParent = resolveNavParentForView(activeView);
         syncSubnav();
     };
 
     const syncSubnav = () => {
         document.querySelectorAll('.agro-shell-subnav').forEach((nav) => {
             const parent = nav.closest('[data-agro-nav-parent]');
-            const parentView = parent?.dataset?.agroNavParent || '';
+            const parentView = normalizeViewToken(parent?.dataset?.agroNavParent || '');
             const isVisible = parentView === expandedNavParent;
             nav.style.display = isVisible ? 'flex' : 'none';
         });
 
         document.querySelectorAll('.agro-shell-sublink').forEach((btn) => {
             const btnView = normalizeView(btn.dataset.agroView);
-            const btnSub = btn.dataset.agroSubview || 'historial';
-            const isActive = btnView === activeView && btnSub === activeSubview;
+            const hasSubview = String(btn.dataset.agroSubview || '').trim().length > 0;
+            const btnSub = hasSubview ? normalizeSubview(btnView, btn.dataset.agroSubview) : '';
+            const isActive = btnView === activeView && (!hasSubview || btnSub === activeSubview);
             btn.classList.toggle('is-active', isActive);
         });
 
         document.querySelectorAll('[data-agro-nav-toggle]').forEach((btn) => {
-            const toggleView = normalizeView(btn.dataset.agroNavToggle);
-            const isActive = toggleView === activeView;
+            const toggleView = normalizeViewToken(btn.dataset.agroNavToggle);
+            const isActive = isViewWithinNavParent(activeView, toggleView);
             const isExpanded = expandedNavParent === toggleView;
             btn.classList.toggle('is-active', isActive);
             btn.classList.toggle('is-expanded', isExpanded);
@@ -446,7 +466,7 @@ export function initAgroShell() {
         const config = VIEW_CONFIG[view] || VIEW_CONFIG[AGRO_DEFAULT_VIEW];
         activeView = view;
         activeSubview = normalizeSubview(view, options.subview || aliasSubview);
-        expandedNavParent = VIEWS_WITH_SUBNAV.has(view) ? view : expandedNavParent;
+        expandedNavParent = resolveNavParentForView(view) || expandedNavParent;
         writeStoredView(view);
         syncRegions(config.region);
         syncViewButtons();
@@ -500,7 +520,7 @@ export function initAgroShell() {
 
         const navToggle = event.target.closest('[data-agro-nav-toggle]');
         if (navToggle) {
-            const toggleTarget = normalizeView(navToggle.dataset.agroNavToggle);
+            const toggleTarget = normalizeViewToken(navToggle.dataset.agroNavToggle);
             expandedNavParent = expandedNavParent === toggleTarget ? null : toggleTarget;
             syncSubnav();
             return;

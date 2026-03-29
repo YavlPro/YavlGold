@@ -784,6 +784,28 @@ function renderToolbarControls() {
     `;
 }
 
+function renderCommercialFamilyNav(activeView = CARTERA_VIVA_VIEW) {
+    return `
+        <div class="agro-commercial-family" aria-label="Historial comercial">
+            <div class="agro-commercial-family__tabs" role="group" aria-label="Familia comercial">
+                <button
+                    type="button"
+                    class="agro-commercial-family__tab${activeView === 'cartera-viva' ? ' is-active' : ''}"
+                    data-agro-view="cartera-viva">
+                    Cartera Viva
+                </button>
+                <button
+                    type="button"
+                    class="agro-commercial-family__tab${activeView === 'operational' ? ' is-active' : ''}"
+                    data-agro-view="operational">
+                    Ciclos Operativos
+                </button>
+            </div>
+            <p class="agro-commercial-family__note">Legacy disponible temporalmente. Usa la nueva Cartera Viva.</p>
+        </div>
+    `;
+}
+
 function renderScopeNote() {
     const selectedCropId = getSelectedCropId();
     if (selectedCropId) {
@@ -966,6 +988,7 @@ function renderListView(root) {
     root.innerHTML = `
         <section class="cartera-viva-view" aria-label="Cartera de compradores">
             <header class="cartera-viva-view__header">
+                ${renderCommercialFamilyNav('cartera-viva')}
                 <div class="cartera-viva-view__headline">
                     <div class="cartera-viva-view__copy">
                         <p class="cartera-viva-view__eyebrow">Cartera Viva</p>

@@ -5848,3 +5848,79 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 - El historial legacy todavía no se elimina.
 - La vinculación real movimiento ↔ ciclo sigue fuera de esta ronda y queda para el siguiente lote.
+
+## Sesión: Historial comercial + aviso legacy + progreso vivo (2026-03-29)
+
+### Diagnóstico
+
+- El sidebar todavía muestra `Cartera Viva` y `Ciclos Operativos` como entradas separadas, lo que empieza a saturar la navegación.
+- Ambas piezas ya pertenecen a la misma familia comercial, pero hoy no comparten un paraguas visual claro.
+- El legacy todavía debe convivir, pero no hay una nota de transición madura que oriente hacia Cartera Viva.
+- Las barras de progreso de Cartera Viva siguen estáticas; les falta una respiración sutil alineada a la sensación de ciclos de cultivo.
+
+### Plan
+
+1. Agrupar `Cartera Viva` y `Ciclos Operativos` bajo un nuevo bloque padre llamado `Historial comercial`.
+2. Mantener ambos módulos separados operativamente con subnavegación compacta, sin fusionar sus datos.
+3. Añadir una nota breve y sobria de transición del legacy.
+4. Darle al progreso de Cartera Viva un movimiento silencioso y premium, respetando `prefers-reduced-motion`.
+
+### Alcance
+
+- Esta ronda agrupa visualmente bajo `Historial comercial`.
+- El legacy no se elimina aún.
+- Cartera Viva y Ciclos Operativos conviven, pero no se mezclan.
+- Las animaciones deben ser sutiles y alineadas al ADN V10.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-shell.js`
+  - se agregó la familia de navegación `historial-comercial` como padre visual de `cartera-viva` y `operational`;
+  - el shell ahora reconoce grupos de navegación donde un padre puede representar varias vistas hijas sin mezclar regiones ni datos.
+- `apps/gold/agro/index.html`
+  - el sidebar reemplaza la entrada suelta de `Cartera Viva` y la familia directa de `Ciclos Operativos` por un solo bloque: `Historial comercial`;
+  - dentro del subnav conviven:
+    - `Cartera Viva`
+    - `Ciclos Operativos`
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - se añadió una subnav compacta de familia comercial dentro de la vista;
+  - se añadió nota sobria de transición: el legacy sigue disponible temporalmente y la dirección nueva es Cartera Viva.
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - la misma familia comercial y la nota de transición también quedan visibles en el detalle buyer-centric.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - el módulo ahora abre con la misma subnav compacta de `Historial comercial`, manteniendo separación semántica con Cartera Viva.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - estilos de la subnav compacta compartida;
+  - barras/progresos de Cartera Viva con shimmer y desplazamiento leve, silencioso y premium.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - ajuste mínimo del heading para convivir con la nueva subnav sin inflar el header.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA corto ejecutado
+
+- Se levantó preview local con `pnpm -C apps/gold preview -- --host localhost --port 4173`.
+- Se abrió `/agro/` y el sistema redirigió al flujo real de login.
+- Se cargaron credenciales QA locales y se ejecutó submit real.
+- El flujo volvió a quedar detenido en `Validando...` por hCaptcha invisible sobre `localhost`, así que no fue posible entrar para validar autenticadamente:
+  - sidebar dentro de sesión
+  - cambio entre `Cartera Viva` y `Ciclos Operativos`
+  - aviso legacy dentro del módulo
+  - progreso vivo en contexto autenticado
+- Browser cerrado, preview local detenido y carpeta temporal de Playwright eliminada:
+  - `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1774826027491`
+
+### Nota operativa
+
+- El historial legacy sigue disponible y no se elimina en esta ronda.
+- `Historial comercial` agrupa mejor la navegación, pero Cartera Viva y Ciclos Operativos siguen separados en semántica y operación.

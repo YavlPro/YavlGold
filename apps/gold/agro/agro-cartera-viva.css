@@ -11,6 +11,57 @@
   gap: 1rem;
 }
 
+.agro-commercial-family {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.5rem 0.58rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-0);
+}
+
+.agro-commercial-family__tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.agro-commercial-family__tab {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.9rem;
+  padding: 0.26rem 0.62rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.agro-commercial-family__tab:hover,
+.agro-commercial-family__tab:focus-visible {
+  border-color: rgba(200, 167, 82, 0.24);
+  color: var(--text-primary);
+}
+
+.agro-commercial-family__tab.is-active {
+  color: var(--gold-4);
+  border-color: rgba(200, 167, 82, 0.28);
+  background: rgba(200, 167, 82, 0.1);
+}
+
+.agro-commercial-family__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
 .cartera-viva-view__header,
 .cartera-viva-detail__summary,
 .cartera-viva-detail__body {
@@ -330,15 +381,31 @@
 .cartera-viva-progress__track {
   display: flex;
   overflow: hidden;
+  position: relative;
+  isolation: isolate;
   min-height: 0.45rem;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.06);
+}
+
+.cartera-viva-hero__signal-track::after,
+.cartera-viva-progress__track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.16) 48%, transparent 100%);
+  transform: translateX(-130%);
+  opacity: 0;
+  pointer-events: none;
+  animation: carteraVivaTrackSheen 7.2s ease-in-out infinite;
 }
 
 .cartera-viva-hero__signal-segment,
 .cartera-viva-progress__segment {
   display: block;
   height: 100%;
+  background-size: 160% 100%;
+  animation: carteraVivaProgressFlow 8s ease-in-out infinite;
 }
 
 .cartera-viva-hero__signal-segment.is-paid,
@@ -1101,6 +1168,35 @@
   }
 }
 
+@keyframes carteraVivaProgressFlow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes carteraVivaTrackSheen {
+  0%,
+  28% {
+    transform: translateX(-130%);
+    opacity: 0;
+  }
+
+  42% {
+    opacity: 0.14;
+  }
+
+  68%,
+  100% {
+    transform: translateX(130%);
+    opacity: 0;
+  }
+}
+
 @media (min-width: 900px) {
   .cartera-viva-view__headline,
   .cartera-viva-summary-strip {
@@ -1190,11 +1286,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .agro-commercial-family__tab,
   .cartera-viva-refresh,
   .cartera-viva-empty__action,
   .cartera-viva-back,
   .cartera-viva-detail-link,
   .cartera-viva-category,
+  .cartera-viva-hero__signal-track::after,
+  .cartera-viva-progress__track::after,
+  .cartera-viva-hero__signal-segment,
+  .cartera-viva-progress__segment,
   .cartera-viva-loading-dot {
     transition: none;
     animation: none;
