@@ -5656,3 +5656,46 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 - No fue posible validar el detalle autenticado en browser dentro de esta ronda.
 - El bloqueo conocido sigue siendo hCaptcha en el login del preview local, por lo que no se puede entrar de forma limpia al detalle del comprador para smoke manual automatizado.
 - La validación funcional completa de resumen multimoneda, selector de par y micrográfica queda pendiente para QA humano autenticado.
+
+## Sesión: Extensión del ADN Visual V10.0 con §15–§18 (2026-03-28)
+
+### Diagnóstico
+
+- El documento canónico del DNA existe en `apps/gold/docs/ADN-VISUAL-V10.0.md` y hoy cubre §0–§14.
+- La guía tiene checklist rápido en §13, pero todavía no cubre spacing system, iconografía, estados de componentes ni accesibilidad de forma formal.
+- Existe un archivo de tokens en `apps/gold/assets/css/tokens.css` donde conviene reflejar los nuevos tokens sin alterar los ya existentes.
+
+### Plan
+
+1. Reemplazar §13 con la versión extendida.
+2. Insertar §15, §16, §17 y §18 después de §14, manteniendo formato y secciones previas intactas.
+3. Extender `apps/gold/assets/css/tokens.css` con los nuevos tokens agrupados por sección.
+4. Actualizar referencias visibles del documento para que cubra §0–§18.
+
+### Cambios aplicados
+
+- `apps/gold/docs/ADN-VISUAL-V10.0.md`
+  - §13 reemplazado por el checklist rápido completo solicitado.
+  - §15, §16, §17 y §18 agregados después de §14 con tablas, ejemplos y anti-patrones.
+  - referencias visibles del documento ajustadas para reflejar cobertura `§0-§18`.
+- `apps/gold/assets/css/tokens.css`
+  - nuevos tokens de spacing, iconografía, estados y accesibilidad agregados al `:root`.
+  - tokens agrupados con comentarios por sección para mantener trazabilidad con el DNA.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA sugerido
+
+- Validar lectura del documento `ADN-VISUAL-V10.0.md` para confirmar continuidad visual entre §14 y §15.
+- Revisar `apps/gold/assets/css/tokens.css` para verificar que los nuevos tokens conviven sin alterar el sistema legacy.
+- No se requirió QA de browser en esta sesión porque el alcance fue documental y de tokens.
