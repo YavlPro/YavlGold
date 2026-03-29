@@ -30,6 +30,7 @@ const PENDING_HISTORY_COLUMNS = [
     'buyer_group_key',
     'buyer_match_status',
     'crop_id',
+    'evidence_url',
     'deleted_at',
     'reverted_at'
 ].join(',');
@@ -51,6 +52,7 @@ const INCOME_HISTORY_COLUMNS = [
     'buyer_group_key',
     'buyer_match_status',
     'crop_id',
+    'soporte_url',
     'deleted_at',
     'reverted_at'
 ].join(',');
@@ -72,6 +74,7 @@ const LOSS_HISTORY_COLUMNS = [
     'buyer_group_key',
     'buyer_match_status',
     'crop_id',
+    'evidence_url',
     'deleted_at',
     'reverted_at'
 ].join(',');
@@ -365,12 +368,17 @@ function buildPendingHistoryRow(row) {
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
     const isTransferred = transferState === 'transferred';
+    const isReverted = transferState === 'reverted' || Boolean(row?.reverted_at);
 
     let label = 'Fiado';
     let note = 'Saldo abierto dentro de la cartera del comprador.';
     let tone = 'pending';
 
-    if (transferState === 'transferred' && transferredTo === 'income') {
+    if (isReverted) {
+        label = 'Revertido';
+        note = 'Este fiado volvió a quedar activo después de una transferencia.';
+        tone = 'review';
+    } else if (transferState === 'transferred' && transferredTo === 'income') {
         label = 'Fiado cerrado';
         note = 'Este saldo ya terminó como cobro.';
         tone = 'paid';
@@ -415,7 +423,10 @@ function buildPendingHistoryRow(row) {
         reverted_at: row?.reverted_at || '',
         origin_table: '',
         origin_id: '',
-        is_transfer_related: isTransferred
+        is_transfer_related: isTransferred,
+        support_url_raw: String(row?.evidence_url || row?.soporte_url || '').trim(),
+        support_url_resolved: '',
+        support_label: 'Ver soporte'
     };
 }
 
@@ -423,14 +434,15 @@ function buildIncomeHistoryRow(row) {
     const amount = normalizeMoney(readHistoryItemField(row, ['monto_usd', 'monto']));
     const fromPending = String(row?.origin_table || '').trim().toLowerCase() === 'agro_pending';
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
+    const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
 
     return {
         history_id: `agro_income:${row?.id || ''}`,
         source_table: 'agro_income',
         source_tab: 'ingresos',
         source_id: String(row?.id || '').trim(),
-        title: fromPending ? 'Cobro registrado' : 'Ingreso aparte',
-        label: fromPending ? 'Pago' : 'Ingreso aparte',
+        title: isReverted ? 'Cobro revertido' : (fromPending ? 'Cobro registrado' : 'Ingreso aparte'),
+        label: isReverted ? 'Revertido' : (fromPending ? 'Pago' : 'Ingreso aparte'),
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -438,12 +450,14 @@ function buildIncomeHistoryRow(row) {
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: String(row?.categoria || '').trim(),
-        note: isReview
+        note: isReverted
+            ? 'Este cobro fue devuelto a Fiados.'
+            : isReview
             ? 'Este ingreso aún está pendiente por revisar.'
             : (fromPending
                 ? 'Entrada confirmada como cobro del saldo.'
                 : 'Entrada relacionada con el comprador, pero separada de la cartera.'),
-        tone: isReview ? 'review' : (fromPending ? 'paid' : 'neutral'),
+        tone: isReverted ? 'review' : (isReview ? 'review' : (fromPending ? 'paid' : 'neutral')),
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
         unit_type: String(row?.unit_type || '').trim().toLowerCase(),
@@ -453,7 +467,10 @@ function buildIncomeHistoryRow(row) {
         reverted_at: row?.reverted_at || '',
         origin_table: String(row?.origin_table || '').trim().toLowerCase(),
         origin_id: String(row?.origin_id || '').trim(),
-        is_transfer_related: fromPending
+        is_transfer_related: fromPending && !isReverted,
+        support_url_raw: String(row?.soporte_url || row?.evidence_url || '').trim(),
+        support_url_resolved: '',
+        support_label: 'Ver soporte'
     };
 }
 
@@ -462,14 +479,15 @@ function buildLossHistoryRow(row) {
     const fromPending = String(row?.origin_table || '').trim().toLowerCase() === 'agro_pending';
     const matchStatus = String(row?.buyer_match_status || '').trim().toLowerCase();
     const isReview = matchStatus !== 'matched';
+    const isReverted = String(row?.transfer_state || '').trim().toLowerCase() === 'reverted' || Boolean(row?.reverted_at);
 
     return {
         history_id: `agro_losses:${row?.id || ''}`,
         source_table: 'agro_losses',
         source_tab: 'perdidas',
         source_id: String(row?.id || '').trim(),
-        title: fromPending ? 'Pérdida registrada' : 'Pérdida por revisar',
-        label: fromPending ? 'Pérdida' : 'Por revisar',
+        title: isReverted ? 'Pérdida revertida' : (fromPending ? 'Pérdida registrada' : 'Pérdida por revisar'),
+        label: isReverted ? 'Revertido' : (fromPending ? 'Pérdida' : 'Por revisar'),
         amount,
         currency: normalizeDetailCurrency(row?.currency),
         exchange_rate: Number(row?.exchange_rate) || null,
@@ -477,12 +495,14 @@ function buildLossHistoryRow(row) {
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
         meta: String(row?.causa || '').trim(),
-        note: isReview
+        note: isReverted
+            ? 'Esta pérdida fue devuelta a Fiados.'
+            : isReview
             ? (matchStatus === 'legacy_unclassified'
                 ? 'Hay un registro antiguo que todavía necesita ordenarse.'
                 : 'Esta pérdida aún necesita confirmación final.')
             : 'Salida cerrada de la cartera.',
-        tone: isReview ? 'review' : 'loss',
+        tone: isReverted ? 'review' : (isReview ? 'review' : 'loss'),
         is_review: isReview,
         crop_id: String(row?.crop_id || '').trim(),
         unit_type: String(row?.unit_type || '').trim().toLowerCase(),
@@ -492,7 +512,10 @@ function buildLossHistoryRow(row) {
         reverted_at: row?.reverted_at || '',
         origin_table: String(row?.origin_table || '').trim().toLowerCase(),
         origin_id: String(row?.origin_id || '').trim(),
-        is_transfer_related: fromPending
+        is_transfer_related: fromPending && !isReverted,
+        support_url_raw: String(row?.evidence_url || row?.soporte_url || '').trim(),
+        support_url_resolved: '',
+        support_label: 'Ver soporte'
     };
 }
 
@@ -500,6 +523,42 @@ function compareHistoryRows(a, b) {
     const aDate = Date.parse(a?.fecha || a?.created_at || '') || 0;
     const bDate = Date.parse(b?.fecha || b?.created_at || '') || 0;
     return bDate - aDate;
+}
+
+function isAbsoluteSupportUrl(value) {
+    return /^(https?:)?\/\//i.test(String(value || '').trim());
+}
+
+async function resolveHistorySupportUrl(rawValue) {
+    const safeValue = String(rawValue || '').trim();
+    if (!safeValue) return '';
+    if (isAbsoluteSupportUrl(safeValue)) return safeValue;
+
+    const bridge = typeof window !== 'undefined' ? window._agroFactureroBridge : null;
+    if (typeof bridge?.resolveEvidenceUrl === 'function') {
+        try {
+            const resolved = await bridge.resolveEvidenceUrl(safeValue);
+            return String(resolved || '').trim();
+        } catch (error) {
+            console.warn('[CarteraViva] support url resolve failed:', error?.message || error);
+        }
+    }
+
+    return '';
+}
+
+async function hydrateHistorySupportUrls(rows) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    return Promise.all(safeRows.map(async (row) => {
+        const rawValue = String(row?.support_url_raw || '').trim();
+        if (!rawValue) return row;
+
+        const resolvedUrl = await resolveHistorySupportUrl(rawValue);
+        return {
+            ...row,
+            support_url_resolved: resolvedUrl
+        };
+    }));
 }
 
 export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, options = {}) {
@@ -511,16 +570,18 @@ export async function fetchBuyerHistoryTimeline(supabaseClient, buyerRow, option
         : [];
 
     const [pendingRows, incomeRows, lossRows] = await Promise.all([
-        fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters }),
-        fetchBuyerScopedRows(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, buyerScope, { extraFilters }),
-        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters })
+        fetchBuyerScopedRows(supabaseClient, 'agro_pending', PENDING_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
+        fetchBuyerScopedRows(supabaseClient, 'agro_income', INCOME_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false }),
+        fetchBuyerScopedRows(supabaseClient, 'agro_losses', LOSS_HISTORY_COLUMNS, buyerScope, { extraFilters, excludeReverted: false })
     ]);
 
-    return [
+    const timelineRows = [
         ...pendingRows.map(buildPendingHistoryRow),
         ...incomeRows.map(buildIncomeHistoryRow),
         ...lossRows.map(buildLossHistoryRow)
     ].sort(compareHistoryRows);
+
+    return hydrateHistorySupportUrls(timelineRows);
 }
 
 function renderEmptyState(config = {}) {
@@ -546,13 +607,15 @@ function renderDetailInsight(label, value) {
 }
 
 function normalizeHistoryFilter(value) {
-    return String(value || '').trim().toLowerCase() === 'transferidos'
-        ? 'transferidos'
-        : 'todos';
+    const token = String(value || '').trim().toLowerCase();
+    if (token === 'transferidos') return 'transferidos';
+    if (token === 'revertidos') return 'revertidos';
+    return 'todos';
 }
 
 function isTransferRelatedHistoryRow(row) {
     if (!row || typeof row !== 'object') return false;
+    if (isRevertedHistoryRow(row)) return false;
     if (row.is_transfer_related) return true;
 
     const sourceTable = String(row?.source_table || '').trim().toLowerCase();
@@ -564,40 +627,58 @@ function isTransferRelatedHistoryRow(row) {
     return false;
 }
 
+function isRevertedHistoryRow(row) {
+    if (!row || typeof row !== 'object') return false;
+    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
+    return transferState === 'reverted' || Boolean(row?.reverted_at);
+}
+
 function filterHistoryRows(rows, filterMode) {
     const safeRows = Array.isArray(rows) ? rows : [];
     const normalizedFilter = normalizeHistoryFilter(filterMode);
-    if (normalizedFilter !== 'transferidos') return safeRows;
-    return safeRows.filter((row) => isTransferRelatedHistoryRow(row));
+    if (normalizedFilter === 'transferidos') {
+        return safeRows.filter((row) => isTransferRelatedHistoryRow(row));
+    }
+    if (normalizedFilter === 'revertidos') {
+        return safeRows.filter((row) => isRevertedHistoryRow(row));
+    }
+    return safeRows;
 }
 
 function getHistoryFilterCount(rows, filterMode) {
     return filterHistoryRows(rows, filterMode).length;
 }
 
+export function getVisibleBuyerHistoryRows(rows, filterMode) {
+    return filterHistoryRows(rows, filterMode);
+}
+
 function renderHistoryFilters(historyRows, activeFilter) {
     const transferCount = getHistoryFilterCount(historyRows, 'transferidos');
-    if (transferCount <= 0) return '';
+    const revertedCount = getHistoryFilterCount(historyRows, 'revertidos');
+    if (transferCount <= 0 && revertedCount <= 0) return '';
 
     const normalizedFilter = normalizeHistoryFilter(activeFilter);
     const allCount = getHistoryFilterCount(historyRows, 'todos');
+    const filters = [
+        { id: 'todos', label: `Todo (${allCount})`, visible: true },
+        { id: 'transferidos', label: `Ver transferidos (${transferCount})`, visible: transferCount > 0 },
+        { id: 'revertidos', label: `Ver revertidos (${revertedCount})`, visible: revertedCount > 0 }
+    ];
 
     return `
         <div class="cartera-viva-detail__filters" role="group" aria-label="Filtrar historial">
-            <button
-                type="button"
-                class="cartera-viva-detail__filter${normalizedFilter === 'todos' ? ' is-active' : ''}"
-                data-cartera-detail-history-filter="todos"
-                aria-pressed="${normalizedFilter === 'todos' ? 'true' : 'false'}">
-                Todo (${allCount})
-            </button>
-            <button
-                type="button"
-                class="cartera-viva-detail__filter${normalizedFilter === 'transferidos' ? ' is-active' : ''}"
-                data-cartera-detail-history-filter="transferidos"
-                aria-pressed="${normalizedFilter === 'transferidos' ? 'true' : 'false'}">
-                Ver transferidos (${transferCount})
-            </button>
+            ${filters
+                .filter((filter) => filter.visible)
+                .map((filter) => `
+                    <button
+                        type="button"
+                        class="cartera-viva-detail__filter${normalizedFilter === filter.id ? ' is-active' : ''}"
+                        data-cartera-detail-history-filter="${filter.id}"
+                        aria-pressed="${normalizedFilter === filter.id ? 'true' : 'false'}">
+                        ${filter.label}
+                    </button>
+                `).join('')}
         </div>
     `;
 }
@@ -647,6 +728,13 @@ function resolveHistoryMenuActions(row, options = {}) {
             sourceId
         },
         {
+            className: 'btn-duplicate-facturero',
+            label: 'Duplicar a otro cultivo',
+            iconClass: 'fa fa-copy',
+            sourceTab,
+            sourceId
+        },
+        {
             className: 'btn-delete-facturero',
             label: 'Eliminar',
             iconClass: 'fa fa-trash',
@@ -654,6 +742,24 @@ function resolveHistoryMenuActions(row, options = {}) {
             sourceId
         }
     );
+
+    if (!cropId) {
+        actions.push({
+            className: 'btn-move-general',
+            label: 'Asignar cultivo',
+            iconClass: 'fa fa-seedling',
+            sourceTab,
+            sourceId
+        });
+    } else {
+        actions.push({
+            className: 'btn-edit-facturero',
+            label: 'Reasignar cultivo',
+            iconClass: 'fa fa-seedling',
+            sourceTab,
+            sourceId
+        });
+    }
 
     if (sourceTab === 'pendientes' && transferState !== 'transferred') {
         actions.push({
@@ -731,6 +837,24 @@ function renderHistoryActionMenu(row, options = {}) {
                 ${actions.map((action) => renderHistoryActionButton(action)).join('')}
             </div>
         </details>
+    `;
+}
+
+function renderHistorySupportLink(row) {
+    const supportUrl = String(row?.support_url_resolved || '').trim();
+    const label = String(row?.support_label || 'Ver soporte').trim();
+    if (!supportUrl) return '';
+
+    return `
+        <a
+            href="${escapeAttribute(supportUrl)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="cartera-viva-history-item__support"
+            title="${escapeAttribute(label)}">
+            <i class="fa fa-cloud" aria-hidden="true"></i>
+            <span>${escapeHtml(label)}</span>
+        </a>
     `;
 }
 
@@ -972,6 +1096,7 @@ function createTimelineRowElement(row, options = {}) {
     const meta = row?.meta ? `<p class="cartera-viva-history-item__meta">${escapeHtml(row.meta)}</p>` : '';
     const concept = row?.concept ? `<p class="cartera-viva-history-item__concept">${escapeHtml(row.concept)}</p>` : '';
     const note = row?.note ? `<p class="cartera-viva-history-item__note">${escapeHtml(row.note)}</p>` : '';
+    const supportLink = renderHistorySupportLink(row);
 
     article.innerHTML = `
         <div class="cartera-viva-history-item__main">
@@ -983,6 +1108,7 @@ function createTimelineRowElement(row, options = {}) {
                 ${meta}
                 ${concept}
                 ${note}
+                ${supportLink}
             </div>
             <div class="cartera-viva-history-item__side">
                 <strong class="cartera-viva-history-item__amount">${amountValue}</strong>
@@ -1013,6 +1139,12 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         ? options.exchangeStatus
         : {};
     const visibleHistoryRows = filterHistoryRows(historyRows, historyFilter);
+    const filterEmptyTitle = historyFilter === 'revertidos'
+        ? 'Sin revertidos visibles'
+        : 'Sin transferidos visibles';
+    const filterEmptyCopy = historyFilter === 'revertidos'
+        ? 'Este comprador no tiene movimientos revertidos dentro del filtro activo.'
+        : 'Este comprador no tiene movimientos transferidos dentro del filtro activo.';
 
     if (!buyerRow) {
         root.innerHTML = `
@@ -1054,8 +1186,8 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         });
     } else if (visibleHistoryRows.length <= 0) {
         bodyContent = renderEmptyState({
-            title: 'Sin transferidos visibles',
-            copy: 'Este comprador no tiene movimientos transferidos dentro del filtro activo.'
+            title: filterEmptyTitle,
+            copy: filterEmptyCopy
         });
     } else {
         bodyContent = '<div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>';

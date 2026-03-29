@@ -6085,6 +6085,11 @@ window._agroTrash = {
     notifyFacturero
 };
 
+window._agroFactureroBridge = Object.assign(window._agroFactureroBridge || {}, {
+    resolveEvidenceUrl,
+    getFactureroEvidenceValue
+});
+
 async function editFactureroItem(tabName, itemId) {
     const config = FACTURERO_CONFIG[tabName];
     if (!config) return;

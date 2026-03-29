@@ -117,6 +117,9 @@ function buildHistoryLines(rows) {
             if (row?.note) {
                 lines.push(`  - Nota: ${row.note}`);
             }
+            if (row?.support_url_resolved) {
+                lines.push(`  - Soporte: [Abrir](${row.support_url_resolved})`);
+            }
         });
 
         lines.push('');

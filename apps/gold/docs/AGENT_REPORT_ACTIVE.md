@@ -5774,3 +5774,77 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 - El historial viejo legacy no se elimina aún en esta ronda.
 - Esta sesión lleva a Cartera Viva un nivel importante de paridad operativa reutilizando lógica real del facturero.
 - El retiro del legacy solo debe evaluarse cuando esta paridad quede validada con QA autenticada real.
+
+## Sesión: Paridad operativa adicional antes de ciclos (2026-03-29)
+
+### Diagnóstico
+
+- `Duplicar a otro cultivo` ya existe en legacy mediante `duplicateFactureroItem()`.
+- `move-general` ya existe en legacy mediante `handleMoveGeneralRecord()`, pero solo cubre registros sin cultivo asignado.
+- La reasignación de un registro que ya tiene cultivo hoy vive en el modal de edición legacy, porque ese flujo ya monta `edit-crop-id`.
+- Cartera Viva solo filtra `Todo / Transferidos`; todavía no expone `Revertidos`.
+- El detalle buyer-centric todavía no trae ni renderiza `evidence_url` / `soporte_url`.
+
+### Plan
+
+1. Llevar `Duplicar a otro cultivo` al menú contextual de Cartera Viva reutilizando el handler legacy.
+2. Exponer `Asignar cultivo` con `move-general` cuando el movimiento no tenga cultivo.
+3. Exponer `Reasignar cultivo` como acceso semántico al modal de edición existente cuando el movimiento sí tenga cultivo.
+4. Agregar filtro real de `Revertidos`.
+5. Traer y renderizar soportes/evidencias con wiring mínimo al resolver de legacy.
+
+### Alcance
+
+- Esta ronda busca paridad operativa adicional antes de tocar la vinculación real con ciclos.
+- Todavía no entra la relación movimiento ↔ ciclo.
+- El historial legacy todavía no se elimina.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - el menú contextual buyer-centric ahora agrega:
+    - `Duplicar a otro cultivo`
+    - `Asignar cultivo` para movimientos sin cultivo
+    - `Reasignar cultivo` para movimientos con cultivo, reutilizando el modal de edición ya existente
+  - se incorporó filtro `Revertidos` además de `Todo` y `Transferidos`.
+  - el detalle ahora consulta filas revertidas de forma real y no las excluye desde la query.
+  - se añadieron `evidence_url` / `soporte_url` a la lectura del timeline y se renderiza `Ver soporte` cuando existe URL resoluble.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - el estado local del detalle ya reconoce `revertidos`.
+  - la exportación buyer-centric ahora respeta el filtro visible del detalle.
+- `apps/gold/agro/agro-cartera-viva-export.js`
+  - la exportación contextual incluye enlace de soporte cuando el movimiento lo trae resuelto.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - estilo discreto para el acceso `Ver soporte`.
+- `apps/gold/agro/agro.js`
+  - puente mínimo `window._agroFactureroBridge` para reutilizar el resolvedor real de evidencias del legacy sin duplicarlo.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA corto ejecutado
+
+- Se levantó preview local con `pnpm -C apps/gold preview -- --host localhost --port 4173`.
+- Se abrió el flujo real de login y se intentó autenticación con la cuenta QA local.
+- El submit volvió a disparar el handler real del login y la ejecución de hCaptcha invisible.
+- El acceso quedó detenido en `Validando...` sobre `http://localhost:4173/index.html#login`.
+- No fue posible entrar para probar autenticadamente:
+  - `Duplicar a otro cultivo`
+  - `Asignar/Reasignar cultivo`
+  - `Revertidos`
+  - `Ver soporte`
+- Se cerró el browser, se detuvo el preview local y se eliminó la carpeta temporal de Playwright de la sesión.
+
+### Nota operativa
+
+- El historial legacy todavía no se elimina.
+- La vinculación real movimiento ↔ ciclo sigue fuera de esta ronda y queda para el siguiente lote.

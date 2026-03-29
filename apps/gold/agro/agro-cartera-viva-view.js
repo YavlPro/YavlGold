@@ -9,6 +9,7 @@ import {
 import { downloadBuyerPortfolioExport } from './agro-cartera-viva-export.js';
 import {
     fetchBuyerHistoryTimeline,
+    getVisibleBuyerHistoryRows,
     renderBuyerHistoryDetail
 } from './agro-cartera-viva-detail.js';
 
@@ -148,9 +149,10 @@ function normalizeSearchQuery(value) {
 }
 
 function normalizeDetailHistoryFilter(value) {
-    return String(value || '').trim().toLowerCase() === 'transferidos'
-        ? 'transferidos'
-        : 'todos';
+    const token = String(value || '').trim().toLowerCase();
+    if (token === 'transferidos') return 'transferidos';
+    if (token === 'revertidos') return 'revertidos';
+    return 'todos';
 }
 
 function getSearchToken(value) {
@@ -1161,9 +1163,10 @@ async function exportBuyerDetail() {
     renderView();
 
     try {
+        const visibleHistoryRows = getVisibleBuyerHistoryRows(detailRows, detailHistoryFilter);
         const fileName = downloadBuyerPortfolioExport({
             buyerRow,
-            historyRows: detailRows
+            historyRows: visibleHistoryRows
         });
         setDetailExportState(`Exportado: ${fileName}`, 'success');
     } catch (error) {

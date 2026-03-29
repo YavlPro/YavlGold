@@ -941,6 +941,22 @@
   text-align: right;
 }
 
+.cartera-viva-history-item__support {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  width: fit-content;
+  color: var(--gold-4);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 180ms ease, opacity 180ms ease;
+}
+
+.cartera-viva-history-item__support:hover {
+  color: var(--gold-5);
+}
+
 .cartera-viva-history-item__actions {
   position: relative;
 }
