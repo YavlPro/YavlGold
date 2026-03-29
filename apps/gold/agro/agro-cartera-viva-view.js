@@ -1,4 +1,5 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
+import { getExchangeStatus, initExchangeRates } from './agro-exchange.js';
 import {
     buildBuyerPortfolioScopeKey,
     fetchBuyerPortfolioCropScopeKeys,
@@ -51,6 +52,9 @@ let detailErrorMessage = '';
 let detailExportPending = false;
 let detailExportMessage = '';
 let detailExportTone = '';
+let detailSelectedPair = readStoredDetailPair();
+let detailExchangeRates = { USD: 1, COP: null, VES: null };
+let detailExchangeStatus = { source: 'unknown', warning: '', fetchedAt: null };
 let visibleCropScopeKeys = null;
 let visibleCropScopeId = null;
 let visibleCropScopeLoading = false;
@@ -89,6 +93,24 @@ function writeStoredSearch(value) {
             return;
         }
         localStorage.removeItem(CARTERA_VIVA_SEARCH_KEY);
+    } catch (_error) {
+        // Ignore storage failures.
+    }
+}
+
+function readStoredDetailPair() {
+    try {
+        const raw = String(localStorage.getItem('YG_AGRO_CARTERA_VIVA_PAIR_V1') || '').trim().toUpperCase();
+        return raw === 'USD/VES' ? raw : 'USD/COP';
+    } catch (_error) {
+        return 'USD/COP';
+    }
+}
+
+function writeStoredDetailPair(value) {
+    try {
+        const safeValue = String(value || '').trim().toUpperCase();
+        localStorage.setItem('YG_AGRO_CARTERA_VIVA_PAIR_V1', safeValue === 'USD/VES' ? safeValue : 'USD/COP');
     } catch (_error) {
         // Ignore storage failures.
     }
@@ -885,6 +907,9 @@ function renderView() {
             exportPending: detailExportPending,
             exportMessage: detailExportMessage,
             exportTone: detailExportTone,
+            selectedPair: detailSelectedPair,
+            exchangeRates: detailExchangeRates,
+            exchangeStatus: detailExchangeStatus,
             onBack: () => {
                 resetDetailState();
                 renderView();
@@ -895,6 +920,11 @@ function renderView() {
             },
             onExport: () => {
                 exportBuyerDetail();
+            },
+            onPairChange: (nextPair) => {
+                detailSelectedPair = String(nextPair || '').trim().toUpperCase() === 'USD/VES' ? 'USD/VES' : 'USD/COP';
+                writeStoredDetailPair(detailSelectedPair);
+                renderView();
             }
         });
         return;
@@ -971,9 +1001,17 @@ async function loadBuyerDetail(buyerId) {
 
     try {
         const buyerRow = getSelectedBuyerRow();
-        detailRows = await fetchBuyerHistoryTimeline(supabase, buyerRow, {
-            cropId: getSelectedCropId()
-        });
+        const [nextHistoryRows, nextExchangeRates] = await Promise.all([
+            fetchBuyerHistoryTimeline(supabase, buyerRow, {
+                cropId: getSelectedCropId()
+            }),
+            initExchangeRates().catch(() => null)
+        ]);
+        detailRows = nextHistoryRows;
+        if (nextExchangeRates && typeof nextExchangeRates === 'object') {
+            detailExchangeRates = nextExchangeRates;
+        }
+        detailExchangeStatus = getExchangeStatus();
     } catch (error) {
         console.error('[CarteraViva] buyer detail load failed:', error?.message || error);
         detailErrorMessage = String(error?.message || 'Error leyendo el historial contextual del comprador.');

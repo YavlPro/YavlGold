@@ -4,6 +4,12 @@ import {
     readHistoryItemField,
     renderHistoryDayGroups
 } from './agro-cartera-viva.js';
+import {
+    SUPPORTED_CURRENCIES,
+    convertFromUSD,
+    getRate,
+    hasOverride
+} from './agro-exchange.js';
 
 const PENDING_HISTORY_COLUMNS = [
     'id',
@@ -11,6 +17,8 @@ const PENDING_HISTORY_COLUMNS = [
     'cliente',
     'monto',
     'monto_usd',
+    'currency',
+    'exchange_rate',
     'fecha',
     'created_at',
     'unit_type',
@@ -32,6 +40,8 @@ const INCOME_HISTORY_COLUMNS = [
     'categoria',
     'monto',
     'monto_usd',
+    'currency',
+    'exchange_rate',
     'fecha',
     'created_at',
     'origin_table',
@@ -51,6 +61,8 @@ const LOSS_HISTORY_COLUMNS = [
     'causa',
     'monto',
     'monto_usd',
+    'currency',
+    'exchange_rate',
     'fecha',
     'created_at',
     'origin_table',
@@ -88,6 +100,87 @@ function formatPercent(value) {
     const nextValue = Number(value);
     if (!Number.isFinite(nextValue)) return 'Sin lectura';
     return `${nextValue.toFixed(0)}%`;
+}
+
+const DETAIL_PAIR_OPTIONS = Object.freeze([
+    Object.freeze({ id: 'USD/COP', currency: 'COP', label: 'USD/COP' }),
+    Object.freeze({ id: 'USD/VES', currency: 'VES', label: 'USD/Bs' })
+]);
+
+function normalizeDetailCurrency(value) {
+    const token = String(value || '').trim().toUpperCase();
+    if (token === 'BS') return 'VES';
+    return SUPPORTED_CURRENCIES[token] ? token : 'USD';
+}
+
+function normalizeDetailPair(value) {
+    const token = String(value || '').trim().toUpperCase();
+    return DETAIL_PAIR_OPTIONS.some((pair) => pair.id === token) ? token : DETAIL_PAIR_OPTIONS[0].id;
+}
+
+function formatMoneyByCurrency(value, currency = 'USD') {
+    const code = normalizeDetailCurrency(currency);
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) {
+        if (code === 'COP') return 'N/D COP';
+        if (code === 'VES') return 'N/D Bs';
+        return '$0.00';
+    }
+
+    if (code === 'USD') {
+        return new Intl.NumberFormat('es-VE', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+    }
+
+    if (code === 'COP') {
+        return `COP ${Math.round(amount).toLocaleString('es-CO')}`;
+    }
+
+    return `Bs ${amount.toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })}`;
+}
+
+function resolveDetailRateForCurrency(currency, exchangeRates) {
+    return getRate(normalizeDetailCurrency(currency), exchangeRates);
+}
+
+function buildConvertedAmount(usdAmount, currency, exchangeRates) {
+    const code = normalizeDetailCurrency(currency);
+    const rate = resolveDetailRateForCurrency(code, exchangeRates);
+    if (code === 'USD') {
+        return {
+            currency: 'USD',
+            rate: 1,
+            amount: Number(usdAmount) || 0,
+            display: formatMoneyByCurrency(usdAmount, 'USD'),
+            available: true
+        };
+    }
+
+    if (!Number.isFinite(Number(usdAmount)) || !Number.isFinite(Number(rate)) || Number(rate) <= 0) {
+        return {
+            currency: code,
+            rate: Number(rate) || null,
+            amount: Number.NaN,
+            display: code === 'COP' ? 'N/D COP' : 'N/D Bs',
+            available: false
+        };
+    }
+
+    const amount = convertFromUSD(Number(usdAmount), code, Number(rate));
+    return {
+        currency: code,
+        rate: Number(rate),
+        amount,
+        display: formatMoneyByCurrency(amount, code),
+        available: true
+    };
 }
 
 function normalizeMoney(value) {
@@ -302,6 +395,8 @@ function buildPendingHistoryRow(row) {
         title: String(row?.cliente || '').trim() ? `Fiado a ${row.cliente}` : 'Fiado registrado',
         label,
         amount,
+        currency: normalizeDetailCurrency(row?.currency),
+        exchange_rate: Number(row?.exchange_rate) || null,
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
@@ -323,6 +418,8 @@ function buildIncomeHistoryRow(row) {
         title: fromPending ? 'Cobro registrado' : 'Ingreso aparte',
         label: fromPending ? 'Pago' : 'Ingreso aparte',
         amount,
+        currency: normalizeDetailCurrency(row?.currency),
+        exchange_rate: Number(row?.exchange_rate) || null,
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
@@ -349,6 +446,8 @@ function buildLossHistoryRow(row) {
         title: fromPending ? 'Pérdida registrada' : 'Pérdida por revisar',
         label: fromPending ? 'Pérdida' : 'Por revisar',
         amount,
+        currency: normalizeDetailCurrency(row?.currency),
+        exchange_rate: Number(row?.exchange_rate) || null,
         fecha: row?.fecha || '',
         created_at: row?.created_at || '',
         concept: String(row?.concepto || '').trim(),
@@ -412,20 +511,177 @@ function renderDetailInsight(label, value) {
     `;
 }
 
-function renderBuyerSummary(buyerRow) {
+function resolvePrimarySummaryMetric(buyerRow) {
     const reviewTotal = getReviewTotal(buyerRow);
     const buyerStatus = resolveBuyerStatus(buyerRow);
+    const pending = Number(buyerRow?.pending_total || 0);
+    const paid = Number(buyerRow?.paid_total || 0);
+    const loss = Number(buyerRow?.loss_total || 0);
+
+    if (pending > 0) {
+        return {
+            label: 'Pendiente',
+            amountUsd: pending,
+            copy: buyerStatus.detail || buyerStatus.copy
+        };
+    }
+
+    if (loss > 0) {
+        return {
+            label: 'Pérdida',
+            amountUsd: loss,
+            copy: buyerStatus.detail || buyerStatus.copy
+        };
+    }
+
+    if (paid > 0) {
+        return {
+            label: 'Cobrado',
+            amountUsd: paid,
+            copy: buyerStatus.detail || buyerStatus.copy
+        };
+    }
+
+    return {
+        label: reviewTotal > 0 ? 'Revisión' : 'Saldo',
+        amountUsd: reviewTotal,
+        copy: reviewTotal > 0
+            ? `Hay ${formatMoney(reviewTotal)} por revisar en este comprador`
+            : buyerStatus.copy
+    };
+}
+
+function resolvePairOption(pairId) {
+    const safePairId = normalizeDetailPair(pairId);
+    return DETAIL_PAIR_OPTIONS.find((pair) => pair.id === safePairId) || DETAIL_PAIR_OPTIONS[0];
+}
+
+function formatPairRate(rate, currency) {
+    const code = normalizeDetailCurrency(currency);
+    if (!Number.isFinite(Number(rate)) || Number(rate) <= 0) {
+        return code === 'COP' ? 'N/D COP' : 'N/D Bs';
+    }
+    if (code === 'COP') {
+        return Math.round(Number(rate)).toLocaleString('es-CO');
+    }
+    return Number(rate).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function resolvePairStatusLabel(pairOption, exchangeStatus = {}) {
+    if (hasOverride(pairOption.currency)) return 'manual';
+
+    const source = String(exchangeStatus?.source || '').trim().toLowerCase();
+    if (!source) return 'sin tasa';
+    if (source.includes('cache:fresh')) return 'cache';
+    if (source.includes('cache:stale')) return 'cache vieja';
+    if (source.includes('api')) return 'mercado';
+    if (source.includes('fallback:none')) return 'sin tasa';
+    return 'mercado';
+}
+
+function buildPairSeries(historyRows, pairOption) {
+    return (Array.isArray(historyRows) ? historyRows : [])
+        .filter((row) => normalizeDetailCurrency(row?.currency) === pairOption.currency)
+        .map((row) => {
+            const rate = Number(row?.exchange_rate);
+            const timestamp = Date.parse(row?.fecha || row?.created_at || '') || 0;
+            return Number.isFinite(rate) && rate > 0
+                ? { rate, timestamp }
+                : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .slice(-10);
+}
+
+function renderPairSparkline(series) {
+    if (!Array.isArray(series) || series.length <= 1) {
+        return `
+            <div class="cartera-viva-pair__sparkline cartera-viva-pair__sparkline--empty">
+                <span>Sin serie suficiente</span>
+            </div>
+        `;
+    }
+
+    const values = series.map((point) => point.rate);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const width = 104;
+    const height = 30;
+    const spread = Math.max(max - min, max * 0.01, 1);
+
+    const points = values.map((value, index) => {
+        const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
+        const y = height - (((value - min) / spread) * height);
+        return `${x.toFixed(1)},${Math.max(1, Math.min(height - 1, y)).toFixed(1)}`;
+    });
+    const lastPoint = points[points.length - 1]?.split(',') || ['0', '0'];
+    const delta = values[values.length - 1] - values[0];
+    const toneClass = delta >= 0 ? 'is-up' : 'is-down';
+
+    return `
+        <svg class="cartera-viva-pair__sparkline ${toneClass}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Microlectura del par">
+            <polyline points="${points.join(' ')}"></polyline>
+            <circle cx="${lastPoint[0]}" cy="${lastPoint[1]}" r="2.4"></circle>
+        </svg>
+    `;
+}
+
+function renderPairSelector(selectedPair) {
+    const activePair = normalizeDetailPair(selectedPair);
+    return `
+        <div class="cartera-viva-pair__selector" role="group" aria-label="Seleccionar par">
+            ${DETAIL_PAIR_OPTIONS.map((pair) => `
+                <button
+                    type="button"
+                    class="cartera-viva-pair__chip${pair.id === activePair ? ' is-active' : ''}"
+                    data-cartera-detail-pair="${pair.id}">
+                    ${pair.label}
+                </button>
+            `).join('')}
+        </div>
+    `;
+}
+
+function renderEquivalentItem(label, value) {
+    return `
+        <div class="cartera-viva-detail__equivalent">
+            <span>${escapeHtml(label)}</span>
+            <strong>${escapeHtml(value)}</strong>
+        </div>
+    `;
+}
+
+function renderBuyerSummary(buyerRow, options = {}) {
+    const buyerStatus = resolveBuyerStatus(buyerRow);
     const progress = buildProgressBreakdown(buyerRow);
-    const reviewCopy = reviewTotal > 0
-        ? `Hay ${formatMoney(reviewTotal)} por revisar en este comprador`
-        : buyerStatus.copy;
+    const primaryMetric = resolvePrimarySummaryMetric(buyerRow);
+    const pairOption = resolvePairOption(options.selectedPair);
+    const exchangeRates = options.exchangeRates && typeof options.exchangeRates === 'object'
+        ? options.exchangeRates
+        : { USD: 1, COP: null, VES: null };
+    const exchangeStatus = options.exchangeStatus && typeof options.exchangeStatus === 'object'
+        ? options.exchangeStatus
+        : {};
+    const copEquivalent = buildConvertedAmount(primaryMetric.amountUsd, 'COP', exchangeRates);
+    const vesEquivalent = buildConvertedAmount(primaryMetric.amountUsd, 'VES', exchangeRates);
+    const pairRate = resolveDetailRateForCurrency(pairOption.currency, exchangeRates);
+    const pairSeries = buildPairSeries(options.historyRows, pairOption);
+    const loss = Number(buyerRow?.loss_total || 0);
+    const secondaryLabel = loss > 0 && Number(buyerRow?.pending_total || 0) <= 0 ? 'Pérdida' : 'Falta';
+    const secondaryValue = secondaryLabel === 'Pérdida'
+        ? formatMoney(loss)
+        : formatMoney(buyerRow?.pending_total || 0);
 
     return `
         <section class="cartera-viva-detail__summary">
             <header class="cartera-viva-detail__summary-head">
                 <div class="cartera-viva-detail__identity">
                     <h2 class="cartera-viva-detail__title">${escapeHtml(buyerRow?.display_name || 'Comprador no encontrado')}</h2>
-                    <p class="cartera-viva-detail__subtitle">${escapeHtml(reviewCopy)}</p>
+                    <p class="cartera-viva-detail__subtitle">${escapeHtml(primaryMetric.copy)}</p>
                 </div>
                 <div class="cartera-viva-card__badges">
                     <span class="cartera-viva-badge cartera-viva-badge--${buyerStatus.tone}">${escapeHtml(buyerStatus.label)}</span>
@@ -433,9 +689,33 @@ function renderBuyerSummary(buyerRow) {
                 </div>
             </header>
 
+            <div class="cartera-viva-detail__hero">
+                <section class="cartera-viva-detail__amount-panel">
+                    <p class="cartera-viva-detail__amount-label">${escapeHtml(primaryMetric.label)}</p>
+                    <strong class="cartera-viva-detail__amount">${formatMoney(primaryMetric.amountUsd)}</strong>
+                    <div class="cartera-viva-detail__equivalents">
+                        ${renderEquivalentItem('COP', copEquivalent.display)}
+                        ${renderEquivalentItem('Bs', vesEquivalent.display)}
+                    </div>
+                </section>
+
+                <aside class="cartera-viva-pair" aria-label="Par de referencia">
+                    <div class="cartera-viva-pair__head">
+                        <p class="cartera-viva-pair__eyebrow">Par</p>
+                        <span class="cartera-viva-pair__status">${escapeHtml(resolvePairStatusLabel(pairOption, exchangeStatus))}</span>
+                    </div>
+                    ${renderPairSelector(pairOption.id)}
+                    <div class="cartera-viva-pair__value-row">
+                        <strong class="cartera-viva-pair__value">1 USD = ${escapeHtml(formatPairRate(pairRate, pairOption.currency))}</strong>
+                        <span class="cartera-viva-pair__value-copy">${escapeHtml(pairOption.label)}</span>
+                    </div>
+                    ${renderPairSparkline(pairSeries)}
+                </aside>
+            </div>
+
             <section class="cartera-viva-progress cartera-viva-progress--large">
                 <div class="cartera-viva-progress__head">
-                    <span class="cartera-viva-progress__label">Cobrado de ${formatMoney(progress.base)}</span>
+                    <span class="cartera-viva-progress__label">Avance</span>
                     <span class="cartera-viva-progress__value">${formatPercent(progress.paidPercent)}</span>
                 </div>
                 <div class="cartera-viva-progress__track">
@@ -444,16 +724,15 @@ function renderBuyerSummary(buyerRow) {
                     ${progress.lossShare > 0 ? `<span class="cartera-viva-progress__segment is-loss" style="width:${progress.lossShare}%"></span>` : ''}
                 </div>
                 <div class="cartera-viva-progress__legend">
-                    <span>${formatMoney(buyerRow?.paid_total || 0)} cobrados</span>
-                    <span>${Number(buyerRow?.pending_total || 0) > 0 ? `Faltan ${formatMoney(buyerRow?.pending_total || 0)}` : 'Sin saldo pendiente'}</span>
+                    <span>Base ${formatMoney(progress.base)}</span>
+                    <span>${secondaryLabel} ${secondaryValue}</span>
                 </div>
             </section>
 
             <div class="cartera-viva-insight-strip cartera-viva-insight-strip--detail">
                 ${renderDetailInsight('Fiado', formatMoney(buyerRow?.credited_total))}
                 ${renderDetailInsight('Cobrado', formatMoney(buyerRow?.paid_total))}
-                ${renderDetailInsight('Falta', formatMoney(buyerRow?.pending_total))}
-                ${renderDetailInsight('Cumplimiento', formatPercent(getPaidPercent(buyerRow)))}
+                ${renderDetailInsight(secondaryLabel, secondaryValue)}
             </div>
         </section>
     `;
@@ -498,6 +777,13 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const exportPending = Boolean(options.exportPending);
     const exportMessage = String(options.exportMessage || '').trim();
     const exportTone = String(options.exportTone || '').trim().toLowerCase();
+    const selectedPair = normalizeDetailPair(options.selectedPair);
+    const exchangeRates = options.exchangeRates && typeof options.exchangeRates === 'object'
+        ? options.exchangeRates
+        : { USD: 1, COP: null, VES: null };
+    const exchangeStatus = options.exchangeStatus && typeof options.exchangeStatus === 'object'
+        ? options.exchangeStatus
+        : {};
 
     if (!buyerRow) {
         root.innerHTML = `
@@ -559,7 +845,12 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
             ${exportStatus}
 
-            ${renderBuyerSummary(buyerRow)}
+            ${renderBuyerSummary(buyerRow, {
+                historyRows,
+                selectedPair,
+                exchangeRates,
+                exchangeStatus
+            })}
 
             <section class="cartera-viva-detail__body">
                 <header class="cartera-viva-detail__body-head">
@@ -586,6 +877,14 @@ export function renderBuyerHistoryDetail(root, options = {}) {
 
     root.querySelector('[data-cartera-detail-export]')?.addEventListener('click', () => {
         options.onExport?.();
+    });
+
+    root.querySelectorAll('[data-cartera-detail-pair]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextPair = normalizeDetailPair(button.dataset.carteraDetailPair);
+            if (nextPair === selectedPair) return;
+            options.onPairChange?.(nextPair);
+        });
     });
 
     const timelineNode = root.querySelector('[data-cartera-detail-timeline]');

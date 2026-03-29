@@ -5608,3 +5608,51 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 - El historial legacy viejo del facturero no se elimina aún en esta ronda.
 - El retiro del legacy solo se evaluará cuando esta capa nueva quede estable y validada con QA autenticada real.
+
+## Sesión: Cartera Viva detalle multimoneda + micrográfica compacta (2026-03-28)
+
+### Diagnóstico
+
+- El bloque superior del detalle todavía repite demasiado la misma lectura entre subtítulo, progreso, leyenda y métricas.
+- El detalle sigue hablando casi solo en USD aunque el proyecto ya soporta `USD`, `COP` y `VES`.
+- Ya existe infraestructura real de tasas en `agro-exchange.js`, pero todavía no está aprovechada en Cartera Viva.
+- La microlectura del par puede apoyarse en `exchange_rate` real de los movimientos del comprador cuando exista serie suficiente; no hace falta inventar un dashboard nuevo.
+
+### Plan
+
+1. Reducir redundancia en el resumen superior y dejar una lectura principal + secundarios compactos.
+2. Integrar equivalentes multimoneda usando la capa existente de exchange (`USD`, `COP`, `VES`).
+3. Agregar selector compacto de par (`USD/COP`, `USD/Bs`) con microvisual silenciosa.
+4. Mantener la vista sobria, sin inflarla ni abrir un panel financiero nuevo.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - el resumen superior se redujo a una lectura principal más seca;
+  - se integraron equivalentes `COP` y `Bs` usando `agro-exchange.js`;
+  - se agregó selector compacto de par (`USD/COP`, `USD/Bs`);
+  - la microvisual usa `exchange_rate` real de los movimientos cuando hay serie suficiente;
+  - si no hay serie suficiente, queda una lectura mínima y honesta sin inventar tendencia.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - el detalle ahora carga tasas con `initExchangeRates()` y conserva el par seleccionado.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - se incorporó el bloque compacto de monto principal + panel del par;
+  - la vista mantiene ADN V10 y no se infla en mobile.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA corto
+
+- No fue posible validar el detalle autenticado en browser dentro de esta ronda.
+- El bloqueo conocido sigue siendo hCaptcha en el login del preview local, por lo que no se puede entrar de forma limpia al detalle del comprador para smoke manual automatizado.
+- La validación funcional completa de resumen multimoneda, selector de par y micrográfica queda pendiente para QA humano autenticado.

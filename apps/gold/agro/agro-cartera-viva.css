@@ -675,12 +675,162 @@
   margin: 0;
 }
 
+.cartera-viva-detail__hero {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.cartera-viva-detail__amount-panel,
+.cartera-viva-pair {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.72rem 0.78rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-0);
+}
+
+.cartera-viva-detail__amount-label,
+.cartera-viva-pair__eyebrow,
+.cartera-viva-pair__status,
+.cartera-viva-detail__equivalent span {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cartera-viva-detail__amount {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary);
+  font-size: clamp(1.45rem, 3.2vw, 2rem);
+  line-height: 1;
+}
+
+.cartera-viva-detail__equivalents {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.cartera-viva-detail__equivalent {
+  display: grid;
+  gap: 0.14rem;
+  padding: 0.42rem 0.48rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cartera-viva-detail__equivalent strong {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.cartera-viva-pair__head,
+.cartera-viva-pair__value-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.45rem;
+  align-items: baseline;
+}
+
+.cartera-viva-pair__status {
+  letter-spacing: 0.08em;
+}
+
+.cartera-viva-pair__selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.cartera-viva-pair__chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+  padding: 0.24rem 0.52rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.cartera-viva-pair__chip:hover {
+  border-color: rgba(200, 167, 82, 0.24);
+  color: var(--text-primary);
+}
+
+.cartera-viva-pair__chip.is-active {
+  color: var(--gold-4);
+  border-color: rgba(200, 167, 82, 0.28);
+  background: rgba(200, 167, 82, 0.1);
+}
+
+.cartera-viva-pair__value {
+  font-family: 'Orbitron', sans-serif;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+}
+
+.cartera-viva-pair__value-copy {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.cartera-viva-pair__sparkline {
+  display: block;
+  width: 100%;
+  height: 2rem;
+}
+
+.cartera-viva-pair__sparkline polyline {
+  fill: none;
+  stroke: rgba(200, 167, 82, 0.84);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cartera-viva-pair__sparkline circle {
+  fill: var(--gold-4);
+}
+
+.cartera-viva-pair__sparkline.is-down polyline {
+  stroke: rgba(239, 68, 68, 0.82);
+}
+
+.cartera-viva-pair__sparkline.is-down circle {
+  fill: var(--color-error);
+}
+
+.cartera-viva-pair__sparkline--empty {
+  min-height: 2rem;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cartera-viva-pair__sparkline--empty span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
 .cartera-viva-detail__body {
   gap: 0.75rem;
 }
 
 .cartera-viva-insight-strip--detail {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .cartera-viva-detail__timeline {
@@ -810,7 +960,12 @@
   }
 
   .cartera-viva-insight-strip--detail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cartera-viva-detail__hero {
+    grid-template-columns: minmax(0, 1fr) minmax(15rem, 16.5rem);
+    align-items: stretch;
   }
 }
 
@@ -828,6 +983,10 @@
   .cartera-viva-insight-strip--detail,
   .cartera-viva-summary-strip__stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cartera-viva-detail__equivalents {
+    grid-template-columns: 1fr;
   }
 
   .cartera-viva-history-item__amount {
@@ -860,6 +1019,11 @@
   .cartera-viva-summary-strip__stats,
   .cartera-viva-insight-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cartera-viva-detail__amount-panel,
+  .cartera-viva-pair {
+    padding: 0.66rem 0.7rem;
   }
 }
 
