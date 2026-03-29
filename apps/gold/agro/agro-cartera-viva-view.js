@@ -275,7 +275,7 @@ function renderHeroSignal(rows) {
     `;
 }
 
-function resolveCategoryHero(rows, category) {
+function resolveCategorySummary(rows, category) {
     const count = rows.length;
     const pending = sumField(rows, 'pending_total');
     const paid = sumField(rows, 'paid_total');
@@ -284,12 +284,12 @@ function resolveCategoryHero(rows, category) {
 
     if (category === 'pagados') {
         return {
-            label: 'Cobrado en esta vista',
+            label: 'Cobrado',
             amount: formatMoney(paid),
             copy: `${formatCount(count)} comprador${count === 1 ? '' : 'es'} con saldo cerrado`,
             stats: [
                 { label: 'Compradores', value: formatCount(count) },
-                { label: 'Fiado que pasó por cartera', value: formatMoney(sumField(rows, 'credited_total')) },
+                { label: 'Fiado total', value: formatMoney(sumField(rows, 'credited_total')) },
                 { label: 'Por revisar', value: formatMoney(review) }
             ]
         };
@@ -297,19 +297,19 @@ function resolveCategoryHero(rows, category) {
 
     if (category === 'perdidos') {
         return {
-            label: 'Saldo cerrado como pérdida',
+            label: 'Pérdidas',
             amount: formatMoney(loss),
-            copy: `${formatCount(count)} caso${count === 1 ? '' : 's'} con salida registrada`,
+            copy: `${formatCount(count)} caso${count === 1 ? '' : 's'} cerrados fuera de cartera`,
             stats: [
                 { label: 'Casos', value: formatCount(count) },
-                { label: 'Cobrado antes del cierre', value: formatMoney(paid) },
+                { label: 'Cobrado antes', value: formatMoney(paid) },
                 { label: 'Por revisar', value: formatMoney(review) }
             ]
         };
     }
 
     return {
-        label: 'Te deben hoy',
+        label: 'Por cobrar',
         amount: formatMoney(pending),
         copy: `${formatCount(count)} comprador${count === 1 ? '' : 'es'} con saldo activo`,
         stats: [
@@ -320,25 +320,27 @@ function resolveCategoryHero(rows, category) {
     };
 }
 
-function renderHeaderHero(filteredRows) {
-    const hero = resolveCategoryHero(filteredRows, activeCategory);
+function renderHeaderSummary(filteredRows) {
+    const summary = resolveCategorySummary(filteredRows, activeCategory);
     return `
-        <div class="cartera-viva-hero">
-            <div class="cartera-viva-hero__main">
-                <p class="cartera-viva-hero__label">${hero.label}</p>
-                <strong class="cartera-viva-hero__amount">${hero.amount}</strong>
-                <p class="cartera-viva-hero__copy">${hero.copy}</p>
+        <div class="cartera-viva-summary-strip">
+            <div class="cartera-viva-summary-strip__main">
+                <p class="cartera-viva-summary-strip__label">${summary.label}</p>
+                <div class="cartera-viva-summary-strip__amount-row">
+                    <strong class="cartera-viva-summary-strip__amount">${summary.amount}</strong>
+                    <p class="cartera-viva-summary-strip__copy">${summary.copy}</p>
+                </div>
             </div>
-            <div class="cartera-viva-hero__aside">
+            <div class="cartera-viva-summary-strip__signal">
                 ${renderHeroSignal(filteredRows)}
-                <div class="cartera-viva-hero__stats">
-                    ${hero.stats.map((stat) => `
-                        <div class="cartera-viva-hero__stat">
-                            <span class="cartera-viva-hero__stat-label">${stat.label}</span>
-                            <strong class="cartera-viva-hero__stat-value">${stat.value}</strong>
+            </div>
+            <div class="cartera-viva-summary-strip__stats">
+                ${summary.stats.map((stat) => `
+                        <div class="cartera-viva-summary-strip__stat">
+                            <span class="cartera-viva-summary-strip__stat-label">${stat.label}</span>
+                            <strong class="cartera-viva-summary-strip__stat-value">${stat.value}</strong>
                         </div>
                     `).join('')}
-                </div>
             </div>
         </div>
     `;
@@ -580,7 +582,7 @@ function renderListView(root) {
                     <div class="cartera-viva-view__copy">
                         <p class="cartera-viva-view__eyebrow">Cartera Viva</p>
                         <h2 class="cartera-viva-view__title">Cartera de compradores</h2>
-                        <p class="cartera-viva-view__subtitle">Una sola vista a la vez, ordenada por el saldo que todavía importa.</p>
+                        <p class="cartera-viva-view__subtitle">Cobros, cierres y pérdidas con lectura compacta.</p>
                     </div>
                     <div class="cartera-viva-view__actions">
                         <button type="button" class="cartera-viva-refresh" data-cartera-refresh>
@@ -588,12 +590,14 @@ function renderListView(root) {
                         </button>
                     </div>
                 </div>
-                ${renderHeaderHero(filteredRows)}
+                ${renderHeaderSummary(filteredRows)}
             </header>
 
             <div class="cartera-viva-category-bar" role="group" aria-label="Categorias de Cartera Viva">
                 ${renderCategoryControls(categoryCounts)}
             </div>
+
+            <p class="cartera-viva-view__note">Otros pertenece a Ciclos Operativos. Donaciones solo entra cuando la data real la sostiene.</p>
 
             <div class="cartera-viva-view__body">
                 ${bodyContent}

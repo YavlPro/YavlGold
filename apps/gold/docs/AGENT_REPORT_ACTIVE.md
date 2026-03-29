@@ -5446,3 +5446,55 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 4. Cambiar entre Fiados, Pagados, Pérdidas — confirmar que las categorías lucen como tabs con underline dorado.
 5. Abrir una card → confirmar que exportación y detalle siguen funcionando.
 6. Confirmar mobile ≤480px — métricas deben mostrarse en 3 columnas, no apiladas.
+
+## Sesión: Micro-pasada final Cartera Viva (2026-03-28)
+
+### Diagnóstico
+
+- El bloque superior seguía sintiéndose demasiado hero para una vista operativa.
+- La superficie principal todavía dependía de un degradado genérico y no del negro profundo del ADN.
+- Las cards y la segmentación admitían una última compactación.
+- `Pérdidas` debía quedar validado con la lógica visible ya corregida.
+- `Donaciones` se evaluó con criterio: no existe soporte real dentro del modelo buyer-centric de Cartera Viva.
+- `Otros` se mantiene fuera del frente de Cartera Viva y alineado conceptualmente a Ciclos Operativos.
+
+### Plan aplicado
+
+1. Bajar el header a una franja operativa compacta.
+2. Sustituir degradados del panel por `--bg-0` y `--bg-1`.
+3. Reducir paddings, gaps y alturas en cards y tabs.
+4. Mantener `Fiados`, `Pagados` y `Pérdidas` como categorías reales del módulo.
+5. Dejar explícito en copy corto que `Otros` vive en Ciclos Operativos y que `Donaciones` solo entra si la data real la sostiene.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - hero superior reemplazado por una franja resumen más baja y operativa;
+  - copy superior compactado;
+  - `Pérdidas` mantenido como lectura visible consistente;
+  - nota semántica breve para `Otros` / `Donaciones`.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - fondo del módulo llevado a negro profundo del ADN;
+  - degradado genérico removido del panel principal;
+  - franja resumen nueva con menor altura;
+  - tabs y cards compactados un paso adicional.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+- Smoke visual:
+  - no se reabrió QA autenticado intensivo en esta micro-pasada;
+  - se mantiene la limitación conocida del preview local por hCaptcha en login.
+- QA sugerido:
+  1. Abrir Cartera Viva.
+  2. Revisar bloque superior, tabs y una card.
+  3. Confirmar categoría `Pérdidas`.
+  4. Abrir detalle y validar que no hubo regresión visual.
