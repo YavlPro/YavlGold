@@ -1,5 +1,5 @@
 import { supabase } from '../assets/js/config/supabase-config.js';
-import { fetchBuyerPortfolioSummary } from './agro-cartera-viva.js';
+import { fetchBuyerPortfolioSummary, normalizeHistorySearchToken } from './agro-cartera-viva.js';
 import { downloadBuyerPortfolioExport } from './agro-cartera-viva-export.js';
 import {
     fetchBuyerHistoryTimeline,
@@ -9,6 +9,8 @@ import {
 const CARTERA_VIVA_VIEW = 'cartera-viva';
 const CARTERA_VIVA_ROOT_ID = 'agro-cartera-viva-root';
 const CARTERA_VIVA_CATEGORY_KEY = 'YG_AGRO_CARTERA_VIVA_CATEGORY_V1';
+const CARTERA_VIVA_SEARCH_KEY = 'YG_AGRO_CARTERA_VIVA_SEARCH_V1';
+const CARTERA_VIVA_GENERAL_CROP_ID = '__general__';
 
 const CATEGORY_META = Object.freeze({
     fiados: Object.freeze({
@@ -33,6 +35,7 @@ const CATEGORY_ORDER = Object.freeze(['fiados', 'pagados', 'perdidos']);
 let initialized = false;
 let rootNode = null;
 let activeCategory = readStoredCategory();
+let searchQuery = readStoredSearch();
 let summaryRows = [];
 let loading = false;
 let lastErrorMessage = '';
@@ -60,6 +63,27 @@ function writeStoredCategory(category) {
     }
 }
 
+function readStoredSearch() {
+    try {
+        return String(localStorage.getItem(CARTERA_VIVA_SEARCH_KEY) || '').trim();
+    } catch (_error) {
+        return '';
+    }
+}
+
+function writeStoredSearch(value) {
+    try {
+        const safeValue = String(value || '').trim();
+        if (safeValue) {
+            localStorage.setItem(CARTERA_VIVA_SEARCH_KEY, safeValue);
+            return;
+        }
+        localStorage.removeItem(CARTERA_VIVA_SEARCH_KEY);
+    } catch (_error) {
+        // Ignore storage failures.
+    }
+}
+
 function normalizeCategory(category) {
     const token = String(category || '').trim().toLowerCase();
     return CATEGORY_ORDER.includes(token) ? token : 'fiados';
@@ -78,6 +102,52 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function normalizeCropId(value) {
+    const token = String(value || '').trim();
+    return token || null;
+}
+
+function normalizeSearchQuery(value) {
+    return String(value || '').trim();
+}
+
+function getSearchToken(value) {
+    return normalizeHistorySearchToken(String(value || '').trim());
+}
+
+function getCropSnapshot() {
+    if (typeof window === 'undefined') return null;
+    const snapshot = window.__AGRO_CROPS_STATE;
+    return snapshot && typeof snapshot === 'object' ? snapshot : null;
+}
+
+function getAvailableCrops() {
+    const snapshot = getCropSnapshot();
+    return Array.isArray(snapshot?.crops) ? snapshot.crops : [];
+}
+
+function getSelectedCropId() {
+    if (typeof window !== 'undefined' && typeof window.getSelectedCropId === 'function') {
+        return normalizeCropId(window.getSelectedCropId());
+    }
+    if (typeof window !== 'undefined') {
+        return normalizeCropId(window.YG_AGRO_SELECTED_CROP_ID);
+    }
+    return null;
+}
+
+function resolveCropDisplay(crop) {
+    const rawName = String(crop?.name || '').trim();
+    const icon = String(crop?.icon || '').trim() || '🌱';
+    const safeName = rawName.replace(/^[^\p{L}\p{N}]+/u, '').trim() || rawName || 'Cultivo';
+    const variety = String(crop?.variety || '').trim();
+    return {
+        icon,
+        label: variety ? `${icon} ${safeName} · ${variety}` : `${icon} ${safeName}`,
+        shortLabel: safeName
+    };
 }
 
 function formatMoney(value) {
@@ -230,10 +300,25 @@ function comparePortfolioRows(a, b) {
     return String(a?.display_name || '').localeCompare(String(b?.display_name || ''), 'es');
 }
 
+function matchesPortfolioSearch(row, query = searchQuery) {
+    const token = getSearchToken(query);
+    if (!token) return true;
+
+    const haystack = [
+        row?.display_name,
+        row?.buyer_group_key,
+        row?.global_status
+    ]
+        .filter(Boolean)
+        .join(' ');
+
+    return getSearchToken(haystack).includes(token);
+}
+
 function filterRowsByCategory(rows, category) {
     const safeRows = Array.isArray(rows) ? rows.slice() : [];
     return safeRows
-        .filter((row) => resolveVisibleCategory(row) === category)
+        .filter((row) => resolveVisibleCategory(row) === category && matchesPortfolioSearch(row))
         .sort(comparePortfolioRows);
 }
 
@@ -247,6 +332,45 @@ function getCategoryCounts(rows) {
 
 function sumField(rows, fieldName) {
     return (Array.isArray(rows) ? rows : []).reduce((total, row) => total + Number(row?.[fieldName] || 0), 0);
+}
+
+function resolveRecordWizardTab(category = activeCategory) {
+    if (category === 'pagados') return 'ingresos';
+    if (category === 'perdidos') return 'perdidas';
+    return 'pendientes';
+}
+
+function resolveRecordActionLabel(category = activeCategory) {
+    if (category === 'pagados') return 'Nuevo cobro';
+    if (category === 'perdidos') return 'Nueva pérdida';
+    return 'Nuevo fiado';
+}
+
+function getCarteraVivaActionContext() {
+    return {
+        category: activeCategory,
+        wizardTab: resolveRecordWizardTab(activeCategory),
+        cropId: getSelectedCropId(),
+        searchQuery
+    };
+}
+
+function openRecordFromCarteraContext() {
+    if (typeof window === 'undefined' || typeof window.launchAgroWizard !== 'function') return false;
+    const context = getCarteraVivaActionContext();
+    if (typeof window.setSelectedCropId === 'function') {
+        window.setSelectedCropId(context.cropId || null);
+    }
+    window.launchAgroWizard(context.wizardTab, {
+        initialCropId: context.cropId || null
+    });
+    return true;
+}
+
+function syncCarteraVivaGlobalContext() {
+    if (typeof window === 'undefined') return;
+    window.getCarteraVivaActionContext = getCarteraVivaActionContext;
+    window.openCarteraVivaRecordContext = openRecordFromCarteraContext;
 }
 
 function renderHeroSignal(rows) {
@@ -422,6 +546,84 @@ function renderProgressBlock(row, options = {}) {
     `;
 }
 
+function renderSearchBar() {
+    return `
+        <label class="cartera-viva-search" aria-label="Buscar comprador">
+            <span class="cartera-viva-search__icon" aria-hidden="true">⌕</span>
+            <input
+                type="search"
+                class="cartera-viva-search__input"
+                data-cartera-search
+                value="${escapeHtml(searchQuery)}"
+                placeholder="Buscar comprador">
+        </label>
+    `;
+}
+
+function renderCropSelector() {
+    const crops = getAvailableCrops();
+    const snapshot = getCropSnapshot();
+    const selectedId = getSelectedCropId();
+
+    if (!crops.length && snapshot?.status === 'loading') {
+        return `
+            <div class="cartera-viva-crop-strip is-loading" aria-hidden="true">
+                <span class="cartera-viva-crop-chip is-skeleton"></span>
+                <span class="cartera-viva-crop-chip is-skeleton"></span>
+                <span class="cartera-viva-crop-chip is-skeleton"></span>
+            </div>
+        `;
+    }
+
+    const buttons = [
+        `
+            <button
+                type="button"
+                class="cartera-viva-crop-chip${!selectedId ? ' is-active' : ''}"
+                data-cartera-crop="${CARTERA_VIVA_GENERAL_CROP_ID}">
+                Vista general
+            </button>
+        `
+    ];
+
+    crops.forEach((crop) => {
+        const cropId = normalizeCropId(crop?.id);
+        if (!cropId) return;
+        const display = resolveCropDisplay(crop);
+        buttons.push(`
+            <button
+                type="button"
+                class="cartera-viva-crop-chip${selectedId === cropId ? ' is-active' : ''}"
+                data-cartera-crop="${escapeHtml(cropId)}">
+                ${escapeHtml(display.shortLabel)}
+            </button>
+        `);
+    });
+
+    return `
+        <div class="cartera-viva-crop-picker">
+            <span class="cartera-viva-crop-picker__label">Cultivo activo</span>
+            <div class="cartera-viva-crop-strip" role="group" aria-label="Contexto de cultivo para nuevos registros">
+                ${buttons.join('')}
+            </div>
+        </div>
+    `;
+}
+
+function renderToolbarControls() {
+    return `
+        <div class="cartera-viva-toolbar">
+            ${renderSearchBar()}
+            <div class="cartera-viva-toolbar__row">
+                ${renderCropSelector()}
+                <button type="button" class="cartera-viva-quick-action" data-cartera-new-record>
+                    ${resolveRecordActionLabel(activeCategory)}
+                </button>
+            </div>
+        </div>
+    `;
+}
+
 function renderCategoryControls(counts) {
     return CATEGORY_ORDER.map((category) => {
         const meta = CATEGORY_META[category];
@@ -564,8 +766,10 @@ function renderListView(root) {
     } else if (filteredRows.length <= 0) {
         const categoryMeta = CATEGORY_META[activeCategory];
         bodyContent = renderEmptyState({
-            title: categoryMeta.emptyTitle,
-            copy: categoryMeta.emptyCopy
+            title: searchQuery ? 'Sin coincidencias en esta vista' : categoryMeta.emptyTitle,
+            copy: searchQuery
+                ? `No encontramos compradores para "${searchQuery}" dentro de ${categoryMeta.label.toLowerCase()}.`
+                : categoryMeta.emptyCopy
         });
     } else {
         bodyContent = `
@@ -592,6 +796,8 @@ function renderListView(root) {
                 </div>
                 ${renderHeaderSummary(filteredRows)}
             </header>
+
+            ${renderToolbarControls()}
 
             <div class="cartera-viva-category-bar" role="group" aria-label="Categorias de Cartera Viva">
                 ${renderCategoryControls(categoryCounts)}
@@ -722,6 +928,12 @@ async function exportBuyerDetail() {
 }
 
 function bindListViewEvents(root) {
+    root.querySelector('[data-cartera-search]')?.addEventListener('input', (event) => {
+        searchQuery = normalizeSearchQuery(event.target?.value);
+        writeStoredSearch(searchQuery);
+        renderView();
+    });
+
     root.querySelectorAll('[data-cartera-category]').forEach((button) => {
         button.addEventListener('click', () => {
             const nextCategory = normalizeCategory(button.dataset.carteraCategory);
@@ -734,6 +946,20 @@ function bindListViewEvents(root) {
 
     root.querySelector('[data-cartera-refresh]')?.addEventListener('click', () => {
         loadSummary();
+    });
+
+    root.querySelector('[data-cartera-new-record]')?.addEventListener('click', () => {
+        openRecordFromCarteraContext();
+    });
+
+    root.querySelectorAll('[data-cartera-crop]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (typeof window === 'undefined' || typeof window.setSelectedCropId !== 'function') return;
+            const cropId = button.dataset.carteraCrop === CARTERA_VIVA_GENERAL_CROP_ID
+                ? null
+                : normalizeCropId(button.dataset.carteraCrop);
+            window.setSelectedCropId(cropId);
+        });
     });
 
     root.querySelectorAll('[data-cartera-open-history]').forEach((button) => {
@@ -771,8 +997,14 @@ function handleShellViewChanged(event) {
     renderView();
 }
 
+function handleCropContextUpdated() {
+    if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() !== CARTERA_VIVA_VIEW) return;
+    renderView();
+}
+
 export function initAgroCarteraVivaView() {
     if (initialized) {
+        syncCarteraVivaGlobalContext();
         if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() === CARTERA_VIVA_VIEW) {
             loadSummary();
         }
@@ -781,8 +1013,11 @@ export function initAgroCarteraVivaView() {
 
     initialized = true;
     getRootNode();
+    syncCarteraVivaGlobalContext();
     renderView();
     window.addEventListener('agro:shell:view-changed', handleShellViewChanged);
+    window.addEventListener('agro:crop:changed', handleCropContextUpdated);
+    window.addEventListener('AGRO_CROPS_READY', handleCropContextUpdated);
 
     if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() === CARTERA_VIVA_VIEW) {
         loadSummary();

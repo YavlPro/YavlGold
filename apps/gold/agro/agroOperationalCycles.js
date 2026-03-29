@@ -957,7 +957,7 @@ function renderShell() {
                     <div class="module-heading">
                         <p class="ops-module-eyebrow">Familia operativa</p>
                         <h2 class="module-title">Ciclos Operativos</h2>
-                        <p class="module-subtitle">Más humano, más guiado y más ordenado: crea desde un modal limpio, filtra por período y exporta Markdown sin salir del módulo.</p>
+                        <p class="module-subtitle">Registra, filtra y exporta con movimientos reales sin salir del módulo.</p>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -975,7 +975,7 @@ function renderShell() {
                     <div>
                         <p class="agro-operational-panel__eyebrow" id="agro-operational-overview-eyebrow">🟡 Activos</p>
                         <h3 class="agro-operational-panel__title" id="agro-operational-overview-title">Vista organizada por estado</h3>
-                        <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula su balance y conserva sus propios filtros.</p>
+                        <p class="agro-operational-panel__copy" id="agro-operational-overview-copy">Cada subvista recalcula balance y conserva filtros compactos.</p>
                     </div>
                 </div>
                 <div id="agro-operational-overview-body"></div>
@@ -986,7 +986,7 @@ function renderShell() {
                     <div>
                         <p class="agro-operational-list-eyebrow" id="agro-operational-list-eyebrow">🟡 Activos</p>
                         <h3 class="agro-operational-list-title" id="agro-operational-list-title">🟡 Ciclos operativos activos</h3>
-                        <p class="agro-operational-list-copy" id="agro-operational-list-copy">Abiertos, en seguimiento o compensándose.</p>
+                        <p class="agro-operational-list-copy" id="agro-operational-list-copy">Abiertos, en seguimiento o compensándose con lectura operativa.</p>
                     </div>
                     <button type="button" class="btn" data-operational-action="new-cycle">➕ Nuevo ciclo operativo</button>
                 </div>
@@ -1471,7 +1471,7 @@ function renderFilters(subview) {
                     </select>
                 </label>
                 <label class="agro-operational-filter">
-                    <span class="agro-operational-filter__label">Tipo económico</span>
+                    <span class="agro-operational-filter__label">Tipo</span>
                     <select class="styled-input" data-operational-filter-view="${subview}" data-operational-filter-key="economicType">
                         ${buildSelectOptionsMarkup(TYPE_FILTER_OPTIONS, filters.economicType)}
                     </select>

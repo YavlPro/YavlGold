@@ -245,6 +245,9 @@ function runAction(action) {
             return clickIfExists('#btn-new-crop');
         case 'new-record':
             if (typeof window.launchAgroWizard === 'function') {
+                if (activeView === 'cartera-viva' && typeof window.openCarteraVivaRecordContext === 'function') {
+                    return window.openCarteraVivaRecordContext() === true;
+                }
                 window.launchAgroWizard('gastos');
                 return true;
             }

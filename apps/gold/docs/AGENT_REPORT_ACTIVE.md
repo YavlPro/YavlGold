@@ -5496,5 +5496,61 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 - QA sugerido:
   1. Abrir Cartera Viva.
   2. Revisar bloque superior, tabs y una card.
-  3. Confirmar categoría `Pérdidas`.
-  4. Abrir detalle y validar que no hubo regresión visual.
+3. Confirmar categoría `Pérdidas`.
+4. Abrir detalle y validar que no hubo regresión visual.
+
+## Sesión: Integración final Cartera Viva + controles compactos + alineación operativa (2026-03-28)
+
+### Diagnóstico
+
+- Cartera Viva todavía no tenía barra de búsqueda propia dentro del módulo vivo.
+- Tampoco tenía un selector de cultivos integrado al frente nuevo; dependía solo del contexto global del agro.
+- El flujo global `Nuevo registro` seguía abriendo `gastos`, incluso estando parado en Cartera Viva.
+- El wizard ya persiste `buyer_id`, `buyer_group_key` y `buyer_match_status` en tabs comerciales, así que el wiring buyer-centric existe y conviene reutilizarlo.
+- Ciclos Operativos ya tiene base funcional propia, pero su frente visible aún admite una compactación sobria en filtros y cards.
+
+### Plan
+
+1. Integrar búsqueda compacta y selector de cultivo ligero en Cartera Viva.
+2. Reutilizar el contexto global de cultivo para que el nuevo módulo y el wizard hablen el mismo idioma.
+3. Hacer que `Nuevo registro` respete el contexto de Cartera Viva y favorezca el tab comercial correcto.
+4. Aplicar un ajuste visual sobrio de bajo riesgo en Ciclos Operativos.
+
+### Alcance
+
+- Cartera Viva pasa a comportarse más como capa funcional nueva del historial comercial.
+- El historial legacy viejo del facturero no se elimina aún.
+- Esta ronda integra, compacta y alinea; no abre refactor mayor.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - barra de búsqueda compacta integrada al módulo vivo;
+  - selector ligero de cultivo reutilizando el contexto global `selectedCropId`;
+  - acción rápida de registro alineada con la categoría visible (`Fiados` -> `pendientes`, `Pagados` -> `ingresos`, `Pérdidas` -> `perdidas`);
+  - contexto global expuesto para que shell/header puedan abrir el wizard correcto desde Cartera Viva;
+  - el conteo visible por categoría ahora respeta la búsqueda activa.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - estilos compactos para búsqueda, selector de cultivo y CTA contextual;
+  - ADN V10 mantenido en negro profundo y dorado sobrio.
+- `apps/gold/agro/agro-shell.js`
+  - `Nuevo registro` respeta Cartera Viva cuando esa vista está activa y deja de mandar siempre a `gastos`.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - copy del módulo y de la lectura operativa compactado para reflejar registros reales.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - compactación sobria de filtros, cards y summary blocks.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+- Smoke visual:
+  - no se ejecutó QA autenticado intensivo en esta ronda;
+  - sigue pendiente validación humana corta dentro de sesión real por el bloqueo conocido del preview local con hCaptcha.
