@@ -5924,3 +5924,84 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 - El historial legacy sigue disponible y no se elimina en esta ronda.
 - `Historial comercial` agrupa mejor la navegación, pero Cartera Viva y Ciclos Operativos siguen separados en semántica y operación.
+
+## Sesión: Pulido final de historial comercial vs legacy (2026-03-29)
+
+### Diagnóstico
+
+- El progreso de Cartera Viva ya tenía movimiento, pero todavía se sentía demasiado genérico frente a la sensación viva de los ciclos de cultivo.
+- `Ciclos Operativos` seguía usando superficies oscuras válidas, pero no lo suficientemente profundas ni uniformes con el negro del ADN que ya sostiene Cartera Viva.
+- El sidebar todavía dejaba `Historial comercial` y el legacy demasiado cerca en semántica visual; faltaba separar explícitamente sistema nuevo y sistema viejo.
+
+### Plan
+
+1. Rehacer el movimiento del progreso de Cartera Viva para que se sienta más orgánico y agrícola, sin ruido.
+2. Llevar `Ciclos Operativos` a `--bg-0` / `--bg-1` como base dominante.
+3. Separar el sidebar en dos grupos claros:
+   - `Historial comercial`
+   - `Historial legacy`
+
+### Alcance
+
+- Esta ronda es de pulido estético/estructural.
+- El legacy sigue vivo y accesible.
+- `Historial comercial` y `Historial legacy` deben quedar claramente separados.
+
+### Cambios aplicados
+
+- `apps/gold/agro/index.html`
+  - el sidebar ahora separa explícitamente:
+    - `Historial comercial`
+    - `Historial legacy`
+  - `Historial comercial` contiene:
+    - `Cartera Viva`
+    - `Ciclos Operativos`
+  - `Historial legacy` contiene:
+    - `Pagados`
+    - `Fiados`
+    - `Pérdidas`
+    - `Donaciones`
+  - `Otros`, `Carrito` y `Rankings` salen de ese bloque legacy para no confundir la migración.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - el progreso de Cartera Viva deja el shimmer genérico y pasa a una lectura más orgánica:
+    - línea viva superior tipo cultivo
+    - respiración mínima del track
+    - flow más rico del fill
+  - sigue respetando `prefers-reduced-motion`.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - `Ciclos Operativos` se lleva a `--bg-0` / `--bg-1` como base dominante;
+  - modal, panels, cards, summary cards, filters y preview/export dejan de sentirse como panel gris genérico y se alinean al negro profundo del ADN.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA corto ejecutado
+
+- Se levantó preview local con `pnpm -C apps/gold preview -- --host localhost --port 4173`.
+- Se abrió `/agro/` y el sistema redirigió al login real.
+- Se cargaron credenciales QA locales y se ejecutó submit real.
+- hCaptcha lanzó un desafío visual real dentro del iframe de validación, por lo que no se completó sesión autenticada automática.
+- Queda validado con honestidad:
+  - preview levanta
+  - login real responde
+  - bloqueo actual de QA automática está en el desafío visual de hCaptcha
+- No fue posible entrar para revisar autenticadamente:
+  - grupos `Historial comercial` y `Historial legacy` dentro de sesión
+  - progreso vivo en Cartera Viva autenticada
+  - negro profundo final de `Ciclos Operativos` autenticado
+- Browser cerrado, preview local detenido y carpeta temporal de Playwright eliminada:
+  - `%LOCALAPPDATA%\\Temp\\playwright-mcp-output\\1774826027491`
+
+### Nota operativa
+
+- El sistema nuevo y el legacy ya quedan mejor separados desde el sidebar.
+- El legacy sigue vivo; no se elimina en esta ronda.

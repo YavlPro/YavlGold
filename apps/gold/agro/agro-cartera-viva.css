@@ -386,6 +386,19 @@
   min-height: 0.45rem;
   border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.cartera-viva-hero__signal-track::before,
+.cartera-viva-progress__track::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--metallic-border);
+  background-size: 200% 100%;
+  opacity: 0.5;
+  animation: borderShimmer 5.8s linear infinite;
 }
 
 .cartera-viva-hero__signal-track::after,
@@ -393,34 +406,34 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.16) 48%, transparent 100%);
-  transform: translateX(-130%);
-  opacity: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(232, 212, 139, 0.08) 48%, transparent 100%);
+  transform: translateX(-18%);
+  opacity: 0.12;
   pointer-events: none;
-  animation: carteraVivaTrackSheen 7.2s ease-in-out infinite;
+  animation: carteraVivaProgressBreath 6.4s ease-in-out infinite;
 }
 
 .cartera-viva-hero__signal-segment,
 .cartera-viva-progress__segment {
   display: block;
   height: 100%;
-  background-size: 160% 100%;
-  animation: carteraVivaProgressFlow 8s ease-in-out infinite;
+  background-size: 200% 100%;
+  animation: carteraVivaProgressCurrent 6.8s ease-in-out infinite;
 }
 
 .cartera-viva-hero__signal-segment.is-paid,
 .cartera-viva-progress__segment.is-paid {
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.88), rgba(16, 185, 129, 0.54));
+  background: linear-gradient(90deg, rgba(10, 150, 108, 0.72) 0%, rgba(16, 185, 129, 0.92) 48%, rgba(110, 231, 183, 0.62) 100%);
 }
 
 .cartera-viva-hero__signal-segment.is-pending,
 .cartera-viva-progress__segment.is-pending {
-  background: linear-gradient(90deg, rgba(200, 167, 82, 0.92), rgba(232, 212, 139, 0.58));
+  background: linear-gradient(90deg, rgba(107, 90, 62, 0.9) 0%, rgba(200, 167, 82, 0.95) 50%, rgba(232, 212, 139, 0.62) 100%);
 }
 
 .cartera-viva-hero__signal-segment.is-loss,
 .cartera-viva-progress__segment.is-loss {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.88), rgba(239, 68, 68, 0.55));
+  background: linear-gradient(90deg, rgba(153, 27, 27, 0.76) 0%, rgba(239, 68, 68, 0.9) 48%, rgba(248, 113, 113, 0.6) 100%);
 }
 
 .cartera-viva-hero__signal-legend,
@@ -1168,7 +1181,7 @@
   }
 }
 
-@keyframes carteraVivaProgressFlow {
+@keyframes carteraVivaProgressCurrent {
   0%,
   100% {
     background-position: 0% 50%;
@@ -1179,21 +1192,16 @@
   }
 }
 
-@keyframes carteraVivaTrackSheen {
+@keyframes carteraVivaProgressBreath {
   0%,
-  28% {
-    transform: translateX(-130%);
-    opacity: 0;
-  }
-
-  42% {
-    opacity: 0.14;
-  }
-
-  68%,
   100% {
-    transform: translateX(130%);
-    opacity: 0;
+    transform: translateX(-18%) scaleX(1);
+    opacity: 0.1;
+  }
+
+  50% {
+    transform: translateX(18%) scaleX(1.02);
+    opacity: 0.2;
   }
 }
 
@@ -1292,6 +1300,8 @@
   .cartera-viva-back,
   .cartera-viva-detail-link,
   .cartera-viva-category,
+  .cartera-viva-hero__signal-track::before,
+  .cartera-viva-progress__track::before,
   .cartera-viva-hero__signal-track::after,
   .cartera-viva-progress__track::after,
   .cartera-viva-hero__signal-segment,
