@@ -364,6 +364,7 @@ function buildPendingHistoryRow(row) {
     const transferState = String(row?.transfer_state || 'active').trim().toLowerCase();
     const transferredTo = String(row?.transferred_to || '').trim().toLowerCase();
     const isReview = String(row?.buyer_match_status || '').trim().toLowerCase() !== 'matched';
+    const isTransferred = transferState === 'transferred';
 
     let label = 'Fiado';
     let note = 'Saldo abierto dentro de la cartera del comprador.';
@@ -392,6 +393,8 @@ function buildPendingHistoryRow(row) {
     return {
         history_id: `agro_pending:${row?.id || ''}`,
         source_table: 'agro_pending',
+        source_tab: 'pendientes',
+        source_id: String(row?.id || '').trim(),
         title: String(row?.cliente || '').trim() ? `Fiado a ${row.cliente}` : 'Fiado registrado',
         label,
         amount,
@@ -403,7 +406,16 @@ function buildPendingHistoryRow(row) {
         meta: buildMovementMeta(row),
         note,
         tone,
-        is_review: isReview
+        is_review: isReview,
+        crop_id: String(row?.crop_id || '').trim(),
+        unit_type: String(row?.unit_type || '').trim().toLowerCase(),
+        unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        transfer_state: transferState,
+        transferred_to: transferredTo,
+        reverted_at: row?.reverted_at || '',
+        origin_table: '',
+        origin_id: '',
+        is_transfer_related: isTransferred
     };
 }
 
@@ -415,6 +427,8 @@ function buildIncomeHistoryRow(row) {
     return {
         history_id: `agro_income:${row?.id || ''}`,
         source_table: 'agro_income',
+        source_tab: 'ingresos',
+        source_id: String(row?.id || '').trim(),
         title: fromPending ? 'Cobro registrado' : 'Ingreso aparte',
         label: fromPending ? 'Pago' : 'Ingreso aparte',
         amount,
@@ -430,7 +444,16 @@ function buildIncomeHistoryRow(row) {
                 ? 'Entrada confirmada como cobro del saldo.'
                 : 'Entrada relacionada con el comprador, pero separada de la cartera.'),
         tone: isReview ? 'review' : (fromPending ? 'paid' : 'neutral'),
-        is_review: isReview
+        is_review: isReview,
+        crop_id: String(row?.crop_id || '').trim(),
+        unit_type: String(row?.unit_type || '').trim().toLowerCase(),
+        unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
+        transferred_to: '',
+        reverted_at: row?.reverted_at || '',
+        origin_table: String(row?.origin_table || '').trim().toLowerCase(),
+        origin_id: String(row?.origin_id || '').trim(),
+        is_transfer_related: fromPending
     };
 }
 
@@ -443,6 +466,8 @@ function buildLossHistoryRow(row) {
     return {
         history_id: `agro_losses:${row?.id || ''}`,
         source_table: 'agro_losses',
+        source_tab: 'perdidas',
+        source_id: String(row?.id || '').trim(),
         title: fromPending ? 'Pérdida registrada' : 'Pérdida por revisar',
         label: fromPending ? 'Pérdida' : 'Por revisar',
         amount,
@@ -458,7 +483,16 @@ function buildLossHistoryRow(row) {
                 : 'Esta pérdida aún necesita confirmación final.')
             : 'Salida cerrada de la cartera.',
         tone: isReview ? 'review' : 'loss',
-        is_review: isReview
+        is_review: isReview,
+        crop_id: String(row?.crop_id || '').trim(),
+        unit_type: String(row?.unit_type || '').trim().toLowerCase(),
+        unit_qty: Number(row?.unit_qty ?? row?.quantity_kg ?? NaN),
+        transfer_state: String(row?.transfer_state || '').trim().toLowerCase(),
+        transferred_to: '',
+        reverted_at: row?.reverted_at || '',
+        origin_table: String(row?.origin_table || '').trim().toLowerCase(),
+        origin_id: String(row?.origin_id || '').trim(),
+        is_transfer_related: fromPending
     };
 }
 
@@ -508,6 +542,195 @@ function renderDetailInsight(label, value) {
             <span class="cartera-viva-insight__label">${escapeHtml(label)}</span>
             <strong class="cartera-viva-insight__value">${escapeHtml(value)}</strong>
         </article>
+    `;
+}
+
+function normalizeHistoryFilter(value) {
+    return String(value || '').trim().toLowerCase() === 'transferidos'
+        ? 'transferidos'
+        : 'todos';
+}
+
+function isTransferRelatedHistoryRow(row) {
+    if (!row || typeof row !== 'object') return false;
+    if (row.is_transfer_related) return true;
+
+    const sourceTable = String(row?.source_table || '').trim().toLowerCase();
+    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
+    const originTable = String(row?.origin_table || '').trim().toLowerCase();
+
+    if (sourceTable === 'agro_pending' && transferState === 'transferred') return true;
+    if ((sourceTable === 'agro_income' || sourceTable === 'agro_losses') && originTable === 'agro_pending') return true;
+    return false;
+}
+
+function filterHistoryRows(rows, filterMode) {
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const normalizedFilter = normalizeHistoryFilter(filterMode);
+    if (normalizedFilter !== 'transferidos') return safeRows;
+    return safeRows.filter((row) => isTransferRelatedHistoryRow(row));
+}
+
+function getHistoryFilterCount(rows, filterMode) {
+    return filterHistoryRows(rows, filterMode).length;
+}
+
+function renderHistoryFilters(historyRows, activeFilter) {
+    const transferCount = getHistoryFilterCount(historyRows, 'transferidos');
+    if (transferCount <= 0) return '';
+
+    const normalizedFilter = normalizeHistoryFilter(activeFilter);
+    const allCount = getHistoryFilterCount(historyRows, 'todos');
+
+    return `
+        <div class="cartera-viva-detail__filters" role="group" aria-label="Filtrar historial">
+            <button
+                type="button"
+                class="cartera-viva-detail__filter${normalizedFilter === 'todos' ? ' is-active' : ''}"
+                data-cartera-detail-history-filter="todos"
+                aria-pressed="${normalizedFilter === 'todos' ? 'true' : 'false'}">
+                Todo (${allCount})
+            </button>
+            <button
+                type="button"
+                class="cartera-viva-detail__filter${normalizedFilter === 'transferidos' ? ' is-active' : ''}"
+                data-cartera-detail-history-filter="transferidos"
+                aria-pressed="${normalizedFilter === 'transferidos' ? 'true' : 'false'}">
+                Ver transferidos (${transferCount})
+            </button>
+        </div>
+    `;
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value).replace(/"/g, '&quot;');
+}
+
+function renderHistoryActionButton(config = {}) {
+    const className = String(config.className || '').trim();
+    const label = String(config.label || 'Acción').trim();
+    const iconClass = String(config.iconClass || 'fa fa-circle').trim();
+    const sourceTab = String(config.sourceTab || '').trim();
+    const sourceId = String(config.sourceId || '').trim();
+    const historyId = String(config.historyId || sourceId).trim();
+    const action = String(config.action || '').trim();
+    const disabled = Boolean(config.disabled);
+    const disabledAttrs = disabled ? ' disabled aria-disabled="true"' : '';
+    const datasetAttrs = action
+        ? ` data-cartera-history-action="${escapeAttribute(action)}" data-cartera-history-id="${escapeAttribute(historyId)}" data-cartera-history-tab="${escapeAttribute(sourceTab)}"`
+        : ` data-tab="${escapeAttribute(sourceTab)}" data-id="${escapeAttribute(sourceId)}"`;
+
+    return `
+        <button type="button" class="cartera-viva-history-item__menu-action${className ? ` ${className}` : ''}"${datasetAttrs}${disabledAttrs}>
+            <i class="${escapeAttribute(iconClass)}" aria-hidden="true"></i>
+            <span>${escapeHtml(label)}</span>
+        </button>
+    `;
+}
+
+function resolveHistoryMenuActions(row, options = {}) {
+    const actions = [];
+    const sourceTab = String(row?.source_tab || '').trim().toLowerCase();
+    const sourceId = String(row?.source_id || '').trim();
+    const transferState = String(row?.transfer_state || '').trim().toLowerCase();
+    const originTable = String(row?.origin_table || '').trim().toLowerCase();
+    const cropId = String(row?.crop_id || '').trim();
+
+    if (!sourceTab || !sourceId) return actions;
+
+    actions.push(
+        {
+            className: 'btn-edit-facturero',
+            label: 'Editar',
+            iconClass: 'fa fa-pen',
+            sourceTab,
+            sourceId
+        },
+        {
+            className: 'btn-delete-facturero',
+            label: 'Eliminar',
+            iconClass: 'fa fa-trash',
+            sourceTab,
+            sourceId
+        }
+    );
+
+    if (sourceTab === 'pendientes' && transferState !== 'transferred') {
+        actions.push({
+            className: 'btn-transfer-pending',
+            label: 'Transferir',
+            iconClass: 'fa fa-arrow-right-long',
+            sourceTab,
+            sourceId
+        });
+    }
+
+    if (sourceTab === 'ingresos') {
+        actions.push({
+            className: 'btn-transfer-income',
+            label: 'Transferir',
+            iconClass: 'fa fa-arrow-right-long',
+            sourceTab,
+            sourceId
+        });
+        if (originTable === 'agro_pending' && !row?.reverted_at) {
+            actions.push({
+                className: 'btn-revert-income',
+                label: 'Revertir',
+                iconClass: 'fa fa-rotate-left',
+                sourceTab,
+                sourceId
+            });
+        }
+    }
+
+    if (sourceTab === 'perdidas') {
+        actions.push({
+            className: 'btn-transfer-loss',
+            label: 'Transferir',
+            iconClass: 'fa fa-arrow-right-long',
+            sourceTab,
+            sourceId
+        });
+        if (originTable === 'agro_pending' && !row?.reverted_at) {
+            actions.push({
+                className: 'btn-revert-loss',
+                label: 'Revertir',
+                iconClass: 'fa fa-rotate-left',
+                sourceTab,
+                sourceId
+            });
+        }
+    }
+
+    if (typeof options.onCreateCycle === 'function') {
+        actions.push({
+            action: 'create-cycle',
+            label: 'Crear ciclo',
+            iconClass: 'fa fa-seedling',
+            historyId: String(row?.history_id || '').trim(),
+            sourceTab,
+            sourceId,
+            disabled: !cropId
+        });
+    }
+
+    return actions;
+}
+
+function renderHistoryActionMenu(row, options = {}) {
+    const actions = resolveHistoryMenuActions(row, options);
+    if (actions.length <= 0) return '';
+
+    return `
+        <details class="cartera-viva-history-item__actions">
+            <summary class="cartera-viva-history-item__actions-trigger" aria-label="Acciones del movimiento">
+                <i class="fa fa-ellipsis-vertical" aria-hidden="true"></i>
+            </summary>
+            <div class="cartera-viva-history-item__menu" role="menu">
+                ${actions.map((action) => renderHistoryActionButton(action)).join('')}
+            </div>
+        </details>
     `;
 }
 
@@ -738,9 +961,10 @@ function renderBuyerSummary(buyerRow, options = {}) {
     `;
 }
 
-function createTimelineRowElement(row) {
+function createTimelineRowElement(row, options = {}) {
     const article = document.createElement('article');
     article.className = `cartera-viva-history-item cartera-viva-history-item--${row?.tone || 'neutral'}`;
+    article.dataset.historyId = String(row?.history_id || '').trim();
 
     const amountValue = formatMoney(row?.amount);
     const title = escapeHtml(row?.title || 'Movimiento');
@@ -760,7 +984,10 @@ function createTimelineRowElement(row) {
                 ${concept}
                 ${note}
             </div>
-            <strong class="cartera-viva-history-item__amount">${amountValue}</strong>
+            <div class="cartera-viva-history-item__side">
+                <strong class="cartera-viva-history-item__amount">${amountValue}</strong>
+                ${renderHistoryActionMenu(row, options)}
+            </div>
         </div>
     `;
 
@@ -778,12 +1005,14 @@ export function renderBuyerHistoryDetail(root, options = {}) {
     const exportMessage = String(options.exportMessage || '').trim();
     const exportTone = String(options.exportTone || '').trim().toLowerCase();
     const selectedPair = normalizeDetailPair(options.selectedPair);
+    const historyFilter = normalizeHistoryFilter(options.historyFilter);
     const exchangeRates = options.exchangeRates && typeof options.exchangeRates === 'object'
         ? options.exchangeRates
         : { USD: 1, COP: null, VES: null };
     const exchangeStatus = options.exchangeStatus && typeof options.exchangeStatus === 'object'
         ? options.exchangeStatus
         : {};
+    const visibleHistoryRows = filterHistoryRows(historyRows, historyFilter);
 
     if (!buyerRow) {
         root.innerHTML = `
@@ -823,6 +1052,11 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             title: 'Sin historial legible',
             copy: 'Este comprador todavía no tiene movimientos suficientes para contar su historia.'
         });
+    } else if (visibleHistoryRows.length <= 0) {
+        bodyContent = renderEmptyState({
+            title: 'Sin transferidos visibles',
+            copy: 'Este comprador no tiene movimientos transferidos dentro del filtro activo.'
+        });
     } else {
         bodyContent = '<div class="cartera-viva-detail__timeline" data-cartera-detail-timeline></div>';
     }
@@ -832,12 +1066,13 @@ export function renderBuyerHistoryDetail(root, options = {}) {
             <div class="cartera-viva-detail__toolbar">
                 <button type="button" class="cartera-viva-back" data-cartera-detail-back>Volver</button>
                 <div class="cartera-viva-detail__toolbar-actions">
-                    <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar</button>
-                    <button
-                        type="button"
-                        class="cartera-viva-refresh"
-                        data-cartera-detail-export
-                        ${loading || exportPending ? 'disabled' : ''}>
+                <button type="button" class="cartera-viva-refresh" data-cartera-detail-refresh>Actualizar</button>
+                <button type="button" class="cartera-viva-refresh" data-cartera-detail-create-cycle>Crear ciclo</button>
+                <button
+                    type="button"
+                    class="cartera-viva-refresh"
+                    data-cartera-detail-export
+                    ${loading || exportPending ? 'disabled' : ''}>
                         ${exportPending ? 'Exportando…' : 'Exportar'}
                     </button>
                 </div>
@@ -858,9 +1093,12 @@ export function renderBuyerHistoryDetail(root, options = {}) {
                         <p class="cartera-viva-view__eyebrow">Historial</p>
                         <h3 class="cartera-viva-detail__section-title">Movimientos del comprador</h3>
                     </div>
-                    <p class="cartera-viva-detail__body-copy">
-                        Fiados, cobros, pérdidas e ingresos relacionados con este comprador.
-                    </p>
+                    <div class="cartera-viva-detail__body-meta">
+                        <p class="cartera-viva-detail__body-copy">
+                            Fiados, cobros, pérdidas e ingresos relacionados con este comprador.
+                        </p>
+                        ${renderHistoryFilters(historyRows, historyFilter)}
+                    </div>
                 </header>
                 ${bodyContent}
             </section>
@@ -875,6 +1113,13 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         options.onRefresh?.();
     });
 
+    root.querySelector('[data-cartera-detail-create-cycle]')?.addEventListener('click', () => {
+        options.onCreateCycle?.({
+            buyerRow,
+            historyRow: null
+        });
+    });
+
     root.querySelector('[data-cartera-detail-export]')?.addEventListener('click', () => {
         options.onExport?.();
     });
@@ -887,13 +1132,34 @@ export function renderBuyerHistoryDetail(root, options = {}) {
         });
     });
 
+    root.querySelectorAll('[data-cartera-detail-history-filter]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextFilter = normalizeHistoryFilter(button.dataset.carteraDetailHistoryFilter);
+            if (nextFilter === historyFilter) return;
+            options.onHistoryFilterChange?.(nextFilter);
+        });
+    });
+
+    root.querySelectorAll('[data-cartera-history-action="create-cycle"]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const historyId = String(button.dataset.carteraHistoryId || '').trim();
+            const historyRow = historyRows.find((row) => String(row?.history_id || '').trim() === historyId) || null;
+            options.onCreateCycle?.({
+                buyerRow,
+                historyRow
+            });
+        });
+    });
+
     const timelineNode = root.querySelector('[data-cartera-detail-timeline]');
     if (timelineNode) {
-        renderHistoryDayGroups(timelineNode, historyRows, {
+        renderHistoryDayGroups(timelineNode, visibleHistoryRows, {
             dateFieldName: 'fecha',
             formatDayLabel: formatHistoryAbsoluteDayLabel,
             renderRow(fragment, row) {
-                fragment.appendChild(createTimelineRowElement(row));
+                fragment.appendChild(createTimelineRowElement(row, {
+                    onCreateCycle: options.onCreateCycle
+                }));
             }
         });
     }

@@ -658,6 +658,46 @@
   justify-content: flex-end;
 }
 
+.cartera-viva-detail__body-meta {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.cartera-viva-detail__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.cartera-viva-detail__filter {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  padding: 0.22rem 0.58rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.cartera-viva-detail__filter:hover {
+  border-color: rgba(200, 167, 82, 0.24);
+  color: var(--text-primary);
+}
+
+.cartera-viva-detail__filter.is-active {
+  color: var(--gold-4);
+  border-color: rgba(200, 167, 82, 0.28);
+  background: rgba(200, 167, 82, 0.1);
+}
+
 .cartera-viva-detail__status.is-success {
   color: var(--color-success);
 }
@@ -877,6 +917,12 @@
   min-width: 0;
 }
 
+.cartera-viva-history-item__side {
+  display: grid;
+  justify-items: end;
+  gap: 0.38rem;
+}
+
 .cartera-viva-history-item__head {
   display: flex;
   flex-wrap: wrap;
@@ -893,6 +939,102 @@
   color: var(--text-primary);
   font-size: 0.85rem;
   text-align: right;
+}
+
+.cartera-viva-history-item__actions {
+  position: relative;
+}
+
+.cartera-viva-history-item__actions[open] {
+  z-index: 4;
+}
+
+.cartera-viva-history-item__actions-trigger {
+  list-style: none;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.cartera-viva-history-item__actions-trigger::-webkit-details-marker,
+.cartera-viva-history-item__actions-trigger::marker {
+  display: none;
+  content: '';
+}
+
+.cartera-viva-history-item__actions-trigger:hover {
+  border-color: rgba(200, 167, 82, 0.24);
+  color: var(--text-primary);
+}
+
+.cartera-viva-history-item__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.28rem);
+  display: grid;
+  gap: 0.18rem;
+  min-width: 10.75rem;
+  padding: 0.32rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 5, 5, 0.98);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.3);
+}
+
+.cartera-viva-history-item__menu-action {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.38rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.cartera-viva-history-item__menu-action i {
+  width: 0.9rem;
+  text-align: center;
+}
+
+.cartera-viva-history-item__menu-action:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.cartera-viva-history-item__menu-action.btn-delete-facturero:hover {
+  color: var(--color-error);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.cartera-viva-history-item__menu-action.btn-revert-income:hover,
+.cartera-viva-history-item__menu-action.btn-revert-loss:hover {
+  color: var(--color-success);
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+.cartera-viva-history-item__menu-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .cartera-viva-empty {
@@ -991,6 +1133,10 @@
 
   .cartera-viva-history-item__amount {
     text-align: left;
+  }
+
+  .cartera-viva-history-item__side {
+    justify-items: start;
   }
 }
 

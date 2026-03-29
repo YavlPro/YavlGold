@@ -52,6 +52,7 @@ let detailErrorMessage = '';
 let detailExportPending = false;
 let detailExportMessage = '';
 let detailExportTone = '';
+let detailHistoryFilter = 'todos';
 let detailSelectedPair = readStoredDetailPair();
 let detailExchangeRates = { USD: 1, COP: null, VES: null };
 let detailExchangeStatus = { source: 'unknown', warning: '', fetchedAt: null };
@@ -60,6 +61,7 @@ let visibleCropScopeId = null;
 let visibleCropScopeLoading = false;
 let visibleCropScopeError = '';
 let visibleCropScopeRequestId = 0;
+let externalRefreshTimer = 0;
 
 function readStoredCategory() {
     try {
@@ -145,6 +147,12 @@ function normalizeSearchQuery(value) {
     return String(value || '').trim();
 }
 
+function normalizeDetailHistoryFilter(value) {
+    return String(value || '').trim().toLowerCase() === 'transferidos'
+        ? 'transferidos'
+        : 'todos';
+}
+
 function getSearchToken(value) {
     return normalizeHistorySearchToken(String(value || '').trim());
 }
@@ -192,6 +200,17 @@ function getSelectedCropShortLabel() {
     const selectedCrop = getSelectedCrop();
     if (!selectedCrop) return 'este cultivo';
     return resolveCropDisplay(selectedCrop).shortLabel || 'este cultivo';
+}
+
+function normalizeOperationalCurrency(value) {
+    const token = String(value || '').trim().toUpperCase();
+    if (token === 'BS') return 'VES';
+    return ['USD', 'COP', 'VES'].includes(token) ? token : 'USD';
+}
+
+function normalizeOperationalUnitType(value) {
+    const token = String(value || '').trim().toLowerCase();
+    return ['unidad', 'saco', 'kg'].includes(token) ? token : '';
 }
 
 function formatMoney(value) {
@@ -422,6 +441,88 @@ function openRecordFromCarteraContext() {
         initialCropId: context.cropId || null
     });
     return true;
+}
+
+function resolveCyclePayloadFromContext(context = {}) {
+    const buyerRow = context?.buyerRow || null;
+    const historyRow = context?.historyRow || null;
+    const cropId = normalizeCropId(historyRow?.crop_id || getSelectedCropId());
+    const sourceTab = String(historyRow?.source_tab || '').trim().toLowerCase();
+    const buyerName = String(
+        buyerRow?.display_name
+        || historyRow?.buyer_name
+        || getSelectedBuyerRow?.()?.display_name
+        || 'Comprador'
+    ).trim();
+    const baseConcept = String(historyRow?.concept || historyRow?.title || '').trim();
+    const suggestedName = historyRow
+        ? `${buyerName} · ${baseConcept || 'Seguimiento'}`
+        : `${buyerName} · Seguimiento comercial`;
+    const name = typeof window !== 'undefined' && typeof window.prompt === 'function'
+        ? window.prompt('Nombre del ciclo operativo', suggestedName)
+        : suggestedName;
+    const unitType = normalizeOperationalUnitType(historyRow?.unit_type || '');
+    const quantityRaw = Number(historyRow?.unit_qty);
+
+    if (name === null) return null;
+
+    let economicType = 'expense';
+    if (sourceTab === 'ingresos') economicType = 'income';
+    else if (sourceTab === 'perdidas') economicType = 'loss';
+    else if (sourceTab === 'transferencias') economicType = 'donation';
+
+    const amount = historyRow
+        ? Number(historyRow?.amount || 0)
+        : Math.max(
+            Number(buyerRow?.pending_total || 0),
+            Number(buyerRow?.loss_total || 0),
+            Number(buyerRow?.paid_total || 0),
+            0
+        );
+
+    return {
+        name: String(name || suggestedName).trim() || suggestedName,
+        description: historyRow
+            ? `Creado desde Cartera Viva para ${buyerName}. ${historyRow.title || 'Movimiento'}${baseConcept ? ` · ${baseConcept}` : ''}.`
+            : `Creado desde Cartera Viva para ${buyerName}.`,
+        economicType,
+        category: 'other',
+        cropId: cropId || '',
+        amount: Number.isFinite(amount) && amount > 0 ? amount : null,
+        currency: normalizeOperationalCurrency(historyRow?.currency || 'USD'),
+        movementDate: String(historyRow?.fecha || new Date().toISOString().slice(0, 10)).trim(),
+        quantity: unitType && Number.isFinite(quantityRaw) ? quantityRaw : null,
+        unitType,
+        status: 'open'
+    };
+}
+
+async function createOperationalCycleFromCartera(context = {}) {
+    const opsApi = typeof window !== 'undefined' ? window.YGAgroOperationalCycles : null;
+    if (!opsApi?.createFromPayload || !opsApi?.openView) {
+        setDetailExportState('Ciclos Operativos no está disponible en esta sesión.', 'error');
+        renderView();
+        return;
+    }
+
+    const payload = resolveCyclePayloadFromContext(context);
+    if (!payload) return;
+
+    if (!payload.cropId) {
+        setDetailExportState('Necesitas un cultivo activo o un movimiento con cultivo para crear el ciclo.', 'error');
+        renderView();
+        return;
+    }
+
+    try {
+        const result = await opsApi.createFromPayload(payload);
+        setDetailExportState(String(result?.message || 'Ciclo operativo creado desde Cartera Viva.'), 'success');
+        opsApi.openView('active');
+    } catch (error) {
+        console.error('[CarteraViva] create operational cycle failed:', error?.message || error);
+        setDetailExportState(String(error?.message || 'No se pudo crear el ciclo operativo desde Cartera Viva.'), 'error');
+        renderView();
+    }
 }
 
 function syncCarteraVivaGlobalContext() {
@@ -907,6 +1008,7 @@ function renderView() {
             exportPending: detailExportPending,
             exportMessage: detailExportMessage,
             exportTone: detailExportTone,
+            historyFilter: detailHistoryFilter,
             selectedPair: detailSelectedPair,
             exchangeRates: detailExchangeRates,
             exchangeStatus: detailExchangeStatus,
@@ -920,6 +1022,13 @@ function renderView() {
             },
             onExport: () => {
                 exportBuyerDetail();
+            },
+            onCreateCycle: (context) => {
+                createOperationalCycleFromCartera(context);
+            },
+            onHistoryFilterChange: (nextFilter) => {
+                detailHistoryFilter = normalizeDetailHistoryFilter(nextFilter);
+                renderView();
             },
             onPairChange: (nextPair) => {
                 detailSelectedPair = String(nextPair || '').trim().toUpperCase() === 'USD/VES' ? 'USD/VES' : 'USD/COP';
@@ -1115,6 +1224,7 @@ function resetDetailState() {
     detailRows = [];
     detailLoading = false;
     detailErrorMessage = '';
+    detailHistoryFilter = 'todos';
     resetDetailExportState();
 }
 
@@ -1122,6 +1232,25 @@ function resetDetailExportState() {
     detailExportPending = false;
     detailExportMessage = '';
     detailExportTone = '';
+}
+
+function scheduleExternalPortfolioRefresh() {
+    if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() !== CARTERA_VIVA_VIEW) return;
+
+    if (externalRefreshTimer) {
+        clearTimeout(externalRefreshTimer);
+    }
+
+    externalRefreshTimer = window.setTimeout(() => {
+        externalRefreshTimer = 0;
+        const activeBuyerId = selectedBuyerId;
+        void (async () => {
+            await loadSummary();
+            if (activeBuyerId) {
+                await loadBuyerDetail(activeBuyerId);
+            }
+        })();
+    }, 140);
 }
 
 function handleShellViewChanged(event) {
@@ -1162,6 +1291,11 @@ export function initAgroCarteraVivaView() {
     window.addEventListener('agro:shell:view-changed', handleShellViewChanged);
     window.addEventListener('agro:crop:changed', handleCropContextUpdated);
     window.addEventListener('AGRO_CROPS_READY', handleCropContextUpdated);
+    document.addEventListener('data-refresh', scheduleExternalPortfolioRefresh);
+    document.addEventListener('agro:income:changed', scheduleExternalPortfolioRefresh);
+    document.addEventListener('agro:losses:changed', scheduleExternalPortfolioRefresh);
+    document.addEventListener('agro:pending:refreshed', scheduleExternalPortfolioRefresh);
+    document.addEventListener('agro:transfers:refreshed', scheduleExternalPortfolioRefresh);
 
     if (String(document.body?.dataset?.agroActiveView || '').trim().toLowerCase() === CARTERA_VIVA_VIEW) {
         loadSummary();

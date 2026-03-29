@@ -5699,3 +5699,78 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 - Validar lectura del documento `ADN-VISUAL-V10.0.md` para confirmar continuidad visual entre §14 y §15.
 - Revisar `apps/gold/assets/css/tokens.css` para verificar que los nuevos tokens conviven sin alterar el sistema legacy.
 - No se requirió QA de browser en esta sesión porque el alcance fue documental y de tokens.
+
+## Sesión: Paridad operativa de Cartera Viva con historial legacy (2026-03-29)
+
+### Diagnóstico
+
+- El menú operativo legacy no vive en un módulo aparte: la pieza reusable real está en `apps/gold/agro/agro.js`.
+- La UI y las acciones salen de `renderHistoryRow()` y del listener delegado `setupFactureroCrudListeners()`.
+- Los handlers útiles ya existen:
+  - `editFactureroItem()`
+  - `deleteFactureroItem()`
+  - `handlePendingTransfer()`
+  - `handleIncomeTransfer()`
+  - `handleLossTransfer()`
+  - `handleRevertIncome()`
+  - `handleRevertLoss()`
+- Cartera Viva hoy no reutiliza esos handlers porque su timeline es buyer-centric propio y no emite el mismo markup/clases del historial viejo.
+- `Crear ciclo` no existe en el legacy facturero como acción buyer-centric, pero sí hay API global de Ciclos Operativos en `window.YGAgroOperationalCycles`.
+
+### Plan
+
+1. Adaptar el timeline de Cartera Viva para emitir acciones compatibles con los handlers legacy ya existentes.
+2. Agregar menú contextual compacto por movimiento dentro del detalle buyer-centric.
+3. Incorporar lectura clara de `Ver transferidos` dentro del detalle.
+4. Crear un puente mínimo hacia `Ciclos Operativos` usando `window.YGAgroOperationalCycles`.
+5. Mantener explícito que el historial legacy no se elimina aún; esta ronda busca paridad operativa, no retiro del legacy.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva-detail.js`
+  - cada movimiento del timeline buyer-centric ahora expone acciones operativas compatibles con el historial legacy:
+    - `Editar`
+    - `Eliminar`
+    - `Transferir`
+    - `Revertir` cuando el flujo real lo soporta
+    - `Crear ciclo`
+  - el menú reutiliza las clases legacy (`btn-edit-facturero`, `btn-delete-facturero`, `btn-transfer-*`, `btn-revert-*`) para delegar en los handlers ya existentes del facturero.
+  - se agregó filtro visible `Todo / Ver transferidos` dentro del detalle para consultar movimientos transferidos sin salir de Cartera Viva.
+  - el timeline se filtra por ese estado sin romper el detalle buyer-centric.
+- `apps/gold/agro/agro-cartera-viva-view.js`
+  - nuevo estado local para filtro de historial del detalle.
+  - refresco automático de Cartera Viva cuando el legacy emite eventos de cambio (`data-refresh`, `agro:income:changed`, `agro:losses:changed`, `agro:pending:refreshed`, `agro:transfers:refreshed`).
+  - puente mínimo `Crear ciclo` usando `window.YGAgroOperationalCycles.createFromPayload()` y `openView()`.
+- `apps/gold/agro/agro-cartera-viva.css`
+  - menú contextual compacto y sobrio por movimiento.
+  - chips de filtro para `Ver transferidos`.
+  - sin rediseño grande ni ruido visual adicional.
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico de chunk grande en `assets/agro-*.js`.
+
+### QA corto ejecutado
+
+- Se levantó preview local con `pnpm -C apps/gold preview -- --host localhost --port 4173`.
+- Se abrió el flujo real de login y se intentó autenticación con la cuenta QA local.
+- El submit sí disparó el handler real del login y ejecutó hCaptcha invisible.
+- El flujo quedó detenido en `Validando...` sobre `http://localhost:4173/index.html#login`.
+- Consola del browser:
+  - warning de hCaptcha por uso de `localhost`;
+  - no fue posible entrar para completar smoke autenticado de `Editar`, `Eliminar`, `Transferir`, `Ver transferidos`, `Revertir` y `Crear ciclo`.
+- Se cerró el browser, se detuvo el preview local y se eliminó la carpeta temporal de Playwright de la sesión.
+
+### Nota operativa
+
+- El historial viejo legacy no se elimina aún en esta ronda.
+- Esta sesión lleva a Cartera Viva un nivel importante de paridad operativa reutilizando lógica real del facturero.
+- El retiro del legacy solo debe evaluarse cuando esta paridad quede validada con QA autenticada real.
