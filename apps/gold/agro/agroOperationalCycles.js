@@ -371,12 +371,16 @@ function sortMovementsAscending(left, right) {
     return leftKey.localeCompare(rightKey);
 }
 
-function directionSummaryLabel(direction) {
-    return direction === 'in' ? '💰 Recibí / Cobré' : '💸 Pagué / Gasté';
+function directionSummaryLabel(direction, economicType) {
+    if (direction === 'in') return '💰 Recibí / Cobré';
+    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Apoyo';
+    return '💸 Pagué / Gasté';
 }
 
-function directionDetailLabel(direction) {
-    return direction === 'in' ? '💰 Entrada de dinero' : '💸 Salida de dinero';
+function directionDetailLabel(direction, economicType) {
+    if (direction === 'in') return '💰 Entrada de dinero';
+    if (normalizeToken(economicType) === 'donation') return '🤝 Donación / Apoyo';
+    return '💸 Salida de dinero';
 }
 
 function formatAmountLabel(amount, currency) {
@@ -1200,7 +1204,7 @@ function renderWizard() {
                         <div class="agro-operational-inline-meta">
                             <div class="agro-operational-impact">
                                 <span>Impacto inicial</span>
-                                <span class="agro-operational-impact__badge ${direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(direction))}</span>
+                                <span class="agro-operational-impact__badge ${direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(direction, values.economicType))}</span>
                             </div>
                         </div>
                         <div class="agro-operational-form-grid">
@@ -1256,7 +1260,7 @@ function renderWizard() {
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(resolveDraftCropLabel(values.cropId))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
-                            <span class="agro-operational-confirm-item__label">${escapeHtml(directionSummaryLabel(direction))}</span>
+                            <span class="agro-operational-confirm-item__label">${escapeHtml(directionSummaryLabel(direction, values.economicType))}</span>
                             <strong class="agro-operational-confirm-item__value">${escapeHtml(formatAmountLabel(parsedAmount, values.currency))}</strong>
                         </article>
                         <article class="agro-operational-confirm-item">
@@ -1562,7 +1566,7 @@ function renderMovementRows(cycle) {
         <div class="agro-operational-detail-list">
             ${cycle.movements.map((movement) => `
                 <article class="agro-operational-detail-item">
-                    <span class="agro-operational-movement-badge ${movement.direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(movement.direction))}</span>
+                    <span class="agro-operational-movement-badge ${movement.direction === 'in' ? 'is-in' : 'is-out'}">${escapeHtml(directionDetailLabel(movement.direction, cycle.economic_type))}</span>
                     <div>
                         <p class="agro-operational-detail-item__concept">${escapeHtml(movement.concept || cycle.name)}</p>
                         <p class="agro-operational-detail-item__meta">${escapeHtml(formatDateLabel(movement.movement_date))} · ${escapeHtml(formatAmountLabel(movement.amount, movement.currency))} · ${escapeHtml(formatQuantityLabel(movement.quantity, movement.unit_type))}</p>
@@ -1590,7 +1594,7 @@ function renderCycleCard(cycle) {
                 </div>
                 <div class="agro-operational-card__badges">
                     <span class="agro-operational-status ${buildStatusClass(cycle.status)}">${escapeHtml(readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto'))}</span>
-                    <span class="agro-operational-pill">${escapeHtml(directionDetailLabel(cycle.direction))}</span>
+                    <span class="agro-operational-pill">${escapeHtml(directionDetailLabel(cycle.direction, cycle.economic_type))}</span>
                 </div>
             </div>
 
@@ -1599,7 +1603,7 @@ function renderCycleCard(cycle) {
 
             <div class="agro-operational-money-grid">
                 <div class="agro-operational-money-cell" data-tone="gold">
-                    <span class="agro-operational-money-cell__label">${escapeHtml(directionSummaryLabel(cycle.direction))}</span>
+                    <span class="agro-operational-money-cell__label">${escapeHtml(directionSummaryLabel(cycle.direction, cycle.economic_type))}</span>
                     <strong class="agro-operational-money-cell__value">${escapeHtml(primaryAmount)}</strong>
                 </div>
                 <div class="agro-operational-money-cell">
@@ -1683,7 +1687,7 @@ function buildMarkdownSection(title, datasetKey) {
         lines.push(`- Estado: ${readLabel(STATUS_OPTIONS, cycle.status, '🟡 Abierto')}`);
         lines.push(`- Cultivo asociado: ${cycle.crop?.label || '🌾 Sin asociar a cultivo'}`);
         lines.push(`- Fechas: ${cycle.closed_at ? `${formatDateLabel(cycle.opened_at)} · Cierre ${formatDateLabel(cycle.closed_at)}` : `${formatDateLabel(cycle.opened_at)} · Sin cierre`}`);
-        lines.push(`- ${directionSummaryLabel(cycle.direction)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
+        lines.push(`- ${directionSummaryLabel(cycle.direction, cycle.economic_type)}: ${formatAmountLabel(cycle.primaryMovement?.amount, cycle.primaryMovement?.currency)}`);
         lines.push(`- 📊 Balance del ciclo: ${cycle.balanceText}`);
         lines.push(`- Descripción principal: ${cycle.description || 'Sin descripción principal'}`);
         if (cycle.notes) {
@@ -1694,7 +1698,7 @@ function buildMarkdownSection(title, datasetKey) {
             lines.push('  - Sin movimientos visibles.');
         } else {
             cycle.movements.forEach((movement) => {
-                lines.push(`  - ${formatDateLabel(movement.movement_date)} · ${directionDetailLabel(movement.direction)} · ${formatAmountLabel(movement.amount, movement.currency)} · ${movement.concept || cycle.name}`);
+                lines.push(`  - ${formatDateLabel(movement.movement_date)} · ${directionDetailLabel(movement.direction, cycle.economic_type)} · ${formatAmountLabel(movement.amount, movement.currency)} · ${movement.concept || cycle.name}`);
             });
         }
         lines.push('');

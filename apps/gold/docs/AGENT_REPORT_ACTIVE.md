@@ -6762,3 +6762,247 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
    - confirmar que el nombre del cliente ya nace prellenado y que no se pierde el contexto.
 7. `Mobile`
    - revisar `<=480px` el modal de cliente y las quick actions del detalle.
+
+## Sesión: QA runtime Cartera Viva + Ciclos Operativos (Otros + Donaciones) (2026-03-30)
+
+### Objetivo
+
+- Ejecutar QA funcional runtime serio sobre:
+  - `Cartera Viva`
+  - `Ciclos Operativos`
+- Confirmar comportamiento real de:
+  - flujo client-centric
+  - quick actions contextualizadas
+  - rutas `Otros`
+  - rutas `Donaciones`
+  - desktop y mobile `390x844`
+
+### Alcance
+
+- `Cartera Viva`
+  - alta de cliente
+  - deduplicación
+  - edición
+  - eliminación/archivado
+  - quick actions de `Nuevo fiado`, `Nuevo cobro`, `Nueva pérdida`
+- `Ciclos Operativos`
+  - creación y lectura de `Otros`
+  - creación y lectura de `Donaciones`
+  - filtros
+  - export
+  - mobile y consola
+
+### Dataset QA a usar o crear
+
+- `QA Cliente Cartera Viva`
+- `QA Cliente Duplicado`
+- `QA Cliente Archivo`
+- `QA Donación Semillas`
+- `QA Otros Ajuste Manual`
+
+### Riesgo
+
+- El QA será sobre producción real con cuenta QA local dedicada.
+- Si se siembran datos QA, deben limpiarse al cierre o documentarse con precisión.
+- Al terminar se debe cerrar browser/Playwright y limpiar temporales locales de esta sesión.
+
+### Diagnóstico
+
+- `Cartera Viva` no está íntegramente operativa en producción real.
+- El alta y la edición de cliente fallan contra `public.agro_buyers` porque la base productiva no tiene la columna `canonical_name` que el frontend ya da por existente.
+- `Ciclos Operativos` sí está operativo en runtime para alta, filtros, preview/export markdown y borrado con cascade verificado.
+- La clasificación económica de `Donación` está semánticamente mal representada hoy:
+  - la card la pinta como `💸 Salida de dinero`;
+  - el balance queda negativo;
+  - el export markdown repite esa misma lectura.
+
+### Resultados QA
+
+- `Cartera Viva`
+  - `Nuevo cliente`:
+    - probado;
+    - falla al guardar con `column agro_buyers.canonical_name does not exist`.
+  - `Duplicado`:
+    - bloqueado por la misma falla de alta;
+    - no se pudo completar validación de canonicalización en producción.
+  - `Editar cliente`:
+    - al abrir ficha de `Jesus Mora` la UI queda en `Cargando cliente...`;
+    - `Archivar cliente` queda deshabilitado;
+    - `Eliminar cliente` aparece habilitado;
+    - la consola vuelve a marcar `400` sobre `agro_buyers` al pedir `canonical_name`.
+  - `Eliminar / archivar seguro`:
+    - no validado end-to-end por el fallo de carga de ficha;
+    - evidencia visual actual sugiere regla insegura en runtime porque delete queda habilitado mientras archive no carga.
+  - `Quick actions desde detalle`:
+    - probado `Nuevo fiado`;
+    - el wizard abre contextualizado y el campo `Cliente` llega prellenado con `Jesus Mora`;
+    - no se guardó movimiento nuevo para no contaminar un cliente no-QA.
+  - `Legacy`:
+    - la experiencia principal sí entra por `Cartera Viva` y `detalle del cliente`;
+    - el texto `Legacy disponible temporalmente` confirma que el legacy sigue vivo como apoyo, no como CTA principal.
+- `Ciclos Operativos`
+  - `Donación`:
+    - alta OK;
+    - card OK;
+    - filtro por tipo `🤝 Donación` OK;
+    - preview/export markdown OK;
+    - bug semántico confirmado: aparece y se exporta como `💸 Salida de dinero` con balance `-$25`.
+  - `Otros`:
+    - alta OK usando categoría `📋 Otro`;
+    - card OK;
+    - filtro por categoría `📋 Otro` OK;
+    - preview/export markdown OK;
+    - no se reclasificó como donación ni pérdida.
+  - `Export`:
+    - la ruta real existe en la subvista `export` del módulo;
+    - genera preview y archivo `ciclos-operativos-2026-03.md`;
+    - probado con filtros activos para `Otro` y para `Donación`.
+  - `Cleanup`:
+    - ambos ciclos QA fueron eliminados;
+    - el sistema respondió `🗑️ Ciclo eliminado y cascade verificado.`
+
+### Bugs confirmados
+
+1. `BUG-CV-001`
+   - Vista: `Cartera Viva > Nuevo cliente`
+   - Pasos:
+     1. abrir `Cartera Viva`;
+     2. pulsar `Nuevo cliente`;
+     3. llenar `Nombre visible`;
+     4. guardar.
+   - Resultado actual:
+     - la ficha no guarda;
+     - aparece `column agro_buyers.canonical_name does not exist`;
+     - la consola devuelve `400` sobre `agro_buyers`.
+   - Resultado esperado:
+     - crear cliente y mostrar su card.
+   - Severidad: alta
+   - Causa raíz probable:
+     - drift entre frontend desplegado y schema productivo; falta la migración que agrega `canonical_name`.
+
+2. `BUG-CV-002`
+   - Vista: `Cartera Viva > Editar cliente`
+   - Pasos:
+     1. abrir `Cartera Viva`;
+     2. pulsar `Editar cliente` en un cliente existente con historial.
+   - Resultado actual:
+     - la ficha queda en `Cargando cliente...`;
+     - `Archivar cliente` sigue deshabilitado;
+     - `Eliminar cliente` queda habilitado.
+   - Resultado esperado:
+     - cargar ficha completa y aplicar regla segura `con historial = archivar / sin historial = eliminar`.
+   - Severidad: alta
+   - Causa raíz probable:
+     - la misma desalineación de schema al consultar `canonical_name`/`status`.
+
+3. `BUG-OPS-001`
+   - Vista: `Ciclos Operativos > Donación`
+   - Pasos:
+     1. crear ciclo con tipo `🤝 Donación`;
+     2. revisar card;
+     3. revisar export markdown.
+   - Resultado actual:
+     - la donación se muestra como `💸 Salida de dinero`;
+     - el balance queda negativo;
+     - el export repite esa semántica.
+   - Resultado esperado:
+     - una donación no debería presentarse como gasto saliente salvo que el negocio lo haya definido explícitamente así.
+   - Severidad: media
+   - Causa raíz probable:
+     - el renderer reutiliza la lógica de `outgoing` para `donation`.
+
+### Cambios aplicados
+
+- Archivo tocado:
+  - `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+- No se aplicó fix de código en esta sesión.
+
+### Build status
+
+- No se ejecutó `pnpm build:gold` porque no hubo cambios de código.
+
+### QA sugerido
+
+1. Aplicar primero en producción la migración que agrega `canonical_name` y volver a correr:
+   - alta cliente;
+   - editar cliente;
+   - archivado seguro;
+   - delete seguro.
+2. Corregir la semántica de `Donación` en `Ciclos Operativos` y repetir:
+   - card;
+   - resumen superior;
+   - export markdown.
+3. Tras el fix de schema, revalidar quick actions completas desde detalle con un cliente QA real y cleanup posterior.
+
+---
+
+## Fix producción: Cartera Viva schema drift + Donación semántica (2026-03-30)
+
+### Diagnóstico
+
+#### Bloqueo 1 — Cartera Viva (schema drift)
+- `agro_buyers` en producción **carecía** de las columnas `canonical_name` y `status`.
+- `agrocompradores.js` hace SELECT/INSERT/UPDATE con ambas (`BUYER_SELECT` = `['id','user_id','display_name','group_key','canonical_name','status',...]`).
+- `agro_buyer_portfolio_summary_v1` (RPC) no retornaba `canonical_name` ni `client_status`.
+- `normalizeBuyerPortfolioSummaryRow()` en `agro-cartera-viva.js` ya espera `nextRow.canonical_name` y `nextRow.client_status`.
+- La migración `20260330173000_agro_clients_master_equivalent_v1.sql` **no existía** en el repo; hubo que crearla tanto en repo como aplicarla en producción.
+
+#### Bloqueo 2 — Donación semántica
+- `DIRECTION_BY_TYPE.donation = 'out'` → se reusaban los labels genéricos `💸 Salida de dinero` / `💸 Pagué / Gasté` / balance negativo.
+- La regla de negocio para Donación es: salida real de dinero (dirección `out` correcta para el balance), pero requiere wording semántico propio (`🤝 Donación / Apoyo`), no el genérico comercial.
+- Afectaba: badge card, badge movimiento detalle, cell resumen, label confirm wizard, export markdown.
+
+### Plan ejecutado
+
+1. Crear y aplicar migración `20260330173000_agro_clients_master_equivalent_v1.sql` en producción.
+2. Backfill de `canonical_name` desde `group_key` para filas existentes.
+3. Reconstruir RPC `agro_buyer_portfolio_summary_v1` añadiendo `canonical_name` y `client_status` al RETURNS TABLE.
+4. Corregir `directionSummaryLabel()` y `directionDetailLabel()` para aceptar `economicType` y retornar `🤝 Donación / Apoyo` cuando `economicType === 'donation'`.
+5. Aplicar el parámetro `economicType` en todos los call-sites: card badge, detail badge, money-cell summary label, wizard step 3 impact badge, wizard step 4 confirm label, export markdown.
+6. Build y verificación DB.
+
+### Cambios aplicados
+
+| Archivo | Cambios |
+|---|---|
+| `apps/gold/supabase/migrations/20260330173000_agro_clients_master_equivalent_v1.sql` | NUEVO — DDL: ADD COLUMN canonical_name, ADD COLUMN status, 2 índices, DROP+CREATE RPC con canonical_name/client_status |
+| `apps/gold/agro/agroOperationalCycles.js` | `directionSummaryLabel()` y `directionDetailLabel()` ahora aceptan `economicType`; 6 call-sites actualizados con el parámetro |
+
+### Riesgo
+
+- Bajo: backfill de `canonical_name = group_key` es determinístico y reversible. Filas sin `group_key` quedan en NULL (la UI ya hace fallback).
+- Bajo: `status DEFAULT 'active'` no rompe filas existentes.
+- Bajo: el balance de Donación sigue siendo correcto (`out`); solo cambió el wording de etiquetas.
+
+### Build status
+
+- `pnpm build:gold` → ✅ OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-dist-utf8: OK`
+
+### Verificación DB
+
+- `agro_buyers.canonical_name`: columna TEXT nullable ✅
+- `agro_buyers.status`: columna TEXT NOT NULL DEFAULT 'active' ✅
+- `agro_buyer_portfolio_summary_v1` return signature incluye `canonical_name text, client_status text` ✅
+
+### QA sugerido
+
+#### Cartera Viva
+1. Nuevo cliente → alta sin error `column does not exist` → confirm en DB
+2. Verificar que duplicado por `canonical_name` funciona (modal redirige al existente)
+3. Editar cliente → guardar → `Cargando cliente...` se resuelve correctamente
+4. Archivar cliente con historial → activa botón Archivar → status cambia a `archived`
+5. Eliminar cliente sin historial → funciona sin error
+6. Quick actions desde detalle: `Nuevo fiado`, `Nuevo cobro`, `Nueva pérdida` → contexto correcto
+
+#### Ciclos Operativos — Donación
+1. Crear ciclo tipo `🤝 Donación` → wizard step 3 muestra `🤝 Donación / Apoyo` (no `💸 Salida de dinero`)
+2. Card renderizada → badge `🤝 Donación / Apoyo` en pill y en money-cell label
+3. Detalle de movimiento → badge `🤝 Donación / Apoyo`
+4. Export MD → línea `- 🤝 Donación / Apoyo: [monto]` (no `💸 Pagué / Gasté`)
+5. Balance sigue siendo negativo (correcto; la direccin `out` se preserva)
+6. Gasto/Ingreso/Pérdida siguen mostrando sus labels originales sin regresión
+
