@@ -6005,3 +6005,153 @@ La auditoria final de Fase 1 detecto un unico bloqueo real: `normalizeBuyerGroup
 
 - El sistema nuevo y el legacy ya quedan mejor separados desde el sidebar.
 - El legacy sigue vivo; no se elimina en esta ronda.
+
+## Sesión: UI Polish quirúrgico — Ciclos Operativos + Sidebar Legacy (2026-03-29)
+
+### Diagnóstico
+
+**Lo que quedó bien de la solución actual:**
+- La agrupación funcional del historial legacy en `Historial comercial` y `Historial legacy` ya está implementada.
+- Ciclos Operativos usa tokens DNA V10 (`--bg-0`, `--bg-1`) correctamente.
+- La barra de progreso de Cartera Viva tiene animaciones (`carteraVivaProgressCurrent`, `carteraVivaProgressBreath`).
+
+**Lo que sigue débil visualmente:**
+- La barra de progreso tiene motion pero le falta suavidad premium en las transiciones.
+- El sidebar group labels (`Historial comercial`, `Historial legacy`) tienen poca jerarquía visual — se sienten planos.
+- Las animaciones del track de progreso podrían sentirse más orgánicas y menos mecánicas.
+
+**Dónde se detectó negro puro:**
+- Los modales legacy (`modal-lunar`, `modal-market`, `modal-new-crop`) usan `#000000` y `#000` en gradientes inline, pero estos están fuera del alcance de esta ronda (no son parte de Ciclos Operativos ni sidebar legacy).
+- Ciclos Operativos ya usa `--bg-0` (`#050505`) correctamente, no negro puro.
+
+**Cómo está construida la progress bar:**
+- Track: `.cartera-viva-progress__track` con pseudo-elements `::before` (shimmer) y `::after` (breath).
+- Segments: `.cartera-viva-progress__segment` con gradientes por estado (paid, pending, loss).
+- Keyframes: `carteraVivaProgressCurrent` (6.8s), `carteraVivaProgressBreath` (6.4s).
+
+**Archivos que gobiernan estos estilos:**
+- `apps/gold/agro/agro-cartera-viva.css` — progress bar
+- `apps/gold/agro/agro.css` — sidebar styling (`.agro-shell-sidebar__group`, `.agro-shell-sidebar__label`)
+- `apps/gold/agro/agro-operational-cycles.css` — ya correcto con DNA V10
+
+### Plan
+
+**Qué se va a tocar:**
+1. `agro-cartera-viva.css` — refinar transitions y timing de progress bar para sensación más premium
+2. `agro.css` — mejorar jerarquía visual de los labels de grupo del sidebar
+
+**Qué NO se va a tocar:**
+- Lógica de negocio (JS)
+- Modales legacy con inline styles
+- Arquitectura del shell/routing
+- `agro.js`
+
+**Cómo minimizar riesgo de regresión:**
+- Solo ediciones CSS quirúrgicas
+- Mantener keyframes existentes, solo ajustar timing/easing
+- No agregar nuevas clases ni elementos
+
+### Opciones evaluadas
+
+- **Opción A (elegida)**: Parche mínimo de CSS sobre progress bar y sidebar labels
+- **Opción B**: Ajuste de estructura visual + CSS — descartada por scope
+- **Opción C**: Refuerzo de tokens compartidos — innecesario, tokens ya están bien
+
+Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero regresión funcional.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva.css`
+  - Refinamiento de progress bar animations:
+    - `borderShimmer`: 5.8s → 7s, opacity 0.5 → 0.42 (más sutil)
+    - `carteraVivaProgressBreath`: 6.4s → 8s, easing `ease-in-out` → `cubic-bezier(0.4, 0, 0.2, 1)` (más suave)
+    - Opacity del breath reducida de 0.1/0.2 → 0.06/0.14 (más sobrio)
+    - `carteraVivaProgressCurrent`: 6.8s → 9s, mismo easing premium
+    - Añadida `transition: width 320ms` a los segments para cambios fluidos
+
+- `apps/gold/agro/agro.css`
+  - `.agro-shell-sidebar__group`: añadido `padding-top: 0.5rem` con `:first-of-type` reset
+  - `.agro-shell-sidebar__label`: 
+    - Añadido padding (0.35rem 0.5rem) y border-radius 8px
+    - Añadido background sutil `rgba(200, 167, 82, 0.04)`
+    - Añadido border-left dorado `2px solid rgba(200, 167, 82, 0.28)`
+    - Color cambiado de blanco muted a dorado sutil `rgba(200, 167, 82, 0.72)`
+  - `.agro-shell-sidebar__label-icon`: tamaño ajustado 0.88rem → 0.82rem, añadido drop-shadow sutil
+
+### Estado
+
+- Build: `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`
+  - warning histórico de chunk grande en `assets/agro-*.js`
+
+### QA sugerido
+
+- Verificar visualmente:
+  - Progress bars en Cartera Viva: animación más lenta, suave, menos mecánica
+  - Sidebar groups: etiquetas `Historial comercial` y `Historial legacy` con mejor jerarquía visual
+  - Ciclos Operativos: confirmar que no hay negro puro (#000) visible
+- Probar en viewport mobile (≤480px) y desktop
+
+### Nota operativa
+
+- El polish es puramente CSS, no tocó lógica de negocio
+- No se modificaron modales legacy con inline styles (fuera de alcance)
+- El legacy sigue vivo y accesible desde el sidebar
+
+## Sesión: Cerrar fondo negro puro en Ciclos Operativos (2026-03-29)
+
+### Diagnóstico
+
+**Causa raíz identificada:**
+- `.agro-operational-panel`, `.agro-operational-list-section`, `.agro-operational-card` (líneas 146-157 de `agro-operational-cycles.css`) usan `var(--bg-0)` (`#050505`).
+- `--bg-0` es el fondo más profundo del sistema según ADN V10, prácticamente negro puro.
+- Esto hace que las superficies de cards/panels se sientan "muertas" visualmente en lugar de premium.
+
+**Por qué es incorrecto según DNA V10:**
+- `--bg-0` (`#050505`) está pensado para el fondo más profundo/base, no para superficies de cards.
+- Las cards elevadas deben usar `--bg-3` (`#111113`) o `--bg-4` (`#1a1a1f`) para tener presencia y profundidad.
+- El contraste visual entre capas se pierde cuando todo usa el nivel más oscuro.
+
+**Archivo responsable:**
+- `apps/gold/agro/agro-operational-cycles.css` — líneas 146-157
+
+### Plan mínimo de corrección
+
+1. Cambiar `var(--bg-0)` por `var(--bg-3)` en las superficies de panel/card.
+2. Mantener el gradiente dorado sutil que ya tienen.
+3. Preservar bordes, sombras y estructura.
+
+**Qué NO se va a tocar:**
+- Lógica de negocio (JS)
+- Otros módulos
+- Modales
+- Sidebar o progress bars (ya corregidos en pasada anterior)
+
+### Resultado
+
+**Superficie corregida:** `.agro-operational-panel`, `.agro-operational-list-section`, `.agro-operational-card`
+
+**Por qué era la causa:** Usaban `var(--bg-0)` (`#050505`), el fondo más profundo del sistema DNA V10. Este valor está reservado para capas base, no para superficies de tarjetas. El resultado visual era "negro muerto" sin presencia de profundidad.
+
+**Corrección aplicada:** Cambio de `var(--bg-0)` → `var(--bg-3)` (`#111113`). Esto eleva las superficies visualmente, dándoles más presencia sin perder la estética oscura premium.
+
+### Archivos tocados
+
+| Archivo | Cambio | Propósito |
+|---------|--------|-----------|
+| `apps/gold/agro/agro-operational-cycles.css` | Línea 156: `--bg-0` → `--bg-3` | Superficie de panels/cards con presencia visual |
+| `apps/gold/docs/AGENT_REPORT_ACTIVE.md` | Diagnóstico + resultado | Documentación de sesión |
+
+### Validación
+
+- `pnpm build:gold`: **PASSED** (sin errores, sin warnings críticos)
+- Diff: **1 línea modificada** en CSS principal
+- Legibilidad: **Conservada** (contraste mejorado ligeramente)
+- DNA V10: **Alineado** — uso correcto de token para superficies elevadas
+

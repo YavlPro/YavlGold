@@ -151,7 +151,7 @@ body.agro-operational-modal-open {
   border: 1px solid var(--border-gold);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--gold-4) 5%, transparent), transparent 18%),
-    var(--bg-0);
+    var(--bg-3);
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.26);
   overflow: hidden;
 }
