@@ -1343,6 +1343,26 @@
   .cartera-viva-pair {
     padding: 0.66rem 0.7rem;
   }
+
+  .agro-commercial-family__tab,
+  .cartera-viva-search,
+  .cartera-viva-crop-chip,
+  .cartera-viva-quick-action,
+  .cartera-viva-refresh,
+  .cartera-viva-empty__action,
+  .cartera-viva-back,
+  .cartera-viva-category,
+  .cartera-viva-detail__filter,
+  .cartera-viva-pair__chip,
+  .cartera-viva-history-item__actions-trigger,
+  .cartera-viva-history-item__menu-action {
+    min-height: var(--a11y-touch-min, 44px);
+  }
+
+  .cartera-viva-history-item__actions-trigger {
+    width: var(--a11y-touch-min, 44px);
+    height: var(--a11y-touch-min, 44px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

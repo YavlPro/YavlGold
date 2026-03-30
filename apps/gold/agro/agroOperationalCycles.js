@@ -1052,6 +1052,22 @@ function renderShell() {
     syncModalVisibility();
 }
 
+function syncCommercialFamilyTabs() {
+    if (!state.root) return;
+    const currentView = normalizeToken(document.body?.dataset?.agroActiveView || state.currentView);
+
+    state.root.querySelectorAll('.agro-commercial-family__tab[data-agro-view]').forEach((button) => {
+        const buttonView = normalizeToken(button.dataset.agroView);
+        const isActive = buttonView === currentView;
+        button.classList.toggle('is-active', isActive);
+        if (isActive) {
+            button.setAttribute('aria-current', 'page');
+        } else {
+            button.removeAttribute('aria-current');
+        }
+    });
+}
+
 function syncModalVisibility() {
     const isOpen = !!state.modalOpen;
     state.refs?.modalOverlay?.classList.toggle('active', isOpen);
@@ -1808,6 +1824,7 @@ function renderCurrentSubview() {
 
 function renderAll() {
     renderWizard();
+    syncCommercialFamilyTabs();
     renderOverview();
     renderCurrentSubview();
 }
@@ -2208,6 +2225,7 @@ function bindEvents() {
             return;
         }
 
+        syncCommercialFamilyTabs();
         renderOverview();
         renderCurrentSubview();
         void refreshData();

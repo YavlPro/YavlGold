@@ -1248,4 +1248,11 @@ body.agro-operational-modal-open {
   .agro-operational-step__copy small {
     white-space: normal;
   }
+
+  .agro-operational-shell .header-actions .btn,
+  .agro-operational-refresh-btn,
+  .agro-operational-card__actions .btn,
+  .agro-operational-card__details summary {
+    min-height: var(--a11y-touch-min, 44px);
+  }
 }

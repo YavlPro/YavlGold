@@ -6330,3 +6330,138 @@ Motivo de elección: menor riesgo, menor diff, máxima coherencia visual, cero r
   2. ciclo con `fiadosUsd = 0` -> badge agrícola intacto + `Cartera cerrada`;
   3. ciclo finalizado con cartera abierta -> seguir mostrando estado agrícola de cierre + `Cartera activa`;
   4. confirmar que no apareció ningún campo de semilla/material de siembra en la card principal.
+
+## Sesión: QA funcional productivo Agro V1 (2026-03-30)
+
+### Diagnóstico
+
+- Se ejecutó QA autenticada sobre `https://www.yavlgold.com/` con la cuenta QA local dedicada.
+- El acceso automatizado por login sigue chocando con captcha:
+  - intento directo por `supabase.auth.signInWithPassword()` devolvió `captcha verification process failed` en `auth/v1/token`;
+  - aun así la sesión quedó activa y permitió continuar el QA funcional autenticado.
+- Dashboard carga y redirige correctamente con sesión activa; saludo visible: `Capitan QA`.
+- Cartera Viva quedó validada como flujo principal:
+  - resumen buyer-centric visible con `USD 134,00` por cobrar y `4` compradores activos;
+  - categorías visibles correctas: `Fiados`, `Pagados`, `Pérdidas`;
+  - `Mixto` no aparece al frente;
+  - filtro por cultivo `Maiz Amarillo` redujo la vista a `1` comprador y el detalle quedó filtrado al movimiento real del cultivo;
+  - detalle de `Jesus Mora` mostró historial cronológico, selector `USD/COP` y `USD/Bs`, equivalentes válidos y exportación real a Markdown.
+- Hallazgos reales en producción:
+  - consola mantiene `1` error por `auth/v1/token` asociado al flujo de captcha/login;
+  - consola mantiene `1` warning: `[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized`;
+  - en móvil `390x844` no apareció scroll horizontal en Agro, pero varios targets quedaron por debajo de `40px` de alto (`30px–39px`) en tabs y acciones secundarias;
+  - en `Ciclos Operativos` la cuenta QA no mostró ciclos reales visibles (`0` activos) y por eso no se pudo validar la rama de datos/export con dataset real;
+  - en la vista de `Ciclos Operativos`, el heading del módulo aparece correcto pero la familia comercial seguía marcando `Cartera Viva` como tab activa, lo que sugiere desalineación visual de estado.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agregó esta sección de cierre de sesión QA.
+- Sin cambios de código productivo en esta sesión.
+
+### Build status
+
+- `No ejecutado`.
+- Motivo: sesión de QA sin cambios de código productivo; solo se actualizó el reporte activo.
+
+### QA sugerido
+
+- Revalidar manualmente el login real con captcha desde navegador humano y confirmar si el error `auth/v1/token` sigue presente aun cuando la sesión termina entrando.
+- Revisar el wiring visual del tab activo en `Ciclos Operativos` dentro de la familia comercial.
+- Probar con una cuenta/dataset que sí tenga ciclos operativos reales para cubrir:
+  1. cards con datos;
+  2. filtros por tipo/categoría;
+  3. exportación Markdown;
+  4. lista de finalizados.
+- Subir el alto mínimo de tabs/acciones secundarias en móvil a `>=40px`, idealmente `44px`, para mejorar tocabilidad.
+
+## Sesión: Fixes post-QA para Agro V1 (2026-03-30)
+
+### Diagnóstico
+
+- Se tomaron los tres ajustes inmediatos derivados del QA funcional productivo:
+  - targets táctiles por debajo de `44px` en mobile dentro de `Cartera Viva` y `Ciclos Operativos`;
+  - desalineación visual potencial del tab activo en la familia comercial de `Ciclos Operativos`;
+  - warning de `Clima` disparado cuando la estructura semanal ni siquiera existe en la vista actual.
+
+### Cambios aplicados
+
+- `apps/gold/agro/agro-cartera-viva.css`
+  - Se elevó a `min-height: var(--a11y-touch-min, 44px)` la superficie táctil mobile de tabs, chips, acciones secundarias y menú de acciones en `Cartera Viva`.
+  - El trigger circular del menú contextual quedó forzado a `44x44`.
+- `apps/gold/agro/agro-operational-cycles.css`
+  - Se elevó a `min-height: var(--a11y-touch-min, 44px)` la tocabilidad mobile de acciones primarias/secundarias y summary-toggle en `Ciclos Operativos`.
+- `apps/gold/agro/agroOperationalCycles.js`
+  - Se agregó `syncCommercialFamilyTabs()` para recalcular `is-active` y `aria-current` de la familia comercial usando el `agroActiveView` real del shell.
+- `apps/gold/agro/agroclima-layout.js`
+  - Se silenció la inicialización cuando la estructura semanal de clima no está montada en absoluto.
+  - El warning permanece solo para estados parcialmente rotos, no para vistas donde clima no aplica.
+
+### Build status
+
+- `pnpm build:gold` -> OK
+  - `agent-guard: OK`
+  - `agent-report-check: OK`
+  - `vite build: OK`
+  - `check-llms: OK`
+  - `check-dist-utf8: OK`
+- Observaciones no bloqueantes:
+  - warning de engine por entorno actual `node v25.6.0` vs objetivo `20.x`;
+  - warning histórico por chunk `assets/agro-*.js` > 500 kB.
+
+### QA sugerido
+
+- Revalidar en mobile `390x844` que tabs y acciones secundarias ya no queden por debajo de `44px`.
+- Reabrir `Ciclos Operativos` desde `Cartera Viva` y confirmar que la familia comercial ahora resalta el tab correcto.
+- Confirmar que el warning `[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized` desaparece en vistas donde el weekly embed no existe.
+
+## Sesión: Re-QA runtime de fixes Agro V1 (2026-03-30)
+
+### Diagnóstico
+
+- Se ejecutó una revalidación rápida en producción real sobre `https://www.yavlgold.com/` con viewport mobile `390x844`.
+- El acceso volvió a rozar `hCaptcha`:
+  - el submit disparó challenge invisible;
+  - apareció un iframe de reto;
+  - aun así la sesión terminó entrando y permitió continuar la validación runtime.
+- Resultado real por fix:
+  - `BUG-01 / tab activa`: `PARCIALMENTE RESUELTO`.
+    - `document.body.dataset.agroActiveView` cambió correctamente entre `cartera-viva` y `operational`;
+    - los tabs visibles de la familia comercial también alternaron correctamente `is-active` y `aria-current="page"`;
+    - la cabecera visible coincidió con la vista activa en ambas rutas;
+    - permanecen nodos ocultos de la vista opuesta en DOM con `height: 0`, pero no quedaron visibles al usuario.
+  - `BUG-02 / touch targets mobile`: `NO RESUELTO EN RUNTIME`.
+    - en `Cartera Viva` se midieron targets visibles por debajo del mínimo `44px`:
+      - tabs de familia comercial visibles: `30px`;
+      - botón `Actualizar`: `39px`;
+      - chips de cultivo (`Vista general`, `Batata Amarilla`, `Tomate Rinon`, `Maiz Amarillo`): `32px`;
+      - CTA `Nuevo fiado`: `32px`;
+      - categorías `Fiados / Pagados / Pérdidas`: `35px`;
+    - en `Ciclos Operativos` también persistieron targets por debajo del mínimo:
+      - sublinks visibles `Cartera Viva / Ciclos Operativos` del shell: `31px`;
+      - CTA `Nuevo ciclo operativo`: `38px` en header y `34px` en estados vacíos;
+      - botón `Feedback`: `40px`.
+  - `BUG-03 / warning de Clima`: `NO RESUELTO EN PRODUCCIÓN`.
+    - el warning siguió apareciendo fuera de Clima al cargar Agro:
+      - `[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized.`
+    - el warning se observó en consola estando en vistas no-Clima, por lo que el guard no está reflejado en runtime productivo actual.
+
+### Cambios aplicados
+
+- `apps/gold/docs/AGENT_REPORT_ACTIVE.md`
+  - Se agregó esta sección de revalidación runtime.
+- Sin cambios de código productivo en esta sesión.
+
+### Build status
+
+- `No ejecutado`.
+- Motivo: sesión de re-QA runtime sin cambios de código; solo se actualizó el reporte activo.
+
+### QA sugerido
+
+- Reabrir el deploy correcto que contenga los CSS/JS ya parchados, porque producción actual todavía expone targets `<44px` y sigue emitiendo el warning de clima.
+- Repetir la medición mobile en `390x844` sobre el deploy actualizado, validando específicamente:
+  1. tabs de familia comercial visibles `>=44px`;
+  2. categorías `Fiados / Pagados / Pérdidas` `>=44px`;
+  3. CTAs `Nuevo fiado` y `Nuevo ciclo operativo` `>=44px`;
+  4. ausencia total del warning de clima fuera de la vista `Clima`.

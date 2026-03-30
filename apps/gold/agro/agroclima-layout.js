@@ -74,6 +74,11 @@ function bindEvents(nodes) {
 
 export function initClimaWeeklyEmbed() {
     const nodes = getNodes();
+    const hasWeeklyStructure = !!(nodes.toggle || nodes.host || nodes.weeklyRoot);
+    if (!hasWeeklyStructure) {
+        return;
+    }
+
     if (!nodes.toggle || !nodes.host || !nodes.weeklyRoot) {
         console.warn('[AGRO_CLIMA_LAYOUT] Missing clima weekly nodes; embed not initialized.');
         return;
