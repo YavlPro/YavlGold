@@ -7206,28 +7206,38 @@ body.agro-view-dense::after {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  padding-top: 0.5rem;
+}
+
+.agro-shell-sidebar__group:first-of-type {
+  padding-top: 0;
 }
 
 .agro-shell-sidebar__label {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  margin: 0;
+  margin: 0 0 0.15rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(200, 167, 82, 0.04);
+  border-left: 2px solid rgba(200, 167, 82, 0.28);
   font-family: 'Orbitron', sans-serif;
   font-size: 0.62rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(200, 167, 82, 0.72);
 }
 
 .agro-shell-sidebar__label-icon,
 .agro-shell-link__icon {
   flex-shrink: 0;
-  opacity: 0.78;
+  opacity: 0.82;
 }
 
 .agro-shell-sidebar__label-icon {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
+  filter: drop-shadow(0 0 2px rgba(200, 167, 82, 0.12));
 }
 
 .agro-shell-link {
